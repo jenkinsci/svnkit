@@ -164,6 +164,11 @@ public abstract class SVNRepository {
     
     public void checkout(long revision, String target, boolean recursive, ISVNEditor editor) throws SVNException {
         final long lastRev = revision >= 0 ? revision : getLatestRevision();
+        // check path?
+        SVNNodeKind nodeKind = checkPath("", revision);
+        if (nodeKind == SVNNodeKind.FILE) {
+            throw new SVNException("svn: URL '" + getLocation().toString() + "' refers to a file, not a directory");
+        }
         update(revision, target, recursive, new ISVNReporterBaton() {
                     public void report(ISVNReporter reporter) throws SVNException {
                         reporter.setPath("", lastRev, true);
