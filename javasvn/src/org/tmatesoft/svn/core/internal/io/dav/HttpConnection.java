@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.Base64;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.SocketFactory;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
@@ -282,17 +283,22 @@ class HttpConnection {
 		sb.append(' ');
         sb.append(path);
 		sb.append(' ');
-		sb.append("HTTP/1.1\n");
+		sb.append("HTTP/1.1");
+        sb.append(HttpConnection.CRLF);
 		sb.append("Host: ");
 		sb.append(mySVNRepositoryLocation.getHost());
 		sb.append(HttpConnection.CRLF);
-        sb.append("Connection: TE\n");
-        sb.append("TE: trailers\n");
+        sb.append("Connection: TE");
+        sb.append(HttpConnection.CRLF);
+        sb.append("TE: trailers");
+        sb.append(HttpConnection.CRLF);
         if (requestBody != null) {
             sb.append("Transfer-Encoding: chunked");
         } else {
             sb.append("Content-Lenght: 0");
         }
+        sb.append(HttpConnection.CRLF);
+        sb.append("Accept-Encoding: gzip");
         sb.append(HttpConnection.CRLF);
         if (header != null) {
             if (!header.containsKey("Content-Type")) {
@@ -394,11 +400,15 @@ class HttpConnection {
 	}
 
 	private static InputStream createInputStream(Map readHeader, InputStream is) throws IOException {
+        DebugLog.log("transfer encoding: " + readHeader.get("Transfer-Encoding"));
+        DebugLog.log("content encoding : " + readHeader.get("Content-Encoding"));
+        DebugLog.log("content length   : " + readHeader.get("Content-Length"));
         if ("chunked".equals(readHeader.get("Transfer-Encoding"))) {
             is = new ChunkedInputStream(is);
         } else if (readHeader.get("Content-Length") != null) {
             is = new FixedSizeInputStream(is, Long.parseLong(readHeader.get("Content-Length").toString()));
             if ("gzip".equals(readHeader.get("Content-Encoding"))) {
+                DebugLog.log("using GZIP encoding to read server responce");
                 is = new GZIPInputStream(is);
             }
         }
