@@ -10,7 +10,10 @@ public interface IDAVProxyManager {
     public static IDAVProxyManager DEFAULT = new IDAVProxyManager() {
 
         public boolean isProxyEnabled(SVNRepositoryLocation location) {
-            return Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("http.proxySet"));
+            if (Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("http.proxySet"))) {
+                return !DAVUtil.matchHost(System.getProperty("http.nonProxyHosts"), location.getHost());
+            }
+            return false;
         }
 
         public String getProxyHost(SVNRepositoryLocation location) {
