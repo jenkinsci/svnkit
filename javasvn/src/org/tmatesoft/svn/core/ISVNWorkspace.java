@@ -69,13 +69,23 @@ public interface ISVNWorkspace {
     
     public long update(SVNRepositoryLocation url, String path, long revision, boolean recursive) throws SVNException;
 
-    public long commit(String paths[], ISVNCommitHandler handler, boolean recursive) throws SVNException;
+    public long commit(String paths[], ISVNCommitHandler handler, boolean recursive, boolean includeUnversionedParents) throws SVNException;
 
-    public long commit(String paths[], String message, boolean recursive) throws SVNException;
+    public long commit(String paths[], String message, boolean recursive, boolean includeUnversionedParents) throws SVNException;
 
     public long commit(String path, String message, boolean recursive) throws SVNException;
 
     public long commit(String message) throws SVNException;
+
+    /**
+     * @deprecated
+     */
+    public long commit(String paths[], ISVNCommitHandler handler, boolean recursive) throws SVNException;
+
+    /**
+     * @deprecated
+     */
+    public long commit(String paths[], String message, boolean recursive) throws SVNException;
     
     /* RO operations */
     

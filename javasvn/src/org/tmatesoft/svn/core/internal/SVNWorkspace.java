@@ -560,36 +560,36 @@ public class SVNWorkspace implements ISVNWorkspace {
     }
 
     public long commit(String path, String message, boolean recursive) throws SVNException {
-        return commit(new String[] { path }, message, recursive);
+        return commit(new String[] { path }, message, recursive, true);
     }
 
     public long commit(String[] paths, final String message, boolean recursive) throws SVNException {
+        return commit(paths, message, recursive, true);
+    }
+    
+    public long commit(String[] paths, final String message, boolean recursive, boolean includeParents) throws SVNException {
         return commit(paths, new ISVNCommitHandler() {
             public String handleCommit(SVNStatus[] tobeCommited) {
                 return message == null ? "" : message;
             }
-        }, recursive);
+        }, recursive, includeParents);
+    }
+    
+    public long commit(String[] paths, ISVNCommitHandler handler, boolean recursive) throws SVNException {
+        return commit(paths, handler, recursive, true);
     }
 
-    public long commit(String[] paths, ISVNCommitHandler handler, boolean recursive) throws SVNException {
+    public long commit(String[] paths, ISVNCommitHandler handler, boolean recursive, boolean includeParents) throws SVNException {
         long start = System.currentTimeMillis();
         for (int i = 0; i < paths.length; i++) {
             ISVNEntry entry = locateEntry(paths[i]);
             if (entry == null || !entry.isManaged()) {
                 throw new SVNException("'" + paths[i] + "' is not under version control");
-            }
-            /*
-            if (entry.getPropertyValue(SVNProperty.COPIED) != null && !entry.isScheduledForAddition()) {
+            } else if (entry != null && entry.getPropertyValue(SVNProperty.COPIED) != null 
+                    && !entry.isScheduledForAddition()) {
                 throw new SVNException("'" + entry.getPath() + "' is marked as 'copied' but is not itself scheduled for addition. " +
-                        "Perhaps you're committing a target that is inside unversioned (or not-yet-versioned) directory?");
+                "Perhaps you're committing a target that is inside unversioned (or not-yet-versioned) directory?");
             }
-            String p = entry.getPath();
-            while(entry != getRoot()) {
-                entry = locateParentEntry(entry.getPath());
-                if (entry == null || entry.isScheduledForAddition()) {
-                    throw new SVNException("'" + p + "' is not under version control");
-                }
-            }*/
         }
         String root = PathUtil.getCommonRoot(paths);
         if (root == null) {
@@ -623,15 +623,18 @@ public class SVNWorkspace implements ISVNWorkspace {
                     SVNCommitUtil.harvestCommitables(entry, paths, recursive, modified);
                 }
             }
-            // add unversioned parents to set of modified files...
+
             Collection modifiedParents = new HashSet();
             for (Iterator modifiedEntries = modified.iterator(); modifiedEntries.hasNext();) {
                 ISVNEntry entry = (ISVNEntry) modifiedEntries.next();
+                String p = entry.getPath();
                 if (entry.isScheduledForAddition()) {
                     ISVNEntry parent = locateParentEntry(entry.getPath());
                     while (parent != null && parent.isScheduledForAddition() && !parent.isScheduledForDeletion()) {
+                        if (!includeParents && !modified.contains(parent)) {
+                            throw new SVNException("'" + p + "' is not under version control");
+                        }
                         DebugLog.log("HV: 'added' parent added to transaction: " + parent.getPath());
-                        modifiedParents.add(parent);
                         parent = locateParentEntry(parent.getPath());
                     }
                 }

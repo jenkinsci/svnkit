@@ -102,7 +102,7 @@ public class CommitCommand extends SVNCommand {
                 out.println(verb + committedPath);
             }
         });
-        long revision = workspace.commit(paths, message, recursive);
+        long revision = workspace.commit(paths, message, recursive, false);
         if (revision >= 0) {
             out.println("Committed revision " + revision + ".");
         }

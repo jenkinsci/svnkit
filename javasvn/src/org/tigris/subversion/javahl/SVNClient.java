@@ -441,7 +441,7 @@ public class SVNClient implements SVNClientInterface {
                     }
                     return message;
                 }
-            }, recurse);
+            }, recurse, true);
         } catch (SVNException e) {
             throwException(e);
         }
