@@ -309,7 +309,7 @@ class DAVRepository extends SVNRepository {
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
             String path = PathUtil.append(info.baselineBase, info.baselinePath);
-            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES);
+            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
             path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
 
             myConnection.doReport(path, request, handler);
@@ -330,7 +330,7 @@ class DAVRepository extends SVNRepository {
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
             String path = PathUtil.append(info.baselineBase, info.baselinePath);
-            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES);
+            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
             path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
 
             myConnection.doReport(path, request, handler);
@@ -351,7 +351,7 @@ class DAVRepository extends SVNRepository {
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
             String path = PathUtil.append(info.baselineBase, info.baselinePath);
-            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES);
+            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
             path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
 
             myConnection.doReport(path, request, handler);
@@ -368,10 +368,11 @@ class DAVRepository extends SVNRepository {
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
             String path = PathUtil.append(info.baselineBase, info.baselinePath);
-            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES);
-            path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-
-            myConnection.doReport(path, request, handler);
+        	DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, true);
+        	if (response != null) {
+        		path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+        		myConnection.doReport(path, request, handler);
+        	}
         } finally {
             closeConnection();
         }
@@ -388,7 +389,7 @@ class DAVRepository extends SVNRepository {
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
             String path = PathUtil.append(info.baselineBase, info.baselinePath);
 
-            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES);
+            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
             path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
             
             // 2. get href from specific vcc with using "label"

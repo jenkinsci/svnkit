@@ -25,7 +25,7 @@ import org.tmatesoft.svn.util.PathUtil;
  */
 public class DAVUtil {
     
-    public static DAVResponse getResourceProperties(DAVConnection connection, String path, String label, DAVElement[] properties) throws SVNException {
+    public static DAVResponse getResourceProperties(DAVConnection connection, String path, String label, DAVElement[] properties, boolean skipNotFound) throws SVNException {
         final DAVResponse[] result = new DAVResponse[1];
         connection.doPropfind(path, 0, label, properties, new IDAVResponseHandler() {
             public void handleDAVResponse(DAVResponse response) {
@@ -33,7 +33,7 @@ public class DAVUtil {
                     result[0] = response;
                 }
             }
-        });
+        }, skipNotFound ? new int[] {200, 207, 404} : new int[] {200, 207});
         return result[0];
     }
 
@@ -80,7 +80,7 @@ public class DAVUtil {
         String loppedPath = "";
         while(true) {
 	        try {
-	            properties = getResourceProperties(connection, path, null, DAVElement.STARTING_PROPERTIES);
+	            properties = getResourceProperties(connection, path, null, DAVElement.STARTING_PROPERTIES, false);
 	            break;
 	        } catch (SVNException e) {
 	        }
@@ -113,7 +113,7 @@ public class DAVUtil {
         } else {
             label = Long.toString(revision);
         }
-        DAVResponse result = getResourceProperties(connection, vcc, label, elements);
+        DAVResponse result = getResourceProperties(connection, vcc, label, elements, false);
         result.setHref(baselineRelativePath);
         return result;
     }

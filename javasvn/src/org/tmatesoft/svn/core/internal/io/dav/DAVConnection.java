@@ -92,12 +92,16 @@ class DAVConnection {
             }
         }
     }    
-    
+
     public void doPropfind(String path, int depth, String label, DAVElement[] properties, IDAVResponseHandler handler) throws SVNException {
+    	doPropfind(path, depth, label, properties, handler, new int[] {200, 207});
+    }
+
+    public void doPropfind(String path, int depth, String label, DAVElement[] properties, IDAVResponseHandler handler, int[] okCodes) throws SVNException {
         StringBuffer body = DAVPropertiesHandler.generatePropertiesRequest(null, properties);
         try {
             byte[] bodyBuffer = body.toString().getBytes("UTF-8");
-            myHttpConnection.request("PROPFIND", path, depth, label, bodyBuffer, new DAVPropertiesHandler(handler), new int[] {200, 207});
+            myHttpConnection.request("PROPFIND", path, depth, label, bodyBuffer, new DAVPropertiesHandler(handler), okCodes);
         } catch (IOException e) {
             throw new SVNException(e);
         } 
