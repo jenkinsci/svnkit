@@ -39,11 +39,10 @@ class UpdateWorkspaceListener extends SVNWorkspaceAdapter {
 		case SVNStatus.MERGED:
 			contents = contents != 0 ? contents : NotifyStatus.merged;
 		case SVNStatus.CONFLICTED:
-			contents = contents != 0 ? contents : NotifyStatus.merged;
+			contents = contents != 0 ? contents : NotifyStatus.conflicted;
 		case SVNStatus.REPLACED:
 		case SVNStatus.UPDATED:
 			updateKind = NotifyAction.update_update;
-			contents = contents != 0 ? contents : NotifyStatus.changed;
 			contents = contents != 0 ? contents : NotifyStatus.changed;
 			break;
 		case SVNStatus.DELETED:
