@@ -710,9 +710,9 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         if (target.isDirectory()) {
             for(Iterator children = target.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
-                if (child.isDirectory()) {
-                    updateURL(child, parentURL);
-                }
+                //if (child.isDirectory()) {
+                updateURL(child, parentURL);
+                //}
             }
         }
     }

@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.ISVNWorkspaceListener;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -1102,12 +1103,19 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         assertFalse(subDir.exists());
         assertFalse(file.exists());
         
-        try {
-            checkoutWorkspace.revert("directory", true);
-            fail("should not be able to revert missing folder");
-        } catch (SVNException e) {
-            // ok.
-        }
+        final int[] status = new int[] {0}; 
+        checkoutWorkspace.addWorkspaceListener(new ISVNWorkspaceListener() {
+            public void updated(String path, int contentsStatus, int propertiesStatus, long revision) {
+            }
+            public void committed(String path, int kind) {
+            }
+            public void modified(String path, int kind) {
+                status[0] = kind;
+            }
+        });
+        checkoutWorkspace.revert("directory", true);
+        assertEquals("should not be able to revert missing folder", status[0], SVNStatus.NOT_REVERTED);
+        
         assertFalse(dir.exists());
         assertFalse(subDir.exists());
         assertFalse(file.exists());

@@ -81,14 +81,14 @@ public class FSEntryHandler {
                 if (SVNProperty.REVISION.equals(e.getKey()) && e.getValue().equals(parent.get(SVNProperty.REVISION))) {
                     continue;
                 }
-                if (SVNProperty.REVISION.equals(e.getKey()) && SVNProperty.KIND_DIR.equals(entry.get(SVNProperty.KIND))) {
-                    // do not save revision for child directories
+                if ((SVNProperty.REVISION.equals(e.getKey()) || SVNProperty.URL.equals(e.getKey())) && 
+                        SVNProperty.KIND_DIR.equals(entry.get(SVNProperty.KIND))) {
+                    // do not save revision and url for child directories
                     continue;
                 }
                 if (SVNProperty.UUID.equals(e.getKey()) && e.getValue().equals(parent.get(SVNProperty.UUID))) {
                     continue;
                 }
-                // do not save when url differs from expected
                 if (SVNProperty.URL.equals(e.getKey())) {
                     String expected = PathUtil.append((String) parent.get(SVNProperty.URL), (String) entry.get(SVNProperty.NAME));
                     if (e.getValue().equals(expected)) {
