@@ -30,51 +30,60 @@ import org.tmatesoft.svn.util.SVNUtil;
 public class UpdateCommand extends SVNCommand {
 
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
-        String path = getCommandLine().getPathAt(0);
-        final ISVNWorkspace workspace = createWorkspace(path, true);
-        long revision = -1;
-        if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
-            String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
-            revision = Long.parseLong(revStr);
-        }
-        final String homePath = path;
-        workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
-            public void updated(String updatedPath, int contentsStatus, int propertiesStatus, long rev) {
-                try {
-                    updatedPath = convertPath(homePath, workspace, updatedPath);
-                } catch (IOException e) {
-                    DebugLog.error(e);
-                    
-                }
-                char contents = 'U';
-                char properties = ' ';
-                if (contentsStatus == SVNStatus.ADDED) {
-                    contents = 'A';
-                } else if (contentsStatus == SVNStatus.DELETED) {
-                    contents = 'D';
-                } else if (contentsStatus == SVNStatus.MERGED) {
-                    contents = 'G';
-                } else if (contentsStatus == SVNStatus.CONFLICTED) {
-                    contents = 'C';
-                } else if (contentsStatus == SVNStatus.NOT_MODIFIED) {
-                    contents = ' ';
-                }
-
-                if (propertiesStatus == SVNStatus.MODIFIED) {
-                    properties = 'U';
-                } else if (propertiesStatus == SVNStatus.CONFLICTED) {
-                    properties = 'C';
-                }
-                DebugLog.log(contents + "" + properties + ' ' + updatedPath);
-                if (contents == ' ' && properties == ' ') {
-                    return;
-                }
-                out.println(contents + "" + properties + ' ' + updatedPath);
+        for(int i = 0; i < getCommandLine().getPathCount(); i++) {
+            String path = getCommandLine().getPathAt(i);
+            final ISVNWorkspace workspace = createWorkspace(path, true);
+            long revision = -1;
+            if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
+                String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
+                revision = Long.parseLong(revStr);
             }
-        });
-
-        revision = workspace.update(SVNUtil.getWorkspacePath(workspace, path), revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
-        DebugLog.log("At revision " + revision + ".");
-        out.println("At revision " + revision + ".");
+            final String homePath = path;
+            final boolean[] changesReceived = new boolean[] {false};
+            workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
+                public void updated(String updatedPath, int contentsStatus, int propertiesStatus, long rev) {
+                    try {
+                        updatedPath = convertPath(homePath, workspace, updatedPath);
+                    } catch (IOException e) {
+                        DebugLog.error(e);
+                        
+                    }
+                    char contents = 'U';
+                    char properties = ' ';
+                    if (contentsStatus == SVNStatus.ADDED) {
+                        contents = 'A';
+                    } else if (contentsStatus == SVNStatus.DELETED) {
+                        contents = 'D';
+                    } else if (contentsStatus == SVNStatus.MERGED) {
+                        contents = 'G';
+                    } else if (contentsStatus == SVNStatus.CONFLICTED) {
+                        contents = 'C';
+                    } else if (contentsStatus == SVNStatus.NOT_MODIFIED) {
+                        contents = ' ';
+                    }
+    
+                    if (propertiesStatus == SVNStatus.MODIFIED) {
+                        properties = 'U';
+                    } else if (propertiesStatus == SVNStatus.CONFLICTED) {
+                        properties = 'C';
+                    }
+                    DebugLog.log(contents + "" + properties + ' ' + updatedPath);
+                    if (contents == ' ' && properties == ' ') {
+                        return;
+                    }
+                    changesReceived[0] = true;
+                    out.println(contents + "" + properties + ' ' + updatedPath);
+                }
+            });
+    
+            revision = workspace.update(SVNUtil.getWorkspacePath(workspace, path), revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+            if (!changesReceived[0]) {
+                DebugLog.log("At revision " + revision + ".");
+                out.println("At revision " + revision + ".");
+            } else {
+                DebugLog.log("Updated to revision " + revision + ".");
+                out.println("Updated to revision " + revision + ".");
+            }
+        }
     }
 }
