@@ -161,11 +161,12 @@ class DAVRepository extends SVNRepository {
                 myConnection.doPropfind(path, 1, null, entryProperties, new IDAVResponseHandler() {
                     public void handleDAVResponse(DAVResponse child) {
                         String href = PathUtil.removeTrailingSlash(child.getHref());
-                        if (href.equals(parentPath)) {
+                        href = PathUtil.decode(href);
+                        if (href.equals(PathUtil.decode(parentPath))) {
                             return;
                         }
                         // build direntry
-                        String name = PathUtil.tail(child.getHref());
+                        String name = PathUtil.tail(href);
                         SVNNodeKind kind = SVNNodeKind.FILE;
                         Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
                         long lastRevision = Long.parseLong(revisionStr.toString());
@@ -412,7 +413,8 @@ class DAVRepository extends SVNRepository {
             // prepend root only.            
             return PathUtil.append(getRepositoryRoot(), path);
         }
-        // it was a relative path relative to location path. 
+        // it was a relative path relative to location path.
+        // decode??
         path = PathUtil.append(getLocation().getPath(), path);
         if (path.charAt(0) != '/') {
             path = '/' + path;            
