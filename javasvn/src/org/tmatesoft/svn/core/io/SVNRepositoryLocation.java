@@ -79,9 +79,7 @@ public class SVNRepositoryLocation {
         myProtocol = protocol;
         myPort = port;
         myPath = path;
-        if (myPath.endsWith("/")) {
-            myPath = myPath.substring(0, myPath.length() - "/".length());
-        }
+        myPath = PathUtil.removeTrailingSlash(myPath);
         myPath = PathUtil.encode(myPath);
     }
 
