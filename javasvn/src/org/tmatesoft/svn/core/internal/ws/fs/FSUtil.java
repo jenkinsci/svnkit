@@ -37,12 +37,12 @@ import org.tmatesoft.svn.util.DebugLog;
 public class FSUtil {
 
     public final static boolean isWindows;
-    
+
     static {
         String osName = System.getProperty("os.name");
         isWindows = osName != null && osName.toLowerCase().indexOf("windows") >= 0;
     }
-    
+
     public static boolean isSymlink(File file) {
         if (isWindows || file == null) {
             return false;
@@ -52,7 +52,7 @@ public class FSUtil {
             File parent = file.getParentFile();
             String[] children = parent.list();
             if (children != null) {
-                for(int i = 0; i < children.length; i++) {
+                for (int i = 0; i < children.length; i++) {
                     if (children[i].equals(file.getName())) {
                         return true;
                     }
@@ -62,11 +62,10 @@ public class FSUtil {
         }
         try {
             return !file.getAbsolutePath().equals(file.getCanonicalPath());
-        } catch (IOException e) {            
-        }
+        } catch (IOException e) {}
         return false;
     }
-    
+
     public static boolean isFileOrSymlinkExists(File file) {
         if (file == null) {
             return false;
@@ -78,7 +77,7 @@ public class FSUtil {
             File parent = file.getParentFile();
             String[] children = parent.list();
             if (children != null) {
-                for(int i = 0; i < children.length; i++) {
+                for (int i = 0; i < children.length; i++) {
                     if (children[i].equals(file.getName())) {
                         return true;
                     }
@@ -95,20 +94,18 @@ public class FSUtil {
         }
         try {
             Runtime.getRuntime().exec("attrib " + (hidden ? "+" : "-") + "H \"" + file.getAbsolutePath() + "\"");
-        } catch (Throwable th) {            
-        }
+        } catch (Throwable th) {}
     }
-    
+
     public static void setExecutable(File file, boolean executable) {
         if (isWindows || file == null || !file.exists()) {
             return;
         }
         try {
             Runtime.getRuntime().exec("chmod ugo" + (executable ? "+" : "-") + "x \"" + file.getAbsolutePath() + "\"");
-        } catch (Throwable th) {            
-        }
+        } catch (Throwable th) {}
     }
-    
+
     public static void setReadonly(File file, boolean readonly) {
         if (file.canWrite() == !readonly || !file.exists()) {
             return;
@@ -122,16 +119,16 @@ public class FSUtil {
             if (isWindows) {
                 p = Runtime.getRuntime().exec("attrib " + (readonly ? "+" : "-") + "R \"" + file.getAbsolutePath() + "\"");
             } else {
-                p = Runtime.getRuntime().exec(new String[] {"chmod", "ugo" + (readonly ? "-" : "+") + "w", file.getAbsolutePath()});
-            }       
+                p = Runtime.getRuntime().exec(new String[] { "chmod", "ugo" + (readonly ? "-" : "+") + "w", file.getAbsolutePath() });
+            }
             if (p != null) {
                 p.waitFor();
             }
-        } catch (Throwable th) {            
+        } catch (Throwable th) {
             th.printStackTrace();
         }
     }
-        
+
     public static void deleteAll(File dir) {
         if (dir == null) {
             return;
@@ -147,7 +144,7 @@ public class FSUtil {
             DebugLog.log("can't delete file " + dir.getAbsolutePath());
         }
     }
-    
+
     public static File copyAll(File source, File dst, String asName, FileFilter filter) throws IOException {
         if (!source.exists()) {
             return null;
@@ -159,12 +156,12 @@ public class FSUtil {
             File dstDir = new File(dst, asName);
             dstDir.mkdirs();
             File[] children = source.listFiles();
-            for(int i = 0; i < children.length; i++) {
+            for (int i = 0; i < children.length; i++) {
                 copyAll(children[i], dstDir, children[i].getName(), filter);
             }
             return dstDir;
-        }   
-        InputStream is = null; 
+        }
+        InputStream is = null;
         OutputStream os = null;
         dst = new File(dst, asName);
         if (!dst.getParentFile().exists()) {
@@ -189,7 +186,7 @@ public class FSUtil {
         }
         return dst;
     }
-    
+
     public static boolean compareFiles(File f1, File f2, boolean isBinary) throws IOException {
         InputStream is1 = null;
         InputStream is2 = null;
@@ -200,7 +197,7 @@ public class FSUtil {
             is1 = new BufferedInputStream(new FileInputStream(f1));
             is2 = new BufferedInputStream(new FileInputStream(f2));
             if (isBinary) {
-                while(true) {
+                while (true) {
                     int read1 = is1.read();
                     int read2 = is2.read();
                     if (read1 != read2) {
@@ -209,9 +206,9 @@ public class FSUtil {
                     if (read1 < 0 || read2 < 0) {
                         break;
                     }
-                }                
+                }
             } else {
-                SVNSequenceLineReader reader = new SVNSequenceLineReader(true);
+                SVNSequenceLineReader reader = new SVNSequenceLineReader(new byte[0]);
                 SVNSequenceLine[] lines1 = reader.read(is1);
                 SVNSequenceLine[] lines2 = reader.read(is2);
                 if (lines1 == null || lines2 == null) {
@@ -220,7 +217,7 @@ public class FSUtil {
                 if (lines1.length != lines2.length) {
                     return false;
                 }
-                for(int i = 0; i < lines1.length; i++) {
+                for (int i = 0; i < lines1.length; i++) {
                     if (!lines1[i].equals(lines2[i])) {
                         return false;
                     }
@@ -231,18 +228,18 @@ public class FSUtil {
                 try {
                     is1.close();
                 } catch (IOException e) {}
-            } 
+            }
             if (is2 != null) {
                 try {
                     is2.close();
                 } catch (IOException e) {}
             }
-        }        
+        }
         return true;
     }
 
     public static String copy(InputStream is, OutputStream os, MessageDigest digest) throws IOException {
-        return FSUtil.copy(is, os, null,digest);
+        return FSUtil.copy(is, os, null, digest);
     }
 
     public static String copy(InputStream is, OutputStream os, String eol, MessageDigest digest) throws IOException {
@@ -250,8 +247,10 @@ public class FSUtil {
     }
 
     /**
-     * @param keywords contains keywords to expand, or unexpand. key is keyword name, null value will result in keyword expanding,
-     * non-null in keyword unexpadning. null map will left keywords untouched.
+     * @param keywords
+     *            contains keywords to expand, or unexpand. key is keyword name,
+     *            null value will result in keyword expanding, non-null in
+     *            keyword unexpadning. null map will left keywords untouched.
      */
     public static String copy(InputStream is, final OutputStream os, String eol, Map keywordsMap, final MessageDigest digest) throws IOException {
         OutputStream dos = digest != null ? new OutputStream() {
@@ -259,15 +258,16 @@ public class FSUtil {
                 digest.update((byte) (b & 0xff));
                 os.write(b);
             }
+
             public void write(byte b[], int o, int l) throws IOException {
                 digest.update(b, o, l);
                 os.write(b, o, l);
             }
         } : os;
-        
+
         keywordsMap = keywordsMap != null && keywordsMap.isEmpty() ? null : keywordsMap;
         if (eol == null && keywordsMap == null) {
-            while(true) {
+            while (true) {
                 int read = is.read(myBinaryBuffer);
                 if (read <= 0) {
                     return toHexDigest(digest);
@@ -278,8 +278,8 @@ public class FSUtil {
 
         byte[] replaceWith = SVNProperty.getEOLBytes(eol);
         OutputStream target = keywordsMap != null ? myLineBuffer : dos;
-        
-        myFirstByte = -1; 
+
+        myFirstByte = -1;
         do {
             if (replaceWith == null) {
                 replaceWith = readLine(is, target);
@@ -290,7 +290,7 @@ public class FSUtil {
                 byte[] strBytes = myLineBuffer.toByteArray();
                 if (strBytes.length > 0) {
                     String line = new String(strBytes);
-                    for(Iterator keywords = keywordsMap.keySet().iterator(); keywords.hasNext();) {
+                    for (Iterator keywords = keywordsMap.keySet().iterator(); keywords.hasNext();) {
                         String keyword = (String) keywords.next();
                         line = expandKeyword(line, keyword, (String) keywordsMap.get(keyword));
                     }
@@ -300,52 +300,52 @@ public class FSUtil {
             }
             if (replaceWith != null) {
                 dos.write(replaceWith);
-            }            
+            }
         } while (replaceWith != null);
         return toHexDigest(digest);
     }
-    
+
     private static ByteArrayOutputStream myLineBuffer = new ByteArrayOutputStream();
-    private static byte[] myBinaryBuffer = new byte[8192*4];
+    private static byte[] myBinaryBuffer = new byte[8192 * 4];
     private static int myFirstByte;
-    
-    private static final int CR = '\r'; 
-    private static final int LF = '\n'; 
-    private static final byte[] CR_BYTES = new byte[] {'\r'};
-    private static final byte[] LF_BYTES = new byte[] {'\n'};
-    private static final byte[] CRLF_BYTES = new byte[] {'\r', '\n'};
-    
+
+    private static final int CR = '\r';
+    private static final int LF = '\n';
+    private static final byte[] CR_BYTES = new byte[] { '\r' };
+    private static final byte[] LF_BYTES = new byte[] { '\n' };
+    private static final byte[] CRLF_BYTES = new byte[] { '\r', '\n' };
+
     private static byte[] readLine(InputStream is, OutputStream os) throws IOException {
         int b;
         if (myFirstByte >= 0) {
             os.write(myFirstByte);
             myFirstByte = -1;
         }
-        while(true) {
+        while (true) {
             b = is.read();
-            switch(b) {
-                case CR:
-                    b = is.read();
+            switch (b) {
+            case CR:
+                b = is.read();
+                myFirstByte = -1;
+                if (b == LF) {
+                    return CRLF_BYTES;
+                } else if (b >= 0) {
+                    myFirstByte = b;
+                }
+                return CR_BYTES;
+            case LF:
+                myFirstByte = -1;
+                return LF_BYTES;
+            default:
+                if (b < 0) {
                     myFirstByte = -1;
-                    if (b == LF) {
-                        return CRLF_BYTES;
-                    } else if (b >= 0 ) {
-                        myFirstByte = b; 
-                    }
-                    return CR_BYTES;
-                case LF:
-                    myFirstByte = -1;
-                    return LF_BYTES;
-                default:
-                    if (b < 0) {
-                        myFirstByte = -1;
-                        return null;
-                    }
-                    os.write(b);
+                    return null;
+                }
+                os.write(b);
             }
         }
     }
-    
+
     private static String toHexDigest(MessageDigest digest) {
         if (digest == null) {
             return null;
@@ -360,13 +360,13 @@ public class FSUtil {
         }
         return hexDigest;
     }
-    
+
     private static String expandKeyword(String line, String keyword, String value) {
         int index = 0;
         StringBuffer result = new StringBuffer();
         if (value != null) {
             String pattern = "$" + keyword + "$";
-            while(true) {
+            while (true) {
                 int prevIndex = index;
                 index = line.indexOf(pattern, index);
                 if (index >= 0) {
@@ -385,9 +385,9 @@ public class FSUtil {
                     return result.toString();
                 }
             }
-        } 
+        }
         String pattern = "$" + keyword + ": ";
-        while(true) {
+        while (true) {
             int prevIndex = index;
             index = line.indexOf(pattern, index);
             int lastIndex = line.indexOf("$", index + 1);
@@ -407,7 +407,7 @@ public class FSUtil {
     public static String copy(File from, File to, String eol, MessageDigest digest) {
         return copy(from, to, eol, null, digest);
     }
-    
+
     public static String copy(File from, File to, String eol, Map keywords, MessageDigest digest) {
         InputStream is = null;
         OutputStream os = null;
@@ -432,27 +432,24 @@ public class FSUtil {
             if (os != null) {
                 try {
                     os.close();
-                } catch (IOException e1) {
-                }
+                } catch (IOException e1) {}
             }
             if (is != null) {
                 try {
                     is.close();
-                } catch (IOException e1) {
-                }
+                } catch (IOException e1) {}
             }
         }
         return null;
     }
-    
+
     public static void sleepForTimestamp() {
         long time = System.currentTimeMillis();
-        time = 1010 - (time - (time/1000)*1000);
+        time = 1010 - (time - (time / 1000) * 1000);
         DebugLog.benchmark("WATING FOR: " + time + " ms.");
         try {
             Thread.sleep(time);
-        } catch (InterruptedException e) {
-        }
+        } catch (InterruptedException e) {}
     }
 
 }

@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNWorkspace;
@@ -119,6 +120,8 @@ public abstract class SVNCommand {
     }
 
     static {
+        Locale.setDefault(Locale.ENGLISH);
+
         ourCommands = new HashMap();
         ourCommands.put(new String[] { "status", "st", "stat" }, "org.tmatesoft.svn.cli.command.StatusCommand");
         ourCommands.put(new String[] { "import" }, "org.tmatesoft.svn.cli.command.ImportCommand");
@@ -133,6 +136,7 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "mkdir" }, "org.tmatesoft.svn.cli.command.MkDirCommand");
         ourCommands.put(new String[] { "propset", "pset", "ps" }, "org.tmatesoft.svn.cli.command.PropsetCommand");
         ourCommands.put(new String[] { "proplist", "plist", "pl" }, "org.tmatesoft.svn.cli.command.ProplistCommand");
+        ourCommands.put(new String[] { "info" }, "org.tmatesoft.svn.cli.command.InfoCommand");
     }
 
 }
