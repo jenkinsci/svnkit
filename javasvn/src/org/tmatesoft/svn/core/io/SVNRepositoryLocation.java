@@ -139,4 +139,18 @@ public class SVNRepositoryLocation {
         }
         return -1;
     }
+    
+    public boolean equals(Object o) {
+    	if (o == this) {
+    		return true;
+    	}
+    	if (o == null || o.getClass() != SVNRepositoryLocation.class) {
+    		return false;
+    	}
+    	return toCanonicalForm().equals(((SVNRepositoryLocation) o).toCanonicalForm());
+    }
+    
+    public int hashCode() {
+    	return toCanonicalForm().hashCode();
+    }
 }
