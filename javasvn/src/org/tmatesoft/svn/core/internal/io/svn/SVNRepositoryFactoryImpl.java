@@ -33,6 +33,10 @@ public final class SVNRepositoryFactoryImpl extends SVNRepositoryFactory {
     }
 
     public SVNRepository createRepositoryImpl(SVNRepositoryLocation location) {
+        if ("svn+ssh".equals(location.getProtocol())) {
+            // there is auth code in connector.
+            return new SVNRepositoryImpl(location);
+        }
         return new SVNAuthRepository(location, new SVNRepositoryImpl(location));
     }
 

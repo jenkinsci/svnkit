@@ -1,5 +1,6 @@
 package org.tmatesoft.svn.core.internal.io.svn;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,8 +34,9 @@ public class SVNJSchConnector implements ISVNConnector {
     public void open(SVNRepositoryImpl repository) throws SVNException {
         ISVNCredentialsProvider provider = repository.getCredentialsProvider();
         if (provider == null) {
-            throw new SVNException("No credential for JSch set");
+            throw new SVNException("Credentials provider is required for SSH connection");
         }
+        provider.reset();
 
         final String host = repository.getLocation().getHost();
         final int port = repository.getLocation().getPort();
@@ -51,7 +53,7 @@ public class SVNJSchConnector implements ISVNConnector {
         }
 
         if (credentials == null) {
-            throw new SVNException("Can't connect without SSH-secrets.");
+            throw new SVNAuthenticationException("Can't establish SSH connection without credentials");
         }
 
         long start;
@@ -76,7 +78,7 @@ public class SVNJSchConnector implements ISVNConnector {
     private void connect(String host, int port, ISVNCredentials credentials) throws SVNException {
         JSch jsch = createJSch();
         String userName = credentials.getName();
-        String password = credentials.getName();
+        String password = credentials.getPassword();
         String privateKey = null;
         String passphrase = null;
         if (credentials instanceof ISVNSSHCredentials) {
@@ -86,14 +88,18 @@ public class SVNJSchConnector implements ISVNConnector {
         }
         try {
             if (privateKey != null) {
-                if (passphrase != null) {
-                    jsch.addIdentity(privateKey, passphrase);
-                } else {
-                    jsch.addIdentity(privateKey);
+                File keyFile = new File(privateKey);
+                if (keyFile.exists() && keyFile.isFile()) {
+                    if (passphrase != null) {
+                        jsch.addIdentity(privateKey, passphrase);
+                    } else {
+                        jsch.addIdentity(privateKey);
+                    }
                 }
             }
             mySession = jsch.getSession(userName, host, port);
         } catch (JSchException e) {
+            e.printStackTrace();
             throw new SVNException(e);
         }
         mySession.setSocketFactory(new SocketFactory() {
@@ -109,11 +115,12 @@ public class SVNJSchConnector implements ISVNConnector {
                 return socket.getOutputStream();
             }
         });
-        mySession.setUserInfo(new EmptyUserInfo(password));
+        mySession.setUserInfo(new EmptyUserInfo(password, passphrase));
         long start = System.currentTimeMillis();
         try {
             mySession.connect();
         } catch (JSchException e) {
+            e.printStackTrace();
             mySession.disconnect();
             throw new SVNAuthenticationException(e);
         }
@@ -145,33 +152,18 @@ public class SVNJSchConnector implements ISVNConnector {
         return new JSch();
     }
 
-    public static interface Credentials {
-        String getLoginName();
-
-        String getLoginPassword();
-
-        String getPrivateKeyID();
-
-        String getPrivateKeyPassPhrase();
-    }
-
-    public interface CredentialsProvider {
-
-        Credentials nextCredentials(String problem);
-
-        void accepted(Credentials credentials);
-    }
-
     private static class EmptyUserInfo implements UserInfo {
 
         private String myPassword;
+        private String myPassphrase;
 
-        public EmptyUserInfo(String password) {
+        public EmptyUserInfo(String password, String passphrase) {
             myPassword = password;
+            myPassphrase = passphrase;
         }
 
         public String getPassphrase() {
-            return null;
+            return myPassphrase;
         }
 
         public String getPassword() {
@@ -179,11 +171,11 @@ public class SVNJSchConnector implements ISVNConnector {
         }
 
         public boolean promptPassword(String arg0) {
-            return true;
+            return myPassword != null;
         }
 
         public boolean promptPassphrase(String arg0) {
-            return true;
+            return myPassphrase != null;
         }
 
         public boolean promptYesNo(String arg0) {
