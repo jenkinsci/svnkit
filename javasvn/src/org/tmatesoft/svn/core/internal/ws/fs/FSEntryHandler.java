@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -87,9 +88,12 @@ public class FSEntryHandler {
                 if (SVNProperty.UUID.equals(e.getKey()) && e.getValue().equals(parent.get(SVNProperty.UUID))) {
                     continue;
                 }
-                if (SVNProperty.URL.equals(e.getKey()) && e.getValue().equals(parent.get(SVNProperty.URL))) {
-                    // do not save for files.
-                    continue;
+                // do not save when url differs from expected
+                if (SVNProperty.URL.equals(e.getKey())) {
+                    String expected = PathUtil.append((String) parent.get(SVNProperty.URL), (String) entry.get(SVNProperty.NAME));
+                    if (e.getValue().equals(expected)) {
+                        continue;
+                    }
                 }
             }
             if (!first) {
