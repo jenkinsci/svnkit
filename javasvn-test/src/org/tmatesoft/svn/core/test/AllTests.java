@@ -184,7 +184,8 @@ public class AllTests extends TestSuite {
 
             // create canon repos.
             String svnadmin = props.getProperty("svnadmin.path");
-            String[] command = {svnadmin, "create", canonRepos.getAbsolutePath()};
+            String svnadminOptions = props.getProperty("svnadmin.options", "");
+            String[] command = {svnadmin, "create", svnadminOptions, canonRepos.getAbsolutePath()};
             execCommand(command);
 
             File configFile = new File(canonRepos.getAbsolutePath() + File.separatorChar + "conf", "svnserve.conf");          
