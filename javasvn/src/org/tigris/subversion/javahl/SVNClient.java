@@ -14,6 +14,7 @@ package org.tigris.subversion.javahl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -548,12 +549,38 @@ public class SVNClient implements SVNClientInterface {
      * @exception ClientException
      */
     public void remove(String[] path, String message, boolean force) throws ClientException {
-        for(int i = 0; i < path.length; i++) {
+        if (path == null || path.length == 0) {
+            return;            
+        }
+        if (isURL(path[0])) {
+            String rootURL = PathUtil.getCommonRoot(path);
+            if (!isURL(rootURL)) {
+                throwException(new SVNException("all locations should be within the same repository"));
+            }
             try {
-                ISVNWorkspace ws = createWorkspace(path[i]);
-                ws.delete(SVNUtil.getWorkspacePath(ws, path[i]), force);
+                SVNRepository repository = createRepository(rootURL);
+                ISVNEditor editor = repository.getCommitEditor(message, null);
+                editor.openRoot(-1);
+                for(int i = 0; i < path.length; i++) {
+                    String subPath = path[i].substring(rootURL.length());
+                    subPath = PathUtil.removeLeadingSlash(subPath);
+                    editor.deleteEntry(subPath, -1);
+                }
+                editor.closeEdit();
             } catch (SVNException e) {
                 throwException(e);
+            }
+        } else {
+            for(int i = 0; i < path.length; i++) {
+                if (isURL(path[i])) {
+                    throwException(new SVNException("remove method doesn't accept remote locations mixed with WC path"));
+                }
+                try {
+                    ISVNWorkspace ws = createWorkspace(path[i]);
+                    ws.delete(SVNUtil.getWorkspacePath(ws, path[i]), force);
+                } catch (SVNException e) {
+                    throwException(e);
+                }
             }
         }
     }
