@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
 import org.tmatesoft.svn.core.diff.ISVNDiffGenerator;
+import org.tmatesoft.svn.core.diff.ISVNDiffGeneratorFactory;
 import org.tmatesoft.svn.core.diff.SVNDiffManager;
 import org.tmatesoft.svn.core.diff.SVNUniDiffGenerator;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -1039,9 +1040,9 @@ public class SVNClient implements SVNClientInterface {
         ByteArrayInputStream is2 = new ByteArrayInputStream(byteArray2);
 
         Map properties = new HashMap();
-        properties.put(SVNUniDiffGenerator.COMPARE_EOL_PROPERTY, Boolean.TRUE.toString());
-        properties.put(SVNUniDiffGenerator.WHITESPACE_PROPERTY, Boolean.FALSE.toString());
-        properties.put(SVNUniDiffGenerator.EOL_PROPERTY, System.getProperty("line.separator"));
+        properties.put(ISVNDiffGeneratorFactory.COMPARE_EOL_PROPERTY, Boolean.TRUE.toString());
+        properties.put(ISVNDiffGeneratorFactory.WHITESPACE_PROPERTY, Boolean.FALSE.toString());
+        properties.put(ISVNDiffGeneratorFactory.EOL_PROPERTY, System.getProperty("line.separator"));
         
         String encoding = System.getProperty("file.encoding", "US-ASCII");
 
