@@ -31,7 +31,7 @@ public class UpdateCommand extends SVNCommand {
 
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
         String path = getCommandLine().getPathAt(0);
-        final ISVNWorkspace workspace = createWorkspace(path, false);
+        final ISVNWorkspace workspace = createWorkspace(path, true);
         long revision = -1;
         if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
             String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
