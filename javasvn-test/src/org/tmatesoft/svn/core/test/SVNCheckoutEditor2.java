@@ -79,7 +79,7 @@ public class SVNCheckoutEditor2 implements ISVNEditor {
     }
     public void closeDir() throws SVNException {
         getCurrentEntry().setPropertyValue("svn:entry:revision", Long.toString(myTargetRevision));
-        getCurrentEntry().merge();
+        getCurrentEntry().merge(true);
         getCurrentEntry().dispose();
         myStack.pop();
     }
@@ -93,7 +93,7 @@ public class SVNCheckoutEditor2 implements ISVNEditor {
     
     public void closeFile(String textChecksum) throws SVNException {
         myCurrentFile.setPropertyValue("svn:entry:checksum", textChecksum);
-        myCurrentFile.merge();
+        myCurrentFile.merge(true);
         myCurrentFile.dispose();
         myCurrentFile = null;
     }

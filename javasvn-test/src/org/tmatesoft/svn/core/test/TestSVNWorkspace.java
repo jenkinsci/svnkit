@@ -747,7 +747,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         modifyFile(new File(dst, "testFile.txt"), "change in switch");
         modifyFile(new File(dst, "folder/testFile2.txt"), "change in switch");
         DebugLog.log("COMPLEX COMMIT");
-        checkoutWorkspace.commit(new String[] {"folder/testFile2.txt", "testFile.txt"}, "change in switch", false);
+        checkoutWorkspace.commit(new String[] {"folder/testFile2.txt", "testFile.txt"}, "change in switch", false, true);
         DebugLog.log("DONE");
         
         revision = checkoutWorkspace.update(ISVNWorkspace.HEAD);        
@@ -857,12 +857,12 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         assertEquals(1, revision);
         
         modifyFile(new File(jsvn, "directory/testFile2.txt"), "contents");
-        revision = checkoutWorkspace.commit(new String[] {"directory/testFile2.txt"}, "single file", true);
+        revision = checkoutWorkspace.commit(new String[] {"directory/testFile2.txt"}, "single file", true, true);
         assertEquals(2, revision);
         
         checkoutWorkspace.update(-1);
         modifyFile(new File(jsvn, "directory/testFile2.txt"), "another contents");
-        revision = checkoutWorkspace.commit(new String[] {"directory"}, "single file", true);
+        revision = checkoutWorkspace.commit(new String[] {"directory"}, "single file", true, true);
         assertEquals(3, revision);
         
         // checkout and compare
@@ -892,7 +892,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         // commit more then one file.
         modifyFile(new File(jsvn, "directory/subfolder/file.txt"), LONG_STRING);
         modifyFile(new File(jsvn, "testFile.txt"), LONG_STRING);
-        checkoutWorkspace.commit(new String[] {"testFile.txt", "directory/subfolder/file.txt"}, "commit", false);
+        checkoutWorkspace.commit(new String[] {"testFile.txt", "directory/subfolder/file.txt"}, "commit", false, true);
 
         checkoutWorkspace.update(ISVNWorkspace.HEAD);
         AllTests.runSVNCommand("up", new String[] {svn.getAbsolutePath()});
@@ -900,7 +900,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
 
         modifyFile(new File(jsvn, "directory/subfolder/file.txt"), LONG_STRING + LONG_STRING);
         modifyFile(new File(jsvn, "directory/testFile2.txt"), LONG_STRING + LONG_STRING);
-        checkoutWorkspace.commit(new String[] {"directory/testFile2.txt", "directory/subfolder/file.txt"}, "commit", false);
+        checkoutWorkspace.commit(new String[] {"directory/testFile2.txt", "directory/subfolder/file.txt"}, "commit", false, true);
         
         checkoutWorkspace.update(ISVNWorkspace.HEAD);
         AllTests.runSVNCommand("up", new String[] {svn.getAbsolutePath()});
