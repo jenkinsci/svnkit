@@ -14,7 +14,6 @@ package org.tmatesoft.svn.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.StringTokenizer;
@@ -111,11 +110,24 @@ public class PathUtil {
         if (source == null) {
             return source;
         }
-        try {
-            return URLDecoder.decode(source, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
+        StringBuffer dst = new StringBuffer();
+        for(StringTokenizer tokens = new StringTokenizer(source, "+/:", true); tokens.hasMoreTokens();) {
+            String token = tokens.nextToken();
+            if ("+".equals(token)) {
+                dst.append("+");
+            } else if ("/".equals(token)) {
+                dst.append("/");
+            } else if (":".equals(token)) {
+                dst.append(":");
+            } else {
+                try {
+                    dst.append(URLDecoder.decode(token, "UTF-8"));
+                } catch (IOException e) {
+                    dst.append(token);
+                }
+            }
         }
-        return source;
+        return dst.toString();
     }
     
     public static String getCommonRoot(String[] paths) {
