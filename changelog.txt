@@ -1,3 +1,11 @@
+= version 1.0.0 build 20041223
+
++ ISVNWorkspace.delete now accepts 'force' parameter
++ bug fixed that prevented Subclipse committing single 
+  file in non-windows systems
++ complete svn and svn+ssh protocol logging may be enabled 
+  with -Djavasvn.log.svn=true command line switch
+
 = version 1.0.0 build 20041221
 
 + when using svn+ssh JavaSVN takes private key path from the java property,
