@@ -1,3 +1,10 @@
+= version 1.0.0 build 20050105
+
++ svn+ssh authentication failed to work in some cases - fixed
++ revisions in working copy now updated correctly after update
++ got rid of number of minor inconsistences between JavaSVN and native SVN
++ http and https protocols supports compressed data (gzip)
+
 = version 1.0.0 build 20041223
 
 + ISVNWorkspace.delete now accepts 'force' parameter
