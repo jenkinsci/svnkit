@@ -111,9 +111,16 @@
             <fileset dir="javasvn/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
             </fileset>
-            <fileset dir="${basedir}">
+            <fileset dir="${basedir}" >
                 <include name="build.properties" />
+                <include name="COPYING" />
             </fileset>
+        	<fileset dir="contrib/sequence">
+                <include name="SEQUENCE-LICENSE" />
+        	</fileset>
+        	<fileset dir="contrib/javahl">
+                <include name="JAVAHL-LICENSE" />
+        	</fileset>
             <fileset dir="contrib/sequence/bin" />
             <fileset dir="contrib/javahl/bin" >
                 <exclude name="org/tigris/subversion/javahl/tests/**" />
@@ -138,6 +145,9 @@
         <jar destfile="build/lib/javasvn-cli.jar">
             <fileset dir="javasvn/bin">
                 <include name="org/tmatesoft/svn/cli/**" />
+            </fileset>
+            <fileset dir="${basedir}">
+                <include name="COPYING" />
             </fileset>
         </jar>
         <copy todir="build/lib">
@@ -196,6 +206,9 @@
         </copy>
         <jar destfile="build/eclipse/${javasvn.plugin.name}/javasvnplugin.jar">
             <fileset dir="javasvn-eclipse/bin" />
+            <fileset dir="${basedir}">
+                <include name="COPYING" />
+            </fileset>
         </jar>
         
         <!-- build subclipse plugin -->
@@ -225,10 +238,10 @@
         <replace dir="build/eclipse" includes="**/plugin.xml,**/feature.xml" token="%subclipse.plugin.version%" value="${subclipse.plugin.version}"/>
         
         <!-- build jars for update site -->
-        <jar destfile="build/eclipse/site/${javasvn.plugin.name}.jar" basedir="build/eclipse/${javasvn.plugin.name}"/>
-        <jar destfile="build/eclipse/site/${subclipse.plugin.name}.jar" basedir="build/eclipse/${subclipse.plugin.name}"/>
-        <jar destfile="build/eclipse/site/${javasvn.feature.name}.jar" basedir="build/eclipse/${javasvn.feature.name}"/>
-        <jar destfile="build/eclipse/site/${subclipse.feature.name}.jar" basedir="build/eclipse/${subclipse.feature.name}"/>
+        <zip destfile="build/eclipse/site/${javasvn.plugin.name}.jar" basedir="build/eclipse/${javasvn.plugin.name}"/>
+        <zip destfile="build/eclipse/site/${subclipse.plugin.name}.jar" basedir="build/eclipse/${subclipse.plugin.name}"/>
+        <zip destfile="build/eclipse/site/${javasvn.feature.name}.jar" basedir="build/eclipse/${javasvn.feature.name}"/>
+        <zip destfile="build/eclipse/site/${subclipse.feature.name}.jar" basedir="build/eclipse/${subclipse.feature.name}"/>
     </target>
 
     <target name="build-doc">
