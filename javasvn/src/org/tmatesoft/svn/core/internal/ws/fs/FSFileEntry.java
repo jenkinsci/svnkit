@@ -63,7 +63,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
     }
     
     public boolean isObstructed() {
-        return getRootEntry().getWorkingCopyFile(this).isDirectory();
+        return super.isObstructed() || getRootEntry().getWorkingCopyFile(this).isDirectory();
     }
 
     public void applyDelta(SVNDiffWindow window, InputStream newData, boolean overwrite) throws SVNException {

@@ -93,7 +93,8 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
     }
     
     public boolean isObstructed() {
-        return getRootEntry().getWorkingCopyFile(this).isFile() ||
+        return super.isObstructed() || 
+         getRootEntry().getWorkingCopyFile(this).isFile() ||
          !getAdminArea().getAdminArea(this).exists();
     }
 

@@ -58,9 +58,9 @@ public class FSEntryHandler extends DefaultHandler {
             parser = getSAXParserFactory().newSAXParser();
             parser.parse(source, handler);
         } catch (ParserConfigurationException e) {
-            throw new IOException();
+            throw new IOException(e.getMessage());
         } catch (SAXException e) {
-            throw new IOException();
+            throw new IOException(e.getMessage());
         }
         return handler;
     }

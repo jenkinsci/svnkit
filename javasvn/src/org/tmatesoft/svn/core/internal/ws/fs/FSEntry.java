@@ -422,6 +422,18 @@ public abstract class FSEntry implements ISVNEntry {
         return false;
     }
     
+    public boolean isObstructed() {
+        File wcFile = getRootEntry().getWorkingCopyFile(this);
+        if (wcFile == null) {
+            return false;
+        }
+        try {
+            return !wcFile.getCanonicalPath().equals(wcFile.getAbsolutePath());
+        } catch (IOException e) {
+        }
+        return false;
+    }
+    
     protected FSAdminArea getAdminArea() {
         return myAdminArea;
     }

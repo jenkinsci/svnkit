@@ -145,7 +145,9 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         return file;
     }
     
-    
+    public boolean isObstructed() {
+        return false;
+    }
     
     public void revert(String childName) throws SVNException {
         if (childName == null) {
