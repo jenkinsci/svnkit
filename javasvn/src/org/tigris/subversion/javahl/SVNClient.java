@@ -35,7 +35,6 @@ import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
-import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
 import org.tmatesoft.svn.core.diff.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.diff.ISVNDiffGeneratorFactory;
@@ -375,6 +374,7 @@ public class SVNClient implements SVNClientInterface {
             	ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt));
             	repository.setCredentialsProvider(new SVNPromptCredentialsProvider(myPrompt));
             }
+            ws.setExternalsHandler(new SVNClientExternalsHandler(myNotify));
             long rev = getRevisionNumber(revision, repository, null, null);
             ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
             long checkedOut = ws.checkout(location, rev, false, recurse);
@@ -1361,6 +1361,7 @@ public class SVNClient implements SVNClientInterface {
                 ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt));
             }
         }
+        ws.setExternalsHandler(new SVNClientExternalsHandler(myNotify));
         return ws;
     }
     
@@ -1531,161 +1532,6 @@ public class SVNClient implements SVNClientInterface {
     private static boolean isURL(String pathOrUrl) {
         return PathUtil.isURL(pathOrUrl);
     }
-
-    private static class UpdateWorkspaceListener extends SVNWorkspaceAdapter {
-    	
-		private final ISVNWorkspace myWorkspace;
-		private Notify myNotify;
-
-		private UpdateWorkspaceListener(Notify notify, ISVNWorkspace ws) {
-			myWorkspace = ws;
-			myNotify = notify;
-		}
-
-		public void updated(String p, int contentsStatus, int propertiesStatus, long updated) {
-			if (myNotify == null) {
-				return;
-			}
-			int updateKind = 0;
-			int contents = 0;
-			switch (contentsStatus) {
-			case SVNStatus.ADDED:
-				updateKind = NotifyAction.update_add;
-				break;
-			case SVNStatus.MERGED:
-				contents = contents != 0 ? contents : NotifyStatus.merged;
-			case SVNStatus.CONFLICTED:
-				contents = contents != 0 ? contents : NotifyStatus.merged;
-			case SVNStatus.REPLACED:
-			case SVNStatus.UPDATED:
-				updateKind = NotifyAction.update_update;
-				contents = contents != 0 ? contents : NotifyStatus.changed;
-				contents = contents != 0 ? contents : NotifyStatus.changed;
-				break;
-			case SVNStatus.DELETED:
-				updateKind = NotifyAction.update_delete;
-			}
-			int props = NotifyStatus.unchanged;
-			switch (propertiesStatus) {
-			case SVNStatus.UPDATED:
-				props = NotifyStatus.changed;
-				break;
-			case SVNStatus.CONFLICTED:
-				props = NotifyStatus.conflicted;
-				break;
-			case SVNStatus.MERGED:
-				props = NotifyStatus.merged;
-			}
-			contents = contents == 0 ? NotifyStatus.unchanged : contents;
-			try {
-				String mimeType = myWorkspace.getPropertyValue(p, SVNProperty.MIME_TYPE);
-				String nodeKindStr = myWorkspace.getPropertyValue(p, SVNProperty.KIND);
-				int nodeKind = NodeKind.unknown;
-				if (SVNProperty.KIND_DIR.equals(nodeKindStr)) {
-					nodeKind = NodeKind.dir;
-				} else if (SVNProperty.KIND_FILE.equals(nodeKindStr)) {
-					nodeKind = NodeKind.file;
-				}
-				myNotify.onNotify(p, updateKind, nodeKind, mimeType,
-						contents, props, updated);
-			} catch (SVNException e) {
-			} 
-		}
-	}
-
-    private static class LocalWorkspaceListener extends SVNWorkspaceAdapter {
-    	
-		private final ISVNWorkspace myWorkspace;
-		private Notify myNotify;
-
-		private LocalWorkspaceListener(Notify notify, ISVNWorkspace ws) {
-			myWorkspace = ws;
-			myNotify = notify;
-		}
-
-		public void modified(String p, int kind) {
-			if (myNotify == null) {
-				return;
-			}
-			int updateKind = 0;
-			switch (kind) {
-			case SVNStatus.REVERTED:
-				updateKind = NotifyAction.revert;
-				break;
-			case SVNStatus.NOT_REVERTED:
-				updateKind = NotifyAction.failed_revert;
-				break;
-			case SVNStatus.ADDED:
-				updateKind = NotifyAction.add;
-				break;
-			case SVNStatus.DELETED:
-				updateKind = NotifyAction.delete;
-				break;
-			case SVNStatus.RESOLVED:
-				updateKind = NotifyAction.resolved;
-				break;
-			case SVNStatus.RESTORED:
-				updateKind = NotifyAction.restore;
-			}
-			try {
-				String mimeType = myWorkspace.getPropertyValue(p, SVNProperty.MIME_TYPE);
-				String nodeKindStr = myWorkspace.getPropertyValue(p, SVNProperty.KIND);
-				int nodeKind = NodeKind.unknown;
-				if (SVNProperty.KIND_DIR.equals(nodeKindStr)) {
-					nodeKind = NodeKind.dir;
-				} else if (SVNProperty.KIND_FILE.equals(nodeKindStr)) {
-					nodeKind = NodeKind.file;
-				}
-				myNotify.onNotify(p, updateKind, nodeKind, mimeType,
-						0, 0, 0);
-			} catch (SVNException e) {
-			} 
-		}
-	}
-
-    private static class CommitWorkspaceListener extends SVNWorkspaceAdapter {
-    	
-		private final ISVNWorkspace myWorkspace;
-		private Notify myNotify;
-
-		private CommitWorkspaceListener(Notify notify, ISVNWorkspace ws) {
-			myWorkspace = ws;
-			myNotify = notify;
-		}
-
-	    public void committed(String path, int kind) {
-			if (myNotify == null) {
-				return;
-			}
-			int updateKind = 0;
-			switch (kind) {
-			case SVNStatus.MODIFIED:
-				updateKind = NotifyAction.commit_modified;
-				break;
-			case SVNStatus.ADDED:
-				updateKind = NotifyAction.commit_added;
-				break;
-			case SVNStatus.DELETED:
-				updateKind = NotifyAction.commit_deleted;
-				break;
-			case SVNStatus.REPLACED:
-				updateKind = NotifyAction.commit_replaced;
-			}
-			try {
-				String mimeType = myWorkspace.getPropertyValue(path, SVNProperty.MIME_TYPE);
-				String nodeKindStr = myWorkspace.getPropertyValue(path, SVNProperty.KIND);
-				int nodeKind = NodeKind.unknown;
-				if (SVNProperty.KIND_DIR.equals(nodeKindStr)) {
-					nodeKind = NodeKind.dir;
-				} else if (SVNProperty.KIND_FILE.equals(nodeKindStr)) {
-					nodeKind = NodeKind.file;
-				}
-				myNotify.onNotify(path, updateKind, nodeKind, mimeType,
-						0, 0, 0);
-			} catch (SVNException e) {
-			} 
-		}
-	}
 
     static final int[] STATUS_CONVERTION_TABLE = new int[0x13];
     
