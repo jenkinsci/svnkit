@@ -754,7 +754,7 @@ public class SVNClient implements SVNClientInterface {
             }
         } else if (!isURL(srcPath) && !isURL(destPath)) {
             try {
-            	String wsRoot = PathUtil.getCommonRoot(new String[] {srcPath, destPath});
+            	String wsRoot = PathUtil.getFSCommonRoot(new String[] {srcPath, destPath});
                 ISVNWorkspace ws = createWorkspace(wsRoot);
                 ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 ws.copy(SVNUtil.getWorkspacePath(ws, srcPath), SVNUtil.getWorkspacePath(ws, destPath), false);
@@ -853,7 +853,7 @@ public class SVNClient implements SVNClientInterface {
             }
         } else if (!isURL(srcPath) && !isURL(destPath)) {
             try {
-            	String wsRoot = PathUtil.getCommonRoot(new String[] {srcPath, destPath});
+            	String wsRoot = PathUtil.getFSCommonRoot(new String[] {srcPath, destPath});
                 ISVNWorkspace ws = createWorkspace(wsRoot);
                 ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 ws.copy(SVNUtil.getWorkspacePath(ws, srcPath), SVNUtil.getWorkspacePath(ws, destPath), true);
@@ -876,8 +876,8 @@ public class SVNClient implements SVNClientInterface {
         if (path == null || path.length == 0) {
             return;
         }
-        String root = PathUtil.getCommonRoot(path);
-        if (isURL(root)) {
+        if (isURL(path[0])) {
+            String root = PathUtil.getCommonRoot(path);
             for(int i = 0; i < path.length; i++) {
                 String dir = path[i].substring(root.length());
                 dir = PathUtil.removeLeadingSlash(dir);
@@ -904,7 +904,7 @@ public class SVNClient implements SVNClientInterface {
             }
         } else {
             try {
-            	root = PathUtil.getFSCommonRoot(path);
+            	String root = PathUtil.getFSCommonRoot(path);
                 ISVNWorkspace ws = createWorkspace(root);
                 ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 for(int i = 0; i < path.length; i++) {
