@@ -71,7 +71,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             ISVNRAData contents = null;
             if (window == null) {
                 try {
-                    myTempFile = getRootEntry().createTemporaryFile();
+                    myTempFile = getRootEntry().createTemporaryFile(this);
                     myTempFile.createNewFile();
                 } catch (IOException e) {
                     throw new SVNException(e);
@@ -79,7 +79,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             } else {
                 if (!isBinary() && SVNProperty.EOL_STYLE_NATIVE.equals(getPropertyValue(SVNProperty.EOL_STYLE))) {
                     if (myTempFile == null) {
-                        myTempFile = getRootEntry().createTemporaryFile();
+                        myTempFile = getRootEntry().createTemporaryFile(this);
                     }
                     contents = new SVNRAFileData(myTempFile, false);
                 } else {
@@ -160,7 +160,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 if (SVNProperty.EOL_STYLE_NATIVE.equals(eolType)) {
                     eolType = SVNProperty.EOL_STYLE_LF;
                 }
-                tmpFile = getRootEntry().createTemporaryFile();
+                tmpFile = getRootEntry().createTemporaryFile(this);
                 // prepare file as to be sent
                 Map keywords = computeKeywords(false);
                 FSUtil.copy(file, tmpFile, eolType, keywords, null);
@@ -173,16 +173,13 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 generator = new SVNSequenceDeltaGenerator();
             }
             
-            File digestFile = getRootEntry().createTemporaryFile();
+            File digestFile = getRootEntry().createTemporaryFile(this);
             digest = FSUtil.copy(tmpFile != null ? tmpFile : file, digestFile, null, null, createDigest());
             SVNRAFileData workFile = new SVNRAFileData(tmpFile != null ? tmpFile : file, true);
             SVNRAFileData baseFile = generator instanceof SVNSequenceDeltaGenerator ? 
                     new SVNRAFileData(getAdminArea().getBaseFile(this), true) : null;
             try {
                 generator.generateDiffWindow(target, workFile, baseFile);
-                if (DebugLog.isSafeMode() && SVNAllDeltaGenerator.lastTempFile() != null) {
-                    DebugLog.log(getPath() + " delta generated: " + SVNAllDeltaGenerator.lastTempFile().getAbsolutePath());
-                }
             } finally {
                 try {
                     if (baseFile != null) {
@@ -238,7 +235,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             if (!isBinary() && getPropertyValue(SVNProperty.KEYWORDS) != null) {
                 // unexpand keywords before comparing files... (for text files only).
                 // only when there are keywords
-                tmpFile = getRootEntry().createTemporaryFile();
+                tmpFile = getRootEntry().createTemporaryFile(this);
                 Map keywords = computeKeywords(false);
                 FSUtil.copy(file, tmpFile, null, keywords, null);
             }
@@ -278,7 +275,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         if (actualFile.exists()) {
             String eolStyle = getPropertyValue(SVNProperty.EOL_STYLE);
             if (!isBinary()) {// && ((isPropertyModified(SVNProperty.EOL_STYLE) && eolStyle != null) || isPropertyModified(SVNProperty.KEYWORDS))) {
-                File tmpFile = getRootEntry().createTemporaryFile();
+                File tmpFile = getRootEntry().createTemporaryFile(this);
                 FSUtil.copy(actualFile, tmpFile, eolStyle, computeKeywords(false), null);
                 FSUtil.copy(tmpFile, actualFile, null, keywords, null);
                 tmpFile.delete();
@@ -358,8 +355,8 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 File remote = getAdminArea().getTemporaryBaseFile(this);
                 File base = getAdminArea().getBaseFile(this);
     
-                localFile = getRootEntry().createTemporaryFile();
-                File result = getRootEntry().createTemporaryFile();
+                localFile = getRootEntry().createTemporaryFile(this);
+                File result = getRootEntry().createTemporaryFile(this);
                 // no need to convert eols, merger should merge just lines.
                 FSUtil.copy(getRootEntry().getWorkingCopyFile(this), localFile, null, computeKeywords(false), null);
                 mergeResult = merger.mergeFiles(base, localFile, remote, result, ".mine", ".r" + getPropertyValue(SVNProperty.COMMITTED_REVISION));

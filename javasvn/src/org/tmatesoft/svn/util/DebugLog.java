@@ -67,16 +67,6 @@ public class DebugLog {
 		getLogger().logError(th.getMessage(), th);
 	}
 
-	public static boolean isSafeMode() {
-		if (getLogger() == null) {
-			return false;
-		}
-		if (isSafeModeDefault() && System.getProperty("javasvn.safemode") == null) {
-			return true;
-		}
-		return Boolean.getBoolean("javasvn.safemode");
-	}
-
 	public static boolean isGeneratorDisabled() {
 		if (getLogger() == null) {
 			return false;

@@ -13,9 +13,6 @@
 package org.tmatesoft.svn.core.internal;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -893,8 +890,6 @@ public class SVNWorkspace implements ISVNWorkspace {
 			start = System.currentTimeMillis();
 			SVNCommitUtil.updateWorkingCopy(info, rootEntry.getPropertyValue(SVNProperty.UUID), tree, this);
 
-			assertCommit(info, tree, repository);
-
 			sleepForTimestamp();
 			DebugLog.log("POST COMMIT ACTIONS TOOK: " + (System.currentTimeMillis() - start) + " ms.");
 			return info != null ? info.getNewRevision() : -1;
@@ -903,53 +898,6 @@ public class SVNWorkspace implements ISVNWorkspace {
 			getRoot().dispose();
 		}
 	}
-
-    private void assertCommit(SVNCommitInfo info, Map tree, SVNRepository repository) throws SVNException {
-        if (!DebugLog.isSafeMode()) {
-            return;
-        }
-        for (Iterator treePaths = tree.keySet().iterator(); treePaths.hasNext();) {
-            String treePath = (String) treePaths.next();
-            if (tree.get(treePath) != null) {
-                ISVNEntry entry = (ISVNEntry) tree.get(treePath);
-                if (!entry.isDirectory() && entry.getPropertyValue(SVNProperty.MIME_TYPE) == null) {
-                    // compare local checksum with remote!
-                    OutputStream os = null;
-                    File tmpFile = null;
-                    try {
-                        tmpFile = File.createTempFile("svn.", ".compare");
-                        os = new FileOutputStream(tmpFile);
-                        repository.getFile(treePath, info.getNewRevision(), null, os);
-                    } catch (Throwable th) {
-                        DebugLog.log("error while getting commited file contents: " + th.getMessage());
-                        continue;
-                    } finally {
-                        if (os != null) {
-                            try {
-                                os.close();
-                            } catch (IOException e) {}
-                        }
-                    }
-                    File baseFile = new File(getID().replace('/', File.separatorChar), entry.getPath().replace('/', File.separatorChar));
-                    baseFile = new File(baseFile.getParentFile(), ".svn" + File.separatorChar + "text-base" + File.separatorChar + baseFile.getName()
-                            + ".svn-base");
-                    DebugLog.log("COMPARING " + tmpFile.getAbsolutePath() + " vs " + baseFile.getAbsolutePath());
-                    try {
-                        if (!FSUtil.compareFiles(tmpFile, baseFile, true)) {
-                            DebugLog.log("FILES NOT EQUAL!");
-                            throw new SVNException("SVN FATAL ERROR! COMMIT FAILED! FILE(S) IN REPOSITORY MAY BE CORRUPTED.\nFILE "
-                                    + baseFile.getAbsolutePath() + " IS NOT EQUAL TO " + tmpFile.getAbsolutePath());
-                        }
-                    } catch (IOException e) {
-                        DebugLog.log("COMPARE FAILED: " + e.getMessage());
-                        throw new SVNException(e);
-                    }
-                    DebugLog.log("FILES ARE EQUAL");
-                    tmpFile.delete();
-                }
-            }
-        }
-    }
 
     public void add(String path, boolean mkdir, boolean recurse) throws SVNException {
         try {

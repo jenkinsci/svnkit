@@ -160,12 +160,13 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         return new File(myID, entry.getPath());
     }
     
-    public File createTemporaryFile() throws SVNException {
-        File file;
-        try {
-            file = File.createTempFile("svn.", ".tmp");
-        } catch (IOException e) {
-            throw new SVNException(e);
+    public File createTemporaryFile(FSFileEntry source) throws SVNException {
+        File parent = new File(source.getAdminArea().getAdminArea(source), "tmp");
+        File file = new File(parent, source.getName() + ".tmp");
+        int n = 1;
+        while(file.exists()) {
+            file = new File(parent, source.getName() + "."  + n + ".tmp");
+            n++;
         }
         file.deleteOnExit();
         return file;
