@@ -68,6 +68,8 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         try {
             reporterBaton.report(new ISVNReporter() {
                 public void setPath(String path, long revision, boolean startEmpty) throws SVNException {
+                	path = path.replaceAll(">", "&gt;");
+                	path = path.replaceAll("<", "&lt;");
                     report.append("<S:entry rev=\"");
                     report.append(revision);
                     report.append("\" ");
@@ -80,12 +82,16 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 }
                 
                 public void deletePath(String path) throws SVNException {
+                	path = path.replaceAll(">", "&gt;");
+                	path = path.replaceAll("<", "&lt;");
                     report.append("<S:missing>");
                     report.append(path);
                     report.append("</S:missing>\n");
                 }
 
                 public void linkPath(SVNRepositoryLocation repository, String path, long revision, boolean startEmpty) throws SVNException {
+                	path = path.replaceAll(">", "&gt;");
+                	path = path.replaceAll("<", "&lt;");
                     report.append("<S:entry rev=\"");
                     report.append(revision);
                     report.append("\" ");
