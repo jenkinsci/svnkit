@@ -76,7 +76,7 @@ easy steps to make Subclipse and JavaSVN work together:</p>
 <p>Above modification will make Sublipse use JavaSVN version of JavaHL instead of native one. Jsch library is required to enable svn+ssh support. You may also download already modified plugin.xml from <a id="normal" href="http://tmate.org/svn/plugin.xml">here</a>.
 </p>
 </div></li>
-<li>If you would like not to install svn libraries at all, you may also use patched svnClientAdater.jar that doesn't 
+<li>If you would like not to install svn libraries at all, you may also use patched svnClientAdater.jar (version 0.9.23) that doesn't 
 check for existense of the native svn libraries. You may download it at <a id="normal" href="http://tmate.org/svn/svnClientAdapter.jar">http://tmate.org/svn/svnClientAdapter.jar</a>.<br/>
 Download and put this file into ECLIPSE_HOME/plugins/org.tigris.subversion.subclipse.core_0.9.25/ directory in place of
 existing <code>svnClientAdapter.jar</code> file.</li>
@@ -93,7 +93,16 @@ know about your private key and passphrase (you need to provide these properties
 $ eclipse -vmargs -Djavasvn.ssh2.key=/path/to/private/key/file \
 -Djavasvn.ssh2.passphrase=optionalPassphrase
 </pre>
-<br/>
+<h4>Making SvnAnt use JavaSVN</h4>
+<p>Step-by-step instructions:</b>
+<ul>
+<li>Delete existing <code>javahl.jar</code> and <code>svnClientAdapter.jar</code> (libraries distirbuted with the svnant) from your Ant classpath (ANT_HOME/lib/ directory).</li>
+<li><a id="normal" href="http://tmate.org/svn/">Download</a> latest version of JavaSVN library. You will need javasvn.jar file from the library distribution.</li>
+<li>Get patched version of <a id="normal" href="http://tmate.org/svn/svnClientAdapter-0.9.13.jar">svnClientAdapter.jar</a> (version 0.9.13).</li>
+<li>Put <code>javasvn.jar</code> and <code>svnClientAdapter-0.9.13.jar</code> files on your Ant classpath (ANT_HOME/lib/ directory).</li>
+</ul>
+<p>After performing the steps above svnant will use JavaSVN instead of JavaHL bindings.</b>
+<br />
 <p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
 <a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
 <br />
