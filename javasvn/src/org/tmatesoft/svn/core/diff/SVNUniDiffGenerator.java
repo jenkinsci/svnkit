@@ -51,7 +51,7 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
         int gutter = getGutter();
         // header
         StringBuffer header = new StringBuffer();
-        header.append("@@@");
+        header.append("@@");
         int sourceStartLine = segment[0].getLeftFrom();
         int sourceEndLine = segment[segment.length - 1].getLeftTo();
         int targetStartLine = segment[0].getRightFrom();
@@ -74,7 +74,7 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
             header.append(",");
             header.append(rightEnd - rightStart + 1);
         }
-        header.append(" @@@");
+        header.append(" @@");
         println(header.toString(), output);
         
         // print gutter context lines before blocks.
@@ -87,7 +87,8 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
                 println("-" + new String(sourceLines[j].getBytes(), encoding), output);
             }
             for(int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
-                println("+" + new String(targetLines[j].getBytes(), encoding), output);
+                String str = new String(targetLines[j].getBytes(), encoding);
+                println("+" + str, output);
             }
             // print glue lines
             int end = Math.min(block.getLeftTo() + gutter, sourceLines.length - 1);

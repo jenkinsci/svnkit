@@ -37,6 +37,7 @@ public class SVNSequenceLineReader {
 			int from = 0;
 			int length = 0;
 			int eolLength = 0;
+            int lastLength = 0;
 			for (; ;) {
 				int ch = pushBack;
 				if (ch != -1) {
@@ -47,7 +48,7 @@ public class SVNSequenceLineReader {
 				}
 
 				if (ch != -1) {
-					append(length, (byte)ch);
+					append(length, (byte) (ch & 0xff));
 					length++;
 				}
 
@@ -55,7 +56,7 @@ public class SVNSequenceLineReader {
 				case '\r':
 					pushBack = stream.read();
 					if (pushBack == '\n') {
-						append(length, (byte)pushBack);
+						append(length, (byte) (pushBack & 0xff));
 						length++;
 						eolLength++;
 						pushBack = -1;
@@ -68,13 +69,21 @@ public class SVNSequenceLineReader {
 						byte[] bytes = new byte[actualLength];
 						System.arraycopy(buffer, 0, bytes, 0, actualLength);
 						lines.add(new SVNSequenceLine(from, from + actualLength - 1, bytes));
-					}
+                        lastLength = length;
+					}                    
 					from = from + length;
 					length = 0;
 					eolLength = 0;
+                    
 				}
 
 				if (ch == -1) {
+                    lastLength--;
+                    if (skipEOL && lastLength < buffer.length && lastLength >= 0) {
+                        if (buffer[lastLength] == '\r' || buffer[lastLength] == '\n') {
+                            lines.add(new SVNSequenceLine(from, from, new byte[0]));
+                        }
+                    }
 					break;
 				}
 			}
@@ -88,14 +97,12 @@ public class SVNSequenceLineReader {
 
 	// Utils ==================================================================
 
-	private byte[] append(int position, byte ch) {
+	private void append(int position, byte ch) {
 		if (position >= buffer.length) {
 			final byte[] newArray = new byte[buffer.length * 2];
 			System.arraycopy(buffer, 0, newArray, 0, buffer.length);
 			buffer = newArray;
 		}
-
 		buffer[position] = ch;
-		return buffer;
 	}
 }
