@@ -202,10 +202,10 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         } else if (element == DELETE_ENTRY) {
             String name = attrs.getValue(NAME_ATTR);
             myEditor.deleteEntry(PathUtil.append(myPath.toString(), name), -1);
-        } else if (element == SET_PROP && myIsFetchContent) {
+        } else if (element == SET_PROP) {
             myPropertyName = attrs.getValue(NAME_ATTR);
             myEncoding = attrs.getValue(ENCODING_ATTR);
-        } else if (element == REMOVE_PROP && myIsFetchContent) { 
+        } else if (element == REMOVE_PROP) { 
             String name = attrs.getValue(NAME_ATTR);
             if (isDir(myPath)) {
                 myEditor.changeDirProperty(name, null);
@@ -214,8 +214,10 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             }            
         } else if (element == RESOURCE || element == FETCH_FILE || element == FETCH_PROPS) {
             throw new SVNException(element + " element is not supported in update-report");
-        } else if (element == TX_DELTA && myIsFetchContent) {
-            setDeltaProcessing(true);
+        } else if (element == TX_DELTA) {
+            if (myIsFetchContent) {
+                setDeltaProcessing(true);
+            }
             myEditor.applyTextDelta(myChecksum);
         }
 	}
@@ -240,9 +242,6 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 element == DAVElement.CREATION_DATE || 
                 element == SET_PROP ||
                 element == DAVElement.HREF) {
-            if (!myIsFetchContent) {
-                return;
-            }
             if (myPropertyName == null) {
                 myPropertyName = computeWCPropertyName(element);
             }
