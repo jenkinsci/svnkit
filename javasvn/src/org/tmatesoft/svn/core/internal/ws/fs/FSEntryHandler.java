@@ -100,6 +100,7 @@ public class FSEntryHandler extends DefaultHandler {
             value = value.replaceAll("<", "&lt;");
             value = value.replaceAll(">", "&gt;");
             value = value.replaceAll("\"", "&quot;");
+            value = value.replaceAll("\t", "&#09;");
             os.write(value);
             os.write("\"");
         }
