@@ -59,30 +59,24 @@ class SVNConnection {
 
     public void authenticate(SVNRepositoryImpl repository, ISVNCredentials credentials) throws SVNException {
         String failureReason = null;
-        Object[] items = read("[((*W)S)]", null);
+        Object[] items = read("[((*W)?S)]", null);
         List mechs = SVNReader.getList(items, 0);
-
         if (mechs == null || mechs.size() == 0) {
             return;
         }
-
         for (int i = 0; i < mechs.size(); i++) {
             String mech = (String) mechs.get(i);
-            if ("ANONYMOUS".equals(mech) || "EXTERNAL".equals(mech)) {
-                // send anon and read response
-                write("(w())", new Object[] { mech });
-                items = read("(W(?S))", null);
-                if (SUCCESS.equals(items[0])) {
-                    if (!myIsCredentialsReceived) {
-                        Object[] creds = read("[(?S?S)]", null);
-                        if (repository != null && repository.getRepositoryRoot() == null) {
-                            repository.updateCredentials((String) creds[0], (String) creds[1]);
-                        }
-                        myIsCredentialsReceived = true;
-                    }
+            if ("EXTERNAL".equals(mech)) {
+                write("(w(s))", new Object[] { mech, credentials.getName()});
+                failureReason = readAuthResponse(repository);
+                if (failureReason == null) {
                     return;
-                } else if (FAILURE.equals(items[0])) {
-                    failureReason = (String) items[1];
+                }
+            } else if ("ANONYMOUS".equals(mech)) { 
+                write("(w())", new Object[] { mech });
+                failureReason = readAuthResponse(repository);
+                if (failureReason == null) {
+                    return;
                 }
             } else if ("CRAM-MD5".equals(mech)) {
                 CramMD5 authenticator = new CramMD5();
@@ -122,6 +116,23 @@ class SVNConnection {
             }
         }
         throw new SVNException(failureReason);
+    }
+
+    private String readAuthResponse(SVNRepositoryImpl repository) throws SVNException {
+        Object[] items = read("(W(?S))", null);
+        if (SUCCESS.equals(items[0])) {
+            if (!myIsCredentialsReceived) {
+                Object[] creds = read("[(?S?S)]", null);
+                if (repository != null && repository.getRepositoryRoot() == null) {
+                    repository.updateCredentials((String) creds[0], (String) creds[1]);
+                }
+                myIsCredentialsReceived = true;
+            }
+            return null;
+        } else if (FAILURE.equals(items[0])) {
+            return (String) items[1];
+        }
+        return "unexpected server responce";
     }
 
     public void close() throws SVNException {

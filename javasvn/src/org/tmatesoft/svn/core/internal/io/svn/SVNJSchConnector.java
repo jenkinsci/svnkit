@@ -60,6 +60,7 @@ public class SVNJSchConnector implements ISVNConnector {
             }
             throw new SVNAuthenticationException("Can't establish SSH connection without credentials");
         }
+        repository.setCredentials(credentials);
 
         long start;
         try {
@@ -67,7 +68,9 @@ public class SVNJSchConnector implements ISVNConnector {
             myInputStream = myChannel.getInputStream();
             myOutputStream = myChannel.getOutputStream();
 
-            myChannel.setCommand("svnserve -t");
+            String command = "svnserve -t";
+            myChannel.setCommand(command);
+            DebugLog.log("JSCH command: " + command);
             myChannel.setErrStream(System.err);
 
             start = System.currentTimeMillis();
