@@ -59,17 +59,24 @@ public class UpdateCommand extends SVNCommand {
                 } else if (contentsStatus == SVNStatus.NOT_MODIFIED) {
                     contents = ' ';
                 }
+
                 if (propertiesStatus == SVNStatus.MODIFIED) {
                     properties = 'U';
                 } else if (propertiesStatus == SVNStatus.CONFLICTED) {
                     properties = 'C';
                 }
-                DebugLog.log(contents + properties + ' ' + updatedPath);
-                out.println(contents + properties + ' ' + updatedPath);
+
+                if (contents == ' ' && properties == ' ') {
+                    return;
+                }
+
+                DebugLog.log(contents + "" + properties + ' ' + updatedPath);
+                out.println(contents + "" + properties + ' ' + updatedPath);
             }
         });
+
         revision = workspace.update(SVNUtil.getWorkspacePath(workspace, path), revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+        DebugLog.log("At revision " + revision + ".");
         out.println("At revision " + revision + ".");
     }
-
 }
