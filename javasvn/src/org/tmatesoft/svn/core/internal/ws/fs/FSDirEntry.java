@@ -381,6 +381,20 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                         (myChildren.containsKey(child.getName()) || ".svn".equals(child.getName()))) {
                     continue;
                 }
+                if (FSUtil.isWindows) {
+                    // check for files with different case in name
+                    boolean obsturcted = false;
+                    for(Iterator names = myChildren.keySet().iterator(); names.hasNext();) {
+                        String name = (String) names.next();
+                        if (name.equalsIgnoreCase(child.getName())) {
+                            obsturcted = true;
+                            break;                            
+                        }
+                    }
+                    if (obsturcted) {
+                        continue;
+                    }
+                }
                 String path = PathUtil.append(getPath(), child.getName());
                 ISVNEntry childEntry;
                 if (child.isDirectory()) {

@@ -425,14 +425,18 @@ public abstract class FSEntry implements ISVNEntry {
     
     public boolean isObstructed() {
         File wcFile = getRootEntry().getWorkingCopyFile(this);
-        if (wcFile == null) {
-            return false;
-        }
         if (FSUtil.isWindows) {
-            if (!getName().equals(wcFile.getName()) &&
-                    getName().equalsIgnoreCase(wcFile.getName())) {
+            String name = null;
+            try {
+                name = wcFile.getCanonicalFile().getName();
+            } catch (IOException e) {
+                return false;
+            }
+            if (!getName().equals(name) &&
+                    getName().equalsIgnoreCase(name)) {
                 return true;
             }
+            return false;
         }
         return FSUtil.isSymlink(wcFile);
     }
