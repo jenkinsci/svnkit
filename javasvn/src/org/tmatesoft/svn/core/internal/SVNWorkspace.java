@@ -849,7 +849,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                     // check if files are modified.
                     assertNotModified(entry.asDirectory().getChild(name));
                 }
-                ISVNEntry child = entry.asDirectory().scheduleForDeletion(name);
+                ISVNEntry child = entry.asDirectory().scheduleForDeletion(name, force);
                 fireEntryModified(child, SVNStatus.DELETED, true);
                 entry.save();
                 entry.dispose();

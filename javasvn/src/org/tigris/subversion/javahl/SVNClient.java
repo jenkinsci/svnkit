@@ -629,6 +629,7 @@ public class SVNClient implements SVNClientInterface {
             try {
                 String newPath = PathUtil.tail(destPath);
                 newPath = PathUtil.removeLeadingSlash(newPath);
+                newPath = PathUtil.decode(newPath);
                 String root = PathUtil.removeTail(destPath);
                 SVNRepository repository = createRepository(root);
                 long revNumber = getRevisionNumber(revision, repository, null, null);
@@ -691,6 +692,8 @@ public class SVNClient implements SVNClientInterface {
                 destPath = destPath.substring(root.length());
                 deletePath = PathUtil.removeLeadingSlash(deletePath);
                 destPath = PathUtil.removeLeadingSlash(destPath);
+                deletePath = PathUtil.decode(deletePath);
+                destPath = PathUtil.decode(destPath);
                 
                 editor = repository.getCommitEditor(message, null);
                 editor.openRoot(-1);

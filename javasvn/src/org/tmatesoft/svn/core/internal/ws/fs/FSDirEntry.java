@@ -520,12 +520,23 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
     
     public ISVNEntry scheduleForDeletion(String name, boolean moved) throws SVNException {
         ISVNEntry entry = getChild(name);
-        if (entry == null || entry.isScheduledForDeletion()) {
+        if (entry == null) {
+            // force file deletion
+            if (moved) {
+                deleteChild(name, false);
+            }
+            return entry;
+        } else if (entry.isScheduledForDeletion()) {
             return entry;
         }
         if (entry.isScheduledForAddition()) {
             if (moved) {
-                deleteChild(name, false);
+                // keep "deleted" state
+                boolean storeInfo = entry.getPropertyValue(SVNProperty.DELETED) != null;
+                if (!storeInfo && entry.isDirectory()) {
+                    storeInfo = ((Map) myChildEntries.get(name)).get(SVNProperty.DELETED) != null;
+                }
+                deleteChild(name, storeInfo);
             } else {
                 myChildEntries.remove(name);
                 myChildren.remove(name);

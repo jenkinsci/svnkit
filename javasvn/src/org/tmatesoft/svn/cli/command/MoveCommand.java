@@ -57,9 +57,7 @@ public class MoveCommand extends SVNCommand {
             } catch (NumberFormatException e) {
                 revNumber = -1;
             }
-        }
-
-        
+        }        
         if (revNumber < 0) {
             revNumber = repository.getLatestRevision();
         }
@@ -67,6 +65,8 @@ public class MoveCommand extends SVNCommand {
         destPath = destPath.substring(root.length());
         deletePath = PathUtil.removeLeadingSlash(deletePath);
         destPath = PathUtil.removeLeadingSlash(destPath);
+        destPath = PathUtil.decode(destPath);
+        deletePath = PathUtil.decode(deletePath);
         
         ISVNEditor editor = repository.getCommitEditor(message, null);
         try {
