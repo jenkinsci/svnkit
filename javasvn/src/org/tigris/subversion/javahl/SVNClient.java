@@ -722,7 +722,8 @@ public class SVNClient implements SVNClientInterface {
             }
         } else if (!isURL(srcPath) && !isURL(destPath)) {
             try {
-                ISVNWorkspace ws = createWorkspace(srcPath);
+            	String wsRoot = PathUtil.getCommonRoot(new String[] {srcPath, destPath});
+                ISVNWorkspace ws = createWorkspace(wsRoot);
                 ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 ws.copy(SVNUtil.getWorkspacePath(ws, srcPath), SVNUtil.getWorkspacePath(ws, destPath), false);
             } catch (SVNException e) {
@@ -776,7 +777,8 @@ public class SVNClient implements SVNClientInterface {
             }
         } else if (!isURL(srcPath) && !isURL(destPath)) {
             try {
-                ISVNWorkspace ws = createWorkspace(srcPath);
+            	String wsRoot = PathUtil.getCommonRoot(new String[] {srcPath, destPath});
+                ISVNWorkspace ws = createWorkspace(wsRoot);
                 ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 ws.copy(SVNUtil.getWorkspacePath(ws, srcPath), SVNUtil.getWorkspacePath(ws, destPath), true);
             } catch (SVNException e) {
@@ -798,7 +800,7 @@ public class SVNClient implements SVNClientInterface {
         if (path == null || path.length == 0) {
             return;
         }
-        String root = PathUtil.getFSCommonRoot(path);
+        String root = PathUtil.getCommonRoot(path);
         if (isURL(root)) {
             for(int i = 0; i < path.length; i++) {
                 String dir = path[i].substring(root.length());
@@ -826,6 +828,7 @@ public class SVNClient implements SVNClientInterface {
             }
         } else {
             try {
+            	root = PathUtil.getFSCommonRoot(path);
                 ISVNWorkspace ws = createWorkspace(root);
                 ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 for(int i = 0; i < path.length; i++) {
