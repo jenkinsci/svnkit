@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.Base64;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNUtil;
 import org.tmatesoft.svn.util.SocketFactory;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
@@ -166,7 +167,7 @@ class HttpConnection {
                 if (credentials != null) {
                     myUserCredentialsProvider.notAccepted(credentials, "forbidden");
                 }
-                credentials = myUserCredentialsProvider.nextCredentials(realm);
+                credentials = SVNUtil.nextCredentials(myUserCredentialsProvider, mySVNRepositoryLocation ,realm);
                 if (credentials == null) {
                     // no more to try.
                     throw new SVNAuthenticationException("Authentication failed");

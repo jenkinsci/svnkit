@@ -13,6 +13,7 @@ import org.tmatesoft.svn.core.io.ISVNSSHCredentials;
 import org.tmatesoft.svn.core.io.SVNAuthenticationException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNUtil;
 
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
@@ -41,7 +42,7 @@ public class SVNJSchConnector implements ISVNConnector {
         final String host = repository.getLocation().getHost();
         final int port = repository.getLocation().getPort();
 
-        ISVNCredentials credentials = provider.nextCredentials(null);
+        ISVNCredentials credentials = SVNUtil.nextCredentials(provider, repository.getLocation(), null);
         SVNAuthenticationException lastException = null;
         while (credentials != null) {
             try {
@@ -50,7 +51,7 @@ public class SVNJSchConnector implements ISVNConnector {
                 break;
             } catch (SVNAuthenticationException e) {
                 lastException = e;
-                credentials = provider.nextCredentials(e.getMessage());
+                credentials = SVNUtil.nextCredentials(provider, repository.getLocation(), e.getMessage());
             }
         }
 

@@ -17,6 +17,9 @@ import java.io.File;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
+import org.tmatesoft.svn.core.io.ISVNCredentials;
+import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
+import org.tmatesoft.svn.core.io.ISVNCredentialsProviderEx;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -82,5 +85,16 @@ public class SVNUtil {
         }
         return repository;
     }
+    
+	public static ISVNCredentials nextCredentials(ISVNCredentialsProvider provider, SVNRepositoryLocation location, String message) {
+		ISVNCredentials credentials;
+		if (provider instanceof ISVNCredentialsProviderEx) {
+        	credentials = ((ISVNCredentialsProviderEx) provider).nextCredentials(message, location);
+        } else {
+        	credentials = provider.nextCredentials(message);
+        }
+		return credentials;
+	}
+
 
 }

@@ -277,7 +277,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                     try {
                         String path = PathUtil.append(getID(), external.getPath());
                         new File(path).mkdirs();
-                        ISVNWorkspace extWorkspace = SVNWorkspaceManager.createWorkspace(getRoot().getType(), path);
+                        ISVNWorkspace extWorkspace = createWorkspace(external);
                         myExternalsHandler.handleCheckout(this, external.getPath(), extWorkspace, external.getLocation(), external.getRevision(), export, true);
                     } catch (Throwable th) {
                         DebugLog.error(th);
@@ -345,7 +345,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                         continue;
                     }
                     try {
-                        ISVNWorkspace extWorkspace = SVNWorkspaceManager.createWorkspace(getRoot().getType(), PathUtil.append(getID(), external.getPath()));
+                        ISVNWorkspace extWorkspace = createWorkspace(external);
                         myExternalsHandler.handleUpdate(this, external.getPath(), extWorkspace, external.getRevision());
                     } catch (Throwable th) {
                         DebugLog.error(th);
@@ -392,7 +392,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                     }
                     paths.add(external.getPath());
                     try {
-                        ISVNWorkspace extWorkspace = SVNWorkspaceManager.createWorkspace(getRoot().getType(), PathUtil.append(getID(), external.getPath()));
+                        ISVNWorkspace extWorkspace = createWorkspace(external);
                         myExternalsHandler.handleCheckout(this, external.getPath(), extWorkspace, external.getLocation(), external.getRevision(), false, true);
                     } catch (Throwable th) {
                         DebugLog.error(th);
@@ -429,6 +429,12 @@ public class SVNWorkspace implements ISVNWorkspace {
             getRoot().dispose();
         }
     }
+
+	private ISVNWorkspace createWorkspace(SVNExternal external) throws SVNException {
+		ISVNWorkspace extWorkspace = SVNWorkspaceManager.createWorkspace(getRoot().getType(), PathUtil.append(getID(), external.getPath()));
+		extWorkspace.setCredentials(myCredentialsProvider);
+		return extWorkspace;
+	}
 
     public void relocate(SVNRepositoryLocation newLocation, String path, boolean recursive) throws SVNException {
         try {
@@ -523,7 +529,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                 }
                 DebugLog.log("EXTERNAL STATUS FOR " + external.getPath());
                 try {
-                    ISVNWorkspace extWorkspace = SVNWorkspaceManager.createWorkspace(getRoot().getType(), PathUtil.append(getID(), external.getPath()));
+                    ISVNWorkspace extWorkspace = createWorkspace(external);
                     myExternalsHandler.handleStatus(this, external.getPath(), extWorkspace, handler, remote, descend, includeUnmodified, includeIgnored,
                             descendInUnversioned);
                 } catch (Throwable th) {

@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -66,7 +67,7 @@ public class SVNAuthRepository extends SVNRepository {
         if (provider == null) {
             throw new SVNAuthenticationException(msg);
         }
-        ISVNCredentials creds = provider.nextCredentials(msg);
+        ISVNCredentials creds = SVNUtil.nextCredentials(provider, getLocation(), msg);
         if (creds == null) {
             throw new SVNAuthenticationException(msg);
         }
