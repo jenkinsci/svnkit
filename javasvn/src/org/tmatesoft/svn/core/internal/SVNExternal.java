@@ -64,7 +64,7 @@ class SVNExternal {
         }
         SVNExternal e = (SVNExternal) o;
         return e.myLocation.toString().equals(myLocation.toString()) && 
-            e.myPath.equals(myLocation.getPath()) && 
+            e.myPath.equals(myPath) && 
             e.myRevision == myRevision;
     }
     
