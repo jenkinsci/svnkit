@@ -323,7 +323,7 @@ class DAVRepository extends SVNRepository {
         if (url == null) {
             throw new SVNException(url + ": not valid URL");
         }
-        byte[] request = convertToBytes(DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, url, recursive, false, false, reporter));
+        byte[] request = convertToBytes(DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, url, recursive, true, false, reporter));
         try {
             openConnection();
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
