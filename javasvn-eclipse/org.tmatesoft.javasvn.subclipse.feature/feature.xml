@@ -1,30 +1,42 @@
-<?xml version="1.0" encoding="UTF-8"?> 
-<feature id="org.tmatesoft.javasvn.subclipse"
-	version="%javasvn.version%"
-	label="JavaSVN Subclipse Extenstion"
-	provider-name="TMate Software"
-	>
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.tmatesoft.javasvn.subclipse"
+      label="JavaSVN Subclipse Extenstion"
+      version="%javasvn.version%"
+      provider-name="TMate Software">
 
    <description url="http://tmate.org/svn/subclipse.html">
-     Subclipse extenstion that makes Subclipse use JavaSVN (pure java Subversion client library)
+      Subclipse extenstion that makes Subclipse use JavaSVN (pure java Subversion client library)
      instead of native javahl bindings.
    </description>
 
    <copyright url="http://tmatesoft.com/">
-   	(c) 2004-2005, TMate Software Ltd.
+      (c) 2004-2005, TMate Software Ltd.
    </copyright>
 
    <license url="http://tmate.org/svn/license.html">
-   %license
+      %license
    </license>
-   
+
+   <url>
+      <update label="TMate Software Update Site" url="http://tmate.org/svn"/>
+      <discovery label="TMate Software Update Site" url="http://tmate.org/svn"/>
+   </url>
+
    <requires>
-	<import feature="org.tigris.subversion.subclipse"
-		version="%subclipse.version%"
-	/>
+      <import feature="org.tigris.subversion.subclipse" version="%subclipse.version%"/>
    </requires>
 
-   <plugin id="org.tmatesoft.javasvn" version="%javasvn.version%" />
-   <plugin id="org.tigris.subversion.subclipse.core" version="%subclipse.plugin.version%" />
-   
+   <plugin
+         id="org.tmatesoft.javasvn"
+         download-size="0"
+         install-size="0"
+         version="%javasvn.version%"/>
+
+   <plugin
+         id="org.tigris.subversion.subclipse.core"
+         download-size="0"
+         install-size="0"
+         version="%subclipse.plugin.version%"/>
+
 </feature>

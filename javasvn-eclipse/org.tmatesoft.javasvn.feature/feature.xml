@@ -18,6 +18,11 @@
    <license url="http://tmate.org/svn/license.html">
    %license
    </license>
+
+   <url>
+      <update label="TMate Software Update Site" url="http://tmate.org/svn"/>
+      <discovery label="TMate Software Update Site" url="http://tmate.org/svn"/>
+   </url>
    
    <plugin id="org.tmatesoft.javasvn" 
 	       version="%javasvn.version%" 
