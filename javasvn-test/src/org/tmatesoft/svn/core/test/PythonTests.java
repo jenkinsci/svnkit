@@ -52,7 +52,7 @@ public class PythonTests {
 		if (Boolean.TRUE.toString().equals(properties.getProperty("python.svn"))) {
 			try {
 				AllTests.startSVNServe(properties);
-				runPythonTests(properties, "svn://localhost/");
+				runPythonTests(properties, "svn://localhost");
 			} catch (Throwable th) {
 				th.printStackTrace();
 			} finally {
