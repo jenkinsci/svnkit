@@ -144,7 +144,7 @@
         <mkdir dir="build/lib" />
         <zip destfile="build/lib/javasvnsrc.zip">
             <fileset dir="javasvn/src" />
-            <fileset dir="javasvn-eclipse/src" />
+            <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn/src" />
             <fileset dir="contrib/javahl/src" />
             <fileset dir="contrib/sequence/src" />
         </zip>
