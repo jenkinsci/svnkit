@@ -38,6 +38,8 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.Base64;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.LoggingInputStream;
+import org.tmatesoft.svn.util.LoggingOutputStream;
 import org.tmatesoft.svn.util.SVNUtil;
 import org.tmatesoft.svn.util.SocketFactory;
 import org.xml.sax.SAXException;
@@ -52,8 +54,8 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 class HttpConnection {
 
-    private OutputStream myOutputStream;
-    private InputStream myInputStream;
+    private LoggingOutputStream myOutputStream;
+    private LoggingInputStream myInputStream;
     private Socket mySocket;
 
     private SVNRepositoryLocation mySVNRepositoryLocation;
@@ -85,6 +87,7 @@ class HttpConnection {
         if (mySocket != null) {
             try {
                 if (myOutputStream != null) {
+	                  myOutputStream.log();
                     myOutputStream.flush();
                 }
                 mySocket.close();
@@ -151,6 +154,10 @@ class HttpConnection {
                 acknowledgeSSLContext(false);
                 throw new SVNException(e);
             }
+	          finally {
+	            logOutputStream();
+	            logInputStream();
+            }
             acknowledgeSSLContext(true);
             if (status != null
                     && (status.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED || status.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN)) {
@@ -212,6 +219,7 @@ class HttpConnection {
         } catch (IOException e) {
             throw new SVNException(e);
         } finally {
+	          logInputStream();
             close();
             status.setErrorText(text.toString());
         }
@@ -233,6 +241,7 @@ class HttpConnection {
         } catch (IOException e) {
             throw new SVNException(e);
         } finally {
+	          logInputStream();
             finishResponse(responseHeader);
         }
     }
@@ -272,6 +281,7 @@ class HttpConnection {
             e.printStackTrace();
             throw new SVNException(e);
         } finally {
+	          logInputStream();
             finishResponse(responseHeader);
         }
     }
@@ -414,16 +424,16 @@ class HttpConnection {
         while (is.skip(2048) > 0) {}
     }
 
-    private OutputStream getOutputStream() throws IOException {
+    private LoggingOutputStream getOutputStream() throws IOException {
         if (myOutputStream == null) {
-            myOutputStream = new BufferedOutputStream(mySocket.getOutputStream());
+            myOutputStream = DebugLog.getLoggingOutputStream("http", new BufferedOutputStream(mySocket.getOutputStream()));
         }
         return myOutputStream;
     }
 
-    private InputStream getInputStream() throws IOException {
+    private LoggingInputStream getInputStream() throws IOException {
         if (myInputStream == null) {
-            myInputStream = new BufferedInputStream(mySocket.getInputStream());
+            myInputStream = DebugLog.getLoggingInputStream("http", new BufferedInputStream(mySocket.getInputStream()));
         }
         return myInputStream;
     }
@@ -527,4 +537,20 @@ class HttpConnection {
             close();
         }
     }
+
+	  private void logInputStream() {
+		  try {
+			  getInputStream().log();
+		  }
+		  catch (IOException ex) {
+		  }
+	  }
+
+	private void logOutputStream() {
+		try {
+			getOutputStream().log();
+		}
+		catch (IOException ex) {
+		}
+	}
 }

@@ -2,6 +2,8 @@ package org.tmatesoft.svn.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.DateFormat;
@@ -18,7 +20,7 @@ import java.util.logging.SimpleFormatter;
 /**
  * @author Marc Strapetz
  */
-public class DebugDefaultLogger implements DebugLogger {
+public class DebugDefaultLogger implements DebugLogger, LoggingStreamLogger {
 
 	private static final DateFormat ourDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd' 'HH:mm:ss.SSS");
@@ -119,8 +121,21 @@ public class DebugDefaultLogger implements DebugLogger {
 		}
 	}
 
-	public boolean isSVNLoggingEnabled() {
-		return Boolean.getBoolean("javasvn.log.svn");
+	public LoggingInputStream getLoggingInputStream(String protocol, InputStream stream) {
+		final boolean enabled = Boolean.getBoolean("javasvn.log.svn");
+		return new LoggingInputStream(stream, enabled ? this : null);
+	}
+
+	public LoggingOutputStream getLoggingOutputStream(String protocol, OutputStream stream) {
+		final boolean enabled = Boolean.getBoolean("javasvn.log.svn");
+		return new LoggingOutputStream(stream, enabled ? this : null);
+	}
+
+	public void logStream(String content, boolean writeNotRead) {
+		final String prefix = writeNotRead ? "SVN.SENT: " : "SVN.READ: ";
+		content = content.replaceAll("\n", "\\\\n");
+		content = content.replaceAll("\r", "\\\\r");
+		logFine(prefix + content);
 	}
 
 	private static boolean isFileLoggingEnabled() {

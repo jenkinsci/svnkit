@@ -31,8 +31,7 @@ import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNError;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.TimeUtil;
+import org.tmatesoft.svn.util.*;
 
 /**
  * @author Alexander Kitaev
@@ -168,7 +167,7 @@ class SVNReader {
      * 
      */
     
-    public static Object[] parse(InputStream is, String templateStr, Object[] target) throws SVNException {
+    public static Object[] parse(LoggingInputStream is, String templateStr, Object[] target) throws SVNException {
         if (!is.markSupported()) {
             throw new SVNException("SVNReader works only with markable input streams");
         }
@@ -268,7 +267,7 @@ class SVNReader {
                 } else if (ch == '(') {
                     readChar(is, '(');
                 } else if (ch == 'd') {
-                    result = readDirEntry(new RollbackInputStream(is));
+                    result = readDirEntry(DebugLog.getLoggingInputStream("svn", new RollbackInputStream(is)));
                 } else if (ch == 'e') {
                     if (editorBaton == null) {
                         editorBaton = new SVNEditModeReader(); 
@@ -578,9 +577,9 @@ class SVNReader {
         return new SVNError(errorMessage, location, errorCode, lineNumber);  
     }
     
-    private static SVNDirEntry readDirEntry(InputStream is) throws SVNException {
+    private static SVNDirEntry readDirEntry(LoggingInputStream is) throws SVNException {
         Object[] items = SVNReader.parse(is, "(SWNTN(?S)(?S))", null);
-        SVNLoggingConnector.flush();
+        is.log();
         
         String name = SVNReader.getString(items, 0);
         SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader.getString(items, 1));

@@ -1,20 +1,25 @@
 package org.tmatesoft.svn.util;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * @author Marc Strapetz
  */
 public interface DebugLogger {
-	boolean isFineEnabled();
+	public boolean isFineEnabled();
 
-	boolean isInfoEnabled();
+	public boolean isInfoEnabled();
 
-	void logFine(String message);
+	public void logFine(String message);
 
 	public void logInfo(String message);
 
-	boolean isErrorEnabled();
+	public boolean isErrorEnabled();
 
-	void logError(String message, Throwable th);
+	public void logError(String message, Throwable th);
 
-	boolean isSVNLoggingEnabled();
+	public LoggingInputStream getLoggingInputStream(String protocol, InputStream stream);
+
+	public LoggingOutputStream getLoggingOutputStream(String protocol, OutputStream stream);
 }

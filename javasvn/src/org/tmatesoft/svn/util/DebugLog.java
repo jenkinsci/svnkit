@@ -13,6 +13,8 @@
 package org.tmatesoft.svn.util;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * @author TMate Software Ltd.
@@ -89,12 +91,20 @@ public class DebugLog {
 		return !Boolean.getBoolean("javasvn.generator.enabled");
 	}
 
-	public static boolean isSVNLoggingEnabled() {
+	public static LoggingInputStream getLoggingInputStream(String protocol, InputStream stream) {
 		if (ourLogger == null) {
-			return false;
+			return new LoggingInputStream(stream, null);
 		}
 
-		return ourLogger.isSVNLoggingEnabled();
+		return ourLogger.getLoggingInputStream(protocol, stream);
+	}
+
+	public static LoggingOutputStream getLoggingOutputStream(String protocol, OutputStream stream) {
+		if (ourLogger == null) {
+			return new LoggingOutputStream(stream, null);
+		}
+
+		return ourLogger.getLoggingOutputStream(protocol, stream);
 	}
 
 	static boolean isSafeModeDefault() {

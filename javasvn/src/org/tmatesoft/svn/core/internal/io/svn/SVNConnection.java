@@ -14,13 +14,12 @@ package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.List;
 
 import org.tmatesoft.svn.core.io.ISVNCredentials;
 import org.tmatesoft.svn.core.io.SVNAuthenticationException;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.*;
 
 /**
  * @author Alexander Kitaev
@@ -29,8 +28,8 @@ class SVNConnection {
 
     private final ISVNConnector myConnector;
 
-    private OutputStream myOutputStream;
-    private InputStream myInputStream;
+    private LoggingOutputStream myOutputStream;
+    private LoggingInputStream myInputStream;
 
     private static final String SUCCESS = "success";
     private static final String FAILURE = "failure";
@@ -107,7 +106,7 @@ class SVNConnection {
                         } catch (IOException e) {
                             throw new SVNException(e);
                         } finally {
-                            SVNLoggingConnector.flush();
+		                        getOutputStream().log();
                         }
                     }
                 }
@@ -142,33 +141,39 @@ class SVNConnection {
     public Object[] read(String template, Object[] items) throws SVNException {
         try {
             return SVNReader.parse(getInputStream(), template, items);
-        } catch (IOException e) {
-            throw new SVNException(e);
         } finally {
-            SVNLoggingConnector.flush();
+		        getInputStream().log();
         }
     } 
 
     public void write(String template, Object[] items) throws SVNException {
         try {
             SVNWriter.write(getOutputStream(), template, items);
-        } catch (IOException e) {
-            throw new SVNException(e);
         } finally {
-            SVNLoggingConnector.flush();
+		        getOutputStream().log();
         }
     }
 
-    public OutputStream getOutputStream() throws IOException {
+    public LoggingOutputStream getOutputStream() throws SVNException {
         if (myOutputStream == null) {
-            return myOutputStream = myConnector.getOutputStream();
+	        try {
+		        return myOutputStream = DebugLog.getLoggingOutputStream("svn", myConnector.getOutputStream());
+	        }
+	        catch (IOException ex) {
+		        throw new SVNException(ex);
+	        }
         }
         return myOutputStream;
     }
 
-    public InputStream getInputStream() throws IOException {
+    public LoggingInputStream getInputStream() throws SVNException {
         if (myInputStream == null) {
-            myInputStream = new RollbackInputStream(new BufferedInputStream(myConnector.getInputStream()));
+	        try {
+		        myInputStream = DebugLog.getLoggingInputStream("svn", new RollbackInputStream(new BufferedInputStream(myConnector.getInputStream())));
+	        }
+	        catch (IOException ex) {
+		        throw new SVNException(ex);
+	        }
         }
         return myInputStream;
     }
