@@ -103,6 +103,17 @@ know about your private key and passphrase (you need to provide these properties
 $ eclipse -vmargs -Djavasvn.ssh2.key=/path/to/private/key/file \
 -Djavasvn.ssh2.passphrase=optionalPassphrase
 </pre>
+<p><b>Note:</b> User name for ssh connection will be taken from SVN Repository properties that may be altered in Subclipse
+SVN Repositories view.</p>
+<br/>
+<p>To avoid special batch script creation to launch Eclipse you may define ssh related properties in
+Eclipse config.ini file <code>ECLIPSE_HOME/configuration/config.ini</code> (tip provided by Andrew Berman):
+<pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; width: 43em; background-color: #eee;">
+  ...
+  javasvn.ssh2.key=path/to/private/key/file
+  javasvn.ssh2.passphrase=passphrase
+</pre>
+</p>
 <p>
 In case you work with Mac OS X version of Eclipse it is not 
 too simple to add arguments that make JSCH look for private 
@@ -116,8 +127,6 @@ adding something like that (tip provided by Valentin Alekseev):
 &lt;/array&gt;
 </pre>
 </p>
-<p><b>Note:</b> User name for ssh connection will be taken from SVN Repository properties that may be altered in Subclipse
-SVN Repositories view.</p>
 <a name="ant"></a>
 <h4>Making SvnAnt use JavaSVN</h4>
 <p>Step-by-step instructions:</b>
