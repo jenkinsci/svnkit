@@ -3,6 +3,7 @@
 contrib/javahl/bin
 contrib/sequence/bin
 contrib/sequence/bin-test
+javasvn-eclipse/bin
 javasvn-test/bin
 javasvn-test/test.properties
 /javasvn.iws
