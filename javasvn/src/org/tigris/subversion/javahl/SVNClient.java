@@ -1344,6 +1344,10 @@ public class SVNClient implements SVNClientInterface {
     }
     
     private ISVNWorkspace createWorkspace(String path) throws SVNException {
+    	File file = new File(path);
+    	if (!file.exists()) {
+    		path = file.getParentFile().getAbsolutePath();
+    	}
     	return createWorkspace(path, false);
     }
 
@@ -1351,17 +1355,17 @@ public class SVNClient implements SVNClientInterface {
    		path = path.replace(File.separatorChar, '/');
         ISVNWorkspace ws = SVNUtil.createWorkspace(path, root);
         DebugLog.log("workspace created: " + path + " (schedule: " + ws.getPropertyValue("", SVNProperty.SCHEDULE) +")");
-        if (ws.getPropertyValue("", SVNProperty.SCHEDULE) != null) {
-        	ws = SVNUtil.createWorkspace(PathUtil.removeTail(path));
-        } 
         if (ws != null) {
+            if (ws.getPropertyValue("", SVNProperty.SCHEDULE) != null) {
+            	ws = SVNUtil.createWorkspace(PathUtil.removeTail(path));
+            } 
             if (myUserName != null && myPassword != null) {
                 ws.setCredentials(myUserName, myPassword);
             } else if (myPrompt != null) {
                 ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt));
             }
+            ws.setExternalsHandler(new SVNClientExternalsHandler(myNotify));
         }
-        ws.setExternalsHandler(new SVNClientExternalsHandler(myNotify));
         return ws;
     }
     
