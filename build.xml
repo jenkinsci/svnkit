@@ -269,7 +269,7 @@
         </java>
     </target>
 
-    <target name="test-python" depends="init-environment,build-library,build-cli">
+    <target name="test-python" depends="init-environment,compile-tests,build-library,build-cli">
         <copy file="javasvn-test/test.${os}.properties"
               tofile="javasvn-test/test.properties"
               failonerror="false"
