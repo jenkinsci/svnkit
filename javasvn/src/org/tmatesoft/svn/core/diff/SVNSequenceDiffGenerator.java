@@ -75,7 +75,6 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
         
         List blocksList = SVNSequenceMedia.createBlocks(leftLines, rightLines);
         List combinedBlocks = combineBlocks(blocksList, getGutter());
-        System.err.println("combined block size: " + combinedBlocks.size());
         for(Iterator blocks = combinedBlocks.iterator(); blocks.hasNext();) {
             List segment = (List) blocks.next();
             QSequenceDifferenceBlock[] segmentBlocks = 
@@ -120,6 +119,5 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
             
         }
         return combinedBlocks;
-        
     }
 }

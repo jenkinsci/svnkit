@@ -44,11 +44,11 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
         rightInfo = rightInfo == null ? "" : " " + rightInfo;
         println("--- " + item + leftInfo, output);
         println("+++ " + item + rightInfo, output);
-        println(output);
     }
     
     protected void processBlock(QSequenceDifferenceBlock[] segment, SVNSequenceLine[] sourceLines, SVNSequenceLine[] targetLines, 
             String encoding, Writer output) throws IOException {
+        int gutter = getGutter();
         // header
         StringBuffer header = new StringBuffer();
         header.append("@@@");
@@ -56,26 +56,29 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
         int sourceEndLine = segment[segment.length - 1].getLeftTo();
         int targetStartLine = segment[0].getRightFrom();
         int targetEndLine = segment[segment.length - 1].getRightTo();
+
+        int leftStart = Math.max(sourceStartLine - gutter, 0);
+        int rightStart = Math.max(targetStartLine - gutter, 0);
+        int leftEnd = Math.min(sourceEndLine + gutter, sourceLines.length - 1);
+        int rightEnd = Math.min(targetEndLine + gutter, targetLines.length - 1);
         
         if (sourceStartLine >= 0 && sourceEndLine >= 0) {
             header.append(" -");
-            header.append(sourceStartLine + 1);
+            header.append(leftStart + 1);
             header.append(",");
-            header.append(sourceEndLine - sourceStartLine + 1);
+            header.append(leftEnd - leftStart + 1);
         }
         if (targetEndLine >= 0 && targetStartLine >= 0) {
             header.append(" +");
-            header.append(targetStartLine + 1);
+            header.append(rightStart + 1);
             header.append(",");
-            header.append(targetEndLine - targetStartLine + 1);
+            header.append(rightEnd - rightStart + 1);
         }
         header.append(" @@@");
         println(header.toString(), output);
-        int gutter = getGutter();
         
         // print gutter context lines before blocks.
-        int start = Math.max(sourceStartLine - gutter, 0);
-        for(int i = start; i < sourceStartLine; i++) {
+        for(int i = leftStart; i < sourceStartLine; i++) {
             println(" " + new String(sourceLines[i].getBytes(), encoding), output);
         }
         for(int i = 0; i < segment.length; i++) {
@@ -91,11 +94,10 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
             if (i + 1< segment.length) {
                 end = Math.min(end, segment[i + 1].getLeftFrom() - 1);                
             }
-            for(int j = block.getLeftTo() + 1; j < end; j++) {
+            for(int j = block.getLeftTo() + 1; j <= end; j++) {
                 println(" " + new String(sourceLines[j].getBytes(), encoding), output);
             }
         }
-        println(output);        
     }
     
     public ISVNDiffGenerator createGenerator(Map properties) {
