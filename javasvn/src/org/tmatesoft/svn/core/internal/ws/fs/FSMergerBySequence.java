@@ -96,8 +96,7 @@ public class FSMergerBySequence {
 		}
 
 		for (baseLineIndex++; baseLineIndex < baseLines.length; baseLineIndex++) {
-			final SVNSequenceLine baseLine = baseLines[baseLineIndex];
-			writeLineAndEol(result, baseLine);
+			writeLine(result, baseLines[baseLineIndex], baseLineIndex == baseLines.length - 1);
 		}
 
 		if (conflict) {
@@ -124,11 +123,11 @@ public class FSMergerBySequence {
 	private int appendLines(OutputStream result, QSequenceDifferenceBlock block, SVNSequenceLine[] baseLines, SVNSequenceLine[] changedLines, int baseLineIndex) throws IOException {
 		final int baseFrom = block.getLeftFrom();
 		for (baseLineIndex++; baseLineIndex < baseFrom; baseLineIndex++) {
-			writeLineAndEol(result, baseLines[baseLineIndex]);
+			writeLine(result, baseLines[baseLineIndex], baseLineIndex == baseLines.length - 1);
 		}
 
 		for (int changedLineIndex = block.getRightFrom(); changedLineIndex <= block.getRightTo(); changedLineIndex++) {
-			writeLineAndEol(result, changedLines[changedLineIndex]);
+			writeLine(result, changedLines[changedLineIndex], changedLineIndex == changedLines.length - 1);
 		}
 
 		baseLineIndex = block.getLeftTo();
@@ -185,7 +184,7 @@ public class FSMergerBySequence {
 		final int maxBaseTo = Math.max(localEnd.getLeftTo(), latestEnd.getLeftTo());
 
 		for (baseLineIndex++; baseLineIndex < minBaseFrom; baseLineIndex++) {
-			writeLineAndEol(result, baseLines[baseLineIndex]);
+			writeLine(result, baseLines[baseLineIndex], baseLineIndex == baseLines.length - 1);
 		}
 
 		final int localFrom = Math.max(0, localStart.getRightFrom() - (localStart.getLeftFrom() - minBaseFrom));
@@ -195,43 +194,33 @@ public class FSMergerBySequence {
 
 		writeBytesAndEol(result, myConflictStart);
 		for (int index = localFrom; index <= localTo; index++) {
-            if (index < localTo) {
-                writeLineAndEol(result, localLines[index]);                
-            } else {
-                writeLine(result, localLines[index]);
-            }
+			writeLine(result, localLines[index], index == localLines.length - 1);
 		}
 		writeBytesAndEol(result, myConflictSeparator);
 		for (int index = latestFrom; index <= latestTo; index++) {
-            if (index < latestTo) {
-                writeLineAndEol(result, latestLines[index]);
-            } else {
-                writeLine(result, latestLines[index]);
-            }
+			writeLine(result, latestLines[index], index == latestLines.length - 1);
 		}
 		writeBytesAndEol(result, myConflictEnd);
 
 		return maxBaseTo;
 	}
 
-    private void writeLineAndEol(OutputStream os, SVNSequenceLine line) throws IOException {
-        final byte[] bytes = line.getBytes();
-        writeBytesAndEol(os, bytes);
-    }
-
-    private void writeLine(OutputStream os, SVNSequenceLine line) throws IOException {
-        final byte[] bytes = line.getBytes();
-        if (bytes.length > 0) {
-            os.write(bytes);
-        }
-    }
-
-	private void writeBytesAndEol(OutputStream os, final byte[] bytes) throws IOException {
+	private void writeLine(OutputStream os, SVNSequenceLine line, boolean lastLine) throws IOException {
+		final byte[] bytes = line.getBytes();
 		if (bytes.length == 0) {
 			return;
 		}
-		
+
 		os.write(bytes);
-		os.write(eolBytes);
+		if (!lastLine) {
+			os.write(eolBytes);
+		}
+	}
+
+	private void writeBytesAndEol(OutputStream os, final byte[] bytes) throws IOException {
+		if (bytes.length > 0) {
+			os.write(bytes);
+			os.write(eolBytes);
+		}
 	}
 }
