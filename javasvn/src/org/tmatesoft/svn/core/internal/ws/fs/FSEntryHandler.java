@@ -58,6 +58,7 @@ public class FSEntryHandler {
                 value = value.replaceAll("&lt;", "<");
                 value = value.replaceAll("&gt;", ">");
                 value = value.replaceAll("&quot;", "\"");
+                value = value.replaceAll("&apos;", "'");
                 value = value.replaceAll("&#09;", "\t");
                 attrs.put(FSEntry.ENTRY_PREFIX + name, value);
                 if (line.endsWith("/>")) {
@@ -107,6 +108,7 @@ public class FSEntryHandler {
             value = value.replaceAll("<", "&lt;");
             value = value.replaceAll(">", "&gt;");
             value = value.replaceAll("\"", "&quot;");
+            value = value.replaceAll("'", "&apos;");
             value = value.replaceAll("\t", "&#09;");
             os.write(value);
             os.write("\"");
