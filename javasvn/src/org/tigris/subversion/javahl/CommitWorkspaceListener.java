@@ -8,6 +8,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.SVNUtil;
 
 
 class CommitWorkspaceListener extends SVNWorkspaceAdapter {
@@ -47,6 +48,7 @@ class CommitWorkspaceListener extends SVNWorkspaceAdapter {
 			} else if (SVNProperty.KIND_FILE.equals(nodeKindStr)) {
 				nodeKind = NodeKind.file;
 			}
+            path = SVNUtil.getAbsolutePath(myWorkspace, path);
 			myNotify.onNotify(path, updateKind, nodeKind, mimeType,
 					0, 0, 0);
 		} catch (SVNException e) {
