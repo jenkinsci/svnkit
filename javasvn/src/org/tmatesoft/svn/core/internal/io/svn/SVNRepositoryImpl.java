@@ -123,16 +123,18 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     public SVNNodeKind checkPath(String path, long revision) throws SVNException {
-        Object[] buffer = new Object[] { "check-path", path, getRevisionObject(revision) };
         try {
             openConnection();
+            path = getRepositoryPath(path);
+            Object[] buffer = new Object[] { "check-path", path, getRevisionObject(revision) };
             write("(w(s(n)))", buffer);
             authenticate();
             read("[(W)]", buffer);
+
+            return SVNNodeKind.parseKind((String) buffer[0]);
         } finally {
             closeConnection();
         }
-        return SVNNodeKind.parseKind((String) buffer[0]);
     }
 
     public int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException {
