@@ -1,34 +1,33 @@
 package org.tmatesoft.svn.core.internal.io.svn;
 
-import java.io.File;
+import java.io.FilterInputStream;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.Socket;
-import java.net.UnknownHostException;
 
 import org.tmatesoft.svn.core.io.ISVNCredentials;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
-import org.tmatesoft.svn.core.io.ISVNSSHCredentials;
 import org.tmatesoft.svn.core.io.SVNAuthenticationException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.SVNUtil;
 
 import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SocketFactory;
 import com.jcraft.jsch.UserInfo;
 
 /**
  * @author Marc Strapetz
+ * @author alex
  */
 public class SVNJSchConnector implements ISVNConnector {
 
-    private Session mySession;
-    private ChannelExec myChannel;
+    private static final String CHANNEL_TYPE = "exec";
+	private static final String SVNSERVE_COMMAND = "svnserve --tunnel";
+	
+	private ChannelExec myChannel;
     private InputStream myInputStream;
     private OutputStream myOutputStream;
 
@@ -38,112 +37,90 @@ public class SVNJSchConnector implements ISVNConnector {
             throw new SVNException("Credentials provider is required for SSH connection");
         }
         provider.reset();
-
         final String host = repository.getLocation().getHost();
         final int port = repository.getLocation().getPort();
 
         ISVNCredentials credentials = SVNUtil.nextCredentials(provider, repository.getLocation(), null);
         SVNAuthenticationException lastException = null;
+        Session session = null;
+        
         while (credentials != null) {
             try {
-                connect(host, port, credentials);
+            	session = SVNJSchSession.getSession(repository.getLocation(), credentials);
+            	if (session != null && !session.isConnected()) {
+            		session = null;
+            		continue;
+            	}
                 provider.accepted(credentials);
+                lastException = null;
                 break;
             } catch (SVNAuthenticationException e) {
+            	if (session != null && session.isConnected()) {
+            		DebugLog.log("DISCONNECTING: " + session);
+            		session.disconnect();
+            		session = null;
+            	}
                 lastException = e;
                 credentials = SVNUtil.nextCredentials(provider, repository.getLocation(), e.getMessage());
             }
         }
-
-        if (credentials == null) {
+        if (lastException != null || session == null) {
             if (lastException != null) {
                 throw lastException;
             }
             throw new SVNAuthenticationException("Can't establish SSH connection without credentials");
         }
         repository.setCredentials(credentials);
-
         long start;
         try {
-            myChannel = (ChannelExec) mySession.openChannel("exec");
-            myInputStream = myChannel.getInputStream();
-            myOutputStream = myChannel.getOutputStream();
-
-            String command = "svnserve -t";
-            myChannel.setCommand(command);
-            DebugLog.log("JSCH command: " + command);
-            myChannel.setErrStream(System.err);
-
-            start = System.currentTimeMillis();
-            myChannel.connect();
-            DebugLog.log("SSH2 channel.connect(): " + (System.currentTimeMillis() - start));
-        } catch (JSchException e) {
-            throw new SVNException(e);
-        } catch (IOException e) {
-            throw new SVNException(e);
-        }
-    }
-
-    private void connect(String host, int port, ISVNCredentials credentials) throws SVNException {
-        JSch jsch = createJSch();
-        String userName = credentials.getName();
-        String password = credentials.getPassword();
-        String privateKey = null;
-        String passphrase = null;
-        if (credentials instanceof ISVNSSHCredentials) {
-            privateKey = ((ISVNSSHCredentials) credentials).getPrivateKeyID();
-            passphrase = ((ISVNSSHCredentials) credentials).getPassphrase();
-            
-        }
-        try {
-            if (privateKey != null) {
-                File keyFile = new File(privateKey);
-                if (keyFile.exists() && keyFile.isFile()) {
-                    if (passphrase != null) {
-                        jsch.addIdentity(privateKey, passphrase);
-                    } else {
-                        jsch.addIdentity(privateKey);
-                    }
-                }
+            int retry = 1;
+            while(true) {
+	            myChannel = (ChannelExec) session.openChannel(CHANNEL_TYPE);
+	            String command = SVNSERVE_COMMAND;
+	            myChannel.setCommand(command);
+	            
+	            myOutputStream = myChannel.getOutputStream();
+	            myInputStream = myChannel.getInputStream();
+	
+	            DebugLog.log("JSCH command: " + command);
+	            start = System.currentTimeMillis();
+            	try {
+		            myChannel.connect();
+            	} catch (JSchException e) {
+            		retry--;
+            		if (retry < 0) {
+            			throw new SVNException(e);
+            		}
+            		if (session.isConnected()) {
+            			session.disconnect();
+            		}
+            		continue;
+            	}
+	            break;
             }
-            mySession = jsch.getSession(userName, host, port);
-        } catch (JSchException e) {
-            e.printStackTrace();
+        } catch (Throwable e) {
+        	close();
+        	if (session.isConnected()) {
+        		session.disconnect();
+        	}
             throw new SVNException(e);
         }
-        mySession.setSocketFactory(new SocketFactory() {
-            public Socket createSocket(String h, int p) throws IOException, UnknownHostException {
-                return org.tmatesoft.svn.util.SocketFactory.createPlainSocket(h, p);
-            }
-
-            public InputStream getInputStream(Socket socket) throws IOException {
-                return socket.getInputStream();
-            }
-
-            public OutputStream getOutputStream(Socket socket) throws IOException {
-                return socket.getOutputStream();
-            }
-        });
-        mySession.setUserInfo(new EmptyUserInfo(password, passphrase));
-        long start = System.currentTimeMillis();
-        try {
-            mySession.connect();
-        } catch (JSchException e) {
-            mySession.disconnect();
-            throw new SVNAuthenticationException(e);
-        }
-        DebugLog.log("SSH2 jsch.connect(): " + (System.currentTimeMillis() - start));
+        
+		myInputStream = new FilterInputStream(myInputStream) {
+			public void close() throws IOException {
+			}
+		};
+		myOutputStream = new FilterOutputStream(myOutputStream) {
+			public void close() throws IOException {
+			}
+		};
     }
 
     public void close() throws SVNException {
         if (myChannel != null) {
-            myChannel.disconnect();
-        }
-        if (mySession != null) {
-            mySession.disconnect();
+        	myChannel.disconnect();
         }
         myChannel = null;
-        mySession = null;
         myOutputStream = null;
         myInputStream = null;
     }
@@ -154,10 +131,6 @@ public class SVNJSchConnector implements ISVNConnector {
 
     public OutputStream getOutputStream() throws IOException {
         return myOutputStream;
-    }
-
-    private JSch createJSch() {
-        return new JSch();
     }
 
     private static class EmptyUserInfo implements UserInfo {

@@ -19,7 +19,9 @@ import java.util.List;
 import org.tmatesoft.svn.core.io.ISVNCredentials;
 import org.tmatesoft.svn.core.io.SVNAuthenticationException;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.*;
+import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.LoggingInputStream;
+import org.tmatesoft.svn.util.LoggingOutputStream;
 
 /**
  * @author Alexander Kitaev
@@ -142,7 +144,7 @@ class SVNConnection {
         try {
             return SVNReader.parse(getInputStream(), template, items);
         } finally {
-		        getInputStream().log();
+		    getInputStream().log();
         }
     } 
 
@@ -150,7 +152,7 @@ class SVNConnection {
         try {
             SVNWriter.write(getOutputStream(), template, items);
         } finally {
-		        getOutputStream().log();
+		    getOutputStream().log();
         }
     }
 
