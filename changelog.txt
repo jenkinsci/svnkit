@@ -1,3 +1,10 @@
+= version 1.0.0 build 20041221
+
++ when using svn+ssh JavaSVN takes private key path from the java property,
+  if it is not defined explicitly
++ svn+ssh bugfixes
++ bugfixes
+
 = version 1.0.0 build 20041219
 
 + infinite loop on commits that includes workspace root fixed

@@ -88,9 +88,10 @@ existing <code>svnClientAdapter.jar</code> file.</li>
 connection. This library supports only SSH version 2, with password or private key authentication. Using 
 password authentication is not a problem with Subclipse, but currently it doesn't provide a way to define 
 private key and passphrase for private key authentication. You may use the following properties to let JavaSVN
-know about your private key and passphrase (you need to provide these properties values when starting Eclipse): </p>
-<pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; width: 40em; background-color: #eee;">
-$ eclipse -vmargs -Djavasvn.ssh2.key=/path/to/private/key/file -Djavasvn.ssh2.passphrase=optionalPassphrase
+know about your private key and passphrase (you need to provide these properties when starting Eclipse): </p>
+<pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; width: 43em; background-color: #eee;">
+$ eclipse -vmargs -Djavasvn.ssh2.key=/path/to/private/key/file \
+-Djavasvn.ssh2.passphrase=optionalPassphrase
 </pre>
 <br/>
 <p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
