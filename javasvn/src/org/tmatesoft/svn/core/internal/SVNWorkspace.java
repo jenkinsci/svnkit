@@ -681,22 +681,10 @@ public class SVNWorkspace implements ISVNWorkspace {
             ISVNEntry entry = locateEntry(paths[i]);
             if (entry == null || !entry.isManaged()) {
                 throw new SVNException("'" + paths[i] + "' is not under version control");
-            } else if (entry != null && entry.getPropertyValue(SVNProperty.COPIED) != null) {
-				ISVNEntry parent = entry;
-				while(parent != null) {
-					if (parent.isScheduledForAddition()) {
-						break;
-					} else if (parent.getPropertyValue(SVNProperty.COPIED) != null) {
-						parent = locateParentEntry(entry.getPath());
-						continue;
-					}
-					parent = null;
-					break;
-				}
-				if (parent == null) {
-					throw new SVNException("'" + entry.getPath() + "' is marked as 'copied' but is not itself scheduled for addition. " +
+            } else if (entry != null && entry.getPropertyValue(SVNProperty.COPIED) != null &&
+                    !entry.isScheduledForAddition()) {
+				throw new SVNException("'" + entry.getPath() + "' is marked as 'copied' but is not itself scheduled for addition. " +
 					"Perhaps you're committing a target that is inside unversioned (or not-yet-versioned) directory?");
-				}
             }
         }
         String root = "";
