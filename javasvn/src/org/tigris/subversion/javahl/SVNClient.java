@@ -1296,7 +1296,24 @@ public class SVNClient implements SVNClientInterface {
         try {
             SVNRepository repository = createRepository(repos);
             long revNumber = getRevisionNumber(revision, repository, ws, wsPath);
-            repository.getFile(PathUtil.tail(path), revNumber, null, bos);
+            // if file doesn't exists at revision, use log to get copied file if exists.
+            path = PathUtil.tail(path);
+            if (repository.checkPath(path, revNumber) != SVNNodeKind.FILE) {
+                String fullPath = PathUtil.append(repository.getLocation().getPath(), path);
+                if (!"/".equals(repository.getRepositoryRoot())) {
+                    fullPath = fullPath.substring(PathUtil.removeTrailingSlash(repository.getRepositoryRoot()).length());
+                }
+                Collection logEntries = repository.log(new String[] {path}, null, -1, revNumber, true, false);
+                for (Iterator entries = logEntries.iterator(); entries.hasNext();) {
+                    SVNLogEntry entry = (SVNLogEntry) entries.next();
+                    SVNLogEntryPath pathEntry = (SVNLogEntryPath) entry.getChangedPaths().get(fullPath);
+                    if (pathEntry.getCopyPath() != null) {
+                        fullPath = pathEntry.getCopyPath();
+                    }
+                }
+                path = fullPath;
+            }
+            repository.getFile(path, revNumber, null, bos);
         } catch (SVNException e) {
             throwException(e);
         }
