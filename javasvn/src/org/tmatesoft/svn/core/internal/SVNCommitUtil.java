@@ -182,12 +182,15 @@ public class SVNCommitUtil {
             String copyFromURL = root.getPropertyValue(SVNProperty.COPYFROM_URL);
             long copyFromRevision = -1;
             if (copyFromURL != null) {
-                copyFromURL = SVNRepositoryLocation.parseURL(copyFromURL).toString();
+                copyFromURL = SVNRepositoryLocation.parseURL(copyFromURL).toCanonicalForm();
                 copyFromRevision = Long.parseLong(root.getPropertyValue(SVNProperty.COPYFROM_REVISION));
+                DebugLog.log("copyfrom path:" + copyFromURL);
+                DebugLog.log("parent's url: " + url);
                 copyFromURL = copyFromURL.substring(url.length());
                 if (!copyFromURL.startsWith("/")) {
                     copyFromURL = "/" + copyFromURL;
                 }
+                DebugLog.log("copyfrom path:" + copyFromURL);
             }
             editor.addDir(path, copyFromURL, copyFromRevision);
             root.sendChangedProperties(editor);
@@ -255,7 +258,7 @@ public class SVNCommitUtil {
                     String copyFromURL = child.getPropertyValue(SVNProperty.COPYFROM_URL);
                     long copyFromRevision = -1;
                     if (copyFromURL != null) {
-                        copyFromURL = SVNRepositoryLocation.parseURL(copyFromURL).toString();
+                        copyFromURL = SVNRepositoryLocation.parseURL(copyFromURL).toCanonicalForm();
                         copyFromRevision = Long.parseLong(child.getPropertyValue(SVNProperty.COPYFROM_REVISION));
                         DebugLog.log("copyfrom path:" + copyFromURL);
                         DebugLog.log("parent's url: " + url);

@@ -115,6 +115,17 @@ public class SVNRepositoryLocation {
         myAsString = sb.toString();
         return sb.toString();
     }
+    
+    public String toCanonicalForm() {
+        StringBuffer sb = new StringBuffer();
+        sb.append(myProtocol);
+        sb.append("://");
+        sb.append(PathUtil.encode(myHost));
+        sb.append(':');
+        sb.append(myPort);
+        sb.append(myPath);
+        return sb.toString();
+    }
 
     private static int getDefaultPort(String protocol) {
         if ("http".equals(protocol)) {
