@@ -63,7 +63,8 @@ class SVNStatusUtil {
                 String name = (String) names.next();
                 SVNStatus status = (SVNStatus) statuses.get(name);
                 if (status == null) {
-                    if (!includeIgnored && entry.asDirectory().isIgnored(name)) {
+                    if (!includeIgnored && (entry.asDirectory().getChild(name) == null && entry.asDirectory().isIgnored(name))) {
+                        // only unmanaged ignores should be skipped
                         continue;
                     }
                     doStatus(ws, entry.asDirectory(), editor, handler, PathUtil.append(path, name), externals, true,
