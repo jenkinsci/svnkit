@@ -21,6 +21,42 @@ import de.regnis.q.sequence.media.*;
  */
 public class QSequenceDifferenceBlockShifter {
 
+	// Static =================================================================
+
+	public static void joinBlocks(List blocks) {
+		QSequenceDifferenceBlock lastBlock = null;
+		for (int index = 0; index < blocks.size();) {
+			final QSequenceDifferenceBlock block = (QSequenceDifferenceBlock)blocks.get(index);
+			if (lastBlock == null) {
+				index++;
+				lastBlock = block;
+				continue;
+			}
+
+			QSequenceAssert.assertTrue(lastBlock.getLeftTo() < block.getLeftFrom());
+			QSequenceAssert.assertTrue(lastBlock.getRightTo() < block.getRightFrom());
+
+			if (lastBlock.getLeftTo() + 1 != block.getLeftFrom()) {
+				QSequenceAssert.assertTrue(lastBlock.getRightTo() != block.getRightFrom() + 1);
+				lastBlock = block;
+				index++;
+				continue;
+			}
+
+			if (lastBlock.getRightTo() + 1 != block.getRightFrom()) {
+				QSequenceAssert.assertTrue(lastBlock.getLeftTo() != block.getLeftFrom() + 1);
+				lastBlock = block;
+				index++;
+				continue;
+			}
+
+			lastBlock.setLeftTo(block.getLeftTo());
+			lastBlock.setRightTo(block.getRightTo());
+			blocks.remove(index);
+			continue;
+		}
+	}
+
 	// Fields =================================================================
 
 	private final QSequenceMedia media;
@@ -46,7 +82,7 @@ public class QSequenceDifferenceBlockShifter {
 		joinBlocks(blocks);
 
 		for (int index = 0; index < blocks.size();) {
-			if (tryShiftUp(blocks, index)) {
+			if (tryShiftUp(blocks, index, true)) {
 				continue;
 			}
 
@@ -62,43 +98,7 @@ public class QSequenceDifferenceBlockShifter {
 		}
 	}
 
-	// Utils ==================================================================
-
-	private static void joinBlocks(List blocks) {
-		QSequenceDifferenceBlock lastBlock = null;
-		for (int index = 0; index < blocks.size();) {
-			final QSequenceDifferenceBlock block = (QSequenceDifferenceBlock)blocks.get(index);
-			if (lastBlock == null) {
-				index++;
-				lastBlock = block;
-				continue;
-			}
-
-			QSequenceAssert.assertTrue(lastBlock.getLeftTo() < block.getLeftFrom());
-			QSequenceAssert.assertTrue(lastBlock.getRightTo() < block.getRightFrom());
-
-			if (lastBlock.getLeftTo() != block.getLeftFrom() + 1) {
-				QSequenceAssert.assertTrue(lastBlock.getRightTo() != block.getRightFrom() + 1);
-				lastBlock = block;
-				index++;
-				continue;
-			}
-
-			if (lastBlock.getRightTo() != block.getRightFrom() + 1) {
-				QSequenceAssert.assertTrue(lastBlock.getLeftTo() != block.getLeftFrom() + 1);
-				lastBlock = block;
-				index++;
-				continue;
-			}
-
-			lastBlock.setLeftTo(block.getLeftTo());
-			lastBlock.setRightTo(block.getRightTo());
-			blocks.remove(index);
-			continue;
-		}
-	}
-
-	private boolean tryShiftUp(List blocks, int blockIndex) throws QSequenceCancelledException {
+	public boolean tryShiftUp(List blocks, int blockIndex, boolean requireMerge) throws QSequenceCancelledException {
 		if (blockIndex == 0) {
 			return false;
 		}
@@ -124,11 +124,11 @@ public class QSequenceDifferenceBlockShifter {
 
 		while (leftFrom > prevLeftTo + 1) {
 			if (leftFrom <= leftTo && !comparer.equalsLeft(leftFrom - 1, leftTo)) {
-				return false;
+				break;
 			}
 
 			if (rightFrom <= rightTo && !comparer.equalsRight(rightFrom - 1, rightTo)) {
-				return false;
+				break;
 			}
 
 			leftFrom--;
@@ -137,15 +137,28 @@ public class QSequenceDifferenceBlockShifter {
 			rightTo--;
 		}
 
-		prevBlock.setLeftTo(prevBlock.getLeftTo() + (leftTo - leftFrom + 1));
-		prevBlock.setRightTo(prevBlock.getRightTo() + (rightTo - rightFrom + 1));
-		blocks.remove(blockIndex);
+		if (leftFrom > prevLeftTo + 1) {
+			if (requireMerge) {
+				return false;
+			}
+
+			block.setLeftFrom(leftFrom);
+			block.setLeftTo(leftTo);
+			block.setRightFrom(rightFrom);
+			block.setRightTo(rightTo);
+		}
+		else {
+			prevBlock.setLeftTo(prevBlock.getLeftTo() + (leftTo - leftFrom + 1));
+			prevBlock.setRightTo(prevBlock.getRightTo() + (rightTo - rightFrom + 1));
+			blocks.remove(blockIndex);
+		}
+
 		return true;
 	}
 
-	private boolean tryShiftDown(List blocks, int blockIndex) throws QSequenceCancelledException {
+	public boolean tryShiftDown(List blocks, int blockIndex) throws QSequenceCancelledException {
 		final QSequenceDifferenceBlock nextBlock = blockIndex < blocks.size() - 1
-		        ? (QSequenceDifferenceBlock)blocks.get(blockIndex + 1) : null;
+		    ? (QSequenceDifferenceBlock)blocks.get(blockIndex + 1) : null;
 		final QSequenceDifferenceBlock block = (QSequenceDifferenceBlock)blocks.get(blockIndex);
 
 		final int nextLeftFrom = nextBlock != null ? nextBlock.getLeftFrom() : media.getLeftLength();

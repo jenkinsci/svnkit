@@ -13,8 +13,6 @@ package de.regnis.q.sequence;
 
 import junit.framework.*;
 
-import de.regnis.q.sequence.media.*;
-
 /**
  * @author Marc Strapetz
  */
