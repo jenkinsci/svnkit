@@ -35,7 +35,7 @@ class SVNPromptCredentialsProvider implements ISVNCredentialsProviderEx {
 				userName = prompt3.getUsername();
 				password = prompt3.getPassword();
 			}
-		} else if (!myPrompt.prompt(realm, System.getProperty("user.name"))) {
+		} else if (!myPrompt.prompt(realm, userName)) {
 			return null;
 		}
 		return new SVNSimpleCredentialsProvider.SimpleCredentials(userName, password
