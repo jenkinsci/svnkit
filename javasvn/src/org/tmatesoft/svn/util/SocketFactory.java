@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.util;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -27,11 +28,41 @@ import org.tmatesoft.svn.core.internal.io.dav.IDAVSSLManager;
 public class SocketFactory {
 	
 	public static Socket createPlainSocket(String host, int port) throws IOException {
-		return new Socket(createAddres(host), port);
+        int attempts = 3;
+        while(true) {
+            try {
+                return new Socket(createAddres(host), port);
+            } catch (ConnectException timeOut) {
+                if (timeOut.getMessage().indexOf("time") >= 0) {
+                    attempts--;
+                    DebugLog.log("SOCKET: attempting to reconnect... (" + attempts + ")");
+                    if (attempts <= 0) {
+                        throw timeOut;
+                    }
+                    continue;                    
+                }
+                throw timeOut;
+            }
+        }
 	}
 
 	public static Socket createSSLSocket(IDAVSSLManager manager, String host, int port) throws IOException {
-		return manager.getSSLContext(host, port).getSocketFactory().createSocket(createAddres(host), port);
+        int attempts = 3;
+        while(true) {
+            try {
+                return manager.getSSLContext(host, port).getSocketFactory().createSocket(createAddres(host), port);
+            } catch (ConnectException timeOut) {
+                if (timeOut.getMessage().indexOf("time") >= 0) {
+                    attempts--;
+                    DebugLog.log("SOCKET: attempting to reconnect... (" + attempts + ")");
+                    if (attempts <= 0) {
+                        throw timeOut;
+                    }
+                    continue;                    
+                }
+                throw timeOut;
+            }
+        }
 	}
 	
 	private static InetAddress createAddres(String hostName) throws UnknownHostException {
