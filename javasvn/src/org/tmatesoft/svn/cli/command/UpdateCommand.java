@@ -62,7 +62,7 @@ public class UpdateCommand extends SVNCommand {
                         contents = ' ';
                     }
     
-                    if (propertiesStatus == SVNStatus.MODIFIED) {
+                    if (propertiesStatus == SVNStatus.UPDATED) {
                         properties = 'U';
                     } else if (propertiesStatus == SVNStatus.CONFLICTED) {
                         properties = 'C';
