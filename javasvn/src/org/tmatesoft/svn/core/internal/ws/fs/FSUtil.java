@@ -42,6 +42,52 @@ public class FSUtil {
         String osName = System.getProperty("os.name");
         isWindows = osName != null && osName.toLowerCase().indexOf("windows") >= 0;
     }
+    
+    public static boolean isSymlink(File file) {
+        if (isWindows || file == null) {
+            return false;
+        }
+        if (!file.exists()) {
+            // may be a "broken" symlink.
+            File parent = file.getParentFile();
+            String[] children = parent.list();
+            if (children != null) {
+                for(int i = 0; i < children.length; i++) {
+                    if (children[i].equals(file.getName())) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        try {
+            return !file.getAbsolutePath().equals(file.getCanonicalPath());
+        } catch (IOException e) {            
+        }
+        return false;
+    }
+    
+    public static boolean isFileOrSymlinkExists(File file) {
+        if (file == null) {
+            return false;
+        }
+        if (isWindows) {
+            return file.exists();
+        }
+        if (!file.exists()) {
+            File parent = file.getParentFile();
+            String[] children = parent.list();
+            if (children != null) {
+                for(int i = 0; i < children.length; i++) {
+                    if (children[i].equals(file.getName())) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        return true;
+    }
 
     public static void setHidden(File file, boolean hidden) {
         if (!isWindows || file == null || !file.exists() || file.isHidden()) {

@@ -69,7 +69,8 @@ public abstract class FSEntry implements ISVNEntry {
     }
     
     public boolean isMissing() throws SVNException {
-        return !getRootEntry().getWorkingCopyFile(this).exists() && !isScheduledForDeletion();
+        File file = getRootEntry().getWorkingCopyFile(this);
+        return FSUtil.isFileOrSymlinkExists(file) && !isScheduledForDeletion();
     }
     
     public String getPath() {
@@ -427,11 +428,7 @@ public abstract class FSEntry implements ISVNEntry {
         if (wcFile == null) {
             return false;
         }
-        try {
-            return !wcFile.getCanonicalPath().equals(wcFile.getAbsolutePath());
-        } catch (IOException e) {
-        }
-        return false;
+        return !FSUtil.isSymlink(wcFile);
     }
     
     protected FSAdminArea getAdminArea() {
