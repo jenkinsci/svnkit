@@ -978,7 +978,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             if (toCopyParent == null || !toCopyParent.isDirectory()) {
                 throw new SVNException("'" + source + "' is not under version control");
             }
-            if (sourceEntry == null || !sourceEntry.isDirectory()) {
+            if (sourceEntry == null) {
                 throw new SVNException("'" + source + "' is not under version control");
             }
             
