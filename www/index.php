@@ -2,7 +2,7 @@
 
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
-
+<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="http://tmate.org/svn/rss2.php" />
 <style>
 html body {
     margin: 0px;
@@ -88,7 +88,8 @@ To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/js
 <tbody>
 
 <tr><td width="20%"><h5>Download</h5></td>
-<td align="right" width="80%"><a style="text-decoration: none" href="rss.xml"><span style="font-family:Arial;font-size:9px;background: #ff6000;color: #fff;padding: 0 4px">rss&nbsp;1.0</span></td>
+<td align="right" width="80%"><a style="text-decoration: none" href="rss.xml"><span style="font-family:Arial;font-size:9px;background: #ff6000;color: #fff;padding: 0 4px">rss&nbsp;1.0</span>
+<a style="text-decoration: none" href="rss2.xml"><span style="font-family:Arial;font-size:9px;background: #ff6000;color: #fff;padding: 0 4px">rss&nbsp;2.0</span></td>
 </tr>
 
 <?
