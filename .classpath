@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry kind="lib" path="contrib/jsch/jsch.jar"/>
+	<classpathentry kind="lib" path="contrib/junit/junit.jar"/>
 	<classpathentry output="javasvn/bin" kind="src" path="javasvn/src"/>
 	<classpathentry output="javasvn-eclipse/bin" kind="src" path="javasvn-eclipse/org.tmatesoft.javasvn/src"/>
 	<classpathentry output="javasvn-test/bin" kind="src" path="javasvn-test/src"/>
@@ -8,9 +10,5 @@
 	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src-test"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="var" path="ECLIPSE_HOME/plugins/org.eclipse.core.runtime_3.1.0/runtime.jar"/>
-	<classpathentry kind="var" path="ECLIPSE_HOME/plugins/org.eclipse.osgi_3.1.0/osgi.jar"/>
-	<classpathentry kind="lib" path="contrib/junit/junit.jar"/>
-	<classpathentry kind="lib" path="contrib/jsch/jsch.jar"/>
 	<classpathentry kind="output" path="javasvn/bin"/>
 </classpath>
