@@ -45,6 +45,7 @@ public class PythonTests {
             // 3. run python tests.
             String pythonLauncher = properties.getProperty("python.launcher");
             String testSuite = properties.getProperty("python.tests.suite");
+            String options = properties.getProperty("python.tests.options", ""); 
             for(StringTokenizer tests = new StringTokenizer(testSuite, ","); tests.hasMoreTokens();) {
                 String testFile = tests.nextToken();
                 testFile = testFile.trim();                
@@ -59,6 +60,7 @@ public class PythonTests {
                         testFile,
                         "-v",
                         "--url=svn://localhost",
+                        options,
                         testNumber,
                 };      
                 System.out.println("RUNNING PYTHON TESTS: " + testFile + " " + testNumber);
