@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.io.SVNAnnotate;
 import org.tmatesoft.svn.util.DebugLog;
 
 /**
@@ -151,6 +152,24 @@ public abstract class SVNRepository {
         });
         return result;        
     }
+	
+	public void annotate(String path, long startRevision, long endRevision, ISVNAnnotateHandler handler) throws SVNException {
+		if (handler == null) {
+			return;
+		}
+		if (endRevision < 0 || endRevision < 0) {
+			long lastRevision = getLatestRevision();
+			startRevision = startRevision < 0 ? lastRevision : startRevision;
+			endRevision = endRevision < 0 ? lastRevision : endRevision;
+		} 
+		SVNAnnotate annotate = new SVNAnnotate();
+		annotate.setAnnotateHandler(handler);
+		try {
+			getFileRevisions(path, startRevision, endRevision, annotate);
+		} finally {
+			annotate.dispose();
+		}
+	}
     
     /* edit-mode methods */
     
