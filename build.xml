@@ -246,7 +246,7 @@
 
     <target name="deploy" depends="clean,deploy-library,deploy-eclipse,deploy-snapshot" />
 
-    <target name="test-java" depends="compile-tests">
+    <target name="test-java" depends="init-environment,compile-tests">
         <copy file="javasvn-test/test.${os}.properties"
               tofile="javasvn-test/test.properties"
               failonerror="false"
@@ -269,7 +269,7 @@
         </java>
     </target>
 
-    <target name="test-python" depends="build-library,build-cli">
+    <target name="test-python" depends="init-environment,build-library,build-cli">
         <copy file="javasvn-test/test.${os}.properties"
               tofile="javasvn-test/test.properties"
               failonerror="false"
@@ -290,6 +290,7 @@
         <path id="python.classpath">
             <pathelement path="build/lib/javasvn.jar" />
             <pathelement path="build/lib/javasvn-cli.jar" />
+            <pathelement path="contrib/junit/junit.jar" />
             <pathelement path="javasvn-test/bin" />
         </path>
 

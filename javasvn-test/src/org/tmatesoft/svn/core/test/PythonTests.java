@@ -12,10 +12,22 @@
 
 package org.tmatesoft.svn.core.test;
 
-import java.io.*;
-import java.util.*;
-import java.util.logging.*;
-import org.tmatesoft.svn.util.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.logging.Level;
+
+import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.
