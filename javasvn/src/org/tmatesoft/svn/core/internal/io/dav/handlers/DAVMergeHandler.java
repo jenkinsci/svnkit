@@ -101,7 +101,7 @@ public class DAVMergeHandler extends BasicDAVHandler {
                 myCommitInfo = new SVNCommitInfo(myRevision, myAuthor, myCommitDate);
             } else {
                 String path = (String) myPathsMap.get(myRepositoryPath);
-                if (path != null) {
+                if (path != null && myMediator != null) {
                     myMediator.setWorkspaceProperty(path, "svn:wc:ra_dav:version-url", myVersionPath);
                 } 
             }
