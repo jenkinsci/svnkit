@@ -1,6 +1,7 @@
 <?
 include($_SERVER["DOCUMENT_ROOT"] . "/svn/feed/feedcreator.class.php");
 include($_SERVER["DOCUMENT_ROOT"] . "/svn/feed/rss_util.php");
+include($_SERVER["DOCUMENT_ROOT"] . "/stat/counter.php");
 
 $cacheFile = $_SERVER["DOCUMENT_ROOT"] . "/svn/feed/rss20.cache";
 
@@ -22,7 +23,7 @@ $rss->editor = "TMate Software";
 $rss->authorEmail = "support@tmatesoft.com"; 
 $rss->editorEmail = "support@tmatesoft.com"; 
 
-$repository = "http://80.188.80.120/svn/jsvn/tags/";
+$repository = "http://72.9.228.230/svn/jsvn/tags/";
 $contents = read_contents($repository);
 if (!$contents) {
    echo $rss->createFeed();

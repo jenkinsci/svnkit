@@ -46,6 +46,9 @@ li {
 }
 </style><!-- base href="http://tmate.org/svn/" --></head>
 <body style="width: 800px;">
+
+<!--#include virtual="../stats/stats.php" -->
+
 <div  style="width: 800px;">
 <small><a id="normal" href="/svn/">Home</a>&nbsp;::&nbsp;Documentation&nbsp;::&nbsp;For&nbsp;Subclipse&nbsp;Users</small>
 <h4>How to make Subclipse (0.9.24) use JavaSVN library</h4>
@@ -75,7 +78,8 @@ easy steps to make Subclipse and JavaSVN work together:</p>
 </div></li>
 <li>If you would like not to install svn libraries at all, you may also use patched svnClientAdater.jar that doesn't 
 check for existense of the native svn libraries. You may download it at <a id="normal" href="http://tmate.org/svn/svnClientAdapter.jar">http://tmate.org/svn/svnClientAdapter.jar</a>.<br/>
-Download and put this file into ECLIPSE_HOME/plugins/org.tigris.subversion.subclipse.core_0.9.24/ directory</li>
+Download and put this file into ECLIPSE_HOME/plugins/org.tigris.subversion.subclipse.core_0.9.24/ directory in place of
+existing <code>svnClientAdapter.jar</code> file.</li>
 <li>To make Eclipse accept modifications, delete ECLIPSE_HOME/configuration directory and restart Eclipse.</li>
 <li>When new version of JavaSVN will become available, just replace older version javasvn.jar file with the newer one.</li>
 </ul>

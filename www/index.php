@@ -42,6 +42,10 @@ ul {
 </style><!-- base href="http://tmate.org/svn/" --></head>
 <body>
 
+<? 
+include ("../stats/stats.php"); 
+?>
+
 <table style="font-size: 120%;" width="800">
 <tbody><tr><td align="center"><h3 style="padding:0px; margin:0px;">Pure Java Subversion (SVN) Client Library</h3></td></tr>
 <tr><td align="center"><small><i>The only pure java subversion client library in the world!</i></small></td></tr>
@@ -76,9 +80,9 @@ and problem support. If you're interested in professional JavaSVN support, pleas
 <a id="normal" href="subclipse.html">For&nbsp;Subclipse&nbsp;Users</a><br/>
 <a id="normal" href="javadoc/index.html">JavaDoc</a>
 <h5>Repository</h5>
-To browse source code visit <a id="normal" href="http://80.188.80.120:8080/svn/jsvn/">http://80.188.80.120:8080/svn/jsvn/</a>
+To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/jsvn/">http://72.9.228.230:8080/svn/jsvn/</a>
 <br />To get the latest source code use the following command:
-<pre style="margin: 4px; padding: 0.5em; font-size: 100%; width: 40em; background-color: #eee;">$ svn co http://80.188.80.120:8080/svn/jsvn/trunk/ javasvn</pre>
+<pre style="margin: 4px; padding: 0.5em; font-size: 100%; width: 40em; background-color: #eee;">$ svn co http://72.9.228.230:8080/svn/jsvn/trunk/ javasvn</pre>
 </div>
 <table width="800">
 <tbody>

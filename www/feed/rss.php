@@ -15,7 +15,7 @@ $rss->editor = "TMate Software";
 $rss->authorEmail = "support@tmatesoft.com"; 
 $rss->editorEmail = "support@tmatesoft.com"; 
 
-$repository = "http://80.188.80.120/svn/jsvn/tags/";
+$repository = "http://72.9.228.230/svn/jsvn/tags/";
 $contents = read_contents($repository);
 if (!$contents) {
    echo $rss->createFeed();
@@ -23,7 +23,7 @@ if (!$contents) {
 }
 
 $items = publish_rss20($repository, $contents, "http://tmate.org/svn/");
-for($i = 0; $i < count($items); $i++) {
+for($i = count($items); $i >=0 && $i > count($items) - 5; $i--) {
 
      $item = $items[$i];
 
