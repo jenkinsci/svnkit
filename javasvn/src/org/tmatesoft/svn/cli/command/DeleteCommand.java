@@ -12,24 +12,23 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.*;
-import org.tmatesoft.svn.cli.*;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.io.*;
-import org.tmatesoft.svn.util.*;
+import java.io.PrintStream;
+
+import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.
  */
-public class AddCommand extends LocalModificationCommand {
+public class DeleteCommand extends LocalModificationCommand {
 
 	protected void run(final PrintStream out, PrintStream err, final ISVNWorkspace workspace, String relativePath) throws SVNException {
-		boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
-		workspace.add(relativePath, false, recursive);
+		workspace.delete(relativePath);
 	}
 
 	protected void log(PrintStream out, String relativePath) {
-		DebugLog.log("A  " + relativePath);
-		out.println("A  " + relativePath);
+		DebugLog.log("D  " + relativePath);
+		out.println("D  " + relativePath);
 	}
 }

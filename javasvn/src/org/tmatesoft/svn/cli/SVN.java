@@ -47,7 +47,7 @@ public class SVN {
                 System.exit(1);
             }
             String commandName = commandLine.getCommandName();
-            DebugLog.log("command name: " + commandName);
+            DebugLog.log("COMMAND NAME: " + commandName + " ========================================== ");
             SVNCommand command = SVNCommand.getCommand(commandName);
             DebugLog.log("command: " + command);
     

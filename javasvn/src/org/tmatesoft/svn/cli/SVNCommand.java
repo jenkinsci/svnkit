@@ -111,6 +111,9 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] {"add"}, "org.tmatesoft.svn.cli.command.AddCommand");
         ourCommands.put(new String[] {"commit", "ci"}, "org.tmatesoft.svn.cli.command.CommitCommand");
         ourCommands.put(new String[] {"update", "up"}, "org.tmatesoft.svn.cli.command.UpdateCommand");
+	      ourCommands.put(new String[] {"delete", "rm", "remove", "del"}, "org.tmatesoft.svn.cli.command.DeleteCommand");
+	      ourCommands.put(new String[] {"revert"}, "org.tmatesoft.svn.cli.command.RevertCommand");
+	      ourCommands.put(new String[] {"mkdir"}, "org.tmatesoft.svn.cli.command.MkDirCommand");
     }
     
 }
