@@ -150,13 +150,13 @@ class HttpConnection {
                 sendHeader(method, path, header, requestBody);
                 readHeader.clear();
                 status = readHeader(readHeader);
+	            logOutputStream();
             } catch (IOException e) {
+	            logOutputStream();
                 close();
                 acknowledgeSSLContext(false);
                 throw new SVNException(e);
-            } finally {
-	            logOutputStream();
-            }
+            } 
             acknowledgeSSLContext(true);
             if (status != null
                     && (status.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED || status.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN)) {
@@ -430,8 +430,11 @@ class HttpConnection {
         while (is.skip(2048) > 0) {}
     }
 
-    private LoggingOutputStream getOutputStream() throws IOException {
+    private LoggingOutputStream getOutputStream() throws IOException {    	
         if (myOutputStream == null) {
+        	if (mySocket == null) {
+        		return null;
+        	}
             myOutputStream = DebugLog.getLoggingOutputStream("http", new BufferedOutputStream(mySocket.getOutputStream()));
         }
         return myOutputStream;
@@ -439,6 +442,9 @@ class HttpConnection {
 
     private InputStream getInputStream() throws IOException {
         if (myInputStream == null) {
+        	if (mySocket == null) {
+        		return null;
+        	}
             myInputStream = new BufferedInputStream(mySocket.getInputStream());
         }
         return myInputStream;
@@ -552,7 +558,9 @@ class HttpConnection {
 
 	private void logOutputStream() {
 		try {
-			getOutputStream().log();
+			if (getOutputStream() != null) {
+				getOutputStream().log();
+			}
 		} catch (IOException ex) {
 		}
 	}
