@@ -578,6 +578,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             if (entry == null || !entry.isManaged()) {
                 throw new SVNException("'" + paths[i] + "' is not under version control");
             }
+            /*
             if (entry.getPropertyValue(SVNProperty.COPIED) != null && !entry.isScheduledForAddition()) {
                 throw new SVNException("'" + entry.getPath() + "' is marked as 'copied' but is not itself scheduled for addition. " +
                         "Perhaps you're committing a target that is inside unversioned (or not-yet-versioned) directory?");
@@ -588,7 +589,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                 if (entry == null || entry.isScheduledForAddition()) {
                     throw new SVNException("'" + p + "' is not under version control");
                 }
-            }
+            }*/
         }
         String root = PathUtil.getCommonRoot(paths);
         if (root == null) {
