@@ -218,7 +218,7 @@ class SVNReader {
                     String value = null;
                     // may not be there
                     InputStream is2 = new RollbackInputStream(is);
-                    is2.mark(0x20);
+                    is2.mark(0x100);
                     try {
                         value = readString(is2);
                     } catch (SVNException exception) {
@@ -228,6 +228,26 @@ class SVNReader {
                         } catch (IOException e1) {
                         }
                     } 
+                    readChar(is, ')');
+                    result = new String[] {name, value};
+                } else if (ch == 'z') {
+                    readChar(is, '(');
+                    String name = readString(is);
+                    String value = null;
+                    // may not be there
+					readChar(is, '(');
+                    InputStream is2 = new RollbackInputStream(is);
+                    is2.mark(0x100);
+                    try {
+                        value = readString(is2);
+                    } catch (SVNException exception) {
+                        try {
+                            value = null;
+                            is2.reset();
+                        } catch (IOException e1) {
+                        }
+                    } 
+					readChar(is, ')');
                     readChar(is, ')');
                     result = new String[] {name, value};
                 } else if (ch == 'w') {
@@ -330,7 +350,7 @@ class SVNReader {
     private static final char[] VALID_TEMPLATE_CHARS = {'(', ')', '[', ']', // groups 
             's', 'w', 'b', 'i', 'n', 't', 'p', // items
             'd', 'f', 'l', 'a', 'r', 'e', 'x', // command-specific
-            '?', '*'};
+            '?', '*', 'z'};
     private static final char[] INVALID_CARDINALITY_SUBJECTS = {'(', ')', '[', ']', '?', '*', '<'};
     
     private static Object[] reportResult(Object[] target, int index, Object result, boolean multiple) {
