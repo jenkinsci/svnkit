@@ -12,9 +12,14 @@
                 <available file="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0/runtime.jar"
                            property="eclipse.runtime.jar"
                 />
+                <or>
+                <available file="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0/core.jar"
+                           property="eclipse.osgi.jar"
+                />
                 <available file="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0/osgi.jar"
                            property="eclipse.osgi.jar"
                 />
+                </or>
             </and>
         </condition>
 
@@ -59,6 +64,7 @@
             <pathelement path="build/lib/javasvn.jar" />
             <pathelement path="build/lib/jsch.jar" />
             <pathelement path="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0/runtime.jar" />
+            <pathelement path="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0/core.jar" />
             <pathelement path="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0/osgi.jar" />
         </path>
 
