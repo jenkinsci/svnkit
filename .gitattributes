@@ -41,6 +41,7 @@ www/feed/rss.php eol=lf
 www/feed/rss_util.php eol=lf
 www/index.php eol=lf
 www/license.html eol=lf
+www/logging.html eol=lf
 www/plugin.xml eol=lf
 www/rss.php eol=lf
 www/rss2.php eol=lf

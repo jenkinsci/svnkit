@@ -71,6 +71,7 @@ and problem support. If you're interested in professional JavaSVN support, pleas
 <center><nobr><h5>JavaSVN Users</h5></nobr></center>
 <ul style="padding: 0px; margin: 0px; padding-left: 1em; list-style-type:none; border-width: 0 0 0 1px; border-style: dashed; border-color:#669999;">
 <li><b><a id="normal" href="http://tmatesoft.com/">TMate</a></b><br />Subversion tracking and reporting tool</li>
+<li><a id="normal" href="http://smartcvs.com/smartsvn/index.html">SmartSVN</a><br />Standalone Pure Java Subversion GUI Client</li>
 <li><a id="normal" href="http://intellij.net/index.jsp">IntelliJ IDEA 5.0 (EAP)</a><br />Java IDE developed by <a id="normal" href="http://jetbrains.com/">JetBrains</a></li>
 <li><a id="normal" href="http://subclipse.tigris.org/">Subclipse</a><br /> Eclipse Subversion plugin (<a id="normal" href="subclipse.html">details</a>)</li>
 </ul>
@@ -91,15 +92,15 @@ what features are planned, but not yet implemented.
 <h5>License</h5>
 <a id="normal" href="license.html">Licence&nbsp;Agreement</a>&nbsp;(BSD-like)
 <h5>Documentation</h5>
-<a id="normal" href="usage.html">How&nbsp;to&nbsp;Use</a><br/>
+<a id="normal" href="usage.html">How&nbsp;to&nbsp;Use (for developers)</a><br/>
 <a id="normal" href="build.html">Build&nbsp;Instructions</a><br/>
 <a id="normal" href="subclipse.html">For&nbsp;Subclipse&nbsp;(and&nbsp;svnant)&nbsp;Users</a><br/>
 <a id="normal" href="ant.html">Using&nbsp;JavaSVN&nbsp;with&nbsp;Ant</a><br/>
 <a id="normal" href="javadoc/index.html">JavaDoc</a>
 <h5>Issue Tracker</h5>
 Use the following link to view JavaSVN issues or submit a new one:
-<a id="normal" href="http://tmate.org/tracker/">JavaSVN Issue Tracker</a> 
-<br/>(powered by <a id="normal" href="http://www.mantisbt.org">Mantis Bug Tracker</a>)
+<a id="normal" href="http://tmate.org/tracker/">JavaSVN Issue Tracker</a>.<br/> 
+Please read <a href="logging.html">documentation chapter</a> on how to get JavaSVN log before submitting a bug report. 
 <h5>Repository</h5>
 To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/jsvn/">http://72.9.228.230:8080/svn/jsvn/</a>
 <br />To get the latest source code use the following command:
