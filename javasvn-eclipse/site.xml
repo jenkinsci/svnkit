@@ -1,20 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<site url=".">
+<?xml version="1.0" encoding="UTF-8" ?>
+<site>
     <description url="http://tmate.org/svn/">
        TMate Sofware Eclipse Plugins Update Site
     </description>
  
 	<feature id="org.tmatesoft.javasvn"
 	         patch="false"
-	         url="features/org.tmatesoft.javasvn_%javasvn.version%.jar"
-	         version="%javasvn.version%">
+	         url="features/org.tmatesoft.javasvn_0.8.3.jar"
+	         version="0.8.3">
        <category name="JavaSVN Library"/>
 	</feature>
 
 	<feature id="org.tmatesoft.javasvn.subclipse"
 	         patch="false"
-	         url="features/org.tmatesoft.javasvn.subclipse_%javasvn.version%.jar"
-	         version="%javasvn.version%">
+	         url="features/org.tmatesoft.javasvn.subclipse_0.8.3.jar"
+	         version="0.8.3">
        <category name="JavaSVN Subclipse Extension"/>
 	</feature>
 
