@@ -790,6 +790,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 
             Map tree = new HashMap();
             String url = SVNCommitUtil.buildCommitTree(modified, tree);
+            String rootEntryPath = SVNCommitUtil.getRootEntryPath(modified); 
             for (Iterator treePaths = tree.keySet().iterator(); treePaths.hasNext();) {
                 String treePath = (String) treePaths.next();
                 if (tree.get(treePath) != null) {
@@ -799,13 +800,15 @@ public class SVNWorkspace implements ISVNWorkspace {
                 }
             }
             DebugLog.log("COMMIT ROOT RECALCULATED: " + url);
+            DebugLog.log("ROOT ENTRY PATH: " + rootEntryPath);
             DebugLog.log("COMMIT PREPARATIONS TOOK: " + (System.currentTimeMillis() - start) + " ms.");
 
             SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
             SVNRepository repository = SVNRepositoryFactory.create(location);
             repository.setCredentialsProvider(getCredentialsProvider());
+            
 
-            ISVNEditor editor = repository.getCommitEditor(message, new SVNWorkspaceMediatorAdapter(getRoot(), tree));
+            ISVNEditor editor = repository.getCommitEditor(message, new SVNWorkspaceMediatorAdapter(getRoot(), rootEntryPath));
             String host = location.getProtocol() + "://" + location.getHost() + ":" + location.getPort();
             String rootURL = PathUtil.append(host, repository.getRepositoryRoot());
             try {

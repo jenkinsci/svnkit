@@ -76,12 +76,13 @@ class DAVResource {
     public String getVersionURL() throws SVNException {
         // do fetch from server if empty...
         if (myVURL == null) {
-//            if (!force) {
-//                myVURL = myMediator.getWorkspaceProperty(myPath, "svn:wc:ra_dav:version-url");
-//                if (myVURL != null) {
-//                    return myVURL;
-//                }
-//            }
+            if (myMediator != null) {
+                myVURL = myMediator.getWorkspaceProperty(myPath, "svn:wc:ra_dav:version-url");
+                DebugLog.log("cached vURL for " + myPath + " : " + myVURL);
+                if (myVURL != null) {
+                    return myVURL;
+                }
+            }
             String path = myURL;
             if (myRevision >= 0) {
                 // get baseline collection url for revision from public url.
