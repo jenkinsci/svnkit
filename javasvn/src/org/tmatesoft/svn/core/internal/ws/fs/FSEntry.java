@@ -428,6 +428,12 @@ public abstract class FSEntry implements ISVNEntry {
         if (wcFile == null) {
             return false;
         }
+        if (FSUtil.isWindows) {
+            if (!getName().equals(wcFile.getName()) &&
+                    getName().equalsIgnoreCase(wcFile.getName())) {
+                return true;
+            }
+        }
         return FSUtil.isSymlink(wcFile);
     }
     
