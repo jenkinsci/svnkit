@@ -2,6 +2,10 @@
 
 + bugfixes
 
+= version 1.0.0 build 20041216
+
++ bugfixes
+
 = version 1.0.0 build 20041211
 
 + command line svn client (status, import, checkout are implemented)
