@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.ISVNEntryContent;
 import org.tmatesoft.svn.core.ISVNFileEntry;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.FileTypeUtil;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -253,6 +254,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 }
                 if (child.getPropertyValue(SVNProperty.REVISION) == null) {
                     // missing child that was deleted.
+                    DebugLog.log("MERGING: MISSING ENTRY DELETED: " + child.getPath());
                     deleteChild(child.getName(), true);
                     continue;
                 }

@@ -20,6 +20,7 @@ import java.util.Stack;
 import org.tmatesoft.svn.core.ISVNDirectoryEntry;
 import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.ISVNFileEntry;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
@@ -65,6 +66,7 @@ public class SVNCheckoutEditor2 implements ISVNEditor {
     
     public void addDir(String path, String copyPath, long copyRevision) throws SVNException {
         ISVNEntry newDir = getCurrentEntry().addDirectory(PathUtil.tail(path), -1);
+        newDir.setPropertyValue(SVNProperty.REVISION, "0");
         myStack.push(newDir);
     }
     public void openDir(String path, long revision) throws SVNException {
@@ -85,6 +87,7 @@ public class SVNCheckoutEditor2 implements ISVNEditor {
     }
     public void addFile(String path, String copyPath, long copyRevision) throws SVNException {
         myCurrentFile = getCurrentEntry().addFile(PathUtil.tail(path), -1);
+        myCurrentFile.setPropertyValue(SVNProperty.REVISION, "0");
     }
     public void openFile(String path, long revision) throws SVNException {
         String name = PathUtil.tail(path);
