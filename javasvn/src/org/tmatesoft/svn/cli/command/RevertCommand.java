@@ -20,7 +20,6 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.SVNUtil;
 
 /**
@@ -28,28 +27,24 @@ import org.tmatesoft.svn.util.SVNUtil;
  */
 public class RevertCommand extends SVNCommand {
 
-	public final void run(final PrintStream out, PrintStream err) throws SVNException {
-		final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
-		for (int i = 0; i < getCommandLine().getPathCount(); i++) {
-			final String absolutePath = getCommandLine().getPathAt(i);
-			final String workspacePath = absolutePath;
-			final ISVNWorkspace workspace = createWorkspace(absolutePath);
-			workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
-				public void modified(String path, int kind) {
-					try {
-						path = convertPath(workspacePath, workspace, path);
-					}
-					catch (IOException e) {
-					}
+    public final void run(final PrintStream out, PrintStream err) throws SVNException {
+        final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
+        for (int i = 0; i < getCommandLine().getPathCount(); i++) {
+            final String absolutePath = getCommandLine().getPathAt(i);
+            final String workspacePath = absolutePath;
+            final ISVNWorkspace workspace = createWorkspace(absolutePath);
+            workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
+                public void modified(String path, int kind) {
+                    try {
+                        path = convertPath(workspacePath, workspace, path);
+                    } catch (IOException e) {}
 
-					DebugLog.log("Reverted '" + path + "'");
-					out.println("Reverted '" + path + "'");
-				}
-			});
+                    println(out, "Reverted '" + path + "'");
+                }
+            });
 
-			final String relativePath = SVNUtil.getWorkspacePath(workspace, absolutePath);
-			DebugLog.log("Workspace/path is '" + workspace.getID() + "'/'" + relativePath + "'");
-			workspace.revert(relativePath, recursive);
-		}
-	}
+            final String relativePath = SVNUtil.getWorkspacePath(workspace, absolutePath);
+            workspace.revert(relativePath, recursive);
+        }
+    }
 }

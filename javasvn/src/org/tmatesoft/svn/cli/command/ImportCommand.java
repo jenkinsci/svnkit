@@ -43,8 +43,7 @@ public class ImportCommand extends SVNCommand {
                 try {
                     committedPath = convertPath(homePath, workspace, committedPath);
                 } catch (IOException e) {}
-                DebugLog.log("Adding " + committedPath);
-                out.println("Adding " + committedPath);
+                println(out, "Adding " + committedPath);
             }
         });
         SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);

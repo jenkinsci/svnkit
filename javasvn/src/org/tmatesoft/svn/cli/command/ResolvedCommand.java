@@ -12,7 +12,6 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -21,39 +20,30 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
  */
-public class PropsetCommand extends SVNCommand {
+public class ResolvedCommand extends SVNCommand {
 
-    public final void run(final PrintStream out, PrintStream err) throws SVNException {
-        final String propertyName = getCommandLine().getPathAt(0);
-        final String propertyValue = getCommandLine().getPathAt(1);
+    public void run(final PrintStream out, PrintStream err) throws SVNException {
         final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
-
-        for (int i = 2; i < getCommandLine().getPathCount(); i++) {
+        for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
-            final ISVNWorkspace workspace = createWorkspace(absolutePath, false);
+            final ISVNWorkspace workspace = createWorkspace(absolutePath);
             workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
                 public void modified(String path, int kind) {
                     try {
                         path = convertPath(absolutePath, workspace, path);
                     } catch (IOException e) {}
 
-                    println(out, "property '" + propertyName + "' set on '" + path + "'");
+                    println(out, "Resolved conflicted state of  '" + path + "'");
                 }
             });
 
-            final String relativePath = SVNUtil.getWorkspacePath(workspace, new File(absolutePath).getAbsolutePath());
-            try {
-                workspace.setPropertyValue(relativePath, propertyName, propertyValue, recursive);
-                DebugLog.log("property set");
-            } catch (SVNException e) {
-                DebugLog.error(e);
-            }
+            final String relativePath = SVNUtil.getWorkspacePath(workspace, absolutePath);
+            workspace.markResolved(relativePath, recursive);
         }
     }
 }

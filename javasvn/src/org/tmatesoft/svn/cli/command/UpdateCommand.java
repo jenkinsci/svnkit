@@ -30,23 +30,19 @@ import org.tmatesoft.svn.util.SVNUtil;
 public class UpdateCommand extends SVNCommand {
 
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
-        for(int i = 0; i < getCommandLine().getPathCount(); i++) {
+        for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             String path = getCommandLine().getPathAt(i);
             final ISVNWorkspace workspace = createWorkspace(path, true);
-            long revision = -1;
-            if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
-                String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
-                revision = Long.parseLong(revStr);
-            }
+            long revision = parseRevision(getCommandLine());
             final String homePath = path;
-            final boolean[] changesReceived = new boolean[] {false};
+            final boolean[] changesReceived = new boolean[] { false };
             workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
                 public void updated(String updatedPath, int contentsStatus, int propertiesStatus, long rev) {
                     try {
                         updatedPath = convertPath(homePath, workspace, updatedPath);
                     } catch (IOException e) {
                         DebugLog.error(e);
-                        
+
                     }
                     char contents = 'U';
                     char properties = ' ';
@@ -61,7 +57,7 @@ public class UpdateCommand extends SVNCommand {
                     } else if (contentsStatus == SVNStatus.NOT_MODIFIED) {
                         contents = ' ';
                     }
-    
+
                     if (propertiesStatus == SVNStatus.UPDATED) {
                         properties = 'U';
                     } else if (propertiesStatus == SVNStatus.CONFLICTED) {
@@ -75,14 +71,12 @@ public class UpdateCommand extends SVNCommand {
                     out.println(contents + "" + properties + ' ' + updatedPath);
                 }
             });
-    
+
             revision = workspace.update(SVNUtil.getWorkspacePath(workspace, path), revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             if (!changesReceived[0]) {
-                DebugLog.log("At revision " + revision + ".");
-                out.println("At revision " + revision + ".");
+                println(out, "At revision " + revision + ".");
             } else {
-                DebugLog.log("Updated to revision " + revision + ".");
-                out.println("Updated to revision " + revision + ".");
+                println(out, "Updated to revision " + revision + ".");
             }
         }
     }

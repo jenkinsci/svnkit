@@ -21,12 +21,19 @@ import org.tmatesoft.svn.util.PathUtil;
  * @author Alexander Kitaev
  */
 public class SVNRepositoryLocation {
-    
+
     private String myPath;
     private final String myHost;
     private final int myPort;
     private final String myProtocol;
     private String myAsString;
+
+    public static boolean equals(SVNRepositoryLocation location1, SVNRepositoryLocation location2) {
+        if (location1 == null || location2 == null) {
+            return location1 == location2;
+        } 
+        return location1.toString().equals(location2.toString());
+    }
 
     public static SVNRepositoryLocation parseURL(String location) throws SVNException {
         if (location == null) {
@@ -40,7 +47,7 @@ public class SVNRepositoryLocation {
         location = "http" + location.substring(protocol.length());
         URL url = null;
         try {
-            url = new URL(location); 
+            url = new URL(location);
         } catch (MalformedURLException e) {
             throw new SVNException("malformed url " + location);
         }
@@ -67,31 +74,33 @@ public class SVNRepositoryLocation {
         throw new SVNException("malformed url " + location);
     }
 
-    
     public SVNRepositoryLocation(String protocol, String host, int port, String path) {
         myHost = host;
         myProtocol = protocol;
         myPort = port;
-        myPath = path;        
+        myPath = path;
         if (myPath.endsWith("/")) {
             myPath = myPath.substring(0, myPath.length() - "/".length());
         }
         myPath = PathUtil.encode(myPath);
     }
-    
+
     public String getProtocol() {
         return myProtocol;
     }
+
     public String getHost() {
         return myHost;
     }
+
     public String getPath() {
         return myPath;
     }
+
     public int getPort() {
         return myPort;
     }
-    
+
     public String toString() {
         if (myAsString != null) {
             return myAsString;
@@ -108,7 +117,7 @@ public class SVNRepositoryLocation {
         myAsString = sb.toString();
         return sb.toString();
     }
-    
+
     private static int getDefaultPort(String protocol) {
         if ("http".equals(protocol)) {
             return 80;

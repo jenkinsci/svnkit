@@ -33,21 +33,20 @@ import org.tmatesoft.svn.util.SVNUtil;
  */
 public class MoveCommand extends SVNCommand {
 
-	public void run(PrintStream out, PrintStream err) throws SVNException {
-		if (getCommandLine().hasURLs()) {
-			runRemote(out);
-		}
-		else {
-			runLocally(out);
-		}
-	}
+    public void run(PrintStream out, PrintStream err) throws SVNException {
+        if (getCommandLine().hasURLs()) {
+            runRemote(out);
+        } else {
+            runLocally(out);
+        }
+    }
 
-	private void runRemote(PrintStream out) throws SVNException {
+    private void runRemote(PrintStream out) throws SVNException {
         String srcPath = getCommandLine().getURL(0);
         String destPath = getCommandLine().getURL(1);
-		String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
-        
-        String root = PathUtil.getCommonRoot(new String[] {destPath, srcPath});
+        String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
+
+        String root = PathUtil.getCommonRoot(new String[] { destPath, srcPath });
         SVNRepository repository = createRepository(root);
         long revNumber = -1;
         String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
@@ -57,7 +56,7 @@ public class MoveCommand extends SVNCommand {
             } catch (NumberFormatException e) {
                 revNumber = -1;
             }
-        }        
+        }
         if (revNumber < 0) {
             revNumber = repository.getLatestRevision();
         }
@@ -67,7 +66,7 @@ public class MoveCommand extends SVNCommand {
         destPath = PathUtil.removeLeadingSlash(destPath);
         destPath = PathUtil.decode(destPath);
         deletePath = PathUtil.decode(deletePath);
-        
+
         ISVNEditor editor = repository.getCommitEditor(message, null);
         try {
             editor.openRoot(-1);
@@ -77,10 +76,10 @@ public class MoveCommand extends SVNCommand {
             editor.closeDir();
             DebugLog.log("deleting: " + deletePath + " at " + revNumber);
             editor.deleteEntry(deletePath, revNumber);
-            
+
             editor.closeDir();
             SVNCommitInfo info = editor.closeEdit();
-            
+
             out.println();
             out.println("Committed revision " + info.getNewRevision() + ".");
         } catch (SVNException e) {
@@ -91,34 +90,31 @@ public class MoveCommand extends SVNCommand {
             }
             throw e;
         }
-	}
+    }
 
-	private void runLocally(final PrintStream out) throws SVNException {
-		if (getCommandLine().getPathCount() != 2) {
-			throw new SVNException("Please enter SRC and DST path");
-		}
+    private void runLocally(final PrintStream out) throws SVNException {
+        if (getCommandLine().getPathCount() != 2) {
+            throw new SVNException("Please enter SRC and DST path");
+        }
 
-		final String absolutePath = getCommandLine().getPathAt(0);
-		final ISVNWorkspace workspace = createWorkspace(absolutePath);
-		workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
-			public void modified(String path, int kind) {
-				try {
-					path = convertPath(absolutePath, workspace, path);
-				}
-				catch (IOException e) {
-				}
+        final String absolutePath = getCommandLine().getPathAt(0);
+        final ISVNWorkspace workspace = createWorkspace(absolutePath);
+        workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
+            public void modified(String path, int kind) {
+                try {
+                    path = convertPath(absolutePath, workspace, path);
+                } catch (IOException e) {}
 
-				final String kindString = (kind == SVNStatus.ADDED ? "A" : "D");
+                final String kindString = (kind == SVNStatus.ADDED ? "A" : "D");
 
-				DebugLog.log(kindString + "  " + path);
-				out.println(kindString + "  " + path);
-			}
-		});
+                println(out, kindString + "  " + path);
+            }
+        });
 
-		final String srcPath = SVNUtil.getWorkspacePath(workspace, getCommandLine().getPathAt(0));
-		final String dstTempPath = SVNUtil.getWorkspacePath(workspace, getCommandLine().getPathAt(1));
-		final SVNStatus status = workspace.status(dstTempPath, false);
-		final String dstPath = status != null && status.isDirectory() ? PathUtil.append(dstTempPath, PathUtil.tail(srcPath)) : dstTempPath;
-		workspace.copy(srcPath, dstPath, true);
-	}
+        final String srcPath = SVNUtil.getWorkspacePath(workspace, getCommandLine().getPathAt(0));
+        final String dstTempPath = SVNUtil.getWorkspacePath(workspace, getCommandLine().getPathAt(1));
+        final SVNStatus status = workspace.status(dstTempPath, false);
+        final String dstPath = status != null && status.isDirectory() ? PathUtil.append(dstTempPath, PathUtil.tail(srcPath)) : dstTempPath;
+        workspace.copy(srcPath, dstPath, true);
+    }
 }

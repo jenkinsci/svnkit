@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
 
@@ -119,6 +120,27 @@ public abstract class SVNCommand {
         return result;
     }
 
+    protected final static long parseRevision(SVNCommandLine commandLine) {
+        if (commandLine.hasArgument(SVNArgument.REVISION)) {
+            final String revStr = (String) commandLine.getArgumentValue(SVNArgument.REVISION);
+            if (revStr.equalsIgnoreCase("HEAD")) {
+                return -1;
+            }
+            return Long.parseLong(revStr);
+        }
+        return -1;
+    }
+
+    protected final static void println(PrintStream out, String line) {
+        out.println(line);
+        DebugLog.log(line);
+    }
+
+    protected final static void println(PrintStream out) {
+        out.println();
+        DebugLog.log("");
+    }
+
     static {
         Locale.setDefault(Locale.ENGLISH);
 
@@ -137,6 +159,6 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "propset", "pset", "ps" }, "org.tmatesoft.svn.cli.command.PropsetCommand");
         ourCommands.put(new String[] { "proplist", "plist", "pl" }, "org.tmatesoft.svn.cli.command.ProplistCommand");
         ourCommands.put(new String[] { "info" }, "org.tmatesoft.svn.cli.command.InfoCommand");
+        ourCommands.put(new String[] { "resolved" }, "org.tmatesoft.svn.cli.command.ResolvedCommand");
     }
-
 }

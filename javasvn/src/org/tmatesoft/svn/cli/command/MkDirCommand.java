@@ -34,55 +34,75 @@ import org.tmatesoft.svn.util.SVNUtil;
  */
 public class MkDirCommand extends SVNCommand {
 
-	public final void run(final PrintStream out, PrintStream err) throws SVNException {
-        Collection paths = new ArrayList(); 
+    public final void run(final PrintStream out, PrintStream err) throws SVNException {
         if (!getCommandLine().hasURLs()) {
-            for(int i = 0; i < getCommandLine().getPathCount(); i++) {
-                paths.add(getCommandLine().getPathAt(i));
-            }
+            createLocalDirectories(out);
         } else {
-            for(int i = 0; i < getCommandLine().getURLCount(); i++) {
-                paths.add(getCommandLine().getURL(i));
-            }
+            createRemoteDirectories(out);
         }
-        String[] pathsArray = (String[]) paths.toArray(new String[paths.size()]);
+    }
+
+    private void createLocalDirectories(final PrintStream out) throws SVNException {
+        final Collection paths = new ArrayList();
+        for (int i = 0; i < getCommandLine().getPathCount(); i++) {
+            paths.add(getCommandLine().getPathAt(i));
+        }
+
+        final String[] pathsArray = (String[]) paths.toArray(new String[paths.size()]);
         final String root = PathUtil.getFSCommonRoot(pathsArray);
         DebugLog.log("MKDIR root: " + root);
-        if (getCommandLine().hasURLs()) {
-            String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
-            for(int i = 0; i < pathsArray.length; i++) {
-                String dir = pathsArray[i].substring(root.length());
-                dir = PathUtil.removeLeadingSlash(dir);
-                pathsArray[i] = dir;
+
+        final ISVNWorkspace ws = createWorkspace(root);
+        ws.addWorkspaceListener(new SVNWorkspaceAdapter() {
+            public void modified(String path, int kind) {
+                try {
+                    path = convertPath(root, ws, path);
+                } catch (IOException e) {}
+
+                println(out, "A  " + path);
             }
-            ISVNEditor editor = null;
-            SVNRepository repository = createRepository(root);
-            editor = repository.getCommitEditor(message, null);
+        });
+
+        for (int i = 0; i < pathsArray.length; i++) {
+            ws.add(SVNUtil.getWorkspacePath(ws, pathsArray[i]), true, false);
+        }
+    }
+
+    private void createRemoteDirectories(final PrintStream out) throws SVNException {
+        Collection urls = new ArrayList();
+        for (int i = 0; i < getCommandLine().getURLCount(); i++) {
+            urls.add(getCommandLine().getURL(i));
+        }
+
+        String[] urlsArray = (String[]) urls.toArray(new String[urls.size()]);
+        final String root = PathUtil.getFSCommonRoot(urlsArray);
+        DebugLog.log("MKDIR root: " + root);
+
+        String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
+        for (int i = 0; i < urlsArray.length; i++) {
+            String dir = urlsArray[i].substring(root.length());
+            dir = PathUtil.removeLeadingSlash(dir);
+            urlsArray[i] = dir;
+        }
+        ISVNEditor editor = null;
+        SVNRepository repository = createRepository(root);
+        editor = repository.getCommitEditor(message, null);
+
+        final SVNCommitInfo info;
+        try {
             editor.openRoot(-1);
-            for(int i = 0; i < pathsArray.length; i++) {
-                editor.addDir(PathUtil.decode(pathsArray[i]), null, -1);
-                editor.closeDir();
+            for (int i = 0; i < urlsArray.length; i++) {
+                final String path = PathUtil.decode(urlsArray[i]);
+                DebugLog.log(path);
+
+                editor.addDir(path, null, -1);
             }
             editor.closeDir();
-            SVNCommitInfo info = editor.closeEdit();
-            out.println();
-            out.println("Committed revision " + info.getNewRevision() + ".");
-        } else {
-            final ISVNWorkspace ws = createWorkspace(root);
-            ws.addWorkspaceListener(new SVNWorkspaceAdapter() {
-                public void modified(String path, int kind) {
-                    try {
-                        path = convertPath(root, ws, path);
-                    }
-                    catch (IOException e) {
-                    }
-                    DebugLog.log("A  " + path);
-                    out.println("A  " + path);
-                }
-            });
-            for(int i = 0; i < pathsArray.length; i++) {
-                ws.add(SVNUtil.getWorkspacePath(ws, pathsArray[i]), true, false);
-            }
+        } finally {
+            info = editor.closeEdit();
         }
-	}
+
+        println(out);
+        println(out, "Committed revision " + info.getNewRevision() + ".");
+    }
 }

@@ -20,7 +20,6 @@ import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.SVNUtil;
 
 /**
@@ -39,8 +38,7 @@ public class ProplistCommand extends SVNCommand {
         final ISVNWorkspace workspace = createWorkspace(absolutePath, false);
         final String relativePath = SVNUtil.getWorkspacePath(workspace, new File(absolutePath).getAbsolutePath());
 
-        DebugLog.log("Properties on '" + absolutePath + "':");
-        out.println("Properties on '" + absolutePath + "':");
+        println(out, "Properties on '" + absolutePath + "':");
         for (Iterator it = workspace.propertyNames(relativePath); it.hasNext();) {
             final String propertyName = (String) it.next();
             if (propertyName.startsWith("svn:entry:")) {
@@ -55,8 +53,7 @@ public class ProplistCommand extends SVNCommand {
                 line.append(workspace.getPropertyValue(relativePath, propertyName));
             }
 
-            DebugLog.log(line.toString());
-            out.println(line.toString());
+            println(out, line.toString());
         }
     }
 }

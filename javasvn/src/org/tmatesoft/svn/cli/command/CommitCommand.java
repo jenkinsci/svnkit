@@ -98,8 +98,7 @@ public class CommitCommand extends SVNCommand {
                 try {
                     committedPath = convertPath(homePath, workspace, committedPath);
                 } catch (IOException e) {}
-                DebugLog.log(verb + committedPath);
-                out.println(verb + committedPath);
+                println(out, verb + committedPath);
             }
         });
         long revision = workspace.commit(paths, message, recursive, false);
