@@ -288,6 +288,8 @@ class HttpConnection {
         sb.append(HttpConnection.CRLF);
 		sb.append("Host: ");
         sb.append(mySVNRepositoryLocation.getHost());
+        sb.append(":");
+        sb.append(mySVNRepositoryLocation.getPort());
         sb.append(HttpConnection.CRLF);
         sb.append("User-Agent: JavaSVN 1.0.0");
         sb.append(HttpConnection.CRLF);
