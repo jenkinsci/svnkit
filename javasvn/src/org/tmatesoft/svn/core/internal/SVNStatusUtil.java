@@ -216,7 +216,7 @@ class SVNStatusUtil {
             propStatus = SVNStatus.NOT_MODIFIED;
             
         }
-        if (isDirectory && SVNReporterBaton.isSwitched(parentURL, child)) {
+        if (SVNReporterBaton.isSwitched(parentURL, child)) {
             switched = true;
         }
         long revision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.COMMITTED_REVISION));

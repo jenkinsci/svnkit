@@ -174,5 +174,6 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "cat" }, "org.tmatesoft.svn.cli.command.CatCommand");
         ourCommands.put(new String[] { "ls" }, "org.tmatesoft.svn.cli.command.LsCommand");
         ourCommands.put(new String[] { "log" }, "org.tmatesoft.svn.cli.command.LogCommand");
+        ourCommands.put(new String[] { "switch", "sw" }, "org.tmatesoft.svn.cli.command.SwitchCommand");
     }
 }

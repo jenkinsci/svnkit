@@ -124,10 +124,8 @@ public class StatusCommand extends SVNCommand {
         } else {
             sb.append(" ");
         }
-        boolean b = false;
-        if (status.isSwitched() && b) {
+        if (status.isSwitched()) {
             sb.append("S");
-            return;
         }
         sb.append(" ");
         boolean detailed = getCommandLine().hasArgument(SVNArgument.SHOW_UPDATES) || getCommandLine().hasArgument(SVNArgument.VERBOSE);

@@ -84,7 +84,7 @@ public class FSEntryHandler extends DefaultHandler {
                 if (SVNProperty.UUID.equals(e.getKey()) && e.getValue().equals(parent.get(SVNProperty.UUID))) {
                     continue;
                 }
-                if (SVNProperty.URL.equals(e.getKey()) && parent != null) {
+                if (SVNProperty.URL.equals(e.getKey()) && e.getValue().equals(parent.get(SVNProperty.URL))) {
                     // do not save for files.
                     continue;
                 }

@@ -372,15 +372,16 @@ public class SVNWorkspace implements ISVNWorkspace {
             if (targetEntry == null) {
                 throw new SVNException("could not find directory '" + path + "'");
             }
+            String target = null;
             if (!targetEntry.isDirectory()) {
-                throw new SVNException("could not switch file '" + path + "' only directories could be switched");
+                target = targetEntry.getName();
+                targetEntry = locateParentEntry(targetEntry.getPath());
             }
-            // create repos!
             SVNRepository repository = SVNUtil.createRepository(this, targetEntry.getPath());
-            SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, targetEntry, false, null);
+            SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, targetEntry, false, target);
 
             ISVNReporterBaton reporterBaton = new SVNReporterBaton(targetEntry, null, recursive);
-            repository.update(url.toString(), revision, null, recursive, reporterBaton, editor);
+            repository.update(url.toString(), revision, target, recursive, reporterBaton, editor);
 
             if (myExternalsHandler != null) {
                 Collection paths = new HashSet();
@@ -401,12 +402,20 @@ public class SVNWorkspace implements ISVNWorkspace {
 
             // update urls.
             String newURL = url.toString();
-            targetEntry.setPropertyValue(SVNProperty.URL, newURL);
-            for (Iterator children = targetEntry.asDirectory().childEntries(); children.hasNext();) {
-                ISVNEntry child = (ISVNEntry) children.next();
-                updateURL(child, newURL, recursive);
+            if (target != null) {
+                targetEntry = locateEntry(path);
             }
-            targetEntry.save();
+            targetEntry.setPropertyValue(SVNProperty.URL, newURL);
+            DebugLog.log("setting new url for " + targetEntry.getPath() + " : " + newURL);
+            if (targetEntry.isDirectory()) {
+                for (Iterator children = targetEntry.asDirectory().childEntries(); children.hasNext();) {
+                    ISVNEntry child = (ISVNEntry) children.next();
+                    updateURL(child, newURL, recursive);
+                }
+                targetEntry.save();
+            } else {
+                locateParentEntry(path).save();
+            }
             if (targetEntry.equals(getRoot())) {
                 setLocation(url);
             }
