@@ -37,6 +37,8 @@ import org.tmatesoft.svn.util.TimeUtil;
  */
 public class SVNCommitUtil {
     
+    private static final String SVN_ENTRY_REPLACED = "svn:entry:replaced";
+    
     public static String buildCommitTree(Collection modifiedEntries, Map map) throws SVNException {
         map = map == null ? new HashMap() : map;
         ISVNEntry root = null;
@@ -71,7 +73,8 @@ public class SVNCommitUtil {
             if (map.size() == 1) {
                 ISVNEntry rootEntry = (ISVNEntry) map.get(urls[0]);
                 // if entry is already a folder, let it be root.
-                if (!rootEntry.isDirectory() || rootEntry.isScheduledForAddition() || rootEntry.isScheduledForDeletion()) {
+                if (!rootEntry.isDirectory() || rootEntry.isScheduledForAddition() || rootEntry.isScheduledForDeletion()
+                    || rootEntry.isPropertiesModified()) {
                     commonRoot = PathUtil.getCommonRoot(paths);
                 } else {
                     commonRoot = paths[0];
@@ -79,7 +82,7 @@ public class SVNCommitUtil {
             } else {
                 commonRoot = PathUtil.getCommonRoot(paths);
             }        
-            commonRoot = "".equals(commonRoot) ? host : host + "/" + commonRoot;
+            commonRoot = "".equals(commonRoot) ? host : PathUtil.append(host, commonRoot);
         } else {
             commonRoot = root.getPropertyValue(SVNProperty.URL);
             commonRoot = PathUtil.decode(commonRoot);
@@ -230,9 +233,13 @@ public class SVNCommitUtil {
             } else if (child.isScheduledForDeletion()) {
                 DebugLog.log("FILE DELETE: " + childPath);
                 child.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
-                editor.deleteEntry(childPath, revision);
-                ws.fireEntryCommitted(child, SVNStatus.DELETED);
-                DebugLog.log("FILE DELETE: DONE");
+                if (child.getPropertyValue(SVN_ENTRY_REPLACED) != null) {
+                    DebugLog.log("FILE NOT DELETED, PARENT WAS REPLACED");
+                } else {
+                    editor.deleteEntry(childPath, revision);
+                    ws.fireEntryCommitted(child, SVNStatus.DELETED);
+                    DebugLog.log("FILE DELETE: DONE");
+                }
             } else if (child.isDirectory()) {
                 doCommit(childPath, url, entries, editor, ws);
             } else {
@@ -332,7 +339,8 @@ public class SVNCommitUtil {
             parents.add(parent);
             if (entry.isScheduledForDeletion() && !entry.isScheduledForAddition()) {
                 DebugLog.log("UPDATE (delete): " + entry.getPath());
-                parent.asDirectory().deleteChild(entry.getName(), true);
+                boolean storeInfo = entry.getPropertyValue(SVN_ENTRY_REPLACED) == null;
+                parent.asDirectory().deleteChild(entry.getName(), storeInfo);
                 return;
             }
         }
@@ -362,6 +370,8 @@ public class SVNCommitUtil {
                     updateReplacementSchedule((ISVNEntry) children.next());
                 }
             }
+        } else if (SVNProperty.SCHEDULE_DELETE.equals(entry.getPropertyValue(SVNProperty.SCHEDULE))) {
+            entry.setPropertyValue(SVN_ENTRY_REPLACED, "true");
         }
     }
     

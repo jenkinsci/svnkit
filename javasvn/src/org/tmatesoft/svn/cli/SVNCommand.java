@@ -52,7 +52,10 @@ public abstract class SVNCommand {
     public abstract void run(PrintStream out, PrintStream err) throws SVNException;
 
     protected ISVNWorkspace createWorkspace(String absolutePath) throws SVNException {
-        ISVNWorkspace ws = SVNUtil.createWorkspace(absolutePath);
+        return createWorkspace(absolutePath, true);
+    }
+    protected ISVNWorkspace createWorkspace(String absolutePath, boolean root) throws SVNException {
+        ISVNWorkspace ws = SVNUtil.createWorkspace(absolutePath, root);
         ws.setCredentials(myUserName, myPassword);
         return ws;
     }
@@ -97,7 +100,7 @@ public abstract class SVNCommand {
         String absolutePath = SVNUtil.getAbsolutePath(ws, path);
         String absoluteHomePath = new File(homePath).getCanonicalPath();
 
-        if (".".equals(homePath)) {
+        if (".".equals(homePath) || new File(homePath).isAbsolute()) {
             homePath = "";
         }
 
@@ -122,10 +125,10 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] {"add"}, "org.tmatesoft.svn.cli.command.AddCommand");
         ourCommands.put(new String[] {"commit", "ci"}, "org.tmatesoft.svn.cli.command.CommitCommand");
         ourCommands.put(new String[] {"update", "up"}, "org.tmatesoft.svn.cli.command.UpdateCommand");
-	      ourCommands.put(new String[] {"delete", "rm", "remove", "del"}, "org.tmatesoft.svn.cli.command.DeleteCommand");
-	      ourCommands.put(new String[] {"revert"}, "org.tmatesoft.svn.cli.command.RevertCommand");
-	      ourCommands.put(new String[] {"mkdir"}, "org.tmatesoft.svn.cli.command.MkDirCommand");
-	      ourCommands.put(new String[] {"propset", "pset", "ps"}, "org.tmatesoft.svn.cli.command.PropsetCommand");
+	    ourCommands.put(new String[] {"delete", "rm", "remove", "del"}, "org.tmatesoft.svn.cli.command.DeleteCommand");
+	    ourCommands.put(new String[] {"revert"}, "org.tmatesoft.svn.cli.command.RevertCommand");
+	    ourCommands.put(new String[] {"mkdir"}, "org.tmatesoft.svn.cli.command.MkDirCommand");
+	    ourCommands.put(new String[] {"propset", "pset", "ps"}, "org.tmatesoft.svn.cli.command.PropsetCommand");
     }
 
 }

@@ -56,7 +56,6 @@ class SVNStatusUtil {
             return;
         }
         // descend
-        handleStatus(handler, dirStatus, includeUnmodified, includeIgnored);
         if (descend && dirStatus.getContentsStatus() != SVNStatus.OBSTRUCTED) {
             for(Iterator names = statuses.keySet().iterator(); names.hasNext();) {
                 String name = (String) names.next();
@@ -78,6 +77,7 @@ class SVNStatusUtil {
                 handleStatus(handler, status, includeUnmodified, includeIgnored);
             }
         }        
+        handleStatus(handler, dirStatus, includeUnmodified, includeIgnored);
     }
     
     private static void handleStatus(ISVNStatusHandler handler, SVNStatus status, boolean includeUnmodified, boolean includeIgnored) {
@@ -209,11 +209,15 @@ class SVNStatusUtil {
                 contentsStatus = SVNStatus.MODIFIED;
             }
         }  
+        if (contentsStatus == SVNStatus.ADDED || contentsStatus == SVNStatus.DELETED) {
+            propStatus = SVNStatus.NOT_MODIFIED;
+            
+        }
         if (isDirectory && SVNReporterBaton.isSwitched(parentURL, child)) {
             switched = true;
         }
-        long revision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.REVISION));
-        long wcRevision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.COMMITTED_REVISION));
+        long revision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.COMMITTED_REVISION));
+        long wcRevision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.REVISION));
         String author = child.getPropertyValue(SVNProperty.LAST_AUTHOR);
         SVNStatus status = new SVNStatus(child.getPath(), propStatus, contentsStatus, revision, wcRevision, history, switched, isDirectory, author);
         return status;

@@ -29,13 +29,13 @@ import org.tmatesoft.svn.util.DebugLog;
 public class CheckoutCommand extends SVNCommand {
 
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
-		    final String path = getCommandLine().getPathAt(0);
-		    final String url = getCommandLine().getURL(0);
+	    final String path = getCommandLine().getPathAt(0);
+	    final String url = getCommandLine().getURL(0);
 
-		    DebugLog.log("checkout url: " + url);
-		    DebugLog.log("checkout path: " + path);
+	    DebugLog.log("checkout url: " + url);
+	    DebugLog.log("checkout path: " + path);
 
-        final ISVNWorkspace workspace = createWorkspace(path);
+        final ISVNWorkspace workspace = createWorkspace(path, false);
         SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
         long revision = -1;
         if (getCommandLine().hasArgument(SVNArgument.REVISION)) {

@@ -12,6 +12,7 @@
 
 package org.tmatesoft.svn.cli.command;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -35,23 +36,28 @@ public class PropsetCommand extends SVNCommand {
 
 		for (int i = 2; i < getCommandLine().getPathCount(); i++) {
 			final String absolutePath = getCommandLine().getPathAt(i);
-			final String workspacePath = absolutePath;
-			final ISVNWorkspace workspace = createWorkspace(absolutePath);
+			final ISVNWorkspace workspace = createWorkspace(absolutePath, false);
 			workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
 				public void modified(String path, int kind) {
 					try {
-						path = convertPath(workspacePath, workspace, path);
+						path = convertPath(absolutePath, workspace, path);
 					}
 					catch (IOException e) {
 					}
 
 					DebugLog.log("property '" + propertyName + "' set on '" + path + "'");
+                    out.println("property '" + propertyName + "' set on '" + path + "'");
 				}
 			});
 
-			final String relativePath = SVNUtil.getWorkspacePath(workspace, absolutePath);
+			final String relativePath = SVNUtil.getWorkspacePath(workspace, new File(absolutePath).getAbsolutePath());
 			DebugLog.log("Workspace/path is '" + workspace.getID() + "'/'" + relativePath + "'");
-			workspace.setPropertyValue(relativePath, propertyName, propertyValue, recursive);
+            try {
+                workspace.setPropertyValue(relativePath, propertyName, propertyValue, recursive);
+                DebugLog.log("property set");
+            } catch (SVNException e) {
+                DebugLog.error(e);
+            }
 		}
 	}
 }

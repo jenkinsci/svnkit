@@ -37,6 +37,7 @@ public abstract class SVNArgument {
     public static final SVNArgument MESSAGE = createStringArgument(new String[] {"--message", "-m"});
     public static final SVNArgument REVISION = createStringArgument(new String[] {"--revision", "-r"});
     public static final SVNArgument FORCE = createUnaryArgument(new String[] {"--force"});
+    public static final SVNArgument FILE = createStringArgument(new String[] {"-F"});
     
     public static SVNArgument findArgument(String name) {
         for(Iterator arguments = ourArguments.iterator(); arguments.hasNext();) {
@@ -67,6 +68,8 @@ public abstract class SVNArgument {
         ourArguments.add(SVNArgument.NO_IGNORE);
         ourArguments.add(SVNArgument.MESSAGE);
         ourArguments.add(SVNArgument.REVISION);
+        ourArguments.add(SVNArgument.FORCE);
+        ourArguments.add(SVNArgument.FILE);
     }
 
     private static SVNArgument createStringArgument(String[] names) {

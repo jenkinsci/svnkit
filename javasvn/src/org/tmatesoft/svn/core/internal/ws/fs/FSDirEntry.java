@@ -30,7 +30,6 @@ import org.tmatesoft.svn.core.ISVNEntryContent;
 import org.tmatesoft.svn.core.ISVNFileEntry;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.FileTypeUtil;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -249,6 +248,8 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 if (child.isScheduledForAddition() || child.isScheduledForDeletion()) {
                     // obstructed!
                     obstructedChildren.add(child.getName());
+                } else {
+                    child.setPropertyValue(SVNProperty.REVISION, revision);
                 }
                 child.merge();
             }
@@ -265,7 +266,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         myDeletedEntries = null;
         saveEntries();
     }
-
+    
     public void commit() throws SVNException {
         if (!getRootEntry().getWorkingCopyFile(this).exists()) {
             return;
@@ -452,7 +453,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             if (recurse) {
                 for(Iterator children = ((ISVNDirectoryEntry) entry).childEntries(); children.hasNext();) {
                     ISVNEntry ch = (ISVNEntry) children.next();
-                    if (ch.isScheduledForDeletion()) {
+                    if (!ch.isScheduledForDeletion()) {
                         ((FSDirEntry) entry).scheduleForAddition(ch.getName(), false, recurse);
                     }
                 }
@@ -599,8 +600,8 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         }
         getAdminArea().deleteArea(entry);
         File file = getRootEntry().getWorkingCopyFile(entry);
-        if (!file.delete()) {
-            DebugLog.log("can't delete file " + file.getAbsolutePath());
+        if (file != null && file.exists()) {
+            file.delete();
         }
     }
 

@@ -37,33 +37,39 @@ public class StatusCommand extends SVNCommand {
         
         SVNCommandLine line = getCommandLine();
         
-        String path = line.getPathAt(0);
-        if (path.trim().endsWith("..")) {
-            err.println("Path '" + path + "' ends with '..', which is unsupported for this operation");
-            return;
+        for(int i = 0; i < line.getPathCount(); i++) {
+            String path = line.getPathAt(i);
+            if (path.trim().endsWith("..")) {
+                err.println("Path '" + path + "' ends with '..', which is unsupported for this operation");
+                return;
+            }
+            
         }
-        ISVNWorkspace workspace = createWorkspace(path);
-        DebugLog.log("workspace created at: " + workspace.getID());
-        try {
-            path = SVNUtil.getWorkspacePath(workspace, new File(path).getCanonicalPath());
-        } catch (IOException e) {
-            throw new SVNException(e);
+        for(int i = 0; i < line.getPathCount(); i++) {
+            String path = line.getPathAt(i);
+            ISVNWorkspace workspace = createWorkspace(path);
+            DebugLog.log("workspace created at: " + workspace.getID());
+            try {
+                path = SVNUtil.getWorkspacePath(workspace, new File(path).getCanonicalPath());
+            } catch (IOException e) {
+                throw new SVNException(e);
+            }
+            DebugLog.log("path in workspace: " + path);
+            
+            doStatus(line.getPathAt(i), workspace, path, !line.hasArgument(SVNArgument.NON_RECURSIVE), 
+                    line.hasArgument(SVNArgument.SHOW_UPDATES), 
+                    line.hasArgument(SVNArgument.VERBOSE), 
+                    line.hasArgument(SVNArgument.NO_IGNORE), 
+                    out);
         }
-        DebugLog.log("path in workspace: " + path);
-        
-        doStatus(workspace, path, !line.hasArgument(SVNArgument.NON_RECURSIVE), 
-                line.hasArgument(SVNArgument.SHOW_UPDATES), 
-                line.hasArgument(SVNArgument.VERBOSE), 
-                line.hasArgument(SVNArgument.NO_IGNORE), 
-                out);
     }
     
-    private void doStatus(final ISVNWorkspace ws, String path, boolean descend, boolean remote, boolean all, boolean noIgnore, final PrintStream out) throws SVNException {
+    private void doStatus(final String wcPath, final ISVNWorkspace ws, String path, boolean descend, boolean remote, boolean all, boolean noIgnore, final PrintStream out) throws SVNException {
         CollectingExternalsHandler externalsHandler = new CollectingExternalsHandler();
         ISVNStatusHandler statusHandler = new ISVNStatusHandler() {
             public void handleStatus(String entryPath, SVNStatus status) {
                 try {
-                    String fullPath = convertPath(getCommandLine().getPathAt(0), ws, entryPath);
+                    String fullPath = convertPath(wcPath, ws, entryPath);
                     printStatus(fullPath, status, out);
                 } catch (IOException e) {}
             }
@@ -85,7 +91,7 @@ public class StatusCommand extends SVNCommand {
             out.println("Performing status on external item at '" +  externalPath + "'");
             ISVNWorkspace externalWorkspace = externalsHandler.getExternalWorkspace(externalPath);
             try {
-                doStatus(externalWorkspace, "", descend, remote, all, noIgnore, out);
+                doStatus(wcPath, externalWorkspace, "", descend, remote, all, noIgnore, out);
             } catch (Throwable th) {
                 out.println("error: " + th.getMessage());
             }
@@ -141,7 +147,7 @@ public class StatusCommand extends SVNCommand {
             String wcRevision = null;
             if (!status.isManaged()) {
                 wcRevision = "";
-            } else if (status.getRevision() < 0) {
+            } else if (status.getWorkingCopyRevision() < 0) {
                 wcRevision = " ? ";
             } else if (status.isAddedWithHistory()) {
                 wcRevision = "-";
@@ -202,6 +208,9 @@ public class StatusCommand extends SVNCommand {
             break;
         case SVNStatus.DELETED:
             sb.append("D");
+            break;
+        case SVNStatus.REPLACED:
+            sb.append("R");
             break;
         case SVNStatus.EXTERNAL:
             sb.append("X");

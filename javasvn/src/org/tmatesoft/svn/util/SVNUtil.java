@@ -27,6 +27,10 @@ import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 public class SVNUtil {
     
     public static ISVNWorkspace createWorkspace(String filePath) throws SVNException {
+        return createWorkspace(filePath, true);
+    }
+    
+    public static ISVNWorkspace createWorkspace(String filePath, boolean root) throws SVNException {
         File file = new File(filePath);
         if (file.exists() && !file.isDirectory()) {
             file = file.getAbsoluteFile().getParentFile();
@@ -36,10 +40,10 @@ public class SVNUtil {
         }
         filePath = file.getAbsolutePath();
         ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace("file", filePath);
-        if (ws != null) {
+        if (root && ws != null) {
             return ws.getRootWorkspace(true, false);
-        }
-        return null;
+        } 
+        return ws;
     }
 
     public static String getWorkspacePath(ISVNWorkspace ws, String absolutePath) {

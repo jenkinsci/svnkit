@@ -477,6 +477,9 @@ public class SVNWorkspace implements ISVNWorkspace {
         if (!"".equals(path)) {
             parent = locateParentEntry(path);
         }
+        if (targetEntry != null && parent != null && parent.asDirectory().isIgnored(targetEntry.getName())) {
+            includeIgnored = true;
+        }
         SVNStatusUtil.doStatus(this, parent != null ? parent.asDirectory() : null, editor, handler, path, externals, descend, includeUnmodified,
                 includeIgnored, descendInUnversioned);
 
@@ -572,6 +575,12 @@ public class SVNWorkspace implements ISVNWorkspace {
 
     public long commit(String[] paths, ISVNCommitHandler handler, boolean recursive) throws SVNException {
         long start = System.currentTimeMillis();
+        for(int i = 0; i < paths.length; i++) {
+            ISVNEntry entry = locateEntry(paths[i]);
+            if (entry == null || !entry.isManaged()) {
+                throw new SVNException("'" + paths[i] + "' is not under version control");
+            }
+        }
         String root = PathUtil.getCommonRoot(paths);
         if (root == null) {
             root = "";
@@ -602,13 +611,6 @@ public class SVNWorkspace implements ISVNWorkspace {
                     String path = paths[i];
                     ISVNEntry entry = locateEntry(path);
                     SVNCommitUtil.harvestCommitables(entry, paths, recursive, modified);
-                    if (entry.isDirectory()) {
-                        // collect direct children only.
-                        for (Iterator children = entry.asDirectory().childEntries(); children.hasNext();) {
-                            ISVNEntry child = (ISVNEntry) children.next();
-                            SVNCommitUtil.harvestCommitables(child, paths, recursive, modified);
-                        }
-                    }
                 }
             }
             // add unversioned parents to set of modified files...
@@ -1063,6 +1065,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 
     private void doSetProperty(ISVNEntry entry, String name, String value, boolean recurse) throws SVNException {
         entry.setPropertyValue(name, value);
+        fireEntryModified(entry, SVNStatus.MODIFIED, false);
         if (recurse && entry.isDirectory()) {
             for (Iterator entries = entry.asDirectory().childEntries(); entries.hasNext();) {
                 ISVNEntry child = (ISVNEntry) entries.next();
