@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
+import org.tmatesoft.svn.core.io.SVNAuthenticationException;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
@@ -94,6 +95,10 @@ class DAVRepository extends SVNRepository {
             path = getFullPath(path);
             info = DAVUtil.getBaselineInfo(myConnection, path, revision, true, false, info);
             kind = info.isDirectory ? SVNNodeKind.DIR : SVNNodeKind.FILE;
+        } catch (SVNException e) {
+            if (e instanceof SVNAuthenticationException) {
+                throw e;
+            }
         } finally {
             closeConnection();
         }
