@@ -39,22 +39,6 @@ import org.tmatesoft.svn.util.TimeUtil;
 public class SVNCommitUtil {
     
     private static final String SVN_ENTRY_REPLACED = "svn:entry:replaced";
-
-    public static String getRootEntryPath(Collection modifiedEntries) {
-    	Collection pathsList = new ArrayList();
-    	for(Iterator entries = modifiedEntries.iterator(); entries.hasNext();) {
-            ISVNEntry entry = (ISVNEntry) entries.next();
-            if (entry instanceof ISVNRootEntry) {
-                return "";
-            }
-            pathsList.add(entry.getPath());
-        }
-    	String[] paths = (String[]) pathsList.toArray(new String[pathsList.size()]);
-    	if (paths.length == 0) {
-    		return null;
-    	} 
-		return PathUtil.getCommonRoot(paths);
-    }
     
     public static String buildCommitTree(Collection modifiedEntries, Map map) throws SVNException {
         map = map == null ? new HashMap() : map;
