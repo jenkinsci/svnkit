@@ -19,6 +19,8 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.diff.delta.SVNSequenceLine;
 
+import de.regnis.q.sequence.QSequenceDifferenceBlock;
+
 /**
  * @author Ian Sullivan 
  * @author TMate Software Ltd.
@@ -42,6 +44,14 @@ public class SVNNormalDiffGenerator extends SVNSequenceDiffGenerator implements 
         output.write(getEOL());
     }
     
+    protected void processBlock(QSequenceDifferenceBlock[] segment, SVNSequenceLine[] sourceLines, SVNSequenceLine[] targetLines, String encoding, Writer output) throws IOException {
+        for(int i = 0; i < segment.length; i++) {
+            QSequenceDifferenceBlock block = segment[i];
+            processBlock(block.getLeftFrom(), block.getLeftTo(), sourceLines, block.getRightFrom(), block.getRightTo(), targetLines,
+                    encoding, output); 
+        }
+    }
+
     protected void processBlock(int sourceStartLine, int sourceEndLine, SVNSequenceLine[] sourceLines, int targetStartLine, int targetEndLine,
             SVNSequenceLine[] targetLines, String encoding, Writer output) throws IOException {
         if(sourceStartLine > sourceEndLine){

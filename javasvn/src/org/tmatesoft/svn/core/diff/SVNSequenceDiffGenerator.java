@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.Writer;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +38,7 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
 
     protected SVNSequenceDiffGenerator(Map properties) {
         myProperties = properties == null ? Collections.EMPTY_MAP : properties;
+        myProperties = Collections.unmodifiableMap(myProperties);
     }
     
     protected Map getProperties() {
@@ -49,10 +51,20 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
         }
         return myEOL;
     }
+    
+    protected int getGutter() {
+        Object gutterStr = getProperties().get(ISVNDiffGeneratorFactory.GUTTER_PROPERTY);
+        if (gutterStr == null) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(gutterStr.toString());
+        } catch (NumberFormatException e) {}
+        return 0;
+    }
 
     public void generateBinaryDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
-        output.write("Binary files are different");
-        output.write(getEOL());
+        println("Binary files are different", output);
     }
     
     public void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
@@ -62,15 +74,17 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
         SVNSequenceLine[] rightLines = reader.read(right);
         
         List blocksList = SVNSequenceMedia.createBlocks(leftLines, rightLines);
-        for(Iterator blocks = blocksList.iterator(); blocks.hasNext();) {
-            QSequenceDifferenceBlock block = (QSequenceDifferenceBlock) blocks.next();
-            processBlock(block.getLeftFrom(), block.getLeftTo(), leftLines, block.getRightFrom(), block.getRightTo(), rightLines,
-                    encoding, output);
+        List combinedBlocks = combineBlocks(blocksList, getGutter());
+        for(Iterator blocks = combinedBlocks.iterator(); blocks.hasNext();) {
+            List segment = (List) blocks.next();
+            QSequenceDifferenceBlock[] segmentBlocks = 
+                (QSequenceDifferenceBlock[]) segment.toArray(new QSequenceDifferenceBlock[segment.size()]);
+            processBlock(segmentBlocks, leftLines, rightLines, encoding, output);
         }
     }
     
-    protected abstract void  processBlock(int sourceStartLine, int sourceEndLine, SVNSequenceLine[] sourceLines, 
-            int targetStartLine, int targetEndLine, SVNSequenceLine[] targetLines, String encoding, Writer output) throws IOException;
+    protected abstract void  processBlock(QSequenceDifferenceBlock[] segment, SVNSequenceLine[] sourceLines, 
+            SVNSequenceLine[] targetLines, String encoding, Writer output) throws IOException;
 
     protected void println(Writer output) throws IOException {
         output.write(getEOL());
@@ -81,5 +95,26 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
             output.write(str);
         }
         output.write(getEOL());
+    }
+    
+    private static List combineBlocks(List blocksList, int gutter) {
+        List combinedBlocks = new LinkedList();
+        List currentList = new LinkedList();
+        
+        QSequenceDifferenceBlock lastBlock = null;
+        for(Iterator blocks = blocksList.iterator(); blocks.hasNext();) {
+            QSequenceDifferenceBlock currentBlock = (QSequenceDifferenceBlock) blocks.next();
+            if (lastBlock != null) {
+                if (currentBlock.getLeftFrom() - lastBlock.getLeftTo() > gutter &&
+                    currentBlock.getRightFrom() - lastBlock.getRightFrom() > gutter) {
+                    combinedBlocks.add(currentList);
+                    currentList = new LinkedList();
+                } 
+            }
+            currentList.add(currentBlock);
+            lastBlock = currentBlock;
+        }
+        return combinedBlocks;
+        
     }
 }

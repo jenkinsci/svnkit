@@ -18,6 +18,9 @@ import java.util.Map;
  * @author TMate Software Ltd.
  */
 public interface ISVNDiffGeneratorFactory {
+
+    public static final String GUTTER_PROPERTY = "gutter";
+
     
     public ISVNDiffGenerator createGenerator(Map properties);
 

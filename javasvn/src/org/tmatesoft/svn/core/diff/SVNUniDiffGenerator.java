@@ -19,6 +19,8 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.diff.delta.SVNSequenceLine;
 
+import de.regnis.q.sequence.QSequenceDifferenceBlock;
+
 /**
  * @author Ian Sullivan 
  * @author TMate Software Ltd.
@@ -44,12 +46,16 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
         println(output);
     }
     
-    protected void processBlock(int sourceStartLine, int sourceEndLine, SVNSequenceLine[] sourceLines, 
-            int targetStartLine, int targetEndLine, SVNSequenceLine[] targetLines, 
+    protected void processBlock(QSequenceDifferenceBlock[] segment, SVNSequenceLine[] sourceLines, SVNSequenceLine[] targetLines, 
             String encoding, Writer output) throws IOException {
         // header
         StringBuffer header = new StringBuffer();
         header.append("@@@");
+        int sourceStartLine = segment[0].getLeftFrom();
+        int sourceEndLine = segment[segment.length - 1].getLeftTo();
+        int targetStartLine = segment[0].getRightFrom();
+        int targetEndLine = segment[segment.length - 1].getRightTo();
+        
         if (sourceStartLine >= 0 && sourceEndLine >= 0) {
             header.append(" -");
             header.append(sourceStartLine + 1);
@@ -64,21 +70,41 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
         }
         header.append(" @@@");
         println(header.toString(), output);
-        // blocks
-        for(int i = sourceStartLine; i <= sourceEndLine; i++) {
-            println("-" + new String(sourceLines[i].getBytes(), encoding), output);
+        int gutter = getGutter();
+        
+        // print gutter context lines before blocks.
+        int start = Math.max(sourceStartLine - gutter, 0);
+        for(int i = start; i < sourceStartLine; i++) {
+            println(" " + new String(sourceLines[i].getBytes(), encoding), output);
         }
-        for(int i = targetStartLine; i <= targetEndLine; i++) {
-            println("+" + new String(targetLines[i].getBytes(), encoding), output);
+        for(int i = 0; i < segment.length; i++) {
+            QSequenceDifferenceBlock block = segment[i];
+            for(int j = block.getLeftFrom(); j <= block.getLeftTo(); j++) {
+                println("-" + new String(sourceLines[j].getBytes(), encoding), output);
+            }
+            for(int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
+                println("-" + new String(sourceLines[j].getBytes(), encoding), output);
+            }
+            // print glue lines
+            int end = Math.min(block.getLeftTo() + gutter, sourceLines.length - 1);
+            if (i + 1< segment.length) {
+                end = Math.min(end, segment[i + 1].getLeftFrom() - 1);                
+            }
+            for(int j = block.getLeftTo() + 1; j < end; j++) {
+                println(" " + new String(sourceLines[j].getBytes(), encoding), output);
+            }
         }
-        println(output);
+        println(output);        
     }
     
     public ISVNDiffGenerator createGenerator(Map properties) {
         if (myGeneratorsCache == null) {
             myGeneratorsCache = new HashMap();
         }        
-            
+        if (!properties.containsKey(ISVNDiffGeneratorFactory.GUTTER_PROPERTY)) {
+            properties = new HashMap(properties);
+            properties.put(ISVNDiffGeneratorFactory.GUTTER_PROPERTY, "3");
+        }   
         ISVNDiffGenerator generator = (ISVNDiffGenerator) myGeneratorsCache.get(properties);
         if (generator != null) {
             return generator;
