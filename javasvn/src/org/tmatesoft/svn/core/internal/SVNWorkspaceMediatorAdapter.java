@@ -49,6 +49,7 @@ class SVNWorkspaceMediatorAdapter implements ISVNWorkspaceMediator {
     		ISVNEntry entry = (ISVNEntry) myCommitTree.get(path);
     		if (entry != null) {
     	        DebugLog.log("setting property for path (citem): " + entry.getPath());
+    	        DebugLog.log("prop value: " + value);
     			myMediator.setWorkspaceProperty(entry.getPath(), name, value);
     		}
     	}

@@ -27,6 +27,7 @@ import java.util.StringTokenizer;
 import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.ISVNRootEntry;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -73,6 +74,8 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         ISVNEntry entry = locateEntry(path);
         if (entry != null) {
             entry.setPropertyValue(name, value);
+        } else {
+        	DebugLog.log("can't locate entry at: " + path);
         }
     }
     
@@ -182,7 +185,7 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         for(StringTokenizer tokens = new StringTokenizer(path, "/"); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
             if (entry.isDirectory()) {
-                entry = entry.asDirectory().getChild(token);
+                entry = entry.asDirectory().getUnmanagedChild(token);
             } else {
                 return null;
             }
