@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 import org.tmatesoft.svn.core.ISVNDirectoryEntry;
 import org.tmatesoft.svn.core.ISVNEntry;
+import org.tmatesoft.svn.core.ISVNEntryContent;
 import org.tmatesoft.svn.core.ISVNFileEntry;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -374,7 +375,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         if (children != null) {
             for (int i = 0; i < children.length; i++) {
                 File child = children[i];
-                if (myChildren != null && 
+                if (myChildren != null &&
                         (myChildren.containsKey(child.getName()) || ".svn".equals(child.getName()))) {
                     continue;
                 }
@@ -625,4 +626,8 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             }
         }
     }
+
+	public ISVNEntryContent getContent() throws SVNException {
+		return new FSDirEntryContent(this);
+	}
 }

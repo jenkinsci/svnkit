@@ -12,9 +12,16 @@
 
 package org.tmatesoft.svn.core.internal.ws.fs;
 
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.io.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import org.tmatesoft.svn.core.ISVNDirectoryContent;
+import org.tmatesoft.svn.core.ISVNFileContent;
+import org.tmatesoft.svn.core.io.SVNException;
 
 /**
  * @author Marc Strapetz
@@ -22,6 +29,26 @@ import java.io.*;
 public class FSFileEntryContent implements ISVNFileContent {
 
 	private final FSFileEntry myEntry;
+
+	public String getName() {
+		return myEntry.getName();
+	}
+
+	public String getPath() {
+		return myEntry.getPath();
+	}
+
+	public boolean isDirectory() {
+		return false;
+	}
+
+	public ISVNDirectoryContent asDirectory() {
+		return null;
+	}
+
+	public ISVNFileContent asFile() {
+		return this;
+	}
 
 	public FSFileEntryContent(FSFileEntry entry) {
 		this.myEntry = entry;
@@ -98,14 +125,19 @@ public class FSFileEntryContent implements ISVNFileContent {
 	}
 
 	public void deleteWorkingCopyContent() throws SVNException {
-		final File file = myEntry.getRootEntry().getWorkingCopyFile(myEntry);
-		if (file == null || !file.isFile()) {
-			return;
-		}
+		try {
+			final File file = myEntry.getRootEntry().getWorkingCopyFile(myEntry);
+			if (file == null || !file.isFile()) {
+				return;
+			}
 
-		final boolean deleted = file.delete();
-		if (!deleted) {
-			throw new SVNException("Can't delete '" + file + "'.");
+			final boolean deleted = file.delete();
+			if (!deleted) {
+				throw new SVNException("Can't delete '" + file + "'.");
+			}
+		}
+		finally {
+			myEntry.dispose();
 		}
 	}
 }

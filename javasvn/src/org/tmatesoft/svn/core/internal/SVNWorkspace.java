@@ -30,8 +30,8 @@ import org.tmatesoft.svn.core.DefaultSVNExternalsHandler;
 import org.tmatesoft.svn.core.ISVNCommitHandler;
 import org.tmatesoft.svn.core.ISVNDirectoryEntry;
 import org.tmatesoft.svn.core.ISVNEntry;
+import org.tmatesoft.svn.core.ISVNEntryContent;
 import org.tmatesoft.svn.core.ISVNExternalsHandler;
-import org.tmatesoft.svn.core.ISVNFileContent;
 import org.tmatesoft.svn.core.ISVNRootEntry;
 import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.ISVNWorkspace;
@@ -981,24 +981,12 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
     }
 
-    public ISVNFileContent getFileContent(String path) throws SVNException {
-        ISVNEntry parentEntry = locateParentEntry(path);
-        if (parentEntry != null && parentEntry.isDirectory()) {
-            final String name = PathUtil.tail(path);
-            final ISVNDirectoryEntry parentDirectory = parentEntry.asDirectory();
-            final ISVNEntry managedChild = parentDirectory.getChild(name);
-            if (managedChild != null && !managedChild.isDirectory()) {
-                return managedChild.asFile().getContent();
-            }
-
-            for (Iterator it = parentDirectory.unmanagedChildEntries(true); it.hasNext();) {
-                final ISVNEntry entry = (ISVNEntry) it.next();
-                if (entry.asFile() != null && entry.getName().equals(name)) {
-                    return entry.asFile().getContent();
-                }
-            }
-        }
-        throw new SVNException("Can't find file " + path);
+    public ISVNEntryContent getContent(String path) throws SVNException {
+	      ISVNEntry entry = locateEntry(path, true);
+	    if (entry == null) {
+		    throw new SVNException("Can't find entry for path " + path);
+	    }
+	    return entry.getContent();
     }
 
     protected void fireEntryCommitted(ISVNEntry entry, int kind) {

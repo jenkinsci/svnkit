@@ -12,10 +12,20 @@
 
 package org.tmatesoft.svn.core.test;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
 
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.io.*;
+import org.tmatesoft.svn.core.ISVNDirectoryContent;
+import org.tmatesoft.svn.core.ISVNEntryContent;
+import org.tmatesoft.svn.core.ISVNFileContent;
+import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 
 /**
  * @author TMate Software Ltd.
@@ -26,18 +36,20 @@ public class TestSVNFileContent extends AbstractRepositoryTest {
         super(url, methodName);
     }
 
-	  public void testContent() throws Throwable {
+	  public void testFileContent() throws Throwable {
 		  File svn = AllTests.createPlayground();
 
 		  ISVNWorkspace ws = createWorkspace(svn);
 		  ws.checkout(SVNRepositoryLocation.parseURL(getRepositoryURL()), -1, false);
 
-		  final ISVNFileContent existingContent = ws.getFileContent("testFile.txt");
+		  final ISVNFileContent existingContent = ws.getContent("testFile.txt").asFile();
 
 		  // Test base file content of existing base file.
 		  final ByteArrayOutputStream existingBaseFile1 = new ByteArrayOutputStream();
 		  assertTrue(existingContent.hasBaseFileContent());
 		  existingContent.getBaseFileContent(existingBaseFile1);
+		  assertEquals("testFile.txt", existingContent.getPath());
+		  assertEquals("testFile.txt", existingContent.getPath());
 		  assertEquals("test file", new String(existingBaseFile1.toByteArray()));
 
 		  // Test working copy content of existing working copy file.
@@ -64,7 +76,7 @@ public class TestSVNFileContent extends AbstractRepositoryTest {
 		  writer.write("New.\n");
 		  writer.close();
 
-		  final ISVNFileContent newContent = ws.getFileContent("new.txt");
+		  final ISVNFileContent newContent = ws.getContent("new.txt").asFile();
 		  assertTrue(!newContent.hasBaseFileContent());
 
 		  final ByteArrayOutputStream newWorkingCopy = new ByteArrayOutputStream();
@@ -76,4 +88,66 @@ public class TestSVNFileContent extends AbstractRepositoryTest {
 		  newContent.deleteWorkingCopyContent();
 		  assertTrue(!newContent.hasWorkingCopyContent());
 	  }
+
+	public void testDirectoryContent() throws IOException, SVNException {
+		File svn = AllTests.createPlayground();
+
+		ISVNWorkspace ws = createWorkspace(svn);
+		ws.checkout(SVNRepositoryLocation.parseURL(getRepositoryURL()), -1, false);
+
+		// Add new directory
+		final File newDir = new File(svn, "newDir");
+		final boolean dirMked = newDir.mkdir();
+		assertTrue(dirMked);
+
+		// with new file in it.
+		final FileWriter writer = new FileWriter(new File(newDir, "newFile.txt"));
+		writer.write("New.\n");
+		writer.close();
+
+		// Check content path/name for root directory.
+		final ISVNDirectoryContent content = ws.getContent("").asDirectory();
+		assertEquals("", content.getPath());
+		assertEquals("", content.getName());
+		try {
+			// Deletion on root directory must fail, because it is non-empty.
+			content.deleteWorkingCopyContent();
+			assertTrue(false);
+		}
+		catch (SVNException ex) {
+			// Ok.
+		}
+
+		// Check children of root directory.
+		final List childContents = content.getChildContents();
+		assertEquals(3, childContents.size());
+
+		// Find newDir and delete it
+		boolean foundAndDeleted = false;
+		for (Iterator it = childContents.iterator(); it.hasNext();) {
+			final ISVNEntryContent childContent = (ISVNEntryContent)it.next();
+			if (!childContent.isDirectory() || !childContent.asDirectory().getName().equals(newDir.getName())) {
+				continue;
+			}
+
+			assertEquals(childContent.getPath(), "newDir");
+
+			assertTrue(!childContent.asDirectory().getChildContents().isEmpty());
+			for (Iterator it2 = childContent.asDirectory().getChildContents().iterator(); it2.hasNext();) {
+				final ISVNEntryContent grandChildContent = (ISVNEntryContent)it2.next();
+				grandChildContent.deleteWorkingCopyContent();
+			}
+
+			childContent.asDirectory().deleteWorkingCopyContent();
+			assertTrue(childContent.asDirectory().getChildContents().isEmpty());
+			foundAndDeleted = true;
+		}
+
+		// Check that newDir has actually been deleted ...
+		assertTrue(foundAndDeleted);
+		assertTrue(!newDir.exists());
+
+		// ... and the root's state is ok.
+		assertEquals(2, content.getChildContents().size());
+	}
 }

@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.io.*;
 /**
  * @author Marc Strapetz
  */
-public interface ISVNFileContent {
+public interface ISVNFileContent extends ISVNEntryContent {
 
 	public boolean hasWorkingCopyContent();
 
@@ -29,6 +29,4 @@ public interface ISVNFileContent {
 	public void getBaseFileContent(OutputStream os) throws SVNException;
 
 	public void setWorkingCopyContent(InputStream is) throws IOException, SVNException;
-
-	public void deleteWorkingCopyContent() throws SVNException;
 }

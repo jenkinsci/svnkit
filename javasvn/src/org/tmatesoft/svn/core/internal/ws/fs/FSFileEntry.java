@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.ISVNDirectoryEntry;
-import org.tmatesoft.svn.core.ISVNFileContent;
+import org.tmatesoft.svn.core.ISVNEntryContent;
 import org.tmatesoft.svn.core.ISVNFileEntry;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
@@ -228,7 +228,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         return false;
     }
 
-	public ISVNFileContent getContent() throws SVNException {
+	public ISVNEntryContent getContent() throws SVNException {
 		return new FSFileEntryContent(this);
 	}
 

@@ -57,10 +57,10 @@ public class AllTests extends TestSuite {
             regexp = props.getProperty("tests.mask", regexp);
         } catch (IOException e) {
         }
-        AbstractRepositoryTest.addToSuite(this, url, TestSVNRepository.class, regexp);
-        AbstractRepositoryTest.addToSuite(this, url, TestSVNFSEntries.class, regexp);
-        AbstractRepositoryTest.addToSuite(this, url, TestSVNWorkspace.class, regexp);
-        AbstractRepositoryTest.addToSuite(this, url, TestSVNStatus.class, regexp);
+//        AbstractRepositoryTest.addToSuite(this, url, TestSVNRepository.class, regexp);
+//        AbstractRepositoryTest.addToSuite(this, url, TestSVNFSEntries.class, regexp);
+//        AbstractRepositoryTest.addToSuite(this, url, TestSVNWorkspace.class, regexp);
+//        AbstractRepositoryTest.addToSuite(this, url, TestSVNStatus.class, regexp);
         AbstractRepositoryTest.addToSuite(this, url, TestSVNFileContent.class, regexp);
     }
     

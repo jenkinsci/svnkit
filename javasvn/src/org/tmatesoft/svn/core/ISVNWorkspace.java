@@ -123,5 +123,5 @@ public interface ISVNWorkspace {
     
     public Map getProperties(String path, boolean reposProps, boolean entryProps) throws SVNException;
 
-    public ISVNFileContent getFileContent(String path) throws SVNException;
+    public ISVNEntryContent getContent(String path) throws SVNException;
 }

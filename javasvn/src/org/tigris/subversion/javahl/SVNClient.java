@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNCommitHandler;
+import org.tmatesoft.svn.core.ISVNEntryContent;
 import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -948,11 +949,15 @@ public class SVNClient implements SVNClientInterface {
             try {
                 ws = createWorkspace(path);
                 wsPath = SVNUtil.getWorkspacePath(ws, path);
-                if (Revision.BASE.equals(revision)) {
-                    ws.getFileContent(wsPath).getBaseFileContent(bos);
+                final ISVNEntryContent content = ws.getContent(wsPath);
+	              if (content == null || content.isDirectory()) {
+		              throw new ClientException("Can't find file " + path, "", 0);
+	              }
+	              if (Revision.BASE.equals(revision)) {
+                    content.asFile().getBaseFileContent(bos);
                     return bos.toByteArray();
                 } else if (Revision.WORKING.equals(revision)) {
-                    ws.getFileContent(wsPath).getWorkingCopyContent(bos);
+                    content.asFile().getWorkingCopyContent(bos);
                     return bos.toByteArray();
                 }
                 path = ws.getLocation(wsPath).toString();

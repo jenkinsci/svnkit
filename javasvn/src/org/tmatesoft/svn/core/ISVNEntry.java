@@ -102,4 +102,6 @@ public interface ISVNEntry {
     public ISVNDirectoryEntry asDirectory();
     
     public ISVNFileEntry asFile();
+
+	  public ISVNEntryContent getContent() throws SVNException;
 }

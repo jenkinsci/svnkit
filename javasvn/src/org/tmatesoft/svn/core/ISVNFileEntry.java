@@ -45,6 +45,4 @@ public interface ISVNFileEntry extends ISVNEntry {
     public String generateDelta(ISVNEditor editor) throws SVNException;
     
     public boolean isContentsModified() throws SVNException;
-
-    public ISVNFileContent getContent() throws SVNException;
 }
