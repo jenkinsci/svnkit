@@ -110,7 +110,7 @@ class DAVCommitEditor implements ISVNEditor {
             copyPath = PathUtil.append(myLocation.getPath(), copyPath);
             // not implemented yet.
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, copyPath, copyRevision, false, false, null);
-            copyPath = info.baselineBase + info.baselinePath;
+            copyPath = PathUtil.append(info.baselineBase, info.baselinePath);
             
             // full url.
             wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + newDir.getWorkingURL();
@@ -173,7 +173,7 @@ class DAVCommitEditor implements ISVNEditor {
             copyPath = PathUtil.append(myLocation.getPath(), copyPath);
             // not implemented yet.
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, copyPath, copyRevision, false, false, null);
-            copyPath = info.baselineBase + info.baselinePath;
+            copyPath = PathUtil.append(info.baselineBase, info.baselinePath);
             
             // do "COPY" copyPath to parents working url ?
             wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + newFile.getWorkingURL();

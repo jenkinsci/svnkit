@@ -125,7 +125,7 @@ class DAVRepository extends SVNRepository {
             path = getFullPath(path);
             if (revision != -2) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
-                path = info.baselineBase + info.baselinePath;
+                path = PathUtil.append(info.baselineBase, info.baselinePath);
                 fileRevision = info.revision; 
             }
             if (properties != null) {
@@ -153,7 +153,7 @@ class DAVRepository extends SVNRepository {
             path = getFullPath(path);
             if (revision != -2) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
-                path = info.baselineBase + info.baselinePath;
+                path = PathUtil.append(info.baselineBase, info.baselinePath);
                 dirRevision = info.revision; 
             }
             if (handler != null) {
@@ -219,7 +219,7 @@ class DAVRepository extends SVNRepository {
 				revision = Math.max(startRevision, endRevision);				
 			}
 			DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, bcPath, revision, false, false, null);
-			bcPath = info.baselineBase + info.baselinePath;
+			bcPath = PathUtil.append(info.baselineBase, info.baselinePath);
 			myConnection.doReport(bcPath, request, davHandler);
             return davHandler.getEntriesCount();
 		} finally {

@@ -42,6 +42,12 @@ public class PathUtil {
     public static final String append(String path, String segment) {
         path = isEmpty(path) ? "" : removeTrailingSlash(path);
         segment = isEmpty(segment) ? "" : removeLeadingSlash(segment);
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - "/".length());
+        }
+        if (segment.startsWith("/")) {
+            segment = segment.substring("/".length());
+        }
         return path + '/' + segment;
     }
     
