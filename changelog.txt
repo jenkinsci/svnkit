@@ -1,3 +1,10 @@
+= version 0.8.7
+
++ http proxy support
++ svn "keywords" are expanded properly
++ different eol's in a file are handled correctly
++ other minor bugfixes
+
 = version 0.8.6
 
 + annotate (blame) operation is implemented.
