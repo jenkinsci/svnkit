@@ -179,7 +179,7 @@ public class StatusCommand extends SVNCommand {
                 String author; 
                 if (status.isManaged() && status.getAuthor() != null) {
                     author = status.getAuthor();
-                } else if (status.isManaged() && remote != '*') {
+                } else if ((status.isManaged() && remote != '*') || status.getAuthor() == null) {
                     author = " ? ";                    
                 } else {
                     author = "";
