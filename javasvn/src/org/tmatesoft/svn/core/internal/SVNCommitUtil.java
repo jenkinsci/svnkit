@@ -153,15 +153,17 @@ public class SVNCommitUtil {
                 for(Iterator children = root.asDirectory().childEntries(); children.hasNext();) {
                     ISVNEntry child = (ISVNEntry) children.next();
                     DebugLog.log("HV: processing " + entryPath + " => collecting child: " + child.getPath() );
+                    long childRevision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.REVISION));
+                    if (copy) {
+                        DebugLog.log("HV: processing unmodified copied child " + child.getPath() );
+                        if (child.getPropertyValue(SVNProperty.COPYFROM_URL) == null) { 
+                            String parentCopyFromURL = root.getPropertyValue(SVNProperty.COPYFROM_URL);
+                            child.setPropertyValue(SVNProperty.COPYFROM_URL, PathUtil.append(parentCopyFromURL, PathUtil.encode(child.getName())));
+                            child.setPropertyValue(SVNProperty.COPYFROM_REVISION, SVNProperty.toString(childRevision));
+                        }
+                    }
                     harvestCommitables(child, paths, recursive, modified);
 					if (copy) {
-	                    DebugLog.log("HV: processing unmodified copied child " + child.getPath() );
-						long childRevision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.REVISION));
-						if (child.getPropertyValue(SVNProperty.COPYFROM_URL) == null) {
-							String parentCopyFromURL = root.getPropertyValue(SVNProperty.COPYFROM_URL);
-							child.setPropertyValue(SVNProperty.COPYFROM_URL, PathUtil.append(parentCopyFromURL, PathUtil.encode(child.getName())));
-							child.setPropertyValue(SVNProperty.COPYFROM_REVISION, SVNProperty.toString(childRevision));
-						}
 						if (!modified.contains(child) && revision != childRevision) {
 		                    DebugLog.log("HV: copied child collected, revision differs from parent " + child.getPath() );
 							modified.add(child);
