@@ -287,11 +287,11 @@ public class AllTests extends TestSuite {
         }
     }
 
-    private static void startApache(Properties props) throws Throwable {
+    public static void startApache(Properties props) throws Throwable {
         apache(props, true);
     }
 
-    private static void stopApache(Properties props) throws Throwable {
+    public static void stopApache(Properties props) throws Throwable {
         apache(props, false);
     }
     
@@ -310,7 +310,7 @@ public class AllTests extends TestSuite {
     }
     
     private static void generateApacheConfig(File destination, Properties props) throws IOException {
-        File template = new File("apache/httpd.template.conf");
+        File template = new File(props.getProperty("apache.conf", "apache/httpd.template.conf"));
         byte[] contents = new byte[(int) template.length()];
         InputStream is = new FileInputStream(template);
         is.read(contents);
@@ -326,9 +326,13 @@ public class AllTests extends TestSuite {
         config = config.replaceAll("%passwd%", passwdFile.getAbsolutePath().replace(File.separatorChar, '/'));
         config = config.replaceAll("%home%", System.getProperty("user.home"));
         
+        String pythonTests = new File(props.getProperty("python.tests")).getAbsolutePath().replace(File.separatorChar, '/');
+        config = config.replaceAll("%python.tests%", pythonTests);
+        
         FileOutputStream os = new FileOutputStream(destination);
         os.write(config.getBytes());
         os.close();
+        System.err.println("apache config written to " + destination.getAbsolutePath());
     }
 
     private static void error(String message, Throwable e) {

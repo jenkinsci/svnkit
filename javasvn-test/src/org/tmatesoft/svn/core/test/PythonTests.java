@@ -40,55 +40,76 @@ public class PythonTests {
 		String fileName = args[0];
 		ourPropertiesFile = new File(fileName);
 
+		Properties properties = null;
 		try {
-			// 1. start svnserve
-			Properties properties = AllTests.loadProperties(ourPropertiesFile);
-			String pythonTestsRoot = properties.getProperty("python.tests");
-			properties.setProperty("repository.root", new File(pythonTestsRoot).getAbsolutePath());
-
-			AllTests.startSVNServe(properties);
-
-			// 3. run python tests.
-			String pythonLauncher = properties.getProperty("python.launcher");
-			String testSuite = properties.getProperty("python.tests.suite");
-			String options = properties.getProperty("python.tests.options", "");
-			for (StringTokenizer tests = new StringTokenizer(testSuite, ","); tests.hasMoreTokens();) {
-				final String testFileString = tests.nextToken();
-				List tokens = tokenizeTestFileString(testFileString);
-
-				final String testFile = tokens.get(0) + "_tests.py";
-				tokens = tokens.subList(1, tokens.size());
-
-				if (tokens.isEmpty()) {
-					System.out.println("PROCESSING ALL " + testFile);
-					processTestCase(pythonLauncher, testFile, options, "");
-				}
-				else {
-					final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
-					final List testCases = combineTestCases(tokens, availabledTestCases);
-
-					System.out.println("PROCESSING " + testFile + " " + testCases);
-					for (Iterator it = testCases.iterator(); it.hasNext();) {
-						final Integer testCase = (Integer)it.next();
-						processTestCase(pythonLauncher, testFile, options, String.valueOf(testCase));
-					}
+			properties = AllTests.loadProperties(ourPropertiesFile);
+		} catch (IOException e) {
+			System.out.println("can't load properties, exiting");
+			System.exit(1);
+		}
+		String pythonTestsRoot = properties.getProperty("python.tests");
+		properties.setProperty("repository.root", new File(pythonTestsRoot).getAbsolutePath());
+		if (Boolean.TRUE.equals(properties.getProperty("python.svn"))) {
+			try {
+				AllTests.startSVNServe(properties);
+				runPythonTests(properties, "svn://localhost/");
+			} catch (Throwable th) {
+				th.printStackTrace();
+			} finally {
+				AllTests.stopSVNServe();
+			}
+		}
+		if (Boolean.TRUE.equals(properties.getProperty("python.http"))) {
+			properties.setProperty("apache.conf", "apache/python.template.conf");
+			try {
+				AllTests.startApache(properties);
+				runPythonTests(properties, "http://localhost:" + properties.getProperty("apache.port", "8082"));
+			} catch (Throwable th) {
+				th.printStackTrace();
+			} finally {
+				try {
+					AllTests.stopApache(properties);
+				} catch (Throwable th) {
+					th.printStackTrace();
 				}
 			}
 		}
-		catch (Throwable th) {
-			th.printStackTrace();
-		}
-		finally {
-			AllTests.stopSVNServe();
+	}
+
+	private static void runPythonTests(Properties properties, String url) throws IOException {
+		String pythonLauncher = properties.getProperty("python.launcher");
+		String testSuite = properties.getProperty("python.tests.suite");
+		String options = properties.getProperty("python.tests.options", "");
+		for (StringTokenizer tests = new StringTokenizer(testSuite, ","); tests.hasMoreTokens();) {
+			final String testFileString = tests.nextToken();
+			List tokens = tokenizeTestFileString(testFileString);
+
+			final String testFile = tokens.get(0) + "_tests.py";
+			tokens = tokens.subList(1, tokens.size());
+
+			if (tokens.isEmpty()) {
+				System.out.println("PROCESSING ALL " + testFile);
+				processTestCase(pythonLauncher, testFile, options, "", url);
+			}
+			else {
+				final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
+				final List testCases = combineTestCases(tokens, availabledTestCases);
+
+				System.out.println("PROCESSING " + testFile + " " + testCases);
+				for (Iterator it = testCases.iterator(); it.hasNext();) {
+					final Integer testCase = (Integer)it.next();
+					processTestCase(pythonLauncher, testFile, options, String.valueOf(testCase), url);
+				}
+			}
 		}
 	}
 
-	private static void processTestCase(String pythonLauncher, String testFile, String options, String testCase) {
+	private static void processTestCase(String pythonLauncher, String testFile, String options, String testCase, String url) {
 		String[] commands = new String[]{
 			pythonLauncher,
 			testFile,
 			"-v",
-			"--url=svn://localhost",
+			"--url=" + url,
 			options,
 			String.valueOf(testCase),
 		};
