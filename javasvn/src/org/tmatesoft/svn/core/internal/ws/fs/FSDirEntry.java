@@ -49,8 +49,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         super(area, root, path);
         if (location != null) {
             try {
-                String url = getPropertyValue(SVNProperty.URL);
-                if (url == null) {
+                if (!getAdminArea().getAdminArea(this).exists()) {
                     setPropertyValue(SVNProperty.URL, location);
                 }
             } catch (SVNException e) {}
