@@ -38,6 +38,10 @@ import org.tmatesoft.svn.util.SVNUtil;
 public class CopyCommand extends SVNCommand {
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
+    	if (getCommandLine().hasPaths() && getCommandLine().hasURLs()) {
+    		err.println("only URL->URL or WC->WC copy is supported");
+    		return;
+    	}
         if (getCommandLine().hasURLs()) {
             if (getCommandLine().hasPaths()) {
                 final String path = getCommandLine().getPathAt(0);

@@ -12,11 +12,21 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.*;
-import org.tmatesoft.svn.cli.*;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.io.*;
-import org.tmatesoft.svn.util.*;
+import java.io.IOException;
+import java.io.PrintStream;
+
+import org.tmatesoft.svn.cli.SVNArgument;
+import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.SVNStatus;
+import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
+import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -24,10 +34,13 @@ import org.tmatesoft.svn.util.*;
 public class MoveCommand extends SVNCommand {
 
 	public void run(PrintStream out, PrintStream err) throws SVNException {
+    	if (getCommandLine().hasPaths() && getCommandLine().hasURLs()) {
+    		err.println("only URL->URL or WC->WC copy is supported");
+    		return;
+    	}
 		if (getCommandLine().hasURLs()) {
 			runRemote(out);
-		}
-		else {
+		} else {
 			runLocally(out);
 		}
 	}
