@@ -42,17 +42,22 @@ public class SVNJSchConnector implements ISVNConnector {
         final int port = repository.getLocation().getPort();
 
         ISVNCredentials credentials = provider.nextCredentials(null);
+        SVNAuthenticationException lastException = null;
         while (credentials != null) {
             try {
                 connect(host, port, credentials);
                 provider.accepted(credentials);
                 break;
-            } catch (SVNAuthenticationException ex) {
-                credentials = provider.nextCredentials(ex.getMessage());
+            } catch (SVNAuthenticationException e) {
+                lastException = e;
+                credentials = provider.nextCredentials(e.getMessage());
             }
         }
 
         if (credentials == null) {
+            if (lastException != null) {
+                throw lastException;
+            }
             throw new SVNAuthenticationException("Can't establish SSH connection without credentials");
         }
 
@@ -120,7 +125,6 @@ public class SVNJSchConnector implements ISVNConnector {
         try {
             mySession.connect();
         } catch (JSchException e) {
-            e.printStackTrace();
             mySession.disconnect();
             throw new SVNAuthenticationException(e);
         }
