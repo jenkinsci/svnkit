@@ -106,6 +106,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void setPrompt(PromptUserPassword prompt) {
+		DebugLog.log("prompt set: " + prompt);
     	myPrompt = prompt;
     }
     
@@ -369,12 +370,12 @@ public class SVNClient implements SVNClientInterface {
             final ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace("file", new File(destPath).getAbsolutePath());
             SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(moduleName);
             SVNRepository repository = SVNRepositoryFactory.create(location);
-            if (myUserName != null && myPassword != null) {
+			if (myPrompt != null) {
+            	ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt, myUserName, myPassword));
+            	repository.setCredentialsProvider(new SVNPromptCredentialsProvider(myPrompt, myUserName, myPassword));
+            } else if (myUserName != null && myPassword != null) {
                 ws.setCredentials(new SVNSimpleCredentialsProvider(myUserName, myPassword));
                 repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
-            } else if (myPrompt != null) {
-            	ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt));
-            	repository.setCredentialsProvider(new SVNPromptCredentialsProvider(myPrompt));
             }
             ws.setExternalsHandler(new SVNClientExternalsHandler(myNotify));
             long rev = getRevisionNumber(revision, repository, null, null);
@@ -511,13 +512,13 @@ public class SVNClient implements SVNClientInterface {
             ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace("file", dir.getAbsolutePath());
             SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(srcPath);
             SVNRepository repository = SVNRepositoryFactory.create(location);
-            if (myUserName != null && myPassword != null) {
+			if (myPrompt != null) {
+            	ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt, myUserName, myPassword));
+            	repository.setCredentialsProvider(new SVNPromptCredentialsProvider(myPrompt, myUserName, myPassword));
+            } else if (myUserName != null && myPassword != null) {
                 ws.setCredentials(new SVNSimpleCredentialsProvider(myUserName, myPassword));
                 repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
-            } else if (myPrompt != null) {
-                ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt));
-                repository.setCredentialsProvider(new SVNPromptCredentialsProvider(myPrompt));
-            }
+            } 
             long revNumber = getRevisionNumber(revision, repository, null, null);
             ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
             return ws.checkout(location, revNumber, true);
@@ -1393,10 +1394,10 @@ public class SVNClient implements SVNClientInterface {
     
     private SVNRepository createRepository(String url) throws SVNException {
         SVNRepository repository = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-        if (myUserName != null && myPassword != null) {
+		if (myPrompt != null) {
+			repository.setCredentialsProvider(new SVNPromptCredentialsProvider(myPrompt, myUserName, myPassword));            
+	    } else if (myUserName != null && myPassword != null) {
             repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
-        } else if (myPrompt != null) {
-            repository.setCredentialsProvider(new SVNPromptCredentialsProvider(myPrompt));            
         }
         return repository;
     }
@@ -1420,7 +1421,7 @@ public class SVNClient implements SVNClientInterface {
             if (myUserName != null && myPassword != null) {
                 ws.setCredentials(myUserName, myPassword);
             } else if (myPrompt != null) {
-                ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt));
+                ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt, myUserName, myPassword));
             }
             ws.setExternalsHandler(new SVNClientExternalsHandler(myNotify));
         }
