@@ -28,7 +28,9 @@ public final class SVNRepositoryFactoryImpl extends SVNRepositoryFactory {
     }
 
     public static void setup(ISVNConnectorFactory connectorFactory) {
-        ourConnectorFactory = connectorFactory == null ? ISVNConnectorFactory.DEFAULT : connectorFactory;
+    	if (ourConnectorFactory == null) {
+    		ourConnectorFactory = connectorFactory == null ? ISVNConnectorFactory.DEFAULT : connectorFactory;
+    	}
         SVNRepositoryFactory.registerRepositoryFactory("^svn(\\+ssh)?://.*$", new SVNRepositoryFactoryImpl());
     }
 

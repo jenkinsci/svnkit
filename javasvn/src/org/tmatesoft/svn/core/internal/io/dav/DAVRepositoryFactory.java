@@ -28,7 +28,9 @@ public class DAVRepositoryFactory extends SVNRepositoryFactory {
     }
 
     public static void setup(IDAVSSLManager sslManager) {
-        ourSSLManager = sslManager == null ? IDAVSSLManager.DEFAULT : sslManager;
+    	if (ourSSLManager == null) {
+    		ourSSLManager = sslManager == null ? IDAVSSLManager.DEFAULT : sslManager;
+    	}
         DAVRepositoryFactory factory = new DAVRepositoryFactory();
         SVNRepositoryFactory.registerRepositoryFactory("^https?://.*$", factory);
     }
