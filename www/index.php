@@ -114,6 +114,6 @@ publish_html("http://tmate.org/svn/");
 </tbody></table>
 <br>
 <div style="max-width: 800px; width: 800px;">
-<center><small><span style="font-size: 80%;">(c) 2004 TMate Software. All rights reserved.</span></small></center>
+<center><small><span style="font-size: 80%;">(c) 2004-2005 TMate Software. All rights reserved.</span></small></center>
 </div>
 </body></html>

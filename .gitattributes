@@ -17,7 +17,7 @@ javasvn-test/test.windows.properties eol=crlf
 javasvn/cli/svn eol=lf
 javasvn/cli/svn.bat eol=crlf
 www/.htaccess eol=lf
-www/ant.html -text
+www/ant.html eol=lf
 www/build.html eol=lf
 www/feed/feedcreator.class.php eol=lf
 www/feed/lgpl.txt eol=lf
