@@ -1338,7 +1338,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
             entry = entry.asDirectory().getUnmanagedChild(token);
         }
-        if (entry != null && !unmanaged && (entry.getPropertyValue(SVNProperty.REVISION) == null && !entry.isMissing())) {
+        if (entry != null && !unmanaged && !entry.isManaged()) {
             return null;
         }
         return entry;
