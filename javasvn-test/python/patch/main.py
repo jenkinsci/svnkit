@@ -113,7 +113,7 @@ if windows == 1:
   test_area_url = string.replace(test_area_url, '\\', '/')
 
 # Global variable indicating the FS type for repository creations.
-fs_type = None
+fs_type = "bdb"
 
 # Where we want all the repositories and working copies to live.
 # Each test will have its own!
@@ -253,7 +253,8 @@ def run_svn(error_expected, *varargs):
   """Run svn with VARARGS; return stdout, stderr as lists of lines.
   If ERROR_EXPECTED is None, any stderr also will be printed.  If
   you're just checking that something does/doesn't come out of
-  stdout/stderr, you might want to use actions.run_and_verify_svn()."""
+  stdout/stderr, you might want to use actions.run_and_verify_svn() or
+  actions.run_and_verify_svn_error()."""
   global config_dir
   return run_command(svn_binary, error_expected, 0,
                      *varargs + ('--config-dir', config_dir))
@@ -321,12 +322,11 @@ def create_repos(path):
   if not(os.path.exists(path)):
     os.makedirs(path) # this creates all the intermediate dirs, if neccessary
 
-  opts = ("--bdb-txn-nosync",)
-  if fs_type is not None:
-    opts += ("--fs-type=" + fs_type,)
-  stdout, stderr = run_command(svnadmin_binary, 1, 0, "create", path, *opts)
+  stdout, stderr = run_command(svnadmin_binary, 1, 0, "create", path,
+                               "--bdb-txn-nosync", "--fs-type="+fs_type)
 
-  # Skip tests if we can't create the repository.
+  # Skip tests if we can't create the repository (most likely, because
+  # Subversion was built without BDB and this is a default test run).
   for line in stderr:
     if line.find('Unknown FS type') != -1:
       raise Skip
@@ -410,16 +410,6 @@ def set_repos_paths(repo_dir):
   if windows == 1:
     current_repo_url = string.replace(current_repo_url, '\\', '/')
 
-
-def canonize_url(input):
-  "Canonize the url, if the schema is unknown, returns intact input"
-  
-  m = re.match(r"^((file://)|((svn|svn\+ssh|http|https)(://)))", input)
-  if m:
-    schema = m.group(1)
-    return schema + re.sub(r'//*', '/', input[len(schema):])
-  else:
-    return input
 
 ######################################################################
 # Sandbox handling
@@ -528,8 +518,7 @@ def _internal_run_tests(test_list, testnum=None):
 
   if testnum is None:
     for n in range(1, len(test_list)):
-      # 1 is the only return code that indicates actual test failure.
-      if run_one_test(n, test_list) == 1:
+      if run_one_test(n, test_list):
         exit_code = 1
   else:
     exit_code = run_one_test(testnum, test_list)

@@ -915,11 +915,14 @@ public class SVNWorkspace implements ISVNWorkspace {
                 if (!force) {
                     // check if files are modified.
                     assertNotModified(entry.asDirectory().getChild(name));
+                    assertNotModified(entry.asDirectory().getUnmanagedChild(name));
                 }
                 ISVNEntry child = entry.asDirectory().scheduleForDeletion(name, force);
                 fireEntryModified(child, SVNStatus.DELETED, true);
                 entry.save();
                 entry.dispose();
+            } else if (entry == null) {
+                
             }
         } finally {
             getRoot().dispose();
@@ -932,7 +935,10 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
         if (!entry.isManaged()) {
             throw new SVNException("'" + entry.getPath() + "' is unmanaged, use 'force' parameter to force deletion.");
+        } else if (entry.isScheduledForAddition() && !entry.isMissing()) {
+            throw new SVNException("'" + entry.getPath() + "' is modified locally, use 'force' parameter to force deletion.");
         }
+        
         if (entry.isPropertiesModified()) {
             throw new SVNException("'" + entry.getPath() + "' is modified locally, use 'force' parameter to force deletion.");
         }
@@ -942,6 +948,9 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
         } else {
             for (Iterator children = entry.asDirectory().unmanagedChildEntries(true); children.hasNext();) {
+                assertNotModified((ISVNEntry) children.next());
+            }
+            for (Iterator children = entry.asDirectory().childEntries(); children.hasNext();) {
                 assertNotModified((ISVNEntry) children.next());
             }
         }

@@ -78,6 +78,11 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
 
         if (child != null) {
             doDeleteFiles(child);
+        } else {
+            child = getUnmanagedChild(name);
+            if (child != null) {
+                doDeleteFiles(child);
+            }
         }
         if (storeInfo) {
             Map map = new HashMap();
@@ -182,7 +187,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
 
     public Iterator childEntries() throws SVNException {
         loadEntries();
-        return myChildren.values().iterator();
+        return new LinkedList(myChildren.values()).iterator();
     }
     
     public Iterator deletedEntries() throws SVNException {
@@ -394,7 +399,8 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
     
     public Iterator unmanagedChildEntries(boolean includeIgnored) throws SVNException {
         loadUnmanagedChildren();
-        return includeIgnored ? myAllUnmanagedChildren.values().iterator() : myUnmanagedChildren.values().iterator();
+        Collection unmanagedChildren = includeIgnored ? myAllUnmanagedChildren.values() : myUnmanagedChildren.values();
+        return new ArrayList(unmanagedChildren).iterator();
     }
     
     private void loadUnmanagedChildren() throws SVNException {
@@ -550,10 +556,12 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
     }
     
     public ISVNEntry scheduleForDeletion(String name, boolean moved) throws SVNException {
+        DebugLog.log("DELETING: " + name + " from " + getPath());
         ISVNEntry entry = getChild(name);
         if (entry == null) {
             // force file deletion
             if (moved) {
+                DebugLog.log("DELETING UNMANAGED CHILD: " + name + " from " + getPath());
                 deleteChild(name, false);
             }
             return entry;
@@ -582,6 +590,10 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 entryMap.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_DELETE);
             }
             for(Iterator children = ((ISVNDirectoryEntry) entry).childEntries(); children.hasNext();) {
+                ISVNEntry child = (ISVNEntry) children.next();
+                ((ISVNDirectoryEntry) entry).scheduleForDeletion(child.getName(), moved);
+            }
+            for(Iterator children = ((ISVNDirectoryEntry) entry).unmanagedChildEntries(true); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
                 ((ISVNDirectoryEntry) entry).scheduleForDeletion(child.getName(), moved);
             }
