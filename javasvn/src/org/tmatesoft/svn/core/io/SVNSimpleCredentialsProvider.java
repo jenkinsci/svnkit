@@ -52,6 +52,21 @@ public class SVNSimpleCredentialsProvider implements ISVNCredentialsProvider {
         myIsFinished = false;
     }
     
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SVNSimpleCredentialsProvider)) {
+            return false;
+        }
+        SVNSimpleCredentialsProvider provider = (SVNSimpleCredentialsProvider) o;
+        return myCredentials.equals(provider.myCredentials);
+    }
+    
+    public int hashCode() {
+        return myCredentials.hashCode();
+    }
+    
     public static class SimpleCredentials implements ISVNSSHCredentials {
         private String myPassword;
         private String myUserName;
@@ -90,5 +105,39 @@ public class SVNSimpleCredentialsProvider implements ISVNCredentialsProvider {
         public String getPassphrase() {
             return myPassphrase;
         }
+        
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof SimpleCredentials)) {
+                return false;
+            }
+            SimpleCredentials credentials = (SimpleCredentials) o;
+            boolean equals = true;
+            equals = myUserName == null ? credentials.myUserName == null : myUserName.equals(credentials.myUserName);
+            if (!equals) {
+                return false;
+            }
+            equals = myPassword == null ? credentials.myPassword == null : myPassword.equals(credentials.myPassword);
+            if (!equals) {
+                return false;
+            }
+            equals = myPrivateKey == null ? credentials.myPrivateKey == null : myPrivateKey.equals(credentials.myPrivateKey);
+            if (!equals) {
+                return false;
+            }
+            return myPassphrase == null ? credentials.myPassphrase == null : myPassphrase.equals(credentials.myPassphrase);
+        }
+        
+        public int hashCode() {
+            int hashCode = 17;
+            hashCode += myUserName != null ? myUserName.hashCode()*31 : 0;
+            hashCode += myPassword != null ? myPassword.hashCode()*31 : 0;
+            hashCode += myPrivateKey != null ? myPrivateKey.hashCode()*31 : 0;
+            hashCode += myPassphrase != null ? myPassphrase.hashCode()*31 : 0;
+            return hashCode;
+        }
+        
     }
 }
