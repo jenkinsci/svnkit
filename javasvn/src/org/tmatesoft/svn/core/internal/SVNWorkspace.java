@@ -871,6 +871,12 @@ public class SVNWorkspace implements ISVNWorkspace {
             ISVNEntry entry = locateParentEntry(destination);
             String name = PathUtil.tail(destination);
             ISVNEntry toCopyParent = locateParentEntry(source);
+            if (entry == null || !entry.isDirectory()) {
+                throw new SVNException("'" + destination + "' is not under version control");
+            }
+            if (toCopyParent == null || !toCopyParent.isDirectory()) {
+                throw new SVNException("'" + source + "' is not under version control");
+            }
             String toCopyName = PathUtil.tail(source);
             ISVNEntry toCopy = toCopyParent.asDirectory().getChild(toCopyName);
 
