@@ -70,7 +70,7 @@ public abstract class FSEntry implements ISVNEntry {
     
     public boolean isMissing() throws SVNException {
         File file = getRootEntry().getWorkingCopyFile(this);
-        return FSUtil.isFileOrSymlinkExists(file) && !isScheduledForDeletion();
+        return !FSUtil.isFileOrSymlinkExists(file) && !isScheduledForDeletion();
     }
     
     public String getPath() {
