@@ -33,8 +33,6 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
-import org.tmatesoft.svn.core.io.ISVNCredentials;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
@@ -57,7 +55,6 @@ import org.tmatesoft.svn.util.TimeUtil;
 public class SVNClient implements SVNClientInterface {
     
     private CommitMessage myMessageHandler;
-    private PromptUserPassword myPrompt;
     private String myUserName;
     private String myPassword;
     private Notify myNotify;
@@ -81,7 +78,6 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void setPrompt(PromptUserPassword prompt) {
-        myPrompt = prompt;
     }
     
     /**
@@ -1253,43 +1249,7 @@ public class SVNClient implements SVNClientInterface {
     private static boolean isURL(String pathOrUrl) {
         return PathUtil.isURL(pathOrUrl);
     }
-    
-    private static class PromptCredentialsProvider implements ISVNCredentialsProvider {
-        
-        private PromptUserPassword myPrompt;
-        
-        public PromptCredentialsProvider(PromptUserPassword prompt) {
-            myPrompt = prompt;            
-        }
 
-        public ISVNCredentials nextCredentials(String realm) {
-            String userName = myPrompt.getUsername();
-            String password = myPrompt.getPassword();
-            if (userName == null) {
-                // ask for user name first.
-                userName = myPrompt.askQuestion(realm, "user name ["  + System.getProperty("user.name") + "]", true);
-                if (userName == null || "".equals(userName.trim())) {
-                    userName = System.getProperty("user.name");                    
-                }
-                password = null;
-            }
-            if (password == null) {
-                if (!myPrompt.prompt(realm, userName)) {
-                    return null;
-                }
-            }
-            return new SVNSimpleCredentialsProvider.SimpleCredentials(userName, password, null, null);
-        }
-
-        public void accepted(ISVNCredentials credentials) {
-        }
-        public void notAccepted(ISVNCredentials credentials, String failureReason) {
-        }
-        public void reset() {
-        }
-        
-    }
-    
     static final int[] STATUS_CONVERTION_TABLE = new int[0x13];
     
     static {
