@@ -12,24 +12,44 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.*;
-import org.tmatesoft.svn.cli.*;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.io.*;
-import org.tmatesoft.svn.util.*;
+import java.io.IOException;
+import java.io.PrintStream;
+
+import org.tmatesoft.svn.cli.SVNArgument;
+import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
  */
-public class AddCommand extends LocalModificationCommand {
+public class AddCommand extends SVNCommand {
 
-	protected void run(final PrintStream out, PrintStream err, final ISVNWorkspace workspace, String relativePath) throws SVNException {
-		boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
-		workspace.add(relativePath, false, recursive);
-	}
+	public final void run(final PrintStream out, PrintStream err) throws SVNException {
+		final boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
+		for (int i = 0; i < getCommandLine().getPathCount(); i++) {
+			final String absolutePath = getCommandLine().getPathAt(i);
+			final String workspacePath = absolutePath;
+			final ISVNWorkspace workspace = createWorkspace(absolutePath);
+			workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
+				public void modified(String path, int kind) {
+					try {
+						path = convertPath(workspacePath, workspace, path);
+					}
+					catch (IOException e) {
+					}
 
-	protected void log(PrintStream out, String relativePath) {
-		DebugLog.log("A  " + relativePath);
-		out.println("A  " + relativePath);
+					DebugLog.log("A  " + path);
+					out.println("A  " + path);
+				}
+			});
+
+			final String relativePath = SVNUtil.getWorkspacePath(workspace, absolutePath);
+			DebugLog.log("Workspace/file is '" + workspace.getID() + "'/'" + relativePath + "'");
+			workspace.add(relativePath, false, recursive);
+		}
 	}
 }

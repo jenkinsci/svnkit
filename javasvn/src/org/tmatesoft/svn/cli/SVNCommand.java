@@ -21,6 +21,10 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
 
@@ -28,11 +32,11 @@ import org.tmatesoft.svn.util.SVNUtil;
  * @author TMate Software Ltd.
  */
 public abstract class SVNCommand {
-    
+
     private SVNCommandLine myCommandLine;
     private String myUserName;
     private String myPassword;
-    
+
     private static Map ourCommands;
 
     protected SVNCommandLine getCommandLine() {
@@ -42,16 +46,23 @@ public abstract class SVNCommand {
     public void setCommandLine(SVNCommandLine commandLine) {
         myCommandLine = commandLine;
         myUserName = (String) commandLine.getArgumentValue(SVNArgument.USERNAME);
-        myPassword = (String) commandLine.getArgumentValue(SVNArgument.PASSWORD);        
+        myPassword = (String) commandLine.getArgumentValue(SVNArgument.PASSWORD);
     }
 
     public abstract void run(PrintStream out, PrintStream err) throws SVNException;
-    
+
     protected ISVNWorkspace createWorkspace(String absolutePath) throws SVNException {
         ISVNWorkspace ws = SVNUtil.createWorkspace(absolutePath);
         ws.setCredentials(myUserName, myPassword);
         return ws;
     }
+
+	protected final SVNRepository createRepository(String url) throws SVNException {
+	    SVNRepository repository = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
+	    repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
+	    return repository;
+	}
+
 
     public static SVNCommand getCommand(String name) {
         if (name == null) {
@@ -72,7 +83,7 @@ public abstract class SVNCommand {
         }
         if (className == null) {
             return null;
-        }        
+        }
         try {
             Class clazz = Class.forName(className);
             if (clazz != null) {
@@ -85,22 +96,22 @@ public abstract class SVNCommand {
     protected String convertPath(String homePath, ISVNWorkspace ws, String path) throws IOException {
         String absolutePath = SVNUtil.getAbsolutePath(ws, path);
         String absoluteHomePath = new File(homePath).getCanonicalPath();
-        
+
         if (".".equals(homePath)) {
             homePath = "";
         }
-        
+
         String relativePath = absolutePath.substring(absoluteHomePath.length());
         String result = PathUtil.append(homePath, relativePath);
         result = result.replace(File.separatorChar, '/');
         result = PathUtil.removeLeadingSlash(result);
         result = PathUtil.removeTrailingSlash(result);
         result = result.replace('/', File.separatorChar);
-        
+
         if ("".equals(result)) {
             return ".";
         }
-        return result;        
+        return result;
     }
 
     static {
@@ -114,6 +125,7 @@ public abstract class SVNCommand {
 	      ourCommands.put(new String[] {"delete", "rm", "remove", "del"}, "org.tmatesoft.svn.cli.command.DeleteCommand");
 	      ourCommands.put(new String[] {"revert"}, "org.tmatesoft.svn.cli.command.RevertCommand");
 	      ourCommands.put(new String[] {"mkdir"}, "org.tmatesoft.svn.cli.command.MkDirCommand");
+	      ourCommands.put(new String[] {"propset", "pset", "ps"}, "org.tmatesoft.svn.cli.command.PropsetCommand");
     }
-    
+
 }

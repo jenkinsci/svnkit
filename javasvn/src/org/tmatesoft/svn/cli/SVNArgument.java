@@ -29,6 +29,7 @@ public abstract class SVNArgument {
     public static final SVNArgument CONFIG_DIR = createStringArgument(new String[] {"--config-dir"});
 
     public static final SVNArgument NON_RECURSIVE = createUnaryArgument(new String[] {"--non-recursive", "-N"});
+    public static final SVNArgument RECURSIVE = createUnaryArgument(new String[] {"--recursive", "-R"});
     public static final SVNArgument VERBOSE = createUnaryArgument(new String[] {"--verbose", "-v"});
     public static final SVNArgument QUIET = createUnaryArgument(new String[] {"--quiet", "-q"});
     public static final SVNArgument SHOW_UPDATES = createUnaryArgument(new String[] {"--show-updates", "-u"});
@@ -58,6 +59,7 @@ public abstract class SVNArgument {
         ourArguments.add(SVNArgument.CONFIG_DIR);
         
         ourArguments.add(SVNArgument.NON_RECURSIVE);
+        ourArguments.add(SVNArgument.RECURSIVE);
         ourArguments.add(SVNArgument.VERBOSE);
         ourArguments.add(SVNArgument.QUIET);
         ourArguments.add(SVNArgument.SHOW_UPDATES);

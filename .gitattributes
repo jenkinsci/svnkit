@@ -97,8 +97,8 @@ javasvn/src/org/tmatesoft/svn/cli/command/CheckoutCommand.java -text
 javasvn/src/org/tmatesoft/svn/cli/command/CommitCommand.java -text
 javasvn/src/org/tmatesoft/svn/cli/command/DeleteCommand.java -text
 javasvn/src/org/tmatesoft/svn/cli/command/ImportCommand.java -text
-javasvn/src/org/tmatesoft/svn/cli/command/LocalModificationCommand.java -text
 javasvn/src/org/tmatesoft/svn/cli/command/MkDirCommand.java -text
+javasvn/src/org/tmatesoft/svn/cli/command/PropsetCommand.java -text
 javasvn/src/org/tmatesoft/svn/cli/command/RevertCommand.java -text
 javasvn/src/org/tmatesoft/svn/cli/command/StatusCommand.java -text
 javasvn/src/org/tmatesoft/svn/cli/command/UpdateCommand.java -text

@@ -29,17 +29,12 @@ import org.tmatesoft.svn.util.DebugLog;
 public class ImportCommand extends SVNCommand {
 
     public void run(final PrintStream out, PrintStream err) throws SVNException {
-        String path;
-        String url;
-        if (getCommandLine().getPathCount() > 1) {
-            path = getCommandLine().getPathAt(0);
-            url = getCommandLine().getPathAt(1);
-        } else {
-            path = ".";
-            url = getCommandLine().getPathAt(0);
-        }
+        final String path = getCommandLine().getPathAt(0);
+        final String url = getCommandLine().getURL(0);
 
+        DebugLog.log("import url: " + url);
         DebugLog.log("import path: " + path);
+
         final ISVNWorkspace workspace = createWorkspace(path);
         final String homePath = path;
         DebugLog.log("import root: " + workspace.getID());

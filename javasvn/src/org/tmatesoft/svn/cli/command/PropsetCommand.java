@@ -19,48 +19,21 @@ import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
-import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
  */
-public class DeleteCommand extends SVNCommand {
+public class PropsetCommand extends SVNCommand {
 
-	public void run(PrintStream out, PrintStream err) throws SVNException {
-		if (getCommandLine().hasURLs()) {
-			runRemote();
-		}
-		else {
-			runLocally(out);
-		}
-	}
+	public final void run(final PrintStream out, PrintStream err) throws SVNException {
+		final String propertyName = getCommandLine().getPathAt(0);
+		final String propertyValue = getCommandLine().getPathAt(1);
+		final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
 
-	private void runRemote() throws SVNException {
-		final String entryUrl = getCommandLine().getURL(0);
-		final String commitMessage = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
-		final String entry = PathUtil.tail(entryUrl);
-		final String url = entryUrl.substring(0, entryUrl.length() - entry.length());
-		final SVNRepository repository = createRepository(url);
-		ISVNEditor editor = repository.getCommitEditor(commitMessage != null ? commitMessage : "", null);
-		try {
-			editor.openRoot(-1);
-			editor.deleteEntry(entry, -1);
-			editor.closeDir();
-			editor.closeEdit();
-		}
-		catch (SVNException ex) {
-			editor.abortEdit();
-			throw ex;
-		}
-	}
-
-	private void runLocally(final PrintStream out) throws SVNException {
-		for (int i = 0; i < getCommandLine().getPathCount(); i++) {
+		for (int i = 2; i < getCommandLine().getPathCount(); i++) {
 			final String absolutePath = getCommandLine().getPathAt(i);
 			final String workspacePath = absolutePath;
 			final ISVNWorkspace workspace = createWorkspace(absolutePath);
@@ -72,14 +45,13 @@ public class DeleteCommand extends SVNCommand {
 					catch (IOException e) {
 					}
 
-					DebugLog.log("D  " + path);
-					out.println("D  " + path);
+					DebugLog.log("property '" + propertyName + "' set on '" + path + "'");
 				}
 			});
 
 			final String relativePath = SVNUtil.getWorkspacePath(workspace, absolutePath);
 			DebugLog.log("Workspace/path is '" + workspace.getID() + "'/'" + relativePath + "'");
-			workspace.delete(relativePath);
+			workspace.setPropertyValue(relativePath, propertyName, propertyValue, recursive);
 		}
 	}
 }

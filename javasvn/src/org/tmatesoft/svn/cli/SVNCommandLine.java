@@ -26,45 +26,47 @@ import org.tmatesoft.svn.util.DebugLog;
  * @author TMate Software Ltd.
  */
 public class SVNCommandLine {
-    
+
     private Set myUnaryArguments;
     private Map myBinaryArguments;
     private String myCommandName;
     private List myPaths;
-    
+		private List myURLs;
+
     public SVNCommandLine(String[] commandLine) throws SVNException {
         init(commandLine);
     }
-    
+
     public boolean hasArgument(SVNArgument argument) {
         return myBinaryArguments.containsKey(argument) || myUnaryArguments.contains(argument);
     }
-    
+
     public Object getArgumentValue(SVNArgument argument) {
         return myBinaryArguments.get(argument);
     }
-    
+
     public String getCommandName() {
         return myCommandName;
     }
-    
+
     public int getPathCount() {
         return myPaths.size();
     }
-    
+
     public String getPathAt(int index) {
         return (String) myPaths.get(index);
     }
-    
+
     protected void init(String[] arguments) throws SVNException {
-        
+
         myUnaryArguments = new HashSet();
         myBinaryArguments = new HashMap();
         myPaths = new ArrayList();
-        
+	      myURLs = new ArrayList();
+
         SVNArgument previousArgument = null;
         String previousArgumentName = null;
-        
+
         for(int i = 0; i < arguments.length; i++) {
             String argument = arguments[i];
             if (previousArgument != null) {
@@ -75,16 +77,16 @@ public class SVNCommandLine {
                 Object value = previousArgument.parseValue(argument);
                 DebugLog.log("value (2): " + value);
                 myBinaryArguments.put(previousArgument, value);
-                
+
                 previousArgument = null;
                 previousArgumentName = null;
                 continue;
             }
-            
+
             if (argument.startsWith("--")) {
                 // long argument (--no-ignore)
                 SVNArgument svnArgument = SVNArgument.findArgument(argument);
-                if (svnArgument != null) {                    
+                if (svnArgument != null) {
                     if (svnArgument.hasValue()) {
                         previousArgument = svnArgument;
                         previousArgumentName = argument;
@@ -98,7 +100,7 @@ public class SVNCommandLine {
                 for(int j = 1; j < argument.length(); j++) {
                     String name = "-" + argument.charAt(j);
                     DebugLog.log("parsing argument: " + name);
-                    
+
                     SVNArgument svnArgument = SVNArgument.findArgument(name);
                     if (svnArgument != null) {
                         if (svnArgument.hasValue()) {
@@ -123,15 +125,28 @@ public class SVNCommandLine {
                 if (myCommandName == null) {
                     myCommandName = argument;
                 } else {
-                    myPaths.add(argument);
+                    if (argument.indexOf("://") >= 0) {
+	                    myURLs.add(argument);
+                    }
+	                else {
+	                  myPaths.add(argument);
+                    }
                 }
             }
         }
         if (myCommandName == null) {
             throw new SVNException("no command name defined");
-        }        
-        if (myPaths.isEmpty()) {
+        }
+        if (myPaths.isEmpty() && myURLs.isEmpty()) {
             myPaths.add(".");
         }
     }
+
+	public boolean hasURLs() {
+		return !myURLs.isEmpty();
+	}
+
+	public String getURL(int index) {
+	    return (String) myURLs.get(index);
+	}
 }

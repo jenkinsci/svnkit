@@ -33,7 +33,7 @@ public class SVN {
 
         StringBuffer commandLineString = new StringBuffer();
         for(int i = 0; i < args.length; i++) {
-            commandLineString.append(args[i]);
+            commandLineString.append(args[i] + (i < args.length - 1 ? " " : ""));
         }
         DebugLog.log("command line: " + commandLineString.toString());
         
