@@ -89,12 +89,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             }
             return;
         }
-        
-        if (!myIsCheckout && !getRootEntry().getWorkingCopyFile(this).exists() && getAdminArea().getBaseFile(this).exists()) {
-            // should be no checkout in progress.
-            return;            
-        }
-        if (isScheduledForAddition() || isScheduledForDeletion()) {
+        if (isScheduledForAddition()) {
             return;
         }
         if (window == null) {
@@ -326,8 +321,12 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         }
         String checksum = null;
         if (isScheduledForDeletion()) {
+            DebugLog.log("merging deleted file: " + getPath());
+            DebugLog.log("tmpBaseFile: " + tmpBaseFile.getAbsolutePath());
+            DebugLog.log("tmpBaseFile.exists(): " + tmpBaseFile.exists());
             if (tmpBaseFile.exists()) {
                 checksum = FSUtil.copy(tmpBaseFile, baseFile, null, createDigest());
+                DebugLog.log("deleted file merged: "  + getPath());
             }
         } else if (!isContentsModified()) {
             String eolStyle = isBinary() ? null : getPropertyValue(SVNProperty.EOL_STYLE);
