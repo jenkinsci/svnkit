@@ -10,8 +10,12 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core;
+package org.tmatesoft.svn.core.internal;
 
+import org.tmatesoft.svn.core.ISVNExternalsHandler;
+import org.tmatesoft.svn.core.ISVNStatusHandler;
+import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.PathUtil;
@@ -19,7 +23,7 @@ import org.tmatesoft.svn.util.PathUtil;
 /**
  * @author TMate Software Ltd.
  */
-public class DefaultSVNExternalsHandler implements ISVNExternalsHandler {
+class DefaultSVNExternalsHandler implements ISVNExternalsHandler {
 
     public void handleStatus(ISVNWorkspace parent, final String path, ISVNWorkspace external, final ISVNStatusHandler statusHandler,
             boolean remote, boolean descend,

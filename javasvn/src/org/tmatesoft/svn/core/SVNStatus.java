@@ -134,7 +134,7 @@ public class SVNStatus {
         myRemoteRevision = revision;
     }
     
-    void setPath(String path) {
+    public void setPath(String path) {
         myPath = path;
     }
 

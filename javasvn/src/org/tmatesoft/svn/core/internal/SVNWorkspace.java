@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
-import org.tmatesoft.svn.core.DefaultSVNExternalsHandler;
 import org.tmatesoft.svn.core.ISVNCommitHandler;
 import org.tmatesoft.svn.core.ISVNDirectoryEntry;
 import org.tmatesoft.svn.core.ISVNEntry;
