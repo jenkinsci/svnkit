@@ -453,7 +453,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             if (recurse) {
                 for(Iterator children = ((ISVNDirectoryEntry) entry).childEntries(); children.hasNext();) {
                     ISVNEntry ch = (ISVNEntry) children.next();
-                    if (!ch.isScheduledForDeletion()) {
+                    if (ch.isScheduledForDeletion() && getRootEntry().getWorkingCopyFile(ch).exists()) {
                         ((FSDirEntry) entry).scheduleForAddition(ch.getName(), false, recurse);
                     }
                 }
