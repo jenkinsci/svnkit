@@ -49,6 +49,7 @@ import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
 import org.tmatesoft.svn.util.TimeUtil;
+import org.tmatesoft.svn.util.Version;
 
 /**
  * @author TMate Software Ltd.
@@ -60,12 +61,6 @@ public class SVNClient implements SVNClientInterface {
     private String myPassword;
     private Notify myNotify;
     
-    private static final int VERSION_MAJOR = 0;
-    private static final int VERSION_MINOR = 8;
-    private static final int VERSION_MICRO = 1;
-    private static final String VERSION = "JavaSVN v" + versionMajor() + "." + versionMinor() + "." + versionMicro() +
-    	" (http://tmate.org/svn/)";
-    
     public SVNClient() {
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
@@ -76,16 +71,16 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public static String version() {
-    	return VERSION;
+    	return Version.getVersionString();
     }
     public static int versionMajor() {
-    	return VERSION_MAJOR;    	
+    	return Version.getMajorVersion();
     }
     public static int versionMinor() {
-    	return VERSION_MINOR;    	
+    	return Version.getMinorVersion();
     }
     public static int versionMicro() {
-    	return VERSION_MICRO;    	
+    	return Version.getMicroVersion();
     }
 
     public void username(String username) {

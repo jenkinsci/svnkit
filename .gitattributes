@@ -29,6 +29,7 @@ javasvn-test/test.unix.properties eol=lf
 javasvn-test/test.windows.properties eol=crlf
 javasvn/cli/svn eol=lf
 javasvn/cli/svn.bat eol=crlf
+javasvn/src/org/tmatesoft/svn/util/javasvn.properties eol=lf
 /plugin.xml -text
 www/.htaccess eol=lf
 www/ant.html eol=lf

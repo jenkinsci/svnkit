@@ -42,6 +42,7 @@ import org.tmatesoft.svn.util.LoggingInputStream;
 import org.tmatesoft.svn.util.LoggingOutputStream;
 import org.tmatesoft.svn.util.SVNUtil;
 import org.tmatesoft.svn.util.SocketFactory;
+import org.tmatesoft.svn.util.Version;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
@@ -302,7 +303,8 @@ class HttpConnection {
         sb.append(":");
         sb.append(mySVNRepositoryLocation.getPort());
         sb.append(HttpConnection.CRLF);
-        sb.append("User-Agent: JavaSVN 1.0.0");
+        sb.append("User-Agent: ");
+        sb.append(Version.getVersionString());
         sb.append(HttpConnection.CRLF);
         sb.append("Keep-Alive:");
         sb.append(HttpConnection.CRLF);
