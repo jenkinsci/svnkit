@@ -63,7 +63,7 @@ public class SVNLoggingConnector implements ISVNConnector {
     }
 
     public InputStream getInputStream() throws IOException {
-        if (myInputStream != null) {
+        if (myInputStream == null) {
             myInputStream = new InputStream() {                
                 public void close() throws IOException {
                     myDelegate.getInputStream().close();
@@ -93,7 +93,7 @@ public class SVNLoggingConnector implements ISVNConnector {
             myReadBuffer.delete(0, myReadBuffer.length());
         }
         if (mySentBuffer.length() > 0) {
-            DebugLog.log("SVN SENT: " + mySentBuffer.toString());
+            DebugLog.log("SVN.SENT: " + mySentBuffer.toString());
             mySentBuffer.delete(0, mySentBuffer.length());
         }
     }
