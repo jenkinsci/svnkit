@@ -11,6 +11,7 @@ javasvn-test/apache/httpd.template.conf eol=lf
 javasvn-test/apache/passwd eol=lf
 javasvn-test/fixture/directory/testFile2.txt -text
 javasvn-test/fixture/testFile.txt -text
+javasvn-test/src/org/tmatesoft/svn/core/test/HTTPSTest.java -text
 javasvn-test/test.mac.properties eol=lf
 javasvn-test/test.unix.properties eol=lf
 javasvn-test/test.windows.properties eol=crlf
