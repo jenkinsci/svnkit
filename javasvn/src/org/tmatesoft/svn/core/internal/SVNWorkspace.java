@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.ISVNDirectoryEntry;
 import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.ISVNEntryContent;
 import org.tmatesoft.svn.core.ISVNExternalsHandler;
+import org.tmatesoft.svn.core.ISVNFileContent;
 import org.tmatesoft.svn.core.ISVNRootEntry;
 import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.ISVNWorkspace;
@@ -981,11 +982,22 @@ public class SVNWorkspace implements ISVNWorkspace {
     }
 
     public ISVNEntryContent getContent(String path) throws SVNException {
-	      ISVNEntry entry = locateEntry(path, true);
-	    if (entry == null) {
-		    throw new SVNException("Can't find entry for path " + path);
-	    }
-	    return entry.getContent();
+        ISVNEntry entry = locateEntry(path, true);
+        if (entry == null) {
+            throw new SVNException("Can't find entry for path " + path);
+        }
+        return entry.getContent();
+    }
+
+    public ISVNFileContent getFileContent(String path) throws SVNException {
+        ISVNEntry entry = locateEntry(path, true);
+        if (entry == null) {
+            throw new SVNException("Can't find entry for path " + path);
+        }
+        if (entry.isDirectory()) {
+            return null;
+        }
+        return (ISVNFileContent) entry.getContent();
     }
 
     protected void fireEntryCommitted(ISVNEntry entry, int kind) {
