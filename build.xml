@@ -86,9 +86,9 @@
 		<chmod file="lib/svn" perm="ugo+rx"/>
 	</target>
 
-	<target name="build-src-jar" depends="clean">
+	<target name="build-src-jar" depends="init">
 		<mkdir dir="lib"/>
-		<zip destfile="lib/javasvnsrc.zip">
+		<zip destfile="lib/javasvn.src.zip">
 			<fileset dir="javasvn/src">
 			    <include name="**/*.java"/>
 			</fileset>
@@ -100,6 +100,7 @@
 			</fileset>
 			<fileset dir="contrib/javahl/src">
 			    <include name="**/*.java"/>
+                            <exclude name="**/SVNClient.java"/>
 			</fileset>
 		</zip>
 	</target>
@@ -186,24 +187,6 @@
 			<include name="**"/>
 		</zip>
 		<!-- zip eclipse fragment -->
-<!--
-		<zip destfile="org.tmatesoft.svn.subclipse_1.0.0_${date}.eclipse.zip">
-			<zipfileset prefix="plugins/org.tmatesoft.svn.subclipse_1.0.0" dir="javasvn-eclipse">
-				<include name="fragment.xml"/>
-			</zipfileset>
-			<zipfileset prefix="plugins/org.tmatesoft.svn.subclipse_1.0.0" dir=".">
-				<include name="lib/**"/>
-				<include name="changelog.txt"/>
-				<include name="COPYING"/>
-			</zipfileset>
-			<zipfileset prefix="plugins/org.tmatesoft.svn.subclipse_1.0.0" dir="contrib/javahl">
-				<include name="COPYING-SVN"/>
-			</zipfileset>
-			<zipfileset prefix="plugins/org.tmatesoft.svn.subclipse_1.0.0" dir="contrib/jsch">
-				<include name="JSCH-LICENSE"/>
-			</zipfileset>
-		</zip>
-	-->	
 	</target>
 	
 	<target name="test" depends="build-standalone">
@@ -229,6 +212,8 @@
         	<echo message="Eclipse:         ${eclipse.home}"/>
 	        <echo message="JDK:             ${java.home}"/>
 	</target>
+
+        <target name="build" depends="build-src-jar,build-standalone"/>
 
         <target name="test-python" depends="build-standalone">
             <copy file="javasvn-test/python/cmdline/svntest/main.py"
