@@ -98,8 +98,8 @@ what features are planned, but not yet implemented.
 <a id="normal" href="javadoc/index.html">JavaDoc</a>
 <h5>Issue Tracker</h5>
 Use the following link to view JavaSVN issues or submit a new one:
-<a id="normal" href="http://javasvn.tigris.org/servlets/ProjectIssues">Issue Tracker at javasvn.tigris.org</a>
-<br />You will have to register at tigris.org to submit an issue.
+<a id="normal" href="http://tmate.org/tracker/">JavaSVN Issue Tracker</a> 
+<br/>(powered by <a id="normal" href="http://www.mantisbt.org">Mantis Bug Tracker</a>)
 <h5>Repository</h5>
 To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/jsvn/">http://72.9.228.230:8080/svn/jsvn/</a>
 <br />To get the latest source code use the following command:
