@@ -639,6 +639,11 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         return this;
     }
     
+    public boolean isManaged(String name) throws SVNException {
+    	loadEntries();
+    	return myChildEntries.containsKey(name);
+    }
+    
     public boolean isIgnored(String name) throws SVNException {
         String ignored = getRootEntry().getGlobalIgnore();
         if (getPropertyValue(SVNProperty.IGNORE) != null) {

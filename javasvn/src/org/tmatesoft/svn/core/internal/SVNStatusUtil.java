@@ -114,7 +114,8 @@ class SVNStatusUtil {
         
         // 2. fetch URL if exists, will be needed to compute "switched" status.
         // 2.1. create status for entry.
-        if (entry != null && entry.isManaged()) {
+        if (entry != null && 
+        		((parent == null && entry.isManaged()) || (parent != null && parent.isManaged(entry.getName())))) {
             String parentURL = null;
             if (parent != null) {
                 parentURL = parent.getPropertyValue(SVNProperty.URL);

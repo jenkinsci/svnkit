@@ -56,4 +56,6 @@ public interface ISVNDirectoryEntry extends ISVNEntry {
     public ISVNEntry getUnmanagedChild(String name) throws SVNException;
     
     public boolean isIgnored(String name) throws SVNException;
+    
+    public boolean isManaged(String name) throws SVNException;
 }
