@@ -85,6 +85,8 @@ class DAVConnection {
                     if (root.endsWith(relativePath)) {
                         root = root.substring(0, root.length() - relativePath.length() - 1);                        
                     }
+                } else {
+                	root = path;
                 }
                 repository.updateCredentials(uuid, root);
             }
