@@ -29,10 +29,10 @@ public class SVNSequenceLineReaderTest extends TestCase {
 		test("", 0, false);
 
 		test("Line", 1, true);
-		test("Line\n", 1, true);
-		test("Line\r\n", 1, true);
-		test("Line\n\r", 2, true);
-		test("Line\n\r\r", 3, true);
+		test("Line\n", 2, true);
+		test("Line\r\n", 2, true);
+		test("Line\n\r", 3, true);
+		test("Line\n\r\r", 4, true);
 	}
 
 	private void test(String testString, int expectedLineCount, boolean skipEol) throws IOException {
@@ -48,14 +48,7 @@ public class SVNSequenceLineReaderTest extends TestCase {
 				assertEquals(0, line.getFrom());
 			}
 			else if (index == lines.length - 1) {
-				int expectedTo = bytes.length - 1;
-				if (skipEol && expectedTo >= 0 && bytes[expectedTo] == '\n') {
-					expectedTo--;
-				}
-				if (skipEol && expectedTo >= 0 && bytes[expectedTo] == '\r') {
-					expectedTo--;
-				}
-				assertEquals(expectedTo, line.getTo());
+				assertEquals(bytes.length - 1, line.getTo());
 			}
 			else {
 				int expectedTo = lines[index - 1].getTo() + 1;

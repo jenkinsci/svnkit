@@ -24,6 +24,7 @@ javasvn/src/org/tmatesoft/svn/core/diff/SVNNormalDiffGenerator.java -text
 javasvn/src/org/tmatesoft/svn/core/diff/SVNSequenceDiffGenerator.java -text
 javasvn/src/org/tmatesoft/svn/core/diff/SVNUniDiffGenerator.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/svn/SVNLoggingConnector.java -text
+javasvn/src/org/tmatesoft/svn/util/SVNAssert.java -text
 www/.htaccess eol=lf
 www/build.html eol=lf
 www/feed/feedcreator.class.php eol=lf

@@ -81,7 +81,7 @@ public class SVNSequenceLineReader {
                     lastLength--;
                     if (skipEOL && lastLength < buffer.length && lastLength >= 0) {
                         if (buffer[lastLength] == '\r' || buffer[lastLength] == '\n') {
-                            lines.add(new SVNSequenceLine(from, from, new byte[0]));
+                            lines.add(new SVNSequenceLine(from, from - 1, new byte[0]));
                         }
                     }
 					break;
