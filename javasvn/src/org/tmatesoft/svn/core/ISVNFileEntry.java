@@ -31,7 +31,6 @@ public interface ISVNFileEntry extends ISVNEntry {
      * @param newData data referenced by the delta object
      * @param overwrite actual contents immideatly if true
      * 
-     * @see ISVNEntry#merge()
      */
     public void applyDelta(SVNDiffWindow window, InputStream newData, boolean overwrite) throws SVNException;
 
