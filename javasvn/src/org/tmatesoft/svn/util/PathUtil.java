@@ -167,7 +167,7 @@ public class PathUtil {
         for (int i = 1; i < paths.length; i++) {
 			root = getCommonAncestor(root, paths[i]);
 		}
-        return root;
+        return PathUtil.removeLeadingSlash(PathUtil.removeTail(root));
     }
     
     private static String getCommonAncestor(String path1, String path2) {
