@@ -12,10 +12,12 @@
 
 package org.tmatesoft.svn.core.internal;
 
+import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.ISVNExternalsHandler;
 import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNStatus;
+import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.PathUtil;
@@ -25,7 +27,7 @@ import org.tmatesoft.svn.util.PathUtil;
  */
 class DefaultSVNExternalsHandler implements ISVNExternalsHandler {
 
-    public void handleStatus(ISVNWorkspace parent, final String path, ISVNWorkspace external, final ISVNStatusHandler statusHandler,
+	public void handleStatus(ISVNWorkspace parent, final String path, ISVNWorkspace external, final ISVNStatusHandler statusHandler,
             boolean remote, boolean descend,
             boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned) throws SVNException {
         external.status("", remote, new ISVNStatusHandler() {
@@ -39,11 +41,36 @@ class DefaultSVNExternalsHandler implements ISVNExternalsHandler {
     }
 
     public void handleCheckout(ISVNWorkspace parent, String path, ISVNWorkspace external, SVNRepositoryLocation location, long revision, boolean export, boolean recurse) throws SVNException {
+		SVNWorkspaceAdapter listener = new UpdateListener(path, (SVNWorkspace) parent);
+		external.addWorkspaceListener(listener);
         external.checkout(location, revision, export);
+		external.removeWorkspaceListener(listener);
     }
 
-    public void handleUpdate(ISVNWorkspace parent, String path, ISVNWorkspace external, long revision) throws SVNException {
+    public void handleUpdate(final ISVNWorkspace parent, final String path, ISVNWorkspace external, long revision) throws SVNException {
+		SVNWorkspaceAdapter listener = new UpdateListener(path, (SVNWorkspace) parent);
+		external.addWorkspaceListener(listener);
         external.update("", revision, true);
+		external.removeWorkspaceListener(listener);
     }
 
+    private static final class UpdateListener extends SVNWorkspaceAdapter {
+
+		private final String myPath;
+		private final SVNWorkspace myParentWorkspace;
+
+		private UpdateListener(String path, SVNWorkspace parent) {
+			myPath = path;
+			myParentWorkspace = parent;
+		}
+
+		public void updated(String externalPath, int contentsStatus, int propertiesStatus, long rev) {
+			externalPath = PathUtil.append(myPath, externalPath);
+			try {
+				ISVNEntry entry = myParentWorkspace.locateEntry(externalPath);
+				myParentWorkspace.fireEntryUpdated(entry, contentsStatus, propertiesStatus, rev);
+			} catch (SVNException e) {
+			} 
+		}
+	}
 }
