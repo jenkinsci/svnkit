@@ -60,6 +60,11 @@ public class SVNClient implements SVNClientInterface {
     private String myPassword;
     private Notify myNotify;
     
+    private static final int VERSION_MAJOR = 0;
+    private static final int VERSION_MINOR = 8;
+    private static final int VERSION_MICRO = 1;
+    private static final String VERSION = "JavaSVN v" + versionMajor() + "." + versionMinor() + "." + versionMicro() +
+    	" (http://tmate.org/svn/)";
     
     public SVNClient() {
         DAVRepositoryFactory.setup();
@@ -68,6 +73,19 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void dispose() {
+    }
+
+    public static String version() {
+    	return VERSION;
+    }
+    public static int versionMajor() {
+    	return VERSION_MAJOR;    	
+    }
+    public static int versionMinor() {
+    	return VERSION_MINOR;    	
+    }
+    public static int versionMicro() {
+    	return VERSION_MICRO;    	
     }
 
     public void username(String username) {
