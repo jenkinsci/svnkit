@@ -97,13 +97,14 @@ public abstract class SVNCommand {
     }
 
     protected String convertPath(String homePath, ISVNWorkspace ws, String path) throws IOException {
+        if ("".equals(homePath)) {
+            homePath = ".";
+        }
         String absolutePath = SVNUtil.getAbsolutePath(ws, path);
         String absoluteHomePath = new File(homePath).getCanonicalPath();
-
         if (".".equals(homePath) || new File(homePath).isAbsolute()) {
             homePath = "";
         }
-
         String relativePath = absolutePath.substring(absoluteHomePath.length());
         String result = PathUtil.append(homePath, relativePath);
         result = result.replace(File.separatorChar, '/');

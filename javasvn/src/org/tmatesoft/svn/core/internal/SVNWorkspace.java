@@ -451,23 +451,20 @@ public class SVNWorkspace implements ISVNWorkspace {
         if (targetEntry == null) {
             return -1;
         }
-        if (remote) {
-            if (remote && targetEntry != null) {
-                ISVNEntry entry = targetEntry;
-                if (!entry.isDirectory()) {
-                    entry = locateParentEntry(path);
-                }
-                path = entry.getPath();
-                SVNRepository repository = SVNUtil.createRepository(this, entry.getPath());
-                editor = new SVNStatusEditor(path);
-                String target = null;
-                if (!targetEntry.isDirectory()) {
-                    target = targetEntry.getName();
-                }
-                SVNReporterBaton reporterBaton = new SVNReporterBaton(entry, target, descend);
-                repository.status(ISVNWorkspace.HEAD, target, descend, reporterBaton, editor);
-                revision = editor.getTargetRevision();
+        if (remote && targetEntry != null) {
+            ISVNEntry entry = targetEntry;
+            if (!entry.isDirectory()) {
+                entry = locateParentEntry(path);
             }
+            SVNRepository repository = SVNUtil.createRepository(this, entry.getPath());
+            editor = new SVNStatusEditor(entry.getPath());
+            String target = null;
+            if (!targetEntry.isDirectory()) {
+                target = targetEntry.getName();
+            }
+            SVNReporterBaton reporterBaton = new SVNReporterBaton(entry, target, descend);
+            repository.status(ISVNWorkspace.HEAD, target, descend, reporterBaton, editor);
+            revision = editor.getTargetRevision();
         }
         if (handler == null) {
             return revision;

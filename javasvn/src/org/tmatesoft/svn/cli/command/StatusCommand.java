@@ -47,6 +47,7 @@ public class StatusCommand extends SVNCommand {
         }
         for(int i = 0; i < line.getPathCount(); i++) {
             String path = line.getPathAt(i);
+            String homePath = path;
             ISVNWorkspace workspace = createWorkspace(path);
             DebugLog.log("workspace created at: " + workspace.getID());
             try {
@@ -56,7 +57,7 @@ public class StatusCommand extends SVNCommand {
             }
             DebugLog.log("path in workspace: " + path);
             
-            doStatus(line.getPathAt(i), workspace, path, !line.hasArgument(SVNArgument.NON_RECURSIVE), 
+            doStatus(homePath, workspace, path, !line.hasArgument(SVNArgument.NON_RECURSIVE), 
                     line.hasArgument(SVNArgument.SHOW_UPDATES), 
                     line.hasArgument(SVNArgument.VERBOSE), 
                     line.hasArgument(SVNArgument.NO_IGNORE), 
