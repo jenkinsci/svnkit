@@ -45,6 +45,7 @@ class SVNConnection {
     }
 
     public void open(SVNRepositoryImpl repository) throws SVNException {
+        myIsCredentialsReceived = false;
         if (mySocket == null) {
             try {
                 SVNRepositoryLocation location = repository.getLocation();
@@ -64,6 +65,8 @@ class SVNConnection {
         write("(n(w)s)", new Object[] { "2", EDIT_PIPELINE, repository.getLocation().toString()});
     }
     
+    private boolean myIsCredentialsReceived = false;
+    
     public void authenticate(SVNRepositoryImpl repository, ISVNCredentials credentials) throws SVNException {
         String failureReason = null;
         Object[] items = read("[((*W)S)]", null);
@@ -80,9 +83,12 @@ class SVNConnection {
                 write("(w())", new Object[] { mech });
                 items = read("(W(?S))", null);
                 if (SUCCESS.equals(items[0])) {
-                    Object[] creds = read("[(?S?S)]", null);
-                    if (repository != null && repository.getRepositoryRoot() == null) {
-                        repository.updateCredentials((String) creds[0], (String) creds[1]);
+                    if (!myIsCredentialsReceived) {
+                        Object[] creds = read("[(?S?S)]", null);
+                        if (repository != null && repository.getRepositoryRoot() == null) {
+                            repository.updateCredentials((String) creds[0], (String) creds[1]);
+                        }
+                        myIsCredentialsReceived = true;
                     }
                     return;
                 } else if (FAILURE.equals(items[0])) {
@@ -98,9 +104,13 @@ class SVNConnection {
 	                authenticator.setUserCredentials(credentials);
 	                items = read("(W(?B))", null);
 	                if (SUCCESS.equals(items[0])) {
-                        Object[] creds = read("[(S?S)]", null);
-                        if (creds != null && creds.length == 2 && creds[0] != null && creds[1] != null) {
-                            repository.updateCredentials((String) creds[0], (String) creds[1]);
+                        // should it be here?
+                        if (!myIsCredentialsReceived) {
+                            Object[] creds = read("[(S?S)]", null);
+                            if (creds != null && creds.length == 2 && creds[0] != null && creds[1] != null) {
+                                repository.updateCredentials((String) creds[0], (String) creds[1]);
+                            }
+                            myIsCredentialsReceived = true;
                         }
 	                    return;
 	                } else if (FAILURE.equals(items[0])) {
