@@ -22,6 +22,7 @@ javasvn/src/org/tmatesoft/svn/core/diff/ISVNDiffGeneratorFactory.java -text
 javasvn/src/org/tmatesoft/svn/core/diff/SVNDiffManager.java -text
 javasvn/src/org/tmatesoft/svn/core/diff/SVNNormalDiffGenerator.java -text
 javasvn/src/org/tmatesoft/svn/core/diff/SVNSequenceDiffGenerator.java -text
+javasvn/src/org/tmatesoft/svn/core/diff/SVNUniDiffGenerator.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/svn/SVNLoggingConnector.java -text
 www/.htaccess eol=lf
 www/build.html eol=lf

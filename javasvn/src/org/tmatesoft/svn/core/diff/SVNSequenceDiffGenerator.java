@@ -56,7 +56,7 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
     }
     
     public void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
-        SVNSequenceLineReader reader = new SVNSequenceLineReader(false);
+        SVNSequenceLineReader reader = new SVNSequenceLineReader(true);
         
         SVNSequenceLine[] leftLines = reader.read(left);
         SVNSequenceLine[] rightLines = reader.read(right);
@@ -71,4 +71,15 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
     
     protected abstract void  processBlock(int sourceStartLine, int sourceEndLine, SVNSequenceLine[] sourceLines, 
             int targetStartLine, int targetEndLine, SVNSequenceLine[] targetLines, String encoding, Writer output) throws IOException;
+
+    protected void println(Writer output) throws IOException {
+        output.write(getEOL());
+    }
+
+    protected void println(String str, Writer output) throws IOException {
+        if (str != null) {
+            output.write(str);
+        }
+        output.write(getEOL());
+    }
 }

@@ -32,6 +32,7 @@ public class SVNDiffManager {
     
     public static void setup() {
         SVNNormalDiffGenerator.setup();
+        SVNUniDiffGenerator.setup();
     }
     
     public static ISVNDiffGenerator getDiffGenerator(String type, Map properties) {

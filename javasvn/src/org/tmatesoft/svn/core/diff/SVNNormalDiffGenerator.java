@@ -42,11 +42,6 @@ public class SVNNormalDiffGenerator extends SVNSequenceDiffGenerator implements 
         output.write(getEOL());
     }
     
-    protected void println(String str, Writer output) throws IOException {
-        output.write(str);
-        output.write(getEOL());
-    }
-
     protected void processBlock(int sourceStartLine, int sourceEndLine, SVNSequenceLine[] sourceLines, int targetStartLine, int targetEndLine,
             SVNSequenceLine[] targetLines, String encoding, Writer output) throws IOException {
         if(sourceStartLine > sourceEndLine){
@@ -110,7 +105,7 @@ public class SVNNormalDiffGenerator extends SVNSequenceDiffGenerator implements 
         println(displayStart + ((displayEnd != displayStart) ? ("," + displayEnd) : "") + "d" + displayAt, output);
         int delLine = deleteStart;
         while(delLine <= deleteEnd){
-            output.write("<" + displayWhiteSpace(new String(deleteLines[delLine++].getBytes(), encoding)));
+            println("<" + displayWhiteSpace(new String(deleteLines[delLine++].getBytes(), encoding)), output);
         }
     }
 
@@ -135,7 +130,7 @@ public class SVNNormalDiffGenerator extends SVNSequenceDiffGenerator implements 
         println(displayAt + "a" + displayStart + ((displayEnd != displayStart) ? ("," + displayEnd) : ""), output);
         int addLine = addStart;
         while(addLine <= addEnd){
-            output.write(">" + displayWhiteSpace(new String(addLines[addLine++].getBytes(), encoding)));
+            println(">" + displayWhiteSpace(new String(addLines[addLine++].getBytes(), encoding)), output);
         }
     }
 
@@ -170,13 +165,13 @@ public class SVNNormalDiffGenerator extends SVNSequenceDiffGenerator implements 
                 displayWithStart + ((displayWithEnd != displayWithStart) ? ("," + displayWithEnd) : ""), output);
         int replaceLine = replaceStart;
         while(replaceLine <= replaceEnd){
-            output.write("<" + displayWhiteSpace(new String(replaceLines[replaceLine++].getBytes(), encoding)));
+            println("<" + displayWhiteSpace(new String(replaceLines[replaceLine++].getBytes(), encoding)), output);
         }
         println("---", output);
 
         int replaceWithLine = replaceWithStart;
         while(replaceWithLine <= replaceWithEnd){
-            output.write(">" + displayWhiteSpace(new String(replaceWithLines[replaceWithLine++].getBytes(), encoding)));
+            println(">" + displayWhiteSpace(new String(replaceWithLines[replaceWithLine++].getBytes(), encoding)), output);
         }
     }
 
