@@ -1216,9 +1216,12 @@ public class SVNWorkspace implements ISVNWorkspace {
     }
 
     private void doImport(String rootPath, ISVNEditor editor, ISVNDirectoryEntry parent, ISVNEntry entry) throws SVNException {
+        if (rootPath.trim().length() > 0) {
+            rootPath += "/";
+        }
         if (entry.isDirectory()) {
-            DebugLog.log("IMPORT: ADDING DIR: " + rootPath + '/' + entry.getPath());
-            editor.addDir(rootPath + '/' + entry.getPath(), null, -1);
+            DebugLog.log("IMPORT: ADDING DIR: " + rootPath + entry.getPath());
+            editor.addDir(rootPath + entry.getPath(), null, -1);
             applyAutoProperties(entry, editor);
             for(Iterator children = entry.asDirectory().unmanagedChildEntries(false); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
@@ -1226,8 +1229,8 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
             editor.closeDir();
         } else {
-            DebugLog.log("IMPORT: ADDING FILE: " + rootPath + '/' + entry.getPath());
-            editor.addFile(rootPath + '/' + entry.getPath(), null, -1);
+            DebugLog.log("IMPORT: ADDING FILE: " + rootPath + entry.getPath());
+            editor.addFile(rootPath + entry.getPath(), null, -1);
             applyAutoProperties(entry, editor);
             entry.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
             entry.asFile().generateDelta(editor);
@@ -1348,9 +1351,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         if (target.isDirectory() && recursive) {
             for (Iterator children = target.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
-                if (child.isDirectory()) {
-                    updateURL(child, parentURL, recursive);
-                }
+                updateURL(child, parentURL, recursive);
             }
         }
     }
