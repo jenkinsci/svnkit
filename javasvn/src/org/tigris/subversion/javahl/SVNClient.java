@@ -71,6 +71,7 @@ public class SVNClient implements SVNClientInterface {
     private String myPassword;
     private Notify myNotify;
 	private PromptUserPassword myPrompt;
+	private String myConfigDir;
     
     public SVNClient() {
         SVNDiffManager.setup();
@@ -922,7 +923,7 @@ public class SVNClient implements SVNClientInterface {
      * @exception ClientException
      */
     public void cleanup(String path) throws ClientException {
-        notImplementedYet();
+		DebugLog.log("SVNClient.cleanup is not yet implemented");
     }
 
     /**
@@ -939,7 +940,6 @@ public class SVNClient implements SVNClientInterface {
         } catch (SVNException e) {
             throwException(e);
         }
-        notImplementedYet();
     }
 
     /**
@@ -1323,16 +1323,15 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void setConfigDirectory(String configDir) throws ClientException {
-        notImplementedYet();
+		myConfigDir = configDir;
     }
 
     public String getConfigDirectory() throws ClientException {
-        notImplementedYet();
-        return null;
+		return myConfigDir;
     }
 
     public void cancelOperation() throws ClientException {
-        notImplementedYet();
+		DebugLog.log("SVNClient.cancelOperation is not yet implemented");
     }
 
     public byte[] blame(String path, Revision revisionStart, Revision revisionEnd) throws ClientException {
