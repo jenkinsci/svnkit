@@ -32,9 +32,7 @@ readfile($cacheFile);
 
 function publish_rss20($repository, $contents, $rss) {
 
-
-if (preg_match_all("/<li><a href=\"([^>(\.\.)]*)\/\">(.*)(<\/a>)<\/li>/", $contents, $matches)) {
-
+if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $contents, $matches)) {
 
    $items = array();
    $index = 0;
@@ -49,6 +47,7 @@ if (preg_match_all("/<li><a href=\"([^>(\.\.)]*)\/\">(.*)(<\/a>)<\/li>/", $conte
        }
 
        $standalone_name = "org.tmatesoft.svn_" . $build . ".standalone.zip";
+       $eclipse_name = "org.tmatesoft.svn_" . $build . ".eclipse.zip";
        $src_name = "org.tmatesoft.svn_" . $build . ".src.zip";
        $standalone_file = $_SERVER["DOCUMENT_ROOT"] . "/svn/" . $standalone_name;
 
@@ -59,6 +58,8 @@ if (preg_match_all("/<li><a href=\"([^>(\.\.)]*)\/\">(.*)(<\/a>)<\/li>/", $conte
        $svn_url = $repository . $build . "/";
        $standalone_link = $rss . $standalone_name;
        $src_url    = $rss . $src_name;
+       $eclipse_url    = $rss . $eclipse_name;
+       $eclipse_update_url    = $rss;
 
        ereg("^=[^\n]+\n([^=]+).*$", $changelog, $m);
        $changelog_str = trim($m[1]);
@@ -66,8 +67,10 @@ if (preg_match_all("/<li><a href=\"([^>(\.\.)]*)\/\">(.*)(<\/a>)<\/li>/", $conte
        
        $item_description  = "<b>" . $date_string . "</b>, build: " . $build . "<p><table style=\"font-size: 100%;\">";
        $item_description .= "<tr><td>standalone version:&nbsp;</td><td><a href=\"" . $standalone_link . "\">" . $standalone_name . "</a></td></tr>";
-       $item_description .= "<tr><td>source code archive:&nbsp;</td><td><a href=\"" . $src_url . "\">" . $src_name . "</a></td></tr></table></p>";
-       $item_description .= "<tr><td>source code:&nbsp;</td><td><a href=\"" . $svn_url . "\">@svn repository</a></td></tr></table></p>";
+       $item_description .= "<tr><td>source code archive:&nbsp;</td><td><a href=\"" . $src_url . "\">" . $src_name . "</a></td></tr>";
+       $item_description .= "<tr><td>source code:&nbsp;</td><td><a href=\"" . $svn_url . "\">@svn repository</a></td></tr>";
+       $item_description .= "<tr><td>eclipse update site archive:&nbsp;</td><td><a href=\"" . $eclipse_url . "\">" . $eclipse_name . "</a></td></tr>";
+       $item_description .= "<tr><td>eclipse update site location:&nbsp;</td><td><b>" . $eclipse_update_url . "</b></td></tr></table></p>";
        $item_description .= "<h5>ChangeLog</h5><pre>" . $changelog_str . "</pre>";
        $item_description .= "<a href=\"" . $changelog_url . "\">full changelog up to this build</a>";
        $item_description .= "<h5>Contact</h5><p>Your questions and feedback are welcome at <a href=\"mailto:support@tmatesoft.com\">support@tmatesoft.com</a></p>";
@@ -79,6 +82,8 @@ if (preg_match_all("/<li><a href=\"([^>(\.\.)]*)\/\">(.*)(<\/a>)<\/li>/", $conte
        $html_description .= "<a href=\"" . $changelog_url . "\">full changelog up to this build</a></td></tr>";
        $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Standalone Version&nbsp;</td><td><a href=\"" . $standalone_link . "\">" . $standalone_name . "</a></td></tr>";
        $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Source Code Archive&nbsp;</td><td><a href=\"" . $src_url . "\">" . $src_name . " </a></td></tr>";
+       $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Eclipse Update Site Archive&nbsp;</td><td><a href=\"" . $eclipse_url . "\">" . $eclipse_name . "</a></td></tr>";
+       $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Eclipse Update Site Location&nbsp;</td><td>&nbsp;&nbsp;<b>" . $eclipse_update_url . "</b></td></tr>";
        $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Source Code&nbsp;</td><td><a href=\"" . $svn_url . "\">@svn repository</a></td></tr>";
        $html_description .= "<tr colspan=2><td></td></tr>";
 
