@@ -140,5 +140,5 @@ public interface ISVNWorkspace {
      */
     public ISVNFileContent getFileContent(String path) throws SVNException;
     
-    public void runCommand(ISVNWorkspaceRunnable runnable) throws SVNException;
+    public void runCommand(ISVNRunnable runnable) throws SVNException;
 }

@@ -37,7 +37,7 @@ import org.tmatesoft.svn.core.ISVNRootEntry;
 import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.ISVNWorkspaceListener;
-import org.tmatesoft.svn.core.ISVNWorkspaceRunnable;
+import org.tmatesoft.svn.core.ISVNRunnable;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
@@ -1298,7 +1298,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         return externals;
     }
 
-    public void runCommand(ISVNWorkspaceRunnable runnable) throws SVNException {
+    public void runCommand(ISVNRunnable runnable) throws SVNException {
         myIsCommandRunning = true;
         myIsNeedToSleepForTimestamp = false;
         try {
