@@ -40,21 +40,37 @@ public class SVNCommitUtil {
         map = map == null ? new HashMap() : map;
         for(Iterator entries = modifiedEntries.iterator(); entries.hasNext();) {
             ISVNEntry entry = (ISVNEntry) entries.next();
-            map.put(PathUtil.decode(entry.getPropertyValue(SVNProperty.URL)), entry);
+            String url = PathUtil.decode(entry.getPropertyValue(SVNProperty.URL));
+            map.put(url, entry);
         }
         // now add common root entry ?
         String[] urls = (String[]) map.keySet().toArray(new String[map.size()]);
+        String[] paths = new String[urls.length];
+        String host = null;
+        // convert urls to path, removing host part of the url (always a common root).
+        for(int i = 0; i < paths.length; i++) {
+            // put path part of the URL only, without leading slash.
+            int index = urls[i].indexOf("://");
+            index = urls[i].indexOf('/', index + "://".length());
+            if (index < 0) {
+                index = urls[i].length();
+            }
+            host = urls[i].substring(0, index);
+            paths[i] = PathUtil.removeLeadingSlash(urls[i].substring(index));
+        }
         String commonRoot = null;
         if (map.size() == 1) {
-            commonRoot = urls[0];
-            ISVNEntry rootEntry = (ISVNEntry) map.get(commonRoot);
+            ISVNEntry rootEntry = (ISVNEntry) map.get(urls[0]);
             // if entry is already a folder, let it be root.
             if (!rootEntry.isDirectory() || rootEntry.isScheduledForAddition() || rootEntry.isScheduledForDeletion()) {
-                commonRoot = PathUtil.getCommonRoot(urls);
-            } 
+                commonRoot = PathUtil.getCommonRoot(paths);
+            } else {
+                commonRoot = paths[0];
+            }
         } else {
-            commonRoot = PathUtil.getCommonRoot(urls);
-        }
+            commonRoot = PathUtil.getCommonRoot(paths);
+        }        
+        commonRoot = "".equals(commonRoot) ? host : host + "/" + commonRoot; 
         // this root may or may not exist in the map. 
         if (!map.containsKey(commonRoot)) {
             map.put(commonRoot, null);
@@ -124,9 +140,6 @@ public class SVNCommitUtil {
 
     public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws) throws SVNException {
         ISVNEntry root = (ISVNEntry) entries.get(path);
-        if (root == null) {
-            // may be real added folder, that was not specified explicitly
-        }
         
         long revision = root == null ? -1 : SVNProperty.longValue(root.getPropertyValue(SVNProperty.COMMITTED_REVISION));
         if (root != null) {
@@ -352,6 +365,7 @@ public class SVNCommitUtil {
     }
 
     private static String[] getVirtualChildren(Map map, String url) {
+        // if url is root then only return entries with '/'
         Collection children = new ArrayList();
         for(Iterator keys = map.keySet().iterator(); keys.hasNext();) {
             String childURL = (String) keys.next();
