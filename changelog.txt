@@ -1,3 +1,11 @@
+= version 1.0.0 build 20050106
+
++ number of bugs in remote status implementation fixed
++ ISVNWorkspace.getFileContent method restored to keep binary compatibility 
++ Diff generators framework added, now JavaSVN provides API for
+  generating diff in different formats ('unified' and 'normal') for arbitrary
+  input sources
+
 = version 1.0.0 build 20050105
 
 + svn+ssh authentication failed to work in some cases - fixed

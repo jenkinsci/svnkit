@@ -28,7 +28,7 @@ import de.regnis.q.sequence.QSequenceDifferenceBlock;
  */
 public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISVNDiffGeneratorFactory {
 
-    public static final String TYPE = "unidiff";
+    public static final String TYPE = "unified";
     private Map myGeneratorsCache;
 
     private SVNUniDiffGenerator(Map properties) {
