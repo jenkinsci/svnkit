@@ -1058,7 +1058,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                         throw new SVNException("'" + source + "' already exists in working copy and it is not missing");
                     }
                 } else {
-                    if (srcEntry == null || !srcEntry.isManaged() || srcEntry.isMissing()) {
+                    if (srcEntry == null || !srcEntry.isManaged()) {
                         throw new SVNException("'" + source + "' does not exist in working copy.");
                     }
                 }
