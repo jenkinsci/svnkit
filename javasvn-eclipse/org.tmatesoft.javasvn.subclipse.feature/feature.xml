@@ -6,8 +6,7 @@
       provider-name="TMate Software">
 
    <description url="http://tmate.org/svn/subclipse.html">
-      Subclipse extenstion that makes Subclipse use JavaSVN (pure java Subversion client library)
-     instead of native javahl bindings.
+Subclipse extenstion that makes Subclipse use JavaSVN (pure java Subversion client library) instead of native javahl bindings.
    </description>
 
    <copyright url="http://tmatesoft.com/">
