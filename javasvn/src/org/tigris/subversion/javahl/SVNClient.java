@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
+import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -54,7 +55,7 @@ import org.tmatesoft.svn.util.TimeUtil;
  */
 public class SVNClient implements SVNClientInterface {
     
-    private CommitMessage myMessageHandler;
+	private CommitMessage myMessageHandler;
     private String myUserName;
     private String myPassword;
     private Notify myNotify;
@@ -337,7 +338,7 @@ public class SVNClient implements SVNClientInterface {
         }
         
         try {
-            ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace("file", new File(destPath).getAbsolutePath());
+            final ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace("file", new File(destPath).getAbsolutePath());
             SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(moduleName);
             SVNRepository repository = SVNRepositoryFactory.create(location);
             if (myUserName != null && myPassword != null) {
@@ -345,7 +346,13 @@ public class SVNClient implements SVNClientInterface {
                 repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
             }
             long rev = getRevisionNumber(revision, repository, null, null);
-            return ws.checkout(location, rev, false, recurse);
+            ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
+            long checkedOut = ws.checkout(location, rev, false, recurse);
+            if (checkedOut >= 0 && myNotify != null) {
+            	myNotify.onNotify("", NotifyAction.update_completed, NodeKind.unknown, null,
+            			0, 0, checkedOut);
+            }
+            return checkedOut;
         } catch (SVNException e) {
             throwException(e);
         }
@@ -363,13 +370,20 @@ public class SVNClient implements SVNClientInterface {
      */
     public long update(String path, Revision revision, boolean recurse) throws ClientException {
         try {
-            ISVNWorkspace ws = createWorkspace(path);
+            final ISVNWorkspace ws = createWorkspace(path);
             String wsPath = SVNUtil.getWorkspacePath(ws, path);
             SVNRepository repository = SVNUtil.createRepository(ws, wsPath);
             
             long revNumber = getRevisionNumber(revision, repository, ws, wsPath);
+
+            ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
+            long updatedRev = ws.update(wsPath, revNumber, recurse);
             
-            return ws.update(wsPath, revNumber, recurse);
+            if (updatedRev >= 0 && myNotify != null) {
+            	myNotify.onNotify("", NotifyAction.update_completed, NodeKind.unknown, null,
+            			0, 0, updatedRev);
+            }
+            return updatedRev;
         } catch (SVNException e) {
             throwException(e);
         }
@@ -401,6 +415,7 @@ public class SVNClient implements SVNClientInterface {
             for(int i = 0; i < paths.length; i++) {
                 DebugLog.log("COMMIT: commiting path: " + paths[i]);
             }
+            ws.addWorkspaceListener(new CommitWorkspaceListener(myNotify, ws));
             return ws.commit(paths, new ISVNCommitHandler() {
                 public String handleCommit(SVNStatus[] tobeCommited) {
                     if (myMessageHandler != null) {
@@ -468,6 +483,7 @@ public class SVNClient implements SVNClientInterface {
                 repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
             }
             long revNumber = getRevisionNumber(revision, repository, null, null);
+            ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
             return ws.checkout(location, revNumber, true);
         } catch (SVNException e) {
             throwException(e);
@@ -488,7 +504,13 @@ public class SVNClient implements SVNClientInterface {
             ISVNWorkspace ws = createWorkspace(path);
             String relativePath = SVNUtil.getWorkspacePath(ws, path);
             long revNumber = getRevisionNumber(revision, SVNUtil.createRepository(ws, relativePath), ws, relativePath);
-            return ws.update(SVNRepositoryLocation.parseURL(url), relativePath, revNumber, recurse);
+            ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
+            long switchedRev = ws.update(SVNRepositoryLocation.parseURL(url), relativePath, revNumber, recurse);
+            if (switchedRev >= 0 && myNotify != null) {
+            	myNotify.onNotify("", NotifyAction.update_completed, NodeKind.unknown, null,
+            			0, 0, switchedRev);
+            }
+            return switchedRev;
         } catch (SVNException e) {
             throwException(e);
         }
@@ -516,6 +538,7 @@ public class SVNClient implements SVNClientInterface {
             } else {
                 url = PathUtil.removeTail(url);
             }
+            ws.addWorkspaceListener(new CommitWorkspaceListener(myNotify, ws));
             ws.commit(SVNRepositoryLocation.parseURL(url), wsPath, message);
         } catch (SVNException e) {
             throwException(e);
@@ -578,6 +601,7 @@ public class SVNClient implements SVNClientInterface {
                 }
                 try {
                     ISVNWorkspace ws = createWorkspace(path[i]);
+                    ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                     ws.delete(SVNUtil.getWorkspacePath(ws, path[i]), force);
                 } catch (SVNException e) {
                     throwException(e);
@@ -595,6 +619,7 @@ public class SVNClient implements SVNClientInterface {
     public void revert(String path, boolean recurse) throws ClientException {
         try {
             ISVNWorkspace ws = createWorkspace(path);
+            ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
             ws.revert(SVNUtil.getWorkspacePath(ws, path), recurse);
         } catch (SVNException e) {
             throwException(e);
@@ -610,7 +635,8 @@ public class SVNClient implements SVNClientInterface {
     public void add(String path, boolean recurse) throws ClientException {
         try {
             ISVNWorkspace ws = createWorkspace(path);
-            path = SVNUtil.getWorkspacePath(ws, path); 
+            path = SVNUtil.getWorkspacePath(ws, path);
+            ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
             ws.add(path, false, recurse);
         } catch (SVNException e) {
             throwException(e);
@@ -684,6 +710,7 @@ public class SVNClient implements SVNClientInterface {
         } else if (!isURL(srcPath) && !isURL(destPath)) {
             try {
                 ISVNWorkspace ws = createWorkspace(srcPath);
+                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 ws.copy(SVNUtil.getWorkspacePath(ws, srcPath), SVNUtil.getWorkspacePath(ws, destPath), false);
             } catch (SVNException e) {
                 throwException(e);
@@ -737,6 +764,7 @@ public class SVNClient implements SVNClientInterface {
         } else if (!isURL(srcPath) && !isURL(destPath)) {
             try {
                 ISVNWorkspace ws = createWorkspace(srcPath);
+                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 ws.copy(SVNUtil.getWorkspacePath(ws, srcPath), SVNUtil.getWorkspacePath(ws, destPath), true);
             } catch (SVNException e) {
                 throwException(e);
@@ -786,6 +814,7 @@ public class SVNClient implements SVNClientInterface {
         } else {
             try {
                 ISVNWorkspace ws = createWorkspace(root);
+                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 for(int i = 0; i < path.length; i++) {
                     ws.add(SVNUtil.getWorkspacePath(ws, path[i]), true, false);
                 }
@@ -814,6 +843,7 @@ public class SVNClient implements SVNClientInterface {
     public void resolved(String path, boolean recurse) throws ClientException {
         try {
             ISVNWorkspace ws = createWorkspace(path);
+            ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
             ws.markResolved(SVNUtil.getWorkspacePath(ws, path), recurse);
         } catch (SVNException e) {
             throwException(e);
@@ -1276,6 +1306,152 @@ public class SVNClient implements SVNClientInterface {
     private static boolean isURL(String pathOrUrl) {
         return PathUtil.isURL(pathOrUrl);
     }
+
+    private static class UpdateWorkspaceListener extends SVNWorkspaceAdapter {
+    	
+		private final ISVNWorkspace myWorkspace;
+		private Notify myNotify;
+
+		private UpdateWorkspaceListener(Notify notify, ISVNWorkspace ws) {
+			myWorkspace = ws;
+			myNotify = notify;
+		}
+
+		public void updated(String p, int contentsStatus, int propertiesStatus, long updated) {
+			if (myNotify == null) {
+				return;
+			}
+			int updateKind = 0;
+			int contents = 0;
+			int props = 0;
+			switch (contentsStatus) {
+			case SVNStatus.ADDED:
+				updateKind = NotifyAction.update_add;
+				break;
+			case SVNStatus.MERGED:
+				contents = contents != 0 ? contents : NotifyStatus.merged;
+			case SVNStatus.CONFLICTED:
+				contents = contents != 0 ? contents : NotifyStatus.merged;
+			case SVNStatus.REPLACED:
+			case SVNStatus.UPDATED:
+				updateKind = NotifyAction.update_update;
+				contents = contents != 0 ? contents : NotifyStatus.changed;
+				contents = contents != 0 ? contents : NotifyStatus.changed;
+				break;
+			case SVNStatus.DELETED:
+				updateKind = NotifyAction.update_delete;
+			}
+			props = props == 0 ? NotifyStatus.unchanged : props;
+			contents = contents == 0 ? NotifyStatus.unchanged : contents;
+			try {
+				String mimeType = myWorkspace.getPropertyValue(p, SVNProperty.MIME_TYPE);
+				String nodeKindStr = myWorkspace.getPropertyValue(p, SVNProperty.KIND);
+				int nodeKind = NodeKind.unknown;
+				if (SVNProperty.KIND_DIR.equals(nodeKindStr)) {
+					nodeKind = NodeKind.dir;
+				} else if (SVNProperty.KIND_FILE.equals(nodeKindStr)) {
+					nodeKind = NodeKind.file;
+				}
+				myNotify.onNotify(p, updateKind, nodeKind, mimeType,
+						contents, props, updated);
+			} catch (SVNException e) {
+			} 
+		}
+	}
+
+    private static class LocalWorkspaceListener extends SVNWorkspaceAdapter {
+    	
+		private final ISVNWorkspace myWorkspace;
+		private Notify myNotify;
+
+		private LocalWorkspaceListener(Notify notify, ISVNWorkspace ws) {
+			myWorkspace = ws;
+			myNotify = notify;
+		}
+
+		public void modified(String p, int kind) {
+			if (myNotify == null) {
+				return;
+			}
+			int updateKind = 0;
+			switch (kind) {
+			case SVNStatus.REVERTED:
+				updateKind = NotifyAction.revert;
+				break;
+			case SVNStatus.NOT_REVERTED:
+				updateKind = NotifyAction.failed_revert;
+				break;
+			case SVNStatus.ADDED:
+				updateKind = NotifyAction.add;
+				break;
+			case SVNStatus.DELETED:
+				updateKind = NotifyAction.delete;
+				break;
+			case SVNStatus.RESOLVED:
+				updateKind = NotifyAction.resolved;
+				break;
+			case SVNStatus.RESTORED:
+				updateKind = NotifyAction.restore;
+			}
+			try {
+				String mimeType = myWorkspace.getPropertyValue(p, SVNProperty.MIME_TYPE);
+				String nodeKindStr = myWorkspace.getPropertyValue(p, SVNProperty.KIND);
+				int nodeKind = NodeKind.unknown;
+				if (SVNProperty.KIND_DIR.equals(nodeKindStr)) {
+					nodeKind = NodeKind.dir;
+				} else if (SVNProperty.KIND_FILE.equals(nodeKindStr)) {
+					nodeKind = NodeKind.file;
+				}
+				myNotify.onNotify(p, updateKind, nodeKind, mimeType,
+						0, 0, 0);
+			} catch (SVNException e) {
+			} 
+		}
+	}
+
+    private static class CommitWorkspaceListener extends SVNWorkspaceAdapter {
+    	
+		private final ISVNWorkspace myWorkspace;
+		private Notify myNotify;
+
+		private CommitWorkspaceListener(Notify notify, ISVNWorkspace ws) {
+			myWorkspace = ws;
+			myNotify = notify;
+		}
+
+	    public void committed(String path, int kind) {
+			if (myNotify == null) {
+				return;
+			}
+			int updateKind = 0;
+			switch (kind) {
+			case SVNStatus.MODIFIED:
+				updateKind = NotifyAction.commit_modified;
+				break;
+			case SVNStatus.ADDED:
+				updateKind = NotifyAction.commit_added;
+				break;
+			case SVNStatus.DELETED:
+				updateKind = NotifyAction.commit_deleted;
+				break;
+			case SVNStatus.REPLACED:
+				updateKind = NotifyAction.commit_replaced;
+			}
+			try {
+				String mimeType = myWorkspace.getPropertyValue(path, SVNProperty.MIME_TYPE);
+				String nodeKindStr = myWorkspace.getPropertyValue(path, SVNProperty.KIND);
+				int nodeKind = NodeKind.unknown;
+				if (SVNProperty.KIND_DIR.equals(nodeKindStr)) {
+					nodeKind = NodeKind.dir;
+				} else if (SVNProperty.KIND_FILE.equals(nodeKindStr)) {
+					nodeKind = NodeKind.file;
+				}
+				myNotify.onNotify(path, updateKind, nodeKind, mimeType,
+						0, 0, 0);
+			} catch (SVNException e) {
+			} 
+		}
+	}
 
     static final int[] STATUS_CONVERTION_TABLE = new int[0x13];
     
