@@ -435,12 +435,13 @@ public class SVNClient implements SVNClientInterface {
         
         try {
             String commonRoot = PathUtil.getFSCommonRoot(path);
+            // it may be an added dir, try parent.
             final ISVNWorkspace ws = createWorkspace(commonRoot);
+            DebugLog.log("COMMIT: workspace created for: " + ws.getID());
             String[] paths = new String[path.length];
             for(int i = 0; i < path.length; i++) {
                 paths[i] = SVNUtil.getWorkspacePath(ws, path[i]);
             }
-            DebugLog.log("COMMIT: workspace created for: " + ws.getID());
             for(int i = 0; i < paths.length; i++) {
                 DebugLog.log("COMMIT: commiting path: " + paths[i]);
             }
@@ -666,7 +667,8 @@ public class SVNClient implements SVNClientInterface {
      */
     public void add(String path, boolean recurse) throws ClientException {
         try {
-            ISVNWorkspace ws = createWorkspace(path);
+        	path = path.replace(File.separatorChar, '/');
+            ISVNWorkspace ws = createWorkspace(PathUtil.removeTail(path));
             path = SVNUtil.getWorkspacePath(ws, path);
             ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
             ws.add(path, false, recurse);
@@ -1345,7 +1347,12 @@ public class SVNClient implements SVNClientInterface {
     }
 
    	private ISVNWorkspace createWorkspace(String path, boolean root) throws SVNException {
+   		path = path.replace(File.separatorChar, '/');
         ISVNWorkspace ws = SVNUtil.createWorkspace(path, root);
+        DebugLog.log("workspace created: " + path + " (schedule: " + ws.getPropertyValue("", SVNProperty.SCHEDULE) +")");
+        if (ws.getPropertyValue("", SVNProperty.SCHEDULE) != null) {
+        	ws = SVNUtil.createWorkspace(PathUtil.removeTail(path));
+        } 
         if (ws != null) {
             if (myUserName != null && myPassword != null) {
                 ws.setCredentials(myUserName, myPassword);
