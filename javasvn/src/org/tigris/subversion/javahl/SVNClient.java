@@ -21,6 +21,7 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.ISVNCommitHandler;
 import org.tmatesoft.svn.core.ISVNEntryContent;
@@ -254,7 +256,18 @@ public class SVNClient implements SVNClientInterface {
      * @return  Array of DirEntry objects.
      */
     public DirEntry[] list(String url, Revision revision, boolean recurse) throws ClientException {
-        Collection allEntries = new LinkedList();
+        TreeSet allEntries = new TreeSet(new Comparator() {
+            public int compare(Object o1, Object o2) {
+                DirEntry d1 = (DirEntry) o1;
+                DirEntry d2 = (DirEntry) o2;
+                if (d1 == null || d1.getPath() == null) {
+                    return d2 == null || d2.getPath() == null ? 0 : -1;
+                } else if (d2 == null || d2.getPath() == null) {
+                    return 1;
+                }                
+                return d1.getPath().toLowerCase().compareTo(d2.getPath().toLowerCase());
+            }
+        });
         ISVNWorkspace ws = null;
         String wsPath = null;
         
@@ -1569,7 +1582,18 @@ public class SVNClient implements SVNClientInterface {
         String author = svnLogEntry.getAuthor();
         
         Map paths = svnLogEntry.getChangedPaths();
-        Collection changedPaths = new LinkedList();
+        Collection changedPaths = new TreeSet(new Comparator() {
+            public int compare(Object o1, Object o2) {
+                ChangePath c1 = (ChangePath) o1;
+                ChangePath c2 = (ChangePath) o2;
+                if (c1 == null || c1.getPath() == null) {
+                    return c2 == null || c2.getPath() == null ? 0 : -1;
+                } else if (c2 == null || c2.getPath() == null) {
+                    return 1;
+                }                
+                return c1.getPath().toLowerCase().compareTo(c2.getPath().toLowerCase());
+            }
+        });
         if (paths != null) {
             for(Iterator keys = paths.keySet().iterator(); keys.hasNext();) {
                 String path = (String) keys.next();
