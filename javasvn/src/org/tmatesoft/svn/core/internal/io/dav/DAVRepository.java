@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -232,20 +233,32 @@ class DAVRepository extends SVNRepository {
         if (targetPaths == null || targetPaths.length == 0) {
             return 0;
         }
-		String path = getLocation().getPath();
-        byte[] request = convertToBytes(DAVLogHandler.generateLogRequest(null, startRevision, endRevision,
-        		changedPath, strictNode, targetPaths));
         DAVLogHandler davHandler = null;
 		try {
 			openConnection();
 			String[] fullPaths = new String[targetPaths.length];
+			String localRoot = getLocationPath().substring(getRepositoryRoot().length());
+			
+			// convert these path to be all full paths 
 			for (int i = 0; i < targetPaths.length; i++) {
 				fullPaths[i] = getFullPath(targetPaths[i]);
+				DebugLog.log("LOG: full path: " + fullPaths[i]);
 			}
-			path = PathUtil.getCommonRoot(fullPaths);
+			// now find common root, this will be request path.
+			String path = fullPaths.length > 1 ? PathUtil.getCommonRoot(fullPaths) : fullPaths[0];
 			if (!path.startsWith("/")) {
 				path = "/".concat(path);
 			}
+			DebugLog.log("LOG: request path: " + path);
+			// make fullPaths to be relative to common root.
+			for (int i = 0; i < targetPaths.length; i++) {
+				fullPaths[i] = fullPaths[i].substring(path.length());
+				fullPaths[i] = PathUtil.removeLeadingSlash(fullPaths[i]);
+				DebugLog.log("LOG: log path: " + fullPaths[i]);
+			}
+	        byte[] request = convertToBytes(DAVLogHandler.generateLogRequest(null, startRevision, endRevision,
+	        		changedPath, strictNode, fullPaths));
+	        
             davHandler = new DAVLogHandler(handler); 
 			long revision = -1;
 			if (isValidRevision(startRevision) && isValidRevision(endRevision)) {
@@ -426,8 +439,11 @@ class DAVRepository extends SVNRepository {
         return editor;
 	}
     
-    private String getFullPath(String path) {
+    private String getFullPath(String path) {    	
         if (path != null && path.startsWith("/")) {
+        	if ("/".equals(path)) {
+        		return getRepositoryRoot();
+        	}
             // assume it is full path in repository
             // prepend root only.            
             return PathUtil.append(getRepositoryRoot(), path);
