@@ -241,6 +241,7 @@ class HttpConnection {
             InputStream is = createInputStream(responseHeader, getInputStream());
             XMLInputStream xmlIs = new XMLInputStream(is);
             is = new BufferedInputStream(xmlIs);
+            
             if (handler == null) {
                 while(true) {
                     int r = is.read();
@@ -253,7 +254,7 @@ class HttpConnection {
                     mySAXParser = getSAXParserFactory().newSAXParser();
                 }
                 while(!xmlIs.isClosed()) {
-                	mySAXParser.parse(is, handler);
+                    mySAXParser.parse(is, handler);
                 }
             }
         } catch (SAXException e) {
@@ -400,14 +401,14 @@ class HttpConnection {
 	}
 
 	private static InputStream createInputStream(Map readHeader, InputStream is) throws IOException {
-        if ("chunked".equals(readHeader.get("Transfer-Encoding"))) {
-            is = new ChunkedInputStream(is);
-        } else if (readHeader.get("Content-Length") != null) {
+        if (readHeader.get("Content-Length") != null) {
             is = new FixedSizeInputStream(is, Long.parseLong(readHeader.get("Content-Length").toString()));
-            if ("gzip".equals(readHeader.get("Content-Encoding"))) {
-                DebugLog.log("using GZIP encoding to read server responce");
-                is = new GZIPInputStream(is);
-            }
+        } else if ("chunked".equals(readHeader.get("Transfer-Encoding"))) {
+            is = new ChunkedInputStream(is);
+        }
+        if ("gzip".equals(readHeader.get("Content-Encoding"))) {
+            DebugLog.log("using GZIP to decode server responce");
+            is = new GZIPInputStream(is);
         }
         return is;
     }

@@ -47,7 +47,7 @@ class ChunkedInputStream extends InputStream {
             }
             myPosition = 0;
         }
-        return myBuffer[myPosition++];
+        return myBuffer[myPosition++] & 0xff;
     }
 
     private int readChunkLength() throws IOException {
