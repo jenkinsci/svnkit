@@ -21,6 +21,9 @@ class SVNPromptCredentialsProvider implements ISVNCredentialsProviderEx {
 	}
 
 	public ISVNCredentials nextCredentials(String realm, SVNRepositoryLocation location) {
+		if (location != null) {
+			realm = realm == null ? location.toCanonicalForm() : realm;
+		}
 		if (!myPrompt.prompt(realm, System.getProperty("user.name"))) {
 			return null;
 		}
