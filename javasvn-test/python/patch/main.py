@@ -92,7 +92,7 @@ else:
 
 # The locations of the svn, svnadmin and svnlook binaries, relative to
 # the only scripts that import this file right now (they live in ../).
-svn_binary = os.path.abspath('../../../lib/svn' + _bat)
+svn_binary = os.path.abspath('../../../build/lib/svn' + _bat)
 svnadmin_binary = 'svnadmin' + _exe
 svnlook_binary = 'svnlook' + _exe
 svnversion_binary = 'svnversion' + _exe
