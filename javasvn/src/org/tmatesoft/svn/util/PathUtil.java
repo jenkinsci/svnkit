@@ -173,18 +173,23 @@ public class PathUtil {
     private static String getCommonAncestor(String path1, String path2) {
     	// simplest case
     	String longerPath = path1.length() > path2.length() ? path1 : path2;
-    	String shorterPath = path1.length() > path2.length() ? path2 : path1;
-    	// truncate shorter path till it longer is not starts with it
-    	while(!PathUtil.isEmpty(shorterPath)) {
+    	String root = path1.length() > path2.length() ? path2 : path1;
+    	if ("".equals(root)) {
+    		root = "/";
+    	}
+    	while(!PathUtil.isEmpty(root)) {
+        	if (!root.endsWith("/")) {
+        		root += "/";
+        	}
     		boolean rootFound = FSUtil.isWindows ?
-    				longerPath.toLowerCase().startsWith(shorterPath.toLowerCase()) :
-    				longerPath.startsWith(shorterPath);
+    				longerPath.toLowerCase().startsWith(root.toLowerCase()) :
+    				longerPath.startsWith(root);
     		if (rootFound) {
-    			return shorterPath;
+    			return PathUtil.removeTrailingSlash(root);
     		}
-    		shorterPath = PathUtil.removeTail(shorterPath);
+    		root = PathUtil.removeTail(root);
     	}    	
-    	return shorterPath;
+    	return PathUtil.removeTrailingSlash(root);
     }
 
     public static boolean isURL(String pathOrUrl) {
