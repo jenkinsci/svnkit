@@ -79,6 +79,9 @@ class HttpConnection {
 
     public void connect() throws IOException {
         if (mySocket == null || isStale()) {
+            if (mySocket != null) {
+                DebugLog.log("connection is silently closed by server, forcing reconnect.");
+            }
             close();
             String host = mySVNRepositoryLocation.getHost();
             int port = mySVNRepositoryLocation.getPort();
