@@ -64,6 +64,26 @@ public class SocketFactory {
             }
         }
 	}
+
+    public static Socket createSSLSocket(IDAVSSLManager manager, String host, int port, Socket socket) throws IOException {
+        int attempts = 3;
+        while(true) {
+            try {
+                System.out.println("creating ssl socket for " + host + " : " + port);
+                return manager.getSSLContext(host, port).getSocketFactory().createSocket(socket, host, port, true);
+            } catch (ConnectException timeOut) {
+                if (timeOut.getMessage().indexOf("time") >= 0) {
+                    attempts--;
+                    DebugLog.log("SOCKET: attempting to reconnect... (" + attempts + ")");
+                    if (attempts <= 0) {
+                        throw timeOut;
+                    }
+                    continue;                    
+                }
+                throw timeOut;
+            }
+        }
+    }
 	
 	private static InetAddress createAddres(String hostName) throws UnknownHostException {
 		byte[] bytes = new byte[4];

@@ -85,10 +85,49 @@ class HttpConnection {
             close();
             String host = mySVNRepositoryLocation.getHost();
             int port = mySVNRepositoryLocation.getPort();
-            mySocket = "https".equals(mySVNRepositoryLocation.getProtocol()) ? SocketFactory.createSSLSocket(DAVRepositoryFactory.getSSLManager(), host, port)
-                    : SocketFactory.createPlainSocket(host, port);
+            if (isProxied() && getProxyPort() > 0 && getProxyHost() != null) {
+                mySocket = SocketFactory.createPlainSocket(getProxyHost(), getProxyPort());
+                if (isSecured()) {
+                    Map props = new HashMap();
+                    if (getProxyAuthString() != null) {
+                        props.put("Proxy-Authorization", getProxyAuthString());
+                    }
+                    myOutputStream = DebugLog.getLoggingOutputStream("http", mySocket.getOutputStream());
+                    /*
+                    OutputStream os = mySocket.getOutputStream();
+                    os.write("CONNECT ".getBytes());
+                    os.write((mySVNRepositoryLocation.getHost() + ":" + mySVNRepositoryLocation.getPort()).getBytes());
+                    os.write(" HTTP/1.1".getBytes());
+                    os.write("\r\n".getBytes());
+                    os.write("\r\n".getBytes());
+                    os.flush();
+                    */
+                    sendHeader("CONNECT", mySVNRepositoryLocation.getHost() + ":" + mySVNRepositoryLocation.getPort(), props, null);
+                    myOutputStream.flush();
+                    System.out.println("reading connect responce");
+                    DAVStatus status = readHeader(new HashMap());
+                    if (status != null && status.getResponseCode() == 200) {
+                        myInputStream = null;
+                        myOutputStream = null;
+                        System.out.println("creating new socket!");
+                        mySocket = SocketFactory.createSSLSocket(DAVRepositoryFactory.getSSLManager(), host, port, mySocket);
+                        System.out.println("created: " + mySocket);
+                        return;
+                    }
+                    System.out.println("no header read");
+                    throw new IOException("couldn't establish http tunnel for proxied secure connection: " + (status != null ? status.getErrorText() + "" : " for unknow reason"));
+                }
+            } else {
+                mySocket = isSecured() ? SocketFactory.createSSLSocket(DAVRepositoryFactory.getSSLManager(), host, port)
+                        : SocketFactory.createPlainSocket(host, port);
+                System.out.println("socket created: " + mySocket);
+            }
             myConnectCount++;
         } 
+    }
+
+    private boolean isSecured() {
+        return "https".equals(mySVNRepositoryLocation.getProtocol());
     }
 
     private boolean isStale() throws IOException {
@@ -180,6 +219,7 @@ class HttpConnection {
     }
 
     private DAVStatus sendRequest(String method, String path, Map header, InputStream requestBody) throws SVNException {
+        System.out.println("sending: " + method);
         Map readHeader = new HashMap();
         if (myUserCredentialsProvider != null) {
             myUserCredentialsProvider.reset();
@@ -341,6 +381,13 @@ class HttpConnection {
         StringBuffer sb = new StringBuffer();
         sb.append(method);
         sb.append(' ');
+        if (isProxied() && !isSecured()) {
+            // prepend path with host name.
+            sb.append("http://");
+            sb.append(mySVNRepositoryLocation.getHost());
+            sb.append(":");
+            sb.append(mySVNRepositoryLocation.getPort());            
+        }
         DAVUtil.getCanonicalPath(path, sb);
         sb.append(' ');
         sb.append("HTTP/1.1");
@@ -359,6 +406,10 @@ class HttpConnection {
         sb.append(HttpConnection.CRLF);
         sb.append("TE: trailers");
         sb.append(HttpConnection.CRLF);
+        if (isProxied() && !isSecured() && getProxyAuthString() != null) {
+            sb.append("Proxy-Authorization: " + getProxyAuthString());
+            sb.append(HttpConnection.CRLF);
+        }
         boolean chunked = false;
         if (requestBody instanceof ByteArrayInputStream) {
             sb.append("Content-Length: ");
@@ -417,6 +468,9 @@ class HttpConnection {
     }
 
     private DAVStatus readHeader(Map headerProperties) throws IOException {
+        return readHeader(headerProperties, false);        
+    }
+    private DAVStatus readHeader(Map headerProperties, boolean firstLineOnly) throws IOException {
         DAVStatus responseCode = null;
         StringBuffer line = new StringBuffer();
         LoggingInputStream is = DebugLog.getLoggingInputStream("http", getInputStream());
@@ -442,6 +496,9 @@ class HttpConnection {
 	                if (read != '\n') {
 	                    is.reset();
 	                }
+                    if (firstLineOnly) {
+                        return DAVStatus.parse(line.toString());
+                    }
 	            }
 	            String lineStr = line.toString();
 	            if (lineStr.trim().length() == 0) {
@@ -482,7 +539,8 @@ class HttpConnection {
         	if (mySocket == null) {
         		return null;
         	}
-            myOutputStream = DebugLog.getLoggingOutputStream("http", new BufferedOutputStream(mySocket.getOutputStream()));
+            System.out.println("os created: " + mySocket);
+            myOutputStream = DebugLog.getLoggingOutputStream("http", new BufferedOutputStream(mySocket.getOutputStream(), 2048));
         }
         return myOutputStream;
     }
@@ -492,7 +550,8 @@ class HttpConnection {
         	if (mySocket == null) {
         		return null;
         	}
-            myInputStream = new BufferedInputStream(mySocket.getInputStream());
+            System.out.println("is created: " + mySocket);
+            myInputStream = new BufferedInputStream(mySocket.getInputStream(), 2048);
         }
         return myInputStream;
     }
@@ -591,7 +650,8 @@ class HttpConnection {
             }
         }
 
-        if ("close".equals(readHeader.get("Connection"))) {
+        if ("close".equals(readHeader.get("Connection")) || 
+                "close".equals(readHeader.get("Proxy-Connection"))) {
             DebugLog.log("closing connection due to server request");
             close();
         }
@@ -611,4 +671,88 @@ class HttpConnection {
 		} catch (IOException ex) {
 		}
 	}
+    
+    private static boolean isProxied() {
+        return Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("http.proxySet"));
+    }    
+    private static String getProxyHost() {
+        return System.getProperty("http.proxyHost");
+    }
+    private static int getProxyPort() {
+        String value = System.getProperty("http.proxyPort");
+        if (value == null) {
+            return 3128;
+        }
+        try {
+            return Integer.parseInt(System.getProperty("http.proxyPort"));
+        } catch (Throwable th) {            
+        }
+        return 3128;
+    }
+    
+    private static String getProxyAuthString() {
+        String username = System.getProperty("http.proxyUser");
+        String password = System.getProperty("http.proxyPassword");
+        if (username != null && password != null) {
+            String auth = username + ":" + password;
+            return "Basic " + Base64.byteArrayToBase64(auth.getBytes());
+        }
+        return null;
+    }
+    
+    private static boolean readConnectResponce(InputStream is) {
+        //is.mark(1024);
+        StringBuffer responce = new StringBuffer();
+        try {
+            while(true) {
+                int r = is.read();
+                if (r < 0) {
+                    is.reset();
+                    return false;
+                }
+                responce.append((char) r);
+                if (r != '\r' && r != '\n') {
+                    continue;
+                }
+                break;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            try {
+                is.reset();
+            } catch (IOException e1) {
+            }
+            return false;
+        }
+        // parse line.
+        String responceStr = responce.toString();
+        int index0 = responceStr.indexOf(' ');
+        if (index0 >= 0) {
+            int index1 = responceStr.indexOf(' ', index0 + 1);
+            if (index1 >= 0) {
+                String code = responceStr.substring(index0 + 1, index1);
+                try {
+                    int codeValue = Integer.parseInt(code);
+                    if (codeValue >= 200 && codeValue < 300) {
+                        while(!responce.toString().endsWith("\r\n\r\n")) {
+                            int r = is.read();
+                            if (r < 0) {
+                                break;
+                            }
+                            responce.append((char) r); 
+                        }
+                        return true;
+                    }
+                } catch (Throwable th) {
+                    th.printStackTrace();
+                }
+            }
+        }
+        try {
+            is.reset();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        return false;
+    }
 }
