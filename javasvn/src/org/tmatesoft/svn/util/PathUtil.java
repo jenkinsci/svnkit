@@ -13,8 +13,10 @@
 package org.tmatesoft.svn.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.StringTokenizer;
 
 /**
@@ -83,12 +85,18 @@ public class PathUtil {
     }
     
     public static void encode(String urlPart, StringBuffer dst) {
-        for(int i = 0; i < urlPart.length(); i++) {
-            char ch = urlPart.charAt(i);
-            if (ch == ' ') {
-                dst.append("%20");                
+        for(StringTokenizer tokens = new StringTokenizer(urlPart, " /", true); tokens.hasMoreTokens();) {
+            String token = tokens.nextToken();
+            if (" ".equals(token)) {
+                dst.append("%20");
+            } else if ("/".equals(token)) {
+                dst.append("/");
             } else {
-                dst.append(ch);
+                try {
+                    dst.append(URLEncoder.encode(token, "UTF-8"));
+                } catch (IOException e) {
+                    dst.append(token);
+                }
             }
         }
     }
