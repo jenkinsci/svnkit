@@ -21,6 +21,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author Alexander Kitaev
@@ -69,7 +70,9 @@ public class SVNEditModeReader {
                 try {
                     items = SVNReader.parse(parameters, "(SB))", null);
                 } catch (Throwable th) {
-                    th.printStackTrace();
+                    DebugLog.error(th);
+                } finally {
+                    SVNLoggingConnector.flush();
                 }
                 byte[] bytes = (byte[]) items[1];
                 myBuilder.accept(bytes, 0);

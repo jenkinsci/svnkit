@@ -184,5 +184,9 @@ public class DebugLog {
         }
         return ourSafeModeTrigger.exists();
     }
+
+    public static boolean isSVNLoggingEnabled() {
+        return Boolean.getBoolean("javasvn.log.svn");
+    }
     
 }

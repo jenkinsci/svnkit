@@ -112,6 +112,8 @@ class SVNConnection {
                             getOutputStream().write(response);
                         } catch (IOException e) {
                             throw new SVNException(e);
+                        } finally {
+                            SVNLoggingConnector.flush();
                         }
                     }
                 }
@@ -131,14 +133,18 @@ class SVNConnection {
             return SVNReader.parse(getInputStream(), template, items);
         } catch (IOException e) {
             throw new SVNException(e);
+        } finally {
+            SVNLoggingConnector.flush();
         }
-    }
+    } 
 
     public void write(String template, Object[] items) throws SVNException {
         try {
             SVNWriter.write(getOutputStream(), template, items);
         } catch (IOException e) {
             throw new SVNException(e);
+        } finally {
+            SVNLoggingConnector.flush();
         }
     }
 

@@ -579,6 +579,8 @@ class SVNReader {
     
     private static SVNDirEntry readDirEntry(InputStream is) throws SVNException {
         Object[] items = SVNReader.parse(is, "(SWNTN(?S)(?S))", null);
+        SVNLoggingConnector.flush();
+        
         String name = SVNReader.getString(items, 0);
         SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader.getString(items, 1));
         long size = SVNReader.getLong(items, 2);
