@@ -130,6 +130,17 @@ public class PathUtil {
         return dst.toString();
     }
     
+    public static String getFSCommonRoot(String[] paths) {
+        if (paths == null || paths.length == 0) {
+            return null;            
+        }
+        String root = getCommonRoot(paths);
+        if (!root.startsWith("/") && paths[0].startsWith("/")) {
+            root = "/" + root;
+        }
+        return root;
+    }
+    
     public static String getCommonRoot(String[] paths) {
         if (paths.length == 1) {
             return PathUtil.removeLeadingSlash(PathUtil.removeTail(paths[0]));

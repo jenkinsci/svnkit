@@ -54,11 +54,7 @@ public class CommitCommand extends SVNCommand {
         if (getCommandLine().getPathCount() == 1 && new File(getCommandLine().getPathAt(0)).isDirectory()) {
             rootPath = (String) pathsList.get(0);
         } else {
-            rootPath = PathUtil.getCommonRoot(paths);
-            // check if original paths should start with '/';
-            if (rootPath.indexOf(":") != 1) {
-                rootPath = "/" + rootPath;
-            }
+            rootPath = PathUtil.getFSCommonRoot(paths);
         }
         DebugLog.log("commit root: " + rootPath);
 

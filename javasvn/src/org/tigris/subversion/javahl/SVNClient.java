@@ -394,7 +394,8 @@ public class SVNClient implements SVNClientInterface {
         }
         
         try {
-            final ISVNWorkspace ws = createWorkspace(PathUtil.getCommonRoot(path));
+            String commonRoot = PathUtil.getFSCommonRoot(path);
+            final ISVNWorkspace ws = createWorkspace(commonRoot);
             String[] paths = new String[path.length];
             for(int i = 0; i < path.length; i++) {
                 paths[i] = SVNUtil.getWorkspacePath(ws, path[i]);
@@ -690,7 +691,7 @@ public class SVNClient implements SVNClientInterface {
         if (path == null || path.length == 0) {
             return;
         }
-        String root = PathUtil.getCommonRoot(path);
+        String root = PathUtil.getFSCommonRoot(path);
         if (isURL(root)) {
             for(int i = 0; i < path.length; i++) {
                 String dir = path[i].substring(root.length());
