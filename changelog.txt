@@ -1,3 +1,8 @@
+= version 1.0.0 build 20050112
+
++ lot of incompatibilities with native svn fixed
++ SVNClient supports remote deletion, copy and move operations
+
 = version 1.0.0 build 20050106
 
 + number of bugs in remote status implementation fixed
