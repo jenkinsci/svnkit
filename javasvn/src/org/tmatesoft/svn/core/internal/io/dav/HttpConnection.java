@@ -85,8 +85,13 @@ class HttpConnection {
             close();
             String host = mySVNRepositoryLocation.getHost();
             int port = mySVNRepositoryLocation.getPort();
-            if (isProxied() && getProxyPort() > 0 && getProxyHost() != null) {
-                mySocket = SocketFactory.createPlainSocket(getProxyHost(), getProxyPort());
+            IDAVProxyManager proxyManager = DAVRepositoryFactory.getProxyManager();
+            String proxyHost = proxyManager.getProxyHost(mySVNRepositoryLocation);
+            int proxyPort = proxyManager.getProxyPort(mySVNRepositoryLocation);
+            if (proxyManager.isProxyEnabled(mySVNRepositoryLocation) && 
+                    proxyPort > 0 && 
+                    proxyHost != null) {
+                mySocket = SocketFactory.createPlainSocket(proxyHost, proxyPort);
                 if (isSecured()) {
                     Map props = new HashMap();
                     if (getProxyAuthString() != null) {
@@ -366,7 +371,8 @@ class HttpConnection {
         StringBuffer sb = new StringBuffer();
         sb.append(method);
         sb.append(' ');
-        if (isProxied() && !isSecured()) {
+        boolean isProxied = DAVRepositoryFactory.getProxyManager().isProxyEnabled(mySVNRepositoryLocation); 
+        if (isProxied && !isSecured()) {
             // prepend path with host name.
             sb.append("http://");
             sb.append(mySVNRepositoryLocation.getHost());
@@ -391,7 +397,7 @@ class HttpConnection {
         sb.append(HttpConnection.CRLF);
         sb.append("TE: trailers");
         sb.append(HttpConnection.CRLF);
-        if (isProxied() && !isSecured() && getProxyAuthString() != null) {
+        if (isProxied && !isSecured() && getProxyAuthString() != null) {
             sb.append("Proxy-Authorization: " + getProxyAuthString());
             sb.append(HttpConnection.CRLF);
         }
@@ -654,28 +660,10 @@ class HttpConnection {
 		} catch (IOException ex) {
 		}
 	}
-    
-    private static boolean isProxied() {
-        return Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("http.proxySet"));
-    }    
-    private static String getProxyHost() {
-        return System.getProperty("http.proxyHost");
-    }
-    private static int getProxyPort() {
-        String value = System.getProperty("http.proxyPort");
-        if (value == null) {
-            return 3128;
-        }
-        try {
-            return Integer.parseInt(System.getProperty("http.proxyPort"));
-        } catch (Throwable th) {            
-        }
-        return 3128;
-    }
-    
-    private static String getProxyAuthString() {
-        String username = System.getProperty("http.proxyUser");
-        String password = System.getProperty("http.proxyPassword");
+
+    private String getProxyAuthString() {
+        String username = DAVRepositoryFactory.getProxyManager().getProxyUserName(mySVNRepositoryLocation);
+        String password = DAVRepositoryFactory.getProxyManager().getProxyPassword(mySVNRepositoryLocation);
         if (username != null && password != null) {
             String auth = username + ":" + password;
             return "Basic " + Base64.byteArrayToBase64(auth.getBytes());
