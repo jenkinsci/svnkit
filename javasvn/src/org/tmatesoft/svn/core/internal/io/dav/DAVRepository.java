@@ -243,6 +243,9 @@ class DAVRepository extends SVNRepository {
 				fullPaths[i] = getFullPath(targetPaths[i]);
 			}
 			path = PathUtil.getCommonRoot(fullPaths);
+			if (!path.startsWith("/")) {
+				path = "/".concat(path);
+			}
             davHandler = new DAVLogHandler(handler); 
 			long revision = -1;
 			if (isValidRevision(startRevision) && isValidRevision(endRevision)) {
