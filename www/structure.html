@@ -1,0 +1,216 @@
+<html><head><title>How to Use :: Documentation :: Pure Java Subversion (SVN) Client Library</title>
+
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+
+<style>
+html body {
+    margin: 0px;
+    padding: 0px;
+    padding-top: 0.2em;
+    margin-left: 1em;
+    margin-right: 1em;
+    font-family: trebuchet ms, verdana, tahoma, arial;
+    line-height: 1.5em;
+    color: #333;
+    text-align: left;
+    max-width: 50em;
+    width: 50em;
+    font-size: 82%;
+}
+
+h4 {
+   font-size: 120%;
+   margin-bottom: 0.5em;
+}
+code {
+   font-weight: bold;
+   font-size: 100%;
+   color: darkblue;
+}
+#normal {
+    padding-left: 0;
+}
+
+small {
+    color: #669999;
+    font-size: 100%;
+}
+p {
+   margin:0px;
+   padding: 0px;
+   margin-top: 0.5em; 
+}
+
+</style><!-- base href="http://tmate.org/svn/" --></head>
+<body style="width: 800px;">
+<div  style="width: 800px;">
+<small><a id="normal" href="/svn/">Home</a>&nbsp;::&nbsp;Documentation&nbsp;::&nbsp;How&nbsp;to&nbsp;Use</small>
+<h4>Preface</h4>
+<p>Purpose of the JavaSVN library is to provide means to work with Subversion (SVN) repository and 
+working copy files within java program without using native subversion executables or libraries. JavaSVN
+library is a complete replacement for svn <i>javahl</i> bindings and svn native client.
+</p>
+<p>In general there are two kind of library users - first are using the API to access the repository or 
+manage working copy files, second are extending the library to provide custom implementation for various
+library aspects, like connection protocols, merge implementation or working copy storage format. This page
+mainly describes what the first, more common type of users should know to work with the library.
+</p>
+<p>
+Library features are divided into two major sets. First are repository access features, that could be considered
+as <q>low-level</q> ones and second are <q>high-level</q> operations that works both with repository
+and working copies. For instance, using the <q>low-level</q> API it is possible to implement a powerful
+repository browser and the high level API abstracts such
+operations as <q>check out</q>, <q>update</q>, <q>commit</q> - all that work both with repository information and local
+working copies. Needless to say that high-level API implementation uses low-level one.
+</p>
+<p>In the sections below you will find more detailed information about those APIs</p>
+
+<h4>Setting up the library</h4>
+<p>JavaSVN is an extenable library, so it may use different implementations for different 
+features or aspects. That is why it needs to be <q>configured</q> before first use. By configuring the library
+you describe which implementations should be used at run-time.
+If you're not writing eclipse plugin and using JavaSVN library as a standalone jar file, you have
+to set up the library to make it usable:
+<pre>
+    // import neccessary files
+    import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+    import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+    import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
+
+    // Set up connection protocols support:
+    // for DAV (over http and https)
+    DAVRepositoryFactory.setup();
+    // for SVN (over svn and svn+ssh)
+    SVNRepositoryFactoryImpl.setup();
+
+    // Working copy storage (default is file system).
+    FSEntryFactory.setup();	
+</pre>
+<center><small>Setting up default library implementations</small></center><br />
+<!--
+If you're planning to access repositories that needs authorization, you have
+to provide <code>SVNUserCredentialsManager</code> implementation. In the above example
+<code>UserCredentialsManager</code> class is such an implementation. Below is the 
+code in its <code>setup</code> method:
+<pre>
+// class have to extend SVNUserCredentialsManager
+public class UserCredentialsManager extends SVNUserCredentialsManager {
+    
+    public static void setup() {
+        SVNUserCredentialsManager.setInstance(new UserCredentialsManager());
+    }
+    // other code...
+}
+</pre>
+<center><small>Registering credentials manager within standlone library</small></center><br />
+This very implementation will be called back for user credentials during authorization phase.</p>
+<p>If you are using JavaSVN library as an Eclipse plug-in, you do not need the above <q>set-up</q> code, but 
+still have to provide <code>SVNUserCredentialsManager</code> implementation through the extension point in
+your <code>plugin.xml</code> file:
+<pre>
+   &lt;extension point="org.tmatesoft.svn.core.uc"&gt;
+   	&lt;credentialsManager class="org.tmatesoft.svn.ui.viewer.UserCredentialsManager"/&gt;
+   &lt;/extension&gt;
+</pre>
+<center><small>Defining credetnials manager in plugin.xml file</small></center><br />
+-->
+</p>
+<h4>Repository Access</h4>
+<p>Package <code>org.tmatesoft.svn.core.io</code></p>
+<p>Repository access API defines two basic notions: <code>SVNRepository</code> and <code>SVNRepositoryLocation</code>.
+Code below explains how to get an <code>SVNRepository</code> instance having a repository URL:
+<pre>
+    String URL = "http://svn.collab.net/svn/trunk/";
+    try { 
+        SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(URL);
+        SVNRepository repository = SVNRepositoryFactory.create(location);
+
+        // work with repository
+    } catch (SVNException e) {
+        e.printStackTrace();
+    }
+</pre>
+<center><small>Obtaining SVNRepository instance</small></center><br />
+<code>SVNRepository</code> is an abstract class that declares all the available repository operations. For instance consider
+ extending the example above to get latest repository revision and all the log messages in the repository:
+<pre>
+   String URL = "http://svn.collab.net/svn/trunk/";
+   try { 
+       SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(URL);
+       SVNRepository repository = SVNRepositoryFactory.create(location);
+
+       // get latest revisions
+       int latestRevision = repository.getLatestRevision();
+       System.out.println("[" + location.toString() + "] latest revision: " + latestRevision); 
+
+       // log messages
+       String[] targetPaths = new String[] {""};
+       repository.log(targetPaths, 0, latestRevision, true, true, new ISVNLogEntryHandler() {
+            public void handleLogEntry(SVNLogEntry logEntry) {
+                System.out.println(logEntry.getRevision() + " : " + logEntry.getMessage());
+            }
+       });
+    } catch (SVNException e) {
+        e.printStackTrace();
+    }
+</pre>
+<center><small>SVNRepository usage example</small></center><br />
+All the interfaces and classes referenced by <code>SVNRepository</code> class, like <code>SVNLogEntry</code> are located in the same package. 
+For users familiar with the native subversion source code it may be useful to know that <code>SVNRepository</code> interface is more or less 
+similar to the <code>include/svn_ra.h</code> declaration file.
+</p>
+<h4>Working Copies</h4>
+<p>Package <code>org.tmatesoft.svn.core</code></p>
+<p>JavaSVN library introduces notion of <q>workspace</q> that is represented by <code>ISVNWorkspace</code> interface. Workspace 
+is a tree of checked out repository files, usually stored as a directory in the file system. To obtain <code>ISVNWorkspace</code> 
+instance use the following code:
+<pre>
+    try {
+        File directory = new File(path); 
+        ISVNWorkspace workspace = SVNWorkspaceManager.createWorkspace("file", directory.getAbsolutePath());
+    } catch (SVNException e) {
+        e.printStackTrace();
+    }
+</pre>
+<center><small>Obtaining ISVNWorkspace instance</small></center><br />
+In the above example using <code>file</code> type to create workspace results in 
+creating workspace that uses filesystem to store working copy files and administrative info. Now it is 
+the only possible type to use, but eventually there could be other types, for instance <code>db</code> to use
+database as a storage media.
+</p>
+<p>As soon as workspace is created you may perform various operations on this workspace. The following 
+examples demonstrates how to check out files from repository into workspace, and how to commit 
+modified workspace:
+<pre>
+    try {
+        File directory = new File(path); 
+        ISVNWorkspace workspace = SVNWorkspaceManager.createWorkspace("file", directory.getAbsolutePath());
+
+ 	// checkout 
+        SVNRepositoryLocation location = SVNRepositoryLocation.parseURL("http://svn.collab.net/repos/svn/);
+        int revision = workspace.checkout(location, ISVNWorkspace.HEAD, false);
+        System.out.println("Checkout out revision " + revision + ".");
+
+	// modify working copy files
+        // create new file.
+        makeChanges();
+
+        // add file, similar to "svn add path" command line.
+        // note, path is relative to the workspace root, i.e. "directory".
+        String newFilePath = "directory/newFile.txt";
+	workspace.add(newFilePath);
+
+        // commit changes
+        int committedRevision = workspace.commit("change log message");
+        System.out.println("committed revision: " + committedRevision);
+    } catch (SVNException e) {
+        e.printStackTrace();
+    }
+</pre>
+<center><small>Working copy operations</small></center><br />
+Note that paths passed to the ISVNWorkspace methods should be relative to the 
+workspace root - location used when creating workspace.
+</p>
+<center><small><span>(c) 2004 TMate Software. All rights reserved.</span></small></center>
+</div></body></html>

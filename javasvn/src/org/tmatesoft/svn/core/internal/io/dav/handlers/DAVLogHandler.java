@@ -1,0 +1,156 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.  The terms
+ * are also available at http://tmate.org/svn/license.html.
+ * If newer versions of this license are posted there, you may use a
+ * newer version instead, at your option.
+ * ====================================================================
+ */
+
+package org.tmatesoft.svn.core.internal.io.dav.handlers;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.io.SVNLogEntry;
+import org.tmatesoft.svn.core.io.SVNLogEntryPath;
+import org.tmatesoft.svn.util.TimeUtil;
+import org.xml.sax.Attributes;
+
+/**
+ * @author TMate Software Ltd.
+ */
+public class DAVLogHandler extends BasicDAVHandler {
+	
+	public static StringBuffer generateLogRequest(StringBuffer buffer, long startRevision, long endRevision,
+			boolean includeChangedPaths, boolean strictNodes, String[] paths) {
+		buffer = buffer == null ? new StringBuffer() : buffer;
+        buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+        buffer.append("<S:log-report xmlns:S=\"svn:\">");
+        if (startRevision >= 0) {
+        	buffer.append("<S:start-revision>"  + startRevision + "</S:start-revision>");
+        } 
+        if (endRevision >= 0) {
+        	buffer.append("<S:end-revision>"  + endRevision + "</S:end-revision>");
+        }
+        if (includeChangedPaths) {
+            buffer.append("<S:discover-changed-paths />");
+        }
+        if (strictNodes) {
+            buffer.append("<S:strict-node-history />");
+        }
+        for (int i = 0; i < paths.length; i++) {
+            buffer.append("<S:path>"  + paths[i] + "</S:path>");
+		}
+        buffer.append("</S:log-report>");
+        return buffer;
+	}
+	
+	private static final DAVElement LOG_ITEM = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "log-item");
+	
+	private static final DAVElement ADDED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "added-path");
+	private static final DAVElement DELETED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "deleted-path");
+	private static final DAVElement MODIFIED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "modified-path");
+	private static final DAVElement REPLACED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replaced-path");
+	
+	private ISVNLogEntryHandler myLogEntryHandler;
+	private long myRevision;
+	private Map myPaths;
+	private String myAuthor;
+	private Date myDate;
+	private String myComment;
+	private SVNLogEntryPathEx myPath;
+
+	private int myCount;
+
+
+	public DAVLogHandler(ISVNLogEntryHandler handler) {
+		myLogEntryHandler = handler;
+		myRevision = -1;
+		myCount = 0;
+		init();
+	}
+	
+	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) {
+		char type = 0;
+		String copyPath = null;
+		long copyRevision = -1;
+		if (element == ADDED_PATH || element == REPLACED_PATH) {
+			type = element == ADDED_PATH ? 'A' : 'R';
+			copyPath = attrs.getValue("copyfrom-path");
+			String copyRevisionStr = attrs.getValue("copyfrom-rev");
+			if (copyPath != null && copyRevisionStr != null) {
+				try {
+					copyRevision = Long.parseLong(copyRevisionStr);
+				} catch (NumberFormatException e) {
+				}
+			} 
+		} else if (element == MODIFIED_PATH) {
+			type = 'M';
+		} else if (element == DELETED_PATH) {
+			type = 'D';			
+		}
+		if (type != 0) {
+			myPath = new SVNLogEntryPathEx(type, copyPath, copyRevision);
+		}
+		
+	}
+	
+	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
+		if (element == LOG_ITEM) {
+			myCount++;
+			if (myLogEntryHandler != null) {
+				if (myPaths == null) {
+					myPaths = new HashMap();
+				}
+				SVNLogEntry logEntry = new SVNLogEntry(myPaths, myRevision, myAuthor, myDate, myComment);
+				myLogEntryHandler.handleLogEntry(logEntry);
+			}
+			myPaths = null;
+			myRevision = -1;
+			myAuthor = null;
+			myDate = null;
+			myComment = null;
+		} else if (element == DAVElement.VERSION_NAME && cdata != null) {
+			myRevision = Long.parseLong(cdata.toString());
+		} else if (element == DAVElement.CREATOR_DISPLAY_NAME && cdata != null) {
+			myAuthor = cdata.toString();
+		} else if (element == DAVElement.COMMENT && cdata != null) {
+			myComment = cdata.toString();
+		} else if (element == DAVElement.DATE && cdata != null) {
+			myDate = TimeUtil.parseDate(cdata.toString());
+		} else if (element == ADDED_PATH || element == MODIFIED_PATH || element == REPLACED_PATH ||
+				element == DELETED_PATH) {
+			if (myPath != null && cdata != null) {
+				if (myPaths == null) {
+					myPaths = new HashMap();
+				}
+				myPath.setPathValue(cdata.toString());
+                String path = myPath.getPath();
+                myPath.setPathValue(path);
+                myPaths.put(myPath.getPath(), myPath);
+			}
+			myPath = null;
+		} 
+	}
+
+	public int getEntriesCount() {
+		return myCount;
+	}
+	
+	private static class SVNLogEntryPathEx extends SVNLogEntryPath {
+		public SVNLogEntryPathEx(char type, String copyPath, long copyRevision) {
+			super(null, type, copyPath, copyRevision);
+		}
+
+		public void setPathValue(String path) {
+			super.setPath(path);
+		}
+	}
+}

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin
+   id="org.tmatesoft.svn.core"
+   name="JavaSVN Library Plug-in"
+   version="1.0.0"
+   provider-name="TMate Software"
+   class="org.tmatesoft.svn.core.SVNPlugin">
+
+   <runtime>
+      <library name="lib/javasvn.jar">
+         <export name="org.tigris.subversion.javahl.*"/>
+         <export name="org.tmatesoft.svn.core.*"/>
+         <export name="org.tmatesoft.svn.core.auth.*"/>
+         <export name="org.tmatesoft.svn.core.diff.*"/>
+         <export name="org.tmatesoft.svn.core.io.*"/>
+      </library>
+      <library name="lib/svnplugin.jar"/>
+      <library name="lib/jsch-0.1.18.jar"/>
+   </runtime>
+   <requires>
+      <import plugin="org.eclipse.core.runtime"/>
+   </requires>
+   
+   <extension-point id="ra" name="SVN RA Provider" />
+   <extension-point id="uc" name="SVN UC Provider" />
+   
+   <extension id="svn" name="svn protocol ra" point="org.tmatesoft.svn.core.ra" >
+   		<ra>
+	   		<url name="^svn(+ssh)?://.*$" />
+    	    <repositoryFactory class="org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl" />
+    	</ra>
+   </extension>
+   
+   <extension id="http" name="http(s) protocol ra" point="org.tmatesoft.svn.core.ra" >
+        <ra>
+	   		<url name="^https?://.*$" />
+    	    <repositoryFactory class="org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory" />
+    	</ra>
+   </extension>
+   
+</plugin>
