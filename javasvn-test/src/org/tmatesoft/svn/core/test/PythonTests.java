@@ -49,10 +49,11 @@ public class PythonTests {
 		}
 		String pythonTestsRoot = properties.getProperty("python.tests");
 		properties.setProperty("repository.root", new File(pythonTestsRoot).getAbsolutePath());
+		String url = "svn://localhost";
 		if (Boolean.TRUE.toString().equals(properties.getProperty("python.svn"))) {
 			try {
 				AllTests.startSVNServe(properties);
-				runPythonTests(properties, "svn://localhost");
+				runPythonTests(properties, url);
 			} catch (Throwable th) {
 				th.printStackTrace();
 			} finally {
@@ -60,10 +61,11 @@ public class PythonTests {
 			}
 		}
 		if (Boolean.TRUE.toString().equals(properties.getProperty("python.http"))) {
+			url = "http://localhost:" + properties.getProperty("apache.port", "8082");
 			properties.setProperty("apache.conf", "apache/python.template.conf");
 			try {
 				AllTests.startApache(properties);
-				runPythonTests(properties, "http://localhost:" + properties.getProperty("apache.port", "8082"));
+				runPythonTests(properties, url);
 			} catch (Throwable th) {
 				th.printStackTrace();
 			} finally {
@@ -77,6 +79,7 @@ public class PythonTests {
 	}
 
 	private static void runPythonTests(Properties properties, String url) throws IOException {
+		System.out.println("RUNNING TESTS AGAINST '" + url + "'");
 		String pythonLauncher = properties.getProperty("python.launcher");
 		String testSuite = properties.getProperty("python.tests.suite");
 		String options = properties.getProperty("python.tests.options", "");

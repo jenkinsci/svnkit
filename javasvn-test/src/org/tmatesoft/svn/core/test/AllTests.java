@@ -332,7 +332,6 @@ public class AllTests extends TestSuite {
         FileOutputStream os = new FileOutputStream(destination);
         os.write(config.getBytes());
         os.close();
-        System.err.println("apache config written to " + destination.getAbsolutePath());
     }
 
     private static void error(String message, Throwable e) {
