@@ -154,7 +154,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         if (file.exists()) {
             target.applyTextDelta(null);
             String eolType = getPropertyValue(SVNProperty.EOL_STYLE);
-            boolean sendAsIs = isBinary() || eolType == null;
+            boolean sendAsIs = isBinary();// || eolType == null;
             File tmpFile = null;
             if (!sendAsIs) {
                 if (SVNProperty.EOL_STYLE_NATIVE.equals(eolType)) {
@@ -277,7 +277,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         Map keywords = computeKeywords(true);
         if (actualFile.exists()) {
             String eolStyle = getPropertyValue(SVNProperty.EOL_STYLE);
-            if (!isBinary() && ((isPropertyModified(SVNProperty.EOL_STYLE) && eolStyle != null) || isPropertyModified(SVNProperty.KEYWORDS))) {
+            if (!isBinary()) {// && ((isPropertyModified(SVNProperty.EOL_STYLE) && eolStyle != null) || isPropertyModified(SVNProperty.KEYWORDS))) {
                 File tmpFile = getRootEntry().createTemporaryFile();
                 FSUtil.copy(actualFile, tmpFile, eolStyle, computeEmptyKeywords(), null);
                 FSUtil.copy(tmpFile, actualFile, null, keywords, null);
