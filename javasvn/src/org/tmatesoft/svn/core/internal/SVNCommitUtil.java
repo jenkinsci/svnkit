@@ -130,7 +130,11 @@ public class SVNCommitUtil {
             DebugLog.log("HV: processing " + entryPath + " => missing, skipped" );
             return;
         }
-        if (root.isDirectory()) {
+		
+		boolean copy = root.getPropertyValue(SVNProperty.COPIED) != null;
+		long revision = SVNProperty.longValue(root.getPropertyValue(SVNProperty.REVISION));
+
+		if (root.isDirectory()) {
             if (root.isScheduledForAddition() || root.isScheduledForDeletion() || root.isPropertiesModified()) {
                 // add to modified only if it is below one of the paths.
                 for(int i = 0; i < paths.length; i++) {
@@ -140,16 +144,30 @@ public class SVNCommitUtil {
                         break;
                     }
                 }
-            }
-            if ((root.isScheduledForAddition() || !root.isScheduledForDeletion()) && recursive) {
-                // no need to collect children of deleted entries.
+            } 
+			if (root.isScheduledForDeletion() && !root.isScheduledForAddition()) {
+                DebugLog.log("HV: processing " + entryPath + " => children are not collected for deleted directory " );
+				return;
+			}
+            if (recursive) {
                 for(Iterator children = root.asDirectory().childEntries(); children.hasNext();) {
                     ISVNEntry child = (ISVNEntry) children.next();
                     DebugLog.log("HV: processing " + entryPath + " => collecting child: " + child.getPath() );
                     harvestCommitables(child, paths, recursive, modified);
+					if (copy) {
+	                    DebugLog.log("HV: processing unmodified copied child " + child.getPath() );
+						long childRevision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.REVISION));
+						if (child.getPropertyValue(SVNProperty.COPYFROM_URL) == null) {
+							String parentCopyFromURL = root.getPropertyValue(SVNProperty.COPYFROM_URL);
+							child.setPropertyValue(SVNProperty.COPYFROM_URL, PathUtil.append(parentCopyFromURL, PathUtil.encode(child.getName())));
+							child.setPropertyValue(SVNProperty.COPYFROM_REVISION, SVNProperty.toString(childRevision));
+						}
+						if (!modified.contains(child) && revision != childRevision) {
+		                    DebugLog.log("HV: copied child collected, revision differs from parent " + child.getPath() );
+							modified.add(child);
+						}
+					}
                 }
-            } else {
-                DebugLog.log("HV: processing " + entryPath + " => children are not collected for deleted directory " );
             }
         } else {
             if (root.isScheduledForAddition() || 
@@ -166,8 +184,10 @@ public class SVNCommitUtil {
         ISVNEntry root = (ISVNEntry) entries.get(path);
         
         long revision = root == null ? -1 : SVNProperty.longValue(root.getPropertyValue(SVNProperty.COMMITTED_REVISION));
+		boolean copied = false;
         if (root != null) {
             root.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
+			copied = Boolean.TRUE.toString().equals(root.getPropertyValue(SVNProperty.COPIED));
         }
         if ("".equals(path)) {
             DebugLog.log("ROOT OPEN: " + path);
@@ -177,7 +197,7 @@ public class SVNCommitUtil {
                     ws.fireEntryCommitted(root, SVNStatus.MODIFIED);
                 }
             }
-        } else if (root != null && root.isScheduledForAddition()) {
+        } else if (root != null && (root.isScheduledForAddition() || copied)) {
             DebugLog.log("DIR ADD: " + path);
             String copyFromURL = root.getPropertyValue(SVNProperty.COPYFROM_URL);
             long copyFromRevision = -1;
@@ -193,7 +213,7 @@ public class SVNCommitUtil {
                 DebugLog.log("copyfrom path:" + copyFromURL);
             }
             editor.addDir(path, copyFromURL, copyFromRevision);
-            root.sendChangedProperties(editor);
+			root.sendChangedProperties(editor);
             ws.fireEntryCommitted(root, SVNStatus.ADDED);
         } else if (root != null && root.isPropertiesModified()) {
             DebugLog.log("DIR OPEN: " + path + ", " + revision);
@@ -252,6 +272,30 @@ public class SVNCommitUtil {
             } else if (child.isDirectory()) {
                 doCommit(childPath, url, entries, editor, ws);
             } else {
+				boolean childIsCopied = Boolean.TRUE.toString().equals(child.getPropertyValue(SVNProperty.COPIED));
+				String digest = null;
+				if (childIsCopied && !child.isScheduledForAddition()) {
+                    DebugLog.log("FILE COPY: " + childPath);
+					// first copy it to have in place for modifications if required.
+					// get copyfrom url and copyfrom rev
+					String copyFromURL = child.getPropertyValue(SVNProperty.COPYFROM_URL);
+					long copyFromRev = Long.parseLong(child.getPropertyValue(SVNProperty.COPYFROM_REVISION));
+                    if (copyFromURL != null) {
+                        copyFromURL = SVNRepositoryLocation.parseURL(copyFromURL).toCanonicalForm();
+                        DebugLog.log("copyfrom path:" + copyFromURL);
+                        DebugLog.log("parent's url: " + url);
+                        // should be relative to repos root.
+                        copyFromURL = copyFromURL.substring(url.length());
+                        if (!copyFromURL.startsWith("/")) {
+                            copyFromURL = "/" + copyFromURL;
+                        }
+                        DebugLog.log("copyfrom path:" + copyFromURL);
+                    }
+                    editor.addFile(childPath, copyFromURL, copyFromRev);
+					editor.closeFile(null);
+                    ws.fireEntryCommitted(child, SVNStatus.ADDED);
+                    DebugLog.log("FILE COPY: DONE");
+				}
                 if (child.isScheduledForAddition()) {
                     DebugLog.log("FILE ADD: " + childPath);
                     child.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
@@ -270,10 +314,9 @@ public class SVNCommitUtil {
                         DebugLog.log("copyfrom path:" + copyFromURL);
                     }
                     editor.addFile(childPath, copyFromURL, copyFromRevision);
-                    child.sendChangedProperties(editor);
-                    String digest = child.asFile().generateDelta(editor);
+					child.sendChangedProperties(editor);
+					digest = child.asFile().generateDelta(editor);
                     editor.closeFile(digest);
-                    
                     ws.fireEntryCommitted(child, SVNStatus.ADDED);
                     DebugLog.log("FILE ADD: DONE");
                 } else if (child.asFile().isContentsModified() || child.isPropertiesModified()) {
@@ -281,7 +324,6 @@ public class SVNCommitUtil {
                     child.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
                     editor.openFile(childPath, revision);
                     child.sendChangedProperties(editor);
-                    String digest = null;
                     if (child.asFile().isContentsModified()) {
                         digest = child.asFile().generateDelta(editor);
                     }
