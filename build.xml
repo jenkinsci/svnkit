@@ -5,6 +5,8 @@
         <property environment="env" />
         <property name="eclipse.home" value="${env.ECLIPSE_HOME}" />
         <property name="java.home" value="${env.JAVA_HOME}" />
+        <property file="build.properties"/>
+        
         <condition property="eclipse.present">
             <and>
                 <available file="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0/runtime.jar"
@@ -25,12 +27,6 @@
         <condition property="os" value="mac">
             <os family="mac" />
         </condition>
-    </target>
-
-    <target name="init-deploy">
-        <tstamp>
-            <format property="date" pattern="yyyyMMdd" />
-        </tstamp>
     </target>
 
     <target name="compile-library">
@@ -67,7 +63,7 @@
         </path>
 
         <javac debug="true"
-               srcdir="javasvn-eclipse/src"
+               srcdir="javasvn-eclipse/org.tmatesoft.javasvn/src"
                classpathref="eclipse.classpath"
                destdir="javasvn-eclipse/bin"
         />
@@ -155,16 +151,28 @@
     </target>
 
     <target name="build-eclipse" depends="build-library,build-src,compile-eclipse" if="eclipse.present">
-        <property name="plugin.name" value="org.tmatesoft.svn.core_1.0.0" />
-        <mkdir dir="build/eclipse/${plugin.name}/lib" />
+        <property name="javasvn.plugin.name" value="plugins/org.tmatesoft.javasvn_${javasvn.version}" />
+        <property name="subclipse.plugin.name" value="plugins/org.tigris.subversion.subclipse.core_${subclipse.plugin.version}" />
 
-        <copy todir="build/eclipse/${plugin.name}/lib">
+        <property name="javasvn.feature.name" value="features/org.tmatesoft.javasvn_${javasvn.version}" />
+        <property name="subclipse.feature.name" value="features/org.tmatesoft.javasvn.subclipse_${javasvn.version}" />
+
+        <mkdir dir="build/eclipse/${javasvn.plugin.name}" />
+        <mkdir dir="build/eclipse/${subclipse.plugin.name}" />
+        <mkdir dir="build/eclipse/${javasvn.feature.name}" />
+        <mkdir dir="build/eclipse/${subclipse.feature.name}" />
+        <mkdir dir="build/eclipse/site/plugins" />
+        <mkdir dir="build/eclipse/site/features" />
+        
+        <!-- build javasvn plugin -->
+        <copy todir="build/eclipse/${javasvn.plugin.name}">
             <fileset dir="build/lib">
                 <include name="javasvn.jar" />
                 <include name="jsch.jar" />
+                <include name="javasvnsrc.zip" />
             </fileset>
         </copy>
-        <copy todir="build/eclipse/${plugin.name}">
+        <copy todir="build/eclipse/${javasvn.plugin.name}">
             <fileset dir="build/lib">
                 <include name="changelog.txt" />
                 <include name="COPYING" />
@@ -172,13 +180,45 @@
                 <include name="SEQUENCE-LICENSE" />
                 <include name="JAVAHL-LICENSE" />
             </fileset>
-            <fileset dir="javasvn-eclipse">
+            <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn">
                 <include name="plugin.xml" />
             </fileset>
         </copy>
-        <jar destfile="build/eclipse/${plugin.name}/lib/svnplugin.jar">
+        <jar destfile="build/eclipse/${javasvn.plugin.name}/javasvnplugin.jar">
             <fileset dir="javasvn-eclipse/bin" />
         </jar>
+        
+        <!-- build subclipse plugin -->
+        <copy todir="build/eclipse/${subclipse.plugin.name}">
+            <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn.subclipse">
+                <exclude name="**/.svn"/>
+            </fileset>
+        </copy>
+        
+        <!-- build features -->
+        <copy todir="build/eclipse/${javasvn.feature.name}">
+            <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn.feature">
+                <exclude name="**/.svn"/>
+            </fileset>
+        </copy>
+        <copy todir="build/eclipse/${subclipse.feature.name}">
+            <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn.subclipse.feature">
+                <exclude name="**/.svn"/>
+            </fileset>
+        </copy>
+
+        <copy file="javasvn-eclipse/site.xml" todir="build/eclipse/site"/>
+
+        <!-- update versions -->
+        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml" token="%javasvn.version%" value="${javasvn.version}"/>
+        <replace dir="build/eclipse" includes="**/plugin.xml,**/feature.xml" token="%subclipse.version%" value="${subclipse.version}"/>
+        <replace dir="build/eclipse" includes="**/plugin.xml,**/feature.xml" token="%subclipse.plugin.version%" value="${subclipse.plugin.version}"/>
+        
+        <!-- build jars for update site -->
+        <jar destfile="build/eclipse/site/${javasvn.plugin.name}.jar" basedir="build/eclipse/${javasvn.plugin.name}"/>
+        <jar destfile="build/eclipse/site/${subclipse.plugin.name}.jar" basedir="build/eclipse/${subclipse.plugin.name}"/>
+        <jar destfile="build/eclipse/site/${javasvn.feature.name}.jar" basedir="build/eclipse/${javasvn.feature.name}"/>
+        <jar destfile="build/eclipse/site/${subclipse.feature.name}.jar" basedir="build/eclipse/${subclipse.feature.name}"/>
     </target>
 
     <target name="build-doc">
@@ -223,28 +263,28 @@
         </delete>
     </target>
 
-    <target name="deploy-library" depends="init-deploy,build-library,build-cli,build-src,build-doc">
-        <zip destfile="build/org.tmatesoft.svn_1.0.0_${date}.standalone.zip">
-            <zipfileset dir="build/lib" prefix="javasvn-${date}">
+    <target name="deploy-library" depends="init-environment,build-library,build-cli,build-src,build-doc">
+        <zip destfile="build/org.tmatesoft.svn_${javasvn.version}.standalone.zip">
+            <zipfileset dir="build/lib" prefix="javasvn-${javasvn.version}">
                 <exclude name="svn" />
             </zipfileset>
-            <zipfileset file="build/lib/svn" filemode="555" prefix="javasvn-${date}" />
-            <zipfileset dir="build/doc" prefix="javasvn-${date}/doc" />
+            <zipfileset file="build/lib/svn" filemode="555" prefix="javasvn-${javasvn.version}" />
+            <zipfileset dir="build/doc" prefix="javasvn-${javasvn.version}/doc" />
         </zip>
     </target>
 
     <target name="deploy-eclipse"
-            depends="init-deploy,init-environment,build-library,build-src,build-doc,build-eclipse"
+            depends="init-environment,build-library,build-src,build-doc,build-eclipse"
             if="eclipse.present"
     >
-        <zip destfile="build/org.tmatesoft.svn_1.0.0_${date}.eclipse.zip">
-            <zipfileset dir="build/eclipse" prefix="plugins" />
+        <zip destfile="build/org.tmatesoft.svn_${javasvn.version}.eclipse.zip">
+            <zipfileset dir="build/eclipse/site/"/>
         </zip>
     </target>
 
-    <target name="deploy-snapshot" depends="init-deploy">
-        <zip destfile="build/org.tmatesoft.svn_1.0.0_${date}.src.zip">
-            <zipfileset dir="." prefix="javasvn-src-${date}">
+    <target name="deploy-snapshot" depends="init-environment">
+        <zip destfile="build/org.tmatesoft.svn_${javasvn.version}.src.zip">
+            <zipfileset dir="." prefix="javasvn-src-${javasvn.version}">
                 <exclude name="build/**" />
                 <exclude name="**/bin/**" />
                 <exclude name="**/bin-test/**" />
@@ -253,7 +293,7 @@
                 <exclude name="www/**" />
                 <exclude name="**/.svn" />
             </zipfileset>
-            <zipfileset dir="build/doc" prefix="javasvn-src-${date}/doc" />
+            <zipfileset dir="build/doc" prefix="javasvn-src-${javasvn.version}/doc" />
         </zip>
     </target>
 

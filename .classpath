@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry output="javasvn/bin" kind="src" path="javasvn/src"/>
+	<classpathentry output="javasvn-eclipse/bin" kind="src" path="javasvn-eclipse/org.tmatesoft.javasvn/src"/>
 	<classpathentry output="javasvn-test/bin" kind="src" path="javasvn-test/src"/>
-	<classpathentry output="javasvn-eclipse/bin" kind="src" path="javasvn-eclipse/src"/>
 	<classpathentry excluding="**/SVNClient.java" output="contrib/javahl/bin" kind="src" path="contrib/javahl/src"/>
 	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src"/>
 	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src-test"/>
