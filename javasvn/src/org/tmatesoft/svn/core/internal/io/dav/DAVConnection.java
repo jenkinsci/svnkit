@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVOptionsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -145,6 +146,7 @@ class DAVConnection {
         Map headers = new HashMap();
         headers.put("Content-Type", "application/vnd.svn-svndiff");
         if (myIsHTTP10Connection) {
+            DebugLog.log("HTTP 1.0 connection is detected, chunked encoding should not be used with PUT");
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             try {
                 while(true) {
