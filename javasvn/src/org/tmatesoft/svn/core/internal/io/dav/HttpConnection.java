@@ -157,9 +157,9 @@ class HttpConnection {
                     header.put("Authorization", "Basic " + auth);
                 }
                 sendHeader(method, path, header, requestBody);
+	            logOutputStream();
                 readHeader.clear();
                 status = readHeader(readHeader);
-	            logOutputStream();
             } catch (IOException e) {
 	            logOutputStream();
                 close();
