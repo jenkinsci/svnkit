@@ -150,6 +150,9 @@ public class FSUtil {
     }
 
     public static File copyAll(File source, File dst, String asName, FileFilter filter) throws IOException {
+        if (source != null && source.equals(dst)) {
+            return dst;
+        }
         if (!source.exists()) {
             return null;
         }
@@ -416,6 +419,9 @@ public class FSUtil {
     }
 
     public static String copy(File from, File to, String eol, Map keywords, MessageDigest digest) {
+        if (from != null && from.exists() && from.equals(to)) {
+            return getChecksum(from, digest);
+        }
         InputStream is = null;
         OutputStream os = null;
         if (!from.exists()) {
@@ -460,7 +466,7 @@ public class FSUtil {
     }
     
     public static String getChecksum(File file, MessageDigest digest) {
-        if (!file.isFile()) {
+        if (digest == null || !file.isFile()) {
             return null;
         }
         InputStream is = null;
