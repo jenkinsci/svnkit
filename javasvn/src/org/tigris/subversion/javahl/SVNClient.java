@@ -228,10 +228,14 @@ public class SVNClient implements SVNClientInterface {
      */
     public DirEntry[] list(String url, Revision revision, boolean recurse) throws ClientException {
         Collection allEntries = new LinkedList();
+        ISVNWorkspace ws = null;
+        String wsPath = null;
+        
         if (!isURL(url)) {
             try {
-                ISVNWorkspace ws = createWorkspace(url);
-                url = ws.getLocation(SVNUtil.getWorkspacePath(ws, url)).toString();
+                ws = createWorkspace(url);
+                wsPath = SVNUtil.getWorkspacePath(ws, url);
+                url = ws.getLocation(wsPath).toString();
             } catch (SVNException e) {
                 throwException(e);
             }
@@ -241,7 +245,8 @@ public class SVNClient implements SVNClientInterface {
             SVNRepository repository = createRepository(url);
             
             String parentPath = "";
-            Collection entries = repository.getDir("", getRevisionNumber(revision), null, (Collection) null);
+            long revNumber = getRevisionNumber(revision, repository, ws, wsPath);
+            Collection entries = repository.getDir("", revNumber, null, (Collection) null);
             for(Iterator svnEntries = entries.iterator(); svnEntries.hasNext();) {
                 SVNDirEntry svnEntry = (SVNDirEntry) svnEntries.next();
                 allEntries.add(createDirEntry(parentPath, svnEntry));
@@ -293,7 +298,9 @@ public class SVNClient implements SVNClientInterface {
                     path = PathUtil.removeTail(path);
                 }
                 SVNRepository repository = createRepository(path);
-                repository.log(new String[] {target}, getRevisionNumber(revisionStart), getRevisionNumber(revisionEnd),
+                long revStart = getRevisionNumber(revisionStart, repository, null, null);
+                long revEnd = getRevisionNumber(revisionEnd, repository, null, null);
+                repository.log(new String[] {target}, revStart, revEnd,
                         discoverPath, stopOnCopy, handler);
             } catch (SVNException e) {
                 throwException(e);
@@ -301,8 +308,13 @@ public class SVNClient implements SVNClientInterface {
         } else if (path != null) {
             try {
                 ISVNWorkspace workspace = createWorkspace(path);
-                workspace.log(SVNUtil.getWorkspacePath(workspace, path), getRevisionNumber(revisionStart), getRevisionNumber(revisionEnd), 
-                        stopOnCopy, discoverPath, handler);
+                String wsPath = SVNUtil.getWorkspacePath(workspace, path);
+                SVNRepository repository = SVNUtil.createRepository(workspace, wsPath);
+                
+                long revStart = getRevisionNumber(revisionStart, repository, workspace, wsPath);
+                long revEnd = getRevisionNumber(revisionEnd, repository, workspace, wsPath);
+
+                workspace.log(wsPath, revStart, revEnd, stopOnCopy, discoverPath, handler);
             } catch (SVNException e) {
                 throwException(e);
             }
@@ -326,14 +338,17 @@ public class SVNClient implements SVNClientInterface {
         if (!file.exists()) {
             file.mkdirs();
         }
-        long rev = getRevisionNumber(revision);
         
         try {
             ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace("file", new File(destPath).getAbsolutePath());
+            SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(moduleName);
+            SVNRepository repository = SVNRepositoryFactory.create(location);
             if (myUserName != null && myPassword != null) {
                 ws.setCredentials(new SVNSimpleCredentialsProvider(myUserName, myPassword));
+                repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
             }
-            return ws.checkout(SVNRepositoryLocation.parseURL(moduleName), rev, false, recurse);
+            long rev = getRevisionNumber(revision, repository, null, null);
+            return ws.checkout(location, rev, false, recurse);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -352,7 +367,12 @@ public class SVNClient implements SVNClientInterface {
     public long update(String path, Revision revision, boolean recurse) throws ClientException {
         try {
             ISVNWorkspace ws = createWorkspace(path);
-            return ws.update(SVNUtil.getWorkspacePath(ws, path), getRevisionNumber(revision), recurse);
+            String wsPath = SVNUtil.getWorkspacePath(ws, path);
+            SVNRepository repository = SVNUtil.createRepository(ws, wsPath);
+            
+            long revNumber = getRevisionNumber(revision, repository, ws, wsPath);
+            
+            return ws.update(wsPath, revNumber, recurse);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -443,10 +463,14 @@ public class SVNClient implements SVNClientInterface {
         dir.mkdirs();
         try {
             ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace("file", dir.getAbsolutePath());
+            SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(srcPath);
+            SVNRepository repository = SVNRepositoryFactory.create(location);
             if (myUserName != null && myPassword != null) {
                 ws.setCredentials(new SVNSimpleCredentialsProvider(myUserName, myPassword));
+                repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
             }
-            return ws.checkout(SVNRepositoryLocation.parseURL(srcPath), getRevisionNumber(revision), true);
+            long revNumber = getRevisionNumber(revision, repository, null, null);
+            return ws.checkout(location, revNumber, true);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -464,7 +488,9 @@ public class SVNClient implements SVNClientInterface {
     public long doSwitch(String path, String url, Revision revision, boolean recurse) throws ClientException {
         try {
             ISVNWorkspace ws = createWorkspace(path);
-            return ws.update(SVNRepositoryLocation.parseURL(url), SVNUtil.getWorkspacePath(ws, path), getRevisionNumber(revision), recurse);
+            String relativePath = SVNUtil.getWorkspacePath(ws, path);
+            long revNumber = getRevisionNumber(revision, SVNUtil.createRepository(ws, relativePath), ws, relativePath);
+            return ws.update(SVNRepositoryLocation.parseURL(url), relativePath, revNumber, recurse);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -576,9 +602,11 @@ public class SVNClient implements SVNClientInterface {
                 String newPath = PathUtil.tail(destPath);
                 String root = PathUtil.removeTail(destPath);
                 SVNRepository repository = createRepository(root);
+                long revNumber = getRevisionNumber(revision, repository, null, null);
+
                 editor = repository.getCommitEditor(message, null);
                 editor.openRoot(-1);
-                editor.addDir(newPath, srcPath, getRevisionNumber(revision));
+                editor.addDir(newPath, srcPath, revNumber);
                 editor.closeDir();
                 editor.closeDir();
                 editor.closeEdit();
@@ -617,15 +645,17 @@ public class SVNClient implements SVNClientInterface {
             try {
                 String root = PathUtil.getCommonRoot(new String[] {destPath, srcPath});
                 SVNRepository repository = createRepository(root);
+                long revNumber = getRevisionNumber(revision, repository, null, null);
+
                 String deletePath = srcPath.substring(root.length());
                 destPath = destPath.substring(root.length());
                 
                 editor = repository.getCommitEditor(message, null);
                 editor.openRoot(-1);
 
-                editor.addDir(destPath, srcPath, getRevisionNumber(revision));
+                editor.addDir(destPath, srcPath, revNumber);
                 editor.closeDir();
-                editor.deleteEntry(deletePath, getRevisionNumber(revision));
+                editor.deleteEntry(deletePath, revNumber);
                 
                 editor.closeDir();
                 editor.closeEdit();
@@ -889,8 +919,10 @@ public class SVNClient implements SVNClientInterface {
         String value = null;
         try {
             ISVNWorkspace ws = createWorkspace(path);
-            SVNRepository repos = SVNUtil.createRepository(ws, SVNUtil.getWorkspacePath(ws, path));
-            value = repos.getRevisionPropertyValue(getRevisionNumber(rev), name);
+            String wsPath = SVNUtil.getWorkspacePath(ws, path);
+            SVNRepository repos = SVNUtil.createRepository(ws, wsPath);
+            long revNumber = getRevisionNumber(rev, repos, ws, wsPath);
+            value = repos.getRevisionPropertyValue(revNumber, name);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -909,17 +941,20 @@ public class SVNClient implements SVNClientInterface {
      */
     public byte[] fileContent(String path, Revision revision) throws ClientException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ISVNWorkspace ws = null;
+        String wsPath = null;
         if (!isURL(path)) {
             try {
-                ISVNWorkspace ws = createWorkspace(path);
+                ws = createWorkspace(path);
+                wsPath = SVNUtil.getWorkspacePath(ws, path);
                 if (Revision.BASE.equals(revision)) {
-                    ws.getFileContent(SVNUtil.getWorkspacePath(ws, path)).getBaseFileContent(bos);
+                    ws.getFileContent(wsPath).getBaseFileContent(bos);
                     return bos.toByteArray();
                 } else if (Revision.WORKING.equals(revision)) {
-                    ws.getFileContent(SVNUtil.getWorkspacePath(ws, path)).getWorkingCopyContent(bos);
+                    ws.getFileContent(wsPath).getWorkingCopyContent(bos);
                     return bos.toByteArray();
                 }
-                path = ws.getLocation(SVNUtil.getWorkspacePath(ws, path)).toString();
+                path = ws.getLocation(wsPath).toString();
             } catch (SVNException e) {
                 throwException(e);
             }
@@ -927,7 +962,8 @@ public class SVNClient implements SVNClientInterface {
         String repos = PathUtil.removeTail(path);
         try {
             SVNRepository repository = createRepository(repos);
-            repository.getFile(PathUtil.tail(path), getRevisionNumber(revision), null, bos);
+            long revNumber = getRevisionNumber(revision, repository, ws, wsPath);
+            repository.getFile(PathUtil.tail(path), revNumber, null, bos);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -1014,14 +1050,40 @@ public class SVNClient implements SVNClientInterface {
         }
         throw ec;
     }
-    
-    private static long getRevisionNumber(Revision revision) {
+
+    private static long getRevisionNumber(Revision revision, SVNRepository repository, ISVNWorkspace workspace, String path) throws SVNException { 
         if (revision == null) {
             return -2;
         }
-        if (revision instanceof Revision.Number) {
-            return ((Revision.Number) revision).revNumber;
-        }
+        int kind = revision.getKind();
+        if (kind == RevisionKind.number && revision instanceof Revision.Number) {
+            return ((Revision.Number) revision).getNumber();
+        } else if (kind == RevisionKind.head && repository != null) {
+            return repository.getLatestRevision();
+        } else if (kind == RevisionKind.date && revision instanceof Revision.DateSpec
+                && repository != null) {
+            Date date = ((Revision.DateSpec) revision).getDate();
+            return repository.getDatedRevision(date);
+        } else if ((kind == RevisionKind.committed || 
+                   kind == RevisionKind.working ||
+                   kind == RevisionKind.previous ||
+                   kind == RevisionKind.base) && workspace != null && path != null) {
+            if (kind == RevisionKind.base || kind == RevisionKind.working) {
+                String revisionStr = workspace.getPropertyValue(path, SVNProperty.REVISION);
+                if (revisionStr != null) {
+                    return SVNProperty.longValue(revisionStr);
+                }
+            } else {
+                String revisionStr = workspace.getPropertyValue(path, SVNProperty.COMMITTED_REVISION);
+                if (revisionStr != null) {
+                    long rev = SVNProperty.longValue(revisionStr);
+                    if (kind == RevisionKind.previous) {
+                        rev--;
+                    }
+                    return rev;
+                }
+            }
+        } 
         return -2;
     }
     
@@ -1177,6 +1239,7 @@ public class SVNClient implements SVNClientInterface {
         }
         
     }
+    
     static final int[] STATUS_CONVERTION_TABLE = new int[0x13];
     
     static {
