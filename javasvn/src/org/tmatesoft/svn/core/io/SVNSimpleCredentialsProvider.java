@@ -61,6 +61,10 @@ public class SVNSimpleCredentialsProvider implements ISVNCredentialsProvider {
             myPassword = password;
             myPrivateKey = privateKey;
             myPassphrase = passprhase;
+            // if key is null, try to get it from javasvn.ssh2.key (workaround for Subclipse)
+            if (myPrivateKey == null) {
+                myPrivateKey = System.getProperty("javasvn.ssh2.key");
+            }
         }
         
         public String getName() {
