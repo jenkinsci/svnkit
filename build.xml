@@ -186,7 +186,7 @@
 		<zip basedir="javasvn-eclipse/plugin" destfile="org.tmatesoft.svn_1.0.0_${date}.eclipse.zip">
 			<include name="**"/>
 		</zip>
-		<!-- zip eclipse fragment -->
+		<copy file="lib/javasvn.src.zip" tofile="org.tmatesoft.svn_1.0.0_${date}.src.zip"/>
 	</target>
 	
 	<target name="test" depends="build-standalone">
