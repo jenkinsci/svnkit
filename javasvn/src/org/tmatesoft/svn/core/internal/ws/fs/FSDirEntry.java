@@ -219,13 +219,22 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         super.dispose();
     }
     
-    public void revert(String childName) throws SVNException {
+    public boolean revert(String childName) throws SVNException {
         ISVNEntry child = getChild(childName);
         if (child == null) {
-            return;
+            return false;
         }
         myUnmanagedChildren = null;
         myAllUnmanagedChildren = null;
+        if (child.isMissing() && child.isDirectory()) {
+            Map childProperties = (Map) myChildEntries.get(child.getName());
+            if (SVNProperty.SCHEDULE_ADD.equals(childProperties.get(SVNProperty.SCHEDULE))) {
+                boolean keepInfo = childProperties.get(SVNProperty.DELETED) != null;
+                deleteChild(child.getName(), keepInfo);
+                return true;
+            }
+            return false;
+        }
         
         if (child.isScheduledForAddition()) {
             myChildEntries.remove(childName);
@@ -248,6 +257,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 }
             }
         }
+        return true;
     }
 
     public void merge(boolean recursive) throws SVNException {

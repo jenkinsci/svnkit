@@ -1000,7 +1000,15 @@ public class SVNWorkspace implements ISVNWorkspace {
         try {
             ISVNEntry entry = locateEntry(path);
             if (entry == null || (entry.isDirectory() && entry.isMissing())) {
-                throw new SVNException("Failed to revert '" + path + "' -- try updating instead");
+                if (entry != null) {
+                    ISVNEntry parent = locateParentEntry(path);
+                    if (parent != null && parent.isDirectory()) {
+                        boolean reverted = parent.asDirectory().revert(entry.getName());
+                        fireEntryModified(entry, reverted ? SVNStatus.REVERTED : SVNStatus.NOT_REVERTED, false);
+                        return;
+                    }
+                }
+                return;
             }
             ISVNDirectoryEntry parent = null;
             parent = (ISVNDirectoryEntry) locateParentEntry(path);
@@ -1010,7 +1018,6 @@ public class SVNWorkspace implements ISVNWorkspace {
             if (parent == null && entry == getRoot()) {
                 entry.asDirectory().revert(null);
             }
-            fireEntryModified(entry, SVNStatus.REVERTED, recursive);
             if (parent != null) {
                 entry = parent;
             }
@@ -1097,7 +1104,8 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
         }
         if (parent != null) {
-            parent.revert(entry.getName());
+            boolean reverted = parent.revert(entry.getName());
+            fireEntryModified(entry, reverted ? SVNStatus.REVERTED : SVNStatus.NOT_REVERTED, false);
         }
         if (!entry.isDirectory()) {
             entry.dispose();

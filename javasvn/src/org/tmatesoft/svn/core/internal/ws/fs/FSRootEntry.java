@@ -33,6 +33,8 @@ import org.tmatesoft.svn.core.io.SVNException;
  */
 public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
     
+    private static final String DEFAULT_GLOBAL_IGNORE = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";
+
     private Map myTempLocations;
     private String myID;
     private FSMerger myMerger;
@@ -40,7 +42,7 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
 
     public FSRootEntry(FSAdminArea area, String id, String location) {
         super(area, null, "", location);
-        setGlobalIgnore("");
+        setGlobalIgnore(DEFAULT_GLOBAL_IGNORE);
         id = id.replace(File.separatorChar, '/');
         myID = id;
     }
@@ -79,6 +81,9 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
     }
     
     public String getGlobalIgnore() {
+        if (myGlobalIgnore == null) {
+            return DEFAULT_GLOBAL_IGNORE;
+        }
         return myGlobalIgnore;
     }
 
@@ -149,12 +154,13 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         return false;
     }
     
-    public void revert(String childName) throws SVNException {
+    public boolean revert(String childName) throws SVNException {
         if (childName == null) {
             revertProperties();            
         } else {
-            super.revert(childName);
+            return super.revert(childName);
         }
+        return true;
     }
     
     public FSMerger getMerger() {

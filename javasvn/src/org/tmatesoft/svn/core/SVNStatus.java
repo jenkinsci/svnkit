@@ -38,6 +38,7 @@ public class SVNStatus {
 
     public static final int EXTERNAL = 0x12;
     public static final int CORRUPTED = 0x13;
+    public static final int NOT_REVERTED = 0x14;
 
     private boolean myIsSwitched;
     private boolean myIsAddedWithHistory;

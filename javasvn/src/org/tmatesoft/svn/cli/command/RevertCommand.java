@@ -18,6 +18,7 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.SVNUtil;
@@ -27,7 +28,7 @@ import org.tmatesoft.svn.util.SVNUtil;
  */
 public class RevertCommand extends SVNCommand {
 
-    public final void run(final PrintStream out, PrintStream err) throws SVNException {
+    public final void run(final PrintStream out, final PrintStream err) throws SVNException {
         final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
@@ -38,8 +39,11 @@ public class RevertCommand extends SVNCommand {
                     try {
                         path = convertPath(workspacePath, workspace, path);
                     } catch (IOException e) {}
-
-                    println(out, "Reverted '" + path + "'");
+                    if (kind == SVNStatus.REVERTED) {
+                        println(out, "Reverted '" + path + "'");
+                    } else {
+                        println(out, "Error: Failed to revert '" + path + "' -- try updating instead");
+                    }
                 }
             });
 

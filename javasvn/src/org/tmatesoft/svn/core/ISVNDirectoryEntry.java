@@ -39,7 +39,7 @@ public interface ISVNDirectoryEntry extends ISVNEntry {
 
     public ISVNEntry scheduleForDeletion(String name, boolean moved) throws SVNException;
     
-    public void revert(String name) throws SVNException;
+    public boolean revert(String name) throws SVNException;
 
     public void unschedule(String name) throws SVNException;
     
