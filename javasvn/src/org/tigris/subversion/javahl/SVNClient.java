@@ -20,7 +20,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.ISVNCommitHandler;
 import org.tmatesoft.svn.core.ISVNEntryContent;
@@ -766,10 +768,35 @@ public class SVNClient implements SVNClientInterface {
                 destPath = PathUtil.decode(destPath);
                 
                 SVNNodeKind srcNodeKind = repository.checkPath(deletePath, revNumber);
+                SVNNodeKind dstNodeKind = repository.checkPath(destPath, revNumber);
+
+                List parentDstDirs = new LinkedList();
+                for(StringTokenizer tokens = new StringTokenizer(destPath, "/"); tokens.hasMoreTokens();) {
+                	parentDstDirs.add(tokens.nextToken());
+                }
+                if (dstNodeKind == SVNNodeKind.NONE) {
+                	// dst doesn't exist will be created.
+                	parentDstDirs.remove(parentDstDirs.size() - 1);
+                } else if (dstNodeKind ==SVNNodeKind.DIR) {
+                	destPath = PathUtil.append(destPath, PathUtil.tail(srcPath));
+                	destPath = PathUtil.removeLeadingSlash(destPath);
+                } else if (dstNodeKind == SVNNodeKind.FILE) {
+                	throwException(new SVNException("destination already exists and its a file")); 
+                }
+                
+                // create list of dirs to be opened before add
+                // if dst exists and its a dir, add a
+                // create list of dirs to be opened before delete
                 
                 editor = repository.getCommitEditor(message, null);
                 editor.openRoot(-1);
-
+                
+                String dir = "";
+                for (Iterator dirs = parentDstDirs.iterator(); dirs.hasNext();) {
+					dir = PathUtil.append(dir, (String) dirs.next());
+					dir = PathUtil.removeLeadingSlash(dir);					
+					editor.openDir(dir, -1);
+				}
                 if (srcNodeKind == SVNNodeKind.DIR) {
                 	editor.addDir(destPath, deletePath, revNumber);
                 	editor.closeDir();
@@ -777,6 +804,10 @@ public class SVNClient implements SVNClientInterface {
                 	editor.addFile(destPath, deletePath, revNumber);
                 	editor.closeFile(null);
                 }
+                for (Iterator dirs = parentDstDirs.iterator(); dirs.hasNext();) {
+                	dirs.next();
+					editor.closeDir();
+				}
                 editor.deleteEntry(deletePath, revNumber);
                 
                 editor.closeDir();
