@@ -371,17 +371,12 @@ public abstract class FSEntry implements ISVNEntry {
     
     protected void revertProperties() throws SVNException {
         // 1. replace props with base props.
-        long lm = TimeUtil.parseDate(getPropertyValue(SVNProperty.PROP_TIME)).getTime();
         File base = getAdminArea().getBasePropertiesFile(this);
         File local = getAdminArea().getPropertiesFile(this);
         if (base.exists()) {
             FSUtil.copy(base, local, null, null, null);
-            if (lm == 0) {
-                lm = local.lastModified();
-                setPropertyValue(SVNProperty.PROP_TIME, TimeUtil.formatDate(new Date(lm)));
-            } else {
-                local.setLastModified(lm);
-            }
+            long lm = local.lastModified();
+            setPropertyValue(SVNProperty.PROP_TIME, TimeUtil.formatDate(new Date(lm)));
         } else {
             local.delete();
         }

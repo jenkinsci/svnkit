@@ -416,18 +416,13 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
     }
     
     protected void revertContents() throws SVNException {
-        long lm = TimeUtil.parseDate(getPropertyValue(SVNProperty.TEXT_TIME)).getTime();
         // replace working copy with base.
         File base = getAdminArea().getBaseFile(this);
         File local = getRootEntry().getWorkingCopyFile(this);
         if (base.exists()) {
             FSUtil.copy(base, local, isBinary() ? null : getPropertyValue(SVNProperty.EOL_STYLE), isBinary() ? null : computeKeywords(), null);
-            if (lm == 0) {
-                lm = local.lastModified();
-                setPropertyValue(SVNProperty.TEXT_TIME, TimeUtil.formatDate(new Date(lm)));
-            } else {
-                local.setLastModified(lm);
-            }
+            long lm = local.lastModified();
+            setPropertyValue(SVNProperty.TEXT_TIME, TimeUtil.formatDate(new Date(lm)));
         } else {
             local.delete();
         }
