@@ -1,5 +1,6 @@
 /.settings
 /bin
+/build
 contrib/javahl/bin
 contrib/sequence/bin
 contrib/sequence/bin-test
