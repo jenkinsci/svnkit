@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.ISVNEntry;
+import org.tmatesoft.svn.core.ISVNRootEntry;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -38,45 +39,57 @@ public class SVNCommitUtil {
     
     public static String buildCommitTree(Collection modifiedEntries, Map map) throws SVNException {
         map = map == null ? new HashMap() : map;
+        ISVNEntry root = null;
         for(Iterator entries = modifiedEntries.iterator(); entries.hasNext();) {
             ISVNEntry entry = (ISVNEntry) entries.next();
             String url = PathUtil.decode(entry.getPropertyValue(SVNProperty.URL));
+            if (entry instanceof ISVNRootEntry) {
+                root = entry;
+            }
             map.put(url, entry);
         }
         // now add common root entry ?
-        String[] urls = (String[]) map.keySet().toArray(new String[map.size()]);
-        String[] paths = new String[urls.length];
-        String host = null;
-        // convert urls to path, removing host part of the url (always a common root).
-        for(int i = 0; i < paths.length; i++) {
-            // put path part of the URL only, without leading slash.
-            int index = urls[i].indexOf("://");
-            index = urls[i].indexOf('/', index + "://".length());
-            if (index < 0) {
-                index = urls[i].length();
-            }
-            host = urls[i].substring(0, index);
-            paths[i] = PathUtil.removeLeadingSlash(urls[i].substring(index));
-        }
         String commonRoot = null;
-        if (map.size() == 1) {
-            ISVNEntry rootEntry = (ISVNEntry) map.get(urls[0]);
-            // if entry is already a folder, let it be root.
-            if (!rootEntry.isDirectory() || rootEntry.isScheduledForAddition() || rootEntry.isScheduledForDeletion()) {
-                commonRoot = PathUtil.getCommonRoot(paths);
-            } else {
-                commonRoot = paths[0];
+        String[] urls = (String[]) map.keySet().toArray(new String[map.size()]);
+        if (root == null) {
+            String[] paths = new String[urls.length];
+            String host = null;
+            // convert urls to path, removing host part of the url (always a common root).
+            for(int i = 0; i < paths.length; i++) {
+                // put path part of the URL only, without leading slash.
+                int index = urls[i].indexOf("://");
+                index = urls[i].indexOf('/', index + "://".length());
+                if (index < 0) {
+                    index = urls[i].length();
+                }
+                host = urls[i].substring(0, index);
+                paths[i] = PathUtil.removeLeadingSlash(urls[i].substring(index));
             }
+            // we may have "repo/trunk" (root entry)
+            // and files like "repo/trunk/" 
+            
+            if (map.size() == 1) {
+                ISVNEntry rootEntry = (ISVNEntry) map.get(urls[0]);
+                // if entry is already a folder, let it be root.
+                if (!rootEntry.isDirectory() || rootEntry.isScheduledForAddition() || rootEntry.isScheduledForDeletion()) {
+                    commonRoot = PathUtil.getCommonRoot(paths);
+                } else {
+                    commonRoot = paths[0];
+                }
+            } else {
+                commonRoot = PathUtil.getCommonRoot(paths);
+            }        
+            commonRoot = "".equals(commonRoot) ? host : host + "/" + commonRoot;
         } else {
-            commonRoot = PathUtil.getCommonRoot(paths);
-        }        
-        commonRoot = "".equals(commonRoot) ? host : host + "/" + commonRoot; 
+            commonRoot = root.getPropertyValue(SVNProperty.URL);
+            commonRoot = PathUtil.decode(commonRoot);
+        }
         // this root may or may not exist in the map. 
         if (!map.containsKey(commonRoot)) {
             map.put(commonRoot, null);
         }
         // replace map urls with paths
-        urls = (String[]) map.keySet().toArray(new String[map.size()]);
+//        urls = (String[]) map.keySet().toArray(new String[map.size()]);
         for(int i = 0; i < urls.length; i++) {
             String key = urls[i];
             Object value = map.get(key);

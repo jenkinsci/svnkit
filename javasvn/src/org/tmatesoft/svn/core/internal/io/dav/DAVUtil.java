@@ -101,7 +101,7 @@ public class DAVUtil {
         if (baselineRelativePath == null) {
             baselineRelativePath = "";
         }
-        baselineRelativePath += loppedPath;
+        baselineRelativePath = PathUtil.append(baselineRelativePath, loppedPath);        
         baselineRelativePath = PathUtil.removeLeadingSlash(baselineRelativePath);
         baselineRelativePath = PathUtil.removeTrailingSlash(baselineRelativePath);
         baselineRelativePath = PathUtil.encode(baselineRelativePath);
