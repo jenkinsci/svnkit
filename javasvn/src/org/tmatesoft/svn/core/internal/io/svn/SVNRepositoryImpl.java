@@ -232,7 +232,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             while (true) {
                 SVNFileRevision fileRevision = null;
                 try {
-                    read("(SN(*P)(*P))", buffer);
+                    read("(SN(*P)(*Z))", buffer);
                     count++;
                 } catch (SVNException e) {
                     read("x", buffer);
@@ -249,6 +249,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                     buffer[2] = null;
                     buffer[3] = null;
+                }
+                if (handler != null && fileRevision != null) {
+                    handler.hanldeFileRevision(fileRevision);
+                    fileRevision = null;
                 }
                 SVNDiffWindowBuilder builder = SVNDiffWindowBuilder.newInstance();
                 while (true) {
@@ -282,13 +286,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                 }
                 handler.hanldeDiffWindowClosed(name == null ? path : name);
-                // no exceptions, nay pass revision
-                if (handler != null && fileRevision != null) {
-                    handler.hanldeFileRevision(fileRevision);
-                    fileRevision = null;
-                }
             }
-        } finally {
+    	} finally {
             closeConnection();
         }
     }

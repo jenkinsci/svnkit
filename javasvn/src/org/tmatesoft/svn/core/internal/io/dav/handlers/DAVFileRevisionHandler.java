@@ -69,12 +69,6 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
         } else if (element == REVISION_PROPERTY) {
             myPropertyName = attrs.getValue("name");
         } if (element == TX_DELTA) {
-            setDeltaProcessing(true);
-		} 
-	}
-    
-	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
-        if (element == FILE_REVISION) {
             if (myPath != null && myFileRevisionsHandler != null) {
                 if (myProperties == null) {
                     myProperties = Collections.EMPTY_MAP;
@@ -82,9 +76,16 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                 if (myPropertiesDelta == null) {
                     myPropertiesDelta = Collections.EMPTY_MAP;
                 }
-                SVNFileRevision revision = new SVNFileRevision(myPath, myRevision, myProperties, myPropertiesDelta);                
+                SVNFileRevision revision = new SVNFileRevision(myPath, myRevision, myProperties, myPropertiesDelta);
                 myFileRevisionsHandler.hanldeFileRevision(revision);
+				myPath = null;
             }
+            setDeltaProcessing(true);
+		} 
+	}
+    
+	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
+        if (element == FILE_REVISION) {
             myPath = null;
             myProperties = null;
             myPropertiesDelta = null;
