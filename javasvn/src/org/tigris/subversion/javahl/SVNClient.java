@@ -167,7 +167,7 @@ public class SVNClient implements SVNClientInterface {
      * @return Array of Status entries.
      */
     public Status[] status(String path, boolean descend, boolean onServer, boolean getAll) throws ClientException {
-        return status(path, descend, onServer, getAll, true);
+        return status(path, descend, onServer, getAll, false);
     }
 
     /**
