@@ -807,10 +807,18 @@ public class SVNWorkspace implements ISVNWorkspace {
     }
 
     public void delete(String path) throws SVNException {
+        delete(path, false);
+    }
+    
+    public void delete(String path, boolean force) throws SVNException {
         try {
             ISVNEntry entry = locateParentEntry(path);
             String name = PathUtil.tail(path);
             if (entry != null && name != null) {
+                if (!force) {
+                    // check if files are modified.
+                    assertNotModified(entry.asDirectory().getChild(name));
+                }
                 ISVNEntry child = entry.asDirectory().scheduleForDeletion(name);
                 fireEntryModified(child, SVNStatus.DELETED, true);
                 entry.save();
@@ -819,6 +827,28 @@ public class SVNWorkspace implements ISVNWorkspace {
         } finally {
             getRoot().dispose();
         }
+    }
+    
+    private static void assertNotModified(ISVNEntry entry) throws SVNException {
+        if (entry == null) {
+            return;
+        }
+        if (!entry.isManaged()) {
+            throw new SVNException("'" + entry.getPath() + "' is unmanaged, use 'force' parameter to force deletion.");
+        }
+        if (entry.isPropertiesModified()) {
+            throw new SVNException("'" + entry.getPath() + "' is modified locally, use 'force' parameter to force deletion.");
+        }
+        if (!entry.isDirectory()) {
+            if (entry.asFile().isContentsModified()) {
+                throw new SVNException("'" + entry.getPath() + "' is modified locally, use 'force' parameter to force deletion.");
+            } 
+        } else {
+            for(Iterator children = entry.asDirectory().unmanagedChildEntries(true); children.hasNext();) {
+                assertNotModified((ISVNEntry) children.next());
+            }
+        }
+        
     }
 
     public void copy(String source, String destination, boolean move) throws SVNException {

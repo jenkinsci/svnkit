@@ -98,7 +98,12 @@ public interface ISVNWorkspace {
     
     public void add(String path, boolean mkdir, boolean recurse) throws SVNException;
 
+    /**
+     * @deprecated
+     */
     public void delete(String path) throws SVNException;
+
+    public void delete(String path, boolean force) throws SVNException;
 
     public void copy(String source, String destination, boolean move) throws SVNException;
     

@@ -549,7 +549,7 @@ public class SVNClient implements SVNClientInterface {
         for(int i = 0; i < path.length; i++) {
             try {
                 ISVNWorkspace ws = createWorkspace(path[i]);
-                ws.delete(SVNUtil.getWorkspacePath(ws, path[i]));
+                ws.delete(SVNUtil.getWorkspacePath(ws, path[i]), force);
             } catch (SVNException e) {
                 throwException(e);
             }
