@@ -1,7 +1,9 @@
 = version 0.8.3
 
-+ http: all DAV requests (including commit comments) are sent in UTF-8 encoding
-+ SvnClient: add method didn't work when adding directories, fixed.
++ children of copied or moved directories were not committed properly when
+  their wc revision was different from the parent's one.
++ http: all DAV requests (including commit comments) are sent in UTF-8 encoding.
++ SvnClient: add and remove methods didn't work for directories, fixed.
 + SvnClient: commit of single file deletion didn't work, fixed.
 
 = version 0.8.2
