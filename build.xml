@@ -45,7 +45,7 @@
         </path>
 
         <javac debug="true" destdir="contrib/javahl/bin" srcdir="contrib/javahl/src">
-            <exclude name="org/tigris/subversion/javahl/SVNClient.java" />
+            <exclude name="**/SVNClient.java" />
             <exclude name="org/tigris/subversion/javahl/tests/**" />
         </javac>
         <javac debug="true" destdir="contrib/sequence/bin" srcdir="contrib/sequence/src" />
@@ -110,7 +110,11 @@
                 <exclude name="org/tmatesoft/svn/cli/**" />
             </fileset>
             <fileset dir="contrib/sequence/bin" />
-            <fileset dir="contrib/javahl/bin" />
+            <fileset dir="contrib/javahl/bin" >
+                <exclude name="org/tigris/subversion/javahl/tests/**" />
+                <exclude name="org/tigris/subversion/javahl/SVNClient.class" />
+                <exclude name="org/tigris/subversion/javahl/SVNClient$*.class" />
+            </fileset>
         </jar>
         <copy file="contrib/jsch/jsch.jar" todir="build/lib" />
         <!-- copy licences and changelog -->
