@@ -79,16 +79,23 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
         
         // print gutter context lines before blocks.
         for(int i = leftStart; i < sourceStartLine; i++) {
-            println(" " + new String(sourceLines[i].getBytes(), encoding), output);
+            print(" " + printLine(sourceLines[i], encoding), output);
         }
         for(int i = 0; i < segment.length; i++) {
             QSequenceDifferenceBlock block = segment[i];
             for(int j = block.getLeftFrom(); j <= block.getLeftTo(); j++) {
-                println("-" + new String(sourceLines[j].getBytes(), encoding), output);
+                String line = printLine(sourceLines[j], encoding); 
+                print("-" + line, output);
+                if (j == sourceLines.length - 1 && isCompareEOLs()) {
+                    printNoNewLine(output, line);
+                }
             }
             for(int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
-                String str = new String(targetLines[j].getBytes(), encoding);
-                println("+" + str, output);
+                String line = printLine(targetLines[j], encoding); 
+                print("+" + line, output);
+                if (j == targetLines.length - 1 && isCompareEOLs()) {
+                    printNoNewLine(output, line);
+                }
             }
             // print glue lines
             int end = Math.min(block.getLeftTo() + gutter, sourceLines.length - 1);
@@ -96,8 +103,19 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
                 end = Math.min(end, segment[i + 1].getLeftFrom() - 1);                
             }
             for(int j = block.getLeftTo() + 1; j <= end; j++) {
-                println(" " + new String(sourceLines[j].getBytes(), encoding), output);
+                String line = printLine(sourceLines[j], encoding);
+                print(" " + printLine(sourceLines[j], encoding), output);
+                if (j == sourceLines.length - 1 && isCompareEOLs()) {
+                    printNoNewLine(output, line);
+                }
             }
+        }
+    }
+
+    private void printNoNewLine(Writer output, String line) throws IOException {
+        if (!line.endsWith("\n") && !line.endsWith("\r")) {
+            println(output);
+            println("\\ No newline at end of file", output);
         }
     }
     

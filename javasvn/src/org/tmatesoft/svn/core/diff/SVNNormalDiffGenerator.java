@@ -113,7 +113,7 @@ public class SVNNormalDiffGenerator extends SVNSequenceDiffGenerator implements 
         println(displayStart + ((displayEnd != displayStart) ? ("," + displayEnd) : "") + "d" + displayAt, output);
         int delLine = deleteStart;
         while (delLine <= deleteEnd) {
-            println("<" + displayWhiteSpace(new String(deleteLines[delLine++].getBytes(), encoding)), output);
+            print("<" + displayWhiteSpace(printLine(deleteLines[delLine++], encoding)), output);
         }
     }
 
@@ -146,7 +146,7 @@ public class SVNNormalDiffGenerator extends SVNSequenceDiffGenerator implements 
         println(displayAt + "a" + displayStart + ((displayEnd != displayStart) ? ("," + displayEnd) : ""), output);
         int addLine = addStart;
         while (addLine <= addEnd) {
-            println(">" + displayWhiteSpace(new String(addLines[addLine++].getBytes(), encoding)), output);
+            print(">" + displayWhiteSpace(printLine(addLines[addLine++], encoding)), output);
         }
     }
 
@@ -188,13 +188,13 @@ public class SVNNormalDiffGenerator extends SVNSequenceDiffGenerator implements 
                 + ((displayWithEnd != displayWithStart) ? ("," + displayWithEnd) : ""), output);
         int replaceLine = replaceStart;
         while (replaceLine <= replaceEnd) {
-            println("<" + displayWhiteSpace(new String(replaceLines[replaceLine++].getBytes(), encoding)), output);
+            print("<" + displayWhiteSpace(printLine(replaceLines[replaceLine++], encoding)), output);
         }
         println("---", output);
 
         int replaceWithLine = replaceWithStart;
         while (replaceWithLine <= replaceWithEnd) {
-            println(">" + displayWhiteSpace(new String(replaceWithLines[replaceWithLine++].getBytes(), encoding)), output);
+            print(">" + displayWhiteSpace(printLine(replaceWithLines[replaceWithLine++], encoding)), output);
         }
     }
 

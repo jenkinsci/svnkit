@@ -34,7 +34,6 @@ import de.regnis.q.sequence.QSequenceDifferenceBlock;
 public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
     
     private Map myProperties;
-    private String myEOL;
 
     protected SVNSequenceDiffGenerator(Map properties) {
         myProperties = properties == null ? Collections.EMPTY_MAP : properties;
@@ -46,13 +45,15 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
     }
     
     protected String getEOL() {
-        if (myEOL == null) {
-            myEOL = System.getProperty("line.separator", "\n");
-            if (getProperties().get("eol") instanceof String) {
-                myEOL = (String) getProperties().get("eol");
-            }
+        if (getProperties().get(ISVNDiffGeneratorFactory.EOL_PROPERTY) instanceof String) {
+            return (String) getProperties().get(ISVNDiffGeneratorFactory.EOL_PROPERTY);
         }
-        return myEOL;
+        return System.getProperty("line.separator", "\n");
+    }
+    
+    protected boolean isCompareEOLs() {
+        return Boolean.TRUE.toString().
+            equals(getProperties().get(ISVNDiffGeneratorFactory.COMPARE_EOL_PROPERTY));
     }
     
     protected int getGutter() {
@@ -65,13 +66,18 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
         } catch (NumberFormatException e) {}
         return 0;
     }
+    
+    protected String printLine(SVNSequenceLine line, String encoding) throws IOException {
+        String str = new String(line.getBytes(), encoding);
+        return isCompareEOLs() ? str : str + getEOL();
+    }
 
     public void generateBinaryDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
         println("Binary files are different", output);
     }
     
     public void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
-        SVNSequenceLineReader reader = new SVNSequenceLineReader(true);
+        SVNSequenceLineReader reader = new SVNSequenceLineReader(!isCompareEOLs());
         
         SVNSequenceLine[] leftLines = reader.read(left);
         SVNSequenceLine[] rightLines = reader.read(right);
@@ -102,6 +108,12 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
             output.write(str);
         }
         output.write(getEOL());
+    }
+
+    protected void print(String str, Writer output) throws IOException {
+        if (str != null) {
+            output.write(str);
+        }
     }
     
     private static List combineBlocks(List blocksList, int gutter) {
