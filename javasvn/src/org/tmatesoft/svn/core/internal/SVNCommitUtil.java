@@ -89,7 +89,6 @@ public class SVNCommitUtil {
             map.put(commonRoot, null);
         }
         // replace map urls with paths
-//        urls = (String[]) map.keySet().toArray(new String[map.size()]);
         for(int i = 0; i < urls.length; i++) {
             String key = urls[i];
             Object value = map.get(key);
@@ -99,6 +98,10 @@ public class SVNCommitUtil {
             
             map.put(newKey, value);
             map.remove(key);
+        }
+        if (map.containsKey(commonRoot)) {
+            map.put("", map.get(commonRoot));
+            map.remove(commonRoot);
         }
         
         return commonRoot;        
