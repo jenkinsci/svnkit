@@ -49,7 +49,9 @@ class SVNReporterBaton implements ISVNReporterBaton {
         String path = getEntryPath(entry);
         if (SVNReporterBaton.isSwitched(parentURL, entry)) {
             DebugLog.log("REPORT.LINK: " + entry.getPropertyValue(SVNProperty.URL) + " : " + path + " : " + revision);
-            reporter.linkPath(SVNRepositoryLocation.parseURL(entry.getPropertyValue(SVNProperty.URL)), path, revision, false); 
+            String url = entry.getPropertyValue(SVNProperty.URL);
+            url = PathUtil.decode(url);
+            reporter.linkPath(SVNRepositoryLocation.parseURL(url), path, revision, false); 
         } else if (entry.isMissing()) {
             reporter.deletePath(path);
             DebugLog.log("REPORT.MISSING: " + path);

@@ -383,7 +383,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
 
             // update urls.
-            String newURL = PathUtil.encode(url.toString());
+            String newURL = url.toString();
             targetEntry.setPropertyValue(SVNProperty.URL, newURL);
             for (Iterator children = targetEntry.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
@@ -413,7 +413,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             if (!targetEntry.isDirectory()) {
                 throw new SVNException("could not relocate file '" + path + "' only directories could be switched");
             }
-            String newURL = PathUtil.encode(newLocation.toString());
+            String newURL = newLocation.toString();
             targetEntry.setPropertyValue(SVNProperty.URL, newURL);
             for (Iterator children = targetEntry.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();

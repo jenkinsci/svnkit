@@ -128,6 +128,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
             }
             myIsTimestampsChanged = true;
         }
+        DebugLog.log("UPDATED: DIR PROPERTY CHANGED");
     }
 
     public void closeDir() throws SVNException {

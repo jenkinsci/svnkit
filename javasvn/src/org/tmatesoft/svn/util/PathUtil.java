@@ -84,7 +84,7 @@ public class PathUtil {
         return path;
     }
     
-    private static void encode(String urlPart, StringBuffer dst) {
+    private static void encode(String urlPart, StringBuffer dst) {        
         for(StringTokenizer tokens = new StringTokenizer(urlPart, " /", true); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
             if (" ".equals(token)) {
@@ -108,6 +108,9 @@ public class PathUtil {
     }
 
     public static String decode(String source) {
+        if (source == null) {
+            return source;
+        }
         try {
             return URLDecoder.decode(source, "UTF-8");
         } catch (UnsupportedEncodingException e) {
