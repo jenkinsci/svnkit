@@ -18,5 +18,7 @@ package org.tmatesoft.svn.core.io;
 public interface ISVNSSHCredentials extends ISVNCredentials {
     
     public String getPrivateKeyID();
+    
+    public String getPassphrase();
 
 }

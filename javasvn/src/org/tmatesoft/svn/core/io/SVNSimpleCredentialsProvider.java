@@ -23,9 +23,13 @@ public class SVNSimpleCredentialsProvider implements ISVNCredentialsProvider {
     public SVNSimpleCredentialsProvider(String userName, String password) {
         this(userName, password, null);
     }
-
-    public SVNSimpleCredentialsProvider(String userName, String password, String key) {
-        myCredentials = new SimpleCredentials(userName, password, key);
+    
+    public SVNSimpleCredentialsProvider(String userName, String password, String privateKey) {
+        this(userName, password, privateKey, null);
+    }
+    
+    public SVNSimpleCredentialsProvider(String userName, String password, String privateKey, String passphrase) {
+        myCredentials = new SimpleCredentials(userName, password, privateKey, passphrase);
     }
 
     public ISVNCredentials nextCredentials(String realm) {
@@ -49,22 +53,30 @@ public class SVNSimpleCredentialsProvider implements ISVNCredentialsProvider {
     public static class SimpleCredentials implements ISVNSSHCredentials {
         private String myPassword;
         private String myUserName;
-        private String myKey;
+        private String myPrivateKey;
+        private String myPassphrase;
 
-        public SimpleCredentials(String userName, String password, String key) {
+        public SimpleCredentials(String userName, String password, String privateKey, String passprhase) {
             myUserName = userName;
             myPassword = password;
-            myKey = key;
+            myPrivateKey = privateKey;
+            myPassphrase = passprhase;
         }
+        
         public String getName() {
             return myUserName;
         }
+        
         public String getPassword() {
             return myPassword;
         }
+        
         public String getPrivateKeyID() {
-            return myKey;
+            return myPrivateKey;
+        }
+        
+        public String getPassphrase() {
+            return myPassphrase;
         }
     }
-
 }

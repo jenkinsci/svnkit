@@ -1228,7 +1228,7 @@ public class SVNClient implements SVNClientInterface {
                     return null;
                 }
             }
-            return new SVNSimpleCredentialsProvider.SimpleCredentials(userName, password, null);
+            return new SVNSimpleCredentialsProvider.SimpleCredentials(userName, password, null, null);
         }
 
         public void accepted(ISVNCredentials credentials) {

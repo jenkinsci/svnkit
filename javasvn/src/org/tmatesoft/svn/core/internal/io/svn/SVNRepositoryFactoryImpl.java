@@ -20,14 +20,23 @@ import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
  * @author Alexander Kitaev
  */
 public final class SVNRepositoryFactoryImpl extends SVNRepositoryFactory {
-    
+
+    private static ISVNConnectorFactory ourConnectorFactory;
+
     public static void setup() {
+        setup(null);
+    }
+
+    public static void setup(ISVNConnectorFactory connectorFactory) {
+        ourConnectorFactory = connectorFactory == null ? ISVNConnectorFactory.DEFAULT : connectorFactory;
         SVNRepositoryFactory.registerRepositoryFactory("^svn(\\+ssh)?://.*$", new SVNRepositoryFactoryImpl());
-        
     }
 
     public SVNRepository createRepositoryImpl(SVNRepositoryLocation location) {
         return new SVNAuthRepository(location, new SVNRepositoryImpl(location));
     }
 
+    static ISVNConnectorFactory getConnectorFactory() {
+        return ourConnectorFactory;
+    }
 }
