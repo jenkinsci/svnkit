@@ -1137,7 +1137,11 @@ public class SVNClient implements SVNClientInterface {
     }
     
     private ISVNWorkspace createWorkspace(String path) throws SVNException {
-        ISVNWorkspace ws = SVNUtil.createWorkspace(path);
+    	return createWorkspace(path, false);
+    }
+
+   	private ISVNWorkspace createWorkspace(String path, boolean root) throws SVNException {
+        ISVNWorkspace ws = SVNUtil.createWorkspace(path, root);
         if (ws != null) {
             if (myUserName != null && myPassword != null) {
                 ws.setCredentials(myUserName, myPassword);

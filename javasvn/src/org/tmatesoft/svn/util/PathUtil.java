@@ -144,9 +144,9 @@ public class PathUtil {
         if (paths == null || paths.length == 0) {
             return null;            
         }
-        String root = paths[0];
+        String root = paths[0].replace(File.separatorChar, '/');
         for (int i = 1; i < paths.length; i++) {
-			root = getCommonAncestor(root, paths[i]);
+			root = getCommonAncestor(root, paths[i].replace(File.separatorChar, '/'));
 		}
         File fileRoot = new File(root);
         if (fileRoot.isFile()) {
