@@ -103,7 +103,7 @@ Use the following link to view JavaSVN issues or submit a new one:
 <h5>Repository</h5>
 To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/jsvn/">http://72.9.228.230:8080/svn/jsvn/</a>
 <br />To get the latest source code use the following command:
-<pre style="margin: 4px; padding: 0.5em; font-size: 100%; width: 40em; background-color: #eee;">$ svn co http://72.9.228.230:8080/svn/jsvn/trunk/ javasvn</pre>
+<pre style="margin: 4px; padding: 0.5em; font-size: 100%; width: 40em; background-color: #eee;">$ svn co http://72.9.228.230:8080/svn/jsvn/trunk/</pre>
 </div>
 <table width="800">
 <tbody>
