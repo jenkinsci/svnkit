@@ -1,3 +1,9 @@
+= version 0.8.1
+
++ bugs with committing files within moved directories fixed
++ bugfixes related to operations over http connection
++ for subclipse users: more detailed console notifications on svn operations
+
 = version 0.8.0
 
 + new builds versioning schema introduced
