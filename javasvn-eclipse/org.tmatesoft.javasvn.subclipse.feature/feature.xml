@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
       id="org.tmatesoft.javasvn.subclipse"
-      label="JavaSVN Subclipse Extenstion"
+      label="JavaSVN Subclipse Extension"
       version="%javasvn.version%"
       provider-name="TMate Software">
 
    <description url="http://tmate.org/svn/subclipse.html">
-Subclipse extenstion that makes Subclipse use JavaSVN (pure java Subversion client library) instead of native javahl bindings.
+Subclipse extension that makes Subclipse use JavaSVN (pure java Subversion client library) instead of native javahl bindings.
    </description>
 
    <copyright url="http://tmatesoft.com/">
