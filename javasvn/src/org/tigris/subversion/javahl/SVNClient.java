@@ -367,7 +367,7 @@ public class SVNClient implements SVNClientInterface {
             ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
             long checkedOut = ws.checkout(location, rev, false, recurse);
             if (checkedOut >= 0 && myNotify != null) {
-            	myNotify.onNotify("", NotifyAction.update_completed, NodeKind.unknown, null,
+            	myNotify.onNotify(destPath, NotifyAction.update_completed, NodeKind.unknown, null,
             			0, 0, checkedOut);
             }
             return checkedOut;
@@ -398,7 +398,7 @@ public class SVNClient implements SVNClientInterface {
             long updatedRev = ws.update(wsPath, revNumber, recurse);
             
             if (updatedRev >= 0 && myNotify != null) {
-            	myNotify.onNotify("", NotifyAction.update_completed, NodeKind.unknown, null,
+            	myNotify.onNotify(path, NotifyAction.update_completed, NodeKind.unknown, null,
             			0, 0, updatedRev);
             }
             return updatedRev;
@@ -525,7 +525,7 @@ public class SVNClient implements SVNClientInterface {
             ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
             long switchedRev = ws.update(SVNRepositoryLocation.parseURL(url), relativePath, revNumber, recurse);
             if (switchedRev >= 0 && myNotify != null) {
-            	myNotify.onNotify("", NotifyAction.update_completed, NodeKind.unknown, null,
+            	myNotify.onNotify(path, NotifyAction.update_completed, NodeKind.unknown, null,
             			0, 0, switchedRev);
             }
             return switchedRev;
