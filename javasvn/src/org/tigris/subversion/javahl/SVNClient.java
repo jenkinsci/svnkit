@@ -14,7 +14,6 @@ package org.tigris.subversion.javahl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -564,7 +563,7 @@ public class SVNClient implements SVNClientInterface {
                 for(int i = 0; i < path.length; i++) {
                     String subPath = path[i].substring(rootURL.length());
                     subPath = PathUtil.removeLeadingSlash(subPath);
-                    editor.deleteEntry(subPath, -1);
+                    editor.deleteEntry(PathUtil.decode(subPath), -1);
                 }
                 editor.closeEdit();
             } catch (SVNException e) {
@@ -732,7 +731,7 @@ public class SVNClient implements SVNClientInterface {
                 editor = repository.getCommitEditor(message, null);
                 editor.openRoot(-1);
                 for(int i = 0; i < path.length; i++) {
-                    editor.addDir(path[i], null, -1);
+                    editor.addDir(PathUtil.decode(path[i]), null, -1);
                     editor.closeDir();
                 }
                 editor.closeDir();
@@ -747,7 +746,7 @@ public class SVNClient implements SVNClientInterface {
             }
         } else {
             try {
-                ISVNWorkspace ws = createWorkspace(path[0]);
+                ISVNWorkspace ws = createWorkspace(root);
                 for(int i = 0; i < path.length; i++) {
                     ws.add(SVNUtil.getWorkspacePath(ws, path[i]), true, false);
                 }

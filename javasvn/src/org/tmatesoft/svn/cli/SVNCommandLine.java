@@ -62,7 +62,7 @@ public class SVNCommandLine {
         myUnaryArguments = new HashSet();
         myBinaryArguments = new HashMap();
         myPaths = new ArrayList();
-	      myURLs = new ArrayList();
+        myURLs = new ArrayList();
 
         SVNArgument previousArgument = null;
         String previousArgumentName = null;
@@ -149,4 +149,8 @@ public class SVNCommandLine {
 	public String getURL(int index) {
 	    return (String) myURLs.get(index);
 	}
+    
+    public int getURLCount() {
+        return myURLs.size();
+    }
 }
