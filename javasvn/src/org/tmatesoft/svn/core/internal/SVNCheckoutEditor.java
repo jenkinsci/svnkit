@@ -65,9 +65,15 @@ public class SVNCheckoutEditor implements ISVNEditor {
     private Collection myExternals;
 
     private String myTarget;
+
+    private boolean myIsRecursive;
     
     public SVNCheckoutEditor(ISVNWorkspaceMediator mediator, SVNWorkspace workspace, ISVNEntry rootEntry, boolean export,
             String target) {
+        this(mediator, workspace, rootEntry, export, target, true);
+    }
+    public SVNCheckoutEditor(ISVNWorkspaceMediator mediator, SVNWorkspace workspace, ISVNEntry rootEntry, boolean export,
+            String target, boolean recursive) {
         myRootEntry = rootEntry;
         myStack = new Stack();
         myMediator = mediator;
@@ -76,6 +82,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
         myTargetRevision = -1;
         myPropertiesMap = new HashMap();
         myTarget = target;
+        myIsRecursive = recursive;
     }    
     
     public long getTargetRevision() {
@@ -268,11 +275,11 @@ public class SVNCheckoutEditor implements ISVNEditor {
         long start = System.currentTimeMillis();
         if (!myIsExport) {
             if (myTarget == null) {
-                myRootEntry.merge();
+                myRootEntry.merge(myIsRecursive);
             } else {
                 DebugLog.log("UPDATED: MERGING TARGET: " + myTarget);
                 if (myRootEntry.asDirectory().getChild(myTarget) != null) {
-                    myRootEntry.asDirectory().getChild(myTarget).merge();
+                    myRootEntry.asDirectory().getChild(myTarget).merge(false);
                     DebugLog.log("UPDATED: TARGET MERGED");
                 }
                 myRootEntry.save(false);

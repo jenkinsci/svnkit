@@ -307,7 +307,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                 targetEntry = locateParentEntry(path);
             }
             SVNRepository repository = SVNUtil.createRepository(this, targetEntry.getPath());
-            SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, targetEntry, false, target);
+            SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, targetEntry, false, target, recursive);
             SVNReporterBaton reporterBaton = new SVNReporterBaton(targetEntry, target, recursive);
             repository.update(revision, target, recursive, reporterBaton, editor);
 

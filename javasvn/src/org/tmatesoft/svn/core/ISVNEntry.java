@@ -83,7 +83,7 @@ public interface ISVNEntry {
     /**
      * Make actual contents and properties be the same as base version.
      */
-    public void merge() throws SVNException;
+    public void merge(boolean recursive) throws SVNException;
     
     /**
      * Make base properties and contents same as actual. Called after commit.

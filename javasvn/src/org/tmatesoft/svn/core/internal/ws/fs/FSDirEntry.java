@@ -240,19 +240,23 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         }
     }
 
-    public void merge() throws SVNException {
+    public void merge(boolean recursive) throws SVNException {
         String revision = getPropertyValue(SVNProperty.REVISION);
         Set obstructedChildren = new HashSet();
         if (myChildren != null) {
             for(Iterator children = childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
+                if (!recursive && child.isDirectory()) {
+                    continue;
+                }
                 if (child.isScheduledForAddition() || child.isScheduledForDeletion()) {
                     // obstructed!
                     obstructedChildren.add(child.getName());
                 } else {
                     child.setPropertyValue(SVNProperty.REVISION, revision);
                 }
-                child.merge();
+                
+                child.merge(recursive);
             }
         }
         super.merge();

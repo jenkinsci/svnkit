@@ -291,7 +291,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         }
     }
 
-    public void merge() throws SVNException {
+    public void merge(boolean recursive) throws SVNException {
         if (isScheduledForAddition() || isScheduledForDeletion()) {
             return;
         }
