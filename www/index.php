@@ -58,11 +58,25 @@ or <i>javahl</i> bindings to work with subversion repository. JavaSVN library is
 only a 100% java replacement for javahl bindings, but also a library that provides 
 high level of control over subversion repository operations. 
 </p>
-<h5>Professional Support</h5>
-<p>If you're using JavaSVN in business-critical applications, you may get a professional 
+<table style="margin: 0px; padding: 0px;">
+<tr style="margin: 0px; padding: 0px;">
+<td  style="margin: 0px; padding: 0px;" align="left" valign="top" width="500px">
+<h5><b>Professional Support</b></h5>
+<p style="padding-right: 0.5em;">If you're using JavaSVN in business-critical applications, you may get a professional 
 support for JavaSVN library. This support includes bug fixes, development prioritization 
 and problem support. If you're interested in professional JavaSVN support, please contact
 <a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a> for more details.</p>
+</td>
+<td valign="top"  align="left"  style="margin: 0px; padding: 0px;">
+<center><nobr><h5>JavaSVN Users</h5></nobr></center>
+<ul style="padding: 0px; margin: 0px; padding-left: 1em; list-style-type:none; border-width: 0 0 0 1px; border-style: dashed; border-color:#669999;">
+<li><b><a id="normal" href="http://tmatesoft.com/">TMate</a></b><br />Subversion tracking and reporting tool</li>
+<li><a id="normal" href="http://intellij.net/index.jsp">IntelliJ IDEA 5.0 (EAP)</a><br />Java IDE developed by <a id="normal" href="http://jetbrains.com/">JetBrains</a></li>
+<li><a id="normal" href="http://subclipse.tigris.org/">Subclipse</a><br /> Eclipse Subversion plugin (<a id="normal" href="subclipse.html">details</a>)</li>
+</ul>
+
+</td>
+</tr></table>
 <h5>Major Features</h5>
 <ul>
 <li>No external binaries or libraries are needed</li>
