@@ -71,7 +71,7 @@ public class FSDirEntryContent implements ISVNDirectoryContent {
 	public void deleteWorkingCopyContent() throws SVNException {
 		try {
 			final File file = myEntry.getRootEntry().getWorkingCopyFile(myEntry);
-			if (myEntry.isManaged() || myEntry.childEntries().hasNext() || myEntry.unmanagedChildEntries(true).hasNext()) {
+			if (myEntry.isManaged()) {
 				throw new SVNException("Can't delete managed/non-empty directory '" + file + "'.");
 			}			
 			FSUtil.deleteAll(file);
