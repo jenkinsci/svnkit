@@ -48,17 +48,19 @@ public class DAVStatus {
         if (message == null) {
             message = sb.toString();
         }
-        return new DAVStatus(code, message);
+        return new DAVStatus(code, message, http);
     }
     
     private int myResponseCode;
     private String myMessage;
     private Map myResponseHeader;
     private String myText;
+    private String myHTTP;
     
-    public DAVStatus(int responseCode, String message) {
+    public DAVStatus(int responseCode, String message, String http) {
         myResponseCode = responseCode;
         myMessage = message;
+        myHTTP = http;
     }
     
     public String getMessage() {
@@ -72,6 +74,10 @@ public class DAVStatus {
     }
     public void setResponseHeader(Map header) {
         myResponseHeader = header;
+    }
+
+    public boolean isHTTP10() {
+        return myHTTP != null && myHTTP.endsWith("/1.0");
     }
     
     public String toString() {

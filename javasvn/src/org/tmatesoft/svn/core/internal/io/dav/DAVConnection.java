@@ -36,6 +36,7 @@ class DAVConnection {
     private SVNRepositoryLocation myLocation;
     private HttpConnection myHttpConnection;
     private String myActivityCollectionURL;
+    private boolean myIsHTTP10Connection;
     
     public DAVConnection(SVNRepositoryLocation location) {
         myLocation = location;
@@ -118,6 +119,7 @@ class DAVConnection {
             url = getActivityCollectionURL(myLocation.getPath(), true) + generateUUID();
             status = myHttpConnection.request("MKACTIVITY", url, 0, null, null, (OutputStream) null, new int[] {201});
         }
+        myIsHTTP10Connection = status !=null && status.isHTTP10();
         return url;
     }
     
@@ -142,24 +144,27 @@ class DAVConnection {
         
         Map headers = new HashMap();
         headers.put("Content-Type", "application/vnd.svn-svndiff");
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
-            while(true) {
-                int b = data.read();
-                if (b < 0) {
-                    break;
-                }
-                bos.write(b);
-            }
-        } catch (IOException e) {
-            throw new SVNException(e);
-        } finally {
+        if (myIsHTTP10Connection) {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
             try {
-                data.close();
+                while(true) {
+                    int b = data.read();
+                    if (b < 0) {
+                        break;
+                    }
+                    bos.write(b);
+                }
             } catch (IOException e) {
+                throw new SVNException(e);
+            } finally {
+                try {
+                    data.close();
+                } catch (IOException e) {
+                }
             }
+            data = new ByteArrayInputStream(bos.toByteArray());
         }
-        return myHttpConnection.request("PUT", path, headers, new ByteArrayInputStream(bos.toByteArray()), null, null);
+        return myHttpConnection.request("PUT", path, headers, data, null, null);
     }
     
     public DAVStatus doMerge(String activityURL, boolean response, DefaultHandler handler) throws SVNException {
