@@ -94,7 +94,6 @@ class DAVRepository extends SVNRepository {
             path = getFullPath(path);
             info = DAVUtil.getBaselineInfo(myConnection, path, revision, true, false, info);
             kind = info.isDirectory ? SVNNodeKind.DIR : SVNNodeKind.FILE;
-        } catch (SVNException e) {            
         } finally {
             closeConnection();
         }
