@@ -47,8 +47,12 @@ public interface IDAVSSLManager {
                 throw new IOException(e.getMessage());
             }            
         }
+
+	    public void acknowledgeSSLContext(String host, int port, boolean accepted) {
+	    }
     };
     
     public SSLContext getSSLContext(String host, int port) throws IOException;
-    
+
+    public void acknowledgeSSLContext(String host, int port, boolean accepted);
 }

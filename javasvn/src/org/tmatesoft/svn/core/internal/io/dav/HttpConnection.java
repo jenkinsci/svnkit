@@ -148,8 +148,10 @@ class HttpConnection {
 				status = readHeader(readHeader);
 			} catch (IOException e) {
                 close();
+				acknowledgeSSLContext(false);
 				throw new SVNException(e);
 			}
+			acknowledgeSSLContext(true);
 			if (status != null && (status.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED ||
 					status.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN)) {
                 myLastUsedCredentials = null;
@@ -492,4 +494,14 @@ class HttpConnection {
         }
     	return map;
     }
+
+	private void acknowledgeSSLContext(boolean accepted) {
+		if (mySVNRepositoryLocation == null || !"https".equalsIgnoreCase(mySVNRepositoryLocation.getProtocol())) {
+			return;
+		}
+
+		String host = mySVNRepositoryLocation.getHost();
+		int port = mySVNRepositoryLocation.getPort();
+		DAVRepositoryFactory.getSSLManager().acknowledgeSSLContext(host, port, accepted);
+	}
 }
