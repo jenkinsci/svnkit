@@ -6,15 +6,15 @@
  
 	<feature id="org.tmatesoft.javasvn"
 	         patch="false"
-	         url="features/org.tmatesoft.javasvn_0.8.4.jar"
-	         version="0.8.4">
+	         url="features/org.tmatesoft.javasvn_%javasvn.version%.jar"
+	         version="%javasvn.version%">
        <category name="JavaSVN Library"/>
 	</feature>
 
 	<feature id="org.tmatesoft.javasvn.subclipse"
 	         patch="false"
-	         url="features/org.tmatesoft.javasvn.subclipse_0.8.4.jar"
-	         version="0.8.4">
+	         url="features/org.tmatesoft.javasvn.subclipse_%javasvn.version%.jar"
+	         version="%javasvn.version%">
        <category name="JavaSVN Subclipse Extension"/>
 	</feature>
 

@@ -1,7 +1,13 @@
+= version 0.8.5
+
++ SVNClient: WC copy and move operations work properly on Linux and OS X.
++ SVNClient: "conflicted" status is reported correctly during update
+             ("merged" was reported instead).
+
 = version 0.8.4
 
 + Subclipse Extension supports Subclipse 0.9.28
-+ tabulations in externals definitions processed correctly
++ tabulations in externals definitions processed correctly.
 
 = version 0.8.3
 
