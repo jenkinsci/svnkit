@@ -85,7 +85,15 @@
             <pathelement path="javasvn/bin" />
         </path>
 
-        <javac debug="true" destdir="contrib/sequence/bin-test" srcdir="contrib/sequence/src-test" />
+        <path id="sequence.tests.classpath">
+            <pathelement location="contrib/junit/junit.jar" />
+        </path>
+
+        <javac debug="true"
+               destdir="contrib/sequence/bin-test"
+               srcdir="contrib/sequence/src-test"
+               classpathref="sequence.tests.classpath"
+        />
         <javac debug="true"
                destdir="javasvn-test/bin"
                srcdir="javasvn-test/src"
