@@ -1,3 +1,10 @@
+= version 1.0.0 build 20050131
+
++ import works properly with single file and when importing to
+  non-yet-existing directories
++ switch works properly when switching single file
++ more minor bugfixes
+
 = version 1.0.0 build 20050120
 
 + bugs with commiting locally copied files fixed
