@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -65,7 +66,10 @@ class SVNCommitEditor implements ISVNEditor {
     
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         if (copyFromPath != null) {
-            copyFromPath = PathUtil.append(myRepository.getLocation().toString(), copyFromPath);
+            SVNRepositoryLocation location = myRepository.getLocation();
+            String host = location.getProtocol() + "://" + location.getHost() + ":" + location.getPort();
+            host = PathUtil.append(host, myRepository.getRepositoryRoot());
+            copyFromPath = PathUtil.append(host, copyFromPath);
             myConnection.write("(w(sss(sn)))", new Object[] {"add-dir", path, myCurrentPath, path, copyFromPath, getRevisionObject(copyFromRevision)});
         } else {
             myConnection.write("(w(sss()))", new Object[] {"add-dir", path, myCurrentPath, path});
@@ -86,7 +90,10 @@ class SVNCommitEditor implements ISVNEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         if (copyFromPath != null) {
-            copyFromPath = PathUtil.append(myRepository.getLocation().toString(), copyFromPath);
+            SVNRepositoryLocation location = myRepository.getLocation();
+            String host = location.getProtocol() + "://" + location.getHost() + ":" + location.getPort();
+            host = PathUtil.append(host, myRepository.getRepositoryRoot());
+            copyFromPath = PathUtil.append(host, copyFromPath);
             myConnection.write("(w(sss(sn)))", new Object[] {"add-file", path, myCurrentPath, path, copyFromPath, getRevisionObject(copyFromRevision)});
         } else {
             myConnection.write("(w(sss()))", new Object[] {"add-file", path, myCurrentPath, path});

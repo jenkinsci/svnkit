@@ -721,9 +721,10 @@ public class SVNWorkspace implements ISVNWorkspace {
             repository.setCredentialsProvider(getCredentialsProvider());
 
             ISVNEditor editor = repository.getCommitEditor(message, new SVNWorkspaceMediatorAdapter(getRoot(), tree));
-
+            String host = location.getProtocol() + "://" + location.getHost() + ":" + location.getPort();
+            String rootURL = PathUtil.append(host, repository.getRepositoryRoot());
             try {
-                SVNCommitUtil.doCommit("", location.toString(), tree, editor, this);
+                SVNCommitUtil.doCommit("", rootURL, tree, editor, this);
                 info = editor.closeEdit();
             } catch (SVNException e) {
                 DebugLog.error("error: " + e.getMessage());

@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
@@ -181,10 +182,11 @@ public class SVNCommitUtil {
             String copyFromURL = root.getPropertyValue(SVNProperty.COPYFROM_URL);
             long copyFromRevision = -1;
             if (copyFromURL != null) {
+                copyFromURL = SVNRepositoryLocation.parseURL(copyFromURL).toString();
                 copyFromRevision = Long.parseLong(root.getPropertyValue(SVNProperty.COPYFROM_REVISION));
                 copyFromURL = copyFromURL.substring(url.length());
-                if (copyFromURL.startsWith("/")) {
-                    copyFromURL = copyFromURL.substring("/".length());
+                if (!copyFromURL.startsWith("/")) {
+                    copyFromURL = "/" + copyFromURL;
                 }
             }
             editor.addDir(path, copyFromURL, copyFromRevision);
@@ -253,11 +255,14 @@ public class SVNCommitUtil {
                     String copyFromURL = child.getPropertyValue(SVNProperty.COPYFROM_URL);
                     long copyFromRevision = -1;
                     if (copyFromURL != null) {
+                        copyFromURL = SVNRepositoryLocation.parseURL(copyFromURL).toString();
                         copyFromRevision = Long.parseLong(child.getPropertyValue(SVNProperty.COPYFROM_REVISION));
                         DebugLog.log("copyfrom path:" + copyFromURL);
+                        DebugLog.log("parent's url: " + url);
+                        // should be relative to repos root.
                         copyFromURL = copyFromURL.substring(url.length());
-                        if (copyFromURL.startsWith("/")) {
-                            copyFromURL = copyFromURL.substring("/".length());
+                        if (!copyFromURL.startsWith("/")) {
+                            copyFromURL = "/" + copyFromURL;
                         }
                         DebugLog.log("copyfrom path:" + copyFromURL);
                     }

@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
@@ -44,11 +45,13 @@ class DAVCommitEditor implements ISVNEditor {
     private Stack myDirsStack;
     private ISVNWorkspaceMediator myCommitMediator;
     private Map myPathsMap;
+    private String myRepositoryRoot;
     
-    public DAVCommitEditor(SVNRepositoryLocation location, DAVConnection connection, String message, ISVNWorkspaceMediator mediator, Runnable closeCallback) {
+    public DAVCommitEditor(SVNRepository repository, DAVConnection connection, String message, ISVNWorkspaceMediator mediator, Runnable closeCallback) {
         myConnection = connection;
         myLogMessage = message; 
-        myLocation = location;
+        myLocation = repository.getLocation();
+        myRepositoryRoot = repository.getRepositoryRoot();
         myCloseCallback = closeCallback;
         myCommitMediator = mediator;
         
@@ -107,7 +110,7 @@ class DAVCommitEditor implements ISVNEditor {
 
         if (copyPath != null) {
             // convert to full path? 
-            copyPath = PathUtil.append(myLocation.getPath(), copyPath);
+            copyPath = PathUtil.append(myRepositoryRoot, copyPath);
             // not implemented yet.
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, copyPath, copyRevision, false, false, null);
             copyPath = PathUtil.append(info.baselineBase, info.baselinePath);
@@ -170,7 +173,7 @@ class DAVCommitEditor implements ISVNEditor {
         myPathsMap.put(myCurrentFile.getURL(), myCurrentFile.getPath());
 
         if (copyPath != null) {
-            copyPath = PathUtil.append(myLocation.getPath(), copyPath);
+            copyPath = PathUtil.append(myRepositoryRoot, copyPath);
             // not implemented yet.
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, copyPath, copyRevision, false, false, null);
             copyPath = PathUtil.append(info.baselineBase, info.baselinePath);

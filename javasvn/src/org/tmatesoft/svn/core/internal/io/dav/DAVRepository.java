@@ -414,7 +414,7 @@ class DAVRepository extends SVNRepository {
 
     public ISVNEditor getCommitEditor(String message, ISVNWorkspaceMediator mediator) throws SVNException {
         openConnection();
-        ISVNEditor editor = new DAVCommitEditor(getLocation(), myConnection, message, mediator, new Runnable() {
+        ISVNEditor editor = new DAVCommitEditor(this, myConnection, message, mediator, new Runnable() {
             public void run() {
                 closeConnection();
             }
