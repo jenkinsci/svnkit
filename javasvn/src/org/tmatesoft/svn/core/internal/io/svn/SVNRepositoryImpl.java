@@ -47,6 +47,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     private SVNConnection myConnection;
     private ISVNCredentials myCredentials;
+	private String myFullRoot;
 
     protected SVNRepositoryImpl(SVNRepositoryLocation location) {
         super(location);
@@ -456,6 +457,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         uuid = uuid == null ? getRepositoryUUID() : uuid;
         // remove url path from root.
         if (root != null) {
+        	myFullRoot = root;
             root = root.startsWith("svn://") ? root.substring("svn://".length()) : root.substring("svn+ssh://".length());
             root = PathUtil.removeTrailingSlash(root);
             if (root.indexOf('/') >= 0) {
@@ -465,6 +467,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             }
         }
         DebugLog.log("root: " + root);
+        DebugLog.log("full root: " + myFullRoot);
         setRepositoryCredentials(uuid, root);
     }
 
@@ -555,5 +558,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     public ISVNCredentials getCredentials() {
         return myCredentials;
+    }
+    
+    public String getFullRoot() {
+    	return myFullRoot;
     }
 }

@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.util.Date;
 
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.TimeUtil;
 
 
@@ -109,7 +110,7 @@ public class SVNWriter {
 	            os.write(' ');
 	        }
         } catch (IOException e) {
-            e.printStackTrace();
+        	DebugLog.error(e);
             throw new SVNException("error while sending data", e);
         }
     }

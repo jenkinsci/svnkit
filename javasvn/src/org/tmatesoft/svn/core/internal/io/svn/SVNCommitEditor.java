@@ -67,8 +67,11 @@ class SVNCommitEditor implements ISVNEditor {
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         if (copyFromPath != null) {
             SVNRepositoryLocation location = myRepository.getLocation();
-            String host = location.getProtocol() + "://" + location.getHost() + ":" + location.getPort();
-            host = PathUtil.append(host, myRepository.getRepositoryRoot());
+            String host = myRepository.getFullRoot();
+            if (host == null) {
+            	host = location.getProtocol() + "://" + location.getHost() + ":" + location.getPort();
+                host = PathUtil.append(host, myRepository.getRepositoryRoot());
+            }
             copyFromPath = PathUtil.append(host, copyFromPath);
             myConnection.write("(w(sss(sn)))", new Object[] {"add-dir", path, myCurrentPath, path, copyFromPath, getRevisionObject(copyFromRevision)});
         } else {
@@ -91,8 +94,11 @@ class SVNCommitEditor implements ISVNEditor {
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         if (copyFromPath != null) {
             SVNRepositoryLocation location = myRepository.getLocation();
-            String host = location.getProtocol() + "://" + location.getHost() + ":" + location.getPort();
-            host = PathUtil.append(host, myRepository.getRepositoryRoot());
+            String host = myRepository.getFullRoot();
+            if (host == null) {
+            	host = location.getProtocol() + "://" + location.getHost() + ":" + location.getPort();
+                host = PathUtil.append(host, myRepository.getRepositoryRoot());
+            }
             copyFromPath = PathUtil.append(host, copyFromPath);
             myConnection.write("(w(sss(sn)))", new Object[] {"add-file", path, myCurrentPath, path, copyFromPath, getRevisionObject(copyFromRevision)});
         } else {

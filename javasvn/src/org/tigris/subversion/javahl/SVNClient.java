@@ -685,9 +685,10 @@ public class SVNClient implements SVNClientInterface {
                 }
                 srcPath = srcPath.substring(repository.getRepositoryRoot().length());
                 if (!srcPath.startsWith("/")) {
-                    srcPath += "/";
+                    srcPath = "/".concat(srcPath);
                 }
                 SVNNodeKind nodeKind = repository.checkPath(newPath, -1);
+                SVNNodeKind srcNodeKind = repository.checkPath(srcPath, revNumber);
             	String newPathParent = null;
                 if (nodeKind == SVNNodeKind.DIR) {
                 	DebugLog.log("path " + newPath + " already exists and its a dir");
@@ -705,8 +706,14 @@ public class SVNClient implements SVNClientInterface {
                 if (newPathParent != null) {
                 	editor.openDir(newPathParent, -1);
                 }
-                editor.addDir(newPath, srcPath, revNumber);
-                editor.closeDir();
+                if (srcNodeKind == SVNNodeKind.DIR) {
+                	editor.addDir(newPath, srcPath, revNumber);
+                    editor.closeDir();
+                } else {
+                	DebugLog.log("adding file " + srcPath);
+                	editor.addFile(newPath, srcPath, revNumber);
+                	editor.closeFile(null);
+                }
                 if (newPathParent != null) {
                 	editor.closeDir();
                 }
@@ -758,11 +765,18 @@ public class SVNClient implements SVNClientInterface {
                 deletePath = PathUtil.decode(deletePath);
                 destPath = PathUtil.decode(destPath);
                 
+                SVNNodeKind srcNodeKind = repository.checkPath(deletePath, revNumber);
+                
                 editor = repository.getCommitEditor(message, null);
                 editor.openRoot(-1);
 
-                editor.addDir(destPath, deletePath, revNumber);
-                editor.closeDir();
+                if (srcNodeKind == SVNNodeKind.DIR) {
+                	editor.addDir(destPath, deletePath, revNumber);
+                	editor.closeDir();
+                } else {
+                	editor.addFile(destPath, deletePath, revNumber);
+                	editor.closeFile(null);
+                }
                 editor.deleteEntry(deletePath, revNumber);
                 
                 editor.closeDir();
