@@ -151,8 +151,8 @@ public abstract class FSEntry implements ISVNEntry {
         return isScheduledForAddition() || isScheduledForDeletion() || isPropertiesModified();
     }
 
-    public int applyChangedProperties(Map changedProperties) throws SVNException {
-        if (isScheduledForAddition() || isScheduledForDeletion()) {
+    public int applyChangedProperties(Map changedProperties) throws SVNException {        
+        if (isScheduledForAddition()) {
             return SVNStatus.OBSTRUCTED;
         }
         setOldRevision(SVNProperty.longValue(getPropertyValue(SVNProperty.COMMITTED_REVISION)));
@@ -202,8 +202,9 @@ public abstract class FSEntry implements ISVNEntry {
                     return SVNStatus.CONFLICTED;
                 }
             }
+            return SVNStatus.MERGED;
         }
-        return SVNStatus.UPDATED;
+        return myModifiedProperties.isEmpty() ? SVNStatus.NOT_MODIFIED : SVNStatus.UPDATED;
     }
 
     public boolean sendChangedProperties(ISVNEditor editor) throws SVNException {

@@ -292,7 +292,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
     }
 
     public void merge(boolean recursive) throws SVNException {
-        if (isScheduledForAddition() || isScheduledForDeletion()) {
+        if (isScheduledForAddition()) {
             return;
         }
         boolean isNewKeywords = isPropertyModified(SVNProperty.KEYWORDS);
@@ -317,7 +317,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         File baseFile = getAdminArea().getBaseFile(this);
         Map keywords = computeKeywords();
 
-        if (!tmpBaseFile.exists()) {
+        if (!tmpBaseFile.exists() && !isScheduledForDeletion()) {
             if (baseFile.exists() && (!actualFile.exists() || isNewKeywords)) {
                 FSUtil.copy(baseFile, actualFile, !isBinary() ? getPropertyValue(SVNProperty.EOL_STYLE) : null, isBinary() ? null : keywords, null);
                 getEntry().put(SVNProperty.TEXT_TIME, TimeUtil.formatDate(new Date(actualFile.lastModified())));
@@ -325,7 +325,11 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             return;
         }
         String checksum = null;
-        if (!isContentsModified()) {
+        if (isScheduledForDeletion()) {
+            if (tmpBaseFile.exists()) {
+                checksum = FSUtil.copy(tmpBaseFile, baseFile, null, createDigest());
+            }
+        } else if (!isContentsModified()) {
             String eolStyle = isBinary() ? null : getPropertyValue(SVNProperty.EOL_STYLE);
             
             checksum = FSUtil.copy(tmpBaseFile, baseFile, null, createDigest());
@@ -375,7 +379,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         }
         if (getPropertyValue(SVNProperty.CHECKSUM) == null) {
             setPropertyValue(SVNProperty.CHECKSUM, checksum);
-        } else if (!checksum.equals(getPropertyValue(SVNProperty.CHECKSUM))) {
+        } else if (checksum != null && !checksum.equals(getPropertyValue(SVNProperty.CHECKSUM))) {
             throw new SVNException(getPath() + " local checksum differs from repository.");
         }
         getAdminArea().deleteTemporaryBaseFile(this);

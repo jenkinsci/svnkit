@@ -115,6 +115,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
         DebugLog.log("UPDATED: ADD DIR: " + path);
         ISVNEntry newDir = getCurrentEntry().addDirectory(PathUtil.tail(path), -1);
         myStack.push(newDir);
+        newDir.setPropertyValue(SVNProperty.REVISION, "0");
         getCurrentProperties().put("added", "true");
         myWorkspace.fireEntryUpdated(newDir, SVNStatus.ADDED, 0, myTargetRevision);        
         myIsTimestampsChanged = !myIsExport;
@@ -140,22 +141,21 @@ public class SVNCheckoutEditor implements ISVNEditor {
 
     public void closeDir() throws SVNException {
         int propsStatus = 0;
-        if (getCurrentProperties().remove("added") == null) {
-            if (!getCurrentProperties().isEmpty()) {
-                //  props are modified.
-                propsStatus = SVNStatus.UPDATED;
-            }
-        }
+        boolean wasAdded = getCurrentProperties().remove("added") != null;
         if (!myIsExport) {
-            if (myTarget == null) {
+            // do not update props and revision when target is not null 
+            // and we are closing root entry.
+            if (!(myTarget != null && getCurrentEntry() == myRootEntry)) {
                 getCurrentProperties().put(SVNProperty.REVISION, Long.toString(myTargetRevision));
-                getCurrentEntry().applyChangedProperties(getCurrentProperties());
+                propsStatus = getCurrentEntry().applyChangedProperties(getCurrentProperties());
             }
             myPropertiesMap.remove(getCurrentEntry());            
         }
         if (propsStatus != 0) {
             long revision = SVNProperty.longValue(getCurrentEntry().getPropertyValue(SVNProperty.COMMITTED_REVISION));
-            myWorkspace.fireEntryUpdated(getCurrentEntry(), 0, propsStatus, revision);
+            if (!wasAdded) {
+                myWorkspace.fireEntryUpdated(getCurrentEntry(), 0, propsStatus, revision);
+            }
         }
         DebugLog.log("UPDATED: CLOSED DIR: " + getCurrentEntry().getPath());
         myStack.pop();
@@ -167,6 +167,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
         if (!myIsExport) {
             myChangedProperties = new HashMap();
         }
+        myCurrentFile.setPropertyValue(SVNProperty.REVISION, "0");
         myContentsStatus = SVNStatus.ADDED;
         myIsTimestampsChanged = !myIsExport;
         DebugLog.log("UPDATED: FILE ADDED");
@@ -281,10 +282,11 @@ public class SVNCheckoutEditor implements ISVNEditor {
                 ISVNEntry targetEntry = myRootEntry.asDirectory().getChild(myTarget); 
                 if (targetEntry != null) {
                     if (targetEntry.getPropertyValue(SVNProperty.REVISION) == null) {
+                        // only if it was missing before and missing now.
                         myRootEntry.asDirectory().deleteChild(targetEntry.getName(), true);
                         DebugLog.log("UPDATED: TARGET DELETED");
                     } else {
-                        targetEntry.merge(false);
+                        targetEntry.merge(myIsRecursive);
                         DebugLog.log("UPDATED: TARGET MERGED");
                     }
                 }
