@@ -63,21 +63,15 @@ public class JavaSVNLogger implements DebugLogger, LoggingStreamLogger {
 	}
 
 	public void logFine(String message) {
-		if (isFineEnabled()) {
-			myLog.log(createStatus(IStatus.INFO, message, null));
-		}
+		myLog.log(createStatus(IStatus.INFO, message, null));
 	}
 
 	public void logInfo(String message) {
-		if (isFineEnabled()) {
-			myLog.log(createStatus(IStatus.INFO, message, null));
-		}
+		myLog.log(createStatus(IStatus.INFO, message, null));
 	}
 
 	public void logError(String message, Throwable th) {
-		if (isFineEnabled()) {
-			myLog.log(createStatus(IStatus.INFO, message, th));
-		}
+		myLog.log(createStatus(IStatus.ERROR, message, th));
 	}
 
 	public LoggingInputStream getLoggingInputStream(String protocol, InputStream stream) {
@@ -100,6 +94,6 @@ public class JavaSVNLogger implements DebugLogger, LoggingStreamLogger {
 	}
 
 	private Status createStatus(int severity, String message, Throwable th) {
-		return new Status(severity, myPluginID, IStatus.OK, message, th);
+		return new Status(severity, myPluginID, IStatus.OK, message == null ? "" : message, th);
 	}
 }

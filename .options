@@ -1,0 +1,7 @@
+org.tmatesoft.javasvn/debug=true
+org.tmatesoft.javasvn/debug/error=true
+org.tmatesoft.javasvn/debug/warning=true
+org.tmatesoft.javasvn/debug/info=false
+org.tmatesoft.javasvn/debug/fine=false
+org.tmatesoft.javasvn/debug/trace/http=false
+org.tmatesoft.javasvn/debug/trace/svn=false
