@@ -70,6 +70,7 @@ public class SVNClient implements SVNClientInterface {
     private String myUserName;
     private String myPassword;
     private Notify myNotify;
+	private PromptUserPassword myPrompt;
     
     public SVNClient() {
         SVNDiffManager.setup();
@@ -103,6 +104,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void setPrompt(PromptUserPassword prompt) {
+    	myPrompt = prompt;
     }
     
     /**
@@ -368,6 +370,9 @@ public class SVNClient implements SVNClientInterface {
             if (myUserName != null && myPassword != null) {
                 ws.setCredentials(new SVNSimpleCredentialsProvider(myUserName, myPassword));
                 repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
+            } else if (myPrompt != null) {
+            	ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt));
+            	repository.setCredentialsProvider(new SVNPromptCredentialsProvider(myPrompt));
             }
             long rev = getRevisionNumber(revision, repository, null, null);
             ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
@@ -505,6 +510,9 @@ public class SVNClient implements SVNClientInterface {
             if (myUserName != null && myPassword != null) {
                 ws.setCredentials(new SVNSimpleCredentialsProvider(myUserName, myPassword));
                 repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
+            } else if (myPrompt != null) {
+                ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt));
+                repository.setCredentialsProvider(new SVNPromptCredentialsProvider(myPrompt));
             }
             long revNumber = getRevisionNumber(revision, repository, null, null);
             ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
@@ -1297,9 +1305,9 @@ public class SVNClient implements SVNClientInterface {
         SVNRepository repository = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
         if (myUserName != null && myPassword != null) {
             repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
-        }/* else if (myPrompt != null) {
-            repository.setCredentialsProvider(new PromptCredentialsProvider(myPrompt));            
-        }*/
+        } else if (myPrompt != null) {
+            repository.setCredentialsProvider(new SVNPromptCredentialsProvider(myPrompt));            
+        }
         return repository;
     }
     
@@ -1312,9 +1320,9 @@ public class SVNClient implements SVNClientInterface {
         if (ws != null) {
             if (myUserName != null && myPassword != null) {
                 ws.setCredentials(myUserName, myPassword);
-            } /*else if (myPrompt != null) {
-                ws.setCredentials(new PromptCredentialsProvider(myPrompt));
-            }*/
+            } else if (myPrompt != null) {
+                ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt));
+            }
         }
         return ws;
     }
