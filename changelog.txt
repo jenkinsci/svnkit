@@ -1,6 +1,7 @@
-= version 0.8.2.1
+= version 0.8.3
 
 + SvnClient: add method didn't work when adding directories, fixed.
++ SvnClient: commit of single file deletion didn't work, fixed.
 
 = version 0.8.2
 

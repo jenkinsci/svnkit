@@ -915,7 +915,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                 entry.save();
                 entry.dispose();
             } else {
-                throw new SVNException("can't located versioned parent entry for '" + path + "'");
+                throw new SVNException("can't locate versioned parent entry for '" + path + "'");
             }
         } finally {
             getRoot().dispose();
