@@ -96,7 +96,8 @@ public class FSMergerBySequence {
 		}
 
 		for (baseLineIndex++; baseLineIndex < baseLines.length; baseLineIndex++) {
-			writeLineAndEol(result, baseLines[baseLineIndex]);
+			final SVNSequenceLine baseLine = baseLines[baseLineIndex];
+			writeLineAndEol(result, baseLine);
 		}
 
 		if (conflict) {
@@ -197,7 +198,7 @@ public class FSMergerBySequence {
             if (index < localTo) {
                 writeLineAndEol(result, localLines[index]);
             } else {
-                result.write(localLines[index].getBytes());
+                writeLineAndEol(result, localLines[index]);
             }
 		}
 		writeBytesAndEol(result, myConflictSeparator);
@@ -205,7 +206,7 @@ public class FSMergerBySequence {
             if (index < latestTo) {
                 writeLineAndEol(result, latestLines[index]);
             } else {
-                result.write(latestLines[index].getBytes());
+                writeLineAndEol(result, latestLines[index]);
             }
 		}
 		writeBytesAndEol(result, myConflictEnd);
@@ -219,6 +220,10 @@ public class FSMergerBySequence {
 	}
 
 	private void writeBytesAndEol(OutputStream os, final byte[] bytes) throws IOException {
+		if (bytes.length == 0) {
+			return;
+		}
+		
 		os.write(bytes);
 		os.write(eolBytes);
 	}

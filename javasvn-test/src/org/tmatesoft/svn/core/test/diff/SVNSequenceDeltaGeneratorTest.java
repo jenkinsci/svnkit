@@ -20,13 +20,6 @@ public class SVNSequenceDeltaGeneratorTest extends TestCase {
 		final StringBuffer lines = new StringBuffer();
 		for (int ch = 0; ch < text.length(); ch++) {
 			lines.append(text.charAt(ch));
-            if (ch + 1 < text.length()) {
-                if (text.charAt(ch + 1) == '=') {
-                    continue;
-                } else if (text.charAt(ch + 1) == '<' && text.charAt(ch) != '=') {
-                    continue;
-                }
-            }
 			lines.append(eol);
 		}
 		return lines.toString();
