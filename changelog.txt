@@ -1,5 +1,6 @@
 = version 0.8.3
 
++ http: all DAV requests (including commit comments) are sent in UTF-8 encoding
 + SvnClient: add method didn't work when adding directories, fixed.
 + SvnClient: commit of single file deletion didn't work, fixed.
 
