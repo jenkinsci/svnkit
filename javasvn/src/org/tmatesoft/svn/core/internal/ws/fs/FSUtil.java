@@ -273,7 +273,7 @@ public class FSUtil {
         if (eol == null && keywordsMap == null) {
             while (true) {
                 int read = is.read(myBinaryBuffer);
-                if (read <= 0) {
+                if (read < 0) {
                     return toHexDigest(digest);
                 }
                 dos.write(myBinaryBuffer, 0, read);
