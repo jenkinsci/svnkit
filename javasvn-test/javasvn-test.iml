@@ -13,7 +13,6 @@
       <excludeFolder url="file://$MODULE_DIR$/python" />
       <excludeFolder url="file://$MODULE_DIR$/svn-config" />
       <excludeFolder url="file://$MODULE_DIR$/testRepository" />
-      <excludeFolder url="file://$MODULE_DIR$/python" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
