@@ -87,6 +87,7 @@
 
         <path id="sequence.tests.classpath">
             <pathelement location="contrib/junit/junit.jar" />
+            <pathelement path="contrib/sequence/bin" />
         </path>
 
         <javac debug="true"
