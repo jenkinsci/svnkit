@@ -37,6 +37,10 @@ import org.tmatesoft.svn.util.DebugLog;
 public class FSUtil {
 
     public final static boolean isWindows;
+    public final static OutputStream NULL_OUTPUT = new OutputStream() {
+                                                        public void write(int b) throws IOException {
+                                                        }
+                                                    };
 
     static {
         String osName = System.getProperty("os.name");
@@ -450,6 +454,25 @@ public class FSUtil {
         try {
             Thread.sleep(time);
         } catch (InterruptedException e) {}
+    }
+    
+    public static String getChecksum(File file, MessageDigest digest) {
+        if (!file.isFile()) {
+            return null;
+        }
+        InputStream is = null;
+        try {
+            is = new FileInputStream(file);
+            return copy(is, NULL_OUTPUT, digest);
+        } catch (IOException e) {
+            return null;
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {}
+            }
+        }
     }
 
 }

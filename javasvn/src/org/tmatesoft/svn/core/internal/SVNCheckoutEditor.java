@@ -172,6 +172,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
         myIsTimestampsChanged = !myIsExport;
         DebugLog.log("UPDATED: FILE ADDED");
     }
+    
     public void openFile(String path, long revision) throws SVNException {
         String name = PathUtil.tail(path);
         myCurrentFile = (ISVNFileEntry) getCurrentEntry().getChild(name);
@@ -182,6 +183,13 @@ public class SVNCheckoutEditor implements ISVNEditor {
     }
     
     public void closeFile(String textChecksum) throws SVNException {
+        if (myContentsStatus == SVNStatus.CORRUPTED) {
+            DebugLog.log("UPDATED: CLOSE FILE: skipping corrupted file: " + myCurrentFile.getPath());
+            myCurrentFile = null;
+            myPropertiesStatus = 0;
+            myContentsStatus = 0;
+            return;
+        }
         if (!myIsExport) {
             myChangedProperties.put(SVNProperty.REVISION, Long.toString(myTargetRevision));
             myChangedProperties.put(SVNProperty.CHECKSUM, textChecksum);
@@ -197,9 +205,20 @@ public class SVNCheckoutEditor implements ISVNEditor {
     }
     
     public void applyTextDelta(String baseChecksum)  throws SVNException {
-        // do nothing.
+        if (baseChecksum != null && myContentsStatus == 0) {
+            if (myCurrentFile.isCorrupted()) {
+                myCurrentFile.setPropertyValue(SVNProperty.CORRUPTED, Boolean.TRUE.toString());
+                myWorkspace.fireEntryUpdated(myCurrentFile, SVNStatus.CORRUPTED, myPropertiesStatus, myTargetRevision);
+                myContentsStatus = SVNStatus.CORRUPTED;
+            }
+        }
     }
+    
     public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
+        if (myContentsStatus == SVNStatus.CORRUPTED) {
+            DebugLog.log("UPDATED: TEXTDELTACHUNK: skipping corrupted file: " + myCurrentFile.getPath());
+            return null;
+        }
         DebugLog.log("UPDATED: TEXTDELTACHUNK: " + myCurrentFile.getPath());
         if (myDiffWindow == null) {
             myDiffWindow = new LinkedList();
@@ -216,6 +235,10 @@ public class SVNCheckoutEditor implements ISVNEditor {
     }    
     
     public void textDeltaEnd() throws SVNException {
+        if (myContentsStatus == SVNStatus.CORRUPTED) {
+            DebugLog.log("UPDATED: TEXTDELTAEND: skipping corrupted file: " + myCurrentFile.getPath());
+            return;
+        }
         DebugLog.log("UPDATED: APPLING DELTA: " + myCurrentFile.getPath());
         int status = 0;
         long t = System.currentTimeMillis();

@@ -48,6 +48,7 @@ public class SVNProperty {
     public static final String CONFLICT_WRK = SVN_ENTRY_PREFIX + "conflict-wrk";
     public static final String PROP_REJECT_FILE = SVN_ENTRY_PREFIX + "prop-reject-file";
     public static final String DELETED = SVN_ENTRY_PREFIX + "deleted";
+    public static final String CORRUPTED = SVN_ENTRY_PREFIX + "corrupted";
 
     public static final String KIND_DIR = "dir";
     public static final String KIND_FILE = "file";

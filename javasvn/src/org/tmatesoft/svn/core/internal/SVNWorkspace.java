@@ -637,6 +637,9 @@ public class SVNWorkspace implements ISVNWorkspace {
             Collection modifiedParents = new HashSet();
             for (Iterator modifiedEntries = modified.iterator(); modifiedEntries.hasNext();) {
                 ISVNEntry entry = (ISVNEntry) modifiedEntries.next();
+                if (!entry.isDirectory() && entry.asFile().isCorrupted()) {
+                    throw new SVNException("svn: Checksum of base file '" + entry.getPath() + "' is not valid");
+                }
                 String p = entry.getPath();
                 if (entry.isScheduledForAddition()) {
                     ISVNEntry parent = locateParentEntry(entry.getPath());

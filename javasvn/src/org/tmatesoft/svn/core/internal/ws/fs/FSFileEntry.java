@@ -253,6 +253,21 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         }
     }
     
+    public boolean isCorrupted() throws SVNException {
+        File baseFile = getAdminArea().getBaseFile(this);
+        if (getPropertyValue(SVNProperty.CHECKSUM) == null) {
+            return false;
+        }
+        if (!baseFile.exists() && isScheduledForAddition()) {
+            return false;
+        }
+        String checksum = FSUtil.getChecksum(baseFile, createDigest());
+        if (checksum == null || !checksum.equals(getPropertyValue(SVNProperty.CHECKSUM))) {
+            return true;
+        }
+        return false;
+    }
+    
     public void commit() throws SVNException {
         super.commit();
         
@@ -445,7 +460,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         return !(type == null || type.startsWith("text/"));
     }
 
-    private static MessageDigest createDigest() throws SVNException {
+    static MessageDigest createDigest() throws SVNException {
         try {
             return MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException e) {

@@ -260,13 +260,15 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 if (!recursive && child.isDirectory()) {
                     continue;
                 }
+                boolean isCorrupted = child.getPropertyValue(SVNProperty.CORRUPTED) != null;
+                child.setPropertyValue(SVNProperty.CORRUPTED, null);
                 if (child.getPropertyValue(SVNProperty.REVISION) == null) {
                     // missing child that was deleted.
                     DebugLog.log("MERGING: MISSING ENTRY DELETED: " + child.getPath());
                     deleteChild(child.getName(), true);
                     continue;
                 }
-                if (child.isScheduledForAddition() || child.isScheduledForDeletion()) {
+                if (child.isScheduledForAddition() || child.isScheduledForDeletion() || isCorrupted) {
                     // obstructed!
                     obstructedChildren.add(child.getName());
                 } else {
