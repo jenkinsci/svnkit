@@ -18,6 +18,8 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.StringTokenizer;
 
+import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
+
 /**
  * @author Alexander Kitaev
  */
@@ -165,7 +167,11 @@ public class PathUtil {
             if (!"/".equals(token)) {
                 String testRoot = root + token + "/";
                 for(int i = 0; i < paths.length; i++) {
-                    if (!paths[i].startsWith(testRoot)) {
+                    if (FSUtil.isWindows && !paths[i].toLowerCase().startsWith(testRoot.toLowerCase())) {
+                        root = PathUtil.removeLeadingSlash(root);
+                        root = PathUtil.removeTrailingSlash(root);
+                        return root;
+                    } else if (!paths[i].startsWith(testRoot)) {
                         root = PathUtil.removeLeadingSlash(root);
                         root = PathUtil.removeTrailingSlash(root);
                         return root;

@@ -16,6 +16,7 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
+import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -49,11 +50,17 @@ public class SVNUtil {
     public static String getWorkspacePath(ISVNWorkspace ws, String absolutePath) {
         File file = new File(absolutePath);
         
-        String root = ws.getID().replace(File.separatorChar, '/');
+        String root = new File(ws.getID()).getAbsolutePath();
+        root = root.replace(File.separatorChar, '/');
         String path = file.getAbsolutePath().replace(File.separatorChar, '/');
-        
-        if (path.startsWith(root)) {
-            path = path.substring(root.length());
+        if (FSUtil.isWindows) {
+            if (path.toLowerCase().startsWith(root.toLowerCase())) {
+                path = path.substring(root.length());
+            }
+        } else {
+            if (path.startsWith(root)) {
+                path = path.substring(root.length());
+            }
         }
         path = PathUtil.removeLeadingSlash(path);
         if (".".equals(path)) {
