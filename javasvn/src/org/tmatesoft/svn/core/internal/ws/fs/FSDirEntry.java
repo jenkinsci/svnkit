@@ -646,22 +646,35 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
     
     public boolean isIgnored(String name) throws SVNException {
         String ignored = getRootEntry().getGlobalIgnore();
-        if (getPropertyValue(SVNProperty.IGNORE) != null) {
-            ignored += " " + getPropertyValue(SVNProperty.IGNORE);
-        }
         for(StringTokenizer tokens = new StringTokenizer(ignored, " \t\n\r"); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
             if (token.length() == 0) {
                 continue;
             }
-            token = token.replaceAll("\\.", "\\\\.");
-            token = token.replaceAll("\\*", ".*");
-            token = token.replaceAll("\\?", ".");
-            if (Pattern.matches(token, name)) {
+            if (ignoreMatches(token, name)) {
                 return true;
             }
         }        
+        ignored = getPropertyValue(SVNProperty.IGNORE);
+        if (ignored != null) {
+            for(StringTokenizer tokens = new StringTokenizer(ignored, "\n\r"); tokens.hasMoreTokens();) {
+                String token = tokens.nextToken();
+                if (token.length() == 0) {
+                    continue;
+                }
+                if (ignoreMatches(token, name)) {
+                    return true;
+                }
+            }        
+        }
         return false;        
+    }
+    
+    private static boolean ignoreMatches(String token, String name) {
+        token = token.replaceAll("\\.", "\\\\.");
+        token = token.replaceAll("\\*", ".*");
+        token = token.replaceAll("\\?", ".");
+        return Pattern.matches(token, name);
     }
     
     private void doCopyFiles(ISVNEntry copy, File dst, String asName) throws SVNException {
