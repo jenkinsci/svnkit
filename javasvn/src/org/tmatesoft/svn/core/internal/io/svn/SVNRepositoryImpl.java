@@ -316,7 +316,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                                 read("(SW(?S?N))", buffer);
                                 if (changedPathsMap != null) {
                                     String path = SVNReader.getString(buffer, 0);
-                                    if (path != null && !PathUtil.isEmpty(path)) {
+                                    if (path != null && !"".equals(path.trim())) {
                                         String type = SVNReader.getString(buffer, 1);
                                         String copyPath = SVNReader.getString(buffer, 2);
                                         long copyRev = SVNReader.getLong(buffer, 3);
