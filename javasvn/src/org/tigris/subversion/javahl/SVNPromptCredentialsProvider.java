@@ -24,11 +24,20 @@ class SVNPromptCredentialsProvider implements ISVNCredentialsProviderEx {
 		if (location != null) {
 			realm = realm == null ? location.toCanonicalForm() : realm;
 		}
-		if (!myPrompt.prompt(realm, System.getProperty("user.name"))) {
+		String userName = myPrompt.getUsername();
+		if (userName == null) {
+			userName = System.getProperty("user.name");
+		}
+		String password = myPrompt.getPassword();
+		if (myPrompt instanceof PromptUserPassword3) {
+			PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
+			if (!prompt3.userAllowedSave() && prompt3.prompt(realm, userName, true)) {
+				userName = prompt3.getUsername();
+				password = prompt3.getPassword();
+			}
+		} else if (!myPrompt.prompt(realm, System.getProperty("user.name"))) {
 			return null;
 		}
-		String userName = myPrompt.getUsername();
-		String password = myPrompt.getPassword();
 		return new SVNSimpleCredentialsProvider.SimpleCredentials(userName, password
 				, null, null);
 	}
