@@ -183,7 +183,6 @@ class SVNStatusUtil {
         if (child.getPropertyValue(SVNProperty.PROP_REJECT_FILE) != null) {
             propStatus = SVNStatus.CONFLICTED;
         }
-        boolean history = false;
         boolean switched = false;
 
         if (child.isMissing()) {
@@ -194,7 +193,6 @@ class SVNStatusUtil {
         } else if (child.isScheduledForAddition()) {
             // may be added (copied) or deleted (dir or file).
             contentsStatus = SVNStatus.ADDED;
-            history = SVNProperty.booleanValue(child.getPropertyValue(SVNProperty.COPIED));
             if (child.isScheduledForDeletion()) {
                 contentsStatus = SVNStatus.REPLACED;
             }
@@ -219,6 +217,7 @@ class SVNStatusUtil {
         if (SVNReporterBaton.isSwitched(parentURL, child)) {
             switched = true;
         }
+        boolean history = SVNProperty.booleanValue(child.getPropertyValue(SVNProperty.COPIED));
         long revision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.COMMITTED_REVISION));
         long wcRevision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.REVISION));
         String author = child.getPropertyValue(SVNProperty.LAST_AUTHOR);
