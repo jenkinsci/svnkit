@@ -98,7 +98,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
 
         // 1. delete dir
         AllTests.runSVNAnonCommand("delete", new String[] {new File(dst2, "directory").getAbsolutePath()});
-        checkoutWorkspace.delete("directory");
+        checkoutWorkspace.delete("directory", true);
         assertEquals(dst, dst2);
 
         // 2. change file
@@ -144,7 +144,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         // more commit to dst, then compare with updates in dst3, dst2
         // 1. delete file
         checkoutWorkspace.update(-1);
-        checkoutWorkspace.delete("added.txt");
+        checkoutWorkspace.delete("added.txt", true);
         // 2. add dir, then add file.
         File dir = new File(dst, "new folder");
         checkoutWorkspace.add("new folder", true, true);
@@ -710,7 +710,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         assertEquals(status.getPropertiesStatus(), SVNStatus.NOT_MODIFIED);
         
         checkoutWorkspace.add("newFile.txt", false, true);
-        checkoutWorkspace.delete("directory/testFile2.txt");
+        checkoutWorkspace.delete("directory/testFile2.txt", true);
 
         status = checkoutWorkspace.status("directory/testFile2.txt", true);
         assertNotNull(status);
@@ -955,7 +955,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         assertEquals(svn, jsvn);
         
         AllTests.runSVNAnonCommand("del", new String[] {new File(svn, "directory/testFile2.txt").getAbsolutePath()});
-        checkoutWorkspace.delete("directory/testFile2.txt");
+        checkoutWorkspace.delete("directory/testFile2.txt", true);
         assertEquals(svn, jsvn);
 
         createFile(new File(jsvn, "directory/testFile2.txt"), "replacement");
@@ -979,7 +979,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         assertEquals(svn, jsvn);
         
         AllTests.runSVNAnonCommand("del", new String[] {new File(svn, "directory").getAbsolutePath()});
-        checkoutWorkspace.delete("directory");
+        checkoutWorkspace.delete("directory", true);
         assertEquals(svn, jsvn);
 
         createFile(new File(jsvn, "directory/testFile2.txt"), "replacement");
@@ -1183,8 +1183,8 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         // 1. delete file
         AllTests.runSVNAnonCommand("delete", new String[]{new File(dst2, "testFile.txt").getAbsolutePath()});
         AllTests.runSVNAnonCommand("delete", new String[]{new File(dst2, "directory").getAbsolutePath()});
-        checkoutWorkspace.delete("testFile.txt");
-        checkoutWorkspace.delete("directory");
+        checkoutWorkspace.delete("testFile.txt", true);
+        checkoutWorkspace.delete("directory", true);
         assertEquals(dst, dst2);
 
         // 2. commit
@@ -1217,7 +1217,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         checkoutWorkspace.checkout(SVNRepositoryLocation.parseURL(getRepositoryURL()), -2, false);
         
         // delete file, commit
-        checkoutWorkspace.delete("testFile.txt");
+        checkoutWorkspace.delete("testFile.txt", true);
         checkoutWorkspace.commit("file deleted");
         
         // add file in place

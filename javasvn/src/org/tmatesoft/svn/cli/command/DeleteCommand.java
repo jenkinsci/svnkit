@@ -64,6 +64,7 @@ public class DeleteCommand extends SVNCommand {
 			final String absolutePath = getCommandLine().getPathAt(i);
 			final String workspacePath = absolutePath;
 			final ISVNWorkspace workspace = createWorkspace(absolutePath);
+            boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
 			workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
 				public void modified(String path, int kind) {
 					try {
@@ -79,7 +80,7 @@ public class DeleteCommand extends SVNCommand {
 
 			final String relativePath = SVNUtil.getWorkspacePath(workspace, absolutePath);
 			DebugLog.log("Workspace/path is '" + workspace.getID() + "'/'" + relativePath + "'");
-			workspace.delete(relativePath);
+			workspace.delete(relativePath, force);
 		}
 	}
 }

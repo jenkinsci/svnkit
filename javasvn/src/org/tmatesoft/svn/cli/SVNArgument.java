@@ -36,6 +36,7 @@ public abstract class SVNArgument {
     public static final SVNArgument NO_IGNORE = createUnaryArgument(new String[] {"--no-ignore"});
     public static final SVNArgument MESSAGE = createStringArgument(new String[] {"--message", "-m"});
     public static final SVNArgument REVISION = createStringArgument(new String[] {"--revision", "-r"});
+    public static final SVNArgument FORCE = createUnaryArgument(new String[] {"--force"});
     
     public static SVNArgument findArgument(String name) {
         for(Iterator arguments = ourArguments.iterator(); arguments.hasNext();) {

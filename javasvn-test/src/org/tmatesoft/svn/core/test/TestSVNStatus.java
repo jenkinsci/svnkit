@@ -101,7 +101,7 @@ public class TestSVNStatus extends AbstractRepositoryTest {
         modifyFile(modified, "modified file");
         missing.delete();
         ws.setPropertyValue("status/properties.txt", "name", "value");
-        ws.delete("status/deleted.txt");
+        ws.delete("status/deleted.txt", true);
         
         // make remote changes
         File remote = AllTests.createPlayground();
@@ -112,10 +112,10 @@ public class TestSVNStatus extends AbstractRepositoryTest {
         modifyFile(new File(remote, "status/conflict.txt"), "conflict modification");
         createFile(new File(remote, "status/remoteAdded.txt"), "added remotely");
         ws2.add("status/remoteAdded.txt", false, false);
-        ws2.delete("status/replaced.txt");
+        ws2.delete("status/replaced.txt", true);
         createFile(new File(remote, "status/replaced.txt"), "replaced");
         ws2.add("status/replaced.txt", false, false);
-        ws2.delete("status/remoteDeleted.txt");
+        ws2.delete("status/remoteDeleted.txt", true);
         ws2.setPropertyValue("status/propsConflict.txt", "name", "conflict");
         ws2.commit("remote commit");
         
