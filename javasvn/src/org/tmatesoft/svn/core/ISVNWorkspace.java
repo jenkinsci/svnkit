@@ -125,6 +125,8 @@ public interface ISVNWorkspace {
     public void delete(String path, boolean force) throws SVNException;
 
     public void copy(String source, String destination, boolean move) throws SVNException;
+
+    public void copy(String source, String destination, boolean move, boolean virtual) throws SVNException;
     
     public void markResolved(String path, boolean recursive) throws SVNException;
 

@@ -1020,11 +1020,33 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
 
     }
-
+    
     public void copy(String source, String destination, boolean move) throws SVNException {
+        copy(source, destination, move, false);
+    }
+
+    public void copy(String source, String destination, boolean move, boolean virtual) throws SVNException {
         try {
-            if (locateEntry(destination, true) != null) {
-                throw new SVNException("'" + destination + "' already exists in working copy");
+            if (virtual) {
+                // check if unversioned destination is already there
+                ISVNEntry dstEntry = locateEntry(destination, true);
+                if (dstEntry != null && dstEntry.isManaged()) {
+                    throw new SVNException("'" + destination + "' already exists in working copy and it is versioned");
+                }
+                ISVNEntry srcEntry = locateEntry(source, false);
+                if (move) {
+                    if (srcEntry == null || !srcEntry.isMissing()) {
+                        throw new SVNException("'" + source + "' already exists in working copy and it is not missing");
+                    }
+                } else {
+                    if (srcEntry == null || !srcEntry.isManaged() || srcEntry.isMissing()) {
+                        throw new SVNException("'" + source + "' does not exist in working copy.");
+                    }
+                }
+            } else {
+                if (locateEntry(destination, true) != null) {
+                    throw new SVNException("'" + destination + "' already exists in working copy");
+                }
             }
             ISVNEntry entry = locateParentEntry(destination);
             String name = PathUtil.tail(destination);
@@ -1047,10 +1069,8 @@ public class SVNWorkspace implements ISVNWorkspace {
             fireEntryModified(copied, SVNStatus.ADDED, true);
             if (move && toCopyParent != null) {
                 toCopyParent.asDirectory().scheduleForDeletion(toCopy.getName(), true);
-                // look for unmanaged children in deleted folder, that was moved
-                // and thus have to be deleted.
-                fireEntryModified(toCopy, SVNStatus.DELETED, false);
 
+                fireEntryModified(toCopy, SVNStatus.DELETED, false);
                 toCopyParent.save();
                 toCopyParent.dispose();
             }
