@@ -20,6 +20,7 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.DebugLog;
@@ -33,14 +34,14 @@ public class DeleteCommand extends SVNCommand {
 
 	public void run(PrintStream out, PrintStream err) throws SVNException {
 		if (getCommandLine().hasURLs()) {
-			runRemote();
+			runRemote(out);
 		}
 		else {
 			runLocally(out);
 		}
 	}
 
-	private void runRemote() throws SVNException {
+	private void runRemote(PrintStream out) throws SVNException {
 		final String entryUrl = getCommandLine().getURL(0);
 		final String commitMessage = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
 		final String entry = PathUtil.tail(entryUrl);
@@ -51,7 +52,10 @@ public class DeleteCommand extends SVNCommand {
 			editor.openRoot(-1);
 			editor.deleteEntry(entry, -1);
 			editor.closeDir();
-			editor.closeEdit();
+			SVNCommitInfo info = editor.closeEdit();
+            
+            out.println();
+            out.println("Committed revision " + info.getNewRevision() + ".");
 		}
 		catch (SVNException ex) {
 			editor.abortEdit();
