@@ -81,6 +81,8 @@ check for existense of the native svn libraries. You may download it at <a id="n
 Download and put this file into ECLIPSE_HOME/plugins/org.tigris.subversion.subclipse.core_0.9.26/ directory in place of
 existing <code>svnClientAdapter.jar</code> file.</li>
 <li>Start Eclipse with <code>-clean</code> command line argument to make it clean caches and use new libraries.</li>
+<li>Sometimes <code>-clean</code> argument is not enough and after restarting, Eclipse still uses cached libraries. In this case delete 
+<code>ECLIPSE_HOME/configuration</code> directory and restart Eclipse.</li>
 <li>When new version of JavaSVN will become available, just replace older version javasvn.jar file with the newer one.</li>
 </ul>
 <h4>SVN+SSH authentication with private key</h4>
