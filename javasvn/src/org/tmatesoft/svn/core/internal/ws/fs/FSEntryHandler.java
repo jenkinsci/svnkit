@@ -12,6 +12,7 @@
 
 package org.tmatesoft.svn.core.internal.ws.fs;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
@@ -19,23 +20,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.tmatesoft.svn.core.SVNProperty;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * @author TMate Software Ltd.
  */
-public class FSEntryHandler extends DefaultHandler {
-    
-    private Map myChildEntries;
-    private static SAXParserFactory ourSAXParserFactory;
+public class FSEntryHandler {
     
     public static void save(Writer os, Map entry, Collection childEntries, Collection deletedEntries) throws IOException {
         os.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
@@ -51,18 +41,27 @@ public class FSEntryHandler extends DefaultHandler {
         os.write("</wc-entries>\n");
     }
     
-    public static FSEntryHandler parse(InputSource source) throws IOException {
-        SAXParser parser = null;
-        FSEntryHandler handler = new FSEntryHandler();
-        try {
-            parser = getSAXParserFactory().newSAXParser();
-            parser.parse(source, handler);
-        } catch (ParserConfigurationException e) {
-            throw new IOException(e.getMessage());
-        } catch (SAXException e) {
-            throw new IOException(e.getMessage());
+    public static Map parse(BufferedReader reader) throws IOException {
+        String line;
+        Map attrs = null;
+        Map childEntries = new HashMap();
+        while((line = reader.readLine()) != null) {
+            line = line.trim();
+            if (line.startsWith("<entry")) {
+                attrs = new HashMap();
+                continue;
+            } 
+            if (attrs != null) {
+                String name = line.substring(0, line.indexOf('='));
+                String value = line.substring(line.indexOf('\"') + 1, line.lastIndexOf('\"'));
+                attrs.put(FSEntry.ENTRY_PREFIX + name, value);
+                if (line.endsWith("/>")) {
+                    childEntries.put(attrs.get(SVNProperty.NAME), attrs);
+                    attrs = null;
+                }
+            }
         }
-        return handler;
+        return childEntries;
     }
     
     private static void saveEntry(Writer os, Map parent, Map entry) throws IOException {
@@ -105,38 +104,5 @@ public class FSEntryHandler extends DefaultHandler {
             os.write("\"");
         }
         os.write("/>\n");
-    }
-    
-    private static SAXParserFactory getSAXParserFactory() {
-        if (ourSAXParserFactory == null) {
-            ourSAXParserFactory = SAXParserFactory.newInstance();
-            ourSAXParserFactory.setNamespaceAware(true);
-        }
-        return ourSAXParserFactory;
-    }
-    
-    private FSEntryHandler() {
-    }
-
-    public Map getChildEntries() {
-        if (myChildEntries == null) {
-            myChildEntries = new HashMap();
-        }
-        return myChildEntries;
-    }
-    
-    public void startElement(String uri, String localName, String qName,  Attributes attrs) throws SAXException {
-        if ("entry".equals(qName)) {
-            Map entry = createEntry(attrs);
-            getChildEntries().put(entry.get(SVNProperty.NAME), entry);
-        }
-    }
-    
-    private static Map createEntry(Attributes attrs) {
-        Map result = new HashMap();
-        for(int i = 0; i < attrs.getLength(); i++) {
-            result.put(FSEntry.ENTRY_PREFIX + attrs.getQName(i), attrs.getValue(i));
-        }
-        return result;
     }
 }

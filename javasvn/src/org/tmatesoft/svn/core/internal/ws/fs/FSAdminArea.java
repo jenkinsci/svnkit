@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.io.Writer;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,7 +25,6 @@ import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-import org.xml.sax.InputSource;
 
 /**
  * @author alex
@@ -67,12 +65,10 @@ public class FSAdminArea {
         if (!entriesFile.exists()) {
             return new HashMap();
         }
-        Reader reader = null;
+        BufferedReader reader = null;
         try {
             reader = new BufferedReader(new InputStreamReader(new FileInputStream(entriesFile), "UTF-8"));
-            InputSource source = new InputSource(reader);
-            FSEntryHandler handler = FSEntryHandler.parse(source);
-            return handler.getChildEntries();
+            return FSEntryHandler.parse(reader);
         } catch (IOException e) {
             throw new SVNException(e);
         } finally {
