@@ -110,8 +110,8 @@ public class SVNCheckoutEditor implements ISVNEditor {
             tempFile = File.createTempFile("svn", "temp");
             tempFile.deleteOnExit();
             is = new FileInputStream(myTempFile);
-            source = new SVNRAFileData((File) myStack.peek());
-            target = new SVNRAFileData(tempFile);
+            source = new SVNRAFileData((File) myStack.peek(), false);
+            target = new SVNRAFileData(tempFile, false);
 
             myDiffWindow.apply(source, target, is, 0);
             source.close();

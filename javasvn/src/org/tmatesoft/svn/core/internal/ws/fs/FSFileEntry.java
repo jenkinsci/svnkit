@@ -81,9 +81,9 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                     if (myTempFile == null) {
                         myTempFile = getRootEntry().createTemporaryFile();
                     }
-                    contents = new SVNRAFileData(myTempFile);
+                    contents = new SVNRAFileData(myTempFile, false);
                 } else {
-                    contents = new SVNRAFileData(getRootEntry().getWorkingCopyFile(this));
+                    contents = new SVNRAFileData(getRootEntry().getWorkingCopyFile(this), false);
                 }
                 window.apply(contents, contents, newData, contents.length());
             }
@@ -103,7 +103,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             }
         } else {
             if (myIsCheckout || !getAdminArea().getBaseFile(this).exists()){
-                ISVNRAData source = new SVNRAFileData(getAdminArea().getBaseFile(this));
+                ISVNRAData source = new SVNRAFileData(getAdminArea().getBaseFile(this), false);
                 long offset = 0;
                 if (getAdminArea().getBaseFile(this).exists()) {
                     offset = getAdminArea().getBaseFile(this).length();
@@ -112,8 +112,8 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 myIsCheckout = true;
                 
             } else {
-                ISVNRAData source = new SVNRAFileData(getAdminArea().getBaseFile(this));
-                ISVNRAData target = new SVNRAFileData(getAdminArea().getTemporaryBaseFile(this));
+                ISVNRAData source = new SVNRAFileData(getAdminArea().getBaseFile(this), true);
+                ISVNRAData target = new SVNRAFileData(getAdminArea().getTemporaryBaseFile(this), false);
                 long offset = 0;
                 if (getAdminArea().getTemporaryBaseFile(this).exists()) {
                     offset = getAdminArea().getTemporaryBaseFile(this).length();
@@ -175,9 +175,9 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             
             File digestFile = getRootEntry().createTemporaryFile();
             digest = FSUtil.copy(tmpFile != null ? tmpFile : file, digestFile, null, null, createDigest());
-            SVNRAFileData workFile = new SVNRAFileData(tmpFile != null ? tmpFile : file);
+            SVNRAFileData workFile = new SVNRAFileData(tmpFile != null ? tmpFile : file, true);
             SVNRAFileData baseFile = generator instanceof SVNSequenceDeltaGenerator ? 
-                    new SVNRAFileData(getAdminArea().getBaseFile(this)) : null;
+                    new SVNRAFileData(getAdminArea().getBaseFile(this), true) : null;
             try {
                 generator.generateDiffWindow(target, workFile, baseFile);
                 if (DebugLog.isSafeMode() && SVNAllDeltaGenerator.lastTempFile() != null) {

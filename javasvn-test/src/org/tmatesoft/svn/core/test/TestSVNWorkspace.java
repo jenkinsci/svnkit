@@ -253,9 +253,6 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         AllTests.runSVNCommand("co", new String[] {getRepositoryURL(), dst2.getAbsolutePath()});
         checkoutWorkspace.update(-1);
         assertEquals(dst, dst2);
-        
-        // TODO test copy of deep folder
-        
     }
 
     public void testMove() throws Throwable {

@@ -431,7 +431,7 @@ public class TestSVNRepository extends AbstractRepositoryTest {
 
                     is = new FileInputStream(myTempFile);
                     tempTarget = File.createTempFile("svn", "test");
-                    SVNRAFileData target = new SVNRAFileData(tempTarget);
+                    SVNRAFileData target = new SVNRAFileData(tempTarget, false);
                     myWindow.apply(target, target, is, 0);
                     target.close();      
                     tempFilesMap.put(token, tempTarget);

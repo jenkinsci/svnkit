@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
 
 
 /**
@@ -85,7 +86,7 @@ public class SVNDiffWindow {
                 target.append(src, myInstructions[i].length);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            DebugLog.error(e);
             throw new SVNException(e);
         } finally {
             try {

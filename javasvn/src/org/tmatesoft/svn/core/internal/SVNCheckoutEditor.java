@@ -221,8 +221,10 @@ public class SVNCheckoutEditor implements ISVNEditor {
         long t = System.currentTimeMillis();
         if (myDiffWindow == null) {
             // create empty file?
+            DebugLog.log("UPDATED: NO DIFF WINDOW TO APPLY");
             myCurrentFile.applyDelta(null, null, myIsExport);
         } else {
+            DebugLog.log("UPDATED: APPLYING DIFF WINDOWS: " + myDiffWindow.size());
             for(int i = 0; i < myDiffWindow.size(); i++) {
                 SVNDiffWindow window = (SVNDiffWindow) myDiffWindow.get(i);
                 InputStream newData = null;

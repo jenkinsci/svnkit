@@ -299,7 +299,6 @@ public class SVNWorkspace implements ISVNWorkspace {
         try {
 
             ISVNEntry targetEntry = locateEntry(path);
-            // TODO collect externals from parent.
             Collection externalsSet = createExternals(path);
             String target = null;
             if (targetEntry == null || !targetEntry.isDirectory()) {

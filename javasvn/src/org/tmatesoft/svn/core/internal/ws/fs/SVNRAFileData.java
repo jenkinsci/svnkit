@@ -66,9 +66,11 @@ public class SVNRAFileData implements ISVNRAData {
     private File myRawFile;
     private byte[] myBuffer;
     private SelfStream mySelfStream;
+    private boolean myIsReadonly;
     
-    public SVNRAFileData(File file) {        
+    public SVNRAFileData(File file, boolean readonly) {        
         myRawFile = file;
+        myIsReadonly = readonly;
     }
 
     public InputStream read(final long offset, final long length) throws IOException {
@@ -118,8 +120,10 @@ public class SVNRAFileData implements ISVNRAData {
                 myRawFile.getParentFile().mkdirs();
                 myRawFile.createNewFile();
             }
-            FSUtil.setReadonly(myRawFile, false);
-            myFile = new RandomAccessFile(myRawFile, "rw");
+            if (!myIsReadonly) {
+                FSUtil.setReadonly(myRawFile, false);
+            }
+            myFile = new RandomAccessFile(myRawFile, myIsReadonly ? "r" : "rw");
         }
         return myFile;
     }
