@@ -13,7 +13,6 @@
 package org.tmatesoft.svn.core.internal;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -42,6 +41,7 @@ class SVNReporterBaton implements ISVNReporterBaton {
         myIsRecursive = recursive;
         myTarget = target;
         myMissingEntries = new HashSet();
+		myExternals = new HashSet();
     }
 
     protected void reportEntry(ISVNEntry entry, ISVNReporter reporter, String parentURL, long parentRevision) throws SVNException {
@@ -149,7 +149,7 @@ class SVNReporterBaton implements ISVNReporterBaton {
     }
     
     public Collection getExternals() {
-        return myExternals == null ? Collections.EMPTY_SET : myExternals;
+        return myExternals;
     }
     
     public static boolean isSwitched(String parentURL, ISVNEntry entry) throws SVNException {
