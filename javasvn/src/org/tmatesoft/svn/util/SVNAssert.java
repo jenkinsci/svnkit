@@ -12,27 +12,18 @@
 
 package org.tmatesoft.svn.util;
 
-import java.io.File;
-
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNWorkspaceManager;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-
 /**
  * @author TMate Software Ltd.
  */
 public class SVNAssert {
 
-	public static void assertTrue(boolean condition) {
-		assertTrue(condition, "");
-	}
+    public static void assertTrue(boolean condition) {
+        assertTrue(condition, "");
+    }
 
-	public static void assertTrue(boolean condition, String message) {
-		if (!condition) {
-			throw new InternalError(message);
-		}
-	}
+    public static void assertTrue(boolean condition, String message) {
+        if (!condition) {
+            throw new InternalError(message);
+        }
+    }
 }
