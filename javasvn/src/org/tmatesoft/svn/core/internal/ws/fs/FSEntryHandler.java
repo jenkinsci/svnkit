@@ -96,7 +96,11 @@ public class FSEntryHandler extends DefaultHandler {
             os.write("   ");
             os.write(e.getKey().toString().substring(FSEntry.ENTRY_PREFIX.length()));
             os.write("=\"");
-            os.write(e.getValue().toString());
+            String value = e.getValue().toString();
+            value = value.replaceAll("<", "&lt;");
+            value = value.replaceAll(">", "&gt;");
+            value = value.replaceAll("\"", "&quot;");
+            os.write(value);
             os.write("\"");
         }
         os.write("/>\n");
