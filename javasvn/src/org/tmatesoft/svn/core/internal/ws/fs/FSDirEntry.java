@@ -560,6 +560,10 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             if (entryMap != null) {
                 unschedule(entryMap);
             }
+            if (child.getPropertyValue(SVNProperty.DELETED) == null &&
+                    entryMap.get(SVNProperty.DELETED) != null) {
+                entryMap.remove(SVNProperty.DELETED);
+            }
         }
         unschedule(((FSEntry) child).getEntry()); 
     }
