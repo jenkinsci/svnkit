@@ -205,7 +205,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
     }
     
     public void applyTextDelta(String baseChecksum)  throws SVNException {
-        if (baseChecksum != null && myContentsStatus == 0) {
+        if (myContentsStatus == 0) {
             if (myCurrentFile.isCorrupted()) {
                 myCurrentFile.setPropertyValue(SVNProperty.CORRUPTED, Boolean.TRUE.toString());
                 myWorkspace.fireEntryUpdated(myCurrentFile, SVNStatus.CORRUPTED, myPropertiesStatus, myTargetRevision);
