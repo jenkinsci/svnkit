@@ -14,7 +14,6 @@ package org.tmatesoft.svn.util;
 
 import java.text.DateFormat;
 import java.text.FieldPosition;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -52,7 +51,7 @@ public class TimeUtil {
         str = str.substring(0, 23);
     	try {
 			return ISO8601_FORMAT_IN.parse(str);
-		} catch (ParseException e) {
+		} catch (Throwable e) {
 		}
 		return new Date(0);
     }
