@@ -130,6 +130,7 @@ public abstract class FSEntry implements ISVNEntry {
                 myProperties = getAdminArea().loadProperties(this);
             }
             if (value != null) {
+                value = normalizePropertyValue(name, value);
                 myProperties.put(name, value);
             } else {
                 myProperties.remove(name);
@@ -449,6 +450,46 @@ public abstract class FSEntry implements ISVNEntry {
     }
     protected long getOldRevision() {
         return myOldRevision;
+    }
+    
+    private static String normalizePropertyValue(String name, String value) {
+        if (value == null) {
+            return null;
+        }
+        if (name.startsWith(SVNProperty.SVN_PREFIX)) {
+            value = convertEolsToNative(value);
+        }
+        if (SVNProperty.EXECUTABLE.equals(name)) {
+            return "*";
+        } else if (SVNProperty.IGNORE.equals(name) || SVNProperty.EXTERNALS.equals(name)) {
+            value = value.trim();
+            value += System.getProperty("line.separator");
+            return value;
+        } else if (SVNProperty.EOL_STYLE.equals(name)) {
+            return value.trim();
+        } else if (SVNProperty.KEYWORDS.equals(name)) {
+            return value.trim();
+        } else if (SVNProperty.MIME_TYPE.equals(name)) {
+            return value.trim();
+        }            
+        return value;
+    }
+
+    private static String convertEolsToNative(String value) {
+        StringBuffer realValue = new StringBuffer(value.length());
+        for(int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            if (ch == '\n') {
+                realValue.append(System.getProperty("line.separator"));
+            } else if (ch == '\r') {
+                if (i + 1 < value.length() && value.charAt(i + 1) != '\n') {
+                    realValue.append(System.getProperty("line.separator"));
+                }
+            } else {
+                realValue.append(ch);
+            }
+        }
+        return realValue.toString();
     }
 
     protected abstract Map getEntry() throws SVNException;
