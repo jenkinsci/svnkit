@@ -35,7 +35,7 @@
 			failonerror="false" overwrite="false"/>
         </target>
 
-	<target name="build-standalone" depends="clean">
+	<target name="build-standalone" depends="init">
 		<mkdir dir="javasvn/bin" />
 		<mkdir dir="javasvn-test/bin" />
 		<mkdir dir="contrib/sequence/bin" />
@@ -165,7 +165,7 @@
 	    </zip>
 	</target>
 	
-	<target name="deploy" depends="build-eclipse,doc,build-src-jar">
+	<target name="deploy" depends="clean,build-eclipse,doc,build-src-jar">
 		<!-- zip this folder contents -->
 		<zip destfile="org.tmatesoft.svn_1.0.0_${date}.standalone.zip">
 			<zipfileset dir=".">
