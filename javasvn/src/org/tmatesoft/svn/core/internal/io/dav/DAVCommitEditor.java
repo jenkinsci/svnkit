@@ -99,6 +99,13 @@ class DAVCommitEditor implements ISVNEditor {
         path = PathUtil.encode(path);
         
         DAVResource parentResource = (DAVResource) myDirsStack.peek();
+        if (parentResource.getWorkingURL() == null) {
+        	String filePath = PathUtil.append(parentResource.getURL(), PathUtil.tail(path));
+    		DAVResponse responce = DAVUtil.getResourceProperties(myConnection, filePath, null, DAVElement.STARTING_PROPERTIES, true);
+    		if (responce != null) {
+    			throw new SVNException("Directory '"  + filePath + "' already exists"); 
+    		}
+        }
         checkoutResource(parentResource);
         String wPath = parentResource.getWorkingURL();
 
@@ -163,6 +170,13 @@ class DAVCommitEditor implements ISVNEditor {
         path = PathUtil.encode(path);
         // checkout parent collection.
         DAVResource parentResource = (DAVResource) myDirsStack.peek();
+        if (parentResource.getWorkingURL() == null) {
+        	String filePath = PathUtil.append(parentResource.getURL(), PathUtil.tail(path));
+    		DAVResponse responce = DAVUtil.getResourceProperties(myConnection, filePath, null, DAVElement.STARTING_PROPERTIES, true);
+    		if (responce != null) {
+    			throw new SVNException("File '"  + filePath + "' already exists"); 
+    		}
+        }
         checkoutResource(parentResource);
         String wPath = parentResource.getWorkingURL();
         // create child resource.
