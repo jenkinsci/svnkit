@@ -506,7 +506,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         SVNStatusUtil.doStatus(this, parent != null ? parent.asDirectory() : null, editor, handler, path, externals, descend, includeUnmodified,
                 includeIgnored, descendInUnversioned, descendFurtherInIgnored);
 
-        if (myExternalsHandler != null && externals != null && descend) {
+        if (myExternalsHandler != null && externals != null) {
             Collection paths = new HashSet();
             for (Iterator exts = externals.iterator(); exts.hasNext();) {
                 SVNExternal external = (SVNExternal) exts.next();
@@ -514,8 +514,10 @@ public class SVNWorkspace implements ISVNWorkspace {
                     continue;
                 }
                 paths.add(external.getPath());
-                if (!external.getPath().startsWith(path)) {
-                    // not below passed path
+                if (!descend && !external.getPath().equals(path)) {
+                    DebugLog.log("SKIPPING EXTERNAL STATUS FOR " + external.getPath());
+                    continue;
+                } else if (!external.getPath().startsWith(path)) {
                     DebugLog.log("SKIPPING EXTERNAL STATUS FOR " + external.getPath());
                     continue;
                 }
