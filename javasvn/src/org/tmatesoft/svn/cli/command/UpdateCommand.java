@@ -40,12 +40,12 @@ public class UpdateCommand extends SVNCommand {
         final String homePath = path;
         workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
             public void updated(String updatedPath, int contentsStatus, int propertiesStatus, long rev) {
-                if ("".equals(updatedPath)) {
-                    return;
-                }
                 try {
                     updatedPath = convertPath(homePath, workspace, updatedPath);
-                } catch (IOException e) {}
+                } catch (IOException e) {
+                    DebugLog.error(e);
+                    
+                }
                 char contents = 'U';
                 char properties = ' ';
                 if (contentsStatus == SVNStatus.ADDED) {
@@ -65,12 +65,10 @@ public class UpdateCommand extends SVNCommand {
                 } else if (propertiesStatus == SVNStatus.CONFLICTED) {
                     properties = 'C';
                 }
-
+                DebugLog.log(contents + "" + properties + ' ' + updatedPath);
                 if (contents == ' ' && properties == ' ') {
                     return;
                 }
-
-                DebugLog.log(contents + "" + properties + ' ' + updatedPath);
                 out.println(contents + "" + properties + ' ' + updatedPath);
             }
         });

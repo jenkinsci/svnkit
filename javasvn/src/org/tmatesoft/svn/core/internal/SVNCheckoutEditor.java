@@ -199,11 +199,11 @@ public class SVNCheckoutEditor implements ISVNEditor {
         myDiffWindow.add(diffWindow);
         try {
             return myMediator.createTemporaryLocation(diffWindow);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Throwable e) {
+            DebugLog.error(e);
             throw new SVNException(e);
         } finally {
-                DebugLog.log("UPDATED: TEXTDELTACHUNK: SAVED");
+            DebugLog.log("UPDATED: TEXTDELTACHUNK: SAVED");
         }
     }    
     
@@ -222,13 +222,13 @@ public class SVNCheckoutEditor implements ISVNEditor {
                     newData = myMediator.getTemporaryLocation(window);
                     myCurrentFile.applyDelta(window, newData, myIsExport);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    DebugLog.error(e);
                     throw new SVNException(e);
                 } catch (SVNException e) {
-                    e.printStackTrace();
+                    DebugLog.error(e);
                     throw e;
                 } catch (Throwable th) {
-                    th.printStackTrace();
+                    DebugLog.error(th);
                     throw new SVNException(th);
                 } finally {        
                     if (newData != null) {

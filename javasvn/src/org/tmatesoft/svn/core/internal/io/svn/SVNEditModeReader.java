@@ -84,6 +84,9 @@ public class SVNEditModeReader {
                             public void write(int b) {}
                         };
                     }
+                    if (myLenght == 0) {
+                        closeDiffStream();
+                    }
                 }
             } else if (myDiffStream != null) {
                 if (myLenght > 0) {
@@ -97,15 +100,7 @@ public class SVNEditModeReader {
                     }
                 }
                 if (myLenght == 0) {
-                    try {
-                        myDiffStream.close();
-                    } catch (IOException e) {
-                        throw new SVNException(e);
-                    }
-                    myBuilder.reset(1);
-                    myDiffStream = null;
-                    myLenght = 0;
-                    myLenght = -1;
+                    closeDiffStream();
                 } 
             } 
             return true;
@@ -148,6 +143,17 @@ public class SVNEditModeReader {
             myEditor.abortEdit();
         }
         return !last;
+    }
+
+    private void closeDiffStream() throws SVNException {
+        try {
+            myDiffStream.close();
+        } catch (IOException e) {
+            throw new SVNException(e);
+        }
+        myBuilder.reset(1);
+        myDiffStream = null;
+        myLenght = -1;
     }
 
 }

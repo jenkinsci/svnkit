@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNError;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
@@ -281,7 +282,7 @@ class SVNReader {
                     try {
                         hasMore = editorBaton.processCommand(commandName, is);
                     } catch (Throwable th) {
-                        th.printStackTrace();
+                        DebugLog.error(th);
                         if (th instanceof SVNException) {
                             throw ((SVNException) th);
                         }
