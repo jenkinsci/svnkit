@@ -69,7 +69,6 @@ public class SocketFactory {
         int attempts = 3;
         while(true) {
             try {
-                System.out.println("creating ssl socket for " + host + " : " + port);
                 return manager.getSSLContext(host, port).getSocketFactory().createSocket(socket, host, port, true);
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {

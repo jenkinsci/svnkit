@@ -93,34 +93,20 @@ class HttpConnection {
                         props.put("Proxy-Authorization", getProxyAuthString());
                     }
                     myOutputStream = DebugLog.getLoggingOutputStream("http", mySocket.getOutputStream());
-                    /*
-                    OutputStream os = mySocket.getOutputStream();
-                    os.write("CONNECT ".getBytes());
-                    os.write((mySVNRepositoryLocation.getHost() + ":" + mySVNRepositoryLocation.getPort()).getBytes());
-                    os.write(" HTTP/1.1".getBytes());
-                    os.write("\r\n".getBytes());
-                    os.write("\r\n".getBytes());
-                    os.flush();
-                    */
                     sendHeader("CONNECT", mySVNRepositoryLocation.getHost() + ":" + mySVNRepositoryLocation.getPort(), props, null);
                     myOutputStream.flush();
-                    System.out.println("reading connect responce");
                     DAVStatus status = readHeader(new HashMap());
                     if (status != null && status.getResponseCode() == 200) {
                         myInputStream = null;
                         myOutputStream = null;
-                        System.out.println("creating new socket!");
                         mySocket = SocketFactory.createSSLSocket(DAVRepositoryFactory.getSSLManager(), host, port, mySocket);
-                        System.out.println("created: " + mySocket);
                         return;
                     }
-                    System.out.println("no header read");
                     throw new IOException("couldn't establish http tunnel for proxied secure connection: " + (status != null ? status.getErrorText() + "" : " for unknow reason"));
                 }
             } else {
                 mySocket = isSecured() ? SocketFactory.createSSLSocket(DAVRepositoryFactory.getSSLManager(), host, port)
                         : SocketFactory.createPlainSocket(host, port);
-                System.out.println("socket created: " + mySocket);
             }
             myConnectCount++;
         } 
@@ -219,7 +205,6 @@ class HttpConnection {
     }
 
     private DAVStatus sendRequest(String method, String path, Map header, InputStream requestBody) throws SVNException {
-        System.out.println("sending: " + method);
         Map readHeader = new HashMap();
         if (myUserCredentialsProvider != null) {
             myUserCredentialsProvider.reset();
@@ -539,7 +524,6 @@ class HttpConnection {
         	if (mySocket == null) {
         		return null;
         	}
-            System.out.println("os created: " + mySocket);
             myOutputStream = DebugLog.getLoggingOutputStream("http", new BufferedOutputStream(mySocket.getOutputStream(), 2048));
         }
         return myOutputStream;
@@ -550,7 +534,6 @@ class HttpConnection {
         	if (mySocket == null) {
         		return null;
         	}
-            System.out.println("is created: " + mySocket);
             myInputStream = new BufferedInputStream(mySocket.getInputStream(), 2048);
         }
         return myInputStream;
