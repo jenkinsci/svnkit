@@ -558,8 +558,13 @@ public class SVNWorkspace implements ISVNWorkspace {
         if (getLocation() == null) {
             throw new SVNException(getRoot().getID() + " does not contain working copy files");
         }
-        SVNRepository repository = SVNUtil.createRepository(this, "");
-        repository.log(new String[] { path }, startRevision, endRevison, discoverPath, stopOnCopy, handler);
+        SVNRepository repository = SVNUtil.createRepository(this, path);
+        ISVNEntry entry = locateEntry(path);
+        String targetPath = "";
+        if (!entry.isDirectory()) {
+        	targetPath = entry.getName();
+        }
+        repository.log(new String[] { targetPath }, startRevision, endRevison, discoverPath, stopOnCopy, handler);
     }
 
     // import
