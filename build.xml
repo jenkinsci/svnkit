@@ -56,8 +56,8 @@
         <mkdir dir="javasvn-eclipse/bin" />
 
         <path id="eclipse.classpath">
-            <pathelement path="lib/javasvn.jar" />
-            <pathelement path="lib/jsch.jar" />
+            <pathelement path="build/lib/javasvn.jar" />
+            <pathelement path="build/lib/jsch.jar" />
             <pathelement path="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0/runtime.jar" />
             <pathelement path="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0/osgi.jar" />
         </path>

@@ -1323,7 +1323,6 @@ public class SVNClient implements SVNClientInterface {
 			}
 			int updateKind = 0;
 			int contents = 0;
-			int props = 0;
 			switch (contentsStatus) {
 			case SVNStatus.ADDED:
 				updateKind = NotifyAction.update_add;
@@ -1341,7 +1340,17 @@ public class SVNClient implements SVNClientInterface {
 			case SVNStatus.DELETED:
 				updateKind = NotifyAction.update_delete;
 			}
-			props = props == 0 ? NotifyStatus.unchanged : props;
+			int props = NotifyStatus.unchanged;
+			switch (propertiesStatus) {
+			case SVNStatus.UPDATED:
+				props = NotifyStatus.changed;
+				break;
+			case SVNStatus.CONFLICTED:
+				props = NotifyStatus.conflicted;
+				break;
+			case SVNStatus.MERGED:
+				props = NotifyStatus.merged;
+			}
 			contents = contents == 0 ? NotifyStatus.unchanged : contents;
 			try {
 				String mimeType = myWorkspace.getPropertyValue(p, SVNProperty.MIME_TYPE);
