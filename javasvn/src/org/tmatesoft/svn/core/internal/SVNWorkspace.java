@@ -631,9 +631,13 @@ public class SVNWorkspace implements ISVNWorkspace {
                 if (entry.isScheduledForAddition()) {
                     ISVNEntry parent = locateParentEntry(entry.getPath());
                     while (parent != null && parent.isScheduledForAddition() && !parent.isScheduledForDeletion()) {
-                        if (!includeParents && !modified.contains(parent)) {
-                            throw new SVNException("'" + p + "' is not under version control");
+                        if (!includeParents) {
+                            if (!modified.contains(parent)) {
+                                throw new SVNException("'" + p + "' is not under version control");
+                            }
+                            break;
                         }
+                        modifiedParents.add(parent);
                         DebugLog.log("HV: 'added' parent added to transaction: " + parent.getPath());
                         parent = locateParentEntry(parent.getPath());
                     }
