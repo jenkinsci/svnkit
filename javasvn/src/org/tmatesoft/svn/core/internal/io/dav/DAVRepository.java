@@ -237,7 +237,6 @@ class DAVRepository extends SVNRepository {
 		try {
 			openConnection();
 			String[] fullPaths = new String[targetPaths.length];
-			String localRoot = getLocationPath().substring(getRepositoryRoot().length());
 			
 			// convert these path to be all full paths 
 			for (int i = 0; i < targetPaths.length; i++) {

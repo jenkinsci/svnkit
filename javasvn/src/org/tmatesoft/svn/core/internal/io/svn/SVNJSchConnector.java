@@ -16,7 +16,6 @@ import org.tmatesoft.svn.util.SVNUtil;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import com.jcraft.jsch.UserInfo;
 
 /**
  * @author Marc Strapetz
@@ -37,8 +36,6 @@ public class SVNJSchConnector implements ISVNConnector {
             throw new SVNException("Credentials provider is required for SSH connection");
         }
         provider.reset();
-        final String host = repository.getLocation().getHost();
-        final int port = repository.getLocation().getPort();
 
         ISVNCredentials credentials = SVNUtil.nextCredentials(provider, repository.getLocation(), null);
         SVNAuthenticationException lastException = null;
@@ -71,7 +68,6 @@ public class SVNJSchConnector implements ISVNConnector {
             throw new SVNAuthenticationException("Can't establish SSH connection without credentials");
         }
         repository.setCredentials(credentials);
-        long start;
         try {
             int retry = 1;
             while(true) {
@@ -83,7 +79,6 @@ public class SVNJSchConnector implements ISVNConnector {
 	            myInputStream = myChannel.getInputStream();
 	
 	            DebugLog.log("JSCH command: " + command);
-	            start = System.currentTimeMillis();
             	try {
 		            myChannel.connect();
             	} catch (JSchException e) {
@@ -131,39 +126,5 @@ public class SVNJSchConnector implements ISVNConnector {
 
     public OutputStream getOutputStream() throws IOException {
         return myOutputStream;
-    }
-
-    private static class EmptyUserInfo implements UserInfo {
-
-        private String myPassword;
-        private String myPassphrase;
-
-        public EmptyUserInfo(String password, String passphrase) {
-            myPassword = password;
-            myPassphrase = passphrase;
-        }
-
-        public String getPassphrase() {
-            return myPassphrase;
-        }
-
-        public String getPassword() {
-            return myPassword;
-        }
-
-        public boolean promptPassword(String arg0) {
-            return myPassword != null;
-        }
-
-        public boolean promptPassphrase(String arg0) {
-            return myPassphrase != null;
-        }
-
-        public boolean promptYesNo(String arg0) {
-            return true;
-        }
-
-        public void showMessage(String arg0) {
-        }
     }
 }
