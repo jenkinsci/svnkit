@@ -1,3 +1,8 @@
+= version 0.8.4
+
++ Subclipse Extension supports Subclipse 0.9.28
++ tabulations in externals definitions processed correctly
+
 = version 0.8.3
 
 + children of copied or moved directories were not committed properly when
