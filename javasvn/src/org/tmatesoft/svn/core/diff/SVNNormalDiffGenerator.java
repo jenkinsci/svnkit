@@ -45,13 +45,10 @@ public class SVNNormalDiffGenerator extends SVNSequenceDiffGenerator implements 
     protected void processBlock(int sourceStartLine, int sourceEndLine, SVNSequenceLine[] sourceLines, int targetStartLine, int targetEndLine,
             SVNSequenceLine[] targetLines, String encoding, Writer output) throws IOException {
         if(sourceStartLine > sourceEndLine){
-            //This is a delete
-            delete(sourceStartLine, targetStartLine, targetEndLine, targetLines, encoding, output);
+            add(sourceStartLine, targetStartLine, targetEndLine, targetLines, encoding, output);
         }else if(targetStartLine > targetEndLine){
-            //This is an add.
-            add(targetStartLine, sourceStartLine, sourceEndLine, sourceLines, encoding, output);
+            delete(targetStartLine, sourceStartLine, sourceEndLine, sourceLines, encoding, output);
         }else{
-            //This is a change
             change(targetStartLine, targetEndLine, targetLines, sourceStartLine, sourceEndLine, sourceLines, encoding, output);
         }
     }
