@@ -10,3 +10,15 @@ javasvn-test/test.properties
 /javasvn.iws
 javasvn/bin
 /lib
+trunk/.settings
+trunk/bin
+trunk/build
+trunk/contrib/javahl/bin
+trunk/contrib/sequence/bin
+trunk/contrib/sequence/bin-test
+trunk/javasvn-eclipse/bin
+trunk/javasvn-test/bin
+trunk/javasvn-test/test.properties
+trunk/javasvn.iws
+trunk/javasvn/bin
+trunk/lib

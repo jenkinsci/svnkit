@@ -1,0 +1,154 @@
+<html><head><title>Using JavaSVN with Ant :: Documentation :: Pure Java Subversion (SVN) Client Library</title>
+
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+
+<style>
+html body {
+    margin: 0px;
+    padding: 0px;
+    padding-top: 0.2em;
+    margin-left: 1em;
+    margin-right: 1em;
+    font-family: trebuchet ms, verdana, tahoma, arial;
+    line-height: 1.5em;
+    color: #333;
+    text-align: left;
+    max-width: 50em;
+    width: 50em;
+    font-size: 82%;
+}
+
+h4 {
+   font-size: 120%;
+   margin-bottom: 0.5em;
+}
+code {
+   font-weight: bold;
+   font-size: 100%;
+   color: darkblue;
+}
+#normal {
+    padding-left: 0;
+}
+
+small {
+    color: #669999;
+    font-size: 100%;
+}
+p, pre {
+    margin: 0px;
+    padding: 0px;
+    margin-top: 0.5em;
+}
+li {
+    padding-bottom: 0.5em;
+}
+</style><!-- base href="http://tmate.org/svn/" --></head>
+<body style="width: 800px;">
+
+<!--#include virtual="../stats/stats.php" -->
+
+<div  style="width: 800px;">
+<small><a id="normal" href="/svn/">Home</a>&nbsp;::&nbsp;Documentation&nbsp;::&nbsp;Using&nbsp;JavaSVN&nbsp;with&nbsp;Ant</small>
+<h4>Using JavaSVN with Ant</h4>
+<p>There are two ways of using JavaSVN in Ant tasks. First way is using <b>svnant</b> - part of Subclipce project,
+you may read JavaSVN+Subclipse <a href="subclipse.html#ant">documentation page</a> for details. 
+Another way, that is described below, is using JavaSVN command line interface.</p>
+
+<h4>Sample Ant tasks that uses JavaSVN <i>(contributed by William Lovins)</i></h4>
+<p><b>Note:</b> There are areas where this library is very inefficient when working
+with large repositories which will be resolved in later versions.
+</p>
+<p><b>Note:</b> The easiest way to use this command is to treat the commands passed to
+the library the same way that you would the normal svn binary.
+There is no svn task at this time as there is in the <a href="http://subclipse.tigris.org/svnant.html">svnant
+library</a>. This too will be resolved in a later version.</p>
+<p>
+The main advantage to this library is that neither subversion nor any
+associated libraries need to be installed on the server.<br>
+Additionally, this documentation will be expanded and improved on later
+versions. This initial page is being made available for people who
+would like to either test this library or who would like to help
+improve it (e.g. - writing a proper &lt;svn&gt; task set or
+fixing bugs).</p>
+<h3>Parameters</h3>
+
+<p>Please see the svn documentation for assistance on what parameters the
+command accepts.
+A large subset of the command line arguments are available via the
+javasvn-cli.jar file, including lesser used switches such as "svn
+status -u".</p>
+<h4>Examples</h4>
+<a href="#svnexampleCheckout">Checking
+out files</a><br/>
+<a href="#svnexampleCommit">Commiting
+files to repository</a>
+<br />
+<br />
+<a name="svnexampleCheckout"></a><b>Checking out files from the repository</b>
+<p>If you need to do an initial checkout, this target will checkout files
+from http://sources.example.com/TESTING to the local directory
+/usr/src/TESTREPO. The username and password arguments can be omitted if you have
+anonymous checkouts from your repository.</p>
+
+<pre  style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; width: 50em; background-color: #eee;">
+  &lt;target name="svnCheckout"&gt;
+    &lt;property name="source-root" value="/usr/src"/&gt;
+    &lt;property name="repository.URL" value="http://sources.example.com"/&gt;
+    &lt;java classname="org.tmatesoft.svn.cli.SVN"
+       dir="${source-root}/TESTREPO" fork="true"&gt;
+      &lt;arg value="co"/&gt;
+      &lt;arg value="--username"/&gt;
+      &lt;arg value="admin"/&gt;
+      &lt;arg value="--password"/&gt;
+      &lt;arg value="admin"/&gt;
+      &lt;arg value="${repository.URL}/TESTING"/&gt;
+      &lt;classpath&gt;
+        &lt;pathelement location="${antroot}/LIB/javasvn.jar" /&gt;
+        &lt;pathelement location="${antroot}/LIB/javasvn-cli.jar" /&gt;
+      &lt;/classpath&gt;
+    &lt;/java&gt;
+  &lt;/target&gt;
+</pre>
+<br />
+<a name="svnexampleCommit"></a><b>Commiting files to repository</b>
+<p>If you had an existing local copy of a repository that you want to
+check files into, you could use the following target to commit the
+files.
+The "-m" argument of "Testing" is set differently than the other
+arguments.
+Please use a single quote "&nbsp; '&nbsp;&nbsp; " to
+surround the
+double-quoted message, as shown in the example below.</p>
+
+<p>This example would commit all changed files from the local directory
+/usr/src/TESTREPO to the repository located at<br>
+http://sources.example.com/TESTING the same way that the command line
+version would.</p>
+<pre  style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; width: 50em; background-color: #eee;">
+  &lt;target name="svnCommit"&gt;
+    &lt;property name="source-root" value="/usr/src"/&gt;
+    &lt;property name="repository.URL" value="http://sources.example.com"/&gt;
+    &lt;java classname="org.tmatesoft.svn.cli.SVN"
+      dir="${source-root}/TESTREPO" fork="true"&gt;
+      &lt;arg value="commit"/&gt;
+      &lt;arg value="--username"/&gt;
+      &lt;arg value="admin"/&gt;
+      &lt;arg value="--password"/&gt;
+      &lt;arg value="admin"/&gt;
+      &lt;arg value="-m"/&gt; 
+      &lt;arg value='"Testing"'/&gt;
+      &lt;arg value="${repository.URL}/TESTING"/&gt;
+      &lt;classpath&gt;
+        &lt;pathelement location="${antroot}/LIB/javasvn.jar" /&gt;
+        &lt;pathelement location="${antroot}/LIB/javasvn-cli.jar" /&gt;
+      &lt;/classpath&gt;
+    &lt;/java&gt;
+  &lt;/target&gt;
+</pre>
+<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<br />
+<center><small><span>(c) 2004-2005 TMate Software. All rights reserved.</span></small></center>
+</div></body></html>

@@ -1,0 +1,147 @@
+<html><head><title>For Subclipse Users :: Documentation :: Pure Java Subversion (SVN) Client Library</title>
+
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+
+<style>
+html body {
+    margin: 0px;
+    padding: 0px;
+    padding-top: 0.2em;
+    margin-left: 1em;
+    margin-right: 1em;
+    font-family: trebuchet ms, verdana, tahoma, arial;
+    line-height: 1.5em;
+    color: #333;
+    text-align: left;
+    max-width: 50em;
+    width: 50em;
+    font-size: 82%;
+}
+
+h4 {
+   font-size: 120%;
+   margin-bottom: 0.5em;
+}
+code {
+   font-weight: bold;
+   font-size: 100%;
+   color: darkblue;
+}
+#normal {
+    padding-left: 0;
+}
+
+small {
+    color: #669999;
+    font-size: 100%;
+}
+p, pre {
+    margin: 0px;
+    padding: 0px;
+    margin-top: 0.5em;
+}
+li {
+    padding-bottom: 0.5em;
+}
+</style><!-- base href="http://tmate.org/svn/" --></head>
+<body style="width: 800px;">
+
+<!--#include virtual="../stats/stats.php" -->
+
+<div  style="width: 800px;">
+<small><a id="normal" href="/svn/">Home</a>&nbsp;::&nbsp;Documentation&nbsp;::&nbsp;For&nbsp;Subclipse&nbsp;Users</small>
+<h4>How to make Subclipse (0.9.28) use JavaSVN library</h4>
+<p>Though JavaSVN is not yet fully integrated into Subclipse as an extension, you may already try it with Subclipse. Perform the following 
+easy steps to make Subclipse and JavaSVN work together.</p>
+<br/>
+<b>With Eclipse Update Manager</b> (tested with Eclipse 3.1M4, WinXP):
+<ul>
+<li>Add <b>http://tmate.org/svn/</b> as an update site to Eclipse Update Manager.<br/>
+Use <span style="color:#669999;">Help | Software Updates | Find and Install</span> in main menu.</li>
+<li>Install "JavaSVN  Subclipse Extension" feature.</li>
+</ul>
+<!--
+<b>More complicated way:</b>
+<ul>
+<li>Install <a id="normal" href="http://subclipse.tigris.org/">Subclipse</a> (version 0.9.27). You will need Eclipse 3.0 or newer.</li>
+<li><a id="normal" href="http://tmate.org/svn/">Download</a> latest version of JavaSVN library. You will need javasvn.jar file from the library distribution.</li>
+<li>Put javasvn.jar and jsch.jar files into ECLIPSE_HOME/plugins/org.tigris.subversion.subclipse.core_0.9.27/ directory.</li>
+<li>Modify plugin.xml file in the same directory the following way:
+<pre  style="line-height: 1.5em">
+&lt;!--
+      &lt;library name="svnjavahl.jar"&gt;
+         &lt;export name="*"/&gt;
+      &lt;/library&gt;
+--&gt;
+      &lt;library name="javasvn.jar"&gt;
+         &lt;export name="*"/&gt;
+      &lt;/library&gt;
+      &lt;library name="jsch.jar"&gt;
+         &lt;export name="*"/&gt;
+      &lt;/library&gt;
+</pre>
+<div style="line-height: 1.5em">
+<p>Above modification will make Sublipse use JavaSVN version of JavaHL instead of native one. Jsch library is required to enable svn+ssh support. You may also download already modified plugin.xml from <a id="normal" href="http://tmate.org/svn/plugin.xml">here</a>.
+</p>
+</div></li>
+<li>If you would like not to install svn libraries at all, you may also use patched svnClientAdater.jar (version 0.9.23) that doesn't 
+check for existense of the native svn libraries. You may download it at <a id="normal" href="http://tmate.org/svn/svnClientAdapter.jar">http://tmate.org/svn/svnClientAdapter.jar</a>.<br/>
+Download and put this file into ECLIPSE_HOME/plugins/org.tigris.subversion.subclipse.core_0.9.27/ directory in place of
+existing <code>svnClientAdapter.jar</code> file.</li>
+<li>Start Eclipse with <code>-clean</code> command line argument to make it clean caches and use new libraries.</li>
+<li>Sometimes <code>-clean</code> argument is not enough and after restarting, Eclipse still uses cached libraries. In this case delete 
+<code>ECLIPSE_HOME/configuration</code> directory and restart Eclipse.</li>
+<li>When new version of JavaSVN will become available, just replace older version javasvn.jar file with the newer one.</li>
+</ul>
+-->
+<h4>SVN+SSH authentication with private key</h4>
+<p>JavaSVN uses pure java <a id=normal href="http://www.jcraft.com">JSCH library</a> to establish SSH 
+connection. This library supports only SSH version 2, with password or private key authentication. Using 
+password authentication is not a problem with Subclipse, but currently it doesn't provide a way to define 
+private key and passphrase for private key authentication. You may use the following properties to let JavaSVN
+know about your private key and passphrase (you need to provide these properties when starting Eclipse): </p>
+<pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; width: 43em; background-color: #eee;">
+$ eclipse -vmargs -Djavasvn.ssh2.key=/path/to/private/key/file \
+-Djavasvn.ssh2.passphrase=optionalPassphrase
+</pre>
+<p><b>Note:</b> User name for ssh connection will be taken from SVN Repository properties that may be altered in Subclipse
+SVN Repositories view.</p>
+<br/>
+<p>To avoid special batch script creation to launch Eclipse you may define ssh related properties in
+Eclipse config.ini file <code>ECLIPSE_HOME/configuration/config.ini</code> (tip provided by Andrew Berman):
+<pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; width: 43em; background-color: #eee;">
+  ...
+  javasvn.ssh2.key=path/to/private/key/file
+  javasvn.ssh2.passphrase=passphrase
+</pre>
+</p>
+<p>
+In case you work with Mac OS X version of Eclipse it is not 
+too simple to add arguments that make JSCH look for private 
+key file at launch. Instead of command line arguments you can 
+modify Eclipse.app/Contents/Info.plist last array of keys 
+adding something like that (tip provided by Valentin Alekseev):
+<pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; width: 43em; background-color: #eee;">
+&lt;array&gt;
+  ...
+   &lt;string&gt;-Djavasvn.ssh2.key=/path/to/key/file&lt;/string&gt;
+&lt;/array&gt;
+</pre>
+</p>
+<a name="ant"></a>
+<h4>Making SvnAnt use JavaSVN</h4>
+<p>Step-by-step instructions:</b>
+<ul>
+<li>Delete existing <code>javahl.jar</code> and <code>svnClientAdapter.jar</code> (libraries distirbuted with the svnant) from your Ant classpath (ANT_HOME/lib/ directory).</li>
+<li><a id="normal" href="http://tmate.org/svn/">Download</a> latest version of JavaSVN library. You will need javasvn.jar file from the library distribution.</li>
+<li>Get patched version of <a id="normal" href="http://tmate.org/svn/svnClientAdapter-0.9.13.jar">svnClientAdapter.jar</a> (version 0.9.13).</li>
+<li>Put <code>javasvn.jar</code> and <code>svnClientAdapter-0.9.13.jar</code> files on your Ant classpath (ANT_HOME/lib/ directory).</li>
+</ul>
+<p>After performing the steps above svnant will use JavaSVN instead of JavaHL bindings.</b>
+<br />
+<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<br />
+<center><small><span>(c) 2004-2005 TMate Software. All rights reserved.</span></small></center>
+</div></body></html>
