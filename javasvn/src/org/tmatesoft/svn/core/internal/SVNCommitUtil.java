@@ -125,6 +125,10 @@ public class SVNCommitUtil {
             DebugLog.log("HV: processing " + entryPath + " => not below commit roots" );
             return;
         }
+        if (root.isMissing()) {
+            DebugLog.log("HV: processing " + entryPath + " => missing, skipped" );
+            return;
+        }
         if (root.isDirectory()) {
             if (root.isScheduledForAddition() || root.isScheduledForDeletion() || root.isPropertiesModified()) {
                 // add to modified only if it is below one of the paths.

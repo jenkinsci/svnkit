@@ -115,23 +115,31 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             added = addDirectory(asName, revision);
             Map childEntry = (Map) myChildEntries.get(asName);
             childEntry.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
-            childEntry.put(SVNProperty.COPIED, SVNProperty.toString(true));
-            childEntry.put(SVNProperty.COPYFROM_REVISION, SVNProperty.toString(revision));
-            childEntry.put(SVNProperty.COPYFROM_URL, url);
-
+            if (!toCopy.isScheduledForAddition()) {
+                childEntry.put(SVNProperty.COPIED, SVNProperty.toString(true));
+                childEntry.put(SVNProperty.COPYFROM_REVISION, SVNProperty.toString(revision));
+                childEntry.put(SVNProperty.COPYFROM_URL, url);
+            } 
             updateURL(added, getPropertyValue(SVNProperty.URL));
         } else {
             added = addFile(asName, revision);
             added.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
         }
+        // do not mark as copied if source was just locally scheduled for addition
         added.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
-        added.setPropertyValue(SVNProperty.COPYFROM_REVISION, SVNProperty.toString(revision));
-        added.setPropertyValue(SVNProperty.COPYFROM_URL, url);
+        if (!toCopy.isScheduledForAddition()) {
+            added.setPropertyValue(SVNProperty.COPYFROM_REVISION, SVNProperty.toString(revision));
+            added.setPropertyValue(SVNProperty.COPYFROM_URL, url);
+        }
         if (myDeletedEntries != null && myDeletedEntries.containsKey(asName)) {
             added.setPropertyValue(SVNProperty.DELETED, Boolean.TRUE.toString());
             myDeletedEntries.remove(asName);
         }
-        setPropertyValueRecursively(added, SVNProperty.COPIED, SVNProperty.toString(true));
+        if (!toCopy.isScheduledForAddition()) {
+            setPropertyValueRecursively(added, SVNProperty.COPIED, SVNProperty.toString(true));
+        } else {
+            setPropertyValueRecursively(added, SVNProperty.REVISION, SVNProperty.toString(0));
+        }
         return added;    
     }
     

@@ -741,7 +741,6 @@ public class SVNWorkspace implements ISVNWorkspace {
                 } catch (SVNException inner) {}
                 throw e;
             } catch (Throwable th) {
-                th.printStackTrace();
                 throw new SVNException(th);
             }
 
