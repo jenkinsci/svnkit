@@ -106,12 +106,7 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
             parent.mkdirs();
             FSUtil.setHidden(parent.getParentFile(), true);
         }
-        File tempFile = new File(parent, name + ".tmp");
-        int n = 1;
-        while(tempFile.exists()) {
-            tempFile = new File(parent, name + "." + n + ".tmp");
-            n++;
-        }
+        File tempFile = File.createTempFile("svn." + name + ".", ".tmp", parent);
         tempFile.deleteOnExit();
         myTempLocations.put(id, tempFile);
         return new BufferedOutputStream(new FileOutputStream(tempFile));
@@ -162,13 +157,17 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
     
     public File createTemporaryFile(FSFileEntry source) throws SVNException {
         File parent = new File(source.getAdminArea().getAdminArea(source), "tmp");
-        File file = new File(parent, source.getName() + ".tmp");
-        int n = 1;
-        while(file.exists()) {
-            file = new File(parent, source.getName() + "."  + n + ".tmp");
-            n++;
+        if (!parent.exists()) {
+            parent.mkdirs();
+            FSUtil.setHidden(parent.getParentFile(), true);
         }
-        file.deleteOnExit();
+        File file = null;
+        try {
+             file = File.createTempFile("svn." + source.getName() + ".", ".tmp", parent);
+             file.deleteOnExit();
+        } catch (IOException e) {
+            DebugLog.error(e);
+        }
         return file;
     }
     
