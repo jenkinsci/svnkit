@@ -16,7 +16,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../contrib/jsch/jsch-0.1.18.jar!/" />
+          <root url="jar://$MODULE_DIR$/../contrib/jsch/jsch.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

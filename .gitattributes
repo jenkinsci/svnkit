@@ -1,11 +1,11 @@
 * text=auto !eol
 /COPYING eol=lf
 /changelog.txt eol=lf
-contrib/javahl/COPYING-SVN eol=lf
+contrib/javahl/JAVAHL-LICENSE eol=lf
 contrib/jsch/JSCH-LICENSE eol=lf
-contrib/jsch/jsch-0.1.18.jar -text
+contrib/jsch/jsch.jar -text
 contrib/junit/junit.jar -text
-contrib/sequence/COPYING eol=lf
+contrib/sequence/SEQUENCE-LICENSE eol=lf
 javasvn-eclipse/plugin.xml eol=lf
 javasvn-test/apache/httpd.template.conf eol=lf
 javasvn-test/apache/passwd eol=lf

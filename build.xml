@@ -1,253 +1,321 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="javasvn" default="help" basedir=".">	
-	
-	<target name="init">
-        <property environment="env"/>		
-        <property name="eclipse.home" value="${env.ECLIPSE_HOME}"/>
-        <property name="java.home" value="${env.JAVA_HOME}"/>
-        
-		<tstamp>
-		      <format property="date" pattern="yyyyMMdd"/>
-		</tstamp>
+<project name="javasvn" default="build-library" basedir=".">
 
-		<condition property="os" value="windows"><os family="dos"/></condition>
-		<condition property="os" value="unix"><os family="unix"/></condition>
-		<condition property="os" value="mac"><os family="mac"/></condition>
-	</target>
-	
-	<target name="clean" depends="init">
-		<delete dir="javasvn/bin" failonerror="false" />
-		<delete dir="javasvn-test/bin" />
-		<delete dir="javasvn-eclipse/bin" failonerror="false" />
-		<delete dir="javasvn-eclipse/plugin" failonerror="false" />
-		<delete dir="javasvn-test/svn-config/auth" failonerror="false" />
-		<delete dir="contrib/sequence/bin" failonerror="false" />
-		<delete dir="contrib/javahl/bin" failonerror="false" />
+    <target name="init-environment">
+        <property environment="env" />
+        <property name="eclipse.home" value="${env.ECLIPSE_HOME}" />
+        <property name="java.home" value="${env.JAVA_HOME}" />
+        <condition property="eclipse.present">
+            <and>
+                <available file="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0/runtime.jar"
+                           property="eclipse.runtime.jar"
+                />
+                <available file="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0/osgi.jar"
+                           property="eclipse.osgi.jar"
+                />
+            </and>
+        </condition>
 
-		<delete dir="lib" failonerror="false" />
-		<delete dir="doc" failonerror="true" />
+        <condition property="os" value="windows">
+            <os family="dos" />
+        </condition>
+        <condition property="os" value="unix">
+            <os family="unix" />
+        </condition>
+        <condition property="os" value="mac">
+            <os family="mac" />
+        </condition>
+    </target>
 
-		<delete failonerror="false" >
-			<fileset dir="." includes="org**"/>
-		</delete>
-		
-		<copy file="javasvn-test/test.${os}.properties" tofile="javasvn-test/test.properties" 
-			failonerror="false" overwrite="false"/>
-        </target>
+    <target name="init-deploy">
+        <tstamp>
+            <format property="date" pattern="yyyyMMdd" />
+        </tstamp>
+    </target>
 
-	<target name="build-standalone" depends="init">
-		<mkdir dir="javasvn/bin" />
-		<mkdir dir="contrib/sequence/bin" />
-		<mkdir dir="contrib/javahl/bin" />
-		
-		<javac debug="true" classpath="contrib/junit/junit.jar"	destdir="contrib/sequence/bin">
-			<src path="contrib/sequence/src"/>
-		</javac>
-		<javac debug="true" destdir="contrib/javahl/bin" excludes="**/tests/**">
-			<src path="contrib/javahl/src" />
-		</javac>
-		<javac classpath="contrib/sequence/bin;contrib/javahl/bin;contrib/jsch/jsch-0.1.18.jar" debug="true" destdir="javasvn/bin">
-			<src path="javasvn/src"/>
-		</javac>
-		<!--
-		<javac debug="true" classpath="contrib/sequence/bin;contrib/junit/junit.jar" destdir="contrib/sequence/bin-test">
-			<src path="contrib/sequence/src-test"/>
-		</javac>
-		<javac classpath="javasvn/bin;contrib/junit/junit.jar" debug="true" destdir="javasvn-test/bin">
-			<src path="javasvn-test/src"/>
-		</javac>
-		-->
-		<!-- build main library jar file -->
-		<mkdir dir="lib"/>
-		<jar destfile="lib/javasvn.jar">
-			<fileset dir="javasvn/bin">
-			    <include name="**"/>
-			    <exclude name="org/tmatesoft/svn/cli/**"/>
-			</fileset>
-			<fileset dir="contrib/sequence/bin">
-			    <include name="**"/>
-			</fileset>
-			<fileset dir="contrib/javahl/bin">
-			    <include name="**"/>
-			    <exclude name="**/SVNClient.class"/>
-			    <exclude name="**/SVNClient$LogLevel.class"/>
-			</fileset>
-		</jar>
-		<jar destfile="lib/javasvn-cli.jar">
-			<fileset dir="javasvn/bin">
-			    <include name="org/tmatesoft/svn/cli/**"/>
-			</fileset>
-		</jar>
-		<copy file="contrib/jsch/jsch-0.1.18.jar" todir="lib"/>
-		<copy file="javasvn/cli/svn.bat" todir="lib"/>
-		<copy file="javasvn/cli/svn" todir="lib"/>
-		<chmod file="lib/svn" perm="ugo+rx"/>
-	</target>
+    <target name="compile-library">
+        <mkdir dir="javasvn/bin" />
+        <mkdir dir="contrib/javahl/bin" />
+        <mkdir dir="contrib/sequence/bin" />
 
-	<target name="build-src-jar" depends="init">
-		<mkdir dir="lib"/>
-		<zip destfile="lib/javasvn.src.zip">
-			<fileset dir="javasvn/src">
-			    <include name="**/*.java"/>
-			</fileset>
-			<fileset dir="javasvn-eclipse/src">
-			    <include name="**/*.java"/>
-			</fileset>
-			<fileset dir="contrib/sequence/src">
-			    <include name="**/*.java"/>
-			</fileset>
-			<fileset dir="contrib/javahl/src">
-			    <include name="**/*.java"/>
-                            <exclude name="**/SVNClient.java"/>
-			</fileset>
-		</zip>
-	</target>
+        <path id="library.classpath">
+            <pathelement location="contrib/jsch/jsch.jar" />
+            <pathelement path="contrib/javahl/bin" />
+            <pathelement path="contrib/sequence/bin" />
+        </path>
 
-	<target name="doc">
-		<mkdir dir="doc/javadoc" />
-		<javadoc destdir="doc/javadoc" windowtitle="JavaDoc :: Documentation :: Pure Java Subversion (SVN) Client Library" 
-			breakiterator="yes" > 
-			<packageset dir="javasvn/src">
-				<include name="**"/>
-				<exclude name="**/internal/**"/>
-			</packageset>
-			<header><![CDATA[<a target="_top" href="http://tmate.org/svn/">JavaSVN&nbsp;Home<a/>]]></header>
-		    <bottom><![CDATA[Copyright &#169; 2004 TMate Software Ltd. All Rights Reserved.]]></bottom>
-		</javadoc>
-		<copy file="www/structure.html" tofile="doc/usage.html" failonerror="false" />
-		<copy file="www/build.html" tofile="doc/build.html" failonerror="false" />
-		<copy file="www/subclipse.html" tofile="doc/subclipse.html" failonerror="false" />
-	</target>
+        <javac debug="true" destdir="contrib/javahl/bin" srcdir="contrib/javahl/src">
+            <exclude name="org/tigris/subversion/javahl/SVNClient.java" />
+            <exclude name="org/tigris/subversion/javahl/tests/**" />
+        </javac>
+        <javac debug="true" destdir="contrib/sequence/bin" srcdir="contrib/sequence/src" />
+        <javac debug="true"
+               destdir="javasvn/bin"
+               srcdir="javasvn/src"
+               classpathref="library.classpath"
+        />
+    </target>
 
-	<target name="build-eclipse" depends="build-standalone">
-		<mkdir dir="javasvn-eclipse/bin" />
-     	<path id="eclipse.class.path">
-		    <pathelement path="lib/javasvn.jar"/>
-		    <pathelement path="lib/jsch-0.1.18.jar"/>
-		    <pathelement path="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0/runtime.jar"/>
-		    <pathelement path="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0/osgi.jar"/>
-	    </path>
-		
-		<javac debug="true" classpathref="eclipse.class.path" destdir="javasvn-eclipse/bin" >
-			<src path="javasvn-eclipse/src"/>
-		</javac>
-		
-		<!-- build plugin structure -->
-		<property name="plugin.name" value="org.tmatesoft.svn.core_1.0.0"/>
-		<mkdir dir="javasvn-eclipse/plugin/${plugin.name}"/>
-		<mkdir dir="javasvn-eclipse/plugin/${plugin.name}/lib"/>
-		<copy file="javasvn-eclipse/plugin.xml" tofile="javasvn-eclipse/plugin/${plugin.name}/plugin.xml"/>
-		<copy file="lib/javasvn.jar" tofile="javasvn-eclipse/plugin/${plugin.name}/lib/javasvn.jar"/>
-		<copy file="lib/jsch-0.1.18.jar" tofile="javasvn-eclipse/plugin/${plugin.name}/lib/jsch-0.1.18.jar"/>
-		<copy file="copying" tofile="javasvn-eclipse/plugin/${plugin.name}/COPYING"/>
-		<copy file="contrib/javahl/copying-svn" tofile="javasvn-eclipse/plugin/${plugin.name}/COPYING-SVN"/>
-		<copy file="contrib/jsch/jsch-license" tofile="javasvn-eclipse/plugin/${plugin.name}/JSCH-LICENSE"/>
+    <target name="compile-eclipse" depends="init-environment,compile-library" if="eclipse.present">
+        <mkdir dir="javasvn-eclipse/bin" />
 
-		<jar destfile="javasvn-eclipse/plugin/${plugin.name}/lib/svnplugin.jar">
-			<fileset dir="javasvn-eclipse/bin">
-			    <include name="**"/>
-			</fileset>
-		</jar>
-		<zip destfile="javasvn-eclipse/plugin/${plugin.name}/javasvnsrc.zip">
-			<fileset dir="javasvn/src">
-			    <include name="**"/>
-			</fileset>
-			<fileset dir="javasvn-eclipse/src">
-			    <include name="**"/>
-			</fileset>
-			<fileset dir="contrib/javahl/src">
-			    <include name="**"/>
-			</fileset>
-			<fileset dir="contrib/sequence/src">
-			    <include name="**"/>
-			</fileset>
-	    </zip>
-	</target>
-	
-	<target name="deploy" depends="clean,build-eclipse,doc,build-src-jar">
-		<!-- zip this folder contents -->
-		<zip destfile="org.tmatesoft.svn_1.0.0_${date}.standalone.zip">
-			<zipfileset dir=".">
-				<include name="lib/**"/>
-				<include name="changelog.txt"/>
-				<include name="COPYING"/>
-				<include name="doc/**"/>
-			</zipfileset>
-			<zipfileset dir="contrib/javahl">
-				<include name="COPYING-SVN"/>
-			</zipfileset>
-			<zipfileset dir="contrib/jsch">
-				<include name="JSCH-LICENSE"/>
-			</zipfileset>
-		</zip>
-		<!-- zip eclipse plugin -->
-		<zip basedir="javasvn-eclipse/plugin" destfile="org.tmatesoft.svn_1.0.0_${date}.eclipse.zip">
-			<include name="**"/>
-		</zip>
-		<zip basedir="javasvn-eclipse/plugin" destfile="org.tmatesoft.svn_1.0.0_${date}.eclipse.zip">
-                        <include name="**"/>
-		</zip>
-		<zip basedir="." destfile="org.tmatesoft.svn_1.0.0_${date}.src.zip">
-			<exclude name="lib/**"/>
-			<exclude name="doc/**"/>
-			<exclude name="**/bin/**"/>
-			<exclude name="**/bin-test/**"/>
-			<exclude name="*.zip"/>
-			<exclude name="javasvn-eclipse/**"/>
-			<exclude name="javasvn-test/**"/>
-			<exclude name="www/**"/>
-                        <exclude name="**/.svn"/>
-                </zip>
-	</target>
-	
-	<target name="test" depends="build-standalone">
-		<java classpath="lib/javasvn.jar;contrib/junit/junit.jar;contrib/sequence/bin-test;javasvn-test/bin" 
-			  dir="javasvn-test"
-			  fork="true"
-			  classname="org.tmatesoft.svn.core.test.AllTests">
-			<arg line="-text test.properties"/>
-		</java>			 
-	</target>
+        <path id="eclipse.classpath">
+            <pathelement path="lib/javasvn.jar" />
+            <pathelement path="lib/jsch.jar" />
+            <pathelement path="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0/runtime.jar" />
+            <pathelement path="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0/osgi.jar" />
+        </path>
 
-	<target name="help" depends="init">
-		<echo message="JavaSVN ANT build file"/>
-		<echo message=""/>
-		<echo message="[targets]"/>
-		<echo message="build-standalone builds javasvn.jar only"/>
-		<echo message="deploy           builds standalone and eclipse distributions"/>
-		<echo message="test             runs all tests"/>
-		<echo message="test-python      runs python tests"/>
-		<echo message=""/>
-		<echo message="[properties]"/>
-	        <echo message="OS:              ${os}"/>
-        	<echo message="Eclipse:         ${eclipse.home}"/>
-	        <echo message="JDK:             ${java.home}"/>
-	</target>
+        <javac debug="true"
+               srcdir="javasvn-eclipse/src"
+               classpathref="eclipse.classpath"
+               destdir="javasvn-eclipse/bin"
+        />
+    </target>
 
-        <target name="build" depends="build-src-jar,build-standalone"/>
+    <target name="compile-tests" depends="compile-library">
+        <mkdir dir="contrib/sequence/bin-test" />
+        <mkdir dir="javasvn-test/bin" />
 
-        <target name="test-python" depends="build-standalone">
-            <copy file="javasvn-test/python/cmdline/svntest/main.py"
-                  overwrite="true"
-                  tofile="javasvn-test/python/cmdline/svntest/main.py.bak"
-                  failonerror="true"/>
-            <copy file="javasvn-test/python/patch/main.py"
-                  overwrite="true"
-                  tofile="javasvn-test/python/cmdline/svntest/main.py"
-                  failonerror="true"/>
-	
-			<java classpath="lib/javasvn.jar;contrib/junit/junit.jar;contrib/sequence/bin-test;javasvn-test/bin" 
-				  dir="javasvn-test"
-				  fork="true"
-				  classname="org.tmatesoft.svn.core.test.PythonTests">
-				<jvmarg value="-Djavasvn.log.path=%home%/.javasvn/.python.%g.%u.log"/>
-				<arg line="test.properties"/>
-			</java>			 
-	
-	        <copy file="javasvn-test/python/cmdline/svntest/main.py.bak"
-	              tofile="javasvn-test/python/cmdline/svntest/main.py"
-	              overwrite="true"
-	              failonerror="true"/>
-	       <delete file="javasvn-test/python/cmdline/svntest/main.py.bak"/>
-        </target>
+        <path id="tests.classpath">
+            <pathelement location="contrib/jsch/jsch.jar" />
+            <pathelement location="contrib/junit/junit.jar" />
+            <pathelement path="contrib/javahl/bin" />
+            <pathelement path="contrib/sequence/bin" />
+            <pathelement path="javasvn/bin" />
+        </path>
+
+        <javac debug="true" destdir="contrib/sequence/bin-test" srcdir="contrib/sequence/src-test" />
+        <javac debug="true"
+               destdir="javasvn-test/bin"
+               srcdir="javasvn-test/src"
+               classpathref="tests.classpath"
+        />
+    </target>
+
+    <target name="build-library" depends="compile-library">
+        <mkdir dir="build/lib" />
+
+        <jar destfile="build/lib/javasvn.jar">
+            <fileset dir="javasvn/bin">
+                <exclude name="org/tmatesoft/svn/cli/**" />
+            </fileset>
+            <fileset dir="contrib/sequence/bin" />
+            <fileset dir="contrib/javahl/bin" />
+        </jar>
+        <copy file="contrib/jsch/jsch.jar" todir="build/lib" />
+        <!-- copy licences and changelog -->
+        <copy todir="build/lib" flatten="true">
+            <fileset dir=".">
+                <include name="changelog.txt" />
+                <include name="COPYING" />
+                <include name="contrib/javahl/JAVAHL-LICENSE" />
+                <include name="contrib/sequence/SEQUENCE-LICENSE" />
+                <include name="contrib/jsch/JSCH-LICENSE" />
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="build-cli" depends="build-library">
+        <jar destfile="build/lib/javasvn-cli.jar">
+            <fileset dir="javasvn/bin">
+                <include name="org/tmatesoft/svn/cli/**" />
+            </fileset>
+        </jar>
+        <copy todir="build/lib">
+            <fileset dir="javasvn/cli">
+                <include name="svn" />
+                <include name="svn.bat" />
+            </fileset>
+        </copy>
+        <chmod file="build/lib/svn" perm="ugo+rx" />
+    </target>
+
+    <target name="build-src">
+        <mkdir dir="build/lib" />
+        <zip destfile="build/lib/javasvnsrc.zip">
+            <fileset dir="javasvn/src" />
+            <fileset dir="javasvn-eclipse/src" />
+            <fileset dir="contrib/javahl/src" />
+            <fileset dir="contrib/sequence/src" />
+        </zip>
+    </target>
+
+    <target name="build-eclipse" depends="build-library,build-src,compile-eclipse" if="eclipse.present">
+        <property name="plugin.name" value="org.tmatesoft.svn.core_1.0.0" />
+        <mkdir dir="build/eclipse/${plugin.name}/lib" />
+
+        <copy todir="build/eclipse/${plugin.name}/lib">
+            <fileset dir="build/lib">
+                <include name="javasvn.jar" />
+                <include name="jsch.jar" />
+            </fileset>
+        </copy>
+        <copy todir="build/eclipse/${plugin.name}">
+            <fileset dir="build/lib">
+                <include name="changelog.txt" />
+                <include name="COPYING" />
+                <include name="JSCH-LICENSE" />
+                <include name="SEQUENCE-LICENSE" />
+                <include name="JAVAHL-LICENSE" />
+            </fileset>
+            <fileset dir="javasvn-eclipse">
+                <include name="plugin.xml" />
+            </fileset>
+        </copy>
+        <jar destfile="build/eclipse/${plugin.name}/lib/svnplugin.jar">
+            <fileset dir="javasvn-eclipse/bin" />
+        </jar>
+    </target>
+
+    <target name="build-doc">
+        <mkdir dir="build/doc/javadoc" />
+        <javadoc destdir="build/doc/javadoc"
+                 windowtitle="JavaDoc :: Documentation :: Pure Java Subversion (SVN) Client Library"
+                 breakiterator="yes"
+        >
+            <packageset dir="javasvn/src">
+                <include name="**" />
+                <exclude name="**/internal/**" />
+            </packageset>
+            <header>
+                <![CDATA[<a target="_top" href="http://tmate.org/svn/">JavaSVN&nbsp;Home<a/>]]></header>
+            <bottom>
+                <![CDATA[Copyright &#169; 2004-2005 TMate Software Ltd. All Rights Reserved.]]>
+            </bottom>
+        </javadoc>
+        <copy todir="build/doc">
+            <fileset dir="www">
+                <include name="usage.html" />
+                <include name="build.html" />
+                <include name="subclipse.html" />
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="clean">
+        <!-- delete build dir -->
+        <delete dir="build" />
+        <delete dir="lib" />
+        <!-- delete all compiled classes -->
+        <delete>
+            <fileset dir=".">
+                <include name="contrib/javahl/bin/**" />
+                <include name="contrib/sequence/bin/**" />
+                <include name="contrib/sequence/bin-test/**" />
+                <include name="javasvn/bin" />
+                <include name="javasvn-eclipse/bin" />
+                <include name="javasvn-test/bin" />
+            </fileset>
+        </delete>
+    </target>
+
+    <target name="deploy-library" depends="init-deploy,build-library,build-cli,build-src,build-doc">
+        <zip destfile="build/org.tmatesoft.svn_1.0.0_${date}.standalone.zip">
+            <zipfileset dir="build/lib" prefix="javasvn-${date}">
+                <exclude name="svn" />
+            </zipfileset>
+            <zipfileset file="build/lib/svn" filemode="555" prefix="javasvn-${date}" />
+            <zipfileset dir="build/doc" prefix="javasvn-${date}/doc" />
+        </zip>
+    </target>
+
+    <target name="deploy-eclipse"
+            depends="init-deploy,init-environment,build-library,build-src,build-doc,build-eclipse"
+            if="eclipse.present"
+    >
+        <zip destfile="build/org.tmatesoft.svn_1.0.0_${date}.eclipse.zip">
+            <zipfileset dir="build/eclipse" prefix="plugins" />
+        </zip>
+    </target>
+
+    <target name="deploy-snapshot" depends="init-deploy">
+        <zip destfile="build/org.tmatesoft.svn_1.0.0_${date}.src.zip">
+            <zipfileset dir="." prefix="javasvn-src-${date}">
+                <exclude name="build/**" />
+                <exclude name="**/bin/**" />
+                <exclude name="**/bin-test/**" />
+                <exclude name="javasvn-eclipse/**" />
+                <exclude name="javasvn-test/**" />
+                <exclude name="www/**" />
+                <exclude name="**/.svn" />
+            </zipfileset>
+            <zipfileset dir="build/doc" prefix="javasvn-src-${date}/doc" />
+        </zip>
+    </target>
+
+    <target name="deploy" depends="clean,deploy-library,deploy-eclipse,deploy-snapshot" />
+
+    <target name="test-java" depends="compile-tests">
+        <copy file="javasvn-test/test.${os}.properties"
+              tofile="javasvn-test/test.properties"
+              failonerror="false"
+              overwrite="false"
+        />
+
+        <path id="test.classpath">
+            <pathelement path="contrib/junit/junit.jar" />
+            <pathelement path="javasvn/bin" />
+            <pathelement path="contrib/sequence/bin" />
+            <pathelement path="javasvn-test/bin" />
+            <pathelement path="contrib/sequence/bin-test" />
+        </path>
+        <java classpathref="test.classpath"
+              dir="javasvn-test"
+              fork="true"
+              classname="org.tmatesoft.svn.core.test.AllTests"
+        >
+            <arg line="-text test.properties" />
+        </java>
+    </target>
+
+    <target name="test-python" depends="build-library,build-cli">
+        <copy file="javasvn-test/test.${os}.properties"
+              tofile="javasvn-test/test.properties"
+              failonerror="false"
+              overwrite="false"
+        />
+
+        <copy file="javasvn-test/python/cmdline/svntest/main.py"
+              overwrite="true"
+              tofile="javasvn-test/python/cmdline/svntest/main.py.bak"
+              failonerror="true"
+        />
+        <copy file="javasvn-test/python/patch/main.py"
+              overwrite="true"
+              tofile="javasvn-test/python/cmdline/svntest/main.py"
+              failonerror="true"
+        />
+
+        <path id="python.classpath">
+            <pathelement path="build/lib/javasvn.jar" />
+            <pathelement path="build/lib/javasvn-cli.jar" />
+            <pathelement path="javasvn-test/bin" />
+        </path>
+
+        <java classpathref="python.classpath"
+              dir="javasvn-test"
+              fork="true"
+              classname="org.tmatesoft.svn.core.test.PythonTests"
+        >
+            <jvmarg value="-Djavasvn.log.path=%home%/.javasvn/.python.%g.%u.log" />
+            <arg line="test.properties" />
+        </java>
+
+        <move file="javasvn-test/python/cmdline/svntest/main.py.bak"
+              tofile="javasvn-test/python/cmdline/svntest/main.py"
+              overwrite="true"
+              failonerror="true"
+        />
+    </target>
+
+    <!-- compatibility target -->
+    <target name="build-standalone" depends="build-library,build-cli">
+        <mkdir dir="lib" />
+        <copy todir="lib">
+            <fileset dir="build/lib">
+            </fileset>
+        </copy>
+    </target>
+
 </project>

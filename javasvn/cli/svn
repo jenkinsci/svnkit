@@ -7,7 +7,7 @@ if [ ! -d $JAVASVN_LOGDIR ]; then
 	mkdir $JAVASVN_LOGDIR
 fi
 
-JAVASVN_CP=$JAVASVN_HOME/javasvn.jar:$JAVASVN_HOME/javasvn-cli.jar:$JAVASVN_HOME/jsch-0.1.18.jar
+JAVASVN_CP=$JAVASVN_HOME/javasvn.jar:$JAVASVN_HOME/javasvn-cli.jar:$JAVASVN_HOME/jsch.jar
 JAVASVN_MAINCLASS=org.tmatesoft.svn.cli.SVN
 
 $JAVA_HOME/bin/java -cp $JAVASVN_CP $JAVASVN_MAINCLASS "$@"
