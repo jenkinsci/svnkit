@@ -13,13 +13,15 @@
 package org.tmatesoft.svn.core;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.progress.*;
+import org.tmatesoft.svn.core.progress.ISVNProgressCanceller;
+import org.tmatesoft.svn.core.progress.ISVNProgressViewer;
 
 /**
  * @author TMate Software Ltd.
@@ -75,8 +77,18 @@ public interface ISVNWorkspace {
     
     public long update(SVNRepositoryLocation url, String path, long revision, boolean recursive) throws SVNException;
 
+	public SVNStatus[] getCommittables(String[] paths, boolean recursive, boolean includeParents) throws SVNException;
+
+	public long commitPaths(List paths, String message, ISVNProgressViewer progressViewer, ISVNProgressCanceller progressCanceller) throws SVNException;
+
+	/**
+	 * @deprecated Use getCommittablePaths().
+	 */
 	public SVNCommitPacket createCommitPacket(String[] paths, boolean recursive, boolean includeParents) throws SVNException;
 
+	/**
+	 * @deprecated Use commitPaths()
+	 */
 	public long commit(SVNCommitPacket packet, String message) throws SVNException;
 
     public long commit(String paths[], ISVNCommitHandler handler, boolean recursive, boolean includeUnversionedParents) throws SVNException;

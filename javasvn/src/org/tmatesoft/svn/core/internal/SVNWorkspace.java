@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -705,7 +706,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 		return commit(packet, handler.handleCommit(packet.getStatuses()));
 	}
 
-	public SVNCommitPacket createCommitPacket(String[] paths, boolean recursive, boolean includeParents) throws SVNException {
+	public SVNStatus[] getCommittables(String[] paths, boolean recursive, boolean includeParents) throws SVNException {
 		long start = System.currentTimeMillis();
 		for (int i = 0; i < paths.length; i++) {
 			ISVNEntry entry = locateEntry(paths[i]);
@@ -718,21 +719,9 @@ public class SVNWorkspace implements ISVNWorkspace {
 				                       "Perhaps you're committing a target that is inside unversioned (or not-yet-versioned) directory?");
 			}
 		}
-		String root = "";
-		if (paths.length == 1) {
-			ISVNEntry entry = locateEntry(paths[0]);
-			if (entry != null && entry.isDirectory() && entry.isManaged()) {
-				root = entry.getPath();
-			}
-		}
-		if (root == null) {
-			root = PathUtil.getCommonRoot(paths);
-			if (root == null) {
-				root = "";
-			}
-		}
 		try {
-			ISVNEntry rootEntry = locateEntry(root);
+			final String root = getCommitRoot(paths);
+			final ISVNEntry rootEntry = locateEntry(root);
 			if (rootEntry == null || rootEntry.getPropertyValue(SVNProperty.URL) == null) {
 				throw new SVNException(root + " does not contain working copy files");
 			}
@@ -806,24 +795,38 @@ public class SVNWorkspace implements ISVNWorkspace {
 				statuses[index++] = SVNStatusUtil.createStatus(entry, -1, 0, 0, null);
 			}
 
-			DebugLog.log("Building commit packet took: " + (System.currentTimeMillis() - start) + " ms.");
-			return new SVNCommitPacket(root, statuses);
+			DebugLog.log("Calculating committables took " + (System.currentTimeMillis() - start) + " ms.");
+			return statuses;
 		}
 		finally {
 			getRoot().dispose();
 		}
 	}
-	
+
+	public SVNCommitPacket createCommitPacket(String[] paths, boolean recursive, boolean includeParents) throws SVNException {
+		return new SVNCommitPacket(getCommitRoot(paths), getCommittables(paths, recursive, includeParents));
+	}
+
 	public long commit(SVNCommitPacket packet, String message) throws SVNException {
+		final List paths = new ArrayList();
+		final SVNStatus[] statuses = packet.getStatuses();
+		for (int index = 0; index < statuses.length; index++) {
+			if (statuses[index] != null) {
+				final String path = statuses[index].getPath();
+				paths.add(path);
+			}
+		}
+
+		return commitPaths(paths, message, null, null);
+	}
+
+	public long commitPaths(List paths, String message, ISVNProgressViewer progressViewer, ISVNProgressCanceller progressCanceller) throws SVNException {
 		long start = System.currentTimeMillis();
 		try {
-			final String root = packet.getRoot();
 			final Set modified = new HashSet();
-			final SVNStatus[] statuses = packet.getStatuses();
-			for (int index = 0; index < statuses.length; index++) {
-				if (statuses[index] != null) {
-					modified.add(locateEntry(statuses[index].getPath()));
-				}
+			for (Iterator it = paths.iterator(); it.hasNext();) {
+				final String path = (String)it.next();
+				modified.add(locateEntry(path));
 			}
 
 			if (message == null || modified.isEmpty()) {
@@ -831,6 +834,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 				return -1;
 			}
 
+			final String root = getCommitRoot((String[])paths.toArray(new String[paths.size()]));
 			final ISVNEntry rootEntry = locateEntry(root);
 			if (rootEntry == null || rootEntry.getPropertyValue(SVNProperty.URL) == null) {
 				throw new SVNException(root + " does not contain working copy files");
@@ -861,7 +865,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 			String rootURL = PathUtil.append(host, repository.getRepositoryRoot());
 			SVNCommitInfo info;
 			try {
-				SVNCommitUtil.doCommit("", rootURL, tree, editor, this);
+				SVNCommitUtil.doCommit("", rootURL, tree, editor, this, new SVNProgressProcessor(progressViewer, progressCanceller));
 				info = editor.closeEdit();
 			}
 			catch (SVNException e) {
@@ -1501,4 +1505,21 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
         FSUtil.sleepForTimestamp();
     }
+
+	private String getCommitRoot(String[] paths) throws SVNException {
+		String root = "";
+		if (paths.length == 1) {
+			ISVNEntry entry = locateEntry(paths[0]);
+			if (entry != null && entry.isDirectory() && entry.isManaged()) {
+				root = entry.getPath();
+			}
+		}
+		if (root == null) {
+			root = PathUtil.getCommonRoot(paths);
+			if (root == null) {
+				root = "";
+			}
+		}
+		return root;
+	}
 }

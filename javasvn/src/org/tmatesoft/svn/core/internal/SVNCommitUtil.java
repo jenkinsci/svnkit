@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.progress.SVNProgressProcessor;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
@@ -182,9 +183,13 @@ public class SVNCommitUtil {
         }
     }
 
-    public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws) throws SVNException {
+		public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws, SVNProgressProcessor progressProcessor) throws SVNException {
+			doCommit(path, url, entries, editor, ws, progressProcessor, new HashSet());
+		}
+
+    public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws, SVNProgressProcessor progressProcessor, Set committedPaths) throws SVNException {
         ISVNEntry root = (ISVNEntry) entries.get(path);
-        
+
         long revision = root == null ? -1 : SVNProperty.longValue(root.getPropertyValue(SVNProperty.COMMITTED_REVISION));
 		boolean copied = false;
         if (root != null) {
@@ -231,7 +236,7 @@ public class SVNCommitUtil {
         DebugLog.log("virtual children count: " + virtualChildren.length);
         for(int i = 0; i < virtualChildren.length; i++) {
             String childPath = virtualChildren[i];
-            doCommit(childPath, url, entries, editor, ws);
+            doCommit(childPath, url, entries, editor, ws, progressProcessor, committedPaths);
         }
         ISVNEntry[] children = getDirectChildren(entries, path);
         DebugLog.log("direct children count: " + children.length);
@@ -245,14 +250,17 @@ public class SVNCommitUtil {
             childPath = PathUtil.removeLeadingSlash(childPath);
             childPath = PathUtil.removeTrailingSlash(childPath);
             revision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.COMMITTED_REVISION));
-            
+
+	          committedPaths.add(childPath);
+	          progressProcessor.setProgress((double)committedPaths.size() / (double)entries.keySet().size());
+
             if (child.isScheduledForAddition() && child.isScheduledForDeletion()) {
                 DebugLog.log("FILE REPLACE: " + childPath);
                 child.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
                 editor.deleteEntry(childPath, revision);
                 updateReplacementSchedule(child);
                 if (child.isDirectory()) {
-                    doCommit(childPath, url, entries, editor, ws);                    
+                    doCommit(childPath, url, entries, editor, ws, progressProcessor, committedPaths);
                 } else {
                     editor.addFile(childPath, null, -1);
                     child.sendChangedProperties(editor);
@@ -272,7 +280,7 @@ public class SVNCommitUtil {
                     DebugLog.log("FILE DELETE: DONE");
                 }
             } else if (child.isDirectory()) {
-                doCommit(childPath, url, entries, editor, ws);
+                doCommit(childPath, url, entries, editor, ws, progressProcessor, committedPaths);
             } else {
 				boolean childIsCopied = Boolean.TRUE.toString().equals(child.getPropertyValue(SVNProperty.COPIED));
 				String digest = null;

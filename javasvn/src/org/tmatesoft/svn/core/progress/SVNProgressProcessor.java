@@ -28,10 +28,10 @@ public final class SVNProgressProcessor implements ISVNProgressViewer, ISVNProgr
 	}
 
 	public SVNProgressProcessor createSubProcessor(double lowerBound, double upperBound) {
-		return new SVNProgressProcessor(SVNProgressRangeViewer.createInstance(viewer, lowerBound, upperBound), canceller);
+		return new SVNProgressProcessor(viewer != null ? SVNProgressRangeViewer.createInstance(viewer, lowerBound, upperBound) : null, canceller);
 	}
 
 	public SVNProgressProcessor createSubProcessor(long currentIndex, long indexCount) {
-		return new SVNProgressProcessor(SVNProgressRangeViewer.createInstance(viewer, currentIndex, indexCount), canceller);
+		return new SVNProgressProcessor(viewer != null ? SVNProgressRangeViewer.createInstance(viewer, currentIndex, indexCount) : null, canceller);
 	}
 }
