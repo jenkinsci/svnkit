@@ -54,6 +54,10 @@ public class FSEntryHandler {
             if (attrs != null) {
                 String name = line.substring(0, line.indexOf('='));
                 String value = line.substring(line.indexOf('\"') + 1, line.lastIndexOf('\"'));
+                value = value.replaceAll("&lt;", "<");
+                value = value.replaceAll("&gt;", ">");
+                value = value.replaceAll("&quot;", "\"");
+                value = value.replaceAll("&#09;", "\t");
                 attrs.put(FSEntry.ENTRY_PREFIX + name, value);
                 if (line.endsWith("/>")) {
                     childEntries.put(attrs.get(SVNProperty.NAME), attrs);
