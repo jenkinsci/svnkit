@@ -112,6 +112,7 @@ To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/js
 <td align="right" width="80%"><a style="text-decoration: none" href="rss.xml"><span style="font-family:Arial;font-size:9px;background: #ff6000;color: #fff;padding: 0 4px">rss&nbsp;1.0</span>
 <a style="text-decoration: none" href="rss2.xml"><span style="font-family:Arial;font-size:9px;background: #ff6000;color: #fff;padding: 0 4px">rss&nbsp;2.0</span></td>
 </tr>
+<tr><td colspan=2>To get an Eclipse plugin version use <b>http://tmate.org/svn/</b> as an update site location in Eclipse Update Manager</td></tr>
 
 <?
 include("feed/rss_util.php");
