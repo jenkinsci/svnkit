@@ -1,6 +1,7 @@
 = version 1.0.0 build 20041219
 
-+ bugfixes
++ infinite loop on commits that includes workspace root fixed
++ JavaHL: SVNClient accepts all revision kinds (DATE, HEAD, etc.)
 
 = version 1.0.0 build 20041217
 
