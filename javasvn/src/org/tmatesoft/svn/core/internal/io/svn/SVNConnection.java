@@ -152,6 +152,11 @@ class SVNConnection {
         try {
             SVNWriter.write(getOutputStream(), template, items);
         } finally {
+		    try {
+				getOutputStream().flush();
+			} catch (IOException e) {
+			} catch (SVNException e) {
+			}
 		    getOutputStream().log();
         }
     }
