@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
@@ -38,6 +39,7 @@ import org.tmatesoft.svn.core.ISVNRunnable;
 import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.ISVNWorkspaceListener;
+import org.tmatesoft.svn.core.SVNCommitPacket;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
@@ -675,187 +677,218 @@ public class SVNWorkspace implements ISVNWorkspace {
         return commit(paths, handler, recursive, true);
     }
 
-    public long commit(String[] paths, ISVNCommitHandler handler, boolean recursive, boolean includeParents) throws SVNException {
-        long start = System.currentTimeMillis();
-        for (int i = 0; i < paths.length; i++) {
-            ISVNEntry entry = locateEntry(paths[i]);
-            if (entry == null || !entry.isManaged()) {
-                throw new SVNException("'" + paths[i] + "' is not under version control");
-            } else if (entry != null && entry.getPropertyValue(SVNProperty.COPIED) != null &&
-                    !entry.isScheduledForAddition()) {
+	public long commit(String[] paths, ISVNCommitHandler handler, boolean recursive, boolean includeParents) throws SVNException {
+		if (handler == null) {
+			handler = new ISVNCommitHandler() {
+				public String handleCommit(SVNStatus[] tobeCommited) {
+					return "";
+				}
+			};
+		}
+
+		final SVNCommitPacket packet = createCommitPacket(paths, recursive, includeParents);
+		if (packet == null) {
+			DebugLog.log("NOTHING TO COMMIT");
+			return -1;
+		}
+
+		return commit(packet, handler.handleCommit(packet.getStatuses()));
+	}
+
+	public SVNCommitPacket createCommitPacket(String[] paths, boolean recursive, boolean includeParents) throws SVNException {
+		long start = System.currentTimeMillis();
+		for (int i = 0; i < paths.length; i++) {
+			ISVNEntry entry = locateEntry(paths[i]);
+			if (entry == null || !entry.isManaged()) {
+				throw new SVNException("'" + paths[i] + "' is not under version control");
+			}
+			else if (entry != null && entry.getPropertyValue(SVNProperty.COPIED) != null &&
+			    !entry.isScheduledForAddition()) {
 				throw new SVNException("'" + entry.getPath() + "' is marked as 'copied' but is not itself scheduled for addition. " +
-					"Perhaps you're committing a target that is inside unversioned (or not-yet-versioned) directory?");
-            }
-        }
-        String root = "";
-        if (paths.length == 1) {
-        	ISVNEntry entry = locateEntry(paths[0]);
-        	if (entry != null && entry.isDirectory() && entry.isManaged()) {
-        		root = entry.getPath();
-        	}
-        } 
-        if (root == null) {
-        	root = PathUtil.getCommonRoot(paths);
-        	if (root == null) {
-        		root = "";
-        	}
-        }
-        if (handler == null) {
-            handler = new ISVNCommitHandler() {
-                public String handleCommit(SVNStatus[] tobeCommited) {
-                    return "";
-                }
-            };
-        }
-        try {
-            ISVNEntry rootEntry = locateEntry(root);
-            if (rootEntry == null || rootEntry.getPropertyValue(SVNProperty.URL) == null) {
-                throw new SVNException(root + " does not contain working copy files");
-            }
+				                       "Perhaps you're committing a target that is inside unversioned (or not-yet-versioned) directory?");
+			}
+		}
+		String root = "";
+		if (paths.length == 1) {
+			ISVNEntry entry = locateEntry(paths[0]);
+			if (entry != null && entry.isDirectory() && entry.isManaged()) {
+				root = entry.getPath();
+			}
+		}
+		if (root == null) {
+			root = PathUtil.getCommonRoot(paths);
+			if (root == null) {
+				root = "";
+			}
+		}
+		try {
+			ISVNEntry rootEntry = locateEntry(root);
+			if (rootEntry == null || rootEntry.getPropertyValue(SVNProperty.URL) == null) {
+				throw new SVNException(root + " does not contain working copy files");
+			}
 
-            DebugLog.log("");
-            DebugLog.log("COMMIT ROOT: " + root);
-            for (int i = 0; i < paths.length; i++) {
-                DebugLog.log("COMMIT PATH " + i + " :" + paths[i]);
-            }
-            Collection modified = new HashSet();
-            if (recursive) {
-                SVNCommitUtil.harvestCommitables(rootEntry, paths, recursive, modified);
-            } else {
-                for (int i = 0; i < paths.length; i++) {
-                    String path = paths[i];
-                    ISVNEntry entry = locateEntry(path);
-                    SVNCommitUtil.harvestCommitables(entry, paths, recursive, modified);
-                }
-            }
+			DebugLog.log("");
+			DebugLog.log("COMMIT ROOT: " + root);
+			for (int i = 0; i < paths.length; i++) {
+				DebugLog.log("COMMIT PATH " + i + " :" + paths[i]);
+			}
+			Collection modified = new HashSet();
+			if (recursive) {
+				SVNCommitUtil.harvestCommitables(rootEntry, paths, recursive, modified);
+			}
+			else {
+				for (int i = 0; i < paths.length; i++) {
+					String path = paths[i];
+					ISVNEntry entry = locateEntry(path);
+					SVNCommitUtil.harvestCommitables(entry, paths, recursive, modified);
+				}
+			}
 
-            Collection modifiedParents = new HashSet();
-            for (Iterator modifiedEntries = modified.iterator(); modifiedEntries.hasNext();) {
-                ISVNEntry entry = (ISVNEntry) modifiedEntries.next();
-                if (!entry.isDirectory() && entry.asFile().isCorrupted()) {
-                    throw new SVNException("svn: Checksum of base file '" + entry.getPath() + "' is not valid");
-                }
-                String p = entry.getPath();
-                if (entry.isScheduledForAddition()) {
-                    ISVNEntry parent = locateParentEntry(entry.getPath());
-                    while (parent != null && parent.isScheduledForAddition() && !parent.isScheduledForDeletion()) {
-                        if (!includeParents) {
-                            if (!modified.contains(parent)) {
-                                throw new SVNException("'" + p + "' is not under version control");
-                            }
-                            break;
-                        }
-                        modifiedParents.add(parent);
-                        DebugLog.log("HV: 'added' parent added to transaction: " + parent.getPath());
-                        parent = locateParentEntry(parent.getPath());
-                    }
-                }
-            }
-            modified.addAll(modifiedParents);
+			Collection modifiedParents = new HashSet();
+			for (Iterator modifiedEntries = modified.iterator(); modifiedEntries.hasNext();) {
+				ISVNEntry entry = (ISVNEntry)modifiedEntries.next();
+				if (!entry.isDirectory() && entry.asFile().isCorrupted()) {
+					throw new SVNException("svn: Checksum of base file '" + entry.getPath() + "' is not valid");
+				}
+				String p = entry.getPath();
+				if (entry.isScheduledForAddition()) {
+					ISVNEntry parent = locateParentEntry(entry.getPath());
+					while (parent != null && parent.isScheduledForAddition() && !parent.isScheduledForDeletion()) {
+						if (!includeParents) {
+							if (!modified.contains(parent)) {
+								throw new SVNException("'" + p + "' is not under version control");
+							}
+							break;
+						}
+						modifiedParents.add(parent);
+						DebugLog.log("HV: 'added' parent added to transaction: " + parent.getPath());
+						parent = locateParentEntry(parent.getPath());
+					}
+				}
+			}
+			modified.addAll(modifiedParents);
 
-            SVNCommitInfo info = null;
-            if (modified.isEmpty()) {
-                DebugLog.log("NOTHING TO COMMIT");
-                return -1;
-            }
-            SVNStatus[] statuses = new SVNStatus[modified.size()];
-            Map urls = new HashMap();
-            int index = 0;
-            String uuid = null;
-            for (Iterator entries = modified.iterator(); entries.hasNext();) {
-                ISVNEntry entry = (ISVNEntry) entries.next();
-                String url = entry.getPropertyValue(SVNProperty.URL);
-                String entryUUID = entry.getPropertyValue(SVNProperty.UUID);
-                if (entryUUID != null) {
-                    if (uuid != null && !uuid.equals(entryUUID)) {
-                        throw new SVNException("commit contains entries from the different repositories '" + entry.getPath() + "' and '" + urls.get(url) + "'");
-                    }
-                    uuid = entryUUID;
-                }
-                if (urls.containsKey(url)) {
-                    throw new SVNException("commit contains entries with the same url '" + entry.getPath() + "' and '" + urls.get(url) + "'");
-                }
-                urls.put(url, entry.getPath());
-                if (entry.isConflict()) {
-                    throw new SVNException("resolve conflict in '" + entry.getPath() + "' before commit");
-                }
-                statuses[index++] = SVNStatusUtil.createStatus(entry, -1, 0, 0, null);
-            }
-            String message = handler == null ? "" : handler.handleCommit(statuses);
-            modified.clear();
-            for (int i = 0; i < statuses.length; i++) {
-                if (statuses[i] != null) {
-                    modified.add(locateEntry(statuses[i].getPath()));
-                }
-            }
-            if (message == null || modified.isEmpty()) {
-                DebugLog.log("NOTHING TO COMMIT");
-                return -1;
-            }
-            DebugLog.log("COMMIT MESSAGE: " + message);
-            paths = new String[modified.size()];
-            index = 0;
-            for (Iterator modifiedEntries = modified.iterator(); modifiedEntries.hasNext();) {
-                ISVNEntry entry = (ISVNEntry) modifiedEntries.next();
-                DebugLog.log("MODIFIED: " + entry.getPath());
-                paths[index++] = entry.getPath();
-            }
+			if (modified.isEmpty()) {
+				return null;
+			}
 
-            Map tree = new HashMap();
-            String url = SVNCommitUtil.buildCommitTree(modified, tree);
-            for (Iterator treePaths = tree.keySet().iterator(); treePaths.hasNext();) {
-                String treePath = (String) treePaths.next();
-                if (tree.get(treePath) != null) {
-                    DebugLog.log("TREE ENTRY : " + treePath + " : " + ((ISVNEntry) tree.get(treePath)).getPath());
-                } else {
-                    DebugLog.log("TREE ENTRY : " + treePath + " : null");
-                }
-            }
-            DebugLog.log("COMMIT ROOT RECALCULATED: " + url);
-            DebugLog.log("COMMIT PREPARATIONS TOOK: " + (System.currentTimeMillis() - start) + " ms.");
+			SVNStatus[] statuses = new SVNStatus[modified.size()];
+			Map urls = new HashMap();
+			int index = 0;
+			String uuid = null;
+			for (Iterator entries = modified.iterator(); entries.hasNext();) {
+				ISVNEntry entry = (ISVNEntry)entries.next();
+				String url = entry.getPropertyValue(SVNProperty.URL);
+				String entryUUID = entry.getPropertyValue(SVNProperty.UUID);
+				if (entryUUID != null) {
+					if (uuid != null && !uuid.equals(entryUUID)) {
+						throw new SVNException("commit contains entries from the different repositories '" + entry.getPath() + "' and '" + urls.get(url) + "'");
+					}
+					uuid = entryUUID;
+				}
+				if (urls.containsKey(url)) {
+					throw new SVNException("commit contains entries with the same url '" + entry.getPath() + "' and '" + urls.get(url) + "'");
+				}
+				urls.put(url, entry.getPath());
+				if (entry.isConflict()) {
+					throw new SVNException("resolve conflict in '" + entry.getPath() + "' before commit");
+				}
+				statuses[index++] = SVNStatusUtil.createStatus(entry, -1, 0, 0, null);
+			}
 
-            SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
-            SVNRepository repository = SVNRepositoryFactory.create(location);
-            repository.setCredentialsProvider(getCredentialsProvider());
-            
+			DebugLog.log("Building commit packet took: " + (System.currentTimeMillis() - start) + " ms.");
+			return new SVNCommitPacket(root, statuses);
+		}
+		finally {
+			getRoot().dispose();
+		}
+	}
+	
+	public long commit(SVNCommitPacket packet, String message) throws SVNException {
+		long start = System.currentTimeMillis();
+		try {
+			final String root = packet.getRoot();
+			final Set modified = new HashSet();
+			final SVNStatus[] statuses = packet.getStatuses();
+			for (int index = 0; index < statuses.length; index++) {
+				if (statuses[index] != null) {
+					modified.add(locateEntry(statuses[index].getPath()));
+				}
+			}
 
-            ISVNEditor editor = repository.getCommitEditor(message, new SVNWorkspaceMediatorAdapter(getRoot(), tree));
-            String host = location.getProtocol() + "://" + location.getHost() + ":" + location.getPort();
-            String rootURL = PathUtil.append(host, repository.getRepositoryRoot());
-            try {
-                SVNCommitUtil.doCommit("", rootURL, tree, editor, this);
-                info = editor.closeEdit();
-            } catch (SVNException e) {
-                DebugLog.error("error: " + e.getMessage());
-                if (e.getErrors() != null) {
-                    for (int i = 0; i < e.getErrors().length; i++) {
-                        SVNError error = e.getErrors()[i];
-                        if (error != null) {
-                            DebugLog.error(error.toString());
-                        }
-                    }
-                }
-                try {
-                    editor.abortEdit();
-                } catch (SVNException inner) {}
-                throw e;
-            } catch (Throwable th) {
-                throw new SVNException(th);
-            }
+			if (message == null || modified.isEmpty()) {
+				DebugLog.log("NOTHING TO COMMIT");
+				return -1;
+			}
 
-            DebugLog.log("COMMIT TOOK: " + (System.currentTimeMillis() - start) + " ms.");
-            start = System.currentTimeMillis();
-            SVNCommitUtil.updateWorkingCopy(info, rootEntry.getPropertyValue(SVNProperty.UUID), tree, this);
+			final ISVNEntry rootEntry = locateEntry(root);
+			if (rootEntry == null || rootEntry.getPropertyValue(SVNProperty.URL) == null) {
+				throw new SVNException(root + " does not contain working copy files");
+			}
 
-            assertCommit(info, tree, repository);
+			DebugLog.log("COMMIT MESSAGE: " + message);
 
-            sleepForTimestamp();
-            DebugLog.log("POST COMMIT ACTIONS TOOK: " + (System.currentTimeMillis() - start) + " ms.");
-            return info != null ? info.getNewRevision() : -1;
-        } finally {
-            getRoot().dispose();
-        }
-    }
+			final Map tree = new HashMap();
+			final String url = SVNCommitUtil.buildCommitTree(modified, tree);
+			for (Iterator treePaths = tree.keySet().iterator(); treePaths.hasNext();) {
+				String treePath = (String)treePaths.next();
+				if (tree.get(treePath) != null) {
+					DebugLog.log("TREE ENTRY : " + treePath + " : " + ((ISVNEntry)tree.get(treePath)).getPath());
+				}
+				else {
+					DebugLog.log("TREE ENTRY : " + treePath + " : null");
+				}
+			}
+			DebugLog.log("COMMIT ROOT RECALCULATED: " + url);
+			DebugLog.log("COMMIT PREPARATIONS TOOK: " + (System.currentTimeMillis() - start) + " ms.");
+
+			SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
+			SVNRepository repository = SVNRepositoryFactory.create(location);
+			repository.setCredentialsProvider(getCredentialsProvider());
+
+			ISVNEditor editor = repository.getCommitEditor(message, new SVNWorkspaceMediatorAdapter(getRoot(), tree));
+			String host = location.getProtocol() + "://" + location.getHost() + ":" + location.getPort();
+			String rootURL = PathUtil.append(host, repository.getRepositoryRoot());
+			SVNCommitInfo info;
+			try {
+				SVNCommitUtil.doCommit("", rootURL, tree, editor, this);
+				info = editor.closeEdit();
+			}
+			catch (SVNException e) {
+				DebugLog.error("error: " + e.getMessage());
+				if (e.getErrors() != null) {
+					for (int i = 0; i < e.getErrors().length; i++) {
+						SVNError error = e.getErrors()[i];
+						if (error != null) {
+							DebugLog.error(error.toString());
+						}
+					}
+				}
+				try {
+					editor.abortEdit();
+				}
+				catch (SVNException inner) {
+				}
+				throw e;
+			}
+			catch (Throwable th) {
+				throw new SVNException(th);
+			}
+
+			DebugLog.log("COMMIT TOOK: " + (System.currentTimeMillis() - start) + " ms.");
+			start = System.currentTimeMillis();
+			SVNCommitUtil.updateWorkingCopy(info, rootEntry.getPropertyValue(SVNProperty.UUID), tree, this);
+
+			assertCommit(info, tree, repository);
+
+			sleepForTimestamp();
+			DebugLog.log("POST COMMIT ACTIONS TOOK: " + (System.currentTimeMillis() - start) + " ms.");
+			return info != null ? info.getNewRevision() : -1;
+		}
+		finally {
+			getRoot().dispose();
+		}
+	}
 
     private void assertCommit(SVNCommitInfo info, Map tree, SVNRepository repository) throws SVNException {
         if (!DebugLog.isSafeMode()) {

@@ -74,6 +74,10 @@ public interface ISVNWorkspace {
     
     public long update(SVNRepositoryLocation url, String path, long revision, boolean recursive) throws SVNException;
 
+	public SVNCommitPacket createCommitPacket(String[] paths, boolean recursive, boolean includeParents) throws SVNException;
+
+	public long commit(SVNCommitPacket packet, String message) throws SVNException;
+
     public long commit(String paths[], ISVNCommitHandler handler, boolean recursive, boolean includeUnversionedParents) throws SVNException;
 
     public long commit(String paths[], String message, boolean recursive, boolean includeUnversionedParents) throws SVNException;
