@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.diff;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -83,7 +84,7 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
                 println("-" + new String(sourceLines[j].getBytes(), encoding), output);
             }
             for(int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
-                println("-" + new String(sourceLines[j].getBytes(), encoding), output);
+                println("+" + new String(targetLines[j].getBytes(), encoding), output);
             }
             // print glue lines
             int end = Math.min(block.getLeftTo() + gutter, sourceLines.length - 1);
@@ -101,8 +102,8 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
         if (myGeneratorsCache == null) {
             myGeneratorsCache = new HashMap();
         }        
-        if (!properties.containsKey(ISVNDiffGeneratorFactory.GUTTER_PROPERTY)) {
-            properties = new HashMap(properties);
+        if (properties == null || !properties.containsKey(ISVNDiffGeneratorFactory.GUTTER_PROPERTY)) {
+            properties = new HashMap(properties == null ? Collections.EMPTY_MAP : properties);
             properties.put(ISVNDiffGeneratorFactory.GUTTER_PROPERTY, "3");
         }   
         ISVNDiffGenerator generator = (ISVNDiffGenerator) myGeneratorsCache.get(properties);
