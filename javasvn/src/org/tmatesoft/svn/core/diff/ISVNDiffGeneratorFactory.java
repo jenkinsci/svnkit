@@ -20,7 +20,8 @@ import java.util.Map;
 public interface ISVNDiffGeneratorFactory {
 
     public static final String GUTTER_PROPERTY = "gutter";
-
+    public static final String EOL_PROPERTY = "eol";
+    public static final String WHITESPACE_PROPERTY = "whitespace";
     
     public ISVNDiffGenerator createGenerator(Map properties);
 

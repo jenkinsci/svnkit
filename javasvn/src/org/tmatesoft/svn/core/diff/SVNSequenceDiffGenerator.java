@@ -48,6 +48,9 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
     protected String getEOL() {
         if (myEOL == null) {
             myEOL = System.getProperty("line.separator", "\n");
+            if (getProperties().get("eol") instanceof String) {
+                myEOL = (String) getProperties().get("eol");
+            }
         }
         return myEOL;
     }
@@ -109,8 +112,8 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
         for(Iterator blocks = blocksList.iterator(); blocks.hasNext();) {
             QSequenceDifferenceBlock currentBlock = (QSequenceDifferenceBlock) blocks.next();
             if (lastBlock != null) {
-                if (currentBlock.getLeftFrom() - lastBlock.getLeftTo() > gutter &&
-                    currentBlock.getRightFrom() - lastBlock.getRightFrom() > gutter) {
+                if (currentBlock.getLeftFrom() - 1 - lastBlock.getLeftTo() > gutter &&
+                    currentBlock.getRightFrom() - 1 - lastBlock.getRightTo() > gutter) {
                     combinedBlocks.add(currentList);
                     currentList = new LinkedList();
                 } 
@@ -120,7 +123,6 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
         }
         if (currentList != null && !combinedBlocks.contains(currentList)) {
             combinedBlocks.add(currentList);
-            
         }
         return combinedBlocks;
     }

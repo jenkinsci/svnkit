@@ -40,8 +40,8 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
     }
 
     public void generateDiffHeader(String item, String leftInfo, String rightInfo, Writer output) throws IOException {
-        leftInfo = leftInfo == null ? "" : " " + leftInfo;
-        rightInfo = rightInfo == null ? "" : " " + rightInfo;
+        leftInfo = leftInfo == null ? "" : "\t" + leftInfo;
+        rightInfo = rightInfo == null ? "" : "\t" + rightInfo;
         println("--- " + item + leftInfo, output);
         println("+++ " + item + rightInfo, output);
     }
