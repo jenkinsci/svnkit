@@ -5,6 +5,7 @@
 + http: all DAV requests (including commit comments) are sent in UTF-8 encoding.
 + SvnClient: add and remove methods didn't work for directories, fixed.
 + SvnClient: commit of single file deletion didn't work, fixed.
++ Eclipse: JavaSVN features installed from update site supports automatic update
 
 = version 0.8.2
 
