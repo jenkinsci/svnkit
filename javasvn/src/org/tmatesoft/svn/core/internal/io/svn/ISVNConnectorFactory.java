@@ -9,12 +9,10 @@ public interface ISVNConnectorFactory {
 
 	public static final ISVNConnectorFactory DEFAULT = new ISVNConnectorFactory() {
 		public ISVNConnector createConnector(SVNRepository repository) {
-            ISVNConnector connector = null;
 			if ("svn+ssh".equals(repository.getLocation().getProtocol())) {
 				return new SVNJSchConnector();
-			} else {
-			    return new SVNPlainConnector();
-            }
+			}
+			return new SVNPlainConnector();
 		}
 	};
 
