@@ -28,7 +28,6 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
@@ -38,6 +37,7 @@ class DAVCommitEditor implements ISVNEditor {
     private String myLogMessage;
     private DAVConnection myConnection;
     private SVNRepositoryLocation myLocation;
+	private DAVRepository myRepository;
     private Runnable myCloseCallback;
     private String myActivity;
     
@@ -45,13 +45,12 @@ class DAVCommitEditor implements ISVNEditor {
     private Stack myDirsStack;
     private ISVNWorkspaceMediator myCommitMediator;
     private Map myPathsMap;
-    private String myRepositoryRoot;
     
-    public DAVCommitEditor(SVNRepository repository, DAVConnection connection, String message, ISVNWorkspaceMediator mediator, Runnable closeCallback) {
+    public DAVCommitEditor(DAVRepository repository, DAVConnection connection, String message, ISVNWorkspaceMediator mediator, Runnable closeCallback) {
         myConnection = connection;
         myLogMessage = message; 
         myLocation = repository.getLocation();
-        myRepositoryRoot = repository.getRepositoryRoot();
+		myRepository = repository;
         myCloseCallback = closeCallback;
         myCommitMediator = mediator;
         
@@ -82,16 +81,27 @@ class DAVCommitEditor implements ISVNEditor {
         DAVResource parentResource = (DAVResource) myDirsStack.peek();
         checkoutResource(parentResource);
         String wPath = parentResource.getWorkingURL();
+		// get root wURL and delete from it!
         
         // append name part of the path to the checked out location
-        wPath = PathUtil.append(wPath, PathUtil.tail(path));
+		// should we append full name here?
+		if (myDirsStack.size() == 1) {
+			wPath = PathUtil.append(parentResource.getWorkingURL(), path);
+		} else {
+			// we are inside openDir()...
+			wPath = PathUtil.append(wPath, PathUtil.tail(path));
+		}
         
         // call DELETE for the composed path
         DAVStatus status = myConnection.doDelete(wPath, revision);
         if (status.getResponseCode() != 204 && status.getResponseCode() != 404) {
             throw new SVNException("DELETE failed: " + status);
         }
-        myPathsMap.put(PathUtil.append(parentResource.getURL(), PathUtil.tail(path)), path);
+		if (myDirsStack.size() == 1) {
+			myPathsMap.put(PathUtil.append(parentResource.getURL(), path), path);
+		} else {
+			myPathsMap.put(PathUtil.append(parentResource.getURL(), PathUtil.tail(path)), path);
+		}
     }
     
     
@@ -117,13 +127,14 @@ class DAVCommitEditor implements ISVNEditor {
 
         if (copyPath != null) {
             // convert to full path? 
-            copyPath = PathUtil.append(myRepositoryRoot, copyPath);
-            // not implemented yet.
+	        copyPath = PathUtil.encode(copyPath);
+            copyPath = myRepository.getFullPath(copyPath);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, copyPath, copyRevision, false, false, null);
             copyPath = PathUtil.append(info.baselineBase, info.baselinePath);
             
             // full url.
-            wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + newDir.getWorkingURL();
+            wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + 
+            	PathUtil.encode(newDir.getWorkingURL());
             DAVStatus status = myConnection.doCopy(copyPath, wPath);
             if (status.getResponseCode() != 201 && status.getResponseCode() != 204) {
                 throw new SVNException("COPY failed: " + status);
@@ -187,13 +198,14 @@ class DAVCommitEditor implements ISVNEditor {
         myPathsMap.put(myCurrentFile.getURL(), myCurrentFile.getPath());
 
         if (copyPath != null) {
-            copyPath = PathUtil.append(myRepositoryRoot, copyPath);
-            // not implemented yet.
+	        copyPath = PathUtil.encode(copyPath);
+            copyPath = myRepository.getFullPath(copyPath);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, copyPath, copyRevision, false, false, null);
             copyPath = PathUtil.append(info.baselineBase, info.baselinePath);
             
             // do "COPY" copyPath to parents working url ?
-            wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + newFile.getWorkingURL();
+            wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + 
+            	PathUtil.encode(newFile.getWorkingURL());
             DAVStatus status = myConnection.doCopy(copyPath, wPath);
             if (status.getResponseCode() != 201 && status.getResponseCode() != 204) {
                 throw new SVNException("COPY failed: " + status);

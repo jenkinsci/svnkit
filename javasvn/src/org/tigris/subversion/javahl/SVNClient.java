@@ -780,6 +780,7 @@ public class SVNClient implements SVNClientInterface {
             try {
                 String root = PathUtil.getCommonRoot(new String[] {destPath, srcPath});
                 SVNRepository repository = createRepository(root);
+				DebugLog.log("repository created: " + repository.getLocation());
                 long revNumber = getRevisionNumber(revision, repository, null, null);
 
                 String deletePath = srcPath.substring(root.length());
@@ -788,6 +789,9 @@ public class SVNClient implements SVNClientInterface {
                 destPath = PathUtil.removeLeadingSlash(destPath);
                 deletePath = PathUtil.decode(deletePath);
                 destPath = PathUtil.decode(destPath);
+				
+				DebugLog.log("MOVE: dst path: " + destPath);
+				DebugLog.log("MOVE: src path: " + deletePath);
                 
                 SVNNodeKind srcNodeKind = repository.checkPath(deletePath, revNumber);
                 SVNNodeKind dstNodeKind = repository.checkPath(destPath, revNumber);
@@ -817,12 +821,15 @@ public class SVNClient implements SVNClientInterface {
                 for (Iterator dirs = parentDstDirs.iterator(); dirs.hasNext();) {
 					dir = PathUtil.append(dir, (String) dirs.next());
 					dir = PathUtil.removeLeadingSlash(dir);					
+					DebugLog.log("MOVE: open dir: " + dir);
 					editor.openDir(dir, -1);
 				}
                 if (srcNodeKind == SVNNodeKind.DIR) {
+					DebugLog.log("MOVE: add dir: " + destPath + " : " + deletePath);
                 	editor.addDir(destPath, deletePath, revNumber);
                 	editor.closeDir();
                 } else {
+					DebugLog.log("MOVE: add file: " + destPath + " : " + deletePath);
                 	editor.addFile(destPath, deletePath, revNumber);
                 	editor.closeFile(null);
                 }
@@ -830,6 +837,7 @@ public class SVNClient implements SVNClientInterface {
                 	dirs.next();
 					editor.closeDir();
 				}
+				DebugLog.log("COPY: delete: " + deletePath);
                 editor.deleteEntry(deletePath, revNumber);
                 
                 editor.closeDir();

@@ -436,7 +436,7 @@ class DAVRepository extends SVNRepository {
         return editor;
 	}
     
-    private String getFullPath(String path) {    	
+    public String getFullPath(String path) {    	
         if (path != null && path.startsWith("/")) {
         	if ("/".equals(path)) {
         		return getRepositoryRoot();
