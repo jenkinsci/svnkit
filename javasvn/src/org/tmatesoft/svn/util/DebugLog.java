@@ -13,180 +13,94 @@
 package org.tmatesoft.svn.util;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 /**
  * @author TMate Software Ltd.
  */
 public class DebugLog {
-    
-    private static boolean ourIsEnabled = true;
 
-    public static void setEnabled(boolean enabled) {
-        ourIsEnabled = enabled;
-    }
-    
-    public static boolean isEnabled() {
-        return ourIsEnabled;
-    }
-    
-    public static void log(String message) {
-        if (!ourIsEnabled) {
-            return;
-        }
-        Logger.getLogger("svn").log(Level.FINE, message);
-    }
+	private static DebugLogger ourLogger = new DebugDefaultLogger();
+	private static final File ourSafeModeTrigger = new File(".javasvn.safemode");
 
-    public static void log(Level level, String message) {
-        if (!ourIsEnabled) {
-            return;
-        }
-        Logger.getLogger("svn").log(level, message);
-    }
+	public static void setLogger(DebugLogger logger) {
+		ourLogger = logger;
+	}
 
-    public static void benchmark(String message) {
-        if (!ourIsEnabled) {
-            return;
-        }
-        Logger.getLogger("svn").log(Level.CONFIG, message);
-    }
+	public static boolean isEnabled() {
+		return ourLogger != null;
+	}
 
-    public static void error(String message) {
-        if (!ourIsEnabled) {
-            return;
-        }
-        Logger.getLogger("svn").log(Level.SEVERE, message);
-    }
+	public static void log(String message) {
+		if (ourLogger == null || !ourLogger.isFineEnabled()) {
+			return;
+		}
+		ourLogger.logFine(message);
+	}
 
-    public static void error(Throwable th) {
-        if (!ourIsEnabled) {
-            return;
-        }
-        Logger.getLogger("svn").log(Level.SEVERE, th.getMessage(), th);
-    }
-    
-    public static boolean isSafeMode() {
-        if (!ourIsEnabled) {
-            return false;
-        }
-        if (isSafeModeDefault() && System.getProperty("javasvn.safemode") == null) {
-            return true;
-        }
-        return Boolean.getBoolean("javasvn.safemode");
-    }
-    
-    public static boolean isGeneratorDisabled() {
-        if (!ourIsEnabled) {
-            return false;
-        }
-        if (isSafeModeDefault()) {
-            // have to enable explicitly
-            return !Boolean.getBoolean("javasvn.generator.enabled");
-        }
-        if (System.getProperty("javasvn.generator.enabled") == null) {
-            return false;
-        }
-        return !Boolean.getBoolean("javasvn.generator.enabled");
-    }
-    
-    private static boolean isFileLoggingEnabled() {
-        if (!ourIsEnabled) {
-            return false;
-        }
-        if (System.getProperty("javasvn.log.file") == null) {
-            return true;
-        }
-        return Boolean.getBoolean("javasvn.log.file"); 
-    }
-    
-    private static final File ourSafeModeTrigger = new File(".javasvn.safemode");
-    private static final DateFormat ourDateFormat = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss.SSS");
+	public static void logInfo(String message) {
+		if (ourLogger == null || !ourLogger.isInfoEnabled()) {
+			return;
+		}
+		ourLogger.logInfo(message);
+	}
 
-    static {
-        try {
-            Logger.getLogger("svn").setUseParentHandlers(false);
-            SimpleFormatter f = new SimpleFormatter() {
-                public synchronized String format(LogRecord record) {
-                    StringBuffer sb = new StringBuffer();
-                    String message = formatMessage(record);
-                    sb.append(ourDateFormat.format(new Date(record.getMillis())));                    
-                    sb.append(": ");
-                    sb.append(message);
-                    sb.append(System.getProperty("line.separator"));
-                    if (record.getThrown() != null) {
-                        try {
-                            StringWriter sw = new StringWriter();
-                            PrintWriter pw = new PrintWriter(sw);
-                            record.getThrown().printStackTrace(pw);
-                            pw.close();
-                            sb.append(sw.toString());
-                        } catch (Exception e) {
-                        }
-                    }                    
-                    return sb.toString();
-                }
-            };
-            String levelStr = System.getProperty("javasvn.log.level");
-            Level level;
-            try {
-                level = Level.parse(levelStr);
-            } catch (Throwable th) {
-                level = isSafeModeDefault() ? Level.FINEST : Level.FINEST;
-            }
-            if (isFileLoggingEnabled()) {
-                String path = System.getProperty("javasvn.log.path");
-                if (path == null) {
-                    path = "%home%/.javasvn/.javasvn.%g.%u.log";
-                } 
-                path = path.replace(File.separatorChar, '/');
-                path = path.replaceAll("%home%", System.getProperty("user.home").replace(File.separatorChar, '/'));
-                path = path.replace('/', File.separatorChar);
-                File dir = new File(path).getParentFile();
-                if (!dir.exists()) {
-                    dir.mkdirs();
-                }
-                
-                Handler handler = new FileHandler(path, 1024*1024, 10, true);
-                handler.setFormatter(f);
-                handler.setLevel(level);
-                Logger.getLogger("svn").addHandler(handler);
-            }
-            if (Boolean.getBoolean("javasvn.log.console")) {
-                ConsoleHandler cHandler = new ConsoleHandler();
-                cHandler.setLevel(level);
-                cHandler.setFilter(null);
-                cHandler.setFormatter(f);                
-                Logger.getLogger("svn").addHandler(cHandler);
-            }
-            Logger.getLogger("svn").setLevel(level);
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    private static boolean isSafeModeDefault() {
-        if (!ourIsEnabled) {
-            return false;
-        }
-        return ourSafeModeTrigger.exists();
-    }
+	public static void benchmark(String message) {
+		if (ourLogger == null || !ourLogger.isInfoEnabled()) {
+			return;
+		}
+		ourLogger.logInfo(message);
+	}
 
-    public static boolean isSVNLoggingEnabled() {
-        return Boolean.getBoolean("javasvn.log.svn");
-    }
-    
+	public static void error(String message) {
+		if (ourLogger == null || !ourLogger.isErrorEnabled()) {
+			return;
+		}
+		ourLogger.logError(message, null);
+	}
+
+	public static void error(Throwable th) {
+		if (ourLogger == null || !ourLogger.isErrorEnabled()) {
+			return;
+		}
+		ourLogger.logError(th.getMessage(), th);
+	}
+
+	public static boolean isSafeMode() {
+		if (ourLogger == null) {
+			return false;
+		}
+		if (isSafeModeDefault() && System.getProperty("javasvn.safemode") == null) {
+			return true;
+		}
+		return Boolean.getBoolean("javasvn.safemode");
+	}
+
+	public static boolean isGeneratorDisabled() {
+		if (ourLogger == null) {
+			return false;
+		}
+		if (isSafeModeDefault()) {
+			// have to enable explicitly
+			return !Boolean.getBoolean("javasvn.generator.enabled");
+		}
+		if (System.getProperty("javasvn.generator.enabled") == null) {
+			return false;
+		}
+		return !Boolean.getBoolean("javasvn.generator.enabled");
+	}
+
+	public static boolean isSVNLoggingEnabled() {
+		if (ourLogger == null) {
+			return false;
+		}
+
+		return ourLogger.isSVNLoggingEnabled();
+	}
+
+	static boolean isSafeModeDefault() {
+		if (ourLogger == null) {
+			return false;
+		}
+		return ourSafeModeTrigger.exists();
+	}
 }

@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Level;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -457,7 +456,7 @@ public class AllTests extends TestSuite {
             try {
                 String line;
                 while((line = myInputStream.readLine()) != null) {
-                    DebugLog.log(Level.CONFIG, line);
+                    DebugLog.logInfo(line);
                     System.err.flush();
                     System.out.flush();
                 }

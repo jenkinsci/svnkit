@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
 
 import org.tmatesoft.svn.util.DebugLog;
 
@@ -244,7 +243,7 @@ public class PythonTests {
 			try {
 				String line;
 				while ((line = myInputStream.readLine()) != null) {
-					DebugLog.log(Level.CONFIG, line);
+					DebugLog.logInfo(line);
 					if (myHelpStream != null) {
 						myHelpStream.println(line);
 						myHelpStream.flush();
