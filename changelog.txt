@@ -1,3 +1,8 @@
+= version 1.0.0 build 20050120
+
++ bugs with commiting locally copied files fixed
++ DAV '/' repository location handled correctly
+
 = version 1.0.0 build 20050112
 
 + lot of incompatibilities with native svn fixed

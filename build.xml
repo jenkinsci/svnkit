@@ -37,9 +37,7 @@
 
 	<target name="build-standalone" depends="init">
 		<mkdir dir="javasvn/bin" />
-		<mkdir dir="javasvn-test/bin" />
 		<mkdir dir="contrib/sequence/bin" />
-		<mkdir dir="contrib/sequence/bin-test" />
 		<mkdir dir="contrib/javahl/bin" />
 		
 		<javac debug="true" classpath="contrib/junit/junit.jar"	destdir="contrib/sequence/bin">
@@ -51,14 +49,14 @@
 		<javac classpath="contrib/sequence/bin;contrib/javahl/bin;contrib/jsch/jsch-0.1.18.jar" debug="true" destdir="javasvn/bin">
 			<src path="javasvn/src"/>
 		</javac>
-
+		<!--
 		<javac debug="true" classpath="contrib/sequence/bin;contrib/junit/junit.jar" destdir="contrib/sequence/bin-test">
 			<src path="contrib/sequence/src-test"/>
 		</javac>
 		<javac classpath="javasvn/bin;contrib/junit/junit.jar" debug="true" destdir="javasvn-test/bin">
 			<src path="javasvn-test/src"/>
 		</javac>
-		
+		-->
 		<!-- build main library jar file -->
 		<mkdir dir="lib"/>
 		<jar destfile="lib/javasvn.jar">
@@ -186,7 +184,20 @@
 		<zip basedir="javasvn-eclipse/plugin" destfile="org.tmatesoft.svn_1.0.0_${date}.eclipse.zip">
 			<include name="**"/>
 		</zip>
-		<copy file="lib/javasvn.src.zip" tofile="org.tmatesoft.svn_1.0.0_${date}.src.zip"/>
+		<zip basedir="javasvn-eclipse/plugin" destfile="org.tmatesoft.svn_1.0.0_${date}.eclipse.zip">
+                        <include name="**"/>
+		</zip>
+		<zip basedir="." destfile="org.tmatesoft.svn_1.0.0_${date}.src.zip">
+			<exclude name="lib/**"/>
+			<exclude name="doc/**"/>
+			<exclude name="**/bin/**"/>
+			<exclude name="**/bin-test/**"/>
+			<exclude name="*.zip"/>
+			<exclude name="javasvn-eclipse/**"/>
+			<exclude name="javasvn-test/**"/>
+			<exclude name="www/**"/>
+                        <exclude name="**/.svn"/>
+                </zip>
 	</target>
 	
 	<target name="test" depends="build-standalone">
