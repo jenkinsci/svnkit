@@ -96,7 +96,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
     public void deleteEntry(String path, long revision) throws SVNException {
         DebugLog.log("DELETE ENTRY: " + path + " : " + revision);
         myWorkspace.fireEntryUpdated(getCurrentEntry().getChild(PathUtil.tail(path)), SVNStatus.DELETED, SVNStatus.DELETED, revision);
-        getCurrentEntry().deleteChild(PathUtil.tail(path), false);
+        getCurrentEntry().deleteChild(PathUtil.tail(path), true);
     }
     
     public void absentDir(String path) throws SVNException {
@@ -270,10 +270,13 @@ public class SVNCheckoutEditor implements ISVNEditor {
             if (myTarget == null) {
                 myRootEntry.merge();
             } else {
+                DebugLog.log("UPDATED: MERGING TARGET: " + myTarget);
                 if (myRootEntry.asDirectory().getChild(myTarget) != null) {
                     myRootEntry.asDirectory().getChild(myTarget).merge();
+                    DebugLog.log("UPDATED: TARGET MERGED");
                 }
                 myRootEntry.save(false);
+                DebugLog.log("UPDATED: PARENT SAVED");
             }
         }
         myRootEntry.dispose();
