@@ -18,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.util.HashMap;
@@ -107,27 +108,35 @@ class HttpConnection {
         return status;
     }
 
-    public DAVStatus request(String method, String path, Map header, byte[] reqBody, DefaultHandler handler, int[] okCodes) throws SVNException {
+    public DAVStatus request(String method, String path, Map header, StringBuffer reqBody, DefaultHandler handler, int[] okCodes) throws SVNException {
         DAVStatus status = sendRequest(method, path, initHeader(0, null, header), reqBody, okCodes);
         readResponse(handler, status.getResponseHeader());
         return status;
     }
 
-    public DAVStatus request(String method, String path, int depth, String label, byte[] requestBody, OutputStream result, int[] okCodes) throws SVNException {
+    public DAVStatus request(String method, String path, int depth, String label, StringBuffer requestBody, OutputStream result, int[] okCodes) throws SVNException {
         DAVStatus status = sendRequest(method, path, initHeader(depth, label, null), requestBody, okCodes);
         readResponse(result, status.getResponseHeader());
         return status;
     }
 
-    public DAVStatus request(String method, String path, int depth, String label, byte[] requestBody, DefaultHandler handler, int[] okCodes)
+    public DAVStatus request(String method, String path, int depth, String label, StringBuffer requestBody, DefaultHandler handler, int[] okCodes)
             throws SVNException {
         DAVStatus status = sendRequest(method, path, initHeader(depth, label, null), requestBody, okCodes);
         readResponse(handler, status.getResponseHeader());
         return status;
     }
 
-    private DAVStatus sendRequest(String method, String path, Map header, byte[] requestBody, int[] okCodes) throws SVNException {
-        DAVStatus status = sendRequest(method, path, header, requestBody != null ? new ByteArrayInputStream(requestBody) : null);
+    private DAVStatus sendRequest(String method, String path, Map header, StringBuffer requestBody, int[] okCodes) throws SVNException {
+		byte[] request = null;
+		if (requestBody != null) {
+			try {
+				request = requestBody.toString().getBytes("UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				request = requestBody.toString().getBytes();
+			}
+		}
+        DAVStatus status = sendRequest(method, path, header, request != null ? new ByteArrayInputStream(request) : null);
         assertOk(status, okCodes);
         return status;
     }

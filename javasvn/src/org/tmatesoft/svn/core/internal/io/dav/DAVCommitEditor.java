@@ -161,7 +161,7 @@ class DAVCommitEditor implements ISVNEditor {
         // do proppatch if there were property changes.
         if (resource.getProperties() != null) {
             StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, resource.getProperties());
-            myConnection.doProppatch(resource.getWorkingURL(), request.toString().getBytes(), null);
+            myConnection.doProppatch(resource.getWorkingURL(), request, null);
         }
         resource.dispose();
     }
@@ -255,7 +255,7 @@ class DAVCommitEditor implements ISVNEditor {
             // do proppatch if there were property changes.
             if (myCurrentFile.getProperties() != null) {
                 StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, myCurrentFile.getProperties());
-                myConnection.doProppatch(myCurrentFile.getWorkingURL(), request.toString().getBytes(), null);
+                myConnection.doProppatch(myCurrentFile.getWorkingURL(), request, null);
             }
         } finally {
             myCurrentFile.dispose();
@@ -313,7 +313,7 @@ class DAVCommitEditor implements ISVNEditor {
         // proppatch log message.
         logMessage = logMessage == null ? "no message" : logMessage;
         StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, "svn:log", logMessage);
-        myConnection.doProppatch(location, request.toString().getBytes(), null);
+        myConnection.doProppatch(location, request, null);
         
         return activity;
     }

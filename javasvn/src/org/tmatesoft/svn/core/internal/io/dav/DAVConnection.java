@@ -12,10 +12,8 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,14 +54,8 @@ class DAVConnection {
                         result[0] = response;
                     }
                 };
-                byte[] bodyBuffer = null;
-                try {
-                    bodyBuffer = body.toString().getBytes("UTF-8");
-                } catch (UnsupportedEncodingException e) {
-                    throw new SVNException(e);
-                }
                 while(true) {
-                    DAVStatus status = myHttpConnection.request("PROPFIND", path, 0, null, bodyBuffer, new DAVPropertiesHandler(handler), new int[] {200, 207, 404});
+                    DAVStatus status = myHttpConnection.request("PROPFIND", path, 0, null, body, new DAVPropertiesHandler(handler), new int[] {200, 207, 404});
                     if (status.getResponseCode() == 404) {
                         if ("".equals(path) || "/".equals(path)) {
                             throw new SVNException(status.getErrorText());
@@ -99,23 +91,18 @@ class DAVConnection {
 
     public void doPropfind(String path, int depth, String label, DAVElement[] properties, IDAVResponseHandler handler, int[] okCodes) throws SVNException {
         StringBuffer body = DAVPropertiesHandler.generatePropertiesRequest(null, properties);
-        try {
-            byte[] bodyBuffer = body.toString().getBytes("UTF-8");
-            myHttpConnection.request("PROPFIND", path, depth, label, bodyBuffer, new DAVPropertiesHandler(handler), okCodes);
-        } catch (IOException e) {
-            throw new SVNException(e);
-        } 
+        myHttpConnection.request("PROPFIND", path, depth, label, body, new DAVPropertiesHandler(handler), okCodes);
     }
 
 	public void doGet(String path, OutputStream os) throws SVNException {
-		myHttpConnection.request("GET", path, 0, null, new byte[0], os, null);
+		myHttpConnection.request("GET", path, 0, null, new StringBuffer(), os, null);
     }
 	
-	public void doReport(String path, byte[] requestBody, DefaultHandler handler) throws SVNException {
+	public void doReport(String path, StringBuffer requestBody, DefaultHandler handler) throws SVNException {
 		myHttpConnection.request("REPORT", path, 0, null, requestBody, handler, new int[] {200, 207});
 	}
 
-    public void doProppatch(String path, byte[] requestBody, DefaultHandler handler) throws SVNException {
+    public void doProppatch(String path, StringBuffer requestBody, DefaultHandler handler) throws SVNException {
         myHttpConnection.request("PROPPATCH", path, 0, null, requestBody, handler, new int[] {200, 207});
 
     }
@@ -132,7 +119,7 @@ class DAVConnection {
     }
     
     public DAVStatus doDelete(String path) throws SVNException {
-        return myHttpConnection.request("DELETE", path, null, (byte[]) null, null, null);
+        return myHttpConnection.request("DELETE", path, null, (StringBuffer) null, null, null);
     }
 
     public DAVStatus doDelete(String path, long revision) throws SVNException {
@@ -141,11 +128,11 @@ class DAVConnection {
             header.put("X-SVN-Version-Name", Long.toString(revision));
         }
         header.put("Depth", "infinity");
-        return myHttpConnection.request("DELETE", path, header, (byte[]) null, null, null);
+        return myHttpConnection.request("DELETE", path, header, (StringBuffer) null, null, null);
     }
     
     public DAVStatus doMakeCollection(String path) throws SVNException {
-        return myHttpConnection.request("MKCOL", path, null, (byte[]) null, null, null);
+        return myHttpConnection.request("MKCOL", path, null, (StringBuffer) null, null, null);
     }
     
     public DAVStatus doPutDiff(String path, InputStream data) throws SVNException {
@@ -158,14 +145,12 @@ class DAVConnection {
     
     public DAVStatus doMerge(String activityURL, boolean response, DefaultHandler handler) throws SVNException {
         StringBuffer request = DAVMergeHandler.generateMergeRequest(null, activityURL);
-        
-        byte[] reqBody = request.toString().getBytes();
         Map header = null;
         if (!response) {
             header = new HashMap();
             header.put("X-SVN-Options", "no-merge-response");
         }
-        return myHttpConnection.request("MERGE", myLocation.getPath(), header, reqBody, handler, null);
+        return myHttpConnection.request("MERGE", myLocation.getPath(), header, request, handler, null);
     }
     
     public DAVStatus doCheckout(String activityPath, String path) throws SVNException {
@@ -177,8 +162,7 @@ class DAVConnection {
         request.append(activityPath);
         request.append("</D:href>");
         request.append("</D:activity-set></D:checkout>");
-        byte[] reqBody = request.toString().getBytes();
-        DAVStatus status = myHttpConnection.request("CHECKOUT", path, 0, null, reqBody, (DefaultHandler) null, null);
+        DAVStatus status = myHttpConnection.request("CHECKOUT", path, 0, null, request, (DefaultHandler) null, null);
         // update location to be a path!
         if (status.getResponseHeader().containsKey("Location")) {
             String location = (String) status.getResponseHeader().get("Location");
@@ -193,7 +177,7 @@ class DAVConnection {
         Map header = new HashMap();
         header.put("Destination", dst);
         header.put("Depth", "infinity");
-        return myHttpConnection.request("COPY", src, header, (byte[]) null, null, null);
+        return myHttpConnection.request("COPY", src, header, (StringBuffer) null, null, null);
     }
 
     public void close()  {

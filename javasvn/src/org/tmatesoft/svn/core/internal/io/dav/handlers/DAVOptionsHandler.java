@@ -19,10 +19,10 @@ import org.xml.sax.Attributes;
 
 public class DAVOptionsHandler extends BasicDAVHandler {
     
-    public static final byte[] OPTIONS_REQUEST =   ("<?xml version=\"1.0\" encoding=\"utf-8\" ?>" +
+    public static final StringBuffer OPTIONS_REQUEST = new StringBuffer("<?xml version=\"1.0\" encoding=\"utf-8\" ?>" +
                                                     "<D:options xmlns:D=\"DAV:\" >" +
                                                     "<D:activity-collection-set />" +
-                                                    "</D:options>").getBytes();
+                                                    "</D:options>");
     private String myActivityCollectionURL = null;
     
     public DAVOptionsHandler() {

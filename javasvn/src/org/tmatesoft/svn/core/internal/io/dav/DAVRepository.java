@@ -13,7 +13,6 @@
 package org.tmatesoft.svn.core.internal.io.dav;
 
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -77,7 +76,7 @@ class DAVRepository extends SVNRepository {
     public long getDatedRevision(Date date) throws SVNException {
     	date = date == null ? new Date(System.currentTimeMillis()) : date;
 		DAVDateRevisionHandler handler = new DAVDateRevisionHandler();
-		byte[] request = convertToBytes(DAVDateRevisionHandler.generateDateRevisionRequest(null, date));
+		StringBuffer request = DAVDateRevisionHandler.generateDateRevisionRequest(null, date);
     	try {
     		openConnection();
 			myConnection.doReport(getLocationPath(), request, handler);
@@ -214,7 +213,7 @@ class DAVRepository extends SVNRepository {
             path = getFullPath(path);
             path = path.substring(getRepositoryRoot().length());
             DAVFileRevisionHandler davHandler = new DAVFileRevisionHandler(handler);
-            byte[] request = convertToBytes(DAVFileRevisionHandler.generateFileRevisionsRequest(null, startRevision, endRevision, path));
+            StringBuffer request = DAVFileRevisionHandler.generateFileRevisionsRequest(null, startRevision, endRevision, path);
 			long revision = -1;
 			if (isValidRevision(startRevision) && isValidRevision(endRevision)) {
 				revision = Math.max(startRevision, endRevision);				
@@ -255,8 +254,8 @@ class DAVRepository extends SVNRepository {
 				fullPaths[i] = PathUtil.removeLeadingSlash(fullPaths[i]);
 				DebugLog.log("LOG: log path: " + fullPaths[i]);
 			}
-	        byte[] request = convertToBytes(DAVLogHandler.generateLogRequest(null, startRevision, endRevision,
-	        		changedPath, strictNode, fullPaths));
+	        StringBuffer request = DAVLogHandler.generateLogRequest(null, startRevision, endRevision,
+	        		changedPath, strictNode, fullPaths);
 	        
             davHandler = new DAVLogHandler(handler); 
 			long revision = -1;
@@ -300,10 +299,9 @@ class DAVRepository extends SVNRepository {
                 root = getLocationPath();
                 path = path.substring(root.length());
             }
-            byte[] request = convertToBytes(DAVLocationsHandler.generateLocationsRequest(null, path, pegRevision, revisions));
+            StringBuffer request = DAVLocationsHandler.generateLocationsRequest(null, path, pegRevision, revisions);
             
             DAVLocationsHandler davHandler = new DAVLocationsHandler(handler);
-            
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, root, pegRevision, false, false, null);            
             
             path = PathUtil.append(info.baselineBase, info.baselinePath);
@@ -316,7 +314,7 @@ class DAVRepository extends SVNRepository {
     }
 
     public void update(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        byte[] request = convertToBytes(DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, null, recursive, false, false, reporter));
+        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, null, recursive, false, false, reporter);
         try {
             openConnection();
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
@@ -338,7 +336,7 @@ class DAVRepository extends SVNRepository {
         if (url == null) {
             throw new SVNException(url + ": not valid URL");
         }
-        byte[] request = convertToBytes(DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, url, recursive, true, false, reporter));
+        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, url, recursive, true, false, reporter);
         try {
             openConnection();
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
@@ -359,7 +357,7 @@ class DAVRepository extends SVNRepository {
         if (url == null) {
             throw new SVNException(url + ": not valid URL");
         }
-        byte[] request = convertToBytes(DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, url, recursive, ignoreAncestry, false, reporter));
+        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, url, recursive, ignoreAncestry, false, reporter);
         try {
             openConnection();
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
@@ -376,7 +374,7 @@ class DAVRepository extends SVNRepository {
     }
 
     public void status(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        byte[] request = convertToBytes(DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, null, recursive, false, false, reporter));
+        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, null, recursive, false, false, reporter);
         try {
             openConnection();
             DAVEditorHandler handler = new DAVEditorHandler(editor, false);
@@ -396,7 +394,7 @@ class DAVRepository extends SVNRepository {
     public void setRevisionPropertyValue(long revision, String propertyName, String propertyValue) throws SVNException {
         assertValidRevision(revision);
 
-        byte[] request = convertToBytes(DAVProppatchHandler.generatePropertyRequest(null, propertyName, propertyValue));
+        StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, propertyName, propertyValue);
         try {
             openConnection();
             // 1. get vcc for root.
@@ -454,17 +452,6 @@ class DAVRepository extends SVNRepository {
             path = '/' + path;            
         }
         return path;
-    }
-    
-    private static byte[] convertToBytes(StringBuffer buffer) {
-    	if (buffer == null) {
-    		return new byte[0];
-    	}
-    	try {
-			return buffer.toString().getBytes("UTF-8");
-		} catch (UnsupportedEncodingException e) {
-		}
-		return new byte[0];
     }
     
     private String getLocationPath() {
