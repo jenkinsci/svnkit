@@ -941,7 +941,16 @@ public class SVNWorkspace implements ISVNWorkspace {
         try {
             ISVNEntry entry = locateParentEntry(path);
             String name = PathUtil.tail(path);
-            if (entry != null && name != null) {
+            if (entry == null || entry.isMissing() || !entry.isDirectory()) {
+                throw new SVNException("can't locate versioned parent entry for '" + path + "'");
+            }
+            if (mkdir && entry != null && !entry.isManaged() && entry.isDirectory() && entry != getRoot()) {
+                add(entry.getPath(), mkdir, recurse);
+                getRoot().dispose();
+                entry = locateParentEntry(path);
+            }
+            if (entry != null && name != null && 
+                    entry.isManaged() && !entry.isMissing() && entry.isDirectory()) {
                 ISVNEntry child = entry.asDirectory().scheduleForAddition(name, mkdir, recurse);
                 doApplyAutoProperties(child, recurse);
                 fireEntryModified(child, SVNStatus.ADDED, true);
