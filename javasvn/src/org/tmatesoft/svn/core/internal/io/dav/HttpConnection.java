@@ -272,6 +272,9 @@ class HttpConnection {
             close();
         }
 	}
+    
+    private static final char[] CRLF = {'\r', '\n'};
+    private static final byte[] CRLF_BYTES = {'\r', '\n'};
 	
 	private void sendHeader(String method, String path, Map header, InputStream requestBody) throws IOException {
 		StringBuffer sb = new StringBuffer();        
@@ -282,43 +285,44 @@ class HttpConnection {
 		sb.append("HTTP/1.1\n");
 		sb.append("Host: ");
 		sb.append(mySVNRepositoryLocation.getHost());
-		sb.append('\n');
+		sb.append(HttpConnection.CRLF);
         sb.append("Connection: TE\n");
         sb.append("TE: trailers\n");
         if (requestBody != null) {
-            sb.append("Transfer-Encoding: chunked\n");
+            sb.append("Transfer-Encoding: chunked");
         } else {
-            sb.append("Content-Lenght: 0\n");
+            sb.append("Content-Lenght: 0");
         }
+        sb.append(HttpConnection.CRLF);
         if (header != null) {
             if (!header.containsKey("Content-Type")) {
-                sb.append("Content-Type: text/xml; charset=\"utf-8\"\n");
+                sb.append("Content-Type: text/xml; charset=\"utf-8\"");
+                sb.append(HttpConnection.CRLF);
             }
             for(Iterator keys = header.keySet().iterator(); keys.hasNext();) {
                 Object key = keys.next();
                 sb.append(key.toString());
                 sb.append(": ");
                 sb.append(header.get(key).toString());
-                sb.append('\n');
+                sb.append(HttpConnection.CRLF);
             }
         }
 
-        getOutputStream().write(sb.toString().getBytes());        
-        getOutputStream().write('\n');
-        byte[] crlf = {13, 10};
+        getOutputStream().write(sb.toString().getBytes());
+        getOutputStream().write(HttpConnection.CRLF_BYTES);
         if (requestBody != null) {
             byte[] buffer = new byte[2048];
             while(true) {
                 int read = requestBody.read(buffer);
                 if (read > 0) {
                     getOutputStream().write(Integer.toHexString(read).getBytes());
-                    getOutputStream().write(crlf);
+                    getOutputStream().write(HttpConnection.CRLF_BYTES);
                     getOutputStream().write(buffer, 0, read);
-                    getOutputStream().write(crlf);
+                    getOutputStream().write(HttpConnection.CRLF_BYTES);
                 } else {
                     getOutputStream().write('0');
-                    getOutputStream().write('\n');
-                    getOutputStream().write('\n');
+                    getOutputStream().write(HttpConnection.CRLF_BYTES);
+                    getOutputStream().write(HttpConnection.CRLF_BYTES);
                     break;
                 }
             }
