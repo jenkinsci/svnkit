@@ -573,7 +573,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 
     public long commit(String[] paths, ISVNCommitHandler handler, boolean recursive) throws SVNException {
         long start = System.currentTimeMillis();
-        for(int i = 0; i < paths.length; i++) {
+        for (int i = 0; i < paths.length; i++) {
             ISVNEntry entry = locateEntry(paths[i]);
             if (entry == null || !entry.isManaged()) {
                 throw new SVNException("'" + paths[i] + "' is not under version control");
@@ -809,7 +809,7 @@ public class SVNWorkspace implements ISVNWorkspace {
     public void delete(String path) throws SVNException {
         delete(path, false);
     }
-    
+
     public void delete(String path, boolean force) throws SVNException {
         try {
             ISVNEntry entry = locateParentEntry(path);
@@ -828,7 +828,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             getRoot().dispose();
         }
     }
-    
+
     private static void assertNotModified(ISVNEntry entry) throws SVNException {
         if (entry == null) {
             return;
@@ -842,13 +842,13 @@ public class SVNWorkspace implements ISVNWorkspace {
         if (!entry.isDirectory()) {
             if (entry.asFile().isContentsModified()) {
                 throw new SVNException("'" + entry.getPath() + "' is modified locally, use 'force' parameter to force deletion.");
-            } 
+            }
         } else {
-            for(Iterator children = entry.asDirectory().unmanagedChildEntries(true); children.hasNext();) {
+            for (Iterator children = entry.asDirectory().unmanagedChildEntries(true); children.hasNext();) {
                 assertNotModified((ISVNEntry) children.next());
             }
         }
-        
+
     }
 
     public void copy(String source, String destination, boolean move) throws SVNException {
@@ -866,6 +866,9 @@ public class SVNWorkspace implements ISVNWorkspace {
                 // look for unmanaged children in deleted folder, that was moved
                 // and thus have to be deleted.
                 fireEntryModified(toCopy, SVNStatus.DELETED, false);
+
+                toCopyParent.save();
+                toCopyParent.dispose();
             }
             entry.save();
             entry.dispose();

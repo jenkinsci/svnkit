@@ -37,17 +37,18 @@ import org.tmatesoft.svn.util.SVNUtil;
 public class CommitCommand extends SVNCommand {
 
     public void run(final PrintStream out, PrintStream err) throws SVNException {
+        checkEditorCommand();
         boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
         String[] localPaths = new String[getCommandLine().getPathCount()];
-        for(int i = 0; i < getCommandLine().getPathCount(); i++) {
+        for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             localPaths[i] = getCommandLine().getPathAt(i).replace(File.separatorChar, '/');
         }
         final String homePath = localPaths.length == 1 ? localPaths[0] : PathUtil.getFSCommonRoot(localPaths);
-        
+
         List pathsList = new ArrayList();
         String[] paths;
         try {
-            for(int i = 0; i < getCommandLine().getPathCount(); i++) {
+            for (int i = 0; i < getCommandLine().getPathCount(); i++) {
                 String path = getCommandLine().getPathAt(i);
                 pathsList.add(new File(path).getCanonicalPath().replace(File.separatorChar, '/'));
             }
@@ -67,11 +68,11 @@ public class CommitCommand extends SVNCommand {
         DebugLog.log("commit root: " + rootPath);
 
         final ISVNWorkspace workspace = createWorkspace(rootPath);
-        for(int i = 0; i < paths.length; i++) {
+        for (int i = 0; i < paths.length; i++) {
             paths[i] = SVNUtil.getWorkspacePath(workspace, paths[i]);
         }
         String message = getCommitMessage();
-        
+
         workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
             public void committed(String committedPath, int kind) {
                 DebugLog.log("commit path: " + committedPath);
@@ -81,7 +82,7 @@ public class CommitCommand extends SVNCommand {
                     verb = "Adding ";
                     try {
                         String mimeType = workspace.getPropertyValue(committedPath, SVNProperty.MIME_TYPE);
-                        
+
                         if (mimeType != null && !mimeType.startsWith("text")) {
                             verb += " (bin) ";
                         }
@@ -106,7 +107,7 @@ public class CommitCommand extends SVNCommand {
             out.println("Committed revision " + revision + ".");
         }
     }
-    
+
     private String getCommitMessage() throws SVNException {
         String fileName = (String) getCommandLine().getArgumentValue(SVNArgument.FILE);
         if (fileName != null) {
@@ -114,13 +115,13 @@ public class CommitCommand extends SVNCommand {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             try {
                 is = new FileInputStream(fileName);
-                while(true) {
+                while (true) {
                     int r = is.read();
                     if (r < 0) {
                         break;
                     }
                     if (r == 0) {
-                        // invalid 
+                        // invalid
                         throw new SVNException("error: commit message contains a zero byte");
                     }
                     bos.write(r);
@@ -140,5 +141,14 @@ public class CommitCommand extends SVNCommand {
             return new String(bos.toByteArray());
         }
         return (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
+    }
+
+    private void checkEditorCommand() throws SVNException {
+        final String editorCommand = (String) getCommandLine().getArgumentValue(SVNArgument.EDITOR_CMD);
+        if (editorCommand == null) {
+            return;
+        }
+
+        throw new SVNException("Commit failed. Can't handle external editor " + editorCommand);
     }
 }

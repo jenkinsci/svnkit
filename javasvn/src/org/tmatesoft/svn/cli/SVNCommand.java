@@ -54,27 +54,27 @@ public abstract class SVNCommand {
     protected ISVNWorkspace createWorkspace(String absolutePath) throws SVNException {
         return createWorkspace(absolutePath, true);
     }
+
     protected ISVNWorkspace createWorkspace(String absolutePath, boolean root) throws SVNException {
         ISVNWorkspace ws = SVNUtil.createWorkspace(absolutePath, root);
         ws.setCredentials(myUserName, myPassword);
         return ws;
     }
 
-	protected final SVNRepository createRepository(String url) throws SVNException {
-	    SVNRepository repository = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-	    repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
-	    return repository;
-	}
-
+    protected final SVNRepository createRepository(String url) throws SVNException {
+        SVNRepository repository = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
+        repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
+        return repository;
+    }
 
     public static SVNCommand getCommand(String name) {
         if (name == null) {
             return null;
         }
         String className = null;
-        for(Iterator keys = ourCommands.keySet().iterator(); keys.hasNext();) {
+        for (Iterator keys = ourCommands.keySet().iterator(); keys.hasNext();) {
             String[] names = (String[]) keys.next();
-            for(int i = 0; i < names.length; i++) {
+            for (int i = 0; i < names.length; i++) {
                 if (name.equals(names[i])) {
                     className = (String) ourCommands.get(names);
                     break;
@@ -120,16 +120,17 @@ public abstract class SVNCommand {
 
     static {
         ourCommands = new HashMap();
-        ourCommands.put(new String[] {"status", "st", "stat"}, "org.tmatesoft.svn.cli.command.StatusCommand");
-        ourCommands.put(new String[] {"import"}, "org.tmatesoft.svn.cli.command.ImportCommand");
-        ourCommands.put(new String[] {"checkout", "co"}, "org.tmatesoft.svn.cli.command.CheckoutCommand");
-        ourCommands.put(new String[] {"add"}, "org.tmatesoft.svn.cli.command.AddCommand");
-        ourCommands.put(new String[] {"commit", "ci"}, "org.tmatesoft.svn.cli.command.CommitCommand");
-        ourCommands.put(new String[] {"update", "up"}, "org.tmatesoft.svn.cli.command.UpdateCommand");
-	    ourCommands.put(new String[] {"delete", "rm", "remove", "del"}, "org.tmatesoft.svn.cli.command.DeleteCommand");
-	    ourCommands.put(new String[] {"revert"}, "org.tmatesoft.svn.cli.command.RevertCommand");
-	    ourCommands.put(new String[] {"mkdir"}, "org.tmatesoft.svn.cli.command.MkDirCommand");
-	    ourCommands.put(new String[] {"propset", "pset", "ps"}, "org.tmatesoft.svn.cli.command.PropsetCommand");
+        ourCommands.put(new String[] { "status", "st", "stat" }, "org.tmatesoft.svn.cli.command.StatusCommand");
+        ourCommands.put(new String[] { "import" }, "org.tmatesoft.svn.cli.command.ImportCommand");
+        ourCommands.put(new String[] { "checkout", "co" }, "org.tmatesoft.svn.cli.command.CheckoutCommand");
+        ourCommands.put(new String[] { "add" }, "org.tmatesoft.svn.cli.command.AddCommand");
+        ourCommands.put(new String[] { "commit", "ci" }, "org.tmatesoft.svn.cli.command.CommitCommand");
+        ourCommands.put(new String[] { "update", "up" }, "org.tmatesoft.svn.cli.command.UpdateCommand");
+        ourCommands.put(new String[] { "delete", "rm", "remove", "del" }, "org.tmatesoft.svn.cli.command.DeleteCommand");
+        ourCommands.put(new String[] { "move", "mv", "rename", "ren" }, "org.tmatesoft.svn.cli.command.MoveCommand");
+        ourCommands.put(new String[] { "revert" }, "org.tmatesoft.svn.cli.command.RevertCommand");
+        ourCommands.put(new String[] { "mkdir" }, "org.tmatesoft.svn.cli.command.MkDirCommand");
+        ourCommands.put(new String[] { "propset", "pset", "ps" }, "org.tmatesoft.svn.cli.command.PropsetCommand");
     }
 
 }
