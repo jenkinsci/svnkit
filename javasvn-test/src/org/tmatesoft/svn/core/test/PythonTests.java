@@ -143,14 +143,16 @@ public class PythonTests {
 		final ByteArrayOutputStream os = new ByteArrayOutputStream();
 		try {
 			Process process = Runtime.getRuntime().exec(commands, null, new File("python/cmdline"));
-			new ReaderThread(process.getInputStream(), new PrintStream(os)).start();
+            Thread readerThread = new ReaderThread(process.getInputStream(), new PrintStream(os));
+            readerThread.start();
 			new ReaderThread(process.getErrorStream(), null).start();
 			try {
-				Thread.sleep(1000);
 				process.waitFor();
+                readerThread.join(5000);                
 			}
 			catch (InterruptedException e) {
 			}
+            os.close();
 		}
 		catch (Throwable th) {
 			System.err.println("ERROR: " + th.getMessage());
