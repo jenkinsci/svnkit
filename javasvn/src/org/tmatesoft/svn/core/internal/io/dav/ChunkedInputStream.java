@@ -54,7 +54,11 @@ class ChunkedInputStream extends InputStream {
         int ch = 0;
         StringBuffer sb = new StringBuffer();
         while(true) {
-            ch = (char) mySource.read();
+            int r = mySource.read();
+            if (r < 0) {
+                return 0;
+            }
+            ch = (char) r;
             if (ch == '\r') {
                 continue;
             }

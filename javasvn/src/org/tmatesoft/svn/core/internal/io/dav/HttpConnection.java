@@ -15,6 +15,7 @@ package org.tmatesoft.svn.core.internal.io.dav;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -355,8 +356,9 @@ class HttpConnection {
             throw new SVNException(e);
         } catch (ParserConfigurationException e) {
             throw new SVNException(e);
+        } catch (EOFException e) {
+            // skip it.  
         } catch (IOException e) {
-            e.printStackTrace();
             throw new SVNException(e);
         } finally {
             logInputStream(is);
