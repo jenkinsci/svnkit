@@ -55,9 +55,21 @@ class SVNWorkspaceMediatorAdapter implements ISVNWorkspaceMediator {
     	}
     }
     
-    public OutputStream createTemporaryLocation(Object id) throws IOException {
-        return myMediator.createTemporaryLocation(id);
+    public OutputStream createTemporaryLocation(String path, Object id) throws IOException {
+        if (myCommitTree != null) {
+            ISVNEntry entry = (ISVNEntry) myCommitTree.get(path);
+            path = entry.getPath();
+        }
+        return myMediator.createTemporaryLocation(path, id);
     }
+    public void deleteAdminFiles(String path) {
+        if (myCommitTree != null) {
+            ISVNEntry entry = (ISVNEntry) myCommitTree.get(path);
+            path = entry.getPath();
+        }
+        myMediator.deleteAdminFiles(path);
+    }
+
     public InputStream getTemporaryLocation(Object id) throws IOException {
         return myMediator.getTemporaryLocation(id);
     }

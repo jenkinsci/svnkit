@@ -26,6 +26,7 @@ import java.util.Stack;
 import org.tmatesoft.svn.core.ISVNDirectoryEntry;
 import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.ISVNFileEntry;
+import org.tmatesoft.svn.core.ISVNRootEntry;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
@@ -157,6 +158,9 @@ public class SVNCheckoutEditor implements ISVNEditor {
                 myWorkspace.fireEntryUpdated(getCurrentEntry(), 0, propsStatus, revision);
             }
         }
+        if (myIsExport) {
+            ((ISVNRootEntry) myRootEntry).deleteAdminFiles(getCurrentEntry().getPath());
+        }
         DebugLog.log("UPDATED: CLOSED DIR: " + getCurrentEntry().getPath());
         myStack.pop();
     }
@@ -229,7 +233,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
         }
         myDiffWindow.add(diffWindow);
         try {
-            return myMediator.createTemporaryLocation(diffWindow);
+            return myMediator.createTemporaryLocation(myCurrentFile.getPath(), diffWindow);
         } catch (Throwable e) {
             DebugLog.error(e);
             throw new SVNException(e);

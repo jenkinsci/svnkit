@@ -107,7 +107,7 @@ public class SVNCheckoutEditor2 implements ISVNEditor {
     public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
         myDiffWindow = diffWindow;
         try {
-            return myMediator.createTemporaryLocation(diffWindow);
+            return myMediator.createTemporaryLocation(myCurrentFile.getPath(), diffWindow);
         } catch (IOException e) {
             e.printStackTrace();
             throw new SVNException(e);

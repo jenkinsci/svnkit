@@ -26,6 +26,7 @@ import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.ISVNDirectoryEntry;
 import org.tmatesoft.svn.core.ISVNEntry;
+import org.tmatesoft.svn.core.internal.ws.fs.FSRootEntry;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNException;
 
@@ -71,11 +72,17 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         entry.setPropertyValue(name, value);
     }
     
-    public OutputStream createTemporaryLocation(Object id) throws IOException {
-        File tempFile = File.createTempFile("svn", "temp");
+    public OutputStream createTemporaryLocation(String path, Object id) throws IOException {
+        File tempFile = myRootEntry instanceof FSRootEntry ?
+                new File(new File(((FSRootEntry) myRootEntry).getID(), path), "svn." + id.hashCode() + ".temp") :
+                    File.createTempFile("svn.", ".temp");
+                    
         tempFile.deleteOnExit();
         myFiles.put(id, tempFile);
         return new BufferedOutputStream(new FileOutputStream(tempFile));
+    }
+
+    public void deleteAdminFiles(String path) {
     }
 
     public InputStream getTemporaryLocation(Object id) throws IOException {

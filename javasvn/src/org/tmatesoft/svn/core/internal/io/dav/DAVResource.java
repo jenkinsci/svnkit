@@ -109,7 +109,7 @@ class DAVResource {
         if (myMediator != null) {
             Object id = new Integer(myDeltaFiles.size());
             myDeltaFiles.add(id);
-            return myMediator.createTemporaryLocation(id);
+            return myMediator.createTemporaryLocation(myPath, id);
         }
         File tempFile = File.createTempFile("svn", "temp");
         tempFile.deleteOnExit();

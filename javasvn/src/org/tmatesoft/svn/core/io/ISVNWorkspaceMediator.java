@@ -25,11 +25,13 @@ public interface ISVNWorkspaceMediator {
     
     public void setWorkspaceProperty(String path, String name, String value) throws SVNException ;
     
-    public OutputStream createTemporaryLocation(Object id) throws IOException;
+    public OutputStream createTemporaryLocation(String path, Object id) throws IOException;
     
     public InputStream getTemporaryLocation(Object id) throws IOException;
     
     public long getLength(Object id) throws IOException;
     
     public void deleteTemporaryLocation(Object id);
+    
+    public void deleteAdminFiles(String path);
 }

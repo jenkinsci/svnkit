@@ -121,7 +121,7 @@ class SVNCommitEditor implements ISVNEditor {
             SVNDiffWindowBuilder.save(diffWindow, bos);
             myConnection.write("b))", new Object[] {bos.toByteArray()});
             DebugLog.log(myCurrentPath + " window sent: " + bos.size());
-            OutputStream os = myMediator.createTemporaryLocation(myCurrentPath);
+            OutputStream os = myMediator.createTemporaryLocation(myCurrentPath, myCurrentPath);
             return os;
         } catch (IOException e) {
             throw new SVNException(e);

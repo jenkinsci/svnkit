@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.ISVNRootEntry;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -90,16 +91,26 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         return myGlobalIgnore;
     }
 
-    public OutputStream createTemporaryLocation(Object id) throws IOException {
+    public OutputStream createTemporaryLocation(String path, Object id) throws IOException {
         if (id == null) {
             throw new IOException("id could not be null");
         }
         if (myTempLocations == null) {
             myTempLocations = new HashMap();
         }
-        File tempFile = File.createTempFile("svn", "temp");
-        if (tempFile == null) {
-            throw new IOException("can't create temporary file");
+        String name = PathUtil.tail(path);
+        path = PathUtil.removeTail(path);
+        path = PathUtil.append(path, ".svn/tmp");
+        File parent = new File(myID, path);
+        if (!parent.exists()) {
+            parent.mkdirs();
+            FSUtil.setHidden(parent.getParentFile(), true);
+        }
+        File tempFile = new File(parent, name + ".tmp");
+        int n = 1;
+        while(tempFile.exists()) {
+            tempFile = new File(parent, name + "." + n + ".tmp");
+            n++;
         }
         tempFile.deleteOnExit();
         myTempLocations.put(id, tempFile);
@@ -115,6 +126,13 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
             throw new IOException("no such location: " + id);
         }
         return new BufferedInputStream(new FileInputStream(file));
+    }
+    
+    public void deleteAdminFiles(String path) {
+        path = PathUtil.append(path, ".svn");
+        File parent = new File(myID, path);
+        FSUtil.deleteAll(parent);
+        myTempLocations.clear();
     }
     
     public long getLength(Object id) throws IOException {
