@@ -400,9 +400,6 @@ class HttpConnection {
 	}
 
 	private static InputStream createInputStream(Map readHeader, InputStream is) throws IOException {
-        DebugLog.log("transfer encoding: " + readHeader.get("Transfer-Encoding"));
-        DebugLog.log("content encoding : " + readHeader.get("Content-Encoding"));
-        DebugLog.log("content length   : " + readHeader.get("Content-Length"));
         if ("chunked".equals(readHeader.get("Transfer-Encoding"))) {
             is = new ChunkedInputStream(is);
         } else if (readHeader.get("Content-Length") != null) {
