@@ -978,8 +978,13 @@ public class SVNClient implements SVNClientInterface {
                 outWriter.close();
             }
             else {
+            	ISVNWorkspace ws = createWorkspace(target1);
+            	String wsPath = target1;
+            	if (ws != null) {
+            		wsPath = SVNUtil.getWorkspacePath(ws, target1);
+            	}
                 FileWriter outWriter = new FileWriter(new File(outFileName));
-                diff(target1, revision1, revision2, outWriter);
+                diff(wsPath, target1, revision1, revision2, outWriter);
                 outWriter.close();
             }
         }
@@ -1015,7 +1020,7 @@ public class SVNClient implements SVNClientInterface {
                     if (status.isDirectory()) {
                         return;
                     }
-                    diff (absPath, myRevision1,myRevision2, myWriter);
+                    diff (path, absPath, myRevision1,myRevision2, myWriter);
                 }
             }
             catch (ClientException ce) {
@@ -1024,16 +1029,17 @@ public class SVNClient implements SVNClientInterface {
         }
     }
 
-    private void diff(String path, Revision revision1, Revision revision2, Writer outWriter) throws ClientException {
-        byte byteArray1[] = fileContent(path, revision1);
-        byte byteArray2[] = fileContent(path, revision2);
+    private void diff(String wsPath, String path, Revision revision1, Revision revision2, Writer outWriter) throws ClientException {
+        byte byteArray1[] = fileContent(path, revision1, SVNProperty.EOL_STYLE_LF, true);
+        byte byteArray2[] = fileContent(path, revision2, SVNProperty.EOL_STYLE_LF, true);
 
         ByteArrayInputStream is1 = new ByteArrayInputStream(byteArray1);
         ByteArrayInputStream is2 = new ByteArrayInputStream(byteArray2);
 
         Map properties = new HashMap();
-        properties.put(SVNUniDiffGenerator.COMPARE_EOL_PROPERTY, Boolean.FALSE.toString());
+        properties.put(SVNUniDiffGenerator.COMPARE_EOL_PROPERTY, Boolean.TRUE.toString());
         properties.put(SVNUniDiffGenerator.WHITESPACE_PROPERTY, Boolean.FALSE.toString());
+        properties.put(SVNUniDiffGenerator.EOL_PROPERTY, System.getProperty("line.separator"));
         
         String encoding = System.getProperty("file.encoding", "US-ASCII");
 
@@ -1051,15 +1057,32 @@ public class SVNClient implements SVNClientInterface {
             	throwException(new SVNException("no suitable diff generator found"));
             	return;
             }
+            outWriter.write("Index: " + wsPath);
+            outWriter.write(System.getProperty("line.separator", "\n"));
+            outWriter.write("===================================================================");
+            outWriter.write(System.getProperty("line.separator", "\n"));
+            String rev1Str = revision1.toString();
+            if (revision1 == Revision.WORKING) {
+            	rev1Str = "working copy";
+            } else {
+            	rev1Str = "revision " + getRevisionNumber(revision1, null, root, targetPath);
+            }
+            String rev2Str = revision1.toString();
+            if (revision2 == Revision.WORKING) {
+            	rev2Str = "working copy";
+            } else {
+            	rev2Str = "revision " + getRevisionNumber(revision2, null, root, targetPath);
+            }
             diff.generateDiffHeader(osTargetPath,
-                                    "(" + revision1.toString() + ")",
-                                    "(" + revision2.toString() + ")",
+                                    "(" + rev1Str + ")",
+                                    "(" + rev2Str + ")",
                                     outWriter);
             String mimeType = ws.getPropertyValue(targetPath,
                                                   SVNProperty.MIME_TYPE);
             if (mimeType != null && !mimeType.startsWith("text")) {
                 diff.generateBinaryDiff(is1, is2, encoding, outWriter);
             } else {
+            	DebugLog.log("generating text diff");
                 diff.generateTextDiff(is1, is2, encoding, outWriter);
             }
         } catch (SVNException e) {
@@ -1225,22 +1248,28 @@ public class SVNClient implements SVNClientInterface {
      * @throws ClientException
      */
     public byte[] fileContent(String path, Revision revision) throws ClientException {
+    	return fileContent(path, revision, null, false);
+    }
+    
+    private byte[] fileContent(String path, Revision revision, String eol, boolean unexpandKeywords) throws ClientException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ISVNWorkspace ws = null;
         String wsPath = null;
+        // use base eol!
         if (!isURL(path)) {
             try {
                 ws = createWorkspace(path);
                 wsPath = SVNUtil.getWorkspacePath(ws, path);
+                // null will be copied as is.
                 final ISVNEntryContent content = ws.getContent(wsPath);
 	              if (content == null || content.isDirectory()) {
 		              throw new ClientException("Can't find file " + path, "", 0);
 	              }
 	              if (Revision.BASE.equals(revision)) {
-                    content.asFile().getBaseFileContent(bos);
+                    content.asFile().getBaseFileContent(bos, eol);
                     return bos.toByteArray();
                 } else if (Revision.WORKING.equals(revision)) {
-                    content.asFile().getWorkingCopyContent(bos);
+                    content.asFile().getWorkingCopyContent(bos, eol, unexpandKeywords);
                     return bos.toByteArray();
                 }
                 path = ws.getLocation(wsPath).toString();

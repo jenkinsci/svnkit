@@ -62,13 +62,13 @@ public class SVNUniDiffGenerator extends SVNSequenceDiffGenerator implements ISV
         int leftEnd = Math.min(sourceEndLine + gutter, sourceLines.length - 1);
         int rightEnd = Math.min(targetEndLine + gutter, targetLines.length - 1);
         
-        if (sourceStartLine >= 0 && sourceEndLine >= 0) {
+        if (leftStart + 1 >= 0 && (leftEnd - leftStart + 1) >= 0) {
             header.append(" -");
             header.append(leftStart + 1);
             header.append(",");
             header.append(leftEnd - leftStart + 1);
         }
-        if (targetEndLine >= 0 && targetStartLine >= 0) {
+        if (rightStart  + 1 > 0 && rightEnd - rightStart + 1 > 0) {
             header.append(" +");
             header.append(rightStart + 1);
             header.append(",");

@@ -274,7 +274,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         File actualFile = getRootEntry().getWorkingCopyFile(this);
         File baseFile = getAdminArea().getBaseFile(this);
         String checksum = null;
-        Map keywords = computeKeywords();
+        Map keywords = computeKeywords(true);
         if (actualFile.exists()) {
             String eolStyle = getPropertyValue(SVNProperty.EOL_STYLE);
             if (!isBinary() && ((isPropertyModified(SVNProperty.EOL_STYLE) && eolStyle != null) || isPropertyModified(SVNProperty.KEYWORDS))) {
@@ -325,7 +325,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         File tmpBaseFile = getAdminArea().getTemporaryBaseFile(this);        
         File actualFile = getRootEntry().getWorkingCopyFile(this);
         File baseFile = getAdminArea().getBaseFile(this);
-        Map keywords = computeKeywords();
+        Map keywords = computeKeywords(true);
 
         if (!tmpBaseFile.exists() && !isScheduledForDeletion()) {
             if (baseFile.exists() && (!actualFile.exists() || isNewKeywords)) {
@@ -384,7 +384,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             }
             if (localFile != null) {
                 // replace "wc" with merge result.
-                keywords = computeKeywords();
+                keywords = computeKeywords(true);
                 String eolStyle = getPropertyValue(SVNProperty.EOL_STYLE);
                 FSUtil.copy(localFile, getRootEntry().getWorkingCopyFile(this), eolStyle, keywords, null);
                 localFile.delete();
@@ -435,7 +435,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         File base = getAdminArea().getBaseFile(this);
         File local = getRootEntry().getWorkingCopyFile(this);
         if (base.exists()) {
-            FSUtil.copy(base, local, isBinary() ? null : getPropertyValue(SVNProperty.EOL_STYLE), isBinary() ? null : computeKeywords(), null);
+            FSUtil.copy(base, local, isBinary() ? null : getPropertyValue(SVNProperty.EOL_STYLE), isBinary() ? null : computeKeywords(true), null);
             long lm = local.lastModified();
             setPropertyValue(SVNProperty.TEXT_TIME, TimeUtil.formatDate(new Date(lm)));
         } else {
@@ -468,7 +468,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         }
     }
     
-    private Map computeKeywords() throws SVNException {
+    public Map computeKeywords(boolean expand) throws SVNException {
         String keywordsProperty = getPropertyValue(SVNProperty.KEYWORDS);
         if (keywordsProperty == null) {
             return Collections.EMPTY_MAP;
@@ -479,22 +479,22 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             if ("LastChangedDate".equals(token) || "Date".equals(token)) {
                 String dateStr = getPropertyValue(SVNProperty.COMMITTED_DATE);
                 dateStr = TimeUtil.toHumanDate(dateStr);
-                map.put("LastChangedDate", dateStr);
-                map.put("Date", dateStr);
+                map.put("LastChangedDate", expand ? dateStr : null);
+                map.put("Date",  expand ? dateStr : null);
             } else if ("LastChangedRevision".equals(token) || "Revision".equals(token) || "Rev".equals(token)) {
                 String revStr = getPropertyValue(SVNProperty.COMMITTED_REVISION);
-                map.put("LastChangedRevision", revStr);
-                map.put("Revision", revStr);
+                map.put("LastChangedRevision", expand ? revStr : null);
+                map.put("Revision", expand ? revStr : null);
                 map.put("Rev", revStr);
             } else if ("LastChangedBy".equals(token) || "Author".equals(token)) {
                 String author = getPropertyValue(SVNProperty.LAST_AUTHOR);
                 author = author == null ? "" : author;
-                map.put("LastChangedBy", author);
-                map.put("Author", author);
+                map.put("LastChangedBy", expand ? author : null);
+                map.put("Author", expand ? author : null);
             } else if ("HeadURL".equals(token) || "URL".equals(token)) {                
                 String url = getPropertyValue(SVNProperty.URL);
-                map.put("HeadURL", url);
-                map.put("URL", url);
+                map.put("HeadURL", expand ? url : null);
+                map.put("URL", expand ? url : null);
             } else if ("Id".equals(token)) {
                 StringBuffer id = new StringBuffer();
                 id.append(getName());
@@ -508,7 +508,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 String author = getPropertyValue(SVNProperty.LAST_AUTHOR);
                 author = author == null ? "" : author;
                 id.append(author);
-                map.put("Id", id.toString());
+                map.put("Id", expand ? id.toString() : null);
             }
         }
         return map;

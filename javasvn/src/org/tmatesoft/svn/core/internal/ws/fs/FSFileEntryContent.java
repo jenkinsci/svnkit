@@ -60,6 +60,10 @@ public class FSFileEntryContent implements ISVNFileContent {
 	}
 
 	public void getWorkingCopyContent(OutputStream os) throws SVNException {
+		getWorkingCopyContent(os, null, false);
+	}
+	
+	public void getWorkingCopyContent(OutputStream os, String eol, boolean unexpandKeywords) throws SVNException {
 		final File file = myEntry.getRootEntry().getWorkingCopyFile(myEntry);
 		if (file == null || !file.isFile()) {
 			return;
@@ -68,7 +72,8 @@ public class FSFileEntryContent implements ISVNFileContent {
 		try {
 			final FileInputStream is = new FileInputStream(file);
 			try {
-				FSUtil.copy(is, os, null);
+				FSUtil.copy(is, os, myEntry.isBinary() ? null : eol, 
+						myEntry.isBinary() || !unexpandKeywords ? null : myEntry.computeKeywords(false), null);
 			}
 			finally {
 				is.close();
@@ -85,6 +90,10 @@ public class FSFileEntryContent implements ISVNFileContent {
 	}
 
 	public void getBaseFileContent(OutputStream os) throws SVNException {
+		getBaseFileContent(os, null);
+	}
+	
+	public void getBaseFileContent(OutputStream os, String eol) throws SVNException {
 		final File file = myEntry.getAdminArea().getBaseFile(myEntry);
 		if (file == null || !file.isFile()) {
 			return;
@@ -93,7 +102,7 @@ public class FSFileEntryContent implements ISVNFileContent {
 		try {
 			final FileInputStream is = new FileInputStream(file);
 			try {
-				FSUtil.copy(is, os, null);
+				FSUtil.copy(is, os, myEntry.isBinary() ? null : eol, null);
 			}
 			finally {
 				is.close();

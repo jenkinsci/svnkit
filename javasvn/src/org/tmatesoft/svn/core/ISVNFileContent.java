@@ -24,9 +24,13 @@ public interface ISVNFileContent extends ISVNEntryContent {
 
 	public void getWorkingCopyContent(OutputStream os) throws SVNException;
 
+	public void getWorkingCopyContent(OutputStream os, String eol, boolean unexpandKeywords) throws SVNException;
+
 	public boolean hasBaseFileContent() throws SVNException;
 
 	public void getBaseFileContent(OutputStream os) throws SVNException;
+
+	public void getBaseFileContent(OutputStream os, String eol) throws SVNException;
 
 	public void setWorkingCopyContent(InputStream is) throws IOException, SVNException;
 }
