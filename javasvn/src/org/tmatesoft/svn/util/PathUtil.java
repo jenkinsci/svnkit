@@ -144,9 +144,13 @@ public class PathUtil {
         if (paths == null || paths.length == 0) {
             return null;            
         }
-        String root = getCommonRoot(paths);
-        if (!root.startsWith("/") && paths[0].startsWith("/")) {
-            root = "/" + root;
+        String root = paths[0];
+        for (int i = 1; i < paths.length; i++) {
+			root = getCommonAncestor(root, paths[i]);
+		}
+        File fileRoot = new File(root);
+        if (fileRoot.isFile()) {
+        	root = PathUtil.removeTail(root);
         }
         return root;
     }
@@ -159,28 +163,28 @@ public class PathUtil {
         for(int i = 0; i < p.length; i++) {
             p[i] = paths[i].replace(File.separatorChar, '/');
         }
-        paths = p;
-        // find common root
-        String root = "";
-        for(StringTokenizer tokens = new StringTokenizer(paths[0], "/", true); tokens.hasMoreTokens();) {
-            String token = tokens.nextToken();
-            if (!"/".equals(token)) {
-                String testRoot = root + token + "/";
-                for(int i = 0; i < paths.length; i++) {
-                    if (FSUtil.isWindows && !paths[i].toLowerCase().startsWith(testRoot.toLowerCase())) {
-                        root = PathUtil.removeLeadingSlash(root);
-                        root = PathUtil.removeTrailingSlash(root);
-                        return root;
-                    } else if (!paths[i].startsWith(testRoot)) {
-                        root = PathUtil.removeLeadingSlash(root);
-                        root = PathUtil.removeTrailingSlash(root);
-                        return root;
-                    }
-                }
-            }
-            root += token;
-        }
+        String root = paths[0];
+        for (int i = 1; i < paths.length; i++) {
+			root = getCommonAncestor(root, paths[i]);
+		}
         return root;
+    }
+    
+    private static String getCommonAncestor(String path1, String path2) {
+    	// simplest case
+    	String longerPath = path1.length() > path2.length() ? path1 : path2;
+    	String shorterPath = path1.length() > path2.length() ? path2 : path1;
+    	// truncate shorter path till it longer is not starts with it
+    	while(!PathUtil.isEmpty(shorterPath)) {
+    		boolean rootFound = FSUtil.isWindows ?
+    				longerPath.toLowerCase().startsWith(shorterPath.toLowerCase()) :
+    				longerPath.startsWith(shorterPath);
+    		if (rootFound) {
+    			return shorterPath;
+    		}
+    		shorterPath = PathUtil.removeTail(shorterPath);
+    	}    	
+    	return shorterPath;
     }
 
     public static boolean isURL(String pathOrUrl) {

@@ -51,8 +51,10 @@ class SVNStatusUtil {
             return;
         }
         SVNStatus dirStatus = (SVNStatus) statuses.remove("");
+        boolean isManagedInParent = (parent != null && parent.isManaged(entry.getName())) || 
+        		(parent == null && entry.isManaged());
         if (dirStatus.getContentsStatus() == SVNStatus.EXTERNAL ||
-            (!descendInUnversioned && !entry.isManaged()) ||
+            (!descendInUnversioned && !isManagedInParent) ||
             (!descendFurtherInIgnored && dirStatus.getContentsStatus() == SVNStatus.IGNORED)) {
             handleStatus(handler, dirStatus, includeUnmodified, includeIgnored);
             return;

@@ -18,6 +18,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.tmatesoft.svn.cli.SVNArgument;
@@ -60,7 +61,7 @@ public class CommitCommand extends SVNCommand {
         paths = (String[]) pathsList.toArray(new String[pathsList.size()]);
         // only if path is not a single directory!
         String rootPath;
-        if (getCommandLine().getPathCount() == 1 && new File(getCommandLine().getPathAt(0)).isDirectory()) {
+        if (pathsList.size() == 1 && new File((String) pathsList.get(0)).isDirectory()) {
             rootPath = (String) pathsList.get(0);
         } else {
             rootPath = PathUtil.getFSCommonRoot(paths);
@@ -68,6 +69,13 @@ public class CommitCommand extends SVNCommand {
         DebugLog.log("commit root: " + rootPath);
 
         final ISVNWorkspace workspace = createWorkspace(rootPath);
+        for (Iterator commitPaths = pathsList.iterator(); commitPaths.hasNext();) {
+			String commitPath = (String) commitPaths.next();
+			ISVNWorkspace ws = SVNUtil.createWorkspace(commitPath);
+			if (ws == null || !ws.getID().equals(workspace.getID())) {
+				throw new SVNException("can't commit items from different working copies");
+			}
+		}
         for (int i = 0; i < paths.length; i++) {
             paths[i] = SVNUtil.getWorkspacePath(workspace, paths[i]);
         }
