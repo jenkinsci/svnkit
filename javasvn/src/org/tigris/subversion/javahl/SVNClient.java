@@ -1192,10 +1192,11 @@ public class SVNClient implements SVNClientInterface {
         Status st = new Status(path, url, nodeKind, revision, lastChangedRevision, lastChangedDate, lastCommitAuthor, textStatus, propStatus,
                 repositoryTextStatus, repositoryPropStatus, locked, copied, conflictOld, conflictNew, conflictWorking, urlCopiedFrom, revisionCopiedFrom,
                 switched);
+        /*
         if (!st.isManaged() || st.getPropStatus() != StatusKind.normal || 
                 st.getTextStatus() != StatusKind.normal) {
-            DebugLog.log(path + ": created status: " + st.getTextStatus() + ":" + st.getPropStatus() + ":" + st.getNodeKind());
-        }
+        }*/
+        DebugLog.log(path + ": created status: " + st.getTextStatus() + ":" + st.getPropStatus() + ":" + st.getNodeKind());
         return st;
     }
     
