@@ -59,7 +59,7 @@ import org.tmatesoft.svn.util.SVNUtil;
  * @author TMate Software Ltd.
  */
 public class SVNWorkspace implements ISVNWorkspace {
-    
+
     private ISVNRootEntry myRoot;
     private SVNRepositoryLocation myLocation;
     private Map myAutoProperties;
@@ -73,14 +73,14 @@ public class SVNWorkspace implements ISVNWorkspace {
         setExternalsHandler(new DefaultSVNExternalsHandler());
         myRoot = root;
     }
-    
+
     public String getID() {
         if (myRoot == null) {
             return null;
         }
         return myRoot.getID();
     }
-    
+
     public void setGlobalIgnore(String ignore) {
         myRoot.setGlobalIgnore(ignore == null ? "" : ignore);
     }
@@ -88,20 +88,20 @@ public class SVNWorkspace implements ISVNWorkspace {
     public String getGlobalIgnore() {
         return myRoot.getGlobalIgnore();
     }
-    
+
     public void setAutoProperties(Map properties) {
         myAutoProperties = properties == null ? new HashMap() : new HashMap(properties);
         myCompiledAutoProperties = null;
     }
-    
+
     public Map getAutoProperties() {
         return Collections.unmodifiableMap(myAutoProperties);
     }
-    
+
     public void setExternalsHandler(ISVNExternalsHandler handler) {
         myExternalsHandler = handler;
     }
-    
+
     public void addWorkspaceListener(ISVNWorkspaceListener listener) {
         if (listener != null) {
             if (myListeners == null) {
@@ -127,13 +127,12 @@ public class SVNWorkspace implements ISVNWorkspace {
             if (url != null) {
                 try {
                     myLocation = SVNRepositoryLocation.parseURL(url);
-                } catch (SVNException e) {
-                }
+                } catch (SVNException e) {}
             }
         }
         return myLocation;
     }
-    
+
     public void setCredentials(String userName, String password) {
         if (userName != null && password != null) {
             myCredentialsProvider = new SVNSimpleCredentialsProvider(userName, password);
@@ -141,24 +140,24 @@ public class SVNWorkspace implements ISVNWorkspace {
             myCredentialsProvider = null;
         }
     }
-    
+
     public ISVNCredentialsProvider getCredentialsProvider() {
         return myCredentialsProvider;
     }
-    
+
     public void setCredentials(ISVNCredentialsProvider provider) {
         myCredentialsProvider = provider;
     }
-    
+
     public void refresh() throws SVNException {
         if (getRoot() != null) {
             getRoot().dispose();
         }
     }
-    
+
     public ISVNWorkspace getRootWorkspace(boolean stopOnExternals, boolean stopOnSwitch) {
         ISVNWorkspace workspace = this;
-        while(true) {
+        while (true) {
             String name = PathUtil.tail(workspace.getID());
             if (name.trim().length() == 0 || PathUtil.isEmpty(name)) {
                 return workspace;
@@ -188,7 +187,8 @@ public class SVNWorkspace implements ISVNWorkspace {
                 if (!expectedUrl.equals(workspace.getLocation().toString())) {
                     // check that ws.url at least starts with
                     // as an external ws should be "unversioned".
-                    // as switched it should has "switched" status (at least not unversioned).
+                    // as switched it should has "switched" status (at least not
+                    // unversioned).
                     DebugLog.log("existing url: " + workspace.getLocation());
                     DebugLog.log("expected url: " + expectedUrl);
                     SVNStatus wsStatus = parentWorkspace.status(name, false);
@@ -200,19 +200,19 @@ public class SVNWorkspace implements ISVNWorkspace {
                         if (stopOnExternals) {
                             return workspace;
                         }
-                    } else if ( ((status != SVNStatus.UNVERSIONED && status != SVNStatus.IGNORED) || wsStatus.isSwitched())) {
+                    } else if (((status != SVNStatus.UNVERSIONED && status != SVNStatus.IGNORED) || wsStatus.isSwitched())) {
                         if (stopOnSwitch) {
                             return workspace;
                         }
-                    } 
-                }                 
+                    }
+                }
             } catch (SVNException e1) {
                 return workspace;
             }
             workspace = parentWorkspace;
         }
     }
-    
+
     public SVNRepositoryLocation getLocation(String path) throws SVNException {
         if (path == null || "".equals(path)) {
             return getLocation();
@@ -231,7 +231,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         url = PathUtil.decode(url);
         return SVNRepositoryLocation.parseURL(url);
     }
-    
+
     public void setLocation(SVNRepositoryLocation location) throws SVNException {
         if (getLocation() == null && location != null) {
             getRoot().setPropertyValue(SVNProperty.URL, location.toString());
@@ -258,10 +258,10 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
             SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, getRoot(), export, null);
             repository.checkout(revision, null, recurse, editor);
-            
+
             if (myExternalsHandler != null) {
                 Collection paths = new HashSet();
-                for(Iterator externals = editor.getExternals().iterator(); externals.hasNext();) {                
+                for (Iterator externals = editor.getExternals().iterator(); externals.hasNext();) {
                     SVNExternal external = (SVNExternal) externals.next();
                     if (paths.contains(external.getPath())) {
                         continue;
@@ -277,7 +277,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                     }
                 }
             }
-            
+
             if (!export && editor.isTimestampsChanged()) {
                 FSUtil.sleepForTimestamp();
             }
@@ -285,8 +285,8 @@ public class SVNWorkspace implements ISVNWorkspace {
         } finally {
             getRoot().dispose();
         }
-    }    
-    
+    }
+
     public long update(long revision) throws SVNException {
         return update("", revision, true);
     }
@@ -296,12 +296,12 @@ public class SVNWorkspace implements ISVNWorkspace {
             throw new SVNException(getRoot().getID() + " does not contain working copy files");
         }
         try {
-            
+
             ISVNEntry targetEntry = locateEntry(path);
             // TODO collect externals from parent.
             Collection externalsSet = createExternals(path);
             String target = null;
-            if (targetEntry == null || !targetEntry.isDirectory()) {            
+            if (targetEntry == null || !targetEntry.isDirectory()) {
                 target = targetEntry != null ? targetEntry.getName() : PathUtil.tail(path);
                 targetEntry = locateParentEntry(path);
             }
@@ -309,7 +309,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, targetEntry, false, target);
             SVNReporterBaton reporterBaton = new SVNReporterBaton(targetEntry, target, recursive);
             repository.update(revision, target, recursive, reporterBaton, editor);
-            
+
             if (myExternalsHandler != null) {
                 Collection existingExternals = reporterBaton.getExternals();
                 Collection updatedExternals = editor.getExternals();
@@ -317,8 +317,8 @@ public class SVNWorkspace implements ISVNWorkspace {
                 allExternals.addAll(externalsSet);
                 existingExternals.addAll(updatedExternals);
                 Collection paths = new HashSet();
-                
-                for(Iterator externals = allExternals.iterator(); externals.hasNext();) {                
+
+                for (Iterator externals = allExternals.iterator(); externals.hasNext();) {
                     SVNExternal external = (SVNExternal) externals.next();
                     if (paths.contains(external.getPath())) {
                         continue;
@@ -335,16 +335,16 @@ public class SVNWorkspace implements ISVNWorkspace {
                     }
                 }
             }
-            
+
             if (editor.isTimestampsChanged()) {
                 FSUtil.sleepForTimestamp();
             }
-            
+
             return editor.getTargetRevision();
         } finally {
             getRoot().dispose();
         }
-    }    
+    }
 
     public long update(SVNRepositoryLocation url, String path, long revision, boolean recursive) throws SVNException {
         if (getLocation() == null) {
@@ -361,13 +361,13 @@ public class SVNWorkspace implements ISVNWorkspace {
             // create repos!
             SVNRepository repository = SVNUtil.createRepository(this, targetEntry.getPath());
             SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, targetEntry, false, null);
-            
+
             ISVNReporterBaton reporterBaton = new SVNReporterBaton(targetEntry, null, recursive);
             repository.update(url.toString(), revision, null, recursive, reporterBaton, editor);
-            
+
             if (myExternalsHandler != null) {
                 Collection paths = new HashSet();
-                for(Iterator externals = editor.getExternals().iterator(); externals.hasNext();) {                
+                for (Iterator externals = editor.getExternals().iterator(); externals.hasNext();) {
                     SVNExternal external = (SVNExternal) externals.next();
                     if (paths.contains(external.getPath())) {
                         continue;
@@ -375,18 +375,17 @@ public class SVNWorkspace implements ISVNWorkspace {
                     paths.add(external.getPath());
                     try {
                         ISVNWorkspace extWorkspace = SVNWorkspaceManager.createWorkspace(getRoot().getType(), PathUtil.append(getID(), external.getPath()));
-                        myExternalsHandler.handleCheckout(this, external.getPath(), extWorkspace, 
-                                external.getLocation(), external.getRevision(), false, true);
+                        myExternalsHandler.handleCheckout(this, external.getPath(), extWorkspace, external.getLocation(), external.getRevision(), false, true);
                     } catch (Throwable th) {
                         DebugLog.error(th);
                     }
                 }
             }
-            
+
             // update urls.
             String newURL = PathUtil.encode(url.toString());
             targetEntry.setPropertyValue(SVNProperty.URL, newURL);
-            for(Iterator children = targetEntry.asDirectory().childEntries(); children.hasNext();) {
+            for (Iterator children = targetEntry.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
                 updateURL(child, newURL, recursive);
             }
@@ -394,17 +393,17 @@ public class SVNWorkspace implements ISVNWorkspace {
             if (targetEntry.equals(getRoot())) {
                 setLocation(url);
             }
-            
+
             if (editor.isTimestampsChanged()) {
                 FSUtil.sleepForTimestamp();
             }
-            
+
             return editor.getTargetRevision();
         } finally {
             getRoot().dispose();
         }
     }
-    
+
     public void relocate(SVNRepositoryLocation newLocation, String path, boolean recursive) throws SVNException {
         try {
             ISVNEntry targetEntry = locateEntry(path);
@@ -416,7 +415,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
             String newURL = PathUtil.encode(newLocation.toString());
             targetEntry.setPropertyValue(SVNProperty.URL, newURL);
-            for(Iterator children = targetEntry.asDirectory().childEntries(); children.hasNext();) {
+            for (Iterator children = targetEntry.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
                 updateURL(child, newURL, recursive);
             }
@@ -427,19 +426,20 @@ public class SVNWorkspace implements ISVNWorkspace {
         } finally {
             getRoot().dispose();
         }
-        
+
     }
-    
-    public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend,
-            boolean includeUnmodified, boolean includeIgnored) throws SVNException {
+
+    public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend, boolean includeUnmodified, boolean includeIgnored)
+            throws SVNException {
         return status(path, remote, handler, descend, includeUnmodified, includeIgnored, false);
     }
-    
-    public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend,
-            boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned) throws SVNException {
+
+    public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend, boolean includeUnmodified, boolean includeIgnored,
+            boolean descendInUnversioned) throws SVNException {
         long start = System.currentTimeMillis();
         if (getLocation() == null) {
-            //throw new SVNException(getRoot().getID() + " does not contain working copy files");
+            // throw new SVNException(getRoot().getID() + " does not contain
+            // working copy files");
             return -1;
         }
         if (path == null) {
@@ -477,11 +477,12 @@ public class SVNWorkspace implements ISVNWorkspace {
         if (!"".equals(path)) {
             parent = locateParentEntry(path);
         }
-        SVNStatusUtil.doStatus(this, parent != null ? parent.asDirectory() : null, editor, handler, path, externals, descend, includeUnmodified, includeIgnored, descendInUnversioned);
-        
+        SVNStatusUtil.doStatus(this, parent != null ? parent.asDirectory() : null, editor, handler, path, externals, descend, includeUnmodified,
+                includeIgnored, descendInUnversioned);
+
         if (myExternalsHandler != null && externals != null && descend) {
             Collection paths = new HashSet();
-            for(Iterator exts = externals.iterator(); exts.hasNext();) {
+            for (Iterator exts = externals.iterator(); exts.hasNext();) {
                 SVNExternal external = (SVNExternal) exts.next();
                 if (paths.contains(external.getPath())) {
                     continue;
@@ -495,7 +496,8 @@ public class SVNWorkspace implements ISVNWorkspace {
                 DebugLog.log("EXTERNAL STATUS FOR " + external.getPath());
                 try {
                     ISVNWorkspace extWorkspace = SVNWorkspaceManager.createWorkspace(getRoot().getType(), PathUtil.append(getID(), external.getPath()));
-                    myExternalsHandler.handleStatus(this, external.getPath(), extWorkspace, handler, remote, descend, includeUnmodified, includeIgnored, descendInUnversioned);
+                    myExternalsHandler.handleStatus(this, external.getPath(), extWorkspace, handler, remote, descend, includeUnmodified, includeIgnored,
+                            descendInUnversioned);
                 } catch (Throwable th) {
                     DebugLog.error(th);
                 }
@@ -504,7 +506,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         DebugLog.benchmark("STATUS COMPLETED IN " + (System.currentTimeMillis() - start));
         return revision;
     }
-    
+
     public SVNStatus status(final String filePath, boolean remote) throws SVNException {
         final SVNStatus[] result = new SVNStatus[1];
         status(filePath, remote, new ISVNStatusHandler() {
@@ -512,26 +514,26 @@ public class SVNWorkspace implements ISVNWorkspace {
                 if (status.getPath().equals(filePath)) {
                     result[0] = status;
                 }
-            } 
+            }
         }, false, true, true);
         return result[0];
     }
-    
-    public void log(String path, long startRevision, long endRevison, boolean stopOnCopy,  boolean discoverPath, 
-            ISVNLogEntryHandler handler) throws SVNException {
+
+    public void log(String path, long startRevision, long endRevison, boolean stopOnCopy, boolean discoverPath, ISVNLogEntryHandler handler)
+            throws SVNException {
         if (getLocation() == null) {
             throw new SVNException(getRoot().getID() + " does not contain working copy files");
         }
         SVNRepository repository = SVNUtil.createRepository(this, "");
-        repository.log(new String[] {path}, startRevision, endRevison, discoverPath, stopOnCopy, handler);
+        repository.log(new String[] { path }, startRevision, endRevison, discoverPath, stopOnCopy, handler);
     }
-    
+
     // import
     public long commit(SVNRepositoryLocation destination, String message) throws SVNException {
         if (getLocation() != null) {
             throw new SVNException(getRoot().getID() + " already contains working copy files");
         }
-        
+
         SVNRepository repository = SVNRepositoryFactory.create(destination);
         repository.setCredentialsProvider(getCredentialsProvider());
         ISVNEditor editor = repository.getCommitEditor(message, getRoot());
@@ -539,7 +541,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         try {
             doImport(editor, getRoot());
             info = editor.closeEdit();
-        } catch(SVNException e) {
+        } catch (SVNException e) {
             try {
                 editor.abortEdit();
             } catch (SVNException inner) {}
@@ -549,17 +551,17 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
         return info != null ? info.getNewRevision() : -1;
     }
-    
+
     // real commit
-    
+
     public long commit(String message) throws SVNException {
         return commit("", message, true);
     }
-    
+
     public long commit(String path, String message, boolean recursive) throws SVNException {
-        return commit(new String[] {path}, message, recursive);
+        return commit(new String[] { path }, message, recursive);
     }
-    
+
     public long commit(String[] paths, final String message, boolean recursive) throws SVNException {
         return commit(paths, new ISVNCommitHandler() {
             public String handleCommit(SVNStatus[] tobeCommited) {
@@ -567,7 +569,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
         }, recursive);
     }
-    
+
     public long commit(String[] paths, ISVNCommitHandler handler, boolean recursive) throws SVNException {
         long start = System.currentTimeMillis();
         String root = PathUtil.getCommonRoot(paths);
@@ -579,43 +581,43 @@ public class SVNWorkspace implements ISVNWorkspace {
                 public String handleCommit(SVNStatus[] tobeCommited) {
                     return "";
                 }
-            }; 
+            };
         }
         try {
-            ISVNEntry rootEntry = locateEntry(root); 
+            ISVNEntry rootEntry = locateEntry(root);
             if (rootEntry == null || rootEntry.getPropertyValue(SVNProperty.URL) == null) {
                 throw new SVNException(root + " does not contain working copy files");
             }
-            
+
             DebugLog.log("");
             DebugLog.log("COMMIT ROOT: " + root);
-            for(int i = 0; i < paths.length; i++) {
+            for (int i = 0; i < paths.length; i++) {
                 DebugLog.log("COMMIT PATH " + i + " :" + paths[i]);
             }
             Collection modified = new HashSet();
             if (recursive) {
                 SVNCommitUtil.harvestCommitables(rootEntry, paths, recursive, modified);
             } else {
-                for(int i = 0; i < paths.length; i++) {
+                for (int i = 0; i < paths.length; i++) {
                     String path = paths[i];
                     ISVNEntry entry = locateEntry(path);
                     SVNCommitUtil.harvestCommitables(entry, paths, recursive, modified);
                     if (entry.isDirectory()) {
                         // collect direct children only.
-                        for(Iterator children = entry.asDirectory().childEntries(); children.hasNext();) {
+                        for (Iterator children = entry.asDirectory().childEntries(); children.hasNext();) {
                             ISVNEntry child = (ISVNEntry) children.next();
                             SVNCommitUtil.harvestCommitables(child, paths, recursive, modified);
                         }
-                    } 
+                    }
                 }
             }
             // add unversioned parents to set of modified files...
             Collection modifiedParents = new HashSet();
-            for(Iterator modifiedEntries = modified.iterator(); modifiedEntries.hasNext();) {
+            for (Iterator modifiedEntries = modified.iterator(); modifiedEntries.hasNext();) {
                 ISVNEntry entry = (ISVNEntry) modifiedEntries.next();
                 if (entry.isScheduledForAddition()) {
                     ISVNEntry parent = locateParentEntry(entry.getPath());
-                    while(parent != null && parent.isScheduledForAddition() && !parent.isScheduledForDeletion()) {
+                    while (parent != null && parent.isScheduledForAddition() && !parent.isScheduledForDeletion()) {
                         DebugLog.log("HV: 'added' parent added to transaction: " + parent.getPath());
                         modifiedParents.add(parent);
                         parent = locateParentEntry(parent.getPath());
@@ -623,7 +625,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                 }
             }
             modified.addAll(modifiedParents);
-            
+
             SVNCommitInfo info = null;
             if (modified.isEmpty()) {
                 DebugLog.log("NOTHING TO COMMIT");
@@ -633,7 +635,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             Map urls = new HashMap();
             int index = 0;
             String uuid = null;
-            for(Iterator entries = modified.iterator(); entries.hasNext();) {
+            for (Iterator entries = modified.iterator(); entries.hasNext();) {
                 ISVNEntry entry = (ISVNEntry) entries.next();
                 String url = entry.getPropertyValue(SVNProperty.URL);
                 String entryUUID = entry.getPropertyValue(SVNProperty.UUID);
@@ -654,7 +656,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
             String message = handler == null ? "" : handler.handleCommit(statuses);
             modified.clear();
-            for(int i = 0; i < statuses.length; i++) {
+            for (int i = 0; i < statuses.length; i++) {
                 if (statuses[i] != null) {
                     modified.add(locateEntry(statuses[i].getPath()));
                 }
@@ -666,7 +668,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             DebugLog.log("COMMIT MESSAGE: " + message);
             paths = new String[modified.size()];
             index = 0;
-            for(Iterator modifiedEntries = modified.iterator(); modifiedEntries.hasNext();) {
+            for (Iterator modifiedEntries = modified.iterator(); modifiedEntries.hasNext();) {
                 ISVNEntry entry = (ISVNEntry) modifiedEntries.next();
                 DebugLog.log("MODIFIED: " + entry.getPath());
                 paths[index++] = entry.getPath();
@@ -674,7 +676,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 
             Map tree = new HashMap();
             String url = SVNCommitUtil.buildCommitTree(modified, tree);
-            for(Iterator treePaths = tree.keySet().iterator(); treePaths.hasNext();) {
+            for (Iterator treePaths = tree.keySet().iterator(); treePaths.hasNext();) {
                 String treePath = (String) treePaths.next();
                 if (tree.get(treePath) != null) {
                     DebugLog.log("TREE ENTRY : " + treePath + " : " + ((ISVNEntry) tree.get(treePath)).getPath());
@@ -684,20 +686,20 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
             DebugLog.log("COMMIT ROOT RECALCULATED: " + url);
             DebugLog.log("COMMIT PREPARATIONS TOOK: " + (System.currentTimeMillis() - start) + " ms.");
-            
-            SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url); 
+
+            SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
             SVNRepository repository = SVNRepositoryFactory.create(location);
             repository.setCredentialsProvider(getCredentialsProvider());
-            
+
             ISVNEditor editor = repository.getCommitEditor(message, new SVNWorkspaceMediatorAdapter(getRoot(), tree));
-            
+
             try {
                 SVNCommitUtil.doCommit("", location.toString(), tree, editor, this);
                 info = editor.closeEdit();
-            } catch(SVNException e) {
+            } catch (SVNException e) {
                 DebugLog.error("error: " + e.getMessage());
                 if (e.getErrors() != null) {
-                    for(int i = 0; i < e.getErrors().length; i++) {
+                    for (int i = 0; i < e.getErrors().length; i++) {
                         SVNError error = e.getErrors()[i];
                         if (error != null) {
                             DebugLog.error(error.toString());
@@ -711,14 +713,14 @@ public class SVNWorkspace implements ISVNWorkspace {
             } catch (Throwable th) {
                 th.printStackTrace();
                 throw new SVNException(th);
-            } 
-            
+            }
+
             DebugLog.log("COMMIT TOOK: " + (System.currentTimeMillis() - start) + " ms.");
             start = System.currentTimeMillis();
             SVNCommitUtil.updateWorkingCopy(info, rootEntry.getPropertyValue(SVNProperty.UUID), tree, this);
 
             assertCommit(info, tree, repository);
-            
+
             FSUtil.sleepForTimestamp();
             DebugLog.log("POST COMMIT ACTIONS TOOK: " + (System.currentTimeMillis() - start) + " ms.");
             return info != null ? info.getNewRevision() : -1;
@@ -726,12 +728,12 @@ public class SVNWorkspace implements ISVNWorkspace {
             getRoot().dispose();
         }
     }
-    
+
     private void assertCommit(SVNCommitInfo info, Map tree, SVNRepository repository) throws SVNException {
         if (!DebugLog.isSafeMode()) {
             return;
         }
-        for(Iterator treePaths = tree.keySet().iterator(); treePaths.hasNext();) {
+        for (Iterator treePaths = tree.keySet().iterator(); treePaths.hasNext();) {
             String treePath = (String) treePaths.next();
             if (tree.get(treePath) != null) {
                 ISVNEntry entry = (ISVNEntry) tree.get(treePath);
@@ -754,12 +756,14 @@ public class SVNWorkspace implements ISVNWorkspace {
                         }
                     }
                     File baseFile = new File(getID().replace('/', File.separatorChar), entry.getPath().replace('/', File.separatorChar));
-                    baseFile = new File(baseFile.getParentFile(), ".svn" + File.separatorChar + "text-base" + File.separatorChar + baseFile.getName() + ".svn-base");
+                    baseFile = new File(baseFile.getParentFile(), ".svn" + File.separatorChar + "text-base" + File.separatorChar + baseFile.getName()
+                            + ".svn-base");
                     DebugLog.log("COMPARING " + tmpFile.getAbsolutePath() + " vs " + baseFile.getAbsolutePath());
                     try {
-                        if (!FSUtil.compareFiles(tmpFile,baseFile,true)) {
+                        if (!FSUtil.compareFiles(tmpFile, baseFile, true)) {
                             DebugLog.log("FILES NOT EQUAL!");
-                            throw new SVNException("SVN FATAL ERROR! COMMIT FAILED! FILE(S) IN REPOSITORY MAY BE CORRUPTED.\nFILE " + baseFile.getAbsolutePath() + " IS NOT EQUAL TO " + tmpFile.getAbsolutePath());
+                            throw new SVNException("SVN FATAL ERROR! COMMIT FAILED! FILE(S) IN REPOSITORY MAY BE CORRUPTED.\nFILE "
+                                    + baseFile.getAbsolutePath() + " IS NOT EQUAL TO " + tmpFile.getAbsolutePath());
                         }
                     } catch (IOException e) {
                         DebugLog.log("COMPARE FAILED: " + e.getMessage());
@@ -775,7 +779,7 @@ public class SVNWorkspace implements ISVNWorkspace {
     public void add(String path, boolean mkdir, boolean recurse) throws SVNException {
         try {
             ISVNEntry entry = locateParentEntry(path);
-            String name = PathUtil.tail(path);        
+            String name = PathUtil.tail(path);
             if (entry != null && name != null) {
                 ISVNEntry child = entry.asDirectory().scheduleForAddition(name, mkdir, recurse);
                 doApplyAutoProperties(child, recurse);
@@ -789,11 +793,11 @@ public class SVNWorkspace implements ISVNWorkspace {
             getRoot().dispose();
         }
     }
-    
+
     private void doApplyAutoProperties(ISVNEntry addedEntry, boolean recurse) throws SVNException {
         applyAutoProperties(addedEntry, null);
         if (recurse && addedEntry.isDirectory()) {
-            for(Iterator children = addedEntry.asDirectory().childEntries(); children.hasNext();) {
+            for (Iterator children = addedEntry.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry childEntry = (ISVNEntry) children.next();
                 if (childEntry.isScheduledForAddition()) {
                     doApplyAutoProperties(childEntry, recurse);
@@ -816,7 +820,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             getRoot().dispose();
         }
     }
-    
+
     public void copy(String source, String destination, boolean move) throws SVNException {
         try {
             ISVNEntry entry = locateParentEntry(destination);
@@ -824,7 +828,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             ISVNEntry toCopyParent = locateParentEntry(source);
             String toCopyName = PathUtil.tail(source);
             ISVNEntry toCopy = toCopyParent.asDirectory().getChild(toCopyName);
-    
+
             ISVNEntry copied = entry.asDirectory().copy(name, toCopy);
             fireEntryModified(copied, SVNStatus.ADDED, true);
             if (move && toCopyParent != null) {
@@ -844,10 +848,10 @@ public class SVNWorkspace implements ISVNWorkspace {
     public Iterator propertyNames(String path) throws SVNException {
         ISVNEntry entry = locateEntry(path);
         if (entry == null) {
-            return Collections.EMPTY_LIST.iterator();            
+            return Collections.EMPTY_LIST.iterator();
         }
         Collection names = new LinkedList();
-        for(Iterator propNames = entry.propertyNames(); propNames.hasNext();) {
+        for (Iterator propNames = entry.propertyNames(); propNames.hasNext();) {
             names.add(propNames.next());
         }
         return names.iterator();
@@ -856,42 +860,42 @@ public class SVNWorkspace implements ISVNWorkspace {
     public String getPropertyValue(String path, String name) throws SVNException {
         ISVNEntry entry = locateEntry(path);
         if (entry == null) {
-            return null;            
+            return null;
         }
         return entry.getPropertyValue(name);
     }
-    
+
     public Map getProperties(String path, boolean reposProps, boolean entryProps) throws SVNException {
         Map props = new HashMap();
         ISVNEntry entry = locateEntry(path, true);
         if (entry == null) {
-            return null;            
+            return null;
         }
         boolean add = false;
-        for(Iterator names = entry.propertyNames(); names.hasNext();) {
+        for (Iterator names = entry.propertyNames(); names.hasNext();) {
             String name = (String) names.next();
             if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
                 add = entryProps;
             } else {
                 add = reposProps;
-            } 
+            }
             if (add) {
                 props.put(name, entry.getPropertyValue(name));
                 add = false;
-            } 
+            }
         }
-            return props;
+        return props;
     }
 
     public void setPropertyValue(String path, String name, String value) throws SVNException {
         setPropertyValue(path, name, value, false);
     }
-    
+
     public void setPropertyValue(String path, String name, String value, boolean recurse) throws SVNException {
         try {
             ISVNEntry entry = locateEntry(path);
             if (entry == null) {
-                return;            
+                return;
             }
             doSetProperty(entry, name, value, recurse);
             entry.save();
@@ -899,8 +903,8 @@ public class SVNWorkspace implements ISVNWorkspace {
         } finally {
             getRoot().dispose();
         }
-    } 
-    
+    }
+
     public void markResolved(String path, boolean recursive) throws SVNException {
         try {
             ISVNEntry entry = locateEntry(path);
@@ -920,7 +924,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             getRoot().dispose();
         }
     }
-    
+
     public void revert(String path, boolean recursive) throws SVNException {
         try {
             ISVNEntry entry = locateEntry(path);
@@ -931,14 +935,14 @@ public class SVNWorkspace implements ISVNWorkspace {
             parent = (ISVNDirectoryEntry) locateParentEntry(path);
             doMarkResolved(entry, recursive);
             doRevert(parent, entry, recursive);
-            
+
             if (parent == null && entry == getRoot()) {
                 entry.asDirectory().revert(null);
             }
             fireEntryModified(entry, SVNStatus.REVERTED, recursive);
             if (parent != null) {
                 entry = parent;
-            }  
+            }
             entry.save();
             entry.dispose();
             FSUtil.sleepForTimestamp();
@@ -946,7 +950,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             getRoot().dispose();
         }
     }
-    
+
     public ISVNFileContent getFileContent(String path) throws SVNException {
         ISVNEntry parentEntry = locateParentEntry(path);
         if (parentEntry != null && parentEntry.isDirectory()) {
@@ -958,7 +962,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
 
             for (Iterator it = parentDirectory.unmanagedChildEntries(true); it.hasNext();) {
-                final ISVNEntry entry = (ISVNEntry)it.next();
+                final ISVNEntry entry = (ISVNEntry) it.next();
                 if (entry.asFile() != null && entry.getName().equals(name)) {
                     return entry.asFile().getContent();
                 }
@@ -971,7 +975,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         if (myListeners == null || entry == null) {
             return;
         }
-        for(Iterator listeners = myListeners.iterator(); listeners.hasNext();) {
+        for (Iterator listeners = myListeners.iterator(); listeners.hasNext();) {
             ISVNWorkspaceListener listener = (ISVNWorkspaceListener) listeners.next();
             listener.committed(entry.getPath(), kind);
         }
@@ -981,17 +985,17 @@ public class SVNWorkspace implements ISVNWorkspace {
         if (myListeners == null || entry == null) {
             return;
         }
-        for(Iterator listeners = myListeners.iterator(); listeners.hasNext();) {
+        for (Iterator listeners = myListeners.iterator(); listeners.hasNext();) {
             ISVNWorkspaceListener listener = (ISVNWorkspaceListener) listeners.next();
             listener.updated(entry.getPath(), contentsStatus, propsStatus, revision);
         }
     }
-    
+
     protected void fireEntryModified(ISVNEntry entry, int kind, boolean recursive) {
         if (myListeners == null || entry == null) {
             return;
         }
-        for(Iterator listeners = myListeners.iterator(); listeners.hasNext();) {
+        for (Iterator listeners = myListeners.iterator(); listeners.hasNext();) {
             ISVNWorkspaceListener listener = (ISVNWorkspaceListener) listeners.next();
             listener.modified(entry.getPath(), kind);
         }
@@ -999,30 +1003,29 @@ public class SVNWorkspace implements ISVNWorkspace {
             Iterator children = null;
             try {
                 children = entry.asDirectory().childEntries();
-            } catch (SVNException e) {
-            }
-            while(children != null && children.hasNext()) {
+            } catch (SVNException e) {}
+            while (children != null && children.hasNext()) {
                 fireEntryModified((ISVNEntry) children.next(), kind, recursive);
             }
         }
     }
-    
+
     private ISVNRootEntry getRoot() {
         return myRoot;
     }
-   
+
     private void doRevert(ISVNDirectoryEntry parent, ISVNEntry entry, boolean recursive) throws SVNException {
         if (entry.isDirectory() && recursive) {
             Collection namesList = new LinkedList();
-            for(Iterator children = entry.asDirectory().childEntries(); children.hasNext();) {
+            for (Iterator children = entry.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
                 namesList.add(child);
             }
-            for(Iterator names = namesList.iterator(); names.hasNext();) {
+            for (Iterator names = namesList.iterator(); names.hasNext();) {
                 ISVNEntry child = (ISVNEntry) names.next();
                 doRevert(entry.asDirectory(), child, recursive);
             }
-        } 
+        }
         if (parent != null) {
             parent.revert(entry.getName());
         }
@@ -1033,31 +1036,31 @@ public class SVNWorkspace implements ISVNWorkspace {
 
     private void doMarkResolved(ISVNEntry entry, boolean recursive) throws SVNException {
         if (entry.isDirectory() && recursive) {
-            for(Iterator children = entry.asDirectory().childEntries(); children.hasNext();) {
+            for (Iterator children = entry.asDirectory().childEntries(); children.hasNext();) {
                 doMarkResolved((ISVNEntry) children.next(), recursive);
             }
         }
         entry.markResolved();
     }
-    
+
     private void doSetProperty(ISVNEntry entry, String name, String value, boolean recurse) throws SVNException {
         entry.setPropertyValue(name, value);
         if (recurse && entry.isDirectory()) {
-            for(Iterator entries = entry.asDirectory().childEntries(); entries.hasNext();) {
+            for (Iterator entries = entry.asDirectory().childEntries(); entries.hasNext();) {
                 ISVNEntry child = (ISVNEntry) entries.next();
                 doSetProperty(child, name, value, recurse);
             }
         }
     }
-    
+
     private void doImport(ISVNEditor editor, ISVNDirectoryEntry root) throws SVNException {
         if (root instanceof ISVNRootEntry) {
             editor.openRoot(-1);
         } else {
             editor.addDir(root.getPath(), null, -1);
             applyAutoProperties(root, editor);
-       }
-        for(Iterator children = root.unmanagedChildEntries(true); children.hasNext();) {
+        }
+        for (Iterator children = root.unmanagedChildEntries(true); children.hasNext();) {
             ISVNEntry child = (ISVNEntry) children.next();
             if (child.isDirectory()) {
                 doImport(editor, child.asDirectory());
@@ -1067,7 +1070,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                 child.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
                 child.asFile().generateDelta(editor);
                 fireEntryCommitted(child, SVNStatus.ADDED);
-                editor.closeFile(null);                    
+                editor.closeFile(null);
             }
         }
         if (root != getRoot()) {
@@ -1075,19 +1078,19 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
         editor.closeDir();
     }
-    
+
     private void applyAutoProperties(ISVNEntry entry, ISVNEditor editor) throws SVNException {
         if (myCompiledAutoProperties == null) {
             myCompiledAutoProperties = compileAutoProperties(myAutoProperties);
         }
-        for(Iterator keys = myCompiledAutoProperties.keySet().iterator(); keys.hasNext();) {
+        for (Iterator keys = myCompiledAutoProperties.keySet().iterator(); keys.hasNext();) {
             Pattern pattern = (Pattern) keys.next();
             if (pattern.matcher(entry.getName().toLowerCase()).matches()) {
                 Map properties = (Map) myCompiledAutoProperties.get(pattern);
-                for(Iterator entries = properties.entrySet().iterator(); entries.hasNext();) {
+                for (Iterator entries = properties.entrySet().iterator(); entries.hasNext();) {
                     Map.Entry propEntry = (Map.Entry) entries.next();
                     String name = (String) propEntry.getKey();
-                    String value = (String) propEntry.getValue(); 
+                    String value = (String) propEntry.getValue();
                     entry.setPropertyValue(name, value);
                     if (editor == null) {
                         continue;
@@ -1101,10 +1104,10 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
         }
     }
-    
+
     private static Map compileAutoProperties(Map source) {
         Map result = new HashMap();
-        for(Iterator entries = source.entrySet().iterator(); entries.hasNext();) {
+        for (Iterator entries = source.entrySet().iterator(); entries.hasNext();) {
             Map.Entry entry = (Map.Entry) entries.next();
             if (entry.getValue() == null) {
                 continue;
@@ -1113,7 +1116,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             StringBuffer regex = new StringBuffer();
             regex.append('^');
             // convert key wildcard into regexp
-            for(int i = 0; i < key.length(); i++) {
+            for (int i = 0; i < key.length(); i++) {
                 char ch = key.charAt(i);
                 if (ch == '.') {
                     regex.append("\\.");
@@ -1128,7 +1131,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             regex.append('$');
             String properties = (String) entry.getValue();
             Map parsedProperties = new HashMap();
-            for(StringTokenizer props = new StringTokenizer(properties, ";"); props.hasMoreTokens();) {
+            for (StringTokenizer props = new StringTokenizer(properties, ";"); props.hasMoreTokens();) {
                 String propset = props.nextToken();
                 int index = propset.indexOf('=');
                 String value = "";
@@ -1147,14 +1150,14 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
         return result;
     }
-    
+
     ISVNEntry locateEntry(String path) throws SVNException {
         return locateEntry(path, false);
     }
-    
+
     ISVNEntry locateEntry(String path, boolean unmanaged) throws SVNException {
         ISVNEntry entry = getRoot();
-        for(StringTokenizer tokens = new StringTokenizer(path, "/"); tokens.hasMoreTokens();) {
+        for (StringTokenizer tokens = new StringTokenizer(path, "/"); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
             if (entry == null) {
                 return null;
@@ -1171,22 +1174,22 @@ public class SVNWorkspace implements ISVNWorkspace {
         ISVNEntry entry = getRoot();
         if ("".equals(path)) {
             return null;
-        }            
-        for(StringTokenizer tokens = new StringTokenizer(path, "/"); tokens.hasMoreTokens();) {
+        }
+        for (StringTokenizer tokens = new StringTokenizer(path, "/"); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
             if (!tokens.hasMoreTokens()) {
                 return entry;
             }
-            entry = entry.asDirectory().getUnmanagedChild(token); 
+            entry = entry.asDirectory().getUnmanagedChild(token);
         }
         return null;
     }
-    
+
     private static void updateURL(ISVNEntry target, String parentURL, boolean recursive) throws SVNException {
         parentURL = PathUtil.append(parentURL, PathUtil.encode(target.getName()));
         target.setPropertyValue(SVNProperty.URL, parentURL);
         if (target.isDirectory() && recursive) {
-            for(Iterator children = target.asDirectory().childEntries(); children.hasNext();) {
+            for (Iterator children = target.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
                 if (child.isDirectory()) {
                     updateURL(child, parentURL, recursive);
@@ -1194,7 +1197,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
         }
     }
-    
+
     private Collection createExternals(String path) throws SVNException {
         Collection externals = new HashSet();
         ISVNEntry parent = null;
@@ -1205,10 +1208,10 @@ public class SVNWorkspace implements ISVNWorkspace {
             return externals;
         }
         ISVNDirectoryEntry current = parent.asDirectory();
-        while(current != null) {
+        while (current != null) {
             externals = SVNExternal.create(current, externals);
             current = (ISVNDirectoryEntry) locateParentEntry(current.getPath());
-        } 
+        }
         return externals;
     }
 }
