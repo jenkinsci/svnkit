@@ -1049,6 +1049,7 @@ public class SVNClient implements SVNClientInterface {
     private static void throwException(SVNException e) throws ClientException {
         ClientException ec = new ClientException(e.getMessage(), "", 0);
         DebugLog.error(ec);
+        DebugLog.error(e);
         if (e.getErrors() != null) {
             for(int i = 0; i < e.getErrors().length; i++) {
                 DebugLog.log(e.getErrors()[i].getMessage());
