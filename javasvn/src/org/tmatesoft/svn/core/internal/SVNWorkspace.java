@@ -56,6 +56,11 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
+import org.tmatesoft.svn.core.progress.ISVNProgressCanceller;
+import org.tmatesoft.svn.core.progress.ISVNProgressViewer;
+import org.tmatesoft.svn.core.progress.SVNProgressDummyCanceller;
+import org.tmatesoft.svn.core.progress.SVNProgressDummyViewer;
+import org.tmatesoft.svn.core.progress.SVNProgressProcessor;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
@@ -467,9 +472,13 @@ public class SVNWorkspace implements ISVNWorkspace {
         return status(path, remote, handler, descend, includeUnmodified, includeIgnored, false, false);
     }
 
-    public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend, boolean includeUnmodified, boolean includeIgnored,
-            boolean descendInUnversioned, boolean descendFurtherInIgnored) throws SVNException {
-        long start = System.currentTimeMillis();
+	public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend, boolean includeUnmodified, boolean includeIgnored,
+	        boolean descendInUnversioned, boolean descendFurtherInIgnored) throws SVNException {
+		return status(path, remote, handler, descend, includeUnmodified, includeIgnored, descendInUnversioned, descendFurtherInIgnored, SVNProgressDummyViewer.getInstance(), SVNProgressDummyCanceller.getInstance());
+	}
+
+	public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend, boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned, boolean descendFurtherInIgnored, ISVNProgressViewer progressViewer, ISVNProgressCanceller canceller) throws SVNException {
+				long start = System.currentTimeMillis();
         if (getLocation() == null) {
             // throw new SVNException(getRoot().getID() + " does not contain
             // working copy files");
@@ -510,8 +519,9 @@ public class SVNWorkspace implements ISVNWorkspace {
         if (targetEntry != null && parent != null && parent.asDirectory().isIgnored(targetEntry.getName())) {
             includeIgnored = true;
         }
-        SVNStatusUtil.doStatus(this, parent != null ? parent.asDirectory() : null, editor, handler, path, externals, descend, includeUnmodified,
-                includeIgnored, descendInUnversioned, descendFurtherInIgnored);
+
+				SVNStatusUtil.doStatus(this, parent != null ? parent.asDirectory() : null, editor, handler, path, externals, descend, includeUnmodified,
+                includeIgnored, descendInUnversioned, descendFurtherInIgnored, new SVNProgressProcessor(progressViewer, canceller));
 
         if (myExternalsHandler != null && externals != null) {
             Collection paths = new HashSet();

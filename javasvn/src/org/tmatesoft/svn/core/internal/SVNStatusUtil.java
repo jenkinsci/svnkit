@@ -24,6 +24,8 @@ import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.progress.SVNProgressProcessor;
+import org.tmatesoft.svn.core.progress.SVNProgressViewerIterator;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -32,7 +34,7 @@ import org.tmatesoft.svn.util.PathUtil;
 class SVNStatusUtil {
 
     static void doStatus(SVNWorkspace ws, ISVNDirectoryEntry parent, SVNStatusEditor editor, ISVNStatusHandler handler, String path, Collection externals, boolean descend,
-            boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned, boolean descendFurtherInIgnored) throws SVNException {
+            boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned, boolean descendFurtherInIgnored, SVNProgressProcessor progressProcessor) throws SVNException {
         externals = externals == null ? new HashSet() : externals;
 
         ISVNEntry entry = ws.locateEntry(path, true);
@@ -48,6 +50,7 @@ class SVNStatusUtil {
         if (!entry.isDirectory()) {
             // ignore ignored, unchanged...
             handleStatus(handler, (SVNStatus) statuses.get(entry.getName()), includeUnmodified, includeIgnored);
+	          progressProcessor.setProgress(1.0);
             return;
         }
         SVNStatus dirStatus = (SVNStatus) statuses.remove("");
@@ -57,12 +60,14 @@ class SVNStatusUtil {
             (!descendInUnversioned && !isManagedInParent) ||
             (!descendFurtherInIgnored && dirStatus.getContentsStatus() == SVNStatus.IGNORED)) {
             handleStatus(handler, dirStatus, includeUnmodified, includeIgnored);
+	          progressProcessor.setProgress(1.0);
             return;
         }
         // descend
         if (descend && dirStatus.getContentsStatus() != SVNStatus.OBSTRUCTED) {
-            for(Iterator names = statuses.keySet().iterator(); names.hasNext();) {
-                String name = (String) names.next();
+
+	        for(SVNProgressViewerIterator it = new SVNProgressViewerIterator(statuses.keySet(), progressProcessor); it.hasNext(); progressProcessor.checkCancelled()) {
+                String name = (String) it.next();
                 SVNStatus status = (SVNStatus) statuses.get(name);
                 if (status == null) {
                     if (!includeIgnored && (entry.asDirectory().getChild(name) == null && entry.asDirectory().isIgnored(name))) {
@@ -70,7 +75,7 @@ class SVNStatusUtil {
                         continue;
                     }
                     doStatus(ws, entry.asDirectory(), editor, handler, PathUtil.append(path, name), externals, true,
-                            includeUnmodified, includeIgnored, descendInUnversioned, descendFurtherInIgnored);
+                            includeUnmodified, includeIgnored, descendInUnversioned, descendFurtherInIgnored, new SVNProgressProcessor(it, progressProcessor));
                 }
             }
         }
@@ -83,6 +88,7 @@ class SVNStatusUtil {
             }
         }
         handleStatus(handler, dirStatus, includeUnmodified, includeIgnored);
+	      progressProcessor.setProgress(1.0);
     }
     
     private static void handleStatus(ISVNStatusHandler handler, SVNStatus status, boolean includeUnmodified, boolean includeIgnored) {

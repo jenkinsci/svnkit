@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.progress.*;
 
 /**
  * @author TMate Software Ltd.
@@ -103,6 +104,9 @@ public interface ISVNWorkspace {
 
     public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend, 
             boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned, boolean descendFurtherInIgnored) throws SVNException;
+
+    public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend,
+            boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned, boolean descendFurtherInIgnored, ISVNProgressViewer progressViewer, ISVNProgressCanceller canceller) throws SVNException;
 
     public SVNStatus status(String path, boolean remote) throws SVNException;
     

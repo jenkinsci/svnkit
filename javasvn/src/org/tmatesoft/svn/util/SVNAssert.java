@@ -12,18 +12,24 @@
 
 package org.tmatesoft.svn.util;
 
+
+
 /**
  * @author TMate Software Ltd.
  */
 public class SVNAssert {
 
-    public static void assertTrue(boolean condition) {
-        assertTrue(condition, "");
-    }
+	public static void assertTrue(boolean condition) {
+		assertTrue(condition, "");
+	}
 
-    public static void assertTrue(boolean condition, String message) {
-        if (!condition) {
-            throw new InternalError(message);
-        }
-    }
+	public static void assertTrue(boolean condition, String message) {
+		if (!condition) {
+			throw new InternalError(message);
+		}
+	}
+
+	public static void assertNotNull(Object o) {
+		assertTrue(o != null);
+	}
 }
