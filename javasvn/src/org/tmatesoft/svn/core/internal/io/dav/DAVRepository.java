@@ -63,7 +63,7 @@ class DAVRepository extends SVNRepository {
         DAVBaselineInfo info = null;
         try {
             openConnection();
-            info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), -1, false, true, info);
+            info = DAVUtil.getBaselineInfo(myConnection, getRepositoryRoot(), -1, false, true, info);
         } finally {
             closeConnection();
         }
@@ -79,7 +79,7 @@ class DAVRepository extends SVNRepository {
 		byte[] request = convertToBytes(DAVDateRevisionHandler.generateDateRevisionRequest(null, date));
     	try {
     		openConnection();
-			myConnection.doReport(getLocation().getPath(), request, handler);
+			myConnection.doReport(getRepositoryRoot(), request, handler);
     	} finally {
     		closeConnection();
     	}
@@ -105,7 +105,7 @@ class DAVRepository extends SVNRepository {
         properties = properties == null ? new HashMap() : properties;
         try {
             openConnection();
-            DAVResponse source = DAVUtil.getBaselineProperties(myConnection, getLocation().getPath(), revision, null);
+            DAVResponse source = DAVUtil.getBaselineProperties(myConnection, getRepositoryRoot(), revision, null);
             properties = DAVUtil.filterProperties(source, properties);
         } finally {
             closeConnection();
@@ -207,7 +207,6 @@ class DAVRepository extends SVNRepository {
     }
 
     public int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException {
-        // remove root part from path!
 		String bcPath = getLocation().getPath();
 		try {
             openConnection();
@@ -230,12 +229,22 @@ class DAVRepository extends SVNRepository {
     
     public int log(String[] targetPaths, long startRevision, long endRevision,
             boolean changedPath, boolean strictNode, ISVNLogEntryHandler handler) throws SVNException {
+        if (targetPaths == null || targetPaths.length == 0) {
+            return 0;
+        }
 		String path = getLocation().getPath();
         byte[] request = convertToBytes(DAVLogHandler.generateLogRequest(null, startRevision, endRevision,
         		changedPath, strictNode, targetPaths));
         DAVLogHandler davHandler = null;
 		try {
 			openConnection();
+            for(int i = 0; i < targetPaths.length; i++) {
+                if (targetPaths[i].startsWith("/")) {
+                    // target is absolute path.
+                    path = getRepositoryRoot();
+                    break;
+                }
+            }
             davHandler = new DAVLogHandler(handler); 
 			long revision = -1;
 			if (isValidRevision(startRevision) && isValidRevision(endRevision)) {
@@ -269,15 +278,14 @@ class DAVRepository extends SVNRepository {
     }
     
     public int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException {
-        byte[] request = convertToBytes(DAVLocationsHandler.generateLocationsRequest(null, path, pegRevision, revisions));
         try {
             openConnection();
-            path = getFullPath(path);
+            byte[] request = convertToBytes(DAVLocationsHandler.generateLocationsRequest(null, getFullPath(path), pegRevision, revisions));
+            
             DAVLocationsHandler davHandler = new DAVLocationsHandler(handler);
             
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), pegRevision, false, false, null);            
             path = PathUtil.append(info.baselineBase, info.baselinePath);
-
             myConnection.doReport(path, request, davHandler);
             
             return davHandler.getEntriesCount();
