@@ -91,7 +91,8 @@ and problem support. If you're interested in professional JavaSVN support, pleas
 <h5>Documentation</h5>
 <a id="normal" href="usage.html">How&nbsp;to&nbsp;Use</a><br/>
 <a id="normal" href="build.html">Build&nbsp;Instructions</a><br/>
-<a id="normal" href="subclipse.html">For&nbsp;Subclipse&nbsp;Users</a><br/>
+<a id="normal" href="subclipse.html">For&nbsp;Subclipse&nbsp;(and&nbsp;svnant)&nbsp;Users</a><br/>
+<a id="normal" href="ant.html">Using&nbsp;JavaSVN&nbsp;with&nbsp;Ant</a><br/>
 <a id="normal" href="javadoc/index.html">JavaDoc</a>
 <h5>Repository</h5>
 To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/jsvn/">http://72.9.228.230:8080/svn/jsvn/</a>
