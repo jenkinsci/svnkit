@@ -1,3 +1,12 @@
+= version 0.8.6
+
++ annotate (blame) operation is implemented.
++ http: server socket close detected properly and doesn't result in operation failure.
++ SVNClient: absolute paths are used in notifications.
++ SVNClient: fileContent method traces file renames.
++ SVNClient: list and logMessages methods return paths sorted alphabetically.
++ SVNClient: auth info is stored in Eclipse key ring when used within Eclipse.
+
 = version 0.8.5
 
 + SVNClient: WC copy and move operations work properly on Linux and OS X.
