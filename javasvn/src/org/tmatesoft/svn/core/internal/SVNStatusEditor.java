@@ -87,11 +87,11 @@ public class SVNStatusEditor implements ISVNEditor {
     }
     
     public void changeDirProperty(String name, String value) throws SVNException {
-        if (!name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
+        if (!name.startsWith(SVNProperty.SVN_ENTRY_PREFIX) && !name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             RemoteSVNStatus status = (RemoteSVNStatus) myRemoteStatuses.get(myCurrentPath);
             if (status == null) {
                 status = new RemoteSVNStatus(myCurrentRevision, SVNStatus.NOT_MODIFIED, SVNStatus.MODIFIED);
-                myRemoteStatuses.put(myCurrentFilePath, status);
+                myRemoteStatuses.put(myCurrentPath, status);
             } else if (status.myContentsStatus != SVNStatus.ADDED && status.myContentsStatus != SVNStatus.REPLACED) {
                 status.myPropertiesStatus = SVNStatus.MODIFIED;
             }
@@ -142,7 +142,7 @@ public class SVNStatusEditor implements ISVNEditor {
     
     
     public void changeFileProperty(String name, String value) throws SVNException {
-        if (!name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
+        if (!name.startsWith(SVNProperty.SVN_ENTRY_PREFIX) && !name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             RemoteSVNStatus status = (RemoteSVNStatus) myRemoteStatuses.get(myCurrentFilePath);
             if (status == null) {
                 myRemoteStatuses.put(myCurrentFilePath, new RemoteSVNStatus(myCurrentFileRevision, SVNStatus.NOT_MODIFIED, SVNStatus.MODIFIED));
@@ -196,7 +196,6 @@ public class SVNStatusEditor implements ISVNEditor {
             String remotePath = (String) remotePaths.next();
             String name = remotePath.substring(relativePath.length());
             name = PathUtil.removeLeadingSlash(name);
-            
             RemoteSVNStatus remoteStatus = (RemoteSVNStatus) myRemoteStatuses.remove(remotePath);
             if (remoteStatus == null) {
                 continue;
