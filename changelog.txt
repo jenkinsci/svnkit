@@ -1,4 +1,8 @@
-= version 1.0.0 build 20041216
+= version 1.0.0 build 20041219
+
++ bugfixes
+
+= version 1.0.0 build 20041217
 
 + bugfixes
 
