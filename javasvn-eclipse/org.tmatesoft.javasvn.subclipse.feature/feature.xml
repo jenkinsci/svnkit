@@ -21,7 +21,6 @@
    <requires>
 	<import feature="org.tigris.subversion.subclipse"
 		version="%subclipse.version%"
-	   	patch="true"
 	/>
    </requires>
 

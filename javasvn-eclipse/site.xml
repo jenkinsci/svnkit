@@ -12,7 +12,7 @@
 	</feature>
 
 	<feature id="org.tmatesoft.javasvn.subclipse"
-	         patch="true"
+	         patch="false"
 	         url="features/org.tmatesoft.javasvn.subclipse_%javasvn.version%.jar"
 	         version="%javasvn.version%">
        <category name="JavaSVN Subclipse Extension"/>
