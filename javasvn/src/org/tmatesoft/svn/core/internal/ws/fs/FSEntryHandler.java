@@ -55,7 +55,7 @@ public class FSEntryHandler extends DefaultHandler {
         SAXParser parser = null;
         FSEntryHandler handler = new FSEntryHandler();
         try {
-            parser = getSAXParserFactpry().newSAXParser();
+            parser = getSAXParserFactory().newSAXParser();
             parser.parse(source, handler);
         } catch (ParserConfigurationException e) {
             throw new IOException();
@@ -102,7 +102,7 @@ public class FSEntryHandler extends DefaultHandler {
         os.write("/>\n");
     }
     
-    private static SAXParserFactory getSAXParserFactpry() {
+    private static SAXParserFactory getSAXParserFactory() {
         if (ourSAXParserFactory == null) {
             ourSAXParserFactory = SAXParserFactory.newInstance();
             ourSAXParserFactory.setNamespaceAware(true);
