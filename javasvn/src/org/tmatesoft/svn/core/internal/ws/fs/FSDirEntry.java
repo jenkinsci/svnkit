@@ -439,10 +439,21 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
     public ISVNEntry scheduleForAddition(String name, boolean mkdir, boolean recurse) throws SVNException {
         loadEntries();
         ISVNEntry child = getChild(name);
+	    File file = new File(getRootEntry().getWorkingCopyFile(this), name);
         if (child != null && !child.isScheduledForDeletion()) {
             throw new SVNException("working copy file " + name + " already exists in " + getPath());
         }
-        File file = new File(getRootEntry().getWorkingCopyFile(this), name);
+	    if (child != null && ((child.isDirectory() && file.isFile()) || (!child.isDirectory() && !file.isFile()))) {
+		    throw new SVNException("Cannot change node kind of " + name + " within path " + getPath());
+	    }
+	    if (myDeletedEntries != null && myDeletedEntries.get(name) != null) {
+		    final Map deletedProperties = (Map)myDeletedEntries.get(name);
+		    final String kind = (String)deletedProperties.get(SVNProperty.KIND);
+		    if (kind != null && ((file.isFile() && kind.equals(SVNProperty.KIND_DIR)) || (!file.isFile() && kind.equals(SVNProperty.KIND_FILE)))) {
+			    throw new SVNException("Cannot change node kind of " + name + " within path " + getPath());
+		    }
+	    }
+
         if (mkdir && !file.exists()) {
             file.mkdirs();
         }

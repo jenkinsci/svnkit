@@ -17,7 +17,10 @@ javasvn-test/test.unix.properties eol=lf
 javasvn-test/test.windows.properties eol=crlf
 javasvn/cli/svn eol=lf
 javasvn/cli/svn.bat eol=crlf
+javasvn/src/org/tmatesoft/svn/cli/command/CatCommand.java -text
 javasvn/src/org/tmatesoft/svn/cli/command/CopyCommand.java -text
+javasvn/src/org/tmatesoft/svn/cli/command/LogCommand.java -text
+javasvn/src/org/tmatesoft/svn/cli/command/LsCommand.java -text
 javasvn/src/org/tmatesoft/svn/core/diff/ISVNDiffGenerator.java -text
 javasvn/src/org/tmatesoft/svn/core/diff/ISVNDiffGeneratorFactory.java -text
 javasvn/src/org/tmatesoft/svn/core/diff/SVNDiffManager.java -text

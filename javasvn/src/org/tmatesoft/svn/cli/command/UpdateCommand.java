@@ -31,10 +31,9 @@ public class UpdateCommand extends SVNCommand {
 
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
-            String path = getCommandLine().getPathAt(i);
-            final ISVNWorkspace workspace = createWorkspace(path, true);
-            long revision = parseRevision(getCommandLine());
-            final String homePath = path;
+            final String absolutPath = getCommandLine().getPathAt(i);
+            final ISVNWorkspace workspace = createWorkspace(absolutPath, true);
+            final String homePath = absolutPath;
             final boolean[] changesReceived = new boolean[] { false };
             workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
                 public void updated(String updatedPath, int contentsStatus, int propertiesStatus, long rev) {
@@ -72,7 +71,9 @@ public class UpdateCommand extends SVNCommand {
                 }
             });
 
-            revision = workspace.update(SVNUtil.getWorkspacePath(workspace, path), revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+	        final String path = SVNUtil.getWorkspacePath(workspace, absolutPath);
+	        long revision = parseRevision(getCommandLine(), workspace, path);
+	        revision = workspace.update(path, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             if (!changesReceived[0]) {
                 println(out, "At revision " + revision + ".");
             } else {

@@ -58,12 +58,13 @@ public class CopyCommand extends SVNCommand {
             throw new SVNException("Please enter SRC and DST path");
         }
 
-        final String absolutePath = getCommandLine().getPathAt(0);
-        final ISVNWorkspace workspace = createWorkspace(absolutePath);
+        final String absoluteSrcPath = getCommandLine().getPathAt(0);
+        final String absoluteDstPath = getCommandLine().getPathAt(1);
+        final ISVNWorkspace workspace = createWorkspace(absoluteSrcPath);
         workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
             public void modified(String path, int kind) {
                 try {
-                    path = convertPath(absolutePath, workspace, path);
+                    path = convertPath(absoluteDstPath, workspace, path);
                 } catch (IOException e) {}
 
                 final String kindString = (kind == SVNStatus.ADDED ? "A" : "D");
@@ -71,8 +72,8 @@ public class CopyCommand extends SVNCommand {
             }
         });
 
-        final String srcPath = SVNUtil.getWorkspacePath(workspace, getCommandLine().getPathAt(0));
-        final String dstTempPath = SVNUtil.getWorkspacePath(workspace, getCommandLine().getPathAt(1));
+        final String srcPath = SVNUtil.getWorkspacePath(workspace, absoluteSrcPath);
+        final String dstTempPath = SVNUtil.getWorkspacePath(workspace, absoluteDstPath);
         final SVNStatus status = workspace.status(dstTempPath, false);
         final String dstPath = status != null && status.isDirectory() ? PathUtil.append(dstTempPath, PathUtil.tail(srcPath)) : dstTempPath;
         workspace.copy(srcPath, dstPath, false);

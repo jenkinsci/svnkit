@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -107,6 +107,9 @@ public abstract class SVNCommand {
         if (".".equals(homePath) || new File(homePath).isAbsolute()) {
             homePath = "";
         }
+	      DebugLog.log(absolutePath);
+	      DebugLog.log(absoluteHomePath);
+	      DebugLog.log(homePath);
         String relativePath = absolutePath.substring(absoluteHomePath.length());
         String result = PathUtil.append(homePath, relativePath);
         result = result.replace(File.separatorChar, '/');
@@ -120,12 +123,20 @@ public abstract class SVNCommand {
         return result;
     }
 
-    protected final static long parseRevision(SVNCommandLine commandLine) {
+    protected final static long parseRevision(SVNCommandLine commandLine, ISVNWorkspace workspace, String path) throws SVNException {
         if (commandLine.hasArgument(SVNArgument.REVISION)) {
             final String revStr = (String) commandLine.getArgumentValue(SVNArgument.REVISION);
             if (revStr.equalsIgnoreCase("HEAD")) {
-                return -1;
+                return ISVNWorkspace.HEAD;
             }
+	          else if (revStr.equalsIgnoreCase("BASE")) {
+		          if (workspace == null ||path == null) {
+			          throw new SVNException("Revision BASE not allowed in this context!");
+		          }
+
+		          final SVNStatus status = workspace.status(path, false);
+		          return status.getWorkingCopyRevision();
+	          }
             return Long.parseLong(revStr);
         }
         return -1;
@@ -160,5 +171,8 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "proplist", "plist", "pl" }, "org.tmatesoft.svn.cli.command.ProplistCommand");
         ourCommands.put(new String[] { "info" }, "org.tmatesoft.svn.cli.command.InfoCommand");
         ourCommands.put(new String[] { "resolved" }, "org.tmatesoft.svn.cli.command.ResolvedCommand");
+        ourCommands.put(new String[] { "cat" }, "org.tmatesoft.svn.cli.command.CatCommand");
+        ourCommands.put(new String[] { "ls" }, "org.tmatesoft.svn.cli.command.LsCommand");
+        ourCommands.put(new String[] { "log" }, "org.tmatesoft.svn.cli.command.LogCommand");
     }
 }
