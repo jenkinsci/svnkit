@@ -44,6 +44,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
+import org.tmatesoft.svn.core.io.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
@@ -1318,8 +1319,53 @@ public class SVNClient implements SVNClientInterface {
         }
     }
 
-    public void blame(String path, Revision revisionStart, Revision revisionEnd, BlameCallback callback) throws ClientException {
-        notImplementedYet();
+    public byte[] blame(String path, Revision revisionStart, Revision revisionEnd) throws ClientException {
+		final StringBuffer buffer = new StringBuffer();
+		blame(path, revisionStart, revisionEnd, new BlameCallback() {
+			public void singleLine(Date changed, long revision, String author, String line) {
+				buffer.append(revision);
+				buffer.append(" ");
+				buffer.append(author);
+				buffer.append(" ");
+				buffer.append(line);
+			}
+		});
+		return buffer.toString().getBytes();
+    }
+
+    public void blame(String path, Revision revisionStart, Revision revisionEnd, final BlameCallback callback) throws ClientException {
+		SVNRepository repository = null;
+		String name = null;
+		ISVNWorkspace ws = null;
+		if (isURL(path)) {
+			String url = PathUtil.removeTail(path);
+			name = PathUtil.tail(path);
+			try {
+				repository = createRepository(url);
+			} catch (SVNException e) {
+				throwException(e);
+			}
+		} else {
+			try {
+				ws = createWorkspace(path);
+				repository = SVNUtil.createRepository(ws, PathUtil.tail(path));
+			} catch (SVNException e) {
+				throwException(e);
+			}
+		}
+		if (repository != null && name != null) {
+			try {
+				long rev1 = getRevisionNumber(revisionStart, repository, ws, name);
+				long rev2 = getRevisionNumber(revisionEnd, repository, ws, name);
+				repository.annotate(name, rev1, rev2, new ISVNAnnotateHandler() {
+					public void handleLine(Date date, long revision, String author, String line) {
+						callback.singleLine(date, revision, author, line);
+					}
+				});
+			} catch (SVNException e) {
+				throwException(e);
+			}
+		}
     }
 
     public void setConfigDirectory(String configDir) throws ClientException {
@@ -1332,11 +1378,6 @@ public class SVNClient implements SVNClientInterface {
 
     public void cancelOperation() throws ClientException {
 		DebugLog.log("SVNClient.cancelOperation is not yet implemented");
-    }
-
-    public byte[] blame(String path, Revision revisionStart, Revision revisionEnd) throws ClientException {
-        notImplementedYet();
-        return null;
     }
     public String getLastPath() {
         return null;

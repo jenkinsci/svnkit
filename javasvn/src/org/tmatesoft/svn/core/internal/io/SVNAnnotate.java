@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.TimeUtil;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
 
@@ -38,6 +40,7 @@ public class SVNAnnotate implements ISVNFileRevisionHandler {
 
 	private long myRevision;
 	private String myAuthor;
+	private Date myDate;
 	
 	private SVNRAFileData myTempFile;
 	private SVNRAFileData myBaseFile;
@@ -76,6 +79,7 @@ public class SVNAnnotate implements ISVNFileRevisionHandler {
 		myDiffWindowsList = null;
 		myRevision = fileRevision.getRevision();
 		myAuthor = fileRevision.getProperties().get("svn:author").toString();
+		myDate = TimeUtil.parseDate(fileRevision.getProperties().get("svn:date").toString());
 		try {
 			File tempFile = File.createTempFile("javasvn.", ".temp");
 			myTempFilePath = tempFile.getAbsolutePath();
@@ -95,7 +99,7 @@ public class SVNAnnotate implements ISVNFileRevisionHandler {
 		if (myLines != null && myHandler != null) {
 			for(int i = 0; i < myLines.size(); i++) {
 				LineInfo info = (LineInfo) myLines.get(i);
-				myHandler.handleLine(info.revision, info.author, info.line);
+				myHandler.handleLine(info.date, info.revision, info.author, info.line);
 			}
 		}
 		myLines = null;
@@ -185,6 +189,7 @@ public class SVNAnnotate implements ISVNFileRevisionHandler {
 					line.revision = myRevision;
 					line.author = myAuthor;
 					line.line = new String(rightLines[j].getBytes());
+					line.date = myDate;
 					newLines.add(line);
 				}
 			}
@@ -230,5 +235,6 @@ public class SVNAnnotate implements ISVNFileRevisionHandler {
 		public String line;
 		public long revision;
 		public String author; 
+		public Date date;
 	}
 }
