@@ -24,6 +24,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.ISVNDirectoryEntry;
 import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.xml.sax.InputSource;
 
@@ -360,7 +361,9 @@ public class FSAdminArea {
                     new File(adminDir, "wcprops/" + entry.getName() + ".svn-work"),
             };
             for(int i = 0; i < adminFiles.length; i++) {
-                adminFiles[i].delete();
+                if (!adminFiles[i].delete()) {
+                    DebugLog.log("can't delete file " + adminFiles[i].getAbsolutePath());
+                }
             }            
         }
     }

@@ -97,7 +97,9 @@ public class FSUtil {
                 deleteAll(child);
             }
         }
-        dir.delete();
+        if (!dir.delete()) {
+            DebugLog.log("can't delete file " + dir.getAbsolutePath());
+        }
     }
     
     public static File copyAll(File source, File dst, String asName, FileFilter filter) throws IOException {

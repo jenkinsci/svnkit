@@ -398,7 +398,7 @@ public class AllTests extends TestSuite {
             }
         }
         dir.delete();
-        dir.deleteOnExit();
+//        dir.deleteOnExit();
     }
 
     private static Process execCommand(String[] command) throws IOException {

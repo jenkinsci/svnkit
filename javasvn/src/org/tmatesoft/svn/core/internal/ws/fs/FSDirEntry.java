@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.ISVNFileEntry;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.FileTypeUtil;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -597,7 +598,9 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         }
         getAdminArea().deleteArea(entry);
         File file = getRootEntry().getWorkingCopyFile(entry);
-        file.delete();
+        if (!file.delete()) {
+            DebugLog.log("can't delete file " + file.getAbsolutePath());
+        }
     }
 
     private static void setPropertyValueRecursively(ISVNEntry root, String name, String value) throws SVNException {

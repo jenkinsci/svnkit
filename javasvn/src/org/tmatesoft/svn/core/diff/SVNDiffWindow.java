@@ -85,6 +85,7 @@ public class SVNDiffWindow {
                 target.append(src, myInstructions[i].length);
             }
         } catch (IOException e) {
+            e.printStackTrace();
             throw new SVNException(e);
         } finally {
             try {
