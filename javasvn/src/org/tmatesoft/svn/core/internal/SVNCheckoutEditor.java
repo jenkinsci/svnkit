@@ -269,7 +269,9 @@ public class SVNCheckoutEditor implements ISVNEditor {
             if (myTarget == null) {
                 myRootEntry.merge();
             } else {
-                myRootEntry.asDirectory().getChild(myTarget).merge();
+                if (myRootEntry.asDirectory().getChild(myTarget) != null) {
+                    myRootEntry.asDirectory().getChild(myTarget).merge();
+                }
                 myRootEntry.save(false);
             }
         }
