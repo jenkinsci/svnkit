@@ -182,6 +182,7 @@
             </fileset>
             <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn">
                 <include name="plugin.xml" />
+                <include name=".options" />
             </fileset>
         </copy>
         <jar destfile="build/eclipse/${javasvn.plugin.name}/javasvnplugin.jar">
