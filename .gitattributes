@@ -80,7 +80,6 @@ javasvn-test/src/org/tmatesoft/svn/core/test/diff/SVNSequenceLineReaderTest.java
 javasvn-test/src/org/tmatesoft/svn/core/test/diff/internal/ws/fs/FSMergerBySequenceTest.java -text
 javasvn-test/svn-config/config -text
 javasvn-test/test.mac.properties -text
-javasvn-test/test.properties -text
 javasvn-test/test.unix.properties -text
 javasvn-test/test.windows.properties -text
 /javasvn.ipr -text
