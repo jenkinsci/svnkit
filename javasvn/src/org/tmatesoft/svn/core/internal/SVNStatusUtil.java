@@ -30,28 +30,30 @@ import org.tmatesoft.svn.util.PathUtil;
  * @author TMate Software Ltd.
  */
 class SVNStatusUtil {
-    
+
     static void doStatus(SVNWorkspace ws, ISVNDirectoryEntry parent, SVNStatusEditor editor, ISVNStatusHandler handler, String path, Collection externals, boolean descend,
-            boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned) throws SVNException {
+            boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned, boolean descendFurtherInIgnored) throws SVNException {
         externals = externals == null ? new HashSet() : externals;
-        
+
         ISVNEntry entry = ws.locateEntry(path, true);
         if (entry != null && entry.isDirectory()) {
             externals = SVNExternal.create(entry.asDirectory(), externals);
         }
         Map statuses = localStatus(ws, parent, path, null, externals, !descend);
-        if (editor != null) { 
+        if (editor != null) {
             statuses = editor.completeStatus(statuses, path, descend);
         }
         // fill in remote information from editor.
-        
+
         if (!entry.isDirectory()) {
             // ignore ignored, unchanged...
             handleStatus(handler, (SVNStatus) statuses.get(entry.getName()), includeUnmodified, includeIgnored);
             return;
         }
         SVNStatus dirStatus = (SVNStatus) statuses.remove("");
-        if (dirStatus.getContentsStatus() == SVNStatus.EXTERNAL || (!descendInUnversioned && !entry.isManaged())) {
+        if (dirStatus.getContentsStatus() == SVNStatus.EXTERNAL ||
+            (!descendInUnversioned && !entry.isManaged()) ||
+            (!descendFurtherInIgnored && dirStatus.getContentsStatus() == SVNStatus.IGNORED)) {
             handleStatus(handler, dirStatus, includeUnmodified, includeIgnored);
             return;
         }
@@ -64,19 +66,19 @@ class SVNStatusUtil {
                     if (!includeIgnored && entry.asDirectory().isIgnored(name)) {
                         continue;
                     }
-                    doStatus(ws, entry.asDirectory(), editor, handler, PathUtil.append(path, name), externals, true, 
-                            includeUnmodified, includeIgnored, descendInUnversioned);
+                    doStatus(ws, entry.asDirectory(), editor, handler, PathUtil.append(path, name), externals, true,
+                            includeUnmodified, includeIgnored, descendInUnversioned, descendFurtherInIgnored);
                 }
             }
         }
-        
+
         for(Iterator names = statuses.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
             SVNStatus status = (SVNStatus) statuses.get(name);
             if (status != null) {
                 handleStatus(handler, status, includeUnmodified, includeIgnored);
             }
-        }        
+        }
         handleStatus(handler, dirStatus, includeUnmodified, includeIgnored);
     }
     

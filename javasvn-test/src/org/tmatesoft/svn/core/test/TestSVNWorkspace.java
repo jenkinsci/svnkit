@@ -811,7 +811,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
           public void handleStatus(String path, SVNStatus st) {
               entries.add(path);
           }  
-        }, true, true, true, true);
+        }, true, true, true, true, true);
         assertTrue(entries.contains("directory"));
         assertTrue(entries.contains("directory/unversioned"));
         assertTrue(entries.contains("directory/unversioned/test"));
@@ -821,7 +821,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
             public void handleStatus(String path, SVNStatus st) {
                 entries.add(path);
             }  
-          }, true, true, true, false);
+          }, true, true, true, false, false);
         assertTrue(entries.contains("directory"));
         assertTrue(entries.contains("directory/unversioned"));
         assertFalse(entries.contains("directory/unversioned/test"));

@@ -93,7 +93,7 @@ public interface ISVNWorkspace {
             boolean includeUnmodified, boolean includeIgnored) throws SVNException;
 
     public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend, 
-            boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned) throws SVNException;
+            boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned, boolean descendFurtherInIgnored) throws SVNException;
 
     public SVNStatus status(String path, boolean remote) throws SVNException;
     

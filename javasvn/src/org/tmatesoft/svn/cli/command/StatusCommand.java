@@ -77,7 +77,7 @@ public class StatusCommand extends SVNCommand {
         };
 
         ws.setExternalsHandler(externalsHandler);
-        long revision = ws.status(path, remote, statusHandler, descend, all, noIgnore, false);
+        long revision = ws.status(path, remote, statusHandler, descend, all, noIgnore, false, false);
         if (remote) {
             out.println("Status against revision: " + formatString(revision + "", 6, false));
         }

@@ -443,11 +443,11 @@ public class SVNWorkspace implements ISVNWorkspace {
 
     public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend, boolean includeUnmodified, boolean includeIgnored)
             throws SVNException {
-        return status(path, remote, handler, descend, includeUnmodified, includeIgnored, false);
+        return status(path, remote, handler, descend, includeUnmodified, includeIgnored, false, false);
     }
 
     public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend, boolean includeUnmodified, boolean includeIgnored,
-            boolean descendInUnversioned) throws SVNException {
+            boolean descendInUnversioned, boolean descendFurtherInIgnored) throws SVNException {
         long start = System.currentTimeMillis();
         if (getLocation() == null) {
             // throw new SVNException(getRoot().getID() + " does not contain
@@ -490,7 +490,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             includeIgnored = true;
         }
         SVNStatusUtil.doStatus(this, parent != null ? parent.asDirectory() : null, editor, handler, path, externals, descend, includeUnmodified,
-                includeIgnored, descendInUnversioned);
+                includeIgnored, descendInUnversioned, descendFurtherInIgnored);
 
         if (myExternalsHandler != null && externals != null && descend) {
             Collection paths = new HashSet();
