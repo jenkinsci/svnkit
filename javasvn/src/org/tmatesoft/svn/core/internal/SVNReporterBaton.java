@@ -153,7 +153,7 @@ class SVNReporterBaton implements ISVNReporterBaton {
     }
     
     public static boolean isSwitched(String parentURL, ISVNEntry entry) throws SVNException {
-        if (parentURL == null) {
+        if (parentURL == null || entry.getPropertyValue(SVNProperty.URL) == null) {
             return false;
         }
         String expectedURL = PathUtil.append(parentURL, PathUtil.encode(entry.getName()));
