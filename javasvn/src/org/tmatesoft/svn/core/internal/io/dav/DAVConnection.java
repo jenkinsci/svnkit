@@ -12,6 +12,9 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -139,8 +142,24 @@ class DAVConnection {
         
         Map headers = new HashMap();
         headers.put("Content-Type", "application/vnd.svn-svndiff");
-
-        return myHttpConnection.request("PUT", path, headers, data, null, null);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            while(true) {
+                int b = data.read();
+                if (b < 0) {
+                    break;
+                }
+                bos.write(b);
+            }
+        } catch (IOException e) {
+            throw new SVNException(e);
+        } finally {
+            try {
+                data.close();
+            } catch (IOException e) {
+            }
+        }
+        return myHttpConnection.request("PUT", path, headers, new ByteArrayInputStream(bos.toByteArray()), null, null);
     }
     
     public DAVStatus doMerge(String activityURL, boolean response, DefaultHandler handler) throws SVNException {
