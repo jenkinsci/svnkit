@@ -17,10 +17,12 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -76,13 +78,46 @@ class HttpConnection {
     }
 
     public void connect() throws IOException {
-        if (mySocket == null) {
+        if (mySocket == null || isStale()) {
+            close();
             String host = mySVNRepositoryLocation.getHost();
             int port = mySVNRepositoryLocation.getPort();
             mySocket = "https".equals(mySVNRepositoryLocation.getProtocol()) ? SocketFactory.createSSLSocket(DAVRepositoryFactory.getSSLManager(), host, port)
                     : SocketFactory.createPlainSocket(host, port);
             myConnectCount++;
+        } 
+    }
+
+    private boolean isStale() throws IOException {
+        boolean isStale = true;
+        if (mySocket != null) {
+            isStale = false;
+            try {
+                if (mySocket.getInputStream().available() == 0) {
+                    int timeout = mySocket.getSoTimeout();
+                    try {
+                        mySocket.setSoTimeout(1);
+                        mySocket.getInputStream().mark(1);
+                        int byteRead = mySocket.getInputStream().read();
+                        if (byteRead == -1) {
+                            isStale = true;
+                        } else {
+                            mySocket.getInputStream().reset();
+                        }
+                    } finally {
+                        mySocket.setSoTimeout(timeout);
+                    }
+                }
+            } catch (InterruptedIOException e) {
+                if (!SocketTimeoutException.class.isInstance(e)) {
+                    throw e;
+                    
+                }
+            } catch (IOException e) {
+                isStale = true;
+            }
         }
+        return isStale;
     }
 
     public void close() {
