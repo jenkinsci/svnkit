@@ -536,7 +536,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         write("(w())", new Object[] { "abort-report" });
     }
 
-    private String getRepositoryPath(String path) {
+    public String getRepositoryPath(String path) {
         if (path != null && path.startsWith("/")) {
             // assuming it is full path.
             return path;
