@@ -287,14 +287,23 @@ class HttpConnection {
 		sb.append("HTTP/1.1");
         sb.append(HttpConnection.CRLF);
 		sb.append("Host: ");
-		sb.append(mySVNRepositoryLocation.getHost());
-		sb.append(HttpConnection.CRLF);
-        sb.append("Connection: TE");
+        sb.append(mySVNRepositoryLocation.getHost());
+        sb.append(HttpConnection.CRLF);
+        sb.append("User-Agent: JavaSVN 1.0.0");
+        sb.append(HttpConnection.CRLF);
+        sb.append("Keep-Alive:");
+        sb.append(HttpConnection.CRLF);
+        sb.append("Connection: TE, Keep-Alive");
         sb.append(HttpConnection.CRLF);
         sb.append("TE: trailers");
         sb.append(HttpConnection.CRLF);
-        if (requestBody != null) {
+        boolean chunked = false;
+        if (requestBody instanceof ByteArrayInputStream) {
+            sb.append("Content-Length: ");
+            sb.append(((ByteArrayInputStream) requestBody).available());
+        } else if (requestBody != null) {
             sb.append("Transfer-Encoding: chunked");
+            chunked = true;
         } else {
             sb.append("Content-Lenght: 0");
         }
@@ -321,16 +330,24 @@ class HttpConnection {
             byte[] buffer = new byte[2048];
             while(true) {
                 int read = requestBody.read(buffer);
-                if (read > 0) {
-                    getOutputStream().write(Integer.toHexString(read).getBytes());
-                    getOutputStream().write(HttpConnection.CRLF_BYTES);
-                    getOutputStream().write(buffer, 0, read);
-                    getOutputStream().write(HttpConnection.CRLF_BYTES);
+                if (chunked) {
+                    if (read > 0) {
+                        getOutputStream().write(Integer.toHexString(read).getBytes());
+                        getOutputStream().write(HttpConnection.CRLF_BYTES);
+                        getOutputStream().write(buffer, 0, read);
+                        getOutputStream().write(HttpConnection.CRLF_BYTES);
+                    } else {
+                        getOutputStream().write('0');
+                        getOutputStream().write(HttpConnection.CRLF_BYTES);
+                        getOutputStream().write(HttpConnection.CRLF_BYTES);
+                        break;
+                    }
                 } else {
-                    getOutputStream().write('0');
-                    getOutputStream().write(HttpConnection.CRLF_BYTES);
-                    getOutputStream().write(HttpConnection.CRLF_BYTES);
-                    break;
+                    if (read > 0) {
+                        getOutputStream().write(buffer, 0, read);
+                    } else {
+                        break;
+                    }
                 }
             }
         }
