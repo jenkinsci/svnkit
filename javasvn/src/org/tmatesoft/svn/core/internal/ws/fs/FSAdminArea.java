@@ -6,11 +6,14 @@ package org.tmatesoft.svn.core.internal.ws.fs;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Collections;
@@ -65,7 +68,7 @@ public class FSAdminArea {
         }
         Reader reader = null;
         try {
-            reader = new BufferedReader(new FileReader(entriesFile));
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(entriesFile), "UTF-8"));
             InputSource source = new InputSource(reader);
             FSEntryHandler handler = FSEntryHandler.parse(source);
             return handler.getChildEntries();
@@ -87,7 +90,7 @@ public class FSAdminArea {
         File entriesFile = new File(adminArea, "entries");
         FSUtil.setReadonly(entriesFile, false);
         try {
-            writer = new BufferedWriter(new FileWriter(entriesFile));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(entriesFile), "UTF-8"));
             if (deletedEntries == null) {
                 deletedEntries = Collections.EMPTY_MAP;
             }

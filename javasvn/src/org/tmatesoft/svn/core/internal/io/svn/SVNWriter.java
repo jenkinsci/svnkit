@@ -59,7 +59,7 @@ public class SVNWriter {
                     InputStream is = ((SVNDataSource) item).getInputStream();
                     long length = ((SVNDataSource) item).lenght();
                     
-                    os.write(Long.toString(length).getBytes());
+                    os.write(Long.toString(length).getBytes("UTF-8"));
                     os.write(':');
                     byte[] buffer = new byte[Math.min(2048, (int) length)];
                     while(true) {
@@ -72,35 +72,35 @@ public class SVNWriter {
                     }
                 } if (ch == 'b') {
                     byte[] bytes = (byte[]) item;
-                    os.write(Integer.toString(bytes.length).getBytes());
+                    os.write(Integer.toString(bytes.length).getBytes("UTF-8"));
                     os.write(':');
                     os.write(bytes);                    
                 } else if (ch == 'n') {
-	                os.write(item.toString().getBytes());
+	                os.write(item.toString().getBytes("UTF-8"));
 	            } else if (ch == 'w') {
-	                os.write(item.toString().getBytes());
+	                os.write(item.toString().getBytes("UTF-8"));
 	            } else if (ch == 's') {
-	                os.write(Integer.toString(item.toString().length()).getBytes());
+	                os.write(Integer.toString(item.toString().getBytes("UTF-8").length).getBytes("UTF-8"));
 	                os.write(':');
-	                os.write(item.toString().getBytes());                    
+	                os.write(item.toString().getBytes("UTF-8"));                    
 	            } else if (ch == '*') {
 	                ch = template.charAt(i + 1);
 	                if (item instanceof Object[]) {
 	                    Object[] list = (Object[]) item;
 	                    for (int j = 0; j < list.length; j++) {
 	                        if (ch == 's') {
-	        	                os.write(Integer.toString(list[j].toString().length()).getBytes());
+	        	                os.write(Integer.toString(list[j].toString().getBytes("UTF-8").length).getBytes("UTF-8"));
 	        	                os.write(':');
-	        	                os.write(list[j].toString().getBytes());                    
+	        	                os.write(list[j].toString().getBytes("UTF-8"));                    
 	                        } else if (ch == 'w') {
-	                            os.write(list[j].toString().getBytes());
+	                            os.write(list[j].toString().getBytes("UTF-8"));
 	                        }
 	                        os.write(' ');
                         }
 	                } else if (item instanceof long[]&& ch == 'n') {
 	                    long[] list = (long[]) item;
 	                    for (int j = 0; j < list.length; j++) {
-	                        os.write(Long.toString(list[j]).getBytes());
+	                        os.write(Long.toString(list[j]).getBytes("UTF-8"));
 	                        os.write(' ');
                         }	                    
 	                }

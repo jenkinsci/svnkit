@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNError;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
@@ -96,7 +97,11 @@ class SVNReader {
             return null;
         }
         if (items[index] instanceof byte[]) {
-            return new String((byte[]) items[index]);
+            try {
+                return new String((byte[]) items[index], "UTF-8");
+            } catch (IOException e) {
+                return null;
+            }
         } else if (items[index] instanceof String) {
             return (String) items[index];
         }
@@ -128,7 +133,11 @@ class SVNReader {
                 return value == null;
             }
             if (items[index] instanceof byte[] && value instanceof String) {
-                items[index] = new String((byte[]) items[index]);
+                try {
+                    items[index] = new String((byte[]) items[index], "UTF-8");
+                } catch (IOException e) {
+                    return false;
+                }
             }
             return items[index].equals(value);
         }
@@ -426,7 +435,11 @@ class SVNReader {
 
     private static String readString(InputStream is) throws SVNException {
         int length = readStringLength(is);
-        return new String(readBytes(is, length, null), 0, length);
+        try {
+            return new String(readBytes(is, length, null), 0, length, "UTF-8");
+        } catch (IOException e) {
+            throw new SVNException(e);
+        }
     }
 
     private static int readStringLength(InputStream is) throws SVNException {
