@@ -55,7 +55,7 @@ import org.xml.sax.helpers.DefaultHandler;
 class HttpConnection {
 
     private LoggingOutputStream myOutputStream;
-    private LoggingInputStream myInputStream;
+    private InputStream myInputStream;
     private Socket mySocket;
 
     private SVNRepositoryLocation mySVNRepositoryLocation;
@@ -153,10 +153,8 @@ class HttpConnection {
                 close();
                 acknowledgeSSLContext(false);
                 throw new SVNException(e);
-            }
-	          finally {
+            } finally {
 	            logOutputStream();
-	            logInputStream();
             }
             acknowledgeSSLContext(true);
             if (status != null
@@ -206,8 +204,9 @@ class HttpConnection {
 
     private void readError(DAVStatus status) throws SVNException {
         StringBuffer text = new StringBuffer();
+        LoggingInputStream stream = null;
         try {
-            InputStream stream = createInputStream(status.getResponseHeader(), getInputStream());
+			stream = createInputStream(status.getResponseHeader(), getInputStream());
             byte[] buffer = new byte[1024];
             while (true) {
                 int count = stream.read(buffer);
@@ -219,15 +218,16 @@ class HttpConnection {
         } catch (IOException e) {
             throw new SVNException(e);
         } finally {
-	          logInputStream();
+	        logInputStream(stream);
             close();
             status.setErrorText(text.toString());
         }
     }
 
     private void readResponse(OutputStream result, Map responseHeader) throws SVNException {
+        LoggingInputStream stream = null;
         try {
-            InputStream stream = createInputStream(responseHeader, getInputStream());
+			stream = createInputStream(responseHeader, getInputStream());
             byte[] buffer = new byte[1024];
             while (true) {
                 int count = stream.read(buffer);
@@ -241,16 +241,16 @@ class HttpConnection {
         } catch (IOException e) {
             throw new SVNException(e);
         } finally {
-	          logInputStream();
+	        logInputStream(stream);
             finishResponse(responseHeader);
         }
     }
 
     private void readResponse(DefaultHandler handler, Map responseHeader) throws SVNException {
+        LoggingInputStream is = null;
         try {
-            InputStream is = createInputStream(responseHeader, getInputStream());
+			is = createInputStream(responseHeader, getInputStream());
             XMLInputStream xmlIs = new XMLInputStream(is);
-            is = new BufferedInputStream(xmlIs);
 
             if (handler == null) {
                 while (true) {
@@ -264,7 +264,7 @@ class HttpConnection {
                     mySAXParser = getSAXParserFactory().newSAXParser();
                 }
                 while (!xmlIs.isClosed()) {
-                    mySAXParser.parse(is, handler);
+                    mySAXParser.parse(xmlIs, handler);
                 }
             }
         } catch (SAXException e) {
@@ -281,7 +281,7 @@ class HttpConnection {
             e.printStackTrace();
             throw new SVNException(e);
         } finally {
-	          logInputStream();
+            logInputStream(is);
             finishResponse(responseHeader);
         }
     }
@@ -370,51 +370,55 @@ class HttpConnection {
     private DAVStatus readHeader(Map headerProperties) throws IOException {
         DAVStatus responseCode = null;
         StringBuffer line = new StringBuffer();
-        InputStream is = getInputStream();
+        LoggingInputStream is = DebugLog.getLoggingInputStream("http", getInputStream());
 
         boolean firstLine = true;
-        while (true) {
-            int read = is.read();
-            if (read < 0) {
-                return null;
-            }
-            if (read != '\n' && read != '\r') {
-                line.append((char) read);
-                continue;
-            }
-            // eol read.
-            if (read == '\r') {
-                is.mark(1);
-                read = is.read();
-                if (read < 0) {
-                    return null;
-                }
-                if (read != '\n') {
-                    is.reset();
-                }
-            }
-            String lineStr = line.toString();
-            if (lineStr.trim().length() == 0) {
-                if (firstLine) {
-                    line = new StringBuffer();
-                    firstLine = false;
-                    continue;
-                }
-                // first empty line (+ eol) read.
-                break;
-            }
-            firstLine = false;
-
-            int index = line.indexOf(":");
-            if (index >= 0 && headerProperties != null) {
-                String name = line.substring(0, index);
-                String value = line.substring(index + 1);
-                headerProperties.put(name.trim(), value.trim());
-            } else if (responseCode == null) {
-                responseCode = DAVStatus.parse(lineStr);
-            }
-
-            line.delete(0, line.length());
+        try {
+	        while (true) {
+	            int read = is.read();
+	            if (read < 0) {
+	                return null;
+	            }
+	            if (read != '\n' && read != '\r') {
+	                line.append((char) read);
+	                continue;
+	            }
+	            // eol read.
+	            if (read == '\r') {
+	                is.mark(1);
+	                read = is.read();
+	                if (read < 0) {
+	                    return null;
+	                }
+	                if (read != '\n') {
+	                    is.reset();
+	                }
+	            }
+	            String lineStr = line.toString();
+	            if (lineStr.trim().length() == 0) {
+	                if (firstLine) {
+	                    line = new StringBuffer();
+	                    firstLine = false;
+	                    continue;
+	                }
+	                // first empty line (+ eol) read.
+	                break;
+	            }
+	            firstLine = false;
+	
+	            int index = line.indexOf(":");
+	            if (index >= 0 && headerProperties != null) {
+	                String name = line.substring(0, index);
+	                String value = line.substring(index + 1);
+	                headerProperties.put(name.trim(), value.trim());
+	            } else if (responseCode == null) {
+	                responseCode = DAVStatus.parse(lineStr);
+	            }
+	
+	            line.delete(0, line.length());
+	        }
+        } finally {
+        	is.log();
         }
         return responseCode;
     }
@@ -431,14 +435,14 @@ class HttpConnection {
         return myOutputStream;
     }
 
-    private LoggingInputStream getInputStream() throws IOException {
+    private InputStream getInputStream() throws IOException {
         if (myInputStream == null) {
-            myInputStream = DebugLog.getLoggingInputStream("http", new BufferedInputStream(mySocket.getInputStream()));
+            myInputStream = new BufferedInputStream(mySocket.getInputStream());
         }
         return myInputStream;
     }
 
-    private static InputStream createInputStream(Map readHeader, InputStream is) throws IOException {
+    private static LoggingInputStream createInputStream(Map readHeader, InputStream is) throws IOException {
         if (readHeader.get("Content-Length") != null) {
             is = new FixedSizeInputStream(is, Long.parseLong(readHeader.get("Content-Length").toString()));
         } else if ("chunked".equals(readHeader.get("Transfer-Encoding"))) {
@@ -448,7 +452,7 @@ class HttpConnection {
             DebugLog.log("using GZIP to decode server responce");
             is = new GZIPInputStream(is);
         }
-        return is;
+        return DebugLog.getLoggingInputStream("http", is);
     }
 
     private static String getAuthRealm(String auth) throws SVNException {
@@ -538,19 +542,16 @@ class HttpConnection {
         }
     }
 
-	  private void logInputStream() {
-		  try {
-			  getInputStream().log();
-		  }
-		  catch (IOException ex) {
-		  }
-	  }
+    private void logInputStream(LoggingInputStream is) {
+		if (is != null) {
+			is.log();
+		}
+	}
 
 	private void logOutputStream() {
 		try {
 			getOutputStream().log();
-		}
-		catch (IOException ex) {
+		} catch (IOException ex) {
 		}
 	}
 }
