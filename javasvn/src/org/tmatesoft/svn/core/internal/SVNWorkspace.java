@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.ISVNRootEntry;
 import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.ISVNWorkspaceListener;
+import org.tmatesoft.svn.core.ISVNWorkspaceRunnable;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
@@ -68,6 +69,9 @@ public class SVNWorkspace implements ISVNWorkspace {
     private Collection myListeners;
     private ISVNCredentialsProvider myCredentialsProvider;
     private ISVNExternalsHandler myExternalsHandler;
+    
+    private boolean myIsCommandRunning;
+    private boolean myIsNeedToSleepForTimestamp;
 
     public SVNWorkspace(ISVNRootEntry root) {
         setAutoProperties(null);
@@ -280,7 +284,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
 
             if (!export && editor.isTimestampsChanged()) {
-                FSUtil.sleepForTimestamp();
+                sleepForTimestamp();
             }
             return editor.getTargetRevision();
         } finally {
@@ -348,7 +352,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
 
             if (editor.isTimestampsChanged()) {
-                FSUtil.sleepForTimestamp();
+                sleepForTimestamp();
             }
 
             return editor.getTargetRevision();
@@ -406,7 +410,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
 
             if (editor.isTimestampsChanged()) {
-                FSUtil.sleepForTimestamp();
+                sleepForTimestamp();
             }
 
             return editor.getTargetRevision();
@@ -753,7 +757,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 
             assertCommit(info, tree, repository);
 
-            FSUtil.sleepForTimestamp();
+            sleepForTimestamp();
             DebugLog.log("POST COMMIT ACTIONS TOOK: " + (System.currentTimeMillis() - start) + " ms.");
             return info != null ? info.getNewRevision() : -1;
         } finally {
@@ -910,7 +914,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
             entry.save();
             entry.dispose();
-            FSUtil.sleepForTimestamp();
+            sleepForTimestamp();
         } finally {
             getRoot().dispose();
         }
@@ -990,7 +994,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
             entry.save();
             entry.dispose();
-            FSUtil.sleepForTimestamp();
+            sleepForTimestamp();
         } finally {
             getRoot().dispose();
         }
@@ -1023,7 +1027,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
             entry.save();
             entry.dispose();
-            FSUtil.sleepForTimestamp();
+            sleepForTimestamp();
         } finally {
             getRoot().dispose();
         }
@@ -1292,5 +1296,32 @@ public class SVNWorkspace implements ISVNWorkspace {
             current = (ISVNDirectoryEntry) locateParentEntry(current.getPath());
         }
         return externals;
+    }
+
+    public void runCommand(ISVNWorkspaceRunnable runnable) throws SVNException {
+        myIsCommandRunning = true;
+        myIsNeedToSleepForTimestamp = false;
+        try {
+            runnable.run(this);
+        } catch (Throwable th) {
+            if (th instanceof SVNException) {
+                throw ((SVNException) th);
+            }
+            throw new SVNException(th);
+        } finally {
+            myIsCommandRunning = false;
+            if (myIsNeedToSleepForTimestamp) {
+                sleepForTimestamp();
+                myIsNeedToSleepForTimestamp = false;
+            }
+        }
+    }
+
+    private void sleepForTimestamp() {
+        if (myIsCommandRunning) {
+            myIsNeedToSleepForTimestamp = true;
+            return;
+        }
+        FSUtil.sleepForTimestamp();
     }
 }

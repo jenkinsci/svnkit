@@ -139,4 +139,6 @@ public interface ISVNWorkspace {
      * @deprecated
      */
     public ISVNFileContent getFileContent(String path) throws SVNException;
+    
+    public void runCommand(ISVNWorkspaceRunnable runnable) throws SVNException;
 }
