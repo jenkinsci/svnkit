@@ -37,16 +37,22 @@ class XMLInputStream extends InputStream {
     public int read(byte[] b, int off, int len) throws IOException {
         int read = mySource.read(b, off, len);
         for(int i = 0; i < read; i++) {
+            char ch = (char) b[off + i];
+            if (ch < 0x20 && ch != '\r' &&
+                    ch != '\n' && ch != '\t') {
+                b[off + i] = ' ';
+                continue;
+            }
             if (myIsEscaping) {
-                if (b[off + i] == ':') {
+                if (ch == ':') {
                     myColonCount++;
                     if (myColonCount > 1) {
                         b[off + i] = '_'; 
                     }
-                } else if (Character.isWhitespace(((char) b[off + i])) || b[off + i] == '>') {
+                } else if (Character.isWhitespace(ch) || ch == '>') {
                     myIsEscaping = false;
                 }
-            } else if (!myIsEscaping && b[off + i] == '<') {
+            } else if (!myIsEscaping && ch == '<') {
                 myIsEscaping = true;
                 myColonCount = 0;
             } 
