@@ -162,7 +162,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 }
                 tmpFile = getRootEntry().createTemporaryFile();
                 // prepare file as to be sent
-                Map keywords = computeEmptyKeywords();
+                Map keywords = computeKeywords(false);
                 FSUtil.copy(file, tmpFile, eolType, keywords, null);
             }
             ISVNDeltaGenerator generator;
@@ -239,7 +239,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 // unexpand keywords before comparing files... (for text files only).
                 // only when there are keywords
                 tmpFile = getRootEntry().createTemporaryFile();
-                Map keywords = computeEmptyKeywords();
+                Map keywords = computeKeywords(false);
                 FSUtil.copy(file, tmpFile, null, keywords, null);
             }
             // no keywords, use original file.
@@ -279,7 +279,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             String eolStyle = getPropertyValue(SVNProperty.EOL_STYLE);
             if (!isBinary()) {// && ((isPropertyModified(SVNProperty.EOL_STYLE) && eolStyle != null) || isPropertyModified(SVNProperty.KEYWORDS))) {
                 File tmpFile = getRootEntry().createTemporaryFile();
-                FSUtil.copy(actualFile, tmpFile, eolStyle, computeEmptyKeywords(), null);
+                FSUtil.copy(actualFile, tmpFile, eolStyle, computeKeywords(false), null);
                 FSUtil.copy(tmpFile, actualFile, null, keywords, null);
                 tmpFile.delete();
             }
@@ -287,7 +287,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             if (SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) {
                 eolStyle = SVNProperty.EOL_STYLE_LF;
             }
-            checksum = FSUtil.copy(actualFile, baseFile, storeAsIs ? null : eolStyle, isBinary() ? null : computeEmptyKeywords(), createDigest());
+            checksum = FSUtil.copy(actualFile, baseFile, storeAsIs ? null : eolStyle, isBinary() ? null : computeKeywords(false), createDigest());
             Date date = new Date(actualFile.lastModified());
             getEntry().put(SVNProperty.TEXT_TIME, TimeUtil.formatDate(date));
         } else {
@@ -361,7 +361,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 localFile = getRootEntry().createTemporaryFile();
                 File result = getRootEntry().createTemporaryFile();
                 // no need to convert eols, merger should merge just lines.
-                FSUtil.copy(getRootEntry().getWorkingCopyFile(this), localFile, null, computeEmptyKeywords(), null);
+                FSUtil.copy(getRootEntry().getWorkingCopyFile(this), localFile, null, computeKeywords(false), null);
                 mergeResult = merger.mergeFiles(base, localFile, remote, result, ".mine", ".r" + getPropertyValue(SVNProperty.COMMITTED_REVISION));
                 localFile.delete();
                 localFile = result;
@@ -485,7 +485,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 String revStr = getPropertyValue(SVNProperty.COMMITTED_REVISION);
                 map.put("LastChangedRevision", expand ? revStr : null);
                 map.put("Revision", expand ? revStr : null);
-                map.put("Rev", revStr);
+                map.put("Rev", expand ? revStr : null);
             } else if ("LastChangedBy".equals(token) || "Author".equals(token)) {
                 String author = getPropertyValue(SVNProperty.LAST_AUTHOR);
                 author = author == null ? "" : author;
@@ -513,25 +513,4 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         }
         return map;
     }
-    
-    private static Map ourEmptyKeywordsMap;
-    
-    private static Map computeEmptyKeywords() {
-        if (ourEmptyKeywordsMap == null) {
-            Map map = new HashMap();
-            map.put("LastChangedDate", null);
-            map.put("Date", null);
-            map.put("LastChangedRevision", null);
-            map.put("Revision", null);
-            map.put("Rev", null);
-            map.put("LastChangedBy", null);
-            map.put("Author", null);
-            map.put("HeadURL", null);
-            map.put("URL", null);
-            map.put("Id", null);
-            ourEmptyKeywordsMap = Collections.unmodifiableMap(map);
-        }
-        return ourEmptyKeywordsMap;
-    }
-    
 }

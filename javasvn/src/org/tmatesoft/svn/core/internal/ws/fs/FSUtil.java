@@ -280,13 +280,14 @@ public class FSUtil {
             }
         }
 
-        byte[] replaceWith = SVNProperty.getEOLBytes(eol);
+        byte[] replaceWith = eol != null ? SVNProperty.getEOLBytes(eol) : null;
+        byte[] realEOL = null;
         OutputStream target = keywordsMap != null ? myLineBuffer : dos;
 
         myFirstByte = -1;
         do {
             if (replaceWith == null) {
-                replaceWith = readLine(is, target);
+                realEOL = readLine(is, target);
             } else if (readLine(is, target) == null) {
                 replaceWith = null;
             }
@@ -302,10 +303,12 @@ public class FSUtil {
                 }
                 myLineBuffer.reset();
             }
-            if (replaceWith != null) {
+            if (replaceWith == null && realEOL != null) {
+                dos.write(realEOL);
+            } else if (replaceWith != null){
                 dos.write(replaceWith);
             }
-        } while (replaceWith != null);
+        } while (!(replaceWith == null && realEOL == null));
         return toHexDigest(digest);
     }
 
