@@ -1328,6 +1328,7 @@ public class SVNClient implements SVNClientInterface {
 				buffer.append(author);
 				buffer.append(" ");
 				buffer.append(line);
+				buffer.append(System.getProperty("line.separator"));
 			}
 		});
 		return buffer.toString().getBytes();
@@ -1359,6 +1360,13 @@ public class SVNClient implements SVNClientInterface {
 				long rev2 = getRevisionNumber(revisionEnd, repository, ws, name);
 				repository.annotate(name, rev1, rev2, new ISVNAnnotateHandler() {
 					public void handleLine(Date date, long revision, String author, String line) {
+						if (line.endsWith("\n")) {
+							line = line.substring(0, line.lastIndexOf("\n"));
+						} else if (line.endsWith("\r\n")) {
+							line = line.substring(0, line.lastIndexOf("\r\n"));
+						} else if (line.endsWith("\r")) {
+							line = line.substring(0, line.lastIndexOf("\r"));
+						}
 						callback.singleLine(date, revision, author, line);
 					}
 				});
