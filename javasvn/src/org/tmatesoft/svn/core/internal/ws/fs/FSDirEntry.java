@@ -446,7 +446,8 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                     entryMap.put(SVNProperty.KIND, SVNProperty.KIND_FILE);
                     childEntry = new FSFileEntry(getAdminArea(), getRootEntry(), path, entryMap);                        
                 }
-                ((FSEntry) childEntry).setManaged(false);
+                // if it is not external!
+                ((FSEntry) childEntry).setManaged(childEntry.getPropertyValue(SVNProperty.URL) != null);
                 if (!isIgnored(child.getName())) {
                     myUnmanagedChildren.put(child.getName(), childEntry);
                 }
