@@ -7,6 +7,7 @@ contrib/jsch/JSCH-LICENSE eol=lf
 contrib/jsch/jsch.jar -text
 contrib/junit/junit.jar -text
 contrib/sequence/SEQUENCE-LICENSE eol=lf
+contrib/sequence/src/de/regnis/q/sequence/QSequenceDifferenceBlockUtils.java -text
 javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.properties eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.xml eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.subclipse.feature/feature.properties eol=lf
