@@ -12,6 +12,8 @@
 
 package org.tmatesoft.svn.core.io;
 
+import org.tmatesoft.svn.util.DebugLog;
+
 /**
  * @author TMate Software Ltd.
  */
@@ -64,6 +66,12 @@ public class SVNSimpleCredentialsProvider implements ISVNCredentialsProvider {
             // if key is null, try to get it from javasvn.ssh2.key (workaround for Subclipse)
             if (myPrivateKey == null) {
                 myPrivateKey = System.getProperty("javasvn.ssh2.key");
+                if (myPrivateKey != null) {
+                    DebugLog.log("using private key defined in javasvn.ssh2.key property: " + myPrivateKey);
+                }
+                if (myPassphrase == null) {
+                    myPassphrase = System.getProperty("javasvn.ssh2.passphrase");
+                }
             }
         }
         
