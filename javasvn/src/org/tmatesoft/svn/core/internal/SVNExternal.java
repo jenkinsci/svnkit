@@ -96,7 +96,10 @@ class SVNExternal {
                 if (index < 0) {
                     continue;
                 }
-                index = line.lastIndexOf(" ", index);
+                index = Math.max(line.lastIndexOf(" ", index), line.lastIndexOf("\t", index));
+                if (index < 0) {
+                    continue;
+                }
                 String url = line.substring(index + 1);
                 SVNRepositoryLocation location = null;
                 try {
