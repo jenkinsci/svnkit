@@ -63,12 +63,12 @@ class DAVRepository extends SVNRepository {
         DAVBaselineInfo info = null;
         try {
             openConnection();
-            info = DAVUtil.getBaselineInfo(myConnection, getRepositoryRoot(), -1, false, true, info);
+            info = DAVUtil.getBaselineInfo(myConnection, getLocationPath(), -1, false, true, info);
         } finally {
             closeConnection();
         }
         if (info == null) {
-            throw new SVNException("can't get baseline information for " + getLocation().getPath());
+            throw new SVNException("can't get baseline information for " + getLocationPath());
         }
         return info.revision;
     }
@@ -79,7 +79,7 @@ class DAVRepository extends SVNRepository {
 		byte[] request = convertToBytes(DAVDateRevisionHandler.generateDateRevisionRequest(null, date));
     	try {
     		openConnection();
-			myConnection.doReport(getRepositoryRoot(), request, handler);
+			myConnection.doReport(getLocationPath(), request, handler);
     	} finally {
     		closeConnection();
     	}
@@ -105,7 +105,7 @@ class DAVRepository extends SVNRepository {
         properties = properties == null ? new HashMap() : properties;
         try {
             openConnection();
-            DAVResponse source = DAVUtil.getBaselineProperties(myConnection, getRepositoryRoot(), revision, null);
+            DAVResponse source = DAVUtil.getBaselineProperties(myConnection, getLocationPath(), revision, null);
             properties = DAVUtil.filterProperties(source, properties);
         } finally {
             closeConnection();
@@ -238,13 +238,11 @@ class DAVRepository extends SVNRepository {
         DAVLogHandler davHandler = null;
 		try {
 			openConnection();
-            for(int i = 0; i < targetPaths.length; i++) {
-                if (targetPaths[i].startsWith("/")) {
-                    // target is absolute path.
-                    path = getRepositoryRoot();
-                    break;
-                }
-            }
+			String[] fullPaths = new String[targetPaths.length];
+			for (int i = 0; i < targetPaths.length; i++) {
+				fullPaths[i] = getFullPath(targetPaths[i]);
+			}
+			path = PathUtil.getCommonRoot(fullPaths);
             davHandler = new DAVLogHandler(handler); 
 			long revision = -1;
 			if (isValidRevision(startRevision) && isValidRevision(endRevision)) {
@@ -284,7 +282,8 @@ class DAVRepository extends SVNRepository {
             String root = getLocation().getPath();
             if (path.startsWith("/")) {
                 path = PathUtil.removeLeadingSlash(path);
-                root = getRepositoryRoot();
+                root = getLocationPath();
+                path = path.substring(root.length());
             }
             byte[] request = convertToBytes(DAVLocationsHandler.generateLocationsRequest(null, path, pegRevision, revisions));
             
@@ -448,6 +447,10 @@ class DAVRepository extends SVNRepository {
 		} catch (UnsupportedEncodingException e) {
 		}
 		return new byte[0];
+    }
+    
+    private String getLocationPath() {
+    	return DAVUtil.getCanonicalPath(getLocation().getPath(), null).toString();
     }
 
     void updateCredentials(String uuid, String root) {
