@@ -159,17 +159,21 @@ public class PathUtil {
         if (paths.length == 1) {
             return PathUtil.removeLeadingSlash(PathUtil.removeTail(paths[0]));
         } 
-        String[] p = new String[paths.length];
-        for(int i = 0; i < p.length; i++) {
-            p[i] = paths[i].replace(File.separatorChar, '/');
-        }
-        String root = paths[0];
+        String root = paths[0].replace(File.separatorChar, '/');
         for (int i = 1; i < paths.length; i++) {
-			root = getCommonAncestor(root, paths[i]);
+			root = getCommonAncestor(root, paths[i].replace(File.separatorChar, '/'));
 		}
-        return PathUtil.removeLeadingSlash(PathUtil.removeTail(root));
+        root = PathUtil.removeLeadingSlash(root);
+        root = PathUtil.removeTrailingSlash(root);
+        for(int i = 0; i < paths.length; i++) {
+        	if (paths[i].replace(File.separatorChar, '/').equals(root)) {
+        		root = PathUtil.removeTail(root);
+        		break;
+        	}
+        }
+        return root;
     }
-    
+
     private static String getCommonAncestor(String path1, String path2) {
     	// simplest case
     	String longerPath = path1.length() > path2.length() ? path1 : path2;

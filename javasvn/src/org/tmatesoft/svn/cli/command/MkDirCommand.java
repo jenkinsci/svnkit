@@ -75,7 +75,7 @@ public class MkDirCommand extends SVNCommand {
         }
 
         String[] urlsArray = (String[]) urls.toArray(new String[urls.size()]);
-        final String root = PathUtil.getFSCommonRoot(urlsArray);
+        final String root = PathUtil.getCommonRoot(urlsArray);
         DebugLog.log("MKDIR root: " + root);
 
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
@@ -93,8 +93,7 @@ public class MkDirCommand extends SVNCommand {
             editor.openRoot(-1);
             for (int i = 0; i < urlsArray.length; i++) {
                 final String path = PathUtil.decode(urlsArray[i]);
-                DebugLog.log(path);
-
+                DebugLog.log("MKDIR adding dir: " + path);
                 editor.addDir(path, null, -1);
             }
             editor.closeDir();
