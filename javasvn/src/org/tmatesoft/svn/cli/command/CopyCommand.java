@@ -26,8 +26,10 @@ import org.tmatesoft.svn.core.SVNWorkspaceManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNAssert;
 import org.tmatesoft.svn.util.SVNUtil;
@@ -50,7 +52,7 @@ public class CopyCommand extends SVNCommand {
                     runRemoteToLocal(out);
                 }
             } else {
-                runRemote(out);
+                runRemote(out, err);
             }
         } else {
             runLocally(out);
@@ -83,7 +85,7 @@ public class CopyCommand extends SVNCommand {
         workspace.copy(srcPath, dstPath, false);
     }
 
-    private void runRemote(PrintStream out) throws SVNException {
+    private void runRemote(PrintStream out, PrintStream err) throws SVNException {
         if (getCommandLine().getURLCount() != 2) {
             throw new SVNException("Please enter SRC and DST URL");
         }
@@ -110,6 +112,20 @@ public class CopyCommand extends SVNCommand {
         if (revNumber < 0) {
             revNumber = repository.getLatestRevision();
         }
+        String newPathParent = null;
+        SVNNodeKind nodeKind = repository.checkPath(newPath, -1);
+        if (nodeKind == SVNNodeKind.DIR) {
+        	DebugLog.log("path " + newPath + " already exists and its a dir");
+        	newPathParent = newPath; 
+        	newPath = PathUtil.tail(srcURL); 
+        	newPath = PathUtil.append(newPathParent, newPath);
+            nodeKind = repository.checkPath(newPath, -1);
+            if (nodeKind == SVNNodeKind.DIR) {
+            	DebugLog.log("can't copy to '" + PathUtil.append(destURL, newPath) + "', location already exists");
+            	err.println("can't copy to '" + PathUtil.append(destURL, newPath) + "', location already exists");
+            	return;
+            }
+        }
 
         SVNRepositoryLocation srcLocation = SVNRepositoryLocation.parseURL(srcURL);
         srcURL = srcLocation.getPath();
@@ -125,8 +141,14 @@ public class CopyCommand extends SVNCommand {
         ISVNEditor editor = repository.getCommitEditor(message, null);
         try {
             editor.openRoot(-1);
+            if (newPathParent != null) {
+            	editor.openDir(newPathParent, -1);
+            }
             editor.addDir(newPath, srcURL, revNumber);
             editor.closeDir();
+            if (newPathParent != null) {
+            	editor.closeDir();
+            }
             editor.closeDir();
 
             SVNCommitInfo info = editor.closeEdit();

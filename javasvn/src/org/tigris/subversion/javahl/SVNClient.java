@@ -628,6 +628,8 @@ public class SVNClient implements SVNClientInterface {
     public void copy(String srcPath, String destPath, String message, Revision revision) throws ClientException {
         if (isURL(srcPath) && isURL(destPath)) {
             ISVNEditor editor = null;
+        	String srcURL = srcPath;
+        	String dstURL = destPath;
             try {
                 String newPath = PathUtil.tail(destPath);
                 newPath = PathUtil.removeLeadingSlash(newPath);
@@ -646,11 +648,29 @@ public class SVNClient implements SVNClientInterface {
                 if (!srcPath.startsWith("/")) {
                     srcPath += "/";
                 }
+                SVNNodeKind nodeKind = repository.checkPath(newPath, -1);
+            	String newPathParent = null;
+                if (nodeKind == SVNNodeKind.DIR) {
+                	DebugLog.log("path " + newPath + " already exists and its a dir");
+					newPathParent = newPath; 
+                	newPath = PathUtil.tail(srcURL);
+                	newPath = PathUtil.append(newPathParent, newPath);
+                    nodeKind = repository.checkPath(newPath, -1);
+                    if (nodeKind == SVNNodeKind.DIR) {
+                    	throwException(new SVNException("can't copy to '" + PathUtil.append(dstURL, newPath) + "', location already exists"));
+                    }
+                }
 
                 editor = repository.getCommitEditor(message, null);
                 editor.openRoot(-1);
+                if (newPathParent != null) {
+                	editor.openDir(newPathParent, -1);
+                }
                 editor.addDir(newPath, srcPath, revNumber);
                 editor.closeDir();
+                if (newPathParent != null) {
+                	editor.closeDir();
+                }
                 editor.closeDir();
                 editor.closeEdit();
             } catch (SVNException e) {
