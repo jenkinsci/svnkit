@@ -86,6 +86,8 @@ and problem support. If you're interested in professional JavaSVN support, pleas
 <li>Extensible design - every part of implementation could be extened or replaced</li>
 <li>May be used as a transparent javahl replacement</li>
 </ul>
+Check the <a href="status.html">JavaSVN status</a> page to see
+what features are planned, but not yet implemented.
 <h5>License</h5>
 <a id="normal" href="license.html">Licence&nbsp;Agreement</a>&nbsp;(BSD-like)
 <h5>Documentation</h5>

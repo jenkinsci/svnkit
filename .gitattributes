@@ -28,5 +28,6 @@ www/license.html eol=lf
 www/plugin.xml eol=lf
 www/rss.php eol=lf
 www/rss2.php eol=lf
+www/status.html eol=lf
 www/subclipse.html eol=lf
 www/usage.html eol=lf
