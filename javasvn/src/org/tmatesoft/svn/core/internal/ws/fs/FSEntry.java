@@ -428,7 +428,7 @@ public abstract class FSEntry implements ISVNEntry {
         if (wcFile == null) {
             return false;
         }
-        return !FSUtil.isSymlink(wcFile);
+        return FSUtil.isSymlink(wcFile);
     }
     
     protected FSAdminArea getAdminArea() {
