@@ -211,9 +211,9 @@
                 <include name="contrib/javahl/bin/**" />
                 <include name="contrib/sequence/bin/**" />
                 <include name="contrib/sequence/bin-test/**" />
-                <include name="javasvn/bin" />
-                <include name="javasvn-eclipse/bin" />
-                <include name="javasvn-test/bin" />
+                <include name="javasvn/bin/**" />
+                <include name="javasvn-eclipse/bin/**" />
+                <include name="javasvn-test/bin/**" />
             </fileset>
         </delete>
     </target>
