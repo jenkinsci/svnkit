@@ -49,7 +49,7 @@ public class PythonTests {
 		}
 		String pythonTestsRoot = properties.getProperty("python.tests");
 		properties.setProperty("repository.root", new File(pythonTestsRoot).getAbsolutePath());
-		if (Boolean.TRUE.equals(properties.getProperty("python.svn"))) {
+		if (Boolean.TRUE.toString().equals(properties.getProperty("python.svn"))) {
 			try {
 				AllTests.startSVNServe(properties);
 				runPythonTests(properties, "svn://localhost/");
@@ -59,7 +59,7 @@ public class PythonTests {
 				AllTests.stopSVNServe();
 			}
 		}
-		if (Boolean.TRUE.equals(properties.getProperty("python.http"))) {
+		if (Boolean.TRUE.toString().equals(properties.getProperty("python.http"))) {
 			properties.setProperty("apache.conf", "apache/python.template.conf");
 			try {
 				AllTests.startApache(properties);
