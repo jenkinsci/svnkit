@@ -64,6 +64,7 @@ public class DAVUtil {
         info = info == null ? new DAVBaselineInfo() : info;        
         info.baselinePath = baselineProperties.getHref();
         info.baselineBase = (String) baselineProperties.getPropertyValue(DAVElement.BASELINE_COLLECTION);
+        info.baselineBase = PathUtil.encode(info.baselineBase);
         if (includeRevision) {
             info.revision = Long.parseLong((String) baselineProperties.getPropertyValue(DAVElement.VERSION_NAME));
         } 
@@ -103,6 +104,7 @@ public class DAVUtil {
         baselineRelativePath += loppedPath;
         baselineRelativePath = PathUtil.removeLeadingSlash(baselineRelativePath);
         baselineRelativePath = PathUtil.removeTrailingSlash(baselineRelativePath);
+        baselineRelativePath = PathUtil.encode(baselineRelativePath);
         
         String label = null;
         if (revision < 0) {

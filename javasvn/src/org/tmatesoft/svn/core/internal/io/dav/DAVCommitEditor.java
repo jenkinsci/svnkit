@@ -74,6 +74,7 @@ class DAVCommitEditor implements ISVNEditor {
     }
     
     public void deleteEntry(String path, long revision) throws SVNException {
+        path = PathUtil.encode(path);
         // get parent's working copy. (checkout? or use checked out?)
         DAVResource parentResource = (DAVResource) myDirsStack.peek();
         checkoutResource(parentResource);
@@ -92,11 +93,13 @@ class DAVCommitEditor implements ISVNEditor {
     
     
     public void addDir(String path, String copyPath, long copyRevision) throws SVNException {
+        path = PathUtil.encode(path);
+        
         DAVResource parentResource = (DAVResource) myDirsStack.peek();
         checkoutResource(parentResource);
         String wPath = parentResource.getWorkingURL();
 
-        DAVResource newDir = new DAVResource(myCommitMediator, myConnection, path, -1, copyPath != null);
+        DAVResource newDir = new DAVResource(myCommitMediator, myConnection, PathUtil.encode(path), -1, copyPath != null);
         newDir.setWorkingURL(PathUtil.append(wPath, PathUtil.tail(path)));
 
         myDirsStack.push(newDir);
@@ -124,6 +127,7 @@ class DAVCommitEditor implements ISVNEditor {
     }
 
     public void openDir(String path, long revision) throws SVNException {
+        path = PathUtil.encode(path);
         // do nothing, 
         DAVResource parent = (DAVResource) myDirsStack.peek();
         DAVResource directory = new DAVResource(myCommitMediator, myConnection, path, revision, parent.isCopy()); 
@@ -153,6 +157,7 @@ class DAVCommitEditor implements ISVNEditor {
     }
     
     public void addFile(String path, String copyPath, long copyRevision) throws SVNException {
+        path = PathUtil.encode(path);
         // checkout parent collection.
         DAVResource parentResource = (DAVResource) myDirsStack.peek();
         checkoutResource(parentResource);
@@ -181,6 +186,7 @@ class DAVCommitEditor implements ISVNEditor {
     }
 
     public void openFile(String path, long revision) throws SVNException {
+        path = PathUtil.encode(path);
         DAVResource file = new DAVResource(myCommitMediator, myConnection, path, revision);
         DAVResource parent = (DAVResource) myDirsStack.peek();
         if (parent.isCopy()) {

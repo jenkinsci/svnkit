@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.Base64;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SocketFactory;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
@@ -278,7 +277,7 @@ class HttpConnection {
 		StringBuffer sb = new StringBuffer();        
 		sb.append(method);
 		sb.append(' ');
-        PathUtil.encode(path, sb);
+        sb.append(path);
 		sb.append(' ');
 		sb.append("HTTP/1.1\n");
 		sb.append("Host: ");
@@ -303,7 +302,7 @@ class HttpConnection {
                 sb.append('\n');
             }
         }
-        
+
         getOutputStream().write(sb.toString().getBytes());        
         getOutputStream().write('\n');
         byte[] crlf = {13, 10};

@@ -64,9 +64,9 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
 	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
         if (element == DAVElement.HREF) {
             if (parent == DAVElement.RESPONSE) {
-                myResponse.setHref(cdata.toString().trim());
+                myResponse.setHref(cdata.toString());
             } else {
-                myResponse.putPropertyValue(parent, cdata.toString().trim());
+                myResponse.putPropertyValue(parent, cdata.toString());
             }
         } else if (element == DAVElement.RESPONSE) {
             myResponseHandler.handleDAVResponse(myResponse);
@@ -74,9 +74,9 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
         } else if (element == DAVElement.COLLECTION || element == DAVElement.BASELINE) {
             myResponse.putPropertyValue(parent, element);
         } else if (element == DAVElement.STATUS) {
-            myResponse.setStatus(DAVStatus.parse(cdata.toString().trim()));
+            myResponse.setStatus(DAVStatus.parse(cdata.toString()));
         } else if (cdata != null && cdata.length() > 0 && myResponse != null) {
-            myResponse.putPropertyValue(element, cdata.toString().trim());
+            myResponse.putPropertyValue(element, cdata.toString());
         }
 	}
 

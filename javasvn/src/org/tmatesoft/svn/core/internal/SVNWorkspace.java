@@ -123,6 +123,7 @@ public class SVNWorkspace implements ISVNWorkspace {
     public SVNRepositoryLocation getLocation() throws SVNException {
         if (myLocation == null) {
             String url = getRoot().getPropertyValue(SVNProperty.URL);
+            url = PathUtil.decode(url);
             if (url != null) {
                 try {
                     myLocation = SVNRepositoryLocation.parseURL(url);
@@ -227,6 +228,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         if (url == null) {
             return null;
         }
+        url = PathUtil.decode(url);
         return SVNRepositoryLocation.parseURL(url);
     }
     
@@ -690,7 +692,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             ISVNEditor editor = repository.getCommitEditor(message, new SVNWorkspaceMediatorAdapter(getRoot(), tree));
             
             try {
-                SVNCommitUtil.doCommit("", url, tree, editor, this);
+                SVNCommitUtil.doCommit("", location.toString(), tree, editor, this);
                 info = editor.closeEdit();
             } catch(SVNException e) {
                 DebugLog.error("error: " + e.getMessage());

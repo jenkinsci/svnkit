@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.io;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -77,6 +76,7 @@ public class SVNRepositoryLocation {
         if (myPath.endsWith("/")) {
             myPath = myPath.substring(0, myPath.length() - "/".length());
         }
+        myPath = PathUtil.encode(myPath);
     }
     
     public String getProtocol() {
@@ -99,15 +99,12 @@ public class SVNRepositoryLocation {
         StringBuffer sb = new StringBuffer();
         sb.append(myProtocol);
         sb.append("://");
-        PathUtil.encode(myHost, sb);
+        sb.append(PathUtil.encode(myHost));
         if (myPort != getDefaultPort(myProtocol)) {
             sb.append(':');
             sb.append(myPort);
         }
-        for(StringTokenizer tokens = new StringTokenizer(myPath, "/"); tokens.hasMoreTokens();) {
-            sb.append("/");
-            PathUtil.encode(tokens.nextToken(), sb);
-        }
+        sb.append(myPath);
         myAsString = sb.toString();
         return sb.toString();
     }

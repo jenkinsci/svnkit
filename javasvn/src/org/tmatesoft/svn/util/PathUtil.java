@@ -84,7 +84,7 @@ public class PathUtil {
         return path;
     }
     
-    public static void encode(String urlPart, StringBuffer dst) {
+    private static void encode(String urlPart, StringBuffer dst) {
         for(StringTokenizer tokens = new StringTokenizer(urlPart, " /", true); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
             if (" ".equals(token)) {
