@@ -32,27 +32,55 @@ import java.util.logging.SimpleFormatter;
  */
 public class DebugLog {
     
+    private static boolean ourIsEnabled = true;
+
+    public static void setEnabled(boolean enabled) {
+        ourIsEnabled = enabled;
+    }
+    
+    public static boolean isEnabled() {
+        return ourIsEnabled;
+    }
+    
     public static void log(String message) {
+        if (!ourIsEnabled) {
+            return;
+        }
         Logger.getLogger("svn").log(Level.FINE, message);
     }
 
     public static void log(Level level, String message) {
+        if (!ourIsEnabled) {
+            return;
+        }
         Logger.getLogger("svn").log(level, message);
     }
 
     public static void benchmark(String message) {
+        if (!ourIsEnabled) {
+            return;
+        }
         Logger.getLogger("svn").log(Level.CONFIG, message);
     }
 
     public static void error(String message) {
+        if (!ourIsEnabled) {
+            return;
+        }
         Logger.getLogger("svn").log(Level.SEVERE, message);
     }
 
     public static void error(Throwable th) {
+        if (!ourIsEnabled) {
+            return;
+        }
         Logger.getLogger("svn").log(Level.SEVERE, th.getMessage(), th);
     }
     
     public static boolean isSafeMode() {
+        if (!ourIsEnabled) {
+            return false;
+        }
         if (isSafeModeDefault() && System.getProperty("javasvn.safemode") == null) {
             return true;
         }
@@ -60,6 +88,9 @@ public class DebugLog {
     }
     
     public static boolean isGeneratorDisabled() {
+        if (!ourIsEnabled) {
+            return false;
+        }
         if (isSafeModeDefault()) {
             // have to enable explicitly
             return !Boolean.getBoolean("javasvn.generator.enabled");
@@ -71,6 +102,9 @@ public class DebugLog {
     }
     
     private static boolean isFileLoggingEnabled() {
+        if (!ourIsEnabled) {
+            return false;
+        }
         if (System.getProperty("javasvn.log.file") == null) {
             return true;
         }
@@ -145,6 +179,9 @@ public class DebugLog {
     }
     
     private static boolean isSafeModeDefault() {
+        if (!ourIsEnabled) {
+            return false;
+        }
         return ourSafeModeTrigger.exists();
     }
     
