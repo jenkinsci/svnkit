@@ -683,9 +683,18 @@ public class SVNWorkspace implements ISVNWorkspace {
                 "Perhaps you're committing a target that is inside unversioned (or not-yet-versioned) directory?");
             }
         }
-        String root = PathUtil.getCommonRoot(paths);
+        String root = "";
+        if (paths.length == 1) {
+        	ISVNEntry entry = locateEntry(paths[0]);
+        	if (entry != null && entry.isDirectory() && entry.isManaged()) {
+        		root = entry.getPath();
+        	}
+        } 
         if (root == null) {
-            root = "";
+        	root = PathUtil.getCommonRoot(paths);
+        	if (root == null) {
+        		root = "";
+        	}
         }
         if (handler == null) {
             handler = new ISVNCommitHandler() {
