@@ -21,7 +21,7 @@ import java.io.OutputStream;
  */
 public class DebugLog {
 
-	private static DebugLogger ourLogger = new DebugDefaultLogger();
+	private static DebugLogger ourLogger;
 	private static final File ourSafeModeTrigger = new File(".javasvn.safemode");
 
 	public static void setLogger(DebugLogger logger) {
@@ -29,46 +29,46 @@ public class DebugLog {
 	}
 
 	public static boolean isEnabled() {
-		return ourLogger != null;
+		return getLogger() != null;
 	}
 
 	public static void log(String message) {
-		if (ourLogger == null || !ourLogger.isFineEnabled()) {
+		if (getLogger() == null || !getLogger().isFineEnabled()) {
 			return;
 		}
-		ourLogger.logFine(message);
+		getLogger().logFine(message);
 	}
 
 	public static void logInfo(String message) {
-		if (ourLogger == null || !ourLogger.isInfoEnabled()) {
+		if (getLogger() == null || !getLogger().isInfoEnabled()) {
 			return;
 		}
-		ourLogger.logInfo(message);
+		getLogger().logInfo(message);
 	}
 
 	public static void benchmark(String message) {
-		if (ourLogger == null || !ourLogger.isInfoEnabled()) {
+		if (getLogger() == null || !getLogger().isInfoEnabled()) {
 			return;
 		}
-		ourLogger.logInfo(message);
+		getLogger().logInfo(message);
 	}
 
 	public static void error(String message) {
-		if (ourLogger == null || !ourLogger.isErrorEnabled()) {
+		if (getLogger() == null || !getLogger().isErrorEnabled()) {
 			return;
 		}
-		ourLogger.logError(message, null);
+		getLogger().logError(message, null);
 	}
 
 	public static void error(Throwable th) {
-		if (ourLogger == null || !ourLogger.isErrorEnabled()) {
+		if (getLogger() == null || !getLogger().isErrorEnabled()) {
 			return;
 		}
-		ourLogger.logError(th.getMessage(), th);
+		getLogger().logError(th.getMessage(), th);
 	}
 
 	public static boolean isSafeMode() {
-		if (ourLogger == null) {
+		if (getLogger() == null) {
 			return false;
 		}
 		if (isSafeModeDefault() && System.getProperty("javasvn.safemode") == null) {
@@ -78,7 +78,7 @@ public class DebugLog {
 	}
 
 	public static boolean isGeneratorDisabled() {
-		if (ourLogger == null) {
+		if (getLogger() == null) {
 			return false;
 		}
 		if (isSafeModeDefault()) {
@@ -92,25 +92,34 @@ public class DebugLog {
 	}
 
 	public static LoggingInputStream getLoggingInputStream(String protocol, InputStream stream) {
-		if (ourLogger == null) {
+		if (getLogger() == null) {
 			return new LoggingInputStream(stream, null);
 		}
 
-		return ourLogger.getLoggingInputStream(protocol, stream);
+		return getLogger().getLoggingInputStream(protocol, stream);
 	}
 
 	public static LoggingOutputStream getLoggingOutputStream(String protocol, OutputStream stream) {
-		if (ourLogger == null) {
+		if (getLogger() == null) {
 			return new LoggingOutputStream(stream, null);
 		}
 
-		return ourLogger.getLoggingOutputStream(protocol, stream);
+		return getLogger().getLoggingOutputStream(protocol, stream);
 	}
+	
 
 	static boolean isSafeModeDefault() {
-		if (ourLogger == null) {
+		if (getLogger() == null) {
 			return false;
 		}
 		return ourSafeModeTrigger.exists();
 	}
+
+	private static DebugLogger getLogger() {
+		if (ourLogger == null) {
+			ourLogger = new DebugDefaultLogger();
+		}
+		return ourLogger;
+	}
+
 }
