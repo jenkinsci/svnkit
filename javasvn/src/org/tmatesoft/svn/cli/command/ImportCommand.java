@@ -22,6 +22,8 @@ import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -30,14 +32,20 @@ public class ImportCommand extends SVNCommand {
 
     public void run(final PrintStream out, PrintStream err) throws SVNException {
         final String path = getCommandLine().getPathAt(0);
-        final String url = getCommandLine().getURL(0);
+        String url = getCommandLine().getURL(0);
 
         DebugLog.log("import url: " + url);
         DebugLog.log("import path: " + path);
 
-        final ISVNWorkspace workspace = createWorkspace(path);
+        final ISVNWorkspace workspace = createWorkspace(path, false);
         final String homePath = path;
         DebugLog.log("import root: " + workspace.getID());
+        String wsPath = SVNUtil.getWorkspacePath(workspace, path);
+        if (wsPath.trim().length() == 0) {
+            wsPath = null;
+        } else {
+            url = PathUtil.removeTail(url);
+        }
         workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
             public void committed(String committedPath, int kind) {
                 try {
@@ -52,7 +60,7 @@ public class ImportCommand extends SVNCommand {
             DebugLog.log("NO MESSAGE!");
             message = "";
         }
-        long revision = workspace.commit(location, message);
+        long revision = workspace.commit(location, wsPath, message);
         out.println("Imported revision " + revision + ".");
     }
 

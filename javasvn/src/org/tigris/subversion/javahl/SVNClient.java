@@ -510,7 +510,13 @@ public class SVNClient implements SVNClientInterface {
         }
         try {
             ISVNWorkspace ws = createWorkspace(path);
-            ws.commit(SVNRepositoryLocation.parseURL(url), message);
+            String wsPath = SVNUtil.getWorkspacePath(ws, path);
+            if (wsPath.trim().length() == 0) {
+                wsPath = null;
+            } else {
+                url = PathUtil.removeTail(url);
+            }
+            ws.commit(SVNRepositoryLocation.parseURL(url), wsPath, message);
         } catch (SVNException e) {
             throwException(e);
         }

@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
@@ -34,10 +35,10 @@ import org.tmatesoft.svn.core.ISVNEntryContent;
 import org.tmatesoft.svn.core.ISVNExternalsHandler;
 import org.tmatesoft.svn.core.ISVNFileContent;
 import org.tmatesoft.svn.core.ISVNRootEntry;
+import org.tmatesoft.svn.core.ISVNRunnable;
 import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.ISVNWorkspaceListener;
-import org.tmatesoft.svn.core.ISVNRunnable;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
@@ -49,6 +50,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNError;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
@@ -545,21 +547,80 @@ public class SVNWorkspace implements ISVNWorkspace {
 
     // import
     public long commit(SVNRepositoryLocation destination, String message) throws SVNException {
-        if (getLocation() != null) {
+        return commit(destination, null, message);
+        
+    }
+    public long commit(SVNRepositoryLocation destination, String fileName, String message) throws SVNException {
+        if (fileName == null && getLocation() != null) {
             throw new SVNException(getRoot().getID() + " already contains working copy files");
+        }
+        if (fileName != null && locateEntry(fileName) != null) {
+            throw new SVNException("'" + fileName + "' already under version control");
         }
 
         SVNRepository repository = SVNRepositoryFactory.create(destination);
         repository.setCredentialsProvider(getCredentialsProvider());
+        repository.testConnection();
+
+        String rootPath = PathUtil.decode(destination.getPath());
+        rootPath = rootPath.substring(repository.getRepositoryRoot().length());
+        if (!rootPath.startsWith("/")) {
+            rootPath = "/" + rootPath;
+        }
+        rootPath = PathUtil.removeTrailingSlash(rootPath);
+        List dirsList = new LinkedList();
+        DebugLog.log("IMPORT: ROOT PATH: " + rootPath);
+        while(rootPath.lastIndexOf('/') >= 0) {
+            SVNNodeKind nodeKind = repository.checkPath(rootPath, -1);
+            if (nodeKind == SVNNodeKind.DIR) {
+                break;
+            } else if (nodeKind == SVNNodeKind.FILE) {
+                throw new SVNException("'" + rootPath + "' is file, could not import into it");
+            }
+            String dir = rootPath.substring(rootPath.lastIndexOf('/') + 1);
+            dirsList.add(0, dir);
+            rootPath = rootPath.substring(0, rootPath.lastIndexOf('/'));
+        }
+        
+        destination = new SVNRepositoryLocation(destination.getProtocol(),
+                destination.getHost(), destination.getPort(), PathUtil.append(repository.getRepositoryRoot(), rootPath));
+        repository = SVNRepositoryFactory.create(destination); 
+        repository.setCredentialsProvider(getCredentialsProvider());
+        DebugLog.log("IMPORT: REPOSITORY CREATED FOR: " + destination.toString());
         ISVNEditor editor = repository.getCommitEditor(message, getRoot());
         SVNCommitInfo info = null;
         try {
-            doImport(editor, getRoot());
+            String dir = "";
+            DebugLog.log("IMPORT: OPEN ROOT");
+            editor.openRoot(-1);
+            for(Iterator dirs = dirsList.iterator(); dirs.hasNext();) {
+                String nextDir = (String) dirs.next();
+                DebugLog.log("IMPORT: NEXT DIR: " + nextDir);
+                dir = dir + '/' + nextDir;
+                DebugLog.log("IMPORT: ADDING MISSING DIR: " + dir);
+                editor.addDir(dir, null, -1);
+            }
+            if (fileName == null) {
+                for(Iterator children = getRoot().asDirectory().unmanagedChildEntries(false); children.hasNext();) {
+                    ISVNEntry child = (ISVNEntry) children.next();
+                    doImport(dir, editor, getRoot(), child);
+                }
+            } else {
+                ISVNEntry child = locateEntry(fileName, true);
+                doImport(dir, editor, getRoot(), child);
+            }
+            for(Iterator dirs = dirsList.iterator(); dirs.hasNext();) {
+                dirs.next();
+                editor.closeDir();
+            }
+            editor.closeDir();
+            fireEntryCommitted(null, SVNStatus.ADDED);
             info = editor.closeEdit();
         } catch (SVNException e) {
             try {
                 editor.abortEdit();
             } catch (SVNException inner) {}
+            DebugLog.error(e);
             throw e;
         } finally {
             getRoot().dispose();
@@ -1136,30 +1197,25 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
     }
 
-    private void doImport(ISVNEditor editor, ISVNDirectoryEntry root) throws SVNException {
-        if (root instanceof ISVNRootEntry) {
-            editor.openRoot(-1);
-        } else {
-            editor.addDir(root.getPath(), null, -1);
-            applyAutoProperties(root, editor);
-        }
-        for (Iterator children = root.unmanagedChildEntries(true); children.hasNext();) {
-            ISVNEntry child = (ISVNEntry) children.next();
-            if (child.isDirectory()) {
-                doImport(editor, child.asDirectory());
-            } else {
-                editor.addFile(child.getPath(), null, -1);
-                applyAutoProperties(child, editor);
-                child.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
-                child.asFile().generateDelta(editor);
-                fireEntryCommitted(child, SVNStatus.ADDED);
-                editor.closeFile(null);
+    private void doImport(String rootPath, ISVNEditor editor, ISVNDirectoryEntry parent, ISVNEntry entry) throws SVNException {
+        if (entry.isDirectory()) {
+            DebugLog.log("IMPORT: ADDING DIR: " + rootPath + '/' + entry.getPath());
+            editor.addDir(rootPath + '/' + entry.getPath(), null, -1);
+            applyAutoProperties(entry, editor);
+            for(Iterator children = entry.asDirectory().unmanagedChildEntries(false); children.hasNext();) {
+                ISVNEntry child = (ISVNEntry) children.next();
+                doImport(rootPath, editor, parent, child);
             }
+            editor.closeDir();
+        } else {
+            DebugLog.log("IMPORT: ADDING FILE: " + rootPath + '/' + entry.getPath());
+            editor.addFile(rootPath + '/' + entry.getPath(), null, -1);
+            applyAutoProperties(entry, editor);
+            entry.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
+            entry.asFile().generateDelta(editor);
+            editor.closeFile(null);
         }
-        if (root != getRoot()) {
-            fireEntryCommitted(root, SVNStatus.ADDED);
-        }
-        editor.closeDir();
+        fireEntryCommitted(entry, SVNStatus.ADDED);
     }
 
     private void applyAutoProperties(ISVNEntry entry, ISVNEditor editor) throws SVNException {

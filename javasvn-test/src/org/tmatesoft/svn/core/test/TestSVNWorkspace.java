@@ -73,7 +73,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         ISVNWorkspace importWorkspace = createWorkspace(getFixtureRoot());
         ISVNWorkspace checkoutWorkspace = createWorkspace(dst);
 
-        long revision = importWorkspace.commit(SVNRepositoryLocation.parseURL(getRepositoryURL() + "/directory"), "import2");
+        long revision = importWorkspace.commit(SVNRepositoryLocation.parseURL(getRepositoryURL() + "/directory"), null, "import2");
         assertEquals(2, revision);
         
         checkoutWorkspace.checkout(SVNRepositoryLocation.parseURL(getRepositoryURL()), -2, false);
@@ -337,7 +337,7 @@ public class TestSVNWorkspace extends AbstractRepositoryTest {
         SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(getRepositoryURL() + "/org.package");
         importWorkspace.setAutoProperties(properties);
 
-        revision = importWorkspace.commit(location, "import");
+        revision = importWorkspace.commit(location, null, "import");
         assertEquals(3, revision);
         
         // now update :)

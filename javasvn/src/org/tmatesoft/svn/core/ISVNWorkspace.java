@@ -61,7 +61,12 @@ public interface ISVNWorkspace {
 
     public long checkout(SVNRepositoryLocation location, long revision, boolean export, boolean recurse) throws SVNException;
     
+    /**
+     * @deprecated
+     */
     public long commit(SVNRepositoryLocation target, String message) throws SVNException;
+
+    public long commit(SVNRepositoryLocation target, String fileName, String message) throws SVNException;
     
     public long update(String path, long revision, boolean recursive) throws SVNException;
 
