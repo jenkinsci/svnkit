@@ -12,12 +12,17 @@
 
 package org.tigris.subversion.javahl;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,6 +37,9 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
+import org.tmatesoft.svn.core.diff.ISVNDiffGenerator;
+import org.tmatesoft.svn.core.diff.SVNDiffManager;
+import org.tmatesoft.svn.core.diff.SVNUniDiffGenerator;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
@@ -64,6 +72,7 @@ public class SVNClient implements SVNClientInterface {
     private Notify myNotify;
     
     public SVNClient() {
+        SVNDiffManager.setup();
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
         FSEntryFactory.setup();
@@ -939,7 +948,117 @@ public class SVNClient implements SVNClientInterface {
      * @exception ClientException
      */
     public void diff(String target1, Revision revision1, String target2, Revision revision2, String outFileName, boolean recurse) throws ClientException {
-        notImplementedYet();
+        try {
+            if (new File(target1).isDirectory()) {
+                FileWriter outWriter = new FileWriter(new File(outFileName));
+                ISVNWorkspace ws = createWorkspace(target1);
+                DiffHandler handler = new DiffHandler(ws,
+                                                      revision1,
+                                                      revision2,
+                                                      outWriter);
+
+            
+                ws.status(SVNUtil.getWorkspacePath(ws, target1),
+                          false,  //remote
+                          handler,
+                          true,   // descend
+                          false,  //includeUnmodified,
+                          false,  //includeIgnored,
+                          false,  //descendInUnversioned,
+                          false); //descendFurtherInIgnored)
+
+                outWriter.close();
+            }
+            else {
+                FileWriter outWriter = new FileWriter(new File(outFileName));
+                diff(target1, revision1, revision2, outWriter);
+                outWriter.close();
+            }
+        }
+        catch(SVNException se) {
+            throwException(se);
+        }
+        catch(IOException ioe) {
+            throw new ClientException(ioe.getMessage(),"",0);
+        }
+    }
+
+    private class DiffHandler implements ISVNStatusHandler {
+        
+    	private Revision myRevision1; 
+    	private Revision myRevision2;
+        private Writer myWriter;
+        private ISVNWorkspace myWorkspace;
+        
+        public DiffHandler(ISVNWorkspace ws,
+                           Revision revision1,
+                           Revision revision2,
+                           Writer outWriter) {
+            myRevision1 = revision1;
+            myRevision2 = revision2;
+            myWriter = outWriter;
+            myWorkspace = ws;
+        }
+        public void handleStatus(String path, SVNStatus status) {
+            try {
+                if (status.getContentsStatus() != SVNStatus.UNVERSIONED) {
+                    String absPath = SVNUtil.getAbsolutePath(myWorkspace,
+                                                             status.getPath());
+                    if (status.isDirectory()) {
+                        return;
+                    }
+                    diff (absPath, myRevision1,myRevision2, myWriter);
+                }
+            }
+            catch (ClientException ce) {
+            	DebugLog.error(ce);
+            }
+        }
+    }
+
+    private void diff(String path, Revision revision1, Revision revision2, Writer outWriter) throws ClientException {
+        byte byteArray1[] = fileContent(path, revision1);
+        byte byteArray2[] = fileContent(path, revision2);
+
+        ByteArrayInputStream is1 = new ByteArrayInputStream(byteArray1);
+        ByteArrayInputStream is2 = new ByteArrayInputStream(byteArray2);
+
+        Map properties = new HashMap();
+        properties.put(SVNUniDiffGenerator.COMPARE_EOL_PROPERTY, Boolean.FALSE.toString());
+        properties.put(SVNUniDiffGenerator.WHITESPACE_PROPERTY, Boolean.FALSE.toString());
+        
+        String encoding = System.getProperty("file.encoding", "US-ASCII");
+
+        try {
+            ISVNWorkspace ws = createWorkspace(path);
+            ISVNWorkspace root = ws.getRootWorkspace(true,true);
+            String targetPath = SVNUtil.getWorkspacePath(root, path);
+            String osTargetPath = targetPath;
+
+            if (FSUtil.isWindows) {
+                osTargetPath = targetPath.replace('/', File.separatorChar);
+            }
+            ISVNDiffGenerator diff = SVNDiffManager.getDiffGenerator(SVNUniDiffGenerator.TYPE, properties);
+            if (diff == null) {
+            	throwException(new SVNException("no suitable diff generator found"));
+            	return;
+            }
+            diff.generateDiffHeader(osTargetPath,
+                                    "(" + revision1.toString() + ")",
+                                    "(" + revision2.toString() + ")",
+                                    outWriter);
+            String mimeType = ws.getPropertyValue(targetPath,
+                                                  SVNProperty.MIME_TYPE);
+            if (mimeType != null && !mimeType.startsWith("text")) {
+                diff.generateBinaryDiff(is1, is2, encoding, outWriter);
+            } else {
+                diff.generateTextDiff(is1, is2, encoding, outWriter);
+            }
+        } catch (SVNException e) {
+            throwException(e);
+        } catch (IOException ioe) {
+            throw new ClientException(ioe.getMessage(), "", 0);            
+        }
     }
 
     /**
@@ -1313,10 +1432,6 @@ public class SVNClient implements SVNClientInterface {
         Status st = new Status(path, url, nodeKind, revision, lastChangedRevision, lastChangedDate, lastCommitAuthor, textStatus, propStatus,
                 repositoryTextStatus, repositoryPropStatus, locked, copied, conflictOld, conflictNew, conflictWorking, urlCopiedFrom, revisionCopiedFrom,
                 switched);
-        /*
-        if (!st.isManaged() || st.getPropStatus() != StatusKind.normal || 
-                st.getTextStatus() != StatusKind.normal) {
-        }*/
         DebugLog.log(path + ": created status: " + st.getTextStatus() + ":" + st.getPropStatus() + ":" + st.getNodeKind());
         return st;
     }
