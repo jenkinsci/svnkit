@@ -23,6 +23,8 @@ import java.util.Map;
  */
 public class SVNDiffManager {
     
+    public static final String DEFAULT_TYPE = SVNNormalDiffGenerator.TYPE;
+    
     private static Map ourDiffGeneratorFactories;
     
     private SVNDiffManager() {
@@ -47,14 +49,24 @@ public class SVNDiffManager {
         generator.generateDiffHeader(path, leftInfo, rightInfo, output);
     }
 
-    public static void generateDiff(InputStream left, InputStream right, String encoding, Writer output, ISVNDiffGenerator generator) throws IOException {
+    public static void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output, ISVNDiffGenerator generator) throws IOException {
         if (generator == null || left == null || right == null || output == null) {
             throw new NullPointerException("null argument is not accepted by SVNDiffManager.generateDiff()");
         }
         if (encoding == null) {
             encoding = System.getProperty("file.encoding", "US-ASCII");
         }
-        generator.generateDiff(left, right, encoding, output);
+        generator.generateTextDiff(left, right, encoding, output);
+    }
+    
+    public static void generateBinaryDiff(InputStream left, InputStream right, String encoding, Writer output, ISVNDiffGenerator generator) throws IOException {
+        if (generator == null || left == null || right == null || output == null) {
+            throw new NullPointerException("null argument is not accepted by SVNDiffManager.generateDiff()");
+        }
+        if (encoding == null) {
+            encoding = System.getProperty("file.encoding", "US-ASCII");
+        }
+        generator.generateBinaryDiff(left, right, encoding, output);
     }
     
     public static void registerDiffGeneratorFactory(ISVNDiffGeneratorFactory factory, String type) {

@@ -18,7 +18,7 @@ import java.util.Map;
  * @author TMate Software Ltd.
  */
 public interface ISVNDiffGeneratorFactory {
-
+    
     public ISVNDiffGenerator createGenerator(Map properties);
 
 }

@@ -23,6 +23,8 @@ public interface ISVNDiffGenerator {
 
     public void generateDiffHeader(String item, String leftInfo, String rightInfo, Writer output) throws IOException;
 
-    public void generateDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException;
+    public void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException;
+
+    public void generateBinaryDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException;
     
 }

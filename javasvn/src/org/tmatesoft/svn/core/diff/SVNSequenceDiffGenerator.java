@@ -49,8 +49,13 @@ public abstract class SVNSequenceDiffGenerator implements ISVNDiffGenerator  {
         }
         return myEOL;
     }
+
+    public void generateBinaryDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
+        output.write("Binary files are different");
+        output.write(getEOL());
+    }
     
-    public void generateDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
+    public void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
         SVNSequenceLineReader reader = new SVNSequenceLineReader(false);
         
         SVNSequenceLine[] leftLines = reader.read(left);
