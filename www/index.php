@@ -89,7 +89,7 @@ and problem support. If you're interested in professional JavaSVN support, pleas
 <h5>License</h5>
 <a id="normal" href="license.html">Licence&nbsp;Agreement</a>&nbsp;(BSD-like)
 <h5>Documentation</h5>
-<a id="normal" href="structure.html">How&nbsp;to&nbsp;Use</a><br/>
+<a id="normal" href="usage.html">How&nbsp;to&nbsp;Use</a><br/>
 <a id="normal" href="build.html">Build&nbsp;Instructions</a><br/>
 <a id="normal" href="subclipse.html">For&nbsp;Subclipse&nbsp;Users</a><br/>
 <a id="normal" href="javadoc/index.html">JavaDoc</a>

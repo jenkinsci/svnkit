@@ -57,7 +57,7 @@ easy steps to make Subclipse and JavaSVN work together:</p>
 <ul>
 <li>Install <a id="normal" href="http://subclipse.tigris.org/">Subclipse</a> (version 0.9.25). You will need Eclipse 3.0 or newer.</li>
 <li><a id="normal" href="http://tmate.org/svn/">Download</a> latest version of JavaSVN library. You will need javasvn.jar file from the library distribution.</li>
-<li>Put javasvn.jar and jsch-0.1.18.jar files into ECLIPSE_HOME/plugins/org.tigris.subversion.subclipse.core_0.9.25/ directory.</li>
+<li>Put javasvn.jar and jsch.jar files into ECLIPSE_HOME/plugins/org.tigris.subversion.subclipse.core_0.9.25/ directory.</li>
 <li>Modify plugin.xml file in the same directory the following way:
 <pre  style="line-height: 1.5em">
 &lt;!--
@@ -68,7 +68,7 @@ easy steps to make Subclipse and JavaSVN work together:</p>
       &lt;library name="javasvn.jar"&gt;
          &lt;export name="*"/&gt;
       &lt;/library&gt;
-      &lt;library name="jsch-0.1.18.jar"&gt;
+      &lt;library name="jsch.jar"&gt;
          &lt;export name="*"/&gt;
       &lt;/library&gt;
 </pre>
