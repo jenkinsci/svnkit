@@ -1,3 +1,7 @@
+= version 0.8.2.1
+
++ SvnClient: add method didn't work when adding directories, fixed.
+
 = version 0.8.2
 
 + svn+ssh: persistent ssh connection is used to improve svn+ssh performance.
@@ -7,7 +11,7 @@
   process non-canonicalized paths.
 + wc: changes in externals were not committed correctly over http when using ISVNWorkspace.commit(...), fixed.
 + SvnClient: diff method implemented (so that Eclipse "generate patch" action works).  
-+ SvnClient: copu and move methods fixed to work properly in Subclipse repository view.
++ SvnClient: copy and move methods fixed to work properly in Subclipse repository view.
 + SvnClient: setPrompt support, better notifications, "windows" paths are handled correctly.
 + logging: Pluggable loggers support and detailed http logging added (thanks to Marc Strapez). 
 + logging: Eclipse JavaSVN version uses Eclipse logging facilities.
