@@ -641,7 +641,11 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 doDeleteFiles(child);
             }
         }
+        boolean keepWC = !entry.isDirectory() && entry.asFile().isContentsModified();
         getAdminArea().deleteArea(entry);
+        if (keepWC) {
+            return;
+        }
         File file = getRootEntry().getWorkingCopyFile(entry);
         if (file != null && file.exists()) {
             file.delete();
