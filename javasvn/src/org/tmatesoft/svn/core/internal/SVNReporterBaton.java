@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -34,11 +35,13 @@ class SVNReporterBaton implements ISVNReporterBaton {
     private boolean myIsRecursive;
     private String myTarget;
     private Collection myExternals;
+    private Collection myMissingEntries;
 
     public SVNReporterBaton(ISVNEntry root, String target, boolean recursive) {
         myRoot = root;
         myIsRecursive = recursive;
         myTarget = target;
+        myMissingEntries = new HashSet();
     }
 
     protected void reportEntry(ISVNEntry entry, ISVNReporter reporter, String parentURL, long parentRevision) throws SVNException {
@@ -54,6 +57,7 @@ class SVNReporterBaton implements ISVNReporterBaton {
             reporter.linkPath(SVNRepositoryLocation.parseURL(url), path, revision, false); 
         } else if (entry.isMissing()) {
             reporter.deletePath(path);
+            myMissingEntries.add(entry);
             DebugLog.log("REPORT.MISSING: " + path);
         } else if (revision != parentRevision) {
             DebugLog.log("REPORT: " + path + " : " + revision);
@@ -68,12 +72,26 @@ class SVNReporterBaton implements ISVNReporterBaton {
             if (targetEntry != null) {
                 revision = SVNProperty.longValue(targetEntry.getPropertyValue(SVNProperty.REVISION));
             }
-            DebugLog.log("REPORT.TARGET: " + myTarget + " : " + revision);
-            reporter.setPath("", revision, revision <= 0);
+            if (revision >= 0) {
+                DebugLog.log("REPORT.TARGET: " + myTarget + " : " + revision);
+                reporter.setPath("", revision, revision == 0);
+            } else {
+                revision = SVNProperty.longValue(myRoot.getPropertyValue(SVNProperty.REVISION)); 
+                DebugLog.log("REPORT.MISSING.TARGET: " + myTarget + " : " + revision);
+                reporter.setPath("", revision, false);
+                reporter.deletePath("");
+                if (targetEntry != null) {
+                    myMissingEntries.add(targetEntry);
+                }
+            }
         } else {
             doReport(myRoot, reporter, null, -1);
         }
         reporter.finishReport();
+    }
+    
+    public Iterator missingEntries() {
+        return myMissingEntries.iterator();
     }
 
     private void doReport(ISVNEntry r, ISVNReporter reporter, String parentURL, long parentRevision) throws SVNException {

@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.ws.fs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -244,9 +245,15 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         String revision = getPropertyValue(SVNProperty.REVISION);
         Set obstructedChildren = new HashSet();
         if (myChildren != null) {
-            for(Iterator children = childEntries(); children.hasNext();) {
+            Collection entries = new ArrayList(myChildren.values()); 
+            for(Iterator children = entries.iterator(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
                 if (!recursive && child.isDirectory()) {
+                    continue;
+                }
+                if (child.getPropertyValue(SVNProperty.REVISION) == null) {
+                    // missing child that was deleted.
+                    deleteChild(child.getName(), true);
                     continue;
                 }
                 if (child.isScheduledForAddition() || child.isScheduledForDeletion()) {

@@ -306,10 +306,21 @@ public class SVNWorkspace implements ISVNWorkspace {
                 target = targetEntry != null ? targetEntry.getName() : PathUtil.tail(path);
                 targetEntry = locateParentEntry(path);
             }
+            if (targetEntry.isMissing()) {
+                target = targetEntry.getName();
+                targetEntry = locateParentEntry(path);
+            }
             SVNRepository repository = SVNUtil.createRepository(this, targetEntry.getPath());
             SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, targetEntry, false, target, recursive);
             SVNReporterBaton reporterBaton = new SVNReporterBaton(targetEntry, target, recursive);
             repository.update(revision, target, recursive, reporterBaton, editor);
+            
+            for(Iterator missingPaths = reporterBaton.missingEntries(); missingPaths.hasNext();) {
+                ISVNEntry missingEntry =  (ISVNEntry) missingPaths.next();
+                if (locateEntry(missingEntry.getPath()) == null) {
+                    fireEntryUpdated(missingEntry, SVNStatus.DELETED, 0, -1);
+                }
+            }
 
             if (myExternalsHandler != null) {
                 Collection existingExternals = reporterBaton.getExternals();
