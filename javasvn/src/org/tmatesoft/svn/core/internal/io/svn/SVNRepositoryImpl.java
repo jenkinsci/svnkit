@@ -538,7 +538,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             // assuming it is full path.
             return path;
         }
-        String fullPath = PathUtil.append(getLocation().getPath(), path);
+        String fullPath = PathUtil.append(PathUtil.decode(getLocation().getPath()), path);
         // substract root path
         if (fullPath.startsWith(getRepositoryRoot())) {
             fullPath = fullPath.substring(getRepositoryRoot().length());
