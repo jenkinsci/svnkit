@@ -142,5 +142,27 @@ public class DAVUtil {
         }
         return target;
     }
+    
+    public static StringBuffer getCanonicalPath(String path, StringBuffer target) {
+    	target = target == null ? new StringBuffer() : target;
+    	int end = path.length() - 1;
+    	for(int i = 0; i <= end; i++) {
+    		char ch = path.charAt(i);
+    		switch (ch) {
+    		case '/': 
+    			if (i == end && i != 0) {
+    				// skip trailing slash
+    				break;
+    			} else if (i > 0 && path.charAt(i - 1) == '/') {
+    				// skip duplicated slashes
+    				break;
+    			}
+    		default:
+    			target.append(ch);
+    		}
+    	}
+    	return target;
+    			
+    }
 
 }

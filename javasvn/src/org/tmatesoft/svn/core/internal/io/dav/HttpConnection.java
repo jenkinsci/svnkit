@@ -293,7 +293,7 @@ class HttpConnection {
         StringBuffer sb = new StringBuffer();
         sb.append(method);
         sb.append(' ');
-        sb.append(path);
+        DAVUtil.getCanonicalPath(path, sb);
         sb.append(' ');
         sb.append("HTTP/1.1");
         sb.append(HttpConnection.CRLF);
