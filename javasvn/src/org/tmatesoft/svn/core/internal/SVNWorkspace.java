@@ -990,6 +990,9 @@ public class SVNWorkspace implements ISVNWorkspace {
 
     public void copy(String source, String destination, boolean move) throws SVNException {
         try {
+            if (locateEntry(destination, true) != null) {
+                throw new SVNException("'" + destination + "' already exists in working copy");
+            }
             ISVNEntry entry = locateParentEntry(destination);
             String name = PathUtil.tail(destination);
             ISVNEntry toCopyParent = locateParentEntry(source);
