@@ -634,7 +634,9 @@ public class SVNClient implements SVNClientInterface {
                     throwException(new SVNException("remove method doesn't accept remote locations mixed with WC path"));
                 }
                 try {
-                    ISVNWorkspace ws = createWorkspace(path[i]);
+					path[i] = path[i].replace(File.separatorChar, '/');
+					String parentPath = PathUtil.removeTail(path[i]);
+                    ISVNWorkspace ws = createWorkspace(parentPath);
                     ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                     ws.delete(SVNUtil.getWorkspacePath(ws, path[i]), force);
                 } catch (SVNException e) {
