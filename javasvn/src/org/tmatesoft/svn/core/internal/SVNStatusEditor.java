@@ -173,7 +173,7 @@ public class SVNStatusEditor implements ISVNEditor {
         Collection remoteMatches = new LinkedList();
         for(Iterator remotePaths = myRemoteStatuses.keySet().iterator(); remotePaths.hasNext();) {
             String remotePath = (String) remotePaths.next();
-            if (remotePath.startsWith(relativePath)) {
+            if (remotePath.equals(relativePath) || remotePath.startsWith(relativePath + "/")) {
                 String name = remotePath.substring(relativePath.length());
                 name = PathUtil.removeLeadingSlash(name);
                 if (name.indexOf('/') < 0) {

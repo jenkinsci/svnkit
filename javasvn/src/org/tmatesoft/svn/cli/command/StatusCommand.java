@@ -144,14 +144,14 @@ public class StatusCommand extends SVNCommand {
             sb.append("  ");
             sb.append(remote);
 
-            String wcRevision = null;
+            String wcRevision = "";
             if (!status.isManaged()) {
                 wcRevision = "";
-            } else if (status.getWorkingCopyRevision() < 0) {
+            } else if (status.getWorkingCopyRevision() < 0 && remote != '*') {
                 wcRevision = " ? ";
             } else if (status.isAddedWithHistory()) {
                 wcRevision = "-";
-            } else {
+            } else if (status.getWorkingCopyRevision() >= 0) {
                 wcRevision = status.getWorkingCopyRevision() + "";
             }
             if (status.isManaged() && status.getContentsStatus() == SVNStatus.EXTERNAL) {
@@ -164,7 +164,7 @@ public class StatusCommand extends SVNCommand {
                 String commitedRevsion;
                 if (status.isManaged() && status.getRevision() >= 0) {
                     commitedRevsion = status.getRevision() + "";
-                } else if (status.isManaged()) {
+                } else if (status.isManaged() && remote != '*') {
                     commitedRevsion = " ? ";
                 } else {
                     commitedRevsion = "";
@@ -178,12 +178,12 @@ public class StatusCommand extends SVNCommand {
                 String author; 
                 if (status.isManaged() && status.getAuthor() != null) {
                     author = status.getAuthor();
-                } else if (status.isManaged()) {
+                } else if (status.isManaged() && remote != '*') {
                     author = " ? ";                    
                 } else {
                     author = "";
                 }
-                author = formatString(author, 12, true);
+                author = formatString(author.trim(), 12, true);
                 sb.append(" ");
                 sb.append(author);
                 sb.append(" ");
@@ -244,8 +244,8 @@ public class StatusCommand extends SVNCommand {
     }
 
     private static String formatString(String str, int chars, boolean left) {
-        if (str.length() >= chars) {
-            return str.substring(0, chars - 1);
+        if (str.length() > chars) {
+            return str.substring(0, chars);
         }
         StringBuffer formatted = new StringBuffer();
         if (left) {
