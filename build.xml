@@ -105,6 +105,9 @@
             <fileset dir="javasvn/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
             </fileset>
+            <fileset dir="${basedir}">
+                <include name="build.properties" />
+            </fileset>
             <fileset dir="contrib/sequence/bin" />
             <fileset dir="contrib/javahl/bin" >
                 <exclude name="org/tigris/subversion/javahl/tests/**" />

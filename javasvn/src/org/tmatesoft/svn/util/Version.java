@@ -12,7 +12,7 @@ import java.util.Properties;
  */
 public class Version {
 	
-	private static String PROPERTIES_PATH = "org/tmatesoft/svn/util/javasvn.properties";
+	private static String PROPERTIES_PATH = "build.properties";
 	
 	private static final String VERSION_STRING_PROPERTY = "javasvn.version.string";
 	private static final String VERSION_MAJOR_PROPERTY = "javasvn.version.major";
