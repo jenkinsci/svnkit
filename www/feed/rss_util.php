@@ -4,10 +4,8 @@ function publish_html($rss) {
 $cacheFile = $_SERVER["DOCUMENT_ROOT"] . "/svn/feed/html.cache";
                                        
 if (file_exists($cacheFile)) {
-//    if (time() - filemtime($cacheFile) <= 3600) {
-        readfile($cacheFile);
-        return;
-  //  }
+    readfile($cacheFile);
+    return;
 } 
                                      
 $repository = "http://72.9.228.230/svn/jsvn/tags/";
@@ -50,19 +48,16 @@ if (preg_match_all("/<li><a href=\"([^>(\.\.)]*)\/\">(.*)(<\/a>)<\/li>/", $conte
            continue;
        }
 
-       $standalone_name = "org.tmatesoft.svn_1.0.0_" . $build . ".standalone.zip";
-       $eclipse_name = "org.tmatesoft.svn_1.0.0_" . $build . ".eclipse.zip";
-       $src_name = "org.tmatesoft.svn_1.0.0_" . $build . ".src.zip";
+       $standalone_name = "org.tmatesoft.svn_" . $build . ".standalone.zip";
+       $src_name = "org.tmatesoft.svn_" . $build . ".src.zip";
        $standalone_file = $_SERVER["DOCUMENT_ROOT"] . "/svn/" . $standalone_name;
-       $eclipse_file    = $_SERVER["DOCUMENT_ROOT"] . "/svn/" . $eclipse_name;
 
-       if (!file_exists($standalone_file) || !file_exists($eclipse_file)) {
+       if (!file_exists($standalone_file)) {
           continue;  
        }
 
        $svn_url = $repository . $build . "/";
        $standalone_link = $rss . $standalone_name;
-       $eclipse_link    = $rss . $eclipse_name;
        $src_url    = $rss . $src_name;
 
        ereg("^=[^\n]+\n([^=]+).*$", $changelog, $m);
@@ -71,7 +66,6 @@ if (preg_match_all("/<li><a href=\"([^>(\.\.)]*)\/\">(.*)(<\/a>)<\/li>/", $conte
        
        $item_description  = "<b>" . $date_string . "</b>, build: " . $build . "<p><table style=\"font-size: 100%;\">";
        $item_description .= "<tr><td>standalone version:&nbsp;</td><td><a href=\"" . $standalone_link . "\">" . $standalone_name . "</a></td></tr>";
-       $item_description .= "<tr><td>eclipse version:&nbsp;</td><td><a href=\"" . $eclipse_link . "\">" . $eclipse_name . "</a></td></tr>";
        $item_description .= "<tr><td>source code archive:&nbsp;</td><td><a href=\"" . $src_url . "\">" . $src_name . "</a></td></tr></table></p>";
        $item_description .= "<tr><td>source code:&nbsp;</td><td><a href=\"" . $svn_url . "\">@svn repository</a></td></tr></table></p>";
        $item_description .= "<h5>ChangeLog</h5><pre>" . $changelog_str . "</pre>";
@@ -84,7 +78,6 @@ if (preg_match_all("/<li><a href=\"([^>(\.\.)]*)\/\">(.*)(<\/a>)<\/li>/", $conte
        $html_description .= "<tr><td colspan=\"2\"><pre>" . $changelog_str . "</pre>";
        $html_description .= "<a href=\"" . $changelog_url . "\">full changelog up to this build</a></td></tr>";
        $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Standalone Version&nbsp;</td><td><a href=\"" . $standalone_link . "\">" . $standalone_name . "</a></td></tr>";
-       $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Eclipse Version&nbsp;</td><td><a href=\"" . $eclipse_link . "\">" . $eclipse_name . "</a></td></tr>";
        $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Source Code Archive&nbsp;</td><td><a href=\"" . $src_url . "\">" . $src_name . " </a></td></tr>";
        $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Source Code&nbsp;</td><td><a href=\"" . $svn_url . "\">@svn repository</a></td></tr>";
        $html_description .= "<tr colspan=2><td></td></tr>";
@@ -144,7 +137,7 @@ if (is_dir($dir)) {
        sort($entries);
        if (count($entries) > 0) {
          $result = $entries[count($entries) - 1];
-         $result = "<tr><td colspan=2>Latest binary version is <a id=normal href=\"org.tmatesoft.svn_1.0.0_" . $result . ".standalone.zip\">org.tmatesoft.svn_1.0.0_" . $result .".standalone.zip</a></td></tr>";
+         $result = "<tr><td colspan=2>Latest binary version is <a id=normal href=\"org.tmatesoft.svn_" . $result . ".standalone.zip\">org.tmatesoft.svn_" . $result .".standalone.zip</a></td></tr>";
        }
    }
 }    

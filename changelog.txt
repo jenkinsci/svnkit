@@ -1,21 +1,26 @@
-= version 1.0.0 build 20050131
+= version 0.8.0
+
++ new builds versioning schema introduced
++ update site with eclipse plugin and subclipse extension added 
+
+= build 20050131
 
 + import works properly with single file and when importing to
   non-yet-existing directories
 + switch works properly when switching single file
 + more minor bugfixes
 
-= version 1.0.0 build 20050120
+= build 20050120
 
 + bugs with commiting locally copied files fixed
 + DAV '/' repository location handled correctly
 
-= version 1.0.0 build 20050112
+= build 20050112
 
 + lot of incompatibilities with native svn fixed
 + SVNClient supports remote deletion, copy and move operations
 
-= version 1.0.0 build 20050106
+= build 20050106
 
 + number of bugs in remote status implementation fixed
 + ISVNWorkspace.getFileContent method restored to keep binary compatibility 
@@ -23,14 +28,14 @@
   generating diff in different formats ('unified' and 'normal') for arbitrary
   input sources
 
-= version 1.0.0 build 20050105
+= build 20050105
 
 + svn+ssh authentication failed to work in some cases - fixed
 + revisions in working copy now updated correctly after update
 + got rid of number of minor inconsistences between JavaSVN and native SVN
 + http and https protocols supports compressed data (gzip)
 
-= version 1.0.0 build 20041223
+= build 20041223
 
 + ISVNWorkspace.delete now accepts 'force' parameter
 + bug fixed that prevented Subclipse committing single 
@@ -38,57 +43,57 @@
 + complete svn and svn+ssh protocol logging may be enabled 
   with -Djavasvn.log.svn=true command line switch
 
-= version 1.0.0 build 20041221
+= build 20041221
 
 + when using svn+ssh JavaSVN takes private key path from the java property,
   if it is not defined explicitly
 + svn+ssh bugfixes
 + bugfixes
 
-= version 1.0.0 build 20041219
+= build 20041219
 
 + infinite loop on commits that includes workspace root fixed
 + JavaHL: SVNClient accepts all revision kinds (DATE, HEAD, etc.)
 
-= version 1.0.0 build 20041217
+= build 20041217
 
 + bugfixes
 
-= version 1.0.0 build 20041216
+= build 20041216
 
 + bugfixes
 
-= version 1.0.0 build 20041211
+= build 20041211
 
 + command line svn client (status, import, checkout are implemented)
 + python tests launcher to reuse original svn python tests suite
 + bugfixes
 
-= version 1.0.0 build 20041209
+= build 20041209
 
 + bugfixes
 
-= version 1.0.0 build 20041204
+= build 20041204
 
 + bugfixes
 + JavaSVN works with Subclipse 0.9.24
 
-= version 1.0.0 build 20041130
+= build 20041130
 
 + bugfixes
 
-= version 1.0.0 build 20041126
+= build 20041126
 
 + svn+shh protocol support (with the jsch library)
 + bugfixes
 
-= version 1.0.0 build 20041124
+= build 20041124
 
 + javahl copy, move and mkdir methods implementation
 + methods to manage global ignore added to ISVNWorkspace
 + bugfixes
 
-= version 1.0.0 build 20041123
+= build 20041123
 
 + recursive property set operation
 + ISVNWorkspace accepts credentials provider
@@ -96,31 +101,31 @@
 + javahl replacement works with Subclipse
 + bugfixes
 
-= version 1.0.0 build 20041118
+= build 20041118
 
 + javahl implementation (SvnClient) is included into the library
 + workspace accepts credentials provider
 
-= version 1.0.0 build 20041116
+= build 20041116
 
 + bugfixes
 
-= version 1.0.0 build 20041110
+= build 20041110
 
 + svn:externals support
 + bugfixes
 
-= version 1.0.0 build 20041109
+= build 20041109
 
 + bug that prevents checkout sometimes fixed
 
-= version 1.0.0 build 20041108
+= build 20041108
 
 + authentication API simplified
 + performance improvements
 + bugfixes
 
-= version 1.0.0 build 20041105
+= build 20041105
 
 + switch and relocate operations
 + bugfixes
