@@ -32,16 +32,15 @@
       <import plugin="org.eclipse.osgi"/>
       <import plugin="org.tmatesoft.javasvn"/>
    </requires>
-
    <extension-point id="svnPropertyTypes" name="SVN Property Type Definitions" schema="schema/svnPropertyTypes.exsd"/>
-   <extension-point id="svnPropertyGroups" name="SVN Property Group Definitions" schema="schema/PropertyGroups.exsd"/>
 
    <extension
          point="org.eclipse.team.core.repository">
       <repository
             typeClass="org.tigris.subversion.subclipse.core.SVNTeamProviderType"
             class="org.tigris.subversion.subclipse.core.SVNTeamProvider"
-            id="org.tigris.subversion.subclipse.core.svnnature">
+            id="org.tigris.subversion.subclipse.core.svnnature"
+            metaFilePaths=".svn/entries,.project">
       </repository>
    </extension>
    <extension
@@ -211,102 +210,74 @@
    <extension
          point="org.tigris.subversion.subclipse.core.svnPropertyTypes">
       <svnPropertyTypes
-            groupId="org.tigris.subversion.subclipse.core.SVN"
             type="String"
+            fileOrFolder="file"
             name="svn:executable">
          <description>
-         The svn:executable property is used to control a versioned file&apos;s filesystem-level execute permission
-bit in a semi-automated way. This property has no defined values-its mere presence indicates a
-desire that the execute permission bit be kept enabled by Subversion. Removing this property will restore
-full control of the execute bit back to the operating system.
-On many operating systems, the ability to execute a file as a command is governed by the presence of an
-execute permission bit. This bit usually defaults to being disabled, and must be explicitly enabled by the
-user for each file that needs it. In a working copy, new files are being created all the time as new versions
-of existing files are received during an update. This means that you might enable the execute bit on
-a file, then update your working copy, and if that file was changed as part of the update, its execute bit
-might get disabled. So, Subversion provides the svn:executable property as a way to keep the execute
-bit enabled.
-This property has no effect on filesystems that have no concept of an executable permission bit, such as
-FAT32 and NTFS. Also, although it has no defined values, Subversion will force its value to * when
-setting this property. Finally, this property is valid only on files, not on directories
-</description>
+svn:executable
+If present, make the file executable.  The value you enter for this property will
+be canonicalized to *, so just enter *.
+        </description>
       </svnPropertyTypes>
       <svnPropertyTypes
-            groupId="org.tigris.subversion.subclipse.core.SVN"
             type="String"
+            fileOrFolder="file"
             name="svn:mime-type">
          <description>
-The svn:mime-type property serves many purposes in Subversion. Besides being a general-purpose
-storage location for a file's Multipurpose Internet Mail Extensions (MIME) classification, the value of
-this property determines some behavioral characteristics of Subversion itself.
-</description>
+svn:mime-type
+The mimetype of the file. Used to determine whether to merge the file, and how
+to serve it from Apache. A mimetype beginning with &apos;text/&apos; (or an absent mimetype)
+is treated as text. Anything else is treated as binary.
+        </description>
       </svnPropertyTypes>
       <svnPropertyTypes
-            groupId="org.tigris.subversion.subclipse.core.SVN"
             type="String"
+            fileOrFolder="folder"
             name="svn:ignore">
          <description>
-The svn:ignore property contains a list of file patterns which certain Subversion operations will ignore.
-Perhaps the most commonly used special property, it works in conjunction with the globalignores
-run-time configuration option (see the section called "Config") to filter unversioned files and
-directories out of commands like svn status, svn add, and svn import.
-The rationale behind the svn:ignore property is easily explained. Subversion does not assume that
-every file or subdirectory in a working copy directory is intended for version control. Resources must be
-explicitly placed under Subversion's management using the svn add or svn import commands. As a result,
-there are often many resources in a working copy that are not versioned.
-</description>
+svn:ignore
+A newline separated list of file patterns to ignore.  This property is set
+automatically when you use the Add to svn:ignore option.
+        </description>
       </svnPropertyTypes>
       <svnPropertyTypes
-            groupId="org.tigris.subversion.subclipse.core.SVN"
             type="String"
+            fileOrFolder="file"
             name="svn:keywords">
          <description>
-Subversion has the ability to substitute keywords-pieces of useful, dynamic information about a versioned
-file-into the contents of the file itself. Keywords generally describe information about the last
-time the file was known to be modified. Because this information changes each time the file changes,
-and more importantly, just after the file changes, it is a hassle for any process except the version control
-system to keep the data completely up-to-date. Left to human authors, the information would inevitably
-grow stale.
-</description>
+svn:keywords
+Keywords to be expanded. Valid keywords are:
+
+URL, HeadURL               The URL for the head version of the object.
+Author, LastChangedBy      The last person to modify the file.
+Date, LastChangedDate      The date/time the object was last modified.
+Rev, LastChangedRevision   The last revision the object changed.
+Id                         A compressed summary of the previous 4 keywords.
+        </description>
       </svnPropertyTypes>
       <svnPropertyTypes
-            groupId="org.tigris.subversion.subclipse.core.SVN"
             type="String"
+            fileOrFolder="file"
             name="svn:eol-style">
          <description>
-Unless otherwise noted using a versioned file's svn:mime-type property, Subversion assumes the
-file contains human-readable data. Generally speaking, Subversion only uses this knowledge to determine
-if contextual difference reports for that file are possible. Otherwise, to Subversion, bytes are bytes.
-</description>
+svn:eol-style
+One of &apos;native&apos;, &apos;LF&apos;, &apos;CR&apos;, &apos;CRLF&apos;.
+        </description>
       </svnPropertyTypes>
       <svnPropertyTypes
-            groupId="org.tigris.subversion.subclipse.core.SVN"
             type="String"
+            fileOrFolder="folder"
             name="svn:externals">
          <description>
-The svn:externals property contains instructions for Subversion to populate a versioned directory
-with one or more other checked-out Subversion working copies.
-</description>
-      </svnPropertyTypes>
-      <svnPropertyTypes
-            groupId="org.tigris.subversion.subclipse.core.SVN"
-            type="String"
-            name="svn:externals">
-         <description>
-The svn:special property is the only svn: property that isn't meant to be directly set or modified
-by users. Subversion automatically sets this property whenever a "special" object is scheduled for addition,
-such as a symbolic link.
-</description>
+svn:externals
+A newline separated list of module specifiers, each of which consists of a relative
+directory path, optional revision flags, and an URL.
+
+For example:
+
+foo      http://example.com/repos/zig
+foo/bar  -r 1234  http://example.com/repos/zag
+        </description>
       </svnPropertyTypes>
  </extension>
-   <extension
-         point="org.tigris.subversion.subclipse.core.svnPropertyGroups"> 
-      <svnPropertyGroups
-            id="org.tigris.subversion.subclipse.core.SVN"
-            name="SVN">
-         <description>
-Standard subversion properties
-         </description>
-      </svnPropertyGroups>
-   </extension>
 </plugin>

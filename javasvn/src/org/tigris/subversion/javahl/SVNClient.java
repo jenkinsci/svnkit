@@ -1422,6 +1422,12 @@ public class SVNClient implements SVNClientInterface {
         return null;
     }
     
+    public static void enableLogging(int logLevel, String logFilePath) {
+    }
+    
+    public static final class LogLevel implements SVNClientLogLevel{
+    }
+    
     private SVNRepository createRepository(String url) throws SVNException {
         SVNRepository repository = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
 		if (myPrompt != null) {

@@ -18,6 +18,7 @@ javasvn-eclipse/org.tmatesoft.javasvn.subclipse/commons-logging-1.0.4.jar -text
 javasvn-eclipse/org.tmatesoft.javasvn.subclipse/jakarta-regexp-1.3.jar -text
 javasvn-eclipse/org.tmatesoft.javasvn.subclipse/plugin.properties eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.subclipse/plugin.xml eol=lf
+javasvn-eclipse/org.tmatesoft.javasvn.subclipse/schema/svnPropertyTypes.exsd eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.subclipse/svnClientAdapter.patched.jar -text
 javasvn-eclipse/org.tmatesoft.javasvn/.options eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn/plugin.xml eol=lf
