@@ -61,40 +61,15 @@ easy steps to make Subclipse and JavaSVN work together.</p>
 Use <span style="color:#669999;">Help | Software Updates | Find and Install</span> in main menu.</li>
 <li>Install "JavaSVN  Subclipse Extension" feature.</li>
 </ul>
-<!--
-<b>More complicated way:</b>
-<ul>
-<li>Install <a id="normal" href="http://subclipse.tigris.org/">Subclipse</a> (version 0.9.27). You will need Eclipse 3.0 or newer.</li>
-<li><a id="normal" href="http://tmate.org/svn/">Download</a> latest version of JavaSVN library. You will need javasvn.jar file from the library distribution.</li>
-<li>Put javasvn.jar and jsch.jar files into ECLIPSE_HOME/plugins/org.tigris.subversion.subclipse.core_0.9.27/ directory.</li>
-<li>Modify plugin.xml file in the same directory the following way:
-<pre  style="line-height: 1.5em">
-&lt;!--
-      &lt;library name="svnjavahl.jar"&gt;
-         &lt;export name="*"/&gt;
-      &lt;/library&gt;
---&gt;
-      &lt;library name="javasvn.jar"&gt;
-         &lt;export name="*"/&gt;
-      &lt;/library&gt;
-      &lt;library name="jsch.jar"&gt;
-         &lt;export name="*"/&gt;
-      &lt;/library&gt;
-</pre>
-<div style="line-height: 1.5em">
-<p>Above modification will make Sublipse use JavaSVN version of JavaHL instead of native one. Jsch library is required to enable svn+ssh support. You may also download already modified plugin.xml from <a id="normal" href="http://tmate.org/svn/plugin.xml">here</a>.
+<h4>HTTP proxy setup</h4>
+<p>Define your proxy port and host in Eclipse <b>Install/Update</b> preferences page.</p>
+<p>Additional proxy settings may be defined in <code>ECLIPSE_HOME/configuration/config.ini</code> file:
+<code><br/>
+http.proxyUser&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code>user name if proxy needs authentication<br/>
+<code>http.proxyPassword&nbsp;&nbsp;</code>password if proxy needs authentication<br/>
+<code>http.nonProxyHosts&nbsp;&nbsp;</code>command or | delimited host names that should bypass proxy</code>
 </p>
-</div></li>
-<li>If you would like not to install svn libraries at all, you may also use patched svnClientAdater.jar (version 0.9.23) that doesn't 
-check for existense of the native svn libraries. You may download it at <a id="normal" href="http://tmate.org/svn/svnClientAdapter.jar">http://tmate.org/svn/svnClientAdapter.jar</a>.<br/>
-Download and put this file into ECLIPSE_HOME/plugins/org.tigris.subversion.subclipse.core_0.9.27/ directory in place of
-existing <code>svnClientAdapter.jar</code> file.</li>
-<li>Start Eclipse with <code>-clean</code> command line argument to make it clean caches and use new libraries.</li>
-<li>Sometimes <code>-clean</code> argument is not enough and after restarting, Eclipse still uses cached libraries. In this case delete 
-<code>ECLIPSE_HOME/configuration</code> directory and restart Eclipse.</li>
-<li>When new version of JavaSVN will become available, just replace older version javasvn.jar file with the newer one.</li>
-</ul>
--->
+
 <h4>SVN+SSH authentication with private key</h4>
 <p>JavaSVN uses pure java <a id=normal href="http://www.jcraft.com">JSCH library</a> to establish SSH 
 connection. This library supports only SSH version 2, with password or private key authentication. Using 
