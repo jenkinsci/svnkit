@@ -801,7 +801,8 @@ public class SVNWorkspace implements ISVNWorkspace {
 	}
 
 	public SVNCommitPacket createCommitPacket(String[] paths, boolean recursive, boolean includeParents) throws SVNException {
-		return new SVNCommitPacket(getCommitRoot(paths), getCommittables(paths, recursive, includeParents));
+		final SVNStatus[] committables = getCommittables(paths, recursive, includeParents);
+		return committables != null ? new SVNCommitPacket(getCommitRoot(paths), committables) : null;
 	}
 
 	public long commit(SVNCommitPacket packet, String message) throws SVNException {
