@@ -8,19 +8,9 @@
         <property file="build.properties"/>
         
         <condition property="eclipse.present">
-            <and>
-                <available file="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0/runtime.jar"
+                <available file="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.jar"
                            property="eclipse.runtime.jar"
                 />
-                <or>
-                <available file="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0/core.jar"
-                           property="eclipse.osgi.jar"
-                />
-                <available file="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0/osgi.jar"
-                           property="eclipse.osgi.jar"
-                />
-                </or>
-            </and>
         </condition>
 
         <condition property="os" value="windows">
@@ -63,9 +53,8 @@
         <path id="eclipse.classpath">
             <pathelement path="build/lib/javasvn.jar" />
             <pathelement path="build/lib/jsch.jar" />
-            <pathelement path="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0/runtime.jar" />
-            <pathelement path="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0/core.jar" />
-            <pathelement path="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0/osgi.jar" />
+            <pathelement path="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.jar" />
+            <pathelement path="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0.jar" />
         </path>
 
         <javac debug="true"
