@@ -112,22 +112,22 @@ public class FSEntryHandler {
     }
 
     private static String xmlEncode(String value) {
+        value = value.replaceAll("&", "&amp;");
         value = value.replaceAll("<", "&lt;");
         value = value.replaceAll(">", "&gt;");
         value = value.replaceAll("\"", "&quot;");
         value = value.replaceAll("'", "&apos;");
         value = value.replaceAll("\t", "&#09;");
-        value = value.replaceAll("&", "&amp;");
         return value;
     }
 
     private static String xmlDecode(String value) {
         value = value.replaceAll("&lt;", "<");
         value = value.replaceAll("&gt;", ">");
-        value = value.replaceAll("&amp;", "&");
         value = value.replaceAll("&quot;", "\"");
         value = value.replaceAll("&apos;", "'");
         value = value.replaceAll("&#09;", "\t");
+        value = value.replaceAll("&amp;", "&");
         return value;
     }
 }

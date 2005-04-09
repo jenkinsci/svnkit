@@ -87,6 +87,14 @@ public class DAVProppatchHandler extends BasicDAVHandler {
             return buffer.append(" />");
         }
         buffer.append(">");
+        
+        value = value.replaceAll("&", "&amp;");
+        value = value.replaceAll("<", "&lt;");
+        value = value.replaceAll(">", "&gt;");
+        value = value.replaceAll("\"", "&quot;");
+        value = value.replaceAll("'", "&apos;");
+        value = value.replaceAll("\t", "&#09;");
+
         buffer.append(value);
         buffer.append("</");
         buffer.append(buffer.substring(index, index2));
