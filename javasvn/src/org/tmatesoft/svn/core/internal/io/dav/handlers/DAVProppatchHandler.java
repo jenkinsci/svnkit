@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.xml.sax.Attributes;
 
@@ -87,13 +88,7 @@ public class DAVProppatchHandler extends BasicDAVHandler {
             return buffer.append(" />");
         }
         buffer.append(">");
-        
-        value = value.replaceAll("&", "&amp;");
-        value = value.replaceAll("<", "&lt;");
-        value = value.replaceAll(">", "&gt;");
-        value = value.replaceAll("\"", "&quot;");
-        value = value.replaceAll("'", "&apos;");
-        value = value.replaceAll("\t", "&#09;");
+        value = DAVUtil.xmlEncode(value);
 
         buffer.append(value);
         buffer.append("</");
