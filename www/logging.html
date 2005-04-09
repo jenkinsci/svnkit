@@ -60,11 +60,12 @@ Below you will find detailed instructions on how to get JavaSVN log file.
 Logging is turned off by default. To enable JavaSVN logging please do the following:
 </p>
 <ul>
-<li>Copy plugins/org.tmatesoft.javasvn_version/.options file to ECLIPSE_HOME directory</li>
+<li>Copy <code>ECLIPSE_HOME/plugins/org.tmatesoft.javasvn_version/.options</code> file to <code>ECLIPSE_HOME</code> directory</li>
 <li>Start Eclipse with -debug command line argument:<br/><code>$eclipse -debug</code></li>
 <li>In Eclipse, open standard 'Error Log' view - it will contain detailed log of JavaSVN
 operations that you may export to a file.</li>
 </ul>
+<p><b>Note:</b> OS X users may find it useful to read this <a href="http://www.luisdelarosa.com/blog/2004/10/how_to_run_ecli.html">article</a>. It describes how to start Eclipse in "-debug" mode.</p>
 <h4>JavaSVN is used as library in standalone application</h4>
 <p>By default JavaSVN uses standard JDK logging API. You may find JavaSVN
 log file at USER_HOME/.javasvn/.javasvn.0.0.log
