@@ -898,18 +898,36 @@ public class SVNClient implements SVNClientInterface {
                 dir = PathUtil.removeLeadingSlash(dir);
                 path[i] = dir;
             }
+            Arrays.sort(path);
             ISVNEditor editor = null;
             try {
                 SVNRepository repository = createRepository(root);
                 editor = repository.getCommitEditor(message, null);
                 editor.openRoot(-1);
                 for(int i = 0; i < path.length; i++) {
-                    editor.addDir(PathUtil.decode(path[i]), null, -1);
-                    editor.closeDir();
+                    int count = 0;
+                    if (path[i] == null) {
+                        continue;
+                    }
+                    String currentPath = "";
+                    for(StringTokenizer tokens = new StringTokenizer(path[i], "/"); tokens.hasMoreTokens();) {
+                        String token = tokens.nextToken();
+                        currentPath = PathUtil.append(currentPath, token);
+                        if (tokens.hasMoreTokens()) {
+                            editor.openDir(PathUtil.decode(currentPath), -1);
+                        } else {
+                            editor.addDir(PathUtil.decode(currentPath), null, -1);
+                        }
+                        count++;
+                    }
+                    for(int j = 0; j < count; j++) {
+                        editor.closeDir();
+                    }
                 }
                 editor.closeDir();
                 editor.closeEdit();
             } catch (SVNException e) {
+                e.printStackTrace();
                 if (editor != null) {
                     try {
                         editor.abortEdit();
