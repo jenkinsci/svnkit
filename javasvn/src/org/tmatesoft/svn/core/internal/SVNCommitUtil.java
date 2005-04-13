@@ -283,13 +283,13 @@ public class SVNCommitUtil {
                 doCommit(childPath, url, entries, editor, ws, progressProcessor, committedPaths);
             } else {
 				boolean childIsCopied = Boolean.TRUE.toString().equals(child.getPropertyValue(SVNProperty.COPIED));
+                long copyFromRev = SVNProperty.longValue(child.getPropertyValue(SVNProperty.COPYFROM_REVISION));
 				String digest = null;
-				if (childIsCopied && !child.isScheduledForAddition()) {
+				if (childIsCopied && !child.isScheduledForAddition() && copyFromRev >= 0) {
                     DebugLog.log("FILE COPY: " + childPath);
 					// first copy it to have in place for modifications if required.
 					// get copyfrom url and copyfrom rev
 					String copyFromURL = child.getPropertyValue(SVNProperty.COPYFROM_URL);
-					long copyFromRev = Long.parseLong(child.getPropertyValue(SVNProperty.COPYFROM_REVISION));
                     if (copyFromURL != null) {
                         copyFromURL = SVNRepositoryLocation.parseURL(copyFromURL).toCanonicalForm();
                         DebugLog.log("copyfrom path:" + copyFromURL);
