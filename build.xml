@@ -358,6 +358,7 @@
             <pathelement path="contrib/junit/junit.jar" />
             <pathelement path="javasvn-test/bin" />
         </path>
+        <delete dir="${user.home}/.javasvn"/>
 
         <java classpathref="python.classpath"
               dir="javasvn-test"
