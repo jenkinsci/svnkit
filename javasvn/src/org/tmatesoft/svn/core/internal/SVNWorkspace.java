@@ -13,6 +13,11 @@
 package org.tmatesoft.svn.core.internal;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +46,7 @@ import org.tmatesoft.svn.core.SVNCommitPacket;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
+import org.tmatesoft.svn.core.internal.ws.fs.FSDirEntry;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -1050,6 +1056,50 @@ public class SVNWorkspace implements ISVNWorkspace {
             entry.dispose();
             sleepForTimestamp();
         } finally {
+            getRoot().dispose();
+        }
+    }
+
+    public void copy(SVNRepositoryLocation source, String destination, long revision) throws SVNException {
+        File tmpFile = null;
+
+        try {
+            SVNRepository repository = SVNRepositoryFactory.create(source);
+            repository.setCredentialsProvider(myCredentialsProvider);
+            if (repository.checkPath("", revision) == SVNNodeKind.DIR) {
+                String root = PathUtil.append(getID(), destination);
+                ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace(getRoot().getType(), root);
+                ws.setCredentials(myCredentialsProvider);
+                ws.setAutoProperties(getAutoProperties());
+                ws.setExternalsHandler(myExternalsHandler);
+                if (myListeners != null) {
+                    for (Iterator listeners = myListeners.iterator(); listeners.hasNext();) {
+                        ISVNWorkspaceListener listener = (ISVNWorkspaceListener) listeners.next();
+                        ws.addWorkspaceListener(listener);                
+                    }
+                }
+                revision = ws.checkout(source, revision, false);
+                ((FSDirEntry) locateEntry(PathUtil.removeTail(destination))).markAsCopied(PathUtil.tail(destination), source, revision);            
+            } else {
+                Map properties = new HashMap();
+                tmpFile = File.createTempFile("svn.", ".tmp");
+                tmpFile.deleteOnExit();                
+                OutputStream tmpStream = new FileOutputStream(tmpFile); 
+                repository.getFile("", revision, properties, tmpStream);
+                tmpStream.close();
+                
+                // create file in wc.
+                InputStream in = new FileInputStream(tmpFile);
+                String name = PathUtil.tail(destination);
+                ((FSDirEntry) locateEntry(PathUtil.removeTail(destination))).markAsCopied(in, tmpFile.length(), properties, name, revision, source);
+                in.close();
+            }
+        } catch (IOException e) {
+            DebugLog.error(e);
+        } finally {
+            if (tmpFile != null) {
+                tmpFile.delete();
+            }
             getRoot().dispose();
         }
     }

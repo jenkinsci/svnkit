@@ -78,6 +78,9 @@ public class FSEntryHandler {
                 if (SVNProperty.REVISION.equals(e.getKey()) && e.getValue().equals(parent.get(SVNProperty.REVISION))) {
                     continue;
                 }
+                if (SVNProperty.COPYFROM_REVISION.equals(e.getKey()) && e.getValue().equals(parent.get(SVNProperty.COPYFROM_REVISION))) {
+                    continue;
+                }
                 if ((SVNProperty.REVISION.equals(e.getKey()) || SVNProperty.URL.equals(e.getKey())) && 
                         SVNProperty.KIND_DIR.equals(entry.get(SVNProperty.KIND))) {
                     // do not save revision and url for child directories
@@ -86,10 +89,10 @@ public class FSEntryHandler {
                 if (SVNProperty.UUID.equals(e.getKey()) && e.getValue().equals(parent.get(SVNProperty.UUID))) {
                     continue;
                 }
-                if (SVNProperty.URL.equals(e.getKey())) {
+                if (SVNProperty.URL.equals(e.getKey()) || SVNProperty.COPYFROM_URL.equals(e.getKey())) {
                     String name = (String) entry.get(SVNProperty.NAME);
                     name = xmlDecode(name);
-                    String url = (String) parent.get(SVNProperty.URL);
+                    String url = (String) parent.get(e.getKey());
                     String expected = PathUtil.append(url, PathUtil.encode(name));
                     if (e.getValue().equals(expected)) {
                         continue;

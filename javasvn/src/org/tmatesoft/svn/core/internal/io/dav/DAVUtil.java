@@ -129,6 +129,7 @@ public class DAVUtil {
             if (value != null) {
                 value = value.toString();
             }
+            System.out.println(property + " = " + value);
             if (namespace.equals(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE)) {
             	String name = property.getName();
             	// hack!
@@ -139,7 +140,7 @@ public class DAVUtil {
             } else if (namespace.equals(DAVElement.SVN_SVN_PROPERTY_NAMESPACE)) {
                 target.put("svn:" + property.getName(), source.getPropertyValue(property));                
             } else if (property == DAVElement.CHECKED_IN) {
-                target.put("version-url", source.getPropertyValue(property));
+                target.put("svn:wc:ra_dav:version-url", source.getPropertyValue(property));
             }
         }
         return target;

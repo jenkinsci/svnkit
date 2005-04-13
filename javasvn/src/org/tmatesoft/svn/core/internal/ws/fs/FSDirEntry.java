@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.ws.fs;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,7 +31,10 @@ import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.ISVNEntryContent;
 import org.tmatesoft.svn.core.ISVNFileEntry;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.FileTypeUtil;
 import org.tmatesoft.svn.util.PathUtil;
@@ -108,6 +112,43 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
 
     public boolean isDirectory() {
         return true;
+    }
+    
+    public void markAsCopied(String name, SVNRepositoryLocation source, long revision) throws SVNException {
+        loadEntries();        
+        Map entry = new HashMap();
+        entry.put(SVNProperty.COPYFROM_URL, source.toCanonicalForm());
+        entry.put(SVNProperty.COPYFROM_REVISION, Long.toString(revision));
+        entry.put(SVNProperty.KIND, SVNProperty.KIND_DIR);
+        entry.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
+        entry.put(SVNProperty.NAME, name);
+        entry.put(SVNProperty.COPIED, Boolean.TRUE.toString());
+        myChildEntries.put(name, entry);
+        if (myDeletedEntries != null && myDeletedEntries.containsKey(name)) {
+            myDeletedEntries.remove(name);
+        }
+        save(false);
+        myChildren = null;
+        myChildEntries = null;
+        ISVNEntry copiedEntry = getChild(name);
+        copiedEntry.setPropertyValue(SVNProperty.COPIED, "true");
+        copiedEntry.setPropertyValue(SVNProperty.COPYFROM_URL, source.toCanonicalForm());
+        copiedEntry.setPropertyValue(SVNProperty.COPYFROM_REVISION, Long.toString(revision));
+        copiedEntry.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
+        updateURL(copiedEntry, getPropertyValue(SVNProperty.URL));
+        setPropertyValueRecursively(copiedEntry, SVNProperty.COPIED, "true");
+        copiedEntry.save();
+    }
+
+    public void markAsCopied(InputStream contents, long length, Map properties, String name, long revision, SVNRepositoryLocation source) throws SVNException {
+        FSFileEntry file = (FSFileEntry) addFile(name, revision);
+        file.initProperties();
+        file.applyChangedProperties(properties);
+        SVNDiffWindow window = SVNDiffWindowBuilder.createReplacementDiffWindow(length);
+        file.applyDelta(window, contents, false);
+        file.deltaApplied(false);
+        file.merge(false);
+        save(false);
     }
     
     public ISVNEntry copy(String asName, ISVNEntry toCopy) throws SVNException {
@@ -720,6 +761,13 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         if (root.isDirectory()) {
             for(Iterator children = root.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
+                if (SVNProperty.COPIED.equals(name) && child instanceof FSDirEntry) {
+                    if (value != null) {
+                        ((Map) ((FSDirEntry) root).myChildEntries.get(child.getName())).put(name, value);
+                    } else {
+                        ((Map) ((FSDirEntry) root).myChildEntries.get(child.getName())).remove(name);
+                    }
+                }                    
                 setPropertyValueRecursively(child, name, value);
             }
         }
@@ -731,9 +779,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         if (target.isDirectory()) {
             for(Iterator children = target.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
-                //if (child.isDirectory()) {
                 updateURL(child, parentURL);
-                //}
             }
         }
     }
