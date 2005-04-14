@@ -37,11 +37,11 @@ public class UpdateCommand extends SVNCommand {
             final boolean[] changesReceived = new boolean[] { false };
             workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
                 public void updated(String updatedPath, int contentsStatus, int propertiesStatus, long rev) {
+                    DebugLog.log("updated path: " + updatedPath);
                     try {
                         updatedPath = convertPath(homePath, workspace, updatedPath);
                     } catch (IOException e) {
                         DebugLog.error(e);
-
                     }
                     char contents = 'U';
                     char properties = ' ';
@@ -64,17 +64,27 @@ public class UpdateCommand extends SVNCommand {
                     } else if (propertiesStatus == SVNStatus.CONFLICTED) {
                         properties = 'C';
                     }
-                    DebugLog.log(contents + "" + properties + ' ' + updatedPath);
                     if (contents == ' ' && properties == ' ') {
                         return;
                     }
                     changesReceived[0] = true;
+                    DebugLog.log(contents + "" + properties + ' ' + updatedPath);
                     out.println(contents + "" + properties + ' ' + updatedPath);
                     if (contentsStatus == SVNStatus.CORRUPTED) {
                         err.println("svn: Checksum error: base version of file '" + updatedPath + "' is corrupted and was not updated.");
                         DebugLog.log("svn: Checksum error: base version of file '" + updatedPath + "' is corrupted and was not updated.");
                     }
                 }
+
+                public void modified(String path, int kind) {
+                    try {
+                        path = convertPath(homePath, workspace, path);
+                    } catch (IOException e) {
+                    }
+                    DebugLog.log("Restored '" + path + "'");
+                    out.println("Restored '" + path + "'");
+                }
+                
             });
 
 	        final String path = SVNUtil.getWorkspacePath(workspace, absolutPath);

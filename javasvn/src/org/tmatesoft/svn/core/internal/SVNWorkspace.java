@@ -326,7 +326,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
             SVNRepository repository = SVNUtil.createRepository(this, targetEntry.getPath());
             SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, targetEntry, false, target, recursive);
-            SVNReporterBaton reporterBaton = new SVNReporterBaton(targetEntry, target, recursive);
+            SVNReporterBaton reporterBaton = new SVNReporterBaton(this, targetEntry, target, recursive);
             repository.update(revision, target, recursive, reporterBaton, editor);
             
             for(Iterator missingPaths = reporterBaton.missingEntries(); missingPaths.hasNext();) {
@@ -389,7 +389,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             SVNRepository repository = SVNUtil.createRepository(this, targetEntry.getPath());
             SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, targetEntry, false, target);
 
-            ISVNReporterBaton reporterBaton = new SVNReporterBaton(targetEntry, null, recursive);
+            ISVNReporterBaton reporterBaton = new SVNReporterBaton(this, targetEntry, null, recursive);
             repository.update(url.toString(), revision, target, recursive, reporterBaton, editor);
 
             if (myExternalsHandler != null) {
@@ -507,7 +507,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             if (!targetEntry.isDirectory()) {
                 target = targetEntry.getName();
             }
-            SVNReporterBaton reporterBaton = new SVNReporterBaton(entry, target, descend);
+            SVNReporterBaton reporterBaton = new SVNReporterBaton(null, entry, target, descend);
             repository.status(ISVNWorkspace.HEAD, target, descend, reporterBaton, editor);
             revision = editor.getTargetRevision();
         }
@@ -1065,7 +1065,11 @@ public class SVNWorkspace implements ISVNWorkspace {
         try {
             SVNRepository repository = SVNRepositoryFactory.create(source);
             repository.setCredentialsProvider(myCredentialsProvider);
-            if (locateEntry(destination) != null) {
+            ISVNEntry entry = locateEntry(destination); 
+            if (entry != null) {
+                if (!entry.isDirectory()) {
+                    throw new SVNException("can't copy over versioned file '" + entry.getPath() + "'");
+                }
                 destination = PathUtil.append(destination, PathUtil.tail(source.getPath()));
             }
             DebugLog.log("copy destination is : " + destination);
@@ -1294,6 +1298,7 @@ public class SVNWorkspace implements ISVNWorkspace {
     }
 
     private void doRevert(ISVNDirectoryEntry parent, ISVNEntry entry, boolean recursive) throws SVNException {
+        boolean restored = !entry.isDirectory() && entry.isMissing();
         if (entry.isDirectory() && recursive) {
             Collection namesList = new LinkedList();
             for (Iterator children = entry.asDirectory().childEntries(); children.hasNext();) {
@@ -1307,7 +1312,11 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
         if (parent != null) {
             boolean reverted = parent.revert(entry.getName());
-            fireEntryModified(entry, reverted ? SVNStatus.REVERTED : SVNStatus.NOT_REVERTED, false);
+            if (!restored) {
+                fireEntryModified(entry, reverted ? SVNStatus.REVERTED : SVNStatus.NOT_REVERTED, false);
+            } else {
+                fireEntryModified(entry, SVNStatus.RESTORED, false);
+            }
         }
         if (!entry.isDirectory()) {
             entry.dispose();

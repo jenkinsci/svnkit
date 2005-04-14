@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirectoryEntry;
 import org.tmatesoft.svn.core.ISVNEntry;
+import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -35,9 +36,11 @@ class SVNReporterBaton implements ISVNReporterBaton {
     private String myTarget;
     private Collection myExternals;
     private Collection myMissingEntries;
+    private ISVNWorkspace myWorkspace;
 
-    public SVNReporterBaton(ISVNEntry root, String target, boolean recursive) {
+    public SVNReporterBaton(ISVNWorkspace workspace, ISVNEntry root, String target, boolean recursive) {
         myRoot = root;
+        myWorkspace = workspace;
         myIsRecursive = recursive;
         myTarget = target;
         myMissingEntries = new HashSet();
@@ -56,9 +59,13 @@ class SVNReporterBaton implements ISVNReporterBaton {
             url = PathUtil.decode(url);
             reporter.linkPath(SVNRepositoryLocation.parseURL(url), path, revision, false); 
         } else if (entry.isMissing()) {
-            reporter.deletePath(path);
-            myMissingEntries.add(entry);
-            DebugLog.log("REPORT.MISSING: " + path);
+            if (myWorkspace != null && !entry.isDirectory()) {
+                myWorkspace.revert(entry.getPath(), false);
+            } else {
+                DebugLog.log("REPORT.MISSING: " + path);
+                reporter.deletePath(path);
+                myMissingEntries.add(entry);
+            }
         } else if (revision != parentRevision) {
             DebugLog.log("REPORT: " + path + " : " + revision);
             reporter.setPath(path, revision, false);

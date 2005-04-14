@@ -107,9 +107,6 @@ public abstract class SVNCommand {
         if (".".equals(homePath) || new File(homePath).isAbsolute()) {
             homePath = "";
         }
-	      DebugLog.log(absolutePath);
-	      DebugLog.log(absoluteHomePath);
-	      DebugLog.log(homePath);
         String relativePath = absolutePath.substring(absoluteHomePath.length());
         String result = PathUtil.append(homePath, relativePath);
         result = result.replace(File.separatorChar, '/');
