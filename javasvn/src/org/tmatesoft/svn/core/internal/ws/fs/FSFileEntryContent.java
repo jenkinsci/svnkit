@@ -115,7 +115,7 @@ public class FSFileEntryContent implements ISVNFileContent {
 
 	public void setWorkingCopyContent(InputStream is) throws SVNException {
 		final File file = myEntry.getRootEntry().getWorkingCopyFile(myEntry);
-		if (file != null && !file.exists() && !file.isFile()) {
+		if (file != null && file.exists() && !file.isFile()) {
 			throw new SVNException("Can't write to '" + file + "'.");
 		}
 
