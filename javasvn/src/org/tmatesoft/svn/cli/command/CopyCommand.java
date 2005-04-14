@@ -19,10 +19,8 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
-import org.tmatesoft.svn.core.SVNWorkspaceManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -31,7 +29,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.SVNAssert;
 import org.tmatesoft.svn.util.SVNUtil;
 
 /**
@@ -41,8 +38,6 @@ public class CopyCommand extends SVNCommand {
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
     	if (getCommandLine().hasPaths() && getCommandLine().hasURLs()) {
-    		err.println("only URL->URL or WC->WC copy is supported");
-    		return;
     	}
         if (getCommandLine().hasURLs()) {
             if (getCommandLine().hasPaths()) {
@@ -50,6 +45,9 @@ public class CopyCommand extends SVNCommand {
                 final String url = getCommandLine().getURL(0);
                 if (getCommandLine().isPathURLBefore(url, path)) {
                     runRemoteToLocal(out);
+                } else {
+                    err.println("WC->URL copy is not yet implemented");
+                    return;
                 }
             } else {
                 runRemote(out, err);
@@ -165,100 +163,17 @@ public class CopyCommand extends SVNCommand {
         }
     }
 
-    // private void runRemoteToLocal(final PrintStream out) throws SVNException
-    // {
-    // final String srcURL = getCommandLine().getURL(0);
-    // final String destPathParent = getCommandLine().getPathAt(0);
-    // final String destPath = destPathParent + "/" + PathUtil.tail(srcURL);
-    //
-    // long revision = -1;
-    // if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
-    // String revStr =
-    // (String)getCommandLine().getArgumentValue(SVNArgument.REVISION);
-    // revision = Long.parseLong(revStr);
-    // }
-    //
-    // final SVNRepository srcRepository = createRepository(srcURL);
-    // srcRepository.testConnection();
-    //
-    // final ISVNWorkspace checkoutWorkspace =
-    // SVNWorkspaceManager.createWorkspace("file", destPath);
-    // checkoutWorkspace.setCredentials(srcRepository.getCredentialsProvider());
-    //
-    // final long checkedOutRevision =
-    // checkoutWorkspace.checkout(srcRepository.getLocation(), revision, true,
-    // true);
-    // SVNAssert.assertTrue(revision == checkedOutRevision);
-    //
-    // final ISVNWorkspace workspace = createWorkspace(destPathParent);
-    // final List copyPaths = new ArrayList();
-    //
-    // workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
-    // public void modified(String path, int kind) {
-    // String convertedPath;
-    // try {
-    // convertedPath = convertPath(destPathParent, workspace, path);
-    // }
-    // catch (IOException ex) {
-    // convertedPath = null;
-    // }
-    //
-    // if (kind == SVNStatus.ADDED) {
-    // copyPaths.add(path);
-    //
-    // println(out, "A " + convertedPath);
-    // }
-    // }
-    // });
-    //
-    // final String relativePath = SVNUtil.getWorkspacePath(workspace,
-    // destPathParent) + "/" + new File(destPath).getName();
-    // workspace.add(relativePath, true, true);
-    // workspace.setPropertyValue(relativePath, SVNProperty.SCHEDULE, null,
-    // true);
-    // workspace.setPropertyValue(relativePath, SVNProperty.COPIED, "true",
-    // true);
-    // workspace.setPropertyValue(relativePath, SVNProperty.SCHEDULE,
-    // SVNProperty.SCHEDULE_ADD, false);
-    // workspace.setPropertyValue(relativePath, SVNProperty.COPYFROM_URL,
-    // srcURL);
-    // workspace.setPropertyValue(relativePath, SVNProperty.COPYFROM_REVISION,
-    // String.valueOf(revision));
-    // }
-
     private void runRemoteToLocal(final PrintStream out) throws SVNException {
         final String srcURL = getCommandLine().getURL(0);
-        final String destPathParent = getCommandLine().getPathAt(0);
-        final String destPath = destPathParent + "/" + PathUtil.tail(srcURL);
+        String destPathParent = getCommandLine().getPathAt(0);
+        destPathParent = destPathParent.replace(File.separatorChar, '/');
 
         long revision = -1;
         if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
             String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
             revision = Long.parseLong(revStr);
         }
-
-        final SVNRepository srcRepository = createRepository(srcURL);
-        srcRepository.testConnection();
-
-        final ISVNWorkspace checkoutWorkspace = SVNWorkspaceManager.createWorkspace("file", destPath);
-        checkoutWorkspace.setCredentials(srcRepository.getCredentialsProvider());
-
-        final long checkedOutRevision = checkoutWorkspace.checkout(srcRepository.getLocation(), revision, false, true);
-        SVNAssert.assertTrue(revision == checkedOutRevision);
-
-        final ISVNWorkspace workspace = createWorkspace(destPathParent);
-        final String relativePath = SVNUtil.getWorkspacePath(workspace, destPathParent) + "/" + new File(destPath).getName();
-        try {
-            println(out, "A  " + convertPath(destPathParent, workspace, relativePath));
-        } catch (IOException ex) {}
-
-        workspace.add(relativePath, true, true);
-        // workspace.setPropertyValue(relativePath, SVNProperty.SCHEDULE, null,
-        // true);
-        workspace.setPropertyValue(relativePath, SVNProperty.COPIED, "true", true);
-        // workspace.setPropertyValue(relativePath, SVNProperty.SCHEDULE,
-        // SVNProperty.SCHEDULE_ADD);
-        workspace.setPropertyValue(relativePath, SVNProperty.COPYFROM_URL, srcURL);
-        workspace.setPropertyValue(relativePath, SVNProperty.COPYFROM_REVISION, String.valueOf(revision));
+        final ISVNWorkspace checkoutWorkspace = createWorkspace(PathUtil.removeTail(destPathParent), false);
+        checkoutWorkspace.copy(SVNRepositoryLocation.parseURL(srcURL), PathUtil.tail(destPathParent), revision);
     }
 }

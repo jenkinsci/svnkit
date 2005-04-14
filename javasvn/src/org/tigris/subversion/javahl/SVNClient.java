@@ -776,8 +776,20 @@ public class SVNClient implements SVNClientInterface {
             } catch (SVNException e) {
                 throwException(e);
             }
+        } else if (isURL(srcPath) && !isURL(destPath)) {
+            try {
+                SVNRepository repository = createRepository(srcPath);
+                long revNumber = getRevisionNumber(revision, repository, null, null);
+
+                destPath = destPath.replace(File.separatorChar, '/');
+                ISVNWorkspace ws = createWorkspace(PathUtil.removeTail(destPath));
+                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
+                ws.copy(SVNRepositoryLocation.parseURL(srcPath), SVNUtil.getWorkspacePath(ws, destPath), revNumber);
+            } catch (SVNException e) {
+                throwException(e);
+            }
         } else {
-            throw new ClientException("only WC->WC or URL->URL copy is supported", "", 0);
+            throw new ClientException("WC->URL copy is not yet implemented", "", 0);
         }
     }
 

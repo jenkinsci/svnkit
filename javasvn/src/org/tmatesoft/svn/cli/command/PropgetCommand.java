@@ -35,7 +35,7 @@ public class PropgetCommand extends SVNCommand {
         final String relativePath = SVNUtil.getWorkspacePath(workspace, new File(absolutePath).getAbsolutePath());
         try {
             String value = workspace.getPropertyValue(relativePath, propertyName);
-            out.print(value);
+            out.println(value);
             DebugLog.log("property get: " + value);
         } catch (SVNException e) {
             DebugLog.error(e);
