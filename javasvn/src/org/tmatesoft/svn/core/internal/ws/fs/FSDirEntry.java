@@ -115,7 +115,12 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
     }
     
     public void markAsCopied(String name, SVNRepositoryLocation source, long revision) throws SVNException {
-        loadEntries();        
+        loadEntries();
+        boolean wasDeleted = false; 
+        if (myDeletedEntries != null && myDeletedEntries.containsKey(name)) {
+            wasDeleted = true;
+            myDeletedEntries.remove(name);
+        }
         Map entry = new HashMap();
         entry.put(SVNProperty.COPYFROM_URL, source.toCanonicalForm());
         entry.put(SVNProperty.COPYFROM_REVISION, Long.toString(revision));
@@ -123,10 +128,10 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         entry.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
         entry.put(SVNProperty.NAME, name);
         entry.put(SVNProperty.COPIED, Boolean.TRUE.toString());
-        myChildEntries.put(name, entry);
-        if (myDeletedEntries != null && myDeletedEntries.containsKey(name)) {
-            myDeletedEntries.remove(name);
+        if (wasDeleted) {
+            entry.put(SVNProperty.DELETED, Boolean.TRUE.toString());
         }
+        myChildEntries.put(name, entry);
         save(false);
         myChildren = null;
         myChildEntries = null;
@@ -135,6 +140,9 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         copiedEntry.setPropertyValue(SVNProperty.COPYFROM_URL, source.toCanonicalForm());
         copiedEntry.setPropertyValue(SVNProperty.COPYFROM_REVISION, Long.toString(revision));
         copiedEntry.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
+        if (wasDeleted) {
+            copiedEntry.setPropertyValue(SVNProperty.DELETED, Boolean.TRUE.toString());
+        }
         updateURL(copiedEntry, getPropertyValue(SVNProperty.URL));
         setPropertyValueRecursively(copiedEntry, SVNProperty.COPIED, "true");
         copiedEntry.save();
@@ -167,7 +175,12 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             file.setPropertyValue(SVNProperty.PROP_TIME, null);
             file.setPropertyValue(SVNProperty.TEXT_TIME, null);
             file.setPropertyValue(SVNProperty.CHECKSUM, null);
+        } 
+        if (myDeletedEntries != null && myDeletedEntries.containsKey(name)) {
+            file.setPropertyValue(SVNProperty.DELETED, Boolean.TRUE.toString());
+            myDeletedEntries.remove(name);
         }
+
         save(false);
     }
     

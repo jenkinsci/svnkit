@@ -1091,6 +1091,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                         ws.addWorkspaceListener(listener);                
                     }
                 }
+                DebugLog.log("checking out revision: " + revision);
                 revision = ws.checkout(source, revision, false);
                 ISVNEntry dirEntry = locateEntry(PathUtil.removeTail(destination)); 
                 dirEntry.asDirectory().markAsCopied(PathUtil.tail(destination), source, revision);            
