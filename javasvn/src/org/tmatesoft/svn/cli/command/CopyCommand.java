@@ -173,7 +173,11 @@ public class CopyCommand extends SVNCommand {
             String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
             revision = Long.parseLong(revStr);
         }
-        final ISVNWorkspace checkoutWorkspace = createWorkspace(PathUtil.removeTail(destPathParent), false);
-        checkoutWorkspace.copy(SVNRepositoryLocation.parseURL(srcURL), PathUtil.tail(destPathParent), revision);
+        DebugLog.log("workspace id is : " + destPathParent);
+        final ISVNWorkspace ws = createWorkspace(destPathParent);
+        DebugLog.log("workspace root is : " + ws.getID());
+        String wsPath = SVNUtil.getWorkspacePath(ws, destPathParent);
+        DebugLog.log("workspace path is : " + wsPath);
+        ws.copy(SVNRepositoryLocation.parseURL(srcURL), wsPath, revision);
     }
 }

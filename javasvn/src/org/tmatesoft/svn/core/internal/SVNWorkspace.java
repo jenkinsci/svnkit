@@ -1065,11 +1065,18 @@ public class SVNWorkspace implements ISVNWorkspace {
         try {
             SVNRepository repository = SVNRepositoryFactory.create(source);
             repository.setCredentialsProvider(myCredentialsProvider);
+            if (locateEntry(destination) != null) {
+                destination = PathUtil.append(destination, PathUtil.tail(source.getPath()));
+            }
+            DebugLog.log("copy destination is : " + destination);
             if (repository.checkPath("", revision) == SVNNodeKind.DIR) {
-                if (locateEntry(destination) != null) {
-                    destination = PathUtil.append(destination, PathUtil.tail(source.getPath()));
+                DebugLog.log("local uuid: " + getRoot().getPropertyValue(SVNProperty.UUID));
+                DebugLog.log("remote uuid: " + repository.getRepositoryUUID());
+                if (!repository.getRepositoryUUID().equals(getRoot().getPropertyValue(SVNProperty.UUID))) {
+                    throw new SVNException("couldn't copy directory from another repository");
                 }
                 String root = PathUtil.append(getID(), destination);
+                DebugLog.log("checkout ws root : " + root);
                 ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace(getRoot().getType(), root);
                 ws.setCredentials(myCredentialsProvider);
                 ws.setAutoProperties(getAutoProperties());
@@ -1093,9 +1100,12 @@ public class SVNWorkspace implements ISVNWorkspace {
 
                 InputStream in = new FileInputStream(tmpFile);
                 String name = PathUtil.tail(destination);
-                
                 ISVNEntry dirEntry = locateEntry(PathUtil.removeTail(destination)); 
-                dirEntry.asDirectory().markAsCopied(in, tmpFile.length(), properties, name, source);
+                if (repository.getRepositoryUUID().equals(getRoot().getPropertyValue(SVNProperty.UUID))) {
+                    dirEntry.asDirectory().markAsCopied(in, tmpFile.length(), properties, name, source);
+                } else {
+                    dirEntry.asDirectory().markAsCopied(in, tmpFile.length(), properties, name, null);
+                }                
                 in.close();
             }
         } catch (IOException e) {

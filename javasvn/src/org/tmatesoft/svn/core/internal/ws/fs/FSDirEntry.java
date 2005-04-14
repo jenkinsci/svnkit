@@ -149,11 +149,25 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         file.applyDelta(window, contents, false);
         file.deltaApplied(false);
         file.merge(false);
-        file.setPropertyValue(SVNProperty.COPIED, "true");
-        file.setPropertyValue(SVNProperty.COPYFROM_URL, source.toCanonicalForm());
-        file.setPropertyValue(SVNProperty.COPYFROM_REVISION, Long.toString(revision));
+        if (source != null) {
+            file.setPropertyValue(SVNProperty.COPIED, "true");
+            file.setPropertyValue(SVNProperty.COPYFROM_URL, source.toCanonicalForm());
+            file.setPropertyValue(SVNProperty.COPYFROM_REVISION, Long.toString(revision));
+        }
         file.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
         file.setPropertyValue(SVNProperty.REVISION, "0");
+        file.setPropertyValue(SVNProperty.KIND, SVNProperty.KIND_FILE);
+        if (source == null) {
+            getAdminArea().getBaseFile(file).delete();
+            getAdminArea().getBasePropertiesFile(file).delete();
+            getAdminArea().getWCPropertiesFile(file).delete();
+            file.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
+            file.setPropertyValue(SVNProperty.COMMITTED_DATE, null);
+            file.setPropertyValue(SVNProperty.LAST_AUTHOR, null);
+            file.setPropertyValue(SVNProperty.PROP_TIME, null);
+            file.setPropertyValue(SVNProperty.TEXT_TIME, null);
+            file.setPropertyValue(SVNProperty.CHECKSUM, null);
+        }
         save(false);
     }
     
