@@ -1069,8 +1069,9 @@ public class SVNWorkspace implements ISVNWorkspace {
                 }
                 destination = PathUtil.append(destination, PathUtil.tail(source.getPath()));
             }
+            SVNNodeKind srcKind = repository.checkPath("", revision); 
             DebugLog.log("copy destination is : " + destination);
-            if (repository.checkPath("", revision) == SVNNodeKind.DIR) {
+            if (srcKind == SVNNodeKind.DIR) {
                 DebugLog.log("local uuid: " + getRoot().getPropertyValue(SVNProperty.UUID));
                 DebugLog.log("remote uuid: " + repository.getRepositoryUUID());
                 if (!repository.getRepositoryUUID().equals(getRoot().getPropertyValue(SVNProperty.UUID))) {
@@ -1092,7 +1093,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                 revision = ws.checkout(source, revision, false);
                 ISVNEntry dirEntry = locateEntry(PathUtil.removeTail(destination)); 
                 dirEntry.asDirectory().markAsCopied(PathUtil.tail(destination), source, revision);            
-            } else {
+            } else if (srcKind == SVNNodeKind.FILE) {
                 Map properties = new HashMap();
                 tmpFile = File.createTempFile("svn.", ".tmp");
                 tmpFile.deleteOnExit();                
@@ -1109,6 +1110,8 @@ public class SVNWorkspace implements ISVNWorkspace {
                     dirEntry.asDirectory().markAsCopied(in, tmpFile.length(), properties, name, null);
                 }                
                 in.close();
+            } else {
+                throw new SVNException("can't copy from '" + source.toCanonicalForm() + "', location doesn't exist at revision " + revision);
             }
         } catch (IOException e) {
             DebugLog.error(e);
