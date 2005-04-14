@@ -1066,6 +1066,9 @@ public class SVNWorkspace implements ISVNWorkspace {
             SVNRepository repository = SVNRepositoryFactory.create(source);
             repository.setCredentialsProvider(myCredentialsProvider);
             if (repository.checkPath("", revision) == SVNNodeKind.DIR) {
+                if (locateEntry(destination) != null) {
+                    destination = PathUtil.append(destination, PathUtil.tail(source.getPath()));
+                }
                 String root = PathUtil.append(getID(), destination);
                 ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace(getRoot().getType(), root);
                 ws.setCredentials(myCredentialsProvider);
