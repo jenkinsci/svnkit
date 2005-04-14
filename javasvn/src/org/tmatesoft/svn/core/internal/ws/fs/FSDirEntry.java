@@ -188,7 +188,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         File dst = getRootEntry().getWorkingCopyFile(this);
         doCopyFiles(toCopy, dst, asName);
         
-        long revision = SVNProperty.longValue(toCopy.getPropertyValue(SVNProperty.COMMITTED_REVISION));
+        long revision = SVNProperty.longValue(toCopy.getPropertyValue(SVNProperty.REVISION));
         String url = toCopy.getPropertyValue(SVNProperty.URL);
         ISVNEntry added = null;
         if (toCopy.isDirectory()) {
