@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVDateRevisionHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVEditorHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVFileRevisionHandler;
@@ -136,8 +137,21 @@ class DAVRepository extends SVNRepository {
             	myConnection.doPropfind(path, 0, null, null, new IDAVResponseHandler() {
 					public void handleDAVResponse(DAVResponse response) {
 						DAVUtil.filterProperties(response, properties);
+                        for(Iterator props = response.properties(); props.hasNext();) {
+                            DAVElement property = (DAVElement) props.next();
+                            if (property == DAVElement.VERSION_NAME) {
+                                properties.put(SVNProperty.COMMITTED_REVISION, response.getPropertyValue(property));
+                            } else if (property == DAVElement.MD5_CHECKSUM) {
+                                properties.put(SVNProperty.CHECKSUM, response.getPropertyValue(property));
+                            } else if (property == DAVElement.CREATOR_DISPLAY_NAME) {
+                                properties.put(SVNProperty.LAST_AUTHOR, response.getPropertyValue(property));
+                            } else if (property == DAVElement.CREATION_DATE) {
+                                properties.put(SVNProperty.COMMITTED_DATE, response.getPropertyValue(property));
+                            }
+                        }
 					}
             	});
+                properties.put(SVNProperty.REVISION, Long.toString(fileRevision));
             }
             if (contents != null) {
                 myConnection.doGet(path, contents);
@@ -201,6 +215,16 @@ class DAVRepository extends SVNRepository {
             	myConnection.doPropfind(path, 0, null, null, new IDAVResponseHandler() {
 					public void handleDAVResponse(DAVResponse response) {
 						DAVUtil.filterProperties(response, properties);
+                        for(Iterator props = response.properties(); props.hasNext();) {
+                            DAVElement property = (DAVElement) props.next();
+                            if (property == DAVElement.VERSION_NAME) {
+                                properties.put(SVNProperty.COMMITTED_REVISION, response.getPropertyValue(property));
+                            } else if (property == DAVElement.CREATOR_DISPLAY_NAME) {
+                                properties.put(SVNProperty.LAST_AUTHOR, response.getPropertyValue(property));
+                            } else if (property == DAVElement.CREATION_DATE) {
+                                properties.put(SVNProperty.COMMITTED_DATE, response.getPropertyValue(property));
+                            }
+                        }
 					}
             	});
             }

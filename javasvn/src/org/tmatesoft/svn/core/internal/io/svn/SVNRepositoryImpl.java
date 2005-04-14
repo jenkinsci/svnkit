@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.io.ISVNCredentials;
@@ -180,6 +181,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             authenticate();
             buffer[2] = properties;
             buffer = read("[((?S)N(*P))]", buffer);
+            if (properties != null) {
+                properties.put(SVNProperty.REVISION, buffer[1].toString());
+                properties.put(SVNProperty.CHECKSUM, buffer[0].toString());
+            }
             if (contents != null) {
                 Object[] buffer2 = new Object[] { contents };
                 read("*I", buffer2);
