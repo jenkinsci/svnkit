@@ -46,6 +46,10 @@ public class SVNCommandLine {
     public Object getArgumentValue(SVNArgument argument) {
         return myBinaryArguments.get(argument);
     }
+    
+    public void setArgumentValue(SVNArgument argument, Object value) {
+        myBinaryArguments.put(argument, value);
+    }
 
     public String getCommandName() {
         return myCommandName;
@@ -73,6 +77,30 @@ public class SVNCommandLine {
 
     public String getURL(int index) {
         return (String) myURLs.get(index);
+    }
+    
+    public void setURLAt(int index, String url) {
+        if (index >= myURLs.size()) {
+            myURLs.add(url);
+            return;
+        }
+        if (url != null) {
+            myURLs.set(index, url);
+        } else {
+            myURLs.remove(index);
+        }
+    }
+
+    public void setPathAt(int index, String path) {
+        if (index >= myPaths.size()) {
+            myPaths.add(path);
+            return;
+        }
+        if (path != null) {
+            myPaths.set(index, path);
+        } else {
+            myPaths.remove(index);
+        }
     }
 
     protected void init(String[] arguments) throws SVNException {

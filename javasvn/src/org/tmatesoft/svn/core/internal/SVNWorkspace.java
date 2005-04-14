@@ -234,9 +234,6 @@ public class SVNWorkspace implements ISVNWorkspace {
             return getLocation();
         }
         ISVNEntry entry = locateEntry(path);
-        if (entry != null && !entry.isDirectory()) {
-            entry = locateParentEntry(path);
-        }
         if (entry == null) {
             return null;
         }

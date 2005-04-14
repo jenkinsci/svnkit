@@ -19,6 +19,7 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -37,8 +38,6 @@ import org.tmatesoft.svn.util.SVNUtil;
 public class CopyCommand extends SVNCommand {
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
-    	if (getCommandLine().hasPaths() && getCommandLine().hasURLs()) {
-    	}
         if (getCommandLine().hasURLs()) {
             if (getCommandLine().hasPaths()) {
                 final String path = getCommandLine().getPathAt(0);
@@ -65,6 +64,18 @@ public class CopyCommand extends SVNCommand {
         final String absoluteSrcPath = getCommandLine().getPathAt(0);
         final String absoluteDstPath = getCommandLine().getPathAt(1);
         final ISVNWorkspace workspace = createWorkspace(absoluteSrcPath);
+        final String srcPath = SVNUtil.getWorkspacePath(workspace, absoluteSrcPath);
+        SVNRepository repository = createRepository(workspace.getLocation(srcPath).toCanonicalForm());
+        long revNumber = getRevisionNumber((String) getCommandLine().getArgumentValue(SVNArgument.REVISION),
+                srcPath, workspace, repository);
+        if (revNumber >= 0 && revNumber != SVNProperty.longValue(workspace.getPropertyValue(srcPath, SVNProperty.REVISION))) {
+            getCommandLine().setPathAt(0, null);
+            getCommandLine().setURLAt(0, workspace.getLocation(srcPath).toCanonicalForm());
+            getCommandLine().setArgumentValue(SVNArgument.REVISION, Long.toString(revNumber));  
+            runRemoteToLocal(out);
+            return;
+        }
+
         workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
             public void modified(String path, int kind) {
                 try {
@@ -75,8 +86,7 @@ public class CopyCommand extends SVNCommand {
                 println(out, kindString + "  " + path);
             }
         });
-
-        final String srcPath = SVNUtil.getWorkspacePath(workspace, absoluteSrcPath);
+        
         final String dstTempPath = SVNUtil.getWorkspacePath(workspace, absoluteDstPath);
         final SVNStatus status = workspace.status(dstTempPath, false);
         final String dstPath = status != null && status.isDirectory() ? PathUtil.append(dstTempPath, PathUtil.tail(srcPath)) : dstTempPath;

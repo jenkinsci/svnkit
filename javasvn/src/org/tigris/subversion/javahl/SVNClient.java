@@ -771,6 +771,12 @@ public class SVNClient implements SVNClientInterface {
             try {
             	String wsRoot = PathUtil.getFSCommonRoot(new String[] {srcPath, destPath});
                 ISVNWorkspace ws = createWorkspace(wsRoot);
+                SVNRepository repository = createRepository(ws.getLocation(srcPath).toCanonicalForm());
+                long srcRevision = getRevisionNumber(revision, repository, ws, srcPath); 
+                if (srcRevision >= 0 && srcRevision != SVNProperty.longValue(ws.getPropertyValue(srcPath, SVNProperty.REVISION))) {
+                    copy(ws.getLocation(srcPath).toCanonicalForm(), destPath, message, revision);
+                    return;
+                }
                 ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 ws.copy(SVNUtil.getWorkspacePath(ws, srcPath), SVNUtil.getWorkspacePath(ws, destPath), false);
             } catch (SVNException e) {

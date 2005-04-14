@@ -15,12 +15,17 @@ package org.tmatesoft.svn.cli;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -137,6 +142,55 @@ public abstract class SVNCommand {
             return Long.parseLong(revStr);
         }
         return -1;
+    }
+    
+    protected final static long getRevisionNumber(String rev, String path, ISVNWorkspace ws, SVNRepository repository) throws SVNException {
+        if (rev == null) {
+            return -2;
+        }
+        rev = rev.trim();
+        long result = -1;
+        try {
+            return Long.parseLong(rev);
+        } catch (NumberFormatException nfe) {
+        }
+        if ("HEAD".equals(rev) && repository != null) {
+            return repository.getLatestRevision();
+        } else if (("COMMITTED".equals(rev) || 
+                   "WORKING".equals(rev) ||
+                   "BASE".equals(rev) ||
+                   "PREV".equals(rev)) && ws != null && path != null) {
+            if ("BASE".equals(rev) || "WORKING".equals(rev)) {
+                String revisionStr = ws.getPropertyValue(path, SVNProperty.REVISION);
+                if (revisionStr != null) {
+                    return SVNProperty.longValue(revisionStr);
+                }
+            } else {
+                String revisionStr = ws.getPropertyValue(path, SVNProperty.COMMITTED_REVISION);
+                if (revisionStr != null) {
+                    long value = SVNProperty.longValue(revisionStr);
+                    if ("PREV".equals(rev)) {                        
+                        value--;
+                    }
+                    return value;
+                }
+            }
+        } else if (rev.startsWith("{") && rev.endsWith("}") &&
+                 repository != null) {
+            rev = rev.substring(1);
+            rev = rev.substring(0, rev.length() - 1);
+            Date date = null;
+            try {
+                date = SimpleDateFormat.getDateTimeInstance().parse(rev);
+            } catch (ParseException e) {
+                DebugLog.error(e);
+            }
+            if (date != null) {
+                return repository.getDatedRevision(date);
+            }
+        } 
+        return -2;
+        
     }
 
     protected final static void println(PrintStream out, String line) {

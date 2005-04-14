@@ -22,6 +22,7 @@ import java.util.TimeZone;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;
@@ -75,6 +76,10 @@ public class InfoCommand extends SVNCommand {
             if (getChecksum(workspace, relativePath) != null) {
                 print("Checksum: " + getChecksum(workspace, relativePath), out);
             }
+        }
+        if (status.isAddedWithHistory()) {
+            print("Copied From URL: " + workspace.getPropertyValue(relativePath, SVNProperty.COPYFROM_URL), out);
+            print("Copied From Rev: " + workspace.getPropertyValue(relativePath, SVNProperty.COPYFROM_REVISION), out);
         }
     }
 
