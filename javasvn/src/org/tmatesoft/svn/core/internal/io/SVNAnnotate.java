@@ -10,7 +10,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -198,8 +197,6 @@ public class SVNAnnotate implements ISVNFileRevisionHandler {
 			}
 			myLines = newLines;
 		} catch (Throwable e) {
-			
-			e.printStackTrace(System.out);
 			DebugLog.error(e);
 		} finally {
 			if (left != null) {
@@ -217,19 +214,6 @@ public class SVNAnnotate implements ISVNFileRevisionHandler {
 		FSUtil.copy(new File(myTempFilePath), new File(myBaseFilePath), null, null, null);
 		new File(myTempFilePath).delete();
 	}
-
-	private void dumpLines() {
-		System.out.println();
-		System.out.println("LINES: (" + myLines.size() + ")");
-		NumberFormat nf = NumberFormat.getIntegerInstance();
-		nf.setMinimumIntegerDigits(6);
-		int count = 0;
-		for(int i = 0; i < myLines.size(); i++) {
-			LineInfo info = (LineInfo) myLines.get(i);
-			System.out.print(nf.format(info.revision) + "      " + info.author + " " + info.line);
-		}
-	}
-
 	
 	private static class LineInfo {
 		public String line;

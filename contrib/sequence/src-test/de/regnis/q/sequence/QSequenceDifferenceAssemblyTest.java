@@ -148,9 +148,6 @@ public class QSequenceDifferenceAssemblyTest extends TestCase {
 
 		final String[] diff = (String[])diffLines.toArray(new String[0]);
 		if (!areLinesEqual(diff, right)) {
-			System.out.println("leftString  = " + getLineString(left));
-			System.out.println("rightString = " + getLineString(right));
-			System.out.println("diffString  = " + getLineString(diff));
 			fail();
 		}
 	}
