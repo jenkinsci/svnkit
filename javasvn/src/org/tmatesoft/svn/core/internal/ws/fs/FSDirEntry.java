@@ -140,7 +140,8 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         copiedEntry.save();
     }
 
-    public void markAsCopied(InputStream contents, long length, Map properties, String name, long revision, SVNRepositoryLocation source) throws SVNException {
+    public void markAsCopied(InputStream contents, long length, Map properties, String name, SVNRepositoryLocation source) throws SVNException {
+        long revision = SVNProperty.longValue((String) properties.get(SVNProperty.REVISION));
         FSFileEntry file = (FSFileEntry) addFile(name, revision);
         file.initProperties();
         file.applyChangedProperties(properties);
@@ -148,6 +149,11 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         file.applyDelta(window, contents, false);
         file.deltaApplied(false);
         file.merge(false);
+        file.setPropertyValue(SVNProperty.COPIED, "true");
+        file.setPropertyValue(SVNProperty.COPYFROM_URL, source.toCanonicalForm());
+        file.setPropertyValue(SVNProperty.COPYFROM_REVISION, Long.toString(revision));
+        file.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
+        file.setPropertyValue(SVNProperty.REVISION, "0");
         save(false);
     }
     

@@ -109,7 +109,6 @@ public abstract class FSEntry implements ISVNEntry {
     }
 
     public void setPropertyValue(String name, String value) throws SVNException {
-        System.out.println(name + " = " + value);
         if (name.startsWith(ENTRY_PREFIX)) {
             // encode value?
             if (value == null) {

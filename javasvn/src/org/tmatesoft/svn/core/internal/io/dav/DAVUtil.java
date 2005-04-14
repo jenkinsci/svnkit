@@ -129,7 +129,6 @@ public class DAVUtil {
             if (value != null) {
                 value = value.toString();
             }
-            System.out.println(property + " = " + value);
             if (namespace.equals(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE)) {
             	String name = property.getName();
             	// hack!

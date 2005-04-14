@@ -46,7 +46,6 @@ import org.tmatesoft.svn.core.SVNCommitPacket;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
-import org.tmatesoft.svn.core.internal.ws.fs.FSDirEntry;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -1079,7 +1078,8 @@ public class SVNWorkspace implements ISVNWorkspace {
                     }
                 }
                 revision = ws.checkout(source, revision, false);
-                ((FSDirEntry) locateEntry(PathUtil.removeTail(destination))).markAsCopied(PathUtil.tail(destination), source, revision);            
+                ISVNEntry dirEntry = locateEntry(PathUtil.removeTail(destination)); 
+                dirEntry.asDirectory().markAsCopied(PathUtil.tail(destination), source, revision);            
             } else {
                 Map properties = new HashMap();
                 tmpFile = File.createTempFile("svn.", ".tmp");
@@ -1087,11 +1087,12 @@ public class SVNWorkspace implements ISVNWorkspace {
                 OutputStream tmpStream = new FileOutputStream(tmpFile); 
                 repository.getFile("", revision, properties, tmpStream);
                 tmpStream.close();
-                
-                // create file in wc.
+
                 InputStream in = new FileInputStream(tmpFile);
                 String name = PathUtil.tail(destination);
-                ((FSDirEntry) locateEntry(PathUtil.removeTail(destination))).markAsCopied(in, tmpFile.length(), properties, name, revision, source);
+                
+                ISVNEntry dirEntry = locateEntry(PathUtil.removeTail(destination)); 
+                dirEntry.asDirectory().markAsCopied(in, tmpFile.length(), properties, name, source);
                 in.close();
             }
         } catch (IOException e) {

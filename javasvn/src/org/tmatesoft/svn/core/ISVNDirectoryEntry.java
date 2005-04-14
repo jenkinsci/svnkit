@@ -12,9 +12,12 @@
 
 package org.tmatesoft.svn.core;
 
+import java.io.InputStream;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 
 /**
  * @author TMate Software Ltd.
@@ -58,4 +61,9 @@ public interface ISVNDirectoryEntry extends ISVNEntry {
     public boolean isIgnored(String name) throws SVNException;
     
     public boolean isManaged(String name) throws SVNException;
+
+    public void markAsCopied(InputStream in, long lenght, Map properties, String name, SVNRepositoryLocation source)
+        throws SVNException;
+
+    public void markAsCopied(String name, SVNRepositoryLocation source, long revision) throws SVNException;
 }
