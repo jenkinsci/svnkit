@@ -327,7 +327,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             unschedule(childName);
             ((FSEntry) child).revertProperties();
             if (!child.isDirectory()) {
-                ((FSFileEntry) child).revertContents();
+                ((FSFileEntry) child).restoreContents();
             } else if (child.getPropertyValue(SVNProperty.PROP_TIME) != null) {
                 if (myChildEntries != null) {
                     Map entryInParent = (Map) myChildEntries.get(childName);

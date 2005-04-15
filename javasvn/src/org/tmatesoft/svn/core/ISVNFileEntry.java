@@ -35,6 +35,10 @@ public interface ISVNFileEntry extends ISVNEntry {
     public void applyDelta(SVNDiffWindow window, InputStream newData, boolean overwrite) throws SVNException;
 
     public int deltaApplied(boolean overwrite) throws SVNException;
+    
+    public void restoreContents() throws SVNException;
+
+    public void markResolved(boolean contentsOnly) throws SVNException;
 
     /**
      * Sends delta between base and actual versions to the editor.

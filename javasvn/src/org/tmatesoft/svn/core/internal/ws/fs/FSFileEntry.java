@@ -404,9 +404,15 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             getPropertyValue(SVNProperty.CONFLICT_NEW) != null ||
             getPropertyValue(SVNProperty.CONFLICT_NEW) != null;
     }
-    
+
     public void markResolved() throws SVNException {
-        super.markResolved();
+        markResolved(false);
+    }
+    
+    public void markResolved(boolean contentsOnly) throws SVNException {
+        if (!contentsOnly) {
+            super.markResolved();
+        }
         // remove properties
         String oldFileName = getPropertyValue(SVNProperty.CONFLICT_OLD);
         String newFileName = getPropertyValue(SVNProperty.CONFLICT_NEW);
@@ -427,8 +433,9 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         }
     }
     
-    protected void revertContents() throws SVNException {
+    public void restoreContents() throws SVNException {
         // replace working copy with base.
+        restoreProperties();
         File base = getAdminArea().getBaseFile(this);
         File local = getRootEntry().getWorkingCopyFile(this);
         if (base.exists()) {

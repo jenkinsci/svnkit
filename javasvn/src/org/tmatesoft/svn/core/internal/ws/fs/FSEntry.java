@@ -391,6 +391,16 @@ public abstract class FSEntry implements ISVNEntry {
         }
     }
     
+    protected void restoreProperties() throws SVNException {
+        File base = getAdminArea().getBasePropertiesFile(this);
+        File local = getAdminArea().getPropertiesFile(this);
+        if (!local.exists() && base.exists()) {
+            FSUtil.copy(base, local, null, null, null);
+            long lm = local.lastModified();
+            setPropertyValue(SVNProperty.PROP_TIME, TimeUtil.formatDate(new Date(lm)));
+        }
+    }
+    
     public void dispose() throws SVNException {
         myModifiedProperties = null;
         myProperties = null;

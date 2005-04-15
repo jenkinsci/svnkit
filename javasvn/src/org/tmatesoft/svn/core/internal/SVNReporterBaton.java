@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.ISVNDirectoryEntry;
 import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -60,7 +61,12 @@ class SVNReporterBaton implements ISVNReporterBaton {
             reporter.linkPath(SVNRepositoryLocation.parseURL(url), path, revision, false); 
         } else if (entry.isMissing()) {
             if (myWorkspace != null && !entry.isDirectory()) {
-                myWorkspace.revert(entry.getPath(), false);
+                entry.asFile().restoreContents();
+                entry.asFile().markResolved(true);
+                ((SVNWorkspace) myWorkspace).fireEntryModified(entry, SVNStatus.RESTORED, false);
+                if (revision != parentRevision) {
+                    reporter.setPath(path, revision, false);
+                }
             } else {
                 DebugLog.log("REPORT.MISSING: " + path);
                 reporter.deletePath(path);
