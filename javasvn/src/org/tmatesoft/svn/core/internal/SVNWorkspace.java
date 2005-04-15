@@ -1158,6 +1158,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             entry.setPropertyValue(SVNProperty.COPYFROM_URL, entry.getPropertyValue(SVNProperty.URL));
             entry.setPropertyValue(SVNProperty.COPYFROM_REVISION, entry.getPropertyValue(SVNProperty.REVISION));
             entry.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
+            entry.setPropertyValue(SVNProperty.SVN_WC_PREFIX + "ra_dav:version-url", null);
             if (entry.isDirectory() && parent != null) {
                 Map entryProps = ((FSDirEntry) parent).getChildEntryMap(entry.getName());
                 entryProps.put(SVNProperty.COPYFROM_URL, entry.getPropertyValue(SVNProperty.URL));
