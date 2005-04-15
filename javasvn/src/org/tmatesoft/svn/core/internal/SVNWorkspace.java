@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.SVNCommitPacket;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
+import org.tmatesoft.svn.core.internal.ws.fs.FSDirEntry;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -83,6 +84,7 @@ public class SVNWorkspace implements ISVNWorkspace {
     
     private boolean myIsCommandRunning;
     private boolean myIsNeedToSleepForTimestamp;
+    private boolean myIsCopyCommit;
 
     public SVNWorkspace(ISVNRootEntry root) {
         setAutoProperties(null);
@@ -801,7 +803,9 @@ public class SVNWorkspace implements ISVNWorkspace {
 			return statuses;
 		}
 		finally {
-			getRoot().dispose();
+            if (!myIsCopyCommit) {
+                getRoot().dispose();
+            }
 		}
 	}
 
@@ -893,14 +897,17 @@ public class SVNWorkspace implements ISVNWorkspace {
 			}
 
 			DebugLog.log("COMMIT TOOK: " + (System.currentTimeMillis() - start) + " ms.");
-			start = System.currentTimeMillis();
-			SVNCommitUtil.updateWorkingCopy(info, rootEntry.getPropertyValue(SVNProperty.UUID), tree, this);
-
-			sleepForTimestamp();
-			DebugLog.log("POST COMMIT ACTIONS TOOK: " + (System.currentTimeMillis() - start) + " ms.");
+            if (!myIsCopyCommit) {
+    			start = System.currentTimeMillis();
+    			SVNCommitUtil.updateWorkingCopy(info, rootEntry.getPropertyValue(SVNProperty.UUID), tree, this);
+    
+    			sleepForTimestamp();
+    			DebugLog.log("POST COMMIT ACTIONS TOOK: " + (System.currentTimeMillis() - start) + " ms.");
+            }
 			return info != null ? info.getNewRevision() : -1;
 		}
 		finally {
+            myIsCopyCommit = false;
 			getRoot().dispose();
 		}
 	}
@@ -1123,6 +1130,56 @@ public class SVNWorkspace implements ISVNWorkspace {
                 tmpFile.delete();
             }
             getRoot().dispose();
+        }
+    }
+
+    public void copy(String src, SVNRepositoryLocation destination, String message) throws SVNException {
+        ISVNEntry entry = locateEntry(src);
+        ISVNEntry parent = locateParentEntry(src);
+        if (entry == null) {
+            throw new SVNException("no versioned entry found at '" + src + "'");
+        }
+        try {
+
+            String url = destination.toCanonicalForm();
+            String name = PathUtil.tail(src);
+            SVNRepository repository = SVNRepositoryFactory.create(destination);
+            repository.setCredentialsProvider(myCredentialsProvider);
+            if (repository.checkPath("", -1) == SVNNodeKind.NONE) {
+                name = PathUtil.tail(url);
+                name = PathUtil.decode(name);
+                url = PathUtil.removeTail(url);
+            }
+            entry.setAlias(PathUtil.append(PathUtil.removeTail(entry.getPath()), name));
+            DebugLog.log("entry path: " + entry.getPath());
+            DebugLog.log("entry aliased path: " + entry.getAlias());
+            
+            // set copyfrom url to original source url and revision.
+            entry.setPropertyValue(SVNProperty.COPYFROM_URL, entry.getPropertyValue(SVNProperty.URL));
+            entry.setPropertyValue(SVNProperty.COPYFROM_REVISION, entry.getPropertyValue(SVNProperty.REVISION));
+            entry.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
+            if (entry.isDirectory()) {
+                Map entryProps = ((FSDirEntry) parent).getChildEntryMap(entry.getName());
+                entryProps.put(SVNProperty.COPYFROM_URL, entry.getPropertyValue(SVNProperty.URL));
+                entryProps.put(SVNProperty.COPYFROM_REVISION, entry.getPropertyValue(SVNProperty.REVISION));
+                entryProps.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
+                entryProps.put(SVNProperty.COPIED, "true");
+            } 
+            
+            FSDirEntry.updateURL(entry, url);
+            FSDirEntry.setPropertyValueRecursively(entry, SVNProperty.COPIED, "true");
+            
+            // commit without saving properties (no entry.save/commit calls).
+            repository = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
+            repository.setCredentialsProvider(myCredentialsProvider);
+            ISVNEditor editor = repository.getCommitEditor(message, getRoot());
+
+            myIsCopyCommit = true;
+            SVNCommitPacket commitPacket = createCommitPacket(new String[] {src}, true, false);
+            commit(commitPacket, message);
+        } finally {
+            getRoot().dispose();
+            myIsCopyCommit = false;
         }
     }
 

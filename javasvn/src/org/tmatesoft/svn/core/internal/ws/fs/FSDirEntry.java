@@ -66,6 +66,16 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         loadEntries();
         return (ISVNEntry) myChildren.get(name);
     }
+    
+    public void rename(String oldName, String newName) throws SVNException {
+        loadEntries();
+        Object info = myChildEntries.remove(oldName);
+        myChildEntries.put(newName, info);
+        Object child = myChildren.remove(oldName);
+        myChildren.put(newName, child);
+        
+        ((FSEntry) child).setName(newName);        
+    }
 
     public ISVNEntry getUnmanagedChild(String name) throws SVNException {
         ISVNEntry managed = getChild(name);
@@ -112,6 +122,11 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
 
     public boolean isDirectory() {
         return true;
+    }
+    
+    public Map getChildEntryMap(String name) throws SVNException {
+        loadEntries();
+        return (Map) myChildEntries.get(name);
     }
     
     public void markAsCopied(String name, SVNRepositoryLocation source, long revision) throws SVNException {
@@ -452,6 +467,9 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             } else {
                 child = new FSFileEntry(getAdminArea(), getRootEntry(), PathUtil.append(getPath(), name), entry);
             }
+            if (getAlias() != null) {
+                child.setAlias(PathUtil.append(getAlias(), name));
+            }
             myChildren.put(name, child);
             myChildEntries.put(name, entry);
         }
@@ -789,7 +807,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         }
     }
 
-    private static void setPropertyValueRecursively(ISVNEntry root, String name, String value) throws SVNException {
+    public static void setPropertyValueRecursively(ISVNEntry root, String name, String value) throws SVNException {
         root.setPropertyValue(name, value);
         if (root.isDirectory()) {
             for(Iterator children = root.asDirectory().childEntries(); children.hasNext();) {
@@ -806,9 +824,10 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         }
     }
     
-    private static void updateURL(ISVNEntry target, String parentURL) throws SVNException {
+    public static void updateURL(ISVNEntry target, String parentURL) throws SVNException {
         parentURL = PathUtil.append(parentURL, PathUtil.encode(target.getName()));
         target.setPropertyValue(SVNProperty.URL, parentURL);
+        DebugLog.log("url set: " + parentURL);
         if (target.isDirectory()) {
             for(Iterator children = target.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();

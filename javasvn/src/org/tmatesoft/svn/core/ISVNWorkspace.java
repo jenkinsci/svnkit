@@ -145,6 +145,8 @@ public interface ISVNWorkspace {
     public void copy(String source, String destination, boolean move, boolean virtual) throws SVNException;
 
     public void copy(SVNRepositoryLocation source, String destination, long revision) throws SVNException;
+
+    public void copy(String source, SVNRepositoryLocation destination, String message) throws SVNException;
     
     public void markResolved(String path, boolean recursive) throws SVNException;
 

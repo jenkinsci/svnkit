@@ -52,6 +52,8 @@ public class SVNCommitUtil {
             }
             map.put(url, entry);
         }
+        DebugLog.log("modified paths: " + modifiedEntries);
+        DebugLog.log("modified map  : " + map);
         // now add common root entry ?
         String commonRoot = null;
         String[] urls = (String[]) map.keySet().toArray(new String[map.size()]);
@@ -78,8 +80,10 @@ public class SVNCommitUtil {
                 if (!rootEntry.isDirectory() || rootEntry.isScheduledForAddition() || rootEntry.isScheduledForDeletion()
                     || rootEntry.isPropertiesModified()) {
                     commonRoot = PathUtil.getCommonRoot(paths);
+                    DebugLog.log("using parent as root  : " + commonRoot);
                 } else {
                     commonRoot = paths[0];
+                    DebugLog.log("using root as is  : " + commonRoot);
                 }
             } else {
                 commonRoot = PathUtil.getCommonRoot(paths);
@@ -183,9 +187,9 @@ public class SVNCommitUtil {
         }
     }
 
-		public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws, SVNProgressProcessor progressProcessor) throws SVNException {
-			doCommit(path, url, entries, editor, ws, progressProcessor, new HashSet());
-		}
+	public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws, SVNProgressProcessor progressProcessor) throws SVNException {
+		doCommit(path, url, entries, editor, ws, progressProcessor, new HashSet());
+	}
 
     public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws, SVNProgressProcessor progressProcessor, Set committedPaths) throws SVNException {
         ISVNEntry root = (ISVNEntry) entries.get(path);
@@ -219,7 +223,8 @@ public class SVNCommitUtil {
                 }
                 DebugLog.log("copyfrom path:" + copyFromURL);
             }
-            editor.addDir(path, copyFromURL, copyFromRevision);
+            // here we could have alias.
+            editor.addDir(root.getAlias() != null ? root.getAlias() : path, copyFromURL, copyFromRevision);
 			root.sendChangedProperties(editor);
             ws.fireEntryCommitted(root, SVNStatus.ADDED);
         } else if (root != null && root.isPropertiesModified()) {
@@ -301,7 +306,7 @@ public class SVNCommitUtil {
                         }
                         DebugLog.log("copyfrom path:" + copyFromURL);
                     }
-                    editor.addFile(childPath, copyFromURL, copyFromRev);
+                    editor.addFile(child.getAlias() != null ? child.getAlias() : childPath, copyFromURL, copyFromRev);
 					editor.closeFile(null);
                     ws.fireEntryCommitted(child, SVNStatus.ADDED);
                     DebugLog.log("FILE COPY: DONE");
@@ -323,16 +328,20 @@ public class SVNCommitUtil {
                         }
                         DebugLog.log("copyfrom path:" + copyFromURL);
                     }
-                    editor.addFile(childPath, copyFromURL, copyFromRevision);
-					child.sendChangedProperties(editor);
-					digest = child.asFile().generateDelta(editor);
+                    editor.addFile(child.getAlias() != null ? child.getAlias() : childPath, copyFromURL, copyFromRevision);
+                    if (child.asFile().isPropertiesModified()) {
+                        child.sendChangedProperties(editor);
+                    }
+                    if (child.asFile().isContentsModified()) {
+                        digest = child.asFile().generateDelta(editor);
+                    }
                     editor.closeFile(digest);
                     ws.fireEntryCommitted(child, SVNStatus.ADDED);
                     DebugLog.log("FILE ADD: DONE");
                 } else if (child.asFile().isContentsModified() || child.isPropertiesModified()) {
                     DebugLog.log("FILE COMMIT: " + childPath + " : " + revision);
                     child.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
-                    editor.openFile(childPath, revision);
+                    editor.openFile(child.getAlias() != null ? child.getAlias() : childPath, revision);
                     child.sendChangedProperties(editor);
                     if (child.asFile().isContentsModified()) {
                         digest = child.asFile().generateDelta(editor);

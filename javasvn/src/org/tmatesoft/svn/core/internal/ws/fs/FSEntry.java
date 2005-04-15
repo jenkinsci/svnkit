@@ -49,6 +49,7 @@ public abstract class FSEntry implements ISVNEntry {
     
     public static final String WC_PREFIX = "svn:wc:"; 
     public static final String ENTRY_PREFIX = "svn:entry:";
+    private String myAlias;
 
     public FSEntry(FSAdminArea adminArea, FSRootEntry entry, String path) {
         setManaged(true);
@@ -82,6 +83,12 @@ public abstract class FSEntry implements ISVNEntry {
             myName = PathUtil.tail(getPath());
         }
         return myName;
+    }
+    
+    public void setName(String name) {
+        myName = name;
+        myPath = PathUtil.append(PathUtil.removeTail(myPath), name);
+        myPath = PathUtil.removeLeadingSlash(myPath);
     }
 
     public String getPropertyValue(String name) throws SVNException {
@@ -505,6 +512,18 @@ public abstract class FSEntry implements ISVNEntry {
             }
         }
         return realValue.toString();
+    }
+    
+    public String getAlias() {
+        return myAlias;
+    }
+
+    public void setAlias(String alias) {
+        if (alias != null) {
+            myAlias = PathUtil.removeLeadingSlash(alias);
+        } else {
+            myAlias = null;
+        }
     }
 
     protected abstract Map getEntry() throws SVNException;

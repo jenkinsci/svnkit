@@ -103,5 +103,9 @@ public interface ISVNEntry {
     
     public ISVNFileEntry asFile();
 
-	  public ISVNEntryContent getContent() throws SVNException;
+    public ISVNEntryContent getContent() throws SVNException;
+
+    public String getAlias();
+    
+    public void setAlias(String alias);
 }
