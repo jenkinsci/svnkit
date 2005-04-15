@@ -58,7 +58,11 @@ class SVNWorkspaceMediatorAdapter implements ISVNWorkspaceMediator {
     public OutputStream createTemporaryLocation(String path, Object id) throws IOException {
         if (myCommitTree != null) {
             ISVNEntry entry = (ISVNEntry) myCommitTree.get(path);
-            path = entry.getPath();
+            if (entry != null) {
+                path = entry.getPath();
+            } else {
+                path = null;
+            }
         }
         return myMediator.createTemporaryLocation(path, id);
     }

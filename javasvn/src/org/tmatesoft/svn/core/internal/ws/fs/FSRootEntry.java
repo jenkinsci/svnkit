@@ -98,9 +98,13 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         if (myTempLocations == null) {
             myTempLocations = new HashMap();
         }
+        if (path == null) {
+            path = getPath();
+        }
         String name = PathUtil.tail(path);
         path = PathUtil.removeTail(path);
         path = PathUtil.append(path, ".svn/tmp");
+        path = PathUtil.removeLeadingSlash(path);
         File parent = new File(myID, path);
         if (!parent.exists()) {
             parent.mkdirs();

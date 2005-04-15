@@ -73,7 +73,7 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
     }
     
     public OutputStream createTemporaryLocation(String path, Object id) throws IOException {
-        File tempFile = myRootEntry instanceof FSRootEntry ?
+        File tempFile = myRootEntry instanceof FSRootEntry  && path != null ?
                 new File(new File(((FSRootEntry) myRootEntry).getID(), path), "svn." + id.hashCode() + ".temp") :
                     File.createTempFile("svn.", ".temp");
                     
