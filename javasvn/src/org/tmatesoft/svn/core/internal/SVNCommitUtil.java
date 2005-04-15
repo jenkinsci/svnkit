@@ -193,6 +193,11 @@ public class SVNCommitUtil {
 
     public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws, SVNProgressProcessor progressProcessor, Set committedPaths) throws SVNException {
         ISVNEntry root = (ISVNEntry) entries.get(path);
+        String realPath = path;
+        if (root != null && root.getAlias() != null) {
+            path = PathUtil.append(PathUtil.removeTail(path), root.getAlias());
+            path = PathUtil.removeLeadingSlash(path);
+        }
 
         long revision = root == null ? -1 : SVNProperty.longValue(root.getPropertyValue(SVNProperty.COMMITTED_REVISION));
 		boolean copied = false;
@@ -200,7 +205,7 @@ public class SVNCommitUtil {
             root.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
 			copied = Boolean.TRUE.toString().equals(root.getPropertyValue(SVNProperty.COPIED));
         }
-        if ("".equals(path)) {
+        if ("".equals(realPath) && !copied) {
             DebugLog.log("ROOT OPEN: " + path);
             editor.openRoot(-1);
             if (root != null) {
@@ -209,6 +214,10 @@ public class SVNCommitUtil {
                 }
             }
         } else if (root != null && (root.isScheduledForAddition() || copied)) {
+            if ("".equals(realPath)) {
+                DebugLog.log("ROOT OPEN: " + path);
+                editor.openRoot(-1);
+            }
             DebugLog.log("DIR ADD: " + path);
             String copyFromURL = root.getPropertyValue(SVNProperty.COPYFROM_URL);
             long copyFromRevision = -1;
@@ -224,7 +233,7 @@ public class SVNCommitUtil {
                 DebugLog.log("copyfrom path:" + copyFromURL);
             }
             // here we could have alias.
-            editor.addDir(root.getAlias() != null ? root.getAlias() : path, copyFromURL, copyFromRevision);
+            editor.addDir(path, copyFromURL, copyFromRevision);
 			root.sendChangedProperties(editor);
             ws.fireEntryCommitted(root, SVNStatus.ADDED);
         } else if (root != null && root.isPropertiesModified()) {
@@ -237,13 +246,13 @@ public class SVNCommitUtil {
             DebugLog.log("DIR OPEN (virtual): " + path + ", " + revision);
             editor.openDir(path, revision);
         } 
-        String[] virtualChildren = getVirtualChildren(entries, path);
+        String[] virtualChildren = getVirtualChildren(entries, realPath);
         DebugLog.log("virtual children count: " + virtualChildren.length);
         for(int i = 0; i < virtualChildren.length; i++) {
             String childPath = virtualChildren[i];
             doCommit(childPath, url, entries, editor, ws, progressProcessor, committedPaths);
         }
-        ISVNEntry[] children = getDirectChildren(entries, path);
+        ISVNEntry[] children = getDirectChildren(entries, realPath);
         DebugLog.log("direct children count: " + children.length);
         ISVNEntry parent = null;
         for(int i = 0; i < children.length; i++) {
@@ -251,13 +260,16 @@ public class SVNCommitUtil {
             if (parent == null) {
                 parent = ws.locateParentEntry(child.getPath());
             }
-            String childPath = PathUtil.append(path, child.getName());
+            String childPath = child.getAlias() != null ? PathUtil.append(path, child.getAlias()) : 
+                PathUtil.append(path, child.getName());
+            
+            String realChildPath = PathUtil.removeLeadingSlash(PathUtil.append(path, child.getName()));
             childPath = PathUtil.removeLeadingSlash(childPath);
             childPath = PathUtil.removeTrailingSlash(childPath);
             revision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.COMMITTED_REVISION));
 
-	          committedPaths.add(childPath);
-	          progressProcessor.setProgress((double)committedPaths.size() / (double)entries.keySet().size());
+	        committedPaths.add(childPath);
+	        progressProcessor.setProgress((double)committedPaths.size() / (double)entries.keySet().size());
 
             if (child.isScheduledForAddition() && child.isScheduledForDeletion()) {
                 DebugLog.log("FILE REPLACE: " + childPath);
@@ -285,7 +297,7 @@ public class SVNCommitUtil {
                     DebugLog.log("FILE DELETE: DONE");
                 }
             } else if (child.isDirectory()) {
-                doCommit(childPath, url, entries, editor, ws, progressProcessor, committedPaths);
+                doCommit(realChildPath, url, entries, editor, ws, progressProcessor, committedPaths);
             } else {
 				boolean childIsCopied = Boolean.TRUE.toString().equals(child.getPropertyValue(SVNProperty.COPIED));
                 long copyFromRev = SVNProperty.longValue(child.getPropertyValue(SVNProperty.COPYFROM_REVISION));
@@ -306,7 +318,7 @@ public class SVNCommitUtil {
                         }
                         DebugLog.log("copyfrom path:" + copyFromURL);
                     }
-                    editor.addFile(child.getAlias() != null ? child.getAlias() : childPath, copyFromURL, copyFromRev);
+                    editor.addFile(childPath, copyFromURL, copyFromRev);
 					editor.closeFile(null);
                     ws.fireEntryCommitted(child, SVNStatus.ADDED);
                     DebugLog.log("FILE COPY: DONE");
@@ -328,7 +340,7 @@ public class SVNCommitUtil {
                         }
                         DebugLog.log("copyfrom path:" + copyFromURL);
                     }
-                    editor.addFile(child.getAlias() != null ? child.getAlias() : childPath, copyFromURL, copyFromRevision);
+                    editor.addFile(childPath, copyFromURL, copyFromRevision);
                     if (child.asFile().isPropertiesModified()) {
                         child.sendChangedProperties(editor);
                     }
@@ -341,7 +353,7 @@ public class SVNCommitUtil {
                 } else if (child.asFile().isContentsModified() || child.isPropertiesModified()) {
                     DebugLog.log("FILE COMMIT: " + childPath + " : " + revision);
                     child.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
-                    editor.openFile(child.getAlias() != null ? child.getAlias() : childPath, revision);
+                    editor.openFile(childPath, revision);
                     child.sendChangedProperties(editor);
                     if (child.asFile().isContentsModified()) {
                         digest = child.asFile().generateDelta(editor);
@@ -354,6 +366,10 @@ public class SVNCommitUtil {
         }
         DebugLog.log("DIR CLOSE: " + path);
         editor.closeDir();
+        if ("".equals(realPath) && copied) {
+            DebugLog.log("DIR CLOSE (ROOT) ");
+            editor.closeDir();
+        }
     }
     
     public static void updateWorkingCopy(SVNCommitInfo info, String uuid, Map commitTree, SVNWorkspace ws) throws SVNException {

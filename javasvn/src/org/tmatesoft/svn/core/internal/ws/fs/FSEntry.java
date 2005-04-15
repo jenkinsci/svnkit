@@ -520,11 +520,7 @@ public abstract class FSEntry implements ISVNEntry {
     }
 
     public void setAlias(String alias) {
-        if (alias != null) {
-            myAlias = PathUtil.removeLeadingSlash(alias);
-        } else {
-            myAlias = null;
-        }
+        myAlias = alias;
     }
 
     protected abstract Map getEntry() throws SVNException;

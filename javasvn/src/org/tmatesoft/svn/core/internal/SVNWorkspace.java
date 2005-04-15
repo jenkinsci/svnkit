@@ -1133,7 +1133,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
     }
 
-    public void copy(String src, SVNRepositoryLocation destination, String message) throws SVNException {
+    public long copy(String src, SVNRepositoryLocation destination, String message) throws SVNException {
         ISVNEntry entry = locateEntry(src);
         ISVNEntry parent = locateParentEntry(src);
         if (entry == null) {
@@ -1150,7 +1150,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                 name = PathUtil.decode(name);
                 url = PathUtil.removeTail(url);
             }
-            entry.setAlias(PathUtil.append(PathUtil.removeTail(entry.getPath()), name));
+            entry.setAlias(name);
             DebugLog.log("entry path: " + entry.getPath());
             DebugLog.log("entry aliased path: " + entry.getAlias());
             
@@ -1158,7 +1158,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             entry.setPropertyValue(SVNProperty.COPYFROM_URL, entry.getPropertyValue(SVNProperty.URL));
             entry.setPropertyValue(SVNProperty.COPYFROM_REVISION, entry.getPropertyValue(SVNProperty.REVISION));
             entry.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
-            if (entry.isDirectory()) {
+            if (entry.isDirectory() && parent != null) {
                 Map entryProps = ((FSDirEntry) parent).getChildEntryMap(entry.getName());
                 entryProps.put(SVNProperty.COPYFROM_URL, entry.getPropertyValue(SVNProperty.URL));
                 entryProps.put(SVNProperty.COPYFROM_REVISION, entry.getPropertyValue(SVNProperty.REVISION));
@@ -1176,7 +1176,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 
             myIsCopyCommit = true;
             SVNCommitPacket commitPacket = createCommitPacket(new String[] {src}, true, false);
-            commit(commitPacket, message);
+            return commit(commitPacket, message);
         } finally {
             getRoot().dispose();
             myIsCopyCommit = false;

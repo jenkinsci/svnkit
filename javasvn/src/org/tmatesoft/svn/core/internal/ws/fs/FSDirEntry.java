@@ -467,9 +467,6 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             } else {
                 child = new FSFileEntry(getAdminArea(), getRootEntry(), PathUtil.append(getPath(), name), entry);
             }
-            if (getAlias() != null) {
-                child.setAlias(PathUtil.append(getAlias(), name));
-            }
             myChildren.put(name, child);
             myChildEntries.put(name, entry);
         }

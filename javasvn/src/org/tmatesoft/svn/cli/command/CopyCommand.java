@@ -45,8 +45,7 @@ public class CopyCommand extends SVNCommand {
                 if (getCommandLine().isPathURLBefore(url, path)) {
                     runRemoteToLocal(out);
                 } else {
-                    err.println("WC->URL copy is not yet implemented");
-                    return;
+                    runLocalToRemote(out);
                 }
             } else {
                 runRemote(out, err);
@@ -189,5 +188,20 @@ public class CopyCommand extends SVNCommand {
         String wsPath = SVNUtil.getWorkspacePath(ws, destPathParent);
         DebugLog.log("workspace path is : " + wsPath);
         ws.copy(SVNRepositoryLocation.parseURL(srcURL), wsPath, revision);
+    }
+
+    private void runLocalToRemote(final PrintStream out) throws SVNException {
+        final String dstURL = getCommandLine().getURL(0);
+        String srcPath = getCommandLine().getPathAt(0);
+        String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
+        srcPath = srcPath.replace(File.separatorChar, '/');
+
+        final ISVNWorkspace ws = createWorkspace(srcPath);
+        String wsPath = SVNUtil.getWorkspacePath(ws, srcPath);
+        DebugLog.log("workspace path is : " + wsPath);
+        long revision = ws.copy(wsPath, SVNRepositoryLocation.parseURL(dstURL), message);
+
+        out.println();
+        out.println("Committed revision " + revision + ".");
     }
 }
