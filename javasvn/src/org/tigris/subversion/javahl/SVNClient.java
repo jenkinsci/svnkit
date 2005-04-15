@@ -795,7 +795,14 @@ public class SVNClient implements SVNClientInterface {
                 throwException(e);
             }
         } else {
-            throw new ClientException("WC->URL copy is not yet implemented", "", 0);
+            try {
+                srcPath = srcPath.replace(File.separatorChar, '/');
+                ISVNWorkspace ws = createWorkspace(srcPath, true);
+                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
+                ws.copy(SVNUtil.getWorkspacePath(ws, srcPath), SVNRepositoryLocation.parseURL(destPath), message);
+            } catch (SVNException e) {
+                throwException(e);
+            }
         }
     }
 
