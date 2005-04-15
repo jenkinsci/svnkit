@@ -92,14 +92,12 @@ public class PathUtil {
     }
     
     private static void encode(String urlPart, StringBuffer dst) {        
-        for(StringTokenizer tokens = new StringTokenizer(urlPart, " /+", true); tokens.hasMoreTokens();) {
+        for(StringTokenizer tokens = new StringTokenizer(urlPart, " /+()", true); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
             if (" ".equals(token)) {
                 dst.append("%20");
-            } else if ("+".equals(token)) {
-                dst.append("+");
-            } else if ("/".equals(token)) {
-                dst.append("/");
+            } else if ("+".equals(token) || "/".equals(token) || "(".equals(token) || ")".equals(token)) {
+                dst.append(token);
             } else {
                 try {
                     dst.append(URLEncoder.encode(token, "UTF-8"));
