@@ -101,11 +101,17 @@ public class CopyCommand extends SVNCommand {
         String destURL = getCommandLine().getURL(1);
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
 
-        String newPath = PathUtil.tail(destURL);
+        SVNRepository repository = createRepository(destURL);
+        String root = destURL;
+        String newPath = PathUtil.tail(srcURL);
         newPath = PathUtil.removeLeadingSlash(newPath);
         newPath = PathUtil.decode(newPath);
-        String root = PathUtil.removeTail(destURL);
-        SVNRepository repository = createRepository(root);
+        if (repository.checkPath("", -1) == SVNNodeKind.NONE) {
+            // dst doesn't exists.
+            root = PathUtil.removeTail(destURL);
+            repository = createRepository(root);
+            newPath = PathUtil.tail(destURL);
+        }
 
         long revNumber = -1;
         String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
