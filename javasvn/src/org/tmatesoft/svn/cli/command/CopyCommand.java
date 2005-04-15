@@ -104,14 +104,15 @@ public class CopyCommand extends SVNCommand {
         SVNRepository repository = createRepository(destURL);
         String root = destURL;
         String newPath = PathUtil.tail(srcURL);
-        newPath = PathUtil.removeLeadingSlash(newPath);
-        newPath = PathUtil.decode(newPath);
-        if (repository.checkPath("", -1) == SVNNodeKind.NONE) {
+        SVNNodeKind nodeKind = repository.checkPath("", -1);
+        if (nodeKind == SVNNodeKind.NONE) {
             // dst doesn't exists.
             root = PathUtil.removeTail(destURL);
             repository = createRepository(root);
             newPath = PathUtil.tail(destURL);
-        }
+        } 
+        newPath = PathUtil.removeLeadingSlash(newPath);
+        newPath = PathUtil.decode(newPath);
 
         long revNumber = -1;
         String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
@@ -126,18 +127,21 @@ public class CopyCommand extends SVNCommand {
             revNumber = repository.getLatestRevision();
         }
         String newPathParent = null;
-        SVNNodeKind nodeKind = repository.checkPath(newPath, -1);
+        DebugLog.log("checking new path: " + newPath);
+        nodeKind = repository.checkPath(newPath, -1);
         if (nodeKind == SVNNodeKind.DIR) {
+            /*
         	DebugLog.log("path " + newPath + " already exists and its a dir");
         	newPathParent = newPath; 
         	newPath = PathUtil.tail(srcURL); 
         	newPath = PathUtil.append(newPathParent, newPath);
             nodeKind = repository.checkPath(newPath, -1);
-            if (nodeKind == SVNNodeKind.DIR) {
+            */
+            //if (nodeKind == SVNNodeKind.DIR) {
             	DebugLog.log("can't copy to '" + PathUtil.append(destURL, newPath) + "', location already exists");
             	err.println("can't copy to '" + PathUtil.append(destURL, newPath) + "', location already exists");
             	return;
-            }
+//            }
         }
 
         SVNRepositoryLocation srcLocation = SVNRepositoryLocation.parseURL(srcURL);
