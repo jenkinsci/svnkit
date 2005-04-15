@@ -45,8 +45,15 @@ public class UpdateCommand extends SVNCommand {
                     }
                     char contents = 'U';
                     char properties = ' ';
+                    if (propertiesStatus == SVNStatus.UPDATED) {
+                        properties = 'U';
+                    } else if (propertiesStatus == SVNStatus.CONFLICTED) {
+                        properties = 'C';
+                    }
+
                     if (contentsStatus == SVNStatus.ADDED) {
                         contents = 'A';
+                        properties = ' ';
                     } else if (contentsStatus == SVNStatus.DELETED) {
                         contents = 'D';
                     } else if (contentsStatus == SVNStatus.MERGED) {
@@ -57,12 +64,6 @@ public class UpdateCommand extends SVNCommand {
                         contents = ' ';
                     } else if (contentsStatus == SVNStatus.CORRUPTED) {
                         contents = 'U';
-                    }
-
-                    if (propertiesStatus == SVNStatus.UPDATED) {
-                        properties = 'U';
-                    } else if (propertiesStatus == SVNStatus.CONFLICTED) {
-                        properties = 'C';
                     }
                     if (contents == ' ' && properties == ' ') {
                         return;
