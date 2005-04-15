@@ -107,6 +107,9 @@ public class FSEntryHandler {
             os.write(e.getKey().toString().substring(FSEntry.ENTRY_PREFIX.length()));
             os.write("=\"");
             String value = e.getValue().toString();
+            if (SVNProperty.URL.equals(e.getKey()) || SVNProperty.COPYFROM_URL.equals(e.getKey())) {
+                value = PathUtil.removeTrailingSlash(value);                
+            }
             value = xmlEncode(value);
             os.write(value);
             os.write("\"");

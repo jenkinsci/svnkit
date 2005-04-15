@@ -198,7 +198,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
             myChangedProperties.put(SVNProperty.REVISION, Long.toString(myTargetRevision));
             if (myChangedProperties.get(SVNProperty.URL) == null) {
                 ISVNDirectoryEntry parent = (ISVNDirectoryEntry) myStack.peek();
-                myChangedProperties.put(SVNProperty.URL, parent.getPropertyValue(SVNProperty.URL) + "/" + PathUtil.encode(myCurrentFile.getName()));
+                myChangedProperties.put(SVNProperty.URL, PathUtil.append(parent.getPropertyValue(SVNProperty.URL), PathUtil.encode(myCurrentFile.getName())));
             }
             myChangedProperties.put(SVNProperty.CHECKSUM, textChecksum);
             myPropertiesStatus = myCurrentFile.applyChangedProperties(myChangedProperties);
