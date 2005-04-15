@@ -12,21 +12,18 @@
 
 package org.tmatesoft.svn.core.test;
 
-import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.SVNWorkspaceManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.ISVNReporter;
-import org.tmatesoft.svn.core.io.ISVNReporterBaton;
-import org.tmatesoft.svn.core.io.SVNCommitInfo;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.util.DebugLog;
 
 /**
@@ -39,95 +36,32 @@ public class SVN {
         SVNRepositoryFactoryImpl.setup();
         FSEntryFactory.setup();
         
-        String url = "http://72.9.228.230:8080/svn/jsvn/trunk/";
+        String url = "svn://localhost/";
+        String copyFromPath = "source";
+        String copyFromPath2 = "source.file.txt";
+        String copyToURL = "svn://localhost/target modified(6)";
+        String copyToURL2 = "svn://localhost/target.file modified(6).txt";
+        String path = "c:/bug/dirs/wc";
+        FSUtil.deleteAll(new File(path));
         try {
             SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
-            SVNRepository repository = SVNRepositoryFactory.create(location);
             
-            ISVNReporterBaton reporterBaton = new ISVNReporterBaton() {
-                public void report(ISVNReporter reporter) throws SVNException {
-                    reporter.setPath("", 21, false);
-                    reporter.finishReport();
-                }
-            };
+            ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace("file", path);
+            ws.setCredentials(new SVNSimpleCredentialsProvider("alex", "cvs"));
+            ws.checkout(location, -1, false);
             
-            ISVNEditor editor = new ISVNEditor() {
+            OutputStream os = new FileOutputStream(new File(path, "source.file.txt"));
+            os.write("modified (1)".getBytes());
+            os.close();
 
-                public void targetRevision(long revision) throws SVNException {
-                }
-
-                public void openRoot(long revision) throws SVNException {
-                    DebugLog.log("OPEN ROOT: " + revision);
-                }
-
-                public void deleteEntry(String path, long revision) throws SVNException {
-                    DebugLog.log("DELETE");
-                }
-
-                public void absentDir(String path) throws SVNException {
-                }
-
-                public void absentFile(String path) throws SVNException {
-                }
-
-                public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-                    DebugLog.log("ADD DIR");
-                }
-
-                public void openDir(String path, long revision) throws SVNException {
-                    DebugLog.log("OPEN DIR");
-                }
-
-                public void changeDirProperty(String name, String value) throws SVNException {
-                    DebugLog.log("CHANGE DIR PROPERTY: " + name + "=" + value);
-                }
-
-                public void closeDir() throws SVNException {
-                    DebugLog.log("CLOSE DIR");
-                }
-
-                public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-                    DebugLog.log("ADD FILE");
-                }
-
-                public void openFile(String path, long revision) throws SVNException {
-                    DebugLog.log("OPEN FILE: " + path);
-                }
-
-                public void applyTextDelta(String baseChecksum) throws SVNException {
-                    DebugLog.log("APPLY DELTA");
-                }
-
-                public void changeFileProperty(String name, String value) throws SVNException {
-                    DebugLog.log("CHANGE FILE PROPERTY: " + name + "=" + value);
-                }
-
-                public void closeFile(String textChecksum) throws SVNException {
-                    DebugLog.log("CLOSE FILE");
-                }
-
-                public SVNCommitInfo closeEdit() throws SVNException {
-                    DebugLog.log("CLOSE EDIT");
-                    return null;
-                }
-
-                public void abortEdit() throws SVNException {
-                    DebugLog.log("ABORT EDIT");
-                }
-
-                public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
-                    DebugLog.log("RECORDING DELTA CHUNK ");
-                    return new ByteArrayOutputStream();
-                }
-
-                public void textDeltaEnd() throws SVNException {
-                }
-                
-            };
+            os = new FileOutputStream(new File(path, "source/source.file.txt"));
+            os.write("modified (2)".getBytes());
+            os.close();
             
-            String targetURL = url + "changelog.txt";
-            repository.diff(targetURL, 23, "changelog.txt", false, false, reporterBaton, editor);
-        } catch (SVNException e) {
+            ws.copy(copyFromPath2, SVNRepositoryLocation.parseURL(copyToURL2), "WC->URL copy test");
+            ws.copy(copyFromPath, SVNRepositoryLocation.parseURL(copyToURL), "WC->URL copy test");
+        } catch (Throwable e) {
+            e.printStackTrace();
             DebugLog.error(e);
         }
     }

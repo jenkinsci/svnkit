@@ -413,6 +413,7 @@ public abstract class FSEntry implements ISVNEntry {
         myProperties = null;
         myWCProperties = null;
         myBaseProperties = null;
+        myAlias = null;
     }
     
     protected boolean isPropertyModified(String name) {
