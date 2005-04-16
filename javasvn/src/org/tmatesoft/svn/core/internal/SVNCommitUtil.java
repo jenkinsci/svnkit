@@ -341,12 +341,8 @@ public class SVNCommitUtil {
                         DebugLog.log("copyfrom path:" + copyFromURL);
                     }
                     editor.addFile(childPath, copyFromURL, copyFromRevision);
-                    if (child.asFile().isPropertiesModified()) {
-                        child.sendChangedProperties(editor);
-                    }
-                    if (child.asFile().isContentsModified()) {
-                        digest = child.asFile().generateDelta(editor);
-                    }
+                    child.sendChangedProperties(editor);
+                    digest = child.asFile().generateDelta(editor);
                     editor.closeFile(digest);
                     ws.fireEntryCommitted(child, SVNStatus.ADDED);
                     DebugLog.log("FILE ADD: DONE");
