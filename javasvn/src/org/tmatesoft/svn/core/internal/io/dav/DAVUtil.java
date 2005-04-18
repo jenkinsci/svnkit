@@ -96,6 +96,7 @@ public class DAVUtil {
             throw new SVNException("resource " + path + " is not part of repository");
         }
         String vcc = (String) properties.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+        //vcc = PathUtil.encode(vcc);
         String baselineRelativePath = (String) properties.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
         if (vcc == null) {
             throw new SVNException("important properties are missing for " + path);
@@ -200,6 +201,56 @@ public class DAVUtil {
         value = value.replaceAll("&#09;", "\t");
         value = value.replaceAll("&amp;", "&");
         return value;
+    }
+    
+    public static Map parseAuthParameters(String source) {
+        if (source == null) {
+            return null;
+        }
+        source = source.trim();
+        Map parameters = new HashMap();
+        // parse strings: name="value" or name=value
+        int index = source.indexOf(' ');
+        if (index <= 0) {
+            return null;
+        }
+        String method = source.substring(0, index);
+        parameters.put("", method);
+        
+        source = source.substring(index).trim();
+        char[] chars = source.toCharArray();
+        int tokenIndex = 0;
+        boolean parsingToken = true;
+        String name = null;
+        String value = null;
+        int quotesCount = 0;
+        
+        for(int i = 0; i < chars.length; i++) {
+            if (parsingToken) {
+                if (chars[i] == '=') {
+                    name = new String(chars, tokenIndex, i - tokenIndex);
+                    name = name.trim();
+                    tokenIndex = i + 1;
+                    parsingToken = false;
+                }
+            } else {
+                if (chars[i] == '\"') {
+                    quotesCount = quotesCount > 0 ? 0 : 1;
+                    continue;
+                } else if ( i + 1 >= chars.length || (chars[i] == ',' && quotesCount == 0)) {
+                    value = new String(chars, tokenIndex, i - tokenIndex);
+                    value = value.trim();
+                    if (value.charAt(0) == '\"' && value.charAt(value.length() - 1) == '\"') {
+                        value = value.substring(1);
+                        value = value.substring(0, value.length() - 1);
+                    }
+                    parameters.put(name, value);
+                    tokenIndex = i + 1;
+                    parsingToken = true;                    
+                }                
+            }
+        }        
+        return parameters;
     }
 
 }

@@ -72,6 +72,7 @@ class HttpConnection {
 
     private ISVNCredentials myLastUsedCredentials;
     private ISVNCredentialsProvider myUserCredentialsProvider;
+    private Map myCredentialsChallenge;
 
     public HttpConnection(SVNRepositoryLocation location, ISVNCredentialsProvider provider) {
         mySVNRepositoryLocation = location;
@@ -215,15 +216,17 @@ class HttpConnection {
         if (myUserCredentialsProvider != null) {
             myUserCredentialsProvider.reset();
         }
+        if (myCredentialsChallenge != null) {
+            myCredentialsChallenge.put("methodname", method);
+            myCredentialsChallenge.put("uri", path);
+        }
         ISVNCredentials credentials = myLastUsedCredentials;
         while (true) {
             DAVStatus status = null;
             try {
                 connect();
-                if (credentials != null) {
-                    String auth = credentials.getName() + ":" + credentials.getPassword();
-                    auth = Base64.byteArrayToBase64(auth.getBytes());
-                    header.put("Authorization", "Basic " + auth);
+                if (credentials != null && myCredentialsChallenge != null) {
+                    header.put("Authorization", composeAuthResponce(credentials, myCredentialsChallenge));
                 }
                 sendHeader(method, path, header, requestBody);
 	            logOutputStream();
@@ -238,12 +241,18 @@ class HttpConnection {
             acknowledgeSSLContext(true);
             if (status != null
                     && (status.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED || status.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN)) {
-                myLastUsedCredentials = null;
+                myLastUsedCredentials = null;                
                 try {
                     skipRequestBody(readHeader);
                 } catch (IOException e1) {}
                 close();
-                String realm = getAuthRealm((String) readHeader.get("WWW-Authenticate"));
+                myCredentialsChallenge = DAVUtil.parseAuthParameters((String) readHeader.get("WWW-Authenticate"));
+                if (myCredentialsChallenge == null) {
+                    throw new SVNAuthenticationException("Authentication challenge is not supported:\n" + (String) readHeader.get("WWW-Authenticate"));
+                }
+                myCredentialsChallenge.put("methodname", method);
+                myCredentialsChallenge.put("uri", path);
+                String realm = (String) myCredentialsChallenge.get("realm");
                 if (myUserCredentialsProvider == null) {
                     throw new SVNAuthenticationException("No credentials defined");
                 }
@@ -560,21 +569,25 @@ class HttpConnection {
         return DebugLog.getLoggingInputStream("http", is);
     }
 
-    private static String getAuthRealm(String auth) throws SVNException {
-        if (auth == null || (!auth.trim().startsWith("Basic") && !auth.trim().startsWith("Digest"))) {
-            throw new SVNException("Authentication method is not supported");
+
+    private static String composeAuthResponce(ISVNCredentials credentials, Map credentialsChallenge) throws SVNAuthenticationException {
+        String method = (String) credentialsChallenge.get("");
+        StringBuffer result = new StringBuffer();
+        if ("basic".equalsIgnoreCase(method)) {
+            String auth = credentials.getName() + ":" + credentials.getPassword();
+            auth = Base64.byteArrayToBase64(auth.getBytes());
+            result.append("Basic ");
+            result.append(auth);
+        } else if ("digest".equalsIgnoreCase(method)) {
+            result.append("Digest ");
+            HttpDigestAuth digestAuth = new HttpDigestAuth(credentials, credentialsChallenge);
+            String response = digestAuth.authenticate();
+            result.append(response);
+        } else {
+            throw new SVNAuthenticationException("Authentication method '" + method + "' is not supported");
         }
-        String realm = auth.substring(auth.indexOf(' ')).trim();
-        if (realm.startsWith("realm=")) {
-            realm = realm.substring("realm=".length()).trim();
-            if (realm.startsWith("\"")) {
-                realm = realm.substring("\"".length());
-            }
-            if (realm.endsWith("\"")) {
-                realm = realm.substring(0, realm.length() - "\"".length());
-            }
-        }
-        return realm;
+
+        return result.toString();
     }
 
     private static synchronized SAXParserFactory getSAXParserFactory() throws FactoryConfigurationError, ParserConfigurationException,
