@@ -44,6 +44,7 @@ import org.tmatesoft.svn.util.Base64;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.LoggingInputStream;
 import org.tmatesoft.svn.util.LoggingOutputStream;
+import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
 import org.tmatesoft.svn.util.SocketFactory;
 import org.tmatesoft.svn.util.Version;
@@ -216,6 +217,7 @@ class HttpConnection {
         if (myUserCredentialsProvider != null) {
             myUserCredentialsProvider.reset();
         }
+        path = PathUtil.removeTrailingSlash(path);
         if (myCredentialsChallenge != null) {
             myCredentialsChallenge.put("methodname", method);
             myCredentialsChallenge.put("uri", path);
