@@ -199,7 +199,7 @@ public class SVNCommitUtil {
             path = PathUtil.removeLeadingSlash(path);
         }
 
-        long revision = root == null ? -1 : SVNProperty.longValue(root.getPropertyValue(SVNProperty.COMMITTED_REVISION));
+        long revision = root == null ? -1 : SVNProperty.longValue(root.getPropertyValue(SVNProperty.REVISION));
 		boolean copied = false;
         if (root != null) {
             root.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
@@ -266,7 +266,7 @@ public class SVNCommitUtil {
             String realChildPath = PathUtil.removeLeadingSlash(PathUtil.append(path, child.getName()));
             childPath = PathUtil.removeLeadingSlash(childPath);
             childPath = PathUtil.removeTrailingSlash(childPath);
-            revision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.COMMITTED_REVISION));
+            revision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.REVISION));
 
 	        committedPaths.add(childPath);
 	        progressProcessor.setProgress((double)committedPaths.size() / (double)entries.keySet().size());
