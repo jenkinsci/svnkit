@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 import org.tigris.subversion.javahl.SVNPromptCredentialsProvider;
@@ -32,6 +33,7 @@ public class JavaSVNPlugin extends Plugin {
         super.start(context);
 		SVNPromptCredentialsProvider.setCredentialsStorage(new JavaSVNCredentialsStorage());
         DebugLog.setLogger(new JavaSVNLogger(getBundle(), isDebugging()));
+        initProxy();
         
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
@@ -44,4 +46,20 @@ public class JavaSVNPlugin extends Plugin {
 		SVNJSchSession.shutdown();
 		super.stop(context);
 	}
+    
+    private void initProxy() {
+        String proxyHost = Platform.getPreferencesService().getString("org.eclipse.update.core", "org.eclipse.update.core.proxy.host", null, null);
+        String proxyPort = Platform.getPreferencesService().getString("org.eclipse.update.core", "org.eclipse.update.core.proxy.port", null, null);
+        String proxyEnabled = Platform.getPreferencesService().getString("org.eclipse.update.core", "org.eclipse.update.core.proxy.enabled", "false", null);
+        if (System.getProperty("http.proxySet") == null) {
+            System.setProperty("http.proxyHost", proxyHost);
+            System.setProperty("http.proxyPort", proxyPort);
+            System.setProperty("http.proxySet", proxyEnabled);
+            DebugLog.log("proxy set from update prefs: " + System.getProperty("http.proxyHost") + ":" + System.getProperty("http.proxyPort"));
+        } else {
+            DebugLog.log("proxy already set: " + System.getProperty("http.proxyHost") + ":" + System.getProperty("http.proxyPort"));
+        }
+        DebugLog.log("proxy enabled: " + System.getProperty("http.proxySet"));
+        
+    }
 }
