@@ -255,7 +255,10 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         entryMap.put(SVNProperty.NAME, name);
         entryMap.put(SVNProperty.KIND, SVNProperty.KIND_DIR);
         myChildEntries.put(name, entryMap);
-
+        File dir = getRootEntry().getWorkingCopyFile(entry);
+        if (dir != null && !dir.exists()) {
+            dir.mkdirs();
+        }
         return entry;
     }
     
