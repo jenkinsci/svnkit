@@ -135,12 +135,19 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                     getRootEntry().getWorkingCopyFile(this), 
                     getAdminArea().getTemporaryBaseFile(this));
         } else if (overwrite) {
+            File dst = getRootEntry().getWorkingCopyFile(this);
             if (myTempFile != null) {
-                File dst = getRootEntry().getWorkingCopyFile(this);
                 FSUtil.copy(myTempFile, dst, isBinary() ? null : SVNProperty.EOL_STYLE_NATIVE, null);
                 myTempFile.delete();
                 myTempFile = null;
             } 
+            if (getRootEntry().isUseCommitTimes()) {
+                String date = getPropertyValue(SVNProperty.COMMITTED_DATE);
+                if (date != null) {
+                    long lm = TimeUtil.parseDate(date).getTime();
+                    dst.setLastModified(lm);
+                }
+            }
         }
         return SVNStatus.UPDATED;
     }
@@ -285,8 +292,14 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 eolStyle = SVNProperty.EOL_STYLE_LF;
             }
             checksum = FSUtil.copy(actualFile, baseFile, storeAsIs ? null : eolStyle, isBinary() ? null : computeKeywords(false), createDigest());
-            Date date = new Date(actualFile.lastModified());
-            getEntry().put(SVNProperty.TEXT_TIME, TimeUtil.formatDate(date));
+            if (!getRootEntry().isUseCommitTimes()) {
+                Date date = new Date(actualFile.lastModified());
+                getEntry().put(SVNProperty.TEXT_TIME, TimeUtil.formatDate(date));
+            } else {
+                String date = (String) getPropertyValue(SVNProperty.COMMITTED_DATE);
+                getEntry().put(SVNProperty.TEXT_TIME, date);
+                actualFile.setLastModified(TimeUtil.parseDate(date).getTime());
+            }            
         } else {
             baseFile.delete();
             getEntry().remove(SVNProperty.TEXT_TIME);
@@ -327,7 +340,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         if (!tmpBaseFile.exists() && !isScheduledForDeletion()) {
             if (baseFile.exists() && (!actualFile.exists() || isNewKeywords)) {
                 FSUtil.copy(baseFile, actualFile, !isBinary() ? getPropertyValue(SVNProperty.EOL_STYLE) : null, isBinary() ? null : keywords, null);
-                getEntry().put(SVNProperty.TEXT_TIME, TimeUtil.formatDate(new Date(actualFile.lastModified())));
+                updateTextTime(actualFile);
             }
             return;
         }
@@ -345,7 +358,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             
             checksum = FSUtil.copy(tmpBaseFile, baseFile, null, createDigest());
             FSUtil.copy(baseFile, actualFile,  isBinary() ? null : eolStyle, isBinary() ? null : keywords, null);
-            getEntry().put(SVNProperty.TEXT_TIME, TimeUtil.formatDate(new Date(actualFile.lastModified())));
+            updateTextTime(actualFile);
         } else {
             int mergeResult = SVNStatus.CONFLICTED;
             File localFile = null;
@@ -396,6 +409,18 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         getAdminArea().deleteTemporaryBaseFile(this);
     }
     
+    private void updateTextTime(File file) throws SVNException {
+        long lastModified = file.lastModified();
+        if (getRootEntry().isUseCommitTimes()) {
+            String commitDate = (String) getPropertyValue(SVNProperty.COMMITTED_DATE);
+            if (commitDate != null) {
+                lastModified = TimeUtil.parseDate(commitDate).getTime();
+                file.setLastModified(lastModified);
+            }
+        }
+        getEntry().put(SVNProperty.TEXT_TIME, TimeUtil.formatDate(new Date(lastModified)));
+    }
+    
     public boolean isConflict() throws SVNException {
         if (super.isConflict()) {
             return true;
@@ -440,8 +465,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         File local = getRootEntry().getWorkingCopyFile(this);
         if (base.exists()) {
             FSUtil.copy(base, local, isBinary() ? null : getPropertyValue(SVNProperty.EOL_STYLE), isBinary() ? null : computeKeywords(true), null);
-            long lm = local.lastModified();
-            setPropertyValue(SVNProperty.TEXT_TIME, TimeUtil.formatDate(new Date(lm)));
+            updateTextTime(local);
         } else {
             local.delete();
         }

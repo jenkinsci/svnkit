@@ -40,7 +40,9 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
     private Map myTempLocations;
     private String myID;
     private FSMerger myMerger;
-    private String myGlobalIgnore; 
+    private String myGlobalIgnore;
+
+    private boolean myIsUseCommitTimes; 
 
     public FSRootEntry(FSAdminArea area, String id, String location) {
         super(area, null, "", location);
@@ -90,6 +92,14 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         }
         return myGlobalIgnore;
     }
+    
+    public void setUseCommitTimes(boolean useCommitTimes) {
+        myIsUseCommitTimes = useCommitTimes;
+    }
+    
+    public boolean isUseCommitTimes() {
+        return myIsUseCommitTimes;
+    }
 
     public OutputStream createTemporaryLocation(String path, Object id) throws IOException {
         if (id == null) {
@@ -131,7 +141,9 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         path = PathUtil.append(path, ".svn");
         File parent = new File(myID, path);
         FSUtil.deleteAll(parent);
-        myTempLocations.clear();
+        if (myTempLocations != null) {
+            myTempLocations.clear();
+        }
     }
     
     public long getLength(Object id) throws IOException {

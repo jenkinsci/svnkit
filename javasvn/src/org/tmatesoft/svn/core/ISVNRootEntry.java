@@ -26,4 +26,8 @@ public interface ISVNRootEntry extends ISVNDirectoryEntry, ISVNWorkspaceMediator
     public void setGlobalIgnore(String ignore);
     
     public String getGlobalIgnore();
+    
+    public void setUseCommitTimes(boolean useCommitTimes);
+    
+    public boolean isUseCommitTimes();
 }

@@ -107,6 +107,14 @@ public class SVNWorkspace implements ISVNWorkspace {
         return myRoot.getGlobalIgnore();
     }
 
+    public void setUseCommitTimes(boolean useCommitTimes) {
+        myRoot.setUseCommitTimes(useCommitTimes);
+    }
+
+    public boolean isUseCommitTimes() {
+        return myRoot.isUseCommitTimes();
+    }
+
     public void setAutoProperties(Map properties) {
         myAutoProperties = properties == null ? new HashMap() : new HashMap(properties);
         myCompiledAutoProperties = null;

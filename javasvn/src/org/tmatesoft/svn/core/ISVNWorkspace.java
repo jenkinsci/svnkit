@@ -44,6 +44,10 @@ public interface ISVNWorkspace {
 
     public String getGlobalIgnore();
     
+    public void setUseCommitTimes(boolean useCommitTimes);
+    
+    public boolean isUseCommitTimes();
+    
     public ISVNWorkspace getRootWorkspace(boolean stopOnExternals, boolean stopOnSwitch);
     
     public void addWorkspaceListener(ISVNWorkspaceListener listener);
