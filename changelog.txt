@@ -1,3 +1,10 @@
+= version 0.8.8
+
++ http digest auth support (requires apache version > 2.0.48)
++ wc->url and url->wc copy operations
++ use-commit-times option support
++ bugfixes
+
 = version 0.8.7.2
 
 + Subclipse v0.9.30 compatible
