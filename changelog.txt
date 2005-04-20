@@ -1,3 +1,7 @@
+= version 0.8.8.1
+
++ critical bug in JavaSVN Eclipse plugin fixed.
+
 = version 0.8.8
 
 + http digest auth support (requires apache version > 2.0.48)

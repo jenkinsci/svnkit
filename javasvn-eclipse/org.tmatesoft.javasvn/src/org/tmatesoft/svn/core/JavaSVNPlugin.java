@@ -48,13 +48,13 @@ public class JavaSVNPlugin extends Plugin {
 	}
     
     private void initProxy() {
-        String proxyHost = Platform.getPreferencesService().getString("org.eclipse.update.core", "org.eclipse.update.core.proxy.host", null, null);
-        String proxyPort = Platform.getPreferencesService().getString("org.eclipse.update.core", "org.eclipse.update.core.proxy.port", null, null);
+        String proxyHost = Platform.getPreferencesService().getString("org.eclipse.update.core", "org.eclipse.update.core.proxy.host", "", null);
+        String proxyPort = Platform.getPreferencesService().getString("org.eclipse.update.core", "org.eclipse.update.core.proxy.port", "", null);
         String proxyEnabled = Platform.getPreferencesService().getString("org.eclipse.update.core", "org.eclipse.update.core.proxy.enabled", "false", null);
         if (System.getProperty("http.proxySet") == null) {
-            System.setProperty("http.proxyHost", proxyHost);
-            System.setProperty("http.proxyPort", proxyPort);
-            System.setProperty("http.proxySet", proxyEnabled);
+            System.setProperty("http.proxyHost", proxyHost == null ? "" : proxyHost);
+            System.setProperty("http.proxyPort", proxyPort == null ? "" : proxyPort);
+            System.setProperty("http.proxySet", proxyEnabled == null ? "false" : proxyEnabled);
             DebugLog.log("proxy set from update prefs: " + System.getProperty("http.proxyHost") + ":" + System.getProperty("http.proxyPort"));
         } else {
             DebugLog.log("proxy already set: " + System.getProperty("http.proxyHost") + ":" + System.getProperty("http.proxyPort"));
