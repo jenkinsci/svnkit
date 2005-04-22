@@ -26,7 +26,9 @@ import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNAuthenticationException;
+import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
@@ -350,5 +352,103 @@ public class SVNAuthRepository extends SVNRepository {
             }
         }
     }
+
+    public ISVNEditor getCommitEditor(String logMessage, SVNLock[] locks, boolean keepLocks, ISVNWorkspaceMediator mediator) throws SVNException {
+        ISVNCredentials credentials = null;
+        ISVNCredentialsProvider provider = initProvider();
+        while(true) {
+            try {
+                myDelegate.setCredentials(credentials);
+                ISVNEditor editor = myDelegate.getCommitEditor(logMessage, locks, keepLocks, mediator);
+                accept(provider, credentials);
+                return editor;
+            } catch (SVNAuthenticationException e) {
+                notAccept(provider, credentials, e.getMessage());
+                credentials = nextCredentials(provider, e.getMessage());
+            } catch (SVNException e) {
+                DebugLog.error(e);
+                throw e;
+            }
+        }
+    }
+
+    public SVNLock getLock(String path) throws SVNException {
+        ISVNCredentials credentials = null;
+        ISVNCredentialsProvider provider = initProvider();
+        while(true) {
+            try {
+                myDelegate.setCredentials(credentials);
+                SVNLock lock = myDelegate.getLock(path);
+                accept(provider, credentials);
+                return lock;
+            } catch (SVNAuthenticationException e) {
+                notAccept(provider, credentials, e.getMessage());
+                credentials = nextCredentials(provider, e.getMessage());
+            }
+        }
+    }
+
+    public SVNLock[] getLocks(String path) throws SVNException {
+        ISVNCredentials credentials = null;
+        ISVNCredentialsProvider provider = initProvider();
+        while(true) {
+            try {
+                myDelegate.setCredentials(credentials);
+                SVNLock[] locks = myDelegate.getLocks(path);
+                accept(provider, credentials);
+                return locks;
+            } catch (SVNAuthenticationException e) {
+                notAccept(provider, credentials, e.getMessage());
+                credentials = nextCredentials(provider, e.getMessage());
+            }
+        }
+    }
+
+    public SVNLock setLock(String path, String comment, boolean force, long revision) throws SVNException {
+        ISVNCredentials credentials = null;
+        ISVNCredentialsProvider provider = initProvider();
+        while(true) {
+            try {
+                myDelegate.setCredentials(credentials);
+                SVNLock lock = myDelegate.setLock(path, comment, force, revision);
+                accept(provider, credentials);
+                return lock;
+            } catch (SVNAuthenticationException e) {
+                notAccept(provider, credentials, e.getMessage());
+                credentials = nextCredentials(provider, e.getMessage());
+            }
+        }
+    }
+
+    public void removeLock(String path, String id, boolean force) throws SVNException {
+        ISVNCredentials credentials = null;
+        ISVNCredentialsProvider provider = initProvider();
+        while(true) {
+            try {
+                myDelegate.setCredentials(credentials);
+                myDelegate.removeLock(path, id, force);
+                accept(provider, credentials);
+                return;
+            } catch (SVNAuthenticationException e) {
+                notAccept(provider, credentials, e.getMessage());
+                credentials = nextCredentials(provider, e.getMessage());
+            }
+        }
+    }
+
+    public SVNDirEntry pathStat(String path, long revision) throws SVNException {
+        ISVNCredentials credentials = null;
+        ISVNCredentialsProvider provider = initProvider();
+        while(true) {
+            try {
+                myDelegate.setCredentials(credentials);
+                return myDelegate.pathStat(path, revision);
+            } catch (SVNAuthenticationException e) {
+                notAccept(provider, credentials, e.getMessage());
+                credentials = nextCredentials(provider, e.getMessage());
+            }
+        }
+    }
+    
 
 }

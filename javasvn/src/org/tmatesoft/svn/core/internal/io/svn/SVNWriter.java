@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.util.Date;
 
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -95,10 +96,23 @@ public class SVNWriter {
 	        	                os.write(list[j].toString().getBytes("UTF-8"));                    
 	                        } else if (ch == 'w') {
 	                            os.write(list[j].toString().getBytes("UTF-8"));
-	                        }
+	                        } else if (ch == 'l') {
+                                SVNLock lock = (SVNLock) list[j];
+                                os.write('(');
+                                os.write(' ');
+                                os.write(Integer.toString(lock.getPath().getBytes("UTF-8").length).getBytes("UTF-8"));
+                                os.write(':');
+                                os.write(lock.getPath().getBytes("UTF-8"));
+                                os.write(' ');
+                                os.write(Integer.toString(lock.getID().getBytes("UTF-8").length).getBytes("UTF-8"));
+                                os.write(':');
+                                os.write(lock.getID().getBytes("UTF-8"));
+                                os.write(' ');
+                                os.write(')');
+                            }
 	                        os.write(' ');
                         }
-	                } else if (item instanceof long[]&& ch == 'n') {
+	                } else if (item instanceof long[] && ch == 'n') {
 	                    long[] list = (long[]) item;
 	                    for (int j = 0; j < list.length; j++) {
 	                        os.write(Long.toString(list[j]).getBytes("UTF-8"));

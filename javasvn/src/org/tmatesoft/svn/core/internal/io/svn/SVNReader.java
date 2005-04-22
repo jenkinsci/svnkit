@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNError;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.util.*;
 
@@ -154,8 +155,10 @@ class SVNReader {
      * 'i' - push input to passed output stream
      * 'n' - read number as Integer
      * 'p' - properties map entry (name => value)
+     * 'l' - lock description
      * 
      * 'd' - dir entry (get-dir svn command response)
+     * 'f' - stat command responce
      * 'e' - edit command
      * 
      * '(' and ')' - list brackets
@@ -288,6 +291,8 @@ class SVNReader {
                     readChar(is, '(');
                 } else if (ch == 'd') {
                     result = readDirEntry(DebugLog.getLoggingInputStream("svn", new RollbackInputStream(is)));
+                } else if (ch == 'f') {
+                    result = readStatEntry(DebugLog.getLoggingInputStream("svn", new RollbackInputStream(is)));
                 } else if (ch == 'e') {
                     if (editorBaton == null) {
                         editorBaton = new SVNEditModeReader(); 
@@ -318,6 +323,8 @@ class SVNReader {
                     if (!"done".equals(word)) {
                         throw new SVNException("netword data doesn't match template, 'done' was expected, but '" + word + "' read.");
                     }
+                } else if (ch == 'l') {
+                    result = readLock(DebugLog.getLoggingInputStream("svn", new RollbackInputStream(is)));
                 }
                 if (doRead) {
                     target = reportResult(target, targetIndex, result, multiple);
@@ -349,7 +356,7 @@ class SVNReader {
     
     private static final char[] VALID_TEMPLATE_CHARS = {'(', ')', '[', ']', // groups 
             's', 'w', 'b', 'i', 'n', 't', 'p', // items
-            'd', 'f', 'l', 'a', 'r', 'e', 'x', // command-specific
+            'd', 'f', 'l', 'a', 'r', 'e', 'x', 'l', // command-specific
             '?', '*', 'z'};
     private static final char[] INVALID_CARDINALITY_SUBJECTS = {'(', ')', '[', ']', '?', '*', '<'};
     
@@ -609,6 +616,35 @@ class SVNReader {
         Date date = TimeUtil.parseDate(SVNReader.getString(items, 5));
         String author = SVNReader.getString(items, 6);
         return new SVNDirEntry(name, kind, size, hasProps, revision, date, author);
+    }
+
+    private static SVNDirEntry readStatEntry(LoggingInputStream is) throws SVNException {
+        Object[] items = SVNReader.parse(is, "(WNTN(?S)(?S))", null);
+        is.log();
+        
+        SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader.getString(items, 0));
+        long size = SVNReader.getLong(items, 1);
+        boolean hasProps = SVNReader.getBoolean(items, 2);
+        long revision = SVNReader.getLong(items, 3);
+        Date date = TimeUtil.parseDate(SVNReader.getString(items, 4));
+        String author = SVNReader.getString(items, 5);
+        return new SVNDirEntry(null, kind, size, hasProps, revision, date, author);
+    }
+
+    private static SVNLock readLock(LoggingInputStream is) throws SVNException {
+        Object[] items = SVNReader.parse(is, "(SSS(?S)S(?S))", new Object[6]);
+        is.log();
+        
+        String path = (String) items[0];
+        String id = (String) items[1];
+        String owner = (String) items[2];
+        String comment = (String) items[3];
+        String creationDate = (String) items[4];
+        String expirationDate = (String) items[5];
+        Date created = creationDate != null ? TimeUtil.parseDate(creationDate) : null;
+        Date expires = expirationDate != null ? TimeUtil.parseDate(expirationDate) : null;
+        
+        return new SVNLock(path, id, owner, comment, created, expires);
     }
 
 }

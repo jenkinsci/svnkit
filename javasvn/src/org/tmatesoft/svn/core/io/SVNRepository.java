@@ -93,6 +93,8 @@ public abstract class SVNRepository {
     
     public abstract SVNNodeKind checkPath(String path, long revision) throws SVNException;
     
+    public abstract SVNDirEntry pathStat(String path, long revision) throws SVNException;
+    
     public abstract long getFile(String path, long revision, Map properties, OutputStream contents) throws SVNException; 
     
     public abstract long getDir(String path, long revision, Map properties, ISVNDirEntryHandler handler) throws SVNException; 
@@ -199,6 +201,18 @@ public abstract class SVNRepository {
     /* write methods */
     
     public abstract ISVNEditor getCommitEditor(String logMessage, ISVNWorkspaceMediator mediator) throws SVNException;
+    
+    public abstract ISVNEditor getCommitEditor(String logMessage, SVNLock[] locks, boolean keepLocks, final ISVNWorkspaceMediator mediator) throws SVNException;
+    
+    /* SVN locks */
+    
+    public abstract SVNLock getLock(String path) throws SVNException;
+
+    public abstract SVNLock[] getLocks(String path) throws SVNException;
+    
+    public abstract SVNLock setLock(String path, String comment, boolean force, long revision) throws SVNException;
+
+    public abstract void removeLock(String path, String id, boolean force) throws SVNException;
     
     protected synchronized void lock() {
     	try {

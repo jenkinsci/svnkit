@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNAuthenticationException;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
@@ -492,5 +493,27 @@ class DAVRepository extends SVNRepository {
         setRepositoryCredentials(uuid, root);
     }
 
+    public ISVNEditor getCommitEditor(String logMessage, SVNLock[] locks, boolean keepLocks, ISVNWorkspaceMediator mediator) throws SVNException {
+        return null;
+    }
+
+    public SVNLock getLock(String path) throws SVNException {
+        return null;
+    }
+
+    public SVNLock[] getLocks(String path) throws SVNException {
+        return null;
+    }
+
+    public SVNLock setLock(String path, String comment, boolean force, long revision) throws SVNException {
+        return null;
+    }
+
+    public void removeLock(String path, String id, boolean force) throws SVNException {
+    }
+
+    public SVNDirEntry pathStat(String path, long revision) throws SVNException {
+        return null;
+    }
 }
 

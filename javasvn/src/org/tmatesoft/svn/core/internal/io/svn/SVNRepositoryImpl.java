@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,9 +31,11 @@ import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
+import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNLogEntryPath;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
@@ -458,6 +461,99 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         } catch (SVNException e) {
             closeConnection();
             throw e;
+        }
+    }
+
+    public ISVNEditor getCommitEditor(String logMessage, SVNLock[] locks, boolean keepLocks, final ISVNWorkspaceMediator mediator) throws SVNException {
+        try {
+            openConnection();
+            write("(w(s(*l)w))", new Object[] { "commit", logMessage, locks, Boolean.valueOf(keepLocks)});
+            authenticate();
+            read("[()]", null);
+            SVNCommitEditor editor = new SVNCommitEditor(this, myConnection, mediator, new Runnable() {
+                public void run() {
+                    closeConnection();
+                }
+            });
+            return editor;
+        } catch (SVNException e) {
+            closeConnection();
+            throw e;
+        }
+    }
+    
+    public SVNLock getLock(String path) throws SVNException {
+        try {
+            openConnection();
+            path = getRepositoryPath(path);
+            Object[] buffer = new Object[] { "get-lock", path};
+            write("(w(s))", buffer);
+            authenticate();
+            read("[((?L))]", buffer);
+            return (SVNLock) buffer[0];
+        } finally {
+            closeConnection();
+        }
+    }
+
+    public SVNLock[] getLocks(String path) throws SVNException {
+        try {
+            openConnection();
+            path = getRepositoryPath(path);
+            Object[] buffer = new Object[] { "get-lock", path};
+            write("(w(s))", buffer);
+            authenticate();
+            read("[((*L))]", buffer);
+            Collection lockObjects = (Collection) buffer[0];
+            return lockObjects == null ? new SVNLock[0] : 
+                (SVNLock[]) lockObjects.toArray(new SVNLock[lockObjects.size()]);
+        } finally {
+            closeConnection();
+        }
+    }
+
+    public SVNLock setLock(String path, String comment, boolean force, long revision) throws SVNException {
+        try {
+            openConnection();
+            path = getRepositoryPath(path);
+            Object[] buffer = new Object[] { "lock", path, comment, Boolean.valueOf(force), getRevisionObject(revision)};
+            write("(w(s(s)w(n)))", buffer);
+            authenticate();
+            read("[(L)]", buffer);
+            return (SVNLock) buffer[0];
+        } finally {
+            closeConnection();
+        }
+    }
+
+    public void removeLock(String path, String id, boolean force) throws SVNException {
+        try {
+            openConnection();
+            path = getRepositoryPath(path);
+            Object[] buffer = new Object[] {"unlock", path, id, Boolean.valueOf(force)};
+            write("(w(s(s)w))", buffer);
+            authenticate();
+            read("[()]", buffer);
+        } finally {
+            closeConnection();
+        }
+    }
+
+    public SVNDirEntry pathStat(String path, long revision) throws SVNException {
+        try {
+            openConnection();
+            path = getRepositoryPath(path);
+            Object[] buffer = new Object[] {"stat", path, getRevisionObject(revision)};
+            write("(w(s(n)))", buffer);
+            authenticate();
+            read("[((?F))]", buffer);
+            SVNDirEntry entry = (SVNDirEntry) buffer[0];
+            if (entry != null) {
+                entry.setName(PathUtil.tail(path));
+            }
+            return (SVNDirEntry) buffer[0];
+        } finally {
+            closeConnection();
         }
     }
 
