@@ -6,4 +6,6 @@ package org.tmatesoft.svn.core.progress;
 public interface ISVNProgressViewer {
 
 	void setProgress(double value);
+
+	void checkCancelled() throws SVNProgressCancelledException;
 }

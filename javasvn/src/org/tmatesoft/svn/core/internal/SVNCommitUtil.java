@@ -29,7 +29,8 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.progress.SVNProgressProcessor;
+import org.tmatesoft.svn.core.progress.ISVNProgressViewer;
+import org.tmatesoft.svn.core.progress.SVNProgressDummyViewer;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
@@ -187,11 +188,13 @@ public class SVNCommitUtil {
         }
     }
 
-	public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws, SVNProgressProcessor progressProcessor) throws SVNException {
-		doCommit(path, url, entries, editor, ws, progressProcessor, new HashSet());
+	public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws, ISVNProgressViewer progressViewer) throws SVNException {
+		doCommit(path, url, entries, editor, ws, progressViewer, new HashSet());
 	}
 
-    public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws, SVNProgressProcessor progressProcessor, Set committedPaths) throws SVNException {
+    public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws, ISVNProgressViewer progressViewer, Set committedPaths) throws SVNException {
+	      progressViewer = progressViewer == null ? new SVNProgressDummyViewer() : progressViewer;
+
         ISVNEntry root = (ISVNEntry) entries.get(path);
         String realPath = path;
         if (root != null && root.getAlias() != null) {
@@ -250,7 +253,7 @@ public class SVNCommitUtil {
         DebugLog.log("virtual children count: " + virtualChildren.length);
         for(int i = 0; i < virtualChildren.length; i++) {
             String childPath = virtualChildren[i];
-            doCommit(childPath, url, entries, editor, ws, progressProcessor, committedPaths);
+            doCommit(childPath, url, entries, editor, ws, progressViewer, committedPaths);
         }
         ISVNEntry[] children = getDirectChildren(entries, realPath);
         DebugLog.log("direct children count: " + children.length);
@@ -269,7 +272,7 @@ public class SVNCommitUtil {
             revision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.REVISION));
 
 	        committedPaths.add(childPath);
-	        progressProcessor.setProgress((double)committedPaths.size() / (double)entries.keySet().size());
+	        progressViewer.setProgress((double)committedPaths.size() / (double)entries.keySet().size());
 
             if (child.isScheduledForAddition() && child.isScheduledForDeletion()) {
                 DebugLog.log("FILE REPLACE: " + childPath);
@@ -277,7 +280,7 @@ public class SVNCommitUtil {
                 editor.deleteEntry(childPath, revision);
                 updateReplacementSchedule(child);
                 if (child.isDirectory()) {
-                    doCommit(childPath, url, entries, editor, ws, progressProcessor, committedPaths);
+                    doCommit(childPath, url, entries, editor, ws, progressViewer, committedPaths);
                 } else {
                     editor.addFile(childPath, null, -1);
                     child.sendChangedProperties(editor);
@@ -297,7 +300,7 @@ public class SVNCommitUtil {
                     DebugLog.log("FILE DELETE: DONE");
                 }
             } else if (child.isDirectory()) {
-                doCommit(realChildPath, url, entries, editor, ws, progressProcessor, committedPaths);
+                doCommit(realChildPath, url, entries, editor, ws, progressViewer, committedPaths);
             } else {
 				boolean childIsCopied = Boolean.TRUE.toString().equals(child.getPropertyValue(SVNProperty.COPIED));
                 long copyFromRev = SVNProperty.longValue(child.getPropertyValue(SVNProperty.COPYFROM_REVISION));

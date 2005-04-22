@@ -1,7 +1,9 @@
 package org.tmatesoft.svn.core.progress;
 
-import java.util.*;
-import org.tmatesoft.svn.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+
+import org.tmatesoft.svn.util.SVNAssert;
 
 /**
  * @author Marc Strapetz
@@ -40,5 +42,9 @@ public final class SVNProgressViewerIterator implements ISVNProgressViewer, Iter
 	public void setProgress(double value) {
 		SVNAssert.assertTrue(0.0 <= value && value <= 1.0);
 		viewer.setProgress((index + value) / count);
+	}
+
+	public void checkCancelled() throws SVNProgressCancelledException {
+		viewer.checkCancelled();
 	}
 }

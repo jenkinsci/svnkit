@@ -20,7 +20,6 @@ import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.progress.ISVNProgressCanceller;
 import org.tmatesoft.svn.core.progress.ISVNProgressViewer;
 
 /**
@@ -67,7 +66,9 @@ public interface ISVNWorkspace {
     public long checkout(SVNRepositoryLocation location, long revision, boolean export) throws SVNException;
 
     public long checkout(SVNRepositoryLocation location, long revision, boolean export, boolean recurse) throws SVNException;
-    
+
+    public long checkout(SVNRepositoryLocation location, long revision, boolean export, boolean recurse, ISVNProgressViewer progressViewer) throws SVNException;
+
     /**
      * @deprecated
      */
@@ -83,7 +84,7 @@ public interface ISVNWorkspace {
 
 	public SVNStatus[] getCommittables(String[] paths, boolean recursive, boolean includeParents) throws SVNException;
 
-	public long commitPaths(List paths, String message, ISVNProgressViewer progressViewer, ISVNProgressCanceller progressCanceller) throws SVNException;
+	public long commitPaths(List paths, String message, ISVNProgressViewer progressViewer) throws SVNException;
 
 	/**
 	 * @deprecated Use getCommittablePaths().
@@ -122,7 +123,7 @@ public interface ISVNWorkspace {
             boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned, boolean descendFurtherInIgnored) throws SVNException;
 
     public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend,
-            boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned, boolean descendFurtherInIgnored, ISVNProgressViewer progressViewer, ISVNProgressCanceller canceller) throws SVNException;
+                       boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned, boolean descendFurtherInIgnored, ISVNProgressViewer progressViewer) throws SVNException;
 
     public SVNStatus status(String path, boolean remote) throws SVNException;
     
@@ -150,8 +151,12 @@ public interface ISVNWorkspace {
 
     public void copy(SVNRepositoryLocation source, String destination, long revision) throws SVNException;
 
+    public void copy(SVNRepositoryLocation source, String destination, long revision, ISVNProgressViewer progressViewer) throws SVNException;
+
     public long copy(String source, SVNRepositoryLocation destination, String message) throws SVNException;
-    
+
+    public long copy(String source, SVNRepositoryLocation destination, String message, ISVNProgressViewer progressViewer) throws SVNException;
+
     public void markResolved(String path, boolean recursive) throws SVNException;
 
     public void revert(String path, boolean recursive) throws SVNException;

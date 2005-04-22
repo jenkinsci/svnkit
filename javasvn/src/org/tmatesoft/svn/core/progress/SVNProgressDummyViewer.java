@@ -13,4 +13,7 @@ public final class SVNProgressDummyViewer implements ISVNProgressViewer {
 
 	public void setProgress(double value) {
 	}
+
+	public void checkCancelled() {
+	}
 }

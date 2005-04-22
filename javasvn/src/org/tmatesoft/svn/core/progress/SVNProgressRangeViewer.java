@@ -1,6 +1,6 @@
 package org.tmatesoft.svn.core.progress;
 
-import org.tmatesoft.svn.util.*;
+import org.tmatesoft.svn.util.SVNAssert;
 
 /**
  * @author Marc Strapetz
@@ -46,5 +46,9 @@ public class SVNProgressRangeViewer
 
 		final double boundedValue = (1.0 - value) * lowerBound + value * upperBound;
 		parentProgressViewer.setProgress(boundedValue);
+	}
+
+	public void checkCancelled() throws SVNProgressCancelledException {
+		parentProgressViewer.checkCancelled();
 	}
 }

@@ -46,7 +46,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
     
     private long myTargetRevision;    
     private ISVNEntry myRootEntry;
-    private ISVNFileEntry myCurrentFile;
+		private ISVNFileEntry myCurrentFile;
     private List myDiffWindow;
     private ISVNWorkspaceMediator myMediator;
 
@@ -62,7 +62,8 @@ public class SVNCheckoutEditor implements ISVNEditor {
     private SVNWorkspace myWorkspace;
     private long myUpdateTime;
     private int myFileCount;
-    
+		private SVNCheckoutProgressProcessor myProgressProcessor;
+
     private Collection myExternals;
 
     private String myTarget;
@@ -71,12 +72,13 @@ public class SVNCheckoutEditor implements ISVNEditor {
     
     public SVNCheckoutEditor(ISVNWorkspaceMediator mediator, SVNWorkspace workspace, ISVNEntry rootEntry, boolean export,
             String target) {
-        this(mediator, workspace, rootEntry, export, target, true);
+        this(mediator, workspace, rootEntry, export, target, true, null);
     }
+
     public SVNCheckoutEditor(ISVNWorkspaceMediator mediator, SVNWorkspace workspace, ISVNEntry rootEntry, boolean export,
-            String target, boolean recursive) {
+            String target, boolean recursive, SVNCheckoutProgressProcessor progressProcessor) {
         myRootEntry = rootEntry;
-        myStack = new Stack();
+	      myStack = new Stack();
         myMediator = mediator;
         myWorkspace = workspace;
         myIsExport = export;
@@ -84,7 +86,8 @@ public class SVNCheckoutEditor implements ISVNEditor {
         myPropertiesMap = new HashMap();
         myTarget = target;
         myIsRecursive = recursive;
-    }    
+	      myProgressProcessor = progressProcessor;
+    }
     
     public long getTargetRevision() {
         return myTargetRevision;
@@ -162,6 +165,9 @@ public class SVNCheckoutEditor implements ISVNEditor {
             ((ISVNRootEntry) myRootEntry).deleteAdminFiles(getCurrentEntry().getPath());
         }
         DebugLog.log("UPDATED: CLOSED DIR: " + getCurrentEntry().getPath());
+	    if (myProgressProcessor != null) {
+		    myProgressProcessor.entryProcessed(getCurrentEntry().getPath());
+	    }
         myStack.pop();
     }
     
@@ -207,6 +213,9 @@ public class SVNCheckoutEditor implements ISVNEditor {
         long revision = SVNProperty.longValue(myCurrentFile.getPropertyValue(SVNProperty.COMMITTED_REVISION));
         myWorkspace.fireEntryUpdated(myCurrentFile, myContentsStatus, myPropertiesStatus, revision);
         DebugLog.log("UPDATED: CLOSED FILE: " + myCurrentFile.getPath());
+	    if (myProgressProcessor != null) {
+		    myProgressProcessor.entryProcessed(myCurrentFile.getPath());
+	    }
         myContentsStatus = 0;
         myPropertiesStatus = 0;
         myCurrentFile = null;

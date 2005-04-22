@@ -60,11 +60,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
-import org.tmatesoft.svn.core.progress.ISVNProgressCanceller;
 import org.tmatesoft.svn.core.progress.ISVNProgressViewer;
-import org.tmatesoft.svn.core.progress.SVNProgressDummyCanceller;
-import org.tmatesoft.svn.core.progress.SVNProgressDummyViewer;
-import org.tmatesoft.svn.core.progress.SVNProgressProcessor;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
@@ -266,7 +262,11 @@ public class SVNWorkspace implements ISVNWorkspace {
         return checkout(location, revision, export, true);
     }
 
-    public long checkout(SVNRepositoryLocation location, long revision, boolean export, boolean recurse) throws SVNException {
+	public long checkout(SVNRepositoryLocation location, long revision, boolean export, boolean recurse) throws SVNException {
+		return checkout(location, revision, export, recurse, null);
+	}
+
+	public long checkout(SVNRepositoryLocation location, long revision, boolean export, boolean recurse, ISVNProgressViewer progressViewer) throws SVNException {
         if (getLocation() != null) {
             throw new SVNException(getRoot().getID() + " already contains working copy files");
         }
@@ -279,7 +279,9 @@ public class SVNWorkspace implements ISVNWorkspace {
                 repository = SVNRepositoryFactory.create(location);
                 repository.setCredentialsProvider(myCredentialsProvider);
             }
-            SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, getRoot(), export, null);
+
+	        final SVNCheckoutProgressProcessor processor = progressViewer != null ? new SVNCheckoutProgressProcessor(progressViewer, repository, revision) : null;
+	        SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, getRoot(), export, null, true, processor);
             repository.checkout(revision, null, recurse, editor);
 
             if (myExternalsHandler != null) {
@@ -332,7 +334,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                 targetEntry = locateParentEntry(path);
             }
             SVNRepository repository = SVNUtil.createRepository(this, targetEntry.getPath());
-            SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, targetEntry, false, target, recursive);
+            SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this, targetEntry, false, target, recursive, null);
             SVNReporterBaton reporterBaton = new SVNReporterBaton(this, targetEntry, target, recursive);
             repository.update(revision, target, recursive, reporterBaton, editor);
             
@@ -484,10 +486,10 @@ public class SVNWorkspace implements ISVNWorkspace {
 
 	public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend, boolean includeUnmodified, boolean includeIgnored,
 	        boolean descendInUnversioned, boolean descendFurtherInIgnored) throws SVNException {
-		return status(path, remote, handler, descend, includeUnmodified, includeIgnored, descendInUnversioned, descendFurtherInIgnored, SVNProgressDummyViewer.getInstance(), SVNProgressDummyCanceller.getInstance());
+		return status(path, remote, handler, descend, includeUnmodified, includeIgnored, descendInUnversioned, descendFurtherInIgnored, null);
 	}
 
-	public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend, boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned, boolean descendFurtherInIgnored, ISVNProgressViewer progressViewer, ISVNProgressCanceller canceller) throws SVNException {
+	public long status(String path, boolean remote, ISVNStatusHandler handler, boolean descend, boolean includeUnmodified, boolean includeIgnored, boolean descendInUnversioned, boolean descendFurtherInIgnored, ISVNProgressViewer progressViewer) throws SVNException {
 				long start = System.currentTimeMillis();
         if (getLocation() == null) {
             // throw new SVNException(getRoot().getID() + " does not contain
@@ -531,7 +533,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
 
 				SVNStatusUtil.doStatus(this, parent != null ? parent.asDirectory() : null, editor, handler, path, externals, descend, includeUnmodified,
-                includeIgnored, descendInUnversioned, descendFurtherInIgnored, new SVNProgressProcessor(progressViewer, canceller));
+                includeIgnored, descendInUnversioned, descendFurtherInIgnored, progressViewer);
 
         if (myExternalsHandler != null && externals != null) {
             Collection paths = new HashSet();
@@ -823,19 +825,11 @@ public class SVNWorkspace implements ISVNWorkspace {
 	}
 
 	public long commit(SVNCommitPacket packet, String message) throws SVNException {
-		final List paths = new ArrayList();
 		final SVNStatus[] statuses = packet.getStatuses();
-		for (int index = 0; index < statuses.length; index++) {
-			if (statuses[index] != null) {
-				final String path = statuses[index].getPath();
-				paths.add(path);
-			}
-		}
-
-		return commitPaths(paths, message, null, null);
+		return commitPaths(getPathsFromStatuses(statuses), message, null);
 	}
 
-	public long commitPaths(List paths, String message, ISVNProgressViewer progressViewer, ISVNProgressCanceller progressCanceller) throws SVNException {
+	public long commitPaths(List paths, String message, ISVNProgressViewer progressViewer) throws SVNException {
 		long start = System.currentTimeMillis();
 		try {
 			final Set modified = new HashSet();
@@ -880,7 +874,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 			String rootURL = PathUtil.append(host, repository.getRepositoryRoot());
 			SVNCommitInfo info;
 			try {
-				SVNCommitUtil.doCommit("", rootURL, tree, editor, this, new SVNProgressProcessor(progressViewer, progressCanceller));
+				SVNCommitUtil.doCommit("", rootURL, tree, editor, this, progressViewer);
 				info = editor.closeEdit();
 			}
 			catch (SVNException e) {
@@ -1074,7 +1068,11 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
     }
 
-    public void copy(SVNRepositoryLocation source, String destination, long revision) throws SVNException {
+	public void copy(SVNRepositoryLocation source, String destination, long revision) throws SVNException {
+		copy(source, destination, revision, null);
+	}
+
+	public void copy(SVNRepositoryLocation source, String destination, long revision, ISVNProgressViewer progressViewer) throws SVNException {
         File tmpFile = null;
 
         try {
@@ -1108,7 +1106,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                     }
                 }
                 DebugLog.log("checking out revision: " + revision);
-                revision = ws.checkout(source, revision, false);
+                revision = ws.checkout(source, revision, false, true, progressViewer);
                 ISVNEntry dirEntry = locateEntry(PathUtil.removeTail(destination)); 
                 dirEntry.asDirectory().markAsCopied(PathUtil.tail(destination), source, revision);            
             } else if (srcKind == SVNNodeKind.FILE) {
@@ -1141,7 +1139,11 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
     }
 
-    public long copy(String src, SVNRepositoryLocation destination, String message) throws SVNException {
+	public long copy(String src, SVNRepositoryLocation destination, String message) throws SVNException {
+		return copy(src, destination, message, null);
+	}
+
+	public long copy(String src, SVNRepositoryLocation destination, String message, ISVNProgressViewer progressViewer) throws SVNException {
         ISVNEntry entry = locateEntry(src);
         ISVNEntry parent = locateParentEntry(src);
         if (entry == null) {
@@ -1184,8 +1186,8 @@ public class SVNWorkspace implements ISVNWorkspace {
             ISVNEditor editor = repository.getCommitEditor(message, getRoot());
 
             myIsCopyCommit = true;
-            SVNCommitPacket commitPacket = createCommitPacket(new String[] {src}, true, false);
-            return commit(commitPacket, message);
+            SVNStatus[] committablePaths = getCommittables(new String[] {src}, true, false);
+            return commitPaths(getPathsFromStatuses(committablePaths), message, progressViewer);
         } finally {
             getRoot().dispose();
             myIsCopyCommit = false;
@@ -1631,5 +1633,16 @@ public class SVNWorkspace implements ISVNWorkspace {
 			}
 		}
 		return root;
+	}
+
+	private List getPathsFromStatuses(final SVNStatus[] statuses) {
+		final List paths = new ArrayList();
+		for (int index = 0; index < statuses.length; index++) {
+			if (statuses[index] != null) {
+				final String path = statuses[index].getPath();
+				paths.add(path);
+			}
+		}
+		return paths;
 	}
 }
