@@ -155,6 +155,11 @@ public interface ISVNWorkspace {
     public void markResolved(String path, boolean recursive) throws SVNException;
 
     public void revert(String path, boolean recursive) throws SVNException;
+
+    /**
+     * Revert for copy/move operation, reverts both src and dst.
+     */
+    public void revert(String srcPath, String dstPath, boolean recursive) throws SVNException;
     
     public void relocate(SVNRepositoryLocation newLocation, String path, boolean recursive) throws SVNException;
 

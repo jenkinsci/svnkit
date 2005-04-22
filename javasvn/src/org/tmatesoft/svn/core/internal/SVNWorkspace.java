@@ -1305,6 +1305,24 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
     }
 
+    public void revert(String srcPath, String dstPath, boolean recursive) throws SVNException {
+        try {
+            myIsCommandRunning = true;
+            ISVNEntry src = locateEntry(srcPath);
+            if (src != null && src.isScheduledForDeletion()) {
+                revert(srcPath, recursive);
+            }
+            // copy props and contents from dst to source (for each file in src that exists in dst).
+            // revert dst.
+            revert(dstPath, recursive);
+        } finally {
+            myIsCommandRunning = false;
+            sleepForTimestamp();
+            getRoot().dispose();
+        }
+        
+    }
+
     public ISVNEntryContent getContent(String path) throws SVNException {
         ISVNEntry entry = locateEntry(path, true);
         if (entry == null) {
