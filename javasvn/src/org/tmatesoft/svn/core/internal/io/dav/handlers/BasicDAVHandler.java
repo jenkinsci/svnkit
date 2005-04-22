@@ -77,11 +77,19 @@ public abstract class BasicDAVHandler extends DefaultHandler {
     }
     
     public void startPrefixMapping(String prefix, String uri) throws SAXException {
-        myPrefixesMap.put(prefix, uri);
+        Stack mappings = (Stack) myPrefixesMap.get(prefix);
+        if (mappings == null) {
+            mappings = new Stack();
+            myPrefixesMap.put(prefix, mappings);
+        }
+        mappings.push(uri); 
     }
     
     public void endPrefixMapping(String prefix) throws SAXException {
-        myPrefixesMap.remove(prefix);
+        Stack mappings = (Stack) myPrefixesMap.get(prefix);
+        if (mappings != null) {
+            mappings.pop();
+        }
     }
     
     protected abstract void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException; 
@@ -101,7 +109,10 @@ public abstract class BasicDAVHandler extends DefaultHandler {
         int index = qName.indexOf(':');
         if (index >= 0) {
             prefix = qName.substring(0, index);
-            prefix = (String) myPrefixesMap.get(prefix);
+            Stack prefixes = (Stack) myPrefixesMap.get(prefix);
+            if (prefixes != null && !prefixes.isEmpty()) {
+                prefix = (String) prefixes.peek();
+            }
             qName = qName.substring(index + 1);
         }
         return DAVElement.getElement(prefix, qName);        
