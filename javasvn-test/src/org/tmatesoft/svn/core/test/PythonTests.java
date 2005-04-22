@@ -12,14 +12,7 @@
 
 package org.tmatesoft.svn.core.test;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.StringReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -40,19 +33,23 @@ public class PythonTests {
 		ourPropertiesFile = new File(fileName);
 
 		Properties properties = null;
+		String defaultTestSuite = null;
 		try {
 			properties = AllTests.loadProperties(ourPropertiesFile);
+			defaultTestSuite = loadDefaultTestSuite();
 		} catch (IOException e) {
 			System.out.println("can't load properties, exiting");
 			System.exit(1);
 		}
+
+
 		String pythonTestsRoot = properties.getProperty("python.tests");
 		properties.setProperty("repository.root", new File(pythonTestsRoot).getAbsolutePath());
 		String url = "svn://localhost";
 		if (Boolean.TRUE.toString().equals(properties.getProperty("python.svn"))) {
 			try {
 				AllTests.startSVNServe(properties);
-				runPythonTests(properties, url);
+				runPythonTests(properties, defaultTestSuite, url);
 			} catch (Throwable th) {
 				th.printStackTrace();
 			} finally {
@@ -64,7 +61,7 @@ public class PythonTests {
 			properties.setProperty("apache.conf", "apache/python.template.conf");
 			try {
 				AllTests.startApache(properties);
-				runPythonTests(properties, url);
+				runPythonTests(properties, defaultTestSuite, url);
 			} catch (Throwable th) {
 				th.printStackTrace();
 			} finally {
@@ -77,10 +74,10 @@ public class PythonTests {
 		}
 	}
 
-	private static void runPythonTests(Properties properties, String url) throws IOException {
+	private static void runPythonTests(Properties properties, String defaultTestSuite, String url) throws IOException {
 		System.out.println("RUNNING TESTS AGAINST '" + url + "'");
 		String pythonLauncher = properties.getProperty("python.launcher");
-		String testSuite = properties.getProperty("python.tests.suite");
+		String testSuite = properties.getProperty("python.tests.suite", defaultTestSuite);
 		String options = properties.getProperty("python.tests.options", "");
 		for (StringTokenizer tests = new StringTokenizer(testSuite, ","); tests.hasMoreTokens();) {
 			final String testFileString = tests.nextToken();
@@ -260,5 +257,25 @@ public class PythonTests {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	private static String loadDefaultTestSuite() throws IOException {
+		final File file = new File("python-suite.txt");
+		final BufferedReader reader = new BufferedReader(new FileReader(file));
+		final StringBuffer defaultTestSuite = new StringBuffer();
+		try {
+			for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+				if (defaultTestSuite.length() > 0) {
+					defaultTestSuite.append(",");
+				}
+
+				defaultTestSuite.append(line.trim());
+			}
+		}
+		finally {
+			reader.close();
+		}
+
+		return defaultTestSuite.toString();
 	}
 }
