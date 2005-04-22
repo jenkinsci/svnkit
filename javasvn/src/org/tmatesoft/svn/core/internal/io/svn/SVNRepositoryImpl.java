@@ -283,11 +283,17 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                                 if (os != null) {
                                     os.write(contents);
                                 }
-                            } catch (IOException th) {}
+                            } catch (IOException th) {
+                                DebugLog.error(th);
+                            }
                         }
                         try {
-                            os.close();
-                        } catch (IOException th) {}
+                            if (os != null) {
+                                os.close();
+                            }
+                        } catch (IOException th) {
+                            DebugLog.error(th);
+                        }
                     }
                 }
                 handler.hanldeDiffWindowClosed(name == null ? path : name);
