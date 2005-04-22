@@ -17,16 +17,20 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVGetLockHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVOptionsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.TimeUtil;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
@@ -97,6 +101,27 @@ class DAVConnection {
     public void doPropfind(String path, int depth, String label, DAVElement[] properties, IDAVResponseHandler handler, int[] okCodes) throws SVNException {
         StringBuffer body = DAVPropertiesHandler.generatePropertiesRequest(null, properties);
         myHttpConnection.request("PROPFIND", path, depth, label, body, new DAVPropertiesHandler(handler), okCodes);
+    }
+    
+    public SVNLock doGetLock(String path) throws SVNException {
+        DAVBaselineInfo info = DAVUtil.getBaselineInfo(this, path, -1, false, true, null);
+        String realPath = PathUtil.append(info.baselineBase, info.baselinePath);
+        StringBuffer body = DAVGetLockHandler.generateGetLockRequest(null);
+        DAVGetLockHandler handler = new DAVGetLockHandler();
+        DAVStatus rc = myHttpConnection.request("PROPFIND", realPath, 0, null, body, handler, new int[] {200, 207});
+        
+        String id = handler.getID();
+        if (id == null) {
+            return null;
+        }
+        String comment = handler.getComment();
+        String created = (String) rc.getResponseHeader().get("X-SVN-Creation-Date");
+        Date createdDate = created != null ? TimeUtil.parseDate(created) : null;
+        path = PathUtil.decode(info.baselinePath);
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+        return new SVNLock(path, id, null, comment, createdDate, null);
     }
 
 	public void doGet(String path, OutputStream os) throws SVNException {

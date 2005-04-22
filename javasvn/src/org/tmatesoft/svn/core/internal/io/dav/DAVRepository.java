@@ -498,7 +498,14 @@ class DAVRepository extends SVNRepository {
     }
 
     public SVNLock getLock(String path) throws SVNException {
-        return null;
+        DAVElement[] properties = {DAVElement.LOCK_DISCOVERY};
+        try {
+            openConnection();
+            path = getFullPath(path);
+            return myConnection.doGetLock(path);
+        } finally {
+            closeConnection();
+        }
     }
 
     public SVNLock[] getLocks(String path) throws SVNException {
