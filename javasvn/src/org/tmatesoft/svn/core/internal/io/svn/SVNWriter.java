@@ -16,9 +16,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -96,20 +97,7 @@ public class SVNWriter {
 	        	                os.write(list[j].toString().getBytes("UTF-8"));                    
 	                        } else if (ch == 'w') {
 	                            os.write(list[j].toString().getBytes("UTF-8"));
-	                        } else if (ch == 'l') {
-                                SVNLock lock = (SVNLock) list[j];
-                                os.write('(');
-                                os.write(' ');
-                                os.write(Integer.toString(lock.getPath().getBytes("UTF-8").length).getBytes("UTF-8"));
-                                os.write(':');
-                                os.write(lock.getPath().getBytes("UTF-8"));
-                                os.write(' ');
-                                os.write(Integer.toString(lock.getID().getBytes("UTF-8").length).getBytes("UTF-8"));
-                                os.write(':');
-                                os.write(lock.getID().getBytes("UTF-8"));
-                                os.write(' ');
-                                os.write(')');
-                            }
+	                        } 
 	                        os.write(' ');
                         }
 	                } else if (item instanceof long[] && ch == 'n') {
@@ -118,7 +106,25 @@ public class SVNWriter {
 	                        os.write(Long.toString(list[j]).getBytes("UTF-8"));
 	                        os.write(' ');
                         }	                    
-	                }
+	                } else if (item instanceof Map && ch =='l') {
+                        Map map = (Map) item;
+                        for(Iterator paths = map.keySet().iterator(); paths.hasNext();) {
+                            String path = (String) paths.next();
+                            String token = (String) map.get(path);
+                            os.write('(');
+                            os.write(' ');
+                            os.write(Integer.toString(path.getBytes("UTF-8").length).getBytes("UTF-8"));
+                            os.write(':');
+                            os.write(path.getBytes("UTF-8"));
+                            os.write(' ');
+                            os.write(Integer.toString(token.getBytes("UTF-8").length).getBytes("UTF-8"));
+                            os.write(':');
+                            os.write(token.getBytes("UTF-8"));
+                            os.write(' ');
+                            os.write(')');
+                            os.write(' ');
+                        }
+                    }
 	                i++;
 	            }
 	            os.write(' ');

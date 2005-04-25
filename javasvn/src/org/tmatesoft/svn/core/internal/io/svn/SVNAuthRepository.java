@@ -353,7 +353,7 @@ public class SVNAuthRepository extends SVNRepository {
         }
     }
 
-    public ISVNEditor getCommitEditor(String logMessage, SVNLock[] locks, boolean keepLocks, ISVNWorkspaceMediator mediator) throws SVNException {
+    public ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, ISVNWorkspaceMediator mediator) throws SVNException {
         ISVNCredentials credentials = null;
         ISVNCredentialsProvider provider = initProvider();
         while(true) {

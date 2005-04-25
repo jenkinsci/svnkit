@@ -446,28 +446,14 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public ISVNEditor getCommitEditor(String logMessage, final ISVNWorkspaceMediator mediator) throws SVNException {
+    public ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, final ISVNWorkspaceMediator mediator) throws SVNException {
         try {
             openConnection();
-            write("(w(s))", new Object[] { "commit", logMessage });
-            authenticate();
-            read("[()]", null);
-            SVNCommitEditor editor = new SVNCommitEditor(this, myConnection, mediator, new Runnable() {
-                public void run() {
-                    closeConnection();
-                }
-            });
-            return editor;
-        } catch (SVNException e) {
-            closeConnection();
-            throw e;
-        }
-    }
-
-    public ISVNEditor getCommitEditor(String logMessage, SVNLock[] locks, boolean keepLocks, final ISVNWorkspaceMediator mediator) throws SVNException {
-        try {
-            openConnection();
-            write("(w(s(*l)w))", new Object[] { "commit", logMessage, locks, Boolean.valueOf(keepLocks)});
+            if (locks != null) {
+                write("(w(s(*l)w))", new Object[] { "commit", logMessage, locks, Boolean.valueOf(keepLocks)});
+            } else {
+                write("(w(s))", new Object[] { "commit", logMessage });
+            }
             authenticate();
             read("[()]", null);
             SVNCommitEditor editor = new SVNCommitEditor(this, myConnection, mediator, new Runnable() {

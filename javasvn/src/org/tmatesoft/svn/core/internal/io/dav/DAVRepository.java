@@ -455,15 +455,16 @@ class DAVRepository extends SVNRepository {
         }
     }
 
-    public ISVNEditor getCommitEditor(String message, ISVNWorkspaceMediator mediator) throws SVNException {
+    public ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, ISVNWorkspaceMediator mediator) throws SVNException {
         openConnection();
-        ISVNEditor editor = new DAVCommitEditor(this, myConnection, message, mediator, new Runnable() {
+        ISVNEditor editor = new DAVCommitEditor(this, myConnection, logMessage, mediator, new Runnable() {
             public void run() {
                 closeConnection();
             }
         });
         return editor;
-	}
+    }
+
     
     public String getFullPath(String path) {    	
         if (path != null && path.startsWith("/")) {
@@ -491,10 +492,6 @@ class DAVRepository extends SVNRepository {
         root = root == null ? getRepositoryRoot() : root;
         uuid = uuid == null ? getRepositoryUUID() : uuid;
         setRepositoryCredentials(uuid, root);
-    }
-
-    public ISVNEditor getCommitEditor(String logMessage, SVNLock[] locks, boolean keepLocks, ISVNWorkspaceMediator mediator) throws SVNException {
-        return null;
     }
 
     public SVNLock getLock(String path) throws SVNException {

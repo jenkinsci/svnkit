@@ -200,9 +200,11 @@ public abstract class SVNRepository {
     
     /* write methods */
     
-    public abstract ISVNEditor getCommitEditor(String logMessage, ISVNWorkspaceMediator mediator) throws SVNException;
+    public ISVNEditor getCommitEditor(String logMessage, final ISVNWorkspaceMediator mediator) throws SVNException {
+        return getCommitEditor(logMessage, null, false, mediator);
+    }
     
-    public abstract ISVNEditor getCommitEditor(String logMessage, SVNLock[] locks, boolean keepLocks, final ISVNWorkspaceMediator mediator) throws SVNException;
+    public abstract ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, final ISVNWorkspaceMediator mediator) throws SVNException;
     
     /* SVN locks */
     
