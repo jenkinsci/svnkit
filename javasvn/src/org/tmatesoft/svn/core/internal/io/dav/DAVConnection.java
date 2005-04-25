@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVGetLockHandler;
+import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVGetLocksHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVOptionsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
@@ -105,10 +106,9 @@ class DAVConnection {
     
     public SVNLock doGetLock(String path) throws SVNException {
         DAVBaselineInfo info = DAVUtil.getBaselineInfo(this, path, -1, false, true, null);
-        String realPath = PathUtil.append(info.baselineBase, info.baselinePath);
         StringBuffer body = DAVGetLockHandler.generateGetLockRequest(null);
         DAVGetLockHandler handler = new DAVGetLockHandler();
-        DAVStatus rc = myHttpConnection.request("PROPFIND", realPath, 0, null, body, handler, new int[] {200, 207});
+        DAVStatus rc = myHttpConnection.request("PROPFIND", path, 0, null, body, handler, new int[] {200, 207});
         
         String id = handler.getID();
         if (id == null) {
@@ -122,6 +122,56 @@ class DAVConnection {
             path = "/" + path;
         }
         return new SVNLock(path, id, null, comment, createdDate, null);
+    }
+
+    public SVNLock[] doGetLocks(String path) throws SVNException {
+        DAVGetLocksHandler handler = new DAVGetLocksHandler();
+        doReport(path, DAVGetLocksHandler.generateGetLocksRequest(null), handler);
+        return handler.getLocks();
+    }
+
+    public SVNLock doLock(String path, String comment, boolean force, long revision) throws SVNException {
+        DAVBaselineInfo info = DAVUtil.getBaselineInfo(this, path, -1, false, true, null);
+
+        StringBuffer body = DAVGetLockHandler.generateSetLockRequest(null, comment);
+        Map header = null;
+        if (revision >= 0) {
+            header = new HashMap();
+            header.put("X-SVN-Version-Name", Long.toString(revision));
+        }
+        if (force) {
+            if (header == null) {
+                header = new HashMap();
+            }
+            header.put("X-SVN-Options", "lock-steal");
+        }
+        DAVGetLockHandler handler = new DAVGetLockHandler();
+        DAVStatus status = myHttpConnection.request("LOCK", path, header, body, handler, null);
+        if (status != null) {
+            String userName = myHttpConnection.getLastCredentials() != null ? myHttpConnection.getLastCredentials().getName() : null; 
+            String created = (String) status.getResponseHeader().get("X-SVN-Creation-Date");
+            Date createdDate = created != null ? TimeUtil.parseDate(created) : null;            
+            return new SVNLock(info.baselinePath, handler.getID(), userName, comment, createdDate, null);
+        }
+        return null;
+    }
+
+    public void doUnlock(String url, String path, String id, boolean force) throws SVNException {
+        if (id == null) {
+            SVNLock lock = doGetLock(path);
+            if (lock != null) {
+                id = lock.getID();
+            } 
+            if (id == null) {
+                throw new SVNException("repository path '" + path + "' is not locked.");
+            }
+        }
+        Map header = new HashMap();
+        header.put("Lock-Token", "<" + id + ">");
+        if (force) {
+            header.put("X-SVN-Options", "lock-break");
+        }
+        myHttpConnection.request("UNLOCK", url, header, (StringBuffer) null, null, new int[] {204});
     }
 
 	public void doGet(String path, OutputStream os) throws SVNException {
@@ -234,6 +284,7 @@ class DAVConnection {
     public void close()  {
         if (myHttpConnection != null) {
             myHttpConnection.close();
+            myHttpConnection = null;
         }
     }
     

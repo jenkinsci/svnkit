@@ -72,6 +72,14 @@ public class DAVElement {
     public static final DAVElement LOCK_OWNER = getElement(DAV_NAMESPACE, "owner");
     public static final DAVElement LOCK_TIMEOUT = getElement(DAV_NAMESPACE, "timeout");
     public static final DAVElement LOCK_TOKEN = getElement(DAV_NAMESPACE, "locktoken");
+
+    public static final DAVElement SVN_LOCK = getElement(SVN_NAMESPACE, "lock");
+    public static final DAVElement SVN_LOCK_PATH = getElement(SVN_NAMESPACE, "path");
+    public static final DAVElement SVN_LOCK_TOKEN = getElement(SVN_NAMESPACE, "token");
+    public static final DAVElement SVN_LOCK_COMMENT = getElement(SVN_NAMESPACE, "comment");
+    public static final DAVElement SVN_LOCK_OWNER = getElement(SVN_NAMESPACE, "owner");
+    public static final DAVElement SVN_LOCK_CREATION_DATE = getElement(SVN_NAMESPACE, "creationdate");
+    public static final DAVElement SVN_LOCK_EXPIRATION_DATE = getElement(SVN_NAMESPACE, "expirationdate");
     
     public static final DAVElement BASELINE_RELATIVE_PATH = getElement(SVN_DAV_PROPERTY_NAMESPACE, "baseline-relative-path");
     public static final DAVElement REPOSITORY_UUID = getElement(SVN_DAV_PROPERTY_NAMESPACE, "repository-uuid");

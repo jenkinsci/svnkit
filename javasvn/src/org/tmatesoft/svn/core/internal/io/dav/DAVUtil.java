@@ -147,7 +147,12 @@ public class DAVUtil {
     }
     
     public static StringBuffer getCanonicalPath(String path, StringBuffer target) {
-    	target = target == null ? new StringBuffer() : target;
+        target = target == null ? new StringBuffer() : target;
+        if (path.startsWith("http:") || path.startsWith("https:")) {
+            target.append(path);
+            return target;
+        }
+                
     	int end = path.length() - 1;
     	for(int i = 0; i <= end; i++) {
     		char ch = path.charAt(i);

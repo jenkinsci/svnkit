@@ -502,6 +502,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             path = getFullPath(path);
+            path = PathUtil.encode(path);
             return myConnection.doGetLock(path);
         } finally {
             closeConnection();
@@ -509,14 +510,38 @@ class DAVRepository extends SVNRepository {
     }
 
     public SVNLock[] getLocks(String path) throws SVNException {
-        return null;
+        try {
+            openConnection();
+            path = getFullPath(path);
+            path = PathUtil.encode(path);
+            return myConnection.doGetLocks(path);
+        } finally {
+            closeConnection();
+        }
     }
 
     public SVNLock setLock(String path, String comment, boolean force, long revision) throws SVNException {
-        return null;
+        try {
+            openConnection();
+            path = getFullPath(path);
+            path = PathUtil.encode(path);
+            return myConnection.doLock(path, comment, force, revision);
+        } finally {
+            closeConnection();
+        }
     }
 
     public void removeLock(String path, String id, boolean force) throws SVNException {
+        try {
+            openConnection();
+            path = getFullPath(path);
+            path = PathUtil.encode(path);
+            String url = getLocation().getProtocol() + "://" + getLocation().getHost() + ":" + getLocation().getPort();
+            url += path;
+            myConnection.doUnlock(url, path, id, force);
+        } finally {
+            closeConnection();
+        }
     }
 
     public SVNDirEntry pathStat(String path, long revision) throws SVNException {

@@ -79,6 +79,10 @@ class HttpConnection {
         mySVNRepositoryLocation = location;
         myUserCredentialsProvider = provider;
     }
+    
+    public ISVNCredentials getLastCredentials() {
+        return myLastUsedCredentials;
+    }
 
     public void connect() throws IOException {
         if (mySocket == null || isStale()) {
