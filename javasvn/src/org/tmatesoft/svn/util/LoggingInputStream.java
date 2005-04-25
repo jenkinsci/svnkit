@@ -29,6 +29,9 @@ public class LoggingInputStream extends InputStream {
 		int read = myInputStream.read();
 		if (myBuffer != null && read >= 0) {
 			myBuffer.append((char) read);
+            if (myBuffer.length() > 8192) {
+                log();
+            }
 		}
 		return read;
 	}
@@ -41,6 +44,9 @@ public class LoggingInputStream extends InputStream {
 		int read = myInputStream.read(b, off, len);
 		if (myBuffer != null && read >= 0) {
 			myBuffer.append(new String(b, off, read));
+            if (myBuffer.length() > 8192) {
+                log();
+            }
 		}
 		return read;
 	}

@@ -29,6 +29,9 @@ public class LoggingOutputStream extends OutputStream {
 		myOutputStream.write(b);
 		if (myBuffer != null) {
 			myBuffer.append((char) b);
+            if (myBuffer.length() > 8192) {
+                log();
+            }
 		}
 	}
 
@@ -40,6 +43,9 @@ public class LoggingOutputStream extends OutputStream {
 		myOutputStream.write(b, off, len);
 		if (myBuffer != null) {
 			myBuffer.append(new String(b, off, len));
+            if (myBuffer.length() > 8192) {
+                log();
+            }
 		}
 	}
 
