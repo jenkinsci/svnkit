@@ -16,6 +16,7 @@ import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -33,7 +34,8 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
 
     public static StringBuffer generateEditorRequest(StringBuffer buffer, final String url, 
             long targetRevision, String target, String dstPath, boolean recurse,
-            boolean ignoreAncestry, boolean resourceWalk, ISVNReporterBaton reporterBaton) {
+            boolean ignoreAncestry, boolean resourceWalk, 
+            boolean fetchContents, ISVNReporterBaton reporterBaton) {
 		buffer = buffer == null ? new StringBuffer() : buffer;
         buffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
         buffer.append("<S:update-report send-all=\"true\" xmlns:S=\"svn:\">\n");
@@ -64,15 +66,23 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         if (resourceWalk) { 
             buffer.append("<S:resource-walk>yes</S:resource-walk>\n");
         }
+        if (!fetchContents) {
+            buffer.append("<S:text-deltas>no</S:text-deltas>\n");
+        }
         final StringBuffer report = buffer;
         try {
             reporterBaton.report(new ISVNReporter() {
-                public void setPath(String path, long revision, boolean startEmpty) throws SVNException {
+                public void setPath(String path, String locktoken, long revision, boolean startEmpty) throws SVNException {
                 	path = path.replaceAll(">", "&gt;");
                 	path = path.replaceAll("<", "&lt;");
                     report.append("<S:entry rev=\"");
                     report.append(revision);
                     report.append("\" ");
+                    if (locktoken != null) {
+                        report.append("lock-token=\"");
+                        report.append(DAVUtil.xmlEncode(locktoken));
+                        report.append("\" ");
+                    }
                     if (startEmpty) {
                         report.append("start-empty=\"true\" ");                        
                     }
@@ -89,12 +99,17 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                     report.append("</S:missing>\n");
                 }
 
-                public void linkPath(SVNRepositoryLocation repository, String path, long revision, boolean startEmpty) throws SVNException {
+                public void linkPath(SVNRepositoryLocation repository, String path, String locktoken, long revision, boolean startEmpty) throws SVNException {
                 	path = path.replaceAll(">", "&gt;");
                 	path = path.replaceAll("<", "&lt;");
                     report.append("<S:entry rev=\"");
                     report.append(revision);
                     report.append("\" ");
+                    if (locktoken != null) {
+                        report.append("lock-token=\"");
+                        report.append(DAVUtil.xmlEncode(locktoken));
+                        report.append("\" ");
+                    }
                     if (startEmpty) {
                         report.append("start-empty=\"true\" ");                        
                     }

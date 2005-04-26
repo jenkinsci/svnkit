@@ -192,7 +192,7 @@ public abstract class SVNRepository {
         }
         update(revision, target, recursive, new ISVNReporterBaton() {
                     public void report(ISVNReporter reporter) throws SVNException {
-                        reporter.setPath("", lastRev, true);
+                        reporter.setPath("", null, lastRev, true);
                         reporter.finishReport();
                     }            
                 }, editor);

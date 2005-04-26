@@ -130,19 +130,24 @@ public class StatusCommand extends SVNCommand {
         sb.append(" ");
         boolean detailed = getCommandLine().hasArgument(SVNArgument.SHOW_UPDATES) || getCommandLine().hasArgument(SVNArgument.VERBOSE);
         boolean displayLastCommited = getCommandLine().hasArgument(SVNArgument.VERBOSE);
-        
+        String lockStatus = " "; 
+        if (status.getLock() != null) {
+            lockStatus = "K";
+        }
         
         if (!detailed) {
-            sb.append("  ");
+            sb.append(lockStatus);
+            sb.append(" ");
         } else {
             char remote = ' ';
             if (status.getRepositoryContentsStatus() != SVNStatus.NOT_MODIFIED || 
                     status.getRepositoryPropertiesStatus() != SVNStatus.NOT_MODIFIED) {
                 remote = '*';
             }
-            sb.append("  ");
+            sb.append(lockStatus);
+            sb.append(" ");
             sb.append(remote);
-
+            
             String wcRevision = "";
             if (!status.isManaged()) {
                 wcRevision = "";

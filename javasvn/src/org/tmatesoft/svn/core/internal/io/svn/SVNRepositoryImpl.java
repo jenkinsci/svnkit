@@ -608,18 +608,26 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
      * ISVNReporter methods
      */
 
-    public void setPath(String path, long revision, boolean startEmpty) throws SVNException {
+    public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
         assertValidRevision(revision);
-        write("(w(snw))", new Object[] { "set-path", path, getRevisionObject(revision), Boolean.valueOf(startEmpty) });
+        if (lockToken == null) {
+            write("(w(snw))", new Object[] { "set-path", path, getRevisionObject(revision), Boolean.valueOf(startEmpty) });
+        } else {
+            write("(w(snw(s)))", new Object[] { "set-path", path, getRevisionObject(revision), Boolean.valueOf(startEmpty), lockToken });
+        }
     }
 
     public void deletePath(String path) throws SVNException {
         write("(w(s))", new Object[] { "delete-path", path });
     }
 
-    public void linkPath(SVNRepositoryLocation repository, String path, long revison, boolean startEmtpy) throws SVNException {
+    public void linkPath(SVNRepositoryLocation repository, String path, String lockToken, long revison, boolean startEmtpy) throws SVNException {
         assertValidRevision(revison);
-        write("(w(ssnw))", new Object[] { "link-path", path, repository.toString(), getRevisionObject(revison), Boolean.valueOf(startEmtpy) });
+        if (lockToken == null) {
+            write("(w(ssnw))", new Object[] { "link-path", path, repository.toString(), getRevisionObject(revison), Boolean.valueOf(startEmtpy) });
+        } else {
+            write("(w(ssnw(s)))", new Object[] { "link-path", path, repository.toString(), getRevisionObject(revison), Boolean.valueOf(startEmtpy), lockToken });
+        }
     }
 
     public void finishReport() throws SVNException {

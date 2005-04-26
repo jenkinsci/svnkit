@@ -24,10 +24,12 @@ import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.progress.ISVNProgressViewer;
 import org.tmatesoft.svn.core.progress.SVNProgressDummyViewer;
 import org.tmatesoft.svn.core.progress.SVNProgressViewerIterator;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.TimeUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -102,7 +104,7 @@ class SVNStatusUtil {
                 status.getContentsStatus() == SVNStatus.NOT_MODIFIED && 
                 status.getPropertiesStatus() == SVNStatus.NOT_MODIFIED &&
                 status.getRepositoryRevision() < 0 &&
-                !status.isSwitched()) {
+                !status.isSwitched() && status.getLock() == null) {
             return;
         }
         handler.handleStatus(status.getPath(), status);
@@ -178,7 +180,7 @@ class SVNStatusUtil {
                 }
             }
         } 
-        SVNStatus status = new SVNStatus(childPath, propStatus, contentsStatus, -1, -1, false, false, isDirectory, null);
+        SVNStatus status = new SVNStatus(childPath, propStatus, contentsStatus, -1, -1, false, false, isDirectory, null, null);
         return status;
     }
 
@@ -233,7 +235,8 @@ class SVNStatusUtil {
         long revision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.COMMITTED_REVISION));
         long wcRevision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.REVISION));
         String author = child.getPropertyValue(SVNProperty.LAST_AUTHOR);
-        SVNStatus status = new SVNStatus(child.getPath(), propStatus, contentsStatus, revision, wcRevision, history, switched, isDirectory, author);
+        SVNLock lock = createSVNLock(child);
+        SVNStatus status = new SVNStatus(child.getPath(), propStatus, contentsStatus, revision, wcRevision, history, switched, isDirectory, author, lock);
         return status;
     }
 
@@ -272,5 +275,16 @@ class SVNStatusUtil {
         }
         boolean isDir = SVNProperty.KIND_DIR.equals(entry.getPropertyValue(SVNProperty.KIND));
         return new SVNStatus(entry.getPath(), propStatus, contentsStatus, revision, wcRevision, remoteRevision, remoteContents, remoteProps, addedWithHistory, isSwitched, isDir, null);
+    }
+    
+    private static SVNLock createSVNLock(ISVNEntry entry) throws SVNException {
+        String token = entry.getPropertyValue(SVNProperty.LOCK_TOKEN);
+        if (token == null) {
+            return null;
+        }
+        String owner = entry.getPropertyValue(SVNProperty.LOCK_OWNER);
+        String comment = entry.getPropertyValue(SVNProperty.LOCK_COMMENT);
+        String date = entry.getPropertyValue(SVNProperty.LOCK_CREATION_DATE);
+        return new SVNLock(null, token, owner, comment, TimeUtil.parseDate(date), null);
     }
 }

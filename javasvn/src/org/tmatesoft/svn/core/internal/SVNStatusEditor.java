@@ -87,6 +87,7 @@ public class SVNStatusEditor implements ISVNEditor {
     }
     
     public void changeDirProperty(String name, String value) throws SVNException {
+        System.out.println("dir property: " + name + "=" + value);
         if (!name.startsWith(SVNProperty.SVN_ENTRY_PREFIX) && !name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             RemoteSVNStatus status = (RemoteSVNStatus) myRemoteStatuses.get(myCurrentPath);
             if (status == null) {
@@ -142,6 +143,7 @@ public class SVNStatusEditor implements ISVNEditor {
     
     
     public void changeFileProperty(String name, String value) throws SVNException {
+        System.out.println("file property: " + name + "=" + value);
         if (!name.startsWith(SVNProperty.SVN_ENTRY_PREFIX) && !name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             RemoteSVNStatus status = (RemoteSVNStatus) myRemoteStatuses.get(myCurrentFilePath);
             if (status == null) {

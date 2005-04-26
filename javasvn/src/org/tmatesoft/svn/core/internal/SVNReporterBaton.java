@@ -50,6 +50,7 @@ class SVNReporterBaton implements ISVNReporterBaton {
 
     protected void reportEntry(ISVNEntry entry, ISVNReporter reporter, String parentURL, long parentRevision) throws SVNException {
         long revision = SVNProperty.longValue(entry.getPropertyValue(SVNProperty.REVISION));
+        String locktoken = entry.getPropertyValue(SVNProperty.LOCK_TOKEN);
         if (revision < 0 && !entry.isMissing()) {
             return;
         }
@@ -58,23 +59,23 @@ class SVNReporterBaton implements ISVNReporterBaton {
             DebugLog.log("REPORT.LINK: " + entry.getPropertyValue(SVNProperty.URL) + " : " + path + " : " + revision);
             String url = entry.getPropertyValue(SVNProperty.URL);
             url = PathUtil.decode(url);
-            reporter.linkPath(SVNRepositoryLocation.parseURL(url), path, revision, false); 
+            reporter.linkPath(SVNRepositoryLocation.parseURL(url), path, locktoken, revision, false); 
         } else if (entry.isMissing()) {
             if (myWorkspace != null && !entry.isDirectory()) {
                 entry.asFile().restoreContents();
                 entry.asFile().markResolved(true);
                 ((SVNWorkspace) myWorkspace).fireEntryModified(entry, SVNStatus.RESTORED, false);
                 if (revision != parentRevision) {
-                    reporter.setPath(path, revision, false);
+                    reporter.setPath(path, locktoken, revision, false);
                 }
             } else {
                 DebugLog.log("REPORT.MISSING: " + path);
                 reporter.deletePath(path);
                 myMissingEntries.add(entry);
             }
-        } else if (revision != parentRevision) {
+        } else if (revision != parentRevision || locktoken != null) {
             DebugLog.log("REPORT: " + path + " : " + revision);
-            reporter.setPath(path, revision, false);
+            reporter.setPath(path, locktoken, revision, false);
         }
     }
 
@@ -85,13 +86,14 @@ class SVNReporterBaton implements ISVNReporterBaton {
             if (targetEntry != null) {
                 revision = SVNProperty.longValue(targetEntry.getPropertyValue(SVNProperty.REVISION));
             }
+            String locktoken = targetEntry.getPropertyValue(SVNProperty.LOCK_TOKEN);
             if (revision >= 0) {
                 DebugLog.log("REPORT.TARGET: " + myTarget + " : " + revision);
-                reporter.setPath("", revision, revision == 0);
+                reporter.setPath("", locktoken, revision, revision == 0);
             } else {
                 revision = SVNProperty.longValue(myRoot.getPropertyValue(SVNProperty.REVISION)); 
                 DebugLog.log("REPORT.MISSING.TARGET: " + myTarget + " : " + revision);
-                reporter.setPath("", revision, false);
+                reporter.setPath("", locktoken, revision, false);
                 reporter.deletePath("");
                 if (targetEntry != null) {
                     myMissingEntries.add(targetEntry);

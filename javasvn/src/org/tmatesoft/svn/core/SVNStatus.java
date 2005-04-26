@@ -12,6 +12,8 @@
 
 package org.tmatesoft.svn.core;
 
+import org.tmatesoft.svn.core.io.SVNLock;
+
 /**
  * @author TMate Software Ltd.
  */
@@ -52,15 +54,27 @@ public class SVNStatus {
     private String myPath;
     private boolean myIsDirectory;
     private String myAuthor;
+    private SVNLock myLock;
     
     public SVNStatus(String path, int propStatus, int contentsStatus, long revision, 
-            long wcRevision, boolean addedWithHistory, boolean switched, boolean isDirectory, String author) {
-        this(path, propStatus, contentsStatus, revision, wcRevision, -1, 0, 0, addedWithHistory, switched, isDirectory, author);
+            long wcRevision, boolean addedWithHistory, boolean switched, boolean isDirectory, String author,
+            SVNLock lock) {
+        this(path, propStatus, contentsStatus, revision, wcRevision, -1, 0, 0, addedWithHistory, switched, isDirectory, author, lock);
         
     }
+
     public SVNStatus(String path, int propStatus, int contentsStatus, long revision, 
             long wcRevision, long remoteRevision, int remoteContentsStatus, int remotePropsStatus,
             boolean addedWithHistory, boolean switched, boolean isDirectory, String author) {
+        this(path, propStatus, contentsStatus, revision, wcRevision, remoteRevision, 
+                remoteContentsStatus, remotePropsStatus, addedWithHistory, switched, isDirectory,
+                author, null);
+    }
+
+    public SVNStatus(String path, int propStatus, int contentsStatus, long revision, 
+            long wcRevision, long remoteRevision, int remoteContentsStatus, int remotePropsStatus,
+            boolean addedWithHistory, boolean switched, boolean isDirectory, String author,
+            SVNLock lock) {
         myPath = path;
         myPropertiesStatus = propStatus;
         myContentsStatus = contentsStatus;
@@ -73,6 +87,7 @@ public class SVNStatus {
         myRemoteContentsStatus = remoteContentsStatus;
         myIsDirectory = isDirectory;
         myAuthor = author;
+        myLock = lock;
     }
     
     public String getAuthor() {
@@ -136,6 +151,10 @@ public class SVNStatus {
     
     public void setPath(String path) {
         myPath = path;
+    }
+    
+    public SVNLock getLock() {
+        return myLock;
     }
 
 }

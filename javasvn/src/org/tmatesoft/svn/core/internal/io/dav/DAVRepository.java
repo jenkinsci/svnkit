@@ -343,7 +343,7 @@ class DAVRepository extends SVNRepository {
     }
 
     public void update(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, null, recursive, false, false, reporter);
+        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, null, recursive, false, false, true, reporter);
         try {
             openConnection();
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
@@ -365,7 +365,7 @@ class DAVRepository extends SVNRepository {
         if (url == null) {
             throw new SVNException(url + ": not valid URL");
         }
-        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, url, recursive, true, false, reporter);
+        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, url, recursive, true, false, true, reporter);
         try {
             openConnection();
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
@@ -386,7 +386,7 @@ class DAVRepository extends SVNRepository {
         if (url == null) {
             throw new SVNException(url + ": not valid URL");
         }
-        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, url, recursive, ignoreAncestry, false, reporter);
+        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, url, recursive, ignoreAncestry, false, true, reporter);
         try {
             openConnection();
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
@@ -403,7 +403,7 @@ class DAVRepository extends SVNRepository {
     }
 
     public void status(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, null, recursive, false, false, reporter);
+        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, null, recursive, false, false, false, reporter);
         try {
             openConnection();
             DAVEditorHandler handler = new DAVEditorHandler(editor, false);

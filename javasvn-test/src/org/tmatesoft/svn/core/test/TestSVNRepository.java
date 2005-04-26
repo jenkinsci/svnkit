@@ -286,7 +286,7 @@ public class TestSVNRepository extends AbstractRepositoryTest {
 
         getRepository().update(-2, null, true, new ISVNReporterBaton() {
             public void report(ISVNReporter reporter) throws SVNException {
-                reporter.setPath("", 1, false);
+                reporter.setPath("", null, 1, false);
                 reporter.deletePath(path);
                 reporter.finishReport();
             }
@@ -301,7 +301,7 @@ public class TestSVNRepository extends AbstractRepositoryTest {
         ISVNEditor editor = new SVNCheckoutEditor(dst);
         getRepository().status(-2, null, true, new ISVNReporterBaton() {
             public void report(ISVNReporter reporter) throws SVNException {
-                reporter.setPath("", 1, false);
+                reporter.setPath("", null, 1, false);
                 reporter.finishReport();
             }
         }, editor); 
@@ -465,7 +465,7 @@ public class TestSVNRepository extends AbstractRepositoryTest {
         try {
             getRepository().update(-2, null, true, new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {
-                    reporter.setPath("", 1, true);
+                    reporter.setPath("", null, 1, true);
                     reporter.finishReport();
                 }
             }, editor);

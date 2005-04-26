@@ -17,11 +17,11 @@ package org.tmatesoft.svn.core.io;
  */
 public interface ISVNReporter {
     
-    public void setPath(String path, long revision, boolean startEmpty) throws SVNException;
+    public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException;
     
     public void deletePath(String path) throws SVNException;
     
-    public void linkPath(SVNRepositoryLocation repository, String path, long revison, boolean startEmtpy) throws SVNException;
+    public void linkPath(SVNRepositoryLocation repository, String path, String lockToken, long revison, boolean startEmtpy) throws SVNException;
     
     public void finishReport() throws SVNException;
     

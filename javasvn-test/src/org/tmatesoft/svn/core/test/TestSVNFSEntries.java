@@ -406,7 +406,7 @@ public class TestSVNFSEntries extends AbstractRepositoryTest {
             String revStr = r.getPropertyValue("svn:entry:committed-rev");
             if (revStr != null) {
                 long rev = Long.parseLong(revStr);
-                reporter.setPath(r.getPath(), rev, false);
+                reporter.setPath(r.getPath(), null, rev, false);
             }
             if (r.isDirectory()) {
                 ISVNDirectoryEntry dir = (ISVNDirectoryEntry) r;
