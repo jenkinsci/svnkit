@@ -19,6 +19,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.progress.ISVNProgressViewer;
 
@@ -165,6 +166,10 @@ public interface ISVNWorkspace {
      * Revert for copy/move operation, reverts both src and dst.
      */
     public void revert(String srcPath, String dstPath, boolean recursive) throws SVNException;
+    
+    public SVNLock lock(String path, String comment, boolean force) throws SVNException;
+
+    public void unlock(String path, boolean force) throws SVNException;
     
     public void relocate(SVNRepositoryLocation newLocation, String path, boolean recursive) throws SVNException;
 

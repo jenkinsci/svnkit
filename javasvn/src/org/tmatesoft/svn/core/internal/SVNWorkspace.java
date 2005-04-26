@@ -55,6 +55,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNError;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -64,6 +65,7 @@ import org.tmatesoft.svn.core.progress.ISVNProgressViewer;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
+import org.tmatesoft.svn.util.TimeUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -1322,7 +1324,66 @@ public class SVNWorkspace implements ISVNWorkspace {
             sleepForTimestamp();
             getRoot().dispose();
         }
+    }
+    
+    public void unlock(String path, boolean force) throws SVNException {
+        try {
+            ISVNEntry entry = locateEntry(path);
+            if (entry == null) {
+                throw new SVNException("no versioned entry at '" + path + "'");
+            }
+            String token = entry.getPropertyValue(SVNProperty.LOCK_TOKEN);
+            if (token == null) {
+                throw new SVNException("'" + path + "' is not locked in repository");
+            }
+            String name = "";
+            if (!entry.isDirectory()) {
+                name = entry.getName();
+            }
+            SVNRepository repository = SVNUtil.createRepository(this, path);
+            repository.removeLock(name, token, force);
+
+            entry.setPropertyValue(SVNProperty.LOCK_TOKEN, null);
+            entry.setPropertyValue(SVNProperty.LOCK_COMMENT, null);
+            entry.setPropertyValue(SVNProperty.LOCK_CREATION_DATE, null);
+            entry.setPropertyValue(SVNProperty.LOCK_OWNER, null);
+            entry.save();
+        } finally {
+            getRoot().dispose();
+        }
         
+    }
+    
+    
+    public SVNLock lock(String path, String comment, boolean force) throws SVNException {
+        SVNLock lock = null;
+        try {
+            comment = comment == null ? "" : comment;
+            ISVNEntry entry = locateEntry(path);
+            if (entry == null) {
+                throw new SVNException("no versioned entry at '" + path + "'");
+            }
+            if (entry.isScheduledForAddition()) {
+                throw new SVNException("'" + path + "' is not added to repository yet");
+            }
+            String name = "";
+            if (!entry.isDirectory()) {
+                name = entry.getName();
+            }
+            SVNRepository repository = SVNUtil.createRepository(this, path);
+            long revision = SVNProperty.longValue(entry.getPropertyValue(SVNProperty.REVISION));
+            lock = repository.setLock(name, comment, force, revision);
+            if (lock != null) {
+                entry.setPropertyValue(SVNProperty.LOCK_TOKEN, lock.getID());
+                entry.setPropertyValue(SVNProperty.LOCK_COMMENT, comment);
+                entry.setPropertyValue(SVNProperty.LOCK_CREATION_DATE, TimeUtil.formatDate(lock.getCreationDate()));
+                entry.setPropertyValue(SVNProperty.LOCK_OWNER, lock.getOwner());
+                entry.save();
+            }
+        } finally {
+            getRoot().dispose();
+        }
+        return lock;
     }
 
     public ISVNEntryContent getContent(String path) throws SVNException {
