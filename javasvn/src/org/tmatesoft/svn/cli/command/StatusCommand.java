@@ -115,6 +115,7 @@ public class StatusCommand extends SVNCommand {
         if (getCommandLine().hasArgument(SVNArgument.QUIET) && (!status.isManaged() || status.getContentsStatus() == SVNStatus.EXTERNAL)) {
             return;
         }
+        boolean remoteMode = getCommandLine().hasArgument(SVNArgument.SHOW_UPDATES);
         StringBuffer sb = new StringBuffer();
         appendStatus(status.getContentsStatus(), sb);
         appendStatus(status.getPropertiesStatus(), sb);
@@ -130,8 +131,22 @@ public class StatusCommand extends SVNCommand {
         sb.append(" ");
         boolean detailed = getCommandLine().hasArgument(SVNArgument.SHOW_UPDATES) || getCommandLine().hasArgument(SVNArgument.VERBOSE);
         boolean displayLastCommited = getCommandLine().hasArgument(SVNArgument.VERBOSE);
-        String lockStatus = " "; 
-        if (status.getLock() != null) {
+        String lockStatus = " ";
+        if (remoteMode) {
+            if (status.getRemoteLockToken() != null) {
+                if (status.getLock() != null) {
+                    if (status.getRemoteLockToken().equals(status.getLock().getID())) {
+                        lockStatus = "K";
+                    } else {
+                        lockStatus = "T";
+                    }                    
+                } else {
+                    lockStatus = "O";
+                }
+            } else if (status.getLock() != null){
+                lockStatus = "B";
+            }
+        } else if (status.getLock() != null) {
             lockStatus = "K";
         }
         

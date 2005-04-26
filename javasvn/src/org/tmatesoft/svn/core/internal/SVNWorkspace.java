@@ -513,11 +513,16 @@ public class SVNWorkspace implements ISVNWorkspace {
                 entry = locateParentEntry(path);
             }
             SVNRepository repository = SVNUtil.createRepository(this, entry.getPath());
-            editor = new SVNStatusEditor(entry.getPath());
             String target = null;
             if (!targetEntry.isDirectory()) {
                 target = targetEntry.getName();
-            }
+            }            
+            SVNLock[] locks = null;
+            try {
+                locks = repository.getLocks(target == null ? "" : target);
+            } catch (SVNException e) {}
+            editor = new SVNStatusEditor(entry.getPath(), locks);
+                
             SVNReporterBaton reporterBaton = new SVNReporterBaton(null, entry, target, descend);
             repository.status(ISVNWorkspace.HEAD, target, descend, reporterBaton, editor);
             revision = editor.getTargetRevision();

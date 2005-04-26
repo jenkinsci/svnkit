@@ -55,6 +55,7 @@ public class SVNStatus {
     private boolean myIsDirectory;
     private String myAuthor;
     private SVNLock myLock;
+    private String myRemoteLockToken;
     
     public SVNStatus(String path, int propStatus, int contentsStatus, long revision, 
             long wcRevision, boolean addedWithHistory, boolean switched, boolean isDirectory, String author,
@@ -143,14 +144,23 @@ public class SVNStatus {
             getContentsStatus() != SVNStatus.IGNORED;
     }
     
-    public void setRemoteStatus(long revision, int propStatus, int contentsStatus) {
+    public String getRemoteLockToken() {
+        return myRemoteLockToken;
+    }
+    
+    public void setRemoteStatus(long revision, int propStatus, int contentsStatus, String lockToken) {
         myRemotePropertiesStatus = propStatus;
         myRemoteContentsStatus = contentsStatus;
         myRemoteRevision = revision;
+        myRemoteLockToken = lockToken;
     }
     
     public void setPath(String path) {
         myPath = path;
+    }
+    
+    public void setRemoteLockToken(String token) {
+        myRemoteLockToken = token;
     }
     
     public SVNLock getLock() {

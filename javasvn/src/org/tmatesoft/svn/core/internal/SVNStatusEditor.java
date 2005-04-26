@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -42,14 +43,19 @@ public class SVNStatusEditor implements ISVNEditor {
     private String myCurrentFilePath;
     private long myCurrentFileRevision;
     private long myCurrentRevision;
+    private Map myLocks;
     
-    public SVNStatusEditor() {
-        this("");
-    }
-    
-    public SVNStatusEditor(String rootPath) {
+    public SVNStatusEditor(String rootPath, SVNLock[] remoteLocks) {
         myRemoteStatuses = new HashMap();
         myRootPath = rootPath;
+        myLocks = new HashMap();
+        if (remoteLocks != null) {
+            for (int i = 0; i < remoteLocks.length; i++) {
+                String path = PathUtil.removeLeadingSlash(remoteLocks[i].getPath()); 
+                myLocks.put(path, remoteLocks[i].getID());
+                myRemoteStatuses.put(path, new RemoteSVNStatus(-1, 0, 0));
+            }
+        }
     }    
 
     public void targetRevision(long revision) throws SVNException {
@@ -87,16 +93,18 @@ public class SVNStatusEditor implements ISVNEditor {
     }
     
     public void changeDirProperty(String name, String value) throws SVNException {
-        System.out.println("dir property: " + name + "=" + value);
+        RemoteSVNStatus status = (RemoteSVNStatus) myRemoteStatuses.get(myCurrentPath);
         if (!name.startsWith(SVNProperty.SVN_ENTRY_PREFIX) && !name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            RemoteSVNStatus status = (RemoteSVNStatus) myRemoteStatuses.get(myCurrentPath);
             if (status == null) {
                 status = new RemoteSVNStatus(myCurrentRevision, SVNStatus.NOT_MODIFIED, SVNStatus.MODIFIED);
                 myRemoteStatuses.put(myCurrentPath, status);
             } else if (status.myContentsStatus != SVNStatus.ADDED && status.myContentsStatus != SVNStatus.REPLACED) {
                 status.myPropertiesStatus = SVNStatus.MODIFIED;
+                status.myRevision = myCurrentRevision;
             }
             status.isDirectory = true;
+        } else if (status == null) {
+            myRemoteStatuses.put(myCurrentPath, new RemoteSVNStatus(-1, SVNStatus.NOT_MODIFIED, SVNStatus.NOT_MODIFIED));
         }
     }
     public void closeDir() throws SVNException {
@@ -143,15 +151,17 @@ public class SVNStatusEditor implements ISVNEditor {
     
     
     public void changeFileProperty(String name, String value) throws SVNException {
-        System.out.println("file property: " + name + "=" + value);
+        RemoteSVNStatus status = (RemoteSVNStatus) myRemoteStatuses.get(myCurrentFilePath);
         if (!name.startsWith(SVNProperty.SVN_ENTRY_PREFIX) && !name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            RemoteSVNStatus status = (RemoteSVNStatus) myRemoteStatuses.get(myCurrentFilePath);
             if (status == null) {
                 myRemoteStatuses.put(myCurrentFilePath, new RemoteSVNStatus(myCurrentFileRevision, SVNStatus.NOT_MODIFIED, SVNStatus.MODIFIED));
             } else if (status.myContentsStatus != SVNStatus.ADDED && status.myContentsStatus != SVNStatus.REPLACED) {
                 status.myPropertiesStatus = SVNStatus.MODIFIED;
+                status.myRevision = myCurrentFileRevision;
                 status.isDirectory = false;
             }
+        } else if (status == null) {
+            myRemoteStatuses.put(myCurrentFilePath, new RemoteSVNStatus(-1, SVNStatus.NOT_MODIFIED, SVNStatus.NOT_MODIFIED));
         }
     }
 
@@ -195,6 +205,7 @@ public class SVNStatusEditor implements ISVNEditor {
         }
         DebugLog.log("COMPLETING STATUS FOR  " + path + " : " + statuses.keySet());
         DebugLog.log("REMOTE MATCHED ENTRIES " + remoteMatches);
+        
         for(Iterator remotePaths = remoteMatches.iterator(); remotePaths.hasNext();) {
             String remotePath = (String) remotePaths.next();
             String name = remotePath.substring(relativePath.length());
@@ -204,12 +215,14 @@ public class SVNStatusEditor implements ISVNEditor {
                 continue;
             }
             SVNStatus svnStatus = (SVNStatus) statuses.get(name);
+            String locktoken = (String) myLocks.remove(remotePath);
             if (svnStatus != null) {
-                svnStatus.setRemoteStatus(remoteStatus.myRevision, remoteStatus.myPropertiesStatus, remoteStatus.myContentsStatus);
+                svnStatus.setRemoteStatus(remoteStatus.myRevision, remoteStatus.myPropertiesStatus, remoteStatus.myContentsStatus, locktoken);
             } else {
                 svnStatus = new SVNStatus(PathUtil.removeLeadingSlash(PathUtil.append(path, name)), 0, 0, -1, -1, 
                         remoteStatus.myRevision, remoteStatus.myContentsStatus, remoteStatus.myPropertiesStatus, 
-                        remoteStatus.isAddedWithHistory, false, remoteStatus.isDirectory, null);
+                        remoteStatus.isAddedWithHistory, false, remoteStatus.isDirectory, null);                
+                svnStatus.setRemoteLockToken(locktoken);
                 statuses.put(name, svnStatus);
             }
         }

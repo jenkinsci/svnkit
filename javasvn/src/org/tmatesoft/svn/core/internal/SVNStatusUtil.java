@@ -104,7 +104,8 @@ class SVNStatusUtil {
                 status.getContentsStatus() == SVNStatus.NOT_MODIFIED && 
                 status.getPropertiesStatus() == SVNStatus.NOT_MODIFIED &&
                 status.getRepositoryRevision() < 0 &&
-                !status.isSwitched() && status.getLock() == null) {
+                !status.isSwitched() && status.getLock() == null &&
+                status.getRemoteLockToken() == null) {
             return;
         }
         handler.handleStatus(status.getPath(), status);
