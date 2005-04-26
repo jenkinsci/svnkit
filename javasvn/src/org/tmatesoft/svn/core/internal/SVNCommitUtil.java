@@ -398,7 +398,7 @@ public class SVNCommitUtil {
             if (entry == null) {
                 continue;
             }
-            updateWCEntry(entry, info, uuid, parents, ws);
+            updateWCEntry(entry, info, uuid, parents, ws, false);
         }
         for(Iterator entries = parents.iterator(); entries.hasNext();) {
             ISVNEntry parent = (ISVNEntry) entries.next();
@@ -409,7 +409,7 @@ public class SVNCommitUtil {
         }
     }
 
-    private static void updateWCEntry(ISVNEntry entry, SVNCommitInfo info, String uuid, Collection parents, SVNWorkspace ws) throws SVNException {
+    private static void updateWCEntry(ISVNEntry entry, SVNCommitInfo info, String uuid, Collection parents, SVNWorkspace ws, boolean keepLocks) throws SVNException {
         String revStr = Long.toString(info.getNewRevision());
         entry.setPropertyValue(SVNProperty.REVISION, revStr);
         if (entry.getPropertyValue(SVNProperty.COPIED) != null && entry.isDirectory()) {
@@ -418,7 +418,7 @@ public class SVNCommitUtil {
                 ISVNEntry child = (ISVNEntry) copied.next();
                 parents.add(child);
                 DebugLog.log("PROCESSING COPIED CHILD: " + child.getPath());
-                updateWCEntry(child, info, uuid, parents, ws);
+                updateWCEntry(child, info, uuid, parents, ws, keepLocks);
             }
         }
         ISVNEntry parent = ws.locateParentEntry(entry.getPath());
@@ -442,6 +442,12 @@ public class SVNCommitUtil {
             entry.setPropertyValue(SVNProperty.LAST_AUTHOR, info.getAuthor());
             entry.setPropertyValue(SVNProperty.COMMITTED_DATE, TimeUtil.formatDate(info.getDate()));
             entry.setPropertyValue(SVNProperty.UUID, uuid);
+            if (!keepLocks) {
+                entry.setPropertyValue(SVNProperty.LOCK_TOKEN, null);
+                entry.setPropertyValue(SVNProperty.LOCK_OWNER, null);
+                entry.setPropertyValue(SVNProperty.LOCK_COMMENT, null);
+                entry.setPropertyValue(SVNProperty.LOCK_CREATION_DATE, null);
+            }
         }
         if (parent != null) {
             parent.asDirectory().unschedule(entry.getName());
