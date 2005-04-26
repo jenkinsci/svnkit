@@ -486,7 +486,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         try {
             openConnection();
             path = getRepositoryPath(path);
-            Object[] buffer = new Object[] { "get-lock", path};
+            Object[] buffer = new Object[] { "get-locks", path};
             write("(w(s))", buffer);
             authenticate();
             read("[((*L))]", buffer);
