@@ -525,7 +525,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public SVNDirEntry pathStat(String path, long revision) throws SVNException {
+    public SVNDirEntry info(String path, long revision) throws SVNException {
         try {
             openConnection();
             path = getRepositoryPath(path);

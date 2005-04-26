@@ -93,7 +93,7 @@ public abstract class SVNRepository {
     
     public abstract SVNNodeKind checkPath(String path, long revision) throws SVNException;
     
-    public abstract SVNDirEntry pathStat(String path, long revision) throws SVNException;
+    public abstract SVNDirEntry info(String path, long revision) throws SVNException;
     
     public abstract long getFile(String path, long revision, Map properties, OutputStream contents) throws SVNException; 
     

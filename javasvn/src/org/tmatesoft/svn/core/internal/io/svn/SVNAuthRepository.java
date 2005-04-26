@@ -436,13 +436,13 @@ public class SVNAuthRepository extends SVNRepository {
         }
     }
 
-    public SVNDirEntry pathStat(String path, long revision) throws SVNException {
+    public SVNDirEntry info(String path, long revision) throws SVNException {
         ISVNCredentials credentials = null;
         ISVNCredentialsProvider provider = initProvider();
         while(true) {
             try {
                 myDelegate.setCredentials(credentials);
-                return myDelegate.pathStat(path, revision);
+                return myDelegate.info(path, revision);
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
                 credentials = nextCredentials(provider, e.getMessage());

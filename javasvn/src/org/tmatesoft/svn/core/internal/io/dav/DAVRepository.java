@@ -541,8 +541,49 @@ class DAVRepository extends SVNRepository {
         }
     }
 
-    public SVNDirEntry pathStat(String path, long revision) throws SVNException {
-        return null;
+    public SVNDirEntry info(String path, long revision) throws SVNException {
+        final SVNDirEntry[] result = new SVNDirEntry[1];
+        try {
+            openConnection();
+            path = getFullPath(path);
+            path = PathUtil.encode(path);
+            if (revision < 0) {
+                DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
+                path = PathUtil.append(info.baselineBase, info.baselinePath);
+            }
+            myConnection.doPropfind(path, 0, null, null, new IDAVResponseHandler() {
+                public void handleDAVResponse(DAVResponse child) {
+                    String href = PathUtil.removeTrailingSlash(child.getHref());
+                    href = PathUtil.decode(href);
+                    String name = PathUtil.tail(href);
+                    // build direntry
+                    SVNNodeKind kind = SVNNodeKind.FILE;
+                    Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
+                    long lastRevision = Long.parseLong(revisionStr.toString());
+                    String sizeStr = (String) child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
+                    long size = sizeStr == null ? 0 : Long.parseLong(sizeStr);
+                    if (child.getPropertyValue(DAVElement.RESOURCE_TYPE) == DAVElement.COLLECTION) {
+                        kind = SVNNodeKind.DIR;
+                    }
+                    String author = (String) child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
+                    String dateStr = (String) child.getPropertyValue(DAVElement.CREATION_DATE);
+                    Date date = TimeUtil.parseDate(dateStr);
+                    boolean hasProperties = false;
+                    for(Iterator props = child.properties(); props.hasNext();) {
+                        DAVElement property = (DAVElement) props.next();
+                        if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(property.getNamespace()) || 
+                                DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(property)) {
+                            hasProperties = true;
+                            break;
+                        }
+                    }
+                    result[0] = new SVNDirEntry(name, kind, size, hasProperties, lastRevision, date, author);
+                }
+            });
+        } finally {
+            closeConnection();
+        }
+        return result[0];
     }
 }
 
