@@ -152,6 +152,14 @@ public class StatusCommand extends SVNCommand {
         
         if (!detailed) {
             sb.append(lockStatus);
+            if (remoteMode) {
+                if (status.getRepositoryContentsStatus() != SVNStatus.NOT_MODIFIED || 
+                        status.getRepositoryPropertiesStatus() != SVNStatus.NOT_MODIFIED) {
+                    sb.append('*');
+                } else {
+                    sb.append(' ');
+                }
+            }
             sb.append(" ");
         } else {
             char remote = ' ';
