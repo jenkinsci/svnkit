@@ -40,8 +40,8 @@ public class StatusCommand extends SVNCommand {
         for(int i = 0; i < line.getPathCount(); i++) {
             String path = line.getPathAt(i);
             if (path.trim().endsWith("..")) {
-                err.println("Path '" + path + "' ends with '..', which is unsupported for this operation");
-                return;
+                //err.println("Path '" + path + "' ends with '..', which is unsupported for this operation");
+                //return;
             }
             
         }

@@ -80,7 +80,7 @@ public class SwitchCommand extends SVNCommand {
                     return;
                 }
                 changesReceived[0] = true;
-                out.println(contents + "" + properties + ' ' + updatedPath);
+                out.println(contents + "" + properties + "  " + updatedPath);
                 if (contentsStatus == SVNStatus.CORRUPTED) {
                     err.println("svn: Checksum error: base version of file '" + updatedPath + "' is corrupted and was not updated.");
                     DebugLog.log("svn: Checksum error: base version of file '" + updatedPath + "' is corrupted and was not updated.");

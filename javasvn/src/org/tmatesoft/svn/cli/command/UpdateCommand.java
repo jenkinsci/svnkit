@@ -69,8 +69,8 @@ public class UpdateCommand extends SVNCommand {
                         return;
                     }
                     changesReceived[0] = true;
-                    DebugLog.log(contents + "" + properties + ' ' + updatedPath);
-                    out.println(contents + "" + properties + ' ' + updatedPath);
+                    DebugLog.log(contents + "" + properties + "  " + updatedPath);
+                    out.println(contents + "" + properties + "  " + updatedPath);
                     if (contentsStatus == SVNStatus.CORRUPTED) {
                         err.println("svn: Checksum error: base version of file '" + updatedPath + "' is corrupted and was not updated.");
                         DebugLog.log("svn: Checksum error: base version of file '" + updatedPath + "' is corrupted and was not updated.");
@@ -90,7 +90,18 @@ public class UpdateCommand extends SVNCommand {
 
 	        final String path = SVNUtil.getWorkspacePath(workspace, absolutPath);
 	        long revision = parseRevision(getCommandLine(), workspace, path);
+            try {
 	        revision = workspace.update(path, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+            } catch (SVNException e) {
+                if (getCommandLine().hasArgument(SVNArgument.QUIET)) {
+                   return;
+                }
+                try {
+                   String fullPath = convertPath(homePath, workspace, path);
+                   out.println("Skipped '" +fullPath + "'");
+                } catch (IOException ioException) {}
+                return;
+            }
             if (!changesReceived[0]) {
                 println(out, "At revision " + revision + ".");
             } else {
