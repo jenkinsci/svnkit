@@ -54,18 +54,18 @@ public class CheckoutCommand extends SVNCommand {
 		final String homePath = path;
 		workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
 			public void updated(String updatedPath, int contentsStatus, int propertiesStatus, long rev) {
-				if ("".equals(updatedPath)) {
-					return;
-				}
+				//if ("".equals(updatedPath)) {
+				//	return;
+				//}
 				try {
 					updatedPath = convertPath(homePath, workspace, updatedPath);
 				}
 				catch (IOException e) {
 				}
-				println(out, "A  " + updatedPath);
+				println(out, "A   " + updatedPath);
 			}
 		});
 		revision = workspace.checkout(location, revision, false, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
-		out.println("Checked out revision " + revision + ".");
+		println(out, "Checked out revision " + revision + ".");
 	}
 }
