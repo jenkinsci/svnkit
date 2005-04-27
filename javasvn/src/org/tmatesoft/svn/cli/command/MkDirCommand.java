@@ -36,15 +36,18 @@ public class MkDirCommand extends SVNCommand {
 
     public final void run(final PrintStream out, PrintStream err) throws SVNException {
         if (!getCommandLine().hasURLs()) {
-            createLocalDirectories(out);
+            createLocalDirectories(out, err);
         } else {
-            createRemoteDirectories(out);
+            createRemoteDirectories(out, err);
         }
     }
 
-    private void createLocalDirectories(final PrintStream out) throws SVNException {
+    private void createLocalDirectories(final PrintStream out, PrintStream err) throws SVNException {
         final Collection paths = new ArrayList();
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
+            if (matchTabsInPath(getCommandLine().getPathAt(i), err)) {
+                continue;
+            }
             paths.add(getCommandLine().getPathAt(i));
         }
 
@@ -68,9 +71,12 @@ public class MkDirCommand extends SVNCommand {
         }
     }
 
-    private void createRemoteDirectories(final PrintStream out) throws SVNException {
+    private void createRemoteDirectories(final PrintStream out, PrintStream err) throws SVNException {
         Collection urls = new ArrayList();
         for (int i = 0; i < getCommandLine().getURLCount(); i++) {
+            if (matchTabsInPath(getCommandLine().getURL(i), err)) {
+                continue;
+            }
             urls.add(getCommandLine().getURL(i));
         }
 

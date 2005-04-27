@@ -32,6 +32,9 @@ public class AddCommand extends SVNCommand {
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
             final String workspacePath = absolutePath;
+            if (matchTabsInPath(workspacePath, err)) {
+                return;
+            }
             final ISVNWorkspace workspace = createWorkspace(absolutePath);
             workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
                 public void modified(String path, int kind) {

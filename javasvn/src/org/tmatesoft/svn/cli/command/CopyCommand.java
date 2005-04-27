@@ -43,25 +43,28 @@ public class CopyCommand extends SVNCommand {
                 final String path = getCommandLine().getPathAt(0);
                 final String url = getCommandLine().getURL(0);
                 if (getCommandLine().isPathURLBefore(url, path)) {
-                    runRemoteToLocal(out);
+                    runRemoteToLocal(out, err);
                 } else {
-                    runLocalToRemote(out);
+                    runLocalToRemote(out, err);
                 }
             } else {
                 runRemote(out, err);
             }
         } else {
-            runLocally(out);
+            runLocally(out, err);
         }
     }
 
-    private void runLocally(final PrintStream out) throws SVNException {
+    private void runLocally(final PrintStream out, PrintStream err) throws SVNException {
         if (getCommandLine().getPathCount() != 2) {
             throw new SVNException("Please enter SRC and DST path");
         }
 
         final String absoluteSrcPath = getCommandLine().getPathAt(0);
         final String absoluteDstPath = getCommandLine().getPathAt(1);
+        if (matchTabsInPath(absoluteDstPath, err) || matchTabsInPath(absoluteSrcPath, err)) {
+            return;
+        }
         final ISVNWorkspace workspace = createWorkspace(absoluteSrcPath);
         final String srcPath = SVNUtil.getWorkspacePath(workspace, absoluteSrcPath);
         SVNRepository repository = createRepository(workspace.getLocation(srcPath).toCanonicalForm());
@@ -71,7 +74,7 @@ public class CopyCommand extends SVNCommand {
             getCommandLine().setPathAt(0, null);
             getCommandLine().setURLAt(0, workspace.getLocation(srcPath).toCanonicalForm());
             getCommandLine().setArgumentValue(SVNArgument.REVISION, Long.toString(revNumber));  
-            runRemoteToLocal(out);
+            runRemoteToLocal(out, err);
             return;
         }
 
@@ -99,6 +102,9 @@ public class CopyCommand extends SVNCommand {
 
         String srcURL = getCommandLine().getURL(0);
         String destURL = getCommandLine().getURL(1);
+        if (matchTabsInPath(srcURL, err) || matchTabsInPath(destURL, err)) {
+            return;
+        }
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
 
         SVNRepository repository = createRepository(destURL);
@@ -182,10 +188,13 @@ public class CopyCommand extends SVNCommand {
         }
     }
 
-    private void runRemoteToLocal(final PrintStream out) throws SVNException {
+    private void runRemoteToLocal(final PrintStream out, PrintStream err) throws SVNException {
         final String srcURL = getCommandLine().getURL(0);
         String destPathParent = getCommandLine().getPathAt(0);
         destPathParent = destPathParent.replace(File.separatorChar, '/');
+        if (matchTabsInPath(srcURL, err) || matchTabsInPath(getCommandLine().getPathAt(0), err)) {
+            return;
+        }
 
         long revision = -1;
         if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
@@ -200,9 +209,12 @@ public class CopyCommand extends SVNCommand {
         ws.copy(SVNRepositoryLocation.parseURL(srcURL), wsPath, revision);
     }
 
-    private void runLocalToRemote(final PrintStream out) throws SVNException {
+    private void runLocalToRemote(final PrintStream out, PrintStream err) throws SVNException {
         final String dstURL = getCommandLine().getURL(0);
         String srcPath = getCommandLine().getPathAt(0);
+        if (matchTabsInPath(srcPath, err) || matchTabsInPath(dstURL, err)) {
+            return;
+        }
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
         srcPath = srcPath.replace(File.separatorChar, '/');
 
