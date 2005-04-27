@@ -189,6 +189,13 @@ public class SVNCheckoutEditor implements ISVNEditor {
     
     public void addFile(String path, String copyPath, long copyRevision) throws SVNException {
         if (myObstructedCount > 0) {
+            myObstructedCount++;
+            return;
+        }
+        ISVNEntry existingChild = getCurrentEntry().getUnmanagedChild(PathUtil.tail(path));
+        if (existingChild != null && (existingChild.isDirectory() || !existingChild.isManaged())) {
+            myWorkspace.fireEntryUpdated(existingChild, SVNStatus.OBSTRUCTED, 0, myTargetRevision);
+            myObstructedCount = 1;
             return;
         }
         DebugLog.log("UPDATED: ADD FILE: " + path);
@@ -212,6 +219,10 @@ public class SVNCheckoutEditor implements ISVNEditor {
     }
     
     public void closeFile(String textChecksum) throws SVNException {
+        myObstructedCount--;
+        if (myObstructedCount > 0) {
+            return;
+        }
         if (myContentsStatus == SVNStatus.CORRUPTED) {
             DebugLog.log("UPDATED: CLOSE FILE: skipping corrupted file: " + myCurrentFile.getPath());
             myCurrentFile = null;
@@ -241,6 +252,9 @@ public class SVNCheckoutEditor implements ISVNEditor {
     }
     
     public void applyTextDelta(String baseChecksum)  throws SVNException {
+        if (myObstructedCount > 0) {
+            return;
+        }
         if (myContentsStatus == 0) {
             if (myCurrentFile.isCorrupted()) {
                 myCurrentFile.setPropertyValue(SVNProperty.CORRUPTED, Boolean.TRUE.toString());
@@ -251,6 +265,10 @@ public class SVNCheckoutEditor implements ISVNEditor {
     }
     
     public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
+        if (myObstructedCount > 0) {
+            DebugLog.log("UPDATED: TEXTDELTACHUNK: skipping obstructed file or file within obstructed dir");
+            return null;
+        }
         if (myContentsStatus == SVNStatus.CORRUPTED) {
             DebugLog.log("UPDATED: TEXTDELTACHUNK: skipping corrupted file: " + myCurrentFile.getPath());
             return null;
@@ -271,6 +289,9 @@ public class SVNCheckoutEditor implements ISVNEditor {
     }    
     
     public void textDeltaEnd() throws SVNException {
+        if (myObstructedCount > 0) {
+            return;
+        }
         if (myContentsStatus == SVNStatus.CORRUPTED) {
             DebugLog.log("UPDATED: TEXTDELTAEND: skipping corrupted file: " + myCurrentFile.getPath());
             return;
@@ -321,6 +342,9 @@ public class SVNCheckoutEditor implements ISVNEditor {
     }
     
     public void changeFileProperty(String name, String value) throws SVNException {
+        if (myObstructedCount > 0) {
+            return;
+        }
         if (!myIsExport) {
             myChangedProperties.put(name, value);
         } else {
