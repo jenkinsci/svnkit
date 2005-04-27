@@ -83,10 +83,11 @@ class SVNReporterBaton implements ISVNReporterBaton {
         if (myTarget != null) {
             ISVNEntry targetEntry = myRoot.asDirectory().getChild(myTarget);
             long revision = 0;
+            String locktoken = null;
             if (targetEntry != null) {
                 revision = SVNProperty.longValue(targetEntry.getPropertyValue(SVNProperty.REVISION));
+                locktoken = targetEntry.getPropertyValue(SVNProperty.LOCK_TOKEN);
             }
-            String locktoken = targetEntry.getPropertyValue(SVNProperty.LOCK_TOKEN);
             if (revision >= 0) {
                 if (myWorkspace != null && targetEntry.isMissing() && !targetEntry.isDirectory()) {
                     // restore before reporting
