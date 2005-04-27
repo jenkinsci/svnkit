@@ -833,33 +833,34 @@ public class SVNWorkspace implements ISVNWorkspace {
 
 	public long commit(SVNCommitPacket packet, String message) throws SVNException {
 		final SVNStatus[] statuses = packet.getStatuses();
-		return commitPaths(getPathsFromStatuses(statuses), message, null);
+		return commitPaths(getPathsFromStatuses(statuses), message, false, null);
 	}
 
-	public long commitPaths(List paths, String message, ISVNProgressViewer progressViewer) throws SVNException {
+	public long commitPaths(List paths, String message, boolean keepLocks, ISVNProgressViewer progressViewer) throws SVNException {
 		long start = System.currentTimeMillis();
 		try {
 			final Set modified = new HashSet();
 			for (Iterator it = paths.iterator(); it.hasNext();) {
 				final String path = (String)it.next();
-				modified.add(locateEntry(path));
+                ISVNEntry entry = locateEntry(path);
+				modified.add(entry);
 			}
-
 			if (message == null || modified.isEmpty()) {
 				DebugLog.log("NOTHING TO COMMIT");
 				return -1;
 			}
 
-			final String root = getCommitRoot((String[])paths.toArray(new String[paths.size()]));
-			final ISVNEntry rootEntry = locateEntry(root);
+			String root = getCommitRoot((String[])paths.toArray(new String[paths.size()]));
+			ISVNEntry rootEntry = locateEntry(root);
 			if (rootEntry == null || rootEntry.getPropertyValue(SVNProperty.URL) == null) {
 				throw new SVNException(root + " does not contain working copy files");
 			}
 
 			DebugLog.log("COMMIT MESSAGE: " + message);
 
-			final Map tree = new HashMap();
-			final String url = SVNCommitUtil.buildCommitTree(modified, tree);
+			Map tree = new HashMap();
+            Map locks = new HashMap();
+			String url = SVNCommitUtil.buildCommitTree(modified, tree, locks);
 			for (Iterator treePaths = tree.keySet().iterator(); treePaths.hasNext();) {
 				String treePath = (String)treePaths.next();
 				if (tree.get(treePath) != null) {
@@ -876,9 +877,24 @@ public class SVNWorkspace implements ISVNWorkspace {
 			SVNRepository repository = SVNRepositoryFactory.create(location);
 			repository.setCredentialsProvider(getCredentialsProvider());
 
-			ISVNEditor editor = repository.getCommitEditor(message, new SVNWorkspaceMediatorAdapter(getRoot(), tree));
-			String host = location.getProtocol() + "://" + location.getHost() + ":" + location.getPort();
-			String rootURL = PathUtil.append(host, repository.getRepositoryRoot());
+            String host = location.getProtocol() + "://" + location.getHost() + ":" + location.getPort();
+            String rootURL = PathUtil.append(host, repository.getRepositoryRoot());
+            
+            if (!locks.isEmpty()) {
+                Map transaltedLocks = new HashMap();
+                for(Iterator lockedPaths = locks.keySet().iterator(); lockedPaths.hasNext();) {
+                    String lockedPath = (String) lockedPaths.next();
+                    String relativePath = lockedPath.substring(rootURL.length());
+                    if (!relativePath.startsWith("/")) {
+                        relativePath = "/" + relativePath;
+                    }
+                    transaltedLocks.put(relativePath, locks.get(lockedPath));
+                }
+                locks = transaltedLocks;
+            }
+            DebugLog.log("LOCKS ready for commit: " + locks);
+
+			ISVNEditor editor = repository.getCommitEditor(message, locks, keepLocks, new SVNWorkspaceMediatorAdapter(getRoot(), tree));
 			SVNCommitInfo info;
 			try {
 				SVNCommitUtil.doCommit("", rootURL, tree, editor, this, progressViewer);
@@ -1194,7 +1210,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 
             myIsCopyCommit = true;
             SVNStatus[] committablePaths = getCommittables(new String[] {src}, true, false);
-            return commitPaths(getPathsFromStatuses(committablePaths), message, progressViewer);
+            return commitPaths(getPathsFromStatuses(committablePaths), message, false, progressViewer);
         } finally {
             getRoot().dispose();
             myIsCopyCommit = false;

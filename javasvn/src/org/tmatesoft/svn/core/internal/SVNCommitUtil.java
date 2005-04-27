@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import org.tmatesoft.svn.core.ISVNDirectoryEntry;
 import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.ISVNRootEntry;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -42,8 +43,10 @@ public class SVNCommitUtil {
     
     private static final String SVN_ENTRY_REPLACED = "svn:entry:replaced";
     
-    public static String buildCommitTree(Collection modifiedEntries, Map map) throws SVNException {
+    public static String buildCommitTree(Collection modifiedEntries, Map map, Map locks) throws SVNException {
         map = map == null ? new HashMap() : map;
+        locks = locks == null ? new HashMap() : locks;
+        
         ISVNEntry root = null;
         for(Iterator entries = modifiedEntries.iterator(); entries.hasNext();) {
             ISVNEntry entry = (ISVNEntry) entries.next();
@@ -52,9 +55,18 @@ public class SVNCommitUtil {
                 root = entry;
             }
             map.put(url, entry);
+            if (entry.getPropertyValue(SVNProperty.LOCK_TOKEN) != null) {
+                url = SVNRepositoryLocation.parseURL(url).toCanonicalForm();
+                locks.put(url, entry.getPropertyValue(SVNProperty.LOCK_TOKEN));
+            }
+            if (entry.isScheduledForDeletion() && entry.isDirectory()) {
+                // collect locks for all children.
+                collectChildrenLocks(entry.asDirectory(), locks);
+            }
         }
         DebugLog.log("modified paths: " + modifiedEntries);
         DebugLog.log("modified map  : " + map);
+        DebugLog.log("modified locks: " + map);
         // now add common root entry ?
         String commonRoot = null;
         String[] urls = (String[]) map.keySet().toArray(new String[map.size()]);
@@ -115,6 +127,21 @@ public class SVNCommitUtil {
         }
         
         return commonRoot;        
+    }
+    
+    private static void collectChildrenLocks(ISVNDirectoryEntry parent, Map locks) throws SVNException {
+        for(Iterator children = parent.childEntries(); children.hasNext();) {
+            ISVNEntry entry = (ISVNEntry) children.next();
+            String lock = entry.getPropertyValue(SVNProperty.LOCK_TOKEN);
+            if (lock != null) {
+                String url = PathUtil.decode(entry.getPropertyValue(SVNProperty.URL));
+                url = SVNRepositoryLocation.parseURL(url).toCanonicalForm();
+                locks.put(url, lock);
+            }
+            if (entry.isDirectory()) {
+                collectChildrenLocks(entry.asDirectory(), locks);
+            }
+        }
     }
     
     public static void harvestCommitables(ISVNEntry root, String[] paths, boolean recursive, Collection modified) throws SVNException {

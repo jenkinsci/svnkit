@@ -85,7 +85,7 @@ public interface ISVNWorkspace {
 
 	public SVNStatus[] getCommittables(String[] paths, boolean recursive, boolean includeParents) throws SVNException;
 
-	public long commitPaths(List paths, String message, ISVNProgressViewer progressViewer) throws SVNException;
+	public long commitPaths(List paths, String message, boolean keepLocks, ISVNProgressViewer progressViewer) throws SVNException;
 
 	/**
 	 * @deprecated Use getCommittablePaths().
