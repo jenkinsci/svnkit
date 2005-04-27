@@ -39,9 +39,12 @@ public class StatusCommand extends SVNCommand {
         
         for(int i = 0; i < line.getPathCount(); i++) {
             String path = line.getPathAt(i);
-            if (path.trim().endsWith("..")) {
-                //err.println("Path '" + path + "' ends with '..', which is unsupported for this operation");
-                //return;
+            if (path.trim().equals("..")) {
+                File dir = new File(path, ".svn");
+                if (!dir.exists() || !dir.isDirectory()) {
+                    err.println("svn: '..' is not a working copy");
+                    return;
+                }
             }
             
         }
