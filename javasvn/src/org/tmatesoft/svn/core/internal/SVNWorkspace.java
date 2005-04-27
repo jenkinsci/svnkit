@@ -1305,6 +1305,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                     ISVNEntry parent = locateParentEntry(path);
                     if (parent != null && parent.isDirectory()) {
                         boolean reverted = parent.asDirectory().revert(entry.getName());
+                        parent.save();
                         fireEntryModified(entry, reverted ? SVNStatus.REVERTED : SVNStatus.NOT_REVERTED, false);
                         return;
                     }
