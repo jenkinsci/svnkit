@@ -50,6 +50,9 @@ public class MkDirCommand extends SVNCommand {
             }
             paths.add(getCommandLine().getPathAt(i));
         }
+        if (paths.isEmpty()) {
+            return;
+        }
 
         final String[] pathsArray = (String[]) paths.toArray(new String[paths.size()]);
         final String root = PathUtil.getFSCommonRoot(pathsArray);
@@ -74,10 +77,13 @@ public class MkDirCommand extends SVNCommand {
     private void createRemoteDirectories(final PrintStream out, PrintStream err) throws SVNException {
         Collection urls = new ArrayList();
         for (int i = 0; i < getCommandLine().getURLCount(); i++) {
-            if (matchTabsInPath(getCommandLine().getURL(i), err)) {
+            if (matchTabsInPath(PathUtil.decode(getCommandLine().getURL(i)), err)) {
                 continue;
             }
             urls.add(getCommandLine().getURL(i));
+        }
+        if (urls.isEmpty()) {
+            return;
         }
 
         String[] urlsArray = (String[]) urls.toArray(new String[urls.size()]);

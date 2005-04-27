@@ -39,15 +39,18 @@ public class MoveCommand extends SVNCommand {
     		return;
     	}
 		if (getCommandLine().hasURLs()) {
-			runRemote(out);
+			runRemote(out, err);
 		} else {
-			runLocally(out);
+			runLocally(out, err);
 		}
 	}
 
-	private void runRemote(PrintStream out) throws SVNException {
+	private void runRemote(PrintStream out, PrintStream err) throws SVNException {
 		String srcPath = getCommandLine().getURL(0);
 		String destPath = getCommandLine().getURL(1);
+        if (matchTabsInPath(PathUtil.decode(srcPath), err) || matchTabsInPath(PathUtil.decode(destPath), err)) {
+            return;
+        }
 		String message = (String)getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
 
 		String root = PathUtil.getCommonRoot(new String[]{destPath, srcPath});
@@ -100,13 +103,17 @@ public class MoveCommand extends SVNCommand {
 		}
 	}
 
-	private void runLocally(final PrintStream out) throws SVNException {
+	private void runLocally(final PrintStream out, PrintStream err) throws SVNException {
 		if (getCommandLine().getPathCount() != 2) {
 			throw new SVNException("Please enter SRC and DST path");
 		}
 
 		final String absoluteSrcPath = getCommandLine().getPathAt(0);
 		final String absoluteDstPath = getCommandLine().getPathAt(1);
+        if (matchTabsInPath(absoluteSrcPath, err) || 
+                matchTabsInPath(absoluteDstPath, err)) {
+            return;
+        }
 		final ISVNWorkspace workspace = createWorkspace(absoluteSrcPath);
 		final String srcPath = SVNUtil.getWorkspacePath(workspace, absoluteSrcPath);
 		final String dstTempPath = SVNUtil.getWorkspacePath(workspace, absoluteDstPath);

@@ -102,7 +102,7 @@ public class CopyCommand extends SVNCommand {
 
         String srcURL = getCommandLine().getURL(0);
         String destURL = getCommandLine().getURL(1);
-        if (matchTabsInPath(srcURL, err) || matchTabsInPath(destURL, err)) {
+        if (matchTabsInPath(PathUtil.decode(srcURL), err) || matchTabsInPath(PathUtil.decode(destURL), err)) {
             return;
         }
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
@@ -136,18 +136,9 @@ public class CopyCommand extends SVNCommand {
         DebugLog.log("checking new path: " + newPath);
         nodeKind = repository.checkPath(newPath, -1);
         if (nodeKind == SVNNodeKind.DIR) {
-            /*
-        	DebugLog.log("path " + newPath + " already exists and its a dir");
-        	newPathParent = newPath; 
-        	newPath = PathUtil.tail(srcURL); 
-        	newPath = PathUtil.append(newPathParent, newPath);
-            nodeKind = repository.checkPath(newPath, -1);
-            */
-            //if (nodeKind == SVNNodeKind.DIR) {
-            	DebugLog.log("can't copy to '" + PathUtil.append(destURL, newPath) + "', location already exists");
-            	err.println("can't copy to '" + PathUtil.append(destURL, newPath) + "', location already exists");
-            	return;
-//            }
+        	DebugLog.log("can't copy to '" + PathUtil.append(destURL, newPath) + "', location already exists");
+        	err.println("can't copy to '" + PathUtil.append(destURL, newPath) + "', location already exists");
+        	return;
         }
 
         SVNRepositoryLocation srcLocation = SVNRepositoryLocation.parseURL(srcURL);
@@ -192,7 +183,7 @@ public class CopyCommand extends SVNCommand {
         final String srcURL = getCommandLine().getURL(0);
         String destPathParent = getCommandLine().getPathAt(0);
         destPathParent = destPathParent.replace(File.separatorChar, '/');
-        if (matchTabsInPath(srcURL, err) || matchTabsInPath(getCommandLine().getPathAt(0), err)) {
+        if (matchTabsInPath(PathUtil.decode(srcURL), err) || matchTabsInPath(getCommandLine().getPathAt(0), err)) {
             return;
         }
 
@@ -212,7 +203,7 @@ public class CopyCommand extends SVNCommand {
     private void runLocalToRemote(final PrintStream out, PrintStream err) throws SVNException {
         final String dstURL = getCommandLine().getURL(0);
         String srcPath = getCommandLine().getPathAt(0);
-        if (matchTabsInPath(srcPath, err) || matchTabsInPath(dstURL, err)) {
+        if (matchTabsInPath(srcPath, err) || matchTabsInPath(PathUtil.decode(dstURL), err)) {
             return;
         }
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
