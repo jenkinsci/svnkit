@@ -205,7 +205,7 @@ public abstract class SVNCommand {
     
     protected static boolean matchTabsInPath(String path, PrintStream out) {
         if (path != null && path.indexOf('\t') >= 0) {
-            out.println("svn: Invalid control character 0x09 in path '" + path + "'");
+            out.println("svn: Invalid control character '0x09' in path '" + path + "'");
             return true;
         }
         return false;
