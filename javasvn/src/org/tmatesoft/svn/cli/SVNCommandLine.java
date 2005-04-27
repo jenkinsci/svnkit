@@ -171,8 +171,10 @@ public class SVNCommandLine {
                 if (myCommandName == null) {
                     myCommandName = argument;
                 } else {
+                    if (argument.indexOf('@') > 0) {
+                        argument = argument.substring(0, argument.indexOf('@'));
+                    }
                     myPathURLs.add(argument);
-
                     if (argument.indexOf("://") >= 0) {
                         myURLs.add(argument);
                     } else {
