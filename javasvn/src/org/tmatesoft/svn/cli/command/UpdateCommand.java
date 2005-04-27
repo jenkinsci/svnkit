@@ -56,6 +56,7 @@ public class UpdateCommand extends SVNCommand {
                         properties = ' ';
                     } else if (contentsStatus == SVNStatus.DELETED) {
                         contents = 'D';
+                        properties = ' ';
                     } else if (contentsStatus == SVNStatus.MERGED) {
                         contents = 'G';
                     } else if (contentsStatus == SVNStatus.CONFLICTED) {
@@ -70,7 +71,11 @@ public class UpdateCommand extends SVNCommand {
                     }
                     changesReceived[0] = true;
                     DebugLog.log(contents + "" + properties + "  " + updatedPath);
-                    out.println(contents + "" + properties + "  " + updatedPath);
+                    if (contents == 'A' || contents == 'D') {
+                        out.println(contents + "    " + updatedPath);
+                    } else {
+                        out.println(contents + "" + properties + "  " + updatedPath);
+                    }
                     if (contentsStatus == SVNStatus.CORRUPTED) {
                         err.println("svn: Checksum error: base version of file '" + updatedPath + "' is corrupted and was not updated.");
                         DebugLog.log("svn: Checksum error: base version of file '" + updatedPath + "' is corrupted and was not updated.");
