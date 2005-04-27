@@ -70,6 +70,7 @@ public class StatusCommand extends SVNCommand {
         ISVNStatusHandler statusHandler = new ISVNStatusHandler() {
             public void handleStatus(String entryPath, SVNStatus status) {
                 try {
+                    DebugLog.log("status received: " + entryPath);
                     String fullPath = convertPath(wcPath, ws, entryPath);
                     printStatus(fullPath, status, out);
                 } catch (IOException e) {}

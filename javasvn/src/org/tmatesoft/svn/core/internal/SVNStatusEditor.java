@@ -136,6 +136,7 @@ public class SVNStatusEditor implements ISVNEditor {
             myRemoteStatuses.put(myCurrentFilePath, status);
         } else if (status.myContentsStatus != SVNStatus.ADDED) {
             status.myContentsStatus = SVNStatus.MODIFIED;            
+            status.myRevision = myCurrentFileRevision;
         }
         status.isDirectory = false;
     }
@@ -208,6 +209,7 @@ public class SVNStatusEditor implements ISVNEditor {
         
         for(Iterator remotePaths = remoteMatches.iterator(); remotePaths.hasNext();) {
             String remotePath = (String) remotePaths.next();
+            DebugLog.log("creating status for: " + remotePath);
             String name = remotePath.substring(relativePath.length());
             name = PathUtil.removeLeadingSlash(name);
             RemoteSVNStatus remoteStatus = (RemoteSVNStatus) myRemoteStatuses.remove(remotePath);
@@ -225,6 +227,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 svnStatus.setRemoteLockToken(locktoken);
                 statuses.put(name, svnStatus);
             }
+            DebugLog.log("status created for: " + remotePath);
         }
         return statuses;
     }
