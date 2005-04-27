@@ -46,7 +46,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
     
     private long myTargetRevision;    
     private ISVNEntry myRootEntry;
-		private ISVNFileEntry myCurrentFile;
+	private ISVNFileEntry myCurrentFile;
     private List myDiffWindow;
     private ISVNWorkspaceMediator myMediator;
 
@@ -62,13 +62,12 @@ public class SVNCheckoutEditor implements ISVNEditor {
     private SVNWorkspace myWorkspace;
     private long myUpdateTime;
     private int myFileCount;
-		private SVNCheckoutProgressProcessor myProgressProcessor;
+    private SVNCheckoutProgressProcessor myProgressProcessor;
 
     private Collection myExternals;
-
     private String myTarget;
-
     private boolean myIsRecursive;
+    private int myObstructedCount;
     
     public SVNCheckoutEditor(ISVNWorkspaceMediator mediator, SVNWorkspace workspace, ISVNEntry rootEntry, boolean export,
             String target) {
@@ -116,7 +115,17 @@ public class SVNCheckoutEditor implements ISVNEditor {
     }
     
     public void addDir(String path, String copyPath, long copyRevision) throws SVNException {
+        if (myObstructedCount > 0) {
+            myObstructedCount++;
+            return;
+        }
         DebugLog.log("UPDATED: ADD DIR: " + path);
+        ISVNEntry existingChild = getCurrentEntry().getUnmanagedChild(PathUtil.tail(path));
+        if (existingChild != null && !existingChild.isDirectory()) {
+            myWorkspace.fireEntryUpdated(existingChild, SVNStatus.OBSTRUCTED, 0, myTargetRevision);
+            myObstructedCount = 1;
+            return;
+        }
         ISVNEntry newDir = getCurrentEntry().addDirectory(PathUtil.tail(path), -1);
         myStack.push(newDir);
         newDir.setPropertyValue(SVNProperty.REVISION, "0");
@@ -133,6 +142,9 @@ public class SVNCheckoutEditor implements ISVNEditor {
         }
     }
     public void changeDirProperty(String name, String value) throws SVNException {
+        if (myObstructedCount > 0) {
+            return;
+        }
         if (!myIsExport) {
             getCurrentProperties().put(name, value);
             if (SVNProperty.EXTERNALS.equals(name) && value != null) {
@@ -144,6 +156,10 @@ public class SVNCheckoutEditor implements ISVNEditor {
     }
 
     public void closeDir() throws SVNException {
+        myObstructedCount--;
+        if (myObstructedCount > 0) {
+            return;
+        }
         int propsStatus = 0;
         boolean wasAdded = getCurrentProperties().remove("added") != null;
         if (!myIsExport) {
@@ -172,6 +188,9 @@ public class SVNCheckoutEditor implements ISVNEditor {
     }
     
     public void addFile(String path, String copyPath, long copyRevision) throws SVNException {
+        if (myObstructedCount > 0) {
+            return;
+        }
         DebugLog.log("UPDATED: ADD FILE: " + path);
         myCurrentFile = getCurrentEntry().addFile(PathUtil.tail(path), -1);
         if (!myIsExport) {

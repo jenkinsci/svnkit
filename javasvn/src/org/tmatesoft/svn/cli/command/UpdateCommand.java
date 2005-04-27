@@ -43,6 +43,10 @@ public class UpdateCommand extends SVNCommand {
                     } catch (IOException e) {
                         DebugLog.error(e);
                     }
+                    if (contentsStatus == SVNStatus.OBSTRUCTED) {
+                        println(err, "Failed to add directory '" + updatedPath + "', object of the same name already exists");
+                        return;
+                    }
                     char contents = 'U';
                     char properties = ' ';
                     if (propertiesStatus == SVNStatus.UPDATED) {
@@ -96,7 +100,7 @@ public class UpdateCommand extends SVNCommand {
 	        final String path = SVNUtil.getWorkspacePath(workspace, absolutPath);
 	        long revision = parseRevision(getCommandLine(), workspace, path);
             try {
-	        revision = workspace.update(path, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+                revision = workspace.update(path, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             } catch (SVNException e) {
                 if (getCommandLine().hasArgument(SVNArgument.QUIET)) {
                    return;
