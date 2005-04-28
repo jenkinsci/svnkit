@@ -18,9 +18,11 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.SVNUtil;
 
 /**
@@ -36,14 +38,24 @@ public class RevertCommand extends SVNCommand {
             final ISVNWorkspace workspace = createWorkspace(absolutePath);
             workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
                 public void modified(String path, int kind) {
+                    String wcPath = path;
                     try {
                         path = convertPath(workspacePath, workspace, path);
                     } catch (IOException e) {}
 
                     if (kind == SVNStatus.REVERTED) {
                         println(out, "Reverted '" + path + "'");
+                    } else if (kind == SVNStatus.RESTORED) {
+                        println(out, "Restored '" + path + "'");
                     } else {
-                        println(err, "Error restoring text for '" + path + "'");
+                        try {
+                            String pathKind = workspace.getPropertyValue(wcPath, SVNProperty.KIND);
+                            DebugLog.log("REVERT: kind of " + wcPath + " : " + pathKind);
+                            if (!SVNProperty.KIND_DIR.equals(pathKind)) {
+                                println(err, "Error restoring text for '" + path + "'");
+                            }
+                        } catch (SVNException e) {
+                        }
                         println(out, "Error: Failed to revert '" + path + "' -- try updating instead");
                     }
                 }

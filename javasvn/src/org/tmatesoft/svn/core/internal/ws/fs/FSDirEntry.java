@@ -344,12 +344,15 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 FSUtil.deleteAll(adminArea);
             }
         } else {
+            DebugLog.log("REVERT: reverting file, base file is: " + getAdminArea().getBaseFile(child));
             if (!child.isDirectory() && !getAdminArea().getBaseFile(child).exists()) {
+                DebugLog.log("REVERT: no base file to revert contents from");
                 return false;
             }
             unschedule(childName);
             ((FSEntry) child).revertProperties();
             if (!child.isDirectory()) {
+                DebugLog.log("REVERT: reverting file contents");
                 ((FSFileEntry) child).restoreContents();
             } else if (child.getPropertyValue(SVNProperty.PROP_TIME) != null) {
                 if (myChildEntries != null) {
@@ -359,6 +362,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                     }
                 }
             }
+            DebugLog.log("REVERT: contents reverted");
         }
         return true;
     }
