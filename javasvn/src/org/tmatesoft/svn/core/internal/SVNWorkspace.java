@@ -1322,7 +1322,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             ISVNDirectoryEntry parent = null;
             parent = (ISVNDirectoryEntry) locateParentEntry(path);
             doMarkResolved(entry, recursive);
-            doRevert(parent, entry, recursive);
+            doRevert(parent, entry, entry.isDirectory() && entry.isScheduledForAddition(), recursive);
 
             if (parent == null && entry == getRoot()) {
                 entry.asDirectory().revert(null);
@@ -1477,17 +1477,20 @@ public class SVNWorkspace implements ISVNWorkspace {
         return myRoot;
     }
 
-    private void doRevert(ISVNDirectoryEntry parent, ISVNEntry entry, boolean recursive) throws SVNException {
+    private void doRevert(ISVNDirectoryEntry parent, ISVNEntry entry, boolean dirsOnly, boolean recursive) throws SVNException {
         boolean restored = !entry.isDirectory() && entry.isMissing();
         if (entry.isDirectory() && recursive) {
             Collection namesList = new LinkedList();
             for (Iterator children = entry.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
+                if (dirsOnly && !child.isDirectory()) {
+                    continue;
+                }
                 namesList.add(child);
             }
             for (Iterator names = namesList.iterator(); names.hasNext();) {
                 ISVNEntry child = (ISVNEntry) names.next();
-                doRevert(entry.asDirectory(), child, recursive);
+                doRevert(entry.asDirectory(), child, dirsOnly, recursive);
             }
         }
         if (parent != null) {
