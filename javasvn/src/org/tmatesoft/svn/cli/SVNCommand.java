@@ -30,7 +30,6 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
@@ -64,13 +63,15 @@ public abstract class SVNCommand {
 
     protected ISVNWorkspace createWorkspace(String absolutePath, boolean root) throws SVNException {
         ISVNWorkspace ws = SVNUtil.createWorkspace(absolutePath, root);
-        ws.setCredentials(myUserName, myPassword);
+        //ws.setCredentials(myUserName, myPassword);
+        ws.setCredentials(new SVNCommandLineCredentialsProvider(myUserName, myPassword));
         return ws;
     }
 
     protected final SVNRepository createRepository(String url) throws SVNException {
         SVNRepository repository = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-        repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
+        repository.setCredentialsProvider(new SVNCommandLineCredentialsProvider(myUserName, myPassword));
+        //repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
         return repository;
     }
 
