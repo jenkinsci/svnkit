@@ -514,6 +514,13 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     public void removeLock(String path, String id, boolean force) throws SVNException {
         try {
+            if (id == null) {
+                SVNLock lock = getLock(path);
+                if (lock == null) {
+                    throw new SVNException("'" + path + "' is not locked");
+                }
+                id = lock.getID();
+            }
             openConnection();
             path = getRepositoryPath(path);
             Object[] buffer = new Object[] {"unlock", path, id, Boolean.valueOf(force)};

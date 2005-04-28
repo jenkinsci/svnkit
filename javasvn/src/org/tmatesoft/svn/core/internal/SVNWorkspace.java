@@ -1362,8 +1362,8 @@ public class SVNWorkspace implements ISVNWorkspace {
                 throw new SVNException("no versioned entry at '" + path + "'");
             }
             String token = entry.getPropertyValue(SVNProperty.LOCK_TOKEN);
-            if (token == null) {
-                throw new SVNException("'" + path + "' is not locked in repository");
+            if (token == null && !force) {
+                throw new SVNException("'" + path + "' is not locked in this working copy");
             }
             String name = "";
             if (!entry.isDirectory()) {
