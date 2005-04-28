@@ -398,7 +398,7 @@ public class SVNCommitUtil {
         }
     }
     
-    public static void updateWorkingCopy(SVNCommitInfo info, String uuid, Map commitTree, SVNWorkspace ws) throws SVNException {
+    public static void updateWorkingCopy(SVNCommitInfo info, String uuid, Map commitTree, SVNWorkspace ws, boolean keepLocks) throws SVNException {
         Set parents = new HashSet();
         LinkedList sorted = new LinkedList();
         for(Iterator entries = commitTree.values().iterator(); entries.hasNext();) {
@@ -425,7 +425,7 @@ public class SVNCommitUtil {
             if (entry == null) {
                 continue;
             }
-            updateWCEntry(entry, info, uuid, parents, ws, false);
+            updateWCEntry(entry, info, uuid, parents, ws, keepLocks);
         }
         for(Iterator entries = parents.iterator(); entries.hasNext();) {
             ISVNEntry parent = (ISVNEntry) entries.next();

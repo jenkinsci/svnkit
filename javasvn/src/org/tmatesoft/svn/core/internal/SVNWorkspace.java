@@ -724,7 +724,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 			return -1;
 		}
 
-		return commit(packet, handler.handleCommit(packet.getStatuses()));
+		return commit(packet, false, handler.handleCommit(packet.getStatuses()));
 	}
 
 	public SVNStatus[] getCommittables(String[] paths, boolean recursive, boolean includeParents) throws SVNException {
@@ -831,9 +831,9 @@ public class SVNWorkspace implements ISVNWorkspace {
 		return committables != null ? new SVNCommitPacket(getCommitRoot(paths), committables) : null;
 	}
 
-	public long commit(SVNCommitPacket packet, String message) throws SVNException {
+	public long commit(SVNCommitPacket packet, boolean keepLocks, String message) throws SVNException {
 		final SVNStatus[] statuses = packet.getStatuses();
-		return commitPaths(getPathsFromStatuses(statuses), message, false, null);
+		return commitPaths(getPathsFromStatuses(statuses), message, keepLocks, null);
 	}
 
 	public long commitPaths(List paths, String message, boolean keepLocks, ISVNProgressViewer progressViewer) throws SVNException {
@@ -927,7 +927,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 			DebugLog.log("COMMIT TOOK: " + (System.currentTimeMillis() - start) + " ms.");
             if (!myIsCopyCommit) {
     			start = System.currentTimeMillis();
-    			SVNCommitUtil.updateWorkingCopy(info, rootEntry.getPropertyValue(SVNProperty.UUID), tree, this);
+    			SVNCommitUtil.updateWorkingCopy(info, rootEntry.getPropertyValue(SVNProperty.UUID), tree, this, keepLocks);
     
     			sleepForTimestamp();
     			DebugLog.log("POST COMMIT ACTIONS TOOK: " + (System.currentTimeMillis() - start) + " ms.");
@@ -1409,7 +1409,11 @@ public class SVNWorkspace implements ISVNWorkspace {
                 entry.setPropertyValue(SVNProperty.LOCK_COMMENT, comment);
                 entry.setPropertyValue(SVNProperty.LOCK_CREATION_DATE, TimeUtil.formatDate(lock.getCreationDate()));
                 entry.setPropertyValue(SVNProperty.LOCK_OWNER, lock.getOwner());
-                entry.save();
+                if (entry.isDirectory()) {
+                    entry.save(false);
+                } else {
+                    locateParentEntry(entry.getPath()).save(false);
+                }
             }
         } finally {
             getRoot().dispose();

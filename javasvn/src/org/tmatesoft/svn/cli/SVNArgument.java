@@ -40,6 +40,7 @@ public abstract class SVNArgument {
     public static final SVNArgument FILE = createStringArgument(new String[] { "-F" });
     public static final SVNArgument EDITOR_CMD = createStringArgument(new String[] { "--editor-cmd" });
     public static final SVNArgument STRICT = createUnaryArgument(new String[] { "--strict" });
+    public static final SVNArgument NO_UNLOCK = createUnaryArgument(new String[] { "--no-unlock" });
 
     public static SVNArgument findArgument(String name) {
         for (Iterator arguments = ourArguments.iterator(); arguments.hasNext();) {
@@ -74,6 +75,7 @@ public abstract class SVNArgument {
         ourArguments.add(SVNArgument.FILE);
         ourArguments.add(SVNArgument.EDITOR_CMD);
         ourArguments.add(SVNArgument.STRICT);
+        ourArguments.add(SVNArgument.NO_UNLOCK);
     }
 
     private static SVNArgument createStringArgument(String[] names) {

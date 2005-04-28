@@ -24,6 +24,7 @@ import java.util.List;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.SVNCommitPacket;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
@@ -109,7 +110,9 @@ public class CommitCommand extends SVNCommand {
                 println(out, verb + committedPath);
             }
         });
-        long revision = workspace.commit(paths, message, recursive, false);
+        
+        SVNCommitPacket packet = workspace.createCommitPacket(paths, recursive, false);
+        long revision = workspace.commit(packet, getCommandLine().hasArgument(SVNArgument.NO_UNLOCK), message);
         if (revision >= 0) {
             out.println("Committed revision " + revision + ".");
         }
