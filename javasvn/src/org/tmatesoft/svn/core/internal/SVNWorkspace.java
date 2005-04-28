@@ -842,7 +842,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 			final Set modified = new HashSet();
 			for (Iterator it = paths.iterator(); it.hasNext();) {
 				final String path = (String)it.next();
-                                ISVNEntry entry = locateEntry(path);
+                ISVNEntry entry = locateEntry(path);
 				modified.add(entry);
 			}
 			if (message == null || modified.isEmpty()) {
@@ -859,7 +859,7 @@ public class SVNWorkspace implements ISVNWorkspace {
 			DebugLog.log("COMMIT MESSAGE: " + message);
 
 			Map tree = new HashMap();
-                        Map locks = new HashMap();
+            Map locks = new HashMap();
 			String url = SVNCommitUtil.buildCommitTree(modified, tree, locks);
 			for (Iterator treePaths = tree.keySet().iterator(); treePaths.hasNext();) {
 				String treePath = (String)treePaths.next();
@@ -1368,6 +1368,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             String name = "";
             if (!entry.isDirectory()) {
                 name = entry.getName();
+                path = PathUtil.removeTail(path);
             }
             SVNRepository repository = SVNUtil.createRepository(this, path);
             repository.removeLock(name, token, force);
@@ -1398,6 +1399,7 @@ public class SVNWorkspace implements ISVNWorkspace {
             String name = "";
             if (!entry.isDirectory()) {
                 name = entry.getName();
+                path = PathUtil.removeTail(path);
             }
             SVNRepository repository = SVNUtil.createRepository(this, path);
             long revision = SVNProperty.longValue(entry.getPropertyValue(SVNProperty.REVISION));

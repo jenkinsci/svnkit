@@ -66,7 +66,7 @@ public class SVNCommitUtil {
         }
         DebugLog.log("modified paths: " + modifiedEntries);
         DebugLog.log("modified map  : " + map);
-        DebugLog.log("modified locks: " + map);
+        DebugLog.log("modified locks: " + locks);
         // now add common root entry ?
         String commonRoot = null;
         String[] urls = (String[]) map.keySet().toArray(new String[map.size()]);

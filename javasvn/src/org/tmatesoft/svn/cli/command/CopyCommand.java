@@ -143,10 +143,12 @@ public class CopyCommand extends SVNCommand {
         String newPathParent = null;
         DebugLog.log("checking new path: " + newPath);
         nodeKind = repository.checkPath(newPath, -1);
-        if (nodeKind == SVNNodeKind.DIR) {
+        if (nodeKind != SVNNodeKind.NONE) {
         	DebugLog.log("can't copy to '" + PathUtil.append(destURL, newPath) + "', location already exists");
         	err.println("can't copy to '" + PathUtil.append(destURL, newPath) + "', location already exists");
         	return;
+        } else if (repository.checkPath(PathUtil.removeTail(newPath), -1) == SVNNodeKind.NONE) {
+            err.println("svn: Path '" + newPath + "' not present");
         }
 
         SVNRepositoryLocation srcLocation = SVNRepositoryLocation.parseURL(srcURL);
