@@ -118,6 +118,13 @@ public class MoveCommand extends SVNCommand {
 		final String srcPath = SVNUtil.getWorkspacePath(workspace, absoluteSrcPath);
 		final String dstTempPath = SVNUtil.getWorkspacePath(workspace, absoluteDstPath);
 		final SVNStatus status = workspace.status(dstTempPath, false);
+        if (status != null && status.getContentsStatus() == SVNStatus.DELETED) {
+            try {
+                err.print("Can't move to '" + convertPath(absoluteDstPath, workspace, dstTempPath) + "' - path is scheduled for deletion");
+            } catch (IOException e) {
+            }
+            return;
+        }
 		final String dstPath = status != null && status.isDirectory() ? PathUtil.append(dstTempPath, PathUtil.tail(srcPath)) : dstTempPath;
 
 		workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {

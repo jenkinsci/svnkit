@@ -1056,6 +1056,10 @@ public class SVNWorkspace implements ISVNWorkspace {
                     }
                 }
             } else {
+                ISVNEntry entry = locateEntry(destination);
+                if (entry != null && entry.isScheduledForDeletion()) {
+                    throw new SVNException("'" + destination + "' is scheduled for deletion");
+                }
                 if (locateEntry(destination, true) != null) {
                     throw new SVNException("'" + destination + "' already exists in working copy");
                 }

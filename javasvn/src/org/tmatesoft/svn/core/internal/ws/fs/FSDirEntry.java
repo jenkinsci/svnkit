@@ -216,6 +216,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 childEntry.put(SVNProperty.COPYFROM_URL, url);
             } 
             updateURL(added, getPropertyValue(SVNProperty.URL));
+            updateDeletedEntries(added);
         } else {
             added = addFile(asName, revision);
             added.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
@@ -832,6 +833,26 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             for(Iterator children = target.asDirectory().childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
                 updateURL(child, parentURL);
+            }
+        }
+    }
+
+    private static void updateDeletedEntries(ISVNEntry target) throws SVNException {
+        if (target.isDirectory()) {
+            FSDirEntry dir = (FSDirEntry) target;
+            for(Iterator deletedEntries = dir.deletedEntries(); deletedEntries.hasNext();) {
+                Map deletedEntry = (Map) deletedEntries.next();
+                // remove deleted entry in dir and replace it with deleted entry
+                String name = (String) deletedEntry.get(SVNProperty.NAME);
+
+                deletedEntry.remove(SVNProperty.DELETED);
+                deletedEntry.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_DELETE);
+                dir.myDeletedEntries.remove(name);
+                dir.myChildEntries.put(name, deletedEntry);
+            }
+            for(Iterator children = target.asDirectory().childEntries(); children.hasNext();) {
+                ISVNEntry child = (ISVNEntry) children.next();
+                updateDeletedEntries(child);
             }
         }
     }
