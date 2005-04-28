@@ -30,12 +30,14 @@ public class SVNCommandLineCredentialsProvider implements
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 
         'e', 'f'
     };
+    private boolean myIsStoreCreds;
 
-    public SVNCommandLineCredentialsProvider(String userName, String password) {
+    public SVNCommandLineCredentialsProvider(String userName, String password, boolean store) {
         if (userName != null && password != null) {
             myCurrentCredentials = new Credentials(userName, password);
             myOriginalCredentials = myCurrentCredentials;
         } 
+        myIsStoreCreds = store;
     }
     
     public ISVNCredentials nextCredentials(String realm) {
@@ -59,6 +61,9 @@ public class SVNCommandLineCredentialsProvider implements
     }
 
     public void accepted(ISVNCredentials credentials) {
+        if (!myIsStoreCreds) {
+            return;
+        }
         // only if not there yet (!)
         int index = 0;
         Credentials creds = null;

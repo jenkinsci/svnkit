@@ -44,6 +44,7 @@ public abstract class SVNCommand {
     private String myPassword;
 
     private static Map ourCommands;
+    private boolean myIsStoreCreds;
 
     protected SVNCommandLine getCommandLine() {
         return myCommandLine;
@@ -53,6 +54,7 @@ public abstract class SVNCommand {
         myCommandLine = commandLine;
         myUserName = (String) commandLine.getArgumentValue(SVNArgument.USERNAME);
         myPassword = (String) commandLine.getArgumentValue(SVNArgument.PASSWORD);
+        myIsStoreCreds = !commandLine.hasArgument(SVNArgument.NO_AUTH_CACHE);
     }
 
     public abstract void run(PrintStream out, PrintStream err) throws SVNException;
@@ -64,13 +66,13 @@ public abstract class SVNCommand {
     protected ISVNWorkspace createWorkspace(String absolutePath, boolean root) throws SVNException {
         ISVNWorkspace ws = SVNUtil.createWorkspace(absolutePath, root);
         //ws.setCredentials(myUserName, myPassword);
-        ws.setCredentials(new SVNCommandLineCredentialsProvider(myUserName, myPassword));
+        ws.setCredentials(new SVNCommandLineCredentialsProvider(myUserName, myPassword, myIsStoreCreds));
         return ws;
     }
 
     protected final SVNRepository createRepository(String url) throws SVNException {
         SVNRepository repository = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-        repository.setCredentialsProvider(new SVNCommandLineCredentialsProvider(myUserName, myPassword));
+        repository.setCredentialsProvider(new SVNCommandLineCredentialsProvider(myUserName, myPassword, myIsStoreCreds));
         //repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
         return repository;
     }
