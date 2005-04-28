@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 #
 #  main.py: a shared, automated test suite for Subversion
@@ -25,7 +24,12 @@ import stat    # for ST_MODE
 import string  # for atof()
 import copy    # for deepcopy()
 import time    # for time()
+
 import getopt
+try:
+  my_getopt = getopt.gnu_getopt
+except AttributeError:
+  my_getopt = getopt.getopt
 
 from svntest import Failure
 from svntest import Skip
@@ -81,12 +85,12 @@ class SVNRepositoryCopyFailure(Failure):
 # Windows specifics
 if sys.platform == 'win32':
   windows = 1
-  file_schema_prefix = 'file:///'
+  file_scheme_prefix = 'file:///'
   _exe = '.exe'
   _bat = '.bat'
 else:
   windows = 0
-  file_schema_prefix = 'file://'
+  file_scheme_prefix = 'file://'
   _exe = ''
   _bat = ''
 
@@ -101,6 +105,10 @@ svnversion_binary = 'svnversion' + _exe
 wc_author = 'jrandom'
 wc_passwd = 'rayjandom'
 
+# Username and password used by the working copies for "second user"
+# scenarios
+wc_author2 = 'jconstant' # use the same password as wc_author
+
 # Global variable indicating if we want verbose output.
 verbose_mode = 0
 
@@ -108,12 +116,12 @@ verbose_mode = 0
 cleanup_mode = 0
 
 # Global URL to testing area.  Default to ra_local, current working dir.
-test_area_url = file_schema_prefix + os.path.abspath(os.getcwd())
+test_area_url = file_scheme_prefix + os.path.abspath(os.getcwd())
 if windows == 1:
   test_area_url = string.replace(test_area_url, '\\', '/')
 
 # Global variable indicating the FS type for repository creations.
-fs_type = "bdb"
+fs_type = None
 
 # Where we want all the repositories and working copies to live.
 # Each test will have its own!
@@ -201,6 +209,20 @@ def run_command(command, error_expected, binary_mode=0, *varargs):
   """Run COMMAND with VARARGS; return stdout, stderr as lists of lines.
   If ERROR_EXPECTED is None, any stderr also will be printed."""
 
+  return run_command_stdin(command, error_expected, binary_mode, 
+                           None, *varargs)
+
+# Run any binary, supplying input text, logging the command line
+def run_command_stdin(command, error_expected, binary_mode=0, 
+                      stdin_lines=None, *varargs):
+  """Run COMMAND with VARARGS; input STDIN_LINES (a list of strings
+  which should include newline characters) to program via stdin - this
+  should not be very large, as if the program outputs more than the OS
+  is willing to buffer, this will deadlock, with both Python and
+  COMMAND waiting to write to each other for ever.
+  Return stdout, stderr as lists of lines.
+  If ERROR_EXPECTED is None, any stderr also will be printed."""
+
   args = ''
   for arg in varargs:                   # build the command string
     args = args + ' "' + str(arg) + '"'
@@ -217,11 +239,15 @@ def run_command(command, error_expected, binary_mode=0, *varargs):
   start = time.time()
   infile, outfile, errfile = os.popen3(command + args, mode)
 
+  if stdin_lines:
+    map(infile.write, stdin_lines)
+
+  infile.close()
+
   stdout_lines = outfile.readlines()
   stderr_lines = errfile.readlines()
 
   outfile.close()
-  infile.close()
   errfile.close()
 
   if verbose_mode:
@@ -253,8 +279,7 @@ def run_svn(error_expected, *varargs):
   """Run svn with VARARGS; return stdout, stderr as lists of lines.
   If ERROR_EXPECTED is None, any stderr also will be printed.  If
   you're just checking that something does/doesn't come out of
-  stdout/stderr, you might want to use actions.run_and_verify_svn() or
-  actions.run_and_verify_svn_error()."""
+  stdout/stderr, you might want to use actions.run_and_verify_svn()."""
   global config_dir
   return run_command(svn_binary, error_expected, 0,
                      *varargs + ('--config-dir', config_dir))
@@ -322,11 +347,12 @@ def create_repos(path):
   if not(os.path.exists(path)):
     os.makedirs(path) # this creates all the intermediate dirs, if neccessary
 
-  stdout, stderr = run_command(svnadmin_binary, 1, 0, "create", path,
-                               "--bdb-txn-nosync", "--fs-type="+fs_type)
+  opts = ("--bdb-txn-nosync",)
+  if fs_type is not None:
+    opts += ("--fs-type=" + fs_type,)
+  stdout, stderr = run_command(svnadmin_binary, 1, 0, "create", path, *opts)
 
-  # Skip tests if we can't create the repository (most likely, because
-  # Subversion was built without BDB and this is a default test run).
+  # Skip tests if we can't create the repository.
   for line in stderr:
     if line.find('Unknown FS type') != -1:
       raise Skip
@@ -334,7 +360,8 @@ def create_repos(path):
   # Allow unauthenticated users to write to the repos, for ra_svn testing.
   file_append(os.path.join(path, "conf", "svnserve.conf"),
               "[general]\nanon-access = write\n");
-
+  file_append(os.path.join(path, "conf", "passwd"),
+               "[users]\njrandom = rayjandom\njconstant = rayjandom\n");
   # make the repos world-writeable, for mod_dav_svn's sake.
   chmod_tree(path, 0666, 0666)
 
@@ -376,7 +403,7 @@ def copy_repos(src_path, dst_path, head_revision, ignore_uuid = 0):
   load_out.close()
   load_err.close()
 
-  dump_re = re.compile(r'^\* Dumped revision (\d+)\.$')
+  dump_re = re.compile(r'^\* Dumped revision (\d+)\.\r?$')
   expect_revision = 0
   for dump_line in dump_lines:
     match = dump_re.match(dump_line)
@@ -388,7 +415,7 @@ def copy_repos(src_path, dst_path, head_revision, ignore_uuid = 0):
     print 'ERROR:  dump failed; did not see revision', head_revision
     raise SVNRepositoryCopyFailure
 
-  load_re = re.compile(r'^------- Committed revision (\d+) >>>$')
+  load_re = re.compile(r'^------- Committed revision (\d+) >>>\r?$')
   expect_revision = 1
   for load_line in load_lines:
     match = load_re.match(load_line)
@@ -410,6 +437,16 @@ def set_repos_paths(repo_dir):
   if windows == 1:
     current_repo_url = string.replace(current_repo_url, '\\', '/')
 
+
+def canonize_url(input):
+  "Canonize the url, if the scheme is unknown, returns intact input"
+  
+  m = re.match(r"^((file://)|((svn|svn\+ssh|http|https)(://)))", input)
+  if m:
+    scheme = m.group(1)
+    return scheme + re.sub(r'//*', '/', input[len(scheme):])
+  else:
+    return input
 
 ######################################################################
 # Sandbox handling
@@ -518,7 +555,8 @@ def _internal_run_tests(test_list, testnum=None):
 
   if testnum is None:
     for n in range(1, len(test_list)):
-      if run_one_test(n, test_list):
+      # 1 is the only return code that indicates actual test failure.
+      if run_one_test(n, test_list) == 1:
         exit_code = 1
   else:
     exit_code = run_one_test(testnum, test_list)
@@ -555,8 +593,8 @@ def run_tests(test_list):
   os.environ['SVN_EDITOR'] = ''
 
   try:
-    opts, args = getopt.getopt(sys.argv[1:], 'v',
-                               ['url=', 'fs-type=', 'verbose', 'cleanup'])
+    opts, args = my_getopt(sys.argv[1:], 'v',
+                           ['url=', 'fs-type=', 'verbose', 'cleanup'])
   except getopt.GetoptError:
     args = []
 

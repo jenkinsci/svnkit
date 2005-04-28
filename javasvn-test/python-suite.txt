@@ -1,4 +1,4 @@
-basic ALL -9 -18 -20
+basic ALL -9 -19
 stat ALL
 update ALL -13
 commit ALL -23
