@@ -81,6 +81,22 @@ public class InfoCommand extends SVNCommand {
             print("Copied From URL: " + workspace.getPropertyValue(relativePath, SVNProperty.COPYFROM_URL), out);
             print("Copied From Rev: " + workspace.getPropertyValue(relativePath, SVNProperty.COPYFROM_REVISION), out);
         }
+        String locktoken = workspace.getPropertyValue(relativePath, SVNProperty.LOCK_TOKEN);
+        String lockowner = workspace.getPropertyValue(relativePath, SVNProperty.LOCK_OWNER);
+        String lockdate = workspace.getPropertyValue(relativePath, SVNProperty.LOCK_CREATION_DATE);
+        String lockcomment = workspace.getPropertyValue(relativePath, SVNProperty.LOCK_COMMENT);
+        if (locktoken != null) {
+            print("Lock Token: " + locktoken, out);
+            if (lockowner != null) {
+                print("Lock Owner: " + lockowner, out);
+            }
+            if (lockdate != null) {
+                print("Lock Created: " + formatDate(lockdate), out);
+            }
+            if (lockcomment != null) {
+                print("Lock Comment:\n" + lockcomment + "\n", out);
+            }
+        }
     }
 
     private static boolean isNormal(SVNStatus status) {
