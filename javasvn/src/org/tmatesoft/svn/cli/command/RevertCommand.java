@@ -39,9 +39,11 @@ public class RevertCommand extends SVNCommand {
                     try {
                         path = convertPath(workspacePath, workspace, path);
                     } catch (IOException e) {}
+
                     if (kind == SVNStatus.REVERTED) {
                         println(out, "Reverted '" + path + "'");
                     } else {
+                        println(err, "Error restoring text for '" + path + "'");
                         println(out, "Error: Failed to revert '" + path + "' -- try updating instead");
                     }
                 }
