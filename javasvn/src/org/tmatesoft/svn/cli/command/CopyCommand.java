@@ -91,6 +91,14 @@ public class CopyCommand extends SVNCommand {
         
         final String dstTempPath = SVNUtil.getWorkspacePath(workspace, absoluteDstPath);
         final SVNStatus status = workspace.status(dstTempPath, false);
+        DebugLog.log("COPY: dst status is: " + status);
+        if (status != null && status.getContentsStatus() == SVNStatus.DELETED) {
+            try {
+                err.print("Can't copy to '" + convertPath(absoluteDstPath, workspace, dstTempPath) + "' - path is scheduled for deletion");
+            } catch (IOException e) {
+            }
+            return;
+        }
         final String dstPath = status != null && status.isDirectory() ? PathUtil.append(dstTempPath, PathUtil.tail(srcPath)) : dstTempPath;
         workspace.copy(srcPath, dstPath, false);
     }
