@@ -847,6 +847,9 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
 
                 deletedEntry.remove(SVNProperty.DELETED);
                 deletedEntry.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_DELETE);
+                deletedEntry.put(SVNProperty.COPIED, "true");
+                deletedEntry.put(SVNProperty.KIND, SVNProperty.KIND_FILE);
+                
                 dir.myDeletedEntries.remove(name);
                 dir.myChildEntries.put(name, deletedEntry);
             }
