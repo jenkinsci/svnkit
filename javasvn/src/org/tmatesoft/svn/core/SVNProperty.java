@@ -54,6 +54,7 @@ public class SVNProperty {
     public static final String LOCK_COMMENT = SVN_ENTRY_PREFIX + "lock-comment";
     public static final String LOCK_OWNER = SVN_ENTRY_PREFIX + "lock-owner";
     public static final String LOCK_CREATION_DATE = SVN_ENTRY_PREFIX + "lock-creation-date";
+    public static final String NEEDS_LOCK = SVN_PREFIX + "needs-lock";
 
     public static final String KIND_DIR = "dir";
     public static final String KIND_FILE = "file";

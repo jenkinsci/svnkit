@@ -482,7 +482,7 @@ public abstract class FSEntry implements ISVNEntry {
         if (name.startsWith(SVNProperty.SVN_PREFIX)) {
             value = convertEolsToNative(value);
         }
-        if (SVNProperty.EXECUTABLE.equals(name)) {
+        if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.NEEDS_LOCK.equals(name)) {
             return "*";
         } else if (SVNProperty.IGNORE.equals(name) || SVNProperty.EXTERNALS.equals(name)) {
             value = value.trim();
