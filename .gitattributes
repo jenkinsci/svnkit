@@ -26,6 +26,7 @@ javasvn-eclipse/site.xml eol=lf
 javasvn-test/apache/httpd.template.conf eol=lf
 javasvn-test/apache/passwd eol=lf
 javasvn-test/apache/python.template.conf eol=lf
+javasvn-test/apache/users eol=lf
 javasvn-test/fixture/directory/testFile2.txt -text
 javasvn-test/fixture/testFile.txt -text
 javasvn-test/test.mac.properties eol=lf
