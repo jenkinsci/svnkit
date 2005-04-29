@@ -54,6 +54,8 @@ public interface ISVNWorkspace {
     
     public void removeWorkspaceListener(ISVNWorkspaceListener listener);
 
+	  public List getWorkspaceListeners();
+
     public void setCredentials(String userName, String password);
     
     public void setCredentials(ISVNCredentialsProvider provider);
