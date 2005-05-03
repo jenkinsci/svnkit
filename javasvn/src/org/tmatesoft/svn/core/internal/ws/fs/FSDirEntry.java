@@ -214,24 +214,33 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 childEntry.put(SVNProperty.COPIED, SVNProperty.toString(true));
                 childEntry.put(SVNProperty.COPYFROM_REVISION, SVNProperty.toString(revision));
                 childEntry.put(SVNProperty.COPYFROM_URL, url);
-            } 
+            } else if (toCopy.getPropertyValue(SVNProperty.COPYFROM_URL) != null) {
+                childEntry.put(SVNProperty.COPIED, SVNProperty.toString(true));
+                childEntry.put(SVNProperty.COPYFROM_REVISION, toCopy.getPropertyValue(SVNProperty.COPYFROM_REVISION));
+                childEntry.put(SVNProperty.COPYFROM_URL, toCopy.getPropertyValue(SVNProperty.COPYFROM_URL));
+            }
             updateURL(added, getPropertyValue(SVNProperty.URL));
             updateDeletedEntries(added);
         } else {
             added = addFile(asName, revision);
             added.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
+            // inherit copyfrom info
+            added.setPropertyValue(SVNProperty.COPIED, toCopy.getPropertyValue(SVNProperty.COPIED));
         }
         // do not mark as copied if source was just locally scheduled for addition
         added.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
         if (!toCopy.isScheduledForAddition()) {
             added.setPropertyValue(SVNProperty.COPYFROM_REVISION, SVNProperty.toString(revision));
             added.setPropertyValue(SVNProperty.COPYFROM_URL, url);
+        } else if (toCopy.getPropertyValue(SVNProperty.COPYFROM_URL) != null) {
+            added.setPropertyValue(SVNProperty.COPYFROM_REVISION, toCopy.getPropertyValue(SVNProperty.COPYFROM_REVISION));
+            added.setPropertyValue(SVNProperty.COPYFROM_URL, toCopy.getPropertyValue(SVNProperty.COPYFROM_URL));
         }
         if (myDeletedEntries != null && myDeletedEntries.containsKey(asName)) {
             added.setPropertyValue(SVNProperty.DELETED, Boolean.TRUE.toString());
             myDeletedEntries.remove(asName);
         }
-        if (!toCopy.isScheduledForAddition()) {
+        if (!toCopy.isScheduledForAddition() || toCopy.getPropertyValue(SVNProperty.COPYFROM_URL) != null) {
             setPropertyValueRecursively(added, SVNProperty.COPIED, SVNProperty.toString(true));
         } else {
             setPropertyValueRecursively(added, SVNProperty.REVISION, SVNProperty.toString(0));
