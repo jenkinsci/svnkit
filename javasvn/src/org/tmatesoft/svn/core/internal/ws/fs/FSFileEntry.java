@@ -423,7 +423,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             setReadWrite = true; 
         } else if (getPropertyValue(SVNProperty.NEEDS_LOCK) != null && 
                 getPropertyValue(SVNProperty.LOCK_TOKEN) == null &&
-                isPropertyModified(SVNProperty.LOCK_TOKEN)) {
+                isLockPropertyChanged()) {
             setReadonly = !isContentsModified(); 
         }
         if (setReadonly) {

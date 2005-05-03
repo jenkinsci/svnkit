@@ -46,6 +46,7 @@ public abstract class FSEntry implements ISVNEntry {
     private FSRootEntry myRootEntry;
     private boolean myIsManaged;
     private long myOldRevision; 
+    private boolean myIsLockChanged;
     
     public static final String WC_PREFIX = "svn:wc:"; 
     public static final String ENTRY_PREFIX = "svn:entry:";
@@ -165,6 +166,7 @@ public abstract class FSEntry implements ISVNEntry {
     }
 
     public int applyChangedProperties(Map changedProperties) throws SVNException {        
+        myIsLockChanged = false;
         if (isScheduledForAddition()) {
             return SVNStatus.OBSTRUCTED;
         }
@@ -186,11 +188,14 @@ public abstract class FSEntry implements ISVNEntry {
             Map.Entry entry = (Map.Entry) entries.next();
             String name = (String) entry.getKey();
             if (name.startsWith(ENTRY_PREFIX) || name.startsWith(WC_PREFIX)) {
+                if (name.equalsIgnoreCase(SVNProperty.LOCK_TOKEN)) {
+                    myIsLockChanged = true;
+                }
                 setPropertyValue(name, (String) entry.getValue());
                 continue;
             }
-            latestProperties.put(name, entry.getValue());
             myModifiedProperties.add(name);
+            latestProperties.put(name, entry.getValue());
         }
         getAdminArea().saveTemporaryProperties(this, latestProperties);
         if (isPropertiesModified()) {
@@ -408,11 +413,16 @@ public abstract class FSEntry implements ISVNEntry {
     }
     
     public void dispose() throws SVNException {
+        myIsLockChanged = false;
         myModifiedProperties = null;
         myProperties = null;
         myWCProperties = null;
         myBaseProperties = null;
         myAlias = null;
+    }
+    
+    protected boolean isLockPropertyChanged() {
+        return myIsLockChanged;
     }
     
     protected boolean isPropertyModified(String name) {
