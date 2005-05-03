@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
@@ -29,7 +30,7 @@ import org.xml.sax.Attributes;
  */
 public class DAVMergeHandler extends BasicDAVHandler {
     
-    public static StringBuffer generateMergeRequest(StringBuffer request, String activityURL) {
+    public static StringBuffer generateMergeRequest(StringBuffer request, String path, String activityURL, Map locks) {
         request = request == null ? new StringBuffer() : request;
         request.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         request.append("<D:merge xmlns:D=\"DAV:\">");
@@ -41,9 +42,43 @@ public class DAVMergeHandler extends BasicDAVHandler {
         request.append("<D:checked-in/><D:version-name/><D:resourcetype/>");
         request.append("<D:creationdate/><D:creator-displayname/>");
         request.append("</D:prop>");
+        if (locks != null) {
+            request = generateLockDataRequest(request, path, null, locks);
+        }
         request.append("</D:merge>");
         return request;
 
+    }
+
+    public static StringBuffer generateLockDataRequest(StringBuffer target, String root, String path, Map locks) {
+        target = target == null ? new StringBuffer() : target;
+        target.append("<S:lock-token-list xmlns:S=\"svn:\">");
+        for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
+            String lockPath = (String) paths.next();
+            if (path == null || isChildPath(path, lockPath)) {
+                String token = (String) locks.get(lockPath);
+                target.append("<S:lock><S:lock-path>");
+                lockPath = lockPath.substring(root.length());
+                lockPath = PathUtil.removeLeadingSlash(lockPath);
+                
+                target.append(lockPath);
+                target.append("</S:lock-path><S:lock-token>");
+                target.append(token);
+                target.append("</S:lock-token></S:lock>");
+            }
+        }
+        target.append("</S:lock-token-list>");
+        return target;
+    }
+    
+    private static boolean isChildPath(String path, String childPath) {
+        if (path.equals(childPath)) {
+            return true;
+        }
+        if (!path.endsWith("/")) {
+            path += "/";
+        }
+        return childPath.startsWith(path);
     }
     
     private ISVNWorkspaceMediator myMediator;

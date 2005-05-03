@@ -449,7 +449,7 @@ class DAVRepository extends SVNRepository {
             if (blPath[0] == null) {
                 throw new SVNException("repository auto-versioning is enabled, can't put unversioned property");
             }
-            myConnection.doProppatch(blPath[0], request, null);
+            myConnection.doProppatch(null, blPath[0], request, null);
         } finally {
             closeConnection();
         }
@@ -457,7 +457,22 @@ class DAVRepository extends SVNRepository {
 
     public ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, ISVNWorkspaceMediator mediator) throws SVNException {
         openConnection();
-        ISVNEditor editor = new DAVCommitEditor(this, myConnection, logMessage, mediator, new Runnable() {
+        Map translatedLocks = null;
+        if (locks != null) {
+            translatedLocks = new HashMap(locks.size());
+            String root = getRepositoryRoot();
+            root = PathUtil.encode(root);
+            for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
+                String path = (String) paths.next();
+                String lock = (String) locks.get(path);
+                
+                path = PathUtil.encode(path);
+                path = PathUtil.append(root, path);
+                translatedLocks.put(path, lock);
+            }
+        }
+        myConnection.setLocks(translatedLocks, keepLocks);
+        ISVNEditor editor = new DAVCommitEditor(this, myConnection, logMessage, locks, mediator, new Runnable() {
             public void run() {
                 closeConnection();
             }

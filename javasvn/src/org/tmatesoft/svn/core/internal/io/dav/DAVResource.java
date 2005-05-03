@@ -167,6 +167,8 @@ class DAVResource {
         sb.append(myVURL);
         sb.append("][");
         sb.append(myWURL);
+        sb.append("][");
+        sb.append(myPath);
         sb.append("]");
         return sb.toString();
     }

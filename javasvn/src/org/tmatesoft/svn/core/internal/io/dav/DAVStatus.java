@@ -83,7 +83,7 @@ public class DAVStatus {
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append(getResponseCode());
-        sb.append(':');
+        sb.append(' ');
         sb.append(getMessage());
         if (myText != null) {
             sb.append("\n");
