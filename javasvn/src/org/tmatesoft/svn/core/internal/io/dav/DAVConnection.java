@@ -217,8 +217,10 @@ class DAVConnection {
         }
         header.put("Depth", "infinity");
         StringBuffer request = null;
-        if (myLocks != null && myLocks.containsKey(url)) {
-            header.put("If", "<" + url + "> (<" + myLocks.get(url) + ">)");
+        if (myLocks != null && DAVMergeHandler.hasChildPaths(url, myLocks)) {
+            if (myLocks.containsKey(url)) {
+                header.put("If", "<" + url + "> (<" + myLocks.get(url) + ">)");
+            }
             if (myKeepLocks) {
                 header.put("X-SVN-Options", "keep-locks");
             }

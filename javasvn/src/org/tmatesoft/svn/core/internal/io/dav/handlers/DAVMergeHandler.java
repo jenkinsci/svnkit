@@ -71,6 +71,19 @@ public class DAVMergeHandler extends BasicDAVHandler {
         return target;
     }
     
+    public static boolean hasChildPaths(String path, Map locks) {
+        for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
+            String lockPath = (String) paths.next();
+            if (!lockPath.startsWith("/")) {
+                lockPath = "/" + lockPath;
+            }
+            if (isChildPath(path, lockPath)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     private static boolean isChildPath(String path, String childPath) {
         if (path.equals(childPath)) {
             return true;
