@@ -3,3 +3,4 @@ stat ALL
 update ALL -13
 commit ALL -23
 copy ALL -18 -23
+lock ALL
