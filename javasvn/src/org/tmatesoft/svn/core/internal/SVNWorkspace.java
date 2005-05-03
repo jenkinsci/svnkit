@@ -1623,9 +1623,8 @@ public class SVNWorkspace implements ISVNWorkspace {
                 entry.setPropertyValue(SVNProperty.LOCK_CREATION_DATE, TimeUtil
                         .formatDate(lock.getCreationDate()));
                 entry.setPropertyValue(SVNProperty.LOCK_OWNER, lock.getOwner());
-                if (entry.isDirectory()) {
-                    entry.save(false);
-                } else {
+                entry.save(false);
+                if (!entry.isDirectory()) {
                     locateParentEntry(entry.getPath()).save(false);
                 }
             }

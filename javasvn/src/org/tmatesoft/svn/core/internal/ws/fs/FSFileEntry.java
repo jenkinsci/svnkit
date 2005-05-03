@@ -436,8 +436,8 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         super.save(recursive);
         if (getPropertyValue(SVNProperty.NEEDS_LOCK) == null) {
             FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), false);
-        } else {
-            FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), getPropertyValue(SVNProperty.LOCK_TOKEN) != null);            
+        } else {            
+            FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), getPropertyValue(SVNProperty.LOCK_TOKEN) == null);            
         }
     }
     
