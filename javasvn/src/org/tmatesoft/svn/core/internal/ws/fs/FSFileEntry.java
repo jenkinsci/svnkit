@@ -309,6 +309,9 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         } else {
             getEntry().put(SVNProperty.CHECKSUM, checksum);
         }
+        if (getPropertyValue(SVNProperty.NEEDS_LOCK) != null && getPropertyValue(SVNProperty.LOCK_TOKEN) == null) {
+            FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), true);
+        }
     }
 
     public void merge(boolean recursive) throws SVNException {
@@ -342,6 +345,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 FSUtil.copy(baseFile, actualFile, !isBinary() ? getPropertyValue(SVNProperty.EOL_STYLE) : null, isBinary() ? null : keywords, null);
                 updateTextTime(actualFile);
             }
+            updateReadonlyState();
             return;
         }
         String checksum = null;
@@ -407,6 +411,34 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             throw new SVNException(getPath() + " local checksum differs from repository.");
         }
         getAdminArea().deleteTemporaryBaseFile(this);
+        updateReadonlyState();
+    }
+
+    private void updateReadonlyState() throws SVNException {
+        boolean setReadonly = false;
+        boolean setReadWrite = false;
+        if (isPropertyModified(SVNProperty.NEEDS_LOCK) && getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
+            setReadonly = !isContentsModified();
+        } else if (isPropertyModified(SVNProperty.NEEDS_LOCK) && getPropertyValue(SVNProperty.NEEDS_LOCK) == null) {
+            setReadWrite = true; 
+        } else if (getPropertyValue(SVNProperty.NEEDS_LOCK) != null && 
+                getPropertyValue(SVNProperty.LOCK_TOKEN) == null &&
+                isPropertyModified(SVNProperty.LOCK_TOKEN)) {
+            setReadonly = !isContentsModified(); 
+        }
+        if (setReadonly) {
+            FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), true);
+        } else if (setReadWrite) {
+            FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), false);
+        }
+    }
+    public void save(boolean recursive) throws SVNException {
+        super.save(recursive);
+        if (getPropertyValue(SVNProperty.NEEDS_LOCK) == null) {
+            FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), false);
+        } else {
+            FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), getPropertyValue(SVNProperty.LOCK_TOKEN) != null);            
+        }
     }
     
     private void updateTextTime(File file) throws SVNException {

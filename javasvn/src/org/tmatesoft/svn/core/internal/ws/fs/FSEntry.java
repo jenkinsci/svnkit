@@ -344,7 +344,6 @@ public abstract class FSEntry implements ISVNEntry {
             getAdminArea().saveProperties(this, myProperties);
         }
         getAdminArea().deleteTemporaryProperties(this);
-        myModifiedProperties = null;
     }
     
     public void commit() throws SVNException {
