@@ -179,18 +179,30 @@ class HttpConnection {
         DAVStatus status = sendRequest(method, path, initHeader(0, null, header), body);
         // check okCodes, read to status if not ok.
         assertOk(status, okCodes);
+        if (status != null && status.getResponseCode() == 204) {
+            finishResponse(status.getResponseHeader());
+            return status;
+        }
         readResponse(handler, status.getResponseHeader());
         return status;
     }
 
     public DAVStatus request(String method, String path, Map header, StringBuffer reqBody, DefaultHandler handler, int[] okCodes) throws SVNException {
         DAVStatus status = sendRequest(method, path, initHeader(0, null, header), reqBody, okCodes);
+        if (status != null && status.getResponseCode() == 204) {
+            finishResponse(status.getResponseHeader());
+            return status;
+        }
         readResponse(handler, status.getResponseHeader());
         return status;
     }
 
     public DAVStatus request(String method, String path, int depth, String label, StringBuffer requestBody, OutputStream result, int[] okCodes) throws SVNException {
         DAVStatus status = sendRequest(method, path, initHeader(depth, label, null), requestBody, okCodes);
+        if (status != null && status.getResponseCode() == 204) {
+            finishResponse(status.getResponseHeader());
+            return status;
+        }
         readResponse(result, status.getResponseHeader());
         return status;
     }
@@ -198,6 +210,10 @@ class HttpConnection {
     public DAVStatus request(String method, String path, int depth, String label, StringBuffer requestBody, DefaultHandler handler, int[] okCodes)
             throws SVNException {
         DAVStatus status = sendRequest(method, path, initHeader(depth, label, null), requestBody, okCodes);
+        if (status != null && status.getResponseCode() == 204) {
+            finishResponse(status.getResponseHeader());
+            return status;
+        }
         readResponse(handler, status.getResponseHeader());
         return status;
     }
