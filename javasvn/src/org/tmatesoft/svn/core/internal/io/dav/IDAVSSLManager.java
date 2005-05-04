@@ -26,12 +26,12 @@ import javax.net.ssl.X509TrustManager;
  * @author TMate Software Ltd.
  */
 public interface IDAVSSLManager {
-    
+
     public static final IDAVSSLManager DEFAULT = new IDAVSSLManager() {
         public SSLContext getSSLContext(String host, int port) throws IOException {
             try {
                 SSLContext context = SSLContext.getInstance("SSL");
-                context.init(null, new TrustManager[] {new X509TrustManager() { 
+                context.init(DAVKeyManager.getKeyManagers(), new TrustManager[] {new X509TrustManager() { 
                     public X509Certificate[] getAcceptedIssuers() {
                         return null;
                     }
@@ -47,7 +47,6 @@ public interface IDAVSSLManager {
                 throw new IOException(e.getMessage());
             }            
         }
-
 	    public void acknowledgeSSLContext(String host, int port, boolean accepted) {
 	    }
     };
