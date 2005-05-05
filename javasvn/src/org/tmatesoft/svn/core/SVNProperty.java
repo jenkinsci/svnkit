@@ -49,6 +49,7 @@ public class SVNProperty {
     public static final String PROP_REJECT_FILE = SVN_ENTRY_PREFIX + "prop-reject-file";
     public static final String DELETED = SVN_ENTRY_PREFIX + "deleted";
     public static final String CORRUPTED = SVN_ENTRY_PREFIX + "corrupted";
+    public static final String WC_URL = SVN_WC_PREFIX + "ra_dav:version-url";
     
     public static final String LOCK_TOKEN = SVN_ENTRY_PREFIX + "lock-token";
     public static final String LOCK_COMMENT = SVN_ENTRY_PREFIX + "lock-comment";

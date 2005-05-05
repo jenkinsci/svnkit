@@ -462,6 +462,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                 targetEntry = locateEntry(path);
             }
             targetEntry.setPropertyValue(SVNProperty.URL, newURL);
+            targetEntry.setPropertyValue(SVNProperty.WC_URL, null);
             DebugLog.log("setting new url for " + targetEntry.getPath() + " : "
                     + newURL);
             if (targetEntry.isDirectory()) {
@@ -1390,8 +1391,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                     .getPropertyValue(SVNProperty.REVISION));
             entry.setPropertyValue(SVNProperty.SCHEDULE,
                     SVNProperty.SCHEDULE_ADD);
-            entry.setPropertyValue(SVNProperty.SVN_WC_PREFIX
-                    + "ra_dav:version-url", null);
+            entry.setPropertyValue(SVNProperty.WC_URL, null);
             if (entry.isDirectory() && parent != null) {
                 Map entryProps = ((FSDirEntry) parent).getChildEntryMap(entry
                         .getName());
@@ -1904,6 +1904,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         parentURL = PathUtil.append(parentURL, PathUtil
                 .encode(target.getName()));
         target.setPropertyValue(SVNProperty.URL, parentURL);
+        target.setPropertyValue(SVNProperty.WC_URL, null);
         if (target.isDirectory() && recursive) {
             for (Iterator children = target.asDirectory().childEntries(); children
                     .hasNext();) {

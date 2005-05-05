@@ -151,7 +151,11 @@ public class FSAdminArea {
     
     public void saveBaseProperties(ISVNEntry entry, Map properties) throws SVNException {
         initAdminArea(entry);
-        if (properties == null || entry == null || (entry.isDirectory() && properties.isEmpty())) {
+        if (entry == null) {
+            return;
+        }
+        if (properties == null || (entry.isDirectory() && properties.isEmpty())) {
+            getBasePropertiesFile(entry).delete();
             return;
         }
         saveProperties(getBasePropertiesFile(entry), properties);
@@ -159,7 +163,11 @@ public class FSAdminArea {
     
     public void saveWCProperties(ISVNEntry entry, Map properties) throws SVNException {
         initAdminArea(entry);
-        if (properties == null || entry == null || (entry.isDirectory() && properties.isEmpty())) {
+        if (entry == null) {
+            return;
+        }
+        if (properties == null || (entry.isDirectory() && properties.isEmpty())) {
+            getWCPropertiesFile(entry).delete();
             return;
         }
         saveProperties(getWCPropertiesFile(entry), properties);
@@ -167,10 +175,13 @@ public class FSAdminArea {
     
     public void saveProperties(ISVNEntry entry, Map properties) throws SVNException {
         initAdminArea(entry);
-        if (properties == null || entry == null || (entry.isDirectory() && properties.isEmpty())) {
+        if (entry == null) {
             return;
         }
-        
+        if (properties == null || (entry.isDirectory() && properties.isEmpty())) {
+            getPropertiesFile(entry).delete();
+            return;
+        }
         saveProperties(getPropertiesFile(entry), properties);
     }
 
