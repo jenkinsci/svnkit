@@ -14,9 +14,9 @@ import org.tmatesoft.svn.util.SVNUtil;
 class LocalWorkspaceListener extends SVNWorkspaceAdapter {
 	
 	private ISVNWorkspace myWorkspace;
-	private Notify myNotify;
+	private Notify2 myNotify;
 
-	public LocalWorkspaceListener(Notify notify, ISVNWorkspace ws) {
+	public LocalWorkspaceListener(Notify2 notify, ISVNWorkspace ws) {
 		myWorkspace = ws;
 		myNotify = notify;
 	}
@@ -55,8 +55,8 @@ class LocalWorkspaceListener extends SVNWorkspaceAdapter {
 				nodeKind = NodeKind.file;
 			}
             p = SVNUtil.getAbsolutePath(myWorkspace, p);
-			myNotify.onNotify(p, updateKind, nodeKind, mimeType,
-					0, 0, 0);
+			//myNotify.onNotify(p, updateKind, nodeKind, mimeType,
+			//		0, 0, 0);
 		} catch (SVNException e) {
 		} 
 	}

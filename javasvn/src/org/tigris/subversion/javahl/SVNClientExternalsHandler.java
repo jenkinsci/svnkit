@@ -18,9 +18,9 @@ import org.tmatesoft.svn.util.SVNUtil;
  */
 public class SVNClientExternalsHandler implements ISVNExternalsHandler {
 	
-	private Notify myNotify;
+	private Notify2 myNotify;
 
-	public SVNClientExternalsHandler(Notify notify) {
+	public SVNClientExternalsHandler(Notify2 notify) {
 		myNotify = notify;
 	}
 
@@ -39,7 +39,7 @@ public class SVNClientExternalsHandler implements ISVNExternalsHandler {
     public void handleCheckout(ISVNWorkspace parent, String path, ISVNWorkspace external, SVNRepositoryLocation location, long revision, boolean export, boolean recurse) throws SVNException {
         String absolutePath = SVNUtil.getAbsolutePath(parent, path);
     	if (myNotify != null) {
-    		myNotify.onNotify(absolutePath, NotifyAction.update_external, NodeKind.dir, null, 0, 0, 0);
+    		//myNotify.onNotify(absolutePath, NotifyAction.update_external, NodeKind.dir, null, 0, 0, 0);
     	}
     	long rev = 0;
     	ISVNWorkspaceListener listener = new UpdateWorkspaceListener(myNotify, external, path);
@@ -49,7 +49,7 @@ public class SVNClientExternalsHandler implements ISVNExternalsHandler {
     	} finally {
         	external.removeWorkspaceListener(listener);
         	if (myNotify != null) {
-        		myNotify.onNotify(absolutePath, NotifyAction.update_completed, NodeKind.dir, null, 0, 0, rev);
+        		//myNotify.onNotify(absolutePath, NotifyAction.update_completed, NodeKind.dir, null, 0, 0, rev);
         	}
     	}
     }
@@ -57,7 +57,7 @@ public class SVNClientExternalsHandler implements ISVNExternalsHandler {
     public void handleUpdate(ISVNWorkspace parent, String path, ISVNWorkspace external, long revision) throws SVNException {
         String absolutePath = SVNUtil.getAbsolutePath(parent, path);
         if (myNotify != null) {
-            myNotify.onNotify(absolutePath, NotifyAction.update_external, NodeKind.dir, null, 0, 0, 0);
+            //myNotify.onNotify(absolutePath, NotifyAction.update_external, NodeKind.dir, null, 0, 0, 0);
         }
     	long rev = 0;
     	ISVNWorkspaceListener listener = new UpdateWorkspaceListener(myNotify, external, path);
@@ -67,7 +67,7 @@ public class SVNClientExternalsHandler implements ISVNExternalsHandler {
     	} finally {
         	external.removeWorkspaceListener(listener);
         	if (myNotify != null) {
-        		myNotify.onNotify(absolutePath, NotifyAction.update_completed, NodeKind.dir, null, 0, 0, rev);
+        		//myNotify.onNotify(absolutePath, NotifyAction.update_completed, NodeKind.dir, null, 0, 0, rev);
         	}
     	}
     }
