@@ -14,13 +14,13 @@ import org.tmatesoft.svn.util.SVNUtil;
 class UpdateWorkspaceListener extends SVNWorkspaceAdapter {
 	
 	private ISVNWorkspace myWorkspace;
-	private Notify2 myNotify;
+	private Notify myNotify;
 	private String myRootPath;
 
-	public UpdateWorkspaceListener(Notify2 notify, ISVNWorkspace ws) {
+	public UpdateWorkspaceListener(Notify notify, ISVNWorkspace ws) {
 		this(notify, ws, null);
 	}
-	public UpdateWorkspaceListener(Notify2 notify, ISVNWorkspace ws, String rootPath) {
+	public UpdateWorkspaceListener(Notify notify, ISVNWorkspace ws, String rootPath) {
 		myWorkspace = ws;
 		myNotify = notify;
 		myRootPath = rootPath;
@@ -70,8 +70,8 @@ class UpdateWorkspaceListener extends SVNWorkspaceAdapter {
 				nodeKind = NodeKind.file;
 			}
             p = SVNUtil.getAbsolutePath(myWorkspace, p);
-			//myNotify.onNotify(p, updateKind, nodeKind, mimeType,
-			//		contents, props, updated);
+			myNotify.onNotify(p, updateKind, nodeKind, mimeType,
+					contents, props, updated);
 		} catch (SVNException e) {
 		} 
 	}

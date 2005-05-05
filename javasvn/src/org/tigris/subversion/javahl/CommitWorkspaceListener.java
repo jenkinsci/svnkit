@@ -14,9 +14,9 @@ import org.tmatesoft.svn.util.SVNUtil;
 class CommitWorkspaceListener extends SVNWorkspaceAdapter {
 	
 	private ISVNWorkspace myWorkspace;
-	private Notify2 myNotify;
+	private Notify myNotify;
 
-	public CommitWorkspaceListener(Notify2 notify, ISVNWorkspace ws) {
+	public CommitWorkspaceListener(Notify notify, ISVNWorkspace ws) {
 		myWorkspace = ws;
 		myNotify = notify;
 	}
@@ -49,8 +49,8 @@ class CommitWorkspaceListener extends SVNWorkspaceAdapter {
 				nodeKind = NodeKind.file;
 			}
             path = SVNUtil.getAbsolutePath(myWorkspace, path);
-			//myNotify.onNotify(path, updateKind, nodeKind, mimeType,
-			//		0, 0, 0);
+			myNotify.onNotify(path, updateKind, nodeKind, mimeType,
+					0, 0, 0);
 		} catch (SVNException e) {
 		} 
 	}

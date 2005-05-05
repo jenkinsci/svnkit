@@ -72,9 +72,9 @@ public class SVNClient implements SVNClientInterface {
 	private CommitMessage myMessageHandler;
     private String myUserName;
     private String myPassword;
+    private Notify myNotify;
 	private PromptUserPassword myPrompt;
 	private String myConfigDir;
-    private Notify2 myNotify2;
     
     public SVNClient() {
         SVNDiffManager.setup();
@@ -215,8 +215,8 @@ public class SVNClient implements SVNClientInterface {
                     } catch (SVNException e) {}
                 }
             }, descend, getAll, noIgnore);
-            if (myNotify2 != null) {
-                //myNotify2.onNotify(path, NotifyAction.status_completed, NodeKind.dir, "", 0,0, revision);
+            if (myNotify != null) {
+                myNotify.onNotify(path, NotifyAction.status_completed, NodeKind.dir, "", 0,0, revision);
             }
         } catch (SVNException e) {
             return new Status[] {};
@@ -374,21 +374,6 @@ public class SVNClient implements SVNClientInterface {
      * @exception ClientException
      */
     public long checkout(String moduleName, String destPath, Revision revision, boolean recurse) throws ClientException {
-        return checkout(moduleName, destPath, revision, null, recurse, false);
-    }
-
-    /**
-     * Executes a revision checkout.
-     * @param moduleName name of the module to checkout.
-     * @param destPath destination directory for checkout.
-     * @param revision the revision to checkout.
-     * @param pegRevision the peg revision to interpret the path
-     * @param recurse whether you want it to checkout files recursively.
-     * @param ignoreExternals if externals are ignored during checkout
-     * @exception ClientException
-     * @since 1.2
-     */
-    public long checkout(String moduleName, String destPath, Revision revision, Revision pegRevision, boolean recurse, boolean ignoreExternals) throws ClientException {
         File file = new File(destPath);
         if (!file.exists()) {
             file.mkdirs();
@@ -405,12 +390,13 @@ public class SVNClient implements SVNClientInterface {
                 ws.setCredentials(new SVNSimpleCredentialsProvider(myUserName, myPassword));
                 repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
             }
-            ws.setExternalsHandler(ignoreExternals ? null : new SVNClientExternalsHandler(myNotify2));
+            ws.setExternalsHandler(new SVNClientExternalsHandler(myNotify));
             long rev = getRevisionNumber(revision, repository, null, null);
-            ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify2, ws));
+            ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
             long checkedOut = ws.checkout(location, rev, false, recurse);
-            if (checkedOut >= 0 && myNotify2 != null) {
-            	myNotify2.onNotify(SVNClientUtil.createNotifyInformation(destPath, NotifyAction.update_completed, checkedOut));
+            if (checkedOut >= 0 && myNotify != null) {
+            	myNotify.onNotify(destPath, NotifyAction.update_completed, NodeKind.unknown, null,
+            			0, 0, checkedOut);
             }
             return checkedOut;
         } catch (SVNException e) {
@@ -436,12 +422,12 @@ public class SVNClient implements SVNClientInterface {
             
             long revNumber = getRevisionNumber(revision, repository, ws, wsPath);
 
-            ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify2, ws));
+            ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
             long updatedRev = ws.update(wsPath, revNumber, recurse);
             
-            if (updatedRev >= 0 && myNotify2 != null) {
-            	//myNotify2.onNotify(path, NotifyAction.update_completed, NodeKind.unknown, null,
-            	//		0, 0, updatedRev);
+            if (updatedRev >= 0 && myNotify != null) {
+            	myNotify.onNotify(path, NotifyAction.update_completed, NodeKind.unknown, null,
+            			0, 0, updatedRev);
             }
             return updatedRev;
         } catch (SVNException e) {
@@ -476,7 +462,7 @@ public class SVNClient implements SVNClientInterface {
             for(int i = 0; i < paths.length; i++) {
                 DebugLog.log("COMMIT: commiting path: " + paths[i]);
             }
-            ws.addWorkspaceListener(new CommitWorkspaceListener(myNotify2, ws));
+            ws.addWorkspaceListener(new CommitWorkspaceListener(myNotify, ws));
             return ws.commit(paths, new ISVNCommitHandler() {
                 public String handleCommit(SVNStatus[] tobeCommited) {
                     if (myMessageHandler != null) {
@@ -547,7 +533,7 @@ public class SVNClient implements SVNClientInterface {
                 repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
             } 
             long revNumber = getRevisionNumber(revision, repository, null, null);
-            ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify2, ws));
+            ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
             return ws.checkout(location, revNumber, true);
         } catch (SVNException e) {
             throwException(e);
@@ -568,11 +554,11 @@ public class SVNClient implements SVNClientInterface {
             ISVNWorkspace ws = createWorkspace(path);
             String relativePath = SVNUtil.getWorkspacePath(ws, path);
             long revNumber = getRevisionNumber(revision, SVNUtil.createRepository(ws, relativePath), ws, relativePath);
-            ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify2, ws));
+            ws.addWorkspaceListener(new UpdateWorkspaceListener(myNotify, ws));
             long switchedRev = ws.update(SVNRepositoryLocation.parseURL(url), relativePath, revNumber, recurse);
-            if (switchedRev >= 0 && myNotify2 != null) {
-            	//myNotify2.onNotify(path, NotifyAction.update_completed, NodeKind.unknown, null,
-            	//		0, 0, switchedRev);
+            if (switchedRev >= 0 && myNotify != null) {
+            	myNotify.onNotify(path, NotifyAction.update_completed, NodeKind.unknown, null,
+            			0, 0, switchedRev);
             }
             return switchedRev;
         } catch (SVNException e) {
@@ -602,7 +588,7 @@ public class SVNClient implements SVNClientInterface {
             } else {
                 url = PathUtil.removeTail(url);
             }
-            ws.addWorkspaceListener(new CommitWorkspaceListener(myNotify2, ws));
+            ws.addWorkspaceListener(new CommitWorkspaceListener(myNotify, ws));
             ws.commit(SVNRepositoryLocation.parseURL(url), wsPath, message);
         } catch (SVNException e) {
             throwException(e);
@@ -616,18 +602,7 @@ public class SVNClient implements SVNClientInterface {
      *               file operations.
      */
     public void notification(Notify notify) {
-        notification2(notify != null ? new NotifyWrapper(notify) : null);
-    }
-
-    /**
-     * Sets the notification callback used to send processing information back
-     * to the calling program.
-     * @param notify listener that the SVN library should call on many
-     *               file operations.
-     * @since 1.2
-     */
-    public void notification2(Notify2 notify) {
-        myNotify2 = notify;
+        myNotify = notify;
     }
 
     /**
@@ -678,7 +653,7 @@ public class SVNClient implements SVNClientInterface {
 					path[i] = path[i].replace(File.separatorChar, '/');
 					String parentPath = PathUtil.removeTail(path[i]);
                     ISVNWorkspace ws = createWorkspace(parentPath);
-                    ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify2, ws));
+                    ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                     ws.delete(SVNUtil.getWorkspacePath(ws, path[i]), force);
                 } catch (SVNException e) {
                     throwException(e);
@@ -696,7 +671,7 @@ public class SVNClient implements SVNClientInterface {
     public void revert(String path, boolean recurse) throws ClientException {
         try {
             ISVNWorkspace ws = createWorkspace(path);
-            ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify2, ws));
+            ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
             ws.revert(SVNUtil.getWorkspacePath(ws, path), recurse);
         } catch (SVNException e) {
             throwException(e);
@@ -714,7 +689,7 @@ public class SVNClient implements SVNClientInterface {
         	path = path.replace(File.separatorChar, '/');
             ISVNWorkspace ws = createWorkspace(PathUtil.removeTail(path));
             path = SVNUtil.getWorkspacePath(ws, path);
-            ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify2, ws));
+            ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
             ws.add(path, false, recurse);
         } catch (SVNException e) {
             throwException(e);
@@ -802,7 +777,7 @@ public class SVNClient implements SVNClientInterface {
                     copy(ws.getLocation(srcPath).toCanonicalForm(), destPath, message, revision);
                     return;
                 }
-                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify2, ws));
+                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 ws.copy(SVNUtil.getWorkspacePath(ws, srcPath), SVNUtil.getWorkspacePath(ws, destPath), false);
             } catch (SVNException e) {
                 throwException(e);
@@ -814,7 +789,7 @@ public class SVNClient implements SVNClientInterface {
 
                 destPath = destPath.replace(File.separatorChar, '/');
                 ISVNWorkspace ws = createWorkspace(PathUtil.removeTail(destPath));
-                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify2, ws));
+                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 ws.copy(SVNRepositoryLocation.parseURL(srcPath), SVNUtil.getWorkspacePath(ws, destPath), revNumber);
             } catch (SVNException e) {
                 throwException(e);
@@ -823,7 +798,7 @@ public class SVNClient implements SVNClientInterface {
             try {
                 srcPath = srcPath.replace(File.separatorChar, '/');
                 ISVNWorkspace ws = createWorkspace(srcPath, true);
-                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify2, ws));
+                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 ws.copy(SVNUtil.getWorkspacePath(ws, srcPath), SVNRepositoryLocation.parseURL(destPath), message);
             } catch (SVNException e) {
                 throwException(e);
@@ -920,7 +895,7 @@ public class SVNClient implements SVNClientInterface {
             try {
             	String wsRoot = PathUtil.getFSCommonRoot(new String[] {srcPath, destPath});
                 ISVNWorkspace ws = createWorkspace(wsRoot);
-                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify2, ws));
+                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 ws.copy(SVNUtil.getWorkspacePath(ws, srcPath), SVNUtil.getWorkspacePath(ws, destPath), true);
             } catch (SVNException e) {
                 throwException(e);
@@ -989,7 +964,7 @@ public class SVNClient implements SVNClientInterface {
             try {
             	String root = PathUtil.getFSCommonRoot(path);
                 ISVNWorkspace ws = createWorkspace(root);
-                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify2, ws));
+                ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
                 for(int i = 0; i < path.length; i++) {
                     ws.add(SVNUtil.getWorkspacePath(ws, path[i]), true, false);
                 }
@@ -1018,7 +993,7 @@ public class SVNClient implements SVNClientInterface {
     public void resolved(String path, boolean recurse) throws ClientException {
         try {
             ISVNWorkspace ws = createWorkspace(path);
-            ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify2, ws));
+            ws.addWorkspaceListener(new LocalWorkspaceListener(myNotify, ws));
             ws.markResolved(SVNUtil.getWorkspacePath(ws, path), recurse);
         } catch (SVNException e) {
             throwException(e);
@@ -1527,7 +1502,7 @@ public class SVNClient implements SVNClientInterface {
             } else if (myPrompt != null) {
                 ws.setCredentials(new SVNPromptCredentialsProvider(myPrompt, myUserName, myPassword));
             }
-            ws.setExternalsHandler(new SVNClientExternalsHandler(myNotify2));
+            ws.setExternalsHandler(new SVNClientExternalsHandler(myNotify));
         }
         return ws;
     }
@@ -1644,7 +1619,7 @@ public class SVNClient implements SVNClientInterface {
         long revisionCopiedFrom = SVNProperty.longValue((String) properties.get(SVNProperty.COPYFROM_REVISION));
         Status st = new Status(path, url, nodeKind, revision, lastChangedRevision, lastChangedDate, lastCommitAuthor, textStatus, propStatus,
                 repositoryTextStatus, repositoryPropStatus, locked, copied, conflictOld, conflictNew, conflictWorking, urlCopiedFrom, revisionCopiedFrom,
-                switched, null, null, null, -1, null);
+                switched);
         DebugLog.log(path + ": created status: " + st.getTextStatus() + ":" + st.getPropStatus() + ":" + st.getNodeKind());
         return st;
     }
@@ -1726,103 +1701,5 @@ public class SVNClient implements SVNClientInterface {
         STATUS_CONVERTION_TABLE[SVNStatus.MISSING] = StatusKind.missing;        
         STATUS_CONVERTION_TABLE[SVNStatus.OBSTRUCTED] = StatusKind.obstructed;
         STATUS_CONVERTION_TABLE[SVNStatus.EXTERNAL] = StatusKind.external;
-    }
-
-    public void add(String path, boolean recurse, boolean force) throws ClientException {
-    }
-
-    public void blame(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, BlameCallback callback) throws ClientException {
-    }
-
-    public long commit(String[] path, String message, boolean recurse, boolean noUnlock) throws ClientException {
-        return 0;
-    }
-
-    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
-    }
-
-    public void diff(String target1, Revision revision1, String target2, Revision revision2, String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
-    }
-
-    public long doExport(String srcPath, String destPath, Revision revision, Revision pegRevision, boolean force, boolean ignoreExternals, boolean recurse, String nativeEOL) throws ClientException {
-        return 0;
-    }
-
-    public byte[] fileContent(String path, Revision revision, Revision pegRevision) throws ClientException {
-        return null;
-    }
-
-    public String getVersionInfo(String path, String trailUrl, boolean lastChanged) throws ClientException {
-        return null;
-    }
-
-    public Info2[] info2(String pathOrUrl, Revision revision, Revision pegRevision, boolean recurse) throws ClientException {
-        return null;
-    }
-
-    public DirEntry[] list(String url, Revision revision, Revision pegRevision, boolean recurse) throws ClientException {
-        return null;
-    }
-
-    public void lock(String[] path, String comment, boolean force) throws ClientException {
-    }
-
-    public LogMessage[] logMessages(String path, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, long limit) throws ClientException {
-        return null;
-    }
-
-    public void merge(String path, Revision pegRevision, Revision revision1, Revision revision2, String localPath, boolean force, boolean recurse, boolean ignoreAncestry, boolean dryRun) throws ClientException {
-    }
-
-    public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, boolean force, boolean recurse, boolean ignoreAncestry, boolean dryRun) throws ClientException {
-    }
-
-    public void move(String srcPath, String destPath, String message, boolean force) throws ClientException {
-    }
-
-    public PropertyData[] properties(String path, Revision revision, Revision pegRevision) throws ClientException {
-        return null;
-    }
-
-    public PropertyData[] properties(String path, Revision revision) throws ClientException {
-        return null;
-    }
-
-    public void propertyCreate(String path, String name, byte[] value, boolean recurse, boolean force) throws ClientException {
-    }
-
-    public void propertyCreate(String path, String name, String value, boolean recurse, boolean force) throws ClientException {
-    }
-
-    public PropertyData propertyGet(String path, String name, Revision revision, Revision pegRevision) throws ClientException {
-        return null;
-    }
-
-    public PropertyData propertyGet(String path, String name, Revision revision) throws ClientException {
-        return null;
-    }
-
-    public void propertySet(String path, String name, byte[] value, boolean recurse, boolean force) throws ClientException {
-    }
-
-    public void propertySet(String path, String name, String value, boolean recurse, boolean force) throws ClientException {
-    }
-
-    public PropertyData[] revProperties(String path, Revision rev) throws ClientException {
-        return null;
-    }
-
-    public void setRevProperty(String path, String name, Revision rev, String value, boolean force) throws ClientException {
-    }
-
-    public Status[] status(String path, boolean descend, boolean onServer, boolean getAll, boolean noIgnore, boolean ignoreExternals) throws ClientException {
-        return null;
-    }
-
-    public void unlock(String[] path, boolean force) throws ClientException {
-    }
-
-    public long[] update(String[] path, Revision revision, boolean recurse, boolean ignoreExternals) throws ClientException {
-        return null;
     }
 }
