@@ -13,6 +13,8 @@ package de.regnis.q.sequence;
 
 import junit.framework.*;
 
+import de.regnis.q.sequence.line.*;
+
 /**
  * @author Marc Strapetz
  */
@@ -26,6 +28,7 @@ public class QSequenceAllTests {
 		suite.addTestSuite(QSequenceDifferenceCoreTest.class);
 		suite.addTestSuite(QSequenceDifferenceAssemblyTest.class);
 		suite.addTestSuite(QSequenceDifferenceBlockShifterTest.class);
+		suite.addTestSuite(QSequenceLineReaderTest.class);
 		return suite;
 	}
 }
