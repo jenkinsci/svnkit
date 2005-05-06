@@ -131,8 +131,9 @@ public class StatusCommand extends SVNCommand {
         }
         if (status.isSwitched()) {
             sb.append("S");
+        } else {
+            sb.append(" ");
         }
-        sb.append(" ");
         boolean detailed = getCommandLine().hasArgument(SVNArgument.SHOW_UPDATES) || getCommandLine().hasArgument(SVNArgument.VERBOSE);
         boolean displayLastCommited = getCommandLine().hasArgument(SVNArgument.VERBOSE);
         String lockStatus = " ";
