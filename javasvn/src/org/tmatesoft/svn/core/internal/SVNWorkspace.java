@@ -352,6 +352,28 @@ public class SVNWorkspace implements ISVNWorkspace {
             ISVNEntry targetEntry = locateEntry(path);
             Collection externalsSet = createExternals(path);
             String target = null;
+            
+            if (targetEntry != null && !targetEntry.isDirectory() &&
+                    SVNReporterBaton.isSwitched(locateParentEntry(path).getPropertyValue(SVNProperty.URL), targetEntry)) {
+                target = PathUtil.tail(targetEntry.getPropertyValue(SVNProperty.URL));
+                // single file, switched.
+                String parentURL = PathUtil.removeTail(targetEntry.getPropertyValue(SVNProperty.URL));
+                SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(parentURL));
+                repos.setCredentialsProvider(myCredentialsProvider);
+                SVNCheckoutEditor editor = new SVNCheckoutEditor(getRoot(), this,
+                        locateParentEntry(path), false, target, false, null);
+                SVNReporterBaton reporterBaton = new SVNReporterBaton(this,
+                        locateParentEntry(path), targetEntry.getName(), recursive);
+                DebugLog.log("repository URL: " + repos.getLocation().toCanonicalForm());
+                DebugLog.log("update target : " + target);
+                repos.update(revision, target, recursive, reporterBaton,
+                        editor);
+                
+                if (editor.isTimestampsChanged()) {
+                    sleepForTimestamp();
+                }
+                return editor.getTargetRevision();
+            }
             if (targetEntry == null || !targetEntry.isDirectory()) {
                 target = targetEntry != null ? targetEntry.getName() : PathUtil
                         .tail(path);
