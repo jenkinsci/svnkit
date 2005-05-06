@@ -903,17 +903,17 @@ public class SVNWorkspace implements ISVNWorkspace {
                 if (entryUUID != null) {
                     if (uuid != null && !uuid.equals(entryUUID)) {
                         throw new SVNException(
-                                "commit contains entries from the different repositories '"
-                                        + entry.getPath() + "' and '"
-                                        + urls.get(url) + "'");
+                                "svn: Cannot commit both '" + entry.getPath() + 
+                                "' and '" + urls.get(url) +
+                                "' as they refer to the same URL");
                     }
                     uuid = entryUUID;
                 }
                 if (urls.containsKey(url)) {
                     throw new SVNException(
-                            "commit contains entries with the same url '"
-                                    + entry.getPath() + "' and '"
-                                    + urls.get(url) + "'");
+                            "svn: Cannot commit both '" + entry.getPath() + 
+                            "' and '" + urls.get(url) +
+                            "' as they refer to the same URL");
                 }
                 urls.put(url, entry.getPath());
                 if (entry.isConflict()) {
