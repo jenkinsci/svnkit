@@ -220,7 +220,7 @@ public class SVNCommitUtil {
 	}
 
     public static void doCommit(String path, String url, Map entries, ISVNEditor editor, SVNWorkspace ws, ISVNProgressViewer progressViewer, Set committedPaths) throws SVNException {
-	      progressViewer = progressViewer == null ? new SVNProgressDummyViewer() : progressViewer;
+	    progressViewer = progressViewer == null ? new SVNProgressDummyViewer() : progressViewer;
 
         ISVNEntry root = (ISVNEntry) entries.get(path);
         String realPath = path;
@@ -290,10 +290,12 @@ public class SVNCommitUtil {
             if (parent == null) {
                 parent = ws.locateParentEntry(child.getPath());
             }
-            String childPath = child.getAlias() != null ? PathUtil.append(path, child.getAlias()) : 
-                PathUtil.append(path, child.getName());
+            DebugLog.log("parent path: " + path);
+            String shortChildName = PathUtil.tail(child.getPropertyValue(SVNProperty.URL));
+            String childPath = child.getAlias() != null ? PathUtil.append(path, child.getAlias()) :
+                PathUtil.append(path, shortChildName);
             
-            String realChildPath = PathUtil.removeLeadingSlash(PathUtil.append(path, child.getName()));
+            String realChildPath = PathUtil.removeLeadingSlash(PathUtil.append(path, shortChildName));
             childPath = PathUtil.removeLeadingSlash(childPath);
             childPath = PathUtil.removeTrailingSlash(childPath);
             revision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.REVISION));
