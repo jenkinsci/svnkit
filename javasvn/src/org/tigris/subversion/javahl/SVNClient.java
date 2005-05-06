@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.diff.ISVNDiffGeneratorFactory;
 import org.tmatesoft.svn.core.diff.SVNDiffManager;
 import org.tmatesoft.svn.core.diff.SVNUniDiffGenerator;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
@@ -84,6 +85,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void dispose() {
+        SVNJSchSession.shutdown();
     }
 
     public static String version() {
