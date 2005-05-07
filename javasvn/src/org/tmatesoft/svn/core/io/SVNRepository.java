@@ -67,7 +67,13 @@ public abstract class SVNRepository {
     public SVNRepositoryLocation getLocation() {
         return myLocation;
     }
-    
+    /**
+     * <p>
+     * Sets output streams for logging out and in.??????   
+     * </p>
+     * @param out stream for outputting log.
+     * @param in stream for writing log messages into.
+     */
     public void setLoggingStreams(OutputStream out, OutputStream in) {
         myLoggingOutput = out;
         myLoggingInput = in;        
@@ -100,7 +106,10 @@ public abstract class SVNRepository {
     public String getRepositoryRoot() {
         return myRepositoryRoot;
     }
-    
+    /**
+     * 
+     * @param provider
+     */
     public void setCredentialsProvider(ISVNCredentialsProvider provider) {
         myUserCredentialsProvider = provider;
     }
@@ -110,7 +119,9 @@ public abstract class SVNRepository {
     }
     /**
      * <p>
-     * Set the following parameters to identify the current repository 
+     * Set the following parameters to identify the current repository.
+     * Every call to this routine is logged by {@link org.tmatesoft.svn.util.DebugLog
+     * DebugLog}. 
      * </p>
      * @param uuid the repository's Universal Unique IDentifier used to
      *  differentiate between one repository and another. NOTE: the UUID
@@ -118,6 +129,7 @@ public abstract class SVNRepository {
      * @param root the repository's root URL
      * @see #getRepositoryRoot()
      * @see #getRepositoryUUID()
+     * 
      */
     protected void setRepositoryCredentials(String uuid, String root) {
         if (uuid != null && root != null) {
@@ -493,7 +505,16 @@ public abstract class SVNRepository {
         });
         return result;        
     }
-	
+	/**
+	 * <p>
+	 * Make annotations for the entry at <code>path</code>.........
+	 * </p>
+	 * @param path
+	 * @param startRevision
+	 * @param endRevision
+	 * @param handler
+	 * @throws SVNException
+	 */
 	public void annotate(String path, long startRevision, long endRevision, ISVNAnnotateHandler handler) throws SVNException {
 		if (handler == null) {
 			return;
@@ -513,31 +534,103 @@ public abstract class SVNRepository {
 	}
     
     /* edit-mode methods */
-    /**
-     * 
-     */
-    public abstract void diff(String url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
+	
+	/**
+	 * <p>
+	 * Ask the RA layer to 'diff' a working copy against <code>url</code>;
+	 * it's another form of 
+	 * {@link #update(long, String, boolean, ISVNReporterBaton, ISVNEditor) update()}.
+	 * </p>
+	 * <p>
+	 * <b>
+	 * Please note: this method cannot be used to diff a single
+	 * file, only a working copy directory.  See the {@link #update(String, long, String, boolean, ISVNReporterBaton, ISVNEditor)
+	 * update()} for more details.
+	 * </b>
+	 * </p>
+	 * <p>
+	 * The client initially provides a diff editor (<code>ISVNEditor</code>) to the RA
+	 * layer; this editor contains knowledge of where the common diff
+	 * root is in the working copy (when {@link ISVNEditor#openRoot(long)
+	 * ISVNEditor.openRoot(long)} is called). 
+	 * </p>
+	 * <p>
+	 * The {@link ISVNReporterBaton reporter-baton} is used to 
+	 * describe client's working-copy revision numbers by calling the methods of
+	 * {@link ISVNReporter}; the RA layer assumes that all
+	 * paths are relative to the URL used to open the current repository session.	 * </p>
+	 * </p>
+	 * <p>
+	 * When finished, the client calls {@link ISVNReporter#finishReport() 
+	 * ISVNReporter.finishReport()}. The RA layer then does a complete drive of the
+	 * diff editor, ending with {@link ISVNEditor#closeEdit() ISVNEditor.closeEdit()},
+	 * to transmit the diff.
+	 * </p>
+	 * <p>
+	 * <code>target</code> is an optional single path component will restrict
+	 * the scope of the diff to an entry in the directory represented by
+	 * the current session's URL, or empty if the entire directory is meant to be
+	 * one of the diff paths.
+	 * </p>
+	 * <p>
+	 * The working copy will be diffed against <code>url</code> as it exists
+	 * in <code>revision</code>, or as it is in head if <code>revision</code> is
+	 * invalid.
+	 * </p>
+	 * <p>
+	 * Use <code>ignoreAncestry</code> to control whether or not items being
+	 * diffed will be checked for relatedness first.  Unrelated items
+	 * are typically transmitted to the editor as a deletion of one thing
+	 * and the addition of another, but if this flag is <code>TRUE</code>,
+	 * unrelated items will be diffed as if they were related.
+	 * </p>
+	 * <p>
+	 * If <code>recursive</code> is true and the target is a directory, diff
+	 * recursively; otherwise, diff just target and its immediate entries,
+	 * but not its child directories (if any).
+	 * </p>
+	 * <p>
+	 * The caller may not perform any RA operations using the current
+	 * <code>SVNRepository</code> object before finishing the report, and may not
+	 * perform any RA operations using <code>SVNRepository</code> from within
+	 * the editing operations of the diff editor.
+	 * </p>
+	 * @param url the URL path to the entry to be diffed against.
+	 * @param revision revision number of the entry located at <code>url</code>
+	 * @param target relative to the current session URL path of the entry to
+	 * be diffed against <code>url</code>.
+	 * @param ignoreAncestry set true to control relatedness.
+	 * @param recursive true to diff recursively, false - otherwise.
+     * @param reporter client's reporter-baton
+     * @param editor client's update editor
+     * @throws SVNException
+     * @see ISVNReporterBaton
+     * @see ISVNReporter
+     * @see ISVNEditor
+	 */
+	public abstract void diff(String url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
      * <p>
      * Ask the Repository Access Layer to update a working copy.
 	 * The client initially provides an update editor ({@link ISVNEditor});
 	 * this editor contains knowledge of where the change will
-	 * begin in the working copy.
+	 * begin in the working copy (when {@link ISVNEditor#openRoot(long)
+	 * ISVNEditor.openRoot(long)} is called).
 	 * </p>
 	 * 
 	 * <p>
-	 * The {@link ISVNReporterBaton reporter} is used to 
+	 * The {@link ISVNReporterBaton reporter-baton} is used to 
 	 * describe client's working-copy revision numbers by calling the methods of
 	 * {@link ISVNReporter}; the RA layer assumes that all
 	 * paths are relative to the URL used to open the current repository session.
 	 * </p>
 	 * 
 	 * <p>
-	 * When finished, the client calls {@link ISVNReporter#finishReport()} 
+	 * When finished, the client calls {@link ISVNReporter#finishReport() ISVNReporter.finishReport()} 
 	 * from within the <code>reporter</code>.  The RA layer then does a complete drive
-	 * of the <code>editor</code>, ending with {@link ISVNEditor#closeEdit()}, to
-	 * update the working copy. 
+	 * of the <code>editor</code>, ending with {@link ISVNEditor#closeEdit() ISVNEditor.closeEdit()},
+	 * to update the working copy. 
 	 * </p>
 	 * 
 	 * <p>
@@ -586,7 +679,8 @@ public abstract class SVNRepository {
 	 * <p>
 	 * The client initially provides an editor {@link ISVNEditor}  to the RA
 	 * layer; this editor contains knowledge of where the change will
-	 * begin in the working copy (when {@link ISVNEditor#openRoot(long)} is called).
+	 * begin in the working copy (when {@link ISVNEditor#openRoot(long)
+	 * ISVNEditor.openRoot(long)} is called).
 	 * </p>
 	 * 
 	 * <p>
@@ -696,42 +790,40 @@ public abstract class SVNRepository {
     /* write methods */
     /**
      * <p>
-	 * Set @a *editor and @a *edit_baton to an editor for committing changes
-	 * to the repository of @a session, using @a log_msg as the log message.  The
-	 * revisions being committed against are passed to the editor
-	 * functions, starting with the rev argument to @c open_root.  The path
-	 * root of the commit is in the @a session's URL.
-	 *
-	 * Before @c close_edit returns, but after the commit has succeeded,
-	 * it will invoke @a callback with the new revision number, the
-	 * commit date (as a <tt>const char *</tt>), commit author (as a
-	 * <tt>const char *</tt>), and @a callback_baton as arguments.  If
-	 * @a callback returns an error, that error will be returned from @c
-	 * close_edit, otherwise @c close_edit will return successfully
-	 * (unless it encountered an error before invoking @a callback).
-	 *
-	 * The callback will not be called if the commit was a no-op
-	 * (i.e. nothing was committed);
-	 *
-	 * @a lock_tokens, if non-NULL, is a hash mapping <tt>const char
-	 * *</tt> paths (relative to the URL of @a session_baton) to <tt>
-	 * const char *</tt> lock tokens.  The server checks that the
-	 * correct token is provided for each committed, locked path.  @a lock_tokens
-	 * must live during the whole commit operation.
-	 *
-	 * If @a keep_locks is @c TRUE, then do not release locks on
-	 * committed objects.  Else, automatically release such locks.
-	 *
-	 * The caller may not perform any RA operations using @a session before
-	 * finishing the edit.     
+	 * Gets an {@link ISVNEditor editor} for committing changes
+	 * to the repository of the current session, using <code>logMessage</code> as
+	 * the log message.  The revisions being committed against are passed to the
+	 * editor methods, starting with the <code>revision</code> argument to 
+	 * {@link ISVNEditor#openRoot(long) ISVNEditor.openRoot(revision)}.
 	 * </p>
+	 * <p>
+	 * After the commit has succeeded {@link ISVNEditor#closeEdit() 
+	 * ISVNEditor.closeEdit()} returns an instance of <code>SVNCommitInfo</code>
+	 * that contains a new revision number, the commit date, commit author.
+	 * </p>
+	 * <p>
+	 * The caller may not perform any RA operations using the current
+	 * <code>SVNRepository</code> before finishing the edit.     
+	 * </p>
+	 * @param logMessage log message 
+	 * @param mediator
+	 * @return commit editor
+	 * @throws SVNException
+	 * @see ISVNEditor
+	 * @see ISVNWorkspaceMediator
      */
     public abstract ISVNEditor getCommitEditor(String logMessage, ISVNWorkspaceMediator mediator) throws SVNException;
     /**
      * <p>
-     * 
+     * Locks the current session <code>SVNRepository</code> object. It prevents
+     * from using non-reenterable methods of this object (e.g. while having not
+     * finished updating the working copy yet, the client can not call the 
+     * <code>status</code> method from within a reporter baton). If the client
+     * tries to lock the object that has been already locked, this method throws
+     * a non catchable <code>Error</code> exception that immediately terminates
+     * the application. 
      * </p>
-     *
+     * @see #unlock()
      */
     protected synchronized void lock() {
     	try {
@@ -747,7 +839,13 @@ public abstract class SVNRepository {
     	    throw new Error("Interrupted attempt to aquire write lock");
     	}
     }
-    
+    /**
+     * <p>
+     * Unlocks the current session <code>SVNRepository</code> object making it free
+     * for using.
+     * </p>
+     * @see #lock()
+     */
     protected synchronized void unlock() {
         if (--myLockCount <= 0) {
             myLockCount = 0;
@@ -755,10 +853,22 @@ public abstract class SVNRepository {
             notifyAll();
         }
     }
-    
+    /**
+     * <p>
+     * Gets <code>OutputSream</code> used for getting out log messages and writing
+     * into it.????? 
+     * </p>
+     * @return <code>OutputStream</code> instance
+     */
     protected OutputStream getOutputLoggingStream() {
         return myLoggingOutput;
     }
+    /**
+     * <p>
+     * Gets <code>OutputSream</code> used for writing log messages.?????? 
+     * </p>
+     * @return <code>OutputStream</code> instance
+     */
     protected OutputStream getInputLoggingStream() {
         return myLoggingInput;
     }

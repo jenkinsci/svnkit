@@ -46,7 +46,16 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
     public void changeFileProperty(String name, String value) throws SVNException;
     
     public void closeFile(String textChecksum) throws SVNException;
-    
+    /**
+     * <p>
+     * This method closes this editor completing the whole operation the editor
+     * was used for (i.e. updating, committing, checking out, getting status or
+     * diff). As the result it returns the last commit information. 
+     * </p>
+     * @return commit information
+     * @throws SVNException
+     * @see SVNCommitInfo
+     */
     public SVNCommitInfo closeEdit() throws SVNException;
     
     public void abortEdit() throws SVNException;

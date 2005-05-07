@@ -20,9 +20,25 @@ import java.io.OutputStream;
  * @author TMate Software Ltd.
  */
 public interface ISVNWorkspaceMediator {
-    
+    /**
+     * <p>
+     * Gets a workspace property.
+     * </p>
+     * @param path path to the workspace
+     * @param name propery name
+     * @return property value
+     * @throws SVNException
+     */
     public String getWorkspaceProperty(String path, String name) throws SVNException;
-    
+    /**
+     * <p>
+     * Immediately set new values for properties of the workspace.
+     * </p>
+     * @param path path to the workspace
+     * @param name property name
+     * @param value property value
+     * @throws SVNException
+     */
     public void setWorkspaceProperty(String path, String name, String value) throws SVNException ;
     
     public OutputStream createTemporaryLocation(String path, Object id) throws IOException;

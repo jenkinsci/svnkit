@@ -15,7 +15,7 @@ package org.tmatesoft.svn.core.io;
 import org.tmatesoft.svn.util.DebugLog;
 
 /**
- * @author TMate Software Ltd.
+ *  @author TMate Software Ltd.
  */
 public class SVNSimpleCredentialsProvider implements ISVNCredentialsProvider {
     
@@ -66,7 +66,22 @@ public class SVNSimpleCredentialsProvider implements ISVNCredentialsProvider {
     public int hashCode() {
         return myCredentials.hashCode();
     }
-    
+    /**
+	 * <p>
+	 * This class is a wrapper for clients' credentials.
+	 * When the server process receives a client request, it typically demands that the
+	 * client identify itself. It issues an authentication challenge to the client, and
+	 * the client responds by providing <b>credentials</b> back to the server. Once 
+	 * authentication is complete, the server responds with the original information
+	 * the client asked for. Notice that this system is different from systems like CVS,
+	 * where the client pre-emptively offers credentials (“logs in”) to the server
+	 * before ever making a request. In Subversion, the server “pulls” credentials by
+	 * challenging the client at the appropriate moment, rather than the client
+	 * “pushing” them. 
+	 * </p>
+     * @version 1.0
+     * @author TMate Software Ltd.
+     */
     public static class SimpleCredentials implements ISVNSSHCredentials {
         private String myPassword;
         private String myUserName;
