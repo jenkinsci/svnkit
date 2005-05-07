@@ -15,7 +15,7 @@ package org.tmatesoft.svn.core.io;
 import java.util.Map;
 
 /**
- * @author Alexander Kitaev
+ * @author TMate Software Ltd.
  */
 public class SVNFileRevision {
     

@@ -13,10 +13,22 @@
 package org.tmatesoft.svn.core.io;
 
 /**
- * @author Alexander Kitaev
+ * <p>
+ * The <code>ISVNDirEntryHandler</code> is used as a directory entry processor
+ * within the {@link SVNRepository#getDir(String, long, Map, ISVNDirEntryHandler)} method.
+ * It declares the only one method - {@link #handleDirEntry(SVNDirEntry)} - for directory
+ * entry handling. 
+ * </p>
+ * @version 1.0
+ * @author TMate Software Ltd.
+ * @see SVNRepository#getDir(String, long, Map, ISVNDirEntryHandler)
  */
 public interface ISVNDirEntryHandler {
-    
+    /**
+     * Handles a directory entry passed.
+     * @param dirEntry a directory entry
+     * @see SVNDirEntry 
+     */
     public void handleDirEntry(SVNDirEntry dirEntry); 
 
 }

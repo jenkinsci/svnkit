@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * @author Alexander Kitaev
+ * @author TMate Software Ltd.
  */
 public abstract class SVNRepositoryFactory {
     
