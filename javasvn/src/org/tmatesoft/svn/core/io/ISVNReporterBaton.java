@@ -35,3 +35,4 @@ public interface ISVNReporterBaton {
     public void report(ISVNReporter reporter) throws SVNException;
 
 }
+

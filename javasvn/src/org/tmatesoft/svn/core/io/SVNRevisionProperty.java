@@ -38,5 +38,4 @@ public class SVNRevisionProperty {
      * revision was created
      */
     public String DATE = "svn:date";
-
 }

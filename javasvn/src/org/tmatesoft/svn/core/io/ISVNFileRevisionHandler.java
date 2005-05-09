@@ -36,8 +36,9 @@ public interface ISVNFileRevisionHandler extends ISVNDiffHandler {
      * method.
      * </p>
      * @param fileRevision a <code>SVNFileRevision</code> object  
-     * @see org.tmatesoft.svn.core.io.SVNFileRevision
+     * @see SVNFileRevision
      */
-	public void hanldeFileRevision(SVNFileRevision fileRevision);
+	public void handleFileRevision(SVNFileRevision fileRevision);
 
 }
+

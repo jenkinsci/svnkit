@@ -62,8 +62,8 @@ public abstract class SVNRepository {
 	 * </p> 
 	 * @return repository location
 	 * @see SVNRepositoryLocation
-	 */
-    
+	 */    
+
     public SVNRepositoryLocation getLocation() {
         return myLocation;
     }
@@ -78,6 +78,7 @@ public abstract class SVNRepository {
         myLoggingOutput = out;
         myLoggingInput = in;        
     }
+
     /**
      * <p>
      * The UUID is the repository's Universal Unique IDentifier. A Subversion
@@ -87,9 +88,12 @@ public abstract class SVNRepository {
      * </p>
      * @return the UUID of the repository 
      */
+    
+
     public String getRepositoryUUID() {
         return myRepositoryUUID;
     }
+
     /**
      * <p>
      * Retrieves the repository's root URL.  The value will not include
@@ -103,6 +107,8 @@ public abstract class SVNRepository {
      * </p>
      * @return the repository root URL
      */
+    
+
     public String getRepositoryRoot() {
         return myRepositoryRoot;
     }
@@ -110,6 +116,7 @@ public abstract class SVNRepository {
      * 
      * @param provider
      */
+    
     public void setCredentialsProvider(ISVNCredentialsProvider provider) {
         myUserCredentialsProvider = provider;
     }
@@ -144,7 +151,6 @@ public abstract class SVNRepository {
     public abstract void testConnection() throws SVNException; 
     
     /* simple methods */
-    
     /**
      * <p>
      * Returns the latest revision number (that is the latest state of the entire
@@ -156,7 +162,6 @@ public abstract class SVNRepository {
      * @return the latest revision number
      */
     public abstract long getLatestRevision() throws SVNException;
-    
     /**
      * <p>
      * Returns the recent repository revision number for the particular moment in time
@@ -183,9 +188,7 @@ public abstract class SVNRepository {
      * @throws SVNException
      * @return hash map containing unversioned revision properties
      */
-    
     public abstract Map getRevisionProperties(long revision, Map properties) throws SVNException;
-    
     /**
      * <p>
      * Sets <code>propertyValue</code> to the value of an unversioned
@@ -201,7 +204,6 @@ public abstract class SVNRepository {
      * @throws SVNException
      */
     public abstract void setRevisionPropertyValue(long revision, String propertyName, String propertyValue) throws SVNException;
-    
     /**
      * <p>
      * Gets the value of an unversioned
@@ -225,6 +227,7 @@ public abstract class SVNRepository {
      * @return the node kind for the given path at the given revision
      */
     public abstract SVNNodeKind checkPath(String path, long revision) throws SVNException;
+    
     /**
      * <p>
 	 * Fetch the contents and properties of the file located at the <code>path</code>
@@ -251,7 +254,6 @@ public abstract class SVNRepository {
      * @throws SVNException
      */
     public abstract long getFile(String path, long revision, Map properties, OutputStream contents) throws SVNException; 
-    
     /**
      * <p>
      * The method is useful to get and handle all the directory entries at the definite
@@ -271,7 +273,6 @@ public abstract class SVNRepository {
      * @see SVNDirEntry
      */
     public abstract long getDir(String path, long revision, Map properties, ISVNDirEntryHandler handler) throws SVNException; 
-    
     /**
      * <p>
      * This method retrieves all the matched revisions for the specified (by the 
@@ -307,7 +308,6 @@ public abstract class SVNRepository {
 	 * @throws SVNException
 	 */    
     public abstract int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException;
-
     /**
 	 * <p>
 	 * Invoke <code>ISVNLogEntryHandler</code> on each log entry from
@@ -387,7 +387,6 @@ public abstract class SVNRepository {
      * @see SVNLocationEntry
      */
     public abstract int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException;
-
     /**
      * <p>
      * This overloaded method uses {@link #getFileRevisions(String, long, long, ISVNFileRevisionHandler)}.
@@ -407,13 +406,13 @@ public abstract class SVNRepository {
     public Collection getFileRevisions(String path, Collection revisions, long sRevision, long eRevision) throws SVNException {
         final Collection result = revisions != null ? revisions : new LinkedList();
         ISVNFileRevisionHandler handler = new ISVNFileRevisionHandler() {
-            public void hanldeFileRevision(SVNFileRevision fileRevision) {
+            public void handleFileRevision(SVNFileRevision fileRevision) {
                 result.add(fileRevision);
             }
             public OutputStream handleDiffWindow(String token, SVNDiffWindow delta) {
             	return null;
             }
-            public void hanldeDiffWindowClosed(String token) {
+            public void handleDiffWindowClosed(String token) {
             }
         };
         getFileRevisions(path, sRevision, eRevision, handler);
@@ -534,7 +533,6 @@ public abstract class SVNRepository {
 	}
     
     /* edit-mode methods */
-	
 	/**
 	 * <p>
 	 * Ask the RA layer to 'diff' a working copy against <code>url</code>;
@@ -608,8 +606,7 @@ public abstract class SVNRepository {
      * @see ISVNReporter
      * @see ISVNEditor
 	 */
-	public abstract void diff(String url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
-    
+    public abstract void diff(String url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     /**
      * <p>
      * Ask the Repository Access Layer to update a working copy.
@@ -729,7 +726,6 @@ public abstract class SVNRepository {
      * @see ISVNEditor
      */
     public abstract void status(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
-
     /**
      * <p>
      * This is another form of update. It updates the client's working copy to
@@ -827,7 +823,6 @@ public abstract class SVNRepository {
     public abstract SVNLock setLock(String path, String comment, boolean force, long revision) throws SVNException;
 
     public abstract void removeLock(String path, String id, boolean force) throws SVNException;
-    
     /**
      * <p>
      * Locks the current session <code>SVNRepository</code> object. It prevents
@@ -922,7 +917,6 @@ public abstract class SVNRepository {
     protected static Long getRevisionObject(long revision) {
         return isValidRevision(revision) ? new Long(revision) : null;
     }
-    
     /**
      * <p>
      * This assertion method checks if the revision number can be assumed as valid.

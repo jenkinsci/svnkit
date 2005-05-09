@@ -23,6 +23,6 @@ public interface ISVNDiffHandler {
     
     public OutputStream handleDiffWindow(String token, SVNDiffWindow diffWindow);
     
-    public void hanldeDiffWindowClosed(String token);
+    public void handleDiffWindowClosed(String token);
 
 }

@@ -19,8 +19,8 @@ package org.tmatesoft.svn.core.io;
  * @see SVNRepository
  */
 public interface ISVNReporter {
-    
-    /**
+
+	/**
 	 *<p>
 	 * Describe a working copy <code>path</code> as being at a particular
 	 * <code>revision</code>.  
@@ -46,7 +46,9 @@ public interface ISVNReporter {
      * @param path a path in the working copy
      * @throws SVNException
      */
+
     public void deletePath(String path) throws SVNException;
+
     /**
      * <p>
      * Like {@link #setPath(String, long, boolean)}, but differs in that the 
@@ -63,10 +65,12 @@ public interface ISVNReporter {
      * @param repository a working copy revision number
      * @param path a path in the working copy
      * @param revison the working copy revision number
+     * @param lockToken
      * @param startEmtpy set if there's no entries or properties
      * @throws SVNException
      * @see SVNRepository
      */
+
     public void linkPath(SVNRepositoryLocation repository, String path, String lockToken, long revison, boolean startEmtpy) throws SVNException;
     /**
      * <p>

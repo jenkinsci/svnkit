@@ -132,11 +132,24 @@ public class SVNDirEntry {
     public String getAuthor() {
         return myLastAuthor;
     }
-    
+    /**
+     * <p>
+     * Sets <code>name</code> for the entry. 
+     * </p>
+     * @param name directory entry name. 
+     */
     public void setName(String name) {
         myName = name;
     }
-
+    /**
+     * <p>
+     * Represents the current <code>SVNDirEntry</code> object as a string
+     * like this way: "name=MyFile.txt, kind=<file>, size=1024, 
+     * hasProperties=true, creation-rev=1, lastAuthor=Eric, 
+     * creation-date=2004.07.10 AD at 15:08:56 PDT".
+     * </p>
+     * @return string representation of this directory entry.
+     */
     public String toString() {
         StringBuffer result = new StringBuffer();
         result.append("name=");
@@ -159,5 +172,4 @@ public class SVNDirEntry {
         }
         return result.toString();
     }
-     
 }

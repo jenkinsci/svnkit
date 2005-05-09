@@ -83,5 +83,4 @@ public final class SVNNodeKind {
         }
         return "<unknown>";
     }
-
 }

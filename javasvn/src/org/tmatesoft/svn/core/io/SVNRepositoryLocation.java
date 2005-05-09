@@ -35,8 +35,8 @@ import org.tmatesoft.svn.util.PathUtil;
  * <li>svn:// - to access the repository via the custom standalone protocol
  * <li>svn+ssh:// - the same as svn:// but through a SSH tunnel
  * </ol>
- * Specifying a URL you can also point a definite port to go out through, e.g.
- * http://host:8080/path/to/repos. If you don't then a default one will be used
+ * Specifying a URL you can also point the definite port to go out through, e.g.
+ * http://host:8080/path/to/repos. If you don't, then a default one will be used
  * for the current protocol.
  *     
  * @version 1.0
@@ -50,7 +50,6 @@ public class SVNRepositoryLocation {
     private final int myPort;
     private final String myProtocol;
     private String myAsString;
-
     /**
      * <p>
      * This static method compares two <code>SVNRepositoryLocation</code> objects.
@@ -69,7 +68,6 @@ public class SVNRepositoryLocation {
         } 
         return location1.toString().equals(location2.toString());
     }
-
     /**
      * <p>
      * This is a static factory method that creates an instance of <code>SVNRepositoryLocation</code>
@@ -122,7 +120,6 @@ public class SVNRepositoryLocation {
         }
         throw new SVNException("malformed url " + location);
     }
-
     /**
      * <p>
      * Creates a new instance of <code>SVNRepositoryLocation</code>.
@@ -142,7 +139,6 @@ public class SVNRepositoryLocation {
         myPath = PathUtil.removeTrailingSlash(myPath);
         myPath = PathUtil.encode(myPath);
     }
-
     /**
      * <p>
      * Returns the used protocol as a string.
@@ -152,7 +148,6 @@ public class SVNRepositoryLocation {
     public String getProtocol() {
         return myProtocol;
     }
-
     /**
      * <p>
      * Returns the defined host address as a string
@@ -168,7 +163,6 @@ public class SVNRepositoryLocation {
      * </p>
      * @return path string 
      */
-
     public String getPath() {
         return myPath;
     }
@@ -237,7 +231,6 @@ public class SVNRepositoryLocation {
         }
         return -1;
     }
-    
     /**
      * <p>
      * Compares the current object with another one
@@ -256,7 +249,6 @@ public class SVNRepositoryLocation {
     	}
     	return toCanonicalForm().equals(((SVNRepositoryLocation) o).toCanonicalForm());
     }
-    
     /**
      * <p>
      * Returns the hash code of a <code>SVNRepositoryLocation</code> object's 
