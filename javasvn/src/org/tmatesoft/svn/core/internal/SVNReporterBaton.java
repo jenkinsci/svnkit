@@ -95,8 +95,15 @@ class SVNReporterBaton implements ISVNReporterBaton {
                     targetEntry.asFile().markResolved(true);
                     ((SVNWorkspace) myWorkspace).fireEntryModified(targetEntry, SVNStatus.RESTORED, false);
                 }
+                String parentURL = myRoot.getPropertyValue(SVNProperty.URL);
                 DebugLog.log("REPORT.TARGET: " + myTarget + " : " + revision);
                 reporter.setPath("", locktoken, revision, revision == 0);
+                if (SVNReporterBaton.isSwitched(parentURL, targetEntry)) {
+                    DebugLog.log("REPORT.TARGET.LINK: " + targetEntry.getPropertyValue(SVNProperty.URL) + " : " + revision);
+                    String url = targetEntry.getPropertyValue(SVNProperty.URL);
+                    url = PathUtil.decode(url);
+                    reporter.linkPath(SVNRepositoryLocation.parseURL(url), "", locktoken, revision, false); 
+                } 
             } else {
                 revision = SVNProperty.longValue(myRoot.getPropertyValue(SVNProperty.REVISION)); 
                 DebugLog.log("REPORT.MISSING.TARGET: " + myTarget + " : " + revision);
