@@ -394,14 +394,25 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                     deleteChild(child.getName(), true);
                     continue;
                 }
+                long rollbackRevision = -1; 
                 if (child.isScheduledForAddition() || child.isScheduledForDeletion() || isCorrupted) {
                     // obstructed!
                     obstructedChildren.add(child.getName());
+                    // if it is copied, update revision for children, but not for this entry!
+                    if (child.getPropertyValue(SVNProperty.COPIED) != null && child.isDirectory()) {
+                        rollbackRevision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.REVISION));
+                        child.setPropertyValue(SVNProperty.REVISION, revision);
+                    }
                 } else {
                     child.setPropertyValue(SVNProperty.REVISION, revision);
                 }
                 
                 child.merge(recursive);
+                if (rollbackRevision >= 0) {
+                    child.setPropertyValue(SVNProperty.REVISION, SVNProperty.toString(rollbackRevision));
+                    rollbackRevision = -1;
+                    child.save();
+                }
             }
         }
         super.merge();
@@ -426,6 +437,9 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
     }
 
     public void save(boolean recursive) throws SVNException {
+        if (isMissing()) {
+            return;
+        }
         super.save(recursive);
         if (recursive && myChildren != null) {
             // only if children was loaded?
@@ -439,7 +453,9 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
     
     
     private void saveEntries() throws SVNException {
-        if (myDirEntry != null) {
+        DebugLog.log("SAVING ENTRIES FOR " + getPath());
+        DebugLog.log("MISSING " + isMissing());
+        if (myDirEntry != null && !isMissing()) {
             getAdminArea().saveEntries(this, myDirEntry, myChildEntries, myDeletedEntries);
         }
     }
