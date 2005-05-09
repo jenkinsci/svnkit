@@ -816,6 +816,8 @@ public abstract class SVNRepository {
         return getCommitEditor(logMessage, null, false, mediator);
     }
     
+    public abstract SVNDirEntry info(String path, long revision) throws SVNException;
+        
     public abstract ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, final ISVNWorkspaceMediator mediator) throws SVNException;
     
     public abstract SVNLock getLock(String path) throws SVNException;
