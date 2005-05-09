@@ -92,7 +92,8 @@ what features are planned, but not yet implemented.
 <h5>License</h5>
 <a id="normal" href="license.html">Licence&nbsp;Agreement</a>&nbsp;(BSD-like)
 <h5>Documentation</h5>
-<a id="normal" href="usage.html">How&nbsp;to&nbsp;Use (for developers)</a><br/>
+<b>New:</b>&nbsp;<a id="normal" href="list.html">Mailing&nbsp;List&nbsp;(ask&nbsp;your&nbsp;questions&nbsp;there)</a><br/>
+<a id="normal" href="usage.html">How&nbsp;to&nbsp;Use&nbsp;(for&nbsp;developers)</a><br/>
 <a id="normal" href="build.html">Build&nbsp;Instructions</a><br/>
 <a id="normal" href="subclipse.html">For&nbsp;Subclipse&nbsp;(and&nbsp;svnant)&nbsp;Users</a><br/>
 <a id="normal" href="ant.html">Using&nbsp;JavaSVN&nbsp;with&nbsp;Ant</a><br/>
