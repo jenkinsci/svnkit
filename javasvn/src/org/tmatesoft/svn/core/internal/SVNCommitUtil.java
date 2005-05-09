@@ -292,6 +292,7 @@ public class SVNCommitUtil {
             }
             DebugLog.log("parent path: " + path);
             String shortChildName = PathUtil.tail(child.getPropertyValue(SVNProperty.URL));
+            shortChildName = PathUtil.decode(shortChildName);
             String childPath = child.getAlias() != null ? PathUtil.append(path, child.getAlias()) :
                 PathUtil.append(path, shortChildName);
             
