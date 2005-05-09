@@ -185,6 +185,8 @@ public class StatusCommand extends SVNCommand {
                 wcRevision = "-";
             } else if (status.getWorkingCopyRevision() >= 0) {
                 wcRevision = status.getWorkingCopyRevision() + "";
+            } else if (status.getContentsStatus() == SVNStatus.MISSING) {
+                wcRevision = " ? ";
             }
             if (status.isManaged() && status.getContentsStatus() == SVNStatus.EXTERNAL) {
                 wcRevision = "";
@@ -192,11 +194,13 @@ public class StatusCommand extends SVNCommand {
             wcRevision = formatString(wcRevision, 6, false);
             sb.append("   ");
             sb.append(wcRevision);
+            DebugLog.log("WC REVISION: " + wcRevision);
+            DebugLog.log("MANAGED: " + status.isManaged());
             if (displayLastCommited) {
                 String commitedRevsion;
                 if (status.isManaged() && status.getRevision() >= 0) {
                     commitedRevsion = status.getRevision() + "";
-                } else if (status.isManaged() && remote != '*') {
+                } else if ((status.isManaged() && remote != '*') || status.getContentsStatus() == SVNStatus.MISSING) {
                     commitedRevsion = " ? ";
                 } else {
                     commitedRevsion = "";
