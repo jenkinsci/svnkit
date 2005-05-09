@@ -468,7 +468,9 @@ public class SVNWorkspace implements ISVNWorkspace {
                 for (Iterator children = targetEntry.asDirectory()
                         .childEntries(); children.hasNext();) {
                     ISVNEntry child = (ISVNEntry) children.next();
-                    updateURL(child, newURL, recursive);
+                    if (!child.isDirectory() || recursive) {
+                        updateURL(child, newURL, recursive);
+                    }
                 }
                 targetEntry.save();
             } else {
