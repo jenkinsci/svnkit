@@ -781,7 +781,7 @@ public abstract class SVNRepository {
         }
         update(revision, target, recursive, new ISVNReporterBaton() {
                     public void report(ISVNReporter reporter) throws SVNException {
-                        reporter.setPath("", lastRev, true);
+                        reporter.setPath("", null, lastRev, true);
                         reporter.finishReport();
                     }            
                 }, editor);
@@ -812,7 +812,20 @@ public abstract class SVNRepository {
 	 * @see ISVNEditor
 	 * @see ISVNWorkspaceMediator
      */
-    public abstract ISVNEditor getCommitEditor(String logMessage, ISVNWorkspaceMediator mediator) throws SVNException;
+    public ISVNEditor getCommitEditor(String logMessage, final ISVNWorkspaceMediator mediator) throws SVNException {
+        return getCommitEditor(logMessage, null, false, mediator);
+    }
+    
+    public abstract ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, final ISVNWorkspaceMediator mediator) throws SVNException;
+    
+    public abstract SVNLock getLock(String path) throws SVNException;
+
+    public abstract SVNLock[] getLocks(String path) throws SVNException;
+    
+    public abstract SVNLock setLock(String path, String comment, boolean force, long revision) throws SVNException;
+
+    public abstract void removeLock(String path, String id, boolean force) throws SVNException;
+    
     /**
      * <p>
      * Locks the current session <code>SVNRepository</code> object. It prevents

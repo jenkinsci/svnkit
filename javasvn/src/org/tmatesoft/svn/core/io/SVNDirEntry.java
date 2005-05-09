@@ -133,4 +133,31 @@ public class SVNDirEntry {
         return myLastAuthor;
     }
     
+    public void setName(String name) {
+        myName = name;
+    }
+
+    public String toString() {
+        StringBuffer result = new StringBuffer();
+        result.append("name=");
+        result.append(myName);
+        result.append(", kind=");
+        result.append(myKind);
+        result.append(", size=");
+        result.append(mySize);
+        result.append(", hasProps=");
+        result.append(myHasProperties);
+        result.append(", creation-rev=");
+        result.append(myFirstRevision);
+        if (myLastAuthor != null) {
+            result.append(", lastAuthor=");
+            result.append(myLastAuthor);
+        }
+        if (myCreatedDate != null) {
+            result.append(", creation-date=");
+            result.append(myCreatedDate);
+        }
+        return result.toString();
+    }
+     
 }

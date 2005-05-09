@@ -38,7 +38,7 @@ public interface ISVNReporter {
      * @throws SVNException
      * @see SVNRepository
      */
-	public void setPath(String path, long revision, boolean startEmpty) throws SVNException;
+	public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException;
     /**
      * <p>
      * Describing a working copy <code>path</cdoe> as missing.
@@ -67,7 +67,7 @@ public interface ISVNReporter {
      * @throws SVNException
      * @see SVNRepository
      */
-    public void linkPath(SVNRepositoryLocation repository, String path, long revison, boolean startEmtpy) throws SVNException;
+    public void linkPath(SVNRepositoryLocation repository, String path, String lockToken, long revison, boolean startEmtpy) throws SVNException;
     /**
      * <p>
      * Called when the state report is finished; any directories
