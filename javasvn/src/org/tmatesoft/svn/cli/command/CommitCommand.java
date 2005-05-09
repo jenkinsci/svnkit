@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.ISVNRunnable;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNCommitPacket;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -40,7 +41,7 @@ public class CommitCommand extends SVNCommand {
 
     public void run(final PrintStream out, PrintStream err) throws SVNException {
         checkEditorCommand();
-        boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
+        final boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
         String[] localPaths = new String[getCommandLine().getPathCount()];
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             localPaths[i] = getCommandLine().getPathAt(i).replace(File.separatorChar, '/');
@@ -80,7 +81,7 @@ public class CommitCommand extends SVNCommand {
         for (int i = 0; i < paths.length; i++) {
             paths[i] = SVNUtil.getWorkspacePath(workspace, paths[i]);
         }
-        String message = getCommitMessage();
+        final String message = getCommitMessage();
 
         workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
             public void committed(String committedPath, int kind) {
@@ -110,11 +111,16 @@ public class CommitCommand extends SVNCommand {
                 println(out, verb + committedPath);
             }
         });
-        
-        SVNCommitPacket packet = workspace.createCommitPacket(paths, recursive, false);
-        long revision = workspace.commit(packet, getCommandLine().hasArgument(SVNArgument.NO_UNLOCK), message);
-        if (revision >= 0) {
-            out.println("Committed revision " + revision + ".");
+        final long[] rev = new long[1];
+        final String[] commitPaths = paths;
+        workspace.runCommand(new ISVNRunnable() {
+            public void run(ISVNWorkspace workspace) throws SVNException {
+                SVNCommitPacket packet = workspace.createCommitPacket(commitPaths, recursive, false);
+                rev[0] = workspace.commit(packet, getCommandLine().hasArgument(SVNArgument.NO_UNLOCK), message);
+            }
+        });
+        if (rev[0] >= 0) {
+            out.println("Committed revision " + rev[0] + ".");
         }
     }
 
