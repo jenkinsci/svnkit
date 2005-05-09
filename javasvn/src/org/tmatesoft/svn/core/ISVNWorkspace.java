@@ -173,7 +173,7 @@ public interface ISVNWorkspace {
 
     public void unlock(String path, boolean force) throws SVNException;
     
-    public void relocate(SVNRepositoryLocation newLocation, String path, boolean recursive) throws SVNException;
+    public void relocate(SVNRepositoryLocation oldLocation, SVNRepositoryLocation newLocation, String path, boolean recursive) throws SVNException;
 
     public Iterator propertyNames(String path) throws SVNException;
     

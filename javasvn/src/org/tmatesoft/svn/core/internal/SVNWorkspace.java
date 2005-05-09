@@ -499,7 +499,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         return extWorkspace;
     }
 
-    public void relocate(SVNRepositoryLocation newLocation, String path,
+    public void relocate(SVNRepositoryLocation oldLocation, SVNRepositoryLocation newLocation, String path,
             boolean recursive) throws SVNException {
         try {
             ISVNEntry targetEntry = locateEntry(path);
@@ -511,13 +511,10 @@ public class SVNWorkspace implements ISVNWorkspace {
                 throw new SVNException("could not relocate file '" + path
                         + "' only directories could be switched");
             }
-            String newURL = newLocation.toString();
-            targetEntry.setPropertyValue(SVNProperty.URL, newURL);
-            for (Iterator children = targetEntry.asDirectory().childEntries(); children
-                    .hasNext();) {
-                ISVNEntry child = (ISVNEntry) children.next();
-                updateURL(child, newURL, recursive);
-            }
+            String newURL = newLocation.toCanonicalForm();
+            String oldURL = oldLocation.toCanonicalForm();
+            
+            doRelocate(targetEntry, oldURL, newURL, recursive);
             targetEntry.save();
             if (targetEntry.equals(getRoot())) {
                 setLocation(newLocation);
@@ -792,8 +789,8 @@ public class SVNWorkspace implements ISVNWorkspace {
         return commit(paths, handler, recursive, true);
     }
 
-    public long commit(String[] paths, ISVNCommitHandler handler,
-            boolean recursive, boolean includeParents) throws SVNException {
+    public long commit(final String[] paths, ISVNCommitHandler handler,
+            final boolean recursive, final boolean includeParents) throws SVNException {
         if (handler == null) {
             handler = new ISVNCommitHandler() {
                 public String handleCommit(SVNStatus[] tobeCommited) {
@@ -802,14 +799,21 @@ public class SVNWorkspace implements ISVNWorkspace {
             };
         }
 
-        final SVNCommitPacket packet = createCommitPacket(paths, recursive,
-                includeParents);
-        if (packet == null) {
-            DebugLog.log("NOTHING TO COMMIT");
-            return -1;
-        }
+        final long[] rev = new long[] {-1};
+        final ISVNCommitHandler fHandler = handler;
+        runCommand(new ISVNRunnable() {
+            public void run(ISVNWorkspace workspace) throws SVNException {
+                final SVNCommitPacket packet = createCommitPacket(paths, recursive,
+                        includeParents);
+                if (packet == null) {
+                    DebugLog.log("NOTHING TO COMMIT");
+                    return;
+                }
+                rev[0] = commit(packet, false, fHandler.handleCommit(packet.getStatuses()));
+            }            
+        });
+        return rev[0];
 
-        return commit(packet, false, handler.handleCommit(packet.getStatuses()));
     }
 
     public SVNStatus[] getCommittables(String[] paths, boolean recursive,
@@ -927,7 +931,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                     + (System.currentTimeMillis() - start) + " ms.");
             return statuses;
         } finally {
-            if (!myIsCopyCommit) {
+            if (!myIsCopyCommit && !myIsCommandRunning) {
                 getRoot().dispose();
             }
         }
@@ -1912,6 +1916,36 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
         }
     }
+
+    private void doRelocate(ISVNEntry target, String oldURL, String newURL, boolean recursive) throws SVNException {
+        target.setPropertyValue(SVNProperty.WC_URL, null);
+        String url = target.getPropertyValue(SVNProperty.URL);
+        url = SVNRepositoryLocation.parseURL(url).toCanonicalForm();
+        url = url.substring(oldURL.length());
+        url = PathUtil.append(newURL, url);
+        target.setPropertyValue(SVNProperty.URL, url);
+
+        String copyFromURL = target.getPropertyValue(SVNProperty.COPYFROM_URL);
+        if (copyFromURL != null) {
+            copyFromURL = SVNRepositoryLocation.parseURL(copyFromURL).toCanonicalForm();
+            copyFromURL = copyFromURL.substring(oldURL.length());
+            copyFromURL = PathUtil.append(newURL, copyFromURL);
+            target.setPropertyValue(SVNProperty.COPYFROM_URL, copyFromURL);
+            if (target.isDirectory()) {
+                ISVNEntry parent = locateParentEntry(target.getPath());                
+                ((FSDirEntry) parent).getChildEntryMap(target.getName()).put(SVNProperty.COPYFROM_URL, copyFromURL);
+            }
+        }
+        if (target.isDirectory() && recursive) {
+            for (Iterator children = target.asDirectory().childEntries(); children
+                    .hasNext();) {
+                ISVNEntry child = (ISVNEntry) children.next();
+                doRelocate(child, oldURL, newURL, recursive);
+            }
+        }
+        
+    }
+            
 
     private Collection createExternals(String path) throws SVNException {
         Collection externals = new HashSet();

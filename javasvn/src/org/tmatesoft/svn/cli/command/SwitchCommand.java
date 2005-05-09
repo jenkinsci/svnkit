@@ -38,6 +38,12 @@ public class SwitchCommand extends SVNCommand {
         final String homePath = absolutePath;
         final String path = SVNUtil.getWorkspacePath(workspace, absolutePath);
         final boolean[] changesReceived = new boolean[] { false };
+        if (getCommandLine().hasArgument(SVNArgument.RELOCATE)) {
+            String newURL = getCommandLine().getURL(1);
+            workspace.relocate(SVNRepositoryLocation.parseURL(url), SVNRepositoryLocation.parseURL(newURL), 
+                    path, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+            return;
+        }
         
         String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
         long revision = -1;

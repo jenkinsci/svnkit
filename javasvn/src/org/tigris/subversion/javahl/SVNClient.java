@@ -1389,7 +1389,7 @@ public class SVNClient implements SVNClientInterface {
     public void relocate(String from, String to, String path, boolean recurse) throws ClientException {
         try {
             ISVNWorkspace ws = createWorkspace(path);
-            ws.relocate(SVNRepositoryLocation.parseURL(to), SVNUtil.getWorkspacePath(ws, path), recurse);
+            ws.relocate(SVNRepositoryLocation.parseURL(from), SVNRepositoryLocation.parseURL(to), SVNUtil.getWorkspacePath(ws, path), recurse);
         } catch (SVNException e) {
             throwException(e);
         }
