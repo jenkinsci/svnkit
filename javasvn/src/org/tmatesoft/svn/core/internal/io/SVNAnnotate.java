@@ -69,7 +69,7 @@ public class SVNAnnotate implements ISVNFileRevisionHandler {
 		}
 	}
 
-	public void hanldeFileRevision(SVNFileRevision fileRevision) {
+	public void handleFileRevision(SVNFileRevision fileRevision) {
 		createBaseFile();
 		if (myLines == null) {
 			myLines = new ArrayList();
@@ -130,7 +130,7 @@ public class SVNAnnotate implements ISVNFileRevisionHandler {
 		return null;
 	}
 
-	public void hanldeDiffWindowClosed(String token) {
+	public void handleDiffWindowClosed(String token) {
 		for(int i = 0; i < myDiffWindowsList.size(); i++) {
 			SVNDiffWindow diffWindow = (SVNDiffWindow) myDiffWindowsList.get(i);
 			File dataFile = (File) myDiffWindowsMap.get(diffWindow);

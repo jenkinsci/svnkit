@@ -259,7 +259,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     buffer[3] = null;
                 }
                 if (handler != null && fileRevision != null) {
-                    handler.hanldeFileRevision(fileRevision);
+                    handler.handleFileRevision(fileRevision);
                     fileRevision = null;
                 }
                 SVNDiffWindowBuilder builder = SVNDiffWindowBuilder.newInstance();
@@ -299,7 +299,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         }
                     }
                 }
-                handler.hanldeDiffWindowClosed(name == null ? path : name);
+                handler.handleDiffWindowClosed(name == null ? path : name);
             }
     	} finally {
             closeConnection();

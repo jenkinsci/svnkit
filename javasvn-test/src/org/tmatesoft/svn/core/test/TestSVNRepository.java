@@ -421,7 +421,7 @@ public class TestSVNRepository extends AbstractRepositoryTest {
                 return null;
             }
             
-            public void hanldeDiffWindowClosed(String token) {
+            public void handleDiffWindowClosed(String token) {
                 File tempTarget = null;
                 InputStream is = null;
                 try {
@@ -450,7 +450,7 @@ public class TestSVNRepository extends AbstractRepositoryTest {
                     myTempFile.delete();
                 }
             }
-            public void hanldeFileRevision(SVNFileRevision fileRevision) {
+            public void handleFileRevision(SVNFileRevision fileRevision) {
                 if (revisions.get(fileRevision.getPath()) == null) {
                     revisions.put(fileRevision.getPath(), new LinkedList());
                 }

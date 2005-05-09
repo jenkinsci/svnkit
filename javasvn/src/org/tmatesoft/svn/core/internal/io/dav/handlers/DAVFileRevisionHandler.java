@@ -77,7 +77,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                     myPropertiesDelta = Collections.EMPTY_MAP;
                 }
                 SVNFileRevision revision = new SVNFileRevision(myPath, myRevision, myProperties, myPropertiesDelta);
-                myFileRevisionsHandler.hanldeFileRevision(revision);
+                myFileRevisionsHandler.handleFileRevision(revision);
 				myPath = null;
             }
             setDeltaProcessing(true);
@@ -106,7 +106,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
 	}
 
     protected void handleDiffWindowClosed() {
-        myFileRevisionsHandler.hanldeDiffWindowClosed(myPath);
+        myFileRevisionsHandler.handleDiffWindowClosed(myPath);
     }
     
     protected OutputStream handleDiffWindow(SVNDiffWindow window) {
