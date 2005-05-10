@@ -27,6 +27,7 @@ public class SVNProperty {
     public static final String KEYWORDS = SVN_PREFIX + "keywords";
     public static final String EXECUTABLE = SVN_PREFIX + "executable";
     public static final String EXTERNALS = SVN_PREFIX + "externals";
+    public static final String SPECIAL = SVN_PREFIX + "special";
     
     public static final String REVISION = SVN_ENTRY_PREFIX + "revision";
     public static final String COMMITTED_REVISION = SVN_ENTRY_PREFIX + "committed-rev";

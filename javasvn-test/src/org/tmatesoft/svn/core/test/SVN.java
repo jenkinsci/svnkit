@@ -12,17 +12,11 @@
 
 package org.tmatesoft.svn.core.test;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
-import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.util.DebugLog;
 
@@ -36,20 +30,33 @@ public class SVN {
         SVNRepositoryFactoryImpl.setup();
         FSEntryFactory.setup();
         
-        String url = "svn://localhost/";
-        String copyFromPath = "source";
-        String copyFromPath2 = "source.file.txt";
-        String copyToURL = "svn://localhost/target modified(6)";
-        String copyToURL2 = "svn://localhost/target.file modified(6).txt";
-        String path = "c:/bug/dirs/wc";
-        FSUtil.deleteAll(new File(path));
+        String url = "svn://80.188.80.120/test3/folder";
+//        String copyFromPath = "source";
+//        String copyFromPath2 = "source.file.txt";
+//        String copyToURL = "svn://localhost/target modified(6)";
+//        String copyToURL2 = "svn://localhost/target.file modified(6).txt";
+        String path = "c:/bug/switch/wc7";
         try {
+            /*
             SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
+            SVNRepository repos = SVNRepositoryFactory.create(location);
+            repos.log(new String[] {""}, -1, -1, false, false, new ISVNLogEntryHandler() {
+                public void handleLogEntry(SVNLogEntry logEntry) {
+                    System.out.println("entry: " + logEntry);
+                }
+            });*/
             
             ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace("file", path);
             ws.setCredentials(new SVNSimpleCredentialsProvider("alex", "cvs"));
-            ws.checkout(location, -1, false);
+            ws.update("folder/alpha.txt", -1, false);
             
+//            ws.update(SVNRepositoryLocation.parseURL("http://80.188.80.120/svn/repos/test3/branches/branch4"), "", -1, true);
+//            long rev = ws.commit("test commit");
+//            System.out.println("revision: " + rev);
+//            long rev = ws.commit("test commit");
+//            System.out.println("rev: " + rev);
+            //ws.update(SVNRepositoryLocation.parseURL("http://80.188.80.120/svn/repos/test3/branches/branch2"), "", -1, true);
+/*            
             OutputStream os = new FileOutputStream(new File(path, "source.file.txt"));
             os.write("modified (1)".getBytes());
             os.close();
@@ -60,9 +67,11 @@ public class SVN {
             
             ws.copy(copyFromPath2, SVNRepositoryLocation.parseURL(copyToURL2), "WC->URL copy test");
             ws.copy(copyFromPath, SVNRepositoryLocation.parseURL(copyToURL), "WC->URL copy test");
+            */
         } catch (Throwable e) {
             e.printStackTrace();
             DebugLog.error(e);
         }
+        
     }
 }
