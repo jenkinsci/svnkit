@@ -1727,12 +1727,16 @@ public class SVNWorkspace implements ISVNWorkspace {
             }
         }
         if (parent != null) {
-            boolean reverted = parent.revert(entry.getName());
-            if (!restored) {
-                fireEntryModified(entry, reverted ? SVNStatus.REVERTED
-                        : SVNStatus.NOT_REVERTED, false);
-            } else {
-                fireEntryModified(entry, SVNStatus.RESTORED, false);
+            if (entry.isMissing() || entry.isPropertiesModified() || entry.isScheduledForAddition() ||
+                    entry.isScheduledForDeletion() || 
+                    (!entry.isDirectory() && entry.asFile().isContentsModified())) {
+                boolean reverted = parent.revert(entry.getName());
+                if (!restored) {
+                    fireEntryModified(entry, reverted ? SVNStatus.REVERTED
+                            : SVNStatus.NOT_REVERTED, false);
+                } else {
+                    fireEntryModified(entry, SVNStatus.RESTORED, false);
+                }
             }
         }
         if (!entry.isDirectory()) {
