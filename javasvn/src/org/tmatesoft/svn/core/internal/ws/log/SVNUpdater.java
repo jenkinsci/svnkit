@@ -7,7 +7,7 @@ import java.io.IOException;
 
 class SVNUpdater {
     
-    public void update(ISVNAdminArea root, String target, SVNRevision revision, boolean recursive) {
+    public void update(ISVNAdminArea root, String target, long revision, boolean recursive) {
         // 1. lock all
         try {
             lockAll(root, recursive);
@@ -21,8 +21,7 @@ class SVNUpdater {
                 unlockAll(root, recursive);
             } catch (IOException e) {
             }
-        }
-        
+        }        
     }
     
     private void lockAll(ISVNAdminArea root, boolean recursive) {
