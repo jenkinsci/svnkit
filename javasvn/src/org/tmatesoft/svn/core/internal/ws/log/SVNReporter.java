@@ -149,42 +149,4 @@ class SVNReporter implements ISVNReporterBaton {
             dir.dispose();
         }
     }
-    
-    public static void main(String[] args) {
-        ISVNReporter testReporter = new ISVNReporter() {
-            public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
-                System.out.println("set path: '" + path + "' : " + revision);
-            }
-            public void deletePath(String path) throws SVNException {
-                System.out.println("delete path: '" + path + "'");
-            }
-            public void linkPath(SVNRepositoryLocation repository, String path, String lockToken, long revision, boolean startEmtpy) throws SVNException {
-                System.out.println("link path: '" + repository.toString() + "' => '" + path + "' : " + revision);
-            }
-            public void finishReport() throws SVNException {
-                System.out.println("finish report");
-            }
-            public void abortReport() throws SVNException {
-            }
-        };
-        
-        System.out.println("free: " + Runtime.getRuntime().freeMemory()/1024 + " kb");
-        try {
-//            SVNWCAccess wcAccess = SVNWCAccess.create(new File("e:/subversion/subversion/libsvn_wc/x"));
-            SVNWCAccess wcAccess = SVNWCAccess.create(new File("e:/i/prop/wc/dir"));
-            System.out.println("anchor dir: " + wcAccess.getAnchor().getFile(""));
-            System.out.println("target dir: " + wcAccess.getTarget().getFile(""));
-            System.out.println("target: " + wcAccess.getTargetName());
-            System.out.println();
-            
-            SVNReporter reporter = new SVNReporter(wcAccess, true);
-            reporter.report(testReporter);
-        } catch (SVNException e) {
-            e.printStackTrace();
-        }
-        System.out.println();
-        System.out.println("free: " + Runtime.getRuntime().freeMemory()/1024 + " kb");
-        Runtime.getRuntime().gc();
-        System.out.println("free: " + Runtime.getRuntime().freeMemory()/1024 + " kb");
-    }
 }
