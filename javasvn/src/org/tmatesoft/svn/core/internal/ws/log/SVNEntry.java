@@ -88,7 +88,7 @@ public class SVNEntry implements Comparable {
         return myEntries.getPropertyValue(myName, SVNProperty.DELETED) != null;
     }
     public boolean isAbsent() {
-        return myEntries.getPropertyValue(myName, "svn:entry:absent") != null;
+        return myEntries.getPropertyValue(myName, SVNProperty.ABSENT) != null;
     }
     
     public String toString() {
@@ -104,10 +104,10 @@ public class SVNEntry implements Comparable {
     }
     
     public void setIncomplete(boolean incomplete) {
-        myEntries.setPropertyValue(myName, "svn:entry:incomplete", incomplete ? "true" : null);
+        myEntries.setPropertyValue(myName, SVNProperty.INCOMPLETE, incomplete ? Boolean.TRUE.toString() : null);
     }
     
     public boolean isIncomplete() {
-        return Boolean.TRUE.toString().equals(myEntries.getPropertyValue(myName, "svn:entry:incomplete"));
+        return Boolean.TRUE.toString().equals(myEntries.getPropertyValue(myName, SVNProperty.INCOMPLETE));
     }
 }

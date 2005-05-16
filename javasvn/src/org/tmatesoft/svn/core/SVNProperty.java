@@ -49,6 +49,8 @@ public class SVNProperty {
     public static final String CONFLICT_WRK = SVN_ENTRY_PREFIX + "conflict-wrk";
     public static final String PROP_REJECT_FILE = SVN_ENTRY_PREFIX + "prop-reject-file";
     public static final String DELETED = SVN_ENTRY_PREFIX + "deleted";
+    public static final String ABSENT = SVN_ENTRY_PREFIX + "absent";
+    public static final String INCOMPLETE = SVN_ENTRY_PREFIX + "incomplete";
     public static final String CORRUPTED = SVN_ENTRY_PREFIX + "corrupted";
     public static final String WC_URL = SVN_WC_PREFIX + "ra_dav:version-url";
     
