@@ -26,7 +26,6 @@ class SVNReporter implements ISVNReporterBaton {
     }
 
     public void report(ISVNReporter reporter) throws SVNException {
-        // get entry from target
         SVNEntries targetEntries = myWCAccess.getTarget().getEntries();
         SVNEntries anchorEntries = myWCAccess.getAnchor().getEntries();
         SVNEntry targetEntry = targetEntries.getEntry(myWCAccess.getTargetName());
@@ -34,10 +33,9 @@ class SVNReporter implements ISVNReporterBaton {
         if (targetEntry == null || targetEntry.isHidden() || 
                 (targetEntry.isDirectory() && targetEntry.isScheduledForAddition())) {
             long revision = targetEntries.getEntry("").getRevision();
-            reporter.setPath("", null, revision, false);
+            reporter.setPath("", null, revision, targetEntry != null ? targetEntry.isIncomplete() : true);
             reporter.deletePath("");
             reporter.finishReport();
-            // dispose entries
             return;
         }
         long revision = targetEntry.getRevision();
@@ -47,7 +45,7 @@ class SVNReporter implements ISVNReporterBaton {
                 revision = anchorEntries.getEntry("").getRevision();
             }
         }
-        reporter.setPath("", null, revision, false);
+        reporter.setPath("", null, revision, targetEntry.isIncomplete());
         boolean missing = !targetEntry.isScheduledForDeletion() &&  
             !myWCAccess.getTarget().getFile(myWCAccess.getTargetName()).exists();
         
@@ -55,12 +53,7 @@ class SVNReporter implements ISVNReporterBaton {
             if (missing) {
                 reporter.deletePath("");
             } else {
-                // dispose everething and 
-                // report children.
-
-                // do report all entries from the dir, 
-                // then open children dirs and report them. 
-                reportEntries(reporter, myWCAccess.getTarget(), myWCAccess.getTargetName(), myIsRecursive);
+                reportEntries(reporter, myWCAccess.getTarget(), myWCAccess.getTargetName(), targetEntry.isIncomplete(), myIsRecursive);
             }
         } else if (targetEntry.isFile()){
             if (missing) {
@@ -78,10 +71,9 @@ class SVNReporter implements ISVNReporterBaton {
             }            
         }
         reporter.finishReport();
-        // dispose entries
     }
     
-    private void reportEntries(ISVNReporter reporter, SVNDirectory directory, String dirPath, boolean recursive) throws SVNException {
+    private void reportEntries(ISVNReporter reporter, SVNDirectory directory, String dirPath, boolean reportAll, boolean recursive) throws SVNException {
         SVNEntries entries = directory.getEntries();
         long baseRevision = entries.getEntry("").getRevision();
         
@@ -94,7 +86,9 @@ class SVNReporter implements ISVNReporterBaton {
             }
             String path = "".equals(dirPath) ? entry.getName() : PathUtil.append(dirPath, entry.getName());
             if (entry.isDeleted() || entry.isAbsent()) {
-                reporter.deletePath(path);
+                if (!reportAll) {
+                    reporter.deletePath(path);
+                }
                 continue;
             }
             if (entry.isScheduledForAddition()) {
@@ -104,7 +98,7 @@ class SVNReporter implements ISVNReporterBaton {
             boolean missing = !file.exists(); 
             if (entry.isFile()) {
                 // check svn:special files -> symlinks that could be directory.
-                if (file == null || file.isDirectory()) {
+                if ((file == null || !file.isFile()) && !reportAll) {
                     reporter.deletePath(path);
                     continue;
                 }
@@ -114,7 +108,13 @@ class SVNReporter implements ISVNReporterBaton {
                 String url = entry.getURL();
                 String parentURL = entries.getPropertyValue("", SVNProperty.URL);
                 String expectedURL = PathUtil.append(parentURL, PathUtil.encode(entry.getName()));
-                if (!entry.isScheduledForReplacement() && !url.equals(expectedURL)) {
+                if (reportAll) {
+                    if (!url.equals(expectedURL)) {
+                        reporter.linkPath(SVNRepositoryLocation.parseURL(url), path, entry.getLockToken(), entry.getRevision(), false);
+                    } else {
+                        reporter.setPath(path, entry.getLockToken(), entry.getRevision(), false);
+                    }
+                } else if (!entry.isScheduledForReplacement() && !url.equals(expectedURL)) {
                     // link path
                     reporter.linkPath(SVNRepositoryLocation.parseURL(url), path, entry.getLockToken(), entry.getRevision(), false);
                 } else if (entry.getRevision() != baseRevision || entry.getLockToken() != null) {
@@ -122,7 +122,9 @@ class SVNReporter implements ISVNReporterBaton {
                 }
             } else if (entry.isDirectory() && recursive) {
                 if (missing) {
-                    reporter.deletePath(path);
+                    if (!reportAll) {
+                        reporter.deletePath(path);
+                    }
                 }
                 if (file.isFile()) {
                     SVNErrorManager.error(3, null);
@@ -131,10 +133,18 @@ class SVNReporter implements ISVNReporterBaton {
                 SVNDirectory childDir = directory.getChildDirectory(entry.getName());
                 SVNEntry childEntry = childDir.getEntries().getEntry("");
                 String url = childEntry.getURL();
-                if (!url.equals(entry.getURL())) {
-                    reporter.linkPath(SVNRepositoryLocation.parseURL(url), path, childEntry.getLockToken(), childEntry.getRevision(), false);
+                if (reportAll) {
+                    if (!url.equals(entry.getURL())) {
+                        reporter.linkPath(SVNRepositoryLocation.parseURL(url), path, childEntry.getLockToken(), childEntry.getRevision(), childEntry.isIncomplete());
+                    } else {
+                        reporter.setPath(path, childEntry.getLockToken(), childEntry.getRevision(), childEntry.isIncomplete());
+                    }
+                } else if (!url.equals(entry.getURL())) {
+                    reporter.linkPath(SVNRepositoryLocation.parseURL(url), path, childEntry.getLockToken(), childEntry.getRevision(), 
+                            childEntry.isIncomplete());
                 } else if (childEntry.getLockToken() != null || childEntry.getRevision() != baseRevision) {
-                    reporter.setPath(path, childEntry.getLockToken(), childEntry.getRevision(), false);
+                    reporter.setPath(path, childEntry.getLockToken(), childEntry.getRevision(), 
+                            childEntry.isIncomplete());
                 }
                 
                 // dispose child entries.
@@ -145,7 +155,9 @@ class SVNReporter implements ISVNReporterBaton {
         for (Iterator dirs = childDirectories.keySet().iterator(); dirs.hasNext();) {
             String path = (String) dirs.next();
             SVNDirectory dir = (SVNDirectory) childDirectories.get(path);
-            reportEntries(reporter, dir, path, recursive);
+            SVNEntry childEntry = dir.getEntries().getEntry("");            
+            boolean childReportAll = childEntry == null ? true : childEntry.isIncomplete();
+            reportEntries(reporter, dir, path, childReportAll, recursive);
             dir.dispose();
         }
     }
