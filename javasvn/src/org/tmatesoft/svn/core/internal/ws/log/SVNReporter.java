@@ -4,6 +4,8 @@
 package org.tmatesoft.svn.core.internal.ws.log;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -14,6 +16,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.TimeUtil;
 
 class SVNReporter implements ISVNReporterBaton {
 
@@ -57,7 +60,7 @@ class SVNReporter implements ISVNReporterBaton {
             }
         } else if (targetEntry.isFile()){
             if (missing) {
-                // restore file.
+                restoreFile(myWCAccess.getTarget(), targetEntry.getName());
             }
             // report either linked path or entry path
             String url = targetEntry.getURL();
@@ -97,13 +100,18 @@ class SVNReporter implements ISVNReporterBaton {
             File file = directory.getFile(entry.getName());
             boolean missing = !file.exists(); 
             if (entry.isFile()) {
-                // check svn:special files -> symlinks that could be directory.
-                if ((file == null || !file.isFile()) && !reportAll) {
-                    reporter.deletePath(path);
-                    continue;
+                if (!reportAll) {
+                    // check svn:special files -> symlinks that could be directory.
+                    boolean special = SVNFileUtil.isWindows && 
+                        directory.getProperties(entry.getName()).getPropertyValue(SVNProperty.SPECIAL) != null;
+                    
+                    if ((special && !file.exists()) || (!special && file.isDirectory())) {
+                        reporter.deletePath(path);
+                        continue;
+                    }
                 }
                 if (missing && !entry.isScheduledForDeletion() && !entry.isScheduledForReplacement()) {
-                    // restore file.
+                    restoreFile(directory, entry.getName());
                 }
                 String url = entry.getURL();
                 String parentURL = entries.getPropertyValue("", SVNProperty.URL);
@@ -146,8 +154,6 @@ class SVNReporter implements ISVNReporterBaton {
                     reporter.setPath(path, childEntry.getLockToken(), childEntry.getRevision(), 
                             childEntry.isIncomplete());
                 }
-                
-                // dispose child entries.
                 childDirectories.put(path, childDir);
                 childDir.dispose();
             }
@@ -160,5 +166,77 @@ class SVNReporter implements ISVNReporterBaton {
             reportEntries(reporter, dir, path, childReportAll, recursive);
             dir.dispose();
         }
+    }
+    
+    private void restoreFile(SVNDirectory dir, String name) throws SVNException {
+        SVNProperties props = dir.getProperties(name);
+        SVNEntry entry = dir.getEntries().getEntry(name);
+        String eolStyle = props.getPropertyValue(SVNProperty.EOL_STYLE);
+        String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
+
+        String url = entry.getURL();
+        String author = entry.getAuthor();
+        String date = entry.getCommittedDate();
+        long rev = entry.getCommittedRevision();
+        boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
+        
+        Map keywordsMap = SVNTranslator.computeKeywords(keywords, url, author, date, rev);
+
+        File src = dir.getBaseFile(name, false);
+        File dst = dir.getBaseFile(name, true);
+        File file = dir.getFile(name);
+        SVNTranslator.translate(src, dst, SVNTranslator.getEOL(eolStyle), keywordsMap, special);
+        try {
+            SVNFileUtil.rename(dst, file);
+        } catch (IOException e) {
+            SVNErrorManager.error(0, e);
+        } finally {
+            dst.delete();
+        }
+        
+        dir.markResolved(name, true, false);
+        
+        boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
+        boolean needsLock = entry.isNeedsLock();
+        if (executable) {
+            SVNFileUtil.setExecutable(file, true);
+        }
+        if (needsLock) {
+            try {
+                SVNFileUtil.setReadonly(file, entry.getLockToken() == null);
+            } catch (IOException e) {
+                SVNErrorManager.error(0, e);
+            }
+        }
+        long tstamp = file.lastModified();
+        entry.setTextTime(TimeUtil.formatDate(new Date(tstamp)));
+        dir.getEntries().save(false);
+    }
+    
+    public static void main(String[] args) {
+        ISVNReporter r = new ISVNReporter() {
+            public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
+                System.out.println("set-path '" + path + "' : " + revision);
+            }
+            public void deletePath(String path) throws SVNException {
+                System.out.println("delete-path '" + path + "'");
+            }
+            public void linkPath(SVNRepositoryLocation repository, String path, String lockToken, long revison, boolean startEmtpy) throws SVNException {
+            }
+            public void finishReport() throws SVNException {
+                System.out.println("finish-report");
+            }
+            public void abortReport() throws SVNException {
+            }
+        };
+
+        try {
+            SVNWCAccess wcAccess = SVNWCAccess.create(new File("c:/i/test4"));
+            SVNReporter reporter = new SVNReporter(wcAccess, true);
+            reporter.report(r);
+        } catch (SVNException e) {
+            e.printStackTrace();
+        }
+        
     }
 }

@@ -110,4 +110,60 @@ public class SVNEntry implements Comparable {
     public boolean isIncomplete() {
         return Boolean.TRUE.toString().equals(myEntries.getPropertyValue(myName, SVNProperty.INCOMPLETE));
     }
+
+    public String getConflictOld() {
+        return myEntries.getPropertyValue(myName, SVNProperty.CONFLICT_OLD);
+    }
+
+    public void setConflictOld(String name) {
+        myEntries.setPropertyValue(myName, SVNProperty.CONFLICT_OLD, name);
+    }
+
+    public String getConflictNew() {
+        return myEntries.getPropertyValue(myName, SVNProperty.CONFLICT_NEW);
+    }
+
+    public void setConflictNew(String name) {
+        myEntries.setPropertyValue(myName, SVNProperty.CONFLICT_NEW, name);
+    }
+
+    public String getConflictWorking() {
+        return myEntries.getPropertyValue(myName, SVNProperty.CONFLICT_WRK);
+    }
+
+    public void setConflictWorking(String name) {
+        myEntries.setPropertyValue(myName, SVNProperty.CONFLICT_WRK, name);
+    }
+
+    public String getPropRejectFile() {
+        return myEntries.getPropertyValue(myName, SVNProperty.PROP_REJECT_FILE);
+    }
+
+    public void setPropRejectFile(String name) {
+        myEntries.setPropertyValue(myName, SVNProperty.PROP_REJECT_FILE, name);
+    }
+
+    public String getAuthor() {
+        return myEntries.getPropertyValue(myName, SVNProperty.LAST_AUTHOR);
+    }
+
+    public String getCommittedDate() {
+        return myEntries.getPropertyValue(myName, SVNProperty.COMMITTED_DATE);
+    }
+
+    public long getCommittedRevision() {
+        String rev = myEntries.getPropertyValue(myName, SVNProperty.COMMITTED_REVISION);
+        if (rev == null) {
+            return -1;
+        }
+        return Long.parseLong(rev);
+    }
+
+    public boolean isNeedsLock() {
+        return myEntries.getPropertyValue(myName, SVNProperty.NEEDS_LOCK) != null;
+    }
+
+    public void setTextTime(String time) {
+        myEntries.setPropertyValue(myName, SVNProperty.TEXT_TIME, time);
+    }
 }

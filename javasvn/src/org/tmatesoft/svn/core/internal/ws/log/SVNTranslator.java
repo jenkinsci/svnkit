@@ -10,14 +10,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
+import java.io.PushbackInputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.TimeUtil;
 
 class SVNTranslator {
     
-    public static void translate(File src, File dst, byte[] eol, Map keywords, boolean special) throws IOException {
+    public static void translate(File src, File dst, byte[] eol, Map keywords, boolean special) throws SVNException {
         if (src == null || dst == null) {
             // TODO: throw exception
             return;
@@ -32,13 +40,18 @@ class SVNTranslator {
         // 'special' case.
         if (special) {
             // just create symlink, if possible, or just copy file.
-            if (FSUtil.isWindows) {
-                dst.createNewFile();
-                rawCopy(src, dst);                
-            } else {
-                createSymlink(src, dst);
+            try {
+                if (FSUtil.isWindows) {
+                    dst.createNewFile();
+                    SVNFileUtil.copy(src, dst);                
+                } else {
+                    SVNFileUtil.createSymlink(src, dst);
+                }
+            } catch (IOException e) {
+                SVNErrorManager.error(0, e);
             }
             return;
+
         }
         InputStream is = null;
         OutputStream os = null;
@@ -46,6 +59,8 @@ class SVNTranslator {
             is = new FileInputStream(src);
             os = new FileOutputStream(dst);
             copy(is, os, eol, keywords);
+        } catch (IOException e) {
+            SVNErrorManager.error(0, e);
         } finally {
             if (os != null) {
                 try {
@@ -62,20 +77,31 @@ class SVNTranslator {
     }
 
     private static void copy(InputStream src, OutputStream dst, byte[] eol, Map keywords) throws IOException {
+        
+        // 1. read bytes from stream
+        // 2. if eol is met -> translate eol
+        // 3. if $ is met -> read next 255 bytes. 
+        // 3.1. locate next $, but not eol.
+        // 3.2. when located -> translate to the same array or to the new one. unread remaining. write translated.
+        // 3.3. when not located (or other interesting char located) -> write all before that char, unread remaining.
+        // 4. simple char -> simple write.
         ByteArrayOutputStream buffer = new ByteArrayOutputStream(2048);
         keywords = keywords.isEmpty() ? null : keywords;
+        PushbackInputStream in = new PushbackInputStream(src, 2048);
         while(true) {
-            int r = src.read();
+            int r = in.read();
+            System.out.println("from stream: " + ((char) r));
             if (r < 0) {
-                dst.write(buffer.toByteArray());
+                buffer.writeTo(dst);
                 // eof.
                 return;
             }
-            if (r == '\r' || r == '\n' && eol != null) {
+            buffer.write(r);
+            if ((r == '\r' || r == '\n') && eol != null) {
                 // advance in buffer for 1 more char.
-                int next = src.read();
+                int next = in.read();
                 int start = buffer.size() - 1;
-                int end = buffer.size();
+                int end = start;
                 if (next >= 0) {
                     buffer.write(next);
                     end++;
@@ -84,20 +110,20 @@ class SVNTranslator {
                 byte[] bytes = buffer.toByteArray();
                 buffer.reset();
                 if (translateEOL(bytes, start, end, eol, dst) >= 0) {
-                    // for new buffer, could be anything.
-                    buffer.write(next);
+                    in.unread(next);
                 }
             } else if (r == '$' && keywords != null) {
                 int start = buffer.size() - 1;
                 // advance in buffer for 256 more chars.
-                byte[] keywordBuffer = new byte[256];                
-                int l = src.read(keywordBuffer);
+                byte[] keywordBuffer = new byte[256];
+                // fill from readAhead, remaining from buffer.
+                int l = in.read(keywordBuffer);
                 buffer.write(keywordBuffer, 0, l);
                 int end = -1;
                 for(int i = 0; i < l; i++) {
                     if (keywordBuffer[i] == '$') {
                         // end of keyword, translate!
-                        end = i;
+                        end = start + i + 1;
                         break;
                     }
                 }
@@ -106,16 +132,20 @@ class SVNTranslator {
                 if (end > 0) {
                     int from = translateKeywords(bytes, start, end, keywords, dst);
                     if (from < bytes.length) {
-                        buffer.write(bytes, from, bytes.length - from);
+                        // unread all from 'from'
+                        System.out.println("unreading from " + from + ", lenght " + (bytes.length - from));
+                        System.out.println("str: " + new String(bytes, from, (bytes.length - from)));
+                        
+                        in.unread(bytes, from, bytes.length - from);
                     }
                 } else {
-                    dst.write(bytes);
+                    // unread all that was read after first '$'.
+                    in.unread(bytes, start + 1, l);
                 }
             } else {
-                buffer.write(r);
                 if (buffer.size() > 2048) {
                     // flush buffer.
-                    dst.write(buffer.toByteArray());
+                    buffer.writeTo(dst);
                     buffer.reset();
                 }
             }
@@ -148,7 +178,8 @@ class SVNTranslator {
         }
         String keyword = new String(buffer, start + 1, keywordLength, "UTF-8");
         if (!keywords.containsKey(keyword)) {
-            return start;
+            out.write(buffer[start]);
+            return start + 1;
         }
         byte[] value = (byte[]) keywords.get(keyword);
         out.write(buffer, start, keywordLength + 1); // $keyword
@@ -157,6 +188,8 @@ class SVNTranslator {
             // fixed length
             if (value != null) {
                 int valueOffset = 0;
+                out.write(' ');
+                offset++;
                 while (buffer[offset] != '$') {
                     if (valueOffset < value.length) {
                         // or '#' if next is '$'
@@ -204,122 +237,50 @@ class SVNTranslator {
             out.write('$');
             return end + 1;
         }
-        return start;
-    }
-    
-    public static void rawCopy(File src, File dst) throws IOException {
-        FileChannel srcChannel = null;
-        FileChannel dstChannel = null;
-        try {
-            srcChannel = new FileInputStream(src).getChannel();
-            dstChannel = new FileOutputStream(dst).getChannel();
-            long count = srcChannel.size();
-            while(count > 0) {
-                count -= dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
-            }
-        } finally {
-            if (dstChannel != null) {
-                try {
-                    dstChannel.close();
-                } catch (IOException e) {}
-            }
-            if (srcChannel != null) {
-                try {
-                    srcChannel.close();
-                } catch (IOException e) {}
-            }
-        }
+        return start + keywordLength + 1;
     }
 
-    private static void createSymlink(File src, File dst) throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        
-        FileInputStream is = null;
-        try {
-            is = new FileInputStream(src);
-            byte[] buffer = new byte[1024];
-            while(true) {
-                int read = is.read(buffer);
-                if (read <= 0) {
-                    break;
-                }
-                bos.write(buffer, 0, read);
-            }
-        } finally {
-            if (bos != null) {
-                bos.close();
-            }
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                }
-            }
-        }
-        if (bos == null) {
-            // TODO: throw exception
-            return;
-        }
-        String link = new String(bos.toByteArray(), "UTF-8");
-        Runtime.getRuntime().exec("ln -s '" + link + "' '" + dst.getName() + "'");
-    }
-    /*
-    public static void setExecutable(File file, ISVNEntries entries, String name) {
-        if (entries.getProperty(name, SVNProperty.EXECUTABLE) != null) {
-            if (FSUtil.isWindows) {
-                FSUtil.setExecutable(file, true);
-            }
-        }        
-    }
-
-    public static void setReadonly(File file, ISVNEntries entries, String name) {
-        if (entries.getProperty(name, SVNProperty.NEEDS_LOCK) != null &&
-                entries.getProperty(name, SVNProperty.LOCK_TOKEN) == null) {
-            FSUtil.setReadonly(file, true);
-        }        
-    }
-
-    public static Map computeKeywords(ISVNEntries entries, String name, boolean expand) {
-        String keywords = entries.getProperty(name, SVNProperty.KEYWORDS);
+    public static Map computeKeywords(String keywords, String url, String author, String date, long revision) {
         if (keywords == null) {
-            return null;
+            return Collections.EMPTY_MAP;
         }
+        date = date == null ? null : TimeUtil.toHumanDate(date);
+        String revStr = revision < 0 ? null : Long.toString(revision);
+        String name = url == null ? null : PathUtil.tail(url);
+        if (name != null) {
+            name = PathUtil.decode(name);
+        }
+        
         Map map = new HashMap();
-        for(StringTokenizer tokens = new StringTokenizer(keywords, ","); tokens.hasMoreTokens();) {
+        for(StringTokenizer tokens = new StringTokenizer(keywords, " \t\n\b\r\f"); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
             if ("LastChangedDate".equals(token) || "Date".equals(token)) {
-                String dateStr = entries.getProperty(name, SVNProperty.COMMITTED_DATE);
-                dateStr = TimeUtil.toHumanDate(dateStr);
-                map.put("LastChangedDate", expand ? dateStr : null);
-                map.put("Date",  expand ? dateStr : null);
+                map.put("LastChangedDate", date);
+                map.put("Date",  date);
             } else if ("LastChangedRevision".equals(token) || "Revision".equals(token) || "Rev".equals(token)) {
-                String revStr = entries.getProperty(name, SVNProperty.COMMITTED_REVISION);
-                map.put("LastChangedRevision", expand ? revStr : null);
-                map.put("Revision", expand ? revStr : null);
-                map.put("Rev", expand ? revStr : null);
+                map.put("LastChangedRevision", revStr);
+                map.put("Revision", revStr);
+                map.put("Rev", revStr);
             } else if ("LastChangedBy".equals(token) || "Author".equals(token)) {
-                String author = entries.getProperty(name, SVNProperty.LAST_AUTHOR);
-                author = author == null ? "" : author;
-                map.put("LastChangedBy", expand ? author : null);
-                map.put("Author", expand ? author : null);
+                map.put("LastChangedBy", author);
+                map.put("Author", author);
             } else if ("HeadURL".equals(token) || "URL".equals(token)) {                
-                String url = entries.getProperty(name, SVNProperty.URL);
-                map.put("HeadURL", expand ? url : null);
-                map.put("URL", expand ? url : null);
+                map.put("HeadURL", url);
+                map.put("URL", url);
             } else if ("Id".equals(token)) {
-                StringBuffer id = new StringBuffer();
-                id.append(entries.getProperty(name, SVNProperty.NAME));
-                id.append(' ');
-                id.append(entries.getProperty(name, SVNProperty.COMMITTED_REVISION));
-                id.append(' ');
-                String dateStr = entries.getProperty(name, SVNProperty.COMMITTED_DATE);
-                dateStr = TimeUtil.toHumanDate(dateStr);
-                id.append(dateStr);
-                id.append(' ');
-                String author = entries.getProperty(name, SVNProperty.LAST_AUTHOR);
-                author = author == null ? "" : author;
-                id.append(author);
-                map.put("Id", expand ? id.toString() : null);
+                if (url == null) {
+                    map.put("Id", null); 
+                } else {
+                    StringBuffer id = new StringBuffer();
+                    id.append(name);
+                    id.append(' ');
+                    id.append(revStr);
+                    id.append(' ');
+                    id.append(date);
+                    id.append(' ');
+                    id.append(author);
+                    map.put("Id", id.toString());
+                }
             }
         }
         Map result = new HashMap();
@@ -337,7 +298,7 @@ class SVNTranslator {
             }
         }
         return result;
-    }*/
+    }
 
     public static byte[] getEOL(String propertyValue) {
         if ("native".equals(propertyValue)) {

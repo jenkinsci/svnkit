@@ -15,6 +15,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.io.SVNException;
 
 public class SVNEntries {
     
@@ -26,7 +27,7 @@ public class SVNEntries {
         myFile = entriesFile;
     }
     
-    public void open() throws IOException {        
+    public void open() throws SVNException {        
         if (myData != null) {
             return;
         }
@@ -56,6 +57,8 @@ public class SVNEntries {
                     }
                 }
             }
+        } catch (IOException e) {
+            SVNErrorManager.error(0, e);
         } finally {
             if (reader != null) {
                 try {
@@ -65,13 +68,14 @@ public class SVNEntries {
         }
     }
     
-    public void save() throws IOException {
+    public void save(boolean close) throws SVNException {
         if (myData == null) {
             return;
         }
         Writer os = null;
+        File tmpFile = new File(myFile.getParentFile(), "tmp/entries");
         try {
-            os = new FileWriter(myFile);
+            os = new FileWriter(tmpFile);
             os.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
             os.write("<wc-entries\n");
             os.write("   xmlns=\"svn:\">\n");
@@ -96,13 +100,26 @@ public class SVNEntries {
                 }
             }
             os.write("</wc-entries>\n");
+        } catch (IOException e) {
+            tmpFile.delete();
+            e.printStackTrace();
+            SVNErrorManager.error(0, e);
         } finally {
             if (os != null) {
                 try {
                     os.close();
                 } catch (IOException e) {
                 }
-            }
+            }            
+        }
+        try {
+            SVNFileUtil.rename(tmpFile, myFile);
+            SVNFileUtil.setReadonly(myFile, true);
+        } catch (IOException e) {
+            tmpFile.delete();
+            SVNErrorManager.error(0, e);
+        }
+        if (close) {
             close();
         }
     }

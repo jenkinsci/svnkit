@@ -76,11 +76,7 @@ public class SVNDirectory {
     public SVNEntries getEntries() throws SVNException {
         if (myEntries == null) {
             myEntries = new SVNEntries(new File(getAdminDirectory(), "entries"));
-            try {
-                myEntries.open();
-            } catch (IOException e) {
-                SVNErrorManager.error(5, e);
-            }
+            myEntries.open();
         }
         return myEntries;
     }
@@ -96,6 +92,44 @@ public class SVNDirectory {
             myProperties.put(name, new SVNProperties(propertiesFile));
         }
         return (SVNProperties) myProperties.get(name);
+    }
+    
+    public void markResolved(String name, boolean text, boolean props) throws SVNException {
+        if (!text && !props) {
+            return;
+        }
+        SVNEntry entry = getEntries().getEntry(name);
+        if (entry == null) {
+            return;
+        }
+        boolean modified = false;
+        if (text && entry.getConflictOld() != null) {
+            modified = true;
+            File file = new File(myDirectory, entry.getConflictOld());
+            file.delete();
+            entry.setConflictOld(null);
+        }
+        if (text && entry.getConflictNew() != null) {
+            modified = true;
+            File file = new File(myDirectory, entry.getConflictNew());
+            file.delete();
+            entry.setConflictNew(null);
+        }
+        if (text && entry.getConflictWorking() != null) {
+            modified = true;
+            File file = new File(myDirectory, entry.getConflictWorking());
+            file.delete();
+            entry.setConflictWorking(null);
+        }
+        if (props && entry.getPropRejectFile() != null) {
+            File file = new File(myDirectory, entry.getPropRejectFile());
+            file.delete();
+            modified = true;
+            entry.setPropRejectFile(null);
+        }
+        if (modified) {
+            getEntries().save(false);
+        }
     }
     
     public void dispose() {
@@ -119,5 +153,13 @@ public class SVNDirectory {
             return myDirectory;
         }
         return new File(myDirectory, name);
+    }
+
+    public File getBaseFile(String name, boolean tmp) {
+        if ("".equals(name)) {
+            return null;
+        }
+        File parent = tmp ? new File(getAdminDirectory(), "tmp") : getAdminDirectory();
+        return new File(parent, "text-base/" + name + ".svn-base");
     }
 }

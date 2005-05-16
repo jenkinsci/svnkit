@@ -1,7 +1,6 @@
 package org.tmatesoft.svn.core.internal.ws.log;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
@@ -27,19 +26,14 @@ public class SVNUpdateEditor implements ISVNEditor {
 
     public void openRoot(long revision) throws SVNException {
         myIsRootOpen = true;
-        // create SVNDirectoryInfo for myRootPath.
         myCurrentDirectory = createDirectoryInfo(null, null, false);
         if (myTarget == null) {
-            // update root entry
             SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
             SVNEntry entry = entries.getEntry("");
             entry.setRevision(myTargetRevision);
             entry.setURL(myCurrentDirectory.URL);
-            try {
-                entries.save();
-            } catch (IOException e) {
-                SVNErrorManager.error(6, e);
-            }
+            entry.setIncomplete(true);
+            entries.save(true);
         }
     }
 

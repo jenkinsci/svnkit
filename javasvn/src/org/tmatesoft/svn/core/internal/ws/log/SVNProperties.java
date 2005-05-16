@@ -12,6 +12,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.TreeSet;
 
+import org.tmatesoft.svn.core.io.SVNException;
+
 public class SVNProperties {
     
     private File myFile;
@@ -19,7 +21,7 @@ public class SVNProperties {
         myFile = properitesFile;
     }
     
-    public Collection properties(Collection target) throws IOException {
+    public Collection properties(Collection target) throws SVNException {
         target = target == null ? new TreeSet() : target;
         if (!myFile.exists()) {
             return target;
@@ -33,6 +35,8 @@ public class SVNProperties {
                 nameOS.reset();
                 readProperty('V', is, null);
             }
+        } catch (IOException e) {
+            SVNErrorManager.error(0, e);
         } finally {
             if (is != null) {
                 try {
@@ -43,7 +47,7 @@ public class SVNProperties {
         return target;
     }
     
-    public boolean compareTo(SVNProperties properties, ISVNPropertyComparator comparator) throws IOException {
+    public boolean compareTo(SVNProperties properties, ISVNPropertyComparator comparator) throws SVNException {
         boolean equals = true;
         Collection props1 = properties(null); 
         Collection props2 = properties.properties(null);
@@ -60,70 +64,127 @@ public class SVNProperties {
         // added in props2.
         tmp = new TreeSet(props2);
         tmp.removeAll(props1);        
+        
+        File tmpFile = null;
+        File tmpFile1 = null;
+        File tmpFile2 = null;
+        OutputStream os = null;
+        InputStream is = null;
+        InputStream is1 = null;
+        InputStream is2 = null;
+
         for (Iterator props = tmp.iterator(); props.hasNext();) {
             String added = (String) props.next();
+            try {
+                tmpFile = SVNFileUtil.createTempFile(myFile);
+    
+                os = new FileOutputStream(tmpFile);
+                properties.getPropertyValue(added, os);
+                os.close();
 
-            File tmpFile = File.createTempFile("property", "tmp", myFile.getParentFile());
-            tmpFile.deleteOnExit();
-            
-            OutputStream os = new FileOutputStream(tmpFile);
-            properties.getPropertyValue(added, os);
-            os.close();
-            InputStream is = new FileInputStream(tmpFile);
-            comparator.propertyAdded(added, is, (int) tmpFile.length());
-            equals = false;
-            is.close();
-            
-            tmpFile.delete();
+                is = new FileInputStream(tmpFile);
+                comparator.propertyAdded(added, is, (int) tmpFile.length());
+                equals = false;
+                is.close();
+            } catch (IOException e) {
+                SVNErrorManager.error(0, e);
+            } finally {
+                if (tmpFile != null) {
+                    tmpFile.delete();
+                }
+                if (os != null) {
+                    try {
+                        os.close();
+                    } catch (IOException e) {}
+                }
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException e) {}
+                }
+                tmpFile = null;
+                is = null;
+                os = null;
+            }
         }        
         
         // changed in props2
         props2.retainAll(props1);
         for (Iterator props = props2.iterator(); props.hasNext();) {
             String changed = (String) props.next();
-
-            File tmpFile1 = File.createTempFile("property", "tmp", myFile.getParentFile());
-            tmpFile1.deleteOnExit();
-            File tmpFile2 = File.createTempFile("property", "tmp", myFile.getParentFile());
-            tmpFile2.deleteOnExit();
             
-            OutputStream os = new FileOutputStream(tmpFile1);
-            getPropertyValue(changed, os);
-            os.close();
-            os = new FileOutputStream(tmpFile2);
-            properties.getPropertyValue(changed, os);
-            os.close();
-            if (tmpFile2.length() != tmpFile1.length()) {
-                InputStream is = new FileInputStream(tmpFile2);
-                comparator.propertyChanged(changed, is, (int) tmpFile2.length());
-                equals = false;
-                is.close();
-            } else {
-                InputStream is1 = new FileInputStream(tmpFile1);
-                InputStream is2 = new FileInputStream(tmpFile2);
-                boolean differs = false;
-                for(int i = 0; i < tmpFile1.length(); i++) {
-                    if (is1.read() != is2.read()) {
-                        differs = true;
-                        break;
+            try {
+                tmpFile1 = SVNFileUtil.createTempFile(myFile);
+                tmpFile2 = SVNFileUtil.createTempFile(myFile);
+                
+                os = new FileOutputStream(tmpFile1);
+                getPropertyValue(changed, os);
+                os.close();
+                os = new FileOutputStream(tmpFile2);
+                properties.getPropertyValue(changed, os);
+                os.close();
+                if (tmpFile2.length() != tmpFile1.length()) {
+                    is = new FileInputStream(tmpFile2);
+                    comparator.propertyChanged(changed, is, (int) tmpFile2.length());
+                    equals = false;
+                    is.close();
+                } else {
+                    is1 = new FileInputStream(tmpFile1);
+                    is2 = new FileInputStream(tmpFile2);
+                    boolean differs = false;
+                    for(int i = 0; i < tmpFile1.length(); i++) {
+                        if (is1.read() != is2.read()) {
+                            differs = true;
+                            break;
+                        }
+                    }
+                    is1.close();
+                    is2.close();
+                    if (differs) {
+                        is2 = new FileInputStream(tmpFile2);
+                        comparator.propertyChanged(changed, is2, (int) tmpFile2.length());
+                        equals = false;
+                        is2.close();
                     }
                 }
-                is1.close();
-                is2.close();
-                if (differs) {
-                    is2 = new FileInputStream(tmpFile2);
-                    comparator.propertyChanged(changed, is2, (int) tmpFile2.length());
-                    equals = false;
-                    is2.close();
+            } catch (IOException e) {
+                SVNErrorManager.error(0, e);
+            } finally {
+                if (tmpFile2 != null) {
+                    tmpFile2.delete();
                 }
-            }            
-            tmpFile2.delete();
-            tmpFile1.delete();
+                if (tmpFile2 != null) {
+                    tmpFile1.delete();
+                }
+                if (os != null) {
+                    try {
+                        os.close();
+                    } catch (IOException e) {}
+                }
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException e) {}
+                }
+                if (is1 != null) {
+                    try {
+                        is1.close();
+                    } catch (IOException e) {}
+                }
+                if (is2 != null) {
+                    try {
+                        is2.close();
+                    } catch (IOException e) {}
+                }
+                os = null;
+                tmpFile1 = tmpFile2 = null;
+                is = is1 = is2 = null;
+            }
         }
         return equals;
     }
     
-    public String getPropertyValue(String name) throws IOException {
+    public String getPropertyValue(String name) throws SVNException {
         if (!myFile.exists()) {
             return null;
         }
@@ -131,12 +192,16 @@ public class SVNProperties {
         getPropertyValue(name, os);
         if (os.size() > 0) {
             byte[] bytes = os.toByteArray();
-            return new String(bytes, "UTF-8");
+            try {
+                return new String(bytes, "UTF-8");
+            } catch (IOException e) {
+            }
+            return new String(bytes);
         }
         return null;
     }
 
-    public void getPropertyValue(String name, OutputStream os) throws IOException {
+    public void getPropertyValue(String name, OutputStream os) throws SVNException {
         if (!myFile.exists()) {
             return;
         }
@@ -154,6 +219,8 @@ public class SVNProperties {
                     readProperty('V', is, null);
                 }
             }
+        } catch (IOException e) {
+            SVNErrorManager.error(0, e);
         } finally {
             if (is != null) {
                 try {
@@ -163,33 +230,34 @@ public class SVNProperties {
         }
     }
 
-    public void setPropertyValue(String name, String value) throws IOException {
-        byte[] bytes = value != null ? value.getBytes("UTF-8") : null;
+    public void setPropertyValue(String name, String value) throws SVNException {
+        
+        byte[] bytes = null;
+        if (value != null) {
+            try {
+                bytes = value.getBytes("UTF-8");
+            } catch (IOException e) {
+                bytes = value.getBytes();
+            }
+        }
         int length = bytes != null && bytes.length > 0 ? bytes.length : -1;
         setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes) : null, length);
     }
 
-    public void setPropertyValue(String name, InputStream is, int length) throws IOException {
+    public void setPropertyValue(String name, InputStream is, int length) throws SVNException {
         InputStream src = null;
         OutputStream dst = null;
         File tmpFile = null;
         try {
-            tmpFile = File.createTempFile("property", "tmp", myFile.getParentFile());
-            tmpFile.deleteOnExit();
+            tmpFile = SVNFileUtil.createTempFile(myFile);
             if (myFile.exists()) {
                 src = new FileInputStream(myFile);
             }
             dst = new FileOutputStream(tmpFile);
             copyProperties(src, dst, name, is, length);
-            src.close();
-            dst.close();
-            src = null;
-            dst = null;
-            if (myFile.exists()) {
-                myFile.delete();                
-            }
-            tmpFile.renameTo(myFile);
-        } finally {
+        } catch(IOException e) {
+            SVNErrorManager.error(0, e);
+        } finally {        
             if (src != null) {
                 try {
                     src.close();
@@ -200,9 +268,17 @@ public class SVNProperties {
                     dst.close();
                 } catch (IOException e) {}
             }
-            if (tmpFile != null && tmpFile.exists()) {
+        }
+        try {
+            if (tmpFile != null) {
+                SVNFileUtil.rename(tmpFile, myFile);
+                SVNFileUtil.setReadonly(myFile, true);
+            }            
+        } catch (IOException e) {
+            if (tmpFile != null) {
                 tmpFile.delete();
             }
+            SVNErrorManager.error(0, e);
         }
     }
     
