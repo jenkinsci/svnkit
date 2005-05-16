@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.Base64;
+import org.tmatesoft.svn.util.DebugLog;
 import org.xml.sax.SAXException;
 
 /**
@@ -46,6 +47,7 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
                 try {
                     handleDiffWindowClosed();
                 } catch (SVNException e) {
+                    DebugLog.error(e);
                 }
                 return;
             }
@@ -55,13 +57,15 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
             while(window != null) {
                 try {
                     os = handleDiffWindow(window);
-                    os.write(myByteBuffer, newOffset, (int) window.getNewDataLength());
-                    os.close();
+                    if (os != null) {
+                        os.write(myByteBuffer, newOffset, (int) window.getNewDataLength());
+                        os.close();
+                    }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    DebugLog.error(e);
                 } catch (SVNException e) {
-                    e.printStackTrace();
-                }
+                    DebugLog.error(e);
+                } 
                 newOffset = newOffset + (int) window.getNewDataLength();
                 if (newOffset < Base64.lastLength()) {
                     myDiffBuilder.reset(1);
@@ -74,7 +78,7 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
             try {
                 handleDiffWindowClosed();
             } catch (SVNException e) {
-                e.printStackTrace();
+                DebugLog.error(e);
             }
         } else {
             myDiffBuilder.reset();
