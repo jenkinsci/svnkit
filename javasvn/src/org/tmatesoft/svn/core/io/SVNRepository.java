@@ -12,6 +12,7 @@
 
 package org.tmatesoft.svn.core.io;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
@@ -410,7 +411,12 @@ public abstract class SVNRepository {
                 result.add(fileRevision);
             }
             public OutputStream handleDiffWindow(String token, SVNDiffWindow delta) {
-            	return null;
+            	return new OutputStream() {
+                    public void write(byte[] b, int o, int l) throws IOException {
+                    }
+                    public void write(int r) throws IOException {
+                    }
+                };
             }
             public void handleDiffWindowClosed(String token) {
             }
