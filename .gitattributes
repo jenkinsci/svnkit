@@ -36,8 +36,6 @@ javasvn-test/test.windows.properties eol=crlf
 javasvn/cli/svn eol=lf
 javasvn/cli/svn.bat eol=crlf
 javasvn/src/org/tmatesoft/svn/cli/command/PropgetCommand.java -text
-javasvn/src/org/tmatesoft/svn/core/internal/ws/log/ISVNEntry.java -text
-javasvn/src/org/tmatesoft/svn/core/internal/ws/log/ISVNOptions.java -text
 /plugin.xml -text
 www/.htaccess eol=lf
 www/ant.html eol=lf

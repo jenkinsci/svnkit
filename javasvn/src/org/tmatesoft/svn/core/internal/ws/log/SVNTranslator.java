@@ -10,16 +10,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.channels.FileChannel;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.StringTokenizer;
 
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
-import org.tmatesoft.svn.util.TimeUtil;
 
 class SVNTranslator {
     
@@ -213,7 +207,7 @@ class SVNTranslator {
         return start;
     }
     
-    private static void rawCopy(File src, File dst) throws IOException {
+    public static void rawCopy(File src, File dst) throws IOException {
         FileChannel srcChannel = null;
         FileChannel dstChannel = null;
         try {
@@ -269,7 +263,7 @@ class SVNTranslator {
         String link = new String(bos.toByteArray(), "UTF-8");
         Runtime.getRuntime().exec("ln -s '" + link + "' '" + dst.getName() + "'");
     }
-    
+    /*
     public static void setExecutable(File file, ISVNEntries entries, String name) {
         if (entries.getProperty(name, SVNProperty.EXECUTABLE) != null) {
             if (FSUtil.isWindows) {
@@ -343,7 +337,7 @@ class SVNTranslator {
             }
         }
         return result;
-    }
+    }*/
 
     public static byte[] getEOL(String propertyValue) {
         if ("native".equals(propertyValue)) {
@@ -357,6 +351,26 @@ class SVNTranslator {
         }
         return null;
     }
-    
+
+    public static String xmlEncode(String value) {
+        value = value.replaceAll("&", "&amp;");
+        value = value.replaceAll("<", "&lt;");
+        value = value.replaceAll(">", "&gt;");
+        value = value.replaceAll("\"", "&quot;");
+        value = value.replaceAll("'", "&apos;");
+        value = value.replaceAll("\t", "&#09;");
+        return value;
+    }
+
+    public static String xmlDecode(String value) {
+        value = value.replaceAll("&lt;", "<");
+        value = value.replaceAll("&gt;", ">");
+        value = value.replaceAll("&quot;", "\"");
+        value = value.replaceAll("&apos;", "'");
+        value = value.replaceAll("&#09;", "\t");
+        value = value.replaceAll("&amp;", "&");
+        return value;
+    }
+  
     
 }

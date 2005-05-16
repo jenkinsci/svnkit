@@ -3,10 +3,9 @@
  */
 package org.tmatesoft.svn.core.internal.ws.log;
 
-import java.io.IOException;
 
 class SVNUpdater {
-    
+    /*
     public void update(ISVNAdminArea root, String target, long revision, boolean recursive) {
         // 1. lock all
         try {
@@ -51,5 +50,5 @@ class SVNUpdater {
             }
         }
     }
-
+*/
 }
