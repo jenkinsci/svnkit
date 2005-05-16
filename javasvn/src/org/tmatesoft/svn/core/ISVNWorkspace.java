@@ -89,14 +89,8 @@ public interface ISVNWorkspace {
 
 	public long commitPaths(List paths, String message, boolean keepLocks, ISVNProgressViewer progressViewer) throws SVNException;
 
-	/**
-	 * @deprecated Use getCommittablePaths().
-	 */
 	public SVNCommitPacket createCommitPacket(String[] paths, boolean recursive, boolean includeParents) throws SVNException;
 
-	/**
-	 * @deprecated Use commitPaths()
-	 */
 	public long commit(SVNCommitPacket packet, boolean keepLocks, String message) throws SVNException;
 
     public long commit(String paths[], ISVNCommitHandler handler, boolean recursive, boolean includeUnversionedParents) throws SVNException;

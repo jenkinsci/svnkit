@@ -29,7 +29,6 @@ import junit.framework.TestSuite;
 
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 import org.tmatesoft.svn.core.test.diff.SVNSequenceDeltaGeneratorTest;
-import org.tmatesoft.svn.core.test.diff.SVNSequenceLineReaderTest;
 import org.tmatesoft.svn.core.test.diff.internal.ws.fs.FSMergerBySequenceTest;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
@@ -114,7 +113,6 @@ public class AllTests extends TestSuite {
         final TestSuite allTests = new TestSuite("All Tests");
         if (!properties.containsKey("tests.mask")) {
             allTests.addTestSuite(SVNSequenceDeltaGeneratorTest.class);
-            allTests.addTestSuite(SVNSequenceLineReaderTest.class);
             allTests.addTestSuite(FSMergerBySequenceTest.class);
         }
         for(int i = 0; i < urls.size(); i++) {

@@ -36,6 +36,15 @@ public class RevertCommand extends SVNCommand {
             final String absolutePath = getCommandLine().getPathAt(i);
             final String workspacePath = absolutePath;
             final ISVNWorkspace workspace = createWorkspace(absolutePath);
+
+            ISVNWorkspace rootWorkspace = createWorkspace(absolutePath, false);
+            if (SVNProperty.SCHEDULE_ADD.equals(rootWorkspace.getPropertyValue("", SVNProperty.SCHEDULE)) &&
+                    ".".equals(absolutePath)) {
+                err.println("svn: can't revert added directory from within");
+                continue;
+            }
+            final String relativePath = SVNUtil.getWorkspacePath(workspace, absolutePath);
+
             workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
                 public void modified(String path, int kind) {
                     String wcPath = path;
@@ -61,7 +70,6 @@ public class RevertCommand extends SVNCommand {
                 }
             });
 
-            final String relativePath = SVNUtil.getWorkspacePath(workspace, absolutePath);
             workspace.revert(relativePath, recursive);
         }
     }

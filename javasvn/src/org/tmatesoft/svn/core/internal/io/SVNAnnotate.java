@@ -18,9 +18,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.diff.delta.SVNSequenceLine;
-import org.tmatesoft.svn.core.diff.delta.SVNSequenceLineReader;
-import org.tmatesoft.svn.core.diff.delta.SVNSequenceMedia;
+
+import de.regnis.q.sequence.line.*;
+
+import de.regnis.q.sequence.line.QSequenceLineReader;
+import de.regnis.q.sequence.line.QSequenceMedia;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
 import org.tmatesoft.svn.core.io.ISVNAnnotateHandler;
@@ -159,14 +161,14 @@ public class SVNAnnotate implements ISVNFileRevisionHandler {
 			left = new FileInputStream(myBaseFilePath);
 			right = new FileInputStream(myTempFilePath);
 			
-			SVNSequenceLineReader reader = new SVNSequenceLineReader(null);
+			QSequenceLineReader reader = new QSequenceLineReader(null);
 
-	        SVNSequenceLine[] leftLines = reader.read(left);
-	        SVNSequenceLine[] rightLines = reader.read(right);
+	        QSequenceLine[] leftLines = reader.read(left);
+	        QSequenceLine[] rightLines = reader.read(right);
 			ArrayList newLines = new ArrayList();
 			int lastStart = 0;
 			
-	        List blocksList = SVNSequenceMedia.createBlocks(leftLines, rightLines);
+	        List blocksList = QSequenceMedia.createBlocks(leftLines, rightLines);
 			for(int i = 0; i < blocksList.size(); i++) {
 				QSequenceDifferenceBlock block = (QSequenceDifferenceBlock) blocksList.get(i);
 				// remove these lines from lines map...

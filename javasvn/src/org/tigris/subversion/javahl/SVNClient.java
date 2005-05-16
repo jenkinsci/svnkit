@@ -38,10 +38,6 @@ import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
-import org.tmatesoft.svn.core.diff.ISVNDiffGenerator;
-import org.tmatesoft.svn.core.diff.ISVNDiffGeneratorFactory;
-import org.tmatesoft.svn.core.diff.SVNDiffManager;
-import org.tmatesoft.svn.core.diff.SVNUniDiffGenerator;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -65,6 +61,11 @@ import org.tmatesoft.svn.util.SVNUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 import org.tmatesoft.svn.util.Version;
 
+import de.regnis.q.sequence.line.diff.QDiffGenerator;
+import de.regnis.q.sequence.line.diff.QDiffGeneratorFactory;
+import de.regnis.q.sequence.line.diff.QDiffManager;
+import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
+
 /**
  * @author TMate Software Ltd.
  */
@@ -78,7 +79,7 @@ public class SVNClient implements SVNClientInterface {
 	private String myConfigDir;
     
     public SVNClient() {
-        SVNDiffManager.setup();
+        QDiffManager.setup();
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
         FSEntryFactory.setup();
@@ -333,12 +334,9 @@ public class SVNClient implements SVNClientInterface {
         };
         
         if (isURL(path)) {
+            DebugLog.log("logMessages called for " + path);
             try {
                 String target = "";
-                if (!path.endsWith("/")) {
-                    target = PathUtil.tail(path);
-                    path = PathUtil.removeTail(path);
-                }
                 SVNRepository repository = createRepository(path);
                 long revStart = getRevisionNumber(revisionStart, repository, null, null);
                 long revEnd = getRevisionNumber(revisionEnd, repository, null, null);
@@ -1110,9 +1108,9 @@ public class SVNClient implements SVNClientInterface {
         ByteArrayInputStream is2 = new ByteArrayInputStream(byteArray2);
 
         Map properties = new HashMap();
-        properties.put(ISVNDiffGeneratorFactory.COMPARE_EOL_PROPERTY, Boolean.TRUE.toString());
-        properties.put(ISVNDiffGeneratorFactory.WHITESPACE_PROPERTY, Boolean.FALSE.toString());
-        properties.put(ISVNDiffGeneratorFactory.EOL_PROPERTY, System.getProperty("line.separator"));
+        properties.put(QDiffGeneratorFactory.COMPARE_EOL_PROPERTY, Boolean.TRUE.toString());
+        properties.put(QDiffGeneratorFactory.WHITESPACE_PROPERTY, Boolean.FALSE.toString());
+        properties.put(QDiffGeneratorFactory.EOL_PROPERTY, System.getProperty("line.separator"));
         
         String encoding = System.getProperty("file.encoding", "US-ASCII");
 
@@ -1125,7 +1123,7 @@ public class SVNClient implements SVNClientInterface {
             if (FSUtil.isWindows) {
                 osTargetPath = targetPath.replace('/', File.separatorChar);
             }
-            ISVNDiffGenerator diff = SVNDiffManager.getDiffGenerator(SVNUniDiffGenerator.TYPE, properties);
+            QDiffGenerator diff = QDiffManager.getDiffGenerator(QDiffUniGenerator.TYPE, properties);
             if (diff == null) {
             	throwException(new SVNException("no suitable diff generator found"));
             	return;

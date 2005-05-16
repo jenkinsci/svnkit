@@ -27,8 +27,10 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.diff.delta.SVNSequenceLine;
-import org.tmatesoft.svn.core.diff.delta.SVNSequenceLineReader;
+
+import de.regnis.q.sequence.line.*;
+
+import de.regnis.q.sequence.line.QSequenceLineReader;
 import org.tmatesoft.svn.util.DebugLog;
 
 /**
@@ -215,9 +217,9 @@ public class FSUtil {
                     }
                 }
             } else {
-                SVNSequenceLineReader reader = new SVNSequenceLineReader(new byte[0]);
-                SVNSequenceLine[] lines1 = reader.read(is1);
-                SVNSequenceLine[] lines2 = reader.read(is2);
+                QSequenceLineReader reader = new QSequenceLineReader(new byte[0]);
+                QSequenceLine[] lines1 = reader.read(is1);
+                QSequenceLine[] lines2 = reader.read(is2);
                 if (lines1 == null || lines2 == null) {
                     return lines1 == lines2;
                 }

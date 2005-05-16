@@ -13,7 +13,7 @@
 package org.tmatesoft.svn.core.internal.io.dav;
 
 
-class DAVBaselineInfo {
+public class DAVBaselineInfo {
     
     public String baselinePath;
     public String baselineBase;

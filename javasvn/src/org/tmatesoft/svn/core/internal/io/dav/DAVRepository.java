@@ -343,9 +343,9 @@ class DAVRepository extends SVNRepository {
     }
 
     public void update(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, null, recursive, false, false, true, reporter);
         try {
             openConnection();
+            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), revision, target, null, recursive, false, false, true, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
@@ -365,9 +365,9 @@ class DAVRepository extends SVNRepository {
         if (url == null) {
             throw new SVNException(url + ": not valid URL");
         }
-        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, url, recursive, true, false, true, reporter);
         try {
             openConnection();
+            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), revision, target, url, recursive, true, false, true, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
@@ -386,9 +386,9 @@ class DAVRepository extends SVNRepository {
         if (url == null) {
             throw new SVNException(url + ": not valid URL");
         }
-        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, url, recursive, ignoreAncestry, false, true, reporter);
         try {
             openConnection();
+            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), revision, target, url, recursive, ignoreAncestry, false, true, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
@@ -403,9 +403,9 @@ class DAVRepository extends SVNRepository {
     }
 
     public void status(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        StringBuffer request = DAVEditorHandler.generateEditorRequest(null, getLocation().toString(), revision, target, null, recursive, false, false, false, reporter);
         try {
             openConnection();
+            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), revision, target, null, recursive, false, false, false, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, false);
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
@@ -492,7 +492,11 @@ class DAVRepository extends SVNRepository {
         }
         // it was a relative path relative to location path.
         // decode??
-        path = PathUtil.append(getLocation().getPath(), path);
+        if ("".equals(path)) {
+            path = getLocation().getPath();
+        } else {
+            path = PathUtil.append(getLocation().getPath(), path);
+        }
         if (path.charAt(0) != '/') {
             path = '/' + path;            
         }

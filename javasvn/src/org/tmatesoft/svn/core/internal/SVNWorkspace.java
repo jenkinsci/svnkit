@@ -949,6 +949,9 @@ public class SVNWorkspace implements ISVNWorkspace {
 
     public long commit(SVNCommitPacket packet, boolean keepLocks, String message)
             throws SVNException {
+        if (packet == null) {
+            return -1;
+        }
         final SVNStatus[] statuses = packet.getStatuses();
         return commitPaths(getPathsFromStatuses(statuses), message, keepLocks,
                 null);
@@ -1573,6 +1576,7 @@ public class SVNWorkspace implements ISVNWorkspace {
     public void unlock(String path, boolean force) throws SVNException {
         try {
             ISVNEntry entry = locateEntry(path);
+            ISVNEntry parent = locateParentEntry(path);
             if (entry == null) {
                 throw new SVNException("no versioned entry at '" + path + "'");
             }
@@ -1592,8 +1596,11 @@ public class SVNWorkspace implements ISVNWorkspace {
             entry.setPropertyValue(SVNProperty.LOCK_TOKEN, null);
             entry.setPropertyValue(SVNProperty.LOCK_COMMENT, null);
             entry.setPropertyValue(SVNProperty.LOCK_CREATION_DATE, null);
-            entry.setPropertyValue(SVNProperty.LOCK_OWNER, null);
+            entry.setPropertyValue(SVNProperty.LOCK_OWNER, null);            
             entry.save();
+            if (!entry.isDirectory()) {
+                parent.save(false);
+            }
         } finally {
             getRoot().dispose();
         }
@@ -1711,7 +1718,7 @@ public class SVNWorkspace implements ISVNWorkspace {
     private void doRevert(ISVNDirectoryEntry parent, ISVNEntry entry,
             boolean dirsOnly, boolean recursive) throws SVNException {
         boolean restored = !entry.isDirectory() && entry.isMissing();
-        if (entry.isDirectory() && recursive) {
+        if (entry.isDirectory() && !entry.isScheduledForAddition() && recursive) {
             Collection namesList = new LinkedList();
             for (Iterator children = entry.asDirectory().childEntries(); children
                     .hasNext();) {

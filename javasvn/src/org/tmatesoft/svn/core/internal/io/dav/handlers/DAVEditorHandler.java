@@ -15,6 +15,8 @@ package org.tmatesoft.svn.core.internal.io.dav.handlers;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.io.dav.DAVBaselineInfo;
+import org.tmatesoft.svn.core.internal.io.dav.DAVConnection;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -23,6 +25,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.Base64;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.xml.sax.Attributes;
 
@@ -32,7 +35,7 @@ import org.xml.sax.Attributes;
 	
 public class DAVEditorHandler extends BasicDAVDeltaHandler {
 
-    public static StringBuffer generateEditorRequest(StringBuffer buffer, final String url, 
+    public static StringBuffer generateEditorRequest(final DAVConnection connection, StringBuffer buffer, final String url, 
             long targetRevision, String target, String dstPath, boolean recurse,
             boolean ignoreAncestry, boolean resourceWalk, 
             boolean fetchContents, ISVNReporterBaton reporterBaton) {
@@ -110,8 +113,11 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                     if (startEmpty) {
                         report.append("start-empty=\"true\" ");                        
                     }
-                    String switchUrl = repository.toString();
-                    switchUrl = switchUrl.substring(url.length());
+                    String linkedPath = repository.getPath();
+                    DAVBaselineInfo info = DAVUtil.getBaselineInfo(connection, linkedPath, revision, false, false, null);
+
+                    String switchUrl = info.baselinePath;
+                    DebugLog.log("REPORTING LINKED PATH: " + switchUrl);
                     report.append("linkpath=\"");
                     // switched path relative to connection root.
                     report.append(DAVUtil.xmlEncode(switchUrl));

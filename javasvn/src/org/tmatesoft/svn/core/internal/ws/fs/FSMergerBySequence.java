@@ -17,11 +17,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNStatus;
-import org.tmatesoft.svn.core.diff.delta.SVNSequenceLine;
-import org.tmatesoft.svn.core.diff.delta.SVNSequenceLineReader;
-import org.tmatesoft.svn.core.diff.delta.SVNSequenceMedia;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
+import de.regnis.q.sequence.line.QSequenceLine;
+import de.regnis.q.sequence.line.QSequenceLineReader;
+import de.regnis.q.sequence.line.QSequenceMedia;
 
 /**
  * @author TMate Software Ltd.
@@ -47,13 +47,13 @@ public class FSMergerBySequence {
     // Accessing ==============================================================
 
     public int merge(InputStream baseStream, InputStream localStream, InputStream latestStream, OutputStream result) throws IOException {
-        final SVNSequenceLineReader reader = new SVNSequenceLineReader(eolBytes);
-        final SVNSequenceLine[] baseLines = reader.read(baseStream);
-        final SVNSequenceLine[] localLines = reader.read(localStream);
-        final SVNSequenceLine[] latestLines = reader.read(latestStream);
+        final QSequenceLineReader reader = new QSequenceLineReader(eolBytes);
+        final QSequenceLine[] baseLines = reader.read(baseStream);
+        final QSequenceLine[] localLines = reader.read(localStream);
+        final QSequenceLine[] latestLines = reader.read(latestStream);
 
-        final FSMergerBySequenceList local = new FSMergerBySequenceList(SVNSequenceMedia.createBlocks(baseLines, localLines));
-        final FSMergerBySequenceList latest = new FSMergerBySequenceList(SVNSequenceMedia.createBlocks(baseLines, latestLines));
+        final FSMergerBySequenceList local = new FSMergerBySequenceList(QSequenceMedia.createBlocks(baseLines, localLines));
+        final FSMergerBySequenceList latest = new FSMergerBySequenceList(QSequenceMedia.createBlocks(baseLines, latestLines));
 
         int baseLineIndex = -1;
         boolean conflict = false;
@@ -119,7 +119,7 @@ public class FSMergerBySequence {
         return block1.getLeftFrom() <= block2.getLeftTo() + 1 && block2.getLeftFrom() <= block1.getLeftTo() + 1;
     }
 
-    private int appendLines(OutputStream result, QSequenceDifferenceBlock block, SVNSequenceLine[] changedLines, int baseLineIndex) throws IOException {
+    private int appendLines(OutputStream result, QSequenceDifferenceBlock block, QSequenceLine[] changedLines, int baseLineIndex) throws IOException {
         for (int equalLineIndex = block.getRightFrom() - (block.getLeftFrom() - 1 - baseLineIndex); equalLineIndex < block.getRightFrom(); equalLineIndex++) {
             writeLine(result, changedLines[equalLineIndex]);
         }
@@ -131,8 +131,8 @@ public class FSMergerBySequence {
         return block.getLeftTo();
     }
 
-    private boolean isEqualChange(QSequenceDifferenceBlock localBlock, QSequenceDifferenceBlock latestBlock, SVNSequenceLine[] localLines,
-            SVNSequenceLine[] latestLines) {
+    private boolean isEqualChange(QSequenceDifferenceBlock localBlock, QSequenceDifferenceBlock latestBlock, QSequenceLine[] localLines,
+            QSequenceLine[] latestLines) {
         if (localBlock.getLeftTo() - localBlock.getLeftFrom() != latestBlock.getLeftTo() - latestBlock.getLeftFrom()) {
             return false;
         }
@@ -142,8 +142,8 @@ public class FSMergerBySequence {
         }
 
         for (int index = 0; index < localBlock.getRightTo() - localBlock.getRightFrom() + 1; index++) {
-            final SVNSequenceLine localLine = localLines[localBlock.getRightFrom() + index];
-            final SVNSequenceLine latestLine = latestLines[latestBlock.getRightFrom() + index];
+            final QSequenceLine localLine = localLines[localBlock.getRightFrom() + index];
+            final QSequenceLine latestLine = latestLines[latestBlock.getRightFrom() + index];
             if (!localLine.equals(latestLine)) {
                 return false;
             }
@@ -152,8 +152,8 @@ public class FSMergerBySequence {
         return true;
     }
 
-    private boolean checkConflict(FSMergerBySequenceList localChanges, FSMergerBySequenceList latestChanges, SVNSequenceLine[] localLines,
-            SVNSequenceLine[] latestLines) {
+    private boolean checkConflict(FSMergerBySequenceList localChanges, FSMergerBySequenceList latestChanges, QSequenceLine[] localLines,
+            QSequenceLine[] latestLines) {
         boolean conflict = false;
         while (intersect(localChanges.current(), latestChanges.current())
                 && !isEqualChange(localChanges.current(), latestChanges.current(), localLines, latestLines)) {
@@ -177,8 +177,8 @@ public class FSMergerBySequence {
     }
 
     private int createConflict(OutputStream result, QSequenceDifferenceBlock localStart, QSequenceDifferenceBlock localEnd,
-            QSequenceDifferenceBlock latestStart, QSequenceDifferenceBlock latestEnd, SVNSequenceLine[] baseLines, SVNSequenceLine[] localLines,
-            SVNSequenceLine[] latestLines, int baseLineIndex) throws IOException {
+            QSequenceDifferenceBlock latestStart, QSequenceDifferenceBlock latestEnd, QSequenceLine[] baseLines, QSequenceLine[] localLines,
+            QSequenceLine[] latestLines, int baseLineIndex) throws IOException {
         final int minBaseFrom = Math.min(localStart.getLeftFrom(), latestStart.getLeftFrom());
         final int maxBaseTo = Math.max(localEnd.getLeftTo(), latestEnd.getLeftTo());
 
@@ -204,7 +204,7 @@ public class FSMergerBySequence {
         return maxBaseTo;
     }
 
-    private void writeLine(OutputStream os, SVNSequenceLine line) throws IOException {
+    private void writeLine(OutputStream os, QSequenceLine line) throws IOException {
         final byte[] bytes = line.getBytes();
         if (bytes.length == 0) {
             return;

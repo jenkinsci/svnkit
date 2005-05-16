@@ -91,11 +91,12 @@ if sys.platform == 'win32':
 else:
   windows = 0
   file_scheme_prefix = 'file://'
-  _exe = ''
   _bat = ''
+  _exe = ''
 
 # The locations of the svn, svnadmin and svnlook binaries, relative to
 # the only scripts that import this file right now (they live in ../).
+#svn_binary = os.path.abspath('../../../clients/cmdline/svn' + _exe)
 svn_binary = os.path.abspath('../../../build/lib/svn' + _bat)
 svnadmin_binary = 'svnadmin' + _exe
 svnlook_binary = 'svnlook' + _exe
@@ -359,7 +360,7 @@ def create_repos(path):
 
   # Allow unauthenticated users to write to the repos, for ra_svn testing.
   file_append(os.path.join(path, "conf", "svnserve.conf"),
-              "[general]\nauth-access=write\npassword-db = passwd\n");
+              "[general]\nauth-access = write\npassword-db = passwd\n");
   file_append(os.path.join(path, "conf", "passwd"),
                "[users]\njrandom = rayjandom\njconstant = rayjandom\n");
   # make the repos world-writeable, for mod_dav_svn's sake.

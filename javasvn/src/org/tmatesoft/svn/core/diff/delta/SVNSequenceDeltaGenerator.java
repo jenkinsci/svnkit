@@ -17,6 +17,7 @@ import org.tmatesoft.svn.util.FileTypeUtil;
 import org.tmatesoft.svn.util.SVNAssert;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
+import de.regnis.q.sequence.line.*;
 
 /**
  * @author Marc Strapetz
@@ -45,8 +46,8 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
     // Utils ==================================================================
 
     private static void doGenerateDiffWindow(ISVNRAData workFile, ISVNRAData baseFile, ISVNDeltaConsumer consumer) throws IOException, SVNException {
-        final SVNSequenceLine[] workLines = new SVNSequenceLineReader(null).read(workFile.read(0, workFile.length()));
-        final SVNSequenceLine[] baseLines = new SVNSequenceLineReader(null).read(baseFile.read(0, baseFile.length()));
+        final QSequenceLine[] workLines = new QSequenceLineReader(null).read(workFile.read(0, workFile.length()));
+        final QSequenceLine[] baseLines = new QSequenceLineReader(null).read(baseFile.read(0, baseFile.length()));
 
         final List instructions = new ArrayList();
         final List newDatas = new ArrayList();
@@ -84,8 +85,8 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
         return true;
     }
 
-    private static void createInstructions(final SVNSequenceLine[] baseLines, final SVNSequenceLine[] workLines, final List instructions, final List bytesToSend) {
-        final List blocks = SVNSequenceMedia.createBlocks(baseLines, workLines);
+    private static void createInstructions(final QSequenceLine[] baseLines, final QSequenceLine[] workLines, final List instructions, final List bytesToSend) {
+        final List blocks = QSequenceMedia.createBlocks(baseLines, workLines);
         int lastBase = 0;
 
         for (Iterator it = blocks.iterator(); it.hasNext();) {
