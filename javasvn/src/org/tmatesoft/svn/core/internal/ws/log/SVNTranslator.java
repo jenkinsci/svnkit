@@ -3,7 +3,6 @@
  */
 package org.tmatesoft.svn.core.internal.ws.log;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -77,167 +76,125 @@ class SVNTranslator {
     }
 
     private static void copy(InputStream src, OutputStream dst, byte[] eol, Map keywords) throws IOException {
-        
-        // 1. read bytes from stream
-        // 2. if eol is met -> translate eol
-        // 3. if $ is met -> read next 255 bytes. 
-        // 3.1. locate next $, but not eol.
-        // 3.2. when located -> translate to the same array or to the new one. unread remaining. write translated.
-        // 3.3. when not located (or other interesting char located) -> write all before that char, unread remaining.
-        // 4. simple char -> simple write.
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream(2048);
         keywords = keywords.isEmpty() ? null : keywords;
         PushbackInputStream in = new PushbackInputStream(src, 2048);
         while(true) {
             int r = in.read();
-            System.out.println("from stream: " + ((char) r));
             if (r < 0) {
-                buffer.writeTo(dst);
-                // eof.
                 return;
             }
-            buffer.write(r);
             if ((r == '\r' || r == '\n') && eol != null) {
-                // advance in buffer for 1 more char.
                 int next = in.read();
-                int start = buffer.size() - 1;
-                int end = start;
-                if (next >= 0) {
-                    buffer.write(next);
-                    end++;
+                dst.write(eol);
+                if (r == '\r' && next == '\n') {
+                    continue;
                 }
-                // translate eol
-                byte[] bytes = buffer.toByteArray();
-                buffer.reset();
-                if (translateEOL(bytes, start, end, eol, dst) >= 0) {
-                    in.unread(next);
+                if (next < 0) {
+                    return;
                 }
+                in.unread(next);
             } else if (r == '$' && keywords != null) {
-                int start = buffer.size() - 1;
                 // advance in buffer for 256 more chars.
+                dst.write(r);
                 byte[] keywordBuffer = new byte[256];
-                // fill from readAhead, remaining from buffer.
-                int l = in.read(keywordBuffer);
-                buffer.write(keywordBuffer, 0, l);
-                int end = -1;
-                for(int i = 0; i < l; i++) {
-                    if (keywordBuffer[i] == '$') {
-                        // end of keyword, translate!
-                        end = start + i + 1;
+                int length = in.read(keywordBuffer);
+                int keywordLength = 0;
+                for(int i = 0; i < length; i++) {
+                    if (keywordBuffer[i] == '\r' || keywordBuffer[i] == '\n') {
+                        // failure, save all before i, unread remains.
+                        dst.write(keywordBuffer, 0, i);
+                        in.unread(keywordBuffer, i, length - i);
+                        keywordBuffer = null;
+                        break;
+                    } else if (keywordBuffer[i] == '$') {
+                        keywordLength = i + 1;
                         break;
                     }
                 }
-                byte[] bytes = buffer.toByteArray();
-                buffer.reset();
-                if (end > 0) {
-                    int from = translateKeywords(bytes, start, end, keywords, dst);
-                    if (from < bytes.length) {
-                        // unread all from 'from'
-                        System.out.println("unreading from " + from + ", lenght " + (bytes.length - from));
-                        System.out.println("str: " + new String(bytes, from, (bytes.length - from)));
-                        
-                        in.unread(bytes, from, bytes.length - from);
-                    }
+                if (keywordBuffer == null) {
+                    continue;
+                } else if (keywordLength == 0) {
+                    dst.write(keywordBuffer, 0, length);
                 } else {
-                    // unread all that was read after first '$'.
-                    in.unread(bytes, start + 1, l);
+                    int from = translateKeyword(dst, keywords, keywordBuffer, keywordLength);
+                    in.unread(keywordBuffer, from, length - from);
                 }
             } else {
-                if (buffer.size() > 2048) {
-                    // flush buffer.
-                    buffer.writeTo(dst);
-                    buffer.reset();
-                }
+                dst.write(r);
             }
         }        
     }
-    
-    private static int translateEOL(byte[] buffer, int start, int end, byte[] eol, OutputStream out) throws IOException {
-        out.write(buffer, 0, start);
-        out.write(eol);
-        if (buffer[start] == '\r' && end < buffer.length && buffer[end] == '\n') {
-            return -1;
-        }
-        return end;
-    }
 
-    private static int translateKeywords(byte[] buffer, int start, int end, Map keywords, OutputStream out) throws IOException {
-        // before keyword.
-        out.write(buffer, 0, start);
-        int totalLength = end - start + 1;
-        // make smthng with keyword here.
-        // 1. match existing keyword.
-        int keywordLength = 0;
-        int offset = start;
-        for(int i = start + 1; i <= end; i++) {
-            if (buffer[i] == '$' || buffer[i] == ':') {
-                keywordLength = i - (start + 1);
-                offset = i;
+    private static int translateKeyword(OutputStream os, Map keywords, byte[] keyword, int length) throws IOException {
+        // $$ = 0, 2 => 1,0
+        String keywordName = null;
+        int i = 0;
+        for(i = 0; i < length; i++) {
+            if (keyword[i] == '$' || keyword[i] == ':') {
+                // from first $ to the offset i, exclusive
+                keywordName = new String(keyword, 0, i, "UTF-8");
                 break;
             }
+            // write to os, we do not need it.
+            os.write(keyword[i]);
         }
-        String keyword = new String(buffer, start + 1, keywordLength, "UTF-8");
-        if (!keywords.containsKey(keyword)) {
-            out.write(buffer[start]);
-            return start + 1;
+        
+        if (!keywords.containsKey(keywordName)) {
+            // unknown keyword, just write trailing chars.
+            // already written is $keyword[i]..
+            // but do not write last '$' - it could be a start of another keyword.
+            os.write(keyword, i, length - i - 1);
+            return length - 1;
         }
-        byte[] value = (byte[]) keywords.get(keyword);
-        out.write(buffer, start, keywordLength + 1); // $keyword
-        if (totalLength - keywordLength >= 6 && buffer[offset] == ':' && buffer[offset + 1] == ':' && buffer[offset + 2] == ' ' && 
-                (buffer[end - 1] == ' ' || buffer[end - 1] == '#')) {
-            // fixed length
+        byte[] value = (byte[]) keywords.get(keywordName);
+        // now i points to the first char after keyword name.
+        if (length - i > 5 && keyword[i] == ':' && keyword[i + 1] == ':' && keyword[i + 2] == ' ' &&
+                (keyword[length - 2] == ' ' || keyword[length - 2] == '#')) {
+            // :: x $
+            // fixed size keyword.
+            // 1. write value to keyword
+            int vOffset = 0;
+            int start = i;
+            for(i = i + 3; i < length - 2; i++) {
+                if (value == null) {
+                    keyword[i] = ' ';
+                } else {
+                    keyword[i] = vOffset < value.length ? value[vOffset] : (byte) ' '; 
+                }
+                vOffset++;
+            }
+            keyword[i] = (byte) (vOffset < value.length ? '#' : ' ');
+            // now save all.
+            os.write(keyword, start, length - start);
+        } else if (length - i > 4 && keyword[i] == ':' && keyword[i + 1] == ' ' && keyword[length - 2] == ' ') {
+            // : x $
             if (value != null) {
-                int valueOffset = 0;
-                out.write(' ');
-                offset++;
-                while (buffer[offset] != '$') {
-                    if (valueOffset < value.length) {
-                        // or '#' if next is '$'
-                        if (buffer[offset + 1] == '$') {
-                            out.write('#');
-                        } else {
-                            out.write(value[valueOffset]);                            
-                        }
-                    } else {
-                        out.write(' ');
-                    }
-                    valueOffset++;
-                    offset++;
-                }
+                os.write(keyword, i, value.length > 0 ? 1 : 2); // ': ' or ':'
+                os.write(value);
+                os.write(keyword, length - 2, 2); // ' $';
             } else {
-                while (buffer[offset] != '$') {
-                    out.write(' ');
-                    offset++;
-                }
+                os.write('$');
             }
-            out.write('$');
-            return end + 1; 
-        } else if (totalLength - keywordLength >= 4 && buffer[offset] == ':' && buffer[offset + 1] == ' ' &&  
-                buffer[end - 1] == ' ') {
-            if (value != null ) {
-                out.write(':');
-                out.write(' ');
+        } else if (keyword[i] == '$' || (keyword[i] == ':' && keyword[i + 1] == '$')) {
+            // $ or :$
+            if (value != null) {
+                os.write(':');
+                os.write(' ');
+                os.write(value);
                 if (value.length > 0) {
-                    out.write(value);
-                    out.write(' ');
+                    os.write(' ');
                 }
+                os.write('$');
+            } else {
+                os.write('$');
             }
-            out.write('$');
-            return end + 1;
-        } else if (buffer[offset] == '$' || (buffer[offset] == ':' && buffer[offset + 1] == '$')) {
-            // unexpanded
-            if (value != null ) {
-                out.write(':');
-                out.write(' ');
-                if (value.length > 0) {
-                    out.write(value);
-                    out.write(' ');
-                }
-            }
-            out.write('$');
-            return end + 1;
+        } else {
+            // something wrong. write all, but not last $
+            os.write(keyword, i, length - i - 1);
+            return length - 1;
         }
-        return start + keywordLength + 1;
+        return length;
+        
     }
 
     public static Map computeKeywords(String keywords, String url, String author, String date, long revision) {
