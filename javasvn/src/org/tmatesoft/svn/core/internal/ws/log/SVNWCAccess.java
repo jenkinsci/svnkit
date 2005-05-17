@@ -14,6 +14,7 @@ public class SVNWCAccess {
     private SVNDirectory myAnchor;
     private SVNDirectory myTarget;
     private String myName;
+    private SVNOptions myOptions;
 
     public static SVNWCAccess create(File file) throws SVNException {
         File parentFile = file.getParentFile();
@@ -90,6 +91,17 @@ public class SVNWCAccess {
         myAnchor = anchor;
         myTarget = target;
         myName = name;
+    }
+    
+    public void setOptions(SVNOptions options) {
+        myOptions = options; 
+    }
+    
+    public SVNOptions getOptions() {
+        if (myOptions == null) {
+            myOptions = new SVNOptions();
+        }
+        return myOptions;
     }
 
     public String getTargetName() {

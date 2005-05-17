@@ -33,47 +33,52 @@ class SVNReporter implements ISVNReporterBaton {
         SVNEntries anchorEntries = myWCAccess.getAnchor().getEntries();
         SVNEntry targetEntry = targetEntries.getEntry(myWCAccess.getTargetName());
         
-        if (targetEntry == null || targetEntry.isHidden() || 
-                (targetEntry.isDirectory() && targetEntry.isScheduledForAddition())) {
-            long revision = targetEntries.getEntry("").getRevision();
-            reporter.setPath("", null, revision, targetEntry != null ? targetEntry.isIncomplete() : true);
-            reporter.deletePath("");
-            reporter.finishReport();
-            return;
-        }
-        long revision = targetEntry.getRevision();
-        if (revision < 0) {
-            revision = targetEntries.getEntry("").getRevision();
-            if (revision < 0) {
-                revision = anchorEntries.getEntry("").getRevision();
-            }
-        }
-        reporter.setPath("", null, revision, targetEntry.isIncomplete());
-        boolean missing = !targetEntry.isScheduledForDeletion() &&  
-            !myWCAccess.getTarget().getFile(myWCAccess.getTargetName()).exists();
-        
-        if (targetEntry.isDirectory()) {
-            if (missing) {
+        try {
+            if (targetEntry == null || targetEntry.isHidden() || 
+                    (targetEntry.isDirectory() && targetEntry.isScheduledForAddition())) {
+                long revision = targetEntries.getEntry("").getRevision();
+                reporter.setPath("", null, revision, targetEntry != null ? targetEntry.isIncomplete() : true);
                 reporter.deletePath("");
-            } else {
-                reportEntries(reporter, myWCAccess.getTarget(), myWCAccess.getTargetName(), targetEntry.isIncomplete(), myIsRecursive);
+                reporter.finishReport();
+                return;
             }
-        } else if (targetEntry.isFile()){
-            if (missing) {
-                restoreFile(myWCAccess.getTarget(), targetEntry.getName());
+            long revision = targetEntry.getRevision();
+            if (revision < 0) {
+                revision = targetEntries.getEntry("").getRevision();
+                if (revision < 0) {
+                    revision = anchorEntries.getEntry("").getRevision();
+                }
             }
-            // report either linked path or entry path
-            String url = targetEntry.getURL();
-            SVNEntry parentEntry = targetEntries.getEntry("");
-            String parentURL = parentEntry.getURL();
-            String expectedURL = PathUtil.append(parentURL, PathUtil.encode(targetEntry.getName()));
-            if (!expectedURL.equals(url)) {
-                reporter.linkPath(SVNRepositoryLocation.parseURL(url), "", targetEntry.getLockToken(), targetEntry.getRevision(), false);
-            } else if (targetEntry.getRevision() != parentEntry.getRevision() || targetEntry.getLockToken() != null) {
-                reporter.setPath("", targetEntry.getLockToken(), targetEntry.getRevision(), false);
-            }            
+            reporter.setPath("", null, revision, targetEntry.isIncomplete());
+            boolean missing = !targetEntry.isScheduledForDeletion() &&  
+                !myWCAccess.getTarget().getFile(myWCAccess.getTargetName()).exists();
+            
+            if (targetEntry.isDirectory()) {
+                if (missing) {
+                    reporter.deletePath("");
+                } else {
+                    reportEntries(reporter, myWCAccess.getTarget(), myWCAccess.getTargetName(), targetEntry.isIncomplete(), myIsRecursive);
+                }
+            } else if (targetEntry.isFile()){
+                if (missing) {
+                    restoreFile(myWCAccess.getTarget(), targetEntry.getName());
+                }
+                // report either linked path or entry path
+                String url = targetEntry.getURL();
+                SVNEntry parentEntry = targetEntries.getEntry("");
+                String parentURL = parentEntry.getURL();
+                String expectedURL = PathUtil.append(parentURL, PathUtil.encode(targetEntry.getName()));
+                if (!expectedURL.equals(url)) {
+                    reporter.linkPath(SVNRepositoryLocation.parseURL(url), "", targetEntry.getLockToken(), targetEntry.getRevision(), false);
+                } else if (targetEntry.getRevision() != parentEntry.getRevision() || targetEntry.getLockToken() != null) {
+                    reporter.setPath("", targetEntry.getLockToken(), targetEntry.getRevision(), false);
+                }            
+            }
+            reporter.finishReport();
+        } catch (Throwable th) {
+            reporter.abortReport();
+            SVNErrorManager.error(0, th);
         }
-        reporter.finishReport();
     }
     
     private void reportEntries(ISVNReporter reporter, SVNDirectory directory, String dirPath, boolean reportAll, boolean recursive) throws SVNException {
@@ -209,11 +214,31 @@ class SVNReporter implements ISVNReporterBaton {
             }
         }
         long tstamp = file.lastModified();
-        entry.setTextTime(TimeUtil.formatDate(new Date(tstamp)));
+        if (myWCAccess.getOptions().isUseCommitTimes() && !special) {
+            entry.setTextTime(entry.getCommittedDate());
+            tstamp = TimeUtil.parseDate(entry.getCommittedDate()).getTime();
+            file.setLastModified(tstamp);
+        } else {
+            entry.setTextTime(TimeUtil.formatDate(new Date(tstamp)));
+        }
         dir.getEntries().save(false);
     }
     
     public static void main(String[] args) {
+        
+        SVNOptions options = new SVNOptions();
+        System.out.println("use-commit-times: " + options.isUseCommitTimes());
+        System.out.println("enable-auto-props: " + options.isUseAutoProperties());
+        System.out.println("ingored: " + options.isIgnored("white"));
+        System.out.println("ingored: " + options.isIgnored("space"));
+        System.out.println("ingored: " + options.isIgnored("white space"));
+        System.out.println("ingored: " + options.isIgnored("*.java"));
+        
+        Map props = options.getAutoProperties("test.java", null);
+        System.out.println("auto props: " + props);
+        props = options.getAutoProperties("java", null);
+        System.out.println("auto props: " + props);
+        
         ISVNReporter r = new ISVNReporter() {
             public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
                 System.out.println("set-path '" + path + "' : " + revision);
@@ -231,7 +256,7 @@ class SVNReporter implements ISVNReporterBaton {
         };
 
         try {
-            SVNWCAccess wcAccess = SVNWCAccess.create(new File("c:/i/test4"));
+            SVNWCAccess wcAccess = SVNWCAccess.create(new File("c:/subversion/subversion/libsvn_wc"));
             SVNReporter reporter = new SVNReporter(wcAccess, true);
             reporter.report(r);
         } catch (SVNException e) {
