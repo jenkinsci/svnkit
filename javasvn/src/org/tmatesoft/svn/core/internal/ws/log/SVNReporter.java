@@ -247,7 +247,7 @@ class SVNReporter implements ISVNReporterBaton {
         };
 
         try {
-            SVNWCAccess wcAccess = SVNWCAccess.create(new File("c:/subversion/subversion/"));
+            SVNWCAccess wcAccess = SVNWCAccess.create(new File("c:/"));
             wcAccess.setEventDispatcher(new ISVNEventListener() {
                 public void svnEvent(SVNEvent event) {
                     System.out.println("Restored: " + event.getPath());

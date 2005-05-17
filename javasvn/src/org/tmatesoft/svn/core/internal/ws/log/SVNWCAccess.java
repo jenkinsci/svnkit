@@ -26,14 +26,14 @@ public class SVNWCAccess implements ISVNEventListener {
             }
         } catch (IOException e) {
         }
-        if (!parentFile.exists() || !parentFile.isDirectory()) {
+        if (parentFile != null && (!parentFile.exists() || !parentFile.isDirectory())) {
             // parent doesn't exist or not a directory
             SVNErrorManager.error(1, null);
         }
-        SVNDirectory anchor = new SVNDirectory(parentFile);
-        SVNDirectory target = anchor.getChildDirectory(name);
+        SVNDirectory anchor = parentFile != null ? new SVNDirectory(parentFile) : null;
+        SVNDirectory target = file.isDirectory() ? new SVNDirectory(file) : null;
         
-        if (!anchor.isVersioned()) {
+        if (anchor == null || !anchor.isVersioned()) {
             // parent is not versioned, do not use it.
             anchor = null;
         }
