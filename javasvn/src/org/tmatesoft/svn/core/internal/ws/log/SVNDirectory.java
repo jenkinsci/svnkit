@@ -162,4 +162,8 @@ public class SVNDirectory {
         File parent = tmp ? new File(getAdminDirectory(), "tmp") : getAdminDirectory();
         return new File(parent, "text-base/" + name + ".svn-base");
     }
+    
+    public File getRoot() {
+        return myDirectory;
+    }
 }

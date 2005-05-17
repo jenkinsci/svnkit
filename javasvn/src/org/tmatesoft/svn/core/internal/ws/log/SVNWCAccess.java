@@ -9,12 +9,13 @@ import java.util.Iterator;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.PathUtil;
 
-public class SVNWCAccess {
+public class SVNWCAccess implements ISVNEventListener {
     
     private SVNDirectory myAnchor;
     private SVNDirectory myTarget;
     private String myName;
     private SVNOptions myOptions;
+    private ISVNEventListener myDispatcher;
 
     public static SVNWCAccess create(File file) throws SVNException {
         File parentFile = file.getParentFile();
@@ -97,6 +98,10 @@ public class SVNWCAccess {
         myOptions = options; 
     }
     
+    public void setEventDispatcher(ISVNEventListener dispatcher) {
+        myDispatcher = dispatcher;
+    }
+    
     public SVNOptions getOptions() {
         if (myOptions == null) {
             myOptions = new SVNOptions();
@@ -159,6 +164,12 @@ public class SVNWCAccess {
             });
         }
     }
+
+    public void svnEvent(SVNEvent event) {
+        if (myDispatcher != null) {
+            myDispatcher.svnEvent(event);
+        }
+    }
     
     private void visitDirectories(SVNDirectory root, ISVNDirectoryVisitor visitor) throws SVNException {
         SVNDirectory[] dirs = root.getChildDirectories();
@@ -173,4 +184,5 @@ public class SVNWCAccess {
     private interface ISVNDirectoryVisitor {
         public void visit(SVNDirectory dir) throws SVNException;
     }
+
 }

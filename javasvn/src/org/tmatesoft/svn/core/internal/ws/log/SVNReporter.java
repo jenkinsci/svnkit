@@ -222,22 +222,12 @@ class SVNReporter implements ISVNReporterBaton {
             entry.setTextTime(TimeUtil.formatDate(new Date(tstamp)));
         }
         dir.getEntries().save(false);
+        
+        myWCAccess.svnEvent(SVNEvent.createRestoredEvent(myWCAccess, dir, entry));
     }
     
     public static void main(String[] args) {
         
-        SVNOptions options = new SVNOptions();
-        System.out.println("use-commit-times: " + options.isUseCommitTimes());
-        System.out.println("enable-auto-props: " + options.isUseAutoProperties());
-        System.out.println("ingored: " + options.isIgnored("white"));
-        System.out.println("ingored: " + options.isIgnored("space"));
-        System.out.println("ingored: " + options.isIgnored("white space"));
-        System.out.println("ingored: " + options.isIgnored("*.java"));
-        
-        Map props = options.getAutoProperties("test.java", null);
-        System.out.println("auto props: " + props);
-        props = options.getAutoProperties("java", null);
-        System.out.println("auto props: " + props);
         
         ISVNReporter r = new ISVNReporter() {
             public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
@@ -252,11 +242,19 @@ class SVNReporter implements ISVNReporterBaton {
                 System.out.println("finish-report");
             }
             public void abortReport() throws SVNException {
+                System.out.println("abort-report");
             }
         };
 
         try {
-            SVNWCAccess wcAccess = SVNWCAccess.create(new File("c:/subversion/subversion/libsvn_wc"));
+            SVNWCAccess wcAccess = SVNWCAccess.create(new File("c:/subversion/subversion/"));
+            wcAccess.setEventDispatcher(new ISVNEventListener() {
+                public void svnEvent(SVNEvent event) {
+                    System.out.println("Restored: " + event.getPath());
+                    System.out.println("Full Path: " + event.getFile().getAbsolutePath());
+                }
+            });
+            
             SVNReporter reporter = new SVNReporter(wcAccess, true);
             reporter.report(r);
         } catch (SVNException e) {
