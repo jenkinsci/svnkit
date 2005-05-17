@@ -7,15 +7,21 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNNodeKind;
 
 public class SVNDirectory {
     
     private File myDirectory;
     private SVNEntries myEntries;
+    
     private Map myProperties;
+    private Map myBaseProperties;
+    private Map myWCProperties;
 
     public SVNDirectory(File dir) {
         myDirectory = dir;
@@ -95,6 +101,32 @@ public class SVNDirectory {
         }
         return (SVNProperties) myProperties.get(name);
     }
+
+    public SVNProperties getBaseProperties(String name) {
+        if (myBaseProperties == null) {
+            myBaseProperties = new HashMap();
+        }
+        if (!myBaseProperties.containsKey(name)) {
+            File propertiesFile = "".equals(name) ? 
+                    new File(getAdminDirectory(), "dir-prop-base") :
+                    new File(getAdminDirectory(), "prop-base/" + name + ".svn-base");
+            myBaseProperties.put(name, new SVNProperties(propertiesFile));
+        }
+        return (SVNProperties) myBaseProperties.get(name);
+    }
+    
+    public SVNProperties getWCProperties(String name) {
+        if (myWCProperties == null) {
+            myWCProperties = new HashMap();
+        }
+        if (!myWCProperties.containsKey(name)) {
+            File propertiesFile = "".equals(name) ? 
+                    new File(getAdminDirectory(), "dir-wcprops") :
+                    new File(getAdminDirectory(), "wcprops/" + name + ".svn-work");
+            myWCProperties.put(name, new SVNProperties(propertiesFile));
+        }
+        return (SVNProperties) myWCProperties.get(name);
+    }
     
     public void markResolved(String name, boolean text, boolean props) throws SVNException {
         if (!text && !props) {
@@ -168,12 +200,33 @@ public class SVNDirectory {
     public File getRoot() {
         return myDirectory;
     }
+    
+    public SVNLog getLog(int id) {
+        return new SVNLog(this, id);
+    }
+    
+    public void runLogs() throws SVNException {
+        Map logFiles = new TreeMap();
+        File dir = getAdminDirectory();
+        File[] children = dir.listFiles();
+        SVNLogRunner runner = new SVNLogRunner();
+        int index = 0;
+        while(true) {
+            SVNLog log = new SVNLog(this, index);
+            if (log.exists()) {
+                log.run(runner);
+                continue;
+            }
+            return;
+        }
+    }
 
-    public SVNDirectory createChildDirectory(String name) throws SVNException {
+    public SVNDirectory createChildDirectory(String name, String url, long revision) throws SVNException {
         File dir = new File(myDirectory, name);
         dir.mkdirs();
         File adminDir = new File(dir, ".svn");
         adminDir.mkdirs();
+        SVNFileUtil.setHidden(adminDir, true);
         
         File format = new File(adminDir, "format");
         OutputStream os = null;
@@ -233,6 +286,86 @@ public class SVNDirectory {
                 tmp[i].mkdirs();
             }
         }
-        return getChildDirectory(name);
+        
+        SVNDirectory child = getChildDirectory(name);
+        SVNEntry rootEntry = child.getEntries().addEntry("");
+        rootEntry.setURL(url);
+        rootEntry.setRevision(revision);
+        child.getEntries().save(true);
+        return child;
+    }
+    
+    public void destroy(String name, boolean deleteWorkingFiles) throws SVNException {
+        if ("".equals(name)) {
+            SVNDirectory parent = new SVNDirectory(myDirectory.getParentFile());
+            if (!parent.isVersioned()) {
+                parent = null;
+            }
+            destroyDirectory(parent, this, deleteWorkingFiles);
+        } else {
+            File file = getFile(name);
+            if (file.isFile()) {
+                destroyFile(name, deleteWorkingFiles);
+            } else if (file.exists()) {
+                SVNDirectory childDir = getChildDirectory(name);
+                if (childDir != null && childDir.isVersioned()) {
+                    destroyDirectory(this, childDir, deleteWorkingFiles);
+                }
+            }
+        }
+    }
+    
+    private void destroyFile(String name, boolean deleteWorkingFile) throws SVNException {
+        SVNEntries entries = getEntries();
+        entries.deleteEntry(name);
+        entries.save(true);
+        
+        File baseFile = getBaseFile(name, false);
+        baseFile.delete();
+        getProperties(name).delete();
+        getBaseProperties(name).delete();
+        getWCProperties(name).delete();
+        
+        // check for local mods.
+        if (deleteWorkingFile) {
+            getFile(name).delete();
+        }
+    }
+    
+    private void destroyDirectory(SVNDirectory parent, SVNDirectory dir, boolean deleteWorkingFiles) throws SVNException {
+        SVNEntries entries = dir.getEntries();
+        entries.getEntry("").setIncomplete(true);
+        entries.save(false);
+        
+        // iterate over dir's entries, delete files and recurse into dirs
+        for (Iterator ents = entries.entries(); ents.hasNext();) {
+            SVNEntry entry = (SVNEntry) ents.next();
+            if ("".equals(entry.getName())) {
+                continue;
+            }
+            if (entry.getKind() == SVNNodeKind.FILE) {
+                dir.destroy(entry.getName(), deleteWorkingFiles);
+            } else if (entry.getKind() == SVNNodeKind.DIR) {
+                SVNDirectory childDirectory = dir.getChildDirectory(entry.getName());
+                if (childDirectory == null) {
+                    entries.deleteEntry(entry.getName());
+                } else {
+                    // recurse
+                    destroyDirectory(dir, childDirectory, deleteWorkingFiles);
+                }
+            }
+        }
+        entries.save(false);
+
+        // delete dir's entry in parent.
+        if (parent != null) {
+            SVNEntries parentEntries = parent.getEntries();
+            parentEntries.deleteEntry(dir.getRoot().getName());
+            parentEntries.save(true);
+        }
+        // delete all admin files
+        SVNFileUtil.deleteAll(new File(dir.getRoot(), ".svn"));
+        // attempt to delete dir - will not be deleted if there are wc files left.
+        dir.getRoot().delete();
     }
 }

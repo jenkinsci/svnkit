@@ -133,6 +133,29 @@ public class SVNFileUtil {
         Runtime.getRuntime().exec("ln -s '" + linkTarget + "' '" + src.getAbsolutePath() + "'");
         return isSymlink(src);
     }
+
+    public static void setHidden(File file, boolean hidden) {
+        if (!isWindows || file == null || !file.exists() || file.isHidden()) {
+            return;
+        }
+        try {
+            Runtime.getRuntime().exec("attrib " + (hidden ? "+" : "-") + "H \"" + file.getAbsolutePath() + "\"");
+        } catch (Throwable th) {}
+    }
+
+    public static void deleteAll(File dir) {
+        if (dir == null) {
+            return;
+        }
+        File[] children = dir.listFiles();
+        if (children != null) {
+            for (int i = 0; i < children.length; i++) {
+                File child = children[i];
+                deleteAll(child);
+            }
+        }
+        dir.delete();
+    }
     
     private static String readSingleLine(File file) throws IOException {
         if (!file.isFile() || !file.canRead()) {

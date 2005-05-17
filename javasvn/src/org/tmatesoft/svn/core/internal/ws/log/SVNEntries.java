@@ -35,6 +35,9 @@ public class SVNEntries {
         }
         myData = new TreeMap();
         myEntries = new TreeSet();
+        if (!myFile.exists()) {
+            return;
+        }
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new FileReader(myFile));

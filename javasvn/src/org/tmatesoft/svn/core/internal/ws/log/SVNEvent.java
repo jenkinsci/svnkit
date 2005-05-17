@@ -40,6 +40,12 @@ public class SVNEvent {
                 entry.getRevision(), null, null, null, null, null, null);
     }
 
+    public static SVNEvent createUpdateDeleteEvent(SVNWCAccess source, SVNDirectory dir, String name) {
+        return new SVNEvent(source, dir, name, 
+                SVNEventAction.UPDATE_DELETE, null, 
+                -1, null, null, null, null, null, null);
+    }
+
     public static SVNEvent createUpdateAddEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
         return new SVNEvent(source, dir, entry.getName(), 
                 SVNEventAction.UPDATE_ADD, entry.getKind(), 

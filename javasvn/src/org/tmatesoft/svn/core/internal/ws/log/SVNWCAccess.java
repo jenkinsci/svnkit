@@ -167,7 +167,10 @@ public class SVNWCAccess implements ISVNEventListener {
 
     public void svnEvent(SVNEvent event) {
         if (myDispatcher != null) {
-            myDispatcher.svnEvent(event);
+            try { 
+                myDispatcher.svnEvent(event);
+            } catch (Throwable th) {
+            }
         }
     }
     
