@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -140,25 +142,28 @@ public class SVNEntries {
         return null;
     }
     
-    public void setPropertyValue(String name, String propertyName, String propertyValue) {        
+    public boolean setPropertyValue(String name, String propertyName, String propertyValue) {        
         if (myData == null) {
-            return;
+            return false;
         }
         Map entry = (Map) myData.get(name);
         if (entry != null) {
             if (propertyValue == null) {
-                entry.remove(propertyName);
-            } else {
+                return entry.remove(propertyName) != null;
+            } else if (!propertyValue.equals(entry.get(propertyName))){
                 entry.put(propertyName, propertyValue);
+                return true;
             }
         }
+        return false;
     }
     
     public Iterator entries() {
         if (myEntries == null) {
             return Collections.EMPTY_LIST.iterator();
         }
-        return myEntries.iterator();
+        Collection copy = new ArrayList(myEntries);
+        return copy.iterator();
     }
     
     public SVNEntry getEntry(String name) {
@@ -173,6 +178,7 @@ public class SVNEntries {
             myData.put(name, new HashMap());
             SVNEntry entry = new SVNEntry(this, name);
             myEntries.add(entry);
+            setPropertyValue(name, SVNProperty.NAME, name);
             return entry;
         }
         return null;
@@ -181,7 +187,7 @@ public class SVNEntries {
     public void deleteEntry(String name) {
         if (myData != null) {
             myData.remove(name);
+            myEntries.remove(new SVNEntry(this, name));
         }
-        myEntries.remove(new SVNEntry(this, name));
     }
 }

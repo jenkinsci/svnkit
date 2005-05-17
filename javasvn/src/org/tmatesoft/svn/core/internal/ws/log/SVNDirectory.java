@@ -1,7 +1,9 @@
 package org.tmatesoft.svn.core.internal.ws.log;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -165,5 +167,72 @@ public class SVNDirectory {
     
     public File getRoot() {
         return myDirectory;
+    }
+
+    public SVNDirectory createChildDirectory(String name) throws SVNException {
+        File dir = new File(myDirectory, name);
+        dir.mkdirs();
+        File adminDir = new File(dir, ".svn");
+        adminDir.mkdirs();
+        
+        File format = new File(adminDir, "format");
+        OutputStream os = null;
+        if (!format.exists()) {
+            try {
+                os = new FileOutputStream(format);
+                os.write(new byte[] {'4', '\n'});
+            } catch (IOException e) {
+                SVNErrorManager.error(0, e);
+            } finally {
+                if (os != null) { 
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+        }
+        File readme = new File(adminDir, "README.txt");
+        if (!readme.exists()) {
+            try {
+                os = new FileOutputStream(readme);
+                String eol = System.getProperty("line.separator");
+                eol = eol == null ? "\n" : eol;
+                os.write(("This is a Subversion working copy administrative directory." + eol + 
+                "Visit http://subversion.tigris.org/ for more information." + eol).getBytes());
+            } catch (IOException e) {
+                SVNErrorManager.error(0, e);
+            } finally {
+                if (os != null) { 
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+        }
+        File empty = new File(adminDir, "empty-file");
+        if (!empty.exists()) {
+            try {
+                empty.createNewFile();
+            } catch (IOException e) {
+                SVNErrorManager.error(0, e);
+            }
+        }
+        File[] tmp = {
+                new File(adminDir, "tmp" + File.separatorChar + "props"),
+                new File(adminDir, "tmp" + File.separatorChar + "prop-base"),
+                new File(adminDir, "tmp" + File.separatorChar + "text-base"),
+                new File(adminDir, "tmp" + File.separatorChar + "wcprops"),
+                new File(adminDir, "props"),
+                new File(adminDir, "prop-base"),
+                new File(adminDir, "text-base"),
+                new File(adminDir, "wcprops")};
+        for(int i = 0; i < tmp.length; i++) {
+            if (!tmp[i].exists()) {
+                tmp[i].mkdirs();
+            }
+        }
+        return getChildDirectory(name);
     }
 }

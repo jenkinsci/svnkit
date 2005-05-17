@@ -30,7 +30,19 @@ public class SVNEvent {
     
     public static SVNEvent createRestoredEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
         return new SVNEvent(source, dir, entry.getName(), 
-                SVNEventAction.RESTORE, SVNNodeKind.FILE, 
+                SVNEventAction.RESTORE, entry.getKind(), 
+                entry.getRevision(), null, null, null, null, null, null);
+    }
+
+    public static SVNEvent createUpdateDeleteEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
+        return new SVNEvent(source, dir, entry.getName(), 
+                SVNEventAction.UPDATE_DELETE, entry.getKind(), 
+                entry.getRevision(), null, null, null, null, null, null);
+    }
+
+    public static SVNEvent createUpdateAddEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
+        return new SVNEvent(source, dir, entry.getName(), 
+                SVNEventAction.UPDATE_ADD, entry.getKind(), 
                 entry.getRevision(), null, null, null, null, null, null);
     }
 

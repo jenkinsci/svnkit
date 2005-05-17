@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.core.internal.ws.log;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNEntry implements Comparable {
@@ -95,12 +96,12 @@ public class SVNEntry implements Comparable {
         return myName;
     }
 
-    public void setRevision(long revision) {
-        myEntries.setPropertyValue(myName, SVNProperty.REVISION, Long.toString(revision));
+    public boolean setRevision(long revision) {
+        return myEntries.setPropertyValue(myName, SVNProperty.REVISION, Long.toString(revision));
     }
 
-    public void setURL(String url) {
-        myEntries.setPropertyValue(myName, SVNProperty.URL, url);
+    public boolean setURL(String url) {
+        return myEntries.setPropertyValue(myName, SVNProperty.URL, url);
     }
     
     public void setIncomplete(boolean incomplete) {
@@ -165,5 +166,29 @@ public class SVNEntry implements Comparable {
 
     public void setTextTime(String time) {
         myEntries.setPropertyValue(myName, SVNProperty.TEXT_TIME, time);
+    }
+
+    public void setKind(SVNNodeKind kind) {
+        String kindStr = kind == SVNNodeKind.DIR ? SVNProperty.KIND_DIR : 
+            (kind == SVNNodeKind.FILE ? SVNProperty.KIND_FILE : null);
+        myEntries.setPropertyValue(myName, SVNProperty.KIND, kindStr);
+    }
+    
+    public void setAbsent(boolean absent) {
+        myEntries.setPropertyValue(myName, SVNProperty.ABSENT, absent ? Boolean.TRUE.toString() : null);
+    }
+
+    public void setDeleted(boolean deleted) {
+        myEntries.setPropertyValue(myName, SVNProperty.DELETED, deleted ? Boolean.TRUE.toString() : null);
+    }
+
+    public SVNNodeKind getKind() {
+        String kind = myEntries.getPropertyValue(myName, SVNProperty.KIND);
+        if (SVNProperty.KIND_DIR.equals(kind)) {
+            return SVNNodeKind.DIR;
+        } else if (SVNProperty.KIND_FILE.equals(kind)) {
+            return SVNNodeKind.FILE;
+        }
+        return SVNNodeKind.UNKNOWN;
     }
 }
