@@ -31,6 +31,8 @@ public class SVNDirectory {
 
     public SVNDirectory(SVNWCAccess wcAccess, String path, File dir) {
         myDirectory = dir;
+        myPath = path;
+        myWCAccess = wcAccess;
     }
 
     public SVNDirectory[] getChildDirectories() {

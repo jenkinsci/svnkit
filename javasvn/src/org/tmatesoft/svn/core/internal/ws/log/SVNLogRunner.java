@@ -12,11 +12,10 @@ import org.tmatesoft.svn.core.io.SVNException;
 public class SVNLogRunner {
 
     public void runCommand(SVNDirectory dir, String name, Map attributes) throws SVNException {
+        String fileName = (String) attributes.remove(SVNLog.NAME_ATTR);
         if (SVNLog.DELETE_ENTRY.equals(name)) {
-            String fileName = (String) attributes.get(SVNLog.NAME_ATTR);
             dir.destroy(fileName, true);
         } else if (SVNLog.MODIFY_ENTRY.equals(name)) {
-            String fileName = (String) attributes.get(SVNLog.NAME_ATTR);
             SVNEntries entries = dir.getEntries();
             if (entries.getEntry(fileName) == null) {
                 entries.addEntry(fileName);
@@ -28,6 +27,22 @@ public class SVNLogRunner {
                 entries.setPropertyValue(fileName, attName, value);
             }
             entries.save(true);
+        } else if (SVNLog.MODIFY_WC_PROPERTY.equals(name)) {
+            SVNProperties props = dir.getWCProperties(fileName);
+            String propName = (String) attributes.get(SVNLog.PROPERTY_NAME_ATTR);
+            String propValue = (String) attributes.get(SVNLog.PROPERTY_VALUE_ATTR);
+            props.setPropertyValue(propName, propValue);
+        } else if (SVNLog.DELETE_LOCK.equals(name)) {
+            SVNEntries entries = dir.getEntries();
+            SVNEntry entry = entries.getEntry(fileName);
+            if (entry != null) {
+                entry.setLockToken(null);
+                entry.setLockOwner(null);
+                entry.setLockCreationDate(null);
+                entry.setLockComment(null);
+                entries.save(true);
+            }
+            
         }
     }
     

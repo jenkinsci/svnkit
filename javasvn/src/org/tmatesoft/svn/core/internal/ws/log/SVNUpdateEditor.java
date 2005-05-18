@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
@@ -63,6 +64,8 @@ public class SVNUpdateEditor implements ISVNEditor {
 
     public void deleteEntry(String path, long revision) throws SVNException {
         path = PathUtil.removeLeadingSlash(path);
+        path = PathUtil.removeTrailingSlash(path);
+
         SVNLog log = myCurrentDirectory.getLog(true);
         Map attributes = new HashMap();
         String name = PathUtil.tail(path);
@@ -87,8 +90,8 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-        System.out.println("add directory: " + path);
-        path = PathUtil.removeLeadingSlash(path);        
+        path = PathUtil.removeLeadingSlash(path);
+        path = PathUtil.removeTrailingSlash(path);
 
         SVNDirectory parentDir = myCurrentDirectory.getDirectory();
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, true);
@@ -123,6 +126,7 @@ public class SVNUpdateEditor implements ISVNEditor {
 
     public void openDir(String path, long revision) throws SVNException {
         path = PathUtil.removeLeadingSlash(path);
+        path = PathUtil.removeTrailingSlash(path);
 
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, false);
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
@@ -135,6 +139,7 @@ public class SVNUpdateEditor implements ISVNEditor {
 
     public void absentDir(String path) throws SVNException {
         path = PathUtil.removeLeadingSlash(path);
+        path = PathUtil.removeTrailingSlash(path);
 
         String name = PathUtil.tail(path);
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
@@ -153,16 +158,23 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
+        myCurrentDirectory.propertyChanged(name, value);
     }
 
     public void closeDir() throws SVNException {
-        // merge properties
+        Map modifiedWCProps = myCurrentDirectory.getChangedWCProperties();
+        Map modifiedEntryProps = myCurrentDirectory.getChangedEntryProperties();
+        Map modifiedProps = myCurrentDirectory.getChangedProperties();
+        
+        SVNLog log = myCurrentDirectory.getLog(true);
+        log.logChangedWCProperties("", modifiedWCProps);
+        log.logChangedEntryProperties("", modifiedEntryProps);
+        log.save();
 
-        // run log to complete properties merge.
+        myCurrentDirectory.runLogs();
+
         completeDirectory(myCurrentDirectory);
         myCurrentDirectory = myCurrentDirectory.Parent;
-
-        // notify if there were prop changes and directory was not added.
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
@@ -294,7 +306,6 @@ public class SVNUpdateEditor implements ISVNEditor {
                 }
                 if (entry.isDeleted()) {
                     if (!entry.isScheduledForAddition()) {
-                        System.out.println("deleting in complete: " + entry.getName());
                         entries.deleteEntry(entry.getName());
                     } else {
                         entry.setDeleted(false);
@@ -319,9 +330,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNDirectoryInfo info = new SVNDirectoryInfo(path);
         info.Parent = parent;
         info.IsAdded = added;
-        info.Path = parent != null ? new File(myWCAccess.getAnchor().getRoot(), path) : 
-            myWCAccess.getAnchor().getRoot();
-        info.Name = path != null ? PathUtil.tail(path) : "";
+        String name = path != null ? PathUtil.tail(path) : "";
 
         if (mySwitchURL == null) {
             SVNDirectory dir = added ? null : info.getDirectory();
@@ -329,7 +338,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 info.URL = dir.getEntries().getEntry("").getURL();
             }
             if (info.URL == null && parent != null) {
-                info.URL = PathUtil.append(parent.URL, PathUtil.encode(info.Name));
+                info.URL = PathUtil.append(parent.URL, name);
             } else if (info.URL == null && parent == null) {
                 info.URL = myTargetURL;
             }
@@ -340,7 +349,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 if (myTarget != null && parent.Parent == null) {
                     info.URL = mySwitchURL;
                 } else {
-                    info.URL = PathUtil.append(parent.URL, PathUtil.encode(info.Name));
+                    info.URL = PathUtil.append(parent.URL, PathUtil.encode(name));
                 }
             }
         }
@@ -353,8 +362,6 @@ public class SVNUpdateEditor implements ISVNEditor {
     
     private class SVNDirectoryInfo {
         public String URL;
-        public File Path;
-        public String Name;
         public boolean IsAdded;
         public SVNDirectoryInfo Parent;
         public int RefCount;
@@ -362,10 +369,37 @@ public class SVNUpdateEditor implements ISVNEditor {
         private String myPath;
         private int myLogCount;
         
+        private Map myChangedProperties;
+        private Map myChangedEntryProperties;
+        private Map myChangedWCProperties;
+        
         public SVNDirectoryInfo(String path) {
             myPath = path;
         }
         
+        public void propertyChanged(String name, String value) {
+            if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
+                myChangedEntryProperties = myChangedEntryProperties == null ? new HashMap() : myChangedEntryProperties;
+                myChangedEntryProperties.put(name.substring(SVNProperty.SVN_ENTRY_PREFIX.length()), value);
+            } else if (name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+                myChangedWCProperties = myChangedWCProperties == null ? new HashMap() : myChangedWCProperties;
+                myChangedWCProperties.put(name, value);
+            } else {
+                myChangedProperties = myChangedProperties == null ? new HashMap() : myChangedProperties;
+                myChangedProperties.put(name, value);
+            }
+        }
+        
+        public Map getChangedWCProperties() {
+            return myChangedWCProperties;
+        }
+        public Map getChangedEntryProperties() {
+            return myChangedEntryProperties;
+        }
+        public Map getChangedProperties() {
+            return myChangedProperties;
+        }
+
         public SVNDirectory getDirectory() {
             return myWCAccess.getDirectory(myPath);
         }

@@ -15,14 +15,19 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
 
 public class SVNLog {
 
     public static final String DELETE_ENTRY = "delete-entry";
     public static final String MODIFY_ENTRY = "modify-entry";
+    public static final String MODIFY_WC_PROPERTY = "modify-wcprop";
+    public static final String DELETE_LOCK = "delete-lock";
 
     public static final String NAME_ATTR = "name";
+    public static final String PROPERTY_NAME_ATTR = "propname";
+    public static final String PROPERTY_VALUE_ATTR = "propvalue";
 
     private File myFile;
     private File myTmpFile;
@@ -46,6 +51,42 @@ public class SVNLog {
         if (save) {
             save();
         }        
+    }
+
+    public void logChangedEntryProperties(String name, Map modifiedEntryProps) throws SVNException {
+        if (modifiedEntryProps != null) {
+            Map command = new HashMap();
+            command.put(SVNLog.NAME_ATTR, name);
+            for (Iterator names = modifiedEntryProps.keySet().iterator(); names.hasNext();) {                
+                String propName = (String) names.next();
+                String propValue = (String) modifiedEntryProps.get(propName);
+                if (SVNProperty.LOCK_TOKEN.equals(propName)) {
+                    addCommand(SVNLog.DELETE_LOCK, command, false);                    
+                } else if (propValue != null) {
+                    command.put(propName, propValue);
+                    addCommand(SVNLog.MODIFY_ENTRY, command, false);
+                    command.remove(SVNTranslator.xmlEncode(propName));
+                } 
+            }
+        }
+    }
+
+    public void logChangedWCProperties(String name, Map modifiedWCProps) throws SVNException {
+        if (modifiedWCProps != null) {
+            Map command = new HashMap();
+            command.put(SVNLog.NAME_ATTR, name);
+            for (Iterator names = modifiedWCProps.keySet().iterator(); names.hasNext();) {                
+                String propName = (String) names.next();
+                String propValue = (String) modifiedWCProps.get(propName);
+                command.put(SVNLog.PROPERTY_NAME_ATTR, propName);
+                if (propValue != null) {
+                    command.put(SVNLog.PROPERTY_VALUE_ATTR, propValue);
+                } else {
+                    command.remove(SVNLog.PROPERTY_VALUE_ATTR);
+                }
+                addCommand(SVNLog.MODIFY_WC_PROPERTY, command, false);
+            }
+        }
     }
     
     public void save() throws SVNException {

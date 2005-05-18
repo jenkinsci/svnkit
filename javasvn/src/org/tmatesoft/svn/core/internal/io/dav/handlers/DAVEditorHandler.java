@@ -308,10 +308,9 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         } else {
             buffer = buffer.append(segment);
         }
-        /*
         if (dir && !isDir(buffer)) {
             buffer = buffer.append('/');
-        }*/
+        }
         return buffer;
     }
     

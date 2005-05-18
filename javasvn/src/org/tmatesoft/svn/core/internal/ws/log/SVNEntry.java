@@ -199,4 +199,17 @@ public class SVNEntry implements Comparable {
     public String getChecksum() {
         return myEntries.getPropertyValue(myName, SVNProperty.CHECKSUM);
     }
+
+    public void setLockComment(String comment) {
+        myEntries.setPropertyValue(myName, SVNProperty.LOCK_COMMENT, comment);
+    }
+    public void setLockOwner(String owner) {
+        myEntries.setPropertyValue(myName, SVNProperty.LOCK_OWNER, owner);
+    }
+    public void setLockCreationDate(String date) {
+        myEntries.setPropertyValue(myName, SVNProperty.LOCK_CREATION_DATE, date);
+    }
+    public void setLockToken(String token) {
+        myEntries.setPropertyValue(myName, SVNProperty.LOCK_TOKEN, token);
+    }
 }

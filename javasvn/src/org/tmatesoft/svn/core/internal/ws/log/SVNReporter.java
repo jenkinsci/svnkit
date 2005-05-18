@@ -253,7 +253,7 @@ class SVNReporter implements ISVNReporterBaton {
         DAVRepositoryFactory.setup();
         SVNWCAccess wcAccess = null;
         try {
-            wcAccess = SVNWCAccess.create(new File("c:/i/test5/A/B"));
+            wcAccess = SVNWCAccess.create(new File("c:/i/test5"));
             final SVNReporter reporter = new SVNReporter(wcAccess, true);
             ISVNReporterBaton baton = new ISVNReporterBaton() {
                 public void report(ISVNReporter r) throws SVNException {
