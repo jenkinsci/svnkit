@@ -73,11 +73,12 @@ public class SVNUpdateEditor implements ISVNEditor {
         attributes.put(SVNLog.NAME_ATTR, name);
         log.addCommand(SVNLog.DELETE_ENTRY, attributes, false);
         if (path.equals(myTarget)) {
-            String kind = myCurrentDirectory.getDirectory().getFile(name).isFile() ? "file" : "dir";
+            String kind = myCurrentDirectory.getDirectory().getFile(name).isFile() ? 
+                    SVNProperty.KIND_FILE : SVNProperty.KIND_DIR;
             attributes.put(SVNLog.NAME_ATTR, name);
-            attributes.put("kind", kind);
-            attributes.put("revision", Long.toString(myTargetRevision));
-            attributes.put("deleted", Boolean.TRUE.toString());
+            attributes.put(SVNProperty.shortPropertyName(SVNProperty.KIND), kind);
+            attributes.put(SVNProperty.shortPropertyName(SVNProperty.REVISION), Long.toString(myTargetRevision));
+            attributes.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), Boolean.TRUE.toString());
             log.addCommand(SVNLog.MODIFY_ENTRY, attributes, false);
             myIsTargetDeleted = true;
         }
@@ -138,6 +139,14 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public void absentDir(String path) throws SVNException {
+        absentEntry(path, SVNNodeKind.DIR);
+    }
+
+    public void absentFile(String path) throws SVNException {
+        absentEntry(path, SVNNodeKind.FILE);
+    }
+    
+    private void absentEntry(String path, SVNNodeKind kind) throws SVNException {
         path = PathUtil.removeLeadingSlash(path);
         path = PathUtil.removeTrailingSlash(path);
 
@@ -150,11 +159,12 @@ public class SVNUpdateEditor implements ISVNEditor {
         if (entry == null) {
             entries.addEntry(name);
         }
-        entry.setKind(SVNNodeKind.DIR);
+        entry.setKind(kind);
         entry.setDeleted(false);
         entry.setRevision(myTargetRevision);
         entry.setAbsent(true);
         entries.save(true);        
+        
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
@@ -188,9 +198,6 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-    }
-
-    public void absentFile(String path) throws SVNException {
     }
 
     public void openFile(String path, long revision) throws SVNException {

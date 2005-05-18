@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.io.SVNException;
@@ -280,6 +281,10 @@ public class SVNProperties {
             }
             SVNErrorManager.error(0, e);
         }
+    }
+    
+    public void mergeProperties(Map changedProperties, SVNLog log) {
+        
     }
     
     public void delete() {

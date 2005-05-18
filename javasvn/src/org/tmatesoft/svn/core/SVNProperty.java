@@ -119,4 +119,18 @@ public class SVNProperty {
         return Long.toString(i);
     }
     
+    public static String shortPropertyName(String longName) {
+        if (longName == null) {
+            return null;
+        }
+        if (longName.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
+            return longName.substring(SVNProperty.SVN_ENTRY_PREFIX.length());
+        } else if (longName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+            return longName.substring(SVNProperty.SVN_WC_PREFIX.length());
+        } else if (longName.startsWith(SVNProperty.SVN_PREFIX)) {
+            return longName.substring(SVNProperty.SVN_PREFIX.length());
+        }
+        return longName;
+    }
+    
 }
