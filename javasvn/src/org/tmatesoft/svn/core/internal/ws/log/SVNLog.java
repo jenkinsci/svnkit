@@ -148,18 +148,15 @@ public class SVNLog {
                 }
             }
         }
-        System.out.println("command count: " + commands.size());
         for (Iterator cmds = commands.iterator(); cmds.hasNext();) {
             Map command = (Map) cmds.next();
             String name = (String) command.remove("");
             if (runner != null) {
                 try {
-                    System.out.println("running: " + name);
                     runner.runCommand(myDirectory, name, command);
                     cmds.remove();
                 } catch (Throwable th) {
                     command.put("", name);
-                    // save all non-runned commands.
                     myCache = commands;
                     save();
                     SVNErrorManager.error(0, th);

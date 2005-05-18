@@ -46,12 +46,10 @@ class SVNReporter implements ISVNReporterBaton {
                 reporter.finishReport();
                 return;
             }
-            long revision = targetEntry.getRevision();
-            if (revision < 0) {
-                revision = targetEntries.getEntry("").getRevision();
-                if (revision < 0) {
-                    revision = anchorEntries.getEntry("").getRevision();
-                }
+            long revision = targetEntry.isFile() ? targetEntry.getRevision() : 
+                targetEntries.getEntry("").getRevision();
+            if (revision < 0) {                
+                revision = anchorEntries.getEntry("").getRevision();
             }
             reporter.setPath("", null, revision, targetEntry.isIncomplete());
             boolean missing = !targetEntry.isScheduledForDeletion() &&  
@@ -61,7 +59,7 @@ class SVNReporter implements ISVNReporterBaton {
                 if (missing) {
                     reporter.deletePath("");
                 } else {
-                    reportEntries(reporter, myWCAccess.getAnchor(), myWCAccess.getTargetName(), targetEntry.isIncomplete(), myIsRecursive);
+                    reportEntries(reporter, myWCAccess.getTarget(), "", targetEntry.isIncomplete(), myIsRecursive);
                 }
             } else if (targetEntry.isFile()){
                 if (missing) {
@@ -78,7 +76,6 @@ class SVNReporter implements ISVNReporterBaton {
                     reporter.setPath("", targetEntry.getLockToken(), targetEntry.getRevision(), false);
                 }            
             }
-            System.out.println("finish report");
             reporter.finishReport();
         } catch (Throwable th) {
             th.printStackTrace();
@@ -196,7 +193,7 @@ class SVNReporter implements ISVNReporterBaton {
         File src = dir.getBaseFile(name, false);
         File dst = dir.getBaseFile(name, true);
         File file = dir.getFile(name);
-        SVNTranslator.translate(src, dst, SVNTranslator.getEOL(eolStyle), keywordsMap, special);
+        SVNTranslator.translate(src, dst, SVNTranslator.getEOL(eolStyle), keywordsMap, special, true);
         try {
             SVNFileUtil.rename(dst, file);
         } catch (IOException e) {
@@ -256,7 +253,7 @@ class SVNReporter implements ISVNReporterBaton {
         DAVRepositoryFactory.setup();
         SVNWCAccess wcAccess = null;
         try {
-            wcAccess = SVNWCAccess.create(new File("e:/i/test4/"));
+            wcAccess = SVNWCAccess.create(new File("c:/i/test5/A/B"));
             final SVNReporter reporter = new SVNReporter(wcAccess, true);
             ISVNReporterBaton baton = new ISVNReporterBaton() {
                 public void report(ISVNReporter r) throws SVNException {
@@ -277,7 +274,8 @@ class SVNReporter implements ISVNReporterBaton {
             });
             SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
             repos.setCredentialsProvider(new SVNSimpleCredentialsProvider("alex", "cvs"));
-            repos.update(12, null, true, baton, editor);
+            repos.update(12, "".equals(wcAccess.getTargetName()) ? "" : wcAccess.getTargetName()
+                    , true, baton, editor);
             
         } catch (SVNException e) {
             e.printStackTrace();

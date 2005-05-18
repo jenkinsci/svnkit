@@ -9,7 +9,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.channels.FileChannel;
+import java.security.MessageDigest;
+
+import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNFileUtil {
 
@@ -130,8 +135,78 @@ public class SVNFileUtil {
             throw new IOException("can't create symlink '" + src.getAbsolutePath() + "' : file already exists.");
         }
         String linkTarget = readSingleLine(linkFile);
+        if (linkTarget.startsWith("link")) {
+            linkTarget = linkTarget.substring("link".length()).trim();
+        }
         Runtime.getRuntime().exec("ln -s '" + linkTarget + "' '" + src.getAbsolutePath() + "'");
         return isSymlink(src);
+    }
+
+    public static boolean detranslateSymlink(File src, File linkFile) throws IOException {
+        if (isWindows) {
+            return false;
+        }
+        if (!src.exists() || !isSymlink(src)) {
+            throw new IOException("can't detranslate symlink '" + src.getAbsolutePath() + "' : file doesn't exists or not a symlink.");
+        }
+        String linkPath = src.getCanonicalPath();
+        String locationPath = src.getAbsolutePath();
+        if (linkPath.startsWith(locationPath)) {
+            linkPath = PathUtil.removeLeadingSlash(linkPath.substring(locationPath.length()));
+        }
+        OutputStream os = null;
+        try {
+            os = new FileOutputStream(linkFile);
+            os.write("link ".getBytes("UTF-8"));
+            os.write(linkPath.getBytes("UTF-8"));
+        } finally {
+            if (os != null) {
+                os.close();
+            }
+        }
+        return true;
+    }
+    
+    public static boolean compareFiles(File f1, File f2, MessageDigest digest) throws IOException {
+        if (f1 == null || f2 == null) {
+            throw new IOException("can't accept 'null' values in compareFiles method");
+        }
+        if (f1.equals(f2)) {
+            return true;
+        }
+        boolean equals = true;
+        if (f1.length() != f2.length()) {
+            if (digest == null) {
+                return false;
+            }
+            equals = false;
+        }
+        InputStream is1 = null;
+        InputStream is2 = null;
+        try {
+            while(true) {
+                int b1 = is1.read();
+                int b2 = is2.read();
+                if (b1 != b2) {
+                    if (digest == null) {
+                        return false;
+                    }
+                    equals = false;
+                }                
+                if (b1 < 0) {
+                    break;
+                }
+                digest.update((byte) (b1 & 0xFF));
+            }
+        } finally {
+            if (is1 != null) {
+                is1.close();
+            }
+            if (is2 != null) {
+                is2.close();
+            }
+        }
+        return equals;
     }
 
     public static void setHidden(File file, boolean hidden) {
@@ -174,5 +249,20 @@ public class SVNFileUtil {
             }
         }
         return line;
+    }
+
+    public static String toHexDigest(MessageDigest digest) {
+        if (digest == null) {
+            return null;
+        }
+        byte[] result = digest.digest();
+        String hexDigest = "";
+        for (int i = 0; i < result.length; i++) {
+            byte b = result[i];
+            int lo = b & 0xf;
+            int hi = (b >> 4) & 0xf;
+            hexDigest += Integer.toHexString(hi) + Integer.toHexString(lo);
+        }
+        return hexDigest;
     }
 }

@@ -16,19 +16,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 class SVNTranslator {
     
-    private static final byte[] CRLF = new byte[] {'\r', '\n'};
-    private static final byte[] LF = new byte[] {'\n'};
-    private static final byte[] CR = new byte[] {'\r'};
-    private static final byte[] NATIVE = System.getProperty("line.separator").getBytes();
+    public static final byte[] CRLF = new byte[] {'\r', '\n'};
+    public static final byte[] LF = new byte[] {'\n'};
+    public static final byte[] CR = new byte[] {'\r'};
+    public static final byte[] NATIVE = System.getProperty("line.separator").getBytes();
     
-    public static void translate(File src, File dst, byte[] eol, Map keywords, boolean special) throws SVNException {
+    public static void translate(File src, File dst, byte[] eol, Map keywords, boolean special, boolean expand) throws SVNException {
         if (src == null || dst == null) {
             SVNErrorManager.error(0, null);
             return;
@@ -41,11 +40,13 @@ class SVNTranslator {
                 if (dst.exists()) {
                     dst.delete();
                 }
-                if (FSUtil.isWindows) {
+                if (SVNFileUtil.isWindows) {
                     dst.createNewFile();
-                    SVNFileUtil.copy(src, dst);                
-                } else {
+                    SVNFileUtil.copy(src, dst);
+                } else if (expand) {
                     SVNFileUtil.createSymlink(src, dst);
+                } else if (!expand) {
+                    SVNFileUtil.detranslateSymlink(src, dst);
                 }
             } catch (IOException e) {
                 SVNErrorManager.error(0, e);

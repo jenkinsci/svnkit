@@ -4,15 +4,19 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.TimeUtil;
 
 public class SVNDirectory {
     
@@ -22,28 +26,19 @@ public class SVNDirectory {
     private Map myProperties;
     private Map myBaseProperties;
     private Map myWCProperties;
+    private SVNWCAccess myWCAccess;
+    private String myPath;
 
-    public SVNDirectory(File dir) {
+    public SVNDirectory(SVNWCAccess wcAccess, String path, File dir) {
         myDirectory = dir;
     }
 
     public SVNDirectory[] getChildDirectories() {
-        File[] children = myDirectory.listFiles();
-        Collection directories = new ArrayList();
-        for (int i = 0; children != null && i < children.length; i++) {
-            if (children[i].isDirectory() && !getAdminDirectory().equals(children[i])) {
-                directories.add(new SVNDirectory(children[i]));
-            }
-        }
-        return (SVNDirectory[]) directories.toArray(new SVNDirectory[directories.size()]);
+        return myWCAccess.getChildDirectories(myPath);
     }
 
     public SVNDirectory getChildDirectory(String name) {
-        File child = new File(myDirectory, name);
-        if (child.isDirectory()) {
-            return new SVNDirectory(child);
-        }
-        return null;
+        return myWCAccess.getDirectory("".equals(myPath) ? name : PathUtil.append(myPath, name));
     }
     
     public boolean isVersioned() {
@@ -166,12 +161,78 @@ public class SVNDirectory {
         }
     }
     
+    public boolean hasTextModifications(String name, boolean force) throws SVNException {
+        if (!getFile(name).isFile()) {
+            return false;
+        }
+        SVNEntries entries = getEntries();
+        if (entries == null || entries.getEntry(name) == null) {
+            return false;
+        }
+        SVNEntry entry = entries.getEntry(name);
+        if (entry.isDirectory()) {
+            return false;
+        }
+        if (!force) {
+            String textTime = entry.getTextTime();
+            long tstamp = TimeUtil.parseDate(textTime).getTime();
+            if (tstamp == getFile(name).lastModified()) {
+                return false;
+            }
+        } 
+        File baseFile = getBaseFile(name, false);
+        if (!baseFile.isFile()) {
+            return true;
+        }
+        // translate versioned file.
+        File baseTmpFile = getBaseFile(name, true);
+        File versionedFile = getFile(name); 
+        byte[] eol = getProperties(name).getPropertyValue(SVNProperty.EOL_STYLE) == null ? 
+                null : SVNTranslator.LF;
+        String keywords = getProperties(name).getPropertyValue(SVNProperty.KEYWORDS);
+        boolean special = getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
+        SVNTranslator.translate(versionedFile, baseTmpFile, eol, 
+                SVNTranslator.computeKeywords(keywords, null, null, null, -1), special, false);
+        
+        // now compare file and get base file checksum (when forced)
+        MessageDigest digest;
+        boolean equals = true;
+        try {
+            digest = force ? MessageDigest.getInstance("MD5") : null;
+            equals = SVNFileUtil.compareFiles(baseFile, baseTmpFile, digest);
+            if (force) {
+                // if checksum differs from expected - throw exception
+                String checksum = SVNFileUtil.toHexDigest(digest);
+                if (!checksum.equals(entry.getChecksum())) {
+                    SVNErrorManager.error(10, null);
+                }
+            }
+        } catch (NoSuchAlgorithmException e) {
+            SVNErrorManager.error(0, e);
+        } catch (IOException e) {
+            SVNErrorManager.error(0, e);
+        }
+        
+        if (equals && isLocked()) {
+            entry.setTextTime(TimeUtil.formatDate(new Date(versionedFile.lastModified())));
+            entries.save(true);
+        }        
+        return !equals;
+    }
+    
+    private static String compareFiles(File baseFile, File versionedFile) {
+        // 1. translate versioned file 
+        return null;
+    }
+    
     public void dispose() {
         if (myEntries != null) {
             myEntries.close();
-            myEntries = null;
         }
+        myEntries = null;
         myProperties = null;
+        myBaseProperties = null;
+        myWCProperties = null;        
     }
 
     private File getLockFile() {
@@ -288,7 +349,10 @@ public class SVNDirectory {
             }
         }
         
-        SVNDirectory child = getChildDirectory(name);
+        String childPath = PathUtil.append(myPath, name);
+        childPath = PathUtil.removeLeadingSlash(childPath);
+
+        SVNDirectory child = myWCAccess.addDirectory(childPath, dir);
         SVNEntry rootEntry = child.getEntries().addEntry("");
         rootEntry.setURL(url);
         rootEntry.setRevision(revision);
@@ -299,9 +363,30 @@ public class SVNDirectory {
     
     public void destroy(String name, boolean deleteWorkingFiles) throws SVNException {
         if ("".equals(name)) {
-            SVNDirectory parent = new SVNDirectory(myDirectory.getParentFile());
-            if (!parent.isVersioned()) {
-                parent = null;
+            SVNDirectory parent = null;
+            if ("".equals(myPath)) {
+                SVNWCAccess parentWCAccess = null;
+                try {
+                    parentWCAccess = SVNWCAccess.create(getRoot().getParentFile());
+                    parentWCAccess.open(true, false);
+                    parent = parentWCAccess.getAnchor();
+                    destroyDirectory(parent, this, deleteWorkingFiles);
+                } catch (SVNException e) {
+                    parent = null;
+                } finally {
+                    if (parentWCAccess != null) {
+                        parentWCAccess.close(true, false);
+                    }
+                }
+                if (parent != null) {
+                    return;
+                }
+            } else {
+                String parentPath = PathUtil.removeTail(myPath);
+                parent = myWCAccess.getDirectory(parentPath);
+                if (parent != null && !parent.isVersioned()) {
+                    parent = null;
+                }
             }
             destroyDirectory(parent, this, deleteWorkingFiles);
         } else {
@@ -317,6 +402,11 @@ public class SVNDirectory {
         }
     }
     
+    public void setWCAccess(SVNWCAccess wcAccess, String path) {
+        myWCAccess = wcAccess;
+        myPath = path;
+    }
+    
     private void destroyFile(String name, boolean deleteWorkingFile) throws SVNException {
         SVNEntries entries = getEntries();
         entries.deleteEntry(name);
@@ -328,8 +418,7 @@ public class SVNDirectory {
         getBaseProperties(name).delete();
         getWCProperties(name).delete();
         
-        // check for local mods.
-        if (deleteWorkingFile) {
+        if (deleteWorkingFile && !hasTextModifications(name, false)) {
             getFile(name).delete();
         }
     }

@@ -50,7 +50,7 @@ public class SVNUpdateEditor implements ISVNEditor {
 
     public void openRoot(long revision) throws SVNException {
         myIsRootOpen = true;
-        myCurrentDirectory = createDirectoryInfo(null, null, false);
+        myCurrentDirectory = createDirectoryInfo(null, "", false);
         if (myTarget == null) {
             SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
             SVNEntry entry = entries.getEntry("");
@@ -62,34 +62,34 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
+        path = PathUtil.removeLeadingSlash(path);
         SVNLog log = myCurrentDirectory.getLog(true);
         Map attributes = new HashMap();
         String name = PathUtil.tail(path);
         
         attributes.put(SVNLog.NAME_ATTR, name);
         log.addCommand(SVNLog.DELETE_ENTRY, attributes, false);
-        System.out.println("delete: " + name);
-        System.out.println("path: " + path);
-        System.out.println("target: " + myTarget);
-        if (PathUtil.removeLeadingSlash(path).equals(myTarget)) {
+        if (path.equals(myTarget)) {
             String kind = myCurrentDirectory.getDirectory().getFile(name).isFile() ? "file" : "dir";
             attributes.put(SVNLog.NAME_ATTR, name);
             attributes.put("kind", kind);
             attributes.put("revision", Long.toString(myTargetRevision));
             attributes.put("deleted", Boolean.TRUE.toString());
             log.addCommand(SVNLog.MODIFY_ENTRY, attributes, false);
-            System.out.println("modentry command added");
+            myIsTargetDeleted = true;
         }
         if (mySwitchURL != null) {
             myCurrentDirectory.getDirectory().destroy(name, true);
         }
         log.save();
         myCurrentDirectory.runLogs();
-        myIsTargetDeleted = PathUtil.removeLeadingSlash(path).equals(myTarget);
         myWCAccess.svnEvent(SVNEvent.createUpdateDeleteEvent(myWCAccess, myCurrentDirectory.getDirectory(), name));
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        System.out.println("add directory: " + path);
+        path = PathUtil.removeLeadingSlash(path);        
+
         SVNDirectory parentDir = myCurrentDirectory.getDirectory();
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, true);
         
@@ -122,6 +122,8 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public void openDir(String path, long revision) throws SVNException {
+        path = PathUtil.removeLeadingSlash(path);
+
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, false);
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
         SVNEntry entry = entries.getEntry("");
@@ -132,6 +134,8 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public void absentDir(String path) throws SVNException {
+        path = PathUtil.removeLeadingSlash(path);
+
         String name = PathUtil.tail(path);
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
         SVNEntry entry = entries.getEntry(name);
@@ -156,7 +160,6 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         // run log to complete properties merge.
         completeDirectory(myCurrentDirectory);
-        myCurrentDirectory.dispose();
         myCurrentDirectory = myCurrentDirectory.Parent;
 
         // notify if there were prop changes and directory was not added.
@@ -313,7 +316,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
     
     private SVNDirectoryInfo createDirectoryInfo(SVNDirectoryInfo parent, String path, boolean added) throws SVNException {
-        SVNDirectoryInfo info = new SVNDirectoryInfo();
+        SVNDirectoryInfo info = new SVNDirectoryInfo(path);
         info.Parent = parent;
         info.IsAdded = added;
         info.Path = parent != null ? new File(myWCAccess.getAnchor().getRoot(), path) : 
@@ -321,8 +324,8 @@ public class SVNUpdateEditor implements ISVNEditor {
         info.Name = path != null ? PathUtil.tail(path) : "";
 
         if (mySwitchURL == null) {
-            SVNDirectory dir = info.getDirectory();
-            if (dir.getEntries().getEntry("") != null) {
+            SVNDirectory dir = added ? null : info.getDirectory();
+            if (dir != null && dir.getEntries().getEntry("") != null) {
                 info.URL = dir.getEntries().getEntry("").getURL();
             }
             if (info.URL == null && parent != null) {
@@ -348,7 +351,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         return info;
     }
     
-    private static class SVNDirectoryInfo {
+    private class SVNDirectoryInfo {
         public String URL;
         public File Path;
         public String Name;
@@ -356,21 +359,15 @@ public class SVNUpdateEditor implements ISVNEditor {
         public SVNDirectoryInfo Parent;
         public int RefCount;
         
-        private SVNDirectory myDirectory;
+        private String myPath;
         private int myLogCount;
         
-        public SVNDirectory getDirectory() {
-            if (myDirectory == null) {
-                myDirectory = new SVNDirectory(Path);
-            }
-            return myDirectory;
+        public SVNDirectoryInfo(String path) {
+            myPath = path;
         }
         
-        public void dispose() {
-            if (myDirectory != null) {
-                myDirectory.dispose();
-                myDirectory = null;
-            }
+        public SVNDirectory getDirectory() {
+            return myWCAccess.getDirectory(myPath);
         }
         
         public SVNLog getLog(boolean increment) {
