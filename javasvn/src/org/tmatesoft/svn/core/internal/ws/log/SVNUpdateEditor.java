@@ -32,8 +32,11 @@ public class SVNUpdateEditor implements ISVNEditor {
         myTarget = wcAccess.getTargetName();
         mySwitchURL = switchURL;
         
-        SVNEntry entry = wcAccess.getTarget().getEntries().getEntry(myTarget);
+        SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("");
         myTargetURL = entry.getURL();
+        if (myTarget != null) {
+            myTargetURL = PathUtil.append(myTargetURL, PathUtil.encode(myTarget));
+        }
         wcAccess.getTarget().getEntries().close();
 
         if ("".equals(myTarget)) {
@@ -65,19 +68,24 @@ public class SVNUpdateEditor implements ISVNEditor {
         
         attributes.put(SVNLog.NAME_ATTR, name);
         log.addCommand(SVNLog.DELETE_ENTRY, attributes, false);
-        if (path.equals(myTarget)) {
+        System.out.println("delete: " + name);
+        System.out.println("path: " + path);
+        System.out.println("target: " + myTarget);
+        if (PathUtil.removeLeadingSlash(path).equals(myTarget)) {
             String kind = myCurrentDirectory.getDirectory().getFile(name).isFile() ? "file" : "dir";
             attributes.put(SVNLog.NAME_ATTR, name);
             attributes.put("kind", kind);
             attributes.put("revision", Long.toString(myTargetRevision));
             attributes.put("deleted", Boolean.TRUE.toString());
-            log.addCommand(SVNLog.MODIFY_ENTRY, attributes, false);            
+            log.addCommand(SVNLog.MODIFY_ENTRY, attributes, false);
+            System.out.println("modentry command added");
         }
         if (mySwitchURL != null) {
             myCurrentDirectory.getDirectory().destroy(name, true);
         }
         log.save();
         myCurrentDirectory.runLogs();
+        myIsTargetDeleted = PathUtil.removeLeadingSlash(path).equals(myTarget);
         myWCAccess.svnEvent(SVNEvent.createUpdateDeleteEvent(myWCAccess, myCurrentDirectory.getDirectory(), name));
     }
 
@@ -110,7 +118,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             SVNErrorManager.error(0, null);
         }
         dir.lock();
-        myWCAccess.svnEvent(SVNEvent.createUpdateAddEvent(myWCAccess, dir, entry));
+        myWCAccess.svnEvent(SVNEvent.createUpdateAddEvent(myWCAccess, parentDir, entry));
     }
 
     public void openDir(String path, long revision) throws SVNException {
@@ -158,7 +166,9 @@ public class SVNUpdateEditor implements ISVNEditor {
         if (!myIsRootOpen) {
             completeDirectory(myCurrentDirectory);
         }
-        bumpDirectories();
+        if (!myIsTargetDeleted) {
+            bumpDirectories();
+        }
         return null;
     }
 
@@ -281,6 +291,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 }
                 if (entry.isDeleted()) {
                     if (!entry.isScheduledForAddition()) {
+                        System.out.println("deleting in complete: " + entry.getName());
                         entries.deleteEntry(entry.getName());
                     } else {
                         entry.setDeleted(false);
@@ -305,7 +316,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNDirectoryInfo info = new SVNDirectoryInfo();
         info.Parent = parent;
         info.IsAdded = added;
-        info.Path = parent != null ? new File(parent.Path, path) : 
+        info.Path = parent != null ? new File(myWCAccess.getAnchor().getRoot(), path) : 
             myWCAccess.getAnchor().getRoot();
         info.Name = path != null ? PathUtil.tail(path) : "";
 

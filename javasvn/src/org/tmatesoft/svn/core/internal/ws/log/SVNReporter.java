@@ -11,10 +11,14 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -31,12 +35,12 @@ class SVNReporter implements ISVNReporterBaton {
     public void report(ISVNReporter reporter) throws SVNException {
         SVNEntries targetEntries = myWCAccess.getTarget().getEntries();
         SVNEntries anchorEntries = myWCAccess.getAnchor().getEntries();
-        SVNEntry targetEntry = targetEntries.getEntry(myWCAccess.getTargetName());
+        SVNEntry targetEntry = anchorEntries.getEntry(myWCAccess.getTargetName());
         
         try {
             if (targetEntry == null || targetEntry.isHidden() || 
                     (targetEntry.isDirectory() && targetEntry.isScheduledForAddition())) {
-                long revision = targetEntries.getEntry("").getRevision();
+                long revision = anchorEntries.getEntry("").getRevision();
                 reporter.setPath("", null, revision, targetEntry != null ? targetEntry.isIncomplete() : true);
                 reporter.deletePath("");
                 reporter.finishReport();
@@ -51,17 +55,17 @@ class SVNReporter implements ISVNReporterBaton {
             }
             reporter.setPath("", null, revision, targetEntry.isIncomplete());
             boolean missing = !targetEntry.isScheduledForDeletion() &&  
-                !myWCAccess.getTarget().getFile(myWCAccess.getTargetName()).exists();
+                !myWCAccess.getAnchor().getFile(myWCAccess.getTargetName()).exists();
             
             if (targetEntry.isDirectory()) {
                 if (missing) {
                     reporter.deletePath("");
                 } else {
-                    reportEntries(reporter, myWCAccess.getTarget(), myWCAccess.getTargetName(), targetEntry.isIncomplete(), myIsRecursive);
+                    reportEntries(reporter, myWCAccess.getAnchor(), myWCAccess.getTargetName(), targetEntry.isIncomplete(), myIsRecursive);
                 }
             } else if (targetEntry.isFile()){
                 if (missing) {
-                    restoreFile(myWCAccess.getTarget(), targetEntry.getName());
+                    restoreFile(myWCAccess.getAnchor(), targetEntry.getName());
                 }
                 // report either linked path or entry path
                 String url = targetEntry.getURL();
@@ -74,8 +78,10 @@ class SVNReporter implements ISVNReporterBaton {
                     reporter.setPath("", targetEntry.getLockToken(), targetEntry.getRevision(), false);
                 }            
             }
+            System.out.println("finish report");
             reporter.finishReport();
         } catch (Throwable th) {
+            th.printStackTrace();
             reporter.abortReport();
             SVNErrorManager.error(0, th);
         }
@@ -228,7 +234,7 @@ class SVNReporter implements ISVNReporterBaton {
     
     public static void main(String[] args) {
         
-        
+        /*
         ISVNReporter r = new ISVNReporter() {
             public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
                 System.out.println("set-path '" + path + "' : " + revision);
@@ -244,21 +250,43 @@ class SVNReporter implements ISVNReporterBaton {
             public void abortReport() throws SVNException {
                 System.out.println("abort-report");
             }
-        };
+        };*/
+        
 
+        DAVRepositoryFactory.setup();
+        SVNWCAccess wcAccess = null;
         try {
-            SVNWCAccess wcAccess = SVNWCAccess.create(new File("c:/"));
+            wcAccess = SVNWCAccess.create(new File("e:/i/test4/"));
+            final SVNReporter reporter = new SVNReporter(wcAccess, true);
+            ISVNReporterBaton baton = new ISVNReporterBaton() {
+                public void report(ISVNReporter r) throws SVNException {
+                    reporter.report(r);
+                }
+            };
+            wcAccess.open(true, true);
+            String url = wcAccess.getAnchor().getEntries().getEntry("").getURL();
+            System.out.println("update url: " + url);
+            System.out.println("update target: " + wcAccess.getTargetName());
+            wcAccess.getTarget().getEntries().close();
+            SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, true);
             wcAccess.setEventDispatcher(new ISVNEventListener() {
                 public void svnEvent(SVNEvent event) {
-                    System.out.println("Restored: " + event.getPath());
+                    System.out.println("event: " + event.getPath());
                     System.out.println("Full Path: " + event.getFile().getAbsolutePath());
                 }
             });
+            SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
+            repos.setCredentialsProvider(new SVNSimpleCredentialsProvider("alex", "cvs"));
+            repos.update(12, null, true, baton, editor);
             
-            SVNReporter reporter = new SVNReporter(wcAccess, true);
-            reporter.report(r);
         } catch (SVNException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                wcAccess.close(true, true);
+            } catch (SVNException e) {
+                e.printStackTrace();
+            }
         }
         
     }

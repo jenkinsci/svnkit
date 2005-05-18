@@ -18,6 +18,9 @@ public class SVNLogRunner {
         } else if (SVNLog.MODIFY_ENTRY.equals(name)) {
             String fileName = (String) attributes.get(SVNLog.NAME_ATTR);
             SVNEntries entries = dir.getEntries();
+            if (entries.getEntry(fileName) == null) {
+                entries.addEntry(fileName);
+            }
             for (Iterator atts = attributes.keySet().iterator(); atts.hasNext();) {
                 String attName = (String) atts.next();
                 String value = (String) attributes.get(attName);

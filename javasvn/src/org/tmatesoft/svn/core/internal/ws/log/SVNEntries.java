@@ -18,6 +18,7 @@ import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNEntries {
     
@@ -33,11 +34,11 @@ public class SVNEntries {
         if (myData != null) {
             return;
         }
-        myData = new TreeMap();
-        myEntries = new TreeSet();
         if (!myFile.exists()) {
             return;
         }
+        myData = new TreeMap();
+        myEntries = new TreeSet();
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new FileReader(myFile));
@@ -79,6 +80,7 @@ public class SVNEntries {
         }
         Writer os = null;
         File tmpFile = new File(myFile.getParentFile(), "tmp/entries");
+        Map rootEntry = (Map) myData.get("");
         try {
             os = new FileWriter(tmpFile);
             os.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
@@ -91,6 +93,30 @@ public class SVNEntries {
                 for (Iterator names = entry.keySet().iterator(); names.hasNext();) {
                     String propName = (String) names.next();
                     String propValue = (String) entry.get(propName);
+                    if (propValue == null) {
+                        continue;
+                    }
+                    if (!"".equals(name)) {
+                        Object expectedValue = null;
+                        if (SVNProperty.KIND_DIR.equals(entry.get(SVNProperty.KIND))) {
+                            if (SVNProperty.UUID.equals(propName) || 
+                                    SVNProperty.REVISION.equals(propName) ||
+                                    SVNProperty.URL.equals(propName)) {
+                                continue;
+                            }
+                        } else {
+                            if (SVNProperty.URL.equals(propName)) {
+                                expectedValue = PathUtil.append((String) rootEntry.get(propName), PathUtil.encode(name));
+                            }  else if (SVNProperty.UUID.equals(propName) || SVNProperty.REVISION.equals(propName)) {
+                                expectedValue = rootEntry.get(propName);
+                            } else {
+                                expectedValue = null;
+                            }
+                            if (propValue.equals(expectedValue)) {
+                                continue;
+                            }
+                        }
+                    }
                     propName = propName.substring(SVNProperty.SVN_ENTRY_PREFIX.length());
                     propValue = SVNTranslator.xmlEncode(propValue);  
                     os.write("   ");
@@ -170,13 +196,17 @@ public class SVNEntries {
     }
     
     public SVNEntry getEntry(String name) {
-        if (myData.containsKey(name)) {
+        if (myData != null && myData.containsKey(name)) {
             return new SVNEntry(this, name);
         }
         return null;
     }
     
     public SVNEntry addEntry(String name) {
+        if (myData == null) {
+            myData = new TreeMap();
+            myEntries = new TreeSet();
+        }
         if (myData != null && !myData.containsKey(name)) {
             myData.put(name, new HashMap());
             SVNEntry entry = new SVNEntry(this, name);

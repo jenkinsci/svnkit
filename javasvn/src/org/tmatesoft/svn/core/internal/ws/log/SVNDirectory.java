@@ -84,8 +84,8 @@ public class SVNDirectory {
     public SVNEntries getEntries() throws SVNException {
         if (myEntries == null) {
             myEntries = new SVNEntries(new File(getAdminDirectory(), "entries"));
-            myEntries.open();
         }
+        myEntries.open();
         return myEntries;
     }
 
@@ -213,6 +213,7 @@ public class SVNDirectory {
         int index = 0;
         while(true) {
             SVNLog log = new SVNLog(this, index);
+            index++;
             if (log.exists()) {
                 log.run(runner);
                 continue;
@@ -291,6 +292,7 @@ public class SVNDirectory {
         SVNEntry rootEntry = child.getEntries().addEntry("");
         rootEntry.setURL(url);
         rootEntry.setRevision(revision);
+        rootEntry.setKind(SVNNodeKind.DIR);
         child.getEntries().save(true);
         return child;
     }

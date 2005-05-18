@@ -76,9 +76,7 @@ public class SVNLog {
                     }
                     os.write('\n');
                 }
-            }
-            SVNFileUtil.rename(myTmpFile, myFile);
-            SVNFileUtil.setReadonly(myFile, true);
+            }            
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {
@@ -89,6 +87,12 @@ public class SVNLog {
                 }
             }
             myCache = null;
+        }
+        try {
+            SVNFileUtil.rename(myTmpFile, myFile);
+            SVNFileUtil.setReadonly(myFile, true);
+        } catch (IOException e) {
+            SVNErrorManager.error(0, e);
         }
     }
     
@@ -113,6 +117,9 @@ public class SVNLog {
                     if (index > 0) {
                         String attrName = line.substring(0, index).trim();
                         String value = line.substring(index + 1).trim();
+                        if (value.endsWith("/>")) {
+                            value = value.substring(0, value.length() - "/>".length());                            
+                        }
                         if (value.startsWith("\"")) {
                             value = value.substring(1);
                         }
@@ -131,16 +138,23 @@ public class SVNLog {
                     name = null;
                 }
             }
-            delete();
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
-        } 
-
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+        System.out.println("command count: " + commands.size());
         for (Iterator cmds = commands.iterator(); cmds.hasNext();) {
             Map command = (Map) cmds.next();
             String name = (String) command.remove("");
             if (runner != null) {
                 try {
+                    System.out.println("running: " + name);
                     runner.runCommand(myDirectory, name, command);
                     cmds.remove();
                 } catch (Throwable th) {
@@ -152,6 +166,7 @@ public class SVNLog {
                 }
             }
         }
+        delete();
     }
     
     public void delete() {

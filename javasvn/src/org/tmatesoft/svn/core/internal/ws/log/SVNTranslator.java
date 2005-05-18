@@ -33,15 +33,14 @@ class SVNTranslator {
             SVNErrorManager.error(0, null);
             return;
         }
-        if (dst.exists()) {
-            SVNErrorManager.error(0, null);
-            return;
-        }
         if (src.equals(dst)) {
             return;
         }
         if (special) {
             try {
+                if (dst.exists()) {
+                    dst.delete();
+                }
                 if (FSUtil.isWindows) {
                     dst.createNewFile();
                     SVNFileUtil.copy(src, dst);                
@@ -117,7 +116,9 @@ class SVNTranslator {
                 if (keywordLength < 0) {
                     continue;
                 } else if (keywordLength == 0) {
-                    dst.write(keywordBuffer, 0, length);
+                    if (length > 0) {
+                        dst.write(keywordBuffer, 0, length);
+                    }
                 } else {
                     int from = translateKeyword(dst, keywords, keywordBuffer, keywordLength);
                     in.unread(keywordBuffer, from, length - from);

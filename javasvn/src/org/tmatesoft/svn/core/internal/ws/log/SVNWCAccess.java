@@ -65,7 +65,7 @@ public class SVNWCAccess implements ISVNEventListener {
                                 anchor = null;                        
                             } else if (targetInAnchor.isDirectory()){
                                 // not switched, target is valid dir, just use it.
-                                anchor = null;       
+                                //anchor = null;       
                             }
                         }
                 } 
