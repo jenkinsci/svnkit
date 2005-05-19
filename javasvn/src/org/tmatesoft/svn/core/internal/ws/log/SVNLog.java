@@ -24,10 +24,17 @@ public class SVNLog {
     public static final String MODIFY_ENTRY = "modify-entry";
     public static final String MODIFY_WC_PROPERTY = "modify-wcprop";
     public static final String DELETE_LOCK = "delete-lock";
+    public static final String MOVE = "mv";
+    public static final String APPEND = "append";
+    public static final String DELETE = "rm";
+    public static final String READONLY = "readonly";
 
     public static final String NAME_ATTR = "name";
     public static final String PROPERTY_NAME_ATTR = "propname";
     public static final String PROPERTY_VALUE_ATTR = "propvalue";
+    public static final String DESTINATION_VALUE_ATTR = "dest";
+
+    public static final String WC_TIMESTAMP = "working";
 
     private File myFile;
     private File myTmpFile;

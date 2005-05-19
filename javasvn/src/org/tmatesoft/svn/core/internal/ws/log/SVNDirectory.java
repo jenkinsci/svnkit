@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -23,9 +26,6 @@ public class SVNDirectory {
     private File myDirectory;
     private SVNEntries myEntries;
     
-    private Map myProperties;
-    private Map myBaseProperties;
-    private Map myWCProperties;
     private SVNWCAccess myWCAccess;
     private String myPath;
 
@@ -86,43 +86,124 @@ public class SVNDirectory {
         return myEntries;
     }
 
-    public SVNProperties getProperties(String name) {
-        if (myProperties == null) {
-            myProperties = new HashMap();
-        }
-        if (!myProperties.containsKey(name)) {
-            File propertiesFile = "".equals(name) ? 
-                    new File(getAdminDirectory(), "dir-props") :
-                    new File(getAdminDirectory(), "props/" + name + ".svn-work");
-            myProperties.put(name, new SVNProperties(propertiesFile));
-        }
-        return (SVNProperties) myProperties.get(name);
+    public SVNProperties getProperties(String name, boolean tmp) {
+        String path = !tmp ? ".svn/" : ".svn/tmp/";
+        path += "".equals(name) ? "dir-props" : "props/" + name + ".svn-work"; 
+        File propertiesFile = new File(getRoot(), path); 
+        return new SVNProperties(propertiesFile, path);
     }
 
-    public SVNProperties getBaseProperties(String name) {
-        if (myBaseProperties == null) {
-            myBaseProperties = new HashMap();
-        }
-        if (!myBaseProperties.containsKey(name)) {
-            File propertiesFile = "".equals(name) ? 
-                    new File(getAdminDirectory(), "dir-prop-base") :
-                    new File(getAdminDirectory(), "prop-base/" + name + ".svn-base");
-            myBaseProperties.put(name, new SVNProperties(propertiesFile));
-        }
-        return (SVNProperties) myBaseProperties.get(name);
+    public SVNProperties getBaseProperties(String name, boolean tmp) {
+        String path = !tmp ? ".svn/" : ".svn/tmp/";
+        path += "".equals(name) ? "dir-prop-base" : "prop-base/" + name + ".svn-base"; 
+        File propertiesFile = new File(getRoot(), path); 
+        return new SVNProperties(propertiesFile, path);
     }
     
     public SVNProperties getWCProperties(String name) {
-        if (myWCProperties == null) {
-            myWCProperties = new HashMap();
+        String path = "".equals(name) ? ".svn/dir-wcprops" : ".svn/wcprops/" + name + ".svn-work"; 
+        File propertiesFile = new File(getRoot(), path); 
+        return new SVNProperties(propertiesFile, path);
+    }
+    
+    public SVNEventStatus mergeProperties(String name, Map changedProperties, Map locallyChanged, SVNLog log) throws SVNException {
+        if (changedProperties == null || changedProperties.isEmpty()) {
+            return SVNEventStatus.UNCHANGED;
         }
-        if (!myWCProperties.containsKey(name)) {
-            File propertiesFile = "".equals(name) ? 
-                    new File(getAdminDirectory(), "dir-wcprops") :
-                    new File(getAdminDirectory(), "wcprops/" + name + ".svn-work");
-            myWCProperties.put(name, new SVNProperties(propertiesFile));
+        SVNProperties working = getProperties(name, false);
+        SVNProperties workingTmp = getProperties(name, true);
+        SVNProperties base = getBaseProperties(name, false);
+        SVNProperties baseTmp = getBaseProperties(name, true);
+
+        try {
+            SVNFileUtil.copy(working.getFile(), workingTmp.getFile());
+            SVNFileUtil.copy(base.getFile(), baseTmp.getFile());
+        } catch (IOException e) {
+            SVNErrorManager.error(0, e);
         }
-        return (SVNProperties) myWCProperties.get(name);
+        
+        Collection conflicts = new ArrayList();
+        SVNEventStatus result = SVNEventStatus.CHANGED;
+        for (Iterator propNames = changedProperties.keySet().iterator(); propNames.hasNext();) {
+            String propName = (String) propNames.next();
+            String propValue = (String) changedProperties.get(propName);
+
+            baseTmp.setPropertyValue(propName, propValue);
+            
+            if (locallyChanged.containsKey(propName)) {
+                String workingValue = (String) locallyChanged.get(propName);
+                String conflict = null;
+                if (workingValue != null) {
+                    if (workingValue == null && propValue != null) {
+                        conflict = MessageFormat.format("Property ''{0}'' locally deleted, but update sets it to ''{1}''\n", 
+                                new String[] {propName, workingValue});                        
+                    } else if (workingValue != null && propValue == null) {
+                        conflict = MessageFormat.format("Property ''{0}'' locally changed to ''{1}'', but update deletes it\n", 
+                                new String[] {propName, workingValue});                        
+                    } else if (workingValue != null && !workingValue.equals(propValue)) {
+                        conflict = MessageFormat.format("Property ''{0}'' locally changed to ''{1}'', but update sets it to ''{2}''\n", 
+                                new String[] {propName, workingValue, propValue});                        
+                    }
+                    if (conflict != null) {          
+                        conflicts.add(conflict);
+                        continue;
+                    }
+                    result = SVNEventStatus.MERGED;
+                }
+            }
+            workingTmp.setPropertyValue(propName, propValue);
+        }        
+        // now log all.
+        Map command = new HashMap();
+        command.put(SVNLog.NAME_ATTR, workingTmp.getPath());
+        command.put(SVNLog.DESTINATION_VALUE_ATTR, working.getPath());
+        log.addCommand(SVNLog.MOVE, command, false);
+        command.clear();
+        command.put(SVNLog.NAME_ATTR, working.getPath());
+        log.addCommand(SVNLog.READONLY, command, false);
+
+        command.put(SVNLog.NAME_ATTR, baseTmp.getPath());
+        command.put(SVNLog.DESTINATION_VALUE_ATTR, base.getPath());
+        log.addCommand(SVNLog.MOVE, command, false);
+        command.clear();
+        command.put(SVNLog.NAME_ATTR, base.getPath());
+        log.addCommand(SVNLog.READONLY, command, false);
+
+        if (!conflicts.isEmpty()) {
+            String prejTmpPath = "".equals(name) ? ".svn/tmp/dir-conflicts.prej" : ".svn/tmp/props/" + name + ".prej";
+            String prejPath = "".equals(name) ? "dir-conflicts.prej" : name + ".prej";
+            result = SVNEventStatus.CONFLICTED;
+            OutputStream os = null;
+            try {
+                os = new FileOutputStream(new File(getRoot(), prejTmpPath));
+                for (Iterator lines = conflicts.iterator(); lines.hasNext();) {
+                    String line = (String) lines.next();
+                    os.write(line.getBytes("UTF-8"));
+                }
+            } catch (IOException e) {
+                SVNErrorManager.error(0, e);
+            } finally {
+                if (os != null) {
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+            command.put(SVNLog.NAME_ATTR, prejTmpPath);
+            command.put(SVNLog.DESTINATION_VALUE_ATTR, prejPath);
+            log.addCommand(SVNLog.APPEND, command, false);
+            command.clear();
+            command.put(SVNLog.NAME_ATTR, prejTmpPath);
+            log.addCommand(SVNLog.DELETE, command, false);
+            command.clear();
+
+            command.put(SVNLog.NAME_ATTR, name);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_REJECT_FILE), prejPath);
+            log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+        }
+
+        return result;
     }
     
     public void markResolved(String name, boolean text, boolean props) throws SVNException {
@@ -189,10 +270,10 @@ public class SVNDirectory {
         // translate versioned file.
         File baseTmpFile = getBaseFile(name, true);
         File versionedFile = getFile(name); 
-        byte[] eol = getProperties(name).getPropertyValue(SVNProperty.EOL_STYLE) == null ? 
+        byte[] eol = getProperties(name, false).getPropertyValue(SVNProperty.EOL_STYLE) == null ? 
                 null : SVNTranslator.LF;
-        String keywords = getProperties(name).getPropertyValue(SVNProperty.KEYWORDS);
-        boolean special = getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
+        String keywords = getProperties(name, false).getPropertyValue(SVNProperty.KEYWORDS);
+        boolean special = getProperties(name, false).getPropertyValue(SVNProperty.SPECIAL) != null;
         SVNTranslator.translate(versionedFile, baseTmpFile, eol, 
                 SVNTranslator.computeKeywords(keywords, null, null, null, -1), special, false);
         
@@ -222,19 +303,11 @@ public class SVNDirectory {
         return !equals;
     }
     
-    private static String compareFiles(File baseFile, File versionedFile) {
-        // 1. translate versioned file 
-        return null;
-    }
-    
     public void dispose() {
         if (myEntries != null) {
             myEntries.close();
         }
         myEntries = null;
-        myProperties = null;
-        myBaseProperties = null;
-        myWCProperties = null;        
     }
 
     private File getLockFile() {
@@ -416,8 +489,8 @@ public class SVNDirectory {
         
         File baseFile = getBaseFile(name, false);
         baseFile.delete();
-        getProperties(name).delete();
-        getBaseProperties(name).delete();
+        getProperties(name, false).delete();
+        getBaseProperties(name, false).delete();
         getWCProperties(name).delete();
         
         if (deleteWorkingFile && !hasTextModifications(name, false)) {

@@ -52,6 +52,13 @@ public class SVNEvent {
                 entry.getRevision(), null, null, null, null, null, null);
     }
 
+    public static SVNEvent createUpdateModifiedEvent(SVNWCAccess source, SVNDirectory dir, String name,
+            SVNEventStatus contents, SVNEventStatus props) {
+        return new SVNEvent(source, dir, name, 
+                SVNEventAction.UPDATE_ADD, null, 
+                -1, null, contents, props, null, null, null);
+    }
+
     public SVNEvent(SVNWCAccess source, SVNDirectory dir, String name, 
             SVNEventAction action, 
             SVNNodeKind kind, 

@@ -8,7 +8,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeSet;
@@ -18,8 +20,19 @@ import org.tmatesoft.svn.core.io.SVNException;
 public class SVNProperties {
     
     private File myFile;
-    public SVNProperties(File properitesFile) {
+    private String myPath;
+    
+    public SVNProperties(File properitesFile, String path) {
         myFile = properitesFile;
+        myPath = path;
+    }
+    
+    public File getFile() {
+        return myFile;
+    }
+    
+    public String getPath() {
+        return myPath;
     }
     
     public Collection properties(Collection target) throws SVNException {
@@ -283,8 +296,50 @@ public class SVNProperties {
         }
     }
     
-    public void mergeProperties(Map changedProperties, SVNLog log) {
-        
+    public SVNEventStatus merge(SVNDirectory dir, SVNProperties base, Map changedProperties, SVNLog log) throws SVNException {
+        if (changedProperties == null  || changedProperties.isEmpty()) {
+            return SVNEventStatus.UNCHANGED;
+        }
+        SVNEventStatus result = SVNEventStatus.CHANGED;
+        final Map locallyChangedProperties = compareTo(base);
+        for (Iterator names = changedProperties.keySet().iterator(); names.hasNext();) {
+            String name = (String) names.next();
+            String value = (String) changedProperties.get(name);
+            // change base.
+            // if there is a conflict -> put info to conflicts map.
+            // change working if no conflict
+            
+        }
+        // save conflicts map to prej file, update entry.
+        return result;
+    }
+    
+    public Map compareTo(SVNProperties properties) throws SVNException {
+        final Map locallyChangedProperties = new HashMap();
+        compareTo(properties, new ISVNPropertyComparator() {
+            public void propertyAdded(String name, InputStream value, int length) {
+                propertyChanged(name, value, length);
+            }
+            public void propertyChanged(String name, InputStream newValue, int length) {
+                ByteArrayOutputStream os = new ByteArrayOutputStream(length);
+                for(int i = 0; i < length; i++) {
+                    try {
+                        os.write(newValue.read());
+                    } catch (IOException e) {
+                    }
+                }
+                byte[] bytes = os.toByteArray();
+                try {
+                    locallyChangedProperties.put(name, new String(bytes, "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    locallyChangedProperties.put(name, new String(bytes));
+                }
+            }
+            public void propertyDeleted(String name) {
+                locallyChangedProperties.put(name, null);
+            }
+        });
+        return locallyChangedProperties;        
     }
     
     public void delete() {

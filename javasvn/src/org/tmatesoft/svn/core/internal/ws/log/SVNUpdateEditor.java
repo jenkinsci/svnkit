@@ -176,14 +176,32 @@ public class SVNUpdateEditor implements ISVNEditor {
         Map modifiedEntryProps = myCurrentDirectory.getChangedEntryProperties();
         Map modifiedProps = myCurrentDirectory.getChangedProperties();
         
-        SVNLog log = myCurrentDirectory.getLog(true);
-        log.logChangedWCProperties("", modifiedWCProps);
-        log.logChangedEntryProperties("", modifiedEntryProps);
-        log.save();
-
+        SVNEventStatus propStatus = SVNEventStatus.UNCHANGED;
+        SVNDirectory dir = myCurrentDirectory.getDirectory();
+        if (modifiedWCProps != null || modifiedEntryProps != null || modifiedProps != null) {
+            SVNLog log = myCurrentDirectory.getLog(true);
+    
+            if (modifiedProps != null && !modifiedProps.isEmpty()) {
+                SVNProperties props = dir.getProperties("", false);
+                Map locallyModified = dir.getBaseProperties("", false).compareTo(props);
+                
+                propStatus = dir.mergeProperties("", modifiedProps, locallyModified, log);
+                if (locallyModified == null || locallyModified.isEmpty()) {
+                    Map command = new HashMap();
+                    command.put(SVNLog.NAME_ATTR, "");
+                    command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNLog.WC_TIMESTAMP);
+                    log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+                }
+            }
+            log.logChangedEntryProperties("", modifiedEntryProps);
+            log.logChangedWCProperties("", modifiedWCProps);
+            log.save();
+        }
         myCurrentDirectory.runLogs();
-
         completeDirectory(myCurrentDirectory);
+        if (!myCurrentDirectory.IsAdded && propStatus != SVNEventStatus.UNCHANGED) {
+            myWCAccess.svnEvent(SVNEvent.createUpdateModifiedEvent(myWCAccess, dir, "", SVNEventStatus.UNCHANGED, propStatus));
+        }
         myCurrentDirectory = myCurrentDirectory.Parent;
     }
 

@@ -104,6 +104,19 @@ public class SVNFileUtil {
     }
 
     public static void copy(File src, File dst) throws IOException {
+        if (src == null || dst == null) {
+            return;
+        }
+        if (src.equals(dst)) {
+            return;
+        }
+        if (!src.exists()) {
+            dst.delete();
+            return;
+        }
+        if (dst.exists()) {
+            dst.delete();
+        }
         FileChannel srcChannel = null;
         FileChannel dstChannel = null;
         try {

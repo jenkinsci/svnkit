@@ -111,7 +111,7 @@ class SVNReporter implements ISVNReporterBaton {
                 if (!reportAll) {
                     // check svn:special files -> symlinks that could be directory.
                     boolean special = SVNFileUtil.isWindows && 
-                        directory.getProperties(entry.getName()).getPropertyValue(SVNProperty.SPECIAL) != null;
+                        directory.getProperties(entry.getName(), false).getPropertyValue(SVNProperty.SPECIAL) != null;
                     
                     if ((special && !file.exists()) || (!special && file.isDirectory())) {
                         reporter.deletePath(path);
@@ -177,7 +177,7 @@ class SVNReporter implements ISVNReporterBaton {
     }
     
     private void restoreFile(SVNDirectory dir, String name) throws SVNException {
-        SVNProperties props = dir.getProperties(name);
+        SVNProperties props = dir.getProperties(name, false);
         SVNEntry entry = dir.getEntries().getEntry(name);
         String eolStyle = props.getPropertyValue(SVNProperty.EOL_STYLE);
         String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
@@ -253,7 +253,7 @@ class SVNReporter implements ISVNReporterBaton {
         DAVRepositoryFactory.setup();
         SVNWCAccess wcAccess = null;
         try {
-            wcAccess = SVNWCAccess.create(new File("c:/i/test5"));
+            wcAccess = SVNWCAccess.create(new File("e:/i/test5"));
             final SVNReporter reporter = new SVNReporter(wcAccess, true);
             ISVNReporterBaton baton = new ISVNReporterBaton() {
                 public void report(ISVNReporter r) throws SVNException {
@@ -274,7 +274,7 @@ class SVNReporter implements ISVNReporterBaton {
             });
             SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
             repos.setCredentialsProvider(new SVNSimpleCredentialsProvider("alex", "cvs"));
-            repos.update(12, "".equals(wcAccess.getTargetName()) ? "" : wcAccess.getTargetName()
+            repos.update(13, "".equals(wcAccess.getTargetName()) ? "" : wcAccess.getTargetName()
                     , true, baton, editor);
             
         } catch (SVNException e) {
