@@ -2,14 +2,16 @@ package org.tmatesoft.svn.core.internal.ws.log;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -25,6 +27,15 @@ public class SVNEntries {
     private File myFile;
     private Map myData;
     private Set myEntries;
+    
+    private static final Set BOOLEAN_PROPERTIES = new HashSet();
+    
+    static {
+        BOOLEAN_PROPERTIES.add(SVNProperty.COPIED);
+        BOOLEAN_PROPERTIES.add(SVNProperty.DELETED);
+        BOOLEAN_PROPERTIES.add(SVNProperty.ABSENT);
+        BOOLEAN_PROPERTIES.add(SVNProperty.INCOMPLETE);
+    }
 
     public SVNEntries(File entriesFile) {
         myFile = entriesFile;
@@ -59,6 +70,21 @@ public class SVNEntries {
                         String entryName = (String) entry.get(SVNProperty.NAME); 
                         myData.put(entryName, entry);
                         myEntries.add(new SVNEntry(this, entryName));
+                        if (!"".equals(entryName)) {
+                            Map rootEntry = (Map) myData.get("");
+                            if (rootEntry != null) {
+                                if (entry.get(SVNProperty.REVISION) == null) {
+                                    setPropertyValue(entryName, SVNProperty.REVISION, (String) rootEntry.get(SVNProperty.REVISION));
+                                }
+                                if (entry.get(SVNProperty.URL) == null) {
+                                    String url = (String) rootEntry.get(SVNProperty.URL);
+                                    if (url != null) {
+                                        url = PathUtil.append(url, PathUtil.encode(entryName));
+                                    }
+                                    setPropertyValue(entryName, SVNProperty.URL, url);
+                                }
+                            }
+                        }
                         entry = null;
                     }
                 }
@@ -82,18 +108,21 @@ public class SVNEntries {
         File tmpFile = new File(myFile.getParentFile(), "tmp/entries");
         Map rootEntry = (Map) myData.get("");
         try {
-            os = new FileWriter(tmpFile);
+            os = new OutputStreamWriter(new FileOutputStream(tmpFile), "UTF-8");
             os.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
             os.write("<wc-entries\n");
             os.write("   xmlns=\"svn:\">\n");
             for (Iterator entries = myData.keySet().iterator(); entries.hasNext();) {
                 String name = (String) entries.next();
                 Map entry = (Map) myData.get(name);
-                os.write("<entry\n");
+                os.write("<entry");
                 for (Iterator names = entry.keySet().iterator(); names.hasNext();) {
                     String propName = (String) names.next();
                     String propValue = (String) entry.get(propName);
                     if (propValue == null) {
+                        continue;
+                    }
+                    if (BOOLEAN_PROPERTIES.contains(propName) && !Boolean.TRUE.toString().equals(propValue)) {
                         continue;
                     }
                     if (!"".equals(name)) {
@@ -119,16 +148,13 @@ public class SVNEntries {
                     }
                     propName = propName.substring(SVNProperty.SVN_ENTRY_PREFIX.length());
                     propValue = SVNTranslator.xmlEncode(propValue);  
-                    os.write("   ");
+                    os.write("\n   ");
                     os.write(propName);
                     os.write("=\"");
                     os.write(propValue);
                     os.write("\"");
-                    if (!names.hasNext()) {
-                        os.write("/>");
-                    }
-                    os.write("\n");
                 }
+                os.write("/>\n");
             }
             os.write("</wc-entries>\n");
         } catch (IOException e) {

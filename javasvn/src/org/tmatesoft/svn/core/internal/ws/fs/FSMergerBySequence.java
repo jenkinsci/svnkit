@@ -34,6 +34,8 @@ public class FSMergerBySequence {
     private final byte[] myConflictSeparator;
     private final byte[] myConflictEnd;
     private final byte[] eolBytes;
+    
+    private static final byte[] DEFAULT_EOL = System.getProperty("line.separator").getBytes();
 
     // Setup ==================================================================
 
@@ -216,7 +218,11 @@ public class FSMergerBySequence {
     private void writeBytesAndEol(OutputStream os, final byte[] bytes) throws IOException {
         if (bytes.length > 0) {
             os.write(bytes);
-            os.write(eolBytes);
-        }
+            if (eolBytes != null) {
+                os.write(eolBytes);
+            } else {
+                os.write(DEFAULT_EOL);
+            }
+        } 
     }
 }

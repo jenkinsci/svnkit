@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -25,15 +26,37 @@ public class SVNFileUtil {
         isWindows = osName != null && osName.toLowerCase().indexOf("windows") >= 0;
     }
     
-    public static File createTempFile(File sibling) throws IOException {
-        File parent = sibling.getParentFile();
-        File result = null; 
-        if (!parent.exists() || !parent.isDirectory()) {
-            result = File.createTempFile("javasvn", "tmp");
-        }  else {
-            result = File.createTempFile("javasvn", "tmp", parent);
+    public static String getBasePath(File file) {
+        File base = file.getParentFile();
+        while (base != null) {
+            if (base.isDirectory()) {
+                File adminDir = new File(base, ".svn");
+                if (adminDir.exists() && adminDir.isDirectory()) {
+                    break;
+                }
+            }
+            base = base.getParentFile();
         }
-        return result;
+        String path = file.getAbsolutePath();
+        if (base != null) {
+            path = path.substring(base.getAbsolutePath().length());
+        }
+        path = path.replace(File.separatorChar, '/');
+        if (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        return path;
+    }
+    
+    public static File createUniqueFile(File parent, String name, String suffix) {
+        File file = new File(parent, name + suffix);
+        for (int i = 1; i < 99999; i++) {
+            if (!file.exists()) {
+                return file;
+            }
+            file = new File(parent, name + "." + i + suffix);
+        }
+        return file;
     }
 
     public static void rename(File src, File dst) throws IOException {
@@ -65,7 +88,7 @@ public class SVNFileUtil {
             return file.setReadOnly();
         }
         File tmpFile = File.createTempFile("javasvn", "tmp", file.getParentFile());
-        copy(file, tmpFile);
+        copy(file, tmpFile, false);
         rename(tmpFile, file);
         return true;
     }
@@ -103,7 +126,7 @@ public class SVNFileUtil {
         return false;
     }
 
-    public static void copy(File src, File dst) throws IOException {
+    public static void copy(File src, File dst, boolean safe) throws IOException {
         if (src == null || dst == null) {
             return;
         }
@@ -114,14 +137,19 @@ public class SVNFileUtil {
             dst.delete();
             return;
         }
+        File tmpDst = dst;
         if (dst.exists()) {
-            dst.delete();
+            if (safe) {
+                tmpDst = createUniqueFile(dst.getParentFile(), dst.getName(), ".tmp");
+            } else {
+                dst.delete();
+            }
         }
         FileChannel srcChannel = null;
         FileChannel dstChannel = null;
         try {
             srcChannel = new FileInputStream(src).getChannel();
-            dstChannel = new FileOutputStream(dst).getChannel();
+            dstChannel = new FileOutputStream(tmpDst).getChannel();
             long count = srcChannel.size();
             while(count > 0) {
                 count -= dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
@@ -137,6 +165,9 @@ public class SVNFileUtil {
                     srcChannel.close();
                 } catch (IOException e) {}
             }
+        }
+        if (safe && tmpDst != dst) {
+            rename(tmpDst, dst);
         }
     }
 
@@ -179,6 +210,34 @@ public class SVNFileUtil {
         }
         return true;
     }
+
+    public static String computeChecksum(File file) throws IOException {
+        if (file == null || !file.exists() || file.isDirectory()) {
+            return null;
+        }
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IOException(e.getMessage());
+        }
+        InputStream is = null;
+        try {
+            is = new FileInputStream(file);
+            while(true) {
+                int b = is.read();
+                if (b < 0) {
+                    break;
+                }
+                digest.update((byte) (b & 0xFF));
+            }
+        } finally {
+            if (is != null) {
+                is.close();
+            }
+        }
+        return toHexDigest(digest);
+    }
     
     public static boolean compareFiles(File f1, File f2, MessageDigest digest) throws IOException {
         if (f1 == null || f2 == null) {
@@ -197,6 +256,8 @@ public class SVNFileUtil {
         InputStream is1 = null;
         InputStream is2 = null;
         try {
+            is1 = new FileInputStream(f1);
+            is2 = new FileInputStream(f2);
             while(true) {
                 int b1 = is1.read();
                 int b2 = is2.read();
@@ -209,7 +270,9 @@ public class SVNFileUtil {
                 if (b1 < 0) {
                     break;
                 }
-                digest.update((byte) (b1 & 0xFF));
+                if (digest != null) {
+                    digest.update((byte) (b1 & 0xFF));
+                }
             }
         } finally {
             if (is1 != null) {

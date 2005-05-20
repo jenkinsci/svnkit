@@ -53,7 +53,7 @@ class SVNReporter implements ISVNReporterBaton {
             }
             reporter.setPath("", null, revision, targetEntry.isIncomplete());
             boolean missing = !targetEntry.isScheduledForDeletion() &&  
-                !myWCAccess.getAnchor().getFile(myWCAccess.getTargetName()).exists();
+                !myWCAccess.getAnchor().getFile(myWCAccess.getTargetName(), false).exists();
             
             if (targetEntry.isDirectory()) {
                 if (missing) {
@@ -105,7 +105,7 @@ class SVNReporter implements ISVNReporterBaton {
             if (entry.isScheduledForAddition()) {
                 continue;
             }        
-            File file = directory.getFile(entry.getName());
+            File file = directory.getFile(entry.getName(), false);
             boolean missing = !file.exists(); 
             if (entry.isFile()) {
                 if (!reportAll) {
@@ -191,36 +191,27 @@ class SVNReporter implements ISVNReporterBaton {
         Map keywordsMap = SVNTranslator.computeKeywords(keywords, url, author, date, rev);
 
         File src = dir.getBaseFile(name, false);
-        File dst = dir.getBaseFile(name, true);
-        File file = dir.getFile(name);
-        SVNTranslator.translate(src, dst, SVNTranslator.getEOL(eolStyle), keywordsMap, special, true);
-        try {
-            SVNFileUtil.rename(dst, file);
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
-        } finally {
-            dst.delete();
-        }
-        
+        File dst = dir.getFile(name, false);
+        SVNTranslator.translate(dir, name, name, SVNFileUtil.getBasePath(dst), true, true);
         dir.markResolved(name, true, false);
         
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
         boolean needsLock = entry.isNeedsLock();
         if (executable) {
-            SVNFileUtil.setExecutable(file, true);
+            SVNFileUtil.setExecutable(dst, true);
         }
         if (needsLock) {
             try {
-                SVNFileUtil.setReadonly(file, entry.getLockToken() == null);
+                SVNFileUtil.setReadonly(dst, entry.getLockToken() == null);
             } catch (IOException e) {
                 SVNErrorManager.error(0, e);
             }
         }
-        long tstamp = file.lastModified();
+        long tstamp = dst.lastModified();
         if (myWCAccess.getOptions().isUseCommitTimes() && !special) {
             entry.setTextTime(entry.getCommittedDate());
             tstamp = TimeUtil.parseDate(entry.getCommittedDate()).getTime();
-            file.setLastModified(tstamp);
+            dst.setLastModified(tstamp);
         } else {
             entry.setTextTime(TimeUtil.formatDate(new Date(tstamp)));
         }
@@ -274,7 +265,7 @@ class SVNReporter implements ISVNReporterBaton {
             });
             SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
             repos.setCredentialsProvider(new SVNSimpleCredentialsProvider("alex", "cvs"));
-            repos.update(13, "".equals(wcAccess.getTargetName()) ? "" : wcAccess.getTargetName()
+            repos.update(-1, "".equals(wcAccess.getTargetName()) ? "" : wcAccess.getTargetName()
                     , true, baton, editor);
             
         } catch (SVNException e) {

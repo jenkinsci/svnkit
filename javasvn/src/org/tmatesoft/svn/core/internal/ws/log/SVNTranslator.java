@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
@@ -26,6 +27,41 @@ class SVNTranslator {
     public static final byte[] LF = new byte[] {'\n'};
     public static final byte[] CR = new byte[] {'\r'};
     public static final byte[] NATIVE = System.getProperty("line.separator").getBytes();
+    
+    public static void translate(SVNDirectory dir, String name, String srcPath, String dstPath, boolean expand, boolean safe) throws SVNException {
+        File src = dir.getFile(srcPath, false);
+        File dst = safe ? SVNFileUtil.createUniqueFile(dir.getRoot(), dstPath, ".tmp") : dir.getFile(dstPath, false);
+        
+        SVNProperties props = dir.getProperties(name, false);
+        String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
+        String eolStyle = props.getPropertyValue(SVNProperty.EOL_STYLE);
+        boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
+        Map keywordsMap = null;
+        byte[] eols = getEOL(eolStyle);
+        if (keywords != null) {
+            if (expand) {
+                SVNEntry entry = dir.getEntries().getEntry(name);
+                String url = entry.getURL();
+                String author = entry.getAuthor();
+                String date = entry.getCommittedDate();
+                long rev = entry.getRevision();
+                keywordsMap = computeKeywords(keywords, url, author, date, rev);
+            } else {                
+                keywordsMap = computeKeywords(keywords, null, null, null, -1);
+            }
+        }
+        if (!expand) {
+            eols = eolStyle != null ? LF : null;
+        }
+        translate(src, dst, eols, keywordsMap, special, expand);
+        if (safe) {
+            try {
+                SVNFileUtil.rename(dst, dir.getFile(dstPath, false));
+            } catch (IOException e) {
+                SVNErrorManager.error(0, e);
+            }
+        }
+    }
     
     public static void translate(File src, File dst, byte[] eol, Map keywords, boolean special, boolean expand) throws SVNException {
         if (src == null || dst == null) {
@@ -41,8 +77,7 @@ class SVNTranslator {
                     dst.delete();
                 }
                 if (SVNFileUtil.isWindows) {
-                    dst.createNewFile();
-                    SVNFileUtil.copy(src, dst);
+                    SVNFileUtil.copy(src, dst, true);
                 } else if (expand) {
                     SVNFileUtil.createSymlink(src, dst);
                 } else if (!expand) {
@@ -168,7 +203,7 @@ class SVNTranslator {
                 }
                 vOffset++;
             }
-            keyword[i] = (byte) (vOffset < value.length ? '#' : ' ');
+            keyword[i] = (byte) (value != null && vOffset < value.length ? '#' : ' ');
             // now save all.
             os.write(keyword, start, length - start);
         } else if (length - i > 4 && keyword[i] == ':' && keyword[i + 1] == ' ' && keyword[length - 2] == ' ') {
@@ -273,22 +308,79 @@ class SVNTranslator {
     }
 
     public static String xmlEncode(String value) {
-        value = value.replaceAll("&", "&amp;");
-        value = value.replaceAll("<", "&lt;");
-        value = value.replaceAll(">", "&gt;");
-        value = value.replaceAll("\"", "&quot;");
-        value = value.replaceAll("'", "&apos;");
-        value = value.replaceAll("\t", "&#09;");
-        return value;
+        StringBuffer result = new StringBuffer();
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            switch (ch) {
+            case '&':
+                result.append("&amp;");
+                break;
+            case '<':
+                result.append("&lt;");
+                break;
+            case '>':
+                result.append("&gt;");
+                break;
+            case '\"':
+                result.append("&quot;");
+                break;
+            case '\'':
+                result.append("&apos;");
+                break;
+            case '\r':
+                result.append("&#13;");
+                break;
+            case '\n':
+                result.append("&#10;");
+                break;
+            case '\t':
+                result.append("&#9;");
+                break;
+            default:
+            result.append(ch);
+            }
+        }
+        return result.toString();
+    }
+    
+    private static final Map XML_UNESCAPE_MAP = new HashMap();
+    static {
+        XML_UNESCAPE_MAP.put("&amp;", "&");
+        XML_UNESCAPE_MAP.put("&lt;", "<");
+        XML_UNESCAPE_MAP.put("&gt;", ">");
+        XML_UNESCAPE_MAP.put("&quot;", "\"");
+        XML_UNESCAPE_MAP.put("&apos;", "'");
+        XML_UNESCAPE_MAP.put("&#13;", "\r");
+        XML_UNESCAPE_MAP.put("&#10;", "\n");
+        XML_UNESCAPE_MAP.put("&#9;", "\t");
     }
 
     public static String xmlDecode(String value) {
-        value = value.replaceAll("&lt;", "<");
-        value = value.replaceAll("&gt;", ">");
-        value = value.replaceAll("&quot;", "\"");
-        value = value.replaceAll("&apos;", "'");
-        value = value.replaceAll("&#09;", "\t");
-        value = value.replaceAll("&amp;", "&");
-        return value;
+        StringBuffer result = new StringBuffer();
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            if (ch == '&') {
+                // check for escape sequence.
+                String replacement = null;
+                for(int j = i + 1; j < i + 6 && j < value.length(); j++) {
+                    if (value.charAt(j) == ';' && j - i > 1) {
+                        // try to uescape from i + 1 to j - 1;
+                        String escape = value.substring(i + 1, j);
+                        replacement = (String) XML_UNESCAPE_MAP.get(escape);
+                        if (replacement != null) {
+                            result.append(replacement);
+                            // change 'i' value 
+                            i = j;
+                        }
+                        break;
+                    }
+                }
+                if (replacement != null) {
+                    continue;
+                }
+            }
+            result.append(ch);
+        }
+        return result.toString();
     }
 }

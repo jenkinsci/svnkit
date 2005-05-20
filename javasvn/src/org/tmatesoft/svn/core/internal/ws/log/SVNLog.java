@@ -8,7 +8,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,11 +29,22 @@ public class SVNLog {
     public static final String APPEND = "append";
     public static final String DELETE = "rm";
     public static final String READONLY = "readonly";
+    public static final String COPY_AND_TRANSLATE = "cp-and-translate";
+    public static final String COPY_AND_DETRANSLATE = "cp-and-detranslate";
+    public static final String MERGE = "merge";
+    public static final String MAYBE_READONLY = "maybe-readonly";
+    public static final String SET_TIMESTAMP = "set-timestamp";
 
     public static final String NAME_ATTR = "name";
     public static final String PROPERTY_NAME_ATTR = "propname";
     public static final String PROPERTY_VALUE_ATTR = "propvalue";
-    public static final String DESTINATION_VALUE_ATTR = "dest";
+    public static final String DEST_ATTR = "dest";
+    public static final String TIMESTAMP_ATTR = "timestamp";
+    public static final String ATTR1 = "attr1";
+    public static final String ATTR2 = "attr2";
+    public static final String ATTR3 = "attr3";
+    public static final String ATTR4 = "attr4";
+    public static final String ATTR5 = "attr5";
 
     public static final String WC_TIMESTAMP = "working";
 
@@ -60,7 +72,8 @@ public class SVNLog {
         }        
     }
 
-    public void logChangedEntryProperties(String name, Map modifiedEntryProps) throws SVNException {
+    public SVNEventStatus logChangedEntryProperties(String name, Map modifiedEntryProps) throws SVNException {
+        SVNEventStatus status = SVNEventStatus.LOCK_UNCHANGED;
         if (modifiedEntryProps != null) {
             Map command = new HashMap();
             command.put(SVNLog.NAME_ATTR, name);
@@ -68,7 +81,8 @@ public class SVNLog {
                 String propName = (String) names.next();
                 String propValue = (String) modifiedEntryProps.get(propName);
                 if (SVNProperty.LOCK_TOKEN.equals(propName)) {
-                    addCommand(SVNLog.DELETE_LOCK, command, false);                    
+                    addCommand(SVNLog.DELETE_LOCK, command, false);
+                    status = SVNEventStatus.LOCK_UNLOCKED;
                 } else if (propValue != null) {
                     command.put(propName, propValue);
                     addCommand(SVNLog.MODIFY_ENTRY, command, false);
@@ -76,6 +90,7 @@ public class SVNLog {
                 } 
             }
         }
+        return status;
     }
 
     public void logChangedWCProperties(String name, Map modifiedWCProps) throws SVNException {
@@ -97,33 +112,29 @@ public class SVNLog {
     }
     
     public void save() throws SVNException {
-        OutputStream os = null; 
+        Writer os = null;
+        
         try {
-            os = new FileOutputStream(myTmpFile);
+            os = new OutputStreamWriter(new FileOutputStream(myTmpFile), "UTF-8");
             for (Iterator commands = myCache.iterator(); commands.hasNext();) {
                 Map command = (Map) commands.next();
                 String name = (String) command.remove("");
-                os.write('<');
-                os.write(name.getBytes("UTF-8"));
-                os.write('\n');
+                os.write("<");
+                os.write(name);
                 for (Iterator attrs = command.keySet().iterator(); attrs.hasNext();) {
                     String attr = (String) attrs.next();
                     String value = (String) command.get(attr);
-                    value = SVNTranslator.xmlEncode(value);
-                    os.write(' ');
-                    os.write(' ');
-                    os.write(' ');
-                    os.write(attr.getBytes("UTF-8"));
-                    os.write('=');
-                    os.write('\"');
-                    os.write(value.getBytes("UTF-8"));
-                    os.write('\"');
-                    if (!attrs.hasNext()) {
-                        os.write('/');
-                        os.write('>');
+                    if (value == null) {
+                        continue;
                     }
-                    os.write('\n');
+                    value = SVNTranslator.xmlEncode(value);
+                    os.write("\n   ");
+                    os.write(attr);
+                    os.write("=\"");
+                    os.write(value);
+                    os.write("\"");
                 }
+                os.write("/>\n");
             }            
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
@@ -196,22 +207,38 @@ public class SVNLog {
                 }
             }
         }
-        for (Iterator cmds = commands.iterator(); cmds.hasNext();) {
-            Map command = (Map) cmds.next();
-            String name = (String) command.remove("");
-            if (runner != null) {
-                try {
-                    runner.runCommand(myDirectory, name, command);
-                    cmds.remove();
-                } catch (Throwable th) {
-                    command.put("", name);
-                    myCache = commands;
-                    save();
-                    SVNErrorManager.error(0, th);
+        SVNException error = null;
+        try {
+            for (Iterator cmds = commands.iterator(); error == null && cmds.hasNext();) {
+                Map command = (Map) cmds.next();
+                String name = (String) command.remove("");
+                if (runner != null) {
+                    try {
+                        runner.runCommand(myDirectory, name, command);
+                        cmds.remove();
+                    } catch (SVNException th) {
+                        command.put("", name);
+                        myCache = commands;
+                        save();
+                        error = th;
+                    }
                 }
             }
+            if (error == null) {
+                delete();
+            }
+        } finally {
+            try {
+                runner.logCompleted(myDirectory);
+            } catch (SVNException e) {
+                if (error == null) {
+                    error = e;
+                }
+            }
+            if (error != null) {
+                throw error;
+            }
         }
-        delete();
     }
     
     public void delete() {

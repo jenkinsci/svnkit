@@ -53,10 +53,10 @@ public class SVNEvent {
     }
 
     public static SVNEvent createUpdateModifiedEvent(SVNWCAccess source, SVNDirectory dir, String name,
-            SVNEventStatus contents, SVNEventStatus props) {
+            SVNEventAction action, String mimeType, SVNEventStatus contents, SVNEventStatus props, SVNEventStatus lock) {
         return new SVNEvent(source, dir, name, 
-                SVNEventAction.UPDATE_ADD, null, 
-                -1, null, contents, props, null, null, null);
+                action, null, 
+                -1, mimeType, contents, props, lock, null, null);
     }
 
     public SVNEvent(SVNWCAccess source, SVNDirectory dir, String name, 

@@ -86,10 +86,10 @@ public class SVNEntry implements Comparable {
     }
 
     public boolean isDeleted() {
-        return myEntries.getPropertyValue(myName, SVNProperty.DELETED) != null;
+        return Boolean.TRUE.toString().equals(myEntries.getPropertyValue(myName, SVNProperty.DELETED));
     }
     public boolean isAbsent() {
-        return myEntries.getPropertyValue(myName, SVNProperty.ABSENT) != null;
+        return Boolean.TRUE.toString().equals(myEntries.getPropertyValue(myName, SVNProperty.ABSENT));
     }
     
     public String toString() {
