@@ -11,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -114,23 +115,19 @@ public class SVNDirectory {
     }
     
     public SVNEventStatus mergeProperties(String name, Map changedProperties, Map locallyChanged, SVNLog log) throws SVNException {
-        if (changedProperties == null || changedProperties.isEmpty()) {
-            return SVNEventStatus.UNCHANGED;
-        }
+        changedProperties = changedProperties == null ? Collections.EMPTY_MAP : changedProperties;
+        locallyChanged = locallyChanged == null ? Collections.EMPTY_MAP : locallyChanged;
+
         SVNProperties working = getProperties(name, false);
         SVNProperties workingTmp = getProperties(name, true);
         SVNProperties base = getBaseProperties(name, false);
         SVNProperties baseTmp = getBaseProperties(name, true);
 
-        try {
-            SVNFileUtil.copy(working.getFile(), workingTmp.getFile(), false);
-            SVNFileUtil.copy(base.getFile(), baseTmp.getFile(), false);
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
-        }
+        working.copyTo(workingTmp);
+        base.copyTo(baseTmp);
         
         Collection conflicts = new ArrayList();
-        SVNEventStatus result = SVNEventStatus.CHANGED;
+        SVNEventStatus result = changedProperties.isEmpty() ? SVNEventStatus.UNCHANGED : SVNEventStatus.CHANGED;
         for (Iterator propNames = changedProperties.keySet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
             String propValue = (String) changedProperties.get(propName);
@@ -558,6 +555,9 @@ public class SVNDirectory {
                 } catch (SVNException e) {
                     parent = null;
                 } finally {
+                    if (parent != null) {
+                        parent.getEntries().save(true);
+                    }
                     if (parentWCAccess != null) {
                         parentWCAccess.close(true, false);
                     }
@@ -573,6 +573,9 @@ public class SVNDirectory {
                 }
             }
             destroyDirectory(parent, this, deleteWorkingFiles);
+            if (parent != null) {
+                parent.getEntries().save(true);
+            }
         } else {
             File file = getFile(name, false);
             if (file.isFile()) {
@@ -584,6 +587,7 @@ public class SVNDirectory {
                 }
             }
         }
+        getEntries().save(true);
     }
     
     public void setWCAccess(SVNWCAccess wcAccess, String path) {
@@ -594,7 +598,6 @@ public class SVNDirectory {
     private void destroyFile(String name, boolean deleteWorkingFile) throws SVNException {
         SVNEntries entries = getEntries();
         entries.deleteEntry(name);
-        entries.save(true);
         
         File baseFile = getBaseFile(name, false);
         baseFile.delete();
@@ -604,43 +607,37 @@ public class SVNDirectory {
         
         if (deleteWorkingFile && !hasTextModifications(name, false)) {
             getFile(name, false).delete();
-        }
+        } 
     }
     
     private void destroyDirectory(SVNDirectory parent, SVNDirectory dir, boolean deleteWorkingFiles) throws SVNException {
         SVNEntries entries = dir.getEntries();
         entries.getEntry("").setIncomplete(true);
-        entries.save(false);
         
-        // iterate over dir's entries, delete files and recurse into dirs
         for (Iterator ents = entries.entries(); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
             if ("".equals(entry.getName())) {
                 continue;
             }
             if (entry.getKind() == SVNNodeKind.FILE) {
-                dir.destroy(entry.getName(), deleteWorkingFiles);
+                dir.destroyFile(entry.getName(), deleteWorkingFiles);
             } else if (entry.getKind() == SVNNodeKind.DIR) {
                 SVNDirectory childDirectory = dir.getChildDirectory(entry.getName());
                 if (childDirectory == null) {
                     entries.deleteEntry(entry.getName());
                 } else {
-                    // recurse
                     destroyDirectory(dir, childDirectory, deleteWorkingFiles);
                 }
             }
         }
-        entries.save(false);
 
-        // delete dir's entry in parent.
         if (parent != null) {
             SVNEntries parentEntries = parent.getEntries();
             parentEntries.deleteEntry(dir.getRoot().getName());
-            parentEntries.save(true);
         }
-        // delete all admin files
+        getEntries().save(true);
+
         SVNFileUtil.deleteAll(new File(dir.getRoot(), ".svn"));
-        // attempt to delete dir - will not be deleted if there are wc files left.
         dir.getRoot().delete();
     }
 }

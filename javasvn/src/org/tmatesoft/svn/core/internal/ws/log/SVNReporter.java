@@ -250,7 +250,7 @@ class SVNReporter implements ISVNReporterBaton {
         DAVRepositoryFactory.setup();
         SVNWCAccess wcAccess = null;
         try {
-            wcAccess = SVNWCAccess.create(new File("c:/javasvn"));
+            wcAccess = SVNWCAccess.create(new File("c:/javasvn/javasvn/src/org/tmatesoft/svn/cli"));
             final SVNReporter reporter = new SVNReporter(wcAccess, true);
             ISVNReporterBaton baton = new ISVNReporterBaton() {
                 public void report(ISVNReporter r) throws SVNException {
@@ -260,19 +260,23 @@ class SVNReporter implements ISVNReporterBaton {
             wcAccess.open(true, true);
             String url = wcAccess.getAnchor().getEntries().getEntry("").getURL();
             System.out.println("update url: " + url);
+            System.out.println("update anchor: " + wcAccess.getAnchor().getRoot());
             System.out.println("update target: " + wcAccess.getTargetName());
             wcAccess.getTarget().getEntries().close();
-            SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, true);
+
+//            String switchURL = "http://72.9.228.230/svn/jsvn/trunk/javasvn/src/org/tmatesoft/svn/cli"; 
+            String switchURL = "http://72.9.228.230/svn/jsvn/tags/0.8.8.1/contrib/sequence"; 
+            SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, switchURL, true);
             wcAccess.setEventDispatcher(new ISVNEventListener() {
                 public void svnEvent(SVNEvent event) {
-                    System.out.println("event: " + event.getPath());
-                    System.out.println("Full Path: " + event.getFile().getAbsolutePath());
+                    System.out.println(event.getAction() + " : " + event.getPath());
                 }
             });
             SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
             repos.setCredentialsProvider(new SVNSimpleCredentialsProvider("alex", "cvs"));
-            repos.update(-1, "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName()
-                    , true, baton, editor);
+            // test switch to tag (check ra:dav:url - should be deleted!).
+            String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
+            repos.update(switchURL, -1, target, true, baton, editor);
             
             System.out.println("externals collected:");
             for (Iterator exts = wcAccess.externals(); exts.hasNext();) {
@@ -280,7 +284,7 @@ class SVNReporter implements ISVNReporterBaton {
                 System.out.println(info);
             }
             
-        } catch (SVNException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         } finally {
             try {

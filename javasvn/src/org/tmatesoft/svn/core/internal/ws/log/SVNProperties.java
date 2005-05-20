@@ -296,24 +296,6 @@ public class SVNProperties {
         }
     }
     
-    public SVNEventStatus merge(SVNDirectory dir, SVNProperties base, Map changedProperties, SVNLog log) throws SVNException {
-        if (changedProperties == null  || changedProperties.isEmpty()) {
-            return SVNEventStatus.UNCHANGED;
-        }
-        SVNEventStatus result = SVNEventStatus.CHANGED;
-        final Map locallyChangedProperties = compareTo(base);
-        for (Iterator names = changedProperties.keySet().iterator(); names.hasNext();) {
-            String name = (String) names.next();
-            String value = (String) changedProperties.get(name);
-            // change base.
-            // if there is a conflict -> put info to conflicts map.
-            // change working if no conflict
-            
-        }
-        // save conflicts map to prej file, update entry.
-        return result;
-    }
-    
     public Map compareTo(SVNProperties properties) throws SVNException {
         final Map locallyChangedProperties = new HashMap();
         compareTo(properties, new ISVNPropertyComparator() {
@@ -340,6 +322,24 @@ public class SVNProperties {
             }
         });
         return locallyChangedProperties;        
+    }
+    
+    public void copyTo(SVNProperties destination) throws SVNException {
+        if (destination.getFile().exists()) {
+            SVNErrorManager.error(0, null);
+        }
+        if (!getFile().exists()) {
+            // just create empty dst.
+            destination.setPropertyValue("tmp", "empty");
+            destination.setPropertyValue("tmp", null);
+            // this will leave "end\n";
+        } else {
+            try {
+                SVNFileUtil.copy(getFile(), destination.getFile(), false);
+            } catch (IOException e) {
+                SVNErrorManager.error(0, e);
+            }
+        }
     }
     
     public void delete() {

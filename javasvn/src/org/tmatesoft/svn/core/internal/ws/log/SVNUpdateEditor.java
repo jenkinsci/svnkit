@@ -356,7 +356,6 @@ public class SVNUpdateEditor implements ISVNEditor {
         Map modifiedProps = myCurrentFile.getChangedProperties();
         
         SVNEventStatus textStatus = SVNEventStatus.UNCHANGED;
-        SVNEventStatus propStatus = SVNEventStatus.UNCHANGED;
         SVNEventStatus lockStatus = SVNEventStatus.LOCK_UNCHANGED;
         
         boolean magicPropsChanged = false;
@@ -368,8 +367,8 @@ public class SVNUpdateEditor implements ISVNEditor {
                 modifiedProps.containsKey(SVNProperty.KEYWORDS) ||
                 modifiedProps.containsKey(SVNProperty.EOL_STYLE) ||
                 modifiedProps.containsKey(SVNProperty.SPECIAL);
-            propStatus = dir.mergeProperties(myCurrentFile.Name, modifiedProps, locallyModifiedProps, log);
         }
+        SVNEventStatus propStatus = dir.mergeProperties(myCurrentFile.Name, modifiedProps, locallyModifiedProps, log);
         if (modifiedEntryProps != null) {
             lockStatus = log.logChangedEntryProperties(myCurrentFile.Name, modifiedEntryProps);
         }
@@ -433,7 +432,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             log.addCommand(SVNLog.MAYBE_READONLY, command, false);
             command.clear();            
         }
-        if (modifiedProps != null && (locallyModifiedProps == null || locallyModifiedProps.isEmpty())) {
+        if (locallyModifiedProps == null || locallyModifiedProps.isEmpty()) {
             command.put(SVNLog.NAME_ATTR, myCurrentFile.Name);
             command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNLog.WC_TIMESTAMP);
             log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
