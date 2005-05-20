@@ -265,7 +265,8 @@ class SVNReporter implements ISVNReporterBaton {
             wcAccess.getTarget().getEntries().close();
 
 //            String switchURL = "http://72.9.228.230/svn/jsvn/trunk/javasvn/src/org/tmatesoft/svn/cli"; 
-            String switchURL = "http://72.9.228.230/svn/jsvn/tags/0.8.8.1/contrib/sequence"; 
+//            String switchURL = "http://72.9.228.230/svn/jsvn/tags/0.8.8.1/contrib/sequence"; 
+            String switchURL = "http://72.9.228.230/svn/jsvn/trunk/contrib/sequence"; 
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, switchURL, true);
             wcAccess.setEventDispatcher(new ISVNEventListener() {
                 public void svnEvent(SVNEvent event) {

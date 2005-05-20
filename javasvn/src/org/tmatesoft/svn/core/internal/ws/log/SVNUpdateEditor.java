@@ -146,7 +146,10 @@ public class SVNUpdateEditor implements ISVNEditor {
         entry.setRevision(myTargetRevision);
         entry.setURL(myCurrentDirectory.URL);
         entry.setIncomplete(true);
-        entries.save(true);        
+        entries.save(true);
+        if (mySwitchURL != null) {
+            changeDirProperty(SVNProperty.WC_URL, null);
+        }        
     }
 
     public void absentDir(String path) throws SVNException {
