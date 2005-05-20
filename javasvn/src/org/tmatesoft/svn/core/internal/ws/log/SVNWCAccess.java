@@ -4,9 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.PathUtil;
@@ -20,6 +24,7 @@ public class SVNWCAccess implements ISVNEventListener {
     private ISVNEventListener myDispatcher;
     
     private Map myDirectories;
+    private Map myExternals;
 
     public static SVNWCAccess create(File file) throws SVNException {
         File parentFile = file.getParentFile();
@@ -226,6 +231,84 @@ public class SVNWCAccess implements ISVNEventListener {
             });
         }
         myDirectories = null;
+    }
+    
+    public SVNExternalInfo[] addExternals(SVNDirectory directory, String externals) throws SVNException {
+        if (externals == null) {
+            return null;
+        }
+        Collection result = new ArrayList();
+        for(StringTokenizer lines = new StringTokenizer(externals, "\n\r"); lines.hasMoreTokens();) {
+            String line = lines.nextToken().trim();
+            if (line.length() == 0 || line.startsWith("#")) {
+                continue;
+            }
+            String url = null;
+            String path = null;
+            long rev = -1;
+            List parts = new ArrayList(4); 
+            for(StringTokenizer tokens = new StringTokenizer(line, " \t"); tokens.hasMoreTokens();) {
+                String token = tokens.nextToken().trim();
+                parts.add(token);
+            }
+            if (parts.size() < 2) {
+                continue;
+            }
+            path = PathUtil.append(directory.getPath(), (String) parts.get(0));
+            path = PathUtil.removeLeadingSlash(path);
+            if (parts.size() == 2) {
+                url = (String) parts.get(1);
+            } else if (parts.size() == 3 && parts.get(1).toString().startsWith("-r")) {
+                String revStr = parts.get(1).toString();
+                revStr = revStr.substring("-r".length());
+                if (!"HEAD".equals(revStr)) {
+                    try {
+                        rev = Long.parseLong(revStr);
+                    } catch (NumberFormatException nfe) {
+                        continue;
+                    }
+                }
+                url = (String) parts.get(2);                
+            } else if (parts.size() == 4 && "-r".equals(parts.get(1))) {
+                String revStr = parts.get(2).toString();
+                if (!"HEAD".equals(revStr)) {
+                    try {
+                        rev = Long.parseLong(revStr);
+                    } catch (NumberFormatException nfe) {
+                        continue;
+                    }
+                }
+                url = (String) parts.get(4);                
+            }
+            if (path!= null && url != null) {
+                SVNExternalInfo info = addExternal(path, url, rev);
+                result.add(info);
+            }
+        }
+        return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
+    }
+    
+    public SVNExternalInfo addExternal(String path, String url, long revision) {
+        if (myExternals == null) {
+            myExternals = new TreeMap();
+        }
+        
+        SVNExternalInfo info = (SVNExternalInfo) myExternals.get(path);
+        if (info == null) {
+            // this means adding new external, either during report or during update,
+            info = new SVNExternalInfo(new File(getAnchor().getRoot(), path), path, null, -1);
+            myExternals.put(path, info);
+        } 
+        // set it as new, report will also set old values, update will left it as is.
+        info.setNewExternal(url, revision);
+        return info;
+    }
+    
+    public Iterator externals() {
+        if (myExternals == null) {
+            return Collections.EMPTY_LIST.iterator();
+        }
+        return myExternals.values().iterator();
     }
 
     public void svnEvent(SVNEvent event) {

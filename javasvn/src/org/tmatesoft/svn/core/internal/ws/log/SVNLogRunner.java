@@ -137,7 +137,6 @@ public class SVNLogRunner {
             // get properties for this entry.
             SVNProperties props = dir.getProperties(dstName, false);
             boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
-
             
             SVNTranslator.translate(dir, dstName, fileName, dstName, true, true);
             if (executable) {

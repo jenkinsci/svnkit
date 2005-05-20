@@ -110,6 +110,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         String name = PathUtil.tail(path);
         File file = parentDir.getFile(name, false);
         if (file.exists()) {
+            System.out.println("failed to add dir: " + file.getAbsolutePath());
             SVNErrorManager.error(0, null);
         } else if (".svn".equals(name)) {
             SVNErrorManager.error(0, null);
@@ -194,6 +195,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             if (modifiedProps != null && !modifiedProps.isEmpty()) {
                 SVNProperties props = dir.getProperties("", false);
                 Map locallyModified = dir.getBaseProperties("", false).compareTo(props);
+                myWCAccess.addExternals(dir, (String) modifiedProps.get(SVNProperty.EXTERNALS));
                 
                 propStatus = dir.mergeProperties("", modifiedProps, locallyModified, log);
                 if (locallyModified == null || locallyModified.isEmpty()) {

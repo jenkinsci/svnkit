@@ -37,6 +37,10 @@ public class SVNDirectory {
         myPath = path;
         myWCAccess = wcAccess;
     }
+    
+    public String getPath() {
+        return myPath;
+    }
 
     public SVNDirectory[] getChildDirectories() {
         return myWCAccess.getChildDirectories(myPath);

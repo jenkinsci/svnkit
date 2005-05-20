@@ -90,6 +90,12 @@ class SVNReporter implements ISVNReporterBaton {
         
         Map childDirectories = new HashMap();
         
+        SVNExternalInfo[] externals = myWCAccess.addExternals(directory, 
+                directory.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS));
+        for(int i = 0; externals != null && i < externals.length; i++) {
+            externals[i].setOldExternal(externals[i].getNewURL(), externals[i].getNewRevision());
+        }
+        
         for (Iterator e = entries.entries(); e.hasNext();) {
             SVNEntry entry = (SVNEntry) e.next();
             if ("".equals(entry.getName())) {
@@ -244,7 +250,7 @@ class SVNReporter implements ISVNReporterBaton {
         DAVRepositoryFactory.setup();
         SVNWCAccess wcAccess = null;
         try {
-            wcAccess = SVNWCAccess.create(new File("e:/i/test5"));
+            wcAccess = SVNWCAccess.create(new File("c:/javasvn"));
             final SVNReporter reporter = new SVNReporter(wcAccess, true);
             ISVNReporterBaton baton = new ISVNReporterBaton() {
                 public void report(ISVNReporter r) throws SVNException {
@@ -265,8 +271,14 @@ class SVNReporter implements ISVNReporterBaton {
             });
             SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
             repos.setCredentialsProvider(new SVNSimpleCredentialsProvider("alex", "cvs"));
-            repos.update(-1, "".equals(wcAccess.getTargetName()) ? "" : wcAccess.getTargetName()
+            repos.update(-1, "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName()
                     , true, baton, editor);
+            
+            System.out.println("externals collected:");
+            for (Iterator exts = wcAccess.externals(); exts.hasNext();) {
+                SVNExternalInfo info = (SVNExternalInfo) exts.next();
+                System.out.println(info);
+            }
             
         } catch (SVNException e) {
             e.printStackTrace();

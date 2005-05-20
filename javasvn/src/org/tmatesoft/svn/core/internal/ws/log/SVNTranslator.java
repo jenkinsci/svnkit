@@ -113,7 +113,9 @@ class SVNTranslator {
     }
 
     private static void copy(InputStream src, OutputStream dst, byte[] eol, Map keywords) throws IOException {
-        keywords = keywords.isEmpty() ? null : keywords;
+        if (keywords != null && keywords.isEmpty()) {
+            keywords = null;
+        }
         PushbackInputStream in = new PushbackInputStream(src, 2048);
         byte[] keywordBuffer = new byte[256];
         
