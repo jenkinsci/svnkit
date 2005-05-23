@@ -24,6 +24,7 @@ public class SVNLogRunner {
     public void runCommand(SVNDirectory dir, String name, Map attributes) throws SVNException {
         String fileName = (String) attributes.remove(SVNLog.NAME_ATTR);
         if (SVNLog.DELETE_ENTRY.equals(name)) {
+            // check if it is not disjoint entry not to delete another wc?
             dir.destroy(fileName, true);
         } else if (SVNLog.MODIFY_ENTRY.equals(name)) {
             SVNEntries entries = dir.getEntries();

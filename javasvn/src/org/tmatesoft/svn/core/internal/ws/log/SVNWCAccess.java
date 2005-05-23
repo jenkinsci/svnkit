@@ -348,5 +348,13 @@ public class SVNWCAccess implements ISVNEventListener {
         }
         return null;
     }
+    
+    public void removeDirectory(String path) throws SVNException {
+        SVNDirectory dir = (SVNDirectory) myDirectories.remove(path);
+        if (dir != null) {
+            myExternals.remove(path);
+            dir.unlock();
+        }
+    }
 
 }

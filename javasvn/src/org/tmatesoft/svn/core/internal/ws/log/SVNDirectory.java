@@ -561,6 +561,7 @@ public class SVNDirectory {
                     if (parentWCAccess != null) {
                         parentWCAccess.close(true, false);
                     }
+                    myWCAccess.removeDirectory("");
                 }
                 if (parent != null) {
                     return;
@@ -573,6 +574,7 @@ public class SVNDirectory {
                 }
             }
             destroyDirectory(parent, this, deleteWorkingFiles);
+            myWCAccess.removeDirectory(myPath);
             if (parent != null) {
                 parent.getEntries().save(true);
             }
@@ -584,6 +586,7 @@ public class SVNDirectory {
                 SVNDirectory childDir = getChildDirectory(name);
                 if (childDir != null && childDir.isVersioned()) {
                     destroyDirectory(this, childDir, deleteWorkingFiles);
+                    myWCAccess.removeDirectory(childDir.getPath());
                 }
             }
         }

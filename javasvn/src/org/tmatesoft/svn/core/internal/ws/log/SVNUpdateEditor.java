@@ -68,6 +68,9 @@ public class SVNUpdateEditor implements ISVNEditor {
             entry.setRevision(myTargetRevision);
             entry.setURL(myCurrentDirectory.URL);
             entry.setIncomplete(true);
+            if (mySwitchURL != null) {
+                clearWCProperty();
+            }
             entries.save(true);
         }
     }
@@ -146,10 +149,10 @@ public class SVNUpdateEditor implements ISVNEditor {
         entry.setRevision(myTargetRevision);
         entry.setURL(myCurrentDirectory.URL);
         entry.setIncomplete(true);
-        entries.save(true);
         if (mySwitchURL != null) {
-            changeDirProperty(SVNProperty.WC_URL, null);
+            clearWCProperty();
         }        
+        entries.save(true);
     }
 
     public void absentDir(String path) throws SVNException {
@@ -183,6 +186,21 @@ public class SVNUpdateEditor implements ISVNEditor {
 
     public void changeDirProperty(String name, String value) throws SVNException {
         myCurrentDirectory.propertyChanged(name, value);
+    }
+    
+    private void clearWCProperty() throws SVNException {
+        if (myCurrentDirectory == null || myCurrentDirectory.getDirectory() == null) {
+            return;
+        }
+        SVNDirectory dir = myCurrentDirectory.getDirectory();
+        SVNEntries entires = dir.getEntries();
+        for (Iterator ents = entires.entries(); ents.hasNext();) {
+            SVNEntry entry = (SVNEntry) ents.next();
+            if (entry.isFile() || "".equals(entry.getName())) {
+                SVNProperties props = dir.getWCProperties(entry.getName());
+                props.setPropertyValue(SVNProperty.WC_URL, null);
+            }
+        }
     }
 
     public void closeDir() throws SVNException {
@@ -486,10 +504,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
     
     private void bumpDirectories() throws SVNException {
-        if (myIsTargetDeleted) {
-            return;
-        }
-        SVNDirectory dir = myWCAccess.getTarget();
+        SVNDirectory dir = myWCAccess.getAnchor();
         if (myTarget != null){
             if (dir.getChildDirectory(myTarget) == null) {
                 SVNEntry entry = dir.getEntries().getEntry(myTarget);
