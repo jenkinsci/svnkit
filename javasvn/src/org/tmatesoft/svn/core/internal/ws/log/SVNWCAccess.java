@@ -106,6 +106,11 @@ public class SVNWCAccess implements ISVNEventListener {
                 anchor != null ? name : "");
     }
     
+    public static boolean isVersionedDirectory(File path) {
+        SVNDirectory dir = new SVNDirectory(null, null, path);
+        return dir.isVersioned();
+    }
+    
     public SVNWCAccess(SVNDirectory anchor, SVNDirectory target, String name) {
         myAnchor = anchor;
         myTarget = target;
@@ -141,6 +146,31 @@ public class SVNWCAccess implements ISVNEventListener {
 
     public SVNDirectory getTarget() {
         return myTarget;
+    }
+    
+    public String getTargetEntryProperty(String propertyName) throws SVNException {
+        SVNDirectory dir = getAnchor().getChildDirectory(myName);
+        SVNEntries entries = null;
+        String name = "";
+        if (dir != null) {
+            entries = dir.getEntries();
+        }
+        if (entries == null) {
+            entries = getAnchor().getEntries();
+            name = myName;
+        }
+        String value = null;
+        if (entries != null) {
+            try {
+                if (entries.getEntry(name) == null) {
+                    name = "";
+                }
+                value = entries.getPropertyValue(name, propertyName);
+            } finally {
+                entries.close();
+            }
+        }
+        return value;        
     }
     
     public SVNDirectory getDirectory(String path) {
@@ -216,9 +246,11 @@ public class SVNWCAccess implements ISVNEventListener {
         if (!unlock || myDirectories == null) {
             return;
         }
+        myAnchor.getEntries().close();
         myAnchor.unlock();
         myDirectories.remove("");
         if (myTarget != myAnchor) {
+            myTarget.getEntries().close();
             myTarget.unlock();
             myDirectories.remove(myName);
         }
@@ -355,6 +387,14 @@ public class SVNWCAccess implements ISVNEventListener {
             myExternals.remove(path);
             dir.unlock();
         }
+    }
+    
+    public String toString() {
+        StringBuffer result = new StringBuffer();
+        result.append("anchor: '" + getAnchor().getRoot().toString() + "'\n");
+        result.append("target: '" + getTarget().getRoot().toString() + "'\n");
+        result.append("target name: '" + getTargetName() + "'\n");
+        return result.toString();
     }
 
 }

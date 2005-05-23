@@ -5,6 +5,8 @@ package org.tmatesoft.svn.core.internal.ws.log;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 
@@ -24,9 +26,9 @@ public class SVNEvent {
     private SVNLock myLock;
     
     private SVNWCAccess mySVNWCAccess;
-    private SVNDirectory myDirectory;
     private String myName;
     private String myPath;
+    private File myRoot;
     
     public static SVNEvent createRestoredEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
         return new SVNEvent(source, dir, entry.getName(), 
@@ -59,6 +61,24 @@ public class SVNEvent {
                 -1, mimeType, contents, props, lock, null, null);
     }
 
+    public static SVNEvent createUpdateCompletedEvent(SVNWCAccess source, long revision) {
+        return new SVNEvent(source, source.getTarget(), "", 
+                SVNEventAction.UPDATE_COMPLETED, null, 
+                revision, null, null, null, null, null, null);
+    }
+
+    public static SVNEvent createAddedEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
+        String mimeType = null;
+        try {
+            mimeType = dir.getProperties(entry.getName(), false).getPropertyValue(SVNProperty.MIME_TYPE);
+        } catch (SVNException e) {
+        }
+        return new SVNEvent(source, dir, entry.getName(), 
+                SVNEventAction.ADD, entry.getKind(), 
+                0, mimeType, 
+                null, null, null, null, null);
+    }
+
     public SVNEvent(SVNWCAccess source, SVNDirectory dir, String name, 
             SVNEventAction action, 
             SVNNodeKind kind, 
@@ -78,7 +98,7 @@ public class SVNEvent {
         myLock = lock;
         
         mySVNWCAccess = source;
-        myDirectory = dir;
+        myRoot = dir != null ? dir.getRoot() : null;
         myName = name;        
     }
     
@@ -90,7 +110,7 @@ public class SVNEvent {
         if (myPath != null) {
             return myPath;
         }
-        if (mySVNWCAccess == null || myDirectory == null) {
+        if (mySVNWCAccess == null) {
             return myName;
         }
         File file = getFile();
@@ -105,9 +125,10 @@ public class SVNEvent {
     }
     
     public File getFile() {
-        if (myDirectory != null) {
-            return ("".equals(myName) || ".".equals(myName)) ? myDirectory.getRoot() : 
-                new File(myDirectory.getRoot(), myName);   
+        
+        if (myRoot != null) {
+            return ("".equals(myName) || ".".equals(myName)) ? myRoot : 
+                new File(myRoot, myName);   
         }
         return null;
     }     
@@ -146,5 +167,9 @@ public class SVNEvent {
 
     public long getRevision() {
         return myRevision;
+    }
+
+    void setPath(String path) {
+        myPath = path;
     }
 }

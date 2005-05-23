@@ -212,4 +212,24 @@ public class SVNEntry implements Comparable {
     public void setLockToken(String token) {
         myEntries.setPropertyValue(myName, SVNProperty.LOCK_TOKEN, token);
     }
+
+    public void setUUID(String uuid) {
+        myEntries.setPropertyValue(myName, SVNProperty.UUID, uuid);
+   }
+
+    public void scheduleForAddition() {
+        myEntries.setPropertyValue(myName, SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
+    }
+
+    public void setCopyFromRevision(long revision) {
+        myEntries.setPropertyValue(myName, SVNProperty.COPYFROM_REVISION, revision >= 0 ? Long.toString(revision) : null);
+    }
+
+    public void setCopyFromURL(String url) {
+        myEntries.setPropertyValue(myName, SVNProperty.COPYFROM_URL, url);
+    }
+
+    public void setCopied(boolean copied) {
+        myEntries.setPropertyValue(myName, SVNProperty.COPIED, copied ? Boolean.TRUE.toString() : null);
+    }
 }

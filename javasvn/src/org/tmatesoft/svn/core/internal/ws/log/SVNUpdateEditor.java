@@ -42,6 +42,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         myIsRecursive = recursive;
         myTarget = wcAccess.getTargetName();
         mySwitchURL = switchURL;
+        myTargetRevision = -1;
         
         SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("");
         myTargetURL = entry.getURL();
@@ -57,6 +58,10 @@ public class SVNUpdateEditor implements ISVNEditor {
 
     public void targetRevision(long revision) throws SVNException {
         myTargetRevision = revision;
+    }
+    
+    public long getTargetRevision() {
+        return myTargetRevision;
     }
 
     public void openRoot(long revision) throws SVNException {
@@ -369,19 +374,22 @@ public class SVNUpdateEditor implements ISVNEditor {
         }
         SVNDirectory dir = myCurrentFile.getDirectory();
         SVNLog log = myCurrentDirectory.getLog(true);
-        Map command = new HashMap();
         
         // merge props.
         Map modifiedWCProps = myCurrentFile.getChangedWCProperties();
         Map modifiedEntryProps = myCurrentFile.getChangedEntryProperties();
         Map modifiedProps = myCurrentFile.getChangedProperties();
+        String name = myCurrentFile.Name;
+        String commitTime = myCurrentFile.CommitTime;
+
+        Map command = new HashMap();
         
         SVNEventStatus textStatus = SVNEventStatus.UNCHANGED;
         SVNEventStatus lockStatus = SVNEventStatus.LOCK_UNCHANGED;
         
         boolean magicPropsChanged = false;
-        SVNProperties props = dir.getProperties(myCurrentFile.Name, false);
-        Map locallyModifiedProps = dir.getBaseProperties(myCurrentFile.Name, false).compareTo(props);
+        SVNProperties props = dir.getProperties(name, false);
+        Map locallyModifiedProps = dir.getBaseProperties(name, false).compareTo(props);
         if (modifiedProps != null && !modifiedProps.isEmpty()) {
             magicPropsChanged = modifiedProps.containsKey(SVNProperty.EXECUTABLE) ||
                 modifiedProps.containsKey(SVNProperty.NEEDS_LOCK) ||
@@ -389,30 +397,30 @@ public class SVNUpdateEditor implements ISVNEditor {
                 modifiedProps.containsKey(SVNProperty.EOL_STYLE) ||
                 modifiedProps.containsKey(SVNProperty.SPECIAL);
         }
-        SVNEventStatus propStatus = dir.mergeProperties(myCurrentFile.Name, modifiedProps, locallyModifiedProps, log);
+        SVNEventStatus propStatus = dir.mergeProperties(name, modifiedProps, locallyModifiedProps, log);
         if (modifiedEntryProps != null) {
-            lockStatus = log.logChangedEntryProperties(myCurrentFile.Name, modifiedEntryProps);
+            lockStatus = log.logChangedEntryProperties(name, modifiedEntryProps);
         }
         
         // merge contents.
-        File textBase = dir.getBaseFile(myCurrentFile.Name, false);
-        File textTmpBase = dir.getBaseFile(myCurrentFile.Name, true);
-        String tmpPath = ".svn/tmp/text-base/" + myCurrentFile.Name + ".svn-base";
-        String basePath = ".svn/text-base/" + myCurrentFile.Name + ".svn-base";
+        File textBase = dir.getBaseFile(name, false);
+        File textTmpBase = dir.getBaseFile(name, true);
+        String tmpPath = ".svn/tmp/text-base/" + name + ".svn-base";
+        String basePath = ".svn/text-base/" + name + ".svn-base";
         
         if (!textTmpBase.exists() && magicPropsChanged) {
             // only props were changed, but we have to retranslate file.
-            command.put(SVNLog.NAME_ATTR, myCurrentFile.Name);
+            command.put(SVNLog.NAME_ATTR, name);
             command.put(SVNLog.DEST_ATTR, tmpPath);
             log.addCommand(SVNLog.COPY_AND_DETRANSLATE, command, false);
             command.clear();
             command.put(SVNLog.NAME_ATTR, tmpPath);
-            command.put(SVNLog.DEST_ATTR, myCurrentFile.Name);
+            command.put(SVNLog.DEST_ATTR, name);
             log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
             command.clear();
         }
         // update entry.
-        command.put(SVNLog.NAME_ATTR, myCurrentFile.Name);
+        command.put(SVNLog.NAME_ATTR, name);
         command.put(SVNProperty.shortPropertyName(SVNProperty.KIND), SVNProperty.KIND_FILE);
         command.put(SVNProperty.shortPropertyName(SVNProperty.REVISION), Long.toString(myTargetRevision));
         command.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), Boolean.FALSE.toString());
@@ -421,23 +429,23 @@ public class SVNUpdateEditor implements ISVNEditor {
         log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
         command.clear();
 
-        boolean isLocallyModified = !myCurrentFile.IsAdded && dir.hasTextModifications(myCurrentFile.Name, false);
-        File workingFile = dir.getFile(myCurrentFile.Name, false);
+        boolean isLocallyModified = !myCurrentFile.IsAdded && dir.hasTextModifications(name, false);
+        File workingFile = dir.getFile(name, false);
         if (textTmpBase.exists()) {
             textStatus = SVNEventStatus.CHANGED;
             // there is a text replace working copy with.
             if (!isLocallyModified || !workingFile.exists()) {
                 command.put(SVNLog.NAME_ATTR, tmpPath);
-                command.put(SVNLog.DEST_ATTR, myCurrentFile.Name);
+                command.put(SVNLog.DEST_ATTR, name);
                 log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
                 command.clear();            
             } else {
                 SVNEntries entries = dir.getEntries();
-                SVNEntry entry = entries.getEntry(myCurrentFile.Name);
+                SVNEntry entry = entries.getEntry(name);
                 String oldRevisionStr = ".r" + entry.getRevision();
                 String newRevisionStr = ".r" + myTargetRevision;
                 entries.close();
-                command.put(SVNLog.NAME_ATTR, myCurrentFile.Name);
+                command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNLog.ATTR1, basePath);
                 command.put(SVNLog.ATTR2, tmpPath);
                 command.put(SVNLog.ATTR3, oldRevisionStr);
@@ -446,15 +454,15 @@ public class SVNUpdateEditor implements ISVNEditor {
                 log.addCommand(SVNLog.MERGE, command, false);
                 command.clear();
                 // do test merge.
-                textStatus = dir.mergeText(myCurrentFile.Name, basePath, tmpPath, "", "", "", true);
+                textStatus = dir.mergeText(name, basePath, tmpPath, "", "", "", true);
             }
         } else if (lockStatus == SVNEventStatus.LOCK_UNLOCKED) {
-            command.put(SVNLog.NAME_ATTR, myCurrentFile.Name);
+            command.put(SVNLog.NAME_ATTR, name);
             log.addCommand(SVNLog.MAYBE_READONLY, command, false);
             command.clear();            
         }
         if (locallyModifiedProps == null || locallyModifiedProps.isEmpty()) {
-            command.put(SVNLog.NAME_ATTR, myCurrentFile.Name);
+            command.put(SVNLog.NAME_ATTR, name);
             command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNLog.WC_TIMESTAMP);
             log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
             command.clear();            
@@ -467,23 +475,23 @@ public class SVNUpdateEditor implements ISVNEditor {
             command.put(SVNLog.NAME_ATTR, basePath);
             log.addCommand(SVNLog.READONLY, command, false);
             command.clear();
-            command.put(SVNLog.NAME_ATTR, myCurrentFile.Name);
+            command.put(SVNLog.NAME_ATTR, name);
             command.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), checksum);
             log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
             command.clear();
         }
         if (modifiedWCProps != null) {
-            log.logChangedWCProperties(myCurrentFile.Name, modifiedWCProps);
+            log.logChangedWCProperties(name, modifiedWCProps);
         }
         if (!isLocallyModified) {
-            if (myCurrentFile.CommitTime != null) {
-                command.put(SVNLog.NAME_ATTR, myCurrentFile.Name);
-                command.put(SVNLog.TIMESTAMP_ATTR, myCurrentFile.CommitTime);
+            if (commitTime != null) {
+                command.put(SVNLog.NAME_ATTR, name);
+                command.put(SVNLog.TIMESTAMP_ATTR, commitTime);
                 log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
                 command.clear();
             }
             if (textTmpBase.exists() || magicPropsChanged) {
-                command.put(SVNLog.NAME_ATTR, myCurrentFile.Name);
+                command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNLog.WC_TIMESTAMP);
                 log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
                 command.clear();

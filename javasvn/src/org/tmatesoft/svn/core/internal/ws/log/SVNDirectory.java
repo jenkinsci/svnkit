@@ -466,11 +466,25 @@ public class SVNDirectory {
 
     public SVNDirectory createChildDirectory(String name, String url, long revision) throws SVNException {
         File dir = new File(myDirectory, name);
+        createVersionedDirectory(dir);
+        
+        String childPath = PathUtil.append(myPath, name);
+        childPath = PathUtil.removeLeadingSlash(childPath);
+
+        SVNDirectory child = myWCAccess.addDirectory(childPath, dir);
+        SVNEntry rootEntry = child.getEntries().addEntry("");
+        rootEntry.setURL(url);
+        rootEntry.setRevision(revision);
+        rootEntry.setKind(SVNNodeKind.DIR);
+        child.getEntries().save(true);
+        return child;
+    }
+
+    public static void createVersionedDirectory(File dir) throws SVNException {
         dir.mkdirs();
         File adminDir = new File(dir, ".svn");
         adminDir.mkdirs();
         SVNFileUtil.setHidden(adminDir, true);
-        
         File format = new File(adminDir, "format");
         OutputStream os = null;
         if (!format.exists()) {
@@ -529,17 +543,6 @@ public class SVNDirectory {
                 tmp[i].mkdirs();
             }
         }
-        
-        String childPath = PathUtil.append(myPath, name);
-        childPath = PathUtil.removeLeadingSlash(childPath);
-
-        SVNDirectory child = myWCAccess.addDirectory(childPath, dir);
-        SVNEntry rootEntry = child.getEntries().addEntry("");
-        rootEntry.setURL(url);
-        rootEntry.setRevision(revision);
-        rootEntry.setKind(SVNNodeKind.DIR);
-        child.getEntries().save(true);
-        return child;
     }
     
     public void destroy(String name, boolean deleteWorkingFiles) throws SVNException {
