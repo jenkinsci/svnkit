@@ -26,6 +26,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
+import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -75,6 +76,10 @@ public abstract class SVNCommand {
         repository.setCredentialsProvider(new SVNCommandLineCredentialsProvider(myUserName, myPassword, myIsStoreCreds));
         //repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
         return repository;
+    }
+    
+    protected ISVNCredentialsProvider getCredentialsProvider() {
+        return new SVNCommandLineCredentialsProvider(myUserName, myPassword, myIsStoreCreds);
     }
 
     public static SVNCommand getCommand(String name) {
