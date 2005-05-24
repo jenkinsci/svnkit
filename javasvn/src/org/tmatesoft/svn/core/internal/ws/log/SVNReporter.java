@@ -168,17 +168,8 @@ class SVNReporter implements ISVNReporterBaton {
                     reporter.setPath(path, childEntry.getLockToken(), childEntry.getRevision(), 
                             childEntry.isIncomplete());
                 }
-                childDirectories.put(path, childDir);
-                childDir.dispose();
+                reportEntries(reporter, childDir, path, childEntry.isIncomplete(), recursive);
             }
-        }
-        for (Iterator dirs = childDirectories.keySet().iterator(); dirs.hasNext();) {
-            String path = (String) dirs.next();
-            SVNDirectory dir = (SVNDirectory) childDirectories.get(path);
-            SVNEntry childEntry = dir.getEntries().getEntry("");            
-            boolean childReportAll = childEntry == null ? true : childEntry.isIncomplete();
-            reportEntries(reporter, dir, path, childReportAll, recursive);
-            dir.dispose();
         }
     }
     
@@ -263,11 +254,18 @@ class SVNReporter implements ISVNReporterBaton {
             }
         };
         try {
+            /*
             File dst = new File("C:/nautilus/org.tmatesoft.javasvn/javasvn-test/python/cmdline/working_copies/basic_tests-1");
             SVNUpdater updater = new SVNUpdater(repositoryFactory, null, dispatcher);
 //            String url = "http://72.9.228.230/svn/jsvn/trunk/javasvn/src/org/tmatesoft/svn/cli"; 
             String url = "svn://localhost/repositories/basic_tests-1"; 
             updater.doCheckout(url, dst, SVNRevision.HEAD, SVNRevision.HEAD, true);
+            */
+            File dst = new File("C:/i/test5");
+            SVNUpdater updater = new SVNUpdater(repositoryFactory, null, dispatcher);
+//            String url = "http://72.9.228.230/svn/jsvn/trunk/javasvn/src/org/tmatesoft/svn/cli"; 
+//            String url = "http://80.188.80.120/svn/repos/test4/dir2"; 
+            updater.doUpdate(dst, SVNRevision.HEAD, true);
         } catch (Throwable e) {
             e.printStackTrace();
         } 

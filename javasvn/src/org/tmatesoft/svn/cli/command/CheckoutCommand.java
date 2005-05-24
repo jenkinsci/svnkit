@@ -24,7 +24,6 @@ import org.tmatesoft.svn.core.internal.ws.log.SVNRevision;
 import org.tmatesoft.svn.core.internal.ws.log.SVNUpdater;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -33,12 +32,15 @@ import org.tmatesoft.svn.util.PathUtil;
 public class CheckoutCommand extends SVNCommand {
 
 	public void run(final PrintStream out, final PrintStream err) throws SVNException {
-        try {
 		final String url = getCommandLine().getURL(0);
 		final SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
 
-		final String path;
-		path = getCommandLine().getPathAt(0);
+		String path;
+        if (getCommandLine().getPathCount() > 0) {
+            path = getCommandLine().getPathAt(0);
+        } else {
+            path = new File("", PathUtil.decode(PathUtil.tail(url))).getAbsolutePath();
+        }
 
         long revision = parseRevision(getCommandLine(), null, null);
         SVNUpdater updater = new SVNUpdater(getCredentialsProvider(), new ISVNEventListener() {
@@ -70,9 +72,6 @@ public class CheckoutCommand extends SVNCommand {
                 File dstPath = new File(path, PathUtil.decode(PathUtil.tail(curl)));
                 updater.doCheckout(url, dstPath, SVNRevision.UNDEFINED, SVNRevision.create(revision), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             }
-        }
-        } catch (Throwable th) {
-            DebugLog.error(th);
         }
 	}
     

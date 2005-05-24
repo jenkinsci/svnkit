@@ -227,13 +227,11 @@ public class SVNDirectory {
         if (mimeType != null && !mimeType.startsWith("text/")) {
             // binary
             if (!dryRun) {
-                File oldFile = SVNFileUtil.createUniqueFile(getRoot(), basePath, baseLabel); 
-                File newFile = SVNFileUtil.createUniqueFile(getRoot(), latestPath, latestLabel); 
-                File mineFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, localLabel);
+                File oldFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, baseLabel); 
+                File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel); 
                 try {
                     SVNFileUtil.copy(getFile(basePath, false), oldFile, false);
                     SVNFileUtil.copy(getFile(latestPath, false), newFile, false);
-                    SVNFileUtil.copy(getFile(localPath, false), mineFile, false);
                 } catch (IOException e) {
                     SVNErrorManager.error(0, e);
                 }

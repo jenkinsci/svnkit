@@ -13,4 +13,8 @@ public class SVNErrorManager {
         throw reason != null ? new SVNException(reason) : new SVNException();
     }
 
+    public static void error(String message) throws SVNException {
+        throw new SVNException(message == null ? "" : message);
+    }
+
 }

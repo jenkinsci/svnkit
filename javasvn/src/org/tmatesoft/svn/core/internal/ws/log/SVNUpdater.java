@@ -77,6 +77,7 @@ public class SVNUpdater extends SVNBasicClient {
             wcAccess.open(true, recursive);
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url, recursive);
             SVNRepository repos = createRepository(wcAccess.getTargetEntryProperty(SVNProperty.URL));
+            repos = createRepository(wcAccess.getAnchor().getEntries().getEntry("").getURL());
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             repos.update(url, revNumber, target, recursive, reporter, editor);
             
@@ -112,9 +113,9 @@ public class SVNUpdater extends SVNBasicClient {
         SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
         String uuid = repos.getRepositoryUUID();
         if (targetNodeKind == SVNNodeKind.FILE) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: URL '" + url + "' refers to a file not a directory");
         } else if (targetNodeKind == SVNNodeKind.NONE) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: URL '" + url + "' doesn't exist");
         }
         myIsDoNotSleepForTimeStamp = true;
         long result = -1;
@@ -170,23 +171,18 @@ public class SVNUpdater extends SVNBasicClient {
             if (entry != null && !entry.isDirectory()) {
                 SVNErrorManager.error(0, null);
             }
-            DebugLog.log("wc access: " + wcAccess);
             String uuid = wcAccess.getTargetEntryProperty(SVNProperty.UUID);
             sameRepositories = uuid.equals(srcUUID);
             if (srcKind == SVNNodeKind.DIR) {
                 String dstURL = wcAccess.getAnchor().getEntries().getPropertyValue("", SVNProperty.URL);
                 dstURL = PathUtil.append(dstURL, PathUtil.encode(dstPath.getName()));
-                createVersionedDirectory(dstPath, dstURL, uuid, revNumber);
-                
-                SVNDirectory targetDir = new SVNDirectory(null, "", dstPath);
+                SVNDirectory targetDir = createVersionedDirectory(dstPath, dstURL, uuid, revNumber);
                 SVNWCAccess wcAccess2 = new SVNWCAccess(targetDir, targetDir, "");
-                DebugLog.log("wc access2: " + wcAccess2);
                 wcAccess2.open(true, true);
                 myIsDoNotSleepForTimeStamp = true;
                 try {
                     SVNReporter reporter = new SVNReporter(wcAccess2, true);
                     SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess2, null, true);
-                    DebugLog.log("checkout from: " + wcAccess2);
                     
                     repos.update(revNumber, null, true, reporter, editor);
                     dispatchEvent(SVNEvent.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
@@ -241,8 +237,90 @@ public class SVNUpdater extends SVNBasicClient {
             SVNFileUtil.sleepForTimestamp();
         }
     }
+    
+    public long doExport(String url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, boolean recursive) throws SVNException {
+        url = validateURL(url);
+        if (dstPath == null) {
+            dstPath = new File(".", PathUtil.tail(url));
+        }
+        if (!revision.isValid() && !pegRevision.isValid()) {
+            pegRevision = SVNRevision.HEAD;
+            revision = SVNRevision.HEAD;
+        } else if (!revision.isValid()) {
+            revision = pegRevision;
+        } else if (!pegRevision.isValid()) {
+            pegRevision = revision;
+        }
+        url = getURL(url, pegRevision, revision);
+        SVNRepository repos = createRepository(url);
+        long revNumber = getRevisionNumber(url, revision);
+        SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
+        
+        if (targetNodeKind == SVNNodeKind.FILE) {
+            if (dstPath.isDirectory()) {
+                dstPath = new File(dstPath, PathUtil.decode(PathUtil.tail(url)));                
+            }
+            if (dstPath.exists()) {
+                if (!force) {
+                    SVNErrorManager.error(0, null);
+                }
+            } else {
+                dstPath.getParentFile().mkdirs();
+            }
+            Map properties = new HashMap();
+            OutputStream os = null;
+            File tmpFile = SVNFileUtil.createUniqueFile(dstPath.getParentFile(), dstPath.getName(), ".tmp");
+            try {
+                os = new FileOutputStream(tmpFile);
+                repos.getFile("", revNumber, properties, os);
+                os.close();
+                os = null;
+                if (force && dstPath.exists()) { 
+                    SVNFileUtil.deleteAll(dstPath);
+                }
+                // 
+                Map keywords = SVNTranslator.computeKeywords((String) properties.get(SVNProperty.KEYWORDS),
+                        url, 
+                        (String) properties.get(SVNProperty.LAST_AUTHOR),
+                        (String) properties.get(SVNProperty.COMMITTED_DATE),
+                        Long.parseLong((String) properties.get(SVNProperty.COMMITTED_REVISION)));
+                if (eolStyle == null) {
+                    eolStyle = (String) properties.get(SVNProperty.EOL_STYLE);
+                }
+                byte[] eols = eolStyle == null ? null : SVNTranslator.getEOL(eolStyle);
+                SVNTranslator.translate(tmpFile, dstPath, eols, keywords, properties.get(SVNProperty.SPECIAL) != null, true);
+                if (properties.get(SVNProperty.EXECUTABLE) != null) {
+                    SVNFileUtil.setExecutable(dstPath, true);
+                }
+//                dispatchEvent(SVNEvent.createAddedEvent(dstPath));
+            } catch (IOException e) {
+                SVNErrorManager.error(0, e);
+            } finally {
+                if (os != null) {
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                    }
+                }
+                if (tmpFile != null) {
+                    tmpFile.delete();
+                }
+            }
+        } else if (targetNodeKind == SVNNodeKind.DIR) {
+            
+        }
+        
+        return -1;
+    }
 
-    private void createVersionedDirectory(File dstPath, String url, String uuid, long revNumber) throws SVNException {
+    public long doExport(File srcPath, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, boolean recursive) throws SVNException {
+        // get url from wc, use passed revision to make a checkout or 
+        // just make a copy of wc working files if revision is not valid. 
+        return -1;
+    }
+    
+
+    private SVNDirectory createVersionedDirectory(File dstPath, String url, String uuid, long revNumber) throws SVNException {
         SVNDirectory.createVersionedDirectory(dstPath);
         // add entry first.
         SVNDirectory dir = new SVNDirectory(null, "", dstPath);
@@ -255,8 +333,9 @@ public class SVNUpdater extends SVNBasicClient {
         entry.setUUID(uuid);
         entry.setKind(SVNNodeKind.DIR);
         entry.setRevision(revNumber);
-        entry.setIncomplete(true);
+        entry.setIncomplete(true);;
         entries.save(true);
+        return dir;
     }
 
     private void addDir(SVNDirectory dir, String name, String copyFromURL, long copyFromRev) throws SVNException {

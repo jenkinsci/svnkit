@@ -118,7 +118,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         String name = PathUtil.tail(path);
         File file = parentDir.getFile(name, false);
         if (file.exists()) {
-            System.out.println("failed to add dir: " + file.getAbsolutePath());
+            SVNErrorManager.error("file '" + file.getAbsolutePath() + "' already exists");
             SVNErrorManager.error(0, null);
         } else if (".svn".equals(name)) {
             SVNErrorManager.error(0, null);
@@ -279,6 +279,9 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNEntry entry = entries.getEntry(myCurrentFile.Name);
         File baseFile = dir.getBaseFile(myCurrentFile.Name, false);
         if (entry != null && entry.getChecksum() != null) {
+            if (baseChecksum == null) {
+                baseChecksum = entry.getChecksum();
+            }
             String realChecksum = null;
             try {
                 realChecksum = SVNFileUtil.computeChecksum(baseFile);
@@ -286,7 +289,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 SVNErrorManager.error(0, e);
             }
             if (baseChecksum != null && (realChecksum == null || !realChecksum.equals(baseChecksum))) {
-                SVNErrorManager.error(0, null);
+                SVNErrorManager.error("svn: Checksum mismatch for '" + myCurrentFile.getPath() + "'; expected: '" + baseChecksum +"', actual: '" + realChecksum + "'");
             }
         }
         File baseTmpFile = dir.getBaseFile(myCurrentFile.Name, true);

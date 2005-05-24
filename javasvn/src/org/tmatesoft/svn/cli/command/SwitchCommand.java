@@ -68,8 +68,8 @@ public class SwitchCommand extends SVNCommand {
                             sb.append("U");
                         } else if (event.getContentsStatus() == SVNEventStatus.CONFLICTED) {
                             sb.append("C");
-                        } else if (event.getContentsStatus() == SVNEventStatus.CONFLICTED) {
-                            sb.append("M");
+                        } else if (event.getContentsStatus() == SVNEventStatus.MERGED) {
+                            sb.append("G");
                         } else {
                             sb.append(" ");
                         }

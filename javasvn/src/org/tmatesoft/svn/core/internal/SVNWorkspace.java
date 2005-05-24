@@ -52,6 +52,7 @@ import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNError;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -718,7 +719,43 @@ public class SVNWorkspace implements ISVNWorkspace {
         repository.setCredentialsProvider(getCredentialsProvider());
         DebugLog.log("IMPORT: REPOSITORY CREATED FOR: "
                 + destination.toString());
-        ISVNEditor editor = repository.getCommitEditor(message, getRoot());
+        ISVNEditor editor = repository.getCommitEditor(message, new ISVNWorkspaceMediator() {
+            private Map myTmpFiles = new HashMap(); 
+            public String getWorkspaceProperty(String path, String name) throws SVNException {
+                return null;
+            }
+            public void setWorkspaceProperty(String path, String name, String value) throws SVNException {
+            }
+
+            public OutputStream createTemporaryLocation(String path, Object id) throws IOException {
+                File tmpFile = File.createTempFile("javasvn.", ".tmp");
+                myTmpFiles.put(id, tmpFile);
+                tmpFile.deleteOnExit();                
+                return new FileOutputStream(tmpFile);
+            }
+            public InputStream getTemporaryLocation(Object id) throws IOException {
+                File file = (File) myTmpFiles.get(id);
+                if (file != null) {
+                    return new FileInputStream(file);
+                }
+                return null;
+            }
+            public long getLength(Object id) throws IOException {
+                File file = (File) myTmpFiles.get(id);
+                if (file != null) {
+                    return file.length();
+                }
+                return 0;
+            }
+            public void deleteTemporaryLocation(Object id) {
+                File file = (File) myTmpFiles.remove(id);
+                if (file != null) {
+                    file.delete();
+                }
+            }
+            public void deleteAdminFiles(String path) {
+            }
+        });
         SVNCommitInfo info = null;
         try {
             String dir = "";

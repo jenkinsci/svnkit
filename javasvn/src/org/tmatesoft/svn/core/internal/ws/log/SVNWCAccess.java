@@ -156,7 +156,7 @@ public class SVNWCAccess implements ISVNEventListener {
         SVNEntries entries = null;
         String name = "";
         if (dir != null && dir.isVersioned()) {
-            entries = dir.getEntries();
+            entries = dir.getEntries();            
         }
         if (entries == null) {
             entries = getAnchor().getEntries();

@@ -23,8 +23,10 @@ import org.tmatesoft.svn.core.internal.ws.log.SVNEventAction;
 import org.tmatesoft.svn.core.internal.ws.log.SVNEventStatus;
 import org.tmatesoft.svn.core.internal.ws.log.SVNRevision;
 import org.tmatesoft.svn.core.internal.ws.log.SVNUpdater;
+import org.tmatesoft.svn.core.internal.ws.log.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -35,7 +37,7 @@ public class UpdateCommand extends SVNCommand {
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String path;
-            path = getCommandLine().getPathAt(0);
+            path = getCommandLine().getPathAt(i);
 
             long revNumber = parseRevision(getCommandLine(), null, null);
             SVNRevision revision = SVNRevision.HEAD;
@@ -69,8 +71,8 @@ public class UpdateCommand extends SVNCommand {
                                 sb.append("U");
                             } else if (event.getContentsStatus() == SVNEventStatus.CONFLICTED) {
                                 sb.append("C");
-                            } else if (event.getContentsStatus() == SVNEventStatus.CONFLICTED) {
-                                sb.append("M");
+                            } else if (event.getContentsStatus() == SVNEventStatus.MERGED) {
+                                sb.append("G");
                             } else {
                                 sb.append(" ");
                             }
@@ -125,7 +127,23 @@ public class UpdateCommand extends SVNCommand {
                     }
                 }
             });
-            updater.doUpdate(new File(path), revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+            
+            File file = new File(path);
+            if (!file.exists()) {
+                File parent = file.getParentFile();
+                if (!parent.exists() || !SVNWCAccess.isVersionedDirectory(parent)) {
+                    if (!getCommandLine().hasArgument(SVNArgument.QUIET)) {
+                        println(out, "Skipped '" +  getPath(file).replace('/', File.separatorChar) + "'");
+                    }
+                    return;
+                }
+            }
+            try {
+                updater.doUpdate(new File(path), revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+            } catch (Throwable th) {
+                println(err, th.getMessage());
+                DebugLog.error(th);
+            }
         }        
     }
     
