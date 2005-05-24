@@ -167,9 +167,10 @@ public class SVNUpdater extends SVNBasicClient {
             wcAccess.open(true, false);
             // check for missing entry.
             SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName());
-            if (entry != null) {
+            if (entry != null && !entry.isDirectory()) {
                 SVNErrorManager.error(0, null);
             }
+            DebugLog.log("wc access: " + wcAccess);
             String uuid = wcAccess.getTargetEntryProperty(SVNProperty.UUID);
             sameRepositories = uuid.equals(srcUUID);
             if (srcKind == SVNNodeKind.DIR) {
@@ -177,12 +178,16 @@ public class SVNUpdater extends SVNBasicClient {
                 dstURL = PathUtil.append(dstURL, PathUtil.encode(dstPath.getName()));
                 createVersionedDirectory(dstPath, dstURL, uuid, revNumber);
                 
-                SVNWCAccess wcAccess2 = createWCAccess(dstPath, wcAccess.getTargetName());
+                SVNDirectory targetDir = new SVNDirectory(null, "", dstPath);
+                SVNWCAccess wcAccess2 = new SVNWCAccess(targetDir, targetDir, "");
+                DebugLog.log("wc access2: " + wcAccess2);
                 wcAccess2.open(true, true);
                 myIsDoNotSleepForTimeStamp = true;
                 try {
                     SVNReporter reporter = new SVNReporter(wcAccess2, true);
                     SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess2, null, true);
+                    DebugLog.log("checkout from: " + wcAccess2);
+                    
                     repos.update(revNumber, null, true, reporter, editor);
                     dispatchEvent(SVNEvent.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
                     if (sameRepositories) {
@@ -239,8 +244,9 @@ public class SVNUpdater extends SVNBasicClient {
 
     private void createVersionedDirectory(File dstPath, String url, String uuid, long revNumber) throws SVNException {
         SVNDirectory.createVersionedDirectory(dstPath);
-        SVNWCAccess wcAccess = SVNWCAccess.create(dstPath);
-        SVNEntries entries = wcAccess.getAnchor().getEntries();
+        // add entry first.
+        SVNDirectory dir = new SVNDirectory(null, "", dstPath);
+        SVNEntries entries = dir.getEntries();
         SVNEntry entry = entries.getEntry("");
         if (entry == null) {
             entry = entries.addEntry("");

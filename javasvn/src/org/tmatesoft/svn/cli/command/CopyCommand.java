@@ -22,6 +22,11 @@ import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
+import org.tmatesoft.svn.core.internal.ws.log.ISVNEventListener;
+import org.tmatesoft.svn.core.internal.ws.log.SVNEvent;
+import org.tmatesoft.svn.core.internal.ws.log.SVNEventAction;
+import org.tmatesoft.svn.core.internal.ws.log.SVNRevision;
+import org.tmatesoft.svn.core.internal.ws.log.SVNUpdater;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -192,22 +197,28 @@ public class CopyCommand extends SVNCommand {
     private void runRemoteToLocal(final PrintStream out, PrintStream err) throws SVNException {
         final String srcURL = getCommandLine().getURL(0);
         String destPathParent = getCommandLine().getPathAt(0);
-        destPathParent = destPathParent.replace(File.separatorChar, '/');
-        if (matchTabsInPath(PathUtil.decode(srcURL), err) || matchTabsInPath(getCommandLine().getPathAt(0), err)) {
-            return;
+        long revNumber = parseRevision(getCommandLine(), null, null);
+        SVNRevision revision = SVNRevision.HEAD;
+        if (revNumber >= 0) {
+            revision = SVNRevision.create(revNumber);
         }
-
-        long revision = -1;
-        if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
-            String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
-            revision = Long.parseLong(revStr);
-        }
-        DebugLog.log("workspace id is : " + destPathParent);
-        final ISVNWorkspace ws = createWorkspace(destPathParent);
-        DebugLog.log("workspace root is : " + ws.getID());
-        String wsPath = SVNUtil.getWorkspacePath(ws, destPathParent);
-        DebugLog.log("workspace path is : " + wsPath);
-        ws.copy(SVNRepositoryLocation.parseURL(srcURL), wsPath, revision);
+        SVNUpdater updater = new SVNUpdater(getCredentialsProvider(), new ISVNEventListener() {
+            public void svnEvent(SVNEvent event) {
+                if (event.getAction() == SVNEventAction.ADD) {
+                    println(out, "A    " + getPath(event.getFile()));
+                } 
+            }
+        });
+        updater.doCopy(srcURL, new File(destPathParent), revision);
+    }
+    
+    private String getPath(File file) {
+        String path = file.getAbsolutePath().replace(File.separatorChar, '/');
+        String rootPath = new File("").getAbsolutePath().replace(File.separatorChar, '/');
+        path = path.substring(rootPath.length());
+        path = PathUtil.removeLeadingSlash(path);
+        path = PathUtil.removeTrailingSlash(path);
+        return path;
     }
 
     private void runLocalToRemote(final PrintStream out, PrintStream err) throws SVNException {

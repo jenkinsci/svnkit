@@ -120,6 +120,8 @@ public class UpdateCommand extends SVNCommand {
                         println(out);
                         println(out, "Updating external item at '" + event.getPath() + "'");
                         isExternal = true;
+                    } else if (event.getAction() == SVNEventAction.RESTORE) {
+                        println(out, "Restored '" + getPath(event.getFile()) + "'");
                     }
                 }
             });

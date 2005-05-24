@@ -90,12 +90,14 @@ public class SVNWCAccess implements ISVNEventListener {
                 } 
             } finally {
                 // close entries.
-                if (anchor == null) {
+                if (anchor == null && anchorCopy != null) {
                     anchorCopy.getEntries().close();
                     anchorCopy.dispose();
                     anchorCopy = null;
                 }
-                target.dispose();
+                if (target != null) {
+                    target.dispose();
+                }
             }
         } else if (target == null && anchor == null) {
             // both are not versioned :(
@@ -153,12 +155,15 @@ public class SVNWCAccess implements ISVNEventListener {
         SVNDirectory dir = "".equals(myName) ? getAnchor() : new SVNDirectory(this, myName, new File(getAnchor().getRoot(), myName));
         SVNEntries entries = null;
         String name = "";
-        if (dir != null) {
+        if (dir != null && dir.isVersioned()) {
             entries = dir.getEntries();
         }
         if (entries == null) {
             entries = getAnchor().getEntries();
             name = myName;
+            if (entries.getEntry(name) != null && entries.getEntry(name).isDirectory()) {
+                name = "";
+            }
         }
         String value = null;
         if (entries != null) {
