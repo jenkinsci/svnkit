@@ -67,6 +67,14 @@ public class SVNEvent {
                 revision, null, null, null, null, null, null);
     }
 
+    public static SVNEvent createUpdateExternalEvent(SVNWCAccess source, String path) {
+        SVNEvent event = new SVNEvent(source, null, null, 
+                SVNEventAction.UPDATE_EXTERNAL, null, 
+                -1, null, null, null, null, null, null);
+        event.setPath(path);
+        return event;
+    }
+
     public static SVNEvent createAddedEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
         String mimeType = null;
         try {

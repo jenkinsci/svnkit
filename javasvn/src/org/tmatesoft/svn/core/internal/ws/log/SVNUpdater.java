@@ -18,10 +18,13 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 
 public class SVNUpdater extends SVNBasicClient {
+    
+    private boolean myIsDoNotSleepForTimeStamp;
 
     public SVNUpdater(final ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
         super(new ISVNRepositoryFactory() {
@@ -53,11 +56,15 @@ public class SVNUpdater extends SVNBasicClient {
             repos.update(revNumber, target, recursive, reporter, editor);
 
             if (editor.getTargetRevision() >= 0) {
+                handleExternals(wcAccess);
                 dispatchEvent(SVNEvent.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
             }
             return editor.getTargetRevision();
-        } finally {
+        } finally {            
             wcAccess.close(true, recursive);
+            if (!myIsDoNotSleepForTimeStamp) {
+                SVNFileUtil.sleepForTimestamp();
+            }            
         }
     }
 
@@ -74,11 +81,15 @@ public class SVNUpdater extends SVNBasicClient {
             repos.update(url, revNumber, target, recursive, reporter, editor);
             
             if (editor.getTargetRevision() >= 0) {
+                handleExternals(wcAccess);
                 dispatchEvent(SVNEvent.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
             }
             return editor.getTargetRevision();
         } finally {
             wcAccess.close(true, recursive);
+            if (!myIsDoNotSleepForTimeStamp) {
+                SVNFileUtil.sleepForTimestamp();
+            }            
         }
     }
     
@@ -105,19 +116,25 @@ public class SVNUpdater extends SVNBasicClient {
         } else if (targetNodeKind == SVNNodeKind.NONE) {
             SVNErrorManager.error(0, null);
         }
+        myIsDoNotSleepForTimeStamp = true;
         long result = -1;
-        if (!dstPath.exists() || (dstPath.isDirectory() && !SVNWCAccess.isVersionedDirectory(dstPath))) {
-            createVersionedDirectory(dstPath, url, uuid, revNumber);
-            result = doUpdate(dstPath, revision, recursive);
-        } else if (dstPath.isDirectory() && SVNWCAccess.isVersionedDirectory(dstPath)) {
-            SVNWCAccess wcAccess = SVNWCAccess.create(dstPath);
-            if (url.equals(wcAccess.getTargetEntryProperty(SVNProperty.URL))) {
+        try {
+            if (!dstPath.exists() || (dstPath.isDirectory() && !SVNWCAccess.isVersionedDirectory(dstPath))) {
+                createVersionedDirectory(dstPath, url, uuid, revNumber);
                 result = doUpdate(dstPath, revision, recursive);
+            } else if (dstPath.isDirectory() && SVNWCAccess.isVersionedDirectory(dstPath)) {
+                SVNWCAccess wcAccess = SVNWCAccess.create(dstPath);
+                if (url.equals(wcAccess.getTargetEntryProperty(SVNProperty.URL))) {
+                    result = doUpdate(dstPath, revision, recursive);
+                } else {
+                    SVNErrorManager.error(0, null);
+                }
             } else {
                 SVNErrorManager.error(0, null);
             }
-        } else {
-            SVNErrorManager.error(0, null);
+        } finally {
+            SVNFileUtil.sleepForTimestamp();
+            myIsDoNotSleepForTimeStamp = false;
         }
         return result;
     }
@@ -162,6 +179,7 @@ public class SVNUpdater extends SVNBasicClient {
                 
                 SVNWCAccess wcAccess2 = createWCAccess(dstPath, wcAccess.getTargetName());
                 wcAccess2.open(true, true);
+                myIsDoNotSleepForTimeStamp = true;
                 try {
                     SVNReporter reporter = new SVNReporter(wcAccess2, true);
                     SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess2, null, true);
@@ -177,6 +195,7 @@ public class SVNUpdater extends SVNBasicClient {
                         SVNErrorManager.error(0, null);
                     }
                 } finally {
+                    myIsDoNotSleepForTimeStamp = false;
                     wcAccess2.close(true, true);
                 }
             } else {
@@ -214,6 +233,7 @@ public class SVNUpdater extends SVNBasicClient {
             if (wcAccess != null) {
                 wcAccess.close(true, false);
             }
+            SVNFileUtil.sleepForTimestamp();
         }
     }
 
@@ -314,6 +334,92 @@ public class SVNUpdater extends SVNBasicClient {
         command.put(SVNLog.DEST_ATTR, SVNFileUtil.getBasePath(dir.getBaseFile(fileName, false)));
         log.addCommand(SVNLog.MOVE, command, false);
         log.save();
+    }
+    
+    private void handleExternals(SVNWCAccess wcAccess) throws SVNException {
+        myIsDoNotSleepForTimeStamp = true;
+    
+        try {
+            for(Iterator externals = wcAccess.externals(); externals.hasNext();) {
+                SVNExternalInfo external = (SVNExternalInfo) externals.next();
+                if (external.getOldURL() == null && external.getNewURL() == null) {
+                    continue;
+                }
+                long revNumber = external.getNewRevision();
+                SVNRevision revision = revNumber >= 0 ? SVNRevision.create(revNumber) : SVNRevision.HEAD;
+                setEventPathPrefix(external.getPath());
+                try {
+                    if (external.getOldURL() == null) {
+                        external.getFile().mkdirs();
+                        dispatchEvent(SVNEvent.createUpdateExternalEvent(wcAccess, ""));
+                        doCheckout(external.getNewURL(), external.getFile(), revision,
+                                revision, true);
+                    } else if (external.getNewURL() == null) {
+                        if (SVNWCAccess.isVersionedDirectory(external.getFile())) {
+                            SVNWCAccess externalAccess = createWCAccess(external.getFile());
+                            externalAccess.open(true, true);
+                            externalAccess.getAnchor().destroy("", true);
+                            externalAccess.close(true, true);
+                        }                    
+                    } else if (external.isModified()) {
+                        deleteExternal(external);
+                        external.getFile().mkdirs();
+                        dispatchEvent(SVNEvent.createUpdateExternalEvent(wcAccess, ""));
+                        doCheckout(external.getNewURL(), external.getFile(), revision,
+                                revision, true);
+                    } else {
+                        if (!external.getFile().isDirectory()) {
+                            external.getFile().mkdirs();
+                            doCheckout(external.getNewURL(), external.getFile(), revision,
+                                    revision, true);
+                        } else {
+                            String url = null;
+                            if (SVNWCAccess.isVersionedDirectory(external.getFile())) {
+                                SVNWCAccess externalAccess = createWCAccess(external.getFile());
+                                url = externalAccess.getTargetEntryProperty(SVNProperty.URL);
+                            }
+                            if (!external.getNewURL().equals(url)) {
+                                deleteExternal(external);
+                            } 
+                            // update or checkout.
+                            external.getFile().mkdirs();
+                            dispatchEvent(SVNEvent.createUpdateExternalEvent(wcAccess, ""));
+                            doCheckout(external.getNewURL(), external.getFile(), revision,
+                                    revision, true);
+                        }
+                    }
+                } finally {
+                    setEventPathPrefix(null);
+                }
+            }
+        } finally {
+            setEventPathPrefix(null);
+            myIsDoNotSleepForTimeStamp = false;
+        }
+    }
+
+    private void deleteExternal(SVNExternalInfo external) throws SVNException {
+        if (SVNWCAccess.isVersionedDirectory(external.getFile())) {
+            SVNWCAccess externalAccess = createWCAccess(external.getFile());
+            
+            try {
+                externalAccess.open(true, true);
+                externalAccess.getAnchor().destroy("", true);
+            } catch (Throwable th) {
+                DebugLog.error(th);
+            } finally {
+                externalAccess.close(true, true);
+            }
+        }
+        if (external.getFile().exists()) {
+            external.getFile().getParentFile().mkdirs();
+            File newLocation = SVNFileUtil.createUniqueFile(external.getFile().getParentFile(), external.getFile().getName(), ".OLD");
+            try {
+                SVNFileUtil.rename(external.getFile(), newLocation);
+            } catch (IOException e) {
+                SVNErrorManager.error(0, e);
+            }
+        }
     }
 }
  

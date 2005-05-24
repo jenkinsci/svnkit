@@ -13,6 +13,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNWCAccess implements ISVNEventListener {
@@ -287,7 +288,6 @@ public class SVNWCAccess implements ISVNEventListener {
                 continue;
             }
             path = PathUtil.append(directory.getPath(), (String) parts.get(0));
-            path = PathUtil.removeLeadingSlash(path);
             if (parts.size() == 2) {
                 url = (String) parts.get(1);
             } else if (parts.size() == 3 && parts.get(1).toString().startsWith("-r")) {
@@ -310,17 +310,27 @@ public class SVNWCAccess implements ISVNEventListener {
                         continue;
                     }
                 }
-                url = (String) parts.get(4);                
+                url = (String) parts.get(3);                
             }
             if (path!= null && url != null) {
-                SVNExternalInfo info = addExternal(path, url, rev);
+                path = PathUtil.removeLeadingSlash(path);
+                path = PathUtil.removeTrailingSlash(path);
+                url = PathUtil.removeTrailingSlash(url);
+                SVNExternalInfo info = addExternal(directory, path, url, rev);
                 result.add(info);
-            }
+            }            
+        }
+        // get existing externals and update all that are not in result but in this dir.
+        for (Iterator exts = externals(); exts.hasNext();) {
+            SVNExternalInfo info = (SVNExternalInfo) exts.next();
+            if (!result.contains(info) && directory.getPath().equals(info.getOwnerPath())) {
+                info.setNewExternal(null, -1);
+            }            
         }
         return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
     }
     
-    public SVNExternalInfo addExternal(String path, String url, long revision) {
+    private SVNExternalInfo addExternal(SVNDirectory dir, String path, String url, long revision) {
         if (myExternals == null) {
             myExternals = new TreeMap();
         }
@@ -328,7 +338,7 @@ public class SVNWCAccess implements ISVNEventListener {
         SVNExternalInfo info = (SVNExternalInfo) myExternals.get(path);
         if (info == null) {
             // this means adding new external, either during report or during update,
-            info = new SVNExternalInfo(new File(getAnchor().getRoot(), path), path, null, -1);
+            info = new SVNExternalInfo(dir.getPath(), new File(getAnchor().getRoot(), path), path, null, -1);
             myExternals.put(path, info);
         } 
         // set it as new, report will also set old values, update will left it as is.
@@ -353,17 +363,24 @@ public class SVNWCAccess implements ISVNEventListener {
     }
     
     private void visitDirectories(String parentPath, SVNDirectory root, ISVNDirectoryVisitor visitor) throws SVNException {
-        File[] dirs = root.getRoot().listFiles();
-        for (int i = 0; dirs != null && i < dirs.length; i++) {
-            if (dirs[i].isFile()) {
+        Iterator entries = root.getEntries().entries();
+        while (entries.hasNext()) {
+            SVNEntry entry = (SVNEntry) entries.next();
+            if ("".equals(entry.getName())) {
                 continue;
             }
-            String path = PathUtil.append(parentPath, dirs[i].getName());
-            path = PathUtil.removeLeadingSlash(path);
-            SVNDirectory dir = new SVNDirectory(this, PathUtil.append(parentPath, dirs[i].getName()), dirs[i]);
-            if (dir.isVersioned()) {
-                visitDirectories(path, dir, visitor);
-                visitor.visit(path, dir);
+            if (entry.getKind() == SVNNodeKind.FILE) {
+                continue;
+            }
+            File dir = new File(root.getRoot(), entry.getName());
+            if (dir.isDirectory() && entry.getKind() == SVNNodeKind.DIR) {
+                String path = PathUtil.append(parentPath, dir.getName());
+                path = PathUtil.removeLeadingSlash(path);
+                SVNDirectory svnDir = new SVNDirectory(this, PathUtil.append(parentPath, dir.getName()), dir);
+                if (svnDir.isVersioned()) {
+                    visitDirectories(path, svnDir, visitor);
+                    visitor.visit(path, svnDir);
+                }
             }
         }
     }
@@ -384,7 +401,9 @@ public class SVNWCAccess implements ISVNEventListener {
     public void removeDirectory(String path) throws SVNException {
         SVNDirectory dir = (SVNDirectory) myDirectories.remove(path);
         if (dir != null) {
-            myExternals.remove(path);
+            if (myExternals != null) {
+                myExternals.remove(path);
+            }
             dir.unlock();
         }
     }
@@ -393,7 +412,7 @@ public class SVNWCAccess implements ISVNEventListener {
         StringBuffer result = new StringBuffer();
         result.append("anchor: '" + getAnchor().getRoot().toString() + "'\n");
         result.append("target: '" + getTarget().getRoot().toString() + "'\n");
-        result.append("target name: '" + getTargetName() + "'\n");
+        result.append("target name: '" + getTargetName() + "'");
         return result.toString();
     }
 

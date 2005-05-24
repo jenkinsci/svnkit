@@ -60,7 +60,7 @@ public class SVNFileUtil {
     }
 
     public static void rename(File src, File dst) throws IOException {
-        if (!src.exists() || !src.isFile()) {
+        if (!src.exists()) {
             throw new IOException("can't rename file '" + src.getAbsolutePath() + "' : file doesn't exist.");            
         }
         if (dst.isDirectory()) {
@@ -340,5 +340,13 @@ public class SVNFileUtil {
             hexDigest += Integer.toHexString(hi) + Integer.toHexString(lo);
         }
         return hexDigest;
+    }
+
+    public static void sleepForTimestamp() {
+        long time = System.currentTimeMillis();
+        time = 1010 - (time - (time / 1000) * 1000);
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {}
     }
 }

@@ -14,11 +14,12 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.PathUtil;
 
-public class SVNBasicClient {
+public class SVNBasicClient implements ISVNEventListener {
 
     private ISVNRepositoryFactory myRepositoryFactory;
     private SVNOptions myOptions;
     private ISVNEventListener myEventDispatcher;
+    private String myEventPathPrefix;
 
     protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
         myRepositoryFactory = repositoryFactory;
@@ -36,7 +37,22 @@ public class SVNBasicClient {
     
     protected void dispatchEvent(SVNEvent event) {
         if (myEventDispatcher != null) {
+            if (myEventPathPrefix != null) {
+                String path = event.getPath();
+                path = PathUtil.append(myEventPathPrefix, path);
+                path = PathUtil.removeLeadingSlash(path);
+                path = PathUtil.removeTrailingSlash(path);
+                event.setPath(path);
+            }
             myEventDispatcher.svnEvent(event);
+        }
+    }
+    
+    protected void setEventPathPrefix(String prefix) {
+        if (myEventPathPrefix != null && prefix != null) {
+            myEventPathPrefix = PathUtil.append(myEventPathPrefix, prefix);
+        } else {
+            myEventPathPrefix = prefix;
         }
     }
 
@@ -53,11 +69,11 @@ public class SVNBasicClient {
                     fullPath = PathUtil.removeTrailingSlash(fullPath);
                     fullPath = PathUtil.removeLeadingSlash(fullPath);
                     event.setPath(fullPath);
-                    myEventDispatcher.svnEvent(event);
+                    dispatchEvent(event);
                 }
             });
         } else {
-            wcAccess.setEventDispatcher(myEventDispatcher);
+            wcAccess.setEventDispatcher(this);
         }
         wcAccess.setOptions(myOptions);
         return wcAccess;
@@ -132,6 +148,10 @@ public class SVNBasicClient {
             return url.substring(0, url.length() - 1);
         }
         return url;
+    }
+
+    public void svnEvent(SVNEvent event) {
+        dispatchEvent(event);
     }
 
 }

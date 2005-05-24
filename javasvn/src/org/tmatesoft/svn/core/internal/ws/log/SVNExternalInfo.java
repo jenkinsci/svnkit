@@ -15,12 +15,18 @@ public class SVNExternalInfo {
     
     private String myNewExternalURL;
     private long myNewExternalRevision;
+    private String myOwnerPath;
     
-    public SVNExternalInfo(File file, String path, String oldURL, long oldRev) {
+    public SVNExternalInfo(String dirPath, File file, String path, String oldURL, long oldRev) {
         myFile = file;
         myPath = path;
+        myOwnerPath = dirPath;
         myOldExternalURL = oldURL;
         myOldExternalRevision = oldRev;
+    }
+    
+    public String getOwnerPath() {
+        return myOwnerPath;
     }
     
     public void setNewExternal(String newURL, long newRev) {
@@ -31,6 +37,14 @@ public class SVNExternalInfo {
     public void setOldExternal(String oldURL, long oldRev) {
         myOldExternalRevision = oldRev;
         myOldExternalURL = oldURL;
+    }
+    
+    public String getPath() {
+        return myPath;
+    }
+    
+    public File getFile() {
+        return myFile;
     }
     
     public boolean isModified() {
@@ -57,6 +71,10 @@ public class SVNExternalInfo {
 
     public String getNewURL() {
         return myNewExternalURL;
+    }
+    
+    public String getOldURL() {
+        return myOldExternalURL;
     }
     
     public String toString() {

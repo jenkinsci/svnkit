@@ -616,7 +616,7 @@ public class SVNDirectory {
         } 
     }
     
-    private void destroyDirectory(SVNDirectory parent, SVNDirectory dir, boolean deleteWorkingFiles) throws SVNException {
+    private static void destroyDirectory(SVNDirectory parent, SVNDirectory dir, boolean deleteWorkingFiles) throws SVNException {
         SVNEntries entries = dir.getEntries();
         entries.getEntry("").setIncomplete(true);
         
@@ -641,7 +641,7 @@ public class SVNDirectory {
             SVNEntries parentEntries = parent.getEntries();
             parentEntries.deleteEntry(dir.getRoot().getName());
         }
-        getEntries().save(true);
+        dir.getEntries().save(true);
 
         SVNFileUtil.deleteAll(new File(dir.getRoot(), ".svn"));
         dir.getRoot().delete();
