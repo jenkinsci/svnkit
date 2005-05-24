@@ -147,15 +147,15 @@ class SVNReporter implements ISVNReporterBaton {
                     reporter.setPath(path, entry.getLockToken(), entry.getRevision(), false);
                 }
             } else if (entry.isDirectory() && recursive) {
-                if (missing) {
+                if (missing || directory.getChildDirectory(entry.getName()) == null) {
                     if (!reportAll) {
                         reporter.deletePath(path);
                     }
+                    return;
                 }
                 if (file.isFile()) {
                     SVNErrorManager.error(3, null);
                 }
-                
                 SVNDirectory childDir = directory.getChildDirectory(entry.getName());
                 SVNEntry childEntry = childDir.getEntries().getEntry("");
                 String url = childEntry.getURL();

@@ -124,7 +124,11 @@ public class SwitchCommand extends SVNCommand {
             }
         });
         try {
-            updater.doSwitch(new File(absolutePath), url, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+            if (getCommandLine().hasArgument(SVNArgument.RELOCATE)) {
+                updater.doRelocate(new File(absolutePath), url, getCommandLine().getURL(1), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+            } else {
+                updater.doSwitch(new File(absolutePath), url, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+            }
         } catch (Throwable th) {
             DebugLog.error(th);
             println(err, th.getMessage());

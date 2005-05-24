@@ -321,6 +321,59 @@ public class SVNUpdater extends SVNBasicClient {
         return -1;
     }
     
+    public void doRelocate(File dst, String oldURL, String newURL, boolean recursive) throws SVNException {
+        oldURL = validateURL(oldURL);
+        newURL = validateURL(newURL);
+        SVNRepository repos = createRepository(newURL);
+        repos.testConnection();
+        String uuid = repos.getRepositoryUUID();
+        SVNWCAccess wcAccess = createWCAccess(dst);
+        try {
+            wcAccess.open(true, recursive);
+            String oldUUID = wcAccess.getTargetEntryProperty(SVNProperty.UUID);
+            if (!oldUUID.equals(uuid)) {
+                SVNErrorManager.error("The repository at '" + newURL + "' has uuid '" + uuid + "', but the WC has '" + oldUUID + "'");
+            }
+            doRelocate(wcAccess.getAnchor(), wcAccess.getTargetName(), oldURL, newURL, recursive);
+        } finally {
+            wcAccess.close(true, recursive);
+            
+        }
+    }
+    
+    private void doRelocate(SVNDirectory dir, String targetName, String oldURL, String newURL, boolean recursive) throws SVNException {
+        SVNEntries entries = dir.getEntries();
+        for(Iterator ents = entries.entries(); ents.hasNext();) {
+            SVNEntry entry = (SVNEntry) ents.next();
+            if (targetName != null && !"".equals(targetName)) {
+                if (!targetName.equals(entry.getName())) {
+                    continue;
+                }
+            }
+            String copyFromURL = entry.getCopyFromURL();
+            if (copyFromURL != null && copyFromURL.startsWith(oldURL)) {
+                copyFromURL = copyFromURL.substring(oldURL.length());
+                copyFromURL = PathUtil.append(newURL, copyFromURL);
+                copyFromURL = validateURL(copyFromURL);
+                entry.setCopyFromURL(copyFromURL);
+            }
+            if (recursive && entry.isDirectory() && !"".equals(entry.getName())) {
+                if (dir.getChildDirectory(entry.getName()) != null) {
+                    doRelocate(dir.getChildDirectory(entry.getName()), null, oldURL, newURL, recursive);
+                }
+            } else if (entry.isFile() || "".equals(entry.getName())) {                
+                String url = entry.getURL();
+                if (url.startsWith(oldURL)) {
+                    url = url.substring(oldURL.length());
+                    url = PathUtil.append(newURL, url);
+                    url = validateURL(url);
+                    entry.setURL(url);
+                }
+            }
+        }
+        dir.getEntries().save(true);
+    }
+    
 
     private SVNDirectory createVersionedDirectory(File dstPath, String url, String uuid, long revNumber) throws SVNException {
         SVNDirectory.createVersionedDirectory(dstPath);

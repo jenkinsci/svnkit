@@ -232,4 +232,8 @@ public class SVNEntry implements Comparable {
     public void setCopied(boolean copied) {
         myEntries.setPropertyValue(myName, SVNProperty.COPIED, copied ? Boolean.TRUE.toString() : null);
     }
+
+    public String getCopyFromURL() {
+        return myEntries.getPropertyValue(myName, SVNProperty.COPYFROM_URL);
+    }
 }
