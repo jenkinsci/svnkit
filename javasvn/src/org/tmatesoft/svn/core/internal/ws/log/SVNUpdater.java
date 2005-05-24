@@ -47,11 +47,11 @@ public class SVNUpdater extends SVNBasicClient {
     public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {        
         long revNumber = getRevisionNumber(file, revision);
         SVNWCAccess wcAccess = createWCAccess(file);
-        final SVNReporter reporter = new SVNReporter(wcAccess, true);
+        final SVNReporter reporter = new SVNReporter(wcAccess, recursive);
         try {
             wcAccess.open(true, recursive);
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, recursive);
-            SVNRepository repos = createRepository(wcAccess.getTargetEntryProperty(SVNProperty.URL));
+            SVNRepository repos = createRepository(wcAccess.getAnchor().getEntries().getEntry("").getURL());
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             repos.update(revNumber, target, recursive, reporter, editor);
 
@@ -72,11 +72,13 @@ public class SVNUpdater extends SVNBasicClient {
         url = validateURL(url);
         long revNumber = getRevisionNumber(file, revision);
         SVNWCAccess wcAccess = createWCAccess(file);
-        final SVNReporter reporter = new SVNReporter(wcAccess, true);
+        final SVNReporter reporter = new SVNReporter(wcAccess, recursive);
         try {
             wcAccess.open(true, recursive);
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url, recursive);
             SVNRepository repos = createRepository(wcAccess.getTargetEntryProperty(SVNProperty.URL));
+            DebugLog.log("wc: " + wcAccess);
+            DebugLog.log("url: " + wcAccess.getAnchor().getEntries().getEntry("").getURL());
             repos = createRepository(wcAccess.getAnchor().getEntries().getEntry("").getURL());
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             repos.update(url, revNumber, target, recursive, reporter, editor);

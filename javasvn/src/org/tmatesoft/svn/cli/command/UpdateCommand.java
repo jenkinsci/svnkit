@@ -26,7 +26,6 @@ import org.tmatesoft.svn.core.internal.ws.log.SVNUpdater;
 import org.tmatesoft.svn.core.internal.ws.log.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -35,6 +34,7 @@ import org.tmatesoft.svn.util.PathUtil;
 public class UpdateCommand extends SVNCommand {
 
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
+        boolean error = false;
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String path;
             path = getCommandLine().getPathAt(i);
@@ -142,9 +142,13 @@ public class UpdateCommand extends SVNCommand {
                 updater.doUpdate(new File(path), revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             } catch (Throwable th) {
                 println(err, th.getMessage());
-                DebugLog.error(th);
+                println(err);
+                error = true;
             }
-        }        
+        }    
+        if (error) {
+            System.exit(1);
+        }
     }
     
     private String getPath(File file) {

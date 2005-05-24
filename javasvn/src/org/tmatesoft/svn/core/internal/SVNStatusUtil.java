@@ -238,6 +238,9 @@ class SVNStatusUtil {
         String author = child.getPropertyValue(SVNProperty.LAST_AUTHOR);
         SVNLock lock = createSVNLock(child);
         SVNStatus status = new SVNStatus(child.getPath(), propStatus, contentsStatus, revision, wcRevision, history, switched, isDirectory, author, lock);
+        if (child.getPropertyValue(SVNProperty.INCOMPLETE) != null) {
+            status.setIncomplete(true);
+        }
         return status;
     }
 
@@ -275,7 +278,11 @@ class SVNStatusUtil {
             remoteRevision = wcRevision;
         }
         boolean isDir = SVNProperty.KIND_DIR.equals(entry.getPropertyValue(SVNProperty.KIND));
-        return new SVNStatus(entry.getPath(), propStatus, contentsStatus, revision, wcRevision, remoteRevision, remoteContents, remoteProps, addedWithHistory, isSwitched, isDir, null);
+        SVNStatus status = new SVNStatus(entry.getPath(), propStatus, contentsStatus, revision, wcRevision, remoteRevision, remoteContents, remoteProps, addedWithHistory, isSwitched, isDir, null);
+        if (entry.getPropertyValue(SVNProperty.INCOMPLETE) != null) {
+            status.setIncomplete(true);
+        }
+        return status;
     }
     
     private static SVNLock createSVNLock(ISVNEntry entry) throws SVNException {

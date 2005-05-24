@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -60,6 +61,7 @@ class SVNReporter implements ISVNReporterBaton {
                 if (missing) {
                     reporter.deletePath("");
                 } else {
+                    DebugLog.log("reporting dir entries: " + myIsRecursive);
                     reportEntries(reporter, myWCAccess.getTarget(), "", targetEntry.isIncomplete(), myIsRecursive);
                 }
             } else if (targetEntry.isFile()){
@@ -72,6 +74,7 @@ class SVNReporter implements ISVNReporterBaton {
                 String parentURL = parentEntry.getURL();
                 String expectedURL = PathUtil.append(parentURL, PathUtil.encode(targetEntry.getName()));
                 if (!expectedURL.equals(url)) {
+                    DebugLog.log("reporting url: " + url);
                     reporter.linkPath(SVNRepositoryLocation.parseURL(url), "", targetEntry.getLockToken(), targetEntry.getRevision(), false);
                 } else if (targetEntry.getRevision() != parentEntry.getRevision() || targetEntry.getLockToken() != null) {
                     reporter.setPath("", targetEntry.getLockToken(), targetEntry.getRevision(), false);
@@ -79,6 +82,7 @@ class SVNReporter implements ISVNReporterBaton {
             }
             reporter.finishReport();
         } catch (Throwable th) {
+            DebugLog.error(th);
             reporter.abortReport();
             SVNErrorManager.error(0, th);
         }

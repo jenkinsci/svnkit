@@ -53,6 +53,7 @@ public class SVNStatus {
     private int myRemotePropertiesStatus;
     private String myPath;
     private boolean myIsDirectory;
+    private boolean myIsIncomplete;
     private String myAuthor;
     private SVNLock myLock;
     private String myRemoteLockToken;
@@ -89,6 +90,14 @@ public class SVNStatus {
         myIsDirectory = isDirectory;
         myAuthor = author;
         myLock = lock;
+    }
+    
+    public boolean isIncomplete() {
+        return myIsIncomplete;
+    }
+    
+    public void setIncomplete(boolean incomplete) {
+        myIsIncomplete = incomplete;
     }
     
     public String getAuthor() {

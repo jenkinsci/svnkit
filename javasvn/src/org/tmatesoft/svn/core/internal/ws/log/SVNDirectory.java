@@ -601,17 +601,19 @@ public class SVNDirectory {
     
     private void destroyFile(String name, boolean deleteWorkingFile) throws SVNException {
         SVNEntries entries = getEntries();
+        if (entries.getEntry(name) != null) {
+            if (deleteWorkingFile && !hasTextModifications(name, false)) {
+                getFile(name, false).delete();
+            } 
+        }
         entries.deleteEntry(name);
         
-        File baseFile = getBaseFile(name, false);
-        baseFile.delete();
-        getProperties(name, false).delete();
         getBaseProperties(name, false).delete();
         getWCProperties(name).delete();
         
-        if (deleteWorkingFile && !hasTextModifications(name, false)) {
-            getFile(name, false).delete();
-        } 
+        getProperties(name, false).delete();
+        File baseFile = getBaseFile(name, false);
+        baseFile.delete();
     }
     
     private static void destroyDirectory(SVNDirectory parent, SVNDirectory dir, boolean deleteWorkingFiles) throws SVNException {

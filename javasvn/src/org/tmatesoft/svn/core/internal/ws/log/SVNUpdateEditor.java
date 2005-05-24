@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNUpdateEditor implements ISVNEditor {
@@ -101,6 +102,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             myIsTargetDeleted = true;
         }
         if (mySwitchURL != null) {
+            DebugLog.log("deleting: " + myCurrentDirectory.getDirectory().getFile(name, false));
             myCurrentDirectory.getDirectory().destroy(name, true);
         }
         log.save();
@@ -118,10 +120,9 @@ public class SVNUpdateEditor implements ISVNEditor {
         String name = PathUtil.tail(path);
         File file = parentDir.getFile(name, false);
         if (file.exists()) {
-            SVNErrorManager.error("file '" + file.getAbsolutePath() + "' already exists");
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: Failed to add directory '" + path + "': object of the same name already exists");
         } else if (".svn".equals(name)) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: Failed to add directory '" + path + "': object of the same name as the administrative directory");
         } 
         SVNEntry entry = parentDir.getEntries().getEntry(name);
         if (entry != null) {
@@ -627,8 +628,8 @@ public class SVNUpdateEditor implements ISVNEditor {
         info.IsAdded = added;
         info.Name = PathUtil.tail(path);
         SVNDirectory dir = parent.getDirectory();
-        if (added && dir.getFile(info.Name, false).exists()) {
-            SVNErrorManager.error(0, null);
+        if (added && dir.getFile(info.Name, false).exists()) {            
+            SVNErrorManager.error("svn: Failed to add file '" + path + "': object of the same name already exists");
         }
         SVNEntries entries = null;
         try {

@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.ws.log.SVNRevision;
 import org.tmatesoft.svn.core.internal.ws.log.SVNUpdater;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -122,7 +123,14 @@ public class SwitchCommand extends SVNCommand {
                 }
             }
         });
-        updater.doSwitch(new File(absolutePath), url, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+        try {
+            updater.doSwitch(new File(absolutePath), url, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+        } catch (Throwable th) {
+            DebugLog.error(th);
+            println(err, th.getMessage());
+            println(err);
+            System.exit(1);
+        }
     }
 
     private String getPath(File file) {

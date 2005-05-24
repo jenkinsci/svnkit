@@ -5,6 +5,8 @@ package org.tmatesoft.svn.core.internal.ws.log;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNProperty;
@@ -19,12 +21,13 @@ public class SVNBasicClient implements ISVNEventListener {
     private ISVNRepositoryFactory myRepositoryFactory;
     private SVNOptions myOptions;
     private ISVNEventListener myEventDispatcher;
-    private String myEventPathPrefix;
+    private List myPathPrefixesStack;
 
     protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
         myRepositoryFactory = repositoryFactory;
         myOptions = options;
         myEventDispatcher = eventDispatcher;
+        myPathPrefixesStack = new LinkedList();
         if (myOptions == null)  {
             myOptions = new SVNOptions();
         }
@@ -37,22 +40,29 @@ public class SVNBasicClient implements ISVNEventListener {
     
     protected void dispatchEvent(SVNEvent event) {
         if (myEventDispatcher != null) {
-            if (myEventPathPrefix != null) {
-                String path = event.getPath();
-                path = PathUtil.append(myEventPathPrefix, path);
+            String path = "";
+            if (!myPathPrefixesStack.isEmpty()) {
+                for(Iterator paths = myPathPrefixesStack.iterator(); paths.hasNext();) {
+                    String segment = (String) paths.next();
+                    path = PathUtil.append(path, segment);
+                }
+            }
+            if (path != null && !PathUtil.isEmpty(path)) {
+                path = PathUtil.append(path, event.getPath());
                 path = PathUtil.removeLeadingSlash(path);
                 path = PathUtil.removeTrailingSlash(path);
                 event.setPath(path);
+                
             }
             myEventDispatcher.svnEvent(event);
         }
     }
     
     protected void setEventPathPrefix(String prefix) {
-        if (myEventPathPrefix != null && prefix != null) {
-            myEventPathPrefix = PathUtil.append(myEventPathPrefix, prefix);
-        } else {
-            myEventPathPrefix = prefix;
+        if (prefix == null && !myPathPrefixesStack.isEmpty()) {
+            myPathPrefixesStack.remove(myPathPrefixesStack.size() - 1);
+        } else if (prefix != null){
+            myPathPrefixesStack.add(prefix);
         }
     }
 

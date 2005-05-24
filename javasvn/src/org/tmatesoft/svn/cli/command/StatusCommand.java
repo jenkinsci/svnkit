@@ -34,7 +34,6 @@ import org.tmatesoft.svn.util.SVNUtil;
 public class StatusCommand extends SVNCommand {
     
     public void run(PrintStream out, PrintStream err) throws SVNException {
-        
         SVNCommandLine line = getCommandLine();
         
         for(int i = 0; i < line.getPathCount(); i++) {
@@ -121,7 +120,11 @@ public class StatusCommand extends SVNCommand {
         }
         boolean remoteMode = getCommandLine().hasArgument(SVNArgument.SHOW_UPDATES);
         StringBuffer sb = new StringBuffer();
-        appendStatus(status.getContentsStatus(), sb);
+        if (!status.isIncomplete()) {
+            appendStatus(status.getContentsStatus(), sb);
+        } else {
+            sb.append("!");
+        }        
         appendStatus(status.getPropertiesStatus(), sb);
         sb.append(" ");
         if (status.isAddedWithHistory()) {
