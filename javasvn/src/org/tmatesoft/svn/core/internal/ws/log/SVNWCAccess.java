@@ -149,7 +149,7 @@ public class SVNWCAccess implements ISVNEventListener {
     }
     
     public String getTargetEntryProperty(String propertyName) throws SVNException {
-        SVNDirectory dir = getAnchor().getChildDirectory(myName);
+        SVNDirectory dir = "".equals(myName) ? getAnchor() : new SVNDirectory(this, myName, new File(getAnchor().getRoot(), myName));
         SVNEntries entries = null;
         String name = "";
         if (dir != null) {

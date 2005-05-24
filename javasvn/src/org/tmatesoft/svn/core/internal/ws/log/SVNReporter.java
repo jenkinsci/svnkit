@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -33,11 +34,11 @@ class SVNReporter implements ISVNReporterBaton {
     }
 
     public void report(ISVNReporter reporter) throws SVNException {
-        SVNEntries targetEntries = myWCAccess.getTarget().getEntries();
-        SVNEntries anchorEntries = myWCAccess.getAnchor().getEntries();
-        SVNEntry targetEntry = anchorEntries.getEntry(myWCAccess.getTargetName());
-        
         try {
+            SVNEntries targetEntries = myWCAccess.getTarget().getEntries();
+            SVNEntries anchorEntries = myWCAccess.getAnchor().getEntries();
+            SVNEntry targetEntry = anchorEntries.getEntry(myWCAccess.getTargetName());
+
             if (targetEntry == null || targetEntry.isHidden() || 
                     (targetEntry.isDirectory() && targetEntry.isScheduledForAddition())) {
                 long revision = anchorEntries.getEntry("").getRevision();
@@ -78,7 +79,6 @@ class SVNReporter implements ISVNReporterBaton {
             }
             reporter.finishReport();
         } catch (Throwable th) {
-            th.printStackTrace();
             reporter.abortReport();
             SVNErrorManager.error(0, th);
         }
@@ -198,7 +198,7 @@ class SVNReporter implements ISVNReporterBaton {
 
         File src = dir.getBaseFile(name, false);
         File dst = dir.getFile(name, false);
-        SVNTranslator.translate(dir, name, name, SVNFileUtil.getBasePath(dst), true, true);
+        SVNTranslator.translate(dir, name, SVNFileUtil.getBasePath(src), SVNFileUtil.getBasePath(dst), true, true);
         dir.markResolved(name, true, false);
         
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
@@ -248,11 +248,12 @@ class SVNReporter implements ISVNReporterBaton {
         
 
         DAVRepositoryFactory.setup();
+        SVNRepositoryFactoryImpl.setup();
         
         ISVNRepositoryFactory repositoryFactory = new ISVNRepositoryFactory() {
             public SVNRepository createRepository(String url) throws SVNException {
                 SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-                repos.setCredentialsProvider(new SVNSimpleCredentialsProvider("alex", "cvs"));
+                repos.setCredentialsProvider(new SVNSimpleCredentialsProvider("jrandom", "rayjandom"));
                 return repos;
             }            
         };
@@ -262,11 +263,11 @@ class SVNReporter implements ISVNReporterBaton {
             }
         };
         try {
-            File dst = new File("c:/javasvn2/seq");
+            File dst = new File("C:/nautilus/org.tmatesoft.javasvn/javasvn-test/python/cmdline/working_copies/basic_tests-1");
             SVNUpdater updater = new SVNUpdater(repositoryFactory, null, dispatcher);
 //            String url = "http://72.9.228.230/svn/jsvn/trunk/javasvn/src/org/tmatesoft/svn/cli"; 
-            String url = "http://72.9.228.230/svn/jsvn/trunk/contrib/sequence"; 
-            updater.doCopy(url, dst, SVNRevision.HEAD);
+            String url = "svn://localhost/repositories/basic_tests-1"; 
+            updater.doCheckout(url, dst, SVNRevision.HEAD, SVNRevision.HEAD, true);
         } catch (Throwable e) {
             e.printStackTrace();
         } 

@@ -12,13 +12,30 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.PathUtil;
 
 
 public class SVNUpdater extends SVNBasicClient {
+
+    public SVNUpdater(final ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
+        super(new ISVNRepositoryFactory() {
+            public SVNRepository createRepository(String url) throws SVNException {
+                SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
+                repos.setCredentialsProvider(credentialsProvider);
+                return repos;
+            }
+        }, null, eventDispatcher);
+    }
+
+    public SVNUpdater(ISVNRepositoryFactory repositoryFactory, ISVNEventListener eventDispatcher) {
+        super(repositoryFactory, null, eventDispatcher);
+    }
 
     public SVNUpdater(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
@@ -104,22 +121,6 @@ public class SVNUpdater extends SVNBasicClient {
         }
         return result;
     }
-
-    private void createVersionedDirectory(File dstPath, String url, String uuid, long revNumber) throws SVNException {
-        SVNDirectory.createVersionedDirectory(dstPath);
-        SVNWCAccess wcAccess = SVNWCAccess.create(dstPath);
-        SVNEntries entries = wcAccess.getAnchor().getEntries();
-        SVNEntry entry = entries.getEntry("");
-        if (entry == null) {
-            entry = entries.addEntry("");
-        }
-        entry.setURL(url);
-        entry.setUUID(uuid);
-        entry.setKind(SVNNodeKind.DIR);
-        entry.setRevision(revNumber);
-        entry.setIncomplete(true);
-        entries.save(true);
-    }
     
     public void doCopy(String srcURL, File dstPath, SVNRevision revision) throws SVNException {
         srcURL = validateURL(srcURL);
@@ -144,7 +145,7 @@ public class SVNUpdater extends SVNBasicClient {
         }
         
         boolean sameRepositories = false;
-        SVNWCAccess wcAccess = createWCAccess(dstPath); // either dir(v)->file(uv) or dir(v)->dir(uv)
+        SVNWCAccess wcAccess = createWCAccess(dstPath); 
         try {
             wcAccess.open(true, false);
             // check for missing entry.
@@ -214,6 +215,22 @@ public class SVNUpdater extends SVNBasicClient {
                 wcAccess.close(true, false);
             }
         }
+    }
+
+    private void createVersionedDirectory(File dstPath, String url, String uuid, long revNumber) throws SVNException {
+        SVNDirectory.createVersionedDirectory(dstPath);
+        SVNWCAccess wcAccess = SVNWCAccess.create(dstPath);
+        SVNEntries entries = wcAccess.getAnchor().getEntries();
+        SVNEntry entry = entries.getEntry("");
+        if (entry == null) {
+            entry = entries.addEntry("");
+        }
+        entry.setURL(url);
+        entry.setUUID(uuid);
+        entry.setKind(SVNNodeKind.DIR);
+        entry.setRevision(revNumber);
+        entry.setIncomplete(true);
+        entries.save(true);
     }
 
     private void addDir(SVNDirectory dir, String name, String copyFromURL, long copyFromRev) throws SVNException {
