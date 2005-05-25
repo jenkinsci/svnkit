@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNEvent;
 import org.tmatesoft.svn.core.internal.wc.SVNEventAction;
 import org.tmatesoft.svn.core.internal.wc.SVNEventStatus;
 import org.tmatesoft.svn.core.internal.wc.SVNRevision;
-import org.tmatesoft.svn.core.internal.wc.SVNUpdater;
+import org.tmatesoft.svn.core.internal.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
@@ -44,7 +44,7 @@ public class UpdateCommand extends SVNCommand {
             if (revNumber >= 0) {
                 revision = SVNRevision.create(revNumber);
             }
-            SVNUpdater updater = new SVNUpdater(getCredentialsProvider(), new ISVNEventListener() {
+            SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new ISVNEventListener() {
                 private boolean isExternal = false;
                 private boolean isChanged = false;
                 private boolean isExternalChanged = false;

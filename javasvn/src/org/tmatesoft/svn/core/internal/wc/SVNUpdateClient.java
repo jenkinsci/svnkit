@@ -22,11 +22,11 @@ import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 
-public class SVNUpdater extends SVNBasicClient {
+public class SVNUpdateClient extends SVNBasicClient {
     
     private boolean myIsDoNotSleepForTimeStamp;
 
-    public SVNUpdater(final ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
+    public SVNUpdateClient(final ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
         super(new ISVNRepositoryFactory() {
             public SVNRepository createRepository(String url) throws SVNException {
                 SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
@@ -36,11 +36,11 @@ public class SVNUpdater extends SVNBasicClient {
         }, null, eventDispatcher);
     }
 
-    public SVNUpdater(ISVNRepositoryFactory repositoryFactory, ISVNEventListener eventDispatcher) {
+    public SVNUpdateClient(ISVNRepositoryFactory repositoryFactory, ISVNEventListener eventDispatcher) {
         super(repositoryFactory, null, eventDispatcher);
     }
 
-    public SVNUpdater(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNUpdateClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
     

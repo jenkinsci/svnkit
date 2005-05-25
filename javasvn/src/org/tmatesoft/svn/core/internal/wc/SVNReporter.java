@@ -267,7 +267,7 @@ class SVNReporter implements ISVNReporterBaton {
             updater.doCheckout(url, dst, SVNRevision.HEAD, SVNRevision.HEAD, true);
             */
             File dst = new File("C:/i/test5");
-            SVNUpdater updater = new SVNUpdater(repositoryFactory, null, dispatcher);
+            SVNUpdateClient updater = new SVNUpdateClient(repositoryFactory, null, dispatcher);
 //            String url = "http://72.9.228.230/svn/jsvn/trunk/javasvn/src/org/tmatesoft/svn/cli"; 
 //            String url = "http://80.188.80.120/svn/repos/test4/dir2"; 
             updater.doUpdate(dst, SVNRevision.HEAD, true);
