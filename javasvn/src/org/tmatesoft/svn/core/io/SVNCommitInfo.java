@@ -15,7 +15,6 @@ package org.tmatesoft.svn.core.io;
 import java.util.Date;
 
 /**
- * <p>
  * <code>SVNCommitInfo</code> represents a class that incapsulates the necessary 
  * information related with every committing to the repository. Commit information
  * includes:
@@ -26,52 +25,53 @@ import java.util.Date;
  * <li>its author's name.
  * </ol>
  * The class provides necessary public methods to obtain that information. 
- * </p>
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
- * @see ISVNEditor
+ * @author 	TMate Software Ltd.
+ * @see 	ISVNEditor
  */
 public class SVNCommitInfo {
     
     private long myNewRevision;
     private Date myDate;
     private String myAuthor;
+
     /**
-     * <p>
-     * The constructor.
-     * </p>
-     * @param revision new revision number the repository was committed to.
-     * @param author the author who performed the commit.
-     * @param date time moment the commit was done.
+     * 
+     * Constructs an <code>SVNCommitInfo</code> object.
+     * 
+     * @param revision 		new revision number the repository was committed to.
+     * @param author 		the author who performed the commit.
+     * @param date 			time moment the commit was done.
      */
     public SVNCommitInfo(long revision, String author, Date date) {
         myNewRevision = revision;
         myAuthor = author;
         myDate = date;
     }
+
     /**
-     * <p>
      * Gets the revision number the repository was committed to.
-     * </p>
-     * @return revision number.
+     * 
+     * @return 	a new assigned revision number after the commit
      */
     public long getNewRevision() {
         return myNewRevision;
     }
+
     /**
-     * <p>
      * Gets the author who did the commit.
-     * </p>
-     * @return author's name.
+     * 
+     * @return 	the commit author's name.
      */
     public String getAuthor() {
         return myAuthor;
     }
+    
     /**
-     * <p>
      * Gets the moment in time when the commit was done.
-     * </p>
-     * @return time moment.
+     *
+     * @return 	the time moment when the commit was performed
      */
     public Date getDate() {
         return myDate;

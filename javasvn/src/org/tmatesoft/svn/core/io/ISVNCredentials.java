@@ -12,13 +12,36 @@
 package org.tmatesoft.svn.core.io;
 
 /**
- * @author TMate Software Ltd.
- *
+ * The <code>ISVNCredentials</code> is an interface that is used to get 
+ * such client's cridentials as his name and password by user credentials provider
+ * interface - <code>ISVNCredentialsProvider</code>.
+ * 
+ * <p>
+ * A Subversion repository can be configured to let clients manipulate with it only 
+ * being authenticated. An implementation of this interface incapsulates a client's 
+ * authentication information per one repository account (name/password) and provides
+ * it via implemented methods.
+ * 
+ * @version 1.0
+ * @author  TMate Software Ltd.
+ * @see 	ISVNCredentialsProvider
+ * @see 	SVNRepository#setCredentialsProvider(ISVNCredentialsProvider)
+ * @see		SVNSimpleCredentialsProvider
+ * @see		ISVNSSHCredentials		
  */
 public interface ISVNCredentials {
-	
+	/**
+	 * Gets a user's account name.
+	 * 
+	 * @return user's name 
+	 */
 	public String getName();
 	
+	/**
+	 * Gets a user's account password.
+	 * 
+	 * @return user's password
+	 */
 	public String getPassword();
 
 }

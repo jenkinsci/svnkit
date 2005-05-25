@@ -15,11 +15,13 @@
 package org.tmatesoft.svn.core.io;
 
 /**
- * <p>
- * Each revision can have some own system properties. Such properties are unversioned,
- * so there is always a risk to loose information when modifying revision property values. 
  * This class is a wrapper for revision properties.
- * </p>
+ * 
+ * <p>
+ * Each revision can have some own system properties. Such properties are
+ * unversioned, so there is always a risk to loose information when 
+ * modifying revision property values. 
+ * 
  * @version 1.0
  * @author TMate Software Ltd.
  */

@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
+ * 
  * @author Marc Strapetz
  */
 public interface DebugLogger {

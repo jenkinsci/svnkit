@@ -20,11 +20,11 @@ public abstract class QSequenceDiscardingMediaBlock {
 
 	// Abstract ===============================================================
 
-	protected abstract int[] getAllSymbols(QSequenceCachingMedia media);
+	protected abstract int[] getAllSymbols(QSequenceIntMedia media);
 
 	// Fields =================================================================
 
-	private final QSequenceCachingMedia media;
+	private final QSequenceIntMedia media;
 	private final int[] undiscardedSymbols;
 	private final int[] undiscardedIndices;
 
@@ -32,7 +32,7 @@ public abstract class QSequenceDiscardingMediaBlock {
 
 	// Setup ==================================================================
 
-	protected QSequenceDiscardingMediaBlock(QSequenceCachingMedia media) {
+	protected QSequenceDiscardingMediaBlock(QSequenceIntMedia media) {
 		this.media = media;
 		this.undiscardedSymbols = new int[getAllSymbols(media).length];
 		this.undiscardedIndices = new int[getAllSymbols(media).length];
@@ -59,7 +59,7 @@ public abstract class QSequenceDiscardingMediaBlock {
 		// Set up table of which lines are going to be discarded.
 		final int[] thisAllSymbols = getAllSymbols(media);
 		final int[] thatAllSymbols = thatBlock.getAllSymbols(media);
-		final int[] otherEquivalences = createEquivalences(thatAllSymbols, media.getSymbolMap());
+		final int[] otherEquivalences = createEquivalences(thatAllSymbols, media);
 		final byte[] discardableMarkers = createDiscardableMarkers(thisAllSymbols, otherEquivalences, confusionDetector);
 
 		// Don't really discard the provisional lines except when they occur
@@ -78,8 +78,8 @@ public abstract class QSequenceDiscardingMediaBlock {
 
 	// Utils ==================================================================
 
-	private static int[] createEquivalences(int[] symbols, QSequenceCachingMediaSymbolMap symbolMap) {
-		final int[] equivalences = new int[symbolMap.getSymbolCount()];
+	private static int[] createEquivalences(int[] symbols, QSequenceIntMedia media) {
+		final int[] equivalences = new int[media.getSymbolCount()];
 		for (int index = 0; index < symbols.length; index++) {
 			equivalences[symbols[index]]++;
 		}

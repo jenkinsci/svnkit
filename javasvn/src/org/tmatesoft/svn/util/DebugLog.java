@@ -17,6 +17,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
+ * This class is used as a wrapper over a socket to write into local log files all data
+ * that is received or sent via the socket.
+ * 
  * @author TMate Software Ltd.
  */
 public class DebugLog {

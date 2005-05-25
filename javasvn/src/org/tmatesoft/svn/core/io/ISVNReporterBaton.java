@@ -13,24 +13,23 @@
 package org.tmatesoft.svn.core.io;
 
 /**
- * <p>
  * This interface is provided when manipulating with a working copy (updating it,
- * getting its status, getting checking it out from the repository). Used to make reports
+ * getting its status, checking it out from a repository). Used to make reports
  * by calling appropriate methods of {@link ISVNReporter} to describe a working copy
  * entries (their revision numbers, locations, etc.)
- * </p>
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
- * @see ISVNReporter
- * @see SVNRepository
+ * @author 	TMate Software Ltd.
+ * @see 	ISVNReporter
+ * @see 	SVNRepository
  */
 public interface ISVNReporterBaton {
     /**
-     * <p>
      * Used by an implementor to make reports about a working copy. 
-     * </p>
-     * @param reporter {@link ISVNReporter} to describe a working copy
-     * @throws SVNException 
+     * 
+     * @param  reporter 		a reporter to describe a working copy
+     * @throws SVNException
+     * @see						ISVNReporter 
      */
     public void report(ISVNReporter reporter) throws SVNException;
 

@@ -13,12 +13,27 @@
 package org.tmatesoft.svn.core.io;
 
 /**
- * @author TMate Software Ltd.
+ * This interface is an extension of the <code>ISVNCredentials</code> specified for
+ * use with the <i>svn+ssh</i> protocol.
+ * 
+ * @version 1.0
+ * @author 	TMate Software Ltd.
+ * @see		ISVNCredentials
  */
 public interface ISVNSSHCredentials extends ISVNCredentials {
-    
+    /**
+     * Gets a user's private key to be used in an SSH-tunnel securing  
+     * 
+     * @return		a private key to encrypt client's data being transmitted to a
+     *  			<i>svnserve</i>	over an SSH-tunnel 
+     */
     public String getPrivateKeyID();
     
+    /**
+     * Gets the passphrase - that is the password to the client's private key.
+     * 
+     * @return	a client's private key passphrase
+     */
     public String getPassphrase();
 
 }

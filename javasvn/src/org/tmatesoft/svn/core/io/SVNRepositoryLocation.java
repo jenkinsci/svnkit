@@ -18,30 +18,36 @@ import java.net.URL;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
- * The <code>SVNRepositoryLocation</code> class incapsulates a URL used
+ * The <code>SVNRepositoryLocation</code> class incapsulates a <code>URL</code> used
  * to access the Subversion Repository. There are actually two ways
  * to access the repository:
- * <ol>
+ * <ul>
  * <li>over a network
  * <li>directly (locally)
- * </ol>
- * Regardless of the way you do it you always ought to provide a necessary URL. 
- * There are the following URL schemas:
- * <ol>
- * <li>file:/// - to access the repository locally, e.g. file:///path/to/repos
- * <li>http:// or https:// (with SSL encryption)-
- * to access the repository via the WebDAV protocol to Subversion-aware Apach
- * Server
- * <li>svn:// - to access the repository via the custom standalone protocol
- * <li>svn+ssh:// - the same as svn:// but through a SSH tunnel
- * </ol>
- * Specifying a URL you can also point the definite port to go out through, e.g.
- * http://host:8080/path/to/repos. If you don't, then a default one will be used
+ * </ul>
+ * Regardless of the way a client do it he always ought to provide a necessary 
+ * <code>URL</code>. There are the following <code>URL</code> schemas:
+ * <ul>
+ * <li><i>file:///</i> - to access the repository locally, e.g. file:///path/to/repos
+ * <li><i>http://</i> or <i>https://</i> (with the <i>SSL</i> encryption)-
+ * to access the repository via the <i>WebDAV</i> protocol to a Subversion-aware 
+ * Apach Server
+ * <li><i>svn://</i> - to access the repository via the custom standalone protocol
+ * <li><i>svn+ssh://</i> - the same as svn:// but through an <i>SSH</i> tunnel
+ * </ul>
+ * Specifying a <code>URL</code> you can also point the definite port to go out through,
+ * e.g. http://host:8080/path/to/repos. If you don't, then a default one will be used
  * for the current protocol.
- *     
+ * 
+ * <p>
+ * <b>NOTE:</b> unfortunately, at present the <i>JavaSVN</i> library doesn't 
+ * provide an implementation for accessing a Subversion repository via the
+ * <i>file:///</i> protocol (on a local machine), but in future it will be
+ * certainly realized.
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
- * @see SVNRepository
+ * @author 	TMate Software Ltd.
+ * @see 	SVNRepository
  */
 public class SVNRepositoryLocation {
 
@@ -50,17 +56,17 @@ public class SVNRepositoryLocation {
     private final int myPort;
     private final String myProtocol;
     private String myAsString;
+    
     /**
-     * <p>
-     * This static method compares two <code>SVNRepositoryLocation</code> objects.
-     * </p>
-     * @param location1 reference to a <code>SVNRepositoryLocation</code> object
-     * @param location2 reference to a <code>SVNRepositoryLocation</code> object
-     * @return true if both parameters have the same (equal) repository access attributes
-     * (i.e. protocol, host, port, path) or if
-     * location1 = location2 = <code>null</code>.
-     * false - in all other cases
-     * @see #equals(Object)
+     * Compares two <code>SVNRepositoryLocation</code> objects.
+     * 
+     * @param location1 	reference to a <code>SVNRepositoryLocation</code> object
+     * @param location2 	reference to a <code>SVNRepositoryLocation</code> object
+     * @return 				<code>true</code> if both parameters represent the same
+     * 						<code>URL</code> (that is the same protocol, host, port, 
+     * 						path) or if location1 = location2 = <code>null</code>;
+     * 						<code>false</code> - in all other cases
+     * @see 				#equals(Object)
      */
     public static boolean equals(SVNRepositoryLocation location1, SVNRepositoryLocation location2) {
         if (location1 == null || location2 == null) {
@@ -68,19 +74,22 @@ public class SVNRepositoryLocation {
         } 
         return location1.toString().equals(location2.toString());
     }
+    
     /**
-     * <p>
-     * This is a static factory method that creates an instance of <code>SVNRepositoryLocation</code>
-     * given the repository access URL string. The method parses the string, extracts
-     * from it the protocol, the port number, the host and the path within the host and finally
-     * constructs a new <code>SVNRepositoryLocation</code> object. 
-     * </p>
-     * @param location <code>String</code> parameter to define the needed URL (for example,
-     * "http://tmate.org/svn/repos/trunk/").
-     * @return a reference to SVNRepositoryLocation object or <code>null</code> if
-     * location parameter is <code>null</code> 
-     * @throws {@link SVNException}
-     * @see #SVNRepositoryLocation(String, String, int, String)
+     * This is a static factory method that creates an instance of 
+     * <code>SVNRepositoryLocation</code> given a repository location <code>URL</code>
+     * string. The method parses the string, extracts from it the protocol, the port
+     * number, the host and the path within the host and finally constructs a new 
+     * <code>SVNRepositoryLocation</code> object. 
+     * 
+     * @param  location 		a <code>URL</code> string that defines the location of
+     * 							a repository (for example, 
+     * 							"http://tmate.org/svn/repos/trunk/").
+     * @return 					an instance of <code>SVNRepositoryLocation</code> 
+     * 							or <code>null</code> if	the <code>location</code>
+     * 							parameter is <code>null</code> 
+     * @throws SVNException		if the <code>URL</code> is malformed
+     * @see 					#SVNRepositoryLocation(String, String, int, String)
      */
     public static SVNRepositoryLocation parseURL(String location) throws SVNException {
         if (location == null) {
@@ -121,15 +130,15 @@ public class SVNRepositoryLocation {
         throw new SVNException("malformed url " + location);
     }
     /**
-     * <p>
-     * Creates a new instance of <code>SVNRepositoryLocation</code>.
-     * </p>
-     * @param protocol <code>String</code> parameter to define the protocol to be used
-     * @param host <code>String</code> parameter to define the host (you may use ip 
-     * adresses as well as dns names)
-     * @param port the port number
-     * @param path <code>String</code> parameter to define the path (relative to the host)
-     * deep down the reposytory tree root  
+     * Constructs a new instance of <code>SVNRepositoryLocation</code>.
+     * 
+     * @param protocol 		a protocol to connect to a repository server
+     * @param host 			a repository server host name (you may use ip 
+     * 						adresses as well as dns names)
+     * @param port 			a port number
+     * @param path 			a path to a repository located at the <code>host</code>;
+     * 						may be the root directory which the repository was 
+     * 						created in as well as its subdirectory   
      */
     public SVNRepositoryLocation(String protocol, String host, int port, String path) {
         myHost = host;
@@ -139,52 +148,52 @@ public class SVNRepositoryLocation {
         myPath = PathUtil.removeTrailingSlash(myPath);
         myPath = PathUtil.encode(myPath);
     }
+    
     /**
-     * <p>
      * Returns the used protocol as a string.
-     * </p>
-     * @return protocol string 
+     * 
+     * @return a protocol string 
      */
     public String getProtocol() {
         return myProtocol;
     }
+    
     /**
-     * <p>
      * Returns the defined host address as a string
-     * </p>
-     * @return host string 
+     * 
+     * @return a host address string 
      */
     public String getHost() {
         return myHost;
     }
+    
     /**
-     * <p>
      * Returns the defined repository location path 
-     * </p>
-     * @return path string 
+     * 
+     * @return a repository path string 
      */
     public String getPath() {
         return myPath;
     }
+    
     /**
-     * <p>
      * Returns the used port number 
-     * </p>
-     * @return <code>int</code> value of the port 
+     * 
+     * @return 	a port number 
      */
     public int getPort() {
         return myPort;
     }
+
     /**
-     * <p>
-     * Represents a <code>SVNRepositoryLocation</code> object as a URL string 
-     * missing a default port number (if it is used) in the resultant output
+     * Represents a <code>SVNRepositoryLocation</code> object as a <code>URL</code> 
+     * string missing a default port number (if it is used) in the resultant output
      * for all protocols but svn one.
-     * </p>
-     * @see #toCanonicalForm()
-     * @return URL string representation of this object 
+     * 
+     * @return 	a <code>URL</code>-string representation of this object
+     * @see 	#toCanonicalForm()
      */
-    public String toString() {
+    public String toString(){
         if (myAsString != null) {
             return myAsString;
         }
@@ -200,13 +209,13 @@ public class SVNRepositoryLocation {
         myAsString = sb.toString();
         return sb.toString();
     }
+    
     /**
-     * <p>
-     * Represents a <code>SVNRepositoryLocation</code> object as a complete URL
-     * string (including a port number). 
-     * </p>
-     * @see #toString()
-     * @return canonical URL string representation of this object 
+     * Represents a <code>SVNRepositoryLocation</code> object as a canonical 
+     * <code>URL</code> string (including a port number). 
+     * 
+     * @return 		a canonical <code>URL</code>-string representation of this object 
+     * @see 		#toString()
      */
     public String toCanonicalForm() {
         StringBuffer sb = new StringBuffer();
@@ -231,14 +240,15 @@ public class SVNRepositoryLocation {
         }
         return -1;
     }
+    
     /**
-     * <p>
-     * Compares the current object with another one
-     * </p>
-     * @return true if both <code>SVNRepositoryLocation</code> objects have the
-     * same (equal) repository access attributes (i.e. protocol, host, port, path)
-     * and false in all other cases.
-     * @see #equals(SVNRepositoryLocation, SVNRepositoryLocation)
+     * Compares this object with another one
+     * 
+     * @return 	<code>true</code> if both <code>SVNRepositoryLocation</code> objects 
+     * 			represent the same <code>URL</code> (that is the same protocol, host,
+     * 			port, path) and <code>false</code> in all other cases
+     * 
+     * @see 	#equals(SVNRepositoryLocation, SVNRepositoryLocation)
      */
     public boolean equals(Object o) {
     	if (o == this) {
@@ -249,13 +259,13 @@ public class SVNRepositoryLocation {
     	}
     	return toCanonicalForm().equals(((SVNRepositoryLocation) o).toCanonicalForm());
     }
+    
     /**
-     * <p>
-     * Returns the hash code of a <code>SVNRepositoryLocation</code> object's 
-     * canonical URL string form.
-     * </p>
-     * @return the hash code value of the canonical URL string
-     * @see #toCanonicalForm()
+     * Returns a hash code of an <code>SVNRepositoryLocation</code> object's 
+     * canonical <code>URL</code>-string form.
+     * 
+     * @return 	a hash code value for this object 
+     * @see 	#toCanonicalForm()
      */
     public int hashCode() {
     	return toCanonicalForm().hashCode();

@@ -9,6 +9,7 @@ contrib/junit/junit.jar -text
 contrib/sequence/SEQUENCE-LICENSE eol=lf
 contrib/sequence/src-test/de/regnis/q/sequence/line/QSequenceLineReaderTest.java -text
 contrib/sequence/src/de/regnis/q/sequence/QSequenceDifferenceBlockUtils.java -text
+contrib/sequence/src/de/regnis/q/sequence/media/QSequenceIntMedia.java -text
 javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.properties eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.xml eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.subclipse.feature/feature.properties eol=lf

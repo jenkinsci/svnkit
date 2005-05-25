@@ -22,6 +22,15 @@ import java.util.StringTokenizer;
 import org.tmatesoft.svn.core.internal.io.dav.IDAVSSLManager;
 
 /**
+ * <code>SocketFactory</code> is a utility class that represents a custom socket
+ * factory which provides creating either a plain socket or a secure one to encrypt
+ * data transmitted over network.
+ * 
+ * <p>
+ * The created socket then used by the inner engine of <b><i>JavaSVN</i></b> library
+ * to communicate with a Subversion repository.
+ *      
+ * @version 1.0
  * @author TMate Software Ltd.
  *
  */

@@ -13,10 +13,25 @@
 package org.tmatesoft.svn.core.io;
 
 /**
- * @author Alexander Kitaev
+ * 
+ * The public interface <code>ISVNLogEntryHandler</code> is implemented to
+ * handle  log entries (<code>SVNLogEntry</code> objects). It declares the
+ * only one method <code>handleLogEntry(SVNLogEntry logEntry)<code> and should
+ * be provided into {@link SVNRepository#log(String[], long, long, boolean, boolean, ISVNLogEntryHandler)
+ * SVNRepository.log(String[], long, long, boolean, boolean, ISVNLogEntryHandler}.
+ * 
+ * @version 	1.0
+ * @author 		TMate Software Ltd.
+ * @see 		SVNRepository
+ * @see 		SVNLogEntry
  */
 public interface ISVNLogEntryHandler {
-    
+    /**
+     * 
+     * Handles the log entry (<code>SVNLogEntry</code> object) passed.
+     * 
+     * @param logEntry 		a <code>SVNLogEntry</code> instance to be handled.
+     */
     public void handleLogEntry(SVNLogEntry logEntry);
 
 }

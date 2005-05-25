@@ -90,7 +90,7 @@ public class QSequenceDifferenceCoreTest extends TestCase {
 
 	private void test1(String left, String right, String leftTest, String rightTest) throws QSequenceCancelledException {
 		final QSequenceTestMedia media = QSequenceTestMedia.createCharacterMedia(left, right);
-		final QSequenceCachingMedia cachingMedia = new QSequenceCachingMedia(media, new QSequenceDummyCanceller());
+		final QSequenceIntMedia cachingMedia = new QSequenceCachingMedia(media, new QSequenceDummyCanceller());
 		final QSequenceDiscardingMedia discardingMedia = new QSequenceDiscardingMedia(cachingMedia, new QSequenceDiscardingMediaNoConfusionDectector(false), new QSequenceDummyCanceller());
 		final List blocks = new QSequenceDifference(discardingMedia, discardingMedia).getBlocks();
 

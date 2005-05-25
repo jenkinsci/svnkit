@@ -20,7 +20,7 @@ public class QSequenceDiscardingMedia implements QSequenceMedia, QSequenceMediaI
 
 	// Fields =================================================================
 
-	private final QSequenceCachingMedia media;
+	private final QSequenceIntMedia media;
 	private final QSequenceCanceller canceller;
 	private final QSequenceDiscardingMediaBlock leftBlock;
 	private final QSequenceDiscardingMediaBlock rightBlock;
@@ -32,7 +32,7 @@ public class QSequenceDiscardingMedia implements QSequenceMedia, QSequenceMediaI
 
 	// Setup ==================================================================
 
-	public QSequenceDiscardingMedia(QSequenceCachingMedia media, QSequenceDiscardingMediaConfusionDetector confusionDetector, QSequenceCanceller canceller) {
+	public QSequenceDiscardingMedia(QSequenceIntMedia media, QSequenceDiscardingMediaConfusionDetector confusionDetector, QSequenceCanceller canceller) {
 		this.media = media;
 		this.canceller = canceller;
 		this.leftBlock = new QSequenceDiscardingMediaLeftBlock(this.media);

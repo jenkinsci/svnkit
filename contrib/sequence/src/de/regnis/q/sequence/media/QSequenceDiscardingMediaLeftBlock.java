@@ -18,13 +18,13 @@ public class QSequenceDiscardingMediaLeftBlock extends QSequenceDiscardingMediaB
 
 	// Setup ==================================================================
 
-	public QSequenceDiscardingMediaLeftBlock(QSequenceCachingMedia media) {
+	public QSequenceDiscardingMediaLeftBlock(QSequenceIntMedia media) {
 		super(media);
 	}
 
 	// Implemented ============================================================
 
-	protected int[] getAllSymbols(QSequenceCachingMedia media) {
+	protected int[] getAllSymbols(QSequenceIntMedia media) {
 		return media.getLeftSymbols();
 	}
 }

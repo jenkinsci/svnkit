@@ -13,21 +13,20 @@
 package org.tmatesoft.svn.core.io;
 
 /**
- * <p>
  * The final class <code>SVNNodeKind</code> incapsulates the kind of a versioned node
  * stored in the Subversion repository. This can be:
- * <ol>
+ * <ul>
  * <li>a directory - the node is a directory
  * <li>a file      - the node is a file
  * <li>none        - the versioned node is absent (does not exist)
  * <li>unknown     - the node kind can not be recognized
- * </ol>
+ * </ul>
  * <code>SVNNodeKind</code> items are used to describe directory
  * entry type.
- * </p> 
+ *  
  * @version 1.0
- * @author TMate Software Ltd.
- * @see SVNDirEntry
+ * @author 	TMate Software Ltd.
+ * @see 	SVNDirEntry
  */
 public final class SVNNodeKind {
     /**
@@ -50,12 +49,15 @@ public final class SVNNodeKind {
      * Default constructor.
      */
     private SVNNodeKind() {}
+    
     /**
      * Parses the passed string and finds out the node kind. For instance,
      * parseKind("dir") will return <code>SVNNodeKind.DIR</code>.
-     * @param kind a node kind as a string
-     * @return node kind as <code>SVNNodeKind</code>. If the exact node kind is not known
-     * <code>SVNNodeKind.UNKNOWN</code> is returned.
+     * 
+     * @param kind 		a node kind as a string
+     * @return 			node kind as <code>SVNNodeKind</code>. If the exact node kind is 
+     * 					not known <code>SVNNodeKind.UNKNOWN</code> is returned or if
+     * 					the node is currently missing - <code>SVNNodeKind.NONE</code>.
      */
     public static SVNNodeKind parseKind(String kind) {
         if ("file".equals(kind)) {
@@ -68,9 +70,8 @@ public final class SVNNodeKind {
         return UNKNOWN;
     }
     /**
-     * <p>
      * Represents the current <code>SVNNodeKind</code> object as a string.
-     * </p>
+     * 
      * @return string representation of the node kind.
      */
     public String toString() {
