@@ -19,9 +19,6 @@ import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.PathUtil;
@@ -43,27 +40,7 @@ public class CheckoutCommand extends SVNCommand {
         }
 
         long revision = parseRevision(getCommandLine(), null, null);
-        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new ISVNEventListener() {
-            private boolean isExternal = false;
-            
-            public void svnEvent(SVNEvent event) {
-                if (event.getAction() == SVNEventAction.UPDATE_ADD) {
-                    println(out, "A    " + getPath(event.getFile()));
-                } else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {
-                    if (!isExternal) {
-                        println(out, "Checked out revision " + event.getRevision() + ".");
-                    } else {
-                        println(out, "Checked out external at revision " + event.getRevision() + ".");
-                        isExternal = false;
-                    }
-                    println(out);
-                } else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
-                    println(out);
-                    println(out, "Fetching external item into '" + event.getPath() + "'");
-                    isExternal = true;
-                }
-            }
-        });
+        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, true));
         if (getCommandLine().getURLCount() == 1) {
             updater.doCheckout(url, new File(path), SVNRevision.UNDEFINED, SVNRevision.create(revision), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
         } else {

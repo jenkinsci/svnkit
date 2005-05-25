@@ -201,12 +201,12 @@ public abstract class SVNCommand {
         
     }
 
-    protected final static void println(PrintStream out, String line) {
+    public final static void println(PrintStream out, String line) {
         out.println(line);
         DebugLog.log(line);
     }
 
-    protected final static void println(PrintStream out) {
+    public final static void println(PrintStream out) {
         out.println();
         DebugLog.log("");
     }
@@ -219,10 +219,12 @@ public abstract class SVNCommand {
         return false;
     }
 
-    protected String getPath(File file) {
+    public static String getPath(File file) {
         String path = file.getAbsolutePath().replace(File.separatorChar, '/');
         String rootPath = new File("").getAbsolutePath().replace(File.separatorChar, '/');
-        path = path.substring(rootPath.length());
+        if (path.startsWith(rootPath)) {
+            path = path.substring(rootPath.length());
+        }
         path = PathUtil.removeLeadingSlash(path);
         path = PathUtil.removeTrailingSlash(path);
         return path.replace('/', File.separatorChar);

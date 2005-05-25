@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.cli.command.SVNCommandEventProcessor;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -20,7 +21,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -228,54 +228,21 @@ public class SVNReporter implements ISVNReporterBaton {
     }
     
     public static void main(String[] args) {
-        
-        /*
-        ISVNReporter r = new ISVNReporter() {
-            public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
-                System.out.println("set-path '" + path + "' : " + revision);
-            }
-            public void deletePath(String path) throws SVNException {
-                System.out.println("delete-path '" + path + "'");
-            }
-            public void linkPath(SVNRepositoryLocation repository, String path, String lockToken, long revison, boolean startEmtpy) throws SVNException {
-            }
-            public void finishReport() throws SVNException {
-                System.out.println("finish-report");
-            }
-            public void abortReport() throws SVNException {
-                System.out.println("abort-report");
-            }
-        };*/
-        
-
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
         
         ISVNRepositoryFactory repositoryFactory = new ISVNRepositoryFactory() {
             public SVNRepository createRepository(String url) throws SVNException {
                 SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-                repos.setCredentialsProvider(new SVNSimpleCredentialsProvider("jrandom", "rayjandom"));
+                repos.setCredentialsProvider(new SVNSimpleCredentialsProvider("alex", "cvs"));
                 return repos;
             }            
         };
-        ISVNEventListener dispatcher = new ISVNEventListener() {
-            public void svnEvent(SVNEvent event) {
-                System.out.println(event.getAction() + " : " + event.getPath());
-            }
-        };
         try {
-            /*
-            File dst = new File("C:/nautilus/org.tmatesoft.javasvn/javasvn-test/python/cmdline/working_copies/basic_tests-1");
-            SVNUpdater updater = new SVNUpdater(repositoryFactory, null, dispatcher);
-//            String url = "http://72.9.228.230/svn/jsvn/trunk/javasvn/src/org/tmatesoft/svn/cli"; 
-            String url = "svn://localhost/repositories/basic_tests-1"; 
+            File dst = new File("C:/nautilus/javasvn3");
+            SVNUpdateClient updater = new SVNUpdateClient(repositoryFactory, null, new SVNCommandEventProcessor(System.out, true));
+            String url = "http://72.9.228.230/svn/jsvn/trunk/"; 
             updater.doCheckout(url, dst, SVNRevision.HEAD, SVNRevision.HEAD, true);
-            */
-            File dst = new File("C:/i/test5");
-            SVNUpdateClient updater = new SVNUpdateClient(repositoryFactory, null, dispatcher);
-//            String url = "http://72.9.228.230/svn/jsvn/trunk/javasvn/src/org/tmatesoft/svn/cli"; 
-//            String url = "http://80.188.80.120/svn/repos/test4/dir2"; 
-            updater.doUpdate(dst, SVNRevision.HEAD, true);
         } catch (Throwable e) {
             e.printStackTrace();
         } 

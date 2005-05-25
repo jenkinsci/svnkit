@@ -28,9 +28,6 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.DebugLog;
@@ -202,13 +199,7 @@ public class CopyCommand extends SVNCommand {
         if (revNumber >= 0) {
             revision = SVNRevision.create(revNumber);
         }
-        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new ISVNEventListener() {
-            public void svnEvent(SVNEvent event) {
-                if (event.getAction() == SVNEventAction.ADD) {
-                    println(out, "A    " + getPath(event.getFile()));
-                } 
-            }
-        });
+        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, true));
         updater.doCopy(srcURL, new File(destPathParent), revision);
     }
     

@@ -18,11 +18,6 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.DebugLog;
@@ -41,87 +36,7 @@ public class SwitchCommand extends SVNCommand {
         if (revNumber >= 0) {
             revision = SVNRevision.create(revNumber);
         }
-        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new ISVNEventListener() {
-            private boolean isExternal = false;
-            private boolean isChanged = false;
-            private boolean isExternalChanged = false;
-            
-            public void svnEvent(SVNEvent event) {
-                if (event.getAction() == SVNEventAction.UPDATE_ADD) {
-                    if (isExternal) {
-                        isExternalChanged = true;
-                    } else {
-                        isChanged = true;
-                    }
-                    println(out, "A    " + getPath(event.getFile()));
-                } else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
-                    if (isExternal) {
-                        isExternalChanged = true;
-                    } else {
-                        isChanged = true;
-                    }
-                    println(out, "D    " + getPath(event.getFile()));
-                } else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
-                    StringBuffer sb = new StringBuffer();
-                    if (event.getNodeKind() != SVNNodeKind.DIR) {
-                        if (event.getContentsStatus() == SVNStatusType.CHANGED) {
-                            sb.append("U");
-                        } else if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
-                            sb.append("C");
-                        } else if (event.getContentsStatus() == SVNStatusType.MERGED) {
-                            sb.append("G");
-                        } else {
-                            sb.append(" ");
-                        }
-                    } else {
-                        sb.append(' ');
-                    }
-                    if (event.getPropertiesStatus() == SVNStatusType.CHANGED) {
-                        sb.append("U");
-                    } else if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
-                        sb.append("C");
-                    } else if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
-                        sb.append("M");
-                    } else {
-                        sb.append(" ");
-                    }
-                    if (sb.toString().trim().length() != 0) {
-                        if (isExternal) {
-                            isExternalChanged = true;
-                        } else {
-                            isChanged = true;
-                        }
-                    }
-                    if (event.getLockStatus() == SVNStatusType.LOCK_UNLOCKED) {
-                        sb.append("B");
-                    } else {
-                        sb.append(" ");
-                    } 
-                    println(out, sb.toString() + " " + getPath(event.getFile()));
-                } else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {                    
-                    if (!isExternal) {
-                        if (isChanged) {
-                            println(out, "Updated to revision " + event.getRevision() + ".");
-                        } else {
-                            println(out, "At revision " + event.getRevision() + ".");
-                        }
-                    } else {
-                        if (isExternalChanged) {
-                            println(out, "Updated external to revision " + event.getRevision() + ".");
-                        } else {
-                            println(out, "External at revision " + event.getRevision() + ".");
-                        }
-                        isExternalChanged = false;
-                        isExternal = false;
-                    }
-                    println(out);
-                } else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
-                    println(out);
-                    println(out, "Updating external item at '" + event.getPath() + "'");
-                    isExternal = true;
-                }
-            }
-        });
+        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, false));
         try {
             if (getCommandLine().hasArgument(SVNArgument.RELOCATE)) {
                 updater.doRelocate(new File(absolutePath).getAbsoluteFile(), url, getCommandLine().getURL(1), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
