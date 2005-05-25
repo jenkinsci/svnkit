@@ -1,7 +1,7 @@
 /*
  * Created on 23.05.2005
  */
-package org.tmatesoft.svn.core.internal.wc;
+package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;

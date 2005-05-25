@@ -1,7 +1,7 @@
 /*
  * Created on 10.05.2005
  */
-package org.tmatesoft.svn.core.internal.wc;
+package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -12,6 +12,17 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
+import org.tmatesoft.svn.core.internal.wc.SVNEntries;
+import org.tmatesoft.svn.core.internal.wc.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNLog;
+import org.tmatesoft.svn.core.internal.wc.SVNReporter;
+import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
+import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;

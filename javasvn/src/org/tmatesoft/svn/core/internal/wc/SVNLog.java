@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.SVNEventStatus;
 
 public class SVNLog {
 

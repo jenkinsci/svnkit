@@ -1,7 +1,7 @@
 /*
  * Created on 23.05.2005
  */
-package org.tmatesoft.svn.core.internal.wc;
+package org.tmatesoft.svn.core.wc;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

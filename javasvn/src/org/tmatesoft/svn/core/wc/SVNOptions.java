@@ -1,7 +1,7 @@
 /*
  * Created on 17.05.2005
  */
-package org.tmatesoft.svn.core.internal.wc;
+package org.tmatesoft.svn.core.wc;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -15,6 +15,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
+
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 public class SVNOptions {
 

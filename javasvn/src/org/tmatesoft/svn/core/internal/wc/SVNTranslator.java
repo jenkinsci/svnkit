@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
-class SVNTranslator {
+public class SVNTranslator {
     
     public static final byte[] CRLF = new byte[] {'\r', '\n'};
     public static final byte[] LF = new byte[] {'\n'};

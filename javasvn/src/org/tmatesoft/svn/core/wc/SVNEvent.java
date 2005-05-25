@@ -1,11 +1,14 @@
 /*
  * Created on 17.05.2005
  */
-package org.tmatesoft.svn.core.internal.wc;
+package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
+import org.tmatesoft.svn.core.internal.wc.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
