@@ -212,15 +212,6 @@ public class CopyCommand extends SVNCommand {
         updater.doCopy(srcURL, new File(destPathParent), revision);
     }
     
-    private String getPath(File file) {
-        String path = file.getAbsolutePath().replace(File.separatorChar, '/');
-        String rootPath = new File("").getAbsolutePath().replace(File.separatorChar, '/');
-        path = path.substring(rootPath.length());
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-        return path;
-    }
-
     private void runLocalToRemote(final PrintStream out, PrintStream err) throws SVNException {
         final String dstURL = getCommandLine().getURL(0);
         String srcPath = getCommandLine().getPathAt(0);

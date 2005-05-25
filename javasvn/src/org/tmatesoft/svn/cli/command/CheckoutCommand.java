@@ -74,13 +74,4 @@ public class CheckoutCommand extends SVNCommand {
             }
         }
 	}
-    
-    private String getPath(File file) {
-        String path = file.getAbsolutePath().replace(File.separatorChar, '/');
-        String rootPath = new File("").getAbsolutePath().replace(File.separatorChar, '/');
-        path = path.substring(rootPath.length());
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-        return path;
-    }
 }

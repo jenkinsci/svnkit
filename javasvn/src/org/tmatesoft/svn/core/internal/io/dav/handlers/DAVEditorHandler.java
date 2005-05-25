@@ -116,7 +116,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                     String linkedPath = repository.getPath();
                     DAVBaselineInfo info = DAVUtil.getBaselineInfo(connection, linkedPath, revision, false, false, null);
 
-                    String switchUrl = info.baselinePath;
+                    String switchUrl = PathUtil.decode(info.baselinePath);
                     DebugLog.log("REPORTING LINKED PATH: " + switchUrl);
                     report.append("linkpath=\"");
                     // switched path relative to connection root.

@@ -26,7 +26,6 @@ import org.tmatesoft.svn.core.internal.ws.log.SVNUpdater;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -125,9 +124,9 @@ public class SwitchCommand extends SVNCommand {
         });
         try {
             if (getCommandLine().hasArgument(SVNArgument.RELOCATE)) {
-                updater.doRelocate(new File(absolutePath), url, getCommandLine().getURL(1), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+                updater.doRelocate(new File(absolutePath).getAbsoluteFile(), url, getCommandLine().getURL(1), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             } else {
-                updater.doSwitch(new File(absolutePath), url, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+                updater.doSwitch(new File(absolutePath).getAbsoluteFile(), url, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             }
         } catch (Throwable th) {
             DebugLog.error(th);
@@ -135,14 +134,5 @@ public class SwitchCommand extends SVNCommand {
             println(err);
             System.exit(1);
         }
-    }
-
-    private String getPath(File file) {
-        String path = file.getAbsolutePath().replace(File.separatorChar, '/');
-        String rootPath = new File("").getAbsolutePath().replace(File.separatorChar, '/');
-        path = path.substring(rootPath.length());
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-        return path;
     }
 }

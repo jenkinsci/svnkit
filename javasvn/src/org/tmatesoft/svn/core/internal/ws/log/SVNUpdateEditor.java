@@ -91,22 +91,26 @@ public class SVNUpdateEditor implements ISVNEditor {
         
         attributes.put(SVNLog.NAME_ATTR, name);
         log.addCommand(SVNLog.DELETE_ENTRY, attributes, false);
+        SVNEntry entry = myCurrentDirectory.getDirectory().getEntries().getEntry(name);
+        SVNNodeKind kind = entry.getKind();
+        boolean isDeleted = entry.isDeleted();
         if (path.equals(myTarget)) {
-            String kind = myCurrentDirectory.getDirectory().getFile(name, false).isFile() ? 
-                    SVNProperty.KIND_FILE : SVNProperty.KIND_DIR;
             attributes.put(SVNLog.NAME_ATTR, name);
-            attributes.put(SVNProperty.shortPropertyName(SVNProperty.KIND), kind);
+            attributes.put(SVNProperty.shortPropertyName(SVNProperty.KIND), kind == SVNNodeKind.DIR ? SVNProperty.KIND_DIR : SVNProperty.KIND_FILE);
             attributes.put(SVNProperty.shortPropertyName(SVNProperty.REVISION), Long.toString(myTargetRevision));
             attributes.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), Boolean.TRUE.toString());
             log.addCommand(SVNLog.MODIFY_ENTRY, attributes, false);
             myIsTargetDeleted = true;
         }
-        if (mySwitchURL != null) {
-            DebugLog.log("deleting: " + myCurrentDirectory.getDirectory().getFile(name, false));
+        if (mySwitchURL != null && kind == SVNNodeKind.DIR) {
             myCurrentDirectory.getDirectory().destroy(name, true);
         }
         log.save();
         myCurrentDirectory.runLogs();
+        if (isDeleted) {
+            // entry was deleted, but it was already deleted, no need to make a notification.
+            return;
+        }
         myWCAccess.svnEvent(SVNEvent.createUpdateDeleteEvent(myWCAccess, myCurrentDirectory.getDirectory(), name));
     }
 
@@ -246,6 +250,11 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
+        if (myTarget != null && !myWCAccess.getAnchor().getFile(myTarget, false).exists()) {
+            
+            myCurrentDirectory = createDirectoryInfo(null, "", false);
+            deleteEntry(myTarget, myTargetRevision);
+        } 
         if (!myIsRootOpen) {
             completeDirectory(myCurrentDirectory);
         }
@@ -548,6 +557,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             } else if (myIsRecursive && entry.getKind() == SVNNodeKind.DIR) {
                 SVNDirectory childDirectory = dir.getChildDirectory(entry.getName());
                 if (!entry.isScheduledForAddition() && (childDirectory == null || !childDirectory.isVersioned())) {
+                    DebugLog.log("missing dir remains after update: entry deleted");
                     myWCAccess.svnEvent(SVNEvent.createUpdateDeleteEvent(myWCAccess, dir, entry));
                     entries.deleteEntry(entry.getName());
                     save = true;
@@ -572,7 +582,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         if (url != null) {
             save |= entry.setURL(url);
         }
-        if (revision >=0 && !entry.isScheduledForAddition() && !entry.isScheduledForDeletion()) {
+        if (revision >=0 && !entry.isScheduledForAddition() && !entry.isScheduledForReplacement()) {
             save |= entry.setRevision(revision);
         }
         if (delete && (entry.isDeleted() || (entry.isAbsent() && entry.getRevision() != revision))) {
@@ -611,8 +621,9 @@ public class SVNUpdateEditor implements ISVNEditor {
                     entries.deleteEntry(entry.getName());
                 } else if (entry.getKind() == SVNNodeKind.DIR) {
                     SVNDirectory childDirectory = info.getDirectory().getChildDirectory(entry.getName());
-                    if ((childDirectory == null || !childDirectory.isVersioned()) 
+                    if (myIsRecursive && (childDirectory == null || !childDirectory.isVersioned()) 
                             && !entry.isAbsent() && !entry.isScheduledForAddition()) {
+                        DebugLog.log("missing dir remains after update (2): entry deleted");
                         myWCAccess.svnEvent(SVNEvent.createUpdateDeleteEvent(myWCAccess, info.getDirectory(), entry));
                         entries.deleteEntry(entry.getName());
                     }
@@ -667,7 +678,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 info.URL = dir.getEntries().getEntry("").getURL();
             }
             if (info.URL == null && parent != null) {
-                info.URL = PathUtil.append(parent.URL, name);
+                info.URL = PathUtil.append(parent.URL, PathUtil.encode(name));
             } else if (info.URL == null && parent == null) {
                 info.URL = myTargetURL;
             }

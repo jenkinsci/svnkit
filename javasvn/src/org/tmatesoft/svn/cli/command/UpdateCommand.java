@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.internal.ws.log.SVNUpdater;
 import org.tmatesoft.svn.core.internal.ws.log.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -114,10 +114,10 @@ public class UpdateCommand extends SVNCommand {
                             } else {
                                 println(out, "External at revision " + event.getRevision() + ".");
                             }
+                            println(out);
                             isExternalChanged = false;
                             isExternal = false;
                         }
-                        println(out);
                     } else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
                         println(out);
                         println(out, "Updating external item at '" + event.getPath() + "'");
@@ -139,8 +139,9 @@ public class UpdateCommand extends SVNCommand {
                 }
             }
             try {
-                updater.doUpdate(new File(path), revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+                updater.doUpdate(file.getAbsoluteFile(), revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             } catch (Throwable th) {
+                DebugLog.error(th);
                 println(err, th.getMessage());
                 println(err);
                 error = true;
@@ -149,14 +150,5 @@ public class UpdateCommand extends SVNCommand {
         if (error) {
             System.exit(1);
         }
-    }
-    
-    private String getPath(File file) {
-        String path = file.getAbsolutePath().replace(File.separatorChar, '/');
-        String rootPath = new File("").getAbsolutePath().replace(File.separatorChar, '/');
-        path = path.substring(rootPath.length());
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-        return path;
     }
 }

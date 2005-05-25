@@ -42,6 +42,7 @@ class SVNReporter implements ISVNReporterBaton {
 
             if (targetEntry == null || targetEntry.isHidden() || 
                     (targetEntry.isDirectory() && targetEntry.isScheduledForAddition())) {
+                DebugLog.log("deleted file reported");
                 long revision = anchorEntries.getEntry("").getRevision();
                 reporter.setPath("", null, revision, targetEntry != null ? targetEntry.isIncomplete() : true);
                 reporter.deletePath("");
@@ -135,7 +136,7 @@ class SVNReporter implements ISVNReporterBaton {
                 String parentURL = entries.getPropertyValue("", SVNProperty.URL);
                 String expectedURL = PathUtil.append(parentURL, PathUtil.encode(entry.getName()));
                 if (reportAll) {
-                    if (!url.equals(expectedURL)) {
+                    if (!url.equals(expectedURL) && !entry.isScheduledForAddition() && !entry.isScheduledForReplacement()) {
                         reporter.linkPath(SVNRepositoryLocation.parseURL(url), path, entry.getLockToken(), entry.getRevision(), false);
                     } else {
                         reporter.setPath(path, entry.getLockToken(), entry.getRevision(), false);
