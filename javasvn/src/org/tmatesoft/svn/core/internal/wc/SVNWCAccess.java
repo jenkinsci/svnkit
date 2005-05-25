@@ -367,9 +367,6 @@ public class SVNWCAccess implements ISVNEventListener {
         }
         return myExternals.values().iterator();
     }
-
-    public void svnEvent(SVNEvent event) {
-    }
     
     private void visitDirectories(String parentPath, SVNDirectory root, ISVNDirectoryVisitor visitor) throws SVNException {
         Iterator entries = root.getEntries().entries();
@@ -423,6 +420,10 @@ public class SVNWCAccess implements ISVNEventListener {
         result.append("target: '" + getTarget().getRoot().toString() + "'\n");
         result.append("target name: '" + getTargetName() + "'");
         return result.toString();
+    }
+
+    public void svnEvent(SVNEvent event) {
+        svnEvent(event, ISVNEventListener.UNKNOWN);
     }
 
     public void svnEvent(SVNEvent event, double progress) {

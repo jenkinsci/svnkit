@@ -58,7 +58,6 @@ public class SVNBasicClient implements ISVNEventListener {
                 path = PathUtil.removeLeadingSlash(path);
                 path = PathUtil.removeTrailingSlash(path);
                 event.setPath(path);
-                
             }
             myEventDispatcher.svnEvent(event, progress);
         }
