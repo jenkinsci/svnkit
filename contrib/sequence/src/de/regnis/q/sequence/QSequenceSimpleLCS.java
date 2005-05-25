@@ -39,7 +39,7 @@ public class QSequenceSimpleLCS implements QSequenceSnakeRegister {
 
 	// Accessing ==============================================================
 
-	public List getCommands() throws QSequenceCancelledException {
+	public List getCommands() throws QSequenceException {
 		commands.clear();
 		final QSequenceAlgorithm algorithm = new QSequenceAlgorithm(media, this);
 		algorithm.produceSnakesInOrder();

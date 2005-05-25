@@ -18,7 +18,7 @@ import de.regnis.q.sequence.core.*;
  */
 public interface QSequenceCachableMedia extends QSequenceMedia {
 
-	Object getMediaLeftObject(int index);
+	Object getMediaLeftObject(int index) throws QSequenceException;
 
-	Object getMediaRightObject(int index);
+	Object getMediaRightObject(int index) throws QSequenceException;
 }

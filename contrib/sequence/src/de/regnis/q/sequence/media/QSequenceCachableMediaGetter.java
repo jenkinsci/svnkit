@@ -11,6 +11,8 @@
 
 package de.regnis.q.sequence.media;
 
+import de.regnis.q.sequence.core.*;
+
 /**
  * @author Marc Strapetz
  */
@@ -18,5 +20,5 @@ public interface QSequenceCachableMediaGetter {
 
 	int getMediaLength(QSequenceCachableMedia media);
 
-	Object getMediaObject(QSequenceCachableMedia media, int index);
+	Object getMediaObject(QSequenceCachableMedia media, int index) throws QSequenceException;
 }

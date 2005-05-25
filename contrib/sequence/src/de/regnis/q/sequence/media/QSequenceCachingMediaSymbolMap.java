@@ -13,6 +13,8 @@ package de.regnis.q.sequence.media;
 
 import java.util.*;
 
+import de.regnis.q.sequence.core.*;
+
 /**
  * @author Marc Strapetz
  */
@@ -36,7 +38,7 @@ public class QSequenceCachingMediaSymbolMap {
 		return symbolCount;
 	}
 
-	public int[] createSymbols(QSequenceCachableMedia media, QSequenceCachableMediaGetter mediaGetter) {
+	public int[] createSymbols(QSequenceCachableMedia media, QSequenceCachableMediaGetter mediaGetter) throws QSequenceException {
 		final int length = mediaGetter.getMediaLength(media);
 		final int[] symbols = new int[length];
 		for (int index = 0; index < length; index++) {

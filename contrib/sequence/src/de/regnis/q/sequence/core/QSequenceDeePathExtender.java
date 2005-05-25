@@ -20,7 +20,7 @@ abstract class QSequenceDeePathExtender {
 
 	protected abstract int getNextX(QSequenceDeePathExtenderArray xs, int diagonal, int dee);
 
-	protected abstract int getSnakeX(QSequenceMedia media, int x, int y) throws QSequenceCancelledException;
+	protected abstract int getSnakeX(QSequenceMedia media, int x, int y) throws QSequenceException;
 
 	protected abstract void reset(QSequenceMedia media, QSequenceDeePathExtenderArray xs);
 
@@ -67,7 +67,7 @@ abstract class QSequenceDeePathExtender {
 		return snakeStartRight;
 	}
 
-	public final void extendDeePath(QSequenceMedia media, int dee, int diagonal) throws QSequenceCancelledException {
+	public final void extendDeePath(QSequenceMedia media, int dee, int diagonal) throws QSequenceException {
 		startX = endX;
 		startY = endY;
 		int x = getNextX(xs, diagonal, dee);

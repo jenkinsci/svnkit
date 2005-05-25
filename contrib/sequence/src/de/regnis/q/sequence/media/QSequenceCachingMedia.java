@@ -26,7 +26,7 @@ public class QSequenceCachingMedia extends QSequenceIntMedia {
 
 	// Setup ==================================================================
 
-	public QSequenceCachingMedia(QSequenceCachableMedia media, QSequenceCanceller canceller) {
+	public QSequenceCachingMedia(QSequenceCachableMedia media, QSequenceCanceller canceller) throws QSequenceException {
 		super(canceller);
 
 		this.symbolMap = new QSequenceCachingMediaSymbolMap(media.getLeftLength() + media.getRightLength());

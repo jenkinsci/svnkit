@@ -16,6 +16,7 @@ import java.io.*;
 import java.util.*;
 
 import de.regnis.q.sequence.*;
+import de.regnis.q.sequence.core.*;
 import de.regnis.q.sequence.line.*;
 
 /**
@@ -26,7 +27,7 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 
 	// Abstract ===============================================================
 
-	protected abstract void processBlock(QSequenceDifferenceBlock[] segment, QSequenceLine[] sourceLines, QSequenceLine[] targetLines, String encoding,
+	protected abstract void processBlock(QSequenceDifferenceBlock[] segment, QSequenceLineCache sourceLines, QSequenceLineCache targetLines, String encoding,
 	                                     Writer output) throws IOException;
 
 	// Fields =================================================================
@@ -47,21 +48,27 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 	}
 
 	public void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
-		QSequenceLineReader reader = new QSequenceLineReader(isCompareEOLs() ? null : new byte[0]);
+		QSequenceLineResult result;
+		try {
+			result = QSequenceLineMedia.createBlocks(QSequenceLineRAByteData.create(left), QSequenceLineRAByteData.create(right), isCompareEOLs() ? null : new byte[0]);
+		}
+		catch (QSequenceException ex) {
+			throw new IOException(ex.getMessage());
+		}
 
-		QSequenceLine[] leftLines = reader.read(left);
-		QSequenceLine[] rightLines = reader.read(right);
-
-		List blocksList = QSequenceMedia.createBlocks(leftLines, rightLines);
-		List combinedBlocks = combineBlocks(blocksList, getGutter());
-
-		for (Iterator blocks = combinedBlocks.iterator(); blocks.hasNext();) {
-			List segment = (List)blocks.next();
-			if (segment.isEmpty()) {
-				continue;
+		try {
+			final List combinedBlocks = combineBlocks(result.getBlocks(), getGutter());
+			for (Iterator it = combinedBlocks.iterator(); it.hasNext();) {
+				List segment = (List)it.next();
+				if (segment.isEmpty()) {
+					continue;
+				}
+				QSequenceDifferenceBlock[] segmentBlocks = (QSequenceDifferenceBlock[])segment.toArray(new QSequenceDifferenceBlock[segment.size()]);
+				processBlock(segmentBlocks, result.getLeftCache(), result.getRightCache(), encoding, output);
 			}
-			QSequenceDifferenceBlock[] segmentBlocks = (QSequenceDifferenceBlock[])segment.toArray(new QSequenceDifferenceBlock[segment.size()]);
-			processBlock(segmentBlocks, leftLines, rightLines, encoding, output);
+		}
+		finally {
+			result.close();
 		}
 	}
 

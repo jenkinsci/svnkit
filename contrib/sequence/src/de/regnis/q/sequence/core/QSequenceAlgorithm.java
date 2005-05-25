@@ -36,14 +36,14 @@ public class QSequenceAlgorithm {
 
 	// Accessing ==============================================================
 
-	public void produceSnakesInOrder() throws QSequenceCancelledException {
+	public void produceSnakesInOrder() throws QSequenceException {
 		final QSequenceRestrictedMedia media = new QSequenceRestrictedMedia(mainMedia);
 		producesSnakesInOrder(media);
 	}
 
 	// Utils ==================================================================
 
-	private void producesSnakesInOrder(QSequenceRestrictedMedia media) throws QSequenceCancelledException {
+	private void producesSnakesInOrder(QSequenceRestrictedMedia media) throws QSequenceException {
 		final int leftLength = media.getLeftLength();
 		final int rightLength = media.getRightLength();
 
@@ -100,7 +100,7 @@ public class QSequenceAlgorithm {
 		}
 	}
 
-	private void registerSnake(QSequenceRestrictedMedia media, int leftFrom, int leftTo, int rightFrom, int rightTo) throws QSequenceCancelledException {
+	private void registerSnake(QSequenceRestrictedMedia media, int leftFrom, int leftTo, int rightFrom, int rightTo) throws QSequenceException {
 		QSequenceAssert.assertTrue(leftTo - leftFrom == rightTo - rightFrom);
 
 		if (leftFrom > leftTo || rightFrom > rightTo) {

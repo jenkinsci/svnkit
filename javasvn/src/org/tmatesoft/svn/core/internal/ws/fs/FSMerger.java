@@ -16,6 +16,8 @@ import java.io.*;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.*;
 
+import de.regnis.q.sequence.line.*;
+
 /**
  * @author TMate Software Ltd.
  */
@@ -55,11 +57,17 @@ public class FSMerger {
 		final FSMergerBySequence merger = new FSMergerBySequence(conflictStart.getBytes(), conflictSeparator.getBytes(), conflictEnd.getBytes(), EOL.getBytes());
 		try {
 			final OutputStream resultStream = result != null ? (OutputStream)new FileOutputStream(result) : (OutputStream)new ByteArrayOutputStream();
+			final RandomAccessFile raBase = new RandomAccessFile(base, "r");
+			final RandomAccessFile raLocal = new RandomAccessFile(local, "r");
+			final RandomAccessFile raLatest = new RandomAccessFile(latest, "r");
 			try {
-				return merger.merge(new FileInputStream(base), new FileInputStream(local), new FileInputStream(latest), resultStream);
+				return merger.merge(new QSequenceLineRAFileData(raBase), new QSequenceLineRAFileData(raLocal), new QSequenceLineRAFileData(raLatest), resultStream);
 			}
 			finally {
 				resultStream.close();
+				raBase.close();
+				raLocal.close();
+				raLatest.close();
 			}
 		}
 		catch (IOException ex) {

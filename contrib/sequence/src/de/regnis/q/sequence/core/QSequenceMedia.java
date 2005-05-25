@@ -20,5 +20,5 @@ public interface QSequenceMedia {
 
 	int getRightLength();
 
-	boolean equals(int leftIndex, int rightIndex) throws QSequenceCancelledException;
+	boolean equals(int leftIndex, int rightIndex) throws QSequenceException;
 }

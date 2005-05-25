@@ -36,7 +36,7 @@ final class QSequenceDeePathBackwardExtender extends QSequenceDeePathExtender {
 		return xs.get(diagonal + 1) - 1;
 	}
 
-	protected int getSnakeX(QSequenceMedia media, int x, int y) throws QSequenceCancelledException {
+	protected int getSnakeX(QSequenceMedia media, int x, int y) throws QSequenceException {
 		for (; x > 0 && y > 0 && media.equals(x, y);) {
 			x--;
 			y--;

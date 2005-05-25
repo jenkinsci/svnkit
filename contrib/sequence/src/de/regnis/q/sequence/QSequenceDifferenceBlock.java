@@ -79,4 +79,10 @@ public class QSequenceDifferenceBlock {
 	void setRightTo(int rightTo) {
 		this.rightTo = rightTo;
 	}
+
+	// Implemented ============================================================
+
+	public String toString() {
+		return "[" + leftFrom + "/" + leftTo + "/" + rightFrom + "/" + rightTo + "]";
+	}
 }

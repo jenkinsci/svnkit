@@ -22,7 +22,7 @@ import de.regnis.q.sequence.line.*;
  * @author Ian Sullivan
  * @author TMate Software Ltd.
  */
-public class QDiffUniGenerator extends QDiffSequenceGenerator implements QDiffGeneratorFactory {
+public final class QDiffUniGenerator extends QDiffSequenceGenerator implements QDiffGeneratorFactory {
 
 	// Constants ==============================================================
 
@@ -57,7 +57,7 @@ public class QDiffUniGenerator extends QDiffSequenceGenerator implements QDiffGe
 		println("+++ " + item + rightInfo, output);
 	}
 
-	protected void processBlock(QSequenceDifferenceBlock[] segment, QSequenceLine[] sourceLines, QSequenceLine[] targetLines,
+	protected void processBlock(QSequenceDifferenceBlock[] segment, QSequenceLineCache sourceLines, QSequenceLineCache targetLines,
 	                            String encoding, Writer output) throws IOException {
 		int gutter = getGutter();
 		// header
@@ -70,8 +70,8 @@ public class QDiffUniGenerator extends QDiffSequenceGenerator implements QDiffGe
 
 		int leftStart = Math.max(sourceStartLine - gutter, 0);
 		int rightStart = Math.max(targetStartLine - gutter, 0);
-		int leftEnd = Math.min(sourceEndLine + gutter, sourceLines.length - 1);
-		int rightEnd = Math.min(targetEndLine + gutter, targetLines.length - 1);
+		int leftEnd = Math.min(sourceEndLine + gutter, sourceLines.getLineCount() - 1);
+		int rightEnd = Math.min(targetEndLine + gutter, targetLines.getLineCount() - 1);
 
 		if (leftStart + 1 >= 0 && (leftEnd - leftStart + 1) >= 0) {
 			header.append(" -");
@@ -94,33 +94,33 @@ public class QDiffUniGenerator extends QDiffSequenceGenerator implements QDiffGe
         
 		// print gutter context lines before blocks.
 		for (int i = leftStart; i < sourceStartLine; i++) {
-			print(" " + printLine(sourceLines[i], encoding), output);
+			print(" " + printLine(sourceLines.getLine(i), encoding), output);
 		}
 		for (int i = 0; i < segment.length; i++) {
 			QSequenceDifferenceBlock block = segment[i];
 			for (int j = block.getLeftFrom(); j <= block.getLeftTo(); j++) {
-				String line = printLine(sourceLines[j], encoding);
+				String line = printLine(sourceLines.getLine(j), encoding);
 				print("-" + line, output);
-				if (j == sourceLines.length - 1 && isCompareEOLs()) {
+				if (j == sourceLines.getLineCount() - 1 && isCompareEOLs()) {
 					printNoNewLine(output, line);
 				}
 			}
 			for (int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
-				String line = printLine(targetLines[j], encoding);
+				String line = printLine(targetLines.getLine(j), encoding);
 				print("+" + line, output);
-				if (j == targetLines.length - 1 && isCompareEOLs()) {
+				if (j == targetLines.getLineCount() - 1 && isCompareEOLs()) {
 					printNoNewLine(output, line);
 				}
 			}
 			// print glue lines
-			int end = Math.min(block.getLeftTo() + gutter, sourceLines.length - 1);
+			int end = Math.min(block.getLeftTo() + gutter, sourceLines.getLineCount() - 1);
 			if (i + 1 < segment.length) {
 				end = Math.min(end, segment[i + 1].getLeftFrom() - 1);
 			}
 			for (int j = block.getLeftTo() + 1; j <= end; j++) {
-				String line = printLine(sourceLines[j], encoding);
-				print(" " + printLine(sourceLines[j], encoding), output);
-				if (j == sourceLines.length - 1 && isCompareEOLs()) {
+				String line = printLine(sourceLines.getLine(j), encoding);
+				print(" " + printLine(sourceLines.getLine(j), encoding), output);
+				if (j == sourceLines.getLineCount() - 1 && isCompareEOLs()) {
 					printNoNewLine(output, line);
 				}
 			}

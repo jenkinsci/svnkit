@@ -27,12 +27,44 @@ public class QSequenceDifferenceAssemblyTest extends TestCase {
 	private static final int LINE_LENGTH = 3;
 	private static final int ALPHABET_SIZE = 10;
 
+	// Static =================================================================
+
+	public static String[] createLines(int lineCount, Random random) {
+		final String[] lines = new String[lineCount];
+		for (int lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+			String line = createLine(random);
+			lines[lineIndex] = line;
+		}
+
+		return lines;
+	}
+
+	public static String[] alterLines(String[] leftLines, double pMod, double pAddRemove, Random random) {
+		final List rightLines = new ArrayList();
+		for (int leftIndex = 0; leftIndex < leftLines.length; leftIndex++) {
+			if (random.nextDouble() < pMod) {
+				rightLines.add(createLine(random));
+				continue;
+			}
+			else if (random.nextDouble() < pAddRemove) {
+				continue;
+			}
+
+			rightLines.add(leftLines[leftIndex]);
+
+			if (random.nextDouble() < pAddRemove) {
+				rightLines.add(createLine(random));
+			}
+		}
+		return (String[])rightLines.toArray(new String[0]);
+	}
+
 	// Fields =================================================================
 
 	private Random random;
 
 	// Implemented ============================================================
- 
+
 	protected void setUp() throws Exception {
 		super.setUp();
 		random = new Random(0);
@@ -40,7 +72,7 @@ public class QSequenceDifferenceAssemblyTest extends TestCase {
 
 	// Accessing ==============================================================
 
-	public void test() throws QSequenceCancelledException {
+	public void test() throws QSequenceException {
 		testVariousLength(0.001, 0.001);
 		testVariousLength(0.01, 0.05);
 		testVariousLength(0.5, 0.5);
@@ -48,15 +80,15 @@ public class QSequenceDifferenceAssemblyTest extends TestCase {
 
 	// Utils ==================================================================
 
-	private void testVariousLength(double pMod, double pAddRemove) throws QSequenceCancelledException {
+	private void testVariousLength(double pMod, double pAddRemove) throws QSequenceException {
 		for (int size = 10; size <= 1000; size += 50) {
 			testOneLength(size, pMod, pAddRemove);
 		}
 	}
 
-	private void testOneLength(int lineCount, double pMod, double pAddRemove) throws QSequenceCancelledException {
-		final String[] left = createLines(lineCount);
-		final String[] right = alterLines(left, pMod, pAddRemove);
+	private void testOneLength(int lineCount, double pMod, double pAddRemove) throws QSequenceException {
+		final String[] left = createLines(lineCount, random);
+		final String[] right = alterLines(left, pMod, pAddRemove, random);
 		testDiff(left, right);
 	}
 
@@ -74,17 +106,7 @@ public class QSequenceDifferenceAssemblyTest extends TestCase {
 		return true;
 	}
 
-	private String[] createLines(int lineCount) {
-		final String[] lines = new String[lineCount];
-		for (int lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-			String line = createLine();
-			lines[lineIndex] = line;
-		}
-
-		return lines;
-	}
-
-	private String createLine() {
+	private static String createLine(Random random) {
 		String line = "";
 		for (int charIndex = 0; charIndex < LINE_LENGTH; charIndex++) {
 			line += (char)('a' + (char)(Math.abs(random.nextInt()) % ALPHABET_SIZE));
@@ -92,27 +114,7 @@ public class QSequenceDifferenceAssemblyTest extends TestCase {
 		return line;
 	}
 
-	private String[] alterLines(String[] leftLines, double pMod, double pAddRemove) {
-		final List rightLines = new ArrayList();
-		for (int leftIndex = 0; leftIndex < leftLines.length; leftIndex++) {
-			if (random.nextDouble() < pMod) {
-				rightLines.add(createLine());
-				continue;
-			}
-			else if (random.nextDouble() < pAddRemove) {
-				continue;
-			}
-
-			rightLines.add(leftLines[leftIndex]);
-
-			if (random.nextDouble() < pAddRemove) {
-				rightLines.add(createLine());
-			}
-		}
-		return (String[])rightLines.toArray(new String[0]);
-	}
-
-	private void testDiff(String[] left, String[] right) throws QSequenceCancelledException {
+	private void testDiff(String[] left, String[] right) throws QSequenceException {
 		final QSequenceTestMedia testMedia = QSequenceTestMedia.createStringMedia(left, right);
 		testDiff(left, right, testMedia, new QSequenceMediaDummyIndexTransformer(testMedia.getLeftLength(), testMedia.getRightLength()), null);
 
@@ -121,7 +123,7 @@ public class QSequenceDifferenceAssemblyTest extends TestCase {
 		testDiff(left, right, media, media, cachingMedia);
 	}
 
-	private void testDiff(String[] left, String[] right, QSequenceMedia media, QSequenceMediaIndexTransformer indexTransformer, QSequenceCachingMedia cachingMedia) throws QSequenceCancelledException {
+	private void testDiff(String[] left, String[] right, QSequenceMedia media, QSequenceMediaIndexTransformer indexTransformer, QSequenceCachingMedia cachingMedia) throws QSequenceException {
 		final List blocks = new QSequenceDifference(media, indexTransformer).getBlocks();
 		if (cachingMedia != null) {
 			new QSequenceDifferenceBlockShifter(cachingMedia, cachingMedia).shiftBlocks(blocks);
@@ -150,18 +152,5 @@ public class QSequenceDifferenceAssemblyTest extends TestCase {
 		if (!areLinesEqual(diff, right)) {
 			fail();
 		}
-	}
-
-	private String getLineString(String[] lines) {
-		final StringBuffer buffer = new StringBuffer();
-		buffer.append("{");
-		for (int lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-			buffer.append("\"" + lines[lineIndex] + "\"");
-			if (lineIndex < lines.length - 1) {
-				buffer.append(", ");
-			}
-		}
-		buffer.append("}");
-		return buffer.toString();
 	}
 }

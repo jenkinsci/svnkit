@@ -23,7 +23,7 @@ public class QSequenceLCSTest extends TestCase {
 
 	// Accessing ==============================================================
 
-	public void test() throws QSequenceCancelledException {
+	public void test() throws QSequenceException {
 		test1("abcabba", "cbabac", "cbba");
 		test1("cbabac", "abcabba", "cbba");
 
@@ -54,12 +54,12 @@ public class QSequenceLCSTest extends TestCase {
 
 	// Utils ==================================================================
 
-	private void test2(String left, String right, String lcs) throws QSequenceCancelledException {
+	private void test2(String left, String right, String lcs) throws QSequenceException {
 		test1(left, right, lcs);
 		test1(right, left, lcs);
 	}
 
-	private void test1(String left, String right, String lcs) throws QSequenceCancelledException {
+	private void test1(String left, String right, String lcs) throws QSequenceException {
 		final QSequenceTestMedia media = QSequenceTestMedia.createCharacterMedia(left, right);
 		final List commands = new QSequenceSimpleLCS(media).getCommands();
 		int lastLeft = -1;

@@ -65,7 +65,7 @@ public class QSequenceDifference
 
 	// Accessing ==============================================================
 
-	public List getBlocks() throws QSequenceCancelledException {
+	public List getBlocks() throws QSequenceException {
 		final QSequenceAlgorithm algorithm = new QSequenceAlgorithm(media, this);
 		algorithm.produceSnakesInOrder();
 		return QSequenceCommonBlocks.createBlocks(leftCommonPoints, rightCommonPoints, this);

@@ -22,7 +22,7 @@ import de.regnis.q.sequence.line.*;
  * @author Ian Sullivan
  * @author TMate Software Ltd.
  */
-public class QDiffNormalGenerator extends QDiffSequenceGenerator implements QDiffGeneratorFactory {
+public final class QDiffNormalGenerator extends QDiffSequenceGenerator implements QDiffGeneratorFactory {
 
 	// Constants ==============================================================
 
@@ -56,7 +56,7 @@ public class QDiffNormalGenerator extends QDiffSequenceGenerator implements QDif
 		output.write(getEOL());
 	}
 
-	protected void processBlock(QSequenceDifferenceBlock[] segment, QSequenceLine[] sourceLines, QSequenceLine[] targetLines, String encoding, Writer output)
+	protected void processBlock(QSequenceDifferenceBlock[] segment, QSequenceLineCache sourceLines, QSequenceLineCache targetLines, String encoding, Writer output)
 	    throws IOException {
 		for (int i = 0; i < segment.length; i++) {
 			QSequenceDifferenceBlock block = segment[i];
@@ -80,8 +80,8 @@ public class QDiffNormalGenerator extends QDiffSequenceGenerator implements QDif
 
 	// Accessing ==============================================================
 
-	protected void processBlock(int sourceStartLine, int sourceEndLine, QSequenceLine[] sourceLines, int targetStartLine, int targetEndLine,
-	                            QSequenceLine[] targetLines, String encoding, Writer output) throws IOException {
+	protected void processBlock(int sourceStartLine, int sourceEndLine, QSequenceLineCache sourceLines, int targetStartLine, int targetEndLine,
+	                            QSequenceLineCache targetLines, String encoding, Writer output) throws IOException {
 		if (sourceStartLine > sourceEndLine) {
 			add(sourceStartLine, targetStartLine, targetEndLine, targetLines, encoding, output);
 		}
@@ -121,7 +121,7 @@ public class QDiffNormalGenerator extends QDiffSequenceGenerator implements QDif
 	 * @param deleteLines all the lines from the target file. Could be accessed with <CODE>deleteStart</CODE> and
 	 *                    <CODE>deleteEnd</CODE> to identify the deleted lines.
 	 */
-	protected void delete(int deleteAt, int deleteStart, int deleteEnd, QSequenceLine[] deleteLines, String encoding, Writer output) throws IOException {
+	protected void delete(int deleteAt, int deleteStart, int deleteEnd, QSequenceLineCache deleteLines, String encoding, Writer output) throws IOException {
 		/*
 		 * Change command is in the format `rdl' Delete the lines in range r
 		 * from the target file; line l is where they would have appeared in the
@@ -137,7 +137,7 @@ public class QDiffNormalGenerator extends QDiffSequenceGenerator implements QDif
 		println(displayStart + ((displayEnd != displayStart) ? ("," + displayEnd) : "") + "d" + displayAt, output);
 		int delLine = deleteStart;
 		while (delLine <= deleteEnd) {
-			print("<" + displayWhiteSpace(printLine(deleteLines[delLine++], encoding)), output);
+			print("<" + displayWhiteSpace(printLine(deleteLines.getLine(delLine++), encoding)), output);
 		}
 	}
 
@@ -150,7 +150,7 @@ public class QDiffNormalGenerator extends QDiffSequenceGenerator implements QDif
 	 * @param addLines all the lines from the source file. Could be accessed with <CODE>addStart</CODE> and
 	 *                 <CODE>addEnd</CODE> to identify the added lines.
 	 */
-	protected void add(int addAt, int addStart, int addEnd, QSequenceLine[] addLines, String encoding, Writer output) throws IOException {
+	protected void add(int addAt, int addStart, int addEnd, QSequenceLineCache addLines, String encoding, Writer output) throws IOException {
 		/*
 		 * Change command is in the format `lar' Add the lines in range r of the
 		 * source file after line l of the target file. For example, `8a12,15'
@@ -164,7 +164,7 @@ public class QDiffNormalGenerator extends QDiffSequenceGenerator implements QDif
 		println(displayAt + "a" + displayStart + ((displayEnd != displayStart) ? ("," + displayEnd) : ""), output);
 		int addLine = addStart;
 		while (addLine <= addEnd) {
-			print(">" + displayWhiteSpace(printLine(addLines[addLine++], encoding)), output);
+			print(">" + displayWhiteSpace(printLine(addLines.getLine(addLine++), encoding)), output);
 		}
 	}
 
@@ -178,8 +178,8 @@ public class QDiffNormalGenerator extends QDiffSequenceGenerator implements QDif
 	 * @param replaceWithEnd   the last line in source to that will replace the lines in target (0 based)
 	 * @param replaceWithLines all the lines in source
 	 */
-	protected void change(int replaceStart, int replaceEnd, QSequenceLine[] replaceLines, int replaceWithStart, int replaceWithEnd,
-	                      QSequenceLine[] replaceWithLines, String encoding, Writer output) throws IOException {
+	protected void change(int replaceStart, int replaceEnd, QSequenceLineCache replaceLines, int replaceWithStart, int replaceWithEnd,
+	                      QSequenceLineCache replaceWithLines, String encoding, Writer output) throws IOException {
 		/*
 		 * Change command is in the format `fct' Replace the lines in range f of
 		 * the target file with lines in range t of the source file. This is
@@ -197,13 +197,13 @@ public class QDiffNormalGenerator extends QDiffSequenceGenerator implements QDif
 		        + ((displayWithEnd != displayWithStart) ? ("," + displayWithEnd) : ""), output);
 		int replaceLine = replaceStart;
 		while (replaceLine <= replaceEnd) {
-			print("<" + displayWhiteSpace(printLine(replaceLines[replaceLine++], encoding)), output);
+			print("<" + displayWhiteSpace(printLine(replaceLines.getLine(replaceLine++), encoding)), output);
 		}
 		println("---", output);
 
 		int replaceWithLine = replaceWithStart;
 		while (replaceWithLine <= replaceWithEnd) {
-			print(">" + displayWhiteSpace(printLine(replaceWithLines[replaceWithLine++], encoding)), output);
+			print(">" + displayWhiteSpace(printLine(replaceWithLines.getLine(replaceWithLine++), encoding)), output);
 		}
 	}
 }

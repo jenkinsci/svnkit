@@ -12,16 +12,7 @@
 
 package org.tmatesoft.svn.core.internal.ws.fs;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.security.MessageDigest;
 import java.util.Iterator;
 import java.util.Map;
@@ -30,7 +21,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 
 import de.regnis.q.sequence.line.*;
 
-import de.regnis.q.sequence.line.QSequenceLineReader;
 import org.tmatesoft.svn.util.DebugLog;
 
 /**
@@ -197,18 +187,18 @@ public class FSUtil {
     }
 
     public static boolean compareFiles(File f1, File f2, boolean isBinary) throws IOException {
-        InputStream is1 = null;
-        InputStream is2 = null;
+        RandomAccessFile raFile1 = null;
+        RandomAccessFile raFile2 = null;
         try {
             if (isBinary && f1.length() != f2.length()) {
                 return false;
             }
-            is1 = new BufferedInputStream(new FileInputStream(f1));
-            is2 = new BufferedInputStream(new FileInputStream(f2));
+            raFile1 = new RandomAccessFile(f1, "r");
+            raFile2 = new RandomAccessFile(f2, "r");
             if (isBinary) {
                 while (true) {
-                    int read1 = is1.read();
-                    int read2 = is2.read();
+                    int read1 = raFile1.read();
+                    int read2 = raFile2.read();
                     if (read1 != read2) {
                         return false;
                     }
@@ -217,30 +207,32 @@ public class FSUtil {
                     }
                 }
             } else {
-                QSequenceLineReader reader = new QSequenceLineReader(new byte[0]);
-                QSequenceLine[] lines1 = reader.read(is1);
-                QSequenceLine[] lines2 = reader.read(is2);
-                if (lines1 == null || lines2 == null) {
-                    return lines1 == lines2;
-                }
-                if (lines1.length != lines2.length) {
-                    return false;
-                }
-                for (int i = 0; i < lines1.length; i++) {
-                    if (!lines1[i].equals(lines2[i])) {
-                        return false;
-                    }
-                }
+	            final QSequenceLineCache lines1 = QSequenceLineMedia.readLines(new QSequenceLineRAFileData(raFile1), new byte[0]);
+	            final QSequenceLineCache lines2 = QSequenceLineMedia.readLines(new QSequenceLineRAFileData(raFile2), new byte[0]);
+	            try {
+		            if (lines1.getLineCount() != lines2.getLineCount()) {
+		                return false;
+		            }
+		            for (int i = 0; i < lines1.getLineCount(); i++) {
+		                if (!lines1.getLine(i).equals(lines2.getLine(i))) {
+		                    return false;
+		                }
+		            }
+	            }
+	            finally {
+		            lines1.close();
+		            lines2.close();
+	            }
             }
         } finally {
-            if (is1 != null) {
+            if (raFile1 != null) {
                 try {
-                    is1.close();
+                    raFile1.close();
                 } catch (IOException e) {}
             }
-            if (is2 != null) {
+            if (raFile2 != null) {
                 try {
-                    is2.close();
+                    raFile2.close();
                 } catch (IOException e) {}
             }
         }

@@ -18,7 +18,7 @@ import de.regnis.q.sequence.core.*;
  */
 public interface QSequenceMediaComparer {
 
-	boolean equalsLeft(int left1, int left2) throws QSequenceCancelledException;
+	boolean equalsLeft(int left1, int left2) throws QSequenceException;
 
-	boolean equalsRight(int right1, int right2) throws QSequenceCancelledException;
+	boolean equalsRight(int right1, int right2) throws QSequenceException;
 }

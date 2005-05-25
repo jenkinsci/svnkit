@@ -18,7 +18,7 @@ import java.util.*;
 /**
  * @author TMate Software Ltd.
  */
-public class QDiffManager {
+public final class QDiffManager {
 
 	// Constants ==============================================================
 

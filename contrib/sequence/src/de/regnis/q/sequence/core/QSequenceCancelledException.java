@@ -14,7 +14,7 @@ package de.regnis.q.sequence.core;
 /**
  * @author Marc Strapetz
  */
-public class QSequenceCancelledException extends Exception {
+public class QSequenceCancelledException extends QSequenceException {
 
 	// Setup ==================================================================
 

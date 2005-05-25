@@ -3,34 +3,36 @@ package de.regnis.q.sequence.line;
 /**
  * @author Marc Strapetz
  */
-public class QSequenceLine {
+public final class QSequenceLine {
 
 	// Fields =================================================================
 
-	private final int myFrom;
-	private final int myTo;
-	private final byte[] myBytes;
+	private final long from;
+	private final byte[] bytes;
 
 	// Setup ==================================================================
 
-	public QSequenceLine(int from, int to, byte[] bytes) {
-		this.myFrom = from;
-		this.myTo = to;
-		this.myBytes = bytes;
+	public QSequenceLine(long from, byte[] bytes) {
+		this.from = from;
+		this.bytes = bytes;
 	}
 
 	// Accessing ==============================================================
 
-	public int getFrom() {
-		return myFrom;
+	public long getFrom() {
+		return from;
 	}
 
-	public int getTo() {
-		return myTo;
+	public long getTo() {
+		return from + bytes.length - 1;
+	}
+
+	public int getLength() {
+		return bytes.length;
 	}
 
 	public byte[] getBytes() {
-		return myBytes;
+		return bytes;
 	}
 
 	// Implemented ============================================================
@@ -38,12 +40,12 @@ public class QSequenceLine {
 	public boolean equals(Object obj) {
 		// Must be because of caching media! Find something better!
 		final byte[] otherBytes = ((QSequenceLine)obj).getBytes();
-		if (myBytes.length != otherBytes.length) {
+		if (bytes.length != otherBytes.length) {
 			return false;
 		}
 
-		for (int index = 0; index < myBytes.length; index++) {
-			if (myBytes[index] != otherBytes[index]) {
+		for (int index = 0; index < bytes.length; index++) {
+			if (bytes[index] != otherBytes[index]) {
 				return false;
 			}
 		}
@@ -53,14 +55,14 @@ public class QSequenceLine {
     
 	public int hashCode() {
 		int hashCode = 0;
-		for (int index = 0; index < myBytes.length; index++) {
-			hashCode = 31 * hashCode + myBytes[index];
+		for (int index = 0; index < bytes.length; index++) {
+			hashCode = 31 * hashCode + bytes[index];
 		}
 
 		return hashCode;
 	}
 
 	public String toString() {
-		return new String(myBytes);
+		return new String(bytes);
 	}
 }

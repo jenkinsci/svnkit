@@ -1,11 +1,10 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
@@ -25,6 +24,9 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
+
+import de.regnis.q.sequence.line.QSequenceLineRAData;
+import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 
 public class SVNDirectory {
     
@@ -248,9 +250,9 @@ public class SVNDirectory {
         File localTmpFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, ".tmp");
         SVNTranslator.translate(this, localPath, localPath, SVNFileUtil.getBasePath(localTmpFile), false, false);
         // 2. run merge between all files we have :)
-        InputStream localIS = null;
-        InputStream latestIS = null;
-        InputStream baseIS = null;
+        RandomAccessFile localIS = null;
+        RandomAccessFile latestIS = null;
+        RandomAccessFile baseIS = null;
         OutputStream result = null;
         File resultFile = dryRun ? null : SVNFileUtil.createUniqueFile(getRoot(), localPath, ".result");
         
@@ -260,15 +262,18 @@ public class SVNDirectory {
         FSMergerBySequence merger = new FSMergerBySequence(conflictStart, separator, conflictEnd, null);
         int mergeResult = 0;
         try {
-            localIS = new FileInputStream(localTmpFile);
-            latestIS = new FileInputStream(getFile(latestPath, false));
-            baseIS = new FileInputStream(getFile(basePath, false));
+            localIS = new RandomAccessFile(localTmpFile, "r");
+            latestIS = new RandomAccessFile(getFile(latestPath, false), "r");
+            baseIS = new RandomAccessFile(getFile(basePath, false), "r");
             OutputStream dummy = new OutputStream() {
                 public void write(int b) throws IOException {}
             };
             result = resultFile == null ?  dummy : new FileOutputStream(resultFile);
             
-            mergeResult = merger.merge(baseIS, localIS, latestIS, result);            
+            QSequenceLineRAData baseData = new QSequenceLineRAFileData(baseIS);
+            QSequenceLineRAData localData = new QSequenceLineRAFileData(localIS);
+            QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
+            mergeResult = merger.merge(baseData, localData, latestData, result);            
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {

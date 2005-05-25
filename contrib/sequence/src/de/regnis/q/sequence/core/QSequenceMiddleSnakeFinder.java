@@ -36,7 +36,7 @@ class QSequenceMiddleSnakeFinder {
 		return result;
 	}
 
-	public int determineMiddleSnake(QSequenceMedia media) throws QSequenceCancelledException {
+	public int determineMiddleSnake(QSequenceMedia media) throws QSequenceException {
 		result.reset();
 		forwardDeePathExtender.reset(media);
 		backwardDeePathExtender.reset(media);

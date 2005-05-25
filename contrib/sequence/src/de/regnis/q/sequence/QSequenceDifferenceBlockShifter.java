@@ -74,7 +74,7 @@ public class QSequenceDifferenceBlockShifter {
 
 	// Accessing ==============================================================
 
-	public void shiftBlocks(List blocks) throws QSequenceCancelledException {
+	public void shiftBlocks(List blocks) throws QSequenceException {
 		if (blocks.isEmpty()) {
 			return;
 		}
@@ -98,7 +98,7 @@ public class QSequenceDifferenceBlockShifter {
 		}
 	}
 
-	public boolean tryShiftUp(List blocks, int blockIndex, boolean requireMerge) throws QSequenceCancelledException {
+	public boolean tryShiftUp(List blocks, int blockIndex, boolean requireMerge) throws QSequenceException {
 		if (blockIndex == 0) {
 			return false;
 		}
@@ -156,7 +156,7 @@ public class QSequenceDifferenceBlockShifter {
 		return true;
 	}
 
-	public boolean tryShiftDown(List blocks, int blockIndex) throws QSequenceCancelledException {
+	public boolean tryShiftDown(List blocks, int blockIndex) throws QSequenceException {
 		final QSequenceDifferenceBlock nextBlock = blockIndex < blocks.size() - 1
 		    ? (QSequenceDifferenceBlock)blocks.get(blockIndex + 1) : null;
 		final QSequenceDifferenceBlock block = (QSequenceDifferenceBlock)blocks.get(blockIndex);

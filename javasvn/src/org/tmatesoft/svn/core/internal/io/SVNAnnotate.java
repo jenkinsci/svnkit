@@ -3,13 +3,7 @@
  */
 package org.tmatesoft.svn.core.internal.io;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,8 +15,7 @@ import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 
 import de.regnis.q.sequence.line.*;
 
-import de.regnis.q.sequence.line.QSequenceLineReader;
-import de.regnis.q.sequence.line.QSequenceMedia;
+import de.regnis.q.sequence.line.QSequenceLineMedia;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
 import org.tmatesoft.svn.core.io.ISVNAnnotateHandler;
@@ -155,49 +148,51 @@ public class SVNAnnotate implements ISVNFileRevisionHandler {
 			}
 		}
 		
-		InputStream left = null;
-		InputStream right = null;
+		RandomAccessFile left = null;
+		RandomAccessFile right = null;
 		try {
-			left = new FileInputStream(myBaseFilePath);
-			right = new FileInputStream(myTempFilePath);
+			left = new RandomAccessFile(myBaseFilePath, "r");
+			right = new RandomAccessFile(myTempFilePath, "r");
 			
-			QSequenceLineReader reader = new QSequenceLineReader(null);
-
-	        QSequenceLine[] leftLines = reader.read(left);
-	        QSequenceLine[] rightLines = reader.read(right);
 			ArrayList newLines = new ArrayList();
 			int lastStart = 0;
-			
-	        List blocksList = QSequenceMedia.createBlocks(leftLines, rightLines);
-			for(int i = 0; i < blocksList.size(); i++) {
-				QSequenceDifferenceBlock block = (QSequenceDifferenceBlock) blocksList.get(i);
-				// remove these lines from lines map...
-				// copy from last start to start.
-				
-				int start = block.getLeftFrom();
-				int end = block.getLeftTo();
-				for(int j = lastStart; j < Math.min(myLines.size(), start); j++) {
+
+			final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right), null);
+			try {
+				List blocksList = result.getBlocks();
+				for(int i = 0; i < blocksList.size(); i++) {
+					QSequenceDifferenceBlock block = (QSequenceDifferenceBlock) blocksList.get(i);
+					// remove these lines from lines map...
+					// copy from last start to start.
+
+					int start = block.getLeftFrom();
+					int end = block.getLeftTo();
+					for(int j = lastStart; j < Math.min(myLines.size(), start); j++) {
+						newLines.add(myLines.get(j));
+						lastStart = j + 1;
+					}
+					// skip it.
+					if (block.getLeftSize() > 0) {
+						lastStart += block.getLeftSize();
+					}
+					// copy all from right.
+					for (int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
+						LineInfo line = new LineInfo();
+						line.revision = myRevision;
+						line.author = myAuthor;
+						line.line = new String(result.getRightCache().getLine(j).getBytes());
+						line.date = myDate;
+						newLines.add(line);
+					}
+				}
+				for(int j = lastStart; j < myLines.size(); j++) {
 					newLines.add(myLines.get(j));
-					lastStart = j + 1;
 				}
-				// skip it.
-				if (block.getLeftSize() > 0) {
-					lastStart += block.getLeftSize();
-				}
-				// copy all from right.
-				for (int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
-					LineInfo line = new LineInfo();
-					line.revision = myRevision;
-					line.author = myAuthor;
-					line.line = new String(rightLines[j].getBytes());
-					line.date = myDate;
-					newLines.add(line);
-				}
+				myLines = newLines;
 			}
-			for(int j = lastStart; j < myLines.size(); j++) {
-				newLines.add(myLines.get(j));
+			finally {
+				result.close();
 			}
-			myLines = newLines;
 		} catch (Throwable e) {
 			DebugLog.error(e);
 		} finally {

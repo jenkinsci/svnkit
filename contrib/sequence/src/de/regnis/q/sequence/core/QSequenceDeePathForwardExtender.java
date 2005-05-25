@@ -32,7 +32,7 @@ class QSequenceDeePathForwardExtender extends QSequenceDeePathExtender {
 		return xs.get(diagonal - 1) + 1;
 	}
 
-	protected int getSnakeX(QSequenceMedia media, int x, int y) throws QSequenceCancelledException {
+	protected int getSnakeX(QSequenceMedia media, int x, int y) throws QSequenceException {
 		for (; x < media.getLeftLength() && y < media.getRightLength() && media.equals(x + 1, y + 1);) {
 			x++;
 			y++;

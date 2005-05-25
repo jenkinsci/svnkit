@@ -11,6 +11,8 @@
 
 package de.regnis.q.sequence.media;
 
+import de.regnis.q.sequence.core.*;
+
 /**
  * @author Marc Strapetz
  */
@@ -22,7 +24,7 @@ public class QSequenceCachableMediaLeftGetter implements QSequenceCachableMediaG
 		return media.getLeftLength();
 	}
 
-	public Object getMediaObject(QSequenceCachableMedia media, int index) {
+	public Object getMediaObject(QSequenceCachableMedia media, int index) throws QSequenceException {
 		return media.getMediaLeftObject(index);
 	}
 }

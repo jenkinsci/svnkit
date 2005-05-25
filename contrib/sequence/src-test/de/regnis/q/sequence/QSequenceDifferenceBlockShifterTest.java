@@ -24,7 +24,7 @@ public class QSequenceDifferenceBlockShifterTest extends TestCase {
 
 	// Accessing ==============================================================
 
-	public void test() throws QSequenceCancelledException {
+	public void test() throws QSequenceException {
 		test2("aa", "aaa", "aa", "aa-");
 		test2("xaa", "yaaa", "-aa", "--aa");
 		test2("ababab", "abababab", "ababab", "ababab--");
@@ -36,12 +36,12 @@ public class QSequenceDifferenceBlockShifterTest extends TestCase {
 
 	// Utils ==================================================================
 
-	private void test2(String left, String right, String leftTest, String rightTest) throws QSequenceCancelledException {
+	private void test2(String left, String right, String leftTest, String rightTest) throws QSequenceException {
 		test1(left, right, leftTest, rightTest);
 		test1(right, left, rightTest, leftTest);
 	}
 
-	private void test1(String left, String right, String leftTest, String rightTest) throws QSequenceCancelledException {
+	private void test1(String left, String right, String leftTest, String rightTest) throws QSequenceException {
 		final QSequenceTestMedia media = QSequenceTestMedia.createCharacterMedia(left, right);
 
 		final QSequenceDifference difference = new QSequenceDifference(media, new QSequenceMediaDummyIndexTransformer(media.getLeftLength(), media.getRightLength()));

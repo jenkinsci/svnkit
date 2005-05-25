@@ -64,7 +64,7 @@ class QSequenceRestrictedMedia implements QSequenceMedia {
 		return rightMax - rightMin + 1;
 	}
 
-	public boolean equals(int leftIndex, int rightIndex) throws QSequenceCancelledException {
+	public boolean equals(int leftIndex, int rightIndex) throws QSequenceException {
 		if (QSequenceAlgorithm.ASSERTIONS) {
 			QSequenceAssert.assertTrue(1 <= leftIndex && leftIndex <= leftMax - leftMin + 1);
 		}
