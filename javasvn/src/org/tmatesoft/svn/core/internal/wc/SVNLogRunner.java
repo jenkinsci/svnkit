@@ -15,7 +15,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.wc.SVNEventStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.TimeUtil;
 
 public class SVNLogRunner {
@@ -169,7 +169,7 @@ public class SVNLogRunner {
             SVNProperties props = dir.getProperties(fileName, false);
             SVNEntry entry = dir.getEntries().getEntry(fileName);
             
-            SVNEventStatus mergeResult = dir.mergeText(fileName, leftPath, rightPath, targetLabel, leftLabel, rightLabel, false);
+            SVNStatusType mergeResult = dir.mergeText(fileName, leftPath, rightPath, targetLabel, leftLabel, rightLabel, false);
 
             if (props.getPropertyValue(SVNProperty.EXECUTABLE) != null) {
                 SVNFileUtil.setExecutable(target, true);
@@ -181,7 +181,7 @@ public class SVNLogRunner {
                     SVNErrorManager.error(0, e);
                 }
             }
-            setEntriesChanged(mergeResult == SVNEventStatus.CONFLICTED);            
+            setEntriesChanged(mergeResult == SVNStatusType.CONFLICTED);            
         }
     }
     

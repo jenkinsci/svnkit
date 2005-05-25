@@ -22,9 +22,9 @@ public class SVNEvent {
     private SVNNodeKind myNodeKind;
     private long myRevision;
     
-    private SVNEventStatus myContentsStatus;
-    private SVNEventStatus myPropertiesStatus;
-    private SVNEventStatus myLockStatus;
+    private SVNStatusType myContentsStatus;
+    private SVNStatusType myPropertiesStatus;
+    private SVNStatusType myLockStatus;
     
     private SVNLock myLock;
     
@@ -58,7 +58,7 @@ public class SVNEvent {
     }
 
     public static SVNEvent createUpdateModifiedEvent(SVNWCAccess source, SVNDirectory dir, String name,
-            SVNEventAction action, String mimeType, SVNEventStatus contents, SVNEventStatus props, SVNEventStatus lock) {
+            SVNEventAction action, String mimeType, SVNStatusType contents, SVNStatusType props, SVNStatusType lock) {
         return new SVNEvent(source, dir, name, 
                 action, null, 
                 -1, mimeType, contents, props, lock, null, null);
@@ -95,7 +95,7 @@ public class SVNEvent {
             SVNNodeKind kind, 
             long revision, 
             String mimetype, 
-            SVNEventStatus cstatus, SVNEventStatus pstatus, SVNEventStatus lstatus, 
+            SVNStatusType cstatus, SVNStatusType pstatus, SVNStatusType lstatus, 
             SVNLock lock,
             String error) {
         myMimeType = mimetype;
@@ -103,9 +103,9 @@ public class SVNEvent {
         myAction = action;
         myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
         myRevision = revision;
-        myContentsStatus = cstatus == null ? SVNEventStatus.INAPPLICABLE : cstatus;
-        myPropertiesStatus = pstatus == null ? SVNEventStatus.INAPPLICABLE : pstatus;
-        myLockStatus = lstatus == null ? SVNEventStatus.INAPPLICABLE : lstatus;
+        myContentsStatus = cstatus == null ? SVNStatusType.INAPPLICABLE : cstatus;
+        myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE : pstatus;
+        myLockStatus = lstatus == null ? SVNStatusType.INAPPLICABLE : lstatus;
         myLock = lock;
         
         mySVNWCAccess = source;
@@ -148,7 +148,7 @@ public class SVNEvent {
         return myAction;
     }
 
-    public SVNEventStatus getContentsStatus() {
+    public SVNStatusType getContentsStatus() {
         return myContentsStatus;
     }
 
@@ -160,7 +160,7 @@ public class SVNEvent {
         return myLock;
     }
 
-    public SVNEventStatus getLockStatus() {
+    public SVNStatusType getLockStatus() {
         return myLockStatus;
     }
 
@@ -172,7 +172,7 @@ public class SVNEvent {
         return myNodeKind;
     }
 
-    public SVNEventStatus getPropertiesStatus() {
+    public SVNStatusType getPropertiesStatus() {
         return myPropertiesStatus;
     }
 

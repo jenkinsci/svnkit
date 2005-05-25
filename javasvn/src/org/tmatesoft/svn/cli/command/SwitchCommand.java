@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNEventStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.DebugLog;
@@ -64,11 +64,11 @@ public class SwitchCommand extends SVNCommand {
                 } else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
                     StringBuffer sb = new StringBuffer();
                     if (event.getNodeKind() != SVNNodeKind.DIR) {
-                        if (event.getContentsStatus() == SVNEventStatus.CHANGED) {
+                        if (event.getContentsStatus() == SVNStatusType.CHANGED) {
                             sb.append("U");
-                        } else if (event.getContentsStatus() == SVNEventStatus.CONFLICTED) {
+                        } else if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
                             sb.append("C");
-                        } else if (event.getContentsStatus() == SVNEventStatus.MERGED) {
+                        } else if (event.getContentsStatus() == SVNStatusType.MERGED) {
                             sb.append("G");
                         } else {
                             sb.append(" ");
@@ -76,11 +76,11 @@ public class SwitchCommand extends SVNCommand {
                     } else {
                         sb.append(' ');
                     }
-                    if (event.getPropertiesStatus() == SVNEventStatus.CHANGED) {
+                    if (event.getPropertiesStatus() == SVNStatusType.CHANGED) {
                         sb.append("U");
-                    } else if (event.getPropertiesStatus() == SVNEventStatus.CONFLICTED) {
+                    } else if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
                         sb.append("C");
-                    } else if (event.getPropertiesStatus() == SVNEventStatus.CONFLICTED) {
+                    } else if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
                         sb.append("M");
                     } else {
                         sb.append(" ");
@@ -92,7 +92,7 @@ public class SwitchCommand extends SVNCommand {
                             isChanged = true;
                         }
                     }
-                    if (event.getLockStatus() == SVNEventStatus.LOCK_UNLOCKED) {
+                    if (event.getLockStatus() == SVNStatusType.LOCK_UNLOCKED) {
                         sb.append("B");
                     } else {
                         sb.append(" ");

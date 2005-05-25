@@ -18,7 +18,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.wc.SVNEventStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 public class SVNLog {
 
@@ -73,8 +73,8 @@ public class SVNLog {
         }        
     }
 
-    public SVNEventStatus logChangedEntryProperties(String name, Map modifiedEntryProps) throws SVNException {
-        SVNEventStatus status = SVNEventStatus.LOCK_UNCHANGED;
+    public SVNStatusType logChangedEntryProperties(String name, Map modifiedEntryProps) throws SVNException {
+        SVNStatusType status = SVNStatusType.LOCK_UNCHANGED;
         if (modifiedEntryProps != null) {
             Map command = new HashMap();
             command.put(SVNLog.NAME_ATTR, name);
@@ -83,7 +83,7 @@ public class SVNLog {
                 String propValue = (String) modifiedEntryProps.get(propName);
                 if (SVNProperty.LOCK_TOKEN.equals(propName)) {
                     addCommand(SVNLog.DELETE_LOCK, command, false);
-                    status = SVNEventStatus.LOCK_UNLOCKED;
+                    status = SVNStatusType.LOCK_UNLOCKED;
                 } else if (propValue != null) {
                     command.put(propName, propValue);
                     addCommand(SVNLog.MODIFY_ENTRY, command, false);

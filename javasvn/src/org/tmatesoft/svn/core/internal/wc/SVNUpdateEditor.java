@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNEventStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -221,7 +221,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         Map modifiedEntryProps = myCurrentDirectory.getChangedEntryProperties();
         Map modifiedProps = myCurrentDirectory.getChangedProperties();
         
-        SVNEventStatus propStatus = SVNEventStatus.UNCHANGED;
+        SVNStatusType propStatus = SVNStatusType.UNCHANGED;
         SVNDirectory dir = myCurrentDirectory.getDirectory();
         if (modifiedWCProps != null || modifiedEntryProps != null || modifiedProps != null) {
             SVNLog log = myCurrentDirectory.getLog(true);
@@ -245,9 +245,9 @@ public class SVNUpdateEditor implements ISVNEditor {
         }
         myCurrentDirectory.runLogs();
         completeDirectory(myCurrentDirectory);
-        if (!myCurrentDirectory.IsAdded && propStatus != SVNEventStatus.UNCHANGED) {
+        if (!myCurrentDirectory.IsAdded && propStatus != SVNStatusType.UNCHANGED) {
             myWCAccess.svnEvent(SVNEvent.createUpdateModifiedEvent(myWCAccess, dir, "", SVNEventAction.UPDATE_UPDATE, 
-                    null, SVNEventStatus.UNCHANGED, propStatus, null));
+                    null, SVNStatusType.UNCHANGED, propStatus, null));
         }
         myCurrentDirectory = myCurrentDirectory.Parent;
     }
@@ -400,8 +400,8 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         Map command = new HashMap();
         
-        SVNEventStatus textStatus = SVNEventStatus.UNCHANGED;
-        SVNEventStatus lockStatus = SVNEventStatus.LOCK_UNCHANGED;
+        SVNStatusType textStatus = SVNStatusType.UNCHANGED;
+        SVNStatusType lockStatus = SVNStatusType.LOCK_UNCHANGED;
         
         boolean magicPropsChanged = false;
         SVNProperties props = dir.getProperties(name, false);
@@ -413,7 +413,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 modifiedProps.containsKey(SVNProperty.EOL_STYLE) ||
                 modifiedProps.containsKey(SVNProperty.SPECIAL);
         }
-        SVNEventStatus propStatus = dir.mergeProperties(name, modifiedProps, locallyModifiedProps, log);
+        SVNStatusType propStatus = dir.mergeProperties(name, modifiedProps, locallyModifiedProps, log);
         if (modifiedEntryProps != null) {
             lockStatus = log.logChangedEntryProperties(name, modifiedEntryProps);
         }
@@ -448,7 +448,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         boolean isLocallyModified = !myCurrentFile.IsAdded && dir.hasTextModifications(name, false);
         File workingFile = dir.getFile(name, false);
         if (textTmpBase.exists()) {
-            textStatus = SVNEventStatus.CHANGED;
+            textStatus = SVNStatusType.CHANGED;
             // there is a text replace working copy with.
             if (!isLocallyModified || !workingFile.exists()) {
                 command.put(SVNLog.NAME_ATTR, tmpPath);
@@ -472,7 +472,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 // do test merge.
                 textStatus = dir.mergeText(name, basePath, tmpPath, "", "", "", true);
             }
-        } else if (lockStatus == SVNEventStatus.LOCK_UNLOCKED) {
+        } else if (lockStatus == SVNStatusType.LOCK_UNLOCKED) {
             command.put(SVNLog.NAME_ATTR, name);
             log.addCommand(SVNLog.MAYBE_READONLY, command, false);
             command.clear();            

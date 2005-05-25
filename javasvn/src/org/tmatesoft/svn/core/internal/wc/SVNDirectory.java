@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.ws.fs.FSMergerBySequence;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.SVNEventStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -115,7 +115,7 @@ public class SVNDirectory {
         return new SVNProperties(propertiesFile, path);
     }
     
-    public SVNEventStatus mergeProperties(String name, Map changedProperties, Map locallyChanged, SVNLog log) throws SVNException {
+    public SVNStatusType mergeProperties(String name, Map changedProperties, Map locallyChanged, SVNLog log) throws SVNException {
         changedProperties = changedProperties == null ? Collections.EMPTY_MAP : changedProperties;
         locallyChanged = locallyChanged == null ? Collections.EMPTY_MAP : locallyChanged;
 
@@ -128,7 +128,7 @@ public class SVNDirectory {
         base.copyTo(baseTmp);
         
         Collection conflicts = new ArrayList();
-        SVNEventStatus result = changedProperties.isEmpty() ? SVNEventStatus.UNCHANGED : SVNEventStatus.CHANGED;
+        SVNStatusType result = changedProperties.isEmpty() ? SVNStatusType.UNCHANGED : SVNStatusType.CHANGED;
         for (Iterator propNames = changedProperties.keySet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
             String propValue = (String) changedProperties.get(propName);
@@ -153,7 +153,7 @@ public class SVNDirectory {
                         conflicts.add(conflict);
                         continue;
                     }
-                    result = SVNEventStatus.MERGED;
+                    result = SVNStatusType.MERGED;
                 }
             }
             workingTmp.setPropertyValue(propName, propValue);
@@ -175,7 +175,7 @@ public class SVNDirectory {
         log.addCommand(SVNLog.READONLY, command, false);
 
         if (!conflicts.isEmpty()) {
-            result = SVNEventStatus.CONFLICTED;
+            result = SVNStatusType.CONFLICTED;
 
             String prejTmpPath = "".equals(name) ? ".svn/tmp/dir-conflicts" : ".svn/tmp/props/" + name;
             File prejTmpFile = SVNFileUtil.createUniqueFile(getRoot(), prejTmpPath, ".prej");
@@ -222,7 +222,7 @@ public class SVNDirectory {
         return result;
     }
     
-    public SVNEventStatus mergeText(String localPath, String basePath, String latestPath, String localLabel, String baseLabel, String latestLabel, boolean dryRun) throws SVNException {
+    public SVNStatusType mergeText(String localPath, String basePath, String latestPath, String localLabel, String baseLabel, String latestLabel, boolean dryRun) throws SVNException {
         String mimeType = getProperties(localPath, false).getPropertyValue(SVNProperty.MIME_TYPE);
         SVNEntry entry = getEntries().getEntry(localPath);
         if (mimeType != null && !mimeType.startsWith("text/")) {
@@ -241,7 +241,7 @@ public class SVNDirectory {
                 entry.setConflictOld(SVNFileUtil.getBasePath(oldFile));
                 entry.setConflictWorking(null);                
             }
-            return SVNEventStatus.CONFLICTED;
+            return SVNStatusType.CONFLICTED;
         }
         // text
         // 1. destranslate local
@@ -279,17 +279,17 @@ public class SVNDirectory {
                 latestIS.close();
             } catch (IOException e) {}
         }
-        SVNEventStatus status = SVNEventStatus.UNCHANGED;
+        SVNStatusType status = SVNStatusType.UNCHANGED;
         if (mergeResult == 2) {
-            status = SVNEventStatus.CONFLICTED;
+            status = SVNStatusType.CONFLICTED;
         } else if (mergeResult == 4) {
-            status = SVNEventStatus.MERGED;
+            status = SVNStatusType.MERGED;
         }
         if (dryRun) {
             localTmpFile.delete();
             return status;
         }
-        if (status != SVNEventStatus.CONFLICTED) {
+        if (status != SVNStatusType.CONFLICTED) {
             SVNTranslator.translate(this, localPath, SVNFileUtil.getBasePath(resultFile), localPath, true, true);
         } else {
             // copy all to wc.
