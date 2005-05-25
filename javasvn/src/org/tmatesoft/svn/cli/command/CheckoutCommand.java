@@ -17,11 +17,11 @@ import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.internal.ws.log.ISVNEventListener;
-import org.tmatesoft.svn.core.internal.ws.log.SVNEvent;
-import org.tmatesoft.svn.core.internal.ws.log.SVNEventAction;
-import org.tmatesoft.svn.core.internal.ws.log.SVNRevision;
-import org.tmatesoft.svn.core.internal.ws.log.SVNUpdater;
+import org.tmatesoft.svn.core.internal.wc.ISVNEventListener;
+import org.tmatesoft.svn.core.internal.wc.SVNEvent;
+import org.tmatesoft.svn.core.internal.wc.SVNEventAction;
+import org.tmatesoft.svn.core.internal.wc.SVNRevision;
+import org.tmatesoft.svn.core.internal.wc.SVNUpdater;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.PathUtil;
