@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -40,6 +41,10 @@ public class SVNBasicClient implements ISVNEventListener {
     }
     
     protected void dispatchEvent(SVNEvent event) {
+        dispatchEvent(event, ISVNEventListener.UNKNOWN);
+        
+    }
+    protected void dispatchEvent(SVNEvent event, double progress) {
         if (myEventDispatcher != null) {
             String path = "";
             if (!myPathPrefixesStack.isEmpty()) {
@@ -55,7 +60,7 @@ public class SVNBasicClient implements ISVNEventListener {
                 event.setPath(path);
                 
             }
-            myEventDispatcher.svnEvent(event);
+            myEventDispatcher.svnEvent(event, progress);
         }
     }
     
@@ -75,12 +80,16 @@ public class SVNBasicClient implements ISVNEventListener {
         SVNWCAccess wcAccess = SVNWCAccess.create(file);
         if (pathPrefix != null) {
             wcAccess.setEventDispatcher(new ISVNEventListener() {
-                public void svnEvent(SVNEvent event) {
+                public void svnEvent(SVNEvent event, double progress) {
                     String fullPath = PathUtil.append(pathPrefix, event.getPath());
                     fullPath = PathUtil.removeTrailingSlash(fullPath);
                     fullPath = PathUtil.removeLeadingSlash(fullPath);
                     event.setPath(fullPath);
-                    dispatchEvent(event);
+                    dispatchEvent(event, progress);
+                }
+                
+                public void checkCancelled() throws SVNCancelException {
+                    SVNBasicClient.this.checkCancelled();
                 }
             });
         } else {
@@ -161,8 +170,14 @@ public class SVNBasicClient implements ISVNEventListener {
         return url;
     }
 
-    public void svnEvent(SVNEvent event) {
-        dispatchEvent(event);
+    public void svnEvent(SVNEvent event, double progress) {
+        dispatchEvent(event, progress);
+    }
+
+    public void checkCancelled() throws SVNCancelException {
+        if (myEventDispatcher != null) {
+            myEventDispatcher.checkCancelled();
+        }
     }
 
 }

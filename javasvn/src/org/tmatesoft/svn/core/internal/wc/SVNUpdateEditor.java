@@ -21,7 +21,6 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.DebugLog;
@@ -114,7 +113,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             // entry was deleted, but it was already deleted, no need to make a notification.
             return;
         }
-        myWCAccess.svnEvent(SVNEvent.createUpdateDeleteEvent(myWCAccess, myCurrentDirectory.getDirectory(), name));
+        myWCAccess.svnEvent(SVNEventFactory.createUpdateDeleteEvent(myWCAccess, myCurrentDirectory.getDirectory(), name));
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
@@ -149,7 +148,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             SVNErrorManager.error(0, null);
         }
         dir.lock();
-        myWCAccess.svnEvent(SVNEvent.createUpdateAddEvent(myWCAccess, parentDir, entry));
+        myWCAccess.svnEvent(SVNEventFactory.createUpdateAddEvent(myWCAccess, parentDir, entry));
     }
 
     public void openDir(String path, long revision) throws SVNException {
@@ -246,7 +245,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         myCurrentDirectory.runLogs();
         completeDirectory(myCurrentDirectory);
         if (!myCurrentDirectory.IsAdded && propStatus != SVNStatusType.UNCHANGED) {
-            myWCAccess.svnEvent(SVNEvent.createUpdateModifiedEvent(myWCAccess, dir, "", SVNEventAction.UPDATE_UPDATE, 
+            myWCAccess.svnEvent(SVNEventFactory.createUpdateModifiedEvent(myWCAccess, dir, "", SVNEventAction.UPDATE_UPDATE, 
                     null, SVNStatusType.UNCHANGED, propStatus, null));
         }
         myCurrentDirectory = myCurrentDirectory.Parent;
@@ -519,7 +518,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         completeDirectory(myCurrentDirectory);
         // notify.
         SVNEventAction action = myCurrentFile.IsAdded ? SVNEventAction.UPDATE_ADD : SVNEventAction.UPDATE_UPDATE;
-        myWCAccess.svnEvent(SVNEvent.createUpdateModifiedEvent(myWCAccess, dir, myCurrentFile.Name, action, null, 
+        myWCAccess.svnEvent(SVNEventFactory.createUpdateModifiedEvent(myWCAccess, dir, myCurrentFile.Name, action, null, 
                 textStatus, propStatus, lockStatus));
         myCurrentFile = null;
     }
@@ -561,7 +560,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 SVNDirectory childDirectory = dir.getChildDirectory(entry.getName());
                 if (!entry.isScheduledForAddition() && (childDirectory == null || !childDirectory.isVersioned())) {
                     DebugLog.log("missing dir remains after update: entry deleted");
-                    myWCAccess.svnEvent(SVNEvent.createUpdateDeleteEvent(myWCAccess, dir, entry));
+                    myWCAccess.svnEvent(SVNEventFactory.createUpdateDeleteEvent(myWCAccess, dir, entry));
                     entries.deleteEntry(entry.getName());
                     save = true;
                 } else {
@@ -627,7 +626,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                     if (myIsRecursive && (childDirectory == null || !childDirectory.isVersioned()) 
                             && !entry.isAbsent() && !entry.isScheduledForAddition()) {
                         DebugLog.log("missing dir remains after update (2): entry deleted");
-                        myWCAccess.svnEvent(SVNEvent.createUpdateDeleteEvent(myWCAccess, info.getDirectory(), entry));
+                        myWCAccess.svnEvent(SVNEventFactory.createUpdateDeleteEvent(myWCAccess, info.getDirectory(), entry));
                         entries.deleteEntry(entry.getName());
                     }
                 }

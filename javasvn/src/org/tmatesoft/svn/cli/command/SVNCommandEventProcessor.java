@@ -6,6 +6,7 @@ package org.tmatesoft.svn.cli.command;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -26,7 +27,7 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
         myIsCheckout = checkout;
     }
 
-    public void svnEvent(SVNEvent event) {
+    public void svnEvent(SVNEvent event, double progress) {
         if (event.getAction() == SVNEventAction.UPDATE_ADD) {
             if (myIsExternal) {
                 myIsExternalChanged = true;
@@ -117,5 +118,8 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
             SVNCommand.println(myPrintStream, "A    " + SVNCommand.getPath(event.getFile()));
         } 
 
+    }
+
+    public void checkCancelled() throws SVNCancelException {
     }
 }

@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
+import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
@@ -368,12 +369,6 @@ public class SVNWCAccess implements ISVNEventListener {
     }
 
     public void svnEvent(SVNEvent event) {
-        if (myDispatcher != null) {
-            try { 
-                myDispatcher.svnEvent(event);
-            } catch (Throwable th) {
-            }
-        }
     }
     
     private void visitDirectories(String parentPath, SVNDirectory root, ISVNDirectoryVisitor visitor) throws SVNException {
@@ -428,6 +423,21 @@ public class SVNWCAccess implements ISVNEventListener {
         result.append("target: '" + getTarget().getRoot().toString() + "'\n");
         result.append("target name: '" + getTargetName() + "'");
         return result.toString();
+    }
+
+    public void svnEvent(SVNEvent event, double progress) {
+        if (myDispatcher != null) {
+            try { 
+                myDispatcher.svnEvent(event, progress);
+            } catch (Throwable th) {
+            }
+        }
+    }
+
+    public void checkCancelled() throws SVNCancelException {
+        if (myDispatcher != null) {
+            myDispatcher.checkCancelled();
+        }
     }
 
 }

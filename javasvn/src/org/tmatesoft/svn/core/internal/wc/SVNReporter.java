@@ -22,7 +22,6 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryFactory;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.DebugLog;
@@ -224,7 +223,7 @@ public class SVNReporter implements ISVNReporterBaton {
         }
         dir.getEntries().save(false);
         
-        myWCAccess.svnEvent(SVNEvent.createRestoredEvent(myWCAccess, dir, entry));
+        myWCAccess.svnEvent(SVNEventFactory.createRestoredEvent(myWCAccess, dir, entry));
     }
     
     public static void main(String[] args) {

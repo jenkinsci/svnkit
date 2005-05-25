@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNLog;
@@ -68,7 +69,7 @@ public class SVNUpdateClient extends SVNBasicClient {
 
             if (editor.getTargetRevision() >= 0) {
                 handleExternals(wcAccess);
-                dispatchEvent(SVNEvent.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
+                dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
             }
             return editor.getTargetRevision();
         } finally {            
@@ -96,7 +97,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             
             if (editor.getTargetRevision() >= 0) {
                 handleExternals(wcAccess);
-                dispatchEvent(SVNEvent.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
+                dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
             }
             return editor.getTargetRevision();
         } finally {
@@ -198,12 +199,12 @@ public class SVNUpdateClient extends SVNBasicClient {
                     SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess2, null, true);
                     
                     repos.update(revNumber, null, true, reporter, editor);
-                    dispatchEvent(SVNEvent.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
+                    dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
                     if (sameRepositories) {
                         addDir(wcAccess.getAnchor(), dstPath.getName(), srcURL, editor.getTargetRevision());
                         addDir(wcAccess2.getAnchor(), "", srcURL, editor.getTargetRevision());
                         // fire added event.
-                        dispatchEvent(SVNEvent.createAddedEvent(wcAccess, wcAccess.getAnchor(), 
+                        dispatchEvent(SVNEventFactory.createAddedEvent(wcAccess, wcAccess.getAnchor(), 
                                 wcAccess.getAnchor().getEntries().getEntry(dstPath.getName())));
                     } else {
                         SVNErrorManager.error(0, null);
@@ -240,7 +241,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 addFile(wcAccess.getAnchor(), dstPath.getName(), properties, sameRepositories ? srcURL : null, revNumber);
                 wcAccess.getAnchor().runLogs();
                 // fire added event.
-                dispatchEvent(SVNEvent.createAddedEvent(wcAccess, wcAccess.getAnchor(), 
+                dispatchEvent(SVNEventFactory.createAddedEvent(wcAccess, wcAccess.getAnchor(), 
                         wcAccess.getAnchor().getEntries().getEntry(dstPath.getName())));
             }
         } finally {
@@ -502,7 +503,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 try {
                     if (external.getOldURL() == null) {
                         external.getFile().mkdirs();
-                        dispatchEvent(SVNEvent.createUpdateExternalEvent(wcAccess, ""));
+                        dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
                         doCheckout(external.getNewURL(), external.getFile(), revision,
                                 revision, true);
                     } else if (external.getNewURL() == null) {
@@ -515,7 +516,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     } else if (external.isModified()) {
                         deleteExternal(external);
                         external.getFile().mkdirs();
-                        dispatchEvent(SVNEvent.createUpdateExternalEvent(wcAccess, ""));
+                        dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
                         doCheckout(external.getNewURL(), external.getFile(), revision,
                                 revision, true);
                     } else {
@@ -534,7 +535,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                             } 
                             // update or checkout.
                             external.getFile().mkdirs();
-                            dispatchEvent(SVNEvent.createUpdateExternalEvent(wcAccess, ""));
+                            dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
                             doCheckout(external.getNewURL(), external.getFile(), revision,
                                     revision, true);
                         }
