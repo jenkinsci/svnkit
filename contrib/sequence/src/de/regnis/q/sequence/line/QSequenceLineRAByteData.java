@@ -1,8 +1,9 @@
 package de.regnis.q.sequence.line;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import org.omg.CORBA.portable.*;
 
 /**
  * @author Marc Strapetz
