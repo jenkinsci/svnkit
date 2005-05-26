@@ -18,6 +18,8 @@ public class SVNEventAction {
     public String toString() {
         return Integer.toString(myID);
     }
+
+    public static final SVNEventAction PROGRESS = new SVNEventAction(-1);
     
     public static final SVNEventAction ADD = new SVNEventAction(0);
     public static final SVNEventAction COPY = new SVNEventAction(1);
