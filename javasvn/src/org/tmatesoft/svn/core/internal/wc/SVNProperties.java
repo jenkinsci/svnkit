@@ -61,6 +61,19 @@ public class SVNProperties {
         return target;
     }
     
+    public Map asMap() throws SVNException {
+        Map result = new HashMap();
+        if (getFile().exists()) {
+            return result;
+        }
+        for(Iterator names = properties(null).iterator(); names.hasNext();) {
+            String name = (String) names.next();
+            String value  = getPropertyValue(name);
+            result.put(name, value);
+        }
+        return result;
+    }
+    
     public boolean compareTo(SVNProperties properties, ISVNPropertyComparator comparator) throws SVNException {
         boolean equals = true;
         Collection props1 = properties(null); 

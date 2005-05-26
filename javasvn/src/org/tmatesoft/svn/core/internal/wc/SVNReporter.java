@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryFactory;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
@@ -239,9 +239,11 @@ public class SVNReporter implements ISVNReporterBaton {
         };
         try {
             File dst = new File("C:/nautilus/javasvn3");
+            SVNDiffClient differ = new SVNDiffClient(null, null, null);
+            differ.doDiff(new File("C:\\subversion\\subversion\\libsvn_client"), false, false, false, System.out);
             SVNUpdateClient updater = new SVNUpdateClient(repositoryFactory, null, new SVNCommandEventProcessor(System.out, true));
             String url = "http://72.9.228.230/svn/jsvn/trunk/"; 
-            updater.doCheckout(url, dst, SVNRevision.HEAD, SVNRevision.HEAD, true);
+//            updater.doCheckout(url, dst, SVNRevision.HEAD, SVNRevision.HEAD, true);
         } catch (Throwable e) {
             e.printStackTrace();
         } 

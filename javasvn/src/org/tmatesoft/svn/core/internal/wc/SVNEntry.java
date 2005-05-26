@@ -244,4 +244,8 @@ public class SVNEntry implements Comparable {
     public void setPropTime(String time) {
         myEntries.setPropertyValue(myName, SVNProperty.PROP_TIME, time);
     }
+
+    public boolean isCopied() {
+        return Boolean.TRUE.toString().equals(myEntries.getPropertyValue(myName, SVNProperty.COPIED));
+    }
 }

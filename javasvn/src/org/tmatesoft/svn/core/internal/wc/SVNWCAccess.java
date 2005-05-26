@@ -386,6 +386,16 @@ public class SVNWCAccess implements ISVNEventListener {
         return myExternals.values().iterator();
     }
     
+    public void visitDirectories(ISVNCrawler visitor) throws SVNException {
+        for (Iterator dirs = myDirectories.keySet().iterator(); dirs.hasNext();) {
+            String path = (String) dirs.next();
+            SVNDirectory dir = (SVNDirectory) myDirectories.get(path);
+            if (dir != null) {
+                visitor.visitDirectory(this, dir);
+            }
+        }
+    }
+    
     private void visitDirectories(String parentPath, SVNDirectory root, ISVNDirectoryVisitor visitor) throws SVNException {
         Iterator entries = root.getEntries().entries();
         while (entries.hasNext()) {
@@ -408,6 +418,7 @@ public class SVNWCAccess implements ISVNEventListener {
             }
         }
     }
+    
     
     private interface ISVNDirectoryVisitor {
         public void visit(String path, SVNDirectory dir) throws SVNException;
