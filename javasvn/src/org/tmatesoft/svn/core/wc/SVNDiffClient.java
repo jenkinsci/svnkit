@@ -112,7 +112,7 @@ public class SVNDiffClient extends SVNBasicClient {
     }
     
     private void localDirectoryDiff(SVNWCAccess owner, SVNDirectory dir, boolean useAncestry, OutputStream result) throws SVNException {
-        boolean anchor = !"".equals(owner.getTargetName()) && owner.getAnchor() != owner.getTarget() && dir == owner.getAnchor();
+        boolean anchor = !"".equals(owner.getTargetName()) && dir == owner.getAnchor();
         
         if (!anchor) {
             // generate prop diff for dir.
