@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.tmatesoft.svn.cli.command.SVNCommandEventProcessor;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -23,7 +22,6 @@ import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
@@ -240,9 +238,9 @@ public class SVNReporter implements ISVNReporterBaton {
         try {
             File dst = new File("C:/nautilus/javasvn3");
             SVNDiffClient differ = new SVNDiffClient(null, null, null);
-            differ.doDiff(new File("C:\\subversion\\subversion\\libsvn_client"), false, false, false, System.out);
-            SVNUpdateClient updater = new SVNUpdateClient(repositoryFactory, null, new SVNCommandEventProcessor(System.out, true));
-            String url = "http://72.9.228.230/svn/jsvn/trunk/"; 
+            differ.doDiff(new File("C:\\subversion\\subversion\\libsvn_client\\diff.c"), false, false, false, System.out);
+//            SVNUpdateClient updater = new SVNUpdateClient(repositoryFactory, null, new SVNCommandEventProcessor(System.out, true));
+//            String url = "http://72.9.228.230/svn/jsvn/trunk/"; 
 //            updater.doCheckout(url, dst, SVNRevision.HEAD, SVNRevision.HEAD, true);
         } catch (Throwable e) {
             e.printStackTrace();

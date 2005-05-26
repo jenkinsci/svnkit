@@ -16,9 +16,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 public class SVNDiffClient extends SVNBasicClient {
 
@@ -68,6 +70,14 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(File path, SVNRevision revision1, SVNRevision revision2, 
             boolean recursive, boolean useAncestry, boolean force,
             OutputStream result) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess(path);
+        if (!"".equals(wcAccess.getTargetName())) {
+            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName());
+            if (entry == null) {
+                // unversioned diff target.
+                SVNErrorManager.error(0, null);
+            }
+        }
         if (revision1 == null || revision1 == SVNRevision.UNDEFINED) {
             revision1 = SVNRevision.BASE;
         }
@@ -82,8 +92,14 @@ public class SVNDiffClient extends SVNBasicClient {
             doDiff(path, recursive, useAncestry, force, result);
         } else if (revision1 == SVNRevision.BASE && revision2 != SVNRevision.WORKING) {
             // case1.1: r1 == BASE, r2 != WORKING => wc:url diff
+            // get wc url and rev number 
+            // run doDiff(file, url, ...).
+            String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+            doDiff(path, url, revision2, revision2, recursive, useAncestry, force, result);
         } else if (revision2 == SVNRevision.BASE && revision1 != SVNRevision.WORKING) {
             // case1.2: r1 != WORKING, r2 == BASE => url:wc diff
+            String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+            doDiff(path, url, revision2, revision2, recursive, useAncestry, force, result);
         } else if (revision1 != SVNRevision.BASE && revision1 != SVNRevision.WORKING 
                 && revision2 != SVNRevision.BASE && revision2 != SVNRevision.WORKING) {
             // case2: url:url diff.
@@ -98,7 +114,29 @@ public class SVNDiffClient extends SVNBasicClient {
     // iterate over wc comparing base files to tmp files.
     public void doDiff(File path, String url, SVNRevision pegRevision, SVNRevision revision, 
             boolean recursive, boolean useAncestry, boolean force,
-            OutputStream result) {
+            OutputStream result) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess(path);
+        url = validateURL(url);
+        url = getURL(url, pegRevision, revision);
+
+        wcAccess.open(true, recursive);
+        try {
+            // create repos to run diff.
+            // if we have 'target' use it, and use parent url
+            long revNumber = getRevisionNumber(url, revision);
+            String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
+            SVNRepository repos = createRepository(wcAccess.getAnchor().getEntries().getEntry("").getURL());
+            SVNReporter reporter = new SVNReporter(wcAccess, recursive);
+            
+            // use special diff editor that will create tmp files, collect props and display diffs.
+            getDiffGenerator().init(getDiffGenerator().getDisplayPath(path), getDiffGenerator().getDisplayPath(path));
+            getDiffGenerator().setForcedBinaryDiff(force);
+            
+            // run 'update' here, not diff.
+            repos.update(revNumber, target, recursive, reporter, null);
+        } finally {
+            wcAccess.close(true, recursive);
+        }
     }
     
     // repos-repos: REV:REV
