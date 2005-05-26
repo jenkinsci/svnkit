@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.ISVNCrawler;
+import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -133,7 +134,8 @@ public class SVNDiffClient extends SVNBasicClient {
             getDiffGenerator().setForcedBinaryDiff(force);
             
             // run 'update' here, not diff.
-            repos.update(revNumber, target, recursive, reporter, null);
+            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry);
+            repos.update(revNumber, target, recursive, reporter, editor);
         } finally {
             wcAccess.close(true, recursive);
         }
