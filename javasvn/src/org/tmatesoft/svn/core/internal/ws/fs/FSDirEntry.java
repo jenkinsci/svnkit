@@ -62,6 +62,10 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         }
     }
     
+    public File getIOFile() {
+        return getRootEntry().getWorkingCopyFile(this);
+    }
+    
     public ISVNEntry getChild(String name) throws SVNException {
         loadEntries();
         return (ISVNEntry) myChildren.get(name);

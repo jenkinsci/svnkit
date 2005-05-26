@@ -236,4 +236,12 @@ public class SVNEntry implements Comparable {
     public String getCopyFromURL() {
         return myEntries.getPropertyValue(myName, SVNProperty.COPYFROM_URL);
     }
+
+    public String getPropTime() {
+        return myEntries.getPropertyValue(myName, SVNProperty.PROP_TIME);
+   }
+
+    public void setPropTime(String time) {
+        myEntries.setPropertyValue(myName, SVNProperty.PROP_TIME, time);
+    }
 }

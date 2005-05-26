@@ -120,13 +120,17 @@ public class StatusCommand extends SVNCommand {
         }
         boolean remoteMode = getCommandLine().hasArgument(SVNArgument.SHOW_UPDATES);
         StringBuffer sb = new StringBuffer();
-        if (!status.isIncomplete()) {
-            appendStatus(status.getContentsStatus(), sb);
-        } else {
+        if (status.isIncomplete()) {
             sb.append("!");
+        } else {
+            appendStatus(status.getContentsStatus(), sb);
         }        
         appendStatus(status.getPropertiesStatus(), sb);
-        sb.append(" ");
+        if (status.isLocked()) {
+            sb.append("L");
+        } else {
+            sb.append(" ");
+        }
         if (status.isAddedWithHistory()) {
             sb.append("+");
         } else {

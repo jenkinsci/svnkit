@@ -229,8 +229,12 @@ public class SVNWCAccess implements ISVNEventListener {
         }
         return myDirectories.containsKey(path);
     }
-
+    
     public void open(boolean lock, boolean recursive) throws SVNException {
+        open(lock, false, recursive);
+    }
+
+    public void open(boolean lock, final boolean stealLock, boolean recursive) throws SVNException {
         if (!lock) {
             return;
         }
@@ -247,7 +251,9 @@ public class SVNWCAccess implements ISVNEventListener {
             if (recursive) {
                 visitDirectories(myTarget == myAnchor ? "" : myName, myTarget, new ISVNDirectoryVisitor() {
                     public void visit(String path, SVNDirectory dir) throws SVNException {
-                        dir.lock();
+                        if (!dir.isLocked() || !stealLock) {
+                            dir.lock();
+                        }
                         myDirectories.put(path, dir);
                     }
                 });

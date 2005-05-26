@@ -412,9 +412,77 @@ public class SVNDirectory {
         
         if (equals && isLocked()) {
             entry.setTextTime(TimeUtil.formatDate(new Date(versionedFile.lastModified())));
-            entries.save(true);
+            entries.save(false);
         }        
         return !equals;
+    }
+
+    public boolean hasPropModifications(String name) throws SVNException {
+        File propFile = null;
+        File baseFile = null;
+        if ("".equals(name)) {
+            propFile = getFile(".svn/dir-props", false);
+            baseFile = getFile(".svn/dir-prop-base", false);
+        } else {
+            propFile = getFile(".svn/props/" + name + ".svn-work", false);
+            baseFile = getFile(".svn/prop-base/" + name + ".svb-base", false);
+        }
+        SVNEntry entry = getEntries().getEntry(name);
+        boolean propEmtpy = !propFile.exists() || propFile.length() <= 4;
+        boolean baseEmtpy = !baseFile.exists() || baseFile.length() <= 4;
+        if (entry.isScheduledForReplacement()) {
+            return !propEmtpy;
+        }
+        if (baseEmtpy) {
+            return !propEmtpy;
+        }
+        if (propEmtpy) {
+            return true;
+        }
+        if (propFile.length() != baseFile.length()) {
+            return true;
+        }
+        String timeStamp = entry.getPropTime();
+        String realTimestamp = TimeUtil.formatDate(new Date(propFile.lastModified()));
+        if (realTimestamp.equals(timeStamp)) {
+            return false;
+        }
+        Map diff = getProperties(name, false).compareTo(getBaseProperties(name, false));
+        if (diff == null || diff.isEmpty()) {
+            // update tstanp
+            if (isLocked()) {
+                entry.setPropTime(realTimestamp);
+                getEntries().save(false);
+            }
+            return false;
+        }
+        return true;
+    }
+    
+    public void cleanup() throws SVNException {
+        SVNEntries svnEntries = getEntries();
+        for(Iterator entries = svnEntries.entries(); entries.hasNext();) {
+            SVNEntry entry = (SVNEntry) entries.next();
+            if (!"".equals(entry.getName()) && entry.isDirectory()) {
+                SVNDirectory childDir = getChildDirectory(entry.getName());
+                if (childDir != null) {
+                    childDir.cleanup();
+                }
+                continue;
+            }
+            hasTextModifications(entry.getName(), false);
+            hasPropModifications(entry.getName());
+        }
+        svnEntries.save(true);
+        if (new File(getRoot(), ".svn/KILLME").isFile()) {
+            destroy("", true);
+        } else {
+            runLogs();
+        }
+        File tmpDir = getFile(".svn/tmp", false);
+        if (tmpDir.isDirectory()) {
+            SVNFileUtil.deleteAll(tmpDir, false);
+        }
     }
     
     public void dispose() {
@@ -448,7 +516,7 @@ public class SVNDirectory {
     }
     
     public SVNLog getLog(int id) {
-        return new SVNLog(this, id);
+        return new SVNLog(this, id); 
     }
     
     public void runLogs() throws SVNException {

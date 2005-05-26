@@ -12,6 +12,7 @@
 
 package org.tmatesoft.svn.core.internal;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -23,6 +24,7 @@ import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
+import org.tmatesoft.svn.core.internal.ws.fs.FSDirEntry;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.progress.ISVNProgressViewer;
@@ -240,6 +242,11 @@ class SVNStatusUtil {
         SVNStatus status = new SVNStatus(child.getPath(), propStatus, contentsStatus, revision, wcRevision, history, switched, isDirectory, author, lock);
         if (child.getPropertyValue(SVNProperty.INCOMPLETE) != null) {
             status.setIncomplete(true);
+        }
+        if (child.isDirectory()) {
+            FSDirEntry dirEntry = (FSDirEntry) child;
+            File dir = dirEntry.getIOFile();
+            status.setLocked(new File(dir, ".svn/lock").isFile());
         }
         return status;
     }

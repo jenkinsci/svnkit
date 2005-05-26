@@ -295,6 +295,10 @@ public class SVNFileUtil {
     }
 
     public static void deleteAll(File dir) {
+        deleteAll(dir, true);
+    }
+
+    public static void deleteAll(File dir, boolean deleteDirs) {
         if (dir == null) {
             return;
         }
@@ -304,6 +308,9 @@ public class SVNFileUtil {
                 File child = children[i];
                 deleteAll(child);
             }
+        }
+        if (dir.isDirectory() && !deleteDirs) {
+            return;
         }
         dir.delete();
     }
