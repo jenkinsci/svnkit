@@ -51,6 +51,8 @@ public class SVNDiffClient extends SVNBasicClient {
                     SVNErrorManager.error(0, null);
                 }
             }
+            getDiffGenerator().init(getDiffGenerator().getDisplayPath(path), 
+                    getDiffGenerator().getDisplayPath(path));
             getDiffGenerator().setForcedBinaryDiff(force);
             wcAccess.visitDirectories(new ISVNCrawler() {
                 public void visitDirectory(SVNWCAccess owner, SVNDirectory dir) throws SVNException {
