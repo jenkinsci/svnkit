@@ -90,6 +90,9 @@ public class SVNRevision {
     }
 
     public static SVNRevision create(long revisionNumber) {
+        if (revisionNumber < 0) {
+            return SVNRevision.HEAD;
+        }
         return new SVNRevision(revisionNumber);
     }
 
@@ -124,7 +127,7 @@ public class SVNRevision {
             } catch (NumberFormatException nfe) {
             }
         }
-        SVNRevision revision = (SVNRevision) ourValidRevisions.get(value.toLowerCase());
+        SVNRevision revision = (SVNRevision) ourValidRevisions.get(value.toUpperCase());
         if (revision == null) {
             return HEAD;
         }

@@ -44,10 +44,10 @@ public class SVNTranslator {
                 String url = entry.getURL();
                 String author = entry.getAuthor();
                 String date = entry.getCommittedDate();
-                long rev = entry.getRevision();
+                String rev = Long.toString(entry.getCommittedRevision());
                 keywordsMap = computeKeywords(keywords, url, author, date, rev);
             } else {                
-                keywordsMap = computeKeywords(keywords, null, null, null, -1);
+                keywordsMap = computeKeywords(keywords, null, null, null, null);
             }
         }
         if (!expand) {
@@ -239,7 +239,7 @@ public class SVNTranslator {
         
     }
 
-    public static Map computeKeywords(String keywords, String u, String a, String d, long r) {
+    public static Map computeKeywords(String keywords, String u, String a, String d, String r) {
         if (keywords == null) {
             return Collections.EMPTY_MAP;
         }
@@ -260,7 +260,7 @@ public class SVNTranslator {
                     map.put("LastChangedDate", date);
                     map.put("Date",  date);
                 } else if ("LastChangedRevision".equals(token) || "Revision".equals(token) || "Rev".equals(token)) {
-                    rev = expand && rev == null ? Long.toString(r).getBytes("UTF-8") : rev;
+                    rev = expand && rev == null ? r.getBytes("UTF-8") : rev;
                     map.put("LastChangedRevision", rev);
                     map.put("Revision", rev);
                     map.put("Rev", rev);
@@ -274,7 +274,7 @@ public class SVNTranslator {
                     map.put("URL", url);
                 } else if ("Id".equals(token)) {
                     if (expand && id == null) {
-                        rev = rev == null ? Long.toString(r).getBytes("UTF-8") : rev;
+                        rev = rev == null ? r.getBytes("UTF-8") : rev;
                         date = date == null ? TimeUtil.toHumanDate(d).getBytes("UTF-8") : date;                
                         name = name == null ? PathUtil.decode(PathUtil.tail(u)).getBytes("UTF-8") : name;
                         author = author == null ? (a == null ? new byte[0] : a.getBytes("UTF-8")) : author;

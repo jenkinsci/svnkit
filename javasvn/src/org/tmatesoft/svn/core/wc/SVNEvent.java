@@ -29,6 +29,11 @@ public class SVNEvent {
     private String myName;
     private String myPath;
     private File myRoot;
+    private File myRootFile;
+    
+    public SVNEvent(String errorMessage) {
+        myErrorMessage = errorMessage;
+    }
     
     public SVNEvent(SVNWCAccess source, SVNDirectory dir, String name, 
             SVNEventAction action, 
@@ -52,6 +57,29 @@ public class SVNEvent {
         myRoot = dir != null ? dir.getRoot() : null;
         myName = name;        
     }
+
+    public SVNEvent(File rootFile, File file, 
+            SVNEventAction action, 
+            SVNNodeKind kind, 
+            long revision, 
+            String mimetype, 
+            SVNStatusType cstatus, SVNStatusType pstatus, SVNStatusType lstatus, 
+            SVNLock lock,
+            String error) {
+        myMimeType = mimetype;
+        myErrorMessage = error;
+        myAction = action;
+        myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
+        myRevision = revision;
+        myContentsStatus = cstatus == null ? SVNStatusType.INAPPLICABLE : cstatus;
+        myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE : pstatus;
+        myLockStatus = lstatus == null ? SVNStatusType.INAPPLICABLE : lstatus;
+        myLock = lock;
+        
+        myRoot = file != null ? file.getParentFile() : null;
+        myRootFile = rootFile;
+        myName = file.getName();        
+    }
     
     public SVNWCAccess getSource() {
         return mySVNWCAccess;
@@ -61,11 +89,11 @@ public class SVNEvent {
         if (myPath != null) {
             return myPath;
         }
-        if (mySVNWCAccess == null) {
+        if (mySVNWCAccess == null && myRootFile == null) {
             return myName;
-        }
+        } 
         File file = getFile();
-        File root = mySVNWCAccess.getAnchor().getRoot();
+        File root = mySVNWCAccess != null ? mySVNWCAccess.getAnchor().getRoot() : myRootFile;
         String rootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
         String filePath = file.getAbsolutePath().replace(File.separatorChar, '/');
         myPath = filePath.substring(rootPath.length());
@@ -76,7 +104,6 @@ public class SVNEvent {
     }
     
     public File getFile() {
-        
         if (myRoot != null) {
             return ("".equals(myName) || ".".equals(myName)) ? myRoot : 
                 new File(myRoot, myName);   

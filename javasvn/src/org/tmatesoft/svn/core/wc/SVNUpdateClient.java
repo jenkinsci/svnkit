@@ -17,14 +17,18 @@ import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNExportEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNLog;
+import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
+import org.tmatesoft.svn.core.io.ISVNReporter;
+import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -32,6 +36,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.TimeUtil;
 
 
 public class SVNUpdateClient extends SVNBasicClient {
@@ -67,7 +72,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             repos.update(revNumber, target, recursive, reporter, editor);
 
-            if (editor.getTargetRevision() >= 0) {
+            if (editor.getTargetRevision() >= 0 && recursive && !isIgnoreExternals()) {
                 handleExternals(wcAccess);
                 dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
             }
@@ -89,13 +94,11 @@ public class SVNUpdateClient extends SVNBasicClient {
             wcAccess.open(true, recursive);
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url, recursive);
             SVNRepository repos = createRepository(wcAccess.getTargetEntryProperty(SVNProperty.URL));
-            DebugLog.log("wc: " + wcAccess);
-            DebugLog.log("url: " + wcAccess.getAnchor().getEntries().getEntry("").getURL());
             repos = createRepository(wcAccess.getAnchor().getEntries().getEntry("").getURL());
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             repos.update(url, revNumber, target, recursive, reporter, editor);
             
-            if (editor.getTargetRevision() >= 0) {
+            if (editor.getTargetRevision() >= 0 && recursive && !isIgnoreExternals()) {
                 handleExternals(wcAccess);
                 dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
             }
@@ -267,7 +270,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
         url = getURL(url, pegRevision, revision);
         SVNRepository repos = createRepository(url);
-        long revNumber = getRevisionNumber(url, revision);
+        final long revNumber = getRevisionNumber(url, revision);
         SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
         
         if (targetNodeKind == SVNNodeKind.FILE) {
@@ -292,12 +295,11 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (force && dstPath.exists()) { 
                     SVNFileUtil.deleteAll(dstPath);
                 }
-                // 
                 Map keywords = SVNTranslator.computeKeywords((String) properties.get(SVNProperty.KEYWORDS),
                         url, 
                         (String) properties.get(SVNProperty.LAST_AUTHOR),
                         (String) properties.get(SVNProperty.COMMITTED_DATE),
-                        Long.parseLong((String) properties.get(SVNProperty.COMMITTED_REVISION)));
+                        (String) properties.get(SVNProperty.COMMITTED_REVISION));
                 if (eolStyle == null) {
                     eolStyle = (String) properties.get(SVNProperty.EOL_STYLE);
                 }
@@ -306,7 +308,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (properties.get(SVNProperty.EXECUTABLE) != null) {
                     SVNFileUtil.setExecutable(dstPath, true);
                 }
-//                dispatchEvent(SVNEvent.createAddedEvent(dstPath));
+                dispatchEvent(SVNEventFactory.createExportAddedEvent(dstPath.getParentFile(), dstPath));
             } catch (IOException e) {
                 SVNErrorManager.error(0, e);
             } finally {
@@ -321,15 +323,91 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
             }
         } else if (targetNodeKind == SVNNodeKind.DIR) {
-            
+            SVNExportEditor editor = new SVNExportEditor(this, url, dstPath, force, eolStyle);
+            repos.update(revNumber, null, recursive, new ISVNReporterBaton() {
+                public void report(ISVNReporter reporter) throws SVNException {
+                    reporter.setPath("", null, revNumber, true);
+                    reporter.finishReport();
+                }
+            }, editor);
+            if (!isIgnoreExternals() && recursive) {
+                Map externals = editor.getCollectedExternals();
+                for(Iterator files = externals.keySet().iterator(); files.hasNext();) {
+                    File rootFile = (File) files.next();
+                    String propValue = (String) externals.get(rootFile);
+                    if (propValue == null) {
+                        continue;
+                    }
+                    SVNExternalInfo[] infos = SVNWCAccess.parseExternals("", propValue);
+                    for (int i = 0; i < infos.length; i++) {
+                        File targetDir = new File(rootFile, infos[i].getPath());
+                        String srcURL = infos[i].getOldURL();
+                        SVNRevision srcRevision = SVNRevision.create(infos[i].getOldRevision());
+                        String relativePath = targetDir.getAbsolutePath().substring(dstPath.getAbsolutePath().length());
+                        relativePath = relativePath.replace(File.separatorChar, '/');
+                        relativePath = PathUtil.removeLeadingSlash(relativePath);
+                        relativePath = PathUtil.removeTrailingSlash(relativePath);
+                        dispatchEvent(SVNEventFactory.createUpdateExternalEvent(null, relativePath));
+                        try {
+                            setEventPathPrefix(relativePath);                            
+                            doExport(srcURL, targetDir, srcRevision, srcRevision, eolStyle, force, recursive);
+                        } catch (Throwable th) {
+                            dispatchEvent(new SVNEvent(th.getMessage()));
+                        } finally {
+                            setEventPathPrefix(null);
+                        }
+                    }
+                }
+            }
         }
+        dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(null, revNumber));
         
-        return -1;
+        return revNumber;
     }
 
-    public long doExport(File srcPath, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, boolean recursive) throws SVNException {
-        // get url from wc, use passed revision to make a checkout or 
-        // just make a copy of wc working files if revision is not valid. 
+    public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, final boolean force, boolean recursive) throws SVNException {
+        if (!SVNWCAccess.isVersionedDirectory(srcPath)) {
+            SVNErrorManager.error(0, null);
+        }
+        DebugLog.log("exporting at revision: " + revision);
+        SVNWCAccess wcAccess = createWCAccess(srcPath);
+        String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+        if (revision == null || revision == SVNRevision.UNDEFINED) {
+            revision = SVNRevision.WORKING;
+        }
+        if (revision != SVNRevision.BASE && revision != SVNRevision.WORKING) {
+            // get rev number from wc.
+            long revNumber = getRevisionNumber(srcPath, revision);
+            revision = SVNRevision.create(revNumber);
+            return doExport(url, dstPath, pegRevision, revision, eolStyle, force, recursive);
+        } else {
+            if (!force && dstPath.exists()) {
+                SVNErrorManager.error(0, null);
+            } 
+            if (dstPath.exists()) {
+                SVNFileUtil.deleteAll(dstPath);
+            }
+            try {
+                wcAccess.open(true, recursive);
+                if (srcPath.isFile()) {
+                    SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(dstPath.getName());
+                    if (entry == null || (revision == SVNRevision.WORKING && entry.isScheduledForDeletion()) || 
+                            (entry.isScheduledForAddition() && revision == SVNRevision.BASE)) {
+                        return -1;
+                    }
+                    copyVersionedFile(dstPath, wcAccess.getAnchor(), dstPath.getName(), revision, force, eolStyle);
+                } else {
+                    SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("");
+                    if (entry == null || (revision == SVNRevision.WORKING && entry.isScheduledForDeletion()) || (entry.isScheduledForAddition() && revision == SVNRevision.BASE)) {
+                        return -1;
+                    }
+                    copyVersionedDir(dstPath, wcAccess.getAnchor(), recursive, revision, force, eolStyle);
+                }
+                dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(null, -1));
+            } finally {
+                wcAccess.close(true, recursive);
+            }
+        }
         return -1;
     }
     
@@ -540,6 +618,9 @@ public class SVNUpdateClient extends SVNBasicClient {
                                     revision, true);
                         }
                     }
+                } catch (Throwable th) {
+                    dispatchEvent(new SVNEvent(th.getMessage()));
+                    DebugLog.error(th);
                 } finally {
                     setEventPathPrefix(null);
                 }
@@ -571,6 +652,81 @@ public class SVNUpdateClient extends SVNBasicClient {
             } catch (IOException e) {
                 SVNErrorManager.error(0, e);
             }
+        }
+    }
+
+    private void copyVersionedDir(File dstPath, SVNDirectory dir, boolean recursive, SVNRevision revision, boolean force, String eol) throws SVNException {
+        if (!force && dstPath.exists()) {
+            SVNErrorManager.error(0, null);
+        }
+        SVNFileUtil.deleteAll(dstPath);
+        dstPath.mkdirs();
+        SVNEntries entries = dir.getEntries();
+        for(Iterator ents = entries.entries(); ents.hasNext();) {
+            SVNEntry entry = (SVNEntry) ents.next();
+            if ("".equals(entry.getName())) {
+                continue;
+            }
+            if (revision != SVNRevision.WORKING && entry.isScheduledForAddition()) {
+                continue;
+            }
+            if (revision != SVNRevision.BASE && entry.isScheduledForDeletion()) {
+                continue;
+            }
+            if (entry.isFile()) {
+                copyVersionedFile(new File(dstPath, entry.getName()), dir, entry.getName(), revision, force, eol);                
+            } else if (recursive && entry.isDirectory() && dir.getFile(entry.getName(), false).isDirectory()) {
+                SVNDirectory childDir = dir.getChildDirectory(entry.getName());
+                if (childDir != null) {
+                    copyVersionedDir(new File(dstPath, entry.getName()), childDir, recursive, revision, force, eol);
+                }
+            }
+        }
+    }
+    
+    private void copyVersionedFile(File dstPath, SVNDirectory dir, String fileName, SVNRevision revision, boolean force, String eol) throws SVNException {
+        
+        if (!force && dstPath.exists()) {
+            SVNErrorManager.error(0, null);
+        }
+        SVNFileUtil.deleteAll(dstPath);
+        Map keywordsMap = null;
+        SVNProperties props = revision == SVNRevision.BASE ? dir.getBaseProperties(fileName, false) : dir.getProperties(fileName, false);
+        SVNEntry entry = dir.getEntries().getEntry(fileName);
+        String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
+        String date = entry.getCommittedDate();
+        byte[] eols = eol != null ? SVNTranslator.getEOL(eol) : null;
+        if (keywords != null) {
+            String author = entry.getAuthor();
+            String rev = Long.toString(entry.getCommittedRevision());
+            if (revision != SVNRevision.BASE) {
+                boolean modified = dir.hasTextModifications(fileName, false);
+                if (modified) {
+                    author = "(local)";
+                    rev += "M";
+                }
+            }
+            keywordsMap = SVNTranslator.computeKeywords(keywords, entry.getURL(), author, entry.getCommittedDate(), rev);
+        }
+        if (eols == null) {
+            eol = props.getPropertyValue(SVNProperty.EOL_STYLE); 
+            eols =  eol != null ? 
+                    SVNTranslator.getEOL(eol) : null;
+        }
+        boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
+        boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
+            
+        File srcFile = revision == SVNRevision.BASE ? 
+                dir.getBaseFile(fileName, false) : dir.getFile(fileName, false);
+        if (!srcFile.isFile()) {
+            SVNErrorManager.error(0, null);
+        }
+        SVNTranslator.translate(srcFile, dstPath, eols, keywordsMap, special, true);
+        if (executable) {
+            SVNFileUtil.setExecutable(dstPath, true);
+        }
+        if (!special && date != null) {
+            dstPath.setLastModified(TimeUtil.parseDate(date).getTime());
         }
     }
 }

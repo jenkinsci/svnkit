@@ -76,6 +76,10 @@ public class SVNExternalInfo {
     public String getOldURL() {
         return myOldExternalURL;
     }
+
+    public long getOldRevision() {
+        return myOldExternalRevision;
+    }
     
     public String toString() {
         StringBuffer sb = new StringBuffer();

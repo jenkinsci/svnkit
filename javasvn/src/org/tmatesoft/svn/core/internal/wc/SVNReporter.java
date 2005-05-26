@@ -191,7 +191,7 @@ public class SVNReporter implements ISVNReporterBaton {
         String url = entry.getURL();
         String author = entry.getAuthor();
         String date = entry.getCommittedDate();
-        long rev = entry.getCommittedRevision();
+        String rev = Long.toString(entry.getCommittedRevision());
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         
         Map keywordsMap = SVNTranslator.computeKeywords(keywords, url, author, date, rev);

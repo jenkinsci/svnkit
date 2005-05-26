@@ -24,6 +24,7 @@ public class SVNBasicClient implements ISVNEventListener {
     private SVNOptions myOptions;
     private ISVNEventListener myEventDispatcher;
     private List myPathPrefixesStack;
+    private boolean myIsIgnoreExternals;
 
     protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
         myRepositoryFactory = repositoryFactory;
@@ -34,6 +35,14 @@ public class SVNBasicClient implements ISVNEventListener {
             myOptions = new SVNOptions();
         }
         
+    }
+    
+    public void setIgnoreExternals(boolean ignore) {
+        myIsIgnoreExternals = ignore;
+    }
+    
+    public boolean isIgnoreExternals() {
+        return myIsIgnoreExternals;
     }
     
     protected SVNRepository createRepository(String url) throws SVNException {

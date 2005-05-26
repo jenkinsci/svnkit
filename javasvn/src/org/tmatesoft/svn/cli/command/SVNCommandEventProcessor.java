@@ -3,6 +3,7 @@
  */
 package org.tmatesoft.svn.cli.command;
 
+import java.io.File;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNCommand;
@@ -19,15 +20,28 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
     private boolean myIsChanged;
     private boolean myIsExternalChanged;
     private boolean myIsCheckout;
+    private boolean myIsExport;
 
     private final PrintStream myPrintStream;
 
     public SVNCommandEventProcessor(PrintStream out, boolean checkout) {
+        this(out, checkout, false);
+    }
+
+    public SVNCommandEventProcessor(PrintStream out, boolean checkout, boolean export) {
         myPrintStream = out;
         myIsCheckout = checkout;
+        myIsExport = export;
     }
 
     public void svnEvent(SVNEvent event, double progress) {
+        if (event.getErrorMessage() != null) {
+            SVNCommand.println(myPrintStream, "error: " + event.getErrorMessage());
+            myIsExternal = false;
+            myIsExternalChanged = false;
+            myIsChanged = false;
+            return;
+        }
         if (event.getAction() == SVNEventAction.UPDATE_ADD) {
             if (myIsExternal) {
                 myIsExternalChanged = true;
@@ -69,7 +83,7 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
             if (sb.toString().trim().length() != 0) {
                 if (myIsExternal) {
                     myIsExternalChanged = true;
-                } else {
+                } else { 
                     myIsChanged = true;
                 }
             }
@@ -84,16 +98,24 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
                 if (myIsChanged) {
                     if (myIsCheckout) {
                         UpdateCommand.println(myPrintStream, "Checked out revision " + event.getRevision() + ".");
+                    } else if (myIsExport) {
+                        UpdateCommand.println(myPrintStream, "Export complete.");
                     } else {
                         UpdateCommand.println(myPrintStream, "Updated to revision " + event.getRevision() + ".");
                     }
                 } else {
-                    UpdateCommand.println(myPrintStream, "At revision " + event.getRevision() + ".");
+                    if (myIsExport ) {
+                        UpdateCommand.println(myPrintStream, "Export complete.");
+                    } else {
+                        UpdateCommand.println(myPrintStream, "At revision " + event.getRevision() + ".");
+                    }
                 }
             } else {
                 if (myIsExternalChanged) {
                     if (myIsCheckout) {
                         UpdateCommand.println(myPrintStream, "Checked out external at revision " + event.getRevision() + ".");
+                    } else if (myIsExport) {
+                        UpdateCommand.println(myPrintStream, "Export complete.");
                     } else {
                         UpdateCommand.println(myPrintStream, "Updated external to revision " + event.getRevision() + ".");
                     }
@@ -106,10 +128,11 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
             }
         } else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
             UpdateCommand.println(myPrintStream);
+            String path = event.getPath().replace('/', File.separatorChar);
             if (myIsCheckout) {
-                UpdateCommand.println(myPrintStream, "Fetching external item into '" + event.getPath() + "'");
+                UpdateCommand.println(myPrintStream, "Fetching external item into '" + path + "'");
             } else {
-                UpdateCommand.println(myPrintStream, "Updating external item at '" + event.getPath() + "'");
+                UpdateCommand.println(myPrintStream, "Updating external item at '" + path + "'");
             }
             myIsExternal = true;
         } else if (event.getAction() == SVNEventAction.RESTORE) {

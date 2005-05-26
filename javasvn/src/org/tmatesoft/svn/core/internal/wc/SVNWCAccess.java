@@ -286,6 +286,23 @@ public class SVNWCAccess implements ISVNEventListener {
             return null;
         }
         Collection result = new ArrayList();
+        SVNExternalInfo[] parsed = parseExternals(directory.getPath(), externals);
+        for (int i = 0; i < parsed.length; i++) {
+            SVNExternalInfo info = addExternal(directory, parsed[i].getPath(), parsed[i].getOldURL(), parsed[i].getOldRevision());
+            result.add(info);
+        }
+        // get existing externals and update all that are not in result but in this dir.
+        for (Iterator exts = externals(); exts.hasNext();) {
+            SVNExternalInfo info = (SVNExternalInfo) exts.next();
+            if (!result.contains(info) && directory.getPath().equals(info.getOwnerPath())) {
+                info.setNewExternal(null, -1);
+            }            
+        }
+        return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
+    }
+
+    public static SVNExternalInfo[] parseExternals(String rootPath, String externals) {
+        Collection result = new ArrayList();
         for(StringTokenizer lines = new StringTokenizer(externals, "\n\r"); lines.hasMoreTokens();) {
             String line = lines.nextToken().trim();
             if (line.length() == 0 || line.startsWith("#")) {
@@ -302,7 +319,7 @@ public class SVNWCAccess implements ISVNEventListener {
             if (parts.size() < 2) {
                 continue;
             }
-            path = PathUtil.append(directory.getPath(), (String) parts.get(0));
+            path = PathUtil.append(rootPath, (String) parts.get(0));
             if (parts.size() == 2) {
                 url = (String) parts.get(1);
             } else if (parts.size() == 3 && parts.get(1).toString().startsWith("-r")) {
@@ -331,15 +348,10 @@ public class SVNWCAccess implements ISVNEventListener {
                 path = PathUtil.removeLeadingSlash(path);
                 path = PathUtil.removeTrailingSlash(path);
                 url = PathUtil.removeTrailingSlash(url);
-                SVNExternalInfo info = addExternal(directory, path, url, rev);
+                
+                SVNExternalInfo info = new SVNExternalInfo("", null, path, url, rev); 
+                    //addExternal(directory, path, url, rev);
                 result.add(info);
-            }            
-        }
-        // get existing externals and update all that are not in result but in this dir.
-        for (Iterator exts = externals(); exts.hasNext();) {
-            SVNExternalInfo info = (SVNExternalInfo) exts.next();
-            if (!result.contains(info) && directory.getPath().equals(info.getOwnerPath())) {
-                info.setNewExternal(null, -1);
             }            
         }
         return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);

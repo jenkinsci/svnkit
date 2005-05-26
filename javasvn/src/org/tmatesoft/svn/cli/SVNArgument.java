@@ -43,6 +43,7 @@ public abstract class SVNArgument {
     public static final SVNArgument STRICT = createUnaryArgument(new String[] { "--strict" });
     public static final SVNArgument NO_UNLOCK = createUnaryArgument(new String[] { "--no-unlock" });
     public static final SVNArgument RELOCATE = createUnaryArgument(new String[] { "--relocate" });
+    public static final SVNArgument EOL_STYLE = createStringArgument(new String[] { "--native-eol" });
 
     public static SVNArgument findArgument(String name) {
         for (Iterator arguments = ourArguments.iterator(); arguments.hasNext();) {
@@ -80,6 +81,7 @@ public abstract class SVNArgument {
         ourArguments.add(SVNArgument.NO_UNLOCK);
         ourArguments.add(SVNArgument.NO_AUTH_CACHE);
         ourArguments.add(SVNArgument.RELOCATE);
+        ourArguments.add(SVNArgument.EOL_STYLE);
     }
 
     private static SVNArgument createStringArgument(String[] names) {

@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
@@ -152,6 +153,15 @@ public abstract class SVNCommand {
         return -1;
     }
     
+    protected final static SVNRevision parseRevision(SVNCommandLine commandLine) throws SVNException {
+        if (commandLine.hasArgument(SVNArgument.REVISION)) {
+            final String revStr = (String) commandLine.getArgumentValue(SVNArgument.REVISION);
+            DebugLog.log("parsing revision: " + revStr);
+            return SVNRevision.parse(revStr);
+        }
+        return SVNRevision.UNDEFINED;        
+    }
+    
     protected final static long getRevisionNumber(String rev, String path, ISVNWorkspace ws, SVNRepository repository) throws SVNException {
         if (rev == null) {
             return -2;
@@ -256,6 +266,7 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "log" }, "org.tmatesoft.svn.cli.command.LogCommand");
         ourCommands.put(new String[] { "switch", "sw" }, "org.tmatesoft.svn.cli.command.SwitchCommand");
         ourCommands.put(new String[] { "diff", "di" }, "org.tmatesoft.svn.cli.command.DiffCommand");
+        ourCommands.put(new String[] { "export" }, "org.tmatesoft.svn.cli.command.ExportCommand");
 
         ourCommands.put(new String[] { "lock" }, "org.tmatesoft.svn.cli.command.LockCommand");
         ourCommands.put(new String[] { "unlock" }, "org.tmatesoft.svn.cli.command.UnlockCommand");

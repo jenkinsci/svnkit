@@ -3,6 +3,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.File;
+
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -32,7 +34,7 @@ public class SVNEventFactory {
     }
 
     public static SVNEvent createUpdateCompletedEvent(SVNWCAccess source, long revision) {
-        return new SVNEvent(source, source.getTarget(), "", 
+        return new SVNEvent(source, source != null ? source.getTarget() : null, "", 
                 SVNEventAction.UPDATE_COMPLETED, null, 
                 revision, null, null, null, null, null, null);
     }
@@ -48,6 +50,12 @@ public class SVNEventFactory {
         return new SVNEvent(source, dir, entry.getName(), 
                 SVNEventAction.UPDATE_ADD, entry.getKind(), 
                 entry.getRevision(), null, null, null, null, null, null);
+    }
+
+    public static SVNEvent createExportAddedEvent(File root, File file) {
+        return new SVNEvent(root, file, 
+                SVNEventAction.UPDATE_ADD, null, 
+                -1, null, null, null, null, null, null);
     }
 
     public static SVNEvent createUpdateDeleteEvent(SVNWCAccess source, SVNDirectory dir, String name) {
