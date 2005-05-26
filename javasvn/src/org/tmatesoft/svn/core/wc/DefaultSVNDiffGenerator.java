@@ -92,6 +92,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     public void displayFileDiff(String path, File file1, File file2,
             String rev1, String rev2, String mimeType1, String mimeType2,
             OutputStream result) throws SVNException {
+        rev1 = rev1 == null ? WC_REVISION_LABEL : rev1;
+        rev2 = rev2 == null ? WC_REVISION_LABEL : rev2;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
             bos.write("Index: ".getBytes("UTF-8"));

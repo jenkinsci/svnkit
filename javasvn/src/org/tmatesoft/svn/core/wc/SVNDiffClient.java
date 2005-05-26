@@ -40,7 +40,7 @@ public class SVNDiffClient extends SVNBasicClient {
         return myDiffGenerator;
     }
     
-    public void doDiff(File path, final boolean recursive, final boolean useAncestry, final boolean force, final OutputStream result) throws SVNException {
+    public void doDiff(File path, boolean recursive, final boolean useAncestry, boolean force, final OutputStream result) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(path);
         wcAccess.open(true, recursive);
         try {
@@ -65,13 +65,40 @@ public class SVNDiffClient extends SVNBasicClient {
         // diff externals?
     }
 
+    public void doDiff(File path, SVNRevision revision1, SVNRevision revision2, 
+            boolean recursive, boolean useAncestry, boolean force,
+            OutputStream result) throws SVNException {
+        if (revision1 == null || revision1 == SVNRevision.UNDEFINED) {
+            revision1 = SVNRevision.BASE;
+        }
+        if (revision2 == null || revision2 == SVNRevision.UNDEFINED) {
+            revision2 = SVNRevision.WORKING;
+        }
+        if (revision1 == revision2) {
+            // nothing to compare.
+            return;
+        } else if (revision1 == SVNRevision.BASE && revision2 == SVNRevision.WORKING) {
+            // case0: r1 == BASE, r2 == WORKING => wc:wc diff
+            doDiff(path, recursive, useAncestry, force, result);
+        } else if (revision1 == SVNRevision.BASE && revision2 != SVNRevision.WORKING) {
+            // case1.1: r1 == BASE, r2 != WORKING => wc:url diff
+        } else if (revision2 == SVNRevision.BASE && revision1 != SVNRevision.WORKING) {
+            // case1.2: r1 != WORKING, r2 == BASE => url:wc diff
+        } else if (revision1 != SVNRevision.BASE && revision1 != SVNRevision.WORKING 
+                && revision2 != SVNRevision.BASE && revision2 != SVNRevision.WORKING) {
+            // case2: url:url diff.
+        } else {
+            // not valid case.
+            SVNErrorManager.error("invalid revisions range: " + revision1 + ":" + revision2);
+        }
+    }
+
     // wc-repos: only BASE:REV is supported, base is compared to rev
     // run repos.diff BASE_URL:REPOS_URL, create tmp files when needed.
     // iterate over wc comparing base files to tmp files.
     public void doDiff(File path, String url, SVNRevision pegRevision, SVNRevision revision, 
             boolean recursive, boolean useAncestry, boolean force,
             OutputStream result) {
-        
     }
     
     // repos-repos: REV:REV
