@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -25,6 +26,8 @@ public class SVNBasicClient implements ISVNEventListener {
     private ISVNEventListener myEventDispatcher;
     private List myPathPrefixesStack;
     private boolean myIsIgnoreExternals;
+    private boolean myIsDoNotSleepForTimeStamp;
+    private boolean myIsCommandRunning;
 
     protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
         myRepositoryFactory = repositoryFactory;
@@ -34,7 +37,6 @@ public class SVNBasicClient implements ISVNEventListener {
         if (myOptions == null)  {
             myOptions = new SVNOptions();
         }
-        
     }
     
     public void setIgnoreExternals(boolean ignore) {
@@ -43,6 +45,28 @@ public class SVNBasicClient implements ISVNEventListener {
     
     public boolean isIgnoreExternals() {
         return myIsIgnoreExternals;
+    }
+    
+    public void runCommand(ISVNRunnable command) throws SVNException {
+        try {
+            myIsCommandRunning = true;
+            command.run();
+        } finally {
+            myIsCommandRunning = false;
+            SVNFileUtil.sleepForTimestamp();
+        }
+    }
+    
+    protected void setDoNotSleepForTimeStamp(boolean doNotSleep) {
+        myIsDoNotSleepForTimeStamp = doNotSleep;
+    }
+    
+    protected boolean isCommandRunning() {
+        return myIsCommandRunning;
+    }
+
+    protected boolean isDoNotSleepForTimeStamp() {
+        return isCommandRunning() || myIsDoNotSleepForTimeStamp;
     }
     
     protected SVNRepository createRepository(String url) throws SVNException {

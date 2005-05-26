@@ -41,7 +41,6 @@ import org.tmatesoft.svn.util.TimeUtil;
 
 public class SVNUpdateClient extends SVNBasicClient {
     
-    private boolean myIsDoNotSleepForTimeStamp;
 
     public SVNUpdateClient(final ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
         super(new ISVNRepositoryFactory() {
@@ -79,7 +78,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             return editor.getTargetRevision();
         } finally {            
             wcAccess.close(true, recursive);
-            if (!myIsDoNotSleepForTimeStamp) {
+            if (!isDoNotSleepForTimeStamp()) {
                 SVNFileUtil.sleepForTimestamp();
             }            
         }
@@ -105,7 +104,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             return editor.getTargetRevision();
         } finally {
             wcAccess.close(true, recursive);
-            if (!myIsDoNotSleepForTimeStamp) {
+            if (!isDoNotSleepForTimeStamp()) {
                 SVNFileUtil.sleepForTimestamp();
             }            
         }
@@ -134,7 +133,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         } else if (targetNodeKind == SVNNodeKind.NONE) {
             SVNErrorManager.error("svn: URL '" + url + "' doesn't exist");
         }
-        myIsDoNotSleepForTimeStamp = true;
+        setDoNotSleepForTimeStamp(true);
         long result = -1;
         try {
             if (!dstPath.exists() || (dstPath.isDirectory() && !SVNWCAccess.isVersionedDirectory(dstPath))) {
@@ -151,8 +150,10 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNErrorManager.error(0, null);
             }
         } finally {
-            SVNFileUtil.sleepForTimestamp();
-            myIsDoNotSleepForTimeStamp = false;
+            if (!isCommandRunning()) {
+                SVNFileUtil.sleepForTimestamp();
+            }
+            setDoNotSleepForTimeStamp(false);
         }
         return result;
     }
@@ -196,7 +197,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNDirectory targetDir = createVersionedDirectory(dstPath, dstURL, uuid, revNumber);
                 SVNWCAccess wcAccess2 = new SVNWCAccess(targetDir, targetDir, "");
                 wcAccess2.open(true, true);
-                myIsDoNotSleepForTimeStamp = true;
+                setDoNotSleepForTimeStamp(true);
                 try {
                     SVNReporter reporter = new SVNReporter(wcAccess2, true);
                     SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess2, null, true);
@@ -213,7 +214,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                         SVNErrorManager.error(0, null);
                     }
                 } finally {
-                    myIsDoNotSleepForTimeStamp = false;
+                    setDoNotSleepForTimeStamp(false);
                     wcAccess2.close(true, true);
                 }
             } else {
@@ -567,8 +568,7 @@ public class SVNUpdateClient extends SVNBasicClient {
     }
     
     private void handleExternals(SVNWCAccess wcAccess) throws SVNException {
-        myIsDoNotSleepForTimeStamp = true;
-    
+        setDoNotSleepForTimeStamp(true);
         try {
             for(Iterator externals = wcAccess.externals(); externals.hasNext();) {
                 SVNExternalInfo external = (SVNExternalInfo) externals.next();
@@ -627,7 +627,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
         } finally {
             setEventPathPrefix(null);
-            myIsDoNotSleepForTimeStamp = false;
+            setDoNotSleepForTimeStamp(false);
         }
     }
 
