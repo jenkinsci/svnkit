@@ -244,11 +244,12 @@ public class SVNReporter implements ISVNReporterBaton {
             
 
 //            File dst = new File("C:\\i\\test5\\test&file.txt");
-            File dst = new File("C:\\i\\test5\\test&file.txt");
+            File dst = new File("C:\\i\\test5");
 //            String url = "http://svn.collab.net/repos/svn/tags/1.2.0/";
             
             // should report an error.
-            differ.doDiff(dst, SVNRevision.BASE, SVNRevision.create(21), true, false, false, System.out);
+//            differ.getDiffGenerator().setDiffDeleted(false);
+            differ.doDiff(dst, SVNRevision.BASE, SVNRevision.create(1), true, false, false, System.out);
 //            updater.doUpdate(dst, SVNRevision.HEAD, true);
         } catch (Throwable e) {
             e.printStackTrace();

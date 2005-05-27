@@ -36,7 +36,7 @@ public class SVNDiffClient extends SVNBasicClient {
         myDiffGenerator = diffGenerator;
     }
     
-    protected ISVNDiffGenerator getDiffGenerator() {
+    public ISVNDiffGenerator getDiffGenerator() {
         if (myDiffGenerator == null) {
             myDiffGenerator = new DefaultSVNDiffGenerator();
         }

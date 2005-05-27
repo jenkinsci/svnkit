@@ -18,6 +18,10 @@ public interface ISVNDiffGenerator {
     public void setEncoding(String encoding);
     
     public String getEncoding();
+
+    public void setDiffDeleted(boolean isDiffDeleted);
+    
+    public boolean isDiffDeleted();
     
     public String getDisplayPath(File file);
     

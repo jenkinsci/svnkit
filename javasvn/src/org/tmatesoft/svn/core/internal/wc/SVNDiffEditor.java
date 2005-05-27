@@ -78,9 +78,8 @@ public class SVNDiffEditor implements ISVNEditor {
             if (myIsReverseDiff) {
                 // deleted
                 File baseFile = dir.getBaseFile(name, false);
-                File emptyFile = dir.getFile(".svn/empty-file", false);
                 String revStr = "(revision " + myTargetRevision + ")";
-                myDiffGenerator.displayFileDiff(path, baseFile, emptyFile, revStr, null, baseMimeType, wcMimeType, myResult);
+                myDiffGenerator.displayFileDiff(path, baseFile, null, revStr, null, baseMimeType, wcMimeType, myResult);
             } else {
                 // added
                 File baseFile = dir.getBaseFile(name, false);
@@ -299,7 +298,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 // repos->empty
                 myDiffGenerator.displayFileDiff(myCurrentFile.myPath, 
                         myCurrentFile.myFile,
-                        myCurrentFile.myBaseFile,
+                        null,
                         Long.toString(myTargetRevision), Long.toString(myTargetRevision),
                         reposMimeType, null, myResult);
                 // TODO display prop diff.
@@ -420,7 +419,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 // display text diff for deleted file.
                 String mimeType1 = (String) baseProps.get(SVNProperty.MIME_TYPE);
                 String rev1 = "(revision " + Long.toString(entry.getRevision()) + ")";
-                myDiffGenerator.displayFileDiff(fullPath, dir.getBaseFile(name, false), dir.getFile(".svn/empty-file", false), rev1, null, mimeType1, null, result);
+                myDiffGenerator.displayFileDiff(fullPath, dir.getBaseFile(name, false), null, rev1, null, mimeType1, null, result);
                 if (deleted) {
                     return;
                 }

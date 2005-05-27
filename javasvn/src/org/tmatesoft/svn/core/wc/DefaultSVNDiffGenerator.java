@@ -3,6 +3,7 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,15 +31,30 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     protected static final byte[] HEADER_SEPARATOR =   "===================================================================".getBytes();
     protected static final byte[] EOL = SVNTranslator.getEOL("native");
     protected static final String WC_REVISION_LABEL = "(working copy)";
+    
+    protected static final InputStream EMPTY_FILE_IS = new ByteArrayInputStream(new byte[0]);
 
     private boolean myIsForcedBinaryDiff;
     private String myAnchorPath1;
     private String myAnchorPath2;
     private String myEncoding;
+    private boolean myIsDiffDeleted;
+    
+    public DefaultSVNDiffGenerator() {
+        myIsDiffDeleted = true;
+    }
 
     public void init(String anchorPath1, String anchorPath2) {
         myAnchorPath1 = anchorPath1;
         myAnchorPath2 = anchorPath2;
+    }
+    
+    public void setDiffDeleted(boolean isDiffDeleted) {
+        myIsDiffDeleted = isDiffDeleted;
+    }
+    
+    public boolean isDiffDeleted() {
+        return myIsDiffDeleted;
     }
 
     public String getDisplayPath(File file) {
@@ -97,6 +113,17 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         rev2 = rev2 == null ? WC_REVISION_LABEL : rev2;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
+            if (file2 == null && !isDiffDeleted()) {
+                bos.write("Index: ".getBytes(getEncoding()));
+                bos.write(path.getBytes(getEncoding()));
+                bos.write(" (deleted)".getBytes(getEncoding()));
+                bos.write(EOL);
+                bos.write(HEADER_SEPARATOR);
+                bos.write(EOL);
+                bos.close();
+                bos.writeTo(result);
+                return;
+            }
             bos.write("Index: ".getBytes(getEncoding()));
             bos.write(path.getBytes(getEncoding()));
             bos.write(EOL);
@@ -173,8 +200,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         InputStream is1 = null;
         InputStream is2 = null;
         try {
-            is1 = new FileInputStream(file1);
-            is2 = new FileInputStream(file2);
+            is1 = file1 == null ? EMPTY_FILE_IS : new FileInputStream(file1);
+            is2 = file2 == null ? EMPTY_FILE_IS : new FileInputStream(file2);
             
             QDiffUniGenerator.setup();
             Map generatorProperties = new HashMap();
@@ -222,5 +249,4 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         }
         return System.getProperty("file.encoding");
     }
-
 }
