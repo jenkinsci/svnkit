@@ -70,10 +70,14 @@ public class SVNDirectory {
         try {
             created = getLockFile().createNewFile();
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: can't create lock file for '" + getRoot().getAbsolutePath() + "'.");
         }
         if (!created) {
-            SVNErrorManager.error(0, null);
+            if (getLockFile().exists()) {
+                SVNErrorManager.error("svn: can't create lock file for '" + getRoot().getAbsolutePath() + "'; directory is already locked.");
+            } else {
+                SVNErrorManager.error("svn: can't create lock file for '" + getRoot().getAbsolutePath() + "'.");
+            }
         }
         return created;
     }
