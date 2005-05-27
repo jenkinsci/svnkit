@@ -93,12 +93,12 @@ public class SVNDiffClient extends SVNBasicClient {
             doDiff(path, recursive, useAncestry, force, result);
         } else if (revision1 == SVNRevision.BASE && revision2 != SVNRevision.WORKING) {
             // case1.1: r1 == BASE, r2 != WORKING => wc:url diff
-            // get wc url and rev number 
-            // run doDiff(file, url, ...).
+            // compare -rBASE:revNumber -> do update of wc to revNumber 
             String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
             doDiff(path, url, revision2, revision2, recursive, useAncestry, force, result);
         } else if (revision2 == SVNRevision.BASE && revision1 != SVNRevision.WORKING) {
-            // case1.2: r1 != WORKING, r2 == BASE => url:wc diff
+            // compare -rrevNumber:BASE -> do url:url diff. 
+            // create repos for revNumber, run diff against local url:rev
             String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
             doDiff(path, url, revision2, revision2, recursive, useAncestry, force, result);
         } else if (revision1 != SVNRevision.BASE && revision1 != SVNRevision.WORKING 
@@ -133,8 +133,8 @@ public class SVNDiffClient extends SVNBasicClient {
             getDiffGenerator().init(getDiffGenerator().getDisplayPath(path), getDiffGenerator().getDisplayPath(path));
             getDiffGenerator().setForcedBinaryDiff(force);
             
-            // run 'update' here, not diff.
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, false, result);
+            // run 'update' here, not diff?
+            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, true, true, result);
             repos.update(revNumber, target, recursive, reporter, editor);
         } finally {
             wcAccess.close(true, recursive);

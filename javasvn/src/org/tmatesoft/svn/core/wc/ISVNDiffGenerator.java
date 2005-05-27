@@ -15,6 +15,10 @@ public interface ISVNDiffGenerator {
     
     public void setForcedBinaryDiff(boolean forced);
     
+    public void setEncoding(String encoding);
+    
+    public String getEncoding();
+    
     public String getDisplayPath(File file);
     
     public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException;

@@ -34,6 +34,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     private boolean myIsForcedBinaryDiff;
     private String myAnchorPath1;
     private String myAnchorPath2;
+    private String myEncoding;
 
     public void init(String anchorPath1, String anchorPath2) {
         myAnchorPath1 = anchorPath1;
@@ -56,7 +57,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
             bos.write(EOL);
-            bos.write(("Property changes on: " + path).getBytes("UTF-8"));
+            bos.write(("Property changes on: " + path).getBytes(getEncoding()));
             bos.write(EOL);
             bos.write(PROPERTIES_SEPARATOR);
             bos.write(EOL);
@@ -64,16 +65,16 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 String name = (String) changedPropNames.next();
                 String originalValue = baseProps != null ? (String) baseProps.get(name) : null;
                 String newValue = (String) diff.get(name);
-                bos.write(("Name: " + name).getBytes("UTF-8"));
+                bos.write(("Name: " + name).getBytes(getEncoding()));
                 bos.write(EOL);
                 if (originalValue != null) {
-                    bos.write("   - ".getBytes("UTF-8"));
-                    bos.write(originalValue.getBytes("UTF-8"));
+                    bos.write("   - ".getBytes(getEncoding()));
+                    bos.write(originalValue.getBytes(getEncoding()));
                     bos.write(EOL);
                 }
                 if (newValue != null) {
-                    bos.write("   + ".getBytes("UTF-8"));
-                    bos.write(newValue.getBytes("UTF-8"));
+                    bos.write("   + ".getBytes(getEncoding()));
+                    bos.write(newValue.getBytes(getEncoding()));
                     bos.write(EOL);
                 }
             }
@@ -96,8 +97,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         rev2 = rev2 == null ? WC_REVISION_LABEL : rev2;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
-            bos.write("Index: ".getBytes("UTF-8"));
-            bos.write(path.getBytes("UTF-8"));
+            bos.write("Index: ".getBytes(getEncoding()));
+            bos.write(path.getBytes(getEncoding()));
             bos.write(EOL);
             bos.write(HEADER_SEPARATOR);
             bos.write(EOL);
@@ -112,27 +113,27 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         }
         if (!isForcedBinaryDiff() && (isBinary(mimeType1) || isBinary(mimeType2))) {
             try {
-                bos.write("Cannot display: file marked as binary type.".getBytes("UTF-8"));
+                bos.write("Cannot display: file marked as binary type.".getBytes(getEncoding()));
                 bos.write(EOL);
                 if (isBinary(mimeType1) && !isBinary(mimeType2)) {
-                    bos.write("svn:mime-type = ".getBytes("UTF-8"));
-                    bos.write(mimeType1.getBytes("UTF-8"));
+                    bos.write("svn:mime-type = ".getBytes(getEncoding()));
+                    bos.write(mimeType1.getBytes(getEncoding()));
                     bos.write(EOL);
                 } else if (!isBinary(mimeType1) && isBinary(mimeType2)) {
-                    bos.write("svn:mime-type = ".getBytes("UTF-8"));
-                    bos.write(mimeType2.getBytes("UTF-8"));
+                    bos.write("svn:mime-type = ".getBytes(getEncoding()));
+                    bos.write(mimeType2.getBytes(getEncoding()));
                     bos.write(EOL);
                 } else if (isBinary(mimeType1) && isBinary(mimeType2)) {
                     if (mimeType1.equals(mimeType2)) {
-                        bos.write("svn:mime-type = ".getBytes("UTF-8"));
-                        bos.write(mimeType2.getBytes("UTF-8"));
+                        bos.write("svn:mime-type = ".getBytes(getEncoding()));
+                        bos.write(mimeType2.getBytes(getEncoding()));
                         bos.write(EOL);
                     } else {
-                        bos.write("svn:mime-type = (".getBytes("UTF-8"));
-                        bos.write(mimeType1.getBytes("UTF-8"));
-                        bos.write(", ".getBytes("UTF-8"));
-                        bos.write(mimeType2.getBytes("UTF-8"));
-                        bos.write(")".getBytes("UTF-8"));
+                        bos.write("svn:mime-type = (".getBytes(getEncoding()));
+                        bos.write(mimeType1.getBytes(getEncoding()));
+                        bos.write(", ".getBytes(getEncoding()));
+                        bos.write(mimeType2.getBytes(getEncoding()));
+                        bos.write(")".getBytes(getEncoding()));
                         bos.write(EOL);
                     }   
                 }
@@ -150,15 +151,15 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         }
         // put header fields.
         try {
-            bos.write("--- ".getBytes("UTF-8"));
-            bos.write(path.getBytes("UTF-8"));
-            bos.write("\t".getBytes("UTF-8"));
-            bos.write(rev1.getBytes("UTF-8"));
+            bos.write("--- ".getBytes(getEncoding()));
+            bos.write(path.getBytes(getEncoding()));
+            bos.write("\t".getBytes(getEncoding()));
+            bos.write(rev1.getBytes(getEncoding()));
             bos.write(EOL);
-            bos.write("+++ ".getBytes("UTF-8"));
-            bos.write(path.getBytes("UTF-8"));
-            bos.write("\t".getBytes("UTF-8"));
-            bos.write(rev2.getBytes("UTF-8"));
+            bos.write("+++ ".getBytes(getEncoding()));
+            bos.write(path.getBytes(getEncoding()));
+            bos.write("\t".getBytes(getEncoding()));
+            bos.write(rev2.getBytes(getEncoding()));
             bos.write(EOL);
         } catch (IOException e) {
             try {
@@ -176,9 +177,11 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             is2 = new FileInputStream(file2);
             
             QDiffUniGenerator.setup();
-            QDiffGenerator generator = QDiffManager.getDiffGenerator(QDiffUniGenerator.TYPE, new HashMap());
-            Writer writer = new OutputStreamWriter(bos, "UTF-8");
-            QDiffManager.generateTextDiff(is1, is2, "UTF-8", writer, generator);
+            Map generatorProperties = new HashMap();
+            generatorProperties.put(QDiffUniGenerator.COMPARE_EOL_PROPERTY, Boolean.TRUE.toString());
+            QDiffGenerator generator = QDiffManager.getDiffGenerator(QDiffUniGenerator.TYPE, generatorProperties);
+            Writer writer = new OutputStreamWriter(bos, getEncoding());
+            QDiffManager.generateTextDiff(is1, is2, getEncoding(), writer, generator);
             writer.flush();
             writer.close();
         } catch (IOException e) {
@@ -207,6 +210,17 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
     protected static boolean isBinary(String mimetype) {
         return mimetype != null && !mimetype.startsWith("text/");
+    }
+
+    public void setEncoding(String encoding) {
+        myEncoding = encoding;
+    }
+
+    public String getEncoding() {
+        if (myEncoding != null) {
+            return myEncoding;
+        }
+        return System.getProperty("file.encoding");
     }
 
 }
