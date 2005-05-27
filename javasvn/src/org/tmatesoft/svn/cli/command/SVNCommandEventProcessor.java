@@ -92,7 +92,7 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
             } else {
                 sb.append(" ");
             } 
-            UpdateCommand.println(myPrintStream, sb.toString() + " " + UpdateCommand.getPath(event.getFile()));
+            UpdateCommand.println(myPrintStream, sb.toString() + "  " + UpdateCommand.getPath(event.getFile()));
         } else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {                    
             if (!myIsExternal) {
                 if (myIsChanged) {

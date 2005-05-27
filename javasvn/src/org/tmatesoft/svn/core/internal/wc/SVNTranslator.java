@@ -367,7 +367,7 @@ public class SVNTranslator {
                 for(int j = i + 1; j < i + 6 && j < value.length(); j++) {
                     if (value.charAt(j) == ';' && j - i > 1) {
                         // try to uescape from i + 1 to j - 1;
-                        String escape = value.substring(i + 1, j);
+                        String escape = value.substring(i, j + 1); // full token like &..;
                         replacement = (String) XML_UNESCAPE_MAP.get(escape);
                         if (replacement != null) {
                             result.append(replacement);

@@ -134,7 +134,7 @@ public class SVNDiffClient extends SVNBasicClient {
             getDiffGenerator().setForcedBinaryDiff(force);
             
             // run 'update' here, not diff.
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry);
+            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, false, result);
             repos.update(revNumber, target, recursive, reporter, editor);
         } finally {
             wcAccess.close(true, recursive);
