@@ -31,6 +31,8 @@ public abstract class SVNArgument {
     public static final SVNArgument NON_RECURSIVE = createUnaryArgument(new String[] { "--non-recursive", "-N" });
     public static final SVNArgument RECURSIVE = createUnaryArgument(new String[] { "--recursive", "-R" });
     public static final SVNArgument VERBOSE = createUnaryArgument(new String[] { "--verbose", "-v" });
+    public static final SVNArgument NO_DIFF_DELETED = createUnaryArgument(new String[] {"--no-diff-deleted"});
+    public static final SVNArgument USE_ANCESTRY = createUnaryArgument(new String[] {"--notice-ancestry"});
     public static final SVNArgument QUIET = createUnaryArgument(new String[] { "--quiet", "-q" });
     public static final SVNArgument SHOW_UPDATES = createUnaryArgument(new String[] { "--show-updates", "-u" });
     public static final SVNArgument NO_IGNORE = createUnaryArgument(new String[] { "--no-ignore" });
@@ -82,6 +84,8 @@ public abstract class SVNArgument {
         ourArguments.add(SVNArgument.NO_AUTH_CACHE);
         ourArguments.add(SVNArgument.RELOCATE);
         ourArguments.add(SVNArgument.EOL_STYLE);
+        ourArguments.add(SVNArgument.NO_DIFF_DELETED);
+        ourArguments.add(SVNArgument.USE_ANCESTRY);
     }
 
     private static SVNArgument createStringArgument(String[] names) {

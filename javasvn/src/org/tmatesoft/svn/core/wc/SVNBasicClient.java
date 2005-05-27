@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -70,6 +71,9 @@ public class SVNBasicClient implements ISVNEventListener {
     }
     
     protected SVNRepository createRepository(String url) throws SVNException {
+        if (myRepositoryFactory == null) {
+            return SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
+        }
         return myRepositoryFactory.createRepository(url);
     }
     

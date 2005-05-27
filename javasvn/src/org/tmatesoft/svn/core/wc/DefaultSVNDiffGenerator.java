@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
 import de.regnis.q.sequence.line.diff.QDiffManager;
@@ -42,11 +43,12 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     
     public DefaultSVNDiffGenerator() {
         myIsDiffDeleted = true;
+        init("", "");
     }
 
     public void init(String anchorPath1, String anchorPath2) {
-        myAnchorPath1 = anchorPath1;
-        myAnchorPath2 = anchorPath2;
+        myAnchorPath1 = anchorPath1.replace(File.separatorChar, '/');
+        myAnchorPath2 = anchorPath2.replace(File.separatorChar, '/');
     }
     
     public void setDiffDeleted(boolean isDiffDeleted) {
@@ -58,7 +60,12 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
 
     public String getDisplayPath(File file) {
-        return file.getAbsolutePath();
+        String fullPath = file.getAbsolutePath().replace(File.separatorChar, '/');
+        if (fullPath.startsWith(myAnchorPath1)) {
+            fullPath = fullPath.substring(myAnchorPath1.length());
+            fullPath = PathUtil.removeLeadingSlash(fullPath);
+        }
+        return fullPath;
     }
     
     public void setForcedBinaryDiff(boolean forced) {

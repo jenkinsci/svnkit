@@ -69,6 +69,7 @@ public class SVNDiffEditor implements ISVNEditor {
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
         String name = PathUtil.tail(path);
         SVNEntry entry = dir.getEntries().getEntry(name);
+        String displayPath = myDiffGenerator.getDisplayPath(new File(dir.getRoot(), name));
         if (entry != null && entry.isFile()) {
             SVNProperties baseProps = dir.getBaseProperties(name, false);
             SVNProperties wcProps = dir.getProperties(name, false);
@@ -79,12 +80,13 @@ public class SVNDiffEditor implements ISVNEditor {
                 // deleted
                 File baseFile = dir.getBaseFile(name, false);
                 String revStr = "(revision " + myTargetRevision + ")";
-                myDiffGenerator.displayFileDiff(path, baseFile, null, revStr, null, baseMimeType, wcMimeType, myResult);
+                myDiffGenerator.displayFileDiff(displayPath, baseFile, null, revStr, null, baseMimeType, wcMimeType, myResult);
             } else {
                 // added
                 File baseFile = dir.getBaseFile(name, false);
                 File emptyFile = dir.getFile(".svn/empty-file", false);
-                myDiffGenerator.displayFileDiff(path, emptyFile, baseFile, "(revision 0)", Long.toString(entry.getRevision()), wcMimeType, baseMimeType, myResult);
+                String revStr = "(revision " + entry.getRevision() + ")";
+                myDiffGenerator.displayFileDiff(displayPath, emptyFile, baseFile, "(revision 0)", revStr, wcMimeType, baseMimeType, myResult);
             }
             myCurrentDirectory.myComparedEntries.add(name);
         } else if (entry != null && entry.isDirectory()) {
@@ -286,20 +288,23 @@ public class SVNDiffEditor implements ISVNEditor {
         if (dir != null) {
             entry = dir.getEntries().getEntry(fileName);
         }
+        String displayPath = myDiffGenerator.getDisplayPath(new File(myWCAccess.getAnchor().getRoot(), myCurrentFile.myPath));
         if (myCurrentFile.myIsAdded) {
             if (myIsReverseDiff) {
                 // empty->repos
-                myDiffGenerator.displayFileDiff(myCurrentFile.myPath, 
+                String revStr = entry != null ? "(revision " + entry.getRevision() + ")" : null;
+                myDiffGenerator.displayFileDiff(displayPath, 
                         myCurrentFile.myBaseFile,
                         myCurrentFile.myFile,
-                        "(revision 0)", entry != null ? Long.toString(entry.getRevision()) : null,
+                        "(revision 0)", revStr,
                                 null, reposMimeType, myResult);
             } else {
                 // repos->empty
-                myDiffGenerator.displayFileDiff(myCurrentFile.myPath, 
+                String revStr = "(revision " + myTargetRevision + ")";
+                myDiffGenerator.displayFileDiff(displayPath, 
                         myCurrentFile.myFile,
                         null,
-                        Long.toString(myTargetRevision), Long.toString(myTargetRevision),
+                        revStr, null,
                         reposMimeType, null, myResult);
                 // TODO display prop diff.
             }
@@ -316,10 +321,10 @@ public class SVNDiffEditor implements ISVNEditor {
                 }
                 String revStr = "(revision " + myTargetRevision + ")";
                 if (myIsReverseDiff) {
-                    myDiffGenerator.displayFileDiff(myCurrentFile.myPath, myCurrentFile.myBaseFile, myCurrentFile.myFile,
+                    myDiffGenerator.displayFileDiff(displayPath, myCurrentFile.myBaseFile, myCurrentFile.myFile,
                             null, revStr, wcMimeType, reposMimeType, myResult);
                 } else {
-                    myDiffGenerator.displayFileDiff(myCurrentFile.myPath, myCurrentFile.myFile, myCurrentFile.myBaseFile,
+                    myDiffGenerator.displayFileDiff(displayPath, myCurrentFile.myFile, myCurrentFile.myBaseFile,
                             revStr, null, reposMimeType, wcMimeType, myResult);
                 }
                 if (myCurrentFile.myBaseFile != null && !myCurrentFile.myIsScheduledForDeletion &&
@@ -334,7 +339,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 if (!myIsReverseDiff) {
                     reversePropChanges(base, diff);
                 }
-                myDiffGenerator.displayPropDiff(myCurrentFile.myPath, base, diff, myResult);
+                myDiffGenerator.displayPropDiff(displayPath, base, diff, myResult);
             }
         }
     }
@@ -383,6 +388,10 @@ public class SVNDiffEditor implements ISVNEditor {
             if ("".equals(entry.getName())) {
                 continue;
             }
+            if (info.myComparedEntries.contains(entry.getName())) {
+                continue;
+            }
+            info.myComparedEntries.add(entry.getName());
             if (entry.isDirectory()) {
                 // recurse here.
                 SVNDirectoryInfo childInfo = createDirInfo(info, PathUtil.append(info.myPath, entry.getName()), false);
@@ -390,9 +399,6 @@ public class SVNDiffEditor implements ISVNEditor {
                 if (dir != null) {
                     localDirectoryDiff(childInfo, isAdded, myResult);
                 }
-                continue;
-            }
-            if (info.myComparedEntries.contains(entry.getName())) {
                 continue;
             }
             String name = entry.getName();
@@ -433,8 +439,8 @@ public class SVNDiffEditor implements ISVNEditor {
 
                     String mimeType1 = null;
                     String mimeType2 = props.getPropertyValue(SVNProperty.MIME_TYPE);
-                    String rev1 = "(revision " + Long.toString(entry.getRevision()) + ")";
-                    String rev2 = rev1;
+                    String rev2 = "(revision " + Long.toString(entry.getRevision()) + ")";
+                    String rev1 = "(revision 0)";
 
                     myDiffGenerator.displayFileDiff(fullPath, dir.getFile(".svn/empty-file", false), tmpFile, rev1, rev2, mimeType1, mimeType2, result);
                     if (propDiff != null && propDiff.size() > 0) {

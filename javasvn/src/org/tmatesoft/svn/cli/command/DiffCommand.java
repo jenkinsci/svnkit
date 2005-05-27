@@ -20,6 +20,7 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
  * @author TMate Software Ltd.
@@ -27,22 +28,35 @@ import org.tmatesoft.svn.core.wc.SVNDiffClient;
 public class DiffCommand extends SVNCommand {
 
 	public void run(final PrintStream out, PrintStream err) throws SVNException {
-		if (getCommandLine().getPathCount() != 1) {
-			err.println("'diff' needs exactly one path to diff");
-			return;
-		}
-
-		final String absolutePath = getCommandLine().getPathAt(0);
-        SVNDiffClient differ = new SVNDiffClient(null, null, null);
+        SVNDiffClient differ = new SVNDiffClient(getCredentialsProvider(), null);
         differ.setDiffGenerator(new DefaultSVNDiffGenerator() {
             public String getDisplayPath(File file) {
                 return getPath(file).replace(File.separatorChar, '/');
             }
         });
-        differ.doDiff(new File(absolutePath).getAbsoluteFile(), 
-                !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE),
-                false,
-                getCommandLine().hasArgument(SVNArgument.FORCE),
-                out);
+        boolean useAncestry = getCommandLine().hasArgument(SVNArgument.USE_ANCESTRY);
+        boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
+        differ.getDiffGenerator().setDiffDeleted(!getCommandLine().hasArgument(SVNArgument.NO_DIFF_DELETED));
+        differ.getDiffGenerator().setForcedBinaryDiff(getCommandLine().hasArgument(SVNArgument.FORCE));
+        
+        // now supports only '-rN:M target' case, when targets are wc paths
+        if (getCommandLine().hasPaths()) {
+            SVNRevision rN = SVNRevision.UNDEFINED;
+            SVNRevision rM = SVNRevision.UNDEFINED;
+            String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
+            if (revStr != null && revStr.indexOf(':') > 0) {
+                rN = SVNRevision.parse(revStr.substring(0, revStr.indexOf(':')));
+                rM = SVNRevision.parse(revStr.substring(revStr.indexOf(':') + 1));
+            } else if (revStr != null) {
+                rN = SVNRevision.parse(revStr);
+            }
+            
+            for(int i = 0; i < getCommandLine().getPathCount(); i++) {
+                String path = getCommandLine().getPathAt(i);
+                differ.doDiff(new File(path).getAbsoluteFile(), rN, rM, null, recursive, useAncestry, out);
+            }
+        } else {
+            throw new SVNException("diff command doesn't support this call");
+        }
 	}
 }

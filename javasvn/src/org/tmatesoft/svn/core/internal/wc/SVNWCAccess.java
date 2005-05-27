@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
@@ -184,6 +185,12 @@ public class SVNWCAccess implements ISVNEventListener {
                 value = entries.getPropertyValue(name, propertyName);
             } finally {
                 entries.close();
+            }
+        }
+        if (SVNProperty.URL.equals(propertyName)) {
+            if (value != null && !name.equals(myName)) {
+                // generated URL.
+                value = PathUtil.append(value, PathUtil.encode(myName));
             }
         }
         return value;        

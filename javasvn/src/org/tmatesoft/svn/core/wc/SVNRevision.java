@@ -102,7 +102,7 @@ public class SVNRevision {
     
     public static SVNRevision parse(String value) {
         if (value == null) {
-            return SVNRevision.HEAD;
+            return SVNRevision.UNDEFINED;
         }
         if (value.startsWith("-r")) {
             value = value.substring("-r".length());
@@ -120,16 +120,13 @@ public class SVNRevision {
         } else {
             try {
                 long number = Long.parseLong(value);
-                if (number < 0) {
-                    return SVNRevision.HEAD;
-                }
                 return SVNRevision.create(number);
             } catch (NumberFormatException nfe) {
             }
         }
         SVNRevision revision = (SVNRevision) ourValidRevisions.get(value.toUpperCase());
         if (revision == null) {
-            return HEAD;
+            return UNDEFINED;
         }
         return revision;
     }

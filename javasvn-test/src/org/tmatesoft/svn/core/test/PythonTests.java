@@ -149,11 +149,29 @@ public class PythonTests {
 				continue;
 			}
 
+            if (token.indexOf("-") > 0) {
+                // parse range
+                String startNumber = token.substring(0, token.indexOf("-"));
+                String endNumber = token.substring(token.indexOf("-") + 1);
+                try {
+                    int start = Integer.parseInt(startNumber);
+                    int end = Integer.parseInt(endNumber);
+                    if (start > end) {
+                        int i = start;
+                        start = end;
+                        end = i;
+                    }
+                    for(int i = start; i <= end; i++) {
+                        combinedTestCases.add(new Integer(i));
+                    }
+                } catch (NumberFormatException nfe) {
+                }
+                continue;
+            }
 			final Integer testCase;
 			try {
 				testCase = new Integer(token);
-			}
-			catch (NumberFormatException ex) {
+			} catch (NumberFormatException ex) {
 				System.err.println("ERROR: " + ex.getMessage());
 				ex.printStackTrace(System.err);
 				continue;
@@ -161,9 +179,8 @@ public class PythonTests {
 
 			if (testCase.intValue() < 0) {
 				combinedTestCases.remove(new Integer(-testCase.intValue()));
-			}
-			else {
-				combinedTestCases.add(testCase);
+			} else {
+                combinedTestCases.add(testCase);
 			}
 		}
 

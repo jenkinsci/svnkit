@@ -5,27 +5,32 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.io.OutputStream;
-import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.wc.ISVNCrawler;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
-import org.tmatesoft.svn.core.internal.wc.SVNEntries;
-import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNReporter;
-import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNDiffClient extends SVNBasicClient {
 
     private ISVNDiffGenerator myDiffGenerator;
+
+    public SVNDiffClient(final ISVNCredentialsProvider credentials, ISVNEventListener eventDispatcher) {
+        super(new ISVNRepositoryFactory() {
+            public SVNRepository createRepository(String url) throws SVNException {
+                SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
+                repos.setCredentialsProvider(credentials);
+                return repos;
+            }
+        }, null, eventDispatcher);
+    }
 
     public SVNDiffClient(ISVNRepositoryFactory repositoryFactory,
             SVNOptions options, ISVNEventListener eventDispatcher) {
@@ -43,202 +48,113 @@ public class SVNDiffClient extends SVNBasicClient {
         return myDiffGenerator;
     }
     
-    public void doDiff(File path, boolean recursive, final boolean useAncestry, boolean force, final OutputStream result) throws SVNException {
+    public void doDiff(File path, boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {
+        doDiff(path, SVNRevision.BASE, SVNRevision.WORKING, null, recursive, useAncestry, result);
+    }
+    
+    public void doDiff(File path, SVNRevision rN, SVNRevision rM, SVNRevision pegRev,
+            boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {
+        if (rN == null || rN == SVNRevision.UNDEFINED) {
+            rN = SVNRevision.BASE;
+        }
+        if (rM == null || rM == SVNRevision.UNDEFINED) {
+            rM = SVNRevision.WORKING;
+        }
+        // cases:
+        // 1.1 wc-wc: BASE->WORKING
+        // 1.2 wc-wc: WORKING->BASE (reversed to 1.1)
+        
+        // 2.1 wc-url: BASE:REV
+        // 2.2 wc-url: WORKING:REV
+        // 2.3 wc-url: REV:BASE     (reversed to 2.1)
+        // 2.4 wc-url: REV:WORKING  (reversed to 2.2)
+        
+        // 3.1 url-url: REV:REV
+        
+        // path should always point to valid wc dir or file.
+        // for 'REV' revisions there could be also 'peg revision' defined, used to get real WC url.
+        
         SVNWCAccess wcAccess = createWCAccess(path);
         wcAccess.open(true, recursive);
+        getDiffGenerator().init(path.getAbsolutePath(), path.getAbsolutePath());
         try {
-            // check for entry in anchor.
-            if (!"".equals(wcAccess.getTargetName())) {
-                SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName());
-                if (entry == null) {
-                    SVNErrorManager.error(0, null);
-                }
+            if (rN == SVNRevision.BASE && rM == SVNRevision.WORKING) {
+                // case 1.1            
+                SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, false, false, result);
+                editor.closeEdit();
+            } else if (rN == SVNRevision.WORKING && rM == SVNRevision.BASE) {
+                // case 1.2 (not supported)
+                SVNErrorManager.error("svn: not supported diff revisions range: '" + rN + ":" + rM + "'");
+            } else if (rN == SVNRevision.BASE) {
+                // case 2.1 (BASE->REV)
+                String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+                long revNumber = getRevisionNumber(url, rM);
+                url = wcAccess.getAnchor().getEntries().getEntry("").getURL();
+                
+                String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
+                SVNRepository repos = createRepository(url);
+                SVNReporter reporter = new SVNReporter(wcAccess, recursive);
+                
+                SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, 
+                        true /*reverse*/, true /*compare to base*/, result);
+                String targetURL = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+                targetURL = PathUtil.decode(targetURL);
+                repos.diff(targetURL, revNumber, target, !useAncestry, recursive, reporter, editor);
+            } else if (rN == SVNRevision.WORKING) {
+                // case 2.2 (WORKING->REV)
+                String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+                long revNumber = getRevisionNumber(url, rM);
+
+                url = wcAccess.getAnchor().getEntries().getEntry("").getURL();
+                SVNRepository repos = createRepository(url);
+                
+                String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
+                SVNReporter reporter = new SVNReporter(wcAccess, recursive);
+                
+                SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, 
+                        true /*reverse*/, false /*compare to base*/, result);
+                String targetURL = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+                targetURL = PathUtil.decode(targetURL);
+                repos.diff(targetURL, revNumber, target, !useAncestry, recursive, reporter, editor);
+            } else if (rM == SVNRevision.BASE) {
+                // case 2.3
+                String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+                long revNumber = getRevisionNumber(url, rN);
+                url = wcAccess.getAnchor().getEntries().getEntry("").getURL();
+                
+                String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
+                SVNRepository repos = createRepository(url);
+                SVNReporter reporter = new SVNReporter(wcAccess, recursive);
+                
+                SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, 
+                        false /*reverse*/, true /*compare to base*/, result);
+                String targetURL = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+                targetURL = PathUtil.decode(targetURL);
+                repos.diff(targetURL, revNumber, target, !useAncestry, recursive, reporter, editor);
+            } else if (rM == SVNRevision.WORKING) {
+                // case 2.4 (not supported)
+                String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+                long revNumber = getRevisionNumber(url, rN);
+                
+                url = wcAccess.getAnchor().getEntries().getEntry("").getURL();
+                String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
+                SVNRepository repos = createRepository(url);
+                SVNReporter reporter = new SVNReporter(wcAccess, recursive);
+                
+                SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, 
+                        false /*reverse*/, false /*compare to base*/, result);
+                String targetURL = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+                targetURL = PathUtil.decode(targetURL);
+                repos.diff(targetURL, revNumber, target, !useAncestry, recursive, reporter, editor);
+            } else {
+                String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+                long revN = getRevisionNumber(path, rN);
+                long revM = getRevisionNumber(path, rM);
+                url = getURL(url, pegRev, rN);
+                // TODO call url:url version of diff.            }
             }
-            getDiffGenerator().init(getDiffGenerator().getDisplayPath(path), 
-                    getDiffGenerator().getDisplayPath(path));
-            getDiffGenerator().setForcedBinaryDiff(force);
-            wcAccess.visitDirectories(new ISVNCrawler() {
-                public void visitDirectory(SVNWCAccess owner, SVNDirectory dir) throws SVNException {
-                    localDirectoryDiff(owner, dir, useAncestry, result);
-                }
-            });
         } finally {
             wcAccess.close(true, recursive);
         }
-        // diff externals?
     }
-
-    public void doDiff(File path, SVNRevision revision1, SVNRevision revision2, 
-            boolean recursive, boolean useAncestry, boolean force,
-            OutputStream result) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess(path);
-        if (!"".equals(wcAccess.getTargetName())) {
-            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName());
-            if (entry == null) {
-                // unversioned diff target.
-                SVNErrorManager.error(0, null);
-            }
-        }
-        if (revision1 == null || revision1 == SVNRevision.UNDEFINED) {
-            revision1 = SVNRevision.BASE;
-        }
-        if (revision2 == null || revision2 == SVNRevision.UNDEFINED) {
-            revision2 = SVNRevision.WORKING;
-        }
-        if (revision1 == revision2) {
-            // nothing to compare.
-            return;
-        } else if (revision1 == SVNRevision.BASE && revision2 == SVNRevision.WORKING) {
-            // case0: r1 == BASE, r2 == WORKING => wc:wc diff
-            doDiff(path, recursive, useAncestry, force, result);
-        } else if (revision1 == SVNRevision.BASE && revision2 != SVNRevision.WORKING) {
-            // case1.1: r1 == BASE, r2 != WORKING => wc:url diff
-            // compare -rBASE:revNumber -> do update of wc to revNumber 
-            String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-            doDiff(path, url, revision2, revision2, recursive, useAncestry, force, result);
-        } else if (revision2 == SVNRevision.BASE && revision1 != SVNRevision.WORKING) {
-            // compare -rrevNumber:BASE -> do url:url diff. 
-            // create repos for revNumber, run diff against local url:rev
-            String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-            doDiff(path, url, revision2, revision2, recursive, useAncestry, force, result);
-        } else if (revision1 != SVNRevision.BASE && revision1 != SVNRevision.WORKING 
-                && revision2 != SVNRevision.BASE && revision2 != SVNRevision.WORKING) {
-            // case2: url:url diff.
-        } else {
-            // not valid case.
-            SVNErrorManager.error("invalid revisions range: " + revision1 + ":" + revision2);
-        }
-    }
-
-    // wc-repos: only BASE:REV is supported, base is compared to rev
-    // run repos.diff BASE_URL:REPOS_URL, create tmp files when needed.
-    // iterate over wc comparing base files to tmp files.
-    public void doDiff(File path, String url, SVNRevision pegRevision, SVNRevision revision, 
-            boolean recursive, boolean useAncestry, boolean force,
-            OutputStream result) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess(path);
-        url = validateURL(url);
-        url = getURL(url, pegRevision, revision);
-
-        wcAccess.open(true, recursive);
-        try {
-            // create repos to run diff.
-            // if we have 'target' use it, and use parent url
-            long revNumber = getRevisionNumber(url, revision);
-            String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
-            SVNRepository repos = createRepository(wcAccess.getAnchor().getEntries().getEntry("").getURL());
-            SVNReporter reporter = new SVNReporter(wcAccess, recursive);
-            
-            // use special diff editor that will create tmp files, collect props and display diffs.
-            getDiffGenerator().init(getDiffGenerator().getDisplayPath(path), getDiffGenerator().getDisplayPath(path));
-            getDiffGenerator().setForcedBinaryDiff(force);
-            
-            // run 'update' here, not diff?
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, true, true, result);
-            repos.update(revNumber, target, recursive, reporter, editor);
-        } finally {
-            wcAccess.close(true, recursive);
-        }
-    }
-    
-    // repos-repos: REV:REV
-    // run diff, apply received deltas to OLD_URL:REV files (tmp) and copy result to tmp2, 
-    // run diff between tmp and tmp2 files.
-    public void doDiff(String oldURL, SVNRevision oldPegRevision, SVNRevision oldRevision, 
-            String newURL, SVNRevision newPegRevision, SVNRevision newRevision, 
-            boolean recursive, boolean useAncestry, boolean force,
-            OutputStream result) {
-        
-    }
-    
-    private void localDirectoryDiff(SVNWCAccess owner, SVNDirectory dir, boolean useAncestry, OutputStream result) throws SVNException {
-        boolean anchor = !"".equals(owner.getTargetName()) && dir == owner.getAnchor();
-        
-        if (!anchor) {
-            // generate prop diff for dir.
-            if (dir.hasPropModifications("")) {
-                SVNProperties baseProps = dir.getBaseProperties("", false);
-                Map propDiff = baseProps.compareTo(dir.getProperties("", false));
-                String displayPath = getDiffGenerator().getDisplayPath(dir.getRoot());
-                getDiffGenerator().displayPropDiff(displayPath, baseProps.asMap(), propDiff, result);
-            }
-        }
-        SVNEntries svnEntries = dir.getEntries();
-        for (Iterator entries = svnEntries.entries(); entries.hasNext();) {
-            SVNEntry entry = (SVNEntry) entries.next();
-            if (entry.isDirectory() || entry.isHidden()) {
-                continue;
-            }
-            if (anchor && !owner.getTargetName().equals(entry.getName())) {
-                continue;
-            }
-            String name = entry.getName();
-            boolean added = entry.isScheduledForAddition();
-            boolean replaced = entry.isScheduledForReplacement();
-            boolean deleted = entry.isScheduledForDeletion();
-            boolean copied = entry.isCopied();
-            if (copied) {
-                added = false;
-                deleted = false;
-                replaced = false;
-            }
-            if (replaced && !useAncestry) {
-                replaced = false;
-            }
-            SVNProperties props = dir.getProperties(name, false);
-            String fullPath = getDiffGenerator().getDisplayPath(dir.getFile(name, false));
-            Map baseProps = dir.getBaseProperties(name, false).asMap();
-            Map propDiff = null;
-            if (!deleted && dir.hasPropModifications(name)) {
-                propDiff = dir.getBaseProperties(name, false).compareTo(dir.getProperties(name, false));
-            } 
-            if (deleted || replaced) {
-                // display text diff for deleted file.
-                String mimeType1 = (String) baseProps.get(SVNProperty.MIME_TYPE);
-                String rev1 = "(revision " + Long.toString(entry.getRevision()) + ")";
-                getDiffGenerator().displayFileDiff(fullPath, dir.getBaseFile(name, false), dir.getFile(".svn/empty-file", false), rev1, null, mimeType1, null, result);
-                if (deleted) {
-                    return;
-                }
-            }
-            File tmpFile = null;
-            try {
-                if (added || replaced) {
-                    tmpFile = dir.getBaseFile(name, true);
-                    SVNTranslator.translate(dir, name, name, SVNFileUtil.getBasePath(tmpFile), false, false);
-                    // display text diff for added file.
-
-                    String mimeType1 = null;
-                    String mimeType2 = props.getPropertyValue(SVNProperty.MIME_TYPE);
-                    String rev1 = "(revision " + Long.toString(entry.getRevision()) + ")";
-                    String rev2 = rev1;
-
-                    getDiffGenerator().displayFileDiff(fullPath, dir.getFile(".svn/empty-file", false), tmpFile, rev1, rev2, mimeType1, mimeType2, result);
-                    if (propDiff != null && propDiff.size() > 0) {
-                        // display prop diff.
-                        getDiffGenerator().displayPropDiff(fullPath, baseProps, propDiff, result);
-                    }
-                    return;
-                }
-                boolean isTextModified = dir.hasTextModifications(name, false);
-                if (isTextModified) {
-                    tmpFile = dir.getBaseFile(name, true);
-                    SVNTranslator.translate(dir, name, name, SVNFileUtil.getBasePath(tmpFile), false, false);
-
-                    String mimeType1 = (String) baseProps.get(SVNProperty.MIME_TYPE);
-                    String mimeType2 = props.getPropertyValue(SVNProperty.MIME_TYPE);
-                    String rev1 = "(revision " + Long.toString(entry.getRevision()) + ")";
-                    getDiffGenerator().displayFileDiff(fullPath, dir.getBaseFile(name, false), tmpFile, rev1, null, mimeType1, mimeType2, result);
-                    if (propDiff != null && propDiff.size() > 0) {
-                        getDiffGenerator().displayPropDiff(fullPath, baseProps, propDiff, result);
-                    }
-                }
-            } finally {
-                if (tmpFile != null) {
-                    tmpFile.delete();
-                }
-            }
-        }
-        svnEntries.close();
-    }   
 }

@@ -249,7 +249,7 @@ public class SVNReporter implements ISVNReporterBaton {
             
             // should report an error.
 //            differ.getDiffGenerator().setDiffDeleted(false);
-            differ.doDiff(dst, SVNRevision.BASE, SVNRevision.create(1), true, false, false, System.out);
+            differ.doDiff(dst, SVNRevision.WORKING, SVNRevision.create(1), null, true, false, System.out);
 //            updater.doUpdate(dst, SVNRevision.HEAD, true);
         } catch (Throwable e) {
             e.printStackTrace();
