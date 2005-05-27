@@ -49,10 +49,28 @@ public class SVNDiffClient extends SVNBasicClient {
     }
     
     public void doDiff(File path, boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {
-        doDiff(path, SVNRevision.BASE, SVNRevision.WORKING, null, recursive, useAncestry, result);
+        doDiff(path, SVNRevision.BASE, SVNRevision.WORKING, recursive, useAncestry, result);
     }
     
-    public void doDiff(File path, SVNRevision rN, SVNRevision rM, SVNRevision pegRev,
+    public void doDiff(String url, SVNRevision pegRevision, File path, SVNRevision rN, SVNRevision rM,
+            boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {    
+    }
+
+    public void doDiff(File path, String url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM,
+            boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {    
+    }
+
+    public void doDiff(String url1, SVNRevision pegRevision1, String url2, SVNRevision pegRevision2, SVNRevision rN, SVNRevision rM,
+            boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {    
+    }
+    
+    // url:url should use 'merge' editor with diff generation callback.
+    // merge editor collects diff bewtween two revs and creates resulting files
+    
+    // (file@rev1 and file@rev2)
+    // then these files could be merged with corresponding wc files. 
+    
+    public void doDiff(File path, SVNRevision rN, SVNRevision rM,
             boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {
         if (rN == null || rN == SVNRevision.UNDEFINED) {
             rN = SVNRevision.BASE;
@@ -79,7 +97,12 @@ public class SVNDiffClient extends SVNBasicClient {
         getDiffGenerator().init(path.getAbsolutePath(), path.getAbsolutePath());
         try {
             if (rN == SVNRevision.BASE && rM == SVNRevision.WORKING) {
-                // case 1.1            
+                // case 1.1
+                if (!"".equals(wcAccess.getTargetName())) {
+                    if (wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName()) == null) {
+                        SVNErrorManager.error("svn: path '" + path.getAbsolutePath() + "' is not under version control");
+                    }
+                }
                 SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, false, false, result);
                 editor.closeEdit();
             } else if (rN == SVNRevision.WORKING && rM == SVNRevision.BASE) {
@@ -132,7 +155,7 @@ public class SVNDiffClient extends SVNBasicClient {
                 targetURL = PathUtil.decode(targetURL);
                 repos.diff(targetURL, revNumber, target, !useAncestry, recursive, reporter, editor);
             } else if (rM == SVNRevision.WORKING) {
-                // case 2.4 (not supported)
+                // case 2.4 
                 String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
                 long revNumber = getRevisionNumber(url, rN);
                 
@@ -150,7 +173,6 @@ public class SVNDiffClient extends SVNBasicClient {
                 String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
                 long revN = getRevisionNumber(path, rN);
                 long revM = getRevisionNumber(path, rM);
-                url = getURL(url, pegRev, rN);
                 // TODO call url:url version of diff.            }
             }
         } finally {

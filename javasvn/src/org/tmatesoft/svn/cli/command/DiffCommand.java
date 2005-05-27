@@ -53,7 +53,7 @@ public class DiffCommand extends SVNCommand {
             
             for(int i = 0; i < getCommandLine().getPathCount(); i++) {
                 String path = getCommandLine().getPathAt(i);
-                differ.doDiff(new File(path).getAbsoluteFile(), rN, rM, null, recursive, useAncestry, out);
+                differ.doDiff(new File(path).getAbsoluteFile(), rN, rM, recursive, useAncestry, out);
             }
         } else {
             throw new SVNException("diff command doesn't support this call");
