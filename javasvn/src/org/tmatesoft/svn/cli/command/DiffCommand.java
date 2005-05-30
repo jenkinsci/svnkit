@@ -13,7 +13,9 @@
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Map;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
@@ -33,6 +35,11 @@ public class DiffCommand extends SVNCommand {
             public String getDisplayPath(File file) {
                 return getPath(file).replace(File.separatorChar, '/');
             }
+
+            public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException {
+                super.displayPropDiff(path.replace('/', File.separatorChar), baseProps, diff, result);
+            }
+            
         });
         boolean useAncestry = getCommandLine().hasArgument(SVNArgument.USE_ANCESTRY);
         boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);

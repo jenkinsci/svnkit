@@ -9,13 +9,18 @@ import java.io.OutputStream;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
+import org.tmatesoft.svn.core.io.ISVNReporter;
+import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNDiffClient extends SVNBasicClient {
@@ -94,6 +99,7 @@ public class SVNDiffClient extends SVNBasicClient {
         
         SVNWCAccess wcAccess = createWCAccess(path);
         wcAccess.open(true, recursive);
+        path = path.getAbsoluteFile();
         getDiffGenerator().init(path.getAbsolutePath(), path.getAbsolutePath());
         try {
             if (rN == SVNRevision.BASE && rM == SVNRevision.WORKING) {
@@ -171,9 +177,32 @@ public class SVNDiffClient extends SVNBasicClient {
                 repos.diff(targetURL, revNumber, target, !useAncestry, recursive, reporter, editor);
             } else {
                 String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-                long revN = getRevisionNumber(path, rN);
+                String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
+                final long revN = getRevisionNumber(path, rN);
                 long revM = getRevisionNumber(path, rM);
-                // TODO call url:url version of diff.            }
+
+                getDiffGenerator().init("", "");
+                File tmpRoot = SVNFileUtil.createUniqueFile(wcAccess.getAnchor().getRoot(), ".diff", ".tmp");
+                tmpRoot.mkdirs();                
+                try {
+                    SVNRepository repos1 = createRepository(url);
+                    SVNRepository repos2 = createRepository(url);
+                    SVNRemoteDiffEditor editor = new SVNRemoteDiffEditor(tmpRoot, getDiffGenerator(), repos1,
+                            revN, result);
+                    DebugLog.log("diffing with revision: " + revM);
+                    DebugLog.log("url: " + url);
+                    repos2.diff(url, revM, target, !useAncestry, recursive, new ISVNReporterBaton() {
+                        public void report(ISVNReporter reporter) throws SVNException {
+                            DebugLog.log("reporting revision: " + revN);
+                            reporter.setPath("", null, revN, false);
+                            reporter.finishReport();
+                        }
+                    }, editor);
+                } finally {
+                    if (tmpRoot != null) {
+                        SVNFileUtil.deleteAll(tmpRoot);
+                    }
+                }
             }
         } finally {
             wcAccess.close(true, recursive);

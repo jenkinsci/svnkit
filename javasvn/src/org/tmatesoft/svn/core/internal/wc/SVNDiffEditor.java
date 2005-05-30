@@ -494,7 +494,7 @@ public class SVNDiffEditor implements ISVNEditor {
         return info;
     }
     
-    private class SVNDirectoryInfo {
+    private static class SVNDirectoryInfo {
         
         private boolean myIsAdded;
         private String myPath;
@@ -507,7 +507,7 @@ public class SVNDiffEditor implements ISVNEditor {
         private Set myComparedEntries = new HashSet();
     }
 
-    private class SVNFileInfo {
+    private static class SVNFileInfo {
         
         private boolean myIsAdded;
         private String myPath;

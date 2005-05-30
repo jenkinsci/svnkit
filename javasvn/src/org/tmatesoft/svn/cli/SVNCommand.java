@@ -230,8 +230,17 @@ public abstract class SVNCommand {
     }
 
     public static String getPath(File file) {
-        String path = file.getAbsolutePath().replace(File.separatorChar, '/');
-        String rootPath = new File("").getAbsolutePath().replace(File.separatorChar, '/');
+        String path = "";
+        String rootPath = "";
+        try {
+            path = file.getCanonicalPath();
+            rootPath = new File("").getCanonicalPath();
+        } catch (IOException e) {
+            path = file.getAbsolutePath();
+            rootPath = new File("").getAbsolutePath();
+        }
+        path = path.replace(File.separatorChar, '/');
+        rootPath = rootPath.replace(File.separatorChar, '/');
         if (path.startsWith(rootPath)) {
             path = path.substring(rootPath.length());
         }
