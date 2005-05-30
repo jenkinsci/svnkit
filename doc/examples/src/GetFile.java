@@ -19,7 +19,7 @@ import java.util.*;
 import org.tmatesoft.svn.core.internal.*;
 import org.tmatesoft.svn.core.*;
 
-public class GetFileExample {
+public class GetFile{
 	public static void main(String[] args){
 		// for DAV (over http and https)
 	    DAVRepositoryFactory.setup();

@@ -23,7 +23,7 @@ import java.io.*;
  * TODO To change the template for this generated type comment go to
  * Window - Preferences - Java - Code Style - Code Templates
  */
-public class GetRepositoryTreeExample {
+public class GetRepositoryTree{
     
     public static void main(String[] args){
         // for DAV (over http and https)
