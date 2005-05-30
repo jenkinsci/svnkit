@@ -417,10 +417,8 @@ public abstract class SVNRepository {
      * 						values. <code>properties</code> can be <code>null</code> 
      * 						when not interested in directory properties.
      * @param  handler 		a handler to process a next found directory entry
-     * @return 				the number of directory enries
-     * @throws SVNException	if the <code>revision</code> number is invalid (&lt0) or
-     * 						if there's no such <code>revision</code> at all. If there's
-     * 						no such <code>path</code> in that <code>revision</code>.
+     * @return 				the revision of the directory
+     * @throws SVNException	If there's no such <code>path</code> in that <code>revision</code>.
      * 						Also if a failure in connection occured or the user's 
      * 						authentication failed (see 
      * 						{@link SVNAuthenticationException}).
@@ -589,8 +587,6 @@ public abstract class SVNRepository {
     }
     
     /**
-     * 
-     * revision and returns them as a <code>Collection</code> instance.
      * The same as {@link #getDir(String, long, Map, ISVNDirEntryHandler)} except for
      * it just collects all the directory entries found and returns them in a 
      * <code>Collection</code>.  

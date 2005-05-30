@@ -118,10 +118,10 @@ public class SVNDirEntry {
     }
     
     /**
-     * Retrieves the revision
+     * Gets the revision
      * at which the entry was last modified in the repository.
      * 
-     * @return 	the last-modified revision number of this entry 
+     * @return 	the revision of this entry when it was last changed 
      */
     public long getRevision() {
         return myFirstRevision;
