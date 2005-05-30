@@ -170,7 +170,7 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         File tmpFile = getDiffGenerator().getTempDirectory();
         try {
-            SVNRemoteDiffEditor editor = new SVNRemoteDiffEditor(getDiffGenerator().getTempDirectory(), 
+            SVNRemoteDiffEditor editor = new SVNRemoteDiffEditor(tmpFile, 
                     getDiffGenerator(), repos, revN, result);
             ISVNReporterBaton reporter = new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {

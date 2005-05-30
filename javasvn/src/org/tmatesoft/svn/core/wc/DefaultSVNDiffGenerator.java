@@ -269,9 +269,12 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         return System.getProperty("file.encoding");
     }
 
-    public File getTempDirectory() {
-        File dir = SVNFileUtil.createUniqueFile(new File(""), ".diff", ".tmp");
-        dir.mkdirs();
+    public File getTempDirectory() throws SVNException {
+        File dir = SVNFileUtil.createUniqueFile(new File("."), ".diff", ".tmp");
+        boolean created = dir.mkdirs();
+        if (!created) {
+            SVNErrorManager.error("svn: cannot create temporary directory '" + dir.getAbsolutePath() + "'");
+        }
         return dir;
     }
 }
