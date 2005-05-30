@@ -21,9 +21,9 @@ contrib/sequence/src/de/regnis/q/sequence/line/QSequenceLineRAFileData.java -tex
 contrib/sequence/src/de/regnis/q/sequence/line/QSequenceLineRAFileDataStream.java -text
 contrib/sequence/src/de/regnis/q/sequence/line/QSequenceLineResult.java -text
 contrib/sequence/src/de/regnis/q/sequence/media/QSequenceIntMedia.java -text
-doc/examples/src/src/ExportExample.java -text
-doc/examples/src/src/GetFileExample.java -text
-doc/examples/src/src/GetRepositoryTreeExample.java -text
+doc/examples/src/ExportExample.java -text
+doc/examples/src/GetFileExample.java -text
+doc/examples/src/GetRepositoryTreeExample.java -text
 javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.properties eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.xml eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.subclipse.feature/feature.properties eol=lf
