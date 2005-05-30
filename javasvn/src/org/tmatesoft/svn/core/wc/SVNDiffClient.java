@@ -21,7 +21,6 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNDiffClient extends SVNBasicClient {
@@ -134,12 +133,12 @@ public class SVNDiffClient extends SVNBasicClient {
 
     public void doDiff(String url1, SVNRevision pegRevision1, String url2, SVNRevision pegRevision2, SVNRevision rN, SVNRevision rM,
             boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {
-        rN = rN == null ? SVNRevision.HEAD : rN;
-        rM = rM == null ? SVNRevision.HEAD : rM;
-        if (rN != SVNRevision.HEAD || rN.getNumber() < 0 || rN.getDate() == null) {
+        rN = rN == null || rN == SVNRevision.UNDEFINED ? SVNRevision.HEAD : rN;
+        rM = rM == null || rM == SVNRevision.UNDEFINED ? SVNRevision.HEAD : rM;
+        if (rN != SVNRevision.HEAD && rN.getNumber() < 0 && rN.getDate() == null) {
             SVNErrorManager.error("svn: invalid revision: '" + rN + "'");
         }
-        if (rM != SVNRevision.HEAD || rM.getNumber() < 0 || rM.getDate() == null) {
+        if (rM != SVNRevision.HEAD && rM.getNumber() < 0 && rM.getDate() == null) {
             SVNErrorManager.error("svn: invalid revision: '" + rM + "'");
         }
         url1 = validateURL(url1);
@@ -183,17 +182,10 @@ public class SVNDiffClient extends SVNBasicClient {
             repos.diff(url2, revM, target, !useAncestry, recursive, reporter, editor);
         } finally {
             if (tmpFile != null) {
-                DebugLog.log("deleting: " + tmpFile);
                 SVNFileUtil.deleteAll(tmpFile);
             }
         }
     }
-    
-    // url:url should use 'merge' editor with diff generation callback.
-    // merge editor collects diff bewtween two revs and creates resulting files
-    
-    // (file@rev1 and file@rev2)
-    // then these files could be merged with corresponding wc files. 
     
     public void doDiff(File path, SVNRevision rN, SVNRevision rM,
             boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {

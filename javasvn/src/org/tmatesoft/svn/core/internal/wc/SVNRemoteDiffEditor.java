@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNRemoteDiffEditor implements ISVNEditor {
@@ -245,7 +244,6 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
-        DebugLog.log("close edit");
         return null;
     }
 
