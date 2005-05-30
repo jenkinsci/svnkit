@@ -1,14 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="lib" path="contrib/jsch/jsch.jar"/>
-	<classpathentry kind="lib" path="contrib/junit/junit.jar"/>
-	<classpathentry output="javasvn/bin" kind="src" path="javasvn/src"/>
-	<classpathentry output="javasvn-eclipse/bin" kind="src" path="javasvn-eclipse/org.tmatesoft.javasvn/src"/>
-	<classpathentry output="javasvn-test/bin" kind="src" path="javasvn-test/src"/>
-	<classpathentry excluding="**/SVNClient.java" output="contrib/javahl/bin" kind="src" path="contrib/javahl/src"/>
-	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src"/>
-	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src-test"/>
-	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="contrib/jsch/jsch.jar">
+		<attributes>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="contrib/junit/junit.jar">
+		<attributes>
+		</attributes>
+	</classpathentry>
+	<classpathentry output="javasvn/bin" kind="src" path="javasvn/src">
+		<attributes>
+		</attributes>
+	</classpathentry>
+	<classpathentry output="doc/examples/bin" kind="src" path="doc/examples/src">
+		<attributes>
+		</attributes>
+	</classpathentry>
+	<classpathentry output="javasvn-eclipse/bin" kind="src" path="javasvn-eclipse/org.tmatesoft.javasvn/src">
+		<attributes>
+		</attributes>
+	</classpathentry>
+	<classpathentry output="javasvn-test/bin" kind="src" path="javasvn-test/src">
+		<attributes>
+		</attributes>
+	</classpathentry>
+	<classpathentry excluding="**/SVNClient.java" output="contrib/javahl/bin" kind="src" path="contrib/javahl/src">
+		<attributes>
+		</attributes>
+	</classpathentry>
+	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src">
+		<attributes>
+		</attributes>
+	</classpathentry>
+	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src-test">
+		<attributes>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins">
+		<attributes>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="javasvn/bin"/>
 </classpath>
