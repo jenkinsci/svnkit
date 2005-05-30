@@ -17,9 +17,11 @@ import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNDiffClient extends SVNBasicClient {
@@ -57,15 +59,134 @@ public class SVNDiffClient extends SVNBasicClient {
     }
     
     public void doDiff(String url, SVNRevision pegRevision, File path, SVNRevision rN, SVNRevision rM,
-            boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {    
+            boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {
+        SVNWCAccess wcAccess = SVNWCAccess.create(path);
+        String url2;
+        try {
+            url2 = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+        } finally {
+            wcAccess.close(true, false);
+        }
+        String rootPath = wcAccess.getAnchor().getRoot().getAbsolutePath();
+        // by default use no base path.
+        getDiffGenerator().init(rootPath, rootPath);
+        getDiffGenerator().setBasePath(wcAccess.getAnchor().getRoot());
+        doDiff(url, pegRevision, url2, SVNRevision.UNDEFINED, rN, rM, recursive, useAncestry, result);
     }
 
     public void doDiff(File path, String url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM,
             boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {    
+        SVNWCAccess wcAccess = SVNWCAccess.create(path);
+        String url1;
+        try {
+            url1 = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+        } finally {
+            wcAccess.close(true, false);
+        }
+        String rootPath = wcAccess.getAnchor().getRoot().getAbsolutePath();
+        // by default use no base path.
+        getDiffGenerator().init(rootPath, rootPath);
+        getDiffGenerator().setBasePath(wcAccess.getAnchor().getRoot());
+        doDiff(url1, SVNRevision.UNDEFINED, url, pegRevision, rN, rM, recursive, useAncestry, result);
+    }
+
+    public void doDiff(File path, File path2, SVNRevision rN, SVNRevision rM,
+            boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {
+        rN = rN == null ? SVNRevision.UNDEFINED : rN;
+        rM = rM == null ? SVNRevision.UNDEFINED : rM;
+        if (rM == SVNRevision.WORKING || rN == SVNRevision.BASE ||
+                rN == SVNRevision.WORKING || rN == SVNRevision.BASE) {
+            if (path.equals(path2)) {
+                doDiff(path, rN, rM, recursive, useAncestry, result);
+                return;
+            }
+            SVNErrorManager.error("svn: invalid diff revisions range: '" + rN + ":" + rM + "'");
+        }
+        if (rN == SVNRevision.UNDEFINED) {
+            rN = SVNRevision.HEAD;
+        }
+        if (rM == SVNRevision.UNDEFINED) {
+            rM = SVNRevision.HEAD;
+        }
+        SVNWCAccess wcAccess = SVNWCAccess.create(path);
+        String url1;
+        try {
+            url1 = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+        } finally {
+            wcAccess.close(true, false);
+        }
+
+        SVNWCAccess wcAccess2 = SVNWCAccess.create(path2);
+        String rootPath = wcAccess2.getAnchor().getRoot().getAbsolutePath();
+        getDiffGenerator().init(rootPath, rootPath);
+        getDiffGenerator().setBasePath(wcAccess2.getAnchor().getRoot());
+        String url2;
+        try {
+            url2 = wcAccess2.getTargetEntryProperty(SVNProperty.URL);
+        } finally {
+            wcAccess.close(true, false);
+        }
+        long revN = getRevisionNumber(path, rN);
+        long revM = getRevisionNumber(path, rM);
+        doDiff(url1, SVNRevision.UNDEFINED, url2, SVNRevision.UNDEFINED, SVNRevision.create(revN), SVNRevision.create(revM), 
+                recursive, useAncestry, result);
     }
 
     public void doDiff(String url1, SVNRevision pegRevision1, String url2, SVNRevision pegRevision2, SVNRevision rN, SVNRevision rM,
-            boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {    
+            boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {
+        rN = rN == null ? SVNRevision.HEAD : rN;
+        rM = rM == null ? SVNRevision.HEAD : rM;
+        if (rN != SVNRevision.HEAD || rN.getNumber() < 0 || rN.getDate() == null) {
+            SVNErrorManager.error("svn: invalid revision: '" + rN + "'");
+        }
+        if (rM != SVNRevision.HEAD || rM.getNumber() < 0 || rM.getDate() == null) {
+            SVNErrorManager.error("svn: invalid revision: '" + rM + "'");
+        }
+        url1 = validateURL(url1);
+        url2 = validateURL(url2);
+        
+        pegRevision1 = pegRevision1 == null ? SVNRevision.UNDEFINED : pegRevision1;
+        pegRevision2 = pegRevision2 == null ? SVNRevision.UNDEFINED : pegRevision2;
+        url1 = getURL(url1, pegRevision1, rN);
+        url2 = getURL(url2, pegRevision2, rM);
+        final long revN = getRevisionNumber(url1, rN);
+        final long revM = getRevisionNumber(url1, rM);
+        
+        SVNRepository repos = createRepository(url1);
+        SVNNodeKind nodeKind = repos.checkPath("", revN);
+        if (nodeKind == SVNNodeKind.NONE) {
+            SVNErrorManager.error("'" + url1 + "' was not found in the repository at revision " + revN);
+        }
+        SVNRepository repos2 = createRepository(url2);
+        SVNNodeKind nodeKind2 = repos2.checkPath("", revM);
+        if (nodeKind2 == SVNNodeKind.NONE) {
+            SVNErrorManager.error("'" + url2 + "' was not found in the repository at revision " + revM);
+        }
+        String target = null;
+        if (nodeKind == SVNNodeKind.FILE || nodeKind2 == SVNNodeKind.FILE) {
+            target = PathUtil.tail(url1);
+            target = PathUtil.decode(target);
+            url1 = PathUtil.removeTail(url1);
+            repos = createRepository(url1);
+        }
+        File tmpFile = getDiffGenerator().getTempDirectory();
+        try {
+            SVNRemoteDiffEditor editor = new SVNRemoteDiffEditor(getDiffGenerator().getTempDirectory(), 
+                    getDiffGenerator(), repos, revN, result);
+            ISVNReporterBaton reporter = new ISVNReporterBaton() {
+                public void report(ISVNReporter reporter) throws SVNException {
+                    reporter.setPath("", null, revN, false);
+                    reporter.finishReport();
+                }            
+            };
+            repos = createRepository(url1);
+            repos.diff(url2, revM, target, !useAncestry, recursive, reporter, editor);
+        } finally {
+            if (tmpFile != null) {
+                DebugLog.log("deleting: " + tmpFile);
+                SVNFileUtil.deleteAll(tmpFile);
+            }
+        }
     }
     
     // url:url should use 'merge' editor with diff generation callback.
@@ -180,7 +301,9 @@ public class SVNDiffClient extends SVNBasicClient {
                 final long revN = getRevisionNumber(path, rN);
                 long revM = getRevisionNumber(path, rM);
 
-                getDiffGenerator().init("", "");
+                // prepend paths with anchor.
+                getDiffGenerator().setBasePath(wcAccess.getAnchor().getRoot());
+                // and then trunkate root.
                 File tmpRoot = SVNFileUtil.createUniqueFile(wcAccess.getAnchor().getRoot(), ".diff", ".tmp");
                 tmpRoot.mkdirs();                
                 try {

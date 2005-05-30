@@ -38,6 +38,8 @@ public abstract class SVNArgument {
     public static final SVNArgument NO_IGNORE = createUnaryArgument(new String[] { "--no-ignore" });
     public static final SVNArgument MESSAGE = createStringArgument(new String[] { "--message", "-m" });
     public static final SVNArgument REVISION = createStringArgument(new String[] { "--revision", "-r" });
+    public static final SVNArgument OLD = createStringArgument(new String[] {"--old"});
+    public static final SVNArgument NEW = createStringArgument(new String[] {"--new"});
     public static final SVNArgument NO_AUTH_CACHE = createUnaryArgument(new String[] {"--no-auth-cache"});
     public static final SVNArgument FORCE = createUnaryArgument(new String[] { "--force" });
     public static final SVNArgument FILE = createStringArgument(new String[] { "-F" });
@@ -86,6 +88,8 @@ public abstract class SVNArgument {
         ourArguments.add(SVNArgument.EOL_STYLE);
         ourArguments.add(SVNArgument.NO_DIFF_DELETED);
         ourArguments.add(SVNArgument.USE_ANCESTRY);
+        ourArguments.add(SVNArgument.OLD);
+        ourArguments.add(SVNArgument.NEW);
     }
 
     private static SVNArgument createStringArgument(String[] names) {

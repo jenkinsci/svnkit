@@ -242,7 +242,8 @@ public class SVNReporter implements ISVNReporterBaton {
             SVNDiffClient differ = new SVNDiffClient(repositoryFactory, null, null);
             
             File dst = new File("C:\\i\\test5\\newDir");
-            differ.doDiff(dst, SVNRevision.create(21), SVNRevision.WORKING, false, false, System.out);
+            String url = "http://80.188.80.120/svn/repos/test4/xxx";
+            differ.doDiff(url, null, url, null, SVNRevision.create(22),  SVNRevision.create(23), true, false, System.out);
         } catch (Throwable e) {
             e.printStackTrace();
         } 

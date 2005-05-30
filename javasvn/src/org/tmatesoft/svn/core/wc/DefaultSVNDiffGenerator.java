@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;
@@ -40,6 +41,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     private String myAnchorPath2;
     private String myEncoding;
     private boolean myIsDiffDeleted;
+    private File myBasePath;
     
     public DefaultSVNDiffGenerator() {
         myIsDiffDeleted = true;
@@ -49,6 +51,10 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     public void init(String anchorPath1, String anchorPath2) {
         myAnchorPath1 = anchorPath1.replace(File.separatorChar, '/');
         myAnchorPath2 = anchorPath2.replace(File.separatorChar, '/');
+    }
+    
+    public void setBasePath(File basePath) {
+        myBasePath = basePath;
     }
     
     public void setDiffDeleted(boolean isDiffDeleted) {
@@ -77,6 +83,9 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException {
+        if (myBasePath != null) {
+            path = getDisplayPath(new File(myBasePath, path));
+        }
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
             bos.write(EOL);
@@ -116,6 +125,9 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     public void displayFileDiff(String path, File file1, File file2,
             String rev1, String rev2, String mimeType1, String mimeType2,
             OutputStream result) throws SVNException {
+        if (myBasePath != null) {
+            path = getDisplayPath(new File(myBasePath, path));
+        }
         rev1 = rev1 == null ? WC_REVISION_LABEL : rev1;
         rev2 = rev2 == null ? WC_REVISION_LABEL : rev2;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -255,5 +267,11 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             return myEncoding;
         }
         return System.getProperty("file.encoding");
+    }
+
+    public File getTempDirectory() {
+        File dir = SVNFileUtil.createUniqueFile(new File(""), ".diff", ".tmp");
+        dir.mkdirs();
+        return dir;
     }
 }

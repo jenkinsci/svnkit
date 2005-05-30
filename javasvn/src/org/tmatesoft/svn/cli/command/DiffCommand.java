@@ -15,7 +15,10 @@ package org.tmatesoft.svn.cli.command;
 import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
@@ -23,6 +26,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -31,23 +35,67 @@ public class DiffCommand extends SVNCommand {
 
 	public void run(final PrintStream out, PrintStream err) throws SVNException {
         SVNDiffClient differ = new SVNDiffClient(getCredentialsProvider(), null);
-        differ.setDiffGenerator(new DefaultSVNDiffGenerator() {
+        final Set limitToPaths = new HashSet();
+        differ.setDiffGenerator(new DefaultSVNDiffGenerator() {            
             public String getDisplayPath(File file) {
                 return getPath(file).replace(File.separatorChar, '/');
             }
-
+            public void displayFileDiff(String path, File file1, File file2,
+                    String rev1, String rev2, String mimeType1, String mimeType2,
+                    OutputStream result) throws SVNException {
+                if (!limitToPaths.isEmpty()) {
+                    boolean pass = false;
+                    for (Iterator paths = limitToPaths.iterator(); paths.hasNext();) {
+                        String p = (String) paths.next();
+                        if (path.equals(p) && path.startsWith(p + '/')) {
+                            pass = true;
+                            break;
+                        }
+                    }
+                    if (!pass) {
+                        return;
+                    }
+                }
+                super.displayFileDiff(path, file1, file2, rev1, rev2, mimeType1, mimeType2, result);
+            }
             public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException {
+                if (!limitToPaths.isEmpty()) {
+                    boolean pass = false;
+                    for (Iterator paths = limitToPaths.iterator(); paths.hasNext();) {
+                        String p = (String) paths.next();
+                        if (path.equals(p) && path.startsWith(p + '/')) {
+                            pass = true;
+                            break;
+                        }
+                    }
+                    if (!pass) {
+                        return;
+                    }
+                }
                 super.displayPropDiff(path.replace('/', File.separatorChar), baseProps, diff, result);
             }
-            
         });
+        
         boolean useAncestry = getCommandLine().hasArgument(SVNArgument.USE_ANCESTRY);
         boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
         differ.getDiffGenerator().setDiffDeleted(!getCommandLine().hasArgument(SVNArgument.NO_DIFF_DELETED));
         differ.getDiffGenerator().setForcedBinaryDiff(getCommandLine().hasArgument(SVNArgument.FORCE));
         
-        // now supports only '-rN:M target' case, when targets are wc paths
-        if (getCommandLine().hasPaths()) {
+        if (getCommandLine().getURLCount() == 2 && !getCommandLine().hasPaths()) {
+            // diff url1[@r] url2[@r]
+            String url1 = getCommandLine().getURL(0);
+            String url2 = getCommandLine().getURL(1);
+            SVNRevision peg1 = getCommandLine().getPegRevision(0);
+            SVNRevision peg2 = getCommandLine().getPegRevision(1);
+            if (peg1 == SVNRevision.UNDEFINED) {
+                peg1 = SVNRevision.HEAD;
+            }
+            if (peg2 == SVNRevision.UNDEFINED) {
+                peg2 = SVNRevision.HEAD;
+            }
+            
+            differ.doDiff(url1, peg1, url2, peg2, peg1, peg2, recursive, useAncestry, out);
+        } else {
             SVNRevision rN = SVNRevision.UNDEFINED;
             SVNRevision rM = SVNRevision.UNDEFINED;
             String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
@@ -57,13 +105,56 @@ public class DiffCommand extends SVNCommand {
             } else if (revStr != null) {
                 rN = SVNRevision.parse(revStr);
             }
-            
-            for(int i = 0; i < getCommandLine().getPathCount(); i++) {
-                String path = getCommandLine().getPathAt(i);
-                differ.doDiff(new File(path).getAbsoluteFile(), rN, rM, recursive, useAncestry, out);
+            if (getCommandLine().hasArgument(SVNArgument.OLD)) {
+                // diff [-rN[:M]] --old=url[@r] [--new=url[@r]] [path...]
+                String oldPath = (String) getCommandLine().getArgumentValue(SVNArgument.OLD);
+                String newPath = (String) getCommandLine().getArgumentValue(SVNArgument.NEW);
+                if (newPath == null) {
+                    newPath = oldPath;
+                }
+                if (oldPath.startsWith("=")) {
+                    oldPath = oldPath.substring(1);
+                }
+                if (newPath.startsWith("=")) {
+                    newPath = newPath.substring(1);
+                }
+                SVNRevision peg1 = SVNRevision.UNDEFINED;
+                SVNRevision peg2 = SVNRevision.UNDEFINED;
+                if (oldPath.indexOf('@') > 0) {
+                    peg1 = SVNRevision.parse(oldPath.substring(oldPath.lastIndexOf('@') + 1));
+                    oldPath = oldPath.substring(0, oldPath.lastIndexOf('@'));
+                }
+                if (newPath.indexOf('@') > 0) {
+                    peg2 = SVNRevision.parse(newPath.substring(newPath.lastIndexOf('@') + 1));
+                    newPath = newPath.substring(0, newPath.lastIndexOf('@'));
+                }
+                for (int i = 0; i < getCommandLine().getPathCount(); i++) {
+                    String p = getCommandLine().getPathAt(i);
+                    p = p.replace(File.separatorChar, '/');
+                    p = PathUtil.removeLeadingSlash(p);
+                    limitToPaths.add(p);
+                }
+                if (getCommandLine().isURL(oldPath) && !getCommandLine().isURL(newPath)) {
+                    differ.doDiff(new File(oldPath).getAbsoluteFile(), newPath, peg2, rN, rM, recursive, useAncestry, out);
+                } else if (!getCommandLine().isURL(oldPath) && getCommandLine().isURL(newPath)) {
+                    differ.doDiff(oldPath, peg1, new File(newPath).getAbsoluteFile(), rN, rM, recursive, useAncestry, out);
+                } else if (getCommandLine().isURL(oldPath) && getCommandLine().isURL(newPath)) {
+                    differ.doDiff(oldPath, peg1, newPath, peg2, rN, rM, recursive, useAncestry, out);
+                } else {
+                    // both are paths.
+                }
+            } else {
+                // diff [-rN[:M]] target[@r] [...]
+                for(int i = 0; i < getCommandLine().getPathCount(); i++) {
+                    String path = getCommandLine().getPathAt(i);
+                    differ.doDiff(new File(path).getAbsoluteFile(), rN, rM, recursive, useAncestry, out);
+                }
+                for(int i = 0; i < getCommandLine().getURLCount(); i++) {
+                    String url = getCommandLine().getURL(i);
+                    SVNRevision peg = getCommandLine().getPegRevision(i);
+                    differ.doDiff(url, peg, url, peg, rN , rM, recursive, useAncestry, out);
+                }
             }
-        } else {
-            throw new SVNException("diff command doesn't support this call");
         }
 	}
 }

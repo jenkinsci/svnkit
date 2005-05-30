@@ -13,6 +13,8 @@ public interface ISVNDiffGenerator {
     
     public void init(String anchorPath1, String anchorPath2);
     
+    public void setBasePath(File basePath);
+    
     public void setForcedBinaryDiff(boolean forced);
     
     public void setEncoding(String encoding);
@@ -24,6 +26,8 @@ public interface ISVNDiffGenerator {
     public boolean isDiffDeleted();
     
     public String getDisplayPath(File file);
+    
+    public File getTempDirectory();
     
     public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException;
 
