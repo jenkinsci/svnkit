@@ -117,9 +117,14 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
+                DebugLog.log(bos.toString());
             } catch (IOException e) {
             }
         }
+    }
+    
+    protected File getBasePath() {
+        return myBasePath;
     }
 
     public void displayFileDiff(String path, File file1, File file2,
@@ -269,7 +274,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         return System.getProperty("file.encoding");
     }
 
-    public File getTempDirectory() throws SVNException {
+    public File createTempDirectory() throws SVNException {
         File dir = SVNFileUtil.createUniqueFile(new File("."), ".diff", ".tmp");
         boolean created = dir.mkdirs();
         if (!created) {

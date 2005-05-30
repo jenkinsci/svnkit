@@ -27,7 +27,7 @@ public interface ISVNDiffGenerator {
     
     public String getDisplayPath(File file);
     
-    public File getTempDirectory() throws SVNException;
+    public File createTempDirectory() throws SVNException;
     
     public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException;
 

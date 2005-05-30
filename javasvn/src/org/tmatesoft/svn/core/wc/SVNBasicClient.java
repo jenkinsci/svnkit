@@ -10,14 +10,17 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNBasicClient implements ISVNEventListener {
@@ -178,15 +181,28 @@ public class SVNBasicClient implements ISVNEventListener {
     }
     
     protected String getURL(String url, SVNRevision peg, SVNRevision rev) throws SVNException {
-        if (peg.equals(rev) || !peg.isValid()) {
+        if (!rev.isValid()) {
+            rev = SVNRevision.HEAD;
+        }
+        if (rev.equals(peg)) {
+            return url;
+        }        
+        if (!peg.isValid()) {
             return url;
         }
         SVNRepository repos = myRepositoryFactory.createRepository(url);
-        
         long pegRevNumber = getRevisionNumber(url, peg);
         long revNumber = getRevisionNumber(url, rev);
-        List locations = (List) repos.getLocations("", new ArrayList(1), pegRevNumber, new long[] {revNumber});
-        if (locations == null || locations.size() != 1) {
+        SVNNodeKind kind = repos.checkPath("", pegRevNumber);
+        DebugLog.log("node kind: " + kind);
+        List locations = new ArrayList(1);
+        try {
+            locations = (List) repos.getLocations("", locations, pegRevNumber, new long[] {revNumber});
+            if (locations == null || locations.size() != 1) {
+                SVNErrorManager.error("svn: Unable to find repository location for '" + url + "' in revision " + revNumber);
+            }
+        } catch (SVNException e) {
+            SVNErrorManager.error("svn: Unable to find repository location for '" + url + "' in revision " + revNumber);
             return url;
         }
         SVNLocationEntry location = (SVNLocationEntry) locations.get(0);

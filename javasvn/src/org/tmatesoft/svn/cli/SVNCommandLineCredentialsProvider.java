@@ -16,7 +16,6 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.io.ISVNCredentials;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
-import org.tmatesoft.svn.util.DebugLog;
 
 public class SVNCommandLineCredentialsProvider implements
         ISVNCredentialsProvider {
@@ -123,7 +122,6 @@ public class SVNCommandLineCredentialsProvider implements
         try {
             byte[] hash = MessageDigest.getInstance("MD5").digest(realm.getBytes());
             String dirName = encode(hash);
-            DebugLog.log("dirname: " + dirName);
             dir = new File(System.getProperty("user.home"), ".javasvn");
             dir = new File(dir, "auth-cache");
             if (index < 0) {

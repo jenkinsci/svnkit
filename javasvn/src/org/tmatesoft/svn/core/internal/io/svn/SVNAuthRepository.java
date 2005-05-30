@@ -449,6 +449,22 @@ public class SVNAuthRepository extends SVNRepository {
             }
         }
     }
+
+    public void diff(String url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+        ISVNCredentials credentials = null;
+        ISVNCredentialsProvider provider = initProvider();
+        while(true) {
+            try {
+                myDelegate.setCredentials(credentials);
+                myDelegate.diff(url, targetRevision, revision, target, ignoreAncestry, recursive, reporter, editor);
+                accept(provider, credentials);
+                return;
+            } catch (SVNAuthenticationException e) {
+                notAccept(provider, credentials, e.getMessage());
+                credentials = nextCredentials(provider, e.getMessage());
+            }
+        }
+    }
     
 
 }

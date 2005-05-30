@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNRemoteDiffEditor implements ISVNEditor {
@@ -60,6 +61,9 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void openRoot(long revision) throws SVNException {
         myCurrentDirectory = new SVNDirectoryInfo(null, "", false);
+
+        myCurrentDirectory.myBaseProperties = new HashMap();
+        myRepos.getDir("", myRevision, myCurrentDirectory.myBaseProperties, (Collection) null);
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
@@ -91,6 +95,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void openDir(String path, long revision) throws SVNException {
+        DebugLog.log("open dir");
         myCurrentDirectory = new SVNDirectoryInfo(myCurrentDirectory, path, false);
 
         myCurrentDirectory.myBaseProperties = new HashMap();
@@ -109,6 +114,10 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void closeDir() throws SVNException {
+        DebugLog.log("close dir");
+        DebugLog.log("path: " + myCurrentDirectory.myPath);
+        DebugLog.log("dir prop changes: " + myCurrentDirectory.myPropertyDiff);
+        DebugLog.log("dir base prop: " + myCurrentDirectory.myBaseProperties);
         if (myCurrentDirectory.myPropertyDiff != null) {
             myDiffGenerator.displayPropDiff(myCurrentDirectory.myPath, myCurrentDirectory.myBaseProperties, 
                     myCurrentDirectory.myPropertyDiff, myResult);
@@ -142,12 +151,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         
         myCurrentFile = new SVNFileInfo(myCurrentDirectory, path, true);
         myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(myRoot, PathUtil.tail(path), ".tmp"); 
-        try {
-            myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos, myRevision);
-        } catch (SVNException th) {
-            
-            SVNErrorManager.error(0, th);
-        }        
+
+        myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos, myRevision);
         myCurrentFile.myFile = SVNFileUtil.createUniqueFile(myRoot, PathUtil.tail(path), ".tmp");
         try {
             myCurrentFile.myFile.createNewFile();

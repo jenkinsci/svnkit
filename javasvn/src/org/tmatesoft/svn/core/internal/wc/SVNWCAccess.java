@@ -19,7 +19,6 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNOptions;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNWCAccess implements ISVNEventListener {
@@ -49,10 +48,6 @@ public class SVNWCAccess implements ISVNEventListener {
         }
         SVNDirectory anchor = parentFile != null ? new SVNDirectory(null, "", parentFile) : null;
         SVNDirectory target = file.isDirectory() ? new SVNDirectory(null, name, file) : null;
-        DebugLog.log("creating wc for " + file);
-        DebugLog.log("anchor " + anchor);
-        DebugLog.log("target " + target);
-        DebugLog.log("parent file " + parentFile);
         
         if (anchor == null || !anchor.isVersioned()) {
             // parent is not versioned, do not use it.

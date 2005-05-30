@@ -13,7 +13,7 @@ public class SVNRevision {
     
     public static final SVNRevision HEAD = new SVNRevision("HEAD");
     public static final SVNRevision WORKING = new SVNRevision("WORKING");
-    public static final SVNRevision PREVIOUS = new SVNRevision("PREVIOUS");
+    public static final SVNRevision PREVIOUS = new SVNRevision("PREV");
     public static final SVNRevision BASE = new SVNRevision("BASE");
     public static final SVNRevision COMMITTED = new SVNRevision("COMMITTED");
     public static final SVNRevision UNDEFINED = new SVNRevision("UNDEFINED");
