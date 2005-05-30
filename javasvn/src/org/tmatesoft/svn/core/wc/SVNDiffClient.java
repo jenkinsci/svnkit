@@ -20,7 +20,6 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNDiffClient extends SVNBasicClient {
@@ -189,11 +188,9 @@ public class SVNDiffClient extends SVNBasicClient {
                     SVNRepository repos2 = createRepository(url);
                     SVNRemoteDiffEditor editor = new SVNRemoteDiffEditor(tmpRoot, getDiffGenerator(), repos1,
                             revN, result);
-                    DebugLog.log("diffing with revision: " + revM);
-                    DebugLog.log("url: " + url);
+                    url = PathUtil.decode(url);
                     repos2.diff(url, revM, target, !useAncestry, recursive, new ISVNReporterBaton() {
                         public void report(ISVNReporter reporter) throws SVNException {
-                            DebugLog.log("reporting revision: " + revN);
                             reporter.setPath("", null, revN, false);
                             reporter.finishReport();
                         }

@@ -80,7 +80,6 @@ public class SVNReporter implements ISVNReporterBaton {
                 String parentURL = parentEntry.getURL();
                 String expectedURL = PathUtil.append(parentURL, PathUtil.encode(targetEntry.getName()));
                 if (!expectedURL.equals(url)) {
-                    DebugLog.log("reporting url: " + url);
                     reporter.linkPath(SVNRepositoryLocation.parseURL(url), "", targetEntry.getLockToken(), targetEntry.getRevision(), false);
                 } else if (targetEntry.getRevision() != parentEntry.getRevision() || targetEntry.getLockToken() != null) {
                     reporter.setPath("", targetEntry.getLockToken(), targetEntry.getRevision(), false);
@@ -242,15 +241,8 @@ public class SVNReporter implements ISVNReporterBaton {
             SVNUpdateClient updater = new SVNUpdateClient(repositoryFactory, null, new SVNCommandEventProcessor(System.out, false, false));
             SVNDiffClient differ = new SVNDiffClient(repositoryFactory, null, null);
             
-
-//            File dst = new File("C:\\i\\test5\\test&file.txt");
-            File dst = new File("C:\\i\\test5");
-//            String url = "http://svn.collab.net/repos/svn/tags/1.2.0/";
-            
-            // should report an error.
-//            differ.getDiffGenerator().setDiffDeleted(false);
-            differ.doDiff(dst, SVNRevision.create(21), SVNRevision.HEAD, true, false, System.out);
-//            updater.doUpdate(dst, SVNRevision.HEAD, true);
+            File dst = new File("C:\\i\\test5\\newDir");
+            differ.doDiff(dst, SVNRevision.create(21), SVNRevision.WORKING, false, false, System.out);
         } catch (Throwable e) {
             e.printStackTrace();
         } 

@@ -63,9 +63,9 @@ public class SVNDiffEditor implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
+        
         path = PathUtil.removeLeadingSlash(path);
         path = PathUtil.removeTrailingSlash(path);
-        
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
         String name = PathUtil.tail(path);
         SVNEntry entry = dir.getEntries().getEntry(name);
@@ -88,11 +88,11 @@ public class SVNDiffEditor implements ISVNEditor {
                 String revStr = "(revision " + entry.getRevision() + ")";
                 myDiffGenerator.displayFileDiff(displayPath, emptyFile, baseFile, "(revision 0)", revStr, wcMimeType, baseMimeType, myResult);
             }
-            myCurrentDirectory.myComparedEntries.add(name);
         } else if (entry != null && entry.isDirectory()) {
             SVNDirectoryInfo info = createDirInfo(myCurrentDirectory, path, true);
             localDirectoryDiff(info, true, myResult);
         }
+        myCurrentDirectory.myComparedEntries.add(name);
     }   
 
     public void addDir(String path, String copyFromPath, long copyFromRevision)

@@ -163,37 +163,29 @@ public class SVNWCAccess implements ISVNEventListener {
     }
     
     public String getTargetEntryProperty(String propertyName) throws SVNException {
-        SVNDirectory dir = "".equals(myName) ? getAnchor() : new SVNDirectory(this, myName, new File(getAnchor().getRoot(), myName));
-        SVNEntries entries = null;
-        String name = "";
-        if (dir != null && dir.isVersioned()) {
-            entries = dir.getEntries();            
-        }
-        if (entries == null) {
-            entries = getAnchor().getEntries();
-            name = myName;
-            if (entries.getEntry(name) != null && entries.getEntry(name).isDirectory()) {
-                name = "";
+        SVNEntries anchorEntries = getAnchor().getEntries();
+        SVNEntries targetEntries = getTarget().getEntries();
+        if (!"".equals(myName) && getAnchor() != getTarget()) {
+            String value = null;
+            // another directory.
+            if (targetEntries != null) {
+                value = targetEntries.getPropertyValue("", propertyName);
             }
-        }
-        String value = null;
-        if (entries != null) {
-            try {
-                if (entries.getEntry(name) == null) {
-                    name = "";
+            if (value == null) {
+                // no value or no entries, get from parent.
+                value = anchorEntries.getPropertyValue(myName, propertyName);
+                if (value == null) {
+                    // no entry in parent.
+                    value = anchorEntries.getPropertyValue("", propertyName);
+                    if (value != null && SVNProperty.URL.equals(propertyName)) {
+                        // special handling for URLs.
+                        value = PathUtil.append(value, PathUtil.encode(myName));
+                    }
                 }
-                value = entries.getPropertyValue(name, propertyName);
-            } finally {
-                entries.close();
             }
+            return value;
         }
-        if (SVNProperty.URL.equals(propertyName)) {
-            if (value != null && !name.equals(myName)) {
-                // generated URL.
-                value = PathUtil.append(value, PathUtil.encode(myName));
-            }
-        }
-        return value;        
+        return anchorEntries.getPropertyValue(myName, propertyName);
     }
     
     public SVNDirectory getDirectory(String path) {
