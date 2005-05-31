@@ -210,9 +210,6 @@ public class SVNDiffClient extends SVNBasicClient {
         url1 = getURL(url1, pegRevision1, rN);
         url2 = getURL(url2, pegRevision2, rM);
         
-        DebugLog.log("url1: " + url1);
-        DebugLog.log("url2: " + url2);
-        
         final long revN = getRevisionNumber(url1, rN);
         final long revM = getRevisionNumber(url2, rM);
         
@@ -276,89 +273,28 @@ public class SVNDiffClient extends SVNBasicClient {
         
         SVNWCAccess wcAccess = createWCAccess(path);
         wcAccess.open(true, recursive);
-        path = wcAccess.getAnchor().getRoot().getAbsoluteFile();
-        getDiffGenerator().init(path.getAbsolutePath(), path.getAbsolutePath());
         try {
+            File originalPath = path;
+            path = wcAccess.getAnchor().getRoot().getAbsoluteFile();
+            getDiffGenerator().init(path.getAbsolutePath(), path.getAbsolutePath());
             if (rN == SVNRevision.BASE && rM == SVNRevision.WORKING) {
                 // case 1.1
                 if (!"".equals(wcAccess.getTargetName())) {
                     if (wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName()) == null) {
-                        SVNErrorManager.error("svn: path '" + path.getAbsolutePath() + "' is not under version control");
+                        SVNErrorManager.error("svn: path '" + originalPath.getAbsolutePath() + "' is not under version control");
                     }
                 }
                 SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, false, false, result);
                 editor.closeEdit();
-            } else if (rN == SVNRevision.WORKING && rM == SVNRevision.BASE) {
+            } else if (rN == SVNRevision.WORKING || rM == SVNRevision.BASE) {
                 // case 1.2 (not supported)
                 SVNErrorManager.error("svn: not supported diff revisions range: '" + rN + ":" + rM + "'");
-            } else if (rN == SVNRevision.BASE) {
-                // case 2.1 (BASE->REV)
-                String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-                long revNumber = getRevisionNumber(url, rM);
-                url = wcAccess.getAnchor().getEntries().getEntry("").getURL();
-                
-                String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
-                SVNRepository repos = createRepository(url);
-                SVNReporter reporter = new SVNReporter(wcAccess, recursive);
-                
-                SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, 
-                        true /*reverse*/, true /*compare to base*/, result);
-                String targetURL = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-                targetURL = PathUtil.decode(targetURL);
-                repos.diff(targetURL, revNumber, target, !useAncestry, recursive, reporter, editor);
-            } else if (rN == SVNRevision.WORKING) {
-                // case 2.2 (WORKING->REV)
-                String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-                long revNumber = getRevisionNumber(url, rM);
-
-                url = wcAccess.getAnchor().getEntries().getEntry("").getURL();
-                SVNRepository repos = createRepository(url);
-                
-                String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
-                SVNReporter reporter = new SVNReporter(wcAccess, recursive);
-                
-                SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, 
-                        true /*reverse*/, false /*compare to base*/, result);
-                String targetURL = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-                targetURL = PathUtil.decode(targetURL);
-                repos.diff(targetURL, revNumber, target, !useAncestry, recursive, reporter, editor);
-            } else if (rM == SVNRevision.BASE) {
-                // case 2.3
-                String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-                long revNumber = getRevisionNumber(url, rN);
-                url = wcAccess.getAnchor().getEntries().getEntry("").getURL();
-                
-                String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
-                SVNRepository repos = createRepository(url);
-                SVNReporter reporter = new SVNReporter(wcAccess, recursive);
-                
-                SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, 
-                        false /*reverse*/, true /*compare to base*/, result);
-                String targetURL = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-                targetURL = PathUtil.decode(targetURL);
-                repos.diff(targetURL, revNumber, target, !useAncestry, recursive, reporter, editor);
-            } else if (rM == SVNRevision.WORKING) {
-                // case 2.4 
-                String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-                long revNumber = getRevisionNumber(url, rN);
-                
-                url = wcAccess.getAnchor().getEntries().getEntry("").getURL();
-                String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
-                SVNRepository repos = createRepository(url);
-                SVNReporter reporter = new SVNReporter(wcAccess, recursive);
-                
-                SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, 
-                        false /*reverse*/, false /*compare to base*/, result);
-                String targetURL = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-                if (wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL) != null) {
-                    targetURL = wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL);
-                }
-                SVNRevision wcRevNumber = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
-                targetURL = getURL(targetURL, wcRevNumber, SVNRevision.create(revNumber));
-                targetURL = PathUtil.decode(targetURL);
-                DebugLog.log("repos url: " + url); // should be created for /I/pi (at rev2?), and compared to /G/pi (at rev1) 
-                DebugLog.log("t.url: " + targetURL + ", revNumber " + revNumber + ", wc rev: " + wcRevNumber);
-                repos.diff(targetURL, revNumber, wcRevNumber.getNumber(), target, !useAncestry, recursive, reporter, editor);
+            } else if (rN == SVNRevision.WORKING || rN == SVNRevision.BASE) {
+                // cases 2.1, 2.2
+                doWCReposDiff(wcAccess, rM, rN, true, recursive, useAncestry, result);
+            } else if (rM == SVNRevision.WORKING || rM == SVNRevision.BASE) {
+                // cases 2.3, 2.4 
+                doWCReposDiff(wcAccess, rN, rM, false, recursive, useAncestry, result);
             } else {
                 // rev:rev
                 long revN = getRevisionNumber(path, rN);
@@ -366,6 +302,9 @@ public class SVNDiffClient extends SVNBasicClient {
                 SVNRevision wcRev = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
                 
                 String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+                if (wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL) != null) {
+                    url = wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL);
+                }
                 String url1 = getURL(url, wcRev, SVNRevision.create(revN));
                 String url2 = getURL(url, wcRev, SVNRevision.create(revM));
                 SVNRevision pegRev = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
@@ -376,5 +315,32 @@ public class SVNDiffClient extends SVNBasicClient {
         } finally {
             wcAccess.close(true, recursive);
         }
+    }
+
+    private void doWCReposDiff(SVNWCAccess wcAccess, SVNRevision reposRev, SVNRevision localRev,
+            boolean reverse,
+            boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
+        String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+        
+        // get wc url and revision
+        url = wcAccess.getAnchor().getEntries().getEntry("").getURL();
+        String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
+        SVNRevision wcRevNumber = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
+        
+        SVNRepository repos = createRepository(url);
+        SVNReporter reporter = new SVNReporter(wcAccess, recursive);
+        
+        SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, 
+                reverse /*reverse*/, localRev == SVNRevision.BASE /*compare to base*/, result);
+        
+        // get target url and revision, fetch target url location at desired target revision 
+        long revNumber = getRevisionNumber(url, reposRev);
+        String targetURL = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+        if (wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL) != null) {
+            targetURL = wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL);
+        }
+        targetURL = getURL(targetURL, wcRevNumber, SVNRevision.create(revNumber));
+        targetURL = PathUtil.decode(targetURL);
+        repos.diff(targetURL, revNumber, wcRevNumber.getNumber(), target, !useAncestry, recursive, reporter, editor);
     }
 }

@@ -172,7 +172,8 @@ public class SVNWCAccess implements ISVNEventListener {
                 if (value == null) {
                     // no entry in parent.
                     value = anchorEntries.getPropertyValue("", propertyName);
-                    if (value != null && SVNProperty.URL.equals(propertyName)) {
+                    if (value != null && 
+                            (SVNProperty.URL.equals(propertyName)|| SVNProperty.COPYFROM_URL.equals(propertyName))) {
                         // special handling for URLs.
                         value = PathUtil.append(value, PathUtil.encode(myName));
                     }
