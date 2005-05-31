@@ -162,19 +162,19 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             }
             SVNErrorManager.error(0, e);
         }
-        if (!isForcedBinaryDiff() && (isBinary(mimeType1) || isBinary(mimeType2))) {
+        if (!isForcedBinaryDiff() && (SVNWCUtil.isBinaryMimetype(mimeType1) || SVNWCUtil.isBinaryMimetype(mimeType2))) {
             try {
                 bos.write("Cannot display: file marked as binary type.".getBytes(getEncoding()));
                 bos.write(EOL);
-                if (isBinary(mimeType1) && !isBinary(mimeType2)) {
+                if (SVNWCUtil.isBinaryMimetype(mimeType1) && !SVNWCUtil.isBinaryMimetype(mimeType2)) {
                     bos.write("svn:mime-type = ".getBytes(getEncoding()));
                     bos.write(mimeType1.getBytes(getEncoding()));
                     bos.write(EOL);
-                } else if (!isBinary(mimeType1) && isBinary(mimeType2)) {
+                } else if (!SVNWCUtil.isBinaryMimetype(mimeType1) && SVNWCUtil.isBinaryMimetype(mimeType2)) {
                     bos.write("svn:mime-type = ".getBytes(getEncoding()));
                     bos.write(mimeType2.getBytes(getEncoding()));
                     bos.write(EOL);
-                } else if (isBinary(mimeType1) && isBinary(mimeType2)) {
+                } else if (SVNWCUtil.isBinaryMimetype(mimeType1) && SVNWCUtil.isBinaryMimetype(mimeType2)) {
                     if (mimeType1.equals(mimeType2)) {
                         bos.write("svn:mime-type = ".getBytes(getEncoding()));
                         bos.write(mimeType2.getBytes(getEncoding()));
@@ -257,10 +257,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             } catch (IOException inner) {
             }
         }
-    }
-
-    protected static boolean isBinary(String mimetype) {
-        return mimetype != null && !mimetype.startsWith("text/");
     }
 
     public void setEncoding(String encoding) {

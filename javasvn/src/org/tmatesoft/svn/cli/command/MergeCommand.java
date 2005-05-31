@@ -56,7 +56,7 @@ public class MergeCommand extends SVNCommand {
                 if (pegRev == SVNRevision.UNDEFINED) {
                     pegRev = SVNRevision.HEAD;
                 }
-                differ.doMerge(url, pegRev, rN, rM, dstPath, recursive, useAncestry, dryRun);
+                differ.doMerge(url, pegRev, rN, rM, dstPath, recursive, useAncestry, force, dryRun);
             } else if (getCommandLine().hasPaths()){
                 File srcPath = new File(getCommandLine().getPathAt(0));
                 File dstPath = new File(".");
@@ -67,7 +67,7 @@ public class MergeCommand extends SVNCommand {
                 if (getCommandLine().getPathCount() > 1) {
                     dstPath = new File(getCommandLine().getPathAt(1));
                 }
-                differ.doMerge(srcPath, pegRevision, rN, rM, dstPath, recursive, useAncestry, dryRun);
+                differ.doMerge(srcPath, pegRevision, rN, rM, dstPath, recursive, useAncestry, force, dryRun);
             }
         } else if (getCommandLine().getURLCount() == 2) {
             // merge url1@r url2@r wcPath
@@ -82,7 +82,7 @@ public class MergeCommand extends SVNCommand {
                 rM = SVNRevision.HEAD;
             }
             File dstPath = new File(getCommandLine().getPathAt(0));
-            differ.doMerge(url1, url2, rN, rM, dstPath, recursive, useAncestry, dryRun);
+            differ.doMerge(url1, url2, rN, rM, dstPath, recursive, useAncestry, force, dryRun);
         } else if (getCommandLine().getPathCount() >= 2){
             // merge wcPath1@r wcPath2@r wcPath
             File path1 = new File(getCommandLine().getPathAt(0));
@@ -99,7 +99,7 @@ public class MergeCommand extends SVNCommand {
             if (getCommandLine().getPathCount() > 2) {
                 dstPath = new File(getCommandLine().getPathAt(2));
             }
-            differ.doMerge(path1, path2, rN, rM, dstPath, recursive, useAncestry, dryRun);
+            differ.doMerge(path1, path2, rN, rM, dstPath, recursive, useAncestry, force, dryRun);
         } else {
             println(err, "svn: unsupported merge call format");
         }

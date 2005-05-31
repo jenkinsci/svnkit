@@ -4,12 +4,19 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNMerger;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
@@ -318,23 +325,66 @@ public class SVNDiffClient extends SVNBasicClient {
     }
     
     public void doMerge(String url1, String url2, SVNRevision rN, SVNRevision rM, File dstPath, 
-            boolean recursive, boolean useAncestry, boolean dryRun) throws SVNException {
-        
+            boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
+        // create merge editor that will receive diffs between url1 and url2 (rN|rM)
+        url1 = validateURL(url1);
+        url2 = validateURL(url2);
+        rN = rN == null || !rN.isValid() ? SVNRevision.HEAD : rN;
+        rM = rM == null || !rM.isValid() ? SVNRevision.HEAD : rM;
+        SVNWCAccess wcAccess = createWCAccess(dstPath);
+        try {
+            wcAccess.open(true, recursive);
+            SVNRepository repos1 = createRepository(url1);
+            SVNRepository repos2 = createRepository(url1);
+            final long revN = getRevisionNumber(url1, rN);
+            long revM = getRevisionNumber(url2, rM);
+            SVNRepository repos3 = createRepository(url2);
+
+            if (SVNProperty.KIND_FILE.equals(wcAccess.getTargetEntryProperty(SVNProperty.KIND))) {
+                SVNMerger merger = new SVNMerger(wcAccess, url2, revM, force, dryRun);
+                mergeSingleFile(wcAccess, repos1, repos3, revN, revM, merger);
+                return;
+            }            
+            
+            SVNNodeKind nodeKind1 = repos1.checkPath("", revN);
+            SVNNodeKind nodeKind2 = repos3.checkPath("", revM);
+            
+            String target = null;
+            if (nodeKind1 == SVNNodeKind.FILE || nodeKind2 == SVNNodeKind.FILE) {
+                target = PathUtil.tail(url1);
+                target = PathUtil.decode(url1);
+                url1 = PathUtil.removeTail(url1);
+                repos1 = createRepository(url1);
+                repos2 = createRepository(url1);
+            }
+            url2 = PathUtil.decode(url2);
+            repos1.diff(url2, revM, revN, target, !useAncestry, recursive, new ISVNReporterBaton() {
+                public void report(ISVNReporter reporter) throws SVNException {
+                    reporter.setPath("", null, revN, false);
+                    reporter.finishReport();
+                }
+            }, null);
+        } finally {
+            wcAccess.close(true, recursive);
+        }        
     }
 
     public void doMerge(File path1, File path2, SVNRevision rN, SVNRevision rM, File dstPath,
-        boolean recursive, boolean useAncestry, boolean dryRun) throws SVNException {
+        boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
         
     }
 
     public void doMerge(File path, SVNRevision pegRev, SVNRevision rN, SVNRevision rM, File dstPath,
-        boolean recursive, boolean useAncestry, boolean dryRun) throws SVNException {
+        boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
 
     }
 
     public void doMerge(String url, SVNRevision pegRev, SVNRevision rN, SVNRevision rM, File dstPath,
-        boolean recursive, boolean useAncestry, boolean dryRun) throws SVNException {
-
+        boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
+        url = validateURL(url);
+        String url1 = getURL(url, pegRev, rN);
+        String url2 = getURL(url, pegRev, rM);
+        doMerge(url1, url2, rN, rM, dstPath, recursive, useAncestry, force, dryRun);        
     }
 
     private void doWCReposDiff(SVNWCAccess wcAccess, SVNRevision reposRev, SVNRevision localRev,
@@ -362,5 +412,44 @@ public class SVNDiffClient extends SVNBasicClient {
         targetURL = getURL(targetURL, wcRevNumber, SVNRevision.create(revNumber));
         targetURL = PathUtil.decode(targetURL);
         repos.diff(targetURL, revNumber, wcRevNumber.getNumber(), target, !useAncestry, recursive, reporter, editor);
+    }
+
+    private void mergeSingleFile(SVNWCAccess wcAccess,SVNRepository repos1, SVNRepository repos2, long revN, long revM, SVNMerger merger) throws SVNException {
+        String name = wcAccess.getTargetName();
+        File tmpFile1 = wcAccess.getAnchor().getBaseFile(name, true);
+        File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile1.getParentFile(), name, ".tmp");
+        Map props1 = new HashMap();
+        Map props2 = new HashMap();
+        OutputStream os1 = null;
+        OutputStream os2 = null;
+        try {
+            os1 = new FileOutputStream(tmpFile1);
+            os2 = new FileOutputStream(tmpFile1);
+            repos1.getFile("", revN, props1, os1);
+            repos2.getFile("", revM, props2, os2);
+        } catch (FileNotFoundException e) {
+            SVNErrorManager.error(0, e);
+        } finally {
+            if (os1 != null) {
+                try {
+                    os1.close();
+                } catch (IOException e) {
+                }
+            } 
+            if (os2 != null) {
+                try {
+                    os2.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+        String mimeType1 = (String) props1.get(SVNProperty.MIME_TYPE);
+        String mimeType2 = (String) props2.get(SVNProperty.MIME_TYPE);
+        SVNStatusType[] mergeResult = merger.fileChanged(wcAccess.getTargetName(), tmpFile1, tmpFile2, revN, revM, 
+                mimeType1, mimeType2, props1, null);
+        svnEvent(SVNEventFactory.createUpdateModifiedEvent(wcAccess, wcAccess.getAnchor(), name,
+                SVNEventAction.UPDATE_UPDATE, mimeType2, mergeResult[0], mergeResult[1], SVNStatusType.LOCK_INAPPLICABLE), 
+                ISVNEventListener.UNKNOWN);
+        return;
     }
 }

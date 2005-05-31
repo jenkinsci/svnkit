@@ -221,6 +221,14 @@ public class SVNEntry implements Comparable {
         myEntries.setPropertyValue(myName, SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
     }
 
+    public void scheduleForDeletion() {
+        myEntries.setPropertyValue(myName, SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_DELETE);
+    }
+
+    public void scheduleForReplacement() {
+        myEntries.setPropertyValue(myName, SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_REPLACE);
+    }
+
     public void setCopyFromRevision(long revision) {
         myEntries.setPropertyValue(myName, SVNProperty.COPYFROM_REVISION, revision >= 0 ? Long.toString(revision) : null);
     }
@@ -247,5 +255,9 @@ public class SVNEntry implements Comparable {
 
     public boolean isCopied() {
         return Boolean.TRUE.toString().equals(myEntries.getPropertyValue(myName, SVNProperty.COPIED));
+    }
+
+    public String getUUID() {
+        return myEntries.getPropertyValue(myName, SVNProperty.UUID);
     }
 }

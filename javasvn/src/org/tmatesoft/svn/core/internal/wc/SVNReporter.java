@@ -23,7 +23,6 @@ import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
@@ -241,9 +240,22 @@ public class SVNReporter implements ISVNReporterBaton {
             SVNUpdateClient updater = new SVNUpdateClient(repositoryFactory, null, new SVNCommandEventProcessor(System.out, false, false));
             SVNDiffClient differ = new SVNDiffClient(repositoryFactory, null, null);
             
-            File dst = new File("C:\\i\\test5\\newDir");
+            File dst = new File("C:\\i\\test5");
+            SVNWCAccess wcAccess = SVNWCAccess.create(dst);
+            try {
+                wcAccess.open(true, true);
+                SVNMerger merger = new SVNMerger(wcAccess, "http://80.188.80.120/svn/repos/test4/branches/branch1", 30, true, false);
+                merger.directoryAdded("dir", 30);
+                merger.fileAdded("dir/file.txt", null, new File(dst, "dir/file.txt"), 1, 30, null, null, null, null);
+                merger.directoryAdded("dir2", 30);
+                merger.fileAdded("dir2/file.txt", null, new File(dst, "dir/file.txt"), 1, 30, null, null, null, null);
+            } finally {
+                wcAccess.close(true, true);
+            }
+            /*
             String url = "http://80.188.80.120/svn/repos/test4/xxx";
             differ.doDiff(url, null, url, null, SVNRevision.create(22),  SVNRevision.create(23), true, false, System.out);
+            */
         } catch (Throwable e) {
             e.printStackTrace();
         } 

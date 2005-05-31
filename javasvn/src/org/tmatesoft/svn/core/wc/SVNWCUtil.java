@@ -64,7 +64,7 @@ public class SVNWCUtil {
         try { 
             tmpFile = SVNFileUtil.createUniqueFile(root, name, ".tmp");
             String tmpPath = SVNFileUtil.getBasePath(tmpFile);
-            SVNTranslator.translate(wcAccess.getAnchor(), name, name, tmpPath, true, false);
+            SVNTranslator.translate(wcAccess.getAnchor(), name, name, tmpPath, false, false);
             
             InputStream is = null;
             try {
@@ -88,5 +88,9 @@ public class SVNWCUtil {
                 tmpFile.delete();
             }
         }
+    }
+
+    public static boolean isBinaryMimetype(String mimetype) {
+        return mimetype != null && !mimetype.startsWith("text/");
     }
 }

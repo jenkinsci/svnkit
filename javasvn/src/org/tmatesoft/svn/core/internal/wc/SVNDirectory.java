@@ -166,19 +166,21 @@ public class SVNDirectory {
         }        
         // now log all.
         Map command = new HashMap();
-        command.put(SVNLog.NAME_ATTR, workingTmp.getPath());
-        command.put(SVNLog.DEST_ATTR, working.getPath());
-        log.addCommand(SVNLog.MOVE, command, false);
-        command.clear();
-        command.put(SVNLog.NAME_ATTR, working.getPath());
-        log.addCommand(SVNLog.READONLY, command, false);
-
-        command.put(SVNLog.NAME_ATTR, baseTmp.getPath());
-        command.put(SVNLog.DEST_ATTR, base.getPath());
-        log.addCommand(SVNLog.MOVE, command, false);
-        command.clear();
-        command.put(SVNLog.NAME_ATTR, base.getPath());
-        log.addCommand(SVNLog.READONLY, command, false);
+        if (log != null) {
+            command.put(SVNLog.NAME_ATTR, workingTmp.getPath());
+            command.put(SVNLog.DEST_ATTR, working.getPath());
+            log.addCommand(SVNLog.MOVE, command, false);
+            command.clear();
+            command.put(SVNLog.NAME_ATTR, working.getPath());
+            log.addCommand(SVNLog.READONLY, command, false);
+    
+            command.put(SVNLog.NAME_ATTR, baseTmp.getPath());
+            command.put(SVNLog.DEST_ATTR, base.getPath());
+            log.addCommand(SVNLog.MOVE, command, false);
+            command.clear();
+            command.put(SVNLog.NAME_ATTR, base.getPath());
+            log.addCommand(SVNLog.READONLY, command, false);
+        }
 
         if (!conflicts.isEmpty()) {
             result = SVNStatusType.CONFLICTED;
@@ -212,17 +214,19 @@ public class SVNDirectory {
                     }
                 }
             }
-            command.put(SVNLog.NAME_ATTR, prejTmpPath);
-            command.put(SVNLog.DEST_ATTR, prejPath);
-            log.addCommand(SVNLog.APPEND, command, false);
-            command.clear();
-            command.put(SVNLog.NAME_ATTR, prejTmpPath);
-            log.addCommand(SVNLog.DELETE, command, false);
-            command.clear();
-
-            command.put(SVNLog.NAME_ATTR, name);
-            command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_REJECT_FILE), prejPath);
-            log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+            if (log != null) {
+                command.put(SVNLog.NAME_ATTR, prejTmpPath);
+                command.put(SVNLog.DEST_ATTR, prejPath);
+                log.addCommand(SVNLog.APPEND, command, false);
+                command.clear();
+                command.put(SVNLog.NAME_ATTR, prejTmpPath);
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+    
+                command.put(SVNLog.NAME_ATTR, name);
+                command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_REJECT_FILE), prejPath);
+                log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+            }
         }
 
         return result;
