@@ -36,6 +36,7 @@ public class SVNCommandLine {
     private List myURLs;
     private List myPathURLs;
     private List myPegRevisions;
+    private List myPegPathRevisions;
 
     public SVNCommandLine(String[] commandLine) throws SVNException {
         init(commandLine);
@@ -85,6 +86,11 @@ public class SVNCommandLine {
         String rev = (String) myPegRevisions.get(index);
         return SVNRevision.parse(rev);
     }
+
+    public SVNRevision getPathPegRevision(int index) {
+        String rev = (String) myPegPathRevisions.get(index);
+        return SVNRevision.parse(rev);
+    }
     
     public void setURLAt(int index, String url) {
         if (index >= myURLs.size()) {
@@ -117,6 +123,7 @@ public class SVNCommandLine {
         myURLs = new ArrayList();
         myPathURLs = new ArrayList();
         myPegRevisions = new ArrayList();
+        myPegPathRevisions = new ArrayList();
 
         SVNArgument previousArgument = null;
         String previousArgumentName = null;
@@ -190,6 +197,7 @@ public class SVNCommandLine {
                         myPegRevisions.add(pegRevision);
                     } else {
                         myPaths.add(argument);
+                        myPegPathRevisions.add(pegRevision);
                     }
                 }
             }

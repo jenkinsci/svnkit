@@ -316,6 +316,26 @@ public class SVNDiffClient extends SVNBasicClient {
             wcAccess.close(true, recursive);
         }
     }
+    
+    public void doMerge(String url1, String url2, SVNRevision rN, SVNRevision rM, File dstPath, 
+            boolean recursive, boolean useAncestry, boolean dryRun) throws SVNException {
+        
+    }
+
+    public void doMerge(File path1, File path2, SVNRevision rN, SVNRevision rM, File dstPath,
+        boolean recursive, boolean useAncestry, boolean dryRun) throws SVNException {
+        
+    }
+
+    public void doMerge(File path, SVNRevision pegRev, SVNRevision rN, SVNRevision rM, File dstPath,
+        boolean recursive, boolean useAncestry, boolean dryRun) throws SVNException {
+
+    }
+
+    public void doMerge(String url, SVNRevision pegRev, SVNRevision rN, SVNRevision rM, File dstPath,
+        boolean recursive, boolean useAncestry, boolean dryRun) throws SVNException {
+
+    }
 
     private void doWCReposDiff(SVNWCAccess wcAccess, SVNRevision reposRev, SVNRevision localRev,
             boolean reverse,
