@@ -83,6 +83,9 @@ public class SVNEntries {
                                     }
                                     setPropertyValue(entryName, SVNProperty.URL, url);
                                 }
+                                if (entry.get(SVNProperty.UUID) == null) {
+                                    setPropertyValue(entryName, SVNProperty.UUID, (String) rootEntry.get(SVNProperty.UUID));
+                                }
                             }
                         }
                         entry = null;
