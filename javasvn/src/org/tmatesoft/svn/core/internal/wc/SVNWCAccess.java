@@ -181,7 +181,17 @@ public class SVNWCAccess implements ISVNEventListener {
             }
             return value;
         }
-        return anchorEntries.getPropertyValue(myName, propertyName);
+        String value = anchorEntries.getPropertyValue(myName, propertyName);
+        if (value == null && anchorEntries.getEntry(myName) == null) {
+            // fetch from root.
+            value = anchorEntries.getPropertyValue("", propertyName);
+            if (value != null && 
+                    (SVNProperty.URL.equals(propertyName)|| SVNProperty.COPYFROM_URL.equals(propertyName))) {
+                // special handling for URLs.
+                value = PathUtil.append(value, PathUtil.encode(myName));
+            }
+        } 
+        return value;
     }
     
     public SVNDirectory getDirectory(String path) {
