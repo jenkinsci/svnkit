@@ -286,7 +286,7 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
                 SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, false, false, result);
                 editor.closeEdit();
-            } else if (rN == SVNRevision.WORKING || rM == SVNRevision.BASE) {
+            } else if (rN == SVNRevision.WORKING && rM == SVNRevision.BASE) {
                 // case 1.2 (not supported)
                 SVNErrorManager.error("svn: not supported diff revisions range: '" + rN + ":" + rM + "'");
             } else if (rN == SVNRevision.WORKING || rN == SVNRevision.BASE) {
