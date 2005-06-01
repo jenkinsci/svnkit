@@ -363,10 +363,7 @@ public abstract class SVNRepository {
      * @param  revision			a revision number which the <code>path</code> is under
      * @return 					the node kind for the given <code>path</code> at the given 
      * 							<code>revision</code>
-     * @throws SVNException  	if the <code>revision</code> number is invalid (<0) or
-     * 							if there's no such <code>revision</code> at all. If there's
-     * 							no such <code>path</code> in that <code>revision</code>.
-     * 							Also if a failure in connection occured or the user's 
+     * @throws SVNException  	if a failure in connection occured or the user's 
      * 							authentication failed (see 
      * 							{@link SVNAuthenticationException}).
      */

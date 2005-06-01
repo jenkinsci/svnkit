@@ -18,7 +18,7 @@ package org.tmatesoft.svn.core.io;
  * <ul>
  * <li>a directory - the node is a directory
  * <li>a file      - the node is a file
- * <li>none        - the versioned node is absent (does not exist)
+ * <li>none        - the node is absent (does not exist)
  * <li>unknown     - the node kind can not be recognized
  * </ul>
  * <code>SVNNodeKind</code> items are used to describe directory

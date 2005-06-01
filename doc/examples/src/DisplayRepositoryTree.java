@@ -5,7 +5,6 @@
  * Window - Preferences - Java - Code Style - Code Templates
  */
 
-import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -19,38 +18,43 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
-
 /*
  * This example shows how to get the repository tree at the latest (HEAD) revision 
  * starting with the directory that is the path/to/repository part of the repository 
  * location URL. The main point is SVNRepository.getDir() method that is called 
  * recursively for each directory (till the end of the tree). getDir collects all 
  * entries located inside a directory and returns them as a java.util.Collection.
- * As an example here's one of the program layouts:
+ * As an example here's one of the program layouts (for the default url used in the
+ * program):
  * 
  * Repository Root: /svn/jsvn
  * Repository UUID: 0a862816-5deb-0310-9199-c792c6ae6c6e
- * /ISVNDirectoryContent.java (author:alex; revision:66)
- * /ISVNFileEntry.java (author:alex; revision:420)
- * /ISVNEntry.java (author:alex; revision:424)
- * /ISVNExternalsHandler.java (author:alex; revision:33)
- * /ISVNWorkspaceListener.java (author:alex; revision:33)
- * /progress (author:alex; revision:446)
- * /progress/SVNProgressCancelledException.java (author:alex; revision:363)
- * /progress/ISVNProgressViewer.java (author:alex; revision:446)
- * /progress/SVNProgressViewerIterator.java (author:alex; revision:446)
- * /progress/SVNProgressDummyViewer.java (author:alex; revision:446)
- * /progress/SVNProgressRangeViewer.java (author:alex; revision:446)
- * /ISVNDirectoryEntry.java (author:alex; revision:409)
- * /diff (author:alex; revision:550)
- * /diff/SVNDiffInstruction.java (author:alex; revision:33)
- * /diff/ISVNDeltaConsumer.java (author:alex; revision:33)
- * /diff/SVNDiffWindow.java (author:alex; revision:151)
- * /diff/delta (author:alex; revision:550)
+ * 
+ * /rss2.php (author:alex; revision:345)
+ * /build.html (author:alex; revision:406)
+ * /feed (author:alex; revision:210)
+ * /feed/rss_util.php (author:alex; revision:210)
+ * /feed/lgpl.txt (author:alex; revision:33)
+ * /feed/feedcreator.class.php (author:alex; revision:33)
+ * /feed/rss.php (author:alex; revision:33)
+ * /ant.html (author:alex; revision:193)
+ * /license.html (author:alex; revision:193)
+ * /status.html (author:alex; revision:439)
+ * /usage.html (author:alex; revision:301)
+ * /logging.html (author:alex; revision:397)
+ * /.htaccess (author:alex; revision:51)
+ * /subclipse.html (author:alex; revision:406)
+ * /index.php (author:alex; revision:535)
+ * /plugin.xml (author:alex; revision:208)
+ * /rss.php (author:alex; revision:345)
+ * /list.html (author:alex; revision:535)
+ * 
  * ---------------------------------------------
- * Repository latest revision: 644
+ * Repository latest revision: 645
  */
 public class DisplayRepositoryTree{
+    private static SVNRepositoryLocation location;
+    private static SVNRepository repository;
     /*
      * args parameter is used to obtain a repository location URL, user's account name
      * & password to authenticate him to the server. 
@@ -59,9 +63,9 @@ public class DisplayRepositoryTree{
         /*
          * default values:
          */
-        String url      = "svn://localhost/path/to/repository";//"http://72.9.228.230:8080/svn/jsvn/trunk/javasvn";
-        String name     = "user";
-        String password = "password";
+        String url      = "http://72.9.228.230:8080/svn/jsvn/trunk/www";
+        String name     = "anonymous";
+        String password = "anonymous";
         
         /*
          * initializes the library (it must be done before ever using the library 
@@ -91,28 +95,45 @@ public class DisplayRepositoryTree{
              * a current repository session directory; it can be any versioned
              * directory inside the repository).  
              */ 
-            SVNRepositoryLocation location         = SVNRepositoryLocation.parseURL(url);
+            location = SVNRepositoryLocation.parseURL(url);
             /*
              * Creates an instance of SVNRepository to work with the repository. All 
              * user's requests to the repository are relative to the repository 
              * location used to create this SVNRepository.
              * 
              */
-            SVNRepository repository         	   = SVNRepositoryFactory.create(location);
+            repository = SVNRepositoryFactory.create(location);
+        }catch(SVNException svne){
             /*
-             * creates a user's credentials provider
+             * Perhaps a malformed URL is the cause of this exception
              */
-            ISVNCredentialsProvider scp            = new SVNSimpleCredentialsProvider(name, password);
+            svne.printStackTrace();
+            System.exit(1);
+        }
+         
+        /*
+         * creates a user's credentials provider
+         */
+        ISVNCredentialsProvider scp            = new SVNSimpleCredentialsProvider(name, password);
+       
+        /*
+         * Sets the provider of the user's credentials that will be used to
+         * authenticate the user to the server (if needed) during operations 
+         * handled by SVNRepository
+         */
+        repository.setCredentialsProvider(scp);
+        try{
             /*
-             * Sets the provider of the user's credentials that will be used to
-             * authenticate the user to the server (if needed) during operations 
-             * handled by SVNRepository
+             * Checks up if the specified path/to/repository part of the URL really 
+             * corresponds to a directory. If don't the program exits. 
+             * SVNNodeKind is that one who says what is located at a path in a 
+             * revision. -1 means the latest revision. 
              */
-            repository.setCredentialsProvider(scp);
-            /*
-             * Tests if the repository server can be connected
-             */
-            repository.testConnection();
+            SVNNodeKind nodeKind = repository.checkPath("", -1);
+            if(nodeKind!=SVNNodeKind.DIR){
+                System.err.println("The current path is not a directory! The real node kind is "+nodeKind.toString());
+                System.exit(1);
+            }
             /*
              * getRepositoryRoot returns the actual root directory where the repository
              * was created
@@ -123,6 +144,7 @@ public class DisplayRepositoryTree{
              * identifier of the repository
              */
             System.out.println("Repository UUID: "+repository.getRepositoryUUID());
+            System.out.println("");
             
             /*
              * Displays the repository tree at the current path - "" (what means the 
@@ -134,6 +156,7 @@ public class DisplayRepositoryTree{
              * Gets the latest revision number of the repository
              */
             long latestRevision = repository.getLatestRevision();
+            System.out.println("");
             System.out.println("---------------------------------------------");
             System.out.println("Repository latest revision: "+latestRevision);
             
@@ -146,7 +169,7 @@ public class DisplayRepositoryTree{
 	 * Initializes the library to work with a repository either via svn:// 
 	 * (or svn+ssh://) or via http:// (https://)
 	 */
-    public static void setupLibrary(){
+    private static void setupLibrary(){
 		/*
 		 * for DAV (over http and https)
 		 */
@@ -168,7 +191,7 @@ public class DisplayRepositoryTree{
      * part of the URL used to create an SVNRepository instance);
      * 
      */
-    public static void listEntries(SVNRepository repository, String path) throws SVNException{
+    private static void listEntries(SVNRepository repository, String path) throws SVNException{
         /*
          * Gets the contents of the directory specified by path at the latest revision
          * (for this purpose -1 is used here as the revision number to mean HEAD-revision)
