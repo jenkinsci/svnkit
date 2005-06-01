@@ -47,7 +47,19 @@
         />
     </target>
 
-    <target name="compile-eclipse" depends="init-environment,compile-library" if="eclipse.present">
+	<target name="compile-examples">
+		<mkdir dir="doc/examples/bin" />
+		<path id="examples.classpath">
+            <pathelement path="javasvn/bin" />
+		</path>
+		<javac debug="true"
+			destdir="doc/examples/bin"
+			srcdir="doc/examples/src"
+			classpathref="examples.classpath"
+		/>
+	</target>
+    
+	<target name="compile-eclipse" depends="init-environment,compile-library" if="eclipse.present">
         <mkdir dir="javasvn-eclipse/bin" />
 
         <path id="eclipse.classpath">
