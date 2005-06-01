@@ -28,23 +28,29 @@ import org.tmatesoft.svn.core.SVNProperty;
  * svn:mime-type property at all or if has and the property value is text/-like)
  * its contents as well as properties will be displayed in the console,
  * otherwise - only properties. As an example here's a part of one of the
- * program layouts (for the default url and file path used in the program): File
- * property: svn:eol-style=LF File property: svn:entry:revision=645 File
- * property: svn:entry:checksum=6b55de2c879b135fec9657309f5c9769 File property:
- * svn:wc:ra_dav:version-url=/svn/jsvn/!svn/ver/301/trunk/www/usage.html File
- * property: svn:entry:last-author=alex File property:
- * svn:entry:committed-date=2005-02-19T23:03:10.978491Z File property:
- * svn:entry:committed-rev=301 File contents: <html><head><title>How to Use ::
- * Documentation :: Pure Java Subversion (SVN) Client Library</title> <meta
- * name="keywords" content="Subversion,SVN,Version
- * Control,Java,Library,Development,Team,Teamwork,Configuration
- * Management,Software Configuration Management,SCM,CM,Revision
- * Control,Collaboration,Open Source,Software Development,Collaborative Software
- * Development"> <meta name="description" content="Pure Java Subversion Library.
- * Open Source, provided by TMate Software"> <style> html body { margin: 0px;
- * padding: 0px; padding-top: 0.2em; margin-left: 1em; margin-right: 1em;
+ * program layouts (for the default url and file path used in the program): 
+ * File property: svn:eol-style=LF File property: svn:entry:revision=645 
+ * File property: svn:entry:checksum=6b55de2c879b135fec9657309f5c9769 
+ * File property: svn:wc:ra_dav:version-url=/svn/jsvn/!svn/ver/301/trunk/www/usage.html 
+ * File property: svn:entry:last-author=alex 
+ * File property: svn:entry:committed-date=2005-02-19T23:03:10.978491Z 
+ * File property: svn:entry:committed-rev=301 
+ * File contents: 
+ * 
+ * <html><head><title>How to Use :: Documentation :: Pure Java Subversion (SVN) Client Library</title>
+ *
+ * <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+ * <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+ *
+ * <style>
+ * html body {
+ *     margin: 0px;
+ *     padding: 0px;
+ *     padding-top: 0.2em;
+ *     margin-left: 1em;
  * ......................................
- * --------------------------------------------- Repository latest revision: 645
+ * --------------------------------------------- 
+ * Repository latest revision: 645
  */
 public class DisplayFile {
     private static SVNRepositoryLocation location;
@@ -148,7 +154,7 @@ public class DisplayFile {
                 System.err.println("There is no entry at '" + url + "'.");
                 System.exit(1);
             } else if (nodeKind == SVNNodeKind.DIR) {
-                System.err.println("Entry at '" + url + "' is directory.");
+                System.err.println("The entry at '" + url + "' is a directory.");
                 System.exit(1);
             }
             /*
@@ -159,7 +165,7 @@ public class DisplayFile {
             repository.getFile(filePath, -1, fileProperties, baos);
 
         } catch (SVNException svne) {
-            System.err.println("error while fetching file contents and properties: " + svne.getMessage());
+            System.err.println("error while fetching the file contents and properties: " + svne.getMessage());
             System.exit(1);
         }
 
@@ -208,7 +214,7 @@ public class DisplayFile {
         try {
             latestRevision = repository.getLatestRevision();
         } catch (SVNException svne) {
-            System.err.println("error while fetching latest repository revision: " + svne.getMessage());
+            System.err.println("error while fetching the latest repository revision: " + svne.getMessage());
             System.exit(1);
         }
         System.out.println("");
