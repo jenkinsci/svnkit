@@ -91,8 +91,10 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
                 sb.append("B");
             } else {
                 sb.append(" ");
-            } 
-            UpdateCommand.println(myPrintStream, sb.toString() + "  " + UpdateCommand.getPath(event.getFile()));
+            }
+            if (sb.toString().trim().length() > 0) {
+                UpdateCommand.println(myPrintStream, sb.toString() + "  " + UpdateCommand.getPath(event.getFile()));
+            }
         } else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {                    
             if (!myIsExternal) {
                 if (myIsChanged) {
@@ -139,6 +141,10 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
             UpdateCommand.println(myPrintStream, "Restored '" + UpdateCommand.getPath(event.getFile()) + "'");
         } else if (event.getAction() == SVNEventAction.ADD) {
             SVNCommand.println(myPrintStream, "A    " + SVNCommand.getPath(event.getFile()));
+        } else if (event.getAction() == SVNEventAction.DELETE) {
+            SVNCommand.println(myPrintStream, "D    " + SVNCommand.getPath(event.getFile()));
+        } else if (event.getAction() == SVNEventAction.SKIP) {
+            SVNCommand.println(myPrintStream, "Skipped '" + SVNCommand.getPath(event.getFile()) + "'");
         } 
 
     }

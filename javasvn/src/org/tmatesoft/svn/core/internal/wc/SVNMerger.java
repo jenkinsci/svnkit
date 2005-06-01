@@ -5,12 +5,16 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNMerger {
@@ -40,8 +44,20 @@ public class SVNMerger {
         String name = PathUtil.tail(path);
         File targetFile = parentDir.getFile(name, false);
         if (targetFile.isDirectory()) {
-            // TODO delete this dir (schedule for deletion).
-            // if we got an exception - > return obstructed.
+            if (!myIsForce) {
+                try {
+                    parentDir.canScheduleForDeletion(name);
+                } catch (SVNException e) {
+                    return SVNStatusType.OBSTRUCTED;
+                }
+            }
+            if (!myIsDryRun) {
+                try {
+                    parentDir.scheduleForDeletion(name);
+                } catch (SVNException e) {
+                    return SVNStatusType.OBSTRUCTED;
+                }
+            }
             return SVNStatusType.CHANGED;
         } else if (targetFile.isFile()) {
             return SVNStatusType.OBSTRUCTED;
@@ -60,8 +76,20 @@ public class SVNMerger {
         if (targetFile.isDirectory()) {
             return SVNStatusType.OBSTRUCTED;
         } else if (targetFile.isFile()) {
-            // TODO delete this file (schedule for deletion).
-            // if we got an exception - > return obstructed.
+            if (!myIsForce) {
+                try {
+                    parentDir.canScheduleForDeletion(name);
+                } catch (SVNException e) {
+                    return SVNStatusType.OBSTRUCTED;
+                }
+            }
+            if (!myIsDryRun) {
+                try {
+                    parentDir.scheduleForDeletion(name);
+                } catch (SVNException e) {
+                    return SVNStatusType.OBSTRUCTED;
+                }
+            }
             return SVNStatusType.CHANGED;
         } 
         return SVNStatusType.MISSING;
@@ -117,6 +145,7 @@ public class SVNMerger {
     public SVNStatusType[] fileChanged(String path, File older, File yours, long rev1, long rev2,
             String mimeType1, String mimeType2,
             Map baseProps, Map propDiff) throws SVNException {
+        DebugLog.log("file changed: " + path);
         SVNStatusType[] result = new SVNStatusType[] {SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN};
         String parentPath = PathUtil.removeTail(path);
         SVNDirectory parentDir = myWCAccess.getDirectory(parentPath);
@@ -170,7 +199,9 @@ public class SVNMerger {
                 String targetLabel = ".working";
                 String leftLabel = ".merge-left.r" + rev1;
                 String rightLabel = ".merge-right.r" + rev2;
+                DebugLog.log("merging: " + name + " in dir: " + parentDir.getPath());
                 mergeResult = parentDir.mergeText(minePath, olderPath, yoursPath, targetLabel, leftLabel, rightLabel, myIsDryRun);
+                parentDir.getEntries().save(true);
             }
             
             if (mergeResult == SVNStatusType.CONFLICTED) {
@@ -179,8 +210,6 @@ public class SVNMerger {
                 result[0] = SVNStatusType.MERGED;
             } else if (mergeResult == SVNStatusType.MERGED) {
                 result[0] = SVNStatusType.CHANGED;
-            } else if (mergeResult == SVNStatusType.UNCHANGED) {
-                result[0] = SVNStatusType.MISSING;
             } else {
                 result[0] = SVNStatusType.UNCHANGED;
             }
@@ -200,7 +229,7 @@ public class SVNMerger {
             } else {
                 result[0] = SVNStatusType.MISSING;
             }
-            return result;
+            return result; 
         }
         String name = PathUtil.tail(path);
         File mine = parentDir.getFile(name, false);
@@ -237,6 +266,16 @@ public class SVNMerger {
 
     public SVNStatusType directoryPropertiesChanged(String path, Map baseProps, Map propDiff) throws SVNException {
         return propertiesChanged(path, "", baseProps, propDiff);
+    }
+    
+    public File getFile(String path, boolean base) {
+        SVNDirectory dir = getParentDirectory(path);
+        String name = PathUtil.tail(path);
+        if (dir != null) {
+            String extension = base ? ".tmp-base" : ".tmp-work";
+            return SVNFileUtil.createUniqueFile(dir.getFile(".svn/tmp/text-base", false), name , extension);
+        }
+        return null;
     }
 
     private SVNStatusType propertiesChanged(String path, String name, Map baseProps, Map propDiff) throws SVNException {
@@ -317,10 +356,59 @@ public class SVNMerger {
         entry.setCopied(true);
         entry.setCopyFromURL(copyFromURL);
         entry.setCopyFromRevision(copyFromRev);
+        String url = PathUtil.append(entries.getEntry("").getURL(), PathUtil.encode(name));
         entries.save(false);
-        // TODO install props, prop-base, then install text-base and finally wc file.
-        // this should be done with the help of directory log.
         parentDir.getWCProperties(name).delete();
+        
+        SVNLog log = parentDir.getLog(0);
+        Map command = new HashMap();
+
+        // 1. props.
+        SVNProperties wcPropsFile = parentDir.getBaseProperties(name, false);
+        SVNProperties basePropsFile = parentDir.getBaseProperties(name, false);
+        for (Iterator propNames = baseProps.keySet().iterator(); propNames.hasNext();) {
+            String propName = (String) propNames.next();
+            wcPropsFile.setPropertyValue(propName, (String) baseProps.get(propName)); 
+            basePropsFile.setPropertyValue(propName, (String) baseProps.get(propName)); 
+        }
+        command.put(SVNLog.NAME_ATTR, wcPropsFile.getPath());
+        log.addCommand(SVNLog.READONLY, command, false);
+        command.put(SVNLog.NAME_ATTR, basePropsFile.getPath());
+        log.addCommand(SVNLog.READONLY, command, false);
+        
+        // 2. entry
+        command.put(SVNLog.NAME_ATTR, name);
+        command.put(SVNProperty.shortPropertyName(SVNProperty.KIND), SVNProperty.KIND_FILE);
+        command.put(SVNProperty.shortPropertyName(SVNProperty.REVISION), Long.toString(copyFromRev));
+        command.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), Boolean.FALSE.toString());
+        command.put(SVNProperty.shortPropertyName(SVNProperty.ABSENT), Boolean.FALSE.toString());
+        command.put(SVNProperty.shortPropertyName(SVNProperty.URL), url);
+        command.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), Boolean.TRUE.toString());
+        command.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), url);
+        command.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION), Long.toString(copyFromRev));
+        log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+        command.clear();
+
+        // 3. text files.
+        String basePath = SVNFileUtil.getBasePath(parentDir.getBaseFile(name, false));
+        command.put(SVNLog.NAME_ATTR, filePath);
+        command.put(SVNLog.DEST_ATTR, basePath);
+        log.addCommand(SVNLog.MOVE, command, false);
+        command.clear();
+        command.put(SVNLog.NAME_ATTR, basePath);
+        log.addCommand(SVNLog.READONLY, command, false);
+        command.clear();
+        command.put(SVNLog.NAME_ATTR, basePath);
+        command.put(SVNLog.DEST_ATTR, name);
+        log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+        command.clear();
+
+        command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNLog.WC_TIMESTAMP);
+        command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNLog.WC_TIMESTAMP);
+        log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+
+        log.save();
+        parentDir.runLogs();
     }
     
     private SVNDirectory getParentDirectory(String path) {

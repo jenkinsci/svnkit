@@ -206,6 +206,18 @@ public class SVNEntries {
         }
         Map entry = (Map) myData.get(name);
         if (entry != null) {
+            if (SVNProperty.SCHEDULE.equals(propertyName)) {
+                if (SVNProperty.SCHEDULE_DELETE.equals(propertyValue)) {
+                    if (SVNProperty.SCHEDULE_ADD.equals(entry.get(SVNProperty.SCHEDULE))) {
+                        if (entry.get(SVNProperty.DELETED) == null) {
+                            deleteEntry(name);
+                        } else {
+                            entry.remove(SVNProperty.SCHEDULE);
+                        }
+                        return true;
+                    } 
+                }                    
+            }
             if (propertyValue == null) {
                 return entry.remove(propertyName) != null;
             } else if (!propertyValue.equals(entry.get(propertyName))){

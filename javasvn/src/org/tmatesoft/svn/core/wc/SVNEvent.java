@@ -80,6 +80,28 @@ public class SVNEvent {
         myRootFile = rootFile;
         myName = file.getName();        
     }
+
+    public SVNEvent(String path, File rootFile, File file, 
+            SVNEventAction action, 
+            SVNNodeKind kind, 
+            long revision, 
+            String mimetype, 
+            SVNStatusType cstatus, SVNStatusType pstatus) {
+        myMimeType = mimetype;
+        myErrorMessage = null;
+        myAction = action;
+        myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
+        myRevision = revision;
+        myContentsStatus = cstatus == null ? SVNStatusType.INAPPLICABLE : cstatus;
+        myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE : pstatus;
+        myLockStatus = SVNStatusType.INAPPLICABLE;
+        myLock = null;
+        myPath = path;
+        
+        myRoot = file != null ? file.getParentFile() : null;
+        myRootFile = rootFile;
+        myName = file.getName();        
+    }
     
     public SVNWCAccess getSource() {
         return mySVNWCAccess;
@@ -107,6 +129,8 @@ public class SVNEvent {
         if (myRoot != null) {
             return ("".equals(myName) || ".".equals(myName)) ? myRoot : 
                 new File(myRoot, myName);   
+        } else if (mySVNWCAccess != null && getPath() != null) {
+            return new File(mySVNWCAccess.getAnchor().getRoot(), getPath());
         }
         return null;
     }     

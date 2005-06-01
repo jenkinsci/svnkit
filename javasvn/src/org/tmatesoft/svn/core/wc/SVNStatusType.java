@@ -15,6 +15,10 @@ public class SVNStatusType {
         return myID;
     }
     
+    public String toString() {
+        return Integer.toString(myID);
+    }
+    
     public static final SVNStatusType INAPPLICABLE = new SVNStatusType(0);    
     public static final SVNStatusType UNKNOWN = new SVNStatusType(1);    
     public static final SVNStatusType UNCHANGED = new SVNStatusType(2);    

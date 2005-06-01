@@ -72,7 +72,6 @@ public class FSMergerBySequence {
 		            baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex);
 		            local.forward();
 		            latest.forward();
-		            merged = true;
 		            continue;
 		        }
 

@@ -231,5 +231,4 @@ public class SVNBasicClient implements ISVNEventListener {
             myEventDispatcher.checkCancelled();
         }
     }
-
 }

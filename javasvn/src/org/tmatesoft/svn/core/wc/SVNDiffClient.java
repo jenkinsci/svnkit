@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNMergeEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNMerger;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNReporter;
@@ -358,12 +359,15 @@ public class SVNDiffClient extends SVNBasicClient {
                 repos2 = createRepository(url1);
             }
             url2 = PathUtil.decode(url2);
+            
+            SVNMerger merger = new SVNMerger(wcAccess, url2, revM, force, dryRun);
+            SVNMergeEditor mergeEditor = new SVNMergeEditor(wcAccess, repos2, revN, revM, merger);
             repos1.diff(url2, revM, revN, target, !useAncestry, recursive, new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {
                     reporter.setPath("", null, revN, false);
                     reporter.finishReport();
                 }
-            }, null);
+            }, mergeEditor);
         } finally {
             wcAccess.close(true, recursive);
         }        

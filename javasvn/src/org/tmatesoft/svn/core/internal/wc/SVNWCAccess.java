@@ -415,7 +415,10 @@ public class SVNWCAccess implements ISVNEventListener {
             if (dir.isDirectory() && entry.getKind() == SVNNodeKind.DIR) {
                 String path = PathUtil.append(parentPath, dir.getName());
                 path = PathUtil.removeLeadingSlash(path);
-                SVNDirectory svnDir = new SVNDirectory(this, PathUtil.append(parentPath, dir.getName()), dir);
+                SVNDirectory svnDir = new SVNDirectory(this, 
+                        "".equals(parentPath) ? dir.getName() : 
+                    PathUtil.append(parentPath, dir.getName()), 
+                    dir);
                 if (svnDir.isVersioned()) {
                     visitDirectories(path, svnDir, visitor);
                     visitor.visit(path, svnDir);

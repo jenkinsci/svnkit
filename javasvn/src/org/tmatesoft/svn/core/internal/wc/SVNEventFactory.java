@@ -10,8 +10,17 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNEventFactory {
+    
+    public static SVNEvent createMergeEvent(SVNWCAccess source, String path, SVNEventAction action, 
+            SVNStatusType cType, SVNStatusType pType) {
+        SVNEvent event = new SVNEvent(source, null, PathUtil.tail(path), action, null,
+                -1, null, cType, pType, null, null, null);
+        event.setPath(path);
+        return event;
+    }
 
     public static SVNEvent createAddedEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
         String mimeType = null;
@@ -22,6 +31,13 @@ public class SVNEventFactory {
         return new SVNEvent(source, dir, entry.getName(), 
                 SVNEventAction.ADD, entry.getKind(), 
                 0, mimeType, 
+                null, null, null, null, null);
+    }
+
+    public static SVNEvent createDeletedEvent(SVNWCAccess source, SVNDirectory dir, String name) {
+        return new SVNEvent(source, dir, name, 
+                SVNEventAction.DELETE, null, 
+                0, null, 
                 null, null, null, null, null);
     }
 

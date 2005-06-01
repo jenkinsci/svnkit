@@ -3,6 +3,7 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.security.MessageDigest;
@@ -21,7 +22,9 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.ws.fs.FSMergerBySequence;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -281,7 +284,11 @@ public class SVNDirectory {
             QSequenceLineRAData baseData = new QSequenceLineRAFileData(baseIS);
             QSequenceLineRAData localData = new QSequenceLineRAFileData(localIS);
             QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
-            mergeResult = merger.merge(baseData, localData, latestData, result);            
+            debugQData("base  :\n", baseData);
+            debugQData("local :\n", localData);
+            debugQData("latest:\n", latestData);
+            mergeResult = merger.merge(baseData, localData, latestData, result);
+            DebugLog.log("merge result: " + mergeResult);
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {
@@ -329,6 +336,20 @@ public class SVNDirectory {
         localTmpFile.delete();
         resultFile.delete();
         return status;
+    }
+
+    private void debugQData(String label, QSequenceLineRAData baseData) throws IOException {
+        InputStream is = baseData.read(0, baseData.length());
+        StringBuffer sb = new StringBuffer();
+        while(true) {
+            int r = is.read();
+            if (r < 0) {
+                break;
+            }
+            sb.append((char) (r & 0xFF));
+        }
+        is.close();
+        DebugLog.log(label + ":" + sb.toString());
     }
     
     public void markResolved(String name, boolean text, boolean props) throws SVNException {
@@ -490,6 +511,49 @@ public class SVNDirectory {
         File tmpDir = getFile(".svn/tmp", false);
         if (tmpDir.isDirectory()) {
             SVNFileUtil.deleteAll(tmpDir, false);
+        }
+    }
+    
+    public void canScheduleForDeletion(String name) throws SVNException {
+        // TODO use status call.
+        // check if this dir doesn't have obstructed, unversioned or modified entries.
+        SVNEntries entries = getEntries();
+        File[] files = getRoot().listFiles();
+        if (files == null) {
+            return;
+        }
+        for (int i = 0; i < files.length; i++) {
+            File childFile = files[i];
+            if (".svn".equals(childFile.getName())) {
+                continue;
+            }
+            if (!"".equals(name) && !childFile.getName().equals(name)) {
+                continue;
+            }
+            SVNEntry entry = entries.getEntry(childFile.getName());
+            String path = PathUtil.append(getPath(), childFile.getName());
+            path = path.replace('/', File.separatorChar);
+            if (entry == null) {
+                SVNErrorManager.error("svn: '" + path + "' is not under version control");
+            } else {
+                SVNNodeKind kind = entry.getKind();
+                if ((childFile.isFile() && kind == SVNNodeKind.DIR) || 
+                        (childFile.isDirectory() && !SVNFileUtil.isSymlink(childFile) && kind == SVNNodeKind.FILE) ||
+                        (SVNFileUtil.isSymlink(childFile) && kind != SVNNodeKind.FILE)) {
+                    SVNErrorManager.error("svn: '" + path + "' is in the way of the resource actually under version control");
+                } else {
+                    // chek for mods.
+                    if (hasTextModifications(entry.getName(), false) || hasPropModifications(entry.getName())) {
+                        SVNErrorManager.error("svn: '" + path + "' has local modifications");
+                    }
+                }                    
+                if (kind == SVNNodeKind.DIR) {
+                    SVNDirectory childDir = getChildDirectory(childFile.getName());
+                    if (childDir != null) {
+                        childDir.canScheduleForDeletion("");
+                    }
+                }
+            }
         }
     }
     
@@ -674,6 +738,122 @@ public class SVNDirectory {
             }
         }
         getEntries().save(true);
+    }
+    
+    public void scheduleForDeletion(String name) throws SVNException {
+        SVNEntries entries = getEntries();
+        SVNEntry entry = entries.getEntry(name);
+        if (entry == null) {
+            SVNFileUtil.deleteAll(getFile(name, false));
+            return;
+        }
+        boolean added = entry.isScheduledForAddition();
+        boolean deleted = false;
+        SVNNodeKind kind = entry.getKind();
+        if (entry.getKind() == SVNNodeKind.DIR) {
+            // try to get parent entry
+            SVNDirectory parent = null;
+            SVNDirectory child = null;
+            String nameInParent = null;
+            if (!"".equals(name)) {
+                parent = this;
+                nameInParent = name;
+                child = getChildDirectory(name);
+            } else {
+                child = this;
+                nameInParent = PathUtil.tail(myPath); 
+                String parentPath = PathUtil.removeTail(myPath);
+                parentPath = PathUtil.removeLeadingSlash(parentPath);
+                parent = myWCAccess.getDirectory(parentPath);
+            }
+            deleted = parent != null ? parent.getEntries().getEntry(nameInParent).isDeleted() : false;
+            if (added && !deleted) {
+                // destroy whole child dir.
+                if (child != null) {
+                    child.destroy("", true);
+                } else if (parent != null) {
+                    // no child, remove entry in parent
+                    parent.getEntries().deleteEntry(nameInParent);
+                    parent.getEntries().save(false);
+                }
+            } else if (child != null) {
+                // recursively mark for deletion (but not "").
+                child.updateEntryProperty(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_DELETE, true);
+            }
+            if (parent != null) {
+                parent.getEntries().save(false);
+            }
+            if (child != null) {
+                child.getEntries().save(false);
+            }
+        } 
+        if (!(kind == SVNNodeKind.DIR && added && !deleted)) {
+            // schedule entry in parent.            
+            entry.scheduleForDeletion();
+        }
+        SVNEvent event = SVNEventFactory.createDeletedEvent(myWCAccess, this, entry.getName());
+        myWCAccess.svnEvent(event);
+        if (added) {
+            SVNFileUtil.deleteAll(getFile(name, false));
+        } else {
+            deleteWorkingFiles(name);
+        }
+        entries.save(true);
+    }
+    
+    private void updateEntryProperty(String propertyName, String value, boolean recursive) throws SVNException {
+        SVNEntries entries = getEntries();
+        for (Iterator ents = entries.entries(); ents.hasNext();) {
+            SVNEntry entry = (SVNEntry) ents.next();
+            if ("".equals(entry.getName())) {
+                continue;
+            }
+            if (entry.isDirectory() && recursive) {
+                SVNDirectory childDir = getChildDirectory(entry.getName());                    
+                childDir.updateEntryProperty(propertyName, value, recursive);
+            } 
+            entries.setPropertyValue(entry.getName(), propertyName, value);
+            if (SVNProperty.SCHEDULE_DELETE.equals(value)) {
+                SVNEvent event = SVNEventFactory.createDeletedEvent(myWCAccess, this, entry.getName());
+                myWCAccess.svnEvent(event);
+            }
+        }
+        SVNEntry root = entries.getEntry("");
+        if (!(SVNProperty.SCHEDULE_DELETE.equals(value) && root.isScheduledForAddition())) {
+            root.scheduleForDeletion();
+        }
+        entries.save(false);
+    }
+
+    private void deleteWorkingFiles(String name) throws SVNException {
+        File file = getFile(name, false);
+        if (file.isFile()) {
+            file.delete();
+        } else if (file.isDirectory()) {
+            SVNDirectory childDir = getChildDirectory(file.getName());
+            if (childDir != null) {
+                SVNEntries childEntries = childDir.getEntries();
+                for(Iterator childEnts = childEntries.entries(); childEnts.hasNext();) {
+                    SVNEntry childEntry = (SVNEntry) childEnts.next();
+                    if ("".equals(childEntry.getName())) {
+                        continue;
+                    }
+                    childDir.deleteWorkingFiles(childEntry.getName());                    
+                }
+                File[] allFiles = file.listFiles();
+                for (int i = 0; allFiles != null && i < allFiles.length; i++) {
+                    if (".svn".equals(allFiles[i].getName())) {
+                        continue;
+                    }
+                    if (childEntries.getEntry(allFiles[i].getName()) != null) {
+                        continue;
+                    }
+                    SVNFileUtil.deleteAll(allFiles[i]);
+                }
+            } else {
+                SVNFileUtil.deleteAll(file);
+            }
+        }
     }
     
     public void setWCAccess(SVNWCAccess wcAccess, String path) {
