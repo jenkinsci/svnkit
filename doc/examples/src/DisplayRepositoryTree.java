@@ -183,11 +183,12 @@ public class DisplayRepositoryTree {
         System.out.println("");
         System.out.println("---------------------------------------------");
         System.out.println("Repository latest revision: " + latestRevision);
+        System.exit(0);
     }
 
     /*
-     * Initializes the library to work with a repository either via svn:// (or
-     * svn+ssh://) or via http:// (https://)
+     * Initializes the library to work with a repository either via svn:// 
+     * (and svn+ssh://) or via http:// (and https://)
      */
     private static void setupLibrary() {
         /*
