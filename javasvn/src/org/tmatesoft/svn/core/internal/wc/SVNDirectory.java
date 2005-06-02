@@ -550,7 +550,8 @@ public class SVNDirectory {
             DebugLog.log("entry: " + entry);
             String path = PathUtil.append(getPath(), childFile.getName());
             path = path.replace('/', File.separatorChar);
-            if (entry == null) {
+            if (entry == null || entry.isHidden()) {
+                // no entry or entry is 'deleted'
                 SVNErrorManager.error("svn: '" + path + "' is not under version control");
             } else {
                 SVNNodeKind kind = entry.getKind();

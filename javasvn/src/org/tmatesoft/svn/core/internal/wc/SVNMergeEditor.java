@@ -110,7 +110,7 @@ public class SVNMergeEditor implements ISVNEditor {
         
         // merge dir added.
         SVNEventAction action = SVNEventAction.ADD;
-        SVNStatusType mergeResult = myMerger.directoryAdded(myCurrentDirectory.myWCPath, myRevision2); 
+        SVNStatusType mergeResult = myMerger.directoryAdded(myCurrentDirectory.myWCPath, myCurrentDirectory.myEntryProps, myRevision2); 
         if (mergeResult == SVNStatusType.MISSING || mergeResult == SVNStatusType.OBSTRUCTED) {
             action = SVNEventAction.SKIP;
         }
@@ -130,6 +130,10 @@ public class SVNMergeEditor implements ISVNEditor {
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
+        if (name != null && myCurrentDirectory.myIsAdded && name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
+            myCurrentDirectory.myEntryProps.put(name, value);
+            return;
+        }
         if (name == null || name.startsWith(SVNProperty.SVN_WC_PREFIX) ||
                 name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
             return;
@@ -185,6 +189,10 @@ public class SVNMergeEditor implements ISVNEditor {
 
 
     public void changeFileProperty(String name, String value) throws SVNException {
+        if (name != null && myCurrentFile.myIsAdded && name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
+            myCurrentFile.myEntryProps.put(name, value);
+            return;
+        }
         if (name == null || name.startsWith(SVNProperty.SVN_WC_PREFIX) ||
                 name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
             return;
@@ -293,7 +301,8 @@ public class SVNMergeEditor implements ISVNEditor {
                     DebugLog.log("adding file: " + myCurrentFile.myWCPath);
                     try {
                     result = myMerger.fileAdded(myCurrentFile.myWCPath, myCurrentFile.myFile != null ? myCurrentFile.myBaseFile : null, myCurrentFile.myFile, myRevision2, 0,
-                            mimeType1, mimeType2, myCurrentFile.myBaseProperties, myCurrentFile.myPropertyDiff);
+                            mimeType1, mimeType2, myCurrentFile.myBaseProperties, myCurrentFile.myPropertyDiff,
+                            myCurrentFile.myEntryProps);
                     } catch (Throwable th) {
                         DebugLog.error(th);
                     }
@@ -353,6 +362,9 @@ public class SVNMergeEditor implements ISVNEditor {
             myParent = parent;
             myPath = path;
             myIsAdded = added;
+            if (added) {
+                myEntryProps = new HashMap();
+            }
         }
         
         private boolean myIsAdded;
@@ -362,6 +374,7 @@ public class SVNMergeEditor implements ISVNEditor {
         
         private Map myBaseProperties;
         private Map myPropertyDiff;
+        private Map myEntryProps;
         
         private SVNDirectoryInfo myParent;
 
@@ -389,6 +402,9 @@ public class SVNMergeEditor implements ISVNEditor {
             myWCPath = PathUtil.removeLeadingSlash(myWCPath);
             myWCPath = PathUtil.removeTrailingSlash(myWCPath);
             myIsAdded = added;            
+            if (added) {
+                myEntryProps = new HashMap();
+            }
         }
         
         public void loadFromRepository(File dst, SVNRepository repos, long revision) throws SVNException {
@@ -425,6 +441,7 @@ public class SVNMergeEditor implements ISVNEditor {
         
         private Map myBaseProperties;
         private Map myPropertyDiff;
+        private Map myEntryProps;
 
         private SVNDirectoryInfo myParent;
         

@@ -10,8 +10,11 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.core.wc.ISVNEventListener;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.DebugLog;
@@ -25,13 +28,13 @@ public class SVNMerger {
     
     private String myAddedPath;
     private String myURL;
-    private long myRevision;
+    private long myTargetRevision;
 
     public SVNMerger(SVNWCAccess wcAccess, String url, long rev, boolean force, boolean dryRun) {
         myWCAccess = wcAccess;
         myIsDryRun = dryRun;
         myIsForce = force;
-        myRevision = rev;
+        myTargetRevision = rev;
         myURL = url;
     }
     
@@ -39,30 +42,53 @@ public class SVNMerger {
         return myIsDryRun;
     }
 
-    public SVNStatusType directoryDeleted(String path) throws SVNException {
-        String parentPath = PathUtil.removeTail(path);
-        SVNDirectory parentDir = myWCAccess.getDirectory(parentPath);
+    public SVNStatusType directoryDeleted(final String path) throws SVNException {
+        SVNDirectory parentDir = getParentDirectory(path);
         if (parentDir == null) {
             return SVNStatusType.MISSING;
         }
         String name = PathUtil.tail(path);
         File targetFile = parentDir.getFile(name, false);
+        DebugLog.log("target file for deletion: " + targetFile);
         if (targetFile.isDirectory()) {
-            if (!myIsForce) {
-                try {
-                    parentDir.canScheduleForDeletion(name);
-                } catch (SVNException e) {
-                    DebugLog.log("can't schedule for deletion: " + targetFile);
-                    DebugLog.error(e);
-                    return SVNStatusType.OBSTRUCTED;
+            // check for normal entry?
+            final ISVNEventListener oldDispatcher = myWCAccess.getEventDispatcher();
+            myWCAccess.setEventDispatcher(new ISVNEventListener() {
+                public void svnEvent(SVNEvent event, double progress) {
+                    String eventPath = event.getPath();
+                    eventPath = eventPath.replace(File.separatorChar, '/');
+                    if (event.getPath().equals(path)) {
+                        return;
+                    }
+                    if (oldDispatcher != null) {
+                        oldDispatcher.svnEvent(event, progress);
+                    }
                 }
-            }
-            if (!myIsDryRun) {
-                try {
-                    parentDir.scheduleForDeletion(name);
-                } catch (SVNException e) {
-                    return SVNStatusType.OBSTRUCTED;
+                public void checkCancelled() throws SVNCancelException {
+                    if (oldDispatcher != null) {
+                        oldDispatcher.checkCancelled();
+                    }
                 }
+            });
+            try {
+                if (!myIsForce) {
+                    try {
+                        parentDir.canScheduleForDeletion(name);
+                    } catch (SVNException e) {
+                        DebugLog.log("can't schedule for deletion: " + targetFile);
+                        DebugLog.error(e);
+                        return SVNStatusType.OBSTRUCTED;
+                    }
+                }
+                if (!myIsDryRun) {
+                    try {
+                        parentDir.scheduleForDeletion(name);
+                    } catch (SVNException e) {
+                        return SVNStatusType.OBSTRUCTED;
+                    }
+                }
+            } finally {
+                myWCAccess.setEventDispatcher(oldDispatcher);
             }
             return SVNStatusType.CHANGED;
         } else if (targetFile.isFile()) {
@@ -72,8 +98,7 @@ public class SVNMerger {
     }
 
     public SVNStatusType fileDeleted(String path) throws SVNException {
-        String parentPath = PathUtil.removeTail(path);
-        SVNDirectory parentDir = myWCAccess.getDirectory(parentPath);
+        SVNDirectory parentDir = getParentDirectory(path);
         if (parentDir == null) {
             return SVNStatusType.MISSING;
         }
@@ -82,26 +107,32 @@ public class SVNMerger {
         if (targetFile.isDirectory()) {
             return SVNStatusType.OBSTRUCTED;
         } else if (targetFile.isFile()) {
-            if (!myIsForce) {
-                try {
-                    parentDir.canScheduleForDeletion(name);
-                } catch (SVNException e) {
-                    return SVNStatusType.OBSTRUCTED;
+            ISVNEventListener oldDispatcher = myWCAccess.getEventDispatcher();
+            try {
+                myWCAccess.setEventDispatcher(null);
+                if (!myIsForce) {
+                    try {
+                        parentDir.canScheduleForDeletion(name);
+                    } catch (SVNException e) {
+                        return SVNStatusType.OBSTRUCTED;
+                    }
                 }
-            }
-            if (!myIsDryRun) {
-                try {
-                    parentDir.scheduleForDeletion(name);
-                } catch (SVNException e) {
-                    return SVNStatusType.OBSTRUCTED;
+                if (!myIsDryRun) {
+                    try {
+                        parentDir.scheduleForDeletion(name);
+                    } catch (SVNException e) {
+                        return SVNStatusType.OBSTRUCTED;
+                    }
                 }
+            } finally {
+                myWCAccess.setEventDispatcher(oldDispatcher);
             }
             return SVNStatusType.CHANGED;
         } 
         return SVNStatusType.MISSING;
     }
     
-    public SVNStatusType directoryAdded(String path, long revision) throws SVNException {
+    public SVNStatusType directoryAdded(String path, Map entryProps, long revision) throws SVNException {
         SVNDirectory parentDir = getParentDirectory(path);
         if (parentDir == null) {
             if (myIsDryRun && myAddedPath != null && path.startsWith(myAddedPath)) {
@@ -114,16 +145,15 @@ public class SVNMerger {
         String pathInURL = path;
         if (!file.exists()) {
             SVNEntry entry = parentDir.getEntries().getEntry(name);
-            if (entry != null && entry.isScheduledForDeletion()) {
-                // it was a file.
+            if (entry != null && !entry.isScheduledForDeletion()) {
+                // missing entry.
                 return SVNStatusType.OBSTRUCTED;
             }
             if (!myIsDryRun) {
                 file.mkdirs();
                 String url = PathUtil.append(myURL, PathUtil.encode(getPathInURL(path)));
-                addDirectory(parentDir, name, url, revision);
-            }
-            if (myIsDryRun) {
+                addDirectory(parentDir, name, url, myTargetRevision, entryProps);
+            } else {
                 myAddedPath = path + "/";
             }
             return SVNStatusType.CHANGED;
@@ -134,7 +164,7 @@ public class SVNMerger {
                     myAddedPath = path + "/";
                 } else {
                     String url = PathUtil.append(myURL, PathUtil.encode(getPathInURL(path)));
-                    addDirectory(parentDir, name, url, revision);
+                    addDirectory(parentDir, name, url, myTargetRevision, entryProps);
                 }
                 return SVNStatusType.CHANGED;
             } else {
@@ -146,7 +176,7 @@ public class SVNMerger {
             }
             return SVNStatusType.OBSTRUCTED;
         }
-        return SVNStatusType.UNKNOWN;
+        return SVNStatusType.MISSING;
     }
 
     public SVNStatusType[] fileChanged(String path, File older, File yours, long rev1, long rev2,
@@ -165,7 +195,7 @@ public class SVNMerger {
         File mine = parentDir.getFile(name, false);
         SVNEntry entry = parentDir.getEntries().getEntry(name);
         
-        if (!mine.isFile() || entry == null) {
+        if (!mine.isFile() || entry == null || entry.isHidden()) {
             result[0] = SVNStatusType.MISSING;
             result[1] = SVNStatusType.MISSING;
             return result;
@@ -226,7 +256,7 @@ public class SVNMerger {
     
     public SVNStatusType[] fileAdded(String path, File older, File yours, long rev1, long rev2,
             String mimeType1, String mimeType2,
-            Map baseProps, Map propDiff) throws SVNException {
+            Map baseProps, Map propDiff, Map entryProps) throws SVNException {
         SVNStatusType[] result = new SVNStatusType[] {SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN};
         SVNDirectory parentDir = getParentDirectory(path);
         if (parentDir == null) {
@@ -251,7 +281,7 @@ public class SVNMerger {
             } else if (!myIsDryRun) {
                 String pathInURL = getPathInURL(path);
                 String copyFromURL = PathUtil.append(myURL, PathUtil.encode(pathInURL));
-                addFile(parentDir, name, SVNFileUtil.getBasePath(yours), propDiff, copyFromURL, rev2);
+                addFile(parentDir, name, SVNFileUtil.getBasePath(yours), propDiff, copyFromURL, myTargetRevision, entryProps);
             }
             result[0] = SVNStatusType.CHANGED;
             if (propDiff != null && !propDiff.isEmpty()) {
@@ -358,19 +388,21 @@ public class SVNMerger {
         return result;
     }    
     
-    private void addDirectory(SVNDirectory parentDir, String name, String copyFromURL, long copyFromRev) throws SVNException {
+    private void addDirectory(SVNDirectory parentDir, String name, String copyFromURL, long copyFromRev, Map entryProps) throws SVNException {
         // 1. update or create entry in parent
         SVNEntries entries = parentDir.getEntries();
         SVNEntry entry = entries.getEntry(name);
         String url = null;
         String uuid = entries.getEntry("").getUUID();
         if (entry != null) {
+            entry.loadProperties(entryProps);
             if (entry.isScheduledForDeletion()) {
                 entry.scheduleForReplacement();
             }
             url = entry.getURL();
         } else {
             entry = parentDir.getEntries().addEntry(name);
+            entry.loadProperties(entryProps);
             entry.setKind(SVNNodeKind.DIR);
             entry.scheduleForAddition();
             url = PathUtil.append(entries.getEntry("").getURL(), PathUtil.encode(name));
@@ -401,15 +433,19 @@ public class SVNMerger {
         entries.save(false);
     }
 
-    private void addFile(SVNDirectory parentDir, String name, String filePath, Map baseProps, String copyFromURL, long copyFromRev) throws SVNException {
+    private void addFile(SVNDirectory parentDir, String name, String filePath, Map baseProps, String copyFromURL, long copyFromRev,
+            Map entryProps) throws SVNException {
         SVNEntries entries = parentDir.getEntries();
         SVNEntry entry = entries.getEntry(name);
         if (entry != null) {
             if (entry.isScheduledForDeletion()) {
                 entry.scheduleForReplacement();
             }
+            // put all entry props.
+            entry.loadProperties(entryProps);
         } else {
             entry = parentDir.getEntries().addEntry(name);
+            entry.loadProperties(entryProps);
             entry.setKind(SVNNodeKind.FILE);
             entry.scheduleForAddition();
         }
@@ -469,6 +505,12 @@ public class SVNMerger {
         command.put(SVNLog.DEST_ATTR, name);
         log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
         command.clear();
+        if (myWCAccess.getOptions().isUseCommitTimes() && wcPropsFile.getPropertyValue(SVNProperty.SPECIAL) == null) {
+            command.put(SVNLog.NAME_ATTR, name);
+            command.put(SVNLog.TIMESTAMP_ATTR, entry.getCommittedDate());
+            log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
+            command.clear();
+        }
 
         command.put(SVNLog.NAME_ATTR, name);
         command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNLog.WC_TIMESTAMP);

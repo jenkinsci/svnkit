@@ -75,9 +75,9 @@ public class SVNBasicClient implements ISVNEventListener {
     
     protected SVNRepository createRepository(String url) throws SVNException {
         if (myRepositoryFactory == null) {
-            return SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
+            return SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(PathUtil.decode(url)));
         }
-        return myRepositoryFactory.createRepository(url);
+        return myRepositoryFactory.createRepository(PathUtil.decode(url));
     }
     
     protected void dispatchEvent(SVNEvent event) {
@@ -146,7 +146,7 @@ public class SVNBasicClient implements ISVNEventListener {
 
         if (revision.getDate() != null || revision == SVNRevision.HEAD) {
             String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-            SVNRepository repository = myRepositoryFactory.createRepository(url);            
+            SVNRepository repository = createRepository(url);            
             return revision.getDate() != null ? 
                     repository.getDatedRevision(revision.getDate()) : repository.getLatestRevision();
         }
@@ -169,7 +169,7 @@ public class SVNBasicClient implements ISVNEventListener {
         if (revision.getNumber() >= 0) {
             return revision.getNumber();
         }
-        SVNRepository repository = myRepositoryFactory.createRepository(url);            
+        SVNRepository repository = createRepository(url);            
         if (revision.getDate() != null) {
             return repository.getDatedRevision(revision.getDate());
         }
@@ -190,7 +190,9 @@ public class SVNBasicClient implements ISVNEventListener {
         if (!peg.isValid()) {
             return url;
         }
-        SVNRepository repos = myRepositoryFactory.createRepository(url);
+        DebugLog.log("creating repos for " + url);
+        SVNRepository repos = createRepository(url);
+        DebugLog.log("repos location " + repos.getLocation());
         long pegRevNumber = getRevisionNumber(url, peg);
         long revNumber = getRevisionNumber(url, rev);
         SVNNodeKind kind = repos.checkPath("", pegRevNumber);
@@ -202,16 +204,22 @@ public class SVNBasicClient implements ISVNEventListener {
                 SVNErrorManager.error("svn: Unable to find repository location for '" + url + "' in revision " + revNumber);
             }
         } catch (SVNException e) {
+            DebugLog.error(e);
             SVNErrorManager.error("svn: Unable to find repository location for '" + url + "' in revision " + revNumber);
             return url;
         }
         SVNLocationEntry location = (SVNLocationEntry) locations.get(0);
-        String path = location.getPath();
+        String path = PathUtil.encode(location.getPath());
+        DebugLog.log("fetched path: " + path);
         String rootPath = repos.getRepositoryRoot();
-        String fullPath = SVNRepositoryLocation.parseURL(url).getPath();
+        DebugLog.log("root path: " + rootPath);
+        String fullPath = SVNRepositoryLocation.parseURL(PathUtil.decode(url)).getPath();
+        DebugLog.log("full path: " + fullPath);
         url = url.substring(0, url.length() - fullPath.length());
+        DebugLog.log("host: " + url);
         url = PathUtil.append(url, rootPath);
         url = PathUtil.append(url, path);
+        DebugLog.log("fetched location: " + url);
         return url;
     }
     

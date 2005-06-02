@@ -1,5 +1,8 @@
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.util.Iterator;
+import java.util.Map;
+
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.util.PathUtil;
@@ -260,4 +263,14 @@ public class SVNEntry implements Comparable {
     public String getUUID() {
         return myEntries.getPropertyValue(myName, SVNProperty.UUID);
     }
-}
+
+    public void loadProperties(Map entryProps) {
+        if (entryProps == null) {
+            return;
+        }
+        for (Iterator propNames = entryProps.keySet().iterator(); propNames.hasNext();) {
+            String propName = (String) propNames.next();
+            myEntries.setPropertyValue(myName, propName, (String) entryProps.get(propName));
+        }
+    }
+} 

@@ -102,6 +102,7 @@ public class InfoCommand extends SVNCommand {
                     print("Lock Comment:\n" + lockcomment + "\n", out);
                 }
             }
+            println(out);
         }
 
         for (int i = 0; i < getCommandLine().getURLCount(); i++) {

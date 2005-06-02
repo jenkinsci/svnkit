@@ -38,13 +38,17 @@ public class SVNDiffClient extends SVNBasicClient {
     private ISVNDiffGenerator myDiffGenerator;
 
     public SVNDiffClient(final ISVNCredentialsProvider credentials, ISVNEventListener eventDispatcher) {
-        super(new ISVNRepositoryFactory() {
+        this(credentials, null, eventDispatcher);
+    }
+    
+    public SVNDiffClient(final ISVNCredentialsProvider credentials, SVNOptions options, ISVNEventListener eventDispatcher) {
+        this(new ISVNRepositoryFactory() {
             public SVNRepository createRepository(String url) throws SVNException {
                 SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
                 repos.setCredentialsProvider(credentials);
                 return repos;
             }
-        }, null, eventDispatcher);
+        }, options, eventDispatcher);
     }
 
     public SVNDiffClient(ISVNRepositoryFactory repositoryFactory,
@@ -331,6 +335,8 @@ public class SVNDiffClient extends SVNBasicClient {
         // create merge editor that will receive diffs between url1 and url2 (rN|rM)
         url1 = validateURL(url1);
         url2 = validateURL(url2);
+        DebugLog.log("url1: " + url1);
+        DebugLog.log("url2: " + url2);
         rN = rN == null || !rN.isValid() ? SVNRevision.HEAD : rN;
         rM = rM == null || !rM.isValid() ? SVNRevision.HEAD : rM;
         SVNWCAccess wcAccess = createWCAccess(dstPath);
@@ -367,7 +373,7 @@ public class SVNDiffClient extends SVNBasicClient {
             DebugLog.log("url1: " + url1);
             DebugLog.log("url2: " + url2);
             DebugLog.log("revM: " + revM);
-            DebugLog.log("revM: " + revN);
+            DebugLog.log("revN: " + revN);
             DebugLog.log("target: " + target);
             SVNMergeEditor mergeEditor = new SVNMergeEditor(wcAccess, repos2, revN, revM, merger);
             repos1.diff(url2, revM, revN, target, !useAncestry, recursive, new ISVNReporterBaton() {

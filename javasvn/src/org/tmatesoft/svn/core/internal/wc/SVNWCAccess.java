@@ -478,4 +478,7 @@ public class SVNWCAccess implements ISVNEventListener {
         }
     }
 
+    public ISVNEventListener getEventDispatcher() {
+        return myDispatcher;
+    }
 }

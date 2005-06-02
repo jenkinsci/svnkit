@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.wc.SVNOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
@@ -63,6 +64,14 @@ public abstract class SVNCommand {
 
     protected ISVNWorkspace createWorkspace(String absolutePath) throws SVNException {
         return createWorkspace(absolutePath, true);
+    }
+    
+    protected SVNOptions getOptions() {
+        String dir = (String) getCommandLine().getArgumentValue(SVNArgument.CONFIG_DIR);
+        if (dir == null) {
+            return new SVNOptions();
+        }
+        return new SVNOptions(new File(dir, "config"));
     }
 
     protected ISVNWorkspace createWorkspace(String absolutePath, boolean root) throws SVNException {
