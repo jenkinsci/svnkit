@@ -470,6 +470,9 @@ public class SVNUpdateEditor implements ISVNEditor {
                 command.clear();
                 // do test merge.
                 textStatus = dir.mergeText(name, basePath, tmpPath, "", "", "", true);
+                if (textStatus == SVNStatusType.UNCHANGED) {
+                    textStatus = SVNStatusType.MERGED;
+                }
             }
         } else if (lockStatus == SVNStatusType.LOCK_UNLOCKED) {
             command.put(SVNLog.NAME_ATTR, name);
