@@ -1,3 +1,4 @@
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -23,33 +24,27 @@ import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
 
 /*
- * Created on 02.06.2005
- *
- * TODO To change the template for this generated file go to
- * Window - Preferences - Java - Code Style - Code Templates
  * 
- * Repository latest revision (before committing): 650
- *
- * The last author:sa
- * Date:Thu Jun 02 19:07:14 NOVST 2005
- * Committed to revision 651
+ * 
  */
-public class AddDrectory {
+public class AddDirectory {
     private static SVNRepositoryLocation location;
+
     private static SVNRepository repository;
+
     private static ISVNEditor editor;
-    
+
     public static void main(String[] args) {
         /*
          * Default values:
          */
         String url = "http://72.9.228.230:8080/svn/jsvn/branches/jorunal";
-        String name = "sa";//"anonymous";
-        String password = "apollo13";//"anonymous";
-        String dirPath = "satemp/temp";
+        String name = "anonymous";
+        String password = "anonymous";
+        String dirPath = "tempDir";
         String fileName = "myTemp.txt";
-        String commitMessage = "adding a new directory";
-        
+        String commitMessage = "adding a new directory with a file";
+
         /*
          * Initializes the library (it must be done before ever using the
          * library itself)
@@ -124,117 +119,130 @@ public class AddDrectory {
         try {
             latestRevision = repository.getLatestRevision();
         } catch (SVNException svne) {
-            System.err.println("error while fetching the latest repository revision: " + svne.getMessage());
-            System.exit(1);
-        }
-        System.out.println("Repository latest revision (before committing): " + latestRevision);
-        System.out.println("");
-        try{
-	        editor = repository.getCommitEditor(commitMessage, new ISVNWorkspaceMediator() {
-	            private Map myTmpFiles = new HashMap(); 
-	            public String getWorkspaceProperty(String path, String name) throws SVNException {
-	                return null;
-	            }
-	            public void setWorkspaceProperty(String path, String name, String value) throws SVNException {
-	            }
-	
-	            public OutputStream createTemporaryLocation(String path, Object id) throws IOException {
-	                File tmpFile = File.createTempFile("javasvn.", ".tmp");
-	                myTmpFiles.put(id, tmpFile);
-	                tmpFile.deleteOnExit();                
-	                return new FileOutputStream(tmpFile);
-	            }
-	            public InputStream getTemporaryLocation(Object id) throws IOException {
-	                File file = (File) myTmpFiles.get(id);
-	                if (file != null) {
-	                    return new FileInputStream(file);
-	                }
-	                return null;
-	            }
-	            public long getLength(Object id) throws IOException {
-	                File file = (File) myTmpFiles.get(id);
-	                if (file != null) {
-	                    return file.length();
-	                }
-	                return 0;
-	            }
-	            public void deleteTemporaryLocation(Object id) {
-	                File file = (File) myTmpFiles.remove(id);
-	                if (file != null) {
-	                    file.delete();
-	                }
-	            }
-	            public void deleteAdminFiles(String path) {
-	            }
-        });
-        }catch(SVNException svne){
             System.err
-            .println("error while getting a commit editor for location '"
-                    + url + "': " + svne.getMessage());
+                    .println("error while fetching the latest repository revision: "
+                            + svne.getMessage());
             System.exit(1);
         }
-        
-        SVNCommitInfo commitInfo = null;
-        
-        try{
-            editor.openRoot(-1);
-            editor.openDir("satemp",-1);
-//            editor.addDir(dirPath, null, -1);
+        System.out.println("Repository latest revision (before committing): "
+                + latestRevision);
+        System.out.println("");
+        try {
+            editor = repository.getCommitEditor(commitMessage,
+                    new ISVNWorkspaceMediator() {
+                        private Map myTmpFiles = new HashMap();
 
-            editor.openDir(dirPath,-1);
-            editor.addFile(dirPath+"/"+fileName,null,-1);
-            File file = new File(dirPath+"/"+fileName);
+                        public String getWorkspaceProperty(String path,
+                                String name) throws SVNException {
+                            return null;
+                        }
+
+                        public void setWorkspaceProperty(String path,
+                                String name, String value) throws SVNException {
+                        }
+
+                        public OutputStream createTemporaryLocation(
+                                String path, Object id) throws IOException {
+                            File tmpFile = File.createTempFile("javasvn.",
+                                    ".tmp");
+                            myTmpFiles.put(id, tmpFile);
+                            tmpFile.deleteOnExit();
+                            return new FileOutputStream(tmpFile);
+                        }
+
+                        public InputStream getTemporaryLocation(Object id)
+                                throws IOException {
+                            File file = (File) myTmpFiles.get(id);
+                            if (file != null) {
+                                return new FileInputStream(file);
+                            }
+                            return null;
+                        }
+
+                        public long getLength(Object id) throws IOException {
+                            File file = (File) myTmpFiles.get(id);
+                            if (file != null) {
+                                return file.length();
+                            }
+                            return 0;
+                        }
+
+                        public void deleteTemporaryLocation(Object id) {
+                            File file = (File) myTmpFiles.remove(id);
+                            if (file != null) {
+                                file.delete();
+                            }
+                        }
+
+                        public void deleteAdminFiles(String path) {
+                        }
+                    });
+        } catch (SVNException svne) {
+            System.err
+                    .println("error while getting a commit editor for location '"
+                            + url + "': " + svne.getMessage());
+            System.exit(1);
+        }
+
+        SVNCommitInfo commitInfo = null;
+
+        try {
+            editor.openRoot(-1);
+            editor.addDir(dirPath, null, -1);
+
+            editor.addFile(dirPath + "/" + fileName, null, -1);
+            File file = new File(dirPath + "/" + fileName);
             long fileLength = file.length();
-            SVNDiffWindow diffWindow = SVNDiffWindowBuilder.createReplacementDiffWindow(fileLength);
+            SVNDiffWindow diffWindow = SVNDiffWindowBuilder
+                    .createReplacementDiffWindow(fileLength);
             OutputStream os = editor.textDeltaChunk(diffWindow);
             if (fileLength == 0) {
                 try {
                     os.close();
                 } catch (IOException e1) {
-                }finally{
+                } finally {
                     editor.textDeltaEnd();
                 }
-            }else{
-	            FileInputStream fis=null;
-	            try{
-	                fis = new FileInputStream(file);
-	            }catch(FileNotFoundException fnfe){
-	                System.err
-	                .println("The file wasn't found:"+fnfe.getMessage());
-	                if(fis!=null){
-	                    try{
-	                        fis.close();
-	                    }catch(IOException ioe){
-	                        
-	                    }
-	                }
-	            }
-	            byte[] myBinaryBuffer = new byte[8192 * 4];
-	            while (true) {
-	                try{
-		                int read = fis.read(myBinaryBuffer);
-		                if (read < 0){
-		                    break;
-		                }
-		                os.write(myBinaryBuffer, 0, read);
-	                }catch(IOException ioe){
-	                    System.err
-	                    .println("An i/o error:"+ioe.getMessage());
-	                    if(fis!=null){
-	                        try{
-	                            fis.close();
-	                        }catch(IOException ioeInternal){
-	                        }
-	                    }
-	                    if(os!=null){
-	                        try{
-	                            os.close();
-	                        }catch(IOException ioeInternal){
-	                        }
-	                    }
-	                    break;
-	                }
-	            }
+            } else {
+                FileInputStream fis = null;
+                try {
+                    fis = new FileInputStream(file);
+                } catch (FileNotFoundException fnfe) {
+                    System.err.println("The file wasn't found:"
+                            + fnfe.getMessage());
+                    if (fis != null) {
+                        try {
+                            fis.close();
+                        } catch (IOException ioe) {
+
+                        }
+                    }
+                }
+                byte[] myBinaryBuffer = new byte[8192 * 4];
+                while (true) {
+                    try {
+                        int read = fis.read(myBinaryBuffer);
+                        if (read < 0) {
+                            break;
+                        }
+                        os.write(myBinaryBuffer, 0, read);
+                    } catch (IOException ioe) {
+                        System.err.println("An i/o error:" + ioe.getMessage());
+                        if (fis != null) {
+                            try {
+                                fis.close();
+                            } catch (IOException ioeInternal) {
+                            }
+                        }
+                        if (os != null) {
+                            try {
+                                os.close();
+                            } catch (IOException ioeInternal) {
+                            }
+                        }
+                        break;
+                    }
+                }
                 editor.textDeltaEnd();
             }
             editor.applyTextDelta(null);
@@ -243,21 +251,22 @@ public class AddDrectory {
             editor.closeDir();
             editor.closeDir();
             commitInfo = editor.closeEdit();
-        }catch(SVNException svne){
+        } catch (SVNException svne) {
             try {
                 editor.abortEdit();
             } catch (SVNException inner) {
             }
-            System.err
-            .println("error while committing the directory addition:" + svne.getMessage());
+            System.err.println("error while committing a new directory:"
+                    + svne.getMessage());
             System.exit(1);
         }
-        System.out.println("The last author:"+commitInfo.getAuthor());
-        System.out.println("Date:"+commitInfo.getDate().toString());
-        System.out.println("Committed to revision "+commitInfo.getNewRevision());
+        System.out.println("The last author:" + commitInfo.getAuthor());
+        System.out.println("Date:" + commitInfo.getDate().toString());
+        System.out.println("Committed to revision "
+                + commitInfo.getNewRevision());
         System.exit(0);
     }
-    
+
     /*
      * Initializes the library to work with a repository either via svn:// 
      * (and svn+ssh://) or via http:// (and https://)
