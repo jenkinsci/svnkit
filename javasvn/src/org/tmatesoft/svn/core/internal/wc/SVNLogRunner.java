@@ -16,6 +16,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.TimeUtil;
 
 public class SVNLogRunner {
@@ -24,6 +25,7 @@ public class SVNLogRunner {
 
     public void runCommand(SVNDirectory dir, String name, Map attributes) throws SVNException {
         String fileName = (String) attributes.remove(SVNLog.NAME_ATTR);
+        DebugLog.log("running: " + name + ":" + fileName + " : " + attributes);
         if (SVNLog.DELETE_ENTRY.equals(name)) {
             // check if it is not disjoint entry not to delete another wc?
             dir.destroy(fileName, true);

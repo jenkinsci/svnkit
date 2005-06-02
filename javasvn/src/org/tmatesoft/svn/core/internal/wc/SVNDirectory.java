@@ -124,7 +124,7 @@ public class SVNDirectory {
         return new SVNProperties(propertiesFile, path);
     }
     
-    public SVNStatusType mergeProperties(String name, Map changedProperties, Map locallyChanged, SVNLog log) throws SVNException {
+    public SVNStatusType mergeProperties(String name, Map changedProperties, Map locallyChanged, boolean updateBaseProps, SVNLog log) throws SVNException {
         changedProperties = changedProperties == null ? Collections.EMPTY_MAP : changedProperties;
         locallyChanged = locallyChanged == null ? Collections.EMPTY_MAP : locallyChanged;
 
@@ -134,23 +134,27 @@ public class SVNDirectory {
         SVNProperties baseTmp = getBaseProperties(name, true);
 
         working.copyTo(workingTmp);
-        base.copyTo(baseTmp);
+        if (updateBaseProps) {
+            base.copyTo(baseTmp);
+        }
         
         Collection conflicts = new ArrayList();
         SVNStatusType result = changedProperties.isEmpty() ? SVNStatusType.UNCHANGED : SVNStatusType.CHANGED;
         for (Iterator propNames = changedProperties.keySet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
             String propValue = (String) changedProperties.get(propName);
-
-            baseTmp.setPropertyValue(propName, propValue);
+            DebugLog.log("merging prop change: " + propName + "=" + propValue);
+            if (updateBaseProps) {
+                baseTmp.setPropertyValue(propName, propValue);
+            }
             
             if (locallyChanged.containsKey(propName)) {
                 String workingValue = (String) locallyChanged.get(propName);
                 String conflict = null;
-                if (workingValue != null) {
+                //if (workingValue != null) {
                     if (workingValue == null && propValue != null) {
                         conflict = MessageFormat.format("Property ''{0}'' locally deleted, but update sets it to ''{1}''\n", 
-                                new String[] {propName, workingValue});                        
+                                new String[] {propName, propValue});                        
                     } else if (workingValue != null && propValue == null) {
                         conflict = MessageFormat.format("Property ''{0}'' locally changed to ''{1}'', but update deletes it\n", 
                                 new String[] {propName, workingValue});                        
@@ -163,8 +167,9 @@ public class SVNDirectory {
                         continue;
                     }
                     result = SVNStatusType.MERGED;
-                }
+                //}
             }
+            DebugLog.log("setting tmp wc value: " + propName + "=" + propValue);
             workingTmp.setPropertyValue(propName, propValue);
         }        
         // now log all.
@@ -177,18 +182,20 @@ public class SVNDirectory {
             command.put(SVNLog.NAME_ATTR, working.getPath());
             log.addCommand(SVNLog.READONLY, command, false);
     
-            command.put(SVNLog.NAME_ATTR, baseTmp.getPath());
-            command.put(SVNLog.DEST_ATTR, base.getPath());
-            log.addCommand(SVNLog.MOVE, command, false);
-            command.clear();
-            command.put(SVNLog.NAME_ATTR, base.getPath());
-            log.addCommand(SVNLog.READONLY, command, false);
+            if (updateBaseProps) {
+                command.put(SVNLog.NAME_ATTR, baseTmp.getPath());
+                command.put(SVNLog.DEST_ATTR, base.getPath());
+                log.addCommand(SVNLog.MOVE, command, false);
+                command.clear();
+                command.put(SVNLog.NAME_ATTR, base.getPath());
+                log.addCommand(SVNLog.READONLY, command, false);
+            }
         }
 
         if (!conflicts.isEmpty()) {
             result = SVNStatusType.CONFLICTED;
 
-            String prejTmpPath = "".equals(name) ? ".svn/tmp/dir-conflicts" : ".svn/tmp/props/" + name;
+            String prejTmpPath = "".equals(name) ? ".svn/tmp/dir_conflicts" : ".svn/tmp/props/" + name;
             File prejTmpFile = SVNFileUtil.createUniqueFile(getRoot(), prejTmpPath, ".prej");
             prejTmpPath = SVNFileUtil.getBasePath(prejTmpFile);
                 
@@ -196,7 +203,7 @@ public class SVNDirectory {
             getEntries().close();
 
             if (prejPath == null) {
-                prejPath = "".equals(name) ? "dir-conflicts" : name;
+                prejPath = "".equals(name) ? "dir_conflicts" : name;
                 File prejFile = SVNFileUtil.createUniqueFile(getRoot(), prejPath, ".prej");
                 prejPath = SVNFileUtil.getBasePath(prejFile);
             }
@@ -230,6 +237,10 @@ public class SVNDirectory {
                 command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_REJECT_FILE), prejPath);
                 log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
             }
+        }
+        if (log == null) {
+            workingTmp.delete();
+            baseTmp.delete();
         }
 
         return result;
@@ -522,6 +533,10 @@ public class SVNDirectory {
         if (files == null) {
             return;
         }
+        DebugLog.log("can schedule for deletion: " + name + " in " + getRoot());
+        if ("".equals(name) && hasPropModifications(name)) {
+            SVNErrorManager.error("svn: '" + getPath().replace('/', File.separatorChar)+ "' has local modifications");
+        }
         for (int i = 0; i < files.length; i++) {
             File childFile = files[i];
             if (".svn".equals(childFile.getName())) {
@@ -530,7 +545,9 @@ public class SVNDirectory {
             if (!"".equals(name) && !childFile.getName().equals(name)) {
                 continue;
             }
+            DebugLog.log("checking file: " + childFile);
             SVNEntry entry = entries.getEntry(childFile.getName());
+            DebugLog.log("entry: " + entry);
             String path = PathUtil.append(getPath(), childFile.getName());
             path = path.replace('/', File.separatorChar);
             if (entry == null) {
@@ -541,8 +558,9 @@ public class SVNDirectory {
                         (childFile.isDirectory() && !SVNFileUtil.isSymlink(childFile) && kind == SVNNodeKind.FILE) ||
                         (SVNFileUtil.isSymlink(childFile) && kind != SVNNodeKind.FILE)) {
                     SVNErrorManager.error("svn: '" + path + "' is in the way of the resource actually under version control");
-                } else {
+                } else if (kind == SVNNodeKind.FILE) {
                     // chek for mods.
+                    DebugLog.log("checking for mods (dir props will be checked later)");
                     if (hasTextModifications(entry.getName(), false) || hasPropModifications(entry.getName())) {
                         SVNErrorManager.error("svn: '" + path + "' has local modifications");
                     }

@@ -29,7 +29,7 @@ public abstract class SVNArgument {
     public static final SVNArgument CONFIG_DIR = createStringArgument(new String[] { "--config-dir" });
 
     public static final SVNArgument NON_RECURSIVE = createUnaryArgument(new String[] { "--non-recursive", "-N" });
-    public static final SVNArgument IGNORE_ANCESTRY = createUnaryArgument(new String[] {"--ingore-ancestry"});
+    public static final SVNArgument IGNORE_ANCESTRY = createUnaryArgument(new String[] {"--ignore-ancestry"});
     public static final SVNArgument RECURSIVE = createUnaryArgument(new String[] { "--recursive", "-R" });
     public static final SVNArgument VERBOSE = createUnaryArgument(new String[] { "--verbose", "-v" });
     public static final SVNArgument NO_DIFF_DELETED = createUnaryArgument(new String[] {"--no-diff-deleted"});

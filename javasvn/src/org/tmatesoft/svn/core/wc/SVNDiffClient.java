@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
@@ -352,8 +353,9 @@ public class SVNDiffClient extends SVNBasicClient {
             
             String target = null;
             if (nodeKind1 == SVNNodeKind.FILE || nodeKind2 == SVNNodeKind.FILE) {
+                DebugLog.log("one of the targets is file");
                 target = PathUtil.tail(url1);
-                target = PathUtil.decode(url1);
+                target = PathUtil.decode(target);
                 url1 = PathUtil.removeTail(url1);
                 repos1 = createRepository(url1);
                 repos2 = createRepository(url1);
@@ -361,6 +363,12 @@ public class SVNDiffClient extends SVNBasicClient {
             url2 = PathUtil.decode(url2);
             
             SVNMerger merger = new SVNMerger(wcAccess, url2, revM, force, dryRun);
+            DebugLog.log("wc access: " + wcAccess);
+            DebugLog.log("url1: " + url1);
+            DebugLog.log("url2: " + url2);
+            DebugLog.log("revM: " + revM);
+            DebugLog.log("revM: " + revN);
+            DebugLog.log("target: " + target);
             SVNMergeEditor mergeEditor = new SVNMergeEditor(wcAccess, repos2, revN, revM, merger);
             repos1.diff(url2, revM, revN, target, !useAncestry, recursive, new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {
@@ -380,7 +388,26 @@ public class SVNDiffClient extends SVNBasicClient {
 
     public void doMerge(File path, SVNRevision pegRev, SVNRevision rN, SVNRevision rM, File dstPath,
         boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
-
+        // get URL for file at rev pegRev.
+        SVNWCAccess wcAccess = createWCAccess(path);
+        String url = null;
+        try {
+            wcAccess.open(true, false);
+            url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+            SVNRevision revision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
+            // here we have URL at wc revision,
+            // now get it as at peg revision.
+            if (pegRev == null || !pegRev.isValid()) {
+                pegRev = SVNRevision.HEAD;
+            }
+            url = getURL(url, revision, pegRev);
+        } finally {
+            wcAccess.close(true, false);
+        }
+        if (url != null) {
+            // we have url as it is at pegrev, later will change it to ones at rN:rM
+            doMerge(url, pegRev, rN, rM, dstPath, recursive, useAncestry, force, dryRun);
+        }
     }
 
     public void doMerge(String url, SVNRevision pegRev, SVNRevision rN, SVNRevision rM, File dstPath,
@@ -388,6 +415,7 @@ public class SVNDiffClient extends SVNBasicClient {
         url = validateURL(url);
         String url1 = getURL(url, pegRev, rN);
         String url2 = getURL(url, pegRev, rM);
+        // if url is a file and no 
         doMerge(url1, url2, rN, rM, dstPath, recursive, useAncestry, force, dryRun);        
     }
 
@@ -428,7 +456,7 @@ public class SVNDiffClient extends SVNBasicClient {
         OutputStream os2 = null;
         try {
             os1 = new FileOutputStream(tmpFile1);
-            os2 = new FileOutputStream(tmpFile1);
+            os2 = new FileOutputStream(tmpFile2);
             repos1.getFile("", revN, props1, os1);
             repos2.getFile("", revM, props2, os2);
         } catch (FileNotFoundException e) {
@@ -449,11 +477,61 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         String mimeType1 = (String) props1.get(SVNProperty.MIME_TYPE);
         String mimeType2 = (String) props2.get(SVNProperty.MIME_TYPE);
+
+        props1 = filterProperties(props1, true, false, false);
+        props2 = filterProperties(props2, true, false, false);
+        Map propsDiff = computePropsDiff(props1, props2);
+        DebugLog.log("base props: " + props1);
+        DebugLog.log("target props: " + props2);
+        DebugLog.log("props diff: " + propsDiff);
         SVNStatusType[] mergeResult = merger.fileChanged(wcAccess.getTargetName(), tmpFile1, tmpFile2, revN, revM, 
-                mimeType1, mimeType2, props1, null);
+                mimeType1, mimeType2, props1, propsDiff);
         svnEvent(SVNEventFactory.createUpdateModifiedEvent(wcAccess, wcAccess.getAnchor(), name,
                 SVNEventAction.UPDATE_UPDATE, mimeType2, mergeResult[0], mergeResult[1], SVNStatusType.LOCK_INAPPLICABLE), 
                 ISVNEventListener.UNKNOWN);
         return;
+    }
+
+    private static Map computePropsDiff(Map props1, Map props2) {
+        Map propsDiff = new HashMap();
+        for (Iterator names = props2.keySet().iterator(); names.hasNext();) {
+            String newPropName = (String) names.next();
+            if (props1.containsKey(newPropName)) {
+                // changed.
+                Object oldValue = props2.get(newPropName);
+                if (!oldValue.equals(props1.get(newPropName))) {
+                    propsDiff.put(newPropName, props2.get(newPropName));
+                }
+            } else {
+                // added.
+                propsDiff.put(newPropName, props2.get(newPropName));
+            }
+        }
+        for (Iterator names = props1.keySet().iterator(); names.hasNext();) {
+            String oldPropName = (String) names.next();
+            if (!props2.containsKey(oldPropName)) {
+                // deleted
+                propsDiff.put(oldPropName, null);
+            } 
+        }
+        return propsDiff;
+    }
+
+    private static Map filterProperties(Map props1, boolean leftRegular, boolean leftEntry, boolean leftWC) {
+        Map result = new HashMap();
+        for (Iterator names = props1.keySet().iterator(); names.hasNext();) {
+            String propName = (String) names.next();
+            if (!leftEntry && propName.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
+                continue;
+            }
+            if (!leftWC && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+                continue;
+            }
+            if (!leftRegular && !(propName.startsWith(SVNProperty.SVN_ENTRY_PREFIX) || propName.startsWith(SVNProperty.SVN_WC_PREFIX))) {
+                continue;
+            }
+            result.put(propName, props1.get(propName));
+        }
+        return result;
     }
 }

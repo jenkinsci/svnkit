@@ -52,18 +52,21 @@ public class MergeCommand extends SVNCommand {
             if (getCommandLine().hasURLs()) {
                 String url = getCommandLine().getURL(0);
                 SVNRevision pegRev = getCommandLine().getPegRevision(0);
-                File dstPath = new File(getCommandLine().getPathAt(0));
+                File dstPath = new File(".");
+                if (getCommandLine().getPathCount() > 0) {
+                    dstPath = new File(getCommandLine().getPathAt(0));
+                }
                 if (pegRev == SVNRevision.UNDEFINED) {
                     pegRev = SVNRevision.HEAD;
                 }
                 differ.doMerge(url, pegRev, rN, rM, dstPath, recursive, useAncestry, force, dryRun);
             } else if (getCommandLine().hasPaths()){
                 File srcPath = new File(getCommandLine().getPathAt(0));
-                File dstPath = new File(".");
                 SVNRevision pegRevision = getCommandLine().getPathPegRevision(0);
                 if (pegRevision == SVNRevision.UNDEFINED) {
                     pegRevision = SVNRevision.HEAD;
                 }                
+                File dstPath = new File(".");
                 if (getCommandLine().getPathCount() > 1) {
                     dstPath = new File(getCommandLine().getPathAt(1));
                 }
@@ -81,7 +84,10 @@ public class MergeCommand extends SVNCommand {
             if (!rM.isValid()) {
                 rM = SVNRevision.HEAD;
             }
-            File dstPath = new File(getCommandLine().getPathAt(0));
+            File dstPath = new File(".");
+            if (getCommandLine().getPathCount() > 0) {
+                dstPath = new File(getCommandLine().getPathAt(0));
+            }
             differ.doMerge(url1, url2, rN, rM, dstPath, recursive, useAncestry, force, dryRun);
         } else if (getCommandLine().getPathCount() >= 2){
             // merge wcPath1@r wcPath2@r wcPath

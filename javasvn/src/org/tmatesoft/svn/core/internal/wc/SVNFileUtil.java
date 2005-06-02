@@ -15,6 +15,7 @@ import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNFileUtil {
@@ -266,7 +267,7 @@ public class SVNFileUtil {
                         return false;
                     }
                     equals = false;
-                }                
+                }
                 if (b1 < 0) {
                     break;
                 }

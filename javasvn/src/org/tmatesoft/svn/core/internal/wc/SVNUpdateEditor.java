@@ -230,7 +230,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 Map locallyModified = dir.getBaseProperties("", false).compareTo(props);
                 myWCAccess.addExternals(dir, (String) modifiedProps.get(SVNProperty.EXTERNALS));
                 
-                propStatus = dir.mergeProperties("", modifiedProps, locallyModified, log);
+                propStatus = dir.mergeProperties("", modifiedProps, locallyModified, true, log);
                 if (locallyModified == null || locallyModified.isEmpty()) {
                     Map command = new HashMap();
                     command.put(SVNLog.NAME_ATTR, "");
@@ -412,7 +412,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 modifiedProps.containsKey(SVNProperty.EOL_STYLE) ||
                 modifiedProps.containsKey(SVNProperty.SPECIAL);
         }
-        SVNStatusType propStatus = dir.mergeProperties(name, modifiedProps, locallyModifiedProps, log);
+        SVNStatusType propStatus = dir.mergeProperties(name, modifiedProps, locallyModifiedProps, true, log);
         if (modifiedEntryProps != null) {
             lockStatus = log.logChangedEntryProperties(name, modifiedEntryProps);
         }

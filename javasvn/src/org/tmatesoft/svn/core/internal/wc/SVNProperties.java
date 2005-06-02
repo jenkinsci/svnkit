@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
 
 public class SVNProperties {
     
@@ -63,7 +64,7 @@ public class SVNProperties {
     
     public Map asMap() throws SVNException {
         Map result = new HashMap();
-        if (getFile().exists()) {
+        if (!getFile().exists()) {
             return result;
         }
         for(Iterator names = properties(null).iterator(); names.hasNext();) {
@@ -339,6 +340,7 @@ public class SVNProperties {
     
     public void copyTo(SVNProperties destination) throws SVNException {
         if (destination.getFile().exists()) {
+            DebugLog.log("file already exists: " + destination.getFile());
             SVNErrorManager.error(0, null);
         }
         if (!getFile().exists()) {

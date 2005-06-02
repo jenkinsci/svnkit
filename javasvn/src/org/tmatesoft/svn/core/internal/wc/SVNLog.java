@@ -242,6 +242,10 @@ public class SVNLog {
         }
     }
     
+    public String toString() {
+        return "Log: " + myFile;
+    }
+    
     public void delete() {
         myFile.delete();
         myTmpFile.delete();

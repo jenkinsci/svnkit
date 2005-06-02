@@ -554,7 +554,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         
         log.logChangedEntryProperties(fileName, entryProps);
         log.logChangedWCProperties(fileName, wcProps);
-        dir.mergeProperties(fileName, regularProps, null, log);
+        dir.mergeProperties(fileName, regularProps, null, true, log);
 
         Map command = new HashMap();
         command.put(SVNLog.NAME_ATTR, SVNFileUtil.getBasePath(dir.getBaseFile(fileName, true)));
