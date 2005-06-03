@@ -112,7 +112,7 @@ public class SVNWCClient extends SVNBasicClient {
                 entry.setLockCreationDate(TimeUtil.formatDate(lock.getCreationDate()));
                 if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
                     try {
-                        SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName(), false), true);
+                        SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName(), false), false);
                     } catch (IOException e) {
                     }
                 }
