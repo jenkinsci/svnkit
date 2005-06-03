@@ -18,7 +18,7 @@ import java.io.OutputStream;
 
 /**
  * <code>ISVNWorkspaceMediator</code> is a custom interface for managing a workspace.
- * A workspace is notion that represents a user's disk area where his working copies
+ * A workspace is a notion that represents a user's disk area where his working copies
  * are checked out to and stored. This mediator helps to manage administrative 
  * directories (also as known as <i>.svn</i> folders) as well as working copy 
  * properties. 
