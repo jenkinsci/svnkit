@@ -220,6 +220,10 @@ public class SVNEntry implements Comparable {
         myEntries.setPropertyValue(myName, SVNProperty.UUID, uuid);
    }
 
+    public void unschedule() {
+        myEntries.setPropertyValue(myName, SVNProperty.SCHEDULE, null);
+    }
+
     public void scheduleForAddition() {
         myEntries.setPropertyValue(myName, SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
     }

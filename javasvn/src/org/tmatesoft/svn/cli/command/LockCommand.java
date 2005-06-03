@@ -19,8 +19,6 @@ public class LockCommand extends SVNCommand {
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
         
-        
-        
         Collection files = new ArrayList();
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             files.add(new File(getCommandLine().getPathAt(i)));

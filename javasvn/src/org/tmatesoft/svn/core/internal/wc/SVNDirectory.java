@@ -348,28 +348,14 @@ public class SVNDirectory {
         resultFile.delete();
         return status;
     }
-
-    private void debugQData(String label, QSequenceLineRAData baseData) throws IOException {
-        InputStream is = baseData.read(0, baseData.length());
-        StringBuffer sb = new StringBuffer();
-        while(true) {
-            int r = is.read();
-            if (r < 0) {
-                break;
-            }
-            sb.append((char) (r & 0xFF));
-        }
-        is.close();
-        DebugLog.log(label + ":" + sb.toString());
-    }
     
-    public void markResolved(String name, boolean text, boolean props) throws SVNException {
+    public boolean markResolved(String name, boolean text, boolean props) throws SVNException {
         if (!text && !props) {
-            return;
+            return false;
         }
         SVNEntry entry = getEntries().getEntry(name);
         if (entry == null) {
-            return;
+            return false;
         }
         boolean modified = false;
         if (text && entry.getConflictOld() != null) {
@@ -399,6 +385,94 @@ public class SVNDirectory {
         if (modified) {
             getEntries().save(false);
         }
+        return modified;
+    }
+    
+    public boolean revert(String name) throws SVNException {
+        boolean magicPropsChanged = false;
+        boolean wasReverted = false;
+        
+        SVNEntry entry = getEntries().getEntry(name);
+        if (entry == null && entry.isHidden()) {
+            return wasReverted;
+        }
+        
+        SVNProperties baseProps = getBaseProperties(name, false);
+        SVNProperties wcProps = getProperties(name, false);
+        if (hasPropModifications(name)) {
+            Map propDiff = baseProps.compareTo(wcProps);
+            if (propDiff != null && !propDiff.isEmpty()) {
+                magicPropsChanged = propDiff.containsKey(SVNProperty.EXECUTABLE) ||
+                    propDiff.containsKey(SVNProperty.KEYWORDS) ||
+                    propDiff.containsKey(SVNProperty.NEEDS_LOCK) ||
+                    propDiff.containsKey(SVNProperty.EOL_STYLE) ||
+                    propDiff.containsKey(SVNProperty.SPECIAL);                
+            }
+            // copy base over wc
+            if (baseProps.getFile().isFile()) {
+                baseProps.copyTo(wcProps);
+                entry.setPropTime(TimeUtil.formatDate(new Date(wcProps.getFile().lastModified())));
+            } else if (wcProps.getFile().isHidden()) {
+                wcProps.delete();
+                entry.setPropTime(null);
+            }
+            getEntries().save(false);            
+            wasReverted |= true;
+        } else if (entry.isScheduledForReplacement()) {
+            baseProps.copyTo(wcProps);
+            entry.setPropTime(TimeUtil.formatDate(new Date(wcProps.getFile().lastModified())));
+            wasReverted |= true;
+        }
+        
+        if (entry.isFile()) {
+            boolean textModified = false;
+            if (!magicPropsChanged) {
+                textModified = hasTextModifications(name, false);
+            }
+            File file = getFile(entry.getName(), false);
+            if (textModified || magicPropsChanged || !file.exists()) {
+                // copy base to wc and expand.
+                String eolStyle = wcProps.getPropertyValue(SVNProperty.EOL_STYLE);
+                String keywords = wcProps.getPropertyValue(SVNProperty.KEYWORDS);
+
+                String url = entry.getURL();
+                String author = entry.getAuthor();
+                String date = entry.getCommittedDate();
+                String rev = Long.toString(entry.getCommittedRevision());
+                boolean special = wcProps.getPropertyValue(SVNProperty.SPECIAL) != null;
+                
+                Map keywordsMap = SVNTranslator.computeKeywords(keywords, url, author, date, rev);
+
+                File src = getBaseFile(name, false);
+                File dst = getFile(name, false);
+                SVNTranslator.translate(this, name, SVNFileUtil.getBasePath(src), SVNFileUtil.getBasePath(dst), true, true);
+                
+                boolean executable = wcProps.getPropertyValue(SVNProperty.EXECUTABLE) != null;
+                boolean needsLock = entry.isNeedsLock();
+                if (executable) {
+                    SVNFileUtil.setExecutable(dst, true);
+                }
+                if (needsLock) {
+                    try {
+                        SVNFileUtil.setReadonly(dst, entry.getLockToken() == null);
+                    } catch (IOException e) {
+                        SVNErrorManager.error(0, e);
+                    }
+                }
+                long tstamp = dst.lastModified();
+                if (myWCAccess.getOptions().isUseCommitTimes() && !special) {
+                    entry.setTextTime(entry.getCommittedDate());
+                    tstamp = TimeUtil.parseDate(entry.getCommittedDate()).getTime();
+                    dst.setLastModified(tstamp);
+                } else {
+                    entry.setTextTime(TimeUtil.formatDate(new Date(tstamp)));
+                }
+                getEntries().save(false);
+                wasReverted |= true;
+            }
+            wasReverted |= markResolved(name, true, false);
+        }
+        return wasReverted;
     }
     
     public boolean hasTextModifications(String name, boolean force) throws SVNException {
@@ -926,5 +1000,19 @@ public class SVNDirectory {
 
         SVNFileUtil.deleteAll(new File(dir.getRoot(), ".svn"));
         dir.getRoot().delete();
+    }
+
+    private static void debugQData(String label, QSequenceLineRAData baseData) throws IOException {
+        InputStream is = baseData.read(0, baseData.length());
+        StringBuffer sb = new StringBuffer();
+        while(true) {
+            int r = is.read();
+            if (r < 0) {
+                break;
+            }
+            sb.append((char) (r & 0xFF));
+        }
+        is.close();
+        DebugLog.log(label + ":" + sb.toString());
     }
 }

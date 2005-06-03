@@ -38,7 +38,11 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
     }
 
     public void svnEvent(SVNEvent event, double progress) {
-        if (event.getAction() == SVNEventAction.LOCKED) {
+        if (event.getAction() == SVNEventAction.REVERT) {
+            SVNCommand.println(myPrintStream, "Reverted '" + SVNCommand.getPath(event.getFile()) + "'");
+        } else if (event.getAction() == SVNEventAction.FAILED_REVERT) {
+            SVNCommand.println(myPrintStream, "Failed to revert '" + SVNCommand.getPath(event.getFile()) + "' -- try updating instead.");
+        } else if (event.getAction() == SVNEventAction.LOCKED) {        
             String path = event.getPath();
             if (event.getFile() != null) {
                 path = SVNCommand.getPath(event.getFile());

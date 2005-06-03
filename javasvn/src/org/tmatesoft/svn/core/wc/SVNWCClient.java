@@ -62,7 +62,112 @@ public class SVNWCClient extends SVNBasicClient {
     public void doAdd(File path, boolean mkdir) {
     }
 
-    public void doRevert(File path, boolean recursive) {
+    public void doRevert(File path, boolean recursive) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess(path);
+        
+        // force recursive lock.
+        boolean reverted = false;
+        boolean replaced = false;
+        SVNNodeKind kind = null;
+        Collection recursiveFiles = new ArrayList();
+        try {
+            wcAccess.open(true, false);
+            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName());
+            if (entry == null) {
+                SVNErrorManager.error("svn: '" + path + "' is not under version control");
+            }
+            kind = entry.getKind();
+            File file = wcAccess.getAnchor().getFile(wcAccess.getTargetName(), false);
+            if (entry.isDirectory()) {
+                if (!entry.isScheduledForAddition() && !file.isDirectory()) {
+                    svnEvent(SVNEventFactory.createNotRevertedEvent(wcAccess, wcAccess.getAnchor(), entry), ISVNEventListener.UNKNOWN);
+                    return;
+                }
+            }
+
+            SVNEvent event = SVNEventFactory.createRevertedEvent(wcAccess, wcAccess.getAnchor(), entry);
+            if (entry.isScheduledForAddition()) {
+                boolean deleted = entry.isDeleted();
+                if (entry.isFile()) {
+                    wcAccess.getAnchor().destroy(entry.getName(), false);
+                } else if (entry.isDirectory()) {
+                    if ("".equals(wcAccess.getTargetName())) {
+                        SVNErrorManager.error("svn: Cannot revert addition of the root directory; please try again from the parent directory");
+                    }
+                    if (!file.exists()) {
+                        wcAccess.getAnchor().getEntries().deleteEntry(entry.getName());
+                    } else {
+                        wcAccess.getAnchor().destroy(entry.getName(), false);
+                    }
+                }
+                reverted = true;
+                if (deleted && !"".equals(wcAccess.getTargetName())) {
+                    // we are not in the root.
+                    SVNEntry replacement = wcAccess.getAnchor().getEntries().addEntry(entry.getName());
+                    replacement.setDeleted(true);
+                    replacement.setKind(kind);
+                }
+            } else if (entry.isScheduledForReplacement() || entry.isScheduledForDeletion()) {
+                replaced = entry.isScheduledForReplacement();
+                if (entry.isDirectory()) {
+                    reverted |= wcAccess.getTarget().revert("");
+                } else {
+                    reverted |= wcAccess.getAnchor().revert(entry.getName());
+                }
+            } else {
+                if (entry.isDirectory()) {
+                    reverted |= wcAccess.getTarget().revert("");
+                } else {
+                    reverted |= wcAccess.getAnchor().revert(entry.getName());
+                }
+            }
+            if (reverted) {
+                if (kind == SVNNodeKind.DIR && replaced) {
+                    recursive = true;
+                }
+                if (!"".equals(wcAccess.getTargetName())) {
+                    entry.unschedule();
+                    entry.setConflictNew(null);
+                    entry.setConflictOld(null);
+                    entry.setConflictWorking(null);
+                    entry.setPropRejectFile(null);
+                }
+                wcAccess.getAnchor().getEntries().save(false);
+                if (kind == SVNNodeKind.DIR) {
+                    SVNEntry inner = wcAccess.getTarget().getEntries().getEntry("");
+                    inner.unschedule();
+                    inner.setConflictNew(null);
+                    inner.setConflictOld(null);
+                    inner.setConflictWorking(null);
+                    inner.setPropRejectFile(null);
+                }
+                if (kind == SVNNodeKind.DIR && recursive) {
+                    // iterate over targets and revert
+                    for (Iterator ents = wcAccess.getTarget().getEntries().entries(); ents.hasNext();) {
+                        SVNEntry childEntry = (SVNEntry) ents.next();
+                        if ("".equals(childEntry.getName())) {
+                            continue;
+                        }
+                        recursiveFiles.add(wcAccess.getTarget().getFile(childEntry.getName(), false));
+                    }
+                }
+                wcAccess.getTarget().getEntries().save(false);
+            }
+            if (reverted) {
+                // fire reverted event.
+                svnEvent(event, ISVNEventListener.UNKNOWN);
+            }
+        } finally {
+            wcAccess.close(true, false);
+        }
+        // recurse
+        if (kind == SVNNodeKind.DIR && recursive) {
+            // iterate over targets and revert
+            for (Iterator files = recursiveFiles.iterator(); files.hasNext();) {
+                File file = (File) files.next();
+                doRevert(file, recursive);
+            }
+        }
     }
 
     public void doResolve(File path, boolean recursive) {

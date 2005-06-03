@@ -12,18 +12,13 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.IOException;
+import java.io.File;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNStatus;
-import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.SVNUtil;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 /**
  * @author TMate Software Ltd.
@@ -32,45 +27,11 @@ public class RevertCommand extends SVNCommand {
 
     public final void run(final PrintStream out, final PrintStream err) throws SVNException {
         final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
+        
+        SVNWCClient wcClient = new SVNWCClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
-            final String workspacePath = absolutePath;
-            final ISVNWorkspace workspace = createWorkspace(absolutePath);
-
-            ISVNWorkspace rootWorkspace = createWorkspace(absolutePath, false);
-            if (SVNProperty.SCHEDULE_ADD.equals(rootWorkspace.getPropertyValue("", SVNProperty.SCHEDULE)) &&
-                    ".".equals(absolutePath)) {
-                err.println("svn: can't revert added directory from within");
-                continue;
-            }
-            final String relativePath = SVNUtil.getWorkspacePath(workspace, absolutePath);
-
-            workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
-                public void modified(String path, int kind) {
-                    String wcPath = path;
-                    try {
-                        path = convertPath(workspacePath, workspace, path);
-                    } catch (IOException e) {}
-
-                    if (kind == SVNStatus.REVERTED) {
-                        println(out, "Reverted '" + path + "'");
-                    } else if (kind == SVNStatus.RESTORED) {
-                        println(out, "Restored '" + path + "'");
-                    } else {
-                        try {
-                            String pathKind = workspace.getPropertyValue(wcPath, SVNProperty.KIND);
-                            DebugLog.log("REVERT: kind of " + wcPath + " : " + pathKind);
-                            if (!SVNProperty.KIND_DIR.equals(pathKind)) {
-                                println(err, "Error restoring text for '" + path + "'");
-                            }
-                        } catch (SVNException e) {
-                        }
-                        println(out, "Error: Failed to revert '" + path + "' -- try updating instead");
-                    }
-                }
-            });
-
-            workspace.revert(relativePath, recursive);
+            wcClient.doRevert(new File(absolutePath), recursive);
         }
     }
 }
