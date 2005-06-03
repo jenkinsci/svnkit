@@ -67,7 +67,7 @@ public class DisplayRepositoryTree {
         /*
          * default values:
          */
-        String url = "http://72.9.228.230:8080/svn/jsvn/branches/jorunal/satemp";
+        String url = "http://72.9.228.230:8080/svn/jsvn/branches/jorunal/tempDir";
         String name = "anonymous";
         String password = "anonymous";
 

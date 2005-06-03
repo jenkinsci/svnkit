@@ -39,8 +39,8 @@ public class AddDirectory {
          * Default values:
          */
         String url = "http://72.9.228.230:8080/svn/jsvn/branches/jorunal";
-        String name = "anonymous";
-        String password = "anonymous";
+        String name = "sa";
+        String password = "apollo13";
         String dirPath = "tempDir";
         String fileName = "myTemp.txt";
         String commitMessage = "adding a new directory with a file";
@@ -196,14 +196,14 @@ public class AddDirectory {
             SVNDiffWindow diffWindow = SVNDiffWindowBuilder
                     .createReplacementDiffWindow(fileLength);
             OutputStream os = editor.textDeltaChunk(diffWindow);
-            if (fileLength == 0) {
+            if(fileLength == 0){
                 try {
                     os.close();
                 } catch (IOException e1) {
                 } finally {
                     editor.textDeltaEnd();
                 }
-            } else {
+            }else{
                 FileInputStream fis = null;
                 try {
                     fis = new FileInputStream(file);
@@ -247,7 +247,6 @@ public class AddDirectory {
             }
             editor.applyTextDelta(null);
             editor.closeFile(null);
-            editor.closeDir();
             editor.closeDir();
             editor.closeDir();
             commitInfo = editor.closeEdit();
