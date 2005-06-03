@@ -389,6 +389,7 @@ public class SVNDirectory {
     }
     
     public boolean revert(String name) throws SVNException {
+        DebugLog.log("reverting: " + name + " in " + getRoot());
         boolean magicPropsChanged = false;
         boolean wasReverted = false;
         
@@ -400,6 +401,7 @@ public class SVNDirectory {
         SVNProperties baseProps = getBaseProperties(name, false);
         SVNProperties wcProps = getProperties(name, false);
         if (hasPropModifications(name)) {
+            DebugLog.log("props modified");
             Map propDiff = baseProps.compareTo(wcProps);
             if (propDiff != null && !propDiff.isEmpty()) {
                 magicPropsChanged = propDiff.containsKey(SVNProperty.EXECUTABLE) ||
@@ -423,6 +425,7 @@ public class SVNDirectory {
             entry.setPropTime(TimeUtil.formatDate(new Date(wcProps.getFile().lastModified())));
             wasReverted |= true;
         }
+        DebugLog.log("m.props changed: " + magicPropsChanged);
         
         if (entry.isFile()) {
             boolean textModified = false;
@@ -449,6 +452,7 @@ public class SVNDirectory {
                 
                 boolean executable = wcProps.getPropertyValue(SVNProperty.EXECUTABLE) != null;
                 boolean needsLock = wcProps.getPropertyValue(SVNProperty.NEEDS_LOCK) != null;
+                DebugLog.log("needs lock: " + needsLock);
                 if (executable) {
                     SVNFileUtil.setExecutable(dst, true);
                 }
@@ -539,7 +543,7 @@ public class SVNDirectory {
             baseFile = getFile(".svn/dir-prop-base", false);
         } else {
             propFile = getFile(".svn/props/" + name + ".svn-work", false);
-            baseFile = getFile(".svn/prop-base/" + name + ".svb-base", false);
+            baseFile = getFile(".svn/prop-base/" + name + ".svn-base", false);
         }
         SVNEntry entry = getEntries().getEntry(name);
         boolean propEmtpy = !propFile.exists() || propFile.length() <= 4;
