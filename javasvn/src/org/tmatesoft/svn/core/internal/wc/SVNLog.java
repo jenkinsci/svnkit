@@ -78,9 +78,10 @@ public class SVNLog {
         if (modifiedEntryProps != null) {
             Map command = new HashMap();
             command.put(SVNLog.NAME_ATTR, name);
-            for (Iterator names = modifiedEntryProps.keySet().iterator(); names.hasNext();) {                
+            for (Iterator names = modifiedEntryProps.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
                 String propValue = (String) modifiedEntryProps.get(propName);
+                propName = SVNProperty.SVN_ENTRY_PREFIX + propName;
                 if (SVNProperty.LOCK_TOKEN.equals(propName)) {
                     addCommand(SVNLog.DELETE_LOCK, command, false);
                     status = SVNStatusType.LOCK_UNLOCKED;

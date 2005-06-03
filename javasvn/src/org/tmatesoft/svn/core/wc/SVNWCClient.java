@@ -4,6 +4,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
@@ -108,6 +110,12 @@ public class SVNWCClient extends SVNBasicClient {
                 entry.setLockComment(lock.getComment());
                 entry.setLockOwner(lock.getOwner());
                 entry.setLockCreationDate(TimeUtil.formatDate(lock.getCreationDate()));
+                if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
+                    try {
+                        SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName(), false), true);
+                    } catch (IOException e) {
+                    }
+                }
                 wcAccess.getAnchor().getEntries().save(true);
                 wcAccess.getAnchor().getEntries().close();
                 svnEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCKED, lock, null),
@@ -190,6 +198,12 @@ public class SVNWCClient extends SVNBasicClient {
                 entry.setLockCreationDate(null);
                 wcAccess.getAnchor().getEntries().save(true);
                 wcAccess.getAnchor().getEntries().close();
+                if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
+                    try {
+                        SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName(), false), true);
+                    } catch (IOException e) {
+                    }
+                }
                 svnEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCKED, lock, null),
                         ISVNEventListener.UNKNOWN);
             } catch (SVNException e) {

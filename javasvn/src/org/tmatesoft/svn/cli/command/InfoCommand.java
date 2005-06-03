@@ -146,14 +146,14 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
             print("Lock Token: " + lock.getID(), myOut);
             print("Lock Owner: " + lock.getOwner(), myOut);
             print("Lock Created: " + formatDate(lock.getCreationDate()), myOut);
-            print("Lock Comment ", myOut);
+            myOut.print("Lock Comment ");
             int lineCount = getLinesCount(lock.getComment());
             if (lineCount == 1) {
-                print("(1 line)", myOut);
+                myOut.print("(1 line)");
             } else {
-                print("(" + lineCount + " lines)", myOut);
+                myOut.print("(" + lineCount + " lines)");
             }
-            print(":\n" + lock.getComment() + "\n", myOut);
+            myOut.print(":\n" + lock.getComment() + "\n");
         }
         println(myOut);
     }
