@@ -40,7 +40,8 @@ public class CheckoutCommand extends SVNCommand {
         }
 
         long revision = parseRevision(getCommandLine(), null, null);
-        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, true));
+        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), 
+                new SVNCommandEventProcessor(out, err, true));
         if (getCommandLine().getURLCount() == 1) {
             updater.doCheckout(url, new File(path), SVNRevision.UNDEFINED, SVNRevision.create(revision), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
         } else {

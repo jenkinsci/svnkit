@@ -389,7 +389,36 @@ public class SVNDiffClient extends SVNBasicClient {
 
     public void doMerge(File path1, File path2, SVNRevision rN, SVNRevision rM, File dstPath,
         boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
-        
+
+        SVNWCAccess wcAccess = createWCAccess(path1);
+        String url1 = null;
+        try {
+            wcAccess.open(true, false);
+            url1 = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+            if (url1 == null) {
+                SVNErrorManager.error("svn: '" + path1.getAbsolutePath() + "' has no URL");
+            }
+            SVNRevision revision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
+            // url as it at revision N
+            url1 = getURL(url1, revision, rN);
+        } finally {
+            wcAccess.close(true, false);
+        }
+        wcAccess = createWCAccess(path2);
+        String url2 = null;
+        try {
+            wcAccess.open(true, false);
+            url2 = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+            if (url2 == null) {
+                SVNErrorManager.error("svn: '" + path2.getAbsolutePath() + "' has no URL");
+            }
+            SVNRevision revision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
+            // url as it at revision N
+            url2 = getURL(url2, revision, rM);
+        } finally {
+            wcAccess.close(true, false);
+        }
+        doMerge(url1, url2, rN, rM, dstPath, recursive, useAncestry, force, dryRun);
     }
 
     public void doMerge(File path, SVNRevision pegRev, SVNRevision rN, SVNRevision rM, File dstPath,
@@ -400,6 +429,9 @@ public class SVNDiffClient extends SVNBasicClient {
         try {
             wcAccess.open(true, false);
             url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+            if (url == null) {
+                SVNErrorManager.error("svn: '" + path.getAbsolutePath() + "' has no URL");
+            }
             SVNRevision revision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
             // here we have URL at wc revision,
             // now get it as at peg revision.

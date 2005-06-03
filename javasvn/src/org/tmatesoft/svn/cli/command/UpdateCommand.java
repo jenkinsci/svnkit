@@ -39,7 +39,8 @@ public class UpdateCommand extends SVNCommand {
             if (revNumber >= 0) {
                 revision = SVNRevision.create(revNumber);
             }
-            SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, false));
+            SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), 
+                    new SVNCommandEventProcessor(out, err, false));
             
             File file = new File(path);
             if (!file.exists()) {

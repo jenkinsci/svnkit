@@ -7,6 +7,7 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -18,6 +19,22 @@ public class SVNEventFactory {
             SVNStatusType cType, SVNStatusType pType) {
         SVNEvent event = new SVNEvent(source, null, PathUtil.tail(path), action, null,
                 -1, null, cType, pType, null, null, null);
+        event.setPath(path);
+        return event;
+    }
+
+    public static SVNEvent createLockEvent(SVNWCAccess source, String path, SVNEventAction action, SVNLock lock,
+            String message) {
+        SVNEvent event = new SVNEvent(source, null, PathUtil.tail(path), action, null,
+                -1, null, null, null, null, lock, message);
+        event.setPath(path);
+        return event;
+    }
+
+    public static SVNEvent createLockEvent(String path, SVNEventAction action, SVNLock lock,
+            String message) {
+        SVNEvent event = new SVNEvent(null, null, PathUtil.tail(path), action, null,
+                -1, null, null, null, null, lock, message);
         event.setPath(path);
         return event;
     }

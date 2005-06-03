@@ -44,7 +44,7 @@ public class SVNWCAccess implements ISVNEventListener {
         }
         if (parentFile != null && (!parentFile.exists() || !parentFile.isDirectory())) {
             // parent doesn't exist or not a directory
-            SVNErrorManager.error(1, null);
+            SVNErrorManager.error("svn: '" + parentFile + "' does not exist");
         }
         SVNDirectory anchor = parentFile != null ? new SVNDirectory(null, "", parentFile) : null;
         SVNDirectory target = file.isDirectory() ? new SVNDirectory(null, name, file) : null;
@@ -107,7 +107,7 @@ public class SVNWCAccess implements ISVNEventListener {
             }
         } else if (target == null && anchor == null) {
             // both are not versioned :(
-            SVNErrorManager.error(1, null);
+            SVNErrorManager.error("svn: '" + file + "' is not under version control");
         }
         return new SVNWCAccess(
                 anchor != null ? anchor : target, 

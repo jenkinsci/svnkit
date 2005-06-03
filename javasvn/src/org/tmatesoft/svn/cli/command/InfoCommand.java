@@ -14,240 +14,161 @@ package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.TimeZone;
+import java.util.Date;
+import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNStatus;
-import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.SVNUtil;
+import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.TimeUtil;
 
 /**
  * @author TMate Software Ltd.
  */
-public class InfoCommand extends SVNCommand {
-
-    private static final DateFormat IN_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    private static final DateFormat OUT_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z (EEE, d MMM yyyy)");
-
-    static {
-        IN_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
-    }
+public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
+    
+    private PrintStream myOut;
+    private File myBaseFile;
 
     public final void run(final PrintStream out, PrintStream err) throws SVNException {
         final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
-        if (recursive) {
-            throw new SVNException("Recursive currently not supported!");
+        SVNRevision revision = SVNRevision.UNDEFINED;
+
+        if (getCommandLine().hasArgument(SVNArgument.RECURSIVE)) {
+            revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         }
+        SVNWCClient wcClient = new SVNWCClient(getCredentialsProvider(), null);
+        myOut = out;
+        
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
-
-            final String absolutePath = getCommandLine().getPathAt(i);
-            final ISVNWorkspace workspace = createWorkspace(absolutePath, false);
-            final String relativePath = SVNUtil.getWorkspacePath(workspace, new File(absolutePath).getAbsolutePath());
-            final SVNStatus status = workspace.status(relativePath, false);
-
-            print("Path: " + getOutputPath(absolutePath), out);
-            if (!status.isDirectory()) {
-                print("Name: " + getName(status), out);
-            }
-            print("URL: " + getLocation(workspace, status), out);
-            if (isNormal(status)) {
-                print("Repository UUID: " + getUUID(workspace, status), out);
-            }
-
-            print("Revision: " + status.getWorkingCopyRevision(), out);
-            print("Node Kind: " + getNodeKind(status), out);
-            print("Schedule: " + getSchedule(status), out);
-            if (isNormal(status)) {
-                print("Last Changed Author: " + status.getAuthor(), out);
-                print("Last Changed Rev: " + status.getRevision(), out);
-                print("Last Changed Date: " + getCommittedDate(workspace, relativePath), out);
-                if (getTextLastUpdate(workspace, relativePath) != null) {
-                    print("Text Last Updated: " + getTextLastUpdate(workspace, relativePath), out);
-                }
-                if (getPropertiesDate(workspace, relativePath) != null) {
-                    print("Properties Last Updated: " + getPropertiesDate(workspace, relativePath), out);
-                }
-                if (getChecksum(workspace, relativePath) != null) {
-                    print("Checksum: " + getChecksum(workspace, relativePath), out);
-                }
-            }
-            if (status.isAddedWithHistory()) {
-                print("Copied From URL: " + workspace.getPropertyValue(relativePath, SVNProperty.COPYFROM_URL), out);
-                print("Copied From Rev: " + workspace.getPropertyValue(relativePath, SVNProperty.COPYFROM_REVISION), out);
-            }
-            String locktoken = workspace.getPropertyValue(relativePath, SVNProperty.LOCK_TOKEN);
-            String lockowner = workspace.getPropertyValue(relativePath, SVNProperty.LOCK_OWNER);
-            String lockdate = workspace.getPropertyValue(relativePath, SVNProperty.LOCK_CREATION_DATE);
-            String lockcomment = workspace.getPropertyValue(relativePath, SVNProperty.LOCK_COMMENT);
-            if (locktoken != null) {
-                print("Lock Token: " + locktoken, out);
-                if (lockowner != null) {
-                    print("Lock Owner: " + lockowner, out);
-                }
-                if (lockdate != null) {
-                    print("Lock Created: " + formatDate(lockdate), out);
-                }
-                if (lockcomment != null) {
-                    print("Lock Comment:\n" + lockcomment + "\n", out);
-                }
-            }
-            println(out);
+            myBaseFile = new File(getCommandLine().getPathAt(i));
+            wcClient.doInfo(myBaseFile, revision, recursive, this);
         }
-
+        myBaseFile = null;
         for (int i = 0; i < getCommandLine().getURLCount(); i++) {
             String url = getCommandLine().getURL(i);
-            SVNRepository repos = createRepository(url);
-            String revisionStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
-            long revision = -1;
-            if (revisionStr != null) {
-                try {
-                    revision = Long.parseLong(revisionStr);
-                } catch (NumberFormatException nfe) {
-                    revision = -1;
-                }
-            }
-            SVNDirEntry info = repos.info("", revision);
-            
-            out.println("URL: " + url);
-            out.println("Repository Root: " + repos.getRepositoryRoot());
-            out.println("Repository UUID: " + repos.getRepositoryUUID());
-            out.println("Revision: " + info.getRevision());
-            out.println("Node Kind: " + (info.getKind() == SVNNodeKind.DIR ? "directory" : "file"));
-            out.println("Last Changed Author: " + (info.getAuthor() == null ? "" : info.getAuthor()));
-            out.println("Last Changed Date: " + OUT_FORMAT.format(info.getDate()));
-            out.println("Last Changed Rev: " + info.getRevision());
-            // lock.
-            SVNLock lock = repos.getLock("");
-            if (lock != null) {
-                print("Lock Token: " + lock.getID(), out);
-                if (lock.getOwner() != null) {
-                    print("Lock Owner: " + lock.getOwner(), out);
-                }
-                if (lock.getCreationDate() != null) {
-                    print("Lock Created: " + OUT_FORMAT.format(lock.getCreationDate()), out);
-                }
-                if (lock.getComment() != null) {
-                    print("Lock Comment:\n" + lock.getComment() + "\n", out);
-                }
-            }
+            SVNRevision peg = getCommandLine().getPegRevision(i);
+            wcClient.doInfo(url, peg, revision, recursive, this);
         }
-    }
-
-    private static boolean isNormal(SVNStatus status) {
-        return status.isManaged() && status.getContentsStatus() != SVNStatus.ADDED;
-    }
-
-    private static String getOutputPath(String absolutePath) {
-        final String cwdPath = new File(".").getAbsolutePath();
-        String path;
-        if (absolutePath.startsWith(cwdPath)) {
-            path = absolutePath.substring(cwdPath.length());
-            if (path.startsWith("/")) {
-                path = path.substring(1);
-            }
-            if (path.endsWith("/")) {
-                path = path.substring(0, path.length() - 1);
-            }
-        } else {
-            path = absolutePath;
-        }
-
-        if (path.equals("")) {
-            path = ".";
-        }
-
-        return path;
-    }
-
-    private static String getName(SVNStatus status) {
-        final String path = status.getPath();
-        if (path.equals(".")) {
-            return null;
-        }
-
-        final int slashIndex = path.lastIndexOf("/");
-        return slashIndex >= 0 ? path.substring(slashIndex + 1) : path;
-    }
-
-    private static String getNodeKind(SVNStatus status) {
-        return status.isDirectory() ? "directory" : "file";
-    }
-
-    private static String getLocation(ISVNWorkspace workspace, SVNStatus status) throws SVNException {
-        final String location = workspace.getLocation().toString();
-        return status.isDirectory() ? location : location + "/" + getName(status);
-    }
-
-    private static String getUUID(ISVNWorkspace workspace, SVNStatus status) throws SVNException {
-        final String path;
-        if (status.isDirectory()) {
-            path = status.getPath();
-        } else {
-            path = getInternalDirectory(status.getPath());
-        }
-
-        return workspace.getPropertyValue(path, "svn:entry:uuid");
-    }
-
-    private static String getCommittedDate(ISVNWorkspace workspace, String path) throws SVNException {
-        final String date = workspace.getPropertyValue(path, "svn:entry:committed-date");
-        return date != null ? formatDate(date) : null;
-    }
-
-    private static String getTextLastUpdate(ISVNWorkspace workspace, String path) throws SVNException {
-        final String date = workspace.getPropertyValue(path, "svn:entry:text-time");
-        return date != null ? formatDate(date) : null;
-    }
-
-    private static String getPropertiesDate(ISVNWorkspace workspace, String path) throws SVNException {
-        final String date = workspace.getPropertyValue(path, "svn:entry:prop-time");
-        return date != null ? formatDate(date) : null;
-    }
-
-    private static String getChecksum(ISVNWorkspace workspace, String path) throws SVNException {
-        return workspace.getPropertyValue(path, "svn:entry:checksum");
-    }
-
-    private static String formatDate(String rawDate) throws SVNException {
-        rawDate = rawDate.replace('T', ' ');
-        rawDate = rawDate.substring(0, rawDate.indexOf('.'));
-
-        try {
-            return OUT_FORMAT.format(IN_FORMAT.parse(rawDate));
-        } catch (ParseException ex) {
-            throw new SVNException(ex);
-        }
-    }
-
-    private static String getSchedule(SVNStatus status) {
-        final int contentStatus = status.getContentsStatus();
-        if (contentStatus == SVNStatus.DELETED) {
-            return "delete";
-        } else if (contentStatus == SVNStatus.ADDED) {
-            return "add";
-        } else {
-            return "normal";
-        }
-    }
-
-    private static String getInternalDirectory(String path) {
-        final int slashIndex = path.lastIndexOf("/");
-        return slashIndex >= 0 ? path.substring(0, slashIndex) : "";
     }
 
     private static void print(String str, PrintStream out) {
         out.println(str);
         DebugLog.log(str);
+    }
+
+    public void handleInfo(SVNInfo info) {
+        if (!info.isRemote()) {
+            print("Path: " + getPath(info.getFile()), myOut);
+        } else if (info.getPath() != null) {
+            String path = info.getPath();
+            path = PathUtil.removeLeadingSlash(path);
+            path = PathUtil.removeTrailingSlash(path);
+            if (myBaseFile != null) {
+                File file = new File(myBaseFile, path);
+                path = getPath(file);
+            } else {
+                path = path.replace('/', File.separatorChar);
+            }
+            print("Path: " + path, myOut);
+        }
+        if (info.getKind() != SVNNodeKind.DIR) {
+            if (info.isRemote()) {
+                print("Name: " + PathUtil.tail(info.getPath()), myOut);
+            } else {
+                print("Name: " + info.getFile().getName(), myOut);
+            }            
+        }
+        print("URL: " + info.getURL(), myOut);
+        if (info.getRepositoryRootURL() != null) {
+            print("Repository Root: " + info.getRepositoryRootURL(), myOut);
+        }
+        if (info.getRepositoryUUID() != null) {
+            print("Repository UUID: " + info.getRepositoryUUID(), myOut);
+        }
+        if (info.getRevision() != null && info.getRevision().isValid()) {
+            print("Revision: " + info.getRevision(), myOut);
+        }
+        print("Node Kind: " + info.getKind(), myOut);
+        if (info.getSchedule() == null && !info.isRemote()) {
+            print("Schedule: normal", myOut);
+        } else if (!info.isRemote()) {
+            print("Schedule: " + info.getSchedule(), myOut);
+        }
+        if (info.getAuthor() != null) {
+            print("Last Changed Author: " + info.getAuthor(), myOut);
+        }
+        if (info.getCommittedRevision() != null && info.getCommittedRevision().isValid()) {
+            print("Last Changed Rev: " + info.getCommittedRevision(), myOut);            
+        }
+        if (info.getCommittedDate() != null) {
+            print("Last Changed Date: " + TimeUtil.formatDate(info.getCommittedDate()), myOut);            
+        }
+        if (!info.isRemote()) {
+            if (info.getTextTime() != null) {
+                print("Text Last Updated: " + formatDate(info.getTextTime()), myOut);                
+            }
+            if (info.getPropTime() != null) {
+                print("Properties Last Updated: " + formatDate(info.getPropTime()), myOut);                
+            }
+            if (info.getChecksum() != null) {
+                print("Checksum: " + info.getChecksum(), myOut);
+            }
+            if (info.getCopyFromURL() != null) {
+                print("Copied From URL: " + info.getCopyFromURL(), myOut);
+            }
+            if (info.getCopyFromRevision() != null && info.getCopyFromRevision().isValid()) {
+                print("Copied From Rev: " + info.getCopyFromRevision(), myOut);
+            }
+            if (info.getConflictOldFile() != null) {
+                print("Conflict Previous Base File: " + info.getConflictOldFile().getName(), myOut);
+            }
+            if (info.getConflictWrkFile() != null) {
+                print("Conflict Previous Working File: " + info.getConflictWrkFile().getName(), myOut);
+            }
+            if (info.getConflictNewFile() != null) {
+                print("Conflict Current Base File: " + info.getConflictNewFile().getName(), myOut);
+            }
+            if (info.getPropConflictFile() != null) {
+                print("Conflict Properties File: " + info.getPropConflictFile().getName(), myOut);
+            }
+        }
+        if (info.getLock() != null) {
+            SVNLock lock = info.getLock();
+            print("Lock Token: " + lock.getID(), myOut);
+            print("Lock Owner: " + lock.getOwner(), myOut);
+            print("Lock Created: " + formatDate(lock.getCreationDate()), myOut);
+            print("Lock Comment ", myOut);
+            int lineCount = getLinesCount(lock.getComment());
+            if (lineCount == 1) {
+                print("(1 line)", myOut);
+            } else {
+                print("(" + lineCount + " lines)", myOut);
+            }
+            print(":\n" + lock.getComment() + "\n", myOut);
+        }
+        println(myOut);
+    }
+    
+    private static String formatDate(Date date) {
+        String str = TimeUtil.formatDate(date);
+        return TimeUtil.toHumanDate(str);
+    }
+    
+    private static int getLinesCount(String str) {
+        int count = 0;
+        for(StringTokenizer lines = new StringTokenizer(str, "\n"); lines.hasMoreTokens();) {
+            String token = lines.nextToken();
+            count++;
+        }
+        return count;
     }
 }

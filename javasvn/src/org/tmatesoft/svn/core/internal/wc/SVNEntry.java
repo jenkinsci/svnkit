@@ -248,6 +248,14 @@ public class SVNEntry implements Comparable {
         return myEntries.getPropertyValue(myName, SVNProperty.COPYFROM_URL);
     }
 
+    public long getCopyFromRevision() {
+        String rev = myEntries.getPropertyValue(myName, SVNProperty.COPYFROM_URL);
+        if (rev == null) {
+            return -1;
+        }
+        return Long.parseLong(rev);
+    }
+
     public String getPropTime() {
         return myEntries.getPropertyValue(myName, SVNProperty.PROP_TIME);
    }
@@ -272,5 +280,19 @@ public class SVNEntry implements Comparable {
             String propName = (String) propNames.next();
             myEntries.setPropertyValue(myName, propName, (String) entryProps.get(propName));
         }
+    }
+
+    public String getLockOwner() {
+        return myEntries.getPropertyValue(myName, SVNProperty.LOCK_OWNER);
+    }
+    public String getLockComment() {
+        return myEntries.getPropertyValue(myName, SVNProperty.LOCK_COMMENT);
+    }
+    public String getLockCreationDate() {
+        return myEntries.getPropertyValue(myName, SVNProperty.LOCK_CREATION_DATE);
+    }
+
+    public String getSchedule() {
+        return myEntries.getPropertyValue(myName, SVNProperty.SCHEDULE);
     }
 } 

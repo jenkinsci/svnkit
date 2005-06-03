@@ -23,8 +23,8 @@ import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
@@ -238,11 +238,13 @@ public class SVNReporter implements ISVNReporterBaton {
             }            
         };
         try {
-            SVNUpdateClient updater = new SVNUpdateClient(repositoryFactory, null, new SVNCommandEventProcessor(System.out, false, false));
-            SVNDiffClient differ = new SVNDiffClient(repositoryFactory, null,  new SVNCommandEventProcessor(System.out, false, false));
-            
-            File dst = new File("C:\\i\\test5");
-            differ.doMerge("http://80.188.80.120/svn/repos/test4/trunk", SVNRevision.HEAD, SVNRevision.create(35), SVNRevision.create(36), dst, true, true, false, false);
+            SVNUpdateClient updater = new SVNUpdateClient(repositoryFactory, null, new SVNCommandEventProcessor(System.out, System.err, false, false));
+            SVNDiffClient differ = new SVNDiffClient(repositoryFactory, null,  new SVNCommandEventProcessor(System.out, System.err, false, false));
+            SVNWCClient wcClient = new SVNWCClient(repositoryFactory, null,  new SVNCommandEventProcessor(System.out, System.err, false, false));
+            File dst = new File("C:\\i\\test5\\trunk\\trunk.txt");
+//            SVNInfo info = wcClient.doInfo(dst, SVNRevision.WORKING);
+            wcClient.doLock(new File[] {dst}, false, "Lock\nComment");
+//            wcClient.doUnlock(new File[] {dst}, false);
         } catch (Throwable e) {
             e.printStackTrace();
         } 

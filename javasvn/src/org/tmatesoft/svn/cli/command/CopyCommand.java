@@ -199,7 +199,7 @@ public class CopyCommand extends SVNCommand {
         if (revNumber >= 0) {
             revision = SVNRevision.create(revNumber);
         }
-        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, true));
+        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, true));
         updater.doCopy(srcURL, new File(destPathParent), revision);
     }
     

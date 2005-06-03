@@ -89,6 +89,18 @@ public class SVNWCUtil {
             }
         }
     }
+    
+    public static void setWorkingFileContents(File workingFile, InputStream contents) throws SVNException {
+        
+    }
+    
+    public static boolean hasConflicts(File workingFile) throws SVNException {
+        return false;
+    }
+
+    public static String[] getConflictFiles(File workingFile, OutputStream left, OutputStream right, OutputStream local) throws SVNException {
+        return null;
+    }
 
     public static boolean isBinaryMimetype(String mimetype) {
         return mimetype != null && !mimetype.startsWith("text/");

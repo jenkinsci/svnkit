@@ -181,13 +181,13 @@ public class SVNBasicClient implements ISVNEventListener {
     }
     
     protected String getURL(String url, SVNRevision peg, SVNRevision rev) throws SVNException {
-        if (!rev.isValid()) {
+        if (rev == null || !rev.isValid()) {
             rev = SVNRevision.HEAD;
         }
         if (rev.equals(peg)) {
             return url;
         }        
-        if (!peg.isValid()) {
+        if (peg == null || !peg.isValid()) {
             return url;
         }
         DebugLog.log("creating repos for " + url);

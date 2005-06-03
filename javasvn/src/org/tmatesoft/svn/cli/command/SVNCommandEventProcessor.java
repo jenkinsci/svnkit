@@ -8,6 +8,7 @@ import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.io.SVNCancelException;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -23,26 +24,38 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
     private boolean myIsExport;
 
     private final PrintStream myPrintStream;
+    private PrintStream myErrStream;
 
-    public SVNCommandEventProcessor(PrintStream out, boolean checkout) {
-        this(out, checkout, false);
+    public SVNCommandEventProcessor(PrintStream out, PrintStream err, boolean checkout) {
+        this(out, err, checkout, false);
     }
 
-    public SVNCommandEventProcessor(PrintStream out, boolean checkout, boolean export) {
+    public SVNCommandEventProcessor(PrintStream out, PrintStream err, boolean checkout, boolean export) {
         myPrintStream = out;
+        myErrStream = err;
         myIsCheckout = checkout;
         myIsExport = export;
     }
 
     public void svnEvent(SVNEvent event, double progress) {
-        if (event.getErrorMessage() != null) {
-            SVNCommand.println(myPrintStream, "error: " + event.getErrorMessage());
-            myIsExternal = false;
-            myIsExternalChanged = false;
-            myIsChanged = false;
-            return;
-        }
-        if (event.getAction() == SVNEventAction.UPDATE_ADD) {
+        if (event.getAction() == SVNEventAction.LOCKED) {
+            String path = event.getPath();
+            if (event.getFile() != null) {
+                path = SVNCommand.getPath(event.getFile());
+            }
+            SVNLock lock = event.getLock();
+            SVNCommand.println(myPrintStream, "'" + path + "' locked by '" + lock.getOwner() + "'.");
+        } else if (event.getAction() == SVNEventAction.UNLOCKED) {
+            String path = event.getPath();
+            if (event.getFile() != null) {
+                path = SVNCommand.getPath(event.getFile());
+            }
+            SVNCommand.println(myPrintStream, "'" + path + "' unlocked.");
+        } else if (event.getAction() == SVNEventAction.UNLOCK_FAILED) {
+            SVNCommand.println(myErrStream, "error: " + event.getErrorMessage());
+        } else if (event.getAction() == SVNEventAction.LOCK_FAILED) {
+            SVNCommand.println(myErrStream, "error: " + event.getErrorMessage());
+        } else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
             if (myIsExternal) {
                 myIsExternalChanged = true;
             } else {

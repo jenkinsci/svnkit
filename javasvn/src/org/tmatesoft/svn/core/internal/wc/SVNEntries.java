@@ -162,7 +162,6 @@ public class SVNEntries {
             os.write("</wc-entries>\n");
         } catch (IOException e) {
             tmpFile.delete();
-            e.printStackTrace();
             SVNErrorManager.error(0, e);
         } finally {
             if (os != null) {
