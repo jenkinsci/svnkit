@@ -163,10 +163,6 @@ public class SVNEntry implements Comparable {
         return Long.parseLong(rev);
     }
 
-    public boolean isNeedsLock() {
-        return myEntries.getPropertyValue(myName, SVNProperty.NEEDS_LOCK) != null;
-    }
-
     public void setTextTime(String time) {
         myEntries.setPropertyValue(myName, SVNProperty.TEXT_TIME, time);
     }

@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.DebugLog;
 
 public class SVNProperties {
     
@@ -339,10 +338,6 @@ public class SVNProperties {
     }
     
     public void copyTo(SVNProperties destination) throws SVNException {
-        if (destination.getFile().exists()) {
-            DebugLog.log("file already exists: " + destination.getFile());
-            SVNErrorManager.error(0, null);
-        }
         if (!getFile().exists()) {
             // just create empty dst.
             destination.setPropertyValue("tmp", "empty");
@@ -350,7 +345,7 @@ public class SVNProperties {
             // this will leave "end\n";
         } else {
             try {
-                SVNFileUtil.copy(getFile(), destination.getFile(), false);
+                SVNFileUtil.copy(getFile(), destination.getFile(), true);
             } catch (IOException e) {
                 SVNErrorManager.error(0, e);
             }

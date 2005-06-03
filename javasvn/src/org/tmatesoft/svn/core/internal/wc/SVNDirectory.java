@@ -448,7 +448,7 @@ public class SVNDirectory {
                 SVNTranslator.translate(this, name, SVNFileUtil.getBasePath(src), SVNFileUtil.getBasePath(dst), true, true);
                 
                 boolean executable = wcProps.getPropertyValue(SVNProperty.EXECUTABLE) != null;
-                boolean needsLock = entry.isNeedsLock();
+                boolean needsLock = wcProps.getPropertyValue(SVNProperty.NEEDS_LOCK) != null;
                 if (executable) {
                     SVNFileUtil.setExecutable(dst, true);
                 }

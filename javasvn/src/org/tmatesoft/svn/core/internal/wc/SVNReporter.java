@@ -202,7 +202,7 @@ public class SVNReporter implements ISVNReporterBaton {
         dir.markResolved(name, true, false);
         
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
-        boolean needsLock = entry.isNeedsLock();
+        boolean needsLock = props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null;
         if (executable) {
             SVNFileUtil.setExecutable(dst, true);
         }
@@ -243,7 +243,7 @@ public class SVNReporter implements ISVNReporterBaton {
             SVNWCClient wcClient = new SVNWCClient(repositoryFactory, null,  new SVNCommandEventProcessor(System.out, System.err, false, false));
             File dst = new File("C:\\i\\test5\\trunk\\trunk.txt");
 //            SVNInfo info = wcClient.doInfo(dst, SVNRevision.WORKING);
-            wcClient.doLock(new File[] {dst}, false, "Lock\nComment");
+            wcClient.doRevert(dst, false);
 //            wcClient.doUnlock(new File[] {dst}, false);
         } catch (Throwable e) {
             e.printStackTrace();
