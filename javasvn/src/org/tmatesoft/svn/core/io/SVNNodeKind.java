@@ -72,7 +72,7 @@ public final class SVNNodeKind {
     /**
      * Represents the current <code>SVNNodeKind</code> object as a string.
      * 
-     * @return string representation of the node kind.
+     * @return string representation of this object.
      */
     public String toString() {
         if (this == NONE) {

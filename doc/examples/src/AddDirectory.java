@@ -1,5 +1,6 @@
 
 import java.io.File;
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -56,23 +57,20 @@ import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
  * Committed to revision 670
  */
 public class AddDirectory {
-    private static SVNRepositoryLocation location;
 
-    private static SVNRepository repository;
-
-    private static ISVNEditor editor;
 
     public static void main(String[] args) {
         /*
          * Default values:
          */
-        String url = "http://72.9.228.230:8080/svn/jsvn/branches/jorunal";
-        String name = "anonymous";
-        String password = "anonymous";
-        String dirPath = "tempDir";
+        String url = "http://72.9.228.230:8080/svn/jsvn/branches/jorunal";//"svn://localhost/materials/rep";//
+        String name = "sa";
+        String password = "apollo13";
+        String dirPath = "test";
         String fileName = "myTemp.txt";
         String commitMessage = "adding a new directory with a file";
-
+        byte[] binaryData = "This is a new file".getBytes();
+        byte[] changedBinaryData = "This is the same file but modified a little ".getBytes();
         /*
          * Initializes the library (it must be done before ever using the
          * library itself)
@@ -106,7 +104,9 @@ public class AddDirectory {
              */
             commitMessage = (args.length >= 6) ? args[5] : commitMessage;
         }
-
+        
+        SVNRepositoryLocation location = null;
+        SVNRepository repository = null;
         try {
             /*
              * Parses the URL string and creates an SVNRepositoryLocation which
@@ -159,6 +159,7 @@ public class AddDirectory {
         System.out.println("Repository latest revision (before committing): "
                 + latestRevision);
         System.out.println("");
+        ISVNEditor editor = null;
         try {
             /*
              * Gets an editor for committing the changes to the repository.
@@ -170,54 +171,7 @@ public class AddDirectory {
              * file.
              */
             editor = repository.getCommitEditor(commitMessage,
-                    new ISVNWorkspaceMediator() {
-                        private Map myTmpFiles = new HashMap();
-
-                        public String getWorkspaceProperty(String path,
-                                String name) throws SVNException {
-                            return null;
-                        }
-
-                        public void setWorkspaceProperty(String path,
-                                String name, String value) throws SVNException {
-                        }
-
-                        public OutputStream createTemporaryLocation(
-                                String path, Object id) throws IOException {
-                            File tmpFile = File.createTempFile("javasvn.",
-                                    ".tmp");
-                            myTmpFiles.put(id, tmpFile);
-                            tmpFile.deleteOnExit();
-                            return new FileOutputStream(tmpFile);
-                        }
-
-                        public InputStream getTemporaryLocation(Object id)
-                                throws IOException {
-                            File file = (File) myTmpFiles.get(id);
-                            if (file != null) {
-                                return new FileInputStream(file);
-                            }
-                            return null;
-                        }
-
-                        public long getLength(Object id) throws IOException {
-                            File file = (File) myTmpFiles.get(id);
-                            if (file != null) {
-                                return file.length();
-                            }
-                            return 0;
-                        }
-
-                        public void deleteTemporaryLocation(Object id) {
-                            File file = (File) myTmpFiles.remove(id);
-                            if (file != null) {
-                                file.delete();
-                            }
-                        }
-
-                        public void deleteAdminFiles(String path) {
-                        }
-                    });
+                    new MySVNWorkspaceMediator());
         } catch (SVNException svne) {
             System.err
                     .println("error while getting a commit editor for location '"
@@ -228,155 +182,28 @@ public class AddDirectory {
         SVNCommitInfo commitInfo = null;
 
         try {
-            /*
-             * Opens the current root directory. It means all modifications will
-             * be applied to this directory until a next entry is opened.
-             */
-            editor.openRoot(-1);
-            /*
-             * Adds a new directory (not a copy of an existing one) to the
-             * currently opened directory (in this case - to the root directory
-             * for which the SVNRepository was created). Since this moment all
-             * changes will be applied to this new directory.
-             * 
-             * dirPath is relative to the root directory.
-             */
-            editor.addDir(dirPath, null, -1);
-            /*
-             * Adds a new file (not a copy) to the just added directory. The
-             * file path is also defined as relative to the root directory.
-             */
-            editor.addFile(dirPath + "/" + fileName, null, -1);
-            /*
-             * The next steps are directed to obtaining and applying the file
-             * delta (that is the full contents of the file in this case).
-             */
-            File file = new File(dirPath + "/" + fileName);
-            long fileLength = file.length();
-            /*
-             * Creating a new diff window that will contain instructions of
-             * applying the delta (contents in this case) to the file in the
-             * repository.
-             */
-            SVNDiffWindow diffWindow = SVNDiffWindowBuilder
-                    .createReplacementDiffWindow(fileLength);
-            /*
-             * Gets an OutputStream where the delta will be written to.
-             */
-            OutputStream os = editor.textDeltaChunk(diffWindow);
-            if (fileLength == 0) {
-                /*
-                 * If the file is empty - close the text delta (nothing was
-                 * written, the file will be empty)
-                 */
-                try {
-                    os.close();
-                } catch (IOException e1) {
-                } finally {
-                    editor.textDeltaEnd();
-                }
-            } else {
-                FileInputStream fis = null;
-                try {
-                    fis = new FileInputStream(file);
-                } catch (FileNotFoundException fnfe) {
-                    System.err.println("The file wasn't found:"
-                            + fnfe.getMessage());
-                    if (fis != null) {
-                        try {
-                            fis.close();
-                        } catch (IOException ioe) {
-
-                        }
-                    }
-                }
-                byte[] myBinaryBuffer = new byte[8192 * 4];
-                /*
-                 * If the file is not empty this code writes the file contents
-                 * to the OutputStream intended for the delta.
-                 */
-                while (true) {
-                    try {
-                        int read = fis.read(myBinaryBuffer);
-                        if (read < 0) {
-                            break;
-                        }
-                        os.write(myBinaryBuffer, 0, read);
-                    } catch (IOException ioe) {
-                        System.err.println("An i/o error:" + ioe.getMessage());
-                        if (fis != null) {
-                            try {
-                                fis.close();
-                            } catch (IOException ioeInternal) {
-                            }
-                        }
-                        if (os != null) {
-                            try {
-                                os.close();
-                            } catch (IOException ioeInternal) {
-                            }
-                        }
-                        break;
-                    }
-                }
-                /*
-                 * Finally closes the delta when all the contents is already
-                 * written. From this point early defined diff window knows how
-                 * to apply the delta for the file (that will be created in the
-                 * repository).
-                 */
-                editor.textDeltaEnd();
-            }
-            /*
-             * Here the delta is applied to the file.
-             */
-            editor.applyTextDelta(null);
-            /*
-             * Closes the new added file.
-             */
-            editor.closeFile(null);
-            /*
-             * Closes the new added directory.
-             */
-            editor.closeDir();
-            /*
-             * Closes the root directory.
-             */
-            editor.closeDir();
-            /*
-             * This is the final point in all editor handling. Only now all that
-             * new information previously described with the editor's methods is
-             * sent to the server for committing. As a result the server sends
-             * the new commit info that is displayed in the console.
-             */
-            commitInfo = editor.closeEdit();
+            commitInfo = addDir(editor, dirPath, dirPath+"/"+fileName, binaryData);
+            printCommitInfo(commitInfo);
+            commitInfo = modifyFile(editor, dirPath, dirPath+"/"+fileName, changedBinaryData);
+            printCommitInfo(commitInfo);
+            
         } catch (SVNException svne) {
             try {
                 /*
                  * An exception was thrown during the work of the editor. The
-                 * editor must be aborted to behave in a right way, so the
+                 * editor must be aborted to behave in a right way in order to the
                  * breakdown won't cause any unstability.
                  */
                 editor.abortEdit();
                 System.err.println("aborting the editor due to errors:"
                         + svne.getMessage());
             } catch (SVNException inner) {
+                System.err.println("failed to abort the editor:"
+                        + svne.getMessage());
             }
             System.exit(1);
         }
-        /*
-         * The author of the last commit.
-         */
-        System.out.println("The last author:" + commitInfo.getAuthor());
-        /*
-         * The time moment when the changes were committed.
-         */
-        System.out.println("Date:" + commitInfo.getDate().toString());
-        /*
-         * And the new committed revision.
-         */
-        System.out.println("Committed to revision "
-                + commitInfo.getNewRevision());
+        
         System.exit(0);
     }
 
@@ -393,5 +220,293 @@ public class AddDirectory {
          * for SVN (over svn and svn+ssh)
          */
         SVNRepositoryFactoryImpl.setup();
+    }
+    private static SVNCommitInfo addDir(ISVNEditor editor, String dirPath, String filePath, byte[] data) throws SVNException{
+        /*
+         * Opens the current root directory. It means all modifications will
+         * be applied to this directory until a next entry is opened.
+         */
+        editor.openRoot(-1);
+        /*
+         * Adds a new directory (not a copy of an existing one) to the
+         * currently opened directory (in this case - to the root directory
+         * for which the SVNRepository was created). Since this moment all
+         * changes will be applied to this new directory.
+         * 
+         * dirPath is relative to the root directory.
+         */
+        editor.addDir(dirPath, null, -1);
+        /*
+         * Adds a new file (not a copy) to the just added directory. The
+         * file path is also defined as relative to the root directory.
+         */
+        editor.addFile(filePath, null, -1);
+        /*
+         * The next steps are directed to obtaining and applying the file
+         * delta (that is the full contents of the file in this case).
+         */
+        long fileLength = data.length;
+        /*
+         * Creating a new diff window that will contain instructions of
+         * applying the delta (contents in this case) to the file in the
+         * repository.
+         */
+        SVNDiffWindow diffWindow = SVNDiffWindowBuilder
+                .createReplacementDiffWindow(fileLength);
+        /*
+         * Gets an OutputStream where the delta will be written to.
+         */
+        OutputStream os = editor.textDeltaChunk(diffWindow);
+        if (fileLength == 0) {
+            /*
+             * If the file is empty - close the OutputStream since there's no text delta
+             * for the file. And mark the end of the delta calling textDeltaEnd(). 
+             * 
+             */
+            try {
+                os.close();
+            } catch (IOException e1) {
+            } finally {
+                editor.textDeltaEnd();
+            }
+        } else {
+            ByteArrayInputStream bais = new ByteArrayInputStream(data);
+            byte[] myBinaryBuffer = new byte[8192 * 4];
+            /*
+             * If the file is not empty this code writes the file contents
+             * to the OutputStream intended for the delta.
+             */
+            while (true) {
+                try {
+                    int read = bais.read(myBinaryBuffer,0,myBinaryBuffer.length);
+                    if (read < 0) {
+                        break;
+                    }
+                    os.write(myBinaryBuffer, 0, read);
+                } catch (IOException ioe) {
+                    System.err.println("An i/o error while writing the delta bytes:" + ioe.getMessage());
+                    if (os != null) {
+                        try {
+                            os.close();
+                        } catch (IOException ioeInternal) {
+                        }
+                    }
+                    break;
+                }
+            }
+            /*
+             * Finally closes the delta when all the contents is already
+             * written. From this point early defined diff window knows how
+             * to apply the delta for the file (that will be created in the
+             * repository).
+             */
+            editor.textDeltaEnd();
+        }
+        /*
+         * Here the delta is applied to the file.
+         */
+        editor.applyTextDelta(null);
+        /*
+         * Closes the new added file.
+         */
+        editor.closeFile(null);
+        /*
+         * Closes the new added directory.
+         */
+        editor.closeDir();
+        /*
+         * Closes the root directory.
+         */
+        editor.closeDir();
+        /*
+         * This is the final point in all editor handling. Only now all that
+         * new information previously described with the editor's methods is
+         * sent to the server for committing. As a result the server sends
+         * the new commit info that is displayed in the console.
+         */
+        return editor.closeEdit();
+    }
+    
+    private static SVNCommitInfo modifyFile(ISVNEditor editor, String dirPath, String filePath, byte[] newData) throws SVNException{
+        /*
+         * Opens the root directory (for which the SVNRepository was created).
+         * It means all modifications will be applied to this directory until a next
+         * entry is opened.
+         * 
+         * -1 means the last (HEAD) revision.
+         */
+        editor.openRoot(-1);
+        /*
+         * Opens a next subdirectory (in this example program it's the directory added
+         * in the last commit). Since this moment all changes will be applied to this
+         * directory.
+         * 
+         * dirPath is relative to the root directory.
+         * -1 means the last (HEAD) revision.
+         */
+        editor.openDir(dirPath, -1);
+        /*
+         * Adds a new file (not a copy) to the just added directory. The
+         * 
+         * file path is also defined as a relative path to the root directory.
+         * -1 means the last (HEAD) revision.
+         */
+        editor.openFile(filePath, -1);
+        /*
+         * The next steps are directed to obtaining and applying the file
+         * delta (that is the full contents of the file in this case).
+         */
+        long fileLength = newData.length;
+        /*
+         * Creating a new diff window that will contain instructions of
+         * applying the delta (contents in this case) to the file in the
+         * repository.
+         */
+        SVNDiffWindow diffWindow = SVNDiffWindowBuilder
+                .createReplacementDiffWindow(fileLength);
+        /*
+         * Gets an OutputStream where the delta will be written to.
+         */
+        OutputStream os = editor.textDeltaChunk(diffWindow);
+        if (fileLength == 0) {
+            /*
+             * If the file is empty - close the OutputStream since there's no text delta
+             * for the file. And mark the end of the delta calling textDeltaEnd(). 
+             * 
+             */
+            try {
+                os.close();
+            } catch (IOException e1) {
+            } finally {
+                editor.textDeltaEnd();
+            }
+        } else {
+            ByteArrayInputStream bais = new ByteArrayInputStream(newData);
+            byte[] myBinaryBuffer = new byte[8192 * 4];
+            /*
+             * If the file is not empty this code writes the file contents
+             * to the OutputStream intended for the delta.
+             */
+            while (true) {
+                try {
+                    int read = bais.read(myBinaryBuffer,0,myBinaryBuffer.length);
+                    if (read < 0) {
+                        break;
+                    }
+                    os.write(myBinaryBuffer, 0, read);
+                } catch (IOException ioe) {
+                    System.err.println("An i/o error while writing the delta bytes:" + ioe.getMessage());
+                    if (os != null) {
+                        try {
+                            os.close();
+                        } catch (IOException ioeInternal) {
+                        }
+                    }
+                    break;
+                }
+            }
+            /*
+             * Finally closes the delta when all the contents is already
+             * written. From this point early defined diff window knows how
+             * to apply the delta for the file (that will be created in the
+             * repository).
+             */
+            editor.textDeltaEnd();
+        }
+        /*
+         * Here the delta is applied to the file.
+         */
+        editor.applyTextDelta(null);
+        /*
+         * Closes the file.
+         */
+        editor.closeFile(null);
+        /*
+         * Closes the directory.
+         */
+        editor.closeDir();
+        /*
+         * Closes the root directory.
+         */
+        editor.closeDir();
+        /*
+         * This is the final point in all editor handling. Only now all that
+         * new information previously described with the editor's methods is
+         * sent to the server for committing. As a result the server sends
+         * the new commit info that is displayed in the console.
+         */
+        return editor.closeEdit();    
+    }
+    
+    private static SVNCommitInfo deleteDir(ISVNEditor editor) throws SVNException{
+        return null;
+    }
+    
+    private static void printCommitInfo(SVNCommitInfo commitInfo){
+        /*
+         * The author of the last commit.
+         */
+        System.out.println("The last author:" + commitInfo.getAuthor());
+        /*
+         * The time moment when the changes were committed.
+         */
+        System.out.println("Date:" + commitInfo.getDate().toString());
+        /*
+         * And the new committed revision.
+         */
+        System.out.println("Committed to revision "
+                + commitInfo.getNewRevision());
+    }
+    
+    /*
+     * 
+     */
+    private  static class MySVNWorkspaceMediator implements ISVNWorkspaceMediator{
+        private Map myTmpFiles = new HashMap();
+
+        public String getWorkspaceProperty(String path,
+                String name) throws SVNException {
+            return null;
+        }
+
+        public void setWorkspaceProperty(String path,
+                String name, String value) throws SVNException {
+        }
+
+        public OutputStream createTemporaryLocation(
+                String path, Object id) throws IOException {
+            File tmpFile = File.createTempFile("javasvn.",
+                    ".tmp");
+            myTmpFiles.put(id, tmpFile);
+            tmpFile.deleteOnExit();
+            return new FileOutputStream(tmpFile);
+        }
+
+        public InputStream getTemporaryLocation(Object id)
+                throws IOException {
+            File file = (File) myTmpFiles.get(id);
+            if (file != null) {
+                return new FileInputStream(file);
+            }
+            return null;
+        }
+
+        public long getLength(Object id) throws IOException {
+            File file = (File) myTmpFiles.get(id);
+            if (file != null) {
+                return file.length();
+            }
+            return 0;
+        }
+
+        public void deleteTemporaryLocation(Object id) {
+            File file = (File) myTmpFiles.remove(id);
+            if (file != null) {
+                file.delete();
+            }
+        }
+
+        public void deleteAdminFiles(String path) {
+        }
     }
 }
