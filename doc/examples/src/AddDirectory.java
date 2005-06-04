@@ -63,7 +63,7 @@ public class AddDirectory {
         /*
          * Default values:
          */
-        String url = "http://72.9.228.230:8080/svn/jsvn/branches/jorunal";//"svn://localhost/materials/rep";//
+        String url = "http://72.9.228.230:8080/svn/jsvn/branches/jorunal";//"svn://localhost/materials/rep/testDir";
         String name = "sa";
         String password = "apollo13";
         String dirPath = "test";
@@ -160,16 +160,16 @@ public class AddDirectory {
                 + latestRevision);
         System.out.println("");
         ISVNEditor editor = null;
-        try {
-            /*
-             * Gets an editor for committing the changes to the repository.
-             * 
-             * commitMessage will be applied as a log message of the commit.
-             * 
-             * ISVNWorkspaceMediator will be used by the editor to store any
-             * file delta (that is to be sent to the server) in an intermediate
-             * file.
-             */
+        /*
+         * Gets an editor for committing the changes to the repository.
+         * 
+         * commitMessage will be applied as a log message of the commit.
+         * 
+         * ISVNWorkspaceMediator will be used by the editor to store any
+         * file delta (that is to be sent to the server) in an intermediate
+         * file.
+         */
+/*        try {
             editor = repository.getCommitEditor(commitMessage,
                     new MySVNWorkspaceMediator());
         } catch (SVNException svne) {
@@ -178,10 +178,12 @@ public class AddDirectory {
                             + url + "': " + svne.getMessage());
             System.exit(1);
         }
-
+*/
         SVNCommitInfo commitInfo = null;
-
-        try {
+        /*
+         * Adding a new directory containing a file to the repository. 
+         */
+/*        try {
             commitInfo = addDir(editor, dirPath, dirPath+"/"+fileName, binaryData);
         } catch (SVNException svne) {
             try {
@@ -190,12 +192,13 @@ public class AddDirectory {
                  * editor must be aborted to behave in a right way in order to the
                  * breakdown won't cause any unstability.
                  */
+/*                System.err.println("aborting the editor due to errors:"
+                        + svne.getMessage());
                 editor.abortEdit();
-                System.err.println("aborting the editor due to errors:"
-                        + svne.getMessage());
             } catch (SVNException inner) {
+                inner.printStackTrace();
                 System.err.println("failed to abort the editor:"
-                        + svne.getMessage());
+                        + inner.getMessage());
             }
             System.exit(1);
         }
@@ -210,9 +213,39 @@ public class AddDirectory {
                             + url + "': " + svne.getMessage());
             System.exit(1);
         }
-        
-        try {
+        /*
+         * Changing the file contents.
+         */
+/*        try {
             commitInfo = modifyFile(editor, dirPath, dirPath+"/"+fileName, changedBinaryData);
+        } catch (SVNException svne) {
+            try {
+                editor.abortEdit();
+                System.err.println("aborting the editor due to errors:"
+                        + svne.getMessage());
+            } catch (SVNException inner) {
+                System.err.println("failed to abort the editor:"
+                        + svne.getMessage());
+            }
+            System.exit(1);
+        }
+        printCommitInfo(commitInfo);
+*/
+        try {
+            editor = repository.getCommitEditor(commitMessage,
+                    new MySVNWorkspaceMediator());
+        } catch (SVNException svne) {
+            System.err
+                    .println("error while getting a commit editor for location '"
+                            + url + "': " + svne.getMessage());
+            System.exit(1);
+        }
+
+        /*
+         * Deleting the directory
+         */
+        try {
+            commitInfo = deleteDir(editor, dirPath);
         } catch (SVNException svne) {
             try {
                 editor.abortEdit();
@@ -460,11 +493,33 @@ public class AddDirectory {
         return editor.closeEdit();    
     }
     
-    private static SVNCommitInfo deleteDir(ISVNEditor editor) throws SVNException{
-        return null;
+    private static SVNCommitInfo deleteDir(ISVNEditor editor, String dirPath) throws SVNException{
+        /*
+         * Opens the current root directory. It means all modifications will
+         * be applied to this directory until a next entry is opened.
+         */
+        editor.openRoot(-1);
+        /*
+         * Deletes the subdirectory.
+         *  
+         * dirPath is relative to the root directory.
+         */
+        editor.deleteEntry(dirPath,-1);
+        /*
+         * Closes the root directory.
+         */
+        editor.closeDir();
+        /*
+         * This is the final point in all editor handling. Only now all that
+         * new information previously described with the editor's methods is
+         * sent to the server for committing. As a result the server sends
+         * the new commit info that is displayed in the console.
+         */
+        return editor.closeEdit();
     }
     
     private static void printCommitInfo(SVNCommitInfo commitInfo){
+        System.out.println("");
         /*
          * The author of the last commit.
          */
