@@ -53,7 +53,6 @@ javasvn/cli/svn.bat eol=crlf
 javasvn/src/org/tmatesoft/svn/cli/command/PropgetCommand.java -text
 javasvn/src/org/tmatesoft/svn/cli/command/SVNCommandEventProcessor.java -text
 /plugin.xml -text
-test/myTemp.txt -text
 www/.htaccess eol=lf
 www/ant.html eol=lf
 www/build.html eol=lf

@@ -183,10 +183,6 @@ public class AddDirectory {
 
         try {
             commitInfo = addDir(editor, dirPath, dirPath+"/"+fileName, binaryData);
-            printCommitInfo(commitInfo);
-            commitInfo = modifyFile(editor, dirPath, dirPath+"/"+fileName, changedBinaryData);
-            printCommitInfo(commitInfo);
-            
         } catch (SVNException svne) {
             try {
                 /*
@@ -203,6 +199,32 @@ public class AddDirectory {
             }
             System.exit(1);
         }
+        printCommitInfo(commitInfo);
+
+        try {
+            editor = repository.getCommitEditor(commitMessage,
+                    new MySVNWorkspaceMediator());
+        } catch (SVNException svne) {
+            System.err
+                    .println("error while getting a commit editor for location '"
+                            + url + "': " + svne.getMessage());
+            System.exit(1);
+        }
+        
+        try {
+            commitInfo = modifyFile(editor, dirPath, dirPath+"/"+fileName, changedBinaryData);
+        } catch (SVNException svne) {
+            try {
+                editor.abortEdit();
+                System.err.println("aborting the editor due to errors:"
+                        + svne.getMessage());
+            } catch (SVNException inner) {
+                System.err.println("failed to abort the editor:"
+                        + svne.getMessage());
+            }
+            System.exit(1);
+        }
+        printCommitInfo(commitInfo);
         
         System.exit(0);
     }
