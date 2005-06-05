@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.DebugLog;
 
 public class SVNCommandEventProcessor implements ISVNEventListener {
 
@@ -126,6 +127,7 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
                     if (myIsExport ) {
                         UpdateCommand.println(myPrintStream, "Export complete.");
                     } else {
+                    	DebugLog.error(new Exception("update completed"));
                         UpdateCommand.println(myPrintStream, "At revision " + event.getRevision() + ".");
                     }
                 }

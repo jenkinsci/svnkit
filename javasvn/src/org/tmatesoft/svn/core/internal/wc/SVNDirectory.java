@@ -394,7 +394,7 @@ public class SVNDirectory {
         boolean wasReverted = false;
         
         SVNEntry entry = getEntries().getEntry(name);
-        if (entry == null && entry.isHidden()) {
+        if (entry == null || entry.isHidden()) {
             return wasReverted;
         }
         
@@ -824,7 +824,7 @@ public class SVNDirectory {
             }
         } else {
             File file = getFile(name, false);
-            if (file.isFile()) {
+            if (file.isFile() || !file.exists()) {
                 destroyFile(name, deleteWorkingFiles);
             } else if (file.exists()) {
                 SVNDirectory childDir = getChildDirectory(name);
@@ -832,7 +832,7 @@ public class SVNDirectory {
                     destroyDirectory(this, childDir, deleteWorkingFiles);
                     myWCAccess.removeDirectory(childDir.getPath());
                 }
-            }
+            } 
         }
         getEntries().save(true);
     }
@@ -896,6 +896,67 @@ public class SVNDirectory {
             deleteWorkingFiles(name);
         }
         entries.save(true);
+    }
+    
+    public SVNEntry add(String name, boolean force) throws SVNException {
+    	File file = getFile(name, false);
+    	if (!file.exists()) {
+    		SVNErrorManager.error("svn: '" + file + "' not found");
+    	}
+    	SVNNodeKind fileKind = file.isFile() || SVNFileUtil.isSymlink(file) ? SVNNodeKind.FILE : SVNNodeKind.DIR;
+    	SVNEntry entry = getEntries().getEntry(name);
+
+    	if (entry != null && !entry.isDeleted() && !entry.isScheduledForDeletion()) {
+    		if (!force) {
+    			SVNErrorManager.error("svn: '" + file + "' already under version control");
+    		} 
+    		return entry;
+    	} else if (entry != null && entry.getKind() != fileKind) {
+    		SVNErrorManager.error("svn: Can't replace '" + file + "' with a node of different type; commit the deletion, update the parent," +
+    				" and then add '" + file + "'");
+    	}
+    	boolean replace = entry != null && entry.isScheduledForDeletion();
+    	// TODO check parent dir
+    	if (entry == null) {
+    		entry = getEntries().addEntry(name);
+    	}
+    	if (replace) {
+    		entry.scheduleForReplacement();
+    	} else {
+    		entry.scheduleForAddition();
+    	}
+    	if (!replace) {
+    		entry.setRevision(0);
+    	}
+    	entry.setKind(fileKind);
+    	if (replace) {
+    		getProperties(name, false).delete();
+    	}
+    	if (fileKind == SVNNodeKind.DIR) {
+    		// compose new url
+    		String parentURL = getEntries().getEntry("").getURL();
+    		String childURL = PathUtil.append(parentURL, PathUtil.encode(name));
+    		// if child dir exists (deleted) -> check that url is the same and revision is the same
+    		SVNDirectory childDir = getChildDirectory(name);
+    		if (childDir != null) {
+    			String existingURL = childDir.getEntries().getEntry("").getURL();
+    			if (!existingURL.equals(childURL)) {
+    				SVNErrorManager.error("svn: URL doesn't match");
+    			}
+    		} else {
+    			childDir = createChildDirectory(name, childURL, 0);
+    		}
+    		if (!replace) {
+    			childDir.getEntries().getEntry("").scheduleForAddition();
+    		} else {
+    			childDir.getEntries().getEntry("").scheduleForReplacement();
+    		}
+    		childDir.getEntries().save(true);
+    	}
+    	getEntries().save(false);
+    	// fire event
+    	SVNEvent event = SVNEventFactory.createAddedEvent(myWCAccess, this, entry);
+    	return entry;
     }
     
     private void updateEntryProperty(String propertyName, String value, boolean recursive) throws SVNException {

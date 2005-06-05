@@ -81,13 +81,16 @@ public class SVNInfo {
         myRepositoryUUID = uuid;
         
         myCommittedRevision = SVNRevision.create(committedRevision);
-        myCommittedDate = TimeUtil.parseDate(committedDate);
+        myCommittedDate = committedDate != null ? TimeUtil.parseDate(committedDate) : null;
         myAuthor = author;
         
         mySchedule = schedule;
         myChecksum = checksum;
         myTextTime = textTime != null ? TimeUtil.parseDate(textTime) : null;
         myPropTime = propTime != null ? TimeUtil.parseDate(propTime) : null;
+        
+        myCopyFromURL = copyFromURL;
+        myCopyFromRevision = SVNRevision.create(copyFromRevision);
         
         myLock = lock;
         

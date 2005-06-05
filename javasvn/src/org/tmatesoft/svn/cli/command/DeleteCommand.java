@@ -12,19 +12,17 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.IOException;
+import java.io.File;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -35,7 +33,7 @@ public class DeleteCommand extends SVNCommand {
         if (getCommandLine().hasURLs()) {
             runRemote(out);
         } else {
-            runLocally(out);
+            runLocally(out, err);
         }
     }
 
@@ -60,24 +58,22 @@ public class DeleteCommand extends SVNCommand {
         }
     }
 
-    private void runLocally(final PrintStream out) throws SVNException {
+    private void runLocally(final PrintStream out, PrintStream err) throws SVNException {
+    	boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
+    	SVNWCClient client = new SVNWCClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+    	
+    	boolean error = false;
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
-            final String workspacePath = absolutePath;
-            final ISVNWorkspace workspace = createWorkspace(absolutePath);
-            boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
-            workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
-                public void modified(String path, int kind) {
-                    try {
-                        path = convertPath(workspacePath, workspace, path);
-                    } catch (IOException e) {}
-
-                    println(out, "D  " + path);
-                }
-            });
-
-            final String relativePath = SVNUtil.getWorkspacePath(workspace, absolutePath);
-            workspace.delete(relativePath, force);
+            try {
+            	client.doDelete(new File(absolutePath), force, false);
+            } catch (SVNException e) {
+            	err.println(e.getMessage());
+            	error = true;
+            }
+        }
+        if (error) {
+        	System.exit(1);
         }
     }
 }

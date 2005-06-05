@@ -29,6 +29,7 @@ public abstract class SVNArgument {
     public static final SVNArgument CONFIG_DIR = createStringArgument(new String[] { "--config-dir" });
 
     public static final SVNArgument NON_RECURSIVE = createUnaryArgument(new String[] { "--non-recursive", "-N" });
+	public static final SVNArgument NO_AUTO_PROPS = createUnaryArgument(new String[] { "--no-auto-props"});
     public static final SVNArgument IGNORE_ANCESTRY = createUnaryArgument(new String[] {"--ignore-ancestry"});
     public static final SVNArgument RECURSIVE = createUnaryArgument(new String[] { "--recursive", "-R" });
     public static final SVNArgument VERBOSE = createUnaryArgument(new String[] { "--verbose", "-v" });
@@ -94,6 +95,7 @@ public abstract class SVNArgument {
         ourArguments.add(SVNArgument.NEW);
         ourArguments.add(SVNArgument.DRY_RUN);
         ourArguments.add(SVNArgument.IGNORE_ANCESTRY);
+        ourArguments.add(SVNArgument.NO_AUTO_PROPS);
     }
 
     private static SVNArgument createStringArgument(String[] names) {

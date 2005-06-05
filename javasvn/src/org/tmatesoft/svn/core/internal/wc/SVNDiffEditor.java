@@ -403,7 +403,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 // recurse here.
                 SVNDirectoryInfo childInfo = createDirInfo(info, PathUtil.append(info.myPath, entry.getName()), false);
                 SVNDirectory childDir = myWCAccess.getDirectory(childInfo.myPath);
-                if (dir != null) {
+                if (childDir != null) {
                     localDirectoryDiff(childInfo, isAdded, myResult);
                 }
                 continue;

@@ -292,7 +292,9 @@ public class SVNAuthRepository extends SVNRepository {
         while(true) {
             try {
                 myDelegate.setCredentials(credentials);
+                DebugLog.log("calling update");
                 myDelegate.update(revision, target, recursive, reporter, editor);
+                DebugLog.log("called");
                 accept(provider, credentials);
                 return;
             } catch (SVNAuthenticationException e) {

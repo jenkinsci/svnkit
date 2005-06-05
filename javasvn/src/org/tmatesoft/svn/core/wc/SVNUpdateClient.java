@@ -69,10 +69,15 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, recursive);
             SVNRepository repos = createRepository(wcAccess.getAnchor().getEntries().getEntry("").getURL());
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
+            DebugLog.log("calling repos update");
             repos.update(revNumber, target, recursive, reporter, editor);
+            DebugLog.log("completed");
 
-            if (editor.getTargetRevision() >= 0 && recursive && !isIgnoreExternals()) {
-                handleExternals(wcAccess);
+            if (editor.getTargetRevision() >= 0) {
+            	if (recursive && !isIgnoreExternals()) {
+            		handleExternals(wcAccess);
+            	}
+                DebugLog.log("dispatching completed event");
                 dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
             }
             return editor.getTargetRevision();

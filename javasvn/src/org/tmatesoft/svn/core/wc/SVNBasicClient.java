@@ -43,6 +43,10 @@ public class SVNBasicClient implements ISVNEventListener {
         }
     }
     
+    public SVNOptions getOptions() {
+    	return myOptions;
+    }
+    
     public void setIgnoreExternals(boolean ignore) {
         myIsIgnoreExternals = ignore;
     }

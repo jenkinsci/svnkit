@@ -12,15 +12,14 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.IOException;
+import java.io.File;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.SVNUtil;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -29,25 +28,17 @@ public class AddCommand extends SVNCommand {
 
     public final void run(final PrintStream out, PrintStream err) throws SVNException {
         final boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
-        for (int i = 0; i < getCommandLine().getPathCount(); i++) {
+        boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
+        boolean disableAutoProps = getCommandLine().hasArgument(SVNArgument.NO_AUTO_PROPS);
+        
+        SVNWCClient wcClient = new SVNWCClient(getCredentialsProvider(), getOptions(), new SVNCommandEventProcessor(out, err, false));
+    	wcClient.getOptions().setUseAutoProperties(!disableAutoProps);
+    	DebugLog.log("ignored? (foo.o) " + wcClient.getOptions().isIgnored("foo.o"));
+
+    	for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
-            final String workspacePath = absolutePath;
-            if (matchTabsInPath(workspacePath, err)) {
-                return;
-            }
-            final ISVNWorkspace workspace = createWorkspace(absolutePath);
-            workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
-                public void modified(String path, int kind) {
-                    try {
-                        path = convertPath(workspacePath, workspace, path);
-                    } catch (IOException e) {}
-
-                    println(out, "A  " + path);
-                }
-            });
-
-            final String relativePath = SVNUtil.getWorkspacePath(workspace, absolutePath);
-            workspace.add(relativePath, false, recursive);
+            DebugLog.log("adding path: " + absolutePath);
+            wcClient.doAdd(new File(absolutePath), force, true, recursive);
         }
     }
 }

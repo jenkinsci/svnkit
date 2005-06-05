@@ -91,13 +91,21 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
         if (info.getRepositoryRootURL() != null) {
             print("Repository Root: " + info.getRepositoryRootURL(), myOut);
         }
-        if (info.getRepositoryUUID() != null) {
+        if (info.isRemote() && info.getRepositoryUUID() != null) {
             print("Repository UUID: " + info.getRepositoryUUID(), myOut);
         }
         if (info.getRevision() != null && info.getRevision().isValid()) {
             print("Revision: " + info.getRevision(), myOut);
         }
-        print("Node Kind: " + info.getKind(), myOut);
+        if (info.getKind() == SVNNodeKind.DIR) {
+        	print("Node Kind: directory", myOut);
+        } else if (info.getKind() == SVNNodeKind.FILE) {
+        	print("Node Kind: file", myOut);
+        } else if (info.getKind() == SVNNodeKind.NONE) {
+        	print("Node Kind: none", myOut);
+        } else {
+        	print("Node Kind: unknown", myOut);
+        }
         if (info.getSchedule() == null && !info.isRemote()) {
             print("Schedule: normal", myOut);
         } else if (!info.isRemote()) {
@@ -106,7 +114,7 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
         if (info.getAuthor() != null) {
             print("Last Changed Author: " + info.getAuthor(), myOut);
         }
-        if (info.getCommittedRevision() != null && info.getCommittedRevision().isValid()) {
+        if (info.getCommittedRevision() != null && info.getCommittedRevision().getNumber() >= 0) {
             print("Last Changed Rev: " + info.getCommittedRevision(), myOut);            
         }
         if (info.getCommittedDate() != null) {
@@ -125,7 +133,7 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
             if (info.getCopyFromURL() != null) {
                 print("Copied From URL: " + info.getCopyFromURL(), myOut);
             }
-            if (info.getCopyFromRevision() != null && info.getCopyFromRevision().isValid()) {
+            if (info.getCopyFromRevision() != null && info.getCopyFromRevision().getNumber() >= 0) {
                 print("Copied From Rev: " + info.getCopyFromRevision(), myOut);
             }
             if (info.getConflictOldFile() != null) {

@@ -410,7 +410,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         if (url == null) {
             throw new SVNException(url + ": not valid URL");
         }
-        Object[] buffer = new Object[] { "diff", getRevisionObject(revision), target, Boolean.valueOf(ignoreAncestry), Boolean.valueOf(recursive), url };
+        Object[] buffer = new Object[] { "diff", getRevisionObject(tRevision), target, Boolean.valueOf(recursive), Boolean.valueOf(ignoreAncestry), url };
         try {
             openConnection();
             write("(w((n)swws))", buffer);

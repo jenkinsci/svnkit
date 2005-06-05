@@ -20,6 +20,7 @@ import org.tmatesoft.svn.util.PathUtil;
 public class SVNFileUtil {
 
     public final static boolean isWindows;
+	private static final String BINARY_MIME_TYPE = "application/octet-stream";
 
     static {
         String osName = System.getProperty("os.name");
@@ -356,4 +357,44 @@ public class SVNFileUtil {
             Thread.sleep(time);
         } catch (InterruptedException e) {}
     }
+    
+    public static String detectMimeType(File file) {
+    	if (file == null || !file.exists()) {
+    		return null;
+    	}
+    	byte[] buffer = new byte[1024];
+    	InputStream is = null;
+    	int read = 0;
+    	try {
+    		is = new FileInputStream(file);
+    		read = is.read(buffer);
+    	} catch (IOException e) {
+    		return null;
+    	} finally {
+    		if (is != null) {
+    			try {
+					is.close();
+				} catch (IOException e1) {
+				}
+    		}
+    	}
+    	int binaryCount = 0;
+    	for (int i = 0; i < read; i++) {
+    		byte b = buffer[i];
+			if (b == 0) {
+				return BINARY_MIME_TYPE;
+			}
+			if (b < 0x07 || (b > 0x0d && b < 0x20) || b > 0x7F) {
+				binaryCount++;
+			}
+		}
+    	if (read > 0 && binaryCount * 1000 / read > 850) {
+    		return BINARY_MIME_TYPE;
+    	}
+    	return null;
+    }
+
+	public static boolean isExecutable(File file) {
+		return false;
+	}
 }

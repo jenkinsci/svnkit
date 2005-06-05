@@ -19,6 +19,8 @@ import java.util.regex.Pattern;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 public class SVNOptions {
+	
+	private static final String DEFAULT_IGNORE = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";
 
     private boolean myIsUseCommitTimes;
     private boolean myIsAutoProperties;
@@ -33,6 +35,9 @@ public class SVNOptions {
     
     public SVNOptions(File configFile) {
         myConfigFile = configFile;
+        if (myConfigFile == null || !myConfigFile.exists()) {
+        	myConfigFile = getDefaultConfigFile();
+        }
         initDefaults();
     }
 
@@ -41,6 +46,11 @@ public class SVNOptions {
         myIsAutoProperties = false;
         myIgnorePatterns = new HashSet();
         myAutoProperties = new HashMap();
+
+        for(StringTokenizer tokens = new StringTokenizer(DEFAULT_IGNORE, " \t"); tokens.hasMoreTokens();) {
+            String token = tokens.nextToken();
+            myIgnorePatterns.add(compileNamePatter(token));
+        }
     }
 
     public boolean isUseCommitTimes() {
@@ -192,4 +202,8 @@ public class SVNOptions {
         public String Name;
         public String Value;
     }
+
+	public void setUseAutoProperties(boolean useAutoProps) {
+		myIsAutoProperties = useAutoProps;
+	}
 }

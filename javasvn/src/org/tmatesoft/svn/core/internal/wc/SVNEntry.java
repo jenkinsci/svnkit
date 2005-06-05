@@ -249,7 +249,7 @@ public class SVNEntry implements Comparable {
     }
 
     public long getCopyFromRevision() {
-        String rev = myEntries.getPropertyValue(myName, SVNProperty.COPYFROM_URL);
+        String rev = myEntries.getPropertyValue(myName, SVNProperty.COPYFROM_REVISION);
         if (rev == null) {
             return -1;
         }

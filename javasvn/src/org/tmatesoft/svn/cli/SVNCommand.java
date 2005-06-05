@@ -71,6 +71,8 @@ public abstract class SVNCommand {
         if (dir == null) {
             return new SVNOptions();
         }
+        DebugLog.log("creating options for: " + new File(dir, "config"));
+        DebugLog.log("exists: " + new File(dir, "config").exists());
         return new SVNOptions(new File(dir, "config"));
     }
 
@@ -255,7 +257,11 @@ public abstract class SVNCommand {
         }
         path = PathUtil.removeLeadingSlash(path);
         path = PathUtil.removeTrailingSlash(path);
-        return path.replace('/', File.separatorChar);
+        path = path.replace('/', File.separatorChar);
+        if (path.trim().length() == 0) {
+        	path = ".";
+        }
+        return path;
     }
 
     static {

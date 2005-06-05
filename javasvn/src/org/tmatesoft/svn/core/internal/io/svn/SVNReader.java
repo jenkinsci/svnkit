@@ -187,6 +187,7 @@ class SVNReader {
         StringBuffer template = normalizeTemplate(templateStr);
         SVNEditModeReader editorBaton = null;
         int targetIndex = 0;
+        boolean unconditionalThrow = false;
         for(int i = 0; i < template.length(); i++) {
             char ch = template.charAt(i);
             boolean optional = ch == '?' || ch == '*';
@@ -306,6 +307,7 @@ class SVNReader {
                     try {
                         hasMore = editorBaton.processCommand(commandName, is);
                     } catch (Throwable th) {
+                    	unconditionalThrow = true;
                         DebugLog.error(th);
                         if (th instanceof SVNException) {
                             throw ((SVNException) th);
@@ -335,6 +337,9 @@ class SVNReader {
                     targetIndex++;
                 }
             } catch(SVNException e) {
+            	if (unconditionalThrow) {
+            		throw e;
+            	}
                 try {
                     is.reset();
                 } catch (IOException e1) {

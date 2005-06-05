@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
@@ -27,19 +28,24 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 public class SVNWCClient extends SVNBasicClient {
 
-    public SVNWCClient(final ISVNCredentialsProvider credentials, ISVNEventListener eventDispatcher) {
+	public SVNWCClient(final ISVNCredentialsProvider credentials, ISVNEventListener eventDispatcher) {
+		this(credentials, null, eventDispatcher);
+    }
+
+    public SVNWCClient(final ISVNCredentialsProvider credentials, SVNOptions options, ISVNEventListener eventDispatcher) {
         super(new ISVNRepositoryFactory() {
             public SVNRepository createRepository(String url) throws SVNException {
                 SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
                 repos.setCredentialsProvider(credentials);
                 return repos;
             }
-        }, null, eventDispatcher);
+        }, options, eventDispatcher);
     }
 
     public SVNWCClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
@@ -56,13 +62,52 @@ public class SVNWCClient extends SVNBasicClient {
         wcAccess.close(true, true);
     }
     
-    public void doDelete(File path, boolean force, boolean dryRun) {
+    public void doDelete(File path, boolean force, boolean dryRun) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess(path);
+        try {
+        	wcAccess.open(true, true, true);
+        	if (!force) {
+        		wcAccess.getAnchor().canScheduleForDeletion(wcAccess.getTargetName());
+        	}
+        	if (!dryRun) {
+        		wcAccess.getAnchor().scheduleForDeletion(wcAccess.getTargetName());
+        	}
+        } finally {
+        	wcAccess.close(true, true);
+        }
     }
 
-    public void doAdd(File path, boolean mkdir) {
+    public void doAdd(File path, boolean force, boolean mkdir, boolean recursive) throws SVNException {
+    	if (mkdir && !path.exists()) {
+    		path.mkdirs();
+    	}
+    	if (!path.exists()) {
+    		// error
+    	}
+    	SVNWCAccess wcAccess = createWCAccess(path);
+    	try {
+    		wcAccess.open(true, recursive);
+    		String name = wcAccess.getTargetName();
+
+    		if ("".equals(name) && !force) {
+    			// error.
+    		}
+			SVNDirectory dir = wcAccess.getAnchor();
+    		if (path.isFile() || SVNFileUtil.isSymlink(path)) {
+    			addSingleFile(wcAccess, dir, name);
+    		} else if (path.isDirectory() && recursive) {
+	    		// add dir and recurse.
+    			addDirectory(wcAccess, wcAccess.getAnchor(), name, force);
+	    	} else {
+	    		// add single dir
+	    		dir.add(wcAccess.getTargetName(), true);
+	    	}
+    	} finally {
+    		wcAccess.close(true, recursive);
+    	}
     }
 
-    public void doRevert(File path, boolean recursive) throws SVNException {
+	public void doRevert(File path, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(path);
         
         // force recursive lock.
@@ -114,6 +159,7 @@ public class SVNWCClient extends SVNBasicClient {
                 } else {
                     reverted |= wcAccess.getAnchor().revert(entry.getName());
                 }
+                reverted = true;
             } else {
                 if (entry.isDirectory()) {
                     reverted |= wcAccess.getTarget().revert("");
@@ -134,24 +180,28 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 wcAccess.getAnchor().getEntries().save(false);
                 if (kind == SVNNodeKind.DIR) {
-                    SVNEntry inner = wcAccess.getTarget().getEntries().getEntry("");
-                    inner.unschedule();
-                    inner.setConflictNew(null);
-                    inner.setConflictOld(null);
-                    inner.setConflictWorking(null);
-                    inner.setPropRejectFile(null);
-                }
-                if (kind == SVNNodeKind.DIR && recursive) {
-                    // iterate over targets and revert
-                    for (Iterator ents = wcAccess.getTarget().getEntries().entries(); ents.hasNext();) {
-                        SVNEntry childEntry = (SVNEntry) ents.next();
-                        if ("".equals(childEntry.getName())) {
-                            continue;
-                        }
-                        recursiveFiles.add(wcAccess.getTarget().getFile(childEntry.getName(), false));
+                	DebugLog.log("reverted, unscheduling target root entry: " + wcAccess.getTarget().getRoot());
+                    SVNEntry inner = wcAccess.getTarget().getEntries().getEntry("");                    
+                    if (inner != null) {
+                    	// may be null if it was removed from wc.
+	                    inner.unschedule();
+	                    inner.setConflictNew(null);
+	                    inner.setConflictOld(null);
+	                    inner.setConflictWorking(null);
+	                    inner.setPropRejectFile(null);
                     }
                 }
                 wcAccess.getTarget().getEntries().save(false);
+            }
+            if (kind == SVNNodeKind.DIR && recursive) {
+                // iterate over targets and revert
+                for (Iterator ents = wcAccess.getTarget().getEntries().entries(); ents.hasNext();) {
+                    SVNEntry childEntry = (SVNEntry) ents.next();
+                    if ("".equals(childEntry.getName())) {
+                        continue;
+                    }
+                    recursiveFiles.add(wcAccess.getTarget().getFile(childEntry.getName(), false));
+                }
             }
             if (reverted) {
                 // fire reverted event.
@@ -456,7 +506,10 @@ public class SVNWCClient extends SVNBasicClient {
                     return;
                 } else if (entry.isDirectory() && !"".equals(name)) {
                     // child dir
-                    collectInfo(dir, "", recursive, handler);
+                	dir = dir.getChildDirectory(name);
+                	if (dir != null) {
+                		collectInfo(dir, "", recursive, handler);
+                	}
                     return;
                 } else if ("".equals(name)) {
                     // report root.
@@ -518,7 +571,78 @@ public class SVNWCClient extends SVNBasicClient {
     // diff, merge -> "diff" client
     
     // (?) ps,pg,pe,pl -> "prop" client
-    
+
+    private void addDirectory(SVNWCAccess wcAccess, SVNDirectory dir, String name, boolean force) throws SVNException {
+		DebugLog.log("ading file " + name + " into " + dir.getRoot());
+		dir.add(name, force);
+			
+		SVNDirectory childDir = dir.getChildDirectory(name);
+    	File file = dir.getFile(name, false);
+    	File[] children = file.listFiles();
+    	for (int i = 0; children != null && i < children.length; i++) {
+    		File childFile = children[i];
+    		if (getOptions().isIgnored(childFile.getName())) {
+    			continue;
+    		}
+    		if (".svn".equals(childFile.getName())) {
+    			continue;
+    		}
+    		DebugLog.log("processing file " + childFile + " in " + file);
+    		if (childFile.isFile() || SVNFileUtil.isSymlink(childFile)) {
+    			SVNEntry entry = childDir.getEntries().getEntry(childFile.getName());
+    			DebugLog.log("existing entry: " + entry);
+    			if (force && entry != null && !entry.isScheduledForDeletion() && !entry.isDeleted()) {
+        			DebugLog.log("this entry will not be added: " + entry.getName());
+    				continue;
+    			}
+    			addSingleFile(wcAccess, childDir, childFile.getName());
+    		} else if (childFile.isDirectory()) {
+    			DebugLog.log("recursing into " + childFile.getName());
+    			addDirectory(wcAccess, childDir, childFile.getName(), force);
+    		}
+		}
+    }
+
+	private void addSingleFile(SVNWCAccess wcAccess, SVNDirectory dir, String name) throws SVNException {
+		File file = dir.getFile(name, false);
+		ISVNEventListener oldDisptcher = wcAccess.getEventDispatcher();
+		SVNEntry entry = null;
+		try {
+			entry = dir.add(name, false);
+		} finally {
+			wcAccess.setEventDispatcher(oldDisptcher);
+		}
+		String mimeType = null;
+		SVNProperties properties = dir.getProperties(name, false);
+		if (SVNFileUtil.isSymlink(file)) {
+			properties.setPropertyValue(SVNProperty.SPECIAL, "*");
+		} else {
+			Map props = new HashMap();
+			boolean executable = false;
+			props = getOptions().getAutoProperties(name, props);
+			mimeType = (String) props.get(SVNProperty.MIME_TYPE);
+			if (mimeType == null) {
+				mimeType = SVNFileUtil.detectMimeType(file);
+				if (mimeType != null) {
+					props.put(SVNProperty.MIME_TYPE, mimeType);
+				}
+			}
+			if (!props.containsKey(SVNProperty.EXECUTABLE)) {
+				executable = SVNFileUtil.isExecutable(file);
+				if (executable) {
+					props.put(SVNProperty.EXECUTABLE, "*");
+				}
+			}
+			for (Iterator names = props.keySet().iterator(); names.hasNext();) {
+				String propName = (String) names.next();
+				String propValue = (String) props.get(propName);
+				properties.setPropertyValue(propName, propValue);
+			}
+		}
+		SVNEvent event = SVNEventFactory.createAddedEvent(wcAccess, dir, entry);
+		wcAccess.svnEvent(event, ISVNEventListener.UNKNOWN);
+	}
+
     private static class LockInfo {
         
         public LockInfo(File file, SVNRevision rev) {
