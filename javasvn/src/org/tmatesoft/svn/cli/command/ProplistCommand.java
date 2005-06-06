@@ -14,46 +14,84 @@ package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.util.Iterator;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.SVNUtil;
+import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 /**
  * @author TMate Software Ltd.
  */
-public class ProplistCommand extends SVNCommand {
+public class ProplistCommand extends SVNCommand implements ISVNPropertyHandler {
+    
+    private boolean myIsVerbose;
+    private boolean myIsRecursive;
+    private PrintStream myOut;
+    private boolean myIsRevProp;
 
     public final void run(final PrintStream out, PrintStream err) throws SVNException {
-        final boolean verbose = getCommandLine().hasArgument(SVNArgument.VERBOSE);
-        final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
-        if (recursive) {
-            throw new SVNException("Recursive currently not supported!");
+        myIsRecursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
+        myIsRevProp = getCommandLine().hasArgument(SVNArgument.REV_PROP);
+        myIsVerbose = getCommandLine().hasArgument(SVNArgument.VERBOSE);
+        myOut = out;
+        myIsRecursive = myIsRecursive & !myIsRevProp;
+        SVNRevision revision = SVNRevision.UNDEFINED; 
+        if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
+            revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION)); 
         }
-
-        final String absolutePath = getCommandLine().getPathAt(0);
-        final ISVNWorkspace workspace = createWorkspace(absolutePath, false);
-        final String relativePath = SVNUtil.getWorkspacePath(workspace, new File(absolutePath).getAbsolutePath());
-
-        println(out, "Properties on '" + absolutePath + "':");
-        for (Iterator it = workspace.propertyNames(relativePath); it.hasNext();) {
-            final String propertyName = (String) it.next();
-            if (propertyName.startsWith("svn:entry:")) {
-                continue;
+        SVNWCClient wcClient = new SVNWCClient(getCredentialsProvider(), getOptions(), null);
+        if (getCommandLine().hasURLs()) {
+            String url = getCommandLine().getURL(0);
+            if (myIsRevProp) {
+                wcClient.doGetRevisionProperty(url, null, revision, this);
+            } else {
+                SVNRevision pegRevision = getCommandLine().getPegRevision(0);
+                wcClient.doGetProperty(url, null, pegRevision, revision, myIsRecursive, this);
             }
-
-            final StringBuffer line = new StringBuffer();
-            line.append("  ");
-            line.append(propertyName);
-            if (verbose) {
-                line.append(" : ");
-                line.append(workspace.getPropertyValue(relativePath, propertyName));
+        } else if (getCommandLine().getPathCount() > 0) {
+            String path = getCommandLine().getPathAt(0);            
+            SVNRevision pegRevision = getCommandLine().getPathPegRevision(1);
+            if (myIsRevProp) {
+                wcClient.doGetRevisionProperty(new File(path), null, pegRevision, revision, this);
+            } else {
+                wcClient.doGetProperty(new File(path), null, pegRevision, revision, myIsRecursive, this);
             }
-
-            println(out, line.toString());
         }
+    }
+    
+    private File myCurrentFile;
+    private String myCurrentURL;
+
+    public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+        if (!path.equals(myCurrentFile)) {
+            myOut.println("Properties on '" +getPath(path) + "':");
+            myCurrentFile = path;
+        }
+        myOut.print(property.getName());
+        if (myIsVerbose) {
+            myOut.print(" : " + property.getValue());
+        }
+        myOut.println();
+    }
+
+    public void handleProperty(String url, SVNPropertyData property) throws SVNException {
+        if (!myIsRevProp) {
+            if (!url.equals(myCurrentURL)) {
+                myOut.println("Properties on '" + url + "':");
+                myCurrentURL = url;
+            }
+        } else if (myCurrentURL == null){
+            myOut.println("Unversioned properties on revision " + url + ":");
+            myCurrentURL = url;
+        }
+        myOut.print(property.getName());
+        if (myIsVerbose) {
+            myOut.print(" : " + property.getValue());
+        }
+        myOut.println();
     }
 }

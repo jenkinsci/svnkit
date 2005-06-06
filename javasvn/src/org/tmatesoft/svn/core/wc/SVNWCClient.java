@@ -123,7 +123,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (propName != null) {
             String value = repos.getRevisionPropertyValue(revNumber, propName);
             if (value != null) {
-                handler.handleProperty(url, new SVNPropertyData(propName, value));
+                handler.handleProperty(revNumber + "", new SVNPropertyData(propName, value));
             }
         } else {
             Map props = new HashMap();
@@ -131,7 +131,7 @@ public class SVNWCClient extends SVNBasicClient {
             for (Iterator names = props.keySet().iterator(); names.hasNext();) {
                 String name = (String) names.next();
                 String value = (String) props.get(name);
-                handler.handleProperty(url, new SVNPropertyData(name, value));
+                handler.handleProperty(revNumber + "", new SVNPropertyData(name, value));
             }
         }
     }
