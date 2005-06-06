@@ -15,36 +15,71 @@ package org.tmatesoft.svn.cli.command;
 import java.io.File;
 import java.io.PrintStream;
 
+import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.SVNUtil;
+import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 /**
  * @author TMate Software Ltd.
  */
-public class PropgetCommand extends SVNCommand {
+public class PropgetCommand extends SVNCommand implements ISVNPropertyHandler {
+    
+    private boolean myIsStrict;
+    private boolean myIsRecursive;
+    private PrintStream myOut;
 
     public final void run(final PrintStream out, PrintStream err) throws SVNException {
-        final String propertyName = getCommandLine().getPathAt(0);
-        DebugLog.error("property name: " + propertyName);
-        final String absolutePath = getCommandLine().getPathAt(1);
-        DebugLog.error("path: " + absolutePath);
-        final ISVNWorkspace workspace = createWorkspace(absolutePath, false);
-        final String relativePath = SVNUtil.getWorkspacePath(workspace, new File(absolutePath).getAbsolutePath());
-        try {
-            String value = workspace.getPropertyValue(relativePath, propertyName);
-            if (propertyName.startsWith("svn:") && !SVNProperty.EXECUTABLE.equals(propertyName) && 
-                    !SVNProperty.SPECIAL.equals(propertyName)) {
-                out.print(value);
+        String propertyName = getCommandLine().getPathAt(0);
+        myIsRecursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
+        boolean revProp = getCommandLine().hasArgument(SVNArgument.REV_PROP);
+        myIsStrict = getCommandLine().hasArgument(SVNArgument.STRICT);
+        myOut = out;
+        myIsRecursive = myIsRecursive & !revProp;
+        SVNRevision revision = SVNRevision.UNDEFINED; 
+        if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
+            revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION)); 
+        }
+        SVNWCClient wcClient = new SVNWCClient(getCredentialsProvider(), getOptions(), null);
+        if (getCommandLine().hasURLs()) {
+            String url = getCommandLine().getURL(0);
+            if (revProp) {
+                wcClient.doGetRevisionProperty(url, propertyName, revision, this);
             } else {
-                println(out, value);
+                SVNRevision pegRevision = getCommandLine().getPegRevision(0);
+                wcClient.doGetProperty(url, propertyName, pegRevision, revision, myIsRecursive, this);
             }
-            DebugLog.log("property get: " + value);
-        } catch (SVNException e) {
-            DebugLog.error(e);
+        } else if (getCommandLine().getPathCount() > 1) {
+            String path = getCommandLine().getPathAt(1);            
+            SVNRevision pegRevision = getCommandLine().getPathPegRevision(1);
+            if (revProp) {
+                wcClient.doGetRevisionProperty(new File(path), propertyName, pegRevision, revision, this);
+            } else {
+                wcClient.doGetProperty(new File(path), propertyName, pegRevision, revision, myIsRecursive, this);
+            }
+        }
+    }
+
+    public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+        if (!myIsStrict && myIsRecursive) {
+            myOut.print(getPath(path) + " - ");
+        }
+        myOut.print(property.getValue());
+        if (!myIsStrict) {
+            myOut.println();
+        }
+    }
+
+    public void handleProperty(String url, SVNPropertyData property) throws SVNException {
+        if (!myIsStrict && myIsRecursive) {
+            myOut.print(url + " - ");
+        }
+        myOut.print(property.getValue());
+        if (!myIsStrict) {
+            myOut.println();
         }
     }
 }
