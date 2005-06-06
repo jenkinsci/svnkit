@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
@@ -60,6 +61,44 @@ public class SVNWCClient extends SVNBasicClient {
         wcAccess.open(true, true, true);
         wcAccess.getAnchor().cleanup();
         wcAccess.close(true, true);
+    }
+    
+    public void doSetProperty(File path, String propName, String propValue, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess(path);
+        try {
+            wcAccess.open(true, recursive);
+            DebugLog.log("calling set local property on " + path);
+            doSetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(), propName, propValue, recursive, handler);
+        } finally {
+            wcAccess.close(true, recursive);
+        }
+    }
+
+    public void doSetRevisionProperty(File path, SVNRevision revision, String propName, String propValue, ISVNPropertyHandler handler) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess(path);
+        try {
+            wcAccess.open(true, false);
+            String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+            SVNRevision pegRevision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
+            doSetRevisionProperty(url, pegRevision, revision, propName, propValue, handler);
+        } finally {
+            wcAccess.close(true, false);
+        }
+    }
+
+    public void doSetRevisionProperty(String url, SVNRevision pegRevision, SVNRevision revision, String propName, String propValue, ISVNPropertyHandler handler) throws SVNException {
+        if (revision == null || !revision.isValid()) {
+            revision = SVNRevision.HEAD;
+        }
+        url = validateURL(url);
+        url = getURL(url, pegRevision, revision);
+        long revNumber = getRevisionNumber(url, revision);
+        // 
+        SVNRepository repos = createRepository(url);
+        repos.setRevisionPropertyValue(revNumber, propName, propValue);
+        if (handler != null) {
+            handler.handleProperty(revNumber + "", new SVNPropertyData(propName, propValue));
+        }
     }
     
     public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
@@ -776,7 +815,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (entry.getKind() == SVNNodeKind.DIR) {
                 SVNDirectory dir = anchor.getChildDirectory(name);
                 if (dir != null) {
-                    doGetLocalProperty(dir, name, propName, rev, recursive, handler);
+                    doGetLocalProperty(dir, "", propName, rev, recursive, handler);
                 }
             } else if (entry.getKind() == SVNNodeKind.FILE) {
                 SVNProperties props = rev == SVNRevision.WORKING ? anchor.getProperties(name, false) : anchor.getBaseProperties(name, false);
@@ -820,6 +859,80 @@ public class SVNWCClient extends SVNBasicClient {
                 continue;
             }
             doGetLocalProperty(anchor, entry.getName(), propName, rev, recursive, handler);
+        }
+    }
+
+    private void doSetLocalProperty(SVNDirectory anchor, String name, String propName, String propValue, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
+        SVNEntries entries = anchor.getEntries();
+        DebugLog.log("anchor: " + anchor.getRoot());
+        if (!"".equals(name)) {
+            SVNEntry entry = entries.getEntry(name);
+            DebugLog.log("entry in anchor: " + entry);
+            if (entry == null) {
+                return;
+            }
+            if (entry.getKind() == SVNNodeKind.DIR) {
+                SVNDirectory dir = anchor.getChildDirectory(name);
+                if (dir != null) {
+                    DebugLog.log("recursing");
+                    doSetLocalProperty(dir, "", propName, propValue, recursive, handler);
+                }
+            } else if (entry.getKind() == SVNNodeKind.FILE) {
+                SVNProperties props = anchor.getProperties(name, false);
+                props.setPropertyValue(propName, propValue);
+
+                File wcFile = anchor.getFile(name, false);
+                File tmpFile = anchor.getBaseFile(name, true);
+                try {
+                    SVNFileUtil.copy(wcFile, tmpFile, true);
+                    SVNTranslator.translate(anchor, name, SVNFileUtil.getBasePath(tmpFile), name, true, true);
+                    // executable, RO?
+                    if (props.getPropertyValue(SVNProperty.SPECIAL) == null) {
+                        if (props.getPropertyValue(SVNProperty.EXECUTABLE) != null) {
+                            SVNFileUtil.setExecutable(wcFile, true);
+                        }
+                        if (props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
+                            SVNFileUtil.setReadonly(wcFile, entry.getLockToken() == null);
+                        } else {
+                            SVNFileUtil.setReadonly(wcFile, false);
+                        }
+                        if (getOptions().isUseCommitTimes() && entry.getCommittedDate() != null) {
+                            wcFile.setLastModified(TimeUtil.parseDate(entry.getCommittedDate()).getTime());
+                        }
+                    }
+                    handler.handleProperty(anchor.getFile(name, false), new SVNPropertyData(propName, propValue));
+                } catch (IOException e) {
+                    SVNErrorManager.error(0, e);
+                } finally {
+                    if (tmpFile != null) {
+                        tmpFile.delete();
+                    }
+                    
+                }
+            }
+            entries.close();
+            return;
+        }
+        DebugLog.log("setting property (" + propName + ") on dir " + anchor.getRoot());
+        SVNProperties props = anchor.getProperties(name, false);
+        if (SVNProperty.KEYWORDS.equals(propName) || SVNProperty.EOL_STYLE.equals(propName) ||
+                SVNProperty.REVISION.equals(propName) || SVNProperty.MIME_TYPE.equals(propName)) {
+            if (!recursive) {
+                SVNErrorManager.error("svn: setting '" + propName + "' property is not supported for directories");
+            }
+        } else {
+            props.setPropertyValue(propName, propValue);
+            handler.handleProperty(anchor.getFile(name, false), new SVNPropertyData(propName, propValue));
+        }
+        if (!recursive) {
+            return;
+        }
+        for (Iterator ents = entries.entries(); ents.hasNext();) {
+            SVNEntry entry = (SVNEntry) ents.next();
+            if ("".equals(entry.getName())) {
+                continue;
+            }
+            doSetLocalProperty(anchor, entry.getName(), propName, propValue, recursive, handler);
         }
     }
 
