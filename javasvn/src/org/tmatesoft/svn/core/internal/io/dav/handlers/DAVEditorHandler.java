@@ -271,7 +271,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             }
             String value = cdata.toString();
             if ("base64".equals(myEncoding)) {
-                value = new String(Base64.base64ToByteArray(cdata, null));                
+                value = new String(Base64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), null));                
             }
             if (isDir(myPath)) {
                 myEditor.changeDirProperty(myPropertyName, value);

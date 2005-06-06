@@ -276,6 +276,7 @@ class DAVCommitEditor implements ISVNEditor {
             // do proppatch if there were property changes.
             if (myCurrentFile.getProperties() != null) {
                 StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, myCurrentFile.getProperties());
+                DebugLog.log("properties request: " + request);
                 try {
                     myConnection.doProppatch(myCurrentFile.getURL(), myCurrentFile.getWorkingURL(), request, null);
                 } catch (SVNException e) {

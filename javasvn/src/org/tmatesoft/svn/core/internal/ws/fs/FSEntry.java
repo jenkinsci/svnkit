@@ -432,6 +432,9 @@ public abstract class FSEntry implements ISVNEntry {
     public boolean isPropertiesModified() throws SVNException {
         // if equals => compare file stmap with prop-time.
         if (myProperties != null) {
+            if (isScheduledForAddition() && isScheduledForDeletion()) {
+                return !myProperties.isEmpty();
+            }
             // props were read or modified.
             // compare base props map and props map,
             if (myBaseProperties == null) {
@@ -447,6 +450,9 @@ public abstract class FSEntry implements ISVNEntry {
         if (timeStamp != savedTime) {
             Map bProps = getAdminArea().loadBaseProperties(this);
             Map props = getAdminArea().loadProperties(this);
+            if (isScheduledForAddition() && isScheduledForDeletion()) {
+                return !props.isEmpty();
+            }
             return !bProps.equals(props);
         }
         return false;

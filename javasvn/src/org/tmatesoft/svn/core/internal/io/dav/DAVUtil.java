@@ -258,4 +258,14 @@ public class DAVUtil {
         return parameters;
     }
 
+    public static boolean isXMLSafe(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            if (ch < 0x20 && ch != 0x0A && ch != 0x0D && ch != 0x09 && ch != 0x08) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

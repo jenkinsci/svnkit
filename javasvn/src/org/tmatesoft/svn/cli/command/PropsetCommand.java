@@ -127,6 +127,10 @@ public class PropsetCommand extends SVNCommand {
                     }
                 }
             }
+            if (getCommandLine().getPathCount() == 2 && getCommandLine().hasURLs()) {
+                err.println("Propset is not supported for target '" + getCommandLine().getURL(0) + "'");
+                System.exit(1);
+            }
         }
     }
 }

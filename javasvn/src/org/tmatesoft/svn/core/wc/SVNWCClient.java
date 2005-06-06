@@ -838,11 +838,11 @@ public class SVNWCClient extends SVNBasicClient {
 
     private void doGetLocalProperty(SVNDirectory anchor, String name, String propName, SVNRevision rev, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         SVNEntries entries = anchor.getEntries();
+        SVNEntry entry = entries.getEntry(name);
+        if (entry == null || (rev == SVNRevision.WORKING && entry.isScheduledForDeletion())) {
+            return;
+        }
         if (!"".equals(name)) {
-            SVNEntry entry = entries.getEntry(name);
-            if (entry == null) {
-                return;
-            }
             if (entry.getKind() == SVNNodeKind.DIR) {
                 SVNDirectory dir = anchor.getChildDirectory(name);
                 if (dir != null) {
@@ -885,11 +885,11 @@ public class SVNWCClient extends SVNBasicClient {
             return;
         }
         for (Iterator ents = entries.entries(); ents.hasNext();) {
-            SVNEntry entry = (SVNEntry) ents.next();
-            if ("".equals(entry.getName())) {
+            SVNEntry childEntry = (SVNEntry) ents.next();
+            if ("".equals(childEntry.getName())) {
                 continue;
             }
-            doGetLocalProperty(anchor, entry.getName(), propName, rev, recursive, handler);
+            doGetLocalProperty(anchor, childEntry.getName(), propName, rev, recursive, handler);
         }
     }
 
@@ -946,7 +946,8 @@ public class SVNWCClient extends SVNBasicClient {
         DebugLog.log("setting property (" + propName + ") on dir " + anchor.getRoot());
         SVNProperties props = anchor.getProperties(name, false);
         if (SVNProperty.KEYWORDS.equals(propName) || SVNProperty.EOL_STYLE.equals(propName) ||
-                SVNProperty.REVISION.equals(propName) || SVNProperty.MIME_TYPE.equals(propName)) {
+                SVNProperty.MIME_TYPE.equals(propName) ||
+                SVNProperty.EXECUTABLE.equals(propName)) {
             if (!recursive) {
                 SVNErrorManager.error("svn: setting '" + propName + "' property is not supported for directories");
             }

@@ -71,6 +71,7 @@ public class ProplistCommand extends SVNCommand implements ISVNPropertyHandler {
             myOut.println("Properties on '" +getPath(path) + "':");
             myCurrentFile = path;
         }
+        myOut.print("  ");
         myOut.print(property.getName());
         if (myIsVerbose) {
             myOut.print(" : " + property.getValue());
@@ -88,6 +89,7 @@ public class ProplistCommand extends SVNCommand implements ISVNPropertyHandler {
             myOut.println("Unversioned properties on revision " + url + ":");
             myCurrentURL = url;
         }
+        myOut.print("  ");
         myOut.print(property.getName());
         if (myIsVerbose) {
             myOut.print(" : " + property.getValue());
