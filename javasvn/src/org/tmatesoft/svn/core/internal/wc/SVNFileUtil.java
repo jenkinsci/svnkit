@@ -431,7 +431,8 @@ public class SVNFileUtil {
             return false;
         }
         if (getCurrentUser().equals(fuid)) {
-            return mod.toLowerCase().indexOf('x') < 4;
+            return mod.toLowerCase().indexOf('x') >= 0 && 
+                mod.toLowerCase().indexOf('x') < 4;
         } else if (getCurrentGroup().equals(fgid)) {
             return mod.toLowerCase().indexOf('x') >= 4 &&
                 mod.toLowerCase().indexOf('x') < 7;
