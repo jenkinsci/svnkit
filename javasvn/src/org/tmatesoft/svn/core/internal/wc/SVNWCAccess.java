@@ -358,6 +358,9 @@ public class SVNWCAccess implements ISVNEventListener {
             if (path!= null && url != null) {
                 path = PathUtil.removeLeadingSlash(path);
                 path = PathUtil.removeTrailingSlash(path);
+                if ("".equals(rootPath) && ((String) parts.get(0)).startsWith("/")) {
+                    path = "/" + path;
+                }
                 url = PathUtil.removeTrailingSlash(url);
                 
                 SVNExternalInfo info = new SVNExternalInfo("", null, path, url, rev); 

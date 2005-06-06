@@ -985,6 +985,7 @@ public class SVNWCClient extends SVNBasicClient {
     }
     
     private static String validatePropertyValue(String name, String value, boolean force) throws SVNException {
+        DebugLog.log("validating: " + name + "=" + value);
         if (value == null) {
             return value;
         }
@@ -997,11 +998,17 @@ public class SVNWCClient extends SVNBasicClient {
                 value += "\n";
             }
             if (SVNProperty.EXTERNALS.equals(name)) {
+                DebugLog.log("validating externals: " + value);
                 SVNExternalInfo[] externalInfos = SVNWCAccess.parseExternals("", value);
+                if (externalInfos != null) {
+                    DebugLog.log("validating externals: " + externalInfos.length);
+                }
                 for (int i = 0; i < externalInfos.length; i++) {
                     String path = externalInfos[i].getPath();
+                    DebugLog.log("checking path: " + path);
                     if (path.indexOf(".") >=0 || path.indexOf("..") >= 0 ||
                             path.startsWith("/")) {
+                        DebugLog.log("throwing exception");
                         SVNErrorManager.error("svn: Invalid external definition: " + value);
                     }
                             
