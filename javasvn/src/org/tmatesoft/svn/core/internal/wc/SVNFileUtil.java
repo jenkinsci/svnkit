@@ -113,24 +113,8 @@ public class SVNFileUtil {
         if (isWindows || file == null) {
             return false;
         }
-        if (!file.exists()) {
-            File parent = file.getParentFile();
-            String[] children = parent.list();
-            if (children != null) {
-                for (int i = 0; i < children.length; i++) {
-                    if (children[i].equals(file.getName())) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        } else {
-            try {
-                return !file.getAbsolutePath().equals(file.getCanonicalPath());
-            } catch (IOException e) {
-            }
-        }
-        return false;
+        String line = execCommand(new String[] {"ls", "-l"});
+        return line != null && line.startsWith("l");
     }
 
     public static void copy(File src, File dst, boolean safe) throws IOException {
@@ -426,20 +410,26 @@ public class SVNFileUtil {
             } else if (index > 3) {
                 break;
             }
+            index++;
         }
         if (mod == null) {
             return false;
         }
+        DebugLog.log("fuid: " + fuid);
+        DebugLog.log("guid: " + fgid);
+        DebugLog.log("mod: " + mod);
+        DebugLog.log("c.user: " + getCurrentUser());
+        DebugLog.log("c.group: " + getCurrentGroup());
         if (getCurrentUser().equals(fuid)) {
             return mod.toLowerCase().indexOf('x') >= 0 && 
                 mod.toLowerCase().indexOf('x') < 4;
         } else if (getCurrentGroup().equals(fgid)) {
-            return mod.toLowerCase().indexOf('x') >= 4 &&
-                mod.toLowerCase().indexOf('x') < 7;
+            return mod.toLowerCase().indexOf('x', 4) >= 4 &&
+                mod.toLowerCase().indexOf('x', 4) < 7;
         } else {
-            return mod.toLowerCase().indexOf('x') >= 7;
+            return mod.toLowerCase().indexOf('x', 7) >= 7;
         }
-	}
+    }
 
     private static String execCommand(String[] commandLine) {
         InputStream is = null;
