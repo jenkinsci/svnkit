@@ -17,6 +17,7 @@ import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.SVNUtil;
@@ -35,7 +36,8 @@ public class PropgetCommand extends SVNCommand {
         final String relativePath = SVNUtil.getWorkspacePath(workspace, new File(absolutePath).getAbsolutePath());
         try {
             String value = workspace.getPropertyValue(relativePath, propertyName);
-            if (propertyName.startsWith("svn:")) {
+            if (propertyName.startsWith("svn:") && !SVNProperty.EXECUTABLE.equals(propertyName) && 
+                    !SVNProperty.SPECIAL.equals(propertyName)) {
                 out.print(value);
             } else {
                 println(out, value);
