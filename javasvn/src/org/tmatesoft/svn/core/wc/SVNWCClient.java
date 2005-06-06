@@ -731,6 +731,9 @@ public class SVNWCClient extends SVNBasicClient {
             } else {
                 for (Iterator names = props.keySet().iterator(); names.hasNext();) {
                     String name = (String) names.next();
+                    if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX) || name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+                        continue;
+                    }
                     String value = (String) props.get(name);
                     handler.handleProperty(url, new SVNPropertyData(name, value));
                 }
@@ -753,6 +756,9 @@ public class SVNWCClient extends SVNBasicClient {
             } else {
                 for (Iterator names = props.keySet().iterator(); names.hasNext();) {
                     String name = (String) names.next();
+                    if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX) || name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+                        continue;
+                    }
                     String value = (String) props.get(name);
                     handler.handleProperty(url, new SVNPropertyData(name, value));
                 }
