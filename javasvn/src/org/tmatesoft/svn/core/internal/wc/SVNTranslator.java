@@ -111,6 +111,43 @@ public class SVNTranslator {
             
         }
     }
+    
+    public static boolean checkNewLines(File file) {
+        if (file == null || !file.exists() || file.isDirectory()) {
+            return true;            
+        }
+        InputStream is = null;
+        try {
+            is = new FileInputStream(file);
+            int r;
+            byte[] lastFoundEOL = null;
+            byte[] currentEOL = null;
+            while((r = is.read()) >= 0) {
+                if (r == '\n') {
+                    currentEOL = LF;
+                } else if (r == '\r') {
+                    currentEOL = CR;
+                    r = is.read();
+                    if (r == '\n') {
+                        currentEOL = CRLF;
+                    }
+                }
+                if (lastFoundEOL == null) {
+                    lastFoundEOL = currentEOL;
+                } else if (currentEOL != null && lastFoundEOL != currentEOL) {
+                    return false;
+                }
+            }
+        } catch (IOException e) {
+            return false;
+        } finally {
+            try {
+                is.close();
+            } catch (IOException e) {
+            }
+        }
+        return true;
+    }
 
     private static void copy(InputStream src, OutputStream dst, byte[] eol, Map keywords) throws IOException {
         if (keywords != null && keywords.isEmpty()) {

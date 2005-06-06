@@ -32,6 +32,7 @@ public class PropdelCommand extends SVNCommand {
         final String propertyName = getCommandLine().getPathAt(0);
         final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
         boolean revProp = getCommandLine().hasArgument(SVNArgument.REV_PROP);
+        boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
         int pathIndex = 1;
 
         SVNWCClient wcClient = new SVNWCClient(getCredentialsProvider(), getOptions(), null);
@@ -42,7 +43,7 @@ public class PropdelCommand extends SVNCommand {
             }
             if (getCommandLine().hasURLs()) {
                 wcClient.doSetRevisionProperty(getCommandLine().getURL(0), getCommandLine().getPegRevision(0), 
-                        revision, propertyName, null, new ISVNPropertyHandler() {
+                        revision, propertyName, null, force, new ISVNPropertyHandler() {
                             public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                             }
                             public void handleProperty(String url, SVNPropertyData property) throws SVNException {
@@ -55,7 +56,7 @@ public class PropdelCommand extends SVNCommand {
                 if (getCommandLine().getPathCount() > 1) {
                     tgt = new File(getCommandLine().getPathAt(1));
                 }
-                wcClient.doSetRevisionProperty(tgt, revision, propertyName, null, new ISVNPropertyHandler() {
+                wcClient.doSetRevisionProperty(tgt, revision, propertyName, null, force, new ISVNPropertyHandler() {
                             public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                             }
                             public void handleProperty(String url, SVNPropertyData property) throws SVNException {
@@ -67,7 +68,7 @@ public class PropdelCommand extends SVNCommand {
             for (int i = pathIndex; i < getCommandLine().getPathCount(); i++) {
                 String absolutePath = getCommandLine().getPathAt(i);
                 if (!recursive) {
-                    wcClient.doSetProperty(new File(absolutePath), propertyName, null, recursive, new ISVNPropertyHandler() {
+                    wcClient.doSetProperty(new File(absolutePath), propertyName, null, force, recursive, new ISVNPropertyHandler() {
                         public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                             out.println("Property '" + propertyName + "' deleted on '" + getPath(path) + "'");
                         }
@@ -77,7 +78,7 @@ public class PropdelCommand extends SVNCommand {
                     });
                 } else {
                     final boolean wasSet[] = new boolean[] {false};
-                    wcClient.doSetProperty(new File(absolutePath), propertyName, null, recursive, new ISVNPropertyHandler() {
+                    wcClient.doSetProperty(new File(absolutePath), propertyName, null, force, recursive, new ISVNPropertyHandler() {
                         public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                            wasSet[0] = true;
                         }
