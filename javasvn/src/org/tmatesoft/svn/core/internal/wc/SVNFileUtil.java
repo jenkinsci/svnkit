@@ -479,7 +479,7 @@ public class SVNFileUtil {
                 ourUserID = "0";
             }            
         }
-        return null;
+        return ourUserID;
     }
     
     private static String getCurrentGroup() {
