@@ -15,6 +15,7 @@ import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNFileUtil {
@@ -398,6 +399,7 @@ public class SVNFileUtil {
         if (isWindows) {
             return false;
         }
+        DebugLog.log("checking file mod: " + file);
         String[] commandLine = new String[] {"ls", "-l", file.getAbsolutePath()};
         InputStream is = null;
         try {
@@ -405,6 +407,7 @@ public class SVNFileUtil {
             
             is = process.getInputStream();
             int rc = process.waitFor();
+            DebugLog.log("exit code: " + rc);
             if (rc != 0) {
                 return false;
             }
@@ -414,12 +417,15 @@ public class SVNFileUtil {
                 result.append((char) (r & 0xFF));
             }
             String line = result.toString().trim();
+            DebugLog.log("output: " + line);
             if (line.indexOf(' ') > 0) {
                 line = line.substring(0, line.indexOf(' '));
             }
             return line.toLowerCase().indexOf('x') >= 0;
         } catch (IOException e) {
+            DebugLog.error(e);
         } catch (InterruptedException e) {
+            DebugLog.error(e);
         } finally {
             try {
                 is.close();
