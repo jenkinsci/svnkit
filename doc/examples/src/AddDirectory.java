@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
-
+import org.tmatesoft.svn.core.SVNProperty;
 /*
  * This is an example of how to commit several types of changes to a repository:
  * a new directory with a file, modification to a file, deletion of the directory
@@ -65,8 +65,8 @@ public class AddDirectory {
          * Default values:
          */
         String url = "svn://localhost/materials/rep/testDir";//"http://72.9.228.230:8080/svn/jsvn/branches/jorunal";
-        String name = "anonymous";
-        String password = "anonymous";
+        String name = "me";
+        String password = "me";
         String dirPath = "test";
         String fileName = "myTemp.txt";
         String commitMessage = "adding a new directory with a file";
@@ -219,7 +219,7 @@ public class AddDirectory {
          * Changing the file contents.
          */
         try {
-            commitInfo = modifyFile(editor, dirPath, dirPath+"/"+fileName, changedBinaryData);
+            commitInfo = modifyFile(editor, dirPath, /*dirPath+"/"+fileName*/"myFile.txt", changedBinaryData);
         } catch (SVNException svne) {
             try {
                 editor.abortEdit();
@@ -297,30 +297,34 @@ public class AddDirectory {
          * Adds a new file (not a copy) to the just added directory. The
          * file path is also defined as relative to the root directory.
          */
-        editor.addFile(filePath, null, -1);
+//        editor.addFile(filePath, null, -1);
+        /*
+         * Here the delta is applied to the file.
+         */
+//        editor.applyTextDelta(null);
         /*
          * The next steps are directed to obtaining and applying the file
          * delta (that is the full contents of the file in this case).
          */
-        long fileLength = data.length;
+//        long fileLength = data.length;
         /*
          * Creating a new diff window that will contain instructions of
          * applying the delta (contents in this case) to the file in the
          * repository.
          */
-        SVNDiffWindow diffWindow = SVNDiffWindowBuilder
-                .createReplacementDiffWindow(fileLength);
+//        SVNDiffWindow diffWindow = SVNDiffWindowBuilder
+//                .createReplacementDiffWindow(fileLength);
         /*
          * Gets an OutputStream where the delta will be written to.
          */
-        OutputStream os = editor.textDeltaChunk(diffWindow);
-        if (fileLength == 0) {
+//        OutputStream os = editor.textDeltaChunk(diffWindow);
+//        if (fileLength == 0) {
             /*
              * If the file is empty - close the OutputStream since there's no text delta
              * for the file. And mark the end of the delta calling textDeltaEnd(). 
              * 
              */
-            try {
+/*            try {
                 os.close();
             } catch (IOException e1) {
             } finally {
@@ -333,7 +337,7 @@ public class AddDirectory {
              * If the file is not empty this code writes the file contents
              * to the OutputStream intended for the delta.
              */
-            while (true) {
+/*            while (true) {
                 try {
                     int read = bais.read(myBinaryBuffer,0,myBinaryBuffer.length);
                     if (read < 0) {
@@ -357,16 +361,12 @@ public class AddDirectory {
              * to apply the delta for the file (that will be created in the
              * repository).
              */
-            editor.textDeltaEnd();
+/*            editor.textDeltaEnd();
         }
-        /*
-         * Here the delta is applied to the file.
-         */
-        editor.applyTextDelta(null);
         /*
          * Closes the new added file.
          */
-        editor.closeFile(null);
+/*        editor.closeFile(null);
         /*
          * Closes the new added directory.
          */
@@ -409,6 +409,10 @@ public class AddDirectory {
          * -1 means the last (HEAD) revision.
          */
         editor.openFile(filePath, -1);
+        /*
+         * Here the delta is applied to the file.
+         */
+        editor.applyTextDelta(null);
         /*
          * The next steps are directed to obtaining and applying the file
          * delta (that is the full contents of the file in this case).
@@ -471,10 +475,6 @@ public class AddDirectory {
             editor.textDeltaEnd();
         }
         /*
-         * Here the delta is applied to the file.
-         */
-        editor.applyTextDelta(null);
-        /*
          * Closes the file.
          */
         editor.closeFile(null);
@@ -485,7 +485,7 @@ public class AddDirectory {
         /*
          * Closes the root directory.
          */
-        editor.closeDir();
+//        editor.closeDir();
         /*
          * This is the final point in all editor handling. Only now all that
          * new information previously described with the editor's methods is
@@ -510,7 +510,7 @@ public class AddDirectory {
         /*
          * Closes the root directory.
          */
-        editor.closeDir();
+//        editor.closeDir();
         /*
          * This is the final point in all editor handling. Only now all that
          * new information previously described with the editor's methods is
