@@ -395,6 +395,38 @@ public class SVNFileUtil {
     }
 
 	public static boolean isExecutable(File file) {
+        if (isWindows) {
+            return false;
+        }
+        String[] commandLine = new String[] {"ls", "-l", file.getAbsolutePath()};
+        InputStream is = null;
+        try {
+            Process process = Runtime.getRuntime().exec(commandLine);
+            
+            is = process.getInputStream();
+            int rc = process.waitFor();
+            if (rc != 0) {
+                return false;
+            }
+            int r;
+            StringBuffer result = new StringBuffer();
+            while((r = is.read()) >= 0) {
+                result.append((char) (r & 0xFF));
+            }
+            String line = result.toString().trim();
+            if (line.indexOf(' ') > 0) {
+                line = line.substring(0, line.indexOf(' '));
+            }
+            return line.toLowerCase().indexOf('x') >= 0;
+        } catch (IOException e) {
+        } catch (InterruptedException e) {
+        } finally {
+            try {
+                is.close();
+            } catch (IOException e) {
+            }
+            
+        }
 		return false;
 	}
 }
