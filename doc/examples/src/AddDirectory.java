@@ -25,8 +25,9 @@ import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
 
 /*
- * This is an example of how to commit a new directory with a file to the
- * repository.
+ * This is an example of how to commit several types of changes to a repository:
+ * a new directory with a file, modification to a file, deletion of the directory
+ * and its entries.
  * 
  * Main steps of this commit example in brief: 0)initialize the library;
  * 
@@ -63,9 +64,9 @@ public class AddDirectory {
         /*
          * Default values:
          */
-        String url = "http://72.9.228.230:8080/svn/jsvn/branches/jorunal";//"svn://localhost/materials/rep/testDir";
-        String name = "sa";
-        String password = "apollo13";
+        String url = "svn://localhost/materials/rep/testDir";//"http://72.9.228.230:8080/svn/jsvn/branches/jorunal";
+        String name = "anonymous";
+        String password = "anonymous";
         String dirPath = "test";
         String fileName = "myTemp.txt";
         String commitMessage = "adding a new directory with a file";
@@ -169,7 +170,7 @@ public class AddDirectory {
          * file delta (that is to be sent to the server) in an intermediate
          * file.
          */
-/*        try {
+        try {
             editor = repository.getCommitEditor(commitMessage,
                     new MySVNWorkspaceMediator());
         } catch (SVNException svne) {
@@ -178,12 +179,12 @@ public class AddDirectory {
                             + url + "': " + svne.getMessage());
             System.exit(1);
         }
-*/
+
         SVNCommitInfo commitInfo = null;
         /*
          * Adding a new directory containing a file to the repository. 
          */
-/*        try {
+        try {
             commitInfo = addDir(editor, dirPath, dirPath+"/"+fileName, binaryData);
         } catch (SVNException svne) {
             try {
@@ -192,8 +193,9 @@ public class AddDirectory {
                  * editor must be aborted to behave in a right way in order to the
                  * breakdown won't cause any unstability.
                  */
-/*                System.err.println("aborting the editor due to errors:"
+                System.err.println("aborting the editor due to errors:"
                         + svne.getMessage());
+                svne.printStackTrace();
                 editor.abortEdit();
             } catch (SVNException inner) {
                 inner.printStackTrace();
@@ -216,7 +218,7 @@ public class AddDirectory {
         /*
          * Changing the file contents.
          */
-/*        try {
+        try {
             commitInfo = modifyFile(editor, dirPath, dirPath+"/"+fileName, changedBinaryData);
         } catch (SVNException svne) {
             try {
@@ -230,7 +232,7 @@ public class AddDirectory {
             System.exit(1);
         }
         printCommitInfo(commitInfo);
-*/
+
         try {
             editor = repository.getCommitEditor(commitMessage,
                     new MySVNWorkspaceMediator());
