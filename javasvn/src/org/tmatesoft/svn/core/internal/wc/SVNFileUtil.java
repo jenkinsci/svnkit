@@ -14,14 +14,19 @@ import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNFileUtil {
 
+    private static final String BINARY_MIME_TYPE = "application/octet-stream";
+
     public final static boolean isWindows;
-	private static final String BINARY_MIME_TYPE = "application/octet-stream";
+    
+    private static String ourGroupID;
+    private static String ourUserID;
 
     static {
         String osName = System.getProperty("os.name");
@@ -400,28 +405,56 @@ public class SVNFileUtil {
             return false;
         }
         DebugLog.log("checking file mod: " + file);
-        String[] commandLine = new String[] {"ls", "-l", file.getAbsolutePath()};
+        String[] commandLine = new String[] {"ls", "-ln", file.getAbsolutePath()};
+        String line = execCommand(commandLine);
+        if (line == null || line.indexOf(' ') < 0) {
+            return false;
+        }
+        int index = 0;
+        
+        String mod = null;
+        String fuid = null;
+        String fgid = null;
+        for(StringTokenizer tokens = new StringTokenizer(line, " \t"); tokens.hasMoreTokens();) {
+            String token = tokens.nextToken();
+            if (index == 0) {
+                mod = token;
+            } else if (index == 2) {
+                fuid = token;
+            } else if (index == 3) {
+                fgid = token;
+            } else if (index > 3) {
+                break;
+            }
+        }
+        if (mod == null) {
+            return false;
+        }
+        if (getCurrentUser().equals(fuid)) {
+            return mod.toLowerCase().indexOf('x') < 4;
+        } else if (getCurrentGroup().equals(fgid)) {
+            return mod.toLowerCase().indexOf('x') >= 4 &&
+                mod.toLowerCase().indexOf('x') < 7;
+        } else {
+            return mod.toLowerCase().indexOf('x') >= 7;
+        }
+	}
+
+    private static String execCommand(String[] commandLine) {
         InputStream is = null;
+        StringBuffer result = new StringBuffer();
         try {
             Process process = Runtime.getRuntime().exec(commandLine);
-            
             is = process.getInputStream();
             int rc = process.waitFor();
-            DebugLog.log("exit code: " + rc);
             if (rc != 0) {
-                return false;
+                return null;
             }
             int r;
-            StringBuffer result = new StringBuffer();
             while((r = is.read()) >= 0) {
                 result.append((char) (r & 0xFF));
             }
-            String line = result.toString().trim();
-            DebugLog.log("output: " + line);
-            if (line.indexOf(' ') > 0) {
-                line = line.substring(0, line.indexOf(' '));
-            }
-            return line.toLowerCase().indexOf('x') >= 0;
+            return result.toString().trim();
         } catch (IOException e) {
             DebugLog.error(e);
         } catch (InterruptedException e) {
@@ -433,6 +466,32 @@ public class SVNFileUtil {
             }
             
         }
-		return false;
-	}
+        return null;
+    }
+    
+    private static String getCurrentUser() {
+        if (isWindows) {
+            return System.getProperty("user.name");
+        }
+        if (ourUserID == null) {
+            ourUserID = execCommand(new String[] {"id", "-u"});
+            if (ourUserID == null) {
+                ourUserID = "0";
+            }            
+        }
+        return null;
+    }
+    
+    private static String getCurrentGroup() {
+        if (isWindows) {
+            return System.getProperty("user.name");
+        }
+        if (ourGroupID == null) {
+            ourGroupID = execCommand(new String[] {"id", "-g"});
+            if (ourGroupID == null) {
+                ourGroupID = "0";
+            }
+        }
+        return ourGroupID;        
+    }
 }
