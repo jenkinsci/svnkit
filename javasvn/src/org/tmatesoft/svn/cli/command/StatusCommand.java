@@ -53,7 +53,7 @@ public class StatusCommand extends SVNCommand {
             if (getCommandLine().getPathCount() == 0) {
                 getCommandLine().setPathAt(0, ".");
             }
-            boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
+            boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
             boolean reportAll = getCommandLine().hasArgument(SVNArgument.VERBOSE);
             boolean ignored = getCommandLine().hasArgument(SVNArgument.NO_IGNORE);
             boolean quiet = getCommandLine().hasArgument(SVNArgument.QUIET);
