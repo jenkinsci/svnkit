@@ -21,6 +21,8 @@ import java.util.StringTokenizer;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class SVNStatusEditor implements ISVNEditor {
 
@@ -120,7 +122,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 if (entry != null) {
                     reportStatus(myWCAccess.getTarget(), null, false, myIsRecursive);
                 } else {
-                    // disable exclude ignore for explicit unversioned dir target 
+                    // disable exclude ignore for explicit unversioned dir target
                     myIsIncludeIgnored = true;
                     reportStatus(myWCAccess.getAnchor(), myTarget, false, myIsRecursive);
                 }
@@ -157,6 +159,16 @@ public class SVNStatusEditor implements ISVNEditor {
             return;
         }
         File[] ioFiles = dir.getRoot().listFiles();
+        if (ioFiles != null)
+        Arrays.sort(ioFiles, new Comparator() {
+            public int compare(Object o1, Object o2) {
+                File f1 = (File) o1;
+                File f2 = (File) o1;
+                int f1type = SVNFileType.getType(f1).getID();
+                int f2type = SVNFileType.getType(f2).getID();
+                return f1type == f2type ? 0 : (f1type > f2type) ? 1 : -1;
+            }
+        });
         for (int i = 0; i < ioFiles.length; i++) {
             File ioFile = ioFiles[i];
             String fileName = ioFile.getName();

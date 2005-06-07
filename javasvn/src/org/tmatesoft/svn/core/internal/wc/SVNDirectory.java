@@ -504,6 +504,9 @@ public class SVNDirectory {
         }
         // translate versioned file.
         File baseTmpFile = SVNFileUtil.createUniqueFile(getRoot(), SVNFileUtil.getBasePath(getBaseFile(name, true)), ".tmp");
+        if (!baseTmpFile.getParentFile().exists()) {
+            baseTmpFile.getParentFile().mkdirs();
+        }
         File versionedFile = getFile(name, false);
         SVNTranslator.translate(this, name, name, SVNFileUtil.getBasePath(baseTmpFile), false, false);
         
