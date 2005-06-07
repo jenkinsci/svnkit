@@ -13,6 +13,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
+import org.tmatesoft.svn.util.DebugLog;
 
 import java.io.OutputStream;
 import java.io.File;
@@ -119,10 +120,14 @@ public class SVNStatusEditor implements ISVNEditor {
                 if (entry != null) {
                     reportStatus(myWCAccess.getTarget(), null, false, myIsRecursive);
                 } else {
-                    reportStatus(myWCAccess.getTarget(), myTarget, false, myIsRecursive);
+                    // disable exclude ignore for explicit unversioned dir target 
+                    myIsIncludeIgnored = true;
+                    reportStatus(myWCAccess.getAnchor(), myTarget, false, myIsRecursive);
                 }
             } else {
-                reportStatus(myWCAccess.getTarget(), myTarget, false, myIsRecursive);
+                // disable exclude ignore for explicit file target
+                myIsIncludeIgnored = true;
+                reportStatus(myWCAccess.getAnchor(), myTarget, false, myIsRecursive);
             }
         } else {
             reportStatus(myWCAccess.getAnchor(), null, false, myIsRecursive);
@@ -146,6 +151,7 @@ public class SVNStatusEditor implements ISVNEditor {
             if (entry != null) {
                 sendVersionedStatus(dir, entryName);
             } else if (dir.getFile(entryName, false).exists()) {
+                DebugLog.log("sending unversioned status (1) for " + dir.getFile(entryName, false));
                 sendUnversionedStatus(dir, entryName);
             }
             return;
@@ -157,6 +163,7 @@ public class SVNStatusEditor implements ISVNEditor {
             if (".svn".equals(fileName) || entries.getEntry(fileName) != null) {
                 continue;
             }
+            DebugLog.log("sending unversioned status (2) for " + fileName);
             sendUnversionedStatus(dir, fileName);
         }
         if (!ignoreRootEntry) {
@@ -209,6 +216,7 @@ public class SVNStatusEditor implements ISVNEditor {
             // it is a file, dir and parentDir are the same.
             parentDir = dir;
         }
+        SVNEntry entryInParent = entry;
         entry = null;
         if (dir == parentDir) {
             path = PathUtil.append(dir.getPath(), name);
@@ -219,6 +227,11 @@ public class SVNStatusEditor implements ISVNEditor {
             path = dir.getPath();
             file = dir.getRoot();
             entry = dir.getEntries().getEntry("");
+            if (entry == null && entryInParent != null) {
+                // probably missing dir.
+                entry = entryInParent;
+                dir = parentDir;
+            }
             parentEntry = parentDir != null ? parentDir.getEntries().getEntry("") : null;
         }
         SVNFileType fileType = SVNFileType.getType(file);
@@ -248,7 +261,9 @@ public class SVNStatusEditor implements ISVNEditor {
         pathKind = pathKind == null || pathKind == SVNFileType.UNKNOWN ?
                 SVNFileType.getType(file) : pathKind;
 
+        DebugLog.log("creating status for " + file);
         if (entry == null) {
+            DebugLog.log("no entry " + file);
             SVNStatusType textStatus = SVNStatusType.STATUS_NONE;
             if (pathKind != SVNFileType.NONE) {
                 textStatus = isIgnored ? SVNStatusType.STATUS_IGNORED : SVNStatusType.STATUS_UNVERSIONED;
