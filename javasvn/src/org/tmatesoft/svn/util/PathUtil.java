@@ -21,10 +21,17 @@ import java.util.StringTokenizer;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 
 /**
- * @author Alexander Kitaev
+ * @author TMate Software Ltd.
  */
 public class PathUtil {
-    
+    /**
+     * Determines if the path string contains no entry name. 
+     * 
+     * <p>
+     * That is if the path is one of the following: <code>null</code>, "" or "/".
+     * 
+     * @param path 	a path to be checked  
+     */
     public static final boolean isEmpty(String path) {
         return path == null || "".equals(path.trim()) || "/".equals(path.trim());
     }

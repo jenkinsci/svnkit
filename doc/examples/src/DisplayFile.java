@@ -53,10 +53,6 @@ import org.tmatesoft.svn.core.SVNProperty;
  * Repository latest revision: 645
  */
 public class DisplayFile {
-    private static SVNRepositoryLocation location;
-
-    private static SVNRepository repository;
-
     /*
      * args parameter is used to obtain a repository location URL, user's
      * account name & password to authenticate him to the server, the file path
@@ -96,7 +92,8 @@ public class DisplayFile {
              */
             filePath = (args.length >= 4) ? args[3] : filePath;
         }
-
+        SVNRepositoryLocation location = null;
+        SVNRepository repository = null;
         try {
             /*
              * Parses the URL string and creates an SVNRepositoryLocation which

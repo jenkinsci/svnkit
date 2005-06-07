@@ -55,10 +55,6 @@ import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
  * Repository latest revision: 645
  */
 public class DisplayRepositoryTree {
-    private static SVNRepositoryLocation location;
-
-    private static SVNRepository repository;
-
     /*
      * args parameter is used to obtain a repository location URL, user's
      * account name & password to authenticate him to the server.
@@ -91,7 +87,8 @@ public class DisplayRepositoryTree {
              */
             password = (args.length >= 3) ? args[2] : password;
         }
-
+        SVNRepositoryLocation location = null;
+        SVNRepository repository = null;
         try {
             /*
              * Parses the URL string and creates an SVNRepositoryLocation which
