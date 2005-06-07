@@ -14,11 +14,11 @@ import java.io.IOException;
  */
 public class SVNFileType {
 
-    public static final SVNFileType UNKNOWN = new SVNFileType(5);
-    public static final SVNFileType NONE = new SVNFileType(4);
-    public static final SVNFileType FILE = new SVNFileType(3);
-    public static final SVNFileType SYMLINK = new SVNFileType(2);
-    public static final SVNFileType DIRECTORY = new SVNFileType(1);
+    public static final SVNFileType UNKNOWN = new SVNFileType(0);
+    public static final SVNFileType NONE = new SVNFileType(1);
+    public static final SVNFileType FILE = new SVNFileType(2);
+    public static final SVNFileType SYMLINK = new SVNFileType(3);
+    public static final SVNFileType DIRECTORY = new SVNFileType(4);
 
     private int myType;
 

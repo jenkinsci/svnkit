@@ -163,10 +163,10 @@ public class SVNStatusEditor implements ISVNEditor {
             Arrays.sort(ioFiles, new Comparator() {
                 public int compare(Object o1, Object o2) {
                     File f1 = (File) o1;
-                    File f2 = (File) o1;
+                    File f2 = (File) o2;
                     int f1type = SVNFileType.getType(f1).getID();
                     int f2type = SVNFileType.getType(f2).getID();
-                    return f1type == f2type ? 0 : (f1type > f2type) ? 1 : -1;
+                    return f1type == f2type ? 0 : (f1type > f2type) ? -1 : 1;
                 }
             });
         }
