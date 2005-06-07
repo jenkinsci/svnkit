@@ -384,6 +384,7 @@ public class SVNCommitUtil {
                     child.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
                     editor.openFile(childPath, revision);
                     child.sendChangedProperties(editor);
+                    DebugLog.log("contents modified: " + child.asFile().isContentsModified());
                     if (child.asFile().isContentsModified()) {
                         digest = child.asFile().generateDelta(editor);
                     }

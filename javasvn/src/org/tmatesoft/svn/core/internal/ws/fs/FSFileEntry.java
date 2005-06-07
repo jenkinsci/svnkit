@@ -210,7 +210,8 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
     }
     
     public boolean isContentsModified() throws SVNException {
-        if (isPropertyModified(SVNProperty.EOL_STYLE)) {
+        if (isPropertyModified(SVNProperty.EOL_STYLE) || isPropertyModified(SVNProperty.KEYWORDS)
+                || isPropertyModified(SVNProperty.SPECIAL)) {
             return true;
         }
         if (isMissing() || isScheduledForDeletion()) {

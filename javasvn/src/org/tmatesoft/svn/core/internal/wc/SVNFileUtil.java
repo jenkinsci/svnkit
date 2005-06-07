@@ -3,14 +3,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -484,5 +477,26 @@ public class SVNFileUtil {
             }
         }
         return ourGroupID;        
+    }
+
+    public static void dump(File file) {
+        InputStream is = null;
+        StringBuffer b = new StringBuffer();
+        try {
+            is = new FileInputStream(file);
+            int r;
+            while ((r = is.read()) >= 0) {
+                b.append((char) (r & 0xFF));
+            }
+        } catch (IOException e) {
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+        DebugLog.log(b.toString());
     }
 }

@@ -23,7 +23,6 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -102,7 +101,6 @@ public class SVNExportEditor implements ISVNEditor {
         File file = new File(myRoot, path);
 
         if (!myIsForce && file.exists()) {
-            // export is obstructed.
             SVNErrorManager.error(0, null);
         } 
         myCurrentFile = file;
@@ -147,7 +145,6 @@ public class SVNExportEditor implements ISVNEditor {
         SVNRAFileData base = new SVNRAFileData(fakeBase, true);
 
         try {
-            int index = 0;
             Iterator windows = myDiffWindows.iterator();
             for (Iterator files = myDataFiles.iterator(); files.hasNext();) {
                 File dataFile = (File) files.next();
@@ -224,8 +221,6 @@ public class SVNExportEditor implements ISVNEditor {
             boolean special = myFileProperties.get(SVNProperty.SPECIAL) != null;
             boolean executable = myFileProperties.get(SVNProperty.EXECUTABLE) != null;
 
-            DebugLog.log("eolStyle: " + eolStyle);
-            DebugLog.log("myEOLStyle: " + myEOLStyle);
             SVNTranslator.translate(myCurrentTmpFile, myCurrentFile, eolBytes, keywordsMap, special, true);
             if (executable) {
                 SVNFileUtil.setExecutable(myCurrentFile, true);
