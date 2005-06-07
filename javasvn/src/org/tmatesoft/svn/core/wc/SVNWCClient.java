@@ -1016,7 +1016,8 @@ public class SVNWCClient extends SVNBasicClient {
             }
         } else if (SVNProperty.KEYWORDS.equals(name)) {
             value = value.trim();
-        } else if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.SPECIAL.equals(name)) {
+        } else if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.SPECIAL.equals(name)
+                || SVNProperty.NEEDS_LOCK.equals(name)) {
             value = "*";
         }
         return value;
