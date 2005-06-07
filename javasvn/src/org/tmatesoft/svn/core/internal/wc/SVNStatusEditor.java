@@ -275,6 +275,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 SVNFileType.getType(file) : pathKind;
 
         DebugLog.log("creating status for " + file);
+        DebugLog.log("path kind: " + pathKind);
         if (entry == null) {
             DebugLog.log("no entry " + file);
             SVNStatusType textStatus = SVNStatusType.STATUS_NONE;
@@ -318,6 +319,7 @@ public class SVNStatusEditor implements ISVNEditor {
             }
             boolean propsModified = entryDir.hasPropModifications(entry.getName());
             boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
+            DebugLog.log("special : " + special);
             boolean textModified = false;
             if (entry.isFile() && special == (pathKind == SVNFileType.SYMLINK)) {
                 textModified = entryDir.hasTextModifications(entry.getName(), false);

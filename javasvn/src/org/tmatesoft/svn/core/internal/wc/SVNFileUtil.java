@@ -106,7 +106,8 @@ public class SVNFileUtil {
         if (isWindows || file == null) {
             return false;
         }
-        String line = execCommand(new String[] {"ls", "-l"});
+        String line = execCommand(new String[] {"ls", "-ld", file.getAbsolutePath()});
+        DebugLog.log("ls output: " + line);
         return line != null && line.startsWith("l");
     }
 
