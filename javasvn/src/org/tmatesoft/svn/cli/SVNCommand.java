@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -255,6 +256,8 @@ public abstract class SVNCommand {
         if (path.startsWith(rootPath)) {
             path = path.substring(rootPath.length());
         }
+        // remove all "./"
+        path = condensePath(path);
         path = PathUtil.removeLeadingSlash(path);
         path = PathUtil.removeTrailingSlash(path);
         path = path.replace('/', File.separatorChar);
@@ -262,6 +265,24 @@ public abstract class SVNCommand {
         	path = ".";
         }
         return path;
+    }
+
+    private static String condensePath(String path) {
+        StringBuffer result = new StringBuffer();
+        for(StringTokenizer tokens = new StringTokenizer(path, "/", true); tokens.hasMoreTokens();) {
+            String token = tokens.nextToken();
+            if (".".equals(token)) {
+                if (tokens.hasMoreTokens()) {
+                    String nextToken = tokens.nextToken();
+                    if (!nextToken.equals("/")) {
+                        result.append(nextToken);
+                    }
+                }
+                continue;
+            }
+            result.append(token);
+        }
+        return result.toString();
     }
 
     static {
