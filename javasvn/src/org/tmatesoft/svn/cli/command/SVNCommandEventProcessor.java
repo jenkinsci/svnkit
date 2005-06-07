@@ -156,6 +156,11 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
                 UpdateCommand.println(myPrintStream, "Updating external item at '" + path + "'");
             }
             myIsExternal = true;
+        } else if (event.getAction() == SVNEventAction.STATUS_EXTERNAL) {
+            UpdateCommand.println(myPrintStream);
+            String path = event.getPath().replace('/', File.separatorChar);
+            UpdateCommand.println(myPrintStream, "Performing status on external item at '" + path + "'");
+            myIsExternal = true;
         } else if (event.getAction() == SVNEventAction.RESTORE) {
             UpdateCommand.println(myPrintStream, "Restored '" + UpdateCommand.getPath(event.getFile()) + "'");
         } else if (event.getAction() == SVNEventAction.ADD) {

@@ -59,8 +59,16 @@ public class SVNEventFactory {
     }
 
     public static SVNEvent createUpdateExternalEvent(SVNWCAccess source, String path) {
-        SVNEvent event = new SVNEvent(source, null, null, 
-                SVNEventAction.UPDATE_EXTERNAL, null, 
+        SVNEvent event = new SVNEvent(source, null, null,
+                SVNEventAction.UPDATE_EXTERNAL, null,
+                -1, null, null, null, null, null, null);
+        event.setPath(path);
+        return event;
+    }
+
+    public static SVNEvent createStatusExternalEvent(SVNWCAccess source, String path) {
+        SVNEvent event = new SVNEvent(source, null, null,
+                SVNEventAction.STATUS_EXTERNAL, null, 
                 -1, null, null, null, null, null, null);
         event.setPath(path);
         return event;

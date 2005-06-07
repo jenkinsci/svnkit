@@ -239,24 +239,25 @@ public class SVNWCAccess implements ISVNEventListener {
         open(lock, false, recursive);
     }
 
-    public void open(boolean lock, final boolean stealLock, boolean recursive) throws SVNException {
-        if (!lock) {
-            return;
-        }
+    public void open(final boolean lock, final boolean stealLock, boolean recursive) throws SVNException {
         if (myDirectories == null) {
             myDirectories = new HashMap();
         }
         try {
-            myAnchor.lock();
+            if (lock) {
+                myAnchor.lock();
+            }
             myDirectories.put("", myAnchor);            
             if (myTarget != myAnchor) {
-                myTarget.lock();
+                if (lock) {
+                    myTarget.lock();
+                }
                 myDirectories.put(myName, myTarget);
             }        
             if (recursive) {
                 visitDirectories(myTarget == myAnchor ? "" : myName, myTarget, new ISVNDirectoryVisitor() {
                     public void visit(String path, SVNDirectory dir) throws SVNException {
-                        if (!dir.isLocked() || !stealLock) {
+                        if (lock && (!dir.isLocked() || !stealLock)) {
                             dir.lock();
                         }
                         myDirectories.put(path, dir);
@@ -271,6 +272,9 @@ public class SVNWCAccess implements ISVNEventListener {
 
     public void close(boolean unlock, boolean recursive) throws SVNException {
         if (!unlock || myDirectories == null) {
+            if (myDirectories != null) {
+                myDirectories = null;
+            }
             return;
         }
         myAnchor.getEntries().close();
@@ -314,6 +318,9 @@ public class SVNWCAccess implements ISVNEventListener {
 
     public static SVNExternalInfo[] parseExternals(String rootPath, String externals) {
         Collection result = new ArrayList();
+        if (externals == null) {
+            return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
+        }
         for(StringTokenizer lines = new StringTokenizer(externals, "\n\r"); lines.hasMoreTokens();) {
             String line = lines.nextToken().trim();
             if (line.length() == 0 || line.startsWith("#")) {

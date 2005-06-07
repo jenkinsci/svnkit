@@ -21,9 +21,11 @@ import org.tmatesoft.svn.cli.CollectingExternalsHandler;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.cli.SVNCommandLine;
+import org.tmatesoft.svn.cli.SVNCommandStatusHandler;
 import org.tmatesoft.svn.core.ISVNStatusHandler;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.SVNUtil;
@@ -35,7 +37,6 @@ public class StatusCommand extends SVNCommand {
     
     public void run(PrintStream out, PrintStream err) throws SVNException {
         SVNCommandLine line = getCommandLine();
-        
         for(int i = 0; i < line.getPathCount(); i++) {
             String path = line.getPathAt(i);
             if (path.trim().equals("..")) {
@@ -45,8 +46,37 @@ public class StatusCommand extends SVNCommand {
                     return;
                 }
             }
-            
         }
+
+        boolean showUpdates = getCommandLine().hasArgument(SVNArgument.SHOW_UPDATES);
+        if (!showUpdates) {
+            if (getCommandLine().getPathCount() == 0) {
+                getCommandLine().setPathAt(0, ".");
+            }
+            boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
+            boolean reportAll = getCommandLine().hasArgument(SVNArgument.VERBOSE);
+            boolean ignored = getCommandLine().hasArgument(SVNArgument.NO_IGNORE);
+            boolean quiet = getCommandLine().hasArgument(SVNArgument.QUIET);
+
+            SVNStatusClient stClient = new SVNStatusClient(getCredentialsProvider(), getOptions(), new SVNCommandEventProcessor(out, err, false));
+            org.tmatesoft.svn.core.wc.ISVNStatusHandler handler = new SVNCommandStatusHandler(System.out, reportAll || showUpdates, reportAll, quiet, showUpdates);
+            boolean error = false;
+            for (int i = 0; i < getCommandLine().getPathCount(); i++) {
+                  String path = getCommandLine().getPathAt(i);
+                  File file = new File(path);
+                  try {
+                    stClient.doStatus(file, recursive, showUpdates, reportAll, ignored, handler);
+                  } catch (SVNException e) {
+                      err.println(e.getMessage());
+                      error = true;
+                  }
+            }
+            if (error) {
+                System.exit(1);
+            }
+            return;
+        }
+        
         for(int i = 0; i < line.getPathCount(); i++) {
             String path = line.getPathAt(i);
             String homePath = path;

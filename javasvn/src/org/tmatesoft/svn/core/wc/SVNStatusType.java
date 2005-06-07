@@ -32,5 +32,20 @@ public class SVNStatusType {
     public static final SVNStatusType LOCK_UNKNOWN = new SVNStatusType(1);    
     public static final SVNStatusType LOCK_UNCHANGED = new SVNStatusType(2);    
     public static final SVNStatusType LOCK_LOCKED = new SVNStatusType(3);    
-    public static final SVNStatusType LOCK_UNLOCKED = new SVNStatusType(4);    
+    public static final SVNStatusType LOCK_UNLOCKED = new SVNStatusType(4);
+
+    public static final SVNStatusType STATUS_NONE = new SVNStatusType(0);
+    public static final SVNStatusType STATUS_NORMAL = new SVNStatusType(1);
+    public static final SVNStatusType STATUS_MODIFIED = new SVNStatusType(2);
+    public static final SVNStatusType STATUS_ADDED = new SVNStatusType(3);
+    public static final SVNStatusType STATUS_DELETED = new SVNStatusType(4);
+    public static final SVNStatusType STATUS_UNVERSIONED = new SVNStatusType(5);
+    public static final SVNStatusType STATUS_MISSING = new SVNStatusType(6);
+    public static final SVNStatusType STATUS_REPLACED = new SVNStatusType(7);
+    public static final SVNStatusType STATUS_MERGED = new SVNStatusType(8);
+    public static final SVNStatusType STATUS_CONFLICTED = new SVNStatusType(9);
+    public static final SVNStatusType STATUS_OBSTRUCTED = new SVNStatusType(10);
+    public static final SVNStatusType STATUS_IGNORED = new SVNStatusType(11);
+    public static final SVNStatusType STATUS_INCOMPLETE = new SVNStatusType(12);
+    public static final SVNStatusType STATUS_EXTERNAL = new SVNStatusType(13);
 }

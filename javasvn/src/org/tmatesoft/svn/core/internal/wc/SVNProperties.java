@@ -456,4 +456,14 @@ public class SVNProperties {
         }
         throw new IOException("invalid properties file format");
     }
+
+    public boolean isEmpty() {
+        if (!getFile().exists() || !getFile().isFile())  {
+            return true;
+        }
+        if (getFile().length() <= 4) {
+            return true;
+        }
+        return false;
+    }
 }

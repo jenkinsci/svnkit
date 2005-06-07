@@ -11,7 +11,9 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.cli.command.SVNCommandEventProcessor;
+import org.tmatesoft.svn.cli.SVNCommandStatusHandler;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.ISVNReporter;
@@ -25,6 +27,8 @@ import org.tmatesoft.svn.core.wc.ISVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.SVNStatusClient;
+import org.tmatesoft.svn.core.wc.SVNOptions;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
@@ -96,10 +100,10 @@ public class SVNReporter implements ISVNReporterBaton {
     private void reportEntries(ISVNReporter reporter, SVNDirectory directory, String dirPath, boolean reportAll, boolean recursive) throws SVNException {
         SVNEntries entries = directory.getEntries();
         long baseRevision = entries.getEntry("").getRevision();
-        
+
         Map childDirectories = new HashMap();
-        
-        SVNExternalInfo[] externals = myWCAccess.addExternals(directory, 
+
+        SVNExternalInfo[] externals = myWCAccess.addExternals(directory,
                 directory.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS));
         for(int i = 0; externals != null && i < externals.length; i++) {
             externals[i].setOldExternal(externals[i].getNewURL(), externals[i].getNewRevision());
@@ -238,12 +242,16 @@ public class SVNReporter implements ISVNReporterBaton {
             }            
         };
         try {
-            SVNUpdateClient updater = new SVNUpdateClient(repositoryFactory, null, new SVNCommandEventProcessor(System.out, System.err, false, false));
-            SVNDiffClient differ = new SVNDiffClient(repositoryFactory, null,  new SVNCommandEventProcessor(System.out, System.err, false, false));
-            SVNWCClient wcClient = new SVNWCClient(repositoryFactory, null,  new SVNCommandEventProcessor(System.out, System.err, false, false));
-            File dst = new File("C:\\i\\test5\\trunk\\trunk.txt");
+            SVNStatusClient stClient = new SVNStatusClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, false));
+            File dst = new File("C:\\nautilus\\org.tmatesoft.javasvn");
 //            SVNInfo info = wcClient.doInfo(dst, SVNRevision.WORKING);
-            wcClient.doRevert(dst, false);
+            boolean verbose = true;
+            boolean remote = false;
+            boolean quiet = false;
+            boolean ignored = false;
+            boolean recusive = true;
+            ISVNStatusHandler handler = new SVNCommandStatusHandler(System.out, verbose || remote, verbose, quiet, remote);
+            stClient.doStatus(dst, recusive, remote, verbose, ignored, handler);
 //            wcClient.doUnlock(new File[] {dst}, false);
         } catch (Throwable e) {
             e.printStackTrace();

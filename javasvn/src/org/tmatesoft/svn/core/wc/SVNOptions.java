@@ -171,7 +171,7 @@ public class SVNOptions {
         return (AutoProperty[]) result.toArray(new AutoProperty[result.size()]);
     }
     
-    private static Pattern compileNamePatter(String wildcard) {
+    public static Pattern compileNamePatter(String wildcard) {
         if (wildcard == null) {
             return null;
         }
