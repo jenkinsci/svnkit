@@ -63,6 +63,14 @@ public class SVNStatusClient extends SVNBasicClient {
     }
 
     public SVNStatus doStatus(File path, boolean remote, ISVNStatusHandler handler) throws SVNException {
-        return null;
+        final SVNStatus[] result = new SVNStatus[] {null};
+        doStatus(path, false, remote, true, true, new ISVNStatusHandler() {
+            public void handleStatus(SVNStatus status) {
+                if (result[0] == null) {
+                    result[0] = status;
+                }
+            }
+        });
+        return result[0];
     }
 }
