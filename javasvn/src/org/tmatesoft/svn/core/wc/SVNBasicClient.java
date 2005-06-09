@@ -184,7 +184,7 @@ public class SVNBasicClient implements ISVNEventListener {
         return number;        
     }
     
-    protected String getURL(String url, SVNRevision peg, SVNRevision rev) throws SVNException {
+    public String getURL(String url, SVNRevision peg, SVNRevision rev) throws SVNException {
         if (rev == null || !rev.isValid()) {
             rev = SVNRevision.HEAD;
         }
