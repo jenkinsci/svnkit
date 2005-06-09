@@ -11,12 +11,12 @@ import java.util.Map;
 
 public class SVNRevision {
     
-    public static final SVNRevision HEAD = new SVNRevision("HEAD");
-    public static final SVNRevision WORKING = new SVNRevision("WORKING");
-    public static final SVNRevision PREVIOUS = new SVNRevision("PREV");
-    public static final SVNRevision BASE = new SVNRevision("BASE");
-    public static final SVNRevision COMMITTED = new SVNRevision("COMMITTED");
-    public static final SVNRevision UNDEFINED = new SVNRevision("UNDEFINED");
+    public static final SVNRevision HEAD = new SVNRevision("HEAD", 0);
+    public static final SVNRevision WORKING = new SVNRevision("WORKING", 1);
+    public static final SVNRevision PREVIOUS = new SVNRevision("PREV", 3);
+    public static final SVNRevision BASE = new SVNRevision("BASE", 2);
+    public static final SVNRevision COMMITTED = new SVNRevision("COMMITTED", 4);
+    public static final SVNRevision UNDEFINED = new SVNRevision("UNDEFINED", 30);
     
     private static final Map ourValidRevisions = new HashMap();
     
@@ -31,20 +31,24 @@ public class SVNRevision {
     private long myRevision;
     private String myName;
     private Date myDate;
-    
+    private int myID;
+
     private SVNRevision(long number) {
         myRevision = number;
         myName = null;
+        myID = 10;
     }
     
-    private SVNRevision(String name) {
+    private SVNRevision(String name, int id) {
         this(-1);
         myName = name;
+        myID = id;
     }
     
     private SVNRevision(Date date) {
         this(-1);
         myDate = date;
+        myID = 20;
     }
     
     public String getName() {
@@ -61,6 +65,10 @@ public class SVNRevision {
     
     public boolean isValid() {
         return this != UNDEFINED && (myDate != null || myRevision >= 0 || myName != null);
+    }
+
+    public int getID() {
+        return myID;
     }
     
     public int hashCode() {
