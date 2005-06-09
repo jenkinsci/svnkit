@@ -3,20 +3,6 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
@@ -39,6 +25,19 @@ import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 
 public class SVNWCClient extends SVNBasicClient {
 
@@ -79,7 +78,6 @@ public class SVNWCClient extends SVNBasicClient {
         }
         String name = wcAccess.getTargetName();
         if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
-            // get local file, expand or unexpand keywords.
             File file = wcAccess.getAnchor().getBaseFile(name, false);
             boolean delete = false;
             try {
@@ -130,64 +128,71 @@ public class SVNWCClient extends SVNBasicClient {
             }
             long revNumber = getRevisionNumber(path, revision);
             long pegRevisionNumber = getRevisionNumber(path, pegRevision);
-            url = getURL(url, SVNRevision.create(pegRevisionNumber), SVNRevision.create(revNumber));
-            // now get contents from URL.
-            Map properties = new HashMap();
-            SVNRepository repos = createRepository(url);
-            SVNNodeKind nodeKind = repos.checkPath("", revNumber);
-            if (nodeKind != SVNNodeKind.FILE) {
-                return;
-            }
-            OutputStream os = null;
-            InputStream is = null;
-            File file = wcAccess.getAnchor().getBaseFile(wcAccess.getTargetName(), true);
-            File file2 = SVNFileUtil.createUniqueFile(file.getParentFile(), wcAccess.getTargetName(), ".tmp");
-            try {
-                os = new FileOutputStream(file);
-                repos.getFile("", revNumber, properties, os);
-                os.close();
-                os = null;
-                if (expandKeywords) {
-                    String keywords = (String) properties.get(SVNProperty.KEYWORDS);
-                    String eol = (String) properties.get(SVNProperty.EOL_STYLE);
-                    byte[] eolBytes = eol != null ? SVNTranslator.getEOL(eol) : null;
-                    Map keywordsMap = SVNTranslator.computeKeywords(keywords, url, (String) properties.get("svn:author"),
-                      (String) properties.get("svn:date"), Long.toString(revNumber));
-                    SVNTranslator.translate(file, file2, eolBytes, keywordsMap, false, true);
-                } else {
-                    file2 = file;
-                }
+            doGetFileContents(url, SVNRevision.create(pegRevisionNumber), SVNRevision.create(revNumber), expandKeywords, dst);
+        }
+    }
 
-                is = new FileInputStream(file2);
-                int r;
-                while((r = is.read()) >= 0) {
-                    dst.write(r);
+    public void doGetFileContents(String url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
+        url = validateURL(url);
+        revision = revision == null || !revision.isValid() ? SVNRevision.HEAD : revision;
+        long revNumber = getRevisionNumber(url, revision);
+        url = getURL(url, pegRevision, SVNRevision.create(revNumber));
+        // now get contents from URL.
+        Map properties = new HashMap();
+        SVNRepository repos = createRepository(url);
+        SVNNodeKind nodeKind = repos.checkPath("", revNumber);
+        if (nodeKind != SVNNodeKind.FILE) {
+            return;
+        }
+        OutputStream os = null;
+        InputStream is = null;
+        File file = SVNFileUtil.createUniqueFile(new File("."), "svn-contents", ".tmp1");
+        File file2 = SVNFileUtil.createUniqueFile(new File("."), "svn-contents", ".tmp2");
+        try {
+            os = new FileOutputStream(file);
+            repos.getFile("", revNumber, properties, os);
+            os.close();
+            os = null;
+            if (expandKeywords) {
+                String keywords = (String) properties.get(SVNProperty.KEYWORDS);
+                String eol = (String) properties.get(SVNProperty.EOL_STYLE);
+                byte[] eolBytes = eol != null ? SVNTranslator.getEOL(eol) : null;
+                Map keywordsMap = SVNTranslator.computeKeywords(keywords, url, (String) properties.get("svn:author"),
+                  (String) properties.get("svn:date"), Long.toString(revNumber));
+                SVNTranslator.translate(file, file2, eolBytes, keywordsMap, false, true);
+            } else {
+                file2 = file;
+            }
+
+            is = new FileInputStream(file2);
+            int r;
+            while((r = is.read()) >= 0) {
+                dst.write(r);
+            }
+        } catch (IOException e) {
+            return;
+        } finally {
+            if (os != null) {
+                try {
+                    os.close();
+                } catch (IOException e) {
                 }
-            } catch (IOException e) {
-                return;
-            } finally {
-                if (os != null) {
-                    try {
-                        os.close();
-                    } catch (IOException e) {
-                    }
+            }
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
                 }
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {
-                    }
-                }
-                if (file != null) {
-                    file.delete();
-                }
-                if (file2 != null) {
-                    file2.delete();
-                }
+            }
+            if (file != null) {
+                file.delete();
+            }
+            if (file2 != null) {
+                file2.delete();
             }
         }
     }
-    
+
     public void doCleanup(File path) throws SVNException {
         if (!SVNWCAccess.isVersionedDirectory(path)) {
             SVNErrorManager.error(0, null);

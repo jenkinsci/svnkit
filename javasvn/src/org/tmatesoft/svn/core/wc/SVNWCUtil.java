@@ -26,36 +26,13 @@ public class SVNWCUtil {
             wcAccess = SVNWCAccess.create(versionedFile);
             return wcAccess.getTargetEntryProperty(SVNProperty.URL);
         } catch (SVNException e) {
+            //
         }
         return null;
     }
 
     public static boolean isVersionedDirectory(File dir) {
         return SVNWCAccess.isVersionedDirectory(dir);
-    }
-
-    public static void getBaseFileContents(File versionedFile, OutputStream dst) throws SVNException {
-        String name = versionedFile.getName();
-        SVNWCAccess wcAccess = SVNWCAccess.create(versionedFile);
-        File file = wcAccess.getAnchor().getFile(name, false);
-        
-        InputStream is = null;
-        try {
-            is = new FileInputStream(file);
-            int r;
-            while((r = is.read()) >= 0) {
-                dst.write(r);
-            }
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);            
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                }
-            }
-        }        
     }
 
     public static void getWorkingFileContents(File versionedFile, OutputStream dst) throws SVNException {
@@ -91,24 +68,12 @@ public class SVNWCUtil {
             }
         }
     }
-    
-    public static void setWorkingFileContents(File workingFile, InputStream contents) throws SVNException {
-        
-    }
-    
-    public static boolean hasConflicts(File workingFile) throws SVNException {
-        return false;
-    }
-
-    public static String[] getConflictFiles(File workingFile, OutputStream left, OutputStream right, OutputStream local) throws SVNException {
-        return null;
-    }
 
     public static boolean isBinaryMimetype(String mimetype) {
         return mimetype != null && !mimetype.startsWith("text/");
     }
 
-    public static boolean isWorkingCopyRoot(final File versionedDir) {
+    public static boolean isWorkingCopyRoot(final File versionedDir, final boolean considerExternalAsRoot) {
         if (versionedDir == null || !SVNWCAccess.isVersionedDirectory(versionedDir)) {
             // unversioned.
             return false;
@@ -126,6 +91,9 @@ public class SVNWCUtil {
                         if (status.getContentsStatus() == SVNStatusType.STATUS_IGNORED ||
                                 status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
                                 status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL) {
+                            if (status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL && !considerExternalAsRoot) {
+                                return;
+                            }
                             isRoot[0] = true;
                         }
                     }
@@ -144,7 +112,7 @@ public class SVNWCUtil {
             return null;
         }
 
-        if (isWorkingCopyRoot(versionedDir)) {
+        if (isWorkingCopyRoot(versionedDir, true)) {
             // this is root.
             if (stopOnExtenrals) {
                 return versionedDir;
