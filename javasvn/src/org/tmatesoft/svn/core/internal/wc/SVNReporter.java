@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
@@ -234,9 +235,15 @@ public class SVNReporter implements ISVNReporterBaton {
         };
         try {
             SVNStatusClient stClient = new SVNStatusClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, false));
-            SVNUpdateClient upClient = new SVNUpdateClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, false));
-            File dst = new File("C:\\nautilus\\org.tmatesoft.javasvn");
+            SVNUpdateClient upClient = new SVNUpdateClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, true));
+            SVNCopyClient cpClient = new SVNCopyClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, true));
+            File src = new File("C:\\i\\test5\\branches");
+            File dst = new File("C:\\i\\test5\\branchesX");
+            File dst2 = new File("C:\\i\\test5\\branchesY");
+//            cpClient.doCopy(src, dst, false, false);
+            cpClient.doCopy(src, dst2, false, true);
 //            SVNInfo info = wcClient.doInfo(dst, SVNRevision.WORKING);
+            /*
             boolean verbose = true;
             boolean remote = false;
             boolean quiet = false;
@@ -251,6 +258,7 @@ public class SVNReporter implements ISVNReporterBaton {
             System.out.println("repository root: " + repos.getRepositoryRoot());
             System.out.println("repository uuid: " + repos.getRepositoryUUID());
             upClient.doCheckout("http://svn.osafoundation.org/chandler", new File("C:\\i\\moved"), SVNRevision.HEAD, SVNRevision.HEAD, false);
+            */
         } catch (Throwable e) {
             e.printStackTrace();
         } 

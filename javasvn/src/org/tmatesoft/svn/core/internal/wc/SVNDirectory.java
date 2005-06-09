@@ -717,8 +717,13 @@ public class SVNDirectory {
         childPath = PathUtil.removeLeadingSlash(childPath);
 
         SVNDirectory child = myWCAccess.addDirectory(childPath, dir);
-        SVNEntry rootEntry = child.getEntries().addEntry("");
-        rootEntry.setURL(url);
+        SVNEntry rootEntry = child.getEntries().getEntry("");
+        if (rootEntry == null) {
+            rootEntry = child.getEntries().addEntry("");
+        }
+        if (url != null) {
+            rootEntry.setURL(url);
+        }
         rootEntry.setRevision(revision);
         rootEntry.setKind(SVNNodeKind.DIR);
         child.getEntries().save(true);

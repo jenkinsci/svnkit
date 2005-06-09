@@ -996,6 +996,11 @@ public class SVNWorkspace implements ISVNWorkspace {
 
     public long commitPaths(List paths, String message, boolean keepLocks,
             ISVNProgressViewer progressViewer) throws SVNException {
+        return commitPaths(paths, message, keepLocks, true, progressViewer);
+    }
+
+    public long commitPaths(List paths, String message, boolean keepLocks, boolean recursive,
+            ISVNProgressViewer progressViewer) throws SVNException {
         long start = System.currentTimeMillis();
         try {
             final Set modified = new HashSet();

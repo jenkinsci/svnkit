@@ -425,6 +425,33 @@ public class SVNFileUtil {
         }
     }
 
+    public static void copyDirectory(File srcDir, File dstDir) throws IOException {
+        if (!dstDir.exists()) {
+            dstDir.mkdirs();
+        }
+        // put everething from srcdir to dstdir.
+        File[] files = srcDir.listFiles();
+        for (int i = 0; files != null && i < files.length; i++) {
+            File file = files[i];
+            if (file.getName().equals("..") || file.getName().equals(".")) {
+                continue;
+            }
+            SVNFileType fileType = SVNFileType.getType(file);
+            if (fileType == SVNFileType.FILE) {
+                copy(file, new File(dstDir, file.getName()), false);
+            } else if (fileType == SVNFileType.DIRECTORY) {
+                File dst = new File(dstDir, file.getName());
+                copyDirectory(file, dst);
+                if (file.isHidden()) {
+                    setHidden(dst, true);
+                }
+            } else if (fileType == SVNFileType.SYMLINK) {
+                // special case
+            }
+
+        }
+    }
+
     private static String execCommand(String[] commandLine) {
         InputStream is = null;
         StringBuffer result = new StringBuffer();
@@ -478,26 +505,5 @@ public class SVNFileUtil {
             }
         }
         return ourGroupID;        
-    }
-
-    public static void dump(File file) {
-        InputStream is = null;
-        StringBuffer b = new StringBuffer();
-        try {
-            is = new FileInputStream(file);
-            int r;
-            while ((r = is.read()) >= 0) {
-                b.append((char) (r & 0xFF));
-            }
-        } catch (IOException e) {
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                }
-            }
-        }
-        DebugLog.log(b.toString());
     }
 }
