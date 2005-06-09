@@ -5,6 +5,7 @@
  * Window - Preferences - Java - Code Style - Code Templates
  */
 
+package org.tmatesoft.svn.examples.repository;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,8 +28,10 @@ import org.tmatesoft.svn.core.SVNProperty;
  * at the latest (HEAD) revision . If the file is a text (either it has no
  * svn:mime-type property at all or if has and the property value is text/-like)
  * its contents as well as properties will be displayed in the console,
- * otherwise - only properties. As an example here's a part of one of the
- * program layouts (for the default url and file path used in the program): 
+ * otherwise - only properties. 
+ * As an example here's a part of one of the
+ * program layouts (for the default url and file path used in the program):
+ *  
  * File property: svn:eol-style=LF File property: svn:entry:revision=645 
  * File property: svn:entry:checksum=6b55de2c879b135fec9657309f5c9769 
  * File property: svn:wc:ra_dav:version-url=/svn/jsvn/!svn/ver/301/trunk/www/usage.html 
@@ -97,9 +100,8 @@ public class DisplayFile {
         try {
             /*
              * Parses the URL string and creates an SVNRepositoryLocation which
-             * represents the repository location (you can think of this
-             * location as of a current repository session directory; it can be
-             * any versioned directory inside the repository).
+             * represents the repository location - it can be
+             * any versioned entry inside the repository.
              */
             location = SVNRepositoryLocation.parseURL(url);
             /*

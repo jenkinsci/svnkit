@@ -5,6 +5,7 @@
  * Preferences - Java - Code Style - Code Templates
  */
 
+package org.tmatesoft.svn.examples.repository;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -109,7 +110,7 @@ public class DisplayRepositoryTree {
              * Perhaps a malformed URL is the cause of this exception
              */
             System.err
-                    .println("error while creating SVNRepository for location '"
+                    .println("error while creating an SVNRepository for location '"
                             + url + "': " + svne.getMessage());
             System.exit(1);
         }
@@ -138,7 +139,7 @@ public class DisplayRepositoryTree {
                 System.err.println("There is no entry at '" + url + "'.");
                 System.exit(1);
             } else if (nodeKind == SVNNodeKind.FILE) {
-                System.err.println("The entry at '" + url + "' is a file.");
+                System.err.println("The entry at '" + url + "' is a file while a directory was expected.");
                 System.exit(1);
             }
             /*
