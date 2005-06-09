@@ -185,6 +185,18 @@ public abstract class SVNRepository {
      * @return 	the repository root <code>URL</code>
      */
     public String getRepositoryRoot() {
+        try {
+            return getRepositoryRoot(false);
+        } catch (SVNException e) {
+            // will not be thrown.
+        }
+        return null;
+    }
+
+    public String getRepositoryRoot(boolean forceConnection) throws SVNException {
+        if (forceConnection && myRepositoryRoot == null) {
+            testConnection();
+        }
         return myRepositoryRoot;
     }
 
