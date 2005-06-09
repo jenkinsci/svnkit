@@ -51,15 +51,15 @@ public class SVNStatus {
                      SVNLock remoteLock, SVNLock localLock) {
         myURL = URL;
         myFile = file;
-        myKind = kind;
-        myRevision = revision;
-        myCommittedRevision = committedRevision;
+        myKind = kind == null ? SVNNodeKind.NONE : kind;
+        myRevision = revision == null ? SVNRevision.UNDEFINED : revision;
+        myCommittedRevision = committedRevision == null ? SVNRevision.UNDEFINED : committedRevision;
         myCommittedDate = committedDate;
         myAuthor = author;
-        myContentsStatus = contentsStatus;
-        myPropertiesStatus = propertiesStatus;
-        myRemoteContentsStatus = remoteContentsStatus;
-        myRemotePropertiesStatus = remotePropertiesStatus;
+        myContentsStatus = contentsStatus == null ? SVNStatusType.STATUS_NONE : contentsStatus;
+        myPropertiesStatus = propertiesStatus == null ? SVNStatusType.STATUS_NONE : propertiesStatus;
+        myRemoteContentsStatus = remoteContentsStatus == null ? SVNStatusType.STATUS_NONE : remoteContentsStatus;
+        myRemotePropertiesStatus = remotePropertiesStatus == null ? SVNStatusType.STATUS_NONE : remotePropertiesStatus;
         myIsLocked = isLocked;
         myIsCopied = isCopied;
         myIsSwitched = isSwitched;
@@ -67,7 +67,7 @@ public class SVNStatus {
         myConflictOldFile = conflictOldFile;
         myConflictWrkFile = conflictWrkFile;
         myCopyFromURL = copyFromURL;
-        myCopyFromRevision = copyFromRevision;
+        myCopyFromRevision = copyFromRevision == null ? SVNRevision.UNDEFINED : copyFromRevision;
         myRemoteLock = remoteLock;
         myLocalLock = localLock;
         myPropRejectFile = projRejectFile;

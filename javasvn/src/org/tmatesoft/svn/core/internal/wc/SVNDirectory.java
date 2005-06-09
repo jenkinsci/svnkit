@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
@@ -955,11 +956,11 @@ public class SVNDirectory {
     			childDir.getEntries().getEntry("").scheduleForReplacement();
     		}
     		childDir.getEntries().save(true);
-    	}
+        }
+        SVNEvent event = SVNEventFactory.createAddedEvent(myWCAccess, this, entry);
+        myWCAccess.svnEvent(event, ISVNEventListener.UNKNOWN);
     	getEntries().save(false);
-    	// fire event
-    	SVNEvent event = SVNEventFactory.createAddedEvent(myWCAccess, this, entry);
-    	return entry;
+        return entry;
     }
     
     private void updateEntryProperty(String propertyName, String value, boolean recursive) throws SVNException {

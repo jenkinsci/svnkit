@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -361,31 +362,43 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    public void doAdd(File path, boolean force, boolean mkdir, boolean recursive) throws SVNException {
+    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive) throws SVNException {
     	if (mkdir && !path.exists()) {
     		path.mkdirs();
     	}
     	if (!path.exists()) {
-    		// error
-    	}
-    	SVNWCAccess wcAccess = createWCAccess(path);
+            SVNErrorManager.error("svn: '" + path + "' doesn't exist");
+        }
+        if (climbUnversionedParents) {
+            File parent = path.getParentFile();
+            if (parent != null && SVNWCUtil.getWorkingCopyRoot(path, true) == null) {
+                // path is in unversioned dir, try to add this parent before path.
+                try {
+                    doAdd(parent, false, mkdir, climbUnversionedParents, false);
+                } catch (SVNException e) {
+                    SVNErrorManager.error("svn: '" + path + "' doesn't belong to svn working copy");
+                }
+            }
+        }
+        SVNWCAccess wcAccess = createWCAccess(path);
     	try {
     		wcAccess.open(true, recursive);
     		String name = wcAccess.getTargetName();
 
     		if ("".equals(name) && !force) {
-    			// error.
+                SVNErrorManager.error("svn: '" + path + "' is the root of the working copy, it couldn't be scheduled for addition");
     		}
 			SVNDirectory dir = wcAccess.getAnchor();
-    		if (path.isFile() || SVNFileUtil.isSymlink(path)) {
+            SVNFileType ftype = SVNFileType.getType(path);
+            if (ftype == SVNFileType.FILE || ftype == SVNFileType.SYMLINK) {
     			addSingleFile(wcAccess, dir, name);
-    		} else if (path.isDirectory() && recursive) {
+    		} else if (ftype == SVNFileType.DIRECTORY && recursive) {
 	    		// add dir and recurse.
     			addDirectory(wcAccess, wcAccess.getAnchor(), name, force);
 	    	} else {
-	    		// add single dir
-	    		dir.add(wcAccess.getTargetName(), true);
-	    	}
+	    		// add single dir, no force - report error anyway.
+	    		dir.add(wcAccess.getTargetName(), false);
+            }
     	} finally {
     		wcAccess.close(true, recursive);
     	}
@@ -875,7 +888,8 @@ public class SVNWCClient extends SVNBasicClient {
     			continue;
     		}
     		DebugLog.log("processing file " + childFile + " in " + file);
-    		if (childFile.isFile() || SVNFileUtil.isSymlink(childFile)) {
+            SVNFileType fileType = SVNFileType.getType(childFile);
+            if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
     			SVNEntry entry = childDir.getEntries().getEntry(childFile.getName());
     			DebugLog.log("existing entry: " + entry);
     			if (force && entry != null && !entry.isScheduledForDeletion() && !entry.isDeleted()) {
@@ -883,7 +897,7 @@ public class SVNWCClient extends SVNBasicClient {
     				continue;
     			}
     			addSingleFile(wcAccess, childDir, childFile.getName());
-    		} else if (childFile.isDirectory()) {
+    		} else if (SVNFileType.DIRECTORY == fileType) {
     			DebugLog.log("recursing into " + childFile.getName());
     			addDirectory(wcAccess, childDir, childFile.getName(), force);
     		}
@@ -892,20 +906,15 @@ public class SVNWCClient extends SVNBasicClient {
 
 	private void addSingleFile(SVNWCAccess wcAccess, SVNDirectory dir, String name) throws SVNException {
 		File file = dir.getFile(name, false);
-		ISVNEventListener oldDisptcher = wcAccess.getEventDispatcher();
-		SVNEntry entry = null;
-		try {
-			entry = dir.add(name, false);
-		} finally {
-			wcAccess.setEventDispatcher(oldDisptcher);
-		}
-		String mimeType = null;
+        dir.add(name, false);
+
+        String mimeType;
 		SVNProperties properties = dir.getProperties(name, false);
 		if (SVNFileUtil.isSymlink(file)) {
 			properties.setPropertyValue(SVNProperty.SPECIAL, "*");
 		} else {
 			Map props = new HashMap();
-			boolean executable = false;
+			boolean executable;
 			props = getOptions().getAutoProperties(name, props);
 			mimeType = (String) props.get(SVNProperty.MIME_TYPE);
 			if (mimeType == null) {
@@ -926,8 +935,6 @@ public class SVNWCClient extends SVNBasicClient {
 				properties.setPropertyValue(propName, propValue);
 			}
 		}
-		SVNEvent event = SVNEventFactory.createAddedEvent(wcAccess, dir, entry);
-		wcAccess.svnEvent(event, ISVNEventListener.UNKNOWN);
 	}
 
     private void doGetRemoteProperty(String url, String path, SVNRepository repos, String propName, SVNRevision rev, boolean recursive, ISVNPropertyHandler handler) throws SVNException {

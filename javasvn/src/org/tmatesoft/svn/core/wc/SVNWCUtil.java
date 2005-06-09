@@ -97,7 +97,6 @@ public class SVNWCUtil {
                             isRoot[0] = true;
                         }
                     }
-                    // if dir is not versioned in parent or external -> return true
                 }
             });
         } catch (SVNException e) {
@@ -107,8 +106,9 @@ public class SVNWCUtil {
     }
 
     public static File getWorkingCopyRoot(File versionedDir, boolean stopOnExtenrals) {
-        if (versionedDir == null || !SVNWCAccess.isVersionedDirectory(versionedDir)) {
-            // unversioned.
+        if (versionedDir == null ||
+                (!SVNWCAccess.isVersionedDirectory(versionedDir) && !SVNWCAccess.isVersionedDirectory(versionedDir.getParentFile()))) {
+            // both this dir and its parent are not versioned.
             return null;
         }
 
