@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -32,6 +33,34 @@ public class SVNBasicClient implements ISVNEventListener {
     private boolean myIsIgnoreExternals;
     private boolean myIsDoNotSleepForTimeStamp;
     private boolean myIsCommandRunning;
+
+    protected SVNBasicClient() {
+        this((ISVNCredentialsProvider) null, null, null);
+    }
+
+    protected SVNBasicClient(ISVNEventListener eventDispatcher) {
+        this((ISVNCredentialsProvider) null, null, eventDispatcher);
+    }
+
+    protected SVNBasicClient(ISVNCredentialsProvider credentialsProvider) {
+        this(credentialsProvider, null, null);
+    }
+
+    protected SVNBasicClient(ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
+        this(credentialsProvider, null, eventDispatcher);
+    }
+
+    protected SVNBasicClient(final ISVNCredentialsProvider credentialsProvider, SVNOptions options, ISVNEventListener eventDispatcher) {
+        this(new ISVNRepositoryFactory() {
+            public SVNRepository createRepository(String url) throws SVNException {
+                SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
+                if (repos != null && credentialsProvider != null) {
+                    repos.setCredentialsProvider(credentialsProvider);
+                }
+                return repos;
+            }
+        }, options, eventDispatcher);
+    }
 
     protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
         myRepositoryFactory = repositoryFactory;
@@ -210,7 +239,6 @@ public class SVNBasicClient implements ISVNEventListener {
         } catch (SVNException e) {
             DebugLog.error(e);
             SVNErrorManager.error("svn: Unable to find repository location for '" + url + "' in revision " + revNumber);
-            return url;
         }
         SVNLocationEntry location = (SVNLocationEntry) locations.get(0);
         String path = PathUtil.encode(location.getPath());

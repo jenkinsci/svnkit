@@ -20,7 +20,6 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
@@ -41,20 +40,23 @@ import java.util.Map;
 
 public class SVNWCClient extends SVNBasicClient {
 
-	public SVNWCClient(final ISVNCredentialsProvider credentials, ISVNEventListener eventDispatcher) {
-		this(credentials, null, eventDispatcher);
+    public SVNWCClient() {
     }
 
-    public SVNWCClient(final ISVNCredentialsProvider credentials, SVNOptions options, ISVNEventListener eventDispatcher) {
-        super(new ISVNRepositoryFactory() {
-            public SVNRepository createRepository(String url) throws SVNException {
-                SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-                if (credentials != null) {
-                    repos.setCredentialsProvider(credentials);
-                }
-                return repos;
-            }
-        }, options, eventDispatcher);
+    public SVNWCClient(ISVNEventListener eventDispatcher) {
+        super(eventDispatcher);
+    }
+
+    public SVNWCClient(ISVNCredentialsProvider credentialsProvider) {
+        super(credentialsProvider);
+    }
+
+    public SVNWCClient(ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
+        super(credentialsProvider, eventDispatcher);
+    }
+
+    public SVNWCClient(final ISVNCredentialsProvider credentialsProvider, SVNOptions options, ISVNEventListener eventDispatcher) {
+        super(credentialsProvider, options, eventDispatcher);
     }
 
     public SVNWCClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {

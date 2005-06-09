@@ -15,25 +15,29 @@ import java.util.Iterator;
 
 public class SVNStatusClient extends SVNBasicClient {
 
-    public SVNStatusClient(final ISVNCredentialsProvider creds, ISVNEventListener eventDispatcher) {
-        this(creds, null, eventDispatcher);        
+    public SVNStatusClient() {
     }
-    public SVNStatusClient(final ISVNCredentialsProvider creds, SVNOptions options, ISVNEventListener eventDispatcher) {
-        super(new ISVNRepositoryFactory() {
-            public SVNRepository createRepository(String url) throws SVNException {
-                SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
-                SVNRepository repos = SVNRepositoryFactory.create(location);
-                if (creds != null) {
-                    repos.setCredentialsProvider(creds);
-                }
-                return repos;
-            }
-        }, options, eventDispatcher);
+
+    public SVNStatusClient(ISVNEventListener eventDispatcher) {
+        super(eventDispatcher);
+    }
+
+    public SVNStatusClient(ISVNCredentialsProvider credentialsProvider) {
+        super(credentialsProvider);
+    }
+
+    public SVNStatusClient(ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
+        super(credentialsProvider, eventDispatcher);
+    }
+
+    public SVNStatusClient(final ISVNCredentialsProvider credentialsProvider, SVNOptions options, ISVNEventListener eventDispatcher) {
+        super(credentialsProvider, options, eventDispatcher);
     }
 
     public SVNStatusClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
+
 
     public void doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler) throws SVNException {
         if (handler == null) {

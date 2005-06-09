@@ -37,22 +37,26 @@ public class SVNDiffClient extends SVNBasicClient {
 
     private ISVNDiffGenerator myDiffGenerator;
 
-    public SVNDiffClient(final ISVNCredentialsProvider credentials, ISVNEventListener eventDispatcher) {
-        this(credentials, null, eventDispatcher);
-    }
-    
-    public SVNDiffClient(final ISVNCredentialsProvider credentials, SVNOptions options, ISVNEventListener eventDispatcher) {
-        this(new ISVNRepositoryFactory() {
-            public SVNRepository createRepository(String url) throws SVNException {
-                SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-                repos.setCredentialsProvider(credentials);
-                return repos;
-            }
-        }, options, eventDispatcher);
+    public SVNDiffClient() {
     }
 
-    public SVNDiffClient(ISVNRepositoryFactory repositoryFactory,
-            SVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNDiffClient(ISVNEventListener eventDispatcher) {
+        super(eventDispatcher);
+    }
+
+    public SVNDiffClient(ISVNCredentialsProvider credentialsProvider) {
+        super(credentialsProvider);
+    }
+
+    public SVNDiffClient(ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
+        super(credentialsProvider, eventDispatcher);
+    }
+
+    public SVNDiffClient(final ISVNCredentialsProvider credentials, SVNOptions options, ISVNEventListener eventDispatcher) {
+        super(credentials, options, eventDispatcher);
+    }
+
+    public SVNDiffClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
     

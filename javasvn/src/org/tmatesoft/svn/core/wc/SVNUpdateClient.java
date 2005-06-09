@@ -40,26 +40,31 @@ import org.tmatesoft.svn.util.TimeUtil;
 
 
 public class SVNUpdateClient extends SVNBasicClient {
-    
 
-    public SVNUpdateClient(final ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
-        super(new ISVNRepositoryFactory() {
-            public SVNRepository createRepository(String url) throws SVNException {
-                SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-                repos.setCredentialsProvider(credentialsProvider);
-                return repos;
-            }
-        }, null, eventDispatcher);
+    public SVNUpdateClient() {
     }
 
-    public SVNUpdateClient(ISVNRepositoryFactory repositoryFactory, ISVNEventListener eventDispatcher) {
-        super(repositoryFactory, null, eventDispatcher);
+    public SVNUpdateClient(ISVNEventListener eventDispatcher) {
+        super(eventDispatcher);
+    }
+
+    public SVNUpdateClient(ISVNCredentialsProvider credentialsProvider) {
+        super(credentialsProvider);
+    }
+
+    public SVNUpdateClient(ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
+        super(credentialsProvider, eventDispatcher);
+    }
+
+    public SVNUpdateClient(final ISVNCredentialsProvider credentialsProvider, SVNOptions options, ISVNEventListener eventDispatcher) {
+        super(credentialsProvider, options, eventDispatcher);
     }
 
     public SVNUpdateClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
-    
+
+
     public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {        
         long revNumber = getRevisionNumber(file, revision);
         SVNWCAccess wcAccess = createWCAccess(file);
