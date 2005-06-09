@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNOptions;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
@@ -91,6 +92,7 @@ public class SVNReporter implements ISVNReporterBaton {
             }
             reporter.finishReport();
         } catch (Throwable th) {
+            th.printStackTrace();
             DebugLog.error(th);
             reporter.abortReport();
             SVNErrorManager.error(0, th);
@@ -100,8 +102,6 @@ public class SVNReporter implements ISVNReporterBaton {
     private void reportEntries(ISVNReporter reporter, SVNDirectory directory, String dirPath, boolean reportAll, boolean recursive) throws SVNException {
         SVNEntries entries = directory.getEntries();
         long baseRevision = entries.getEntry("").getRevision();
-
-        Map childDirectories = new HashMap();
 
         SVNExternalInfo[] externals = myWCAccess.addExternals(directory,
                 directory.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS));
@@ -189,17 +189,8 @@ public class SVNReporter implements ISVNReporterBaton {
     private void restoreFile(SVNDirectory dir, String name) throws SVNException {
         SVNProperties props = dir.getProperties(name, false);
         SVNEntry entry = dir.getEntries().getEntry(name);
-        String eolStyle = props.getPropertyValue(SVNProperty.EOL_STYLE);
-        String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
-
-        String url = entry.getURL();
-        String author = entry.getAuthor();
-        String date = entry.getCommittedDate();
-        String rev = Long.toString(entry.getCommittedRevision());
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         
-        Map keywordsMap = SVNTranslator.computeKeywords(keywords, url, author, date, rev);
-
         File src = dir.getBaseFile(name, false);
         File dst = dir.getFile(name, false);
         SVNTranslator.translate(dir, name, SVNFileUtil.getBasePath(src), SVNFileUtil.getBasePath(dst), true, true);
@@ -243,6 +234,7 @@ public class SVNReporter implements ISVNReporterBaton {
         };
         try {
             SVNStatusClient stClient = new SVNStatusClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, false));
+            SVNUpdateClient upClient = new SVNUpdateClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, false));
             File dst = new File("C:\\nautilus\\org.tmatesoft.javasvn");
 //            SVNInfo info = wcClient.doInfo(dst, SVNRevision.WORKING);
             boolean verbose = true;
@@ -250,9 +242,10 @@ public class SVNReporter implements ISVNReporterBaton {
             boolean quiet = false;
             boolean ignored = false;
             boolean recusive = true;
-            ISVNStatusHandler handler = new SVNCommandStatusHandler(System.out, verbose || remote, verbose, quiet, remote);
-            stClient.doStatus(dst, recusive, remote, verbose, ignored, handler);
+            //ISVNStatusHandler handler = new SVNCommandStatusHandler(System.out, verbose || remote, verbose, quiet, remote);
+            //stClient.doStatus(dst, recusive, remote, verbose, ignored, handler);
 //            wcClient.doUnlock(new File[] {dst}, false);
+            upClient.doUpdate(new File("C:\\Documents and Settings\\alex\\IdeaProjects\\svntest\\javasvn"), SVNRevision.HEAD, true);
         } catch (Throwable e) {
             e.printStackTrace();
         } 

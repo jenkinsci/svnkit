@@ -354,7 +354,11 @@ class DAVRepository extends SVNRepository {
             if (response != null) {
             	path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
             	myConnection.doReport(path, request, handler);
+            } else {
+                String revisionStr = revision < 0 ? "HEAD" : Long.toString(revision);
+                throw new SVNException("svn: Location '" + path + "' doesn't exists in repository at revision " + revisionStr);
             }
+
         } finally {
             closeConnection();
         }
@@ -373,9 +377,13 @@ class DAVRepository extends SVNRepository {
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
             String path = PathUtil.append(info.baselineBase, info.baselinePath);
             DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
-            path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-
-            myConnection.doReport(path, request, handler);
+            if (response != null) {
+                path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+                myConnection.doReport(path, request, handler);
+            } else {
+                String revisionStr = revision < 0 ? "HEAD" : Long.toString(revision);
+                throw new SVNException("svn: Location '" + path + "' doesn't exists in repository at revision " + revisionStr);
+            }
         } finally {
             closeConnection();
         }
