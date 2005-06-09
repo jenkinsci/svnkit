@@ -244,7 +244,7 @@ class HttpConnection {
         }
         ISVNCredentials credentials = myLastUsedCredentials;
         while (true) {
-            DAVStatus status = null;
+            DAVStatus status;
             try {
                 connect();
                 if (credentials != null && myCredentialsChallenge != null) {
@@ -293,6 +293,32 @@ class HttpConnection {
                 } else if (requestBody != null) {
                     throw new SVNAuthenticationException("Authentication failed");
                 }
+            } else if (status != null &&
+                    (status.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM || status.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP)) {
+                try {
+                    skipRequestBody(readHeader);
+                } catch (IOException e1) {}
+                close();
+                // reconnect
+                String newLocation = (String) readHeader.get("Location");
+                if (newLocation == null) {
+                    throw new SVNException("can't connect: " + status.getMessage());
+                }
+                int hostIndex = newLocation.indexOf("://");
+                if (hostIndex > 0) {
+                    hostIndex += 3;
+                    hostIndex = newLocation.indexOf("/", hostIndex);
+                }
+                if (hostIndex > 0 && hostIndex < newLocation.length()) {
+                    String newPath = newLocation.substring(hostIndex);
+                    if (newPath.endsWith("/") &&
+                            !newPath.endsWith("//") && !path.endsWith("/") &&
+                            newPath.substring(0, newPath.length() - 1).equals(path)) {
+                        path += "//";
+                        continue;
+                    }
+                }
+                throw new SVNException("HTTP 301 MOVED PERMANENTLY: " + newLocation);
             } else if (status != null) {
                 if (credentials != null && myUserCredentialsProvider != null) {
                     myUserCredentialsProvider.accepted(credentials);

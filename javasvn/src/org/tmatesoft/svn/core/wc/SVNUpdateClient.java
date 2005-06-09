@@ -150,7 +150,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (url.equals(wcAccess.getTargetEntryProperty(SVNProperty.URL))) {
                     result = doUpdate(dstPath, revision, recursive);
                 } else {
-                    SVNErrorManager.error(0, null);
+                    SVNErrorManager.error("svn: working copy with different URL '" + wcAccess.getTargetEntryProperty(SVNProperty.URL) + "' already exists at checkout destination");
                 }
             } else {
                 SVNErrorManager.error(0, null);

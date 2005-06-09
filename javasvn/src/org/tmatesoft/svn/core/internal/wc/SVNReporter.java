@@ -245,7 +245,12 @@ public class SVNReporter implements ISVNReporterBaton {
             //ISVNStatusHandler handler = new SVNCommandStatusHandler(System.out, verbose || remote, verbose, quiet, remote);
             //stClient.doStatus(dst, recusive, remote, verbose, ignored, handler);
 //            wcClient.doUnlock(new File[] {dst}, false);
-            upClient.doUpdate(new File("C:\\Documents and Settings\\alex\\IdeaProjects\\svntest\\javasvn"), SVNRevision.HEAD, true);
+            String url = "http://svn.osafoundation.org/chandler";
+            SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
+            repos.testConnection();
+            System.out.println("repository root: " + repos.getRepositoryRoot());
+            System.out.println("repository uuid: " + repos.getRepositoryUUID());
+            upClient.doCheckout("http://svn.osafoundation.org/chandler", new File("C:\\i\\moved"), SVNRevision.HEAD, SVNRevision.HEAD, false);
         } catch (Throwable e) {
             e.printStackTrace();
         } 
