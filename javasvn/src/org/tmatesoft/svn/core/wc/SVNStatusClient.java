@@ -15,12 +15,17 @@ import java.util.Iterator;
 
 public class SVNStatusClient extends SVNBasicClient {
 
+    public SVNStatusClient(final ISVNCredentialsProvider creds, ISVNEventListener eventDispatcher) {
+        this(creds, null, eventDispatcher);        
+    }
     public SVNStatusClient(final ISVNCredentialsProvider creds, SVNOptions options, ISVNEventListener eventDispatcher) {
         super(new ISVNRepositoryFactory() {
             public SVNRepository createRepository(String url) throws SVNException {
                 SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
                 SVNRepository repos = SVNRepositoryFactory.create(location);
-                repos.setCredentialsProvider(creds);
+                if (creds != null) {
+                    repos.setCredentialsProvider(creds);
+                }
                 return repos;
             }
         }, options, eventDispatcher);
@@ -43,7 +48,6 @@ public class SVNStatusClient extends SVNBasicClient {
             // do report, collect repos locks, and drive the editor.
         }
         wcAccess.close(false, recursive);
-
         if (!isIgnoreExternals() && recursive) {
             Map externals = statusEditor.getCollectedExternals();
             for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
@@ -62,11 +66,11 @@ public class SVNStatusClient extends SVNBasicClient {
         }
     }
 
-    public SVNStatus doStatus(File path, boolean remote, ISVNStatusHandler handler) throws SVNException {
+    public SVNStatus doStatus(final File path, boolean remote) throws SVNException {
         final SVNStatus[] result = new SVNStatus[] {null};
         doStatus(path, false, remote, true, true, new ISVNStatusHandler() {
             public void handleStatus(SVNStatus status) {
-                if (result[0] == null) {
+                if (result[0] == null && path.equals(status.getFile())) {
                     result[0] = status;
                 }
             }

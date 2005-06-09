@@ -5,6 +5,11 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,7 +50,9 @@ public class SVNWCClient extends SVNBasicClient {
         super(new ISVNRepositoryFactory() {
             public SVNRepository createRepository(String url) throws SVNException {
                 SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-                repos.setCredentialsProvider(credentials);
+                if (credentials != null) {
+                    repos.setCredentialsProvider(credentials);
+                }
                 return repos;
             }
         }, options, eventDispatcher);
@@ -53,6 +60,132 @@ public class SVNWCClient extends SVNBasicClient {
 
     public SVNWCClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
+    }
+
+    public void doGetFileContents(File path, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
+        if (dst == null) {
+            return;
+        }
+        if (revision == null || !revision.isValid()) {
+            revision = SVNRevision.WORKING;
+        }
+        if (revision == SVNRevision.COMMITTED) {
+            revision = SVNRevision.BASE;
+        }
+        SVNWCAccess wcAccess = createWCAccess(path);
+        if ("".equals(wcAccess.getTargetName()) || wcAccess.getTarget() != wcAccess.getAnchor()) {
+            // this is dir.
+            return;
+        }
+        String name = wcAccess.getTargetName();
+        if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
+            // get local file, expand or unexpand keywords.
+            File file = wcAccess.getAnchor().getBaseFile(name, false);
+            boolean delete = false;
+            try {
+                if (revision == SVNRevision.BASE) {
+                    if (expandKeywords) {
+                        delete = true;
+                        file = wcAccess.getAnchor().getBaseFile(name, true);
+                        SVNTranslator.translate(wcAccess.getAnchor(), name,
+                            SVNFileUtil.getBasePath(wcAccess.getAnchor().getBaseFile(name, false)),
+                            SVNFileUtil.getBasePath(file), true, false);
+                    }
+                } else {
+                    if (!expandKeywords) {
+                        delete = true;
+                        file = wcAccess.getAnchor().getBaseFile(name, true);
+                        SVNTranslator.translate(wcAccess.getAnchor(), name,
+                            name,
+                            SVNFileUtil.getBasePath(file), false, false);
+                    }
+                }
+            } finally {
+                if (file != null && file.exists()) {
+                    InputStream is = null;
+                    try {
+                        is = new FileInputStream(file);
+                        int r;
+                        while ((r = is.read()) >= 0) {
+                            dst.write(r);
+                        }
+                    } catch (IOException e) {
+                    } finally  {
+                        if (is != null) {
+                            try {
+                                is.close();
+                            } catch (IOException e) {
+                            }
+                        }
+                    }
+                    if (delete) {
+                        file.delete();
+                    }
+                }
+            }
+        } else {
+            String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+            if (pegRevision == null || !pegRevision.isValid()) {
+                pegRevision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
+            }
+            long revNumber = getRevisionNumber(path, revision);
+            long pegRevisionNumber = getRevisionNumber(path, pegRevision);
+            url = getURL(url, SVNRevision.create(pegRevisionNumber), SVNRevision.create(revNumber));
+            // now get contents from URL.
+            Map properties = new HashMap();
+            SVNRepository repos = createRepository(url);
+            SVNNodeKind nodeKind = repos.checkPath("", revNumber);
+            if (nodeKind != SVNNodeKind.FILE) {
+                return;
+            }
+            OutputStream os = null;
+            InputStream is = null;
+            File file = wcAccess.getAnchor().getBaseFile(wcAccess.getTargetName(), true);
+            File file2 = SVNFileUtil.createUniqueFile(file.getParentFile(), wcAccess.getTargetName(), ".tmp");
+            try {
+                os = new FileOutputStream(file);
+                repos.getFile("", revNumber, properties, os);
+                os.close();
+                os = null;
+                if (expandKeywords) {
+                    String keywords = (String) properties.get(SVNProperty.KEYWORDS);
+                    String eol = (String) properties.get(SVNProperty.EOL_STYLE);
+                    byte[] eolBytes = eol != null ? SVNTranslator.getEOL(eol) : null;
+                    Map keywordsMap = SVNTranslator.computeKeywords(keywords, url, (String) properties.get("svn:author"),
+                      (String) properties.get("svn:date"), Long.toString(revNumber));
+                    SVNTranslator.translate(file, file2, eolBytes, keywordsMap, false, true);
+                } else {
+                    file2 = file;
+                }
+
+                is = new FileInputStream(file2);
+                int r;
+                while((r = is.read()) >= 0) {
+                    dst.write(r);
+                }
+            } catch (IOException e) {
+                return;
+            } finally {
+                if (os != null) {
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                    }
+                }
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                    }
+                }
+                if (file != null) {
+                    file.delete();
+                }
+                if (file2 != null) {
+                    file2.delete();
+                }
+            }
+        }
     }
     
     public void doCleanup(File path) throws SVNException {
@@ -286,6 +419,9 @@ public class SVNWCClient extends SVNBasicClient {
                     if (!file.exists()) {
                         wcAccess.getAnchor().getEntries().deleteEntry(entry.getName());
                     } else {
+                        if (!recursive) {
+                            wcAccess.open(true, true, true);
+                        }
                         wcAccess.getAnchor().destroy(entry.getName(), false);
                     }
                 }
@@ -364,7 +500,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    public void doResolve(File path, boolean recursive) {
+    public void doResolve(File path, boolean recursive) throws SVNException {
     }
 
     public void doLock(File[] paths, boolean stealLock, String lockMessage) throws SVNException {

@@ -245,12 +245,16 @@ public class SVNWCAccess implements ISVNEventListener {
         }
         try {
             if (lock) {
-                myAnchor.lock();
+                if (!(stealLock && myAnchor.isLocked())) {
+                    myAnchor.lock();
+                }
             }
             myDirectories.put("", myAnchor);            
             if (myTarget != myAnchor) {
                 if (lock) {
-                    myTarget.lock();
+                    if (!(stealLock && myTarget.isLocked())) {
+                        myTarget.lock();
+                    }
                 }
                 myDirectories.put(myName, myTarget);
             }        
