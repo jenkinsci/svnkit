@@ -485,12 +485,11 @@ class DAVRepository extends SVNRepository {
             }
         }
         myConnection.setLocks(translatedLocks, keepLocks);
-        ISVNEditor editor = new DAVCommitEditor(this, myConnection, logMessage, locks, mediator, new Runnable() {
+        return new DAVCommitEditor(this, myConnection, logMessage, locks, mediator, new Runnable() {
             public void run() {
                 closeConnection();
             }
         });
-        return editor;
     }
 
     
@@ -527,7 +526,6 @@ class DAVRepository extends SVNRepository {
     }
 
     public SVNLock getLock(String path) throws SVNException {
-        DAVElement[] properties = {DAVElement.LOCK_DISCOVERY};
         try {
             openConnection();
             path = getFullPath(path);

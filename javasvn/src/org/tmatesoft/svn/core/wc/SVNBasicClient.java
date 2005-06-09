@@ -13,6 +13,9 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
+import org.tmatesoft.svn.core.internal.wc.SVNEntries;
+import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -270,5 +273,23 @@ public class SVNBasicClient implements ISVNEventListener {
         if (myEventDispatcher != null) {
             myEventDispatcher.checkCancelled();
         }
+    }
+
+    protected SVNDirectory createVersionedDirectory(File dstPath, String url, String uuid, long revNumber) throws SVNException {
+        SVNDirectory.createVersionedDirectory(dstPath);
+        // add entry first.
+        SVNDirectory dir = new SVNDirectory(null, "", dstPath);
+        SVNEntries entries = dir.getEntries();
+        SVNEntry entry = entries.getEntry("");
+        if (entry == null) {
+            entry = entries.addEntry("");
+        }
+        entry.setURL(url);
+        entry.setUUID(uuid);
+        entry.setKind(SVNNodeKind.DIR);
+        entry.setRevision(revNumber);
+        entry.setIncomplete(true);;
+        entries.save(true);
+        return dir;
     }
 }

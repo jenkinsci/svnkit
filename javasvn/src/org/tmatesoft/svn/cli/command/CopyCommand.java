@@ -12,10 +12,6 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
@@ -28,11 +24,15 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 
 /**
  * @author TMate Software Ltd.
@@ -199,8 +199,8 @@ public class CopyCommand extends SVNCommand {
         if (revNumber >= 0) {
             revision = SVNRevision.create(revNumber);
         }
-        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, true));
-        updater.doCopy(srcURL, new File(destPathParent), revision);
+        SVNCopyClient updater = new SVNCopyClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, true));
+        updater.doCopy(srcURL, getCommandLine().getPegRevision(0), revision, new File(destPathParent));
     }
     
     private void runLocalToRemote(final PrintStream out, PrintStream err) throws SVNException {
