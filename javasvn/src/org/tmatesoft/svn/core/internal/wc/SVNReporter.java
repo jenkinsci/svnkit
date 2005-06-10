@@ -3,37 +3,19 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
-import org.tmatesoft.svn.cli.command.SVNCommandEventProcessor;
-import org.tmatesoft.svn.cli.SVNCommandStatusHandler;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
-import org.tmatesoft.svn.core.wc.ISVNRepositoryFactory;
-import org.tmatesoft.svn.core.wc.SVNDiffClient;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
-import org.tmatesoft.svn.core.wc.SVNOptions;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Date;
+import java.util.Iterator;
 
 public class SVNReporter implements ISVNReporterBaton {
 
@@ -220,51 +202,5 @@ public class SVNReporter implements ISVNReporterBaton {
         dir.getEntries().save(false);
         
         myWCAccess.svnEvent(SVNEventFactory.createRestoredEvent(myWCAccess, dir, entry));
-    }
-    
-    public static void main(String[] args) {
-        DAVRepositoryFactory.setup();
-        SVNRepositoryFactoryImpl.setup();
-        
-        ISVNRepositoryFactory repositoryFactory = new ISVNRepositoryFactory() {
-            public SVNRepository createRepository(String url) throws SVNException {
-                SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-                repos.setCredentialsProvider(new SVNSimpleCredentialsProvider("alex", "cvs"));
-                return repos;
-            }            
-        };
-        try {
-            SVNStatusClient stClient = new SVNStatusClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, false));
-            SVNUpdateClient upClient = new SVNUpdateClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, true));
-            SVNCopyClient cpClient = new SVNCopyClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, true));
-
-            SVNWCClient wcClient = new SVNWCClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, true));
-            File revertDir = new File("C:\\i\\small\\new");
-            File dst = new File("C:\\i\\test5\\branchesX");
-            File dst2 = new File("C:\\i\\test5\\branchesY");
-//            cpClient.doCopy(src, dst, false, false);
-            wcClient.doRevert(revertDir, false);
-
-//            SVNInfo info = wcClient.doInfo(dst, SVNRevision.WORKING);
-            /*
-            boolean verbose = true;
-            boolean remote = false;
-            boolean quiet = false;
-            boolean ignored = false;
-            boolean recusive = true;
-            //ISVNStatusHandler handler = new SVNCommandStatusHandler(System.out, verbose || remote, verbose, quiet, remote);
-            //stClient.doStatus(dst, recusive, remote, verbose, ignored, handler);
-//            wcClient.doUnlock(new File[] {dst}, false);
-            String url = "http://svn.osafoundation.org/chandler";
-            SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-            repos.testConnection();
-            System.out.println("repository root: " + repos.getRepositoryRoot());
-            System.out.println("repository uuid: " + repos.getRepositoryUUID());
-            upClient.doCheckout("http://svn.osafoundation.org/chandler", new File("C:\\i\\moved"), SVNRevision.HEAD, SVNRevision.HEAD, false);
-            */
-        } catch (Throwable e) {
-            e.printStackTrace();
-        } 
-        
     }
 }
