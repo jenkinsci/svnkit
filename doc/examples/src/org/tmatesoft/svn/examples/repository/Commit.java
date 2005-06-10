@@ -220,8 +220,9 @@ public class Commit {
              */
             nodeKind = repository.checkPath("", -1);
         } catch (SVNException svne) {
-            System.err.println("error while listing entries: "
-                    + svne.getMessage());
+            System.err
+                    .println("error while getting the node kind of the repository location dir: "
+                            + svne.getMessage());
             System.exit(1);
         }
 

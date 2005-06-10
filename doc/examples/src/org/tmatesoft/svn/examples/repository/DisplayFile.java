@@ -115,7 +115,7 @@ public class DisplayFile {
              * Perhaps a malformed URL is the cause of this exception
              */
             System.err
-                    .println("error while creating SVNRepository for location '"
+                    .println("error while creating an SVNRepository for the location '"
                             + url + "': " + svne.getMessage());
             System.exit(1);
         }
@@ -153,7 +153,8 @@ public class DisplayFile {
                 System.err.println("There is no entry at '" + url + "'.");
                 System.exit(1);
             } else if (nodeKind == SVNNodeKind.DIR) {
-                System.err.println("The entry at '" + url + "' is a directory.");
+                System.err.println("The entry at '" + url
+                        + "' is a directory while a file was expected.");
                 System.exit(1);
             }
             /*

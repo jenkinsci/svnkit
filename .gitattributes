@@ -24,6 +24,7 @@ contrib/sequence/src/de/regnis/q/sequence/media/QSequenceIntMedia.java -text
 doc/examples/src/org/tmatesoft/svn/examples/repository/Commit.java -text
 doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java -text
 doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayRepositoryTree.java -text
+doc/examples/src/org/tmatesoft/svn/examples/repository/Export.java -text
 javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.properties eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.xml eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.subclipse.feature/feature.properties eol=lf
