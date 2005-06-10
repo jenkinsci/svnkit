@@ -237,11 +237,14 @@ public class SVNReporter implements ISVNReporterBaton {
             SVNStatusClient stClient = new SVNStatusClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, false));
             SVNUpdateClient upClient = new SVNUpdateClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, true));
             SVNCopyClient cpClient = new SVNCopyClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, true));
-            File src = new File("C:\\i\\test5\\branches");
+
+            SVNWCClient wcClient = new SVNWCClient(repositoryFactory, new SVNOptions(), new SVNCommandEventProcessor(System.out, System.err, true));
+            File revertDir = new File("C:\\i\\small\\new");
             File dst = new File("C:\\i\\test5\\branchesX");
             File dst2 = new File("C:\\i\\test5\\branchesY");
 //            cpClient.doCopy(src, dst, false, false);
-            cpClient.doCopy(src, dst2, false, true);
+            wcClient.doRevert(revertDir, false);
+
 //            SVNInfo info = wcClient.doInfo(dst, SVNRevision.WORKING);
             /*
             boolean verbose = true;

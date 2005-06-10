@@ -439,9 +439,7 @@ public class SVNWCClient extends SVNBasicClient {
                     if (!file.exists()) {
                         wcAccess.getAnchor().getEntries().deleteEntry(entry.getName());
                     } else {
-                        if (!recursive) {
-                            wcAccess.open(true, true, true);
-                        }
+                        wcAccess.open(true, true, true);
                         wcAccess.getAnchor().destroy(entry.getName(), false);
                     }
                 }
