@@ -407,8 +407,11 @@ public class SVNStatusEditor implements ISVNEditor {
         if (ignoredProperty == null) {
             return false;
         }
-        for(StringTokenizer tokens = new StringTokenizer(ignoredProperty, " \t\r\n"); tokens.hasMoreTokens();) {
+        for(StringTokenizer tokens = new StringTokenizer(ignoredProperty, "\r\n"); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
+            if (token.length() == 0) {
+                continue;
+            }
             if (SVNOptions.compileNamePatter(token).matcher(name).matches()) {
                 return true;
             }
