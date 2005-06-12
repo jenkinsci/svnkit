@@ -47,7 +47,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         mySwitchURL = switchURL;
         myTargetRevision = -1;
         
-        SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("");
+        SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", true);
         myTargetURL = entry.getURL();
         if (myTarget != null) {
             myTargetURL = PathUtil.append(myTargetURL, PathUtil.encode(myTarget));
@@ -72,7 +72,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         myCurrentDirectory = createDirectoryInfo(null, "", false);
         if (myTarget == null) {
             SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
-            SVNEntry entry = entries.getEntry("");
+            SVNEntry entry = entries.getEntry("", true);
             entry.setRevision(myTargetRevision);
             entry.setURL(myCurrentDirectory.URL);
             entry.setIncomplete(true);
@@ -93,7 +93,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         
         attributes.put(SVNLog.NAME_ATTR, name);
         log.addCommand(SVNLog.DELETE_ENTRY, attributes, false);
-        SVNEntry entry = myCurrentDirectory.getDirectory().getEntries().getEntry(name);
+        SVNEntry entry = myCurrentDirectory.getDirectory().getEntries().getEntry(name, true);
         SVNNodeKind kind = entry.getKind();
         boolean isDeleted = entry.isDeleted();
         if (path.equals(myTarget)) {
@@ -130,7 +130,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         } else if (".svn".equals(name)) {
             SVNErrorManager.error("svn: Failed to add directory '" + path + "': object of the same name as the administrative directory");
         } 
-        SVNEntry entry = parentDir.getEntries().getEntry(name);
+        SVNEntry entry = parentDir.getEntries().getEntry(name, true);
         if (entry != null) {
             if (entry.isScheduledForAddition()) {
                 SVNErrorManager.error(0, null);
@@ -157,7 +157,7 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, false);
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
-        SVNEntry entry = entries.getEntry("");
+        SVNEntry entry = entries.getEntry("", true);
         entry.setRevision(myTargetRevision);
         entry.setURL(myCurrentDirectory.URL);
         entry.setIncomplete(true);
@@ -181,7 +181,7 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         String name = PathUtil.tail(path);
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
-        SVNEntry entry = entries.getEntry(name);
+        SVNEntry entry = entries.getEntry(name, true);
         if (entry != null && entry.isScheduledForAddition()) {
             SVNErrorManager.error(0, null);
         }
@@ -206,7 +206,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         }
         SVNDirectory dir = myCurrentDirectory.getDirectory();
         SVNEntries entires = dir.getEntries();
-        for (Iterator ents = entires.entries(); ents.hasNext();) {
+        for (Iterator ents = entires.entries(true); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
             if (entry.isFile() || "".equals(entry.getName())) {
                 SVNProperties props = dir.getWCProperties(entry.getName());
@@ -288,7 +288,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     public void applyTextDelta(String baseChecksum) throws SVNException {
         SVNDirectory dir = myCurrentFile.getDirectory();
         SVNEntries entries = dir.getEntries();
-        SVNEntry entry = entries.getEntry(myCurrentFile.Name);
+        SVNEntry entry = entries.getEntry(myCurrentFile.Name, true);
         File baseFile = dir.getBaseFile(myCurrentFile.Name, false);
         if (entry != null && entry.getChecksum() != null) {
             if (baseChecksum == null) {
@@ -456,7 +456,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 command.clear();            
             } else {
                 SVNEntries entries = dir.getEntries();
-                SVNEntry entry = entries.getEntry(name);
+                SVNEntry entry = entries.getEntry(name, true);
                 String oldRevisionStr = ".r" + entry.getRevision();
                 String newRevisionStr = ".r" + myTargetRevision;
                 entries.close();
@@ -533,7 +533,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNDirectory dir = myWCAccess.getAnchor();
         if (myTarget != null){
             if (dir.getChildDirectory(myTarget) == null) {
-                SVNEntry entry = dir.getEntries().getEntry(myTarget);
+                SVNEntry entry = dir.getEntries().getEntry(myTarget, true);
                 boolean save = bumpEntry(dir.getEntries(), entry, mySwitchURL, myTargetRevision, false);
                 if (save) {
                     dir.getEntries().save(true);
@@ -549,9 +549,9 @@ public class SVNUpdateEditor implements ISVNEditor {
     
     private void bumpDirectory(SVNDirectory dir, String url) throws SVNException {
         SVNEntries entries = dir.getEntries();
-        boolean save = bumpEntry(entries, entries.getEntry(""), url, myTargetRevision, false);
+        boolean save = bumpEntry(entries, entries.getEntry("", true), url, myTargetRevision, false);
         Map childDirectories = new HashMap();
-        for (Iterator ents = entries.entries(); ents.hasNext();) {
+        for (Iterator ents = entries.entries(true); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
             if ("".equals(entry.getName())) {
                 continue;
@@ -607,10 +607,10 @@ public class SVNUpdateEditor implements ISVNEditor {
                 return;
             }
             SVNEntries entries = info.getDirectory().getEntries();
-            if (entries.getEntry("") == null) {
+            if (entries.getEntry("", true) == null) {
                 SVNErrorManager.error(0, null);
             }
-            for (Iterator ents = entries.entries(); ents.hasNext();) {
+            for (Iterator ents = entries.entries(true); ents.hasNext();) {
                 SVNEntry entry = (SVNEntry) ents.next();
                 if ("".equals(entry.getName())) {
                     entry.setIncomplete(false);
@@ -650,7 +650,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNEntries entries = null;
         try {
             entries = dir.getEntries();
-            SVNEntry entry = entries.getEntry(info.Name);
+            SVNEntry entry = entries.getEntry(info.Name, true);
             if (added && entry != null && entry.isScheduledForAddition()) {
                 SVNErrorManager.error(0, null);
             }
@@ -679,8 +679,8 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         if (mySwitchURL == null) {
             SVNDirectory dir = added ? null : info.getDirectory();
-            if (dir != null && dir.getEntries().getEntry("") != null) {
-                info.URL = dir.getEntries().getEntry("").getURL();
+            if (dir != null && dir.getEntries().getEntry("", true) != null) {
+                info.URL = dir.getEntries().getEntry("", true).getURL();
             }
             if (info.URL == null && parent != null) {
                 info.URL = PathUtil.append(parent.URL, PathUtil.encode(name));

@@ -414,7 +414,7 @@ public class SVNWCClient extends SVNBasicClient {
         Collection recursiveFiles = new ArrayList();
         try {
             wcAccess.open(true, false);
-            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName());
+            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), true);
             if (entry == null) {
                 SVNErrorManager.error("svn: '" + path + "' is not under version control");
             }
@@ -479,7 +479,7 @@ public class SVNWCClient extends SVNBasicClient {
                 wcAccess.getAnchor().getEntries().save(false);
                 if (kind == SVNNodeKind.DIR) {
                 	DebugLog.log("reverted, unscheduling target root entry: " + wcAccess.getTarget().getRoot());
-                    SVNEntry inner = wcAccess.getTarget().getEntries().getEntry("");                    
+                    SVNEntry inner = wcAccess.getTarget().getEntries().getEntry("", true);
                     if (inner != null) {
                     	// may be null if it was removed from wc.
 	                    inner.unschedule();
@@ -493,7 +493,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
             if (kind == SVNNodeKind.DIR && recursive) {
                 // iterate over targets and revert
-                for (Iterator ents = wcAccess.getTarget().getEntries().entries(); ents.hasNext();) {
+                for (Iterator ents = wcAccess.getTarget().getEntries().entries(true); ents.hasNext();) {
                     SVNEntry childEntry = (SVNEntry) ents.next();
                     if ("".equals(childEntry.getName())) {
                         continue;
@@ -527,7 +527,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNWCAccess wcAccess = createWCAccess(paths[i]);
             try {
                 wcAccess.open(true, false);
-                SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName());
+                SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), true);
                 if (entry == null || entry.isHidden()) {
                     SVNErrorManager.error("svn: '" + entry.getName() + "' is not under version control");
                 }
@@ -558,7 +558,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
             try {
                 wcAccess.open(true, false);
-                SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName());
+                SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), true);
                 entry.setLockToken(lock.getID());
                 entry.setLockComment(lock.getComment());
                 entry.setLockOwner(lock.getOwner());
@@ -605,7 +605,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNWCAccess wcAccess = createWCAccess(paths[i]);
             try {
                 wcAccess.open(true, false);
-                SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName());
+                SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), true);
                 if (entry == null || entry.isHidden()) {
                     SVNErrorManager.error("svn: '" + entry.getName() + "' is not under version control");
                 }
@@ -644,7 +644,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
             try {
                 wcAccess.open(true, false);
-                SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName());
+                SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), true);
                 entry.setLockToken(null);
                 entry.setLockComment(null);
                 entry.setLockOwner(null);
@@ -794,7 +794,7 @@ public class SVNWCClient extends SVNBasicClient {
     
     private static void collectInfo(SVNDirectory dir, String name, boolean recursive, ISVNInfoHandler handler) throws SVNException {
         SVNEntries entries = dir.getEntries();
-        SVNEntry entry = entries.getEntry(name);
+        SVNEntry entry = entries.getEntry(name, true);
         try {
             if (entry != null && !entry.isHidden()) {
                 if (entry.isFile()) {
@@ -815,7 +815,7 @@ public class SVNWCClient extends SVNBasicClient {
                 }
               
                 if (recursive) {
-                    for (Iterator ents = entries.entries(); ents.hasNext();) {
+                    for (Iterator ents = entries.entries(true); ents.hasNext();) {
                         SVNEntry childEntry = (SVNEntry) ents.next();
                         if ("".equals(childEntry.getName())) {
                             continue;
@@ -888,7 +888,7 @@ public class SVNWCClient extends SVNBasicClient {
     		DebugLog.log("processing file " + childFile + " in " + file);
             SVNFileType fileType = SVNFileType.getType(childFile);
             if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
-    			SVNEntry entry = childDir.getEntries().getEntry(childFile.getName());
+    			SVNEntry entry = childDir.getEntries().getEntry(childFile.getName(), true);
     			DebugLog.log("existing entry: " + entry);
     			if (force && entry != null && !entry.isScheduledForDeletion() && !entry.isDeleted()) {
         			DebugLog.log("this entry will not be added: " + entry.getName());
@@ -986,7 +986,7 @@ public class SVNWCClient extends SVNBasicClient {
 
     private void doGetLocalProperty(SVNDirectory anchor, String name, String propName, SVNRevision rev, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         SVNEntries entries = anchor.getEntries();
-        SVNEntry entry = entries.getEntry(name);
+        SVNEntry entry = entries.getEntry(name, true);
         if (entry == null || (rev == SVNRevision.WORKING && entry.isScheduledForDeletion())) {
             return;
         }
@@ -1032,7 +1032,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (!recursive) {
             return;
         }
-        for (Iterator ents = entries.entries(); ents.hasNext();) {
+        for (Iterator ents = entries.entries(true); ents.hasNext();) {
             SVNEntry childEntry = (SVNEntry) ents.next();
             if ("".equals(childEntry.getName())) {
                 continue;
@@ -1045,7 +1045,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNEntries entries = anchor.getEntries();
         DebugLog.log("anchor: " + anchor.getRoot());
         if (!"".equals(name)) {
-            SVNEntry entry = entries.getEntry(name);
+            SVNEntry entry = entries.getEntry(name, true);
             DebugLog.log("entry in anchor: " + entry);
             if (entry == null || (recursive && entry.isDeleted())) {
                 return;
@@ -1106,7 +1106,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (!recursive) {
             return;
         }
-        for (Iterator ents = entries.entries(); ents.hasNext();) {
+        for (Iterator ents = entries.entries(true); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
             if ("".equals(entry.getName())) {
                 continue;

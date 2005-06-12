@@ -77,7 +77,7 @@ public class SVNEntry implements Comparable {
     }
 
     public boolean isHidden() {
-        return (isDeleted() && !isScheduledForAddition() && !isScheduledForReplacement()) || isAbsent(); 
+        return (isDeleted() || isAbsent()) && !isScheduledForAddition() && !isScheduledForReplacement(); 
     }
 
     public boolean isFile() {

@@ -31,21 +31,21 @@ public class SVNReporter implements ISVNReporterBaton {
         try {
             SVNEntries targetEntries = myWCAccess.getTarget().getEntries();
             SVNEntries anchorEntries = myWCAccess.getAnchor().getEntries();
-            SVNEntry targetEntry = anchorEntries.getEntry(myWCAccess.getTargetName());
+            SVNEntry targetEntry = anchorEntries.getEntry(myWCAccess.getTargetName(), true);
 
             if (targetEntry == null || targetEntry.isHidden() || 
                     (targetEntry.isDirectory() && targetEntry.isScheduledForAddition())) {
                 DebugLog.log("deleted file reported");
-                long revision = anchorEntries.getEntry("").getRevision();
+                long revision = anchorEntries.getEntry("", true).getRevision();
                 reporter.setPath("", null, revision, targetEntry != null ? targetEntry.isIncomplete() : true);
                 reporter.deletePath("");
                 reporter.finishReport();
                 return;
             }
             long revision = targetEntry.isFile() ? targetEntry.getRevision() : 
-                targetEntries.getEntry("").getRevision();
+                targetEntries.getEntry("", true).getRevision();
             if (revision < 0) {                
-                revision = anchorEntries.getEntry("").getRevision();
+                revision = anchorEntries.getEntry("", true).getRevision();
             }
             reporter.setPath("", null, revision, targetEntry.isIncomplete());
             boolean missing = !targetEntry.isScheduledForDeletion() &&  
@@ -64,7 +64,7 @@ public class SVNReporter implements ISVNReporterBaton {
                 }
                 // report either linked path or entry path
                 String url = targetEntry.getURL();
-                SVNEntry parentEntry = targetEntries.getEntry("");
+                SVNEntry parentEntry = targetEntries.getEntry("", true);
                 String parentURL = parentEntry.getURL();
                 String expectedURL = PathUtil.append(parentURL, PathUtil.encode(targetEntry.getName()));
                 if (!expectedURL.equals(url)) {
@@ -84,7 +84,7 @@ public class SVNReporter implements ISVNReporterBaton {
     
     private void reportEntries(ISVNReporter reporter, SVNDirectory directory, String dirPath, boolean reportAll, boolean recursive) throws SVNException {
         SVNEntries entries = directory.getEntries();
-        long baseRevision = entries.getEntry("").getRevision();
+        long baseRevision = entries.getEntry("", true).getRevision();
 
         SVNExternalInfo[] externals = myWCAccess.addExternals(directory,
                 directory.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS));
@@ -92,7 +92,7 @@ public class SVNReporter implements ISVNReporterBaton {
             externals[i].setOldExternal(externals[i].getNewURL(), externals[i].getNewRevision());
         }
         
-        for (Iterator e = entries.entries(); e.hasNext();) {
+        for (Iterator e = entries.entries(true); e.hasNext();) {
             SVNEntry entry = (SVNEntry) e.next();
             if ("".equals(entry.getName())) {
                 continue;
@@ -149,7 +149,7 @@ public class SVNReporter implements ISVNReporterBaton {
                     SVNErrorManager.error(3, null);
                 }
                 SVNDirectory childDir = directory.getChildDirectory(entry.getName());
-                SVNEntry childEntry = childDir.getEntries().getEntry("");
+                SVNEntry childEntry = childDir.getEntries().getEntry("", true);
                 String url = childEntry.getURL();
                 if (reportAll) {
                     if (!url.equals(entry.getURL())) {
@@ -171,7 +171,7 @@ public class SVNReporter implements ISVNReporterBaton {
     
     private void restoreFile(SVNDirectory dir, String name) throws SVNException {
         SVNProperties props = dir.getProperties(name, false);
-        SVNEntry entry = dir.getEntries().getEntry(name);
+        SVNEntry entry = dir.getEntries().getEntry(name, true);
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         
         File src = dir.getBaseFile(name, false);

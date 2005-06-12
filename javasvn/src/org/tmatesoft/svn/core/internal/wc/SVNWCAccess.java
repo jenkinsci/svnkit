@@ -68,7 +68,7 @@ public class SVNWCAccess implements ISVNEventListener {
         if (target != null && anchor != null) {
             // both are versioned dirs, 
             // check whether target is switched.
-            SVNEntry targetInAnchor = anchor.getEntries().getEntry(name);
+            SVNEntry targetInAnchor = anchor.getEntries().getEntry(name, true);
             SVNDirectory anchorCopy = anchor;
             try {
                 if (targetInAnchor == null) {
@@ -78,8 +78,8 @@ public class SVNWCAccess implements ISVNEventListener {
                         target.setWCAccess(null, "");
                     }
                 } else {
-                        SVNEntry anchorEntry = anchor.getEntries().getEntry("");
-                        SVNEntry targetEntry = target.getEntries().getEntry("");
+                        SVNEntry anchorEntry = anchor.getEntries().getEntry("", true);
+                        SVNEntry targetEntry = target.getEntries().getEntry("", true);
                         String anchorURL = anchorEntry.getURL();
                         String targetURL = targetEntry.getURL();
                         if (anchorURL != null && targetURL != null) {
@@ -183,7 +183,7 @@ public class SVNWCAccess implements ISVNEventListener {
             return value;
         }
         String value = anchorEntries.getPropertyValue(myName, propertyName);
-        if (value == null && anchorEntries.getEntry(myName) == null) {
+        if (value == null && anchorEntries.getEntry(myName, true) == null) {
             // fetch from root.
             value = anchorEntries.getPropertyValue("", propertyName);
             if (value != null &&
@@ -411,7 +411,7 @@ public class SVNWCAccess implements ISVNEventListener {
     }
 
     private void visitDirectories(String parentPath, SVNDirectory root, ISVNDirectoryVisitor visitor) throws SVNException {
-        Iterator entries = root.getEntries().entries();
+        Iterator entries = root.getEntries().entries(true);
         while (entries.hasNext()) {
             SVNEntry entry = (SVNEntry) entries.next();
             if ("".equals(entry.getName())) {

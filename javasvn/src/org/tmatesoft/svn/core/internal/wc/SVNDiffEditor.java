@@ -69,7 +69,7 @@ public class SVNDiffEditor implements ISVNEditor {
         path = PathUtil.removeTrailingSlash(path);
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
         String name = PathUtil.tail(path);
-        SVNEntry entry = dir.getEntries().getEntry(name);
+        SVNEntry entry = dir.getEntries().getEntry(name, true);
         String displayPath = myDiffGenerator.getDisplayPath(new File(dir.getRoot(), name));
         if (entry != null && entry.isFile()) {
             SVNProperties baseProps = dir.getBaseProperties(name, false);
@@ -185,7 +185,7 @@ public class SVNDiffEditor implements ISVNEditor {
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
         String fileName = PathUtil.tail(myCurrentFile.myPath);
         if (dir != null) {
-            SVNEntry entry = dir.getEntries().getEntry(fileName);
+            SVNEntry entry = dir.getEntries().getEntry(fileName, true);
             if (entry != null && entry.getCopyFromURL() != null) {
                 myCurrentFile.myIsAdded = false;
             }
@@ -290,7 +290,7 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         SVNEntry entry = null;
         if (dir != null) {
-            entry = dir.getEntries().getEntry(fileName);
+            entry = dir.getEntries().getEntry(fileName, true);
         }
         String displayPath = myDiffGenerator.getDisplayPath(new File(myWCAccess.getAnchor().getRoot(), myCurrentFile.myPath));
         if (myCurrentFile.myIsAdded) {
@@ -382,7 +382,7 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         DebugLog.log("local diff: " + dir.getRoot());
         SVNEntries svnEntries = dir.getEntries();
-        for (Iterator entries = svnEntries.entries(); entries.hasNext();) {
+        for (Iterator entries = svnEntries.entries(true); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
             if (entry.isHidden()) {
                 continue;

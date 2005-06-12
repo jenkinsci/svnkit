@@ -117,7 +117,7 @@ public class SVNStatusEditor implements ISVNEditor {
             File file = myWCAccess.getAnchor().getFile(myTarget, false);
             if (file.isDirectory()) {
                 SVNEntries entries = myWCAccess.getAnchor().getEntries();
-                SVNEntry entry = entries.getEntry(myTarget);
+                SVNEntry entry = entries.getEntry(myTarget, true);
                 entries.close();
                 if (entry != null) {
                     reportStatus(myWCAccess.getTarget(), null, false, myIsRecursive);
@@ -149,7 +149,7 @@ public class SVNStatusEditor implements ISVNEditor {
             myExternalsMap.put(external.getPath(), external);
         }
         if (entryName != null) {
-            SVNEntry entry = entries.getEntry(entryName);
+            SVNEntry entry = entries.getEntry(entryName, true);
             if (entry != null) {
                 sendVersionedStatus(dir, entryName);
             } else if (dir.getFile(entryName, false).exists()) {
@@ -173,16 +173,15 @@ public class SVNStatusEditor implements ISVNEditor {
         for (int i = 0; ioFiles != null && i < ioFiles.length; i++) {
             File ioFile = ioFiles[i];
             String fileName = ioFile.getName();
-            if (".svn".equals(fileName) || entries.getEntry(fileName) != null) {
+            if (".svn".equals(fileName) || entries.getEntry(fileName, false) != null) {
                 continue;
             }
-            DebugLog.log("sending unversioned status (2) for " + fileName);
             sendUnversionedStatus(dir, fileName);
         }
         if (!ignoreRootEntry) {
             sendVersionedStatus(dir, "");
         }
-        for(Iterator ents = entries.entries(); ents.hasNext();) {
+        for(Iterator ents = entries.entries(false); ents.hasNext();) {
             SVNEntry childEntry = (SVNEntry) ents.next();
             if ("".equals(childEntry.getName())) {
                 continue;
@@ -206,7 +205,7 @@ public class SVNStatusEditor implements ISVNEditor {
         File file;
         SVNEntry parentEntry;
         SVNDirectory parentDir = null;
-        SVNEntry entry = dir.getEntries().getEntry(name);
+        SVNEntry entry = dir.getEntries().getEntry(name, true);
 
         if (entry.isDirectory() && !"".equals(name)) {
             // we are in the parent dir, with 'short' entry
@@ -234,18 +233,18 @@ public class SVNStatusEditor implements ISVNEditor {
         if (dir == parentDir) {
             path = PathUtil.append(dir.getPath(), name);
             file = dir.getFile(name, false);
-            entry = dir.getEntries().getEntry(name);
-            parentEntry = dir.getEntries().getEntry("");
+            entry = dir.getEntries().getEntry(name, true);
+            parentEntry = dir.getEntries().getEntry("", true);
         } else {
             path = dir.getPath();
             file = dir.getRoot();
-            entry = dir.getEntries().getEntry("");
+            entry = dir.getEntries().getEntry("", true);
             if (entry == null && entryInParent != null) {
                 // probably missing dir.
                 entry = entryInParent;
                 dir = parentDir;
             }
-            parentEntry = parentDir != null ? parentDir.getEntries().getEntry("") : null;
+            parentEntry = parentDir != null ? parentDir.getEntries().getEntry("", true) : null;
         }
         SVNFileType fileType = SVNFileType.getType(file);
         SVNStatus status = createStatus(path, file, dir, parentEntry, entry, false, fileType);

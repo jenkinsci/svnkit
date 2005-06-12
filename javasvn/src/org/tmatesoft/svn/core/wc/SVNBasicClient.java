@@ -280,7 +280,7 @@ public class SVNBasicClient implements ISVNEventListener {
         // add entry first.
         SVNDirectory dir = new SVNDirectory(null, "", dstPath);
         SVNEntries entries = dir.getEntries();
-        SVNEntry entry = entries.getEntry("");
+        SVNEntry entry = entries.getEntry("", true);
         if (entry == null) {
             entry = entries.addEntry("");
         }

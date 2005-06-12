@@ -32,7 +32,7 @@ public class SVNLogRunner {
         } else if (SVNLog.MODIFY_ENTRY.equals(name)) {
             SVNEntries entries = dir.getEntries();
             boolean modified = false;
-            if (entries.getEntry(fileName) == null) {
+            if (entries.getEntry(fileName, true) == null) {
                 entries.addEntry(fileName);
                 modified = true;
             }
@@ -64,7 +64,7 @@ public class SVNLogRunner {
             props.setPropertyValue(propName, propValue);
         } else if (SVNLog.DELETE_LOCK.equals(name)) {
             SVNEntries entries = dir.getEntries();
-            SVNEntry entry = entries.getEntry(fileName);
+            SVNEntry entry = entries.getEntry(fileName, true);
             if (entry != null) {
                 entry.setLockToken(null);
                 entry.setLockOwner(null);
@@ -127,8 +127,8 @@ public class SVNLogRunner {
             file.setLastModified(time.getTime());            
         } else if (SVNLog.MAYBE_READONLY.equals(name)) {
             SVNEntries entries = dir.getEntries();
-            if (entries.getEntry(fileName) != null &&
-                    entries.getEntry(fileName).getLockToken() == null) {
+            if (entries.getEntry(fileName, true) != null &&
+                    entries.getEntry(fileName, true).getLockToken() == null) {
                 try {
                     SVNFileUtil.setReadonly(new File(dir.getRoot(), fileName), true);
                 } catch (IOException e) {
@@ -146,7 +146,7 @@ public class SVNLogRunner {
             if (executable) {
                 SVNFileUtil.setExecutable(dst, true);
             }
-            SVNEntry entry = dir.getEntries().getEntry(dstName);
+            SVNEntry entry = dir.getEntries().getEntry(dstName, true);
             if (entry.getLockToken() == null && props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
                 try {
                     SVNFileUtil.setReadonly(dst, true);
@@ -169,7 +169,7 @@ public class SVNLogRunner {
             targetLabel = targetLabel == null ? ".working" : targetLabel;
             
             SVNProperties props = dir.getProperties(fileName, false);
-            SVNEntry entry = dir.getEntries().getEntry(fileName);
+            SVNEntry entry = dir.getEntries().getEntry(fileName, true);
             
             SVNStatusType mergeResult = dir.mergeText(fileName, leftPath, rightPath, targetLabel, leftLabel, rightLabel, false);
 

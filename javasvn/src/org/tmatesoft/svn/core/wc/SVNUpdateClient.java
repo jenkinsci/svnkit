@@ -69,7 +69,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         try {
             wcAccess.open(true, recursive);
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, recursive);
-            SVNRepository repos = createRepository(wcAccess.getAnchor().getEntries().getEntry("").getURL());
+            SVNRepository repos = createRepository(wcAccess.getAnchor().getEntries().getEntry("", true).getURL());
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             DebugLog.log("calling repos update");
             repos.update(revNumber, target, recursive, reporter, editor);
@@ -99,7 +99,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         try {
             wcAccess.open(true, recursive);
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url, recursive);
-            SVNRepository repos = createRepository(wcAccess.getAnchor().getEntries().getEntry("").getURL());
+            SVNRepository repos = createRepository(wcAccess.getAnchor().getEntries().getEntry("", true).getURL());
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             repos.update(url, revNumber, target, recursive, reporter, editor);
             
@@ -300,14 +300,14 @@ public class SVNUpdateClient extends SVNBasicClient {
             try {
                 wcAccess.open(true, recursive);
                 if (srcPath.isFile()) {
-                    SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(dstPath.getName());
+                    SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(dstPath.getName(), true);
                     if (entry == null || (revision == SVNRevision.WORKING && entry.isScheduledForDeletion()) || 
                             (entry.isScheduledForAddition() && revision == SVNRevision.BASE)) {
                         return -1;
                     }
                     copyVersionedFile(dstPath, wcAccess.getAnchor(), dstPath.getName(), revision, force, eolStyle);
                 } else {
-                    SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("");
+                    SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", true);
                     if (entry == null || (revision == SVNRevision.WORKING && entry.isScheduledForDeletion()) || (entry.isScheduledForAddition() && revision == SVNRevision.BASE)) {
                         return -1;
                     }
@@ -343,7 +343,7 @@ public class SVNUpdateClient extends SVNBasicClient {
     
     private void doRelocate(SVNDirectory dir, String targetName, String oldURL, String newURL, boolean recursive) throws SVNException {
         SVNEntries entries = dir.getEntries();
-        for(Iterator ents = entries.entries(); ents.hasNext();) {
+        for(Iterator ents = entries.entries(true); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
             if (targetName != null && !"".equals(targetName)) {
                 if (!targetName.equals(entry.getName())) {
@@ -469,7 +469,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         SVNFileUtil.deleteAll(dstPath);
         dstPath.mkdirs();
         SVNEntries entries = dir.getEntries();
-        for(Iterator ents = entries.entries(); ents.hasNext();) {
+        for(Iterator ents = entries.entries(true); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
             if ("".equals(entry.getName())) {
                 continue;
@@ -499,7 +499,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         SVNFileUtil.deleteAll(dstPath);
         Map keywordsMap = null;
         SVNProperties props = revision == SVNRevision.BASE ? dir.getBaseProperties(fileName, false) : dir.getProperties(fileName, false);
-        SVNEntry entry = dir.getEntries().getEntry(fileName);
+        SVNEntry entry = dir.getEntries().getEntry(fileName, true);
         String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
         String date = entry.getCommittedDate();
         byte[] eols = eol != null ? SVNTranslator.getEOL(eol) : null;

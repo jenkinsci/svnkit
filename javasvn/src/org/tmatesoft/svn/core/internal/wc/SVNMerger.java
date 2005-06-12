@@ -144,7 +144,7 @@ public class SVNMerger {
         File file = parentDir.getFile(name, false);
         String pathInURL = path;
         if (!file.exists()) {
-            SVNEntry entry = parentDir.getEntries().getEntry(name);
+            SVNEntry entry = parentDir.getEntries().getEntry(name, true);
             if (entry != null && !entry.isScheduledForDeletion()) {
                 // missing entry.
                 return SVNStatusType.OBSTRUCTED;
@@ -158,7 +158,7 @@ public class SVNMerger {
             }
             return SVNStatusType.CHANGED;
         } else if (file.isDirectory()) {
-            SVNEntry entry = parentDir.getEntries().getEntry(name);
+            SVNEntry entry = parentDir.getEntries().getEntry(name, true);
             if (entry == null || entry.isScheduledForDeletion()) {
                 if (myIsDryRun) {
                     myAddedPath = path + "/";
@@ -193,7 +193,7 @@ public class SVNMerger {
 
         String name = PathUtil.tail(path);
         File mine = parentDir.getFile(name, false);
-        SVNEntry entry = parentDir.getEntries().getEntry(name);
+        SVNEntry entry = parentDir.getEntries().getEntry(name, true);
         
         if (!mine.isFile() || entry == null || entry.isHidden()) {
             result[0] = SVNStatusType.MISSING;
@@ -274,7 +274,7 @@ public class SVNMerger {
         File mine = parentDir.getFile(name, false);
         
         if (!mine.exists()) {
-            SVNEntry entry = parentDir.getEntries().getEntry(name);
+            SVNEntry entry = parentDir.getEntries().getEntry(name, true);
             if (entry != null && !entry.isScheduledForDeletion()) {
                 result[0] = SVNStatusType.OBSTRUCTED;
                 return result;
@@ -290,7 +290,7 @@ public class SVNMerger {
         } else if (mine.isDirectory()) {
             result[0] = SVNStatusType.OBSTRUCTED;
         } else if (mine.isFile()) {
-            SVNEntry entry = parentDir.getEntries().getEntry(name);
+            SVNEntry entry = parentDir.getEntries().getEntry(name, true);
             if (entry == null || entry.isScheduledForDeletion()) {
                 result[0] = SVNStatusType.OBSTRUCTED;
             } else {
@@ -391,9 +391,9 @@ public class SVNMerger {
     private void addDirectory(SVNDirectory parentDir, String name, String copyFromURL, long copyFromRev, Map entryProps) throws SVNException {
         // 1. update or create entry in parent
         SVNEntries entries = parentDir.getEntries();
-        SVNEntry entry = entries.getEntry(name);
+        SVNEntry entry = entries.getEntry(name, true);
         String url = null;
-        String uuid = entries.getEntry("").getUUID();
+        String uuid = entries.getEntry("", true).getUUID();
         if (entry != null) {
             entry.loadProperties(entryProps);
             if (entry.isScheduledForDeletion()) {
@@ -405,7 +405,7 @@ public class SVNMerger {
             entry.loadProperties(entryProps);
             entry.setKind(SVNNodeKind.DIR);
             entry.scheduleForAddition();
-            url = PathUtil.append(entries.getEntry("").getURL(), PathUtil.encode(name));
+            url = PathUtil.append(entries.getEntry("", true).getURL(), PathUtil.encode(name));
         }
         entry.setCopied(true);
         entry.setCopyFromURL(copyFromURL);
@@ -415,18 +415,18 @@ public class SVNMerger {
         SVNDirectory childDir = parentDir.getChildDirectory(name);
         if (childDir == null) {
             childDir = parentDir.createChildDirectory(name, url, copyFromRev);
-            SVNEntry root = childDir.getEntries().getEntry("");
+            SVNEntry root = childDir.getEntries().getEntry("", true);
             root.scheduleForAddition();
             root.setUUID(uuid);
         } else {
             childDir.getWCProperties("").delete();
-            SVNEntry root = childDir.getEntries().getEntry("");
+            SVNEntry root = childDir.getEntries().getEntry("", true);
             if (root.isScheduledForDeletion()) {
                 root.scheduleForReplacement();
             }
         }
         entries = childDir.getEntries();
-        SVNEntry rootEntry = entries.getEntry("");
+        SVNEntry rootEntry = entries.getEntry("", true);
         rootEntry.setCopyFromURL(copyFromURL);
         rootEntry.setCopyFromRevision(copyFromRev);
         rootEntry.setCopied(true);
@@ -436,7 +436,7 @@ public class SVNMerger {
     private void addFile(SVNDirectory parentDir, String name, String filePath, Map baseProps, String copyFromURL, long copyFromRev,
             Map entryProps) throws SVNException {
         SVNEntries entries = parentDir.getEntries();
-        SVNEntry entry = entries.getEntry(name);
+        SVNEntry entry = entries.getEntry(name, true);
         if (entry != null) {
             if (entry.isScheduledForDeletion()) {
                 entry.scheduleForReplacement();
@@ -452,7 +452,7 @@ public class SVNMerger {
         entry.setCopied(true);
         entry.setCopyFromURL(copyFromURL);
         entry.setCopyFromRevision(copyFromRev);
-        String url = PathUtil.append(entries.getEntry("").getURL(), PathUtil.encode(name));
+        String url = PathUtil.append(entries.getEntry("", true).getURL(), PathUtil.encode(name));
         entries.save(false);
         parentDir.getWCProperties(name).delete();
         

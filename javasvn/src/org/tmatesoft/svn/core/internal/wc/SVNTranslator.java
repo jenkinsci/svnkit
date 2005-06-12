@@ -40,7 +40,7 @@ public class SVNTranslator {
         byte[] eols = getEOL(eolStyle);
         if (keywords != null) {
             if (expand) {
-                SVNEntry entry = dir.getEntries().getEntry(name);
+                SVNEntry entry = dir.getEntries().getEntry(name, true);
                 String url = entry.getURL();
                 String author = entry.getAuthor();
                 String date = entry.getCommittedDate();

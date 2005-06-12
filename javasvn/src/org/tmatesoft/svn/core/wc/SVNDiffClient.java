@@ -28,8 +28,6 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -82,7 +80,7 @@ public class SVNDiffClient extends SVNBasicClient {
         getDiffGenerator().init(rootPath, rootPath);
         if (rM == SVNRevision.BASE || rM == SVNRevision.WORKING || !rM.isValid()) {
             // URL->WC diff.
-            String wcURL = wcAccess.getAnchor().getEntries().getEntry("").getURL();
+            String wcURL = wcAccess.getAnchor().getEntries().getEntry("", true).getURL();
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             
             SVNRepository repos = createRepository(wcURL);
@@ -123,7 +121,7 @@ public class SVNDiffClient extends SVNBasicClient {
         getDiffGenerator().init(rootPath, rootPath);
         if (rN == SVNRevision.BASE || rN == SVNRevision.WORKING || !rN.isValid()) {
             // URL->WC diff.
-            String wcURL = wcAccess.getAnchor().getEntries().getEntry("").getURL();
+            String wcURL = wcAccess.getAnchor().getEntries().getEntry("", true).getURL();
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             
             SVNRepository repos = createRepository(wcURL);
@@ -297,7 +295,7 @@ public class SVNDiffClient extends SVNBasicClient {
             if (rN == SVNRevision.BASE && rM == SVNRevision.WORKING) {
                 // case 1.1
                 if (!"".equals(wcAccess.getTargetName())) {
-                    if (wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName()) == null) {
+                    if (wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), true) == null) {
                         SVNErrorManager.error("svn: path '" + originalPath.getAbsolutePath() + "' is not under version control");
                     }
                 }
@@ -467,7 +465,7 @@ public class SVNDiffClient extends SVNBasicClient {
         String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
         
         // get wc url and revision
-        url = wcAccess.getAnchor().getEntries().getEntry("").getURL();
+        url = wcAccess.getAnchor().getEntries().getEntry("", true).getURL();
         String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
         SVNRevision wcRevNumber = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
         
