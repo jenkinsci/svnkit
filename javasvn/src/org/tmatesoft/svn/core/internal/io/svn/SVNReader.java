@@ -282,7 +282,8 @@ class SVNReader {
                             } catch (IOException e1) {
                             } catch (SVNException e2) {}
                         }
-                        throw new SVNException("svnserve reported an error", (SVNError[]) errors.toArray(new SVNError[errors.size()]));
+                        String message = errors.isEmpty() ? "svnserver reported an error" : ((SVNError) errors.get(0)).getMessage();
+                        throw new SVNException(message);
                     } else if (!"success".equals(word)) {
                         throw new SVNException("network data doesn't match template, 'success' or 'failure' expected, '" + word + "' read");
                     }

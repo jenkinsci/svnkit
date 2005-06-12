@@ -432,7 +432,7 @@ public class SVNFileUtil {
         File[] files = srcDir.listFiles();
         for (int i = 0; files != null && i < files.length; i++) {
             File file = files[i];
-            if (file.getName().equals("..") || file.getName().equals(".")) {
+            if (file.getName().equals("..") || file.getName().equals(".") || file.equals(dstDir)) {
                 continue;
             }
             SVNFileType fileType = SVNFileType.getType(file);

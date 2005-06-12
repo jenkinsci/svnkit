@@ -449,11 +449,13 @@ public class SVNDirectory {
 
                 File src = getBaseFile(name, false);
                 File dst = getFile(name, false);
+                if (!src.exists()) {
+                    SVNErrorManager.error("svn: Error restoring text for '" + dst + "'");
+                }
                 SVNTranslator.translate(this, name, SVNFileUtil.getBasePath(src), SVNFileUtil.getBasePath(dst), true, true);
                 
                 boolean executable = wcProps.getPropertyValue(SVNProperty.EXECUTABLE) != null;
                 boolean needsLock = wcProps.getPropertyValue(SVNProperty.NEEDS_LOCK) != null;
-                DebugLog.log("needs lock: " + needsLock);
                 if (executable) {
                     SVNFileUtil.setExecutable(dst, true);
                 }

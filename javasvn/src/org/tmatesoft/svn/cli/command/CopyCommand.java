@@ -59,9 +59,15 @@ public class CopyCommand extends SVNCommand {
         if (matchTabsInPath(absoluteDstPath, err) || matchTabsInPath(absoluteSrcPath, err)) {
             return;
         }
+
+        SVNRevision srcRevision = SVNRevision.WORKING;
+        if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
+            srcRevision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
+        }
+
         SVNCopyClient updater = new SVNCopyClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
-        updater.doCopy(new File(absoluteSrcPath), null, SVNRevision.WORKING, new File(absoluteDstPath), null, SVNRevision.WORKING, force, false, null);
+        updater.doCopy(new File(absoluteSrcPath), null, srcRevision, new File(absoluteDstPath), null, SVNRevision.WORKING, force, false, null);
     }
 
     private void runRemote(PrintStream out, PrintStream err) throws SVNException {

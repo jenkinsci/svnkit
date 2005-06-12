@@ -20,15 +20,16 @@ import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNOptions;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.DebugLog;
 
 public class SVNWCAccess implements ISVNEventListener {
-    
+
     private SVNDirectory myAnchor;
     private SVNDirectory myTarget;
     private String myName;
     private SVNOptions myOptions;
     private ISVNEventListener myDispatcher;
-    
+
     private Map myDirectories;
     private Map myExternals;
 
@@ -48,7 +49,7 @@ public class SVNWCAccess implements ISVNEventListener {
         }
         SVNDirectory anchor = parentFile != null ? new SVNDirectory(null, "", parentFile) : null;
         SVNDirectory target = file.isDirectory() ? new SVNDirectory(null, name, file) : null;
-        
+
         if (anchor == null || !anchor.isVersioned()) {
             // parent is not versioned, do not use it.
             anchor = null;
@@ -67,7 +68,7 @@ public class SVNWCAccess implements ISVNEventListener {
         if (target != null && anchor != null) {
             // both are versioned dirs, 
             // check whether target is switched.
-            SVNEntry targetInAnchor = anchor.getEntries().getEntry(name);            
+            SVNEntry targetInAnchor = anchor.getEntries().getEntry(name);
             SVNDirectory anchorCopy = anchor;
             try {
                 if (targetInAnchor == null) {
@@ -84,16 +85,16 @@ public class SVNWCAccess implements ISVNEventListener {
                         if (anchorURL != null && targetURL != null) {
                             String urlName = PathUtil.encode(targetInAnchor.getName());
                             String expectedURL = PathUtil.append(anchorURL, urlName);
-                            if (!expectedURL.equals(targetURL) || 
+                            if (!expectedURL.equals(targetURL) ||
                                     !anchorURL.equals(PathUtil.removeTail(targetURL))) {
                                 // switched, do not use anchor.
-                                anchor = null;                        
+                                anchor = null;
                                 if (target != null) {
                                     target.setWCAccess(null, "");
                                 }
-                            } 
+                            }
                         }
-                } 
+                }
             } finally {
                 // close entries.
                 if (anchor == null && anchorCopy != null) {
@@ -110,16 +111,16 @@ public class SVNWCAccess implements ISVNEventListener {
             SVNErrorManager.error("svn: '" + file + "' is not under version control");
         }
         return new SVNWCAccess(
-                anchor != null ? anchor : target, 
-                target != null ? target : anchor, 
+                anchor != null ? anchor : target,
+                target != null ? target : anchor,
                 anchor != null ? name : "");
     }
-    
+
     public static boolean isVersionedDirectory(File path) {
         SVNDirectory dir = new SVNDirectory(null, null, path);
         return dir.isVersioned();
     }
-    
+
     public SVNWCAccess(SVNDirectory anchor, SVNDirectory target, String name) {
         myAnchor = anchor;
         myTarget = target;
@@ -129,15 +130,15 @@ public class SVNWCAccess implements ISVNEventListener {
             myTarget.setWCAccess(this, myName);
         }
     }
-    
+
     public void setOptions(SVNOptions options) {
-        myOptions = options; 
+        myOptions = options;
     }
-    
+
     public void setEventDispatcher(ISVNEventListener dispatcher) {
         myDispatcher = dispatcher;
     }
-    
+
     public SVNOptions getOptions() {
         if (myOptions == null) {
             myOptions = new SVNOptions();
@@ -156,7 +157,7 @@ public class SVNWCAccess implements ISVNEventListener {
     public SVNDirectory getTarget() {
         return myTarget;
     }
-    
+
     public String getTargetEntryProperty(String propertyName) throws SVNException {
         SVNEntries anchorEntries = getAnchor().getEntries();
         SVNEntries targetEntries = getTarget().getEntries();
@@ -172,7 +173,7 @@ public class SVNWCAccess implements ISVNEventListener {
                 if (value == null) {
                     // no entry in parent.
                     value = anchorEntries.getPropertyValue("", propertyName);
-                    if (value != null && 
+                    if (value != null &&
                             (SVNProperty.URL.equals(propertyName)|| SVNProperty.COPYFROM_URL.equals(propertyName))) {
                         // special handling for URLs.
                         value = PathUtil.append(value, PathUtil.encode(myName));
@@ -185,15 +186,15 @@ public class SVNWCAccess implements ISVNEventListener {
         if (value == null && anchorEntries.getEntry(myName) == null) {
             // fetch from root.
             value = anchorEntries.getPropertyValue("", propertyName);
-            if (value != null && 
+            if (value != null &&
                     (SVNProperty.URL.equals(propertyName)|| SVNProperty.COPYFROM_URL.equals(propertyName))) {
                 // special handling for URLs.
                 value = PathUtil.append(value, PathUtil.encode(myName));
             }
-        } 
+        }
         return value;
     }
-    
+
     public SVNDirectory getDirectory(String path) {
         if (myDirectories == null || path == null) {
             return null;
@@ -203,7 +204,7 @@ public class SVNWCAccess implements ISVNEventListener {
         }
         return (SVNDirectory) myDirectories.get(path);
     }
-    
+
     public SVNDirectory[] getChildDirectories(String path) {
         if (path.startsWith("/")) {
             path = path.substring(1);
@@ -224,7 +225,7 @@ public class SVNWCAccess implements ISVNEventListener {
         }
         return (SVNDirectory[]) dirs.toArray(new SVNDirectory[dirs.size()]);
     }
-    
+
     public boolean hasDirectory(String path) {
         if (myDirectories == null || path == null) {
             return false;
@@ -234,7 +235,7 @@ public class SVNWCAccess implements ISVNEventListener {
         }
         return myDirectories.containsKey(path);
     }
-    
+
     public void open(boolean lock, boolean recursive) throws SVNException {
         open(lock, false, recursive);
     }
@@ -249,7 +250,7 @@ public class SVNWCAccess implements ISVNEventListener {
                     myAnchor.lock();
                 }
             }
-            myDirectories.put("", myAnchor);            
+            myDirectories.put("", myAnchor);
             if (myTarget != myAnchor) {
                 if (lock) {
                     if (!(stealLock && myTarget.isLocked())) {
@@ -257,7 +258,7 @@ public class SVNWCAccess implements ISVNEventListener {
                     }
                 }
                 myDirectories.put(myName, myTarget);
-            }        
+            }
             if (recursive) {
                 visitDirectories(myTarget == myAnchor ? "" : myName, myTarget, new ISVNDirectoryVisitor() {
                     public void visit(String path, SVNDirectory dir) throws SVNException {
@@ -303,7 +304,7 @@ public class SVNWCAccess implements ISVNEventListener {
         myTarget.dispose();
         myDirectories = null;
     }
-    
+
     public SVNExternalInfo[] addExternals(SVNDirectory directory, String externals) throws SVNException {
         if (externals == null) {
             return null;
@@ -319,7 +320,7 @@ public class SVNWCAccess implements ISVNEventListener {
             SVNExternalInfo info = (SVNExternalInfo) exts.next();
             if (!result.contains(info) && directory.getPath().equals(info.getOwnerPath())) {
                 info.setNewExternal(null, -1);
-            }            
+            }
         }
         return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
     }
@@ -337,7 +338,7 @@ public class SVNWCAccess implements ISVNEventListener {
             String url = null;
             String path = null;
             long rev = -1;
-            List parts = new ArrayList(4); 
+            List parts = new ArrayList(4);
             for(StringTokenizer tokens = new StringTokenizer(line, " \t"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken().trim();
                 parts.add(token);
@@ -358,7 +359,7 @@ public class SVNWCAccess implements ISVNEventListener {
                         continue;
                     }
                 }
-                url = (String) parts.get(2);                
+                url = (String) parts.get(2);
             } else if (parts.size() == 4 && "-r".equals(parts.get(1))) {
                 String revStr = parts.get(2).toString();
                 if (!"HEAD".equals(revStr)) {
@@ -368,7 +369,7 @@ public class SVNWCAccess implements ISVNEventListener {
                         continue;
                     }
                 }
-                url = (String) parts.get(3);                
+                url = (String) parts.get(3);
             }
             if (path!= null && url != null) {
                 path = PathUtil.removeLeadingSlash(path);
@@ -377,38 +378,38 @@ public class SVNWCAccess implements ISVNEventListener {
                     path = "/" + path;
                 }
                 url = PathUtil.removeTrailingSlash(url);
-                
-                SVNExternalInfo info = new SVNExternalInfo("", null, path, url, rev); 
+
+                SVNExternalInfo info = new SVNExternalInfo("", null, path, url, rev);
                     //addExternal(directory, path, url, rev);
                 result.add(info);
-            }            
+            }
         }
         return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
     }
-    
+
     private SVNExternalInfo addExternal(SVNDirectory dir, String path, String url, long revision) {
         if (myExternals == null) {
             myExternals = new TreeMap();
         }
-        
+
         SVNExternalInfo info = (SVNExternalInfo) myExternals.get(path);
         if (info == null) {
             // this means adding new external, either during report or during update,
             info = new SVNExternalInfo(dir.getPath(), new File(getAnchor().getRoot(), path), path, null, -1);
             myExternals.put(path, info);
-        } 
+        }
         // set it as new, report will also set old values, update will left it as is.
         info.setNewExternal(url, revision);
         return info;
     }
-    
+
     public Iterator externals() {
         if (myExternals == null) {
             return Collections.EMPTY_LIST.iterator();
         }
         return myExternals.values().iterator();
     }
-    
+
     private void visitDirectories(String parentPath, SVNDirectory root, ISVNDirectoryVisitor visitor) throws SVNException {
         Iterator entries = root.getEntries().entries();
         while (entries.hasNext()) {
@@ -423,9 +424,9 @@ public class SVNWCAccess implements ISVNEventListener {
             if (dir.isDirectory() && entry.getKind() == SVNNodeKind.DIR) {
                 String path = PathUtil.append(parentPath, dir.getName());
                 path = PathUtil.removeLeadingSlash(path);
-                SVNDirectory svnDir = new SVNDirectory(this, 
-                        "".equals(parentPath) ? dir.getName() : 
-                    PathUtil.append(parentPath, dir.getName()), 
+                SVNDirectory svnDir = new SVNDirectory(this,
+                        "".equals(parentPath) ? dir.getName() :
+                    PathUtil.append(parentPath, dir.getName()),
                     dir);
                 if (svnDir.isVersioned()) {
                     visitDirectories(path, svnDir, visitor);
@@ -434,8 +435,8 @@ public class SVNWCAccess implements ISVNEventListener {
             }
         }
     }
-    
-    
+
+
     private interface ISVNDirectoryVisitor {
         public void visit(String path, SVNDirectory dir) throws SVNException;
     }
@@ -446,8 +447,8 @@ public class SVNWCAccess implements ISVNEventListener {
     public SVNDirectory addDirectory(String path, File file, boolean recursive, boolean lock) throws SVNException {
         if (myDirectories != null) {
             SVNDirectory dir = new SVNDirectory(this, path, file);
-            myDirectories.put(path, dir);
-            if (lock) {
+            DebugLog.log("adding dir: " + path + " (" + file + ")");
+            if (myDirectories.put(path, dir) == null && lock && !dir.isLocked()) {
                 dir.lock();
             }
             if (recursive) {
@@ -469,7 +470,7 @@ public class SVNWCAccess implements ISVNEventListener {
         }
         return null;
     }
-    
+
     public void removeDirectory(String path) throws SVNException {
         SVNDirectory dir = (SVNDirectory) myDirectories.remove(path);
         if (dir != null) {
@@ -479,7 +480,7 @@ public class SVNWCAccess implements ISVNEventListener {
             dir.unlock();
         }
     }
-    
+
     public String toString() {
         StringBuffer result = new StringBuffer();
         result.append("anchor: '" + getAnchor().getRoot().toString() + "'\n");
@@ -494,7 +495,7 @@ public class SVNWCAccess implements ISVNEventListener {
 
     public void svnEvent(SVNEvent event, double progress) {
         if (myDispatcher != null) {
-            try { 
+            try {
                 myDispatcher.svnEvent(event, progress);
             } catch (Throwable th) {
             }
