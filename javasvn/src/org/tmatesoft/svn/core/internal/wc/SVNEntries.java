@@ -277,4 +277,11 @@ public class SVNEntries {
             myEntries.remove(new SVNEntry(this, name));
         }
     }
+
+    Map getEntryMap(String name) {
+        if (myData != null && name != null) {
+            return (Map) myData.get(name);
+        }
+        return null;
+    }
 }

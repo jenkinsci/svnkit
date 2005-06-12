@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Collections;
 
 public class SVNStatusEditor implements ISVNEditor {
 
@@ -247,7 +248,7 @@ public class SVNStatusEditor implements ISVNEditor {
             parentEntry = parentDir != null ? parentDir.getEntries().getEntry("", true) : null;
         }
         SVNFileType fileType = SVNFileType.getType(file);
-        SVNStatus status = createStatus(path, file, dir, parentEntry, entry, false, fileType);
+        SVNStatus status = createStatus(path, file, dir, parentEntry, entry, false, fileType, entry != null ? Collections.unmodifiableMap(entry.asMap()) : null);
 
         if (status != null) {
             myHandler.handleStatus(status);
@@ -257,7 +258,7 @@ public class SVNStatusEditor implements ISVNEditor {
     private void sendUnversionedStatus(SVNDirectory parent, String name) throws SVNException {
         boolean ignored = isIgnored(parent, name);
         String path = "".equals(name) ? parent.getPath() : PathUtil.append(parent.getPath(), name);
-        SVNStatus status = createStatus(path, parent.getFile(name, false), parent, null, null, ignored, null);
+        SVNStatus status = createStatus(path, parent.getFile(name, false), parent, null, null, ignored, null, null);
         if (myExternalsMap.containsKey(path)) {
             status.markExternal();
         }
@@ -269,7 +270,7 @@ public class SVNStatusEditor implements ISVNEditor {
     }
 
     private SVNStatus createStatus(String path, File file, SVNDirectory entryDir, SVNEntry parentEntry, SVNEntry entry /* this could be dir entry in parent*/,
-                                   boolean isIgnored, SVNFileType pathKind) throws SVNException {
+                                   boolean isIgnored, SVNFileType pathKind, Map allEntryProperties) throws SVNException {
         pathKind = pathKind == null || pathKind == SVNFileType.UNKNOWN ?
                 SVNFileType.getType(file) : pathKind;
 
@@ -285,7 +286,7 @@ public class SVNStatusEditor implements ISVNEditor {
                     textStatus, SVNStatusType.STATUS_NONE,
                     SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
                     false, false, false,
-                    null, null, null, null, null, null, null, null);
+                    null, null, null, null, null, null, null, null, null);
         }
         SVNStatusType textStatus = SVNStatusType.STATUS_NORMAL;
         SVNStatusType propStatus = SVNStatusType.STATUS_NONE;
@@ -395,7 +396,8 @@ public class SVNStatusEditor implements ISVNEditor {
                 textStatus, propStatus,
                 SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
                 isLocked, entry.isCopied(), isSwitched,
-                conflictNew, conflictOld, conflictWrk, propReject, entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()), null, localLock);
+                conflictNew, conflictOld, conflictWrk, propReject, entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()), null, localLock,
+                allEntryProperties);
     }
 
     private boolean isIgnored(SVNDirectory dir, String name) throws SVNException {

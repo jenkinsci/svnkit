@@ -77,7 +77,7 @@ public class SVNEntry implements Comparable {
     }
 
     public boolean isHidden() {
-        return (isDeleted() || isAbsent()) && !isScheduledForAddition() && !isScheduledForReplacement(); 
+        return (isDeleted() || isAbsent()) && !isScheduledForAddition() && !isScheduledForReplacement();
     }
 
     public boolean isFile() {
@@ -294,5 +294,9 @@ public class SVNEntry implements Comparable {
 
     public String getSchedule() {
         return myEntries.getPropertyValue(myName, SVNProperty.SCHEDULE);
+    }
+
+    public Map asMap() {
+        return myEntries.getEntryMap(myName);
     }
 } 

@@ -5,6 +5,7 @@ import org.tmatesoft.svn.core.io.SVNLock;
 
 import java.io.File;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -42,13 +43,16 @@ public class SVNStatus {
     private SVNLock myRemoteLock;
     private SVNLock myLocalLock;
 
+    private Map myEntryProperties;
+
     public SVNStatus(String URL, File file, SVNNodeKind kind, SVNRevision revision,
                      SVNRevision committedRevision, Date committedDate, String author,
                      SVNStatusType contentsStatus, SVNStatusType propertiesStatus, SVNStatusType remoteContentsStatus, SVNStatusType remotePropertiesStatus,
                      boolean isLocked, boolean isCopied, boolean isSwitched,
                      File conflictNewFile, File conflictOldFile, File conflictWrkFile, File projRejectFile,
                      String copyFromURL, SVNRevision copyFromRevision,
-                     SVNLock remoteLock, SVNLock localLock) {
+                     SVNLock remoteLock, SVNLock localLock,
+                     Map entryProperties) {
         myURL = URL;
         myFile = file;
         myKind = kind == null ? SVNNodeKind.NONE : kind;
@@ -71,6 +75,7 @@ public class SVNStatus {
         myRemoteLock = remoteLock;
         myLocalLock = localLock;
         myPropRejectFile = projRejectFile;
+        myEntryProperties = entryProperties;
     }
 
     public String getURL() {
@@ -161,7 +166,11 @@ public class SVNStatus {
         return myLocalLock;
     }
 
+    public Map getEntryProperties() {
+        return myEntryProperties;
+    }
+
     public void markExternal() {
-        myContentsStatus = SVNStatusType.STATUS_EXTERNAL; 
+        myContentsStatus = SVNStatusType.STATUS_EXTERNAL;
     }
 }
