@@ -32,7 +32,6 @@ public class SVNFileType {
     }
 
     public static SVNFileType getType(File file) {
-        DebugLog.log("type for file: " + file);
         if (file == null) {
             return SVNFileType.UNKNOWN;
         }
@@ -44,13 +43,10 @@ public class SVNFileType {
             canonicalPath = file.getAbsolutePath();
         }
         if (!file.exists()) {
-            DebugLog.log("File doesn't exists");
             File[] children = file.getParentFile().listFiles();
             for (int i = 0; children != null && i < children.length; i++) {
                 File child = children[i];
-                DebugLog.log("testing child: " + child);
                 if (child.getName().equals(file.getName())) {
-                    DebugLog.log("checking if symlink: " + file);
                     if (SVNFileUtil.isSymlink(file)) {
                            return SVNFileType.SYMLINK;
                     } 

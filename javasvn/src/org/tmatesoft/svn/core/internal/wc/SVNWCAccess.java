@@ -279,6 +279,8 @@ public class SVNWCAccess implements ISVNEventListener {
             if (myDirectories != null) {
                 myDirectories = null;
             }
+            myAnchor.dispose();
+            myTarget.dispose();
             return;
         }
         myAnchor.getEntries().close();
@@ -297,6 +299,8 @@ public class SVNWCAccess implements ISVNEventListener {
                 }
             });
         }
+        myAnchor.dispose();
+        myTarget.dispose();
         myDirectories = null;
     }
     
@@ -405,16 +409,6 @@ public class SVNWCAccess implements ISVNEventListener {
         return myExternals.values().iterator();
     }
     
-    public void visitDirectories(ISVNCrawler visitor) throws SVNException {
-        for (Iterator dirs = myDirectories.keySet().iterator(); dirs.hasNext();) {
-            String path = (String) dirs.next();
-            SVNDirectory dir = (SVNDirectory) myDirectories.get(path);
-            if (dir != null) {
-                visitor.visitDirectory(this, dir);
-            }
-        }
-    }
-    
     private void visitDirectories(String parentPath, SVNDirectory root, ISVNDirectoryVisitor visitor) throws SVNException {
         Iterator entries = root.getEntries().entries();
         while (entries.hasNext()) {
@@ -446,10 +440,31 @@ public class SVNWCAccess implements ISVNEventListener {
         public void visit(String path, SVNDirectory dir) throws SVNException;
     }
 
-    public SVNDirectory addDirectory(String path, File file) {
+    public SVNDirectory addDirectory(String path, File file) throws SVNException {
+        return addDirectory(path, file, false, false);
+    }
+    public SVNDirectory addDirectory(String path, File file, boolean recursive, boolean lock) throws SVNException {
         if (myDirectories != null) {
             SVNDirectory dir = new SVNDirectory(this, path, file);
             myDirectories.put(path, dir);
+            if (lock) {
+                dir.lock();
+            }
+            if (recursive) {
+                File[] dirs = file.listFiles();
+                for (int i = 0; i < dirs.length; i++) {
+                    File childDir = dirs[i];
+                    if (".svn".equals(childDir)) {
+                        continue;
+                    }
+                    SVNFileType fType = SVNFileType.getType(childDir);
+                    if (fType == SVNFileType.DIRECTORY && SVNWCAccess.isVersionedDirectory(childDir)) {
+                        // recurse
+                        String childPath = PathUtil.append(path, childDir.getName());
+                        addDirectory(childPath, childDir, recursive, lock);
+                    }
+                }
+            }
             return dir;
         }
         return null;

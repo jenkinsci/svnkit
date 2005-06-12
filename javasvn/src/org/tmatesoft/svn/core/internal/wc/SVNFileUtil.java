@@ -429,7 +429,6 @@ public class SVNFileUtil {
         if (!dstDir.exists()) {
             dstDir.mkdirs();
         }
-        // put everething from srcdir to dstdir.
         File[] files = srcDir.listFiles();
         for (int i = 0; files != null && i < files.length; i++) {
             File file = files[i];
@@ -437,18 +436,22 @@ public class SVNFileUtil {
                 continue;
             }
             SVNFileType fileType = SVNFileType.getType(file);
+            File dst = new File(dstDir, file.getName());
+
             if (fileType == SVNFileType.FILE) {
-                copy(file, new File(dstDir, file.getName()), false);
+                boolean executable = isExecutable(file);
+                copy(file, dst, false);
+                if (executable) {
+                    setExecutable(dst, executable);
+                }
             } else if (fileType == SVNFileType.DIRECTORY) {
-                File dst = new File(dstDir, file.getName());
                 copyDirectory(file, dst);
                 if (file.isHidden()) {
                     setHidden(dst, true);
                 }
             } else if (fileType == SVNFileType.SYMLINK) {
-                // special case
+                // special case, copy of symlink.
             }
-
         }
     }
 
