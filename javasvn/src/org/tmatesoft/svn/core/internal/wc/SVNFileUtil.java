@@ -103,7 +103,6 @@ public class SVNFileUtil {
             execCommand(new String[] {"chmod", executable ? "ugo+x" : "ugo-x", file.getAbsolutePath()});
         } catch (Throwable th) {
             DebugLog.error(th);
-
         }
     }
 

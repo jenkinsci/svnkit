@@ -147,6 +147,7 @@ public class SVNStatusEditor implements ISVNEditor {
         SVNExternalInfo[] externals = SVNWCAccess.parseExternals(dir.getPath(), dir.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS));
         for (int i = 0; i < externals.length; i++) {
             SVNExternalInfo external = externals[i];
+            System.out.println("external collected: " + external.getPath());
             myExternalsMap.put(external.getPath(), external);
         }
         if (entryName != null) {
@@ -258,6 +259,7 @@ public class SVNStatusEditor implements ISVNEditor {
     private void sendUnversionedStatus(SVNDirectory parent, String name) throws SVNException {
         boolean ignored = isIgnored(parent, name);
         String path = "".equals(name) ? parent.getPath() : PathUtil.append(parent.getPath(), name);
+        path = PathUtil.removeLeadingSlash(path);
         SVNStatus status = createStatus(path, parent.getFile(name, false), parent, null, null, ignored, null, null);
         if (myExternalsMap.containsKey(path)) {
             status.markExternal();
