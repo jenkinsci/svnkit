@@ -147,7 +147,6 @@ public class SVNStatusEditor implements ISVNEditor {
         SVNExternalInfo[] externals = SVNWCAccess.parseExternals(dir.getPath(), dir.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS));
         for (int i = 0; i < externals.length; i++) {
             SVNExternalInfo external = externals[i];
-            System.out.println("external collected: " + external.getPath());
             myExternalsMap.put(external.getPath(), external);
         }
         if (entryName != null) {

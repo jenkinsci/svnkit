@@ -57,7 +57,7 @@ public class SVNStatusClient extends SVNBasicClient {
             for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
                 String externalPath = (String) paths.next();
                 File externalFile = new File(wcAccess.getAnchor().getRoot(), externalPath);
-                if (!externalFile.exists() || !externalFile.isDirectory()) {
+                if (!externalFile.exists() || !externalFile.isDirectory() || !SVNWCUtil.isWorkingCopyRoot(externalFile, true)) {
                      continue;
                 }
                 svnEvent(SVNEventFactory.createStatusExternalEvent(wcAccess, externalPath), ISVNEventListener.UNKNOWN);

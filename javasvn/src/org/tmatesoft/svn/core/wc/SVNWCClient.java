@@ -32,6 +32,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -76,7 +78,6 @@ public class SVNWCClient extends SVNBasicClient {
         }
         SVNWCAccess wcAccess = createWCAccess(path);
         if ("".equals(wcAccess.getTargetName()) || wcAccess.getTarget() != wcAccess.getAnchor()) {
-            // this is dir.
             return;
         }
         String name = wcAccess.getTargetName();
@@ -125,7 +126,45 @@ public class SVNWCClient extends SVNBasicClient {
             }
             long revNumber = getRevisionNumber(path, revision);
             long pegRevisionNumber = getRevisionNumber(path, pegRevision);
-            doGetFileContents(url, SVNRevision.create(pegRevisionNumber), SVNRevision.create(revNumber), expandKeywords, dst);
+            if (!expandKeywords) {
+                doGetFileContents(url, SVNRevision.create(pegRevisionNumber), SVNRevision.create(revNumber), expandKeywords, dst);
+            } else {
+                File tmpFile = SVNFileUtil.createUniqueFile(new File(path.getParentFile(), ".svn/tmp/text-base"), path.getName(), ".tmp");
+                File tmpFile2 = null;
+                OutputStream os = null;
+                InputStream is = null;
+                try {
+                    os = SVNFileUtil.openFileForWriting(tmpFile);
+                    doGetFileContents(url, SVNRevision.create(pegRevisionNumber), SVNRevision.create(revNumber), false, os);
+                    SVNFileUtil.closeFile(os);
+                    os = null;
+                    // translate
+                    tmpFile2 = SVNFileUtil.createUniqueFile(new File(path.getParentFile(), ".svn/tmp/text-base"), path.getName(), ".tmp");
+                    boolean special = wcAccess.getAnchor().getProperties(path.getName(), false).getPropertyValue(SVNProperty.SPECIAL) != null;
+                    if (special) {
+                        tmpFile2 = tmpFile;
+                    } else {
+                        SVNTranslator.translate(wcAccess.getAnchor(), path.getName(), SVNFileUtil.getBasePath(tmpFile), SVNFileUtil.getBasePath(tmpFile2), true, false);
+                    }
+                    // cat tmp file
+                    is = SVNFileUtil.openFileForReading(tmpFile2);
+                    int r;
+                    while((r = is.read()) >= 0) {
+                        dst.write(r);
+                    }
+                } catch (IOException e) {
+                    SVNErrorManager.error("svn: " + e.getMessage());
+                } finally {
+                    SVNFileUtil.closeFile(os);
+                    SVNFileUtil.closeFile(is);
+                    if (tmpFile != null) {
+                        tmpFile.delete();
+                    }
+                    if (tmpFile2 != null) {
+                        tmpFile2.delete();
+                    }
+                }
+            }
         }
     }
 
@@ -151,6 +190,7 @@ public class SVNWCClient extends SVNBasicClient {
             os.close();
             os = null;
             if (expandKeywords) {
+                // use props at committed (peg) revision, not those.
                 String keywords = (String) properties.get(SVNProperty.KEYWORDS);
                 String eol = (String) properties.get(SVNProperty.EOL_STYLE);
                 byte[] eolBytes = eol != null ? SVNTranslator.getEOL(eol) : null;
@@ -1061,7 +1101,7 @@ public class SVNWCClient extends SVNBasicClient {
                     }
                     if (!SVNTranslator.checkNewLines(wcFile)) {
                         SVNErrorManager.error("svn: File '" + wcFile + "' has inconsistent newlines");
-                    }                    
+                    }
                 }
                 props.setPropertyValue(propName, propValue);
 
@@ -1102,7 +1142,7 @@ public class SVNWCClient extends SVNBasicClient {
             doSetLocalProperty(anchor, entry.getName(), propName, propValue, force, recursive, handler);
         }
     }
-    
+
     private static String validatePropertyName(String name) throws SVNException {
         if (name == null || name.trim().length() == 0) {
             SVNErrorManager.error("svn: Bad property name: '" + name + "'");
@@ -1119,7 +1159,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         return name;
     }
-    
+
     private static String validatePropertyValue(String name, String value, boolean force) throws SVNException {
         DebugLog.log("validating: " + name + "=" + value);
         if (value == null) {
@@ -1147,7 +1187,7 @@ public class SVNWCClient extends SVNBasicClient {
                         DebugLog.log("throwing exception");
                         SVNErrorManager.error("svn: Invalid external definition: " + value);
                     }
-                            
+
                 }
             }
         } else if (SVNProperty.KEYWORDS.equals(name)) {
@@ -1158,7 +1198,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         return value;
     }
-    
+
     private static final Collection REVISION_PROPS = new HashSet();
     static {
         REVISION_PROPS.add("svn:author");
@@ -1170,7 +1210,7 @@ public class SVNWCClient extends SVNBasicClient {
 
 
     private static class LockInfo {
-        
+
         public LockInfo(File file, SVNRevision rev) {
             myFile = file;
             myRevision = rev;
@@ -1180,7 +1220,7 @@ public class SVNWCClient extends SVNBasicClient {
             myFile = file;
             myToken = token;
         }
-        
+
         private File myFile;
         private SVNRevision myRevision;
         private String myToken;
