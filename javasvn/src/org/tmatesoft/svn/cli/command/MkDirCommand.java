@@ -12,22 +12,17 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.IOException;
+import org.tmatesoft.svn.cli.SVNArgument;
+import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
+
+import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import org.tmatesoft.svn.cli.SVNArgument;
-import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.SVNCommitInfo;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.SVNUtil;
+import java.util.Iterator;
 
 /**
  * @author TMate Software Ltd.
@@ -48,36 +43,27 @@ public class MkDirCommand extends SVNCommand {
             if (matchTabsInPath(getCommandLine().getPathAt(i), err)) {
                 continue;
             }
-            paths.add(getCommandLine().getPathAt(i));
+            paths.add(new File(getCommandLine().getPathAt(i)));
         }
         if (paths.isEmpty()) {
             return;
         }
-
-        final String[] pathsArray = (String[]) paths.toArray(new String[paths.size()]);
-        final String root = PathUtil.getFSCommonRoot(pathsArray);
-        DebugLog.log("MKDIR root: " + root);
-
-        final ISVNWorkspace ws = createWorkspace(root);
-        ws.addWorkspaceListener(new SVNWorkspaceAdapter() {
-            public void modified(String path, int kind) {
-                try {
-                    path = convertPath(root, ws, path);
-                } catch (IOException e) {}
-
-                println(out, "A  " + path);
+        SVNWCClient wcClient = new SVNWCClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+        boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
+        for (Iterator files = paths.iterator(); files.hasNext();) {
+            File file = (File) files.next();
+            try {
+                wcClient.doAdd(file, false, true, false, recursive);
+            } catch (SVNException e) {
+                err.println(e.getMessage());
             }
-        });
-
-        for (int i = 0; i < pathsArray.length; i++) {
-            ws.add(SVNUtil.getWorkspacePath(ws, pathsArray[i]), true, false);
         }
     }
 
     private void createRemoteDirectories(final PrintStream out, PrintStream err) throws SVNException {
-        Collection urls = new ArrayList();
+        final Collection urls = new ArrayList();
         for (int i = 0; i < getCommandLine().getURLCount(); i++) {
-            if (matchTabsInPath(PathUtil.decode(getCommandLine().getURL(i)), err)) {
+            if (matchTabsInPath(getCommandLine().getURL(i), err)) {
                 continue;
             }
             urls.add(getCommandLine().getURL(i));
@@ -85,35 +71,13 @@ public class MkDirCommand extends SVNCommand {
         if (urls.isEmpty()) {
             return;
         }
-
-        String[] urlsArray = (String[]) urls.toArray(new String[urls.size()]);
-        final String root = PathUtil.getCommonRoot(urlsArray);
-        DebugLog.log("MKDIR root: " + root);
-
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
-        for (int i = 0; i < urlsArray.length; i++) {
-            String dir = urlsArray[i].substring(root.length());
-            dir = PathUtil.removeLeadingSlash(dir);
-            urlsArray[i] = dir;
+        SVNCommitClient client = new SVNCommitClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+        String[] paths = (String[]) urls.toArray(new String[urls.size()]);
+        long revision = client.doMkDir(paths, message == null ? "" : message);
+        if (revision >= 0) {
+            out.println();
+            out.println("Committed revision " + revision + ".");
         }
-        ISVNEditor editor = null;
-        SVNRepository repository = createRepository(root);
-        editor = repository.getCommitEditor(message, null);
-
-        final SVNCommitInfo info;
-        try {
-            editor.openRoot(-1);
-            for (int i = 0; i < urlsArray.length; i++) {
-                final String path = PathUtil.decode(urlsArray[i]);
-                DebugLog.log("MKDIR adding dir: " + path);
-                editor.addDir(path, null, -1);
-            }
-            editor.closeDir();
-        } finally {
-            info = editor.closeEdit();
-        }
-
-        println(out);
-        println(out, "Committed revision " + info.getNewRevision() + ".");
     }
 }

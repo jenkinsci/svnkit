@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -80,6 +82,66 @@ public class SVNPathUtil {
             return new File(commonPath);
         }
         return null;
+    }
+
+    public static String condenceURLs(String[] urls, Collection condencedPaths, boolean removeRedundantURLs) {
+        if (urls == null || urls.length == 0) {
+            return null;
+        }
+        if (urls.length == 1) {
+            return urls[0];
+        }
+        String rootURL = urls[0];
+        for (int i = 0; i < urls.length; i++) {
+            String url = urls[i];
+            rootURL = getCommonURLAncestor(rootURL, url);
+        }
+        if (condencedPaths != null && removeRedundantURLs) {
+            for (int i = 0; i < urls.length; i++) {
+                String url1 = urls[i];
+                if (url1 == null) {
+                    continue;
+                }
+                for (int j = 0; j < urls.length; j++) {
+                    String url2 = urls[j];
+                    if (url2 == null) {
+                        continue;
+                    }
+                    String common = getCommonURLAncestor(url1, url2);
+                    if ("".equals(common) || common == null) {
+                        continue;
+                    }
+                    if (common.equals(url1)) {
+                        urls[i] = null;
+                    } else if (common.equals(url2)) {
+                        urls[j] = null;
+                    }
+                }
+            }
+            for (int j = 0; j < urls.length; j++) {
+                String url = urls[j];
+                if (url != null && url.equals(rootURL)) {
+                    urls[j] = null;
+                }
+            }
+        }
+
+        if (condencedPaths != null) {
+            for (int i = 0; i < urls.length; i++) {
+                String url = urls[i];
+                if (url == null) {
+                    continue;
+                }
+                if (rootURL != null && !"".equals(rootURL)) {
+                    url = url.substring(rootURL.length());
+                    if (url.startsWith("/")) {
+                        url = url.substring(1);
+                    }
+                }
+                condencedPaths.add(url);
+            }
+        }
+        return rootURL;
     }
 
     public static String validateFilePath(String path) {
