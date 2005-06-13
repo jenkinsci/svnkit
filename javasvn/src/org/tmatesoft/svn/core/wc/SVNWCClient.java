@@ -1040,6 +1040,7 @@ public class SVNWCClient extends SVNBasicClient {
                     doSetLocalProperty(dir, "", propName, propValue, force, recursive, handler);
                 }
             } else if (entry.getKind() == SVNNodeKind.FILE) {
+                DebugLog.log("setting file property: " + propName + "=" + propValue);
                 if (SVNProperty.IGNORE.equals(propName) || SVNProperty.EXTERNALS.equals(propName)) {
                     if (!recursive) {
                         SVNErrorManager.error("svn: setting '" + propName + "' property is not supported for files");
@@ -1049,6 +1050,7 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNProperties props = anchor.getProperties(name, false);
                 File wcFile = anchor.getFile(name, false);
                 if (SVNProperty.EXECUTABLE.equals(propName)) {
+                    DebugLog.log("making file executable: " + wcFile);
                     SVNFileUtil.setExecutable(wcFile, propValue != null);
                 }
                 if (!force && SVNProperty.EOL_STYLE.equals(propName) && propValue != null) {
