@@ -284,24 +284,18 @@ public class SVNWCAccess implements ISVNEventListener {
             myTarget.dispose();
             return;
         }
-        myAnchor.getEntries().close();
+        myAnchor.dispose();
         myAnchor.unlock();
-        myDirectories.remove("");
         if (myTarget != myAnchor) {
-            myTarget.getEntries().close();
+            myTarget.dispose();
             myTarget.unlock();
-            myDirectories.remove(myName);
         }
         if (recursive) {
-            visitDirectories(myTarget == myAnchor ? "" : myName, myTarget, new ISVNDirectoryVisitor() {
-                public void visit(String path, SVNDirectory dir) throws SVNException {
-                    dir.unlock();
-                    myDirectories.remove(path);
-                }
-            });
+            for (Iterator dirs = myDirectories.values().iterator(); dirs.hasNext();) {
+                SVNDirectory directory = (SVNDirectory) dirs.next();
+                directory.unlock();
+            }
         }
-        myAnchor.dispose();
-        myTarget.dispose();
         myDirectories = null;
     }
 
