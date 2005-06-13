@@ -1,11 +1,8 @@
 package org.tmatesoft.svn.examples.repository;
 
-import java.io.File;
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -25,15 +22,14 @@ import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
-import org.tmatesoft.svn.core.SVNProperty;
-
+import org.tmatesoft.svn.util.PathUtil;
 /*
  * This is an example of how to commit several types of changes to a repository:
  * a new directory with a file, modification to a file, copying a directory into
  * a branch, deletion of the directory and its entries.
  * 
  * Main aspects of performing a commit with the help of ISVNEditor:
- * 0)initialize the library;
+ * 0)initialize the library (this is done in setupLibrary() method);
  * 
  * 1)create an SVNRepository to the location (represented by an
  * SVNRepositoryLocation) that will be the root for committing - that is all
@@ -122,9 +118,9 @@ public class Commit {
         String url = "svn://localhost/rep";
         String name = "userName";
         String password = "userPassword";
-        String dirPath = "test";
-        String fileName = "myTemp.txt";
-        String copyPath = "testCopy";
+        String dirPath = "/test";
+        String filePath = "/test/myTemp.txt";
+        String copyPath = "/testCopy";
         String commitMessage = "adding a new directory with a file!";
         /*
          * This is the text of the file to be created in the repository.
@@ -162,7 +158,7 @@ public class Commit {
             /*
              * Obtains a file name
              */
-            fileName = (args.length >= 5) ? args[4] : fileName;
+            filePath = (args.length >= 5) ? args[4] : filePath;
             /*
              * Obtains a path where the existing directory will be copied to 
              * (branched).
@@ -215,7 +211,7 @@ public class Commit {
         try {
             /*
              * Checks up if the current path really corresponds to a directory.
-             * If don't the program exits. SVNNodeKind is that one who says what
+             * If doesn't the program exits. SVNNodeKind is that one who says what
              * is located at a path in a revision. -1 means the latest revision.
              */
             nodeKind = repository.checkPath("", -1);
@@ -250,7 +246,7 @@ public class Commit {
         System.out.println("Repository latest revision (before committing): "
                 + latestRevision);
         System.out.println("");
-
+        
         ISVNEditor editor = null;
 
         /*
@@ -265,7 +261,7 @@ public class Commit {
          */
         try {
             editor = repository.getCommitEditor(commitMessage,
-                    new MySVNWorkspaceMediator());
+                    new WorkspaceMediator());
         } catch (SVNException svne) {
             System.err
                     .println("error while getting a commit editor for the location '"
@@ -278,8 +274,7 @@ public class Commit {
          * Adding a new directory containing a file to the repository.
          */
         try {
-            commitInfo = addDir(editor, dirPath, dirPath + "/" + fileName,
-                    binaryData);
+            commitInfo = addDir(editor, dirPath, filePath, binaryData);
         } catch (SVNException svne) {
             try {
                 System.err
@@ -306,7 +301,7 @@ public class Commit {
          */
         try {
             editor = repository.getCommitEditor(commitMessage,
-                    new MySVNWorkspaceMediator());
+                    new WorkspaceMediator());
         } catch (SVNException svne) {
             System.err
                     .println("error while getting a commit editor for the location '"
@@ -318,8 +313,7 @@ public class Commit {
          * Changing the file contents.
          */
         try {
-            commitInfo = modifyFile(editor, dirPath, dirPath + "/" + fileName,
-                    changedBinaryData);
+            commitInfo = modifyFile(editor, dirPath, filePath, changedBinaryData);
         } catch (SVNException svne) {
             try {
                 System.err.println("failed to modify the file due to errors: "
@@ -357,7 +351,7 @@ public class Commit {
          */
         try {
             editor = repository.getCommitEditor(commitMessage,
-                    new MySVNWorkspaceMediator());
+                    new WorkspaceMediator());
         } catch (SVNException svne) {
             System.err
                     .println("error while getting a commit editor for the location '"
@@ -399,7 +393,7 @@ public class Commit {
          */
         try {
             editor = repository.getCommitEditor(commitMessage,
-                    new MySVNWorkspaceMediator());
+                    new WorkspaceMediator());
         } catch (SVNException svne) {
             System.err
                     .println("error while getting a commit editor for the location '"
@@ -740,7 +734,7 @@ public class Commit {
      * ISVNEditor to write file delta that will be supplied to the repository
      * server.
      */
-    private static class MySVNWorkspaceMediator implements
+    private static class WorkspaceMediator implements
             ISVNWorkspaceMediator {
         private Map myTmpFiles = new HashMap();
 
@@ -760,10 +754,9 @@ public class Commit {
          */
         public OutputStream createTemporaryLocation(String path, Object id)
                 throws IOException {
-            File tmpFile = File.createTempFile("javasvn.", ".tmp");
-            myTmpFiles.put(id, tmpFile);
-            tmpFile.deleteOnExit();
-            return new FileOutputStream(tmpFile);
+            ByteArrayOutputStream tempStorageOS = new ByteArrayOutputStream();
+            myTmpFiles.put(id, tempStorageOS);
+            return tempStorageOS;
         }
 
         /*
@@ -771,20 +764,18 @@ public class Commit {
          * by id to read the delta.
          */
         public InputStream getTemporaryLocation(Object id) throws IOException {
-            File file = (File) myTmpFiles.get(id);
-            if (file != null) {
-                return new FileInputStream(file);
-            }
-            return null;
+            ByteArrayInputStream tempStorageIS = new ByteArrayInputStream(((ByteArrayOutputStream)myTmpFiles.get(id)).toByteArray());
+            return tempStorageIS;
         }
 
         /*
-         * Gets the length of the temporary file delta storage identified by id.
+         * Gets the length of the delta that was written to the temporary storage 
+         * identified by id.
          */
         public long getLength(Object id) throws IOException {
-            File file = (File) myTmpFiles.get(id);
-            if (file != null) {
-                return file.length();
+            ByteArrayOutputStream tempStorageOS = (ByteArrayOutputStream)myTmpFiles.get(id);
+            if (tempStorageOS != null) {
+                return tempStorageOS.size();
             }
             return 0;
         }
@@ -793,9 +784,9 @@ public class Commit {
          * Deletes the temporary file delta storage identified by id.
          */
         public void deleteTemporaryLocation(Object id) {
-            File file = (File) myTmpFiles.remove(id);
-            if (file != null) {
-                file.delete();
+            ByteArrayOutputStream tempStorageOS = (ByteArrayOutputStream)myTmpFiles.remove(id);
+            if (tempStorageOS != null) {
+                tempStorageOS = null;
             }
         }
 

@@ -249,7 +249,7 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
      * corrupted, an exception is thrown.
      * 
      * @param  textChecksum		a server's checksum for the modified file 
-     * @throws SVNException		server's and client's checksums differ
+     * @throws SVNException		if server's and client's checksums differ
      */
     public void closeFile(String textChecksum) throws SVNException;
     

@@ -67,6 +67,9 @@ public class DisplayFile {
          * Default values:
          */
         String url = "http://72.9.228.230:8080/svn/jsvn/trunk";
+        /*
+         * Authentication is generally not required for reading operations
+         */
         String name = "anonymous";
         String password = "anonymous";
         String filePath = "www/usage.html";
@@ -82,18 +85,18 @@ public class DisplayFile {
              */
             url = (args.length >= 1) ? args[0] : url;
             /*
+             * Obtains a file path
+             */
+            filePath = (args.length >= 2) ? args[1] : filePath;
+            /*
              * Obtains an account name (will be used to authenticate the user to
              * the server)
              */
-            name = (args.length >= 2) ? args[1] : name;
+            name = (args.length >= 3) ? args[2] : name;
             /*
              * Obtains a password
              */
-            password = (args.length >= 3) ? args[2] : password;
-            /*
-             * Obtains a file path
-             */
-            filePath = (args.length >= 4) ? args[3] : filePath;
+            password = (args.length >= 4) ? args[3] : password;
         }
         SVNRepositoryLocation location = null;
         SVNRepository repository = null;
@@ -144,7 +147,7 @@ public class DisplayFile {
         try {
             /*
              * Checks up if the specified path really corresponds to a file. If
-             * don't the program exits. SVNNodeKind is that one who says what is
+             * doesn't the program exits. SVNNodeKind is that one who says what is
              * located at a path in a revision. -1 means the latest revision.
              */
             SVNNodeKind nodeKind = repository.checkPath(filePath, -1);

@@ -65,6 +65,9 @@ public class DisplayRepositoryTree {
          * default values:
          */
         String url = "http://72.9.228.230:8080/svn/jsvn/branches/jorunal";
+        /*
+         * Authentication is generally not required for reading operations
+         */
         String name = "anonymous";
         String password = "anonymous";
 
@@ -130,7 +133,7 @@ public class DisplayRepositoryTree {
         try {
             /*
              * Checks up if the specified path/to/repository part of the URL
-             * really corresponds to a directory. If don't the program exits.
+             * really corresponds to a directory. If doesn't the program exits.
              * SVNNodeKind is that one who says what is located at a path in a
              * revision. -1 means the latest revision.
              */

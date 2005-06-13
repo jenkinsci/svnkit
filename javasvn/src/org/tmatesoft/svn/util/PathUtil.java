@@ -21,7 +21,14 @@ import java.util.StringTokenizer;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 
 /**
- * @author TMate Software Ltd.
+ * This class is a utility which aim is to help in work with path strings.
+ * The <code>PathUtility</code> is used along with strings denoting relative
+ * paths composed of entry names separated by '/' character (for example 
+ * "/some/directory/some/file/").
+ *   
+ * @version 1.0
+ * @author  TMate Software Ltd.
+ * 
  */
 public class PathUtil {
     /**
@@ -30,12 +37,20 @@ public class PathUtil {
      * <p>
      * That is if the path is one of the following: <code>null</code>, "" or "/".
      * 
-     * @param path 	a path to be checked  
+     * @param  path 	a path string that is to be checked up
+     * @return 			<code>true</code> - if the path string contains no entries,
+     * 					<code>false</code> otherwise 
      */
     public static final boolean isEmpty(String path) {
         return path == null || "".equals(path.trim()) || "/".equals(path.trim());
     }
-    
+    /**
+     * Returns a substring of the original <code>path</code> string that doesn't
+     * contain the last entry name. For example: 
+     * <code>removeTail(<i>"some/path/to/entry/"</i>)</code>
+     * @param path
+     * @return
+     */
     public static final String removeTail(String path) {
         if (isEmpty(path)) {
             return null;
