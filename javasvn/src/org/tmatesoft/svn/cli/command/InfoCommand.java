@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.Date;
 import java.util.StringTokenizer;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
@@ -34,7 +36,9 @@ import org.tmatesoft.svn.util.TimeUtil;
  * @author TMate Software Ltd.
  */
 public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
-    
+
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+
     private PrintStream myOut;
     private File myBaseFile;
 
@@ -118,7 +122,7 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
             print("Last Changed Rev: " + info.getCommittedRevision(), myOut);            
         }
         if (info.getCommittedDate() != null) {
-            print("Last Changed Date: " + TimeUtil.formatDate(info.getCommittedDate()), myOut);            
+            print("Last Changed Date: " + formatDate(info.getCommittedDate()), myOut);
         }
         if (!info.isRemote()) {
             if (info.getTextTime() != null) {
@@ -167,14 +171,13 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
     }
     
     private static String formatDate(Date date) {
-        String str = TimeUtil.formatDate(date);
-        return TimeUtil.toHumanDate(str);
+        return DATE_FORMAT.format(date);
     }
     
     private static int getLinesCount(String str) {
         int count = 0;
         for(StringTokenizer lines = new StringTokenizer(str, "\n"); lines.hasMoreTokens();) {
-            String token = lines.nextToken();
+            lines.nextToken();
             count++;
         }
         return count;

@@ -30,7 +30,6 @@ public class CheckoutCommand extends SVNCommand {
 
 	public void run(final PrintStream out, final PrintStream err) throws SVNException {
 		final String url = getCommandLine().getURL(0);
-		final SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
 
 		String path;
         if (getCommandLine().getPathCount() > 0) {
@@ -40,7 +39,7 @@ public class CheckoutCommand extends SVNCommand {
         }
 
         long revision = parseRevision(getCommandLine(), null, null);
-        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), 
+        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), getOptions(),
                 new SVNCommandEventProcessor(out, err, true));
         if (getCommandLine().getURLCount() == 1) {
             updater.doCheckout(url, new File(path), SVNRevision.UNDEFINED, SVNRevision.create(revision), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
