@@ -28,17 +28,8 @@ public class CatCommand extends SVNCommand {
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         SVNWCClient wcClient = new SVNWCClient(getCredentialsProvider());
-        SVNRevision revision = SVNRevision.WORKING;
-        if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
-            revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
-        }
-        for (int index = 0; index < getCommandLine().getURLCount(); index++) {
-            final String url = getCommandLine().getURL(index);
-            SVNRevision pegRevision = getCommandLine().getPegRevision(index);
-            wcClient.doGetFileContents(url, pegRevision, revision, true, out);
-        }
-        
-        revision = SVNRevision.HEAD;
+        SVNRevision revision = SVNRevision.BASE;
+
         if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
             revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         }
@@ -46,6 +37,18 @@ public class CatCommand extends SVNCommand {
             final String absolutePath = getCommandLine().getPathAt(index);
             SVNRevision pegRevision = getCommandLine().getPathPegRevision(index);
             wcClient.doGetFileContents(new File(absolutePath), pegRevision, revision, true, out);
+            out.flush();
+        }
+
+        revision = SVNRevision.HEAD;
+        if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
+            revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
+        }
+        for (int index = 0; index < getCommandLine().getURLCount(); index++) {
+            final String url = getCommandLine().getURL(index);
+            SVNRevision pegRevision = getCommandLine().getPegRevision(index);
+            wcClient.doGetFileContents(url, pegRevision, revision, true, out);
+            out.flush();
         }
     }
 }

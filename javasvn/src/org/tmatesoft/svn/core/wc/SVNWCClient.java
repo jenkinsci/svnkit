@@ -100,6 +100,8 @@ public class SVNWCClient extends SVNBasicClient {
                         SVNTranslator.translate(wcAccess.getAnchor(), name,
                             name,
                             SVNFileUtil.getBasePath(file), false, false);
+                    } else {
+                        file = wcAccess.getAnchor().getFile(name, false);
                     }
                 }
             } finally {
@@ -111,6 +113,7 @@ public class SVNWCClient extends SVNBasicClient {
                             dst.write(r);
                         }
                     } catch (IOException e) {
+                        DebugLog.error(e);
                     } finally  {
                         SVNFileUtil.closeFile(is);
                     }
