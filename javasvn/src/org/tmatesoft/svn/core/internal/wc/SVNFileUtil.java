@@ -97,14 +97,13 @@ public class SVNFileUtil {
 
     public static void setExecutable(File file, boolean executable) {
         if (isWindows || file == null || !file.exists()) {
-            DebugLog.log("file doesn't exists");
             return;
         }
         try {
-            execCommand(new String[] {"chmod", executable ? "u+x" : "u-x", file.getAbsolutePath()});
-//            Runtime.getRuntime().exec("chmod ugo" + (executable ? "+" : "-") + "x \"" + file.getAbsolutePath() + "\"");
+            execCommand(new String[] {"chmod", executable ? "ugo+x" : "ugo-x", file.getAbsolutePath()});
         } catch (Throwable th) {
             DebugLog.error(th);
+
         }
     }
 

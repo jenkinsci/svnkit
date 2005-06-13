@@ -1050,7 +1050,6 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNProperties props = anchor.getProperties(name, false);
                 File wcFile = anchor.getFile(name, false);
                 if (SVNProperty.EXECUTABLE.equals(propName)) {
-                    DebugLog.log("making file executable: " + wcFile);
                     SVNFileUtil.setExecutable(wcFile, propValue != null);
                 }
                 if (!force && SVNProperty.EOL_STYLE.equals(propName) && propValue != null) {
