@@ -767,7 +767,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (rootEntry == null || rootEntry.getKind() == SVNNodeKind.NONE) {
             SVNErrorManager.error("'" + url + "' non-existent in revision " + revNum);
         }
-        String reposRoot = repos.getRepositoryRoot();
+        String reposRoot = repos.getRepositoryRoot(true);
         String reposUUID = repos.getRepositoryUUID();
         // 1. get locks for this dir and below.
         SVNLock[] locks = null;
