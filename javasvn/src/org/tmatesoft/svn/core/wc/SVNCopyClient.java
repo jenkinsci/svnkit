@@ -643,6 +643,7 @@ public class SVNCopyClient extends SVNBasicClient {
         // copy props, props base and text-base
         File srcTextBase = srcAccess.getAnchor().getBaseFile(srcAccess.getTargetName(), false);
         SVNProperties srcProps = srcAccess.getAnchor().getProperties(srcAccess.getTargetName(), false);
+        boolean executable = srcProps.getPropertyValue(SVNProperty.EXECUTABLE) != null;
         SVNProperties srcBaseProps = srcAccess.getAnchor().getBaseProperties(srcAccess.getTargetName(), false);
 
         File dstTextBase = dstAccess.getAnchor().getBaseFile(dstName, false);
@@ -660,6 +661,9 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         if (srcBaseProps.getFile().exists()) {
             srcBaseProps.copyTo(dstBaseProps);
+        }
+        if (executable) {
+            SVNFileUtil.setExecutable(srcPath, true);
         }
         // and finally -> add.
         String copyFromURL = srcAccess.getTargetEntryProperty(SVNProperty.URL);
