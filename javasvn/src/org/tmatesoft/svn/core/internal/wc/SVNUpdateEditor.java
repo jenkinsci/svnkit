@@ -294,12 +294,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             if (baseChecksum == null) {
                 baseChecksum = entry.getChecksum();
             }
-            String realChecksum = null;
-            try {
-                realChecksum = SVNFileUtil.computeChecksum(baseFile);
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            String realChecksum = SVNFileUtil.computeChecksum(baseFile);
             if (baseChecksum != null && (realChecksum == null || !realChecksum.equals(baseChecksum))) {
                 SVNErrorManager.error("svn: Checksum mismatch for '" + myCurrentFile.getPath() + "'; expected: '" + baseChecksum +"', actual: '" + realChecksum + "'");
             }
@@ -345,17 +340,10 @@ public class SVNUpdateEditor implements ISVNEditor {
             File dataFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name + "." + index + ".txtdelta", true);
             InputStream data = null;
             try {
-                data = new FileInputStream(dataFile);
+                data = SVNFileUtil.openFileForReading(dataFile);
                 window.apply(baseData, target, data, target.length());
-            } catch (FileNotFoundException e) {
-                SVNErrorManager.error(0, e);
             } finally {
-                if (data != null) {
-                    try {
-                        data.close();
-                    } catch (IOException e) {
-                    }
-                }
+                SVNFileUtil.closeFile(data);
             }
             dataFile.delete();
             index++;
@@ -378,11 +366,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         String checksum = null;
         if (myCurrentFile.myDiffWindows != null && textChecksum != null) {
             File baseTmpFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name, true);
-            try {
-                checksum = SVNFileUtil.computeChecksum(baseTmpFile);
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            checksum = SVNFileUtil.computeChecksum(baseTmpFile);
             if (!textChecksum.equals(checksum)) {
                 SVNErrorManager.error(0, null);
             }

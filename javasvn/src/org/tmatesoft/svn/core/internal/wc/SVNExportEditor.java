@@ -150,19 +150,11 @@ public class SVNExportEditor implements ISVNEditor {
                 File dataFile = (File) files.next();
                 SVNDiffWindow window = (SVNDiffWindow) windows.next();
                 // apply to tmp file, use 'fake' base.
-                InputStream is = null;
+                InputStream is = SVNFileUtil.openFileForReading(dataFile);
                 try {
-                    is = new FileInputStream(dataFile);
                     window.apply(base, target, is, target.length());
-                } catch (FileNotFoundException e) {
-                    SVNErrorManager.error(0, e);
                 } finally {
-                    if (is != null) {
-                        try {
-                            is.close();
-                        } catch (IOException e) {
-                        }
-                    }
+                    SVNFileUtil.closeFile(is);
                 }
             }
         } finally {
@@ -197,11 +189,7 @@ public class SVNExportEditor implements ISVNEditor {
         if (myIsForce) {
             myCurrentFile.delete();
         }
-        try {
-            if (textChecksum != null && !textChecksum.equals(SVNFileUtil.computeChecksum(myCurrentTmpFile))) {
-                SVNErrorManager.error(0, null);
-            }
-        } catch (IOException e) {
+        if (textChecksum != null && !textChecksum.equals(SVNFileUtil.computeChecksum(myCurrentTmpFile))) {
             SVNErrorManager.error(0, null);
         }
         // retranslate.

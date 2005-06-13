@@ -210,13 +210,7 @@ public class SVNMerger {
             SVNStatusType mergeResult = null;
             if (!isTextModified) {
                 if (SVNWCUtil.isBinaryMimetype(mimeType1) || SVNWCUtil.isBinaryMimetype(mimeType2)) {
-                    boolean equals = false;
-                    try {
-                        equals = SVNFileUtil.compareFiles(mine, older, null);
-                    } catch (IOException e) {
-                        DebugLog.error(e);
-                        equals = false;
-                    }
+                    boolean equals = SVNFileUtil.compareFiles(mine, older, null);
                     if (equals) {
                         if (!myIsDryRun) {
                             try {

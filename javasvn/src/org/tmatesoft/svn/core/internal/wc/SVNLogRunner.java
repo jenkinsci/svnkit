@@ -96,8 +96,8 @@ public class SVNLogRunner {
             OutputStream os = null;
             InputStream is = null;
             try {
-                os = new FileOutputStream(dst, true);
-                is = new FileInputStream(src);
+                os = SVNFileUtil.openFileForWriting(dst, true);
+                is = SVNFileUtil.openFileForReading(src);
                 while(true) {
                     int r = is.read();
                     if (r < 0) {
@@ -108,19 +108,9 @@ public class SVNLogRunner {
             } catch (IOException e) {
                 SVNErrorManager.error(0, e);
             } finally {
-                if (os != null) {
-                    try {
-                        os.close();
-                    } catch (IOException e) {
-                    }
-                }
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {
-                    }
-                }
-            }            
+                SVNFileUtil.closeFile(os);
+                SVNFileUtil.closeFile(is);
+            }
         } else if (SVNLog.SET_TIMESTAMP.equals(name)) {
             File file = new File(dir.getRoot(), fileName);
             Date time = TimeUtil.parseDate((String) attributes.get(SVNLog.TIMESTAMP_ATTR));

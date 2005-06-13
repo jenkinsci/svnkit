@@ -445,8 +445,6 @@ public class SVNDirectory {
                 String rev = Long.toString(entry.getCommittedRevision());
                 boolean special = wcProps.getPropertyValue(SVNProperty.SPECIAL) != null;
                 
-                Map keywordsMap = SVNTranslator.computeKeywords(keywords, url, author, date, rev);
-
                 File src = getBaseFile(name, false);
                 File dst = getFile(name, false);
                 if (!src.exists()) {
@@ -496,8 +494,9 @@ public class SVNDirectory {
         }
         if (!force) {
             String textTime = entry.getTextTime();
-            long tstamp = TimeUtil.parseDate(textTime).getTime();
-            if (tstamp == getFile(name, false).lastModified()) {
+            long textTimeAsLong = SVNFileUtil.roundTimeStamp(TimeUtil.parseDate(textTime).getTime());
+            long tstamp = SVNFileUtil.roundTimeStamp(getFile(name, false).lastModified());
+            if (textTimeAsLong == tstamp ) {
                 return false;
             }
         } 
@@ -528,13 +527,12 @@ public class SVNDirectory {
             }
         } catch (NoSuchAlgorithmException e) {
             SVNErrorManager.error(0, e);
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
         } finally {
             baseTmpFile.delete();
         }
         
         if (equals && isLocked()) {
+            System.out.println("new text time: " + TimeUtil.formatDate(new Date(versionedFile.lastModified())));
             entry.setTextTime(TimeUtil.formatDate(new Date(versionedFile.lastModified())));
             entries.save(false);
         }        

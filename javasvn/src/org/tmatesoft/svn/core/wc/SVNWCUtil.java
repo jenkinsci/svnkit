@@ -35,40 +35,6 @@ public class SVNWCUtil {
         return SVNWCAccess.isVersionedDirectory(dir);
     }
 
-    public static void getWorkingFileContents(File versionedFile, OutputStream dst) throws SVNException {
-        String name = versionedFile.getName();
-        SVNWCAccess wcAccess = SVNWCAccess.create(versionedFile);
-        File root = wcAccess.getAnchor().getFile(".svn/tmp/text-base", false);
-        File tmpFile = null;
-        try { 
-            tmpFile = SVNFileUtil.createUniqueFile(root, name, ".tmp");
-            String tmpPath = SVNFileUtil.getBasePath(tmpFile);
-            SVNTranslator.translate(wcAccess.getAnchor(), name, name, tmpPath, false, false);
-            
-            InputStream is = null;
-            try {
-                is = new FileInputStream(tmpFile);
-                int r;
-                while((r = is.read()) >= 0) {
-                    dst.write(r);
-                }
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);            
-            } finally {
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {
-                    }
-                }
-            }
-        } finally {
-            if (tmpFile != null) {
-                tmpFile.delete();
-            }
-        }
-    }
-
     public static boolean isBinaryMimetype(String mimetype) {
         return mimetype != null && !mimetype.startsWith("text/");
     }

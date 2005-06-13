@@ -200,19 +200,11 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         for (int i = 0; i < myCurrentFile.myDiffWindows.size(); i++) {
             SVNDiffWindow window = (SVNDiffWindow) myCurrentFile.myDiffWindows.get(i);
             File dataFile = (File) myCurrentFile.myDataFiles.get(i);
-            InputStream data = null;
+            InputStream data = SVNFileUtil.openFileForReading(dataFile);
             try {
-                data = new FileInputStream(dataFile);
                 window.apply(baseData, target, data, target.length());
-            } catch (FileNotFoundException e) {
-                SVNErrorManager.error(0, e);
             } finally {
-                if (data != null) {
-                    try {
-                        data.close();
-                    } catch (IOException e) {
-                    }
-                }
+                SVNFileUtil.closeFile(data);
             }
             dataFile.delete();
             index++;

@@ -89,26 +89,15 @@ public class SVNTranslator {
             return;
 
         }
-        InputStream is = null;
-        OutputStream os = null;
+        OutputStream os = SVNFileUtil.openFileForWriting(dst);
+        InputStream is = SVNFileUtil.openFileForReading(src);
         try {
-            is = new FileInputStream(src);
-            os = new FileOutputStream(dst);
             copy(is, os, eol, keywords);
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (IOException e) {}
-            }
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {}
-            }
-            
+            SVNFileUtil.closeFile(os);
+            SVNFileUtil.closeFile(is);
         }
     }
     
@@ -118,7 +107,7 @@ public class SVNTranslator {
         }
         InputStream is = null;
         try {
-            is = new FileInputStream(file);
+            is = SVNFileUtil.openFileForReading(file);
             int r;
             byte[] lastFoundEOL = null;
             byte[] currentEOL = null;
@@ -140,11 +129,10 @@ public class SVNTranslator {
             }
         } catch (IOException e) {
             return false;
+        } catch (SVNException e) {
+            return false;
         } finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-            }
+            SVNFileUtil.closeFile(is);
         }
         return true;
     }

@@ -8,16 +8,18 @@ import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.StringTokenizer;
+import java.util.Date;
 
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.core.io.SVNException;
 
 public class SVNFileUtil {
 
     private static final String BINARY_MIME_TYPE = "application/octet-stream";
 
     public final static boolean isWindows;
-    
+
     private static String ourGroupID;
     private static String ourUserID;
 
@@ -25,7 +27,7 @@ public class SVNFileUtil {
         String osName = System.getProperty("os.name");
         isWindows = osName != null && osName.toLowerCase().indexOf("windows") >= 0;
     }
-    
+
     public static String getBasePath(File file) {
         File base = file.getParentFile();
         while (base != null) {
@@ -47,7 +49,7 @@ public class SVNFileUtil {
         }
         return path;
     }
-    
+
     public static File createUniqueFile(File parent, String name, String suffix) {
         File file = new File(parent, name + suffix);
         for (int i = 1; i < 99999; i++) {
@@ -61,28 +63,28 @@ public class SVNFileUtil {
 
     public static void rename(File src, File dst) throws IOException {
         if (!src.exists()) {
-            throw new IOException("can't rename file '" + src.getAbsolutePath() + "' : file doesn't exist.");            
+            throw new IOException("can't rename file '" + src.getAbsolutePath() + "' : file doesn't exist.");
         }
         if (dst.isDirectory()) {
-            throw new IOException("can't overwrite file '" + dst.getAbsolutePath() + "' : it is a directory.");            
+            throw new IOException("can't overwrite file '" + dst.getAbsolutePath() + "' : it is a directory.");
         }
         boolean renamed = src.renameTo(dst);
         if (!renamed) {
             if (dst.exists()) {
                 boolean deleted = dst.delete();
                 if (!deleted || dst.exists()) {
-                    throw new IOException("can't overwrite file '" + dst.getAbsolutePath() + "'.");            
+                    throw new IOException("can't overwrite file '" + dst.getAbsolutePath() + "'.");
                 }
             }
             if (!src.renameTo(dst)) {
-                throw new IOException("can't rename file '" + src.getAbsolutePath() + "'.");            
+                throw new IOException("can't rename file '" + src.getAbsolutePath() + "'.");
             }
         }
     }
-    
+
     public static boolean setReadonly(File file, boolean readonly) throws IOException {
         if (!file.exists()) {
-            throw new IOException("can't change file RO state '" + file.getAbsolutePath() + "' : file doesn't exist");            
+            throw new IOException("can't change file RO state '" + file.getAbsolutePath() + "' : file doesn't exist");
         }
         if (readonly) {
             return file.setReadOnly();
@@ -101,7 +103,7 @@ public class SVNFileUtil {
             Runtime.getRuntime().exec("chmod ugo" + (executable ? "+" : "-") + "x \"" + file.getAbsolutePath() + "\"");
         } catch (Throwable th) {}
     }
-    
+
     public static boolean isSymlink(File file) {
         if (isWindows || file == null) {
             return false;
@@ -196,7 +198,7 @@ public class SVNFileUtil {
         return true;
     }
 
-    public static String computeChecksum(File file) throws IOException {
+    public static String computeChecksum(File file) throws SVNException {
         if (file == null || !file.exists() || file.isDirectory()) {
             return null;
         }
@@ -204,11 +206,10 @@ public class SVNFileUtil {
         try {
             digest = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException e) {
-            throw new IOException(e.getMessage());
+            throw new SVNException(e.getMessage());
         }
-        InputStream is = null;
+        InputStream is = openFileForReading(file);
         try {
-            is = new FileInputStream(file);
             while(true) {
                 int b = is.read();
                 if (b < 0) {
@@ -216,17 +217,17 @@ public class SVNFileUtil {
                 }
                 digest.update((byte) (b & 0xFF));
             }
+        } catch (IOException e) {
+            SVNErrorManager.error(0, e);
         } finally {
-            if (is != null) {
-                is.close();
-            }
+            closeFile(is);
         }
         return toHexDigest(digest);
     }
-    
-    public static boolean compareFiles(File f1, File f2, MessageDigest digest) throws IOException {
+
+    public static boolean compareFiles(File f1, File f2, MessageDigest digest) throws SVNException {
         if (f1 == null || f2 == null) {
-            throw new IOException("can't accept 'null' values in compareFiles method");
+            throw new SVNException("can't accept 'null' values in compareFiles method");
         }
         if (f1.equals(f2)) {
             return true;
@@ -238,11 +239,9 @@ public class SVNFileUtil {
             }
             equals = false;
         }
-        InputStream is1 = null;
-        InputStream is2 = null;
+        InputStream is1 = openFileForReading(f1);
+        InputStream is2 = openFileForReading(f2);
         try {
-            is1 = new FileInputStream(f1);
-            is2 = new FileInputStream(f2);
             while(true) {
                 int b1 = is1.read();
                 int b2 = is2.read();
@@ -259,13 +258,11 @@ public class SVNFileUtil {
                     digest.update((byte) (b1 & 0xFF));
                 }
             }
+        } catch (IOException e) {
+            SVNErrorManager.error(0, e);
         } finally {
-            if (is1 != null) {
-                is1.close();
-            }
-            if (is2 != null) {
-                is2.close();
-            }
+            closeFile(is1);
+            closeFile(is2);
         }
         return equals;
     }
@@ -299,7 +296,7 @@ public class SVNFileUtil {
         }
         dir.delete();
     }
-    
+
     private static String readSingleLine(File file) throws IOException {
         if (!file.isFile() || !file.canRead()) {
             throw new IOException("can't open file '" + file.getAbsolutePath() + "'");
@@ -334,6 +331,14 @@ public class SVNFileUtil {
         return hexDigest;
     }
 
+    public static long roundTimeStamp(long tstamp) {
+        long remainder = tstamp - ((tstamp/1000) * 1000);
+        if (remainder < 500) {
+            return (tstamp / 1000) * 1000;
+        }
+        return (tstamp / 1000) * 1000 + 1000;
+    }
+
     public static void sleepForTimestamp() {
         long time = System.currentTimeMillis();
         time = 1010 - (time - (time / 1000) * 1000);
@@ -341,44 +346,41 @@ public class SVNFileUtil {
             Thread.sleep(time);
         } catch (InterruptedException e) {}
     }
-    
+
     public static String detectMimeType(File file) {
-    	if (file == null || !file.exists()) {
-    		return null;
-    	}
-    	byte[] buffer = new byte[1024];
-    	InputStream is = null;
-    	int read = 0;
-    	try {
-    		is = new FileInputStream(file);
-    		read = is.read(buffer);
-    	} catch (IOException e) {
-    		return null;
-    	} finally {
-    		if (is != null) {
-    			try {
-					is.close();
-				} catch (IOException e1) {
-				}
-    		}
-    	}
-    	int binaryCount = 0;
-    	for (int i = 0; i < read; i++) {
-    		byte b = buffer[i];
-			if (b == 0) {
-				return BINARY_MIME_TYPE;
-			}
-			if (b < 0x07 || (b > 0x0d && b < 0x20) || b > 0x7F) {
-				binaryCount++;
-			}
-		}
-    	if (read > 0 && binaryCount * 1000 / read > 850) {
-    		return BINARY_MIME_TYPE;
-    	}
-    	return null;
+        if (file == null || !file.exists()) {
+            return null;
+        }
+        byte[] buffer = new byte[1024];
+        InputStream is = null;
+        int read = 0;
+        try {
+            is = openFileForReading(file);
+            read = is.read(buffer);
+        } catch (IOException e) {
+            return null;
+        } catch (SVNException e) {
+            return null;
+        } finally {
+            closeFile(is);
+        }
+        int binaryCount = 0;
+        for (int i = 0; i < read; i++) {
+            byte b = buffer[i];
+            if (b == 0) {
+                return BINARY_MIME_TYPE;
+            }
+            if (b < 0x07 || (b > 0x0d && b < 0x20) || b > 0x7F) {
+                binaryCount++;
+            }
+        }
+        if (read > 0 && binaryCount * 1000 / read > 850) {
+            return BINARY_MIME_TYPE;
+        }
+        return null;
     }
 
-	public static boolean isExecutable(File file) {
+    public static boolean isExecutable(File file) {
         if (isWindows) {
             return false;
         }
@@ -389,7 +391,7 @@ public class SVNFileUtil {
             return false;
         }
         int index = 0;
-        
+
         String mod = null;
         String fuid = null;
         String fgid = null;
@@ -415,7 +417,7 @@ public class SVNFileUtil {
         DebugLog.log("c.user: " + getCurrentUser());
         DebugLog.log("c.group: " + getCurrentGroup());
         if (getCurrentUser().equals(fuid)) {
-            return mod.toLowerCase().indexOf('x') >= 0 && 
+            return mod.toLowerCase().indexOf('x') >= 0 &&
                 mod.toLowerCase().indexOf('x') < 4;
         } else if (getCurrentGroup().equals(fgid)) {
             return mod.toLowerCase().indexOf('x', 4) >= 4 &&
@@ -455,6 +457,63 @@ public class SVNFileUtil {
         }
     }
 
+    public static OutputStream openFileForWriting(File file) throws SVNException  {
+        return openFileForWriting(file, false);
+    }
+
+    public static OutputStream openFileForWriting(File file, boolean append) throws SVNException  {
+        if (file == null) {
+            return null;
+        }
+        if (file.exists() && (!file.isFile() || !file.canWrite())) {
+            throw new SVNException("svn: Cannot write to '" + file + "': path refers to directory or write access denied");
+        }
+        try {
+            return new BufferedOutputStream(new FileOutputStream(file, append));
+        } catch (FileNotFoundException e) {
+            throw new SVNException("svn: Cannot write to '" + file + "': " + e.getMessage());
+        }
+    }
+
+    public static InputStream openFileForReading(File file) throws SVNException  {
+        if (file == null) {
+            return null;
+        }
+        if (!file.isFile() || !file.canRead()) {
+            throw new SVNException("svn: Cannot read from '" + file + "': path refers to directory or read access denied");
+        }
+        if (!file.exists()) {
+            return new ByteArrayInputStream(new byte[0]);
+        }
+        try {
+            return new BufferedInputStream(new FileInputStream(file));
+        } catch (FileNotFoundException e) {
+            throw new SVNException("svn: Cannot read from '" + file + "': " + e.getMessage());
+        }
+    }
+
+    public static void closeFile(InputStream is) {
+        if (is == null) {
+            return;
+        }
+        try {
+            is.close();
+        } catch (IOException e) {
+            //
+        }
+    }
+
+    public static void closeFile(OutputStream os) {
+        if (os == null) {
+            return;
+        }
+        try {
+            os.close();
+        } catch (IOException e) {
+            //
+        }
+    }
+
     private static String execCommand(String[] commandLine) {
         InputStream is = null;
         StringBuffer result = new StringBuffer();
@@ -479,11 +538,11 @@ public class SVNFileUtil {
                 is.close();
             } catch (IOException e) {
             }
-            
+
         }
         return null;
     }
-    
+
     private static String getCurrentUser() {
         if (isWindows) {
             return System.getProperty("user.name");
@@ -492,11 +551,13 @@ public class SVNFileUtil {
             ourUserID = execCommand(new String[] {"id", "-u"});
             if (ourUserID == null) {
                 ourUserID = "0";
-            }            
+            }
         }
         return ourUserID;
     }
-    
+
+
+
     private static String getCurrentGroup() {
         if (isWindows) {
             return System.getProperty("user.name");
@@ -507,6 +568,8 @@ public class SVNFileUtil {
                 ourGroupID = "0";
             }
         }
-        return ourGroupID;        
+        return ourGroupID;
     }
+
+
 }

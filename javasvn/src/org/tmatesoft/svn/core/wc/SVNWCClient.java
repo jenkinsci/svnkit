@@ -103,21 +103,15 @@ public class SVNWCClient extends SVNBasicClient {
                 }
             } finally {
                 if (file != null && file.exists()) {
-                    InputStream is = null;
+                    InputStream is = SVNFileUtil.openFileForReading(file);
                     try {
-                        is = new FileInputStream(file);
                         int r;
                         while ((r = is.read()) >= 0) {
                             dst.write(r);
                         }
                     } catch (IOException e) {
                     } finally  {
-                        if (is != null) {
-                            try {
-                                is.close();
-                            } catch (IOException e) {
-                            }
-                        }
+                        SVNFileUtil.closeFile(is);
                     }
                     if (delete) {
                         file.delete();
@@ -167,7 +161,7 @@ public class SVNWCClient extends SVNBasicClient {
                 file2 = file;
             }
 
-            is = new FileInputStream(file2);
+            is = SVNFileUtil.openFileForReading(file2);
             int r;
             while((r = is.read()) >= 0) {
                 dst.write(r);
@@ -175,18 +169,8 @@ public class SVNWCClient extends SVNBasicClient {
         } catch (IOException e) {
             return;
         } finally {
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (IOException e) {
-                }
-            }
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                }
-            }
+            SVNFileUtil.closeFile(os);
+            SVNFileUtil.closeFile(is);
             if (file != null) {
                 file.delete();
             }

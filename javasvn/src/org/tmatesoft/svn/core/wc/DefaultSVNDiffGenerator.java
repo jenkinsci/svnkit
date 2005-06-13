@@ -224,8 +224,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         InputStream is1 = null;
         InputStream is2 = null;
         try {
-            is1 = file1 == null ? EMPTY_FILE_IS : new FileInputStream(file1);
-            is2 = file2 == null ? EMPTY_FILE_IS : new FileInputStream(file2);
+            is1 = file1 == null ? EMPTY_FILE_IS : SVNFileUtil.openFileForReading(file1);
+            is2 = file2 == null ? EMPTY_FILE_IS : SVNFileUtil.openFileForReading(file2);
             
             QDiffUniGenerator.setup();
             Map generatorProperties = new HashMap();
@@ -238,23 +238,14 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {
-            if (is1 != null) {
-                try {
-                    is1.close();
-                } catch (IOException e) {
-                }
-            }
-            if (is2 != null) {
-                try {
-                    is2.close();
-                } catch (IOException e) {
-                }
-            }
+            SVNFileUtil.closeFile(is1);
+            SVNFileUtil.closeFile(is2);
             try {
                 bos.close();
                 DebugLog.log(bos.toString());
                 bos.writeTo(result);
             } catch (IOException inner) {
+                //
             }
         }
     }

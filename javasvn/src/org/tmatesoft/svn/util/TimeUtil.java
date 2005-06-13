@@ -50,7 +50,7 @@ public class TimeUtil {
         // truncate last nanoseconds.
         str = str.substring(0, 23);
     	try {
-			return ISO8601_FORMAT_IN.parse(str);
+            return ISO8601_FORMAT_IN.parse(str);
 		} catch (Throwable e) {
 		}
 		return new Date(0);

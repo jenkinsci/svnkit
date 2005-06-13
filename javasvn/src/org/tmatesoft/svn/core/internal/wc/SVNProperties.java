@@ -41,9 +41,8 @@ public class SVNProperties {
             return target;
         }
         ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
-        InputStream is = null;
+        InputStream is = SVNFileUtil.openFileForReading(myFile);
         try {
-            is = new FileInputStream(myFile);
             while(readProperty('K', is, nameOS)) {
                 target.add(new String(nameOS.toByteArray(), "UTF-8"));
                 nameOS.reset();
@@ -52,11 +51,7 @@ public class SVNProperties {
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {}
-            }
+            SVNFileUtil.closeFile(is);
         }
         return target;
     }
@@ -105,30 +100,20 @@ public class SVNProperties {
             try {
                 tmpFile = SVNFileUtil.createUniqueFile(myFile.getParentFile(), myFile.getName(), ".tmp");
     
-                os = new FileOutputStream(tmpFile);
+                os = SVNFileUtil.openFileForWriting(tmpFile);
                 properties.getPropertyValue(added, os);
-                os.close();
+                SVNFileUtil.closeFile(os);
 
-                is = new FileInputStream(tmpFile);
+                is = SVNFileUtil.openFileForReading(tmpFile);
                 comparator.propertyAdded(added, is, (int) tmpFile.length());
                 equals = false;
-                is.close();
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
+                SVNFileUtil.closeFile(is);
             } finally {
                 if (tmpFile != null) {
                     tmpFile.delete();
                 }
-                if (os != null) {
-                    try {
-                        os.close();
-                    } catch (IOException e) {}
-                }
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {}
-                }
+                SVNFileUtil.closeFile(os);
+                SVNFileUtil.closeFile(is);
                 tmpFile = null;
                 is = null;
                 os = null;
@@ -151,13 +136,13 @@ public class SVNProperties {
                 properties.getPropertyValue(changed, os);
                 os.close();
                 if (tmpFile2.length() != tmpFile1.length()) {
-                    is = new FileInputStream(tmpFile2);
+                    is = SVNFileUtil.openFileForReading(tmpFile2);
                     comparator.propertyChanged(changed, is, (int) tmpFile2.length());
                     equals = false;
-                    is.close();
+                    SVNFileUtil.closeFile(is);
                 } else {
-                    is1 = new FileInputStream(tmpFile1);
-                    is2 = new FileInputStream(tmpFile2);
+                    is1 = SVNFileUtil.openFileForReading(tmpFile1);
+                    is2 = SVNFileUtil.openFileForReading(tmpFile2);
                     boolean differs = false;
                     for(int i = 0; i < tmpFile1.length(); i++) {
                         if (is1.read() != is2.read()) {
@@ -165,13 +150,13 @@ public class SVNProperties {
                             break;
                         }
                     }
-                    is1.close();
-                    is2.close();
+                    SVNFileUtil.closeFile(is1);
+                    SVNFileUtil.closeFile(is2);
                     if (differs) {
-                        is2 = new FileInputStream(tmpFile2);
+                        is2 = SVNFileUtil.openFileForReading(tmpFile2);
                         comparator.propertyChanged(changed, is2, (int) tmpFile2.length());
                         equals = false;
-                        is2.close();
+                        SVNFileUtil.closeFile(is2);
                     }
                 }
             } catch (IOException e) {
@@ -183,26 +168,10 @@ public class SVNProperties {
                 if (tmpFile2 != null) {
                     tmpFile1.delete();
                 }
-                if (os != null) {
-                    try {
-                        os.close();
-                    } catch (IOException e) {}
-                }
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {}
-                }
-                if (is1 != null) {
-                    try {
-                        is1.close();
-                    } catch (IOException e) {}
-                }
-                if (is2 != null) {
-                    try {
-                        is2.close();
-                    } catch (IOException e) {}
-                }
+                SVNFileUtil.closeFile(os);
+                SVNFileUtil.closeFile(is);
+                SVNFileUtil.closeFile(is1);
+                SVNFileUtil.closeFile(is2);
                 os = null;
                 tmpFile1 = tmpFile2 = null;
                 is = is1 = is2 = null;
@@ -233,9 +202,8 @@ public class SVNProperties {
             return;
         }
         ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
-        InputStream is = null;
+        InputStream is = SVNFileUtil.openFileForReading(myFile);
         try {
-            is = new FileInputStream(myFile);
             while(readProperty('K', is, nameOS)) {
                 String currentName = new String(nameOS.toByteArray(), "UTF-8");
                 nameOS.reset();
@@ -249,11 +217,7 @@ public class SVNProperties {
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {}
-            }
+            SVNFileUtil.closeFile(is);
         }
     }
 
@@ -278,23 +242,15 @@ public class SVNProperties {
         try {
             tmpFile = SVNFileUtil.createUniqueFile(myFile.getParentFile(), myFile.getName(), ".tmp");
             if (myFile.exists()) {
-                src = new FileInputStream(myFile);
+                src = SVNFileUtil.openFileForReading(myFile);
             }
-            dst = new FileOutputStream(tmpFile);
+            dst = SVNFileUtil.openFileForWriting(tmpFile);
             copyProperties(src, dst, name, is, length);
         } catch(IOException e) {
             SVNErrorManager.error(0, e);
-        } finally {        
-            if (src != null) {
-                try {
-                    src.close();
-                } catch (IOException e) {}
-            }
-            if (dst != null) {
-                try {
-                    dst.close();
-                } catch (IOException e) {}
-            }
+        } finally {
+            SVNFileUtil.closeFile(src);
+            SVNFileUtil.closeFile(dst);
         }
         try {
             if (tmpFile != null) {
