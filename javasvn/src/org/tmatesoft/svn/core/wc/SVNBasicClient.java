@@ -138,7 +138,7 @@ public class SVNBasicClient implements ISVNEventListener {
             myEventDispatcher.svnEvent(event, progress);
         }
     }
-    
+
     protected void setEventPathPrefix(String prefix) {
         if (prefix == null && !myPathPrefixesStack.isEmpty()) {
             myPathPrefixesStack.remove(myPathPrefixesStack.size() - 1);

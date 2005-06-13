@@ -24,6 +24,10 @@ public class SVNExternalInfo {
         myOldExternalURL = oldURL;
         myOldExternalRevision = oldRev;
     }
+
+    public void setPath(String path) {
+        myPath = path;
+    }
     
     public String getOwnerPath() {
         return myOwnerPath;

@@ -42,6 +42,7 @@ public class SVNStatusEditor implements ISVNEditor {
     private Map myExternalsMap;
 
     public SVNStatusEditor(SVNOptions globalOptions, SVNWCAccess wcAccess, ISVNStatusHandler handler,
+                           Map externals,
                            boolean includeIgnored,
                            boolean reportAll,
                            boolean recursive) {
@@ -51,7 +52,7 @@ public class SVNStatusEditor implements ISVNEditor {
         myIsIncludeIgnored = includeIgnored;
         myIsReportAll = reportAll;
         myIsRecursive = recursive;
-        myExternalsMap = new HashMap();
+        myExternalsMap = externals;
         myTarget = "".equals(myWCAccess.getTargetName()) ? null : myWCAccess.getTargetName();
     }
 
