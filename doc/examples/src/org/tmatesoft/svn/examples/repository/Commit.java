@@ -169,7 +169,7 @@ public class Commit {
             commitMessage = (args.length >= 7) ? args[6] : commitMessage;
         }
 
-        SVNRepositoryLocation location = null;
+        SVNRepositoryLocation location;
         SVNRepository repository = null;
         try {
             /*
@@ -286,6 +286,7 @@ public class Commit {
                  */
                 editor.abortEdit();
             } catch (SVNException inner) {
+                //
             }
             System.exit(1);
         }
@@ -324,6 +325,7 @@ public class Commit {
                  */
                 editor.abortEdit();
             } catch (SVNException inner) {
+                //
             }
             System.exit(1);
         }
@@ -378,6 +380,7 @@ public class Commit {
                  */
                 editor.abortEdit();
             } catch (SVNException inner) {
+                //
             }
             System.exit(1);
         }
@@ -417,6 +420,7 @@ public class Commit {
                  */
                 editor.abortEdit();
             } catch (SVNException inner) {
+                //
             }
             System.exit(1);
         }
@@ -497,19 +501,19 @@ public class Commit {
             for (int i = 0; i < deltaLength; i++) {
                 os.write(data[i]);
             }
-            /*
-             * Don't forget to close the stream after you have written the
-             * delta!
-             */
-            os.close();
-
         } catch (IOException ioe) {
             System.err.println("An i/o error while writing the delta bytes: "
                     + ioe.getMessage());
+        } finally {
+            /*
+            * Don't forget to close the stream after you have written the
+            * delta!
+            */
             if (os != null) {
                 try {
                     os.close();
                 } catch (IOException ioeInternal) {
+                    //
                 }
             }
         }
@@ -590,18 +594,19 @@ public class Commit {
             for (int i = 0; i < deltaLength; i++) {
                 os.write(newData[i]);
             }
-            /*
-             * Don't forget to close the stream after you have written the
-             * delta!
-             */
-            os.close();
         } catch (IOException ioe) {
             System.err.println("An i/o error while writing the delta bytes: "
                     + ioe.getMessage());
+        } finally {
+            /*
+            * Don't forget to close the stream after you have written the
+            * delta!
+            */
             if (os != null) {
                 try {
                     os.close();
                 } catch (IOException ioeInternal) {
+                    //
                 }
             }
         }
@@ -763,8 +768,7 @@ public class Commit {
          * by id to read the delta.
          */
         public InputStream getTemporaryLocation(Object id) throws IOException {
-            ByteArrayInputStream tempStorageIS = new ByteArrayInputStream(((ByteArrayOutputStream)myTmpFiles.get(id)).toByteArray());
-            return tempStorageIS;
+            return new ByteArrayInputStream(((ByteArrayOutputStream)myTmpFiles.get(id)).toByteArray());
         }
 
         /*
@@ -783,10 +787,7 @@ public class Commit {
          * Deletes the temporary file delta storage identified by id.
          */
         public void deleteTemporaryLocation(Object id) {
-            ByteArrayOutputStream tempStorageOS = (ByteArrayOutputStream)myTmpFiles.remove(id);
-            if (tempStorageOS != null) {
-                tempStorageOS = null;
-            }
+            myTmpFiles.remove(id);
         }
 
         public void deleteAdminFiles(String path) {
