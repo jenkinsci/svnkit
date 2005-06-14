@@ -57,7 +57,7 @@ public class History {
             password = (args.length >= 5) ? args[4] : password;
         }
 
-        SVNRepositoryLocation location = null;
+        SVNRepositoryLocation location;
         SVNRepository repository = null;
         try {
             /*

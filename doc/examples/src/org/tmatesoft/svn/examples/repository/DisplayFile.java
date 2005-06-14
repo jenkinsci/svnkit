@@ -98,7 +98,7 @@ public class DisplayFile {
              */
             password = (args.length >= 4) ? args[3] : password;
         }
-        SVNRepositoryLocation location = null;
+        SVNRepositoryLocation location;
         SVNRepository repository = null;
         try {
             /*

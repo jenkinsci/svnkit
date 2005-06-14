@@ -91,7 +91,7 @@ public class DisplayRepositoryTree {
              */
             password = (args.length >= 3) ? args[2] : password;
         }
-        SVNRepositoryLocation location = null;
+        SVNRepositoryLocation location;
         SVNRepository repository = null;
         try {
             /*

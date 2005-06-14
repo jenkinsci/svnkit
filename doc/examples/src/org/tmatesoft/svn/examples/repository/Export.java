@@ -119,7 +119,7 @@ public class Export {
         }
         exportDir.mkdirs();
 
-        SVNRepositoryLocation location = null;
+        SVNRepositoryLocation location;
         SVNRepository repository = null;
         try {
             /*
@@ -500,6 +500,7 @@ public class Export {
                                 try {
                                     newData.close();
                                 } catch (IOException e1) {
+                                    //
                                 }
                             }
                             myMediator.deleteTemporaryLocation(window);
@@ -509,6 +510,7 @@ public class Export {
                     try {
                         target.close();
                     } catch (IOException ioe) {
+                        //
                     }
                     myDiffWindows.clear();
                     myDiffWindows = null;
@@ -535,10 +537,6 @@ public class Export {
                     throw new SVNException("error: the file '"
                             + file.getAbsolutePath() + "' is corrupted!");
                 }
-            } catch (IOException ioe) {
-                throw new SVNException(
-                        "error while evaluating the checksum for the file '"
-                                + file.getAbsolutePath() + "'.", ioe);
             } finally {
                 myCurrentPath = null;
                 myFileProperties.clear();
@@ -615,9 +613,8 @@ public class Export {
          * by id to read the delta.
          */
         public InputStream getTemporaryLocation(Object id) throws IOException {
-            ByteArrayInputStream tempStorageIS = new ByteArrayInputStream(
+            return new ByteArrayInputStream(
                     ((ByteArrayOutputStream) myTmpFiles.get(id)).toByteArray());
-            return tempStorageIS;
         }
 
         /*
@@ -637,11 +634,7 @@ public class Export {
          * Deletes the temporary file delta storage identified by id.
          */
         public void deleteTemporaryLocation(Object id) {
-            ByteArrayOutputStream tempStorageOS = (ByteArrayOutputStream) myTmpFiles
-                    .remove(id);
-            if (tempStorageOS != null) {
-                tempStorageOS = null;
-            }
+            myTmpFiles.remove(id);
         }
 
         public void deleteAdminFiles(String path) {
