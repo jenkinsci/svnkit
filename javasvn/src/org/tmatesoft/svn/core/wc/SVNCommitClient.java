@@ -343,7 +343,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 }
             }
             if (!autoProperties.containsKey(SVNProperty.EXECUTABLE) && SVNFileUtil.isExecutable(file)) {
-                autoProperties.put(SVNProperty.EXECUTABLE, "*");
+                autoProperties.put(SVNProperty.EXECUTABLE, "");
             }
         } else {
             autoProperties.put(SVNProperty.SPECIAL, "*");
