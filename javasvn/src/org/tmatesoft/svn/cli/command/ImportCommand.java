@@ -14,11 +14,13 @@ package org.tmatesoft.svn.cli.command;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.File;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
@@ -31,37 +33,19 @@ import org.tmatesoft.svn.util.SVNUtil;
 public class ImportCommand extends SVNCommand {
 
     public void run(final PrintStream out, PrintStream err) throws SVNException {
-        final String path = getCommandLine().getPathAt(0);
+        String path = ".";
+        if (getCommandLine().getPathCount() >= 1) {
+            path = getCommandLine().getPathAt(0);
+        }
         String url = getCommandLine().getURL(0);
-
-        DebugLog.log("import url: " + url);
-        DebugLog.log("import path: " + path);
-
-        final ISVNWorkspace workspace = createWorkspace(path, false);
-        final String homePath = path;
-        DebugLog.log("import root: " + workspace.getID());
-        String wsPath = SVNUtil.getWorkspacePath(workspace, path);
-        if (wsPath.trim().length() == 0) {
-            wsPath = null;
-        } else {
-            url = PathUtil.removeTail(url);
-        }
-        workspace.addWorkspaceListener(new SVNWorkspaceAdapter() {
-            public void committed(String committedPath, int kind) {
-                try {
-                    committedPath = convertPath(homePath, workspace, committedPath);
-                } catch (IOException e) {}
-                println(out, "Adding " + committedPath);
-            }
-        });
-        SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
+        boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
-        if (message == null) {
-            DebugLog.log("NO MESSAGE!");
-            message = "";
+        SVNCommitClient commitClient = new SVNCommitClient(getCredentialsProvider(), getOptions(), new SVNCommandEventProcessor(out, err, false));
+        long revision = commitClient.doImport(new File(path), url, message, recursive);
+        if (revision >= 0) {
+            out.println();
+            out.println("Imported revision " + revision + ".");
         }
-        long revision = workspace.commit(location, wsPath, message);
-        out.println("Imported revision " + revision + ".");
     }
 
 }

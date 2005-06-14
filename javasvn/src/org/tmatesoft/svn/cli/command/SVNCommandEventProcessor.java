@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.DebugLog;
 
 public class SVNCommandEventProcessor implements ISVNEventListener {
@@ -39,7 +40,14 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
     }
 
     public void svnEvent(SVNEvent event, double progress) {
-        if (event.getAction() == SVNEventAction.REVERT) {
+        if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
+            String mimeType = event.getMimeType();
+            if (SVNWCUtil.isBinaryMimetype(mimeType)) {
+                SVNCommand.println(myPrintStream, "Adding  (bin)  " + SVNCommand.getPath(event.getFile()));
+            } else {
+                SVNCommand.println(myPrintStream, "Adding         " + SVNCommand.getPath(event.getFile()));
+            }
+        } else if (event.getAction() == SVNEventAction.REVERT) {
             SVNCommand.println(myPrintStream, "Reverted '" + SVNCommand.getPath(event.getFile()) + "'");
         } else if (event.getAction() == SVNEventAction.FAILED_REVERT) {
             SVNCommand.println(myPrintStream, "Failed to revert '" + SVNCommand.getPath(event.getFile()) + "' -- try updating instead.");
@@ -127,7 +135,6 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
                     if (myIsExport ) {
                         UpdateCommand.println(myPrintStream, "Export complete.");
                     } else {
-                    	DebugLog.error(new Exception("update completed"));
                         UpdateCommand.println(myPrintStream, "At revision " + event.getRevision() + ".");
                     }
                 }

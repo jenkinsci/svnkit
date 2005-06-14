@@ -1,18 +1,5 @@
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.diff.ISVNRAData;
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
@@ -25,6 +12,18 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class SVNUpdateEditor implements ISVNEditor {
     
@@ -86,14 +85,19 @@ public class SVNUpdateEditor implements ISVNEditor {
     public void deleteEntry(String path, long revision) throws SVNException {
         path = PathUtil.removeLeadingSlash(path);
         path = PathUtil.removeTrailingSlash(path);
+        String name = PathUtil.tail(path);
+
+        SVNEntry entry = myCurrentDirectory.getDirectory().getEntries().getEntry(name, true);
+        DebugLog.log("deleting : " + path);
+        if (entry == null) {
+            return;
+        }
 
         SVNLog log = myCurrentDirectory.getLog(true);
         Map attributes = new HashMap();
-        String name = PathUtil.tail(path);
-        
+
         attributes.put(SVNLog.NAME_ATTR, name);
         log.addCommand(SVNLog.DELETE_ENTRY, attributes, false);
-        SVNEntry entry = myCurrentDirectory.getDirectory().getEntries().getEntry(name, true);
         SVNNodeKind kind = entry.getKind();
         boolean isDeleted = entry.isDeleted();
         if (path.equals(myTarget)) {
@@ -567,6 +571,9 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
     
     private static boolean bumpEntry(SVNEntries entries, SVNEntry entry, String url, long revision, boolean delete) {
+        if (entry == null) {
+            return false;
+        }
         boolean save = false;
         if (url != null) {
             save |= entry.setURL(url);

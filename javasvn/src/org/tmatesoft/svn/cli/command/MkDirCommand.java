@@ -37,7 +37,7 @@ public class MkDirCommand extends SVNCommand {
         }
     }
 
-    private void createLocalDirectories(final PrintStream out, PrintStream err) throws SVNException {
+    private void createLocalDirectories(final PrintStream out, PrintStream err) {
         final Collection paths = new ArrayList();
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             if (matchTabsInPath(getCommandLine().getPathAt(i), err)) {
