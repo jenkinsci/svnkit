@@ -185,8 +185,8 @@ public class SVNProperties {
             return null;
         }
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        getPropertyValue(name, os);
-        if (os.size() > 0) {
+        os = (ByteArrayOutputStream) getPropertyValue(name, os);
+        if (os != null && os.size() >= 0) {
             byte[] bytes = os.toByteArray();
             try {
                 return new String(bytes, "UTF-8");
@@ -197,9 +197,9 @@ public class SVNProperties {
         return null;
     }
 
-    public void getPropertyValue(String name, OutputStream os) throws SVNException {
+    public OutputStream getPropertyValue(String name, OutputStream os) throws SVNException {
         if (!myFile.exists()) {
-            return;
+            return null;
         }
         ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
         InputStream is = SVNFileUtil.openFileForReading(myFile);
@@ -209,7 +209,7 @@ public class SVNProperties {
                 nameOS.reset();
                 if (currentName.equals(name)) {
                     readProperty('V', is, os);
-                    return;
+                    return os;
                 } else {
                     readProperty('V', is, null);
                 }
@@ -219,6 +219,7 @@ public class SVNProperties {
         } finally {
             SVNFileUtil.closeFile(is);
         }
+        return null;
     }
 
     public void setPropertyValue(String name, String value) throws SVNException {
@@ -231,7 +232,7 @@ public class SVNProperties {
                 bytes = value.getBytes();
             }
         }
-        int length = bytes != null && bytes.length > 0 ? bytes.length : -1;
+        int length = bytes != null && bytes.length >= 0 ? bytes.length : -1;
         setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes) : null, length);
     }
 
@@ -334,7 +335,7 @@ public class SVNProperties {
                     is.read();
                 }
             } 
-            if (value != null && length > 0) {
+            if (value != null && length >= 0) {
                 byte[] nameBytes = name.getBytes("UTF-8");
                 writeProperty(os, 'K', nameBytes);
                 writeProperty(os, 'V', value, length);
