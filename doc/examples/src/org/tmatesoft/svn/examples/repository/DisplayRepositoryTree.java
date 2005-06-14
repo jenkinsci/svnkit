@@ -65,9 +65,6 @@ public class DisplayRepositoryTree {
          * default values:
          */
         String url = "http://72.9.228.230:8080/svn/jsvn/branches/jorunal";
-        /*
-         * Authentication is generally not required for reading operations
-         */
         String name = "anonymous";
         String password = "anonymous";
 

@@ -14,13 +14,48 @@ import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNLogEntryPath;
 
+/*
+ * The following example program demonstrates how you can use SVNRepository to
+ * obtain a history for a range of revisions including (for each revision): all
+ * changed paths, log message, the author of the commit, the timestamp it was
+ * made. It is similar to the "svn log" command supported by the Subversion
+ * client library.
+ * 
+ * As an example here's a part of one of the program layouts (for the default
+ * values):
+ * 
+ * --------------------------------------------- 
+ * revision: 733 
+ * author: alex
+ * date: Thu Jun 09 20:57:16 NOVST 2005 
+ * log message: "jorunal" branch renamed to more meaningful name.
+ * 
+ * 
+ * changed paths: 
+ * A /branches/0.9.0 (from /branches/jorunal revision 732) 
+ * D /branches/jorunal 
+ * --------------------------------------------- 
+ * revision: 739
+ * author: sa 
+ * date: Fri Jun 10 16:26:07 NOVST 2005 
+ * log message: export example
+ * 
+ * changed paths: 
+ * M /branches/0.9.0/doc/examples/src/org/tmatesoft/svn/examples/repository/Commit.java
+ * M /branches/0.9.0/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java
+ * A /branches/0.9.0/doc/examples/src/org/tmatesoft/svn/examples/repository/Export.java
+ */
 public class History {
-
+    /*
+     * args parameter is used to obtain a repository location URL, a start
+     * revision number, an end revision number, user's account name & password
+     * to authenticate him to the server.
+     */
     public static void main(String[] args) {
         /*
          * Default values:
          */
-        String url = "svn://localhost/rep/";
+        String url = "http://72.9.228.230:8080/svn/jsvn/branches/0.9.0/doc";
         String name = "anonymous";
         String password = "anonymous";
         long startRevision = 0;
@@ -96,28 +131,94 @@ public class History {
         repository.setCredentialsProvider(scp);
         Collection logEntries = null;
         try {
+            /*
+             * Collects SVNLogEntry objects for all revisions in the range
+             * defined by its start and end points [startRevision, endRevision].
+             * For each revision commit information is represented by
+             * SVNLogEntry.
+             * 
+             * the 1st parameter (targetPaths - an array of path strings) is set
+             * when restricting the [startRevision, endRevision] range to only
+             * those revisions when the paths in targetPaths were changed.
+             * 
+             * the 2nd parameter if non-null - is a user's Collection that will
+             * be filled up with found SVNLogEntry objects; it's just another
+             * way to get reach the scope.
+             * 
+             * startRevision, endRevision - to define the revisions range; by
+             * default in this program - startRevision=0, endRevision=-1 meaning
+             * the latest (HEAD) revision of the repository.
+             * 
+             * the 5th parameter -a bulean flag changedPath - if true then for
+             * each revision a corresponding SVNLogEntry will contain a map of
+             * all paths which were changed in that revision.
+             * 
+             * the 6th parameter - boolean flag strictNode - if true and a
+             * changed path is a copy of an existing one in the repository then
+             * the history for its origin won't be traversed; it means it will
+             * be possible to know what path at what revision it was copied
+             * from.
+             */
             logEntries = repository.log(new String[] { "" }, null,
                     startRevision, endRevision, true, true);
         } catch (SVNException svne) {
-            svne.printStackTrace();
+            System.out.println("error while collecting log information for '"
+                    + url + "': " + svne.getMessage());
             System.exit(1);
         }
         for (Iterator entries = logEntries.iterator(); entries.hasNext();) {
+            /*
+             * gets a next SVNLogEntry
+             */
             SVNLogEntry logEntry = (SVNLogEntry) entries.next();
             System.out.println("---------------------------------------------");
+            /*
+             * gets the revision number
+             */
             System.out.println("revision: " + logEntry.getRevision());
+            /*
+             * gets the author of the changes made in that revision
+             */
             System.out.println("author: " + logEntry.getAuthor());
+            /*
+             * gets the time moment when the changes were committed
+             */
             System.out.println("date: " + logEntry.getDate());
+            /*
+             * gets the commit log message
+             */
             System.out.println("log message: " + logEntry.getMessage());
+            /*
+             * displaying all paths that were changed in that revision; cahnged
+             * path information is represented by SVNLogEntryPath.
+             */
             if (logEntry.getChangedPaths().size() > 0) {
                 System.out.println();
                 System.out.println("changed paths:");
+                /*
+                 * keys are changed paths
+                 */
                 Set changedPathsSet = logEntry.getChangedPaths().keySet();
 
                 for (Iterator changedPaths = changedPathsSet.iterator(); changedPaths
                         .hasNext();) {
+                    /*
+                     * obtains a next SVNLogEntryPath
+                     */
                     SVNLogEntryPath entryPath = (SVNLogEntryPath) logEntry
                             .getChangedPaths().get(changedPaths.next());
+                    /*
+                     * SVNLogEntryPath.getPath returns the changed path itself;
+                     * 
+                     * SVNLogEntryPath.getType returns a charecter describing
+                     * how the path was changed ('A' - added, 'D' - deleted or
+                     * 'M' - modified);
+                     * 
+                     * If the path was copied from another (branched) then
+                     * SVNLogEntryPath.getCopyPath &
+                     * SVNLogEntryPath.getCopyRevision tells where it was copied
+                     * from and what revision the origin path was at.
+                     */
                     System.out.println(" "
                             + entryPath.getType()
                             + "	"

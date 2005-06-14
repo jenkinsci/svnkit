@@ -67,9 +67,6 @@ public class DisplayFile {
          * Default values:
          */
         String url = "http://72.9.228.230:8080/svn/jsvn/trunk";
-        /*
-         * Authentication is generally not required for reading operations
-         */
         String name = "anonymous";
         String password = "anonymous";
         String filePath = "www/usage.html";

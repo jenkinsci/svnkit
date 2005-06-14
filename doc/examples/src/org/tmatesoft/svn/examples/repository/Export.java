@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.diff.ISVNRAData;
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.diff.SVNDiffInstruction;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -68,19 +69,21 @@ import org.tmatesoft.svn.util.PathUtil;
  * For more details see descriptions of UpdateReporterBaton, UpdateEditor in this 
  * program code.
  * 
- * 
- * 
  * If the program succeeds you'll see something like this:
  * 
  * Exported revision: 82   
  */
 public class Export {
-
+    /*
+     * args parameter is used to obtain a repository location URL, a local path 
+     * (relative or absolute) where a copy will be created, user's account name &
+     * password to authenticate him to the server.
+     */
     public static void main(String[] args) {
         /*
          * Default values:
          */
-        String url = "svn://localhost/rep";//"http://72.9.228.230:8080/svn/jsvn/branches/0.9.0/doc";
+        String url = "http://72.9.228.230:8080/svn/jsvn/branches/0.9.0/doc";
         String name = "anonymous";
         String password = "anonymous";
         String exportDirPath = "/export";
@@ -196,7 +199,24 @@ public class Export {
 
         try {
             /*
+             * This call will make a simple checkout (export) of the entire directory
+             * "/doc" being at the latest revision from the repository to your 
+             * exportDirPath.
              * 
+             * latestRevision is the repository revision itself we're interested in.
+             * 
+             * the 2nd parameter - target - is null as we are not restricting the
+             * checkout scope to only this entry, we need the entire directory.
+             * 
+             * the 3rd parameter - recursive - is true as we're not restricting
+             * the checkout scope to only entries located in "/doc" directory,
+             * we need the full tree.
+             * 
+             * the 4th parameter is an ISVNReporterBaton who will report to the 
+             * server that we need to checkout the "/doc" directory.
+             * 
+             * the 5th parameter is an ISVNEditor who will "make" the work - create
+             * the local copy of "/doc". 
              */
             repository.update(latestRevision, null, true,
                     new UpdateReporterBaton(), new UpdateEditor(
@@ -254,16 +274,16 @@ public class Export {
      *		//for the root directory
      *		reporter.setPath("", null, 4, false);
      *		
-     *		//for /dirA
+     *		//for "/dirA"
      *		reporter.setPath("/dirA", null, 5, false);
      *		
-     *		//for /dirA/dirB
+     *		//for "/dirA/dirB"
      *		reporter.setPath("/dirA/dirB", null, 6, false);
      *		
-     *		//for /dirA/dirB/file1.txt
+     *		//for "/dirA/dirB/file1.txt"
      *		reporter.setPath("/dirA/dirB/file1.txt", null, 6, false);
      *		
-     *		//for /dirA/dirC
+     *		//for "/dirA/dirC"
      *		reporter.setPath("/dirA/dirC", null, 4, false);
      *		
      *		....//and so on for all entries which revisions differ from 8
@@ -293,7 +313,7 @@ public class Export {
      * 	 startEmpty=true means the directory is still empty.
      * 	 In other cases it must be false.
      * 
-     * - if a user's local working copy is updated against a URL different from that
+     * - If a user's local working copy is updated against a URL different from that
      * 	 it was checked out from, then instead of calling reporter.setPath you should
      * 	 call:
      *      
@@ -333,15 +353,17 @@ public class Export {
 		 * 
 		 * lockToken is null as this parameter is irrelevant in an export.
 		 * 
-		 * rev=0 - revision being described is also irrelevant (therefore it can be any
-		 * non-negative value); the revision of the export scope is passed to
-		 * SVNRepository.update.
+		 * rev=0 - revision being described is practically irrelevant (therefore it can
+		 * be any non-negative value that doesn't exceed the real latest revision of the
+		 * repository); significant is the revision of the export scope being  passed to 
+		 * SVNRepository.update. (But if this is an update of an existing copy, 
+		 * certainly you are to provide the real revision for each entry).
 		 *  
 		 * The last flag (startEmpty) is set to true says that there are no local 
 		 * copies yet and they are to be exported from the repository.     
          */
         public void report(ISVNReporter reporter) throws SVNException {
-            reporter.setPath("", null, 100, true);
+            reporter.setPath("", null, 0, true);
             /*
              * Don't forget to finish the report!
              */
@@ -366,39 +388,167 @@ public class Export {
      *        
      * Assume that only file1.txt is out of date and must be updated. The server sends 
      * commands to update the file which are translated into series of calls to 
-     * ISVNEditor methods :
+     * ISVNEditor methods. Here is the scheme of this process:
      * 		
-     * 		//sets the target revision the copy is ubeing updated to.
+     * 		//sets the target revision the copy is being updated to.
      * 		editor.targetRevision(revision)
      * 		
-     * 		//processing starts with the parent directory the update was run for - "/" 
+     * 		//processing starts with the parent directory the update was
+     * 		//run for - "/"; now modifications can be applied to the opened directory.
      * 		editor.openRoot(revision);
-     * 
-     * 		//opens /dirA.
+     * 		
+     * 		// changing root directory properties
+     * 		editor.changeDirProperty(propertyName1, propertyValue1);
+     * 		editor.changeDirProperty(propertyName2, propertyValue2);
+     *      .....................................
+     * 		
+     * 		//opens "/dirA".
      * 		editor.openDir("/dirA", revision);
-
+     *
      * 		//now modifications can be applied to the opened directory. For example,
      * 		//changing its properties.
      *  	//Also all further calls like editor.openFile(...)/editor.addFile(...)
      * 		//or editor.openDir(...)/editor.addDir(...) are relative to the currently
      * 		//opened directory.
-     * 		editor.changeDirProperty(propertyName, propertyValue);
+     * 		editor.changeDirProperty(propertyName1, propertyValue1);
+     * 		editor.changeDirProperty(propertyName2, propertyValue2);
+     *      .....................................
      *       
      * 		//opens file "file1.txt" to modify it
      * 		editor.openFile("/dirA/file1.txt", revision);
      * 		
-     * 		//changing file properties. 
-     * 		editor.changeFileProperty(propertyName, propertyValue);
-     * 		
+     * 		//changing properties of "file1.txt"
+     * 		editor.changeFileProperty(propertyName1, propertyValue1);
+     * 		editor.changeFileProperty(propertyName2, propertyValue2);
+     * 		.....................................
+     * 
      * 		//file contents are out of date - the server sends delta
-     * 		//(the difference between the local copy and the file in the repository)
+     * 		//(the difference between the local BASE-revision copy and the file in 
+     * 		//the repository).
      * 		//baseChecksum is provided by the server to make certain of the delta
      * 		//will be applied correctly - the client should compare it
-     * 		//with the one evaluated upon copy
+     * 		//with his own one evaluated upon the contents of the file at the BASE
+     * 		//revision - that is the state of the file it had just after the previous
+     * 		//update (or checkout). If both checksums match each other - it's ok, the 
+     * 		//delta can be applied correctly, if don't - may be the local file is
+     * 		//corrupted, that's an error.
      * 		editor.applyTextDelta(baseChecksum);
      * 		
-     * 		//
+     * 		//well, if the previous step was ok, the next step is to receive the delta
+     * 		//itself. ISVNEditor.textDeltaChunk(SVNDiffWindow) receives an 
+     * 		//SVNDiffWindow - this is an object which contains instructions on how the
+     * 		//delta (the entire delta or a part of it when the delta is too big) must 
+     * 		//be applied. If the delta is too big ISVNEditor.textDeltaChunk is called 
+     * 		//several times to pass all parts of the delta; in this case all passed 
+     * 		//diffWindows should be accumulated and associated with their OutputStreams
+     * 		//(each call to ISVNEditor.textDeltaChunk returns an OutputStream as a 
+     * 		//storage where delta is written).
      * 		OutputStream os=editor.textDeltaChunk(diffWindow);
+     * 
+     * 		//the following is called when all the delta is received.
+     * 		//that is where it's applied to a local file; in this illustration
+     * 		//"file1.txt" is modified.
+     * 		editor.textDeltaEnd();
+     * 		
+     * 		//the final point of the file modification: once again the server sends 
+     * 		//a checksum to control if the resultant file ("file1.txt") was modified 
+     * 		//correctly; the client repeats the operation of comparing the got checksum
+     * 		//with the own one evaluated upon the resultant file contents. 
+     * 		editor.closeFile(textChecksum);
+     * 		
+     * 		//closes the directory  - "/dirA"
+     * 		editor.closeDir();
+     * 
+     * 		//closes the root directory - "/"
+     * 		editor.closeDir();
+     * 		
+     * 		//editing ends with a call to ISVNEditor.closeEdit() which returns
+     * 		//the commit information (SVNCommitInfo) - what revision the copy is
+     * 		//updated to, who is the author of the changes, when the changes were
+     * 		//committed.   
+     * 		SVNCommitInfo commitInfo = editor.closeEdit();
+     * 
+     * That is how an update runs in common words. The described scheme is analogous for
+     * the case when more than one file is out of date (what is more actual in reality), 
+     * the local copy tree is processed (by an ISVNEditor) top-down for each directory 
+     * and file that must be updated.
+     * 
+     * Well, the case of a checkout is a little bit different. ISVNEditor.openDir, 
+     * ISVNEditor.openFile are not called, instead ISVNEditor.addDir, ISVNEditor.addFile
+     * are called for each directory and file to be checked out. This is a principal 
+     * model of how ISVNEditor methods are invoked during a checkout(suppose we are 
+     * checking out some node tree from a repository what will lead us to the previous
+     * illustrartion when the local copy already exists):
+     * 
+     * 		//sets the target revision of the copy being checked out.
+     * 		editor.targetRevision(revision)
+     * 		
+     * 		//ISVNEditor.openRoot is not called;
+     * 		//setting root directory properties.
+     * 		editor.changeDirProperty(propertyName, propertyValue);
+     * 		
+     * 		//adds "/dirA". CopyDirFromPath & CopyFromRevision - set if the directory
+     * 		//is a copy (usually called branch) of an existing one in the repository.
+     * 		//In the case of a checkout (not simply an export) an implementation of 
+     * 		//this method creates an administrative area (.svn directory) for the 
+     * 		//directory being added ("/dirA"). 
+     * 		editor.addDir("/dirA", copyDirFromPath, CopyFromRevision);
+     *
+     * 		//setting the directory properties - they should be stored in the 
+     * 		//previously created .svn directory.
+     *  	//Also all further calls like editor.addFile(...)/editor.addDir(...)
+     * 		//are relative to the added directory.
+     * 		editor.changeDirProperty(propertyName1, propertyValue1);
+     * 		editor.changeDirProperty(propertyName2, propertyValue2);
+     *      .....................................
+     *  
+     * 		//adds file "file1.txt". CopyFileFromPath & CopyFromRevision - if the file
+     * 		//is a copy of an existing one in the repository.
+     * 		editor.addFile("/dirA/file1.txt", copyFileFromPath, CopyFromRevision);
+     * 		
+     * 		//setting properties of "file1.txt". Save them in .svn directory.
+     * 		editor.changeFileProperty(propertyName1, propertyValue1);
+     * 		editor.changeFileProperty(propertyName2, propertyValue2);
+     * 		.....................................
+     * 
+     * 		//if the file is empty  - only ISVNEditor.applyTextDelta and 
+     * 		//ISVNEditor.textDeltaEnd are called. Otherwise ISVNEditor.textDeltaChunk
+     * 		//is also invoked.
+     *  
+     * 		//baseChecksum is irrelevant for a checkout.
+     * 	    editor.applyTextDelta(baseChecksum);
+     * 		
+     * 		//writing file contents (delta is contents in this case).
+     * 		OutputStream os=editor.textDeltaChunk(diffWindow);
+     * 		editor.textDeltaEnd();
+     * 		
+     * 		//the final point of the file modification: once again the server sends 
+     * 		//a checksum to control if the resultant file ("file1.txt") was transmitted 
+     * 		//correctly; the client compares the got checksum
+     * 		//with the own one evaluated upon the resultant file contents.
+     * 		//It may be this method implementation where a copy of the file ("file1.txt")
+     * 		// - the BASE revision file copy - is stored in .svn directory. 
+     * 		editor.closeFile(textChecksum);
+     * 
+     *		//each entry (wheteher it's a file or a directory) that is added 
+     *		//should be reflected in its parent's administrative directory - .svn
+     * 
+     * 		//adds file "file2.txt".  
+     * 		editor.addFile("/dirA/file2.txt", copyFileFromPath, CopyFromRevision);
+     * 		
+     * 		............................................//so on
+     * 		
+     * 		//closes the directory  - "/dirA"
+     * 		editor.closeDir();
+     * 		
+     * 		//closes the root directory - "/"
+     * 		editor.closeDir();
+     * 		
+     * 		SVNCommitInfo commitInfo = editor.closeEdit();
+     * 
+     * Update editor is a simple ISVNEditor implementation that stores exported 
+     * directories and files to a client's fylesystem (not creating .svn directories for
+     * them).
      */
     private static class UpdateEditor implements ISVNEditor {
         private String myRootDirectory;
@@ -410,7 +560,10 @@ public class Export {
         private List myDiffWindows;
 
         private Map myFileProperties;
-
+        /*
+         * root - the local directory where the node tree is to be exported into.
+         * mediator - used for temporary delta storage allocations.
+         */
         public UpdateEditor(String root, ISVNWorkspaceMediator mediator) {
             myRootDirectory = (root != null) ? root : myRootDirectory;
             myMediator = (mediator != null) ? mediator
@@ -420,16 +573,25 @@ public class Export {
         public void targetRevision(long revision) throws SVNException {
         }
 
+        /*
+         * Called when a new directory is to be added.
+         * path - relative to the root directory that is being exported.
+         * Creates a directory in a filesystem (relative to myRootDirectory).
+         */
         public void addDir(String path, String copyFromPath,
                 long copyFromRevision) throws SVNException {
+            /*
+             * PathUtil is a utility that helps to work with path strings.
+             * PathUtil.removeLeadingSlash removes the first '/' (if any) from the path
+             * string.
+             */
             path = PathUtil.removeLeadingSlash(path);
+            /*
+             * PathUtil.removeTrailingSlash removes the last '/' (if any) from the path 
+             * string.
+             */
             path = PathUtil.removeTrailingSlash(path);
             File newDir = new File(myRootDirectory, path);
-            if (newDir.isFile()) {
-                // export is obstructed.
-                throw new SVNException(
-                        "error: a file is received while a directory was expected.");
-            }
             if (!newDir.exists()) {
                 if (!newDir.mkdirs()) {
                     throw new SVNException(
@@ -439,6 +601,11 @@ public class Export {
             }
         }
 
+        /*
+         * Called when a new file is to be added.
+         * path is relative to the root directory that is being exported 
+         * (myRootDirectory).
+         */
         public void addFile(String path, String copyFromPath,
                 long copyFromRevision) throws SVNException {
             path = PathUtil.removeLeadingSlash(path);
@@ -449,13 +616,28 @@ public class Export {
                 throw new SVNException("error: exported file '"
                         + file.getAbsolutePath() + "' already exists!");
             }
+            /*
+             * remember the path
+             */
             myCurrentPath = path;
             myFileProperties = new HashMap();
         }
 
+        /*
+         * Provides an OutputStream where file delta (contents) sent by the server
+         * will be written. diffWindow will be associated with this OutputStream
+         * because exactly this diffWindow has got instructions on how to apply 
+         * the delta that will be written exactly in this OutputStream.
+         * For too "weighty" files delta may be devided into parts, therefore
+         * ISVNEditor.textDeltaChunk will be called a number of times.   
+         */
         public OutputStream textDeltaChunk(SVNDiffWindow diffWindow)
                 throws SVNException {
             if (myDiffWindows == null) {
+                /*
+                 * this is the collection for all diffWindows (if any)
+                 * which will be supplied
+                 */
                 myDiffWindows = new LinkedList();
             }
             myDiffWindows.add(diffWindow);
@@ -466,7 +648,10 @@ public class Export {
                 throw new SVNException(ioe);
             }
         }
-
+        
+        /*
+         * All delta is transmitted. Now it's time to apply it.
+         */
         public void textDeltaEnd() throws SVNException {
             File newFile = new File(myRootDirectory, myCurrentPath);
             try {
@@ -475,22 +660,51 @@ public class Export {
                 newFile.delete();
                 throw new SVNException(ioe);
             }
+            /*
+             * The file should be preliminary wrapped in an ISVNRAData since
+             * the SVNDiffWindow doesn't work directly with the file itself
+             * but by means of the ISVNRAData interface.  
+             */
             ISVNRAData target = new SVNRAFileData(newFile, false);
 
+            /*
+             * if myDiffWindows is null - the file is empty.
+             */
             if (myDiffWindows != null) {
                 try {
                     for (Iterator windows = myDiffWindows.iterator(); windows
                             .hasNext();) {
+                        /*
+                         * obtains a next SVNDiffWindow. 
+                         */
                         SVNDiffWindow window = (SVNDiffWindow) windows.next();
-
                         if (window == null)
                             continue;
 
                         InputStream newData = null;
-                        long offset = newFile.length();
+                        
                         try {
+                            /*
+                             * Gets the InputStream based upon the OutpruStream (where
+                             * the delta was written to) that is associated with the
+                             * current window
+                             */
                             newData = myMediator.getTemporaryLocation(window);
-                            window.apply(target, target, newData, offset);
+                            /*
+                             * Here the delta is applied.
+                             * target is the file where the dleta is being written.
+                             * 
+                             * newData - source bytes stored in a temporary delta 
+                             * storage.
+                             * 
+                             * The last parameter - offset in the file - is to be the 
+                             * current file size. If some delta chunk consists of bytes
+                             * of the same value the server won't transmit the full 
+                             * chunk but provide one byte and an instruction how many
+                             * times it should be repeated. These bytes are written to
+                             * the current end of the file.  
+                             */
+                            window.apply(target, target, newData, target.length());
                         } catch (IOException ioe) {
                             throw new SVNException(
                                     "error while fetching a temporary delta storage.",
@@ -503,6 +717,9 @@ public class Export {
                                     //
                                 }
                             }
+                            /*
+                             * don't need the temporary storage anymore.
+                             */
                             myMediator.deleteTemporaryLocation(window);
                         }
                     }
@@ -517,12 +734,16 @@ public class Export {
                 }
             }
         }
-
+        /*
+         * Save a file property.
+         */
         public void changeFileProperty(String name, String value)
                 throws SVNException {
             myFileProperties.put(name, value);
         }
-
+        /*
+         * Check if the file has been updated correctly.
+         */
         public void closeFile(String textChecksum) throws SVNException {
             File file = new File(myRootDirectory, myCurrentPath);
             if (textChecksum == null) {
@@ -531,6 +752,11 @@ public class Export {
             }
 
             try {
+                /*
+                 * Uses SVNFileUtil.computeChecksum(File) to evaluate the client's
+                 * checksum that should be compared with the one transmitted by the 
+                 * server (textChecksum).
+                 */
                 if (textChecksum != null
                         && !textChecksum.equals(SVNFileUtil
                                 .computeChecksum(file))) {
@@ -543,7 +769,10 @@ public class Export {
                 myFileProperties = null;
             }
         }
-
+        
+        /*
+         * The rest ISVNEditor methods are left empty since there's no work for them.
+         */
         public SVNCommitInfo closeEdit() throws SVNException {
             return null;
         }
