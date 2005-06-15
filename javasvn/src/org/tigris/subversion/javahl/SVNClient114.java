@@ -69,7 +69,7 @@ import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
 /**
  * @author TMate Software Ltd.
  */
-public class SVNClient implements SVNClientInterface {
+public class SVNClient114 {
     
 	private CommitMessage myMessageHandler;
     private String myUserName;
@@ -78,7 +78,7 @@ public class SVNClient implements SVNClientInterface {
 	private PromptUserPassword myPrompt;
 	private String myConfigDir;
     
-    public SVNClient() {
+    public SVNClient114() {
         QDiffManager.setup();
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
