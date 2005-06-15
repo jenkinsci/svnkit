@@ -1,3 +1,14 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.  The terms
+ * are also available at http://tmate.org/svn/license.html.
+ * If newer versions of this license are posted there, you may use a
+ * newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.examples.repository;
 
 import java.util.HashMap;
@@ -363,11 +374,19 @@ public class Export {
 		 * copies yet and they are to be exported from the repository.     
          */
         public void report(ISVNReporter reporter) throws SVNException {
-            reporter.setPath("", null, 0, true);
-            /*
-             * Don't forget to finish the report!
-             */
-            reporter.finishReport();
+            try{
+	            reporter.setPath("", null, 0, true);
+	            /*
+	             * Don't forget to finish the report!
+	             */
+	            reporter.finishReport();
+            }catch(SVNException svne){
+                try{
+                    reporter.abortReport();
+                }catch(SVNException svneInner){
+                }
+                throw svne;
+            }
         }
     }
 
@@ -718,7 +737,7 @@ public class Export {
                                 }
                             }
                             /*
-                             * don't need the temporary storage anymore.
+                             * doesn't need the temporary storage anymore.
                              */
                             myMediator.deleteTemporaryLocation(window);
                         }
