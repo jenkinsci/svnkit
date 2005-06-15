@@ -1127,9 +1127,9 @@ public class SVNWorkspace implements ISVNWorkspace {
                         "can't locate versioned parent entry for '" + path
                                 + "'");
             }
-            if (mkdir && entry != null && !entry.isManaged()
+            if (entry != null && !entry.isManaged()
                     && entry.isDirectory() && entry != getRoot()) {
-                add(entry.getPath(), mkdir, recurse);
+                add(entry.getPath(), false, false);
                 getRoot().dispose();
                 entry = locateParentEntry(path);
             }
@@ -1949,7 +1949,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         for (StringTokenizer tokens = new StringTokenizer(path, "/"); tokens
                 .hasMoreTokens();) {
             String token = tokens.nextToken();
-            if (!tokens.hasMoreTokens()) {
+            if (entry == null || !tokens.hasMoreTokens()) {
                 return entry;
             }
             entry = entry.asDirectory().getUnmanagedChild(token);
