@@ -1183,7 +1183,7 @@ public class SVNClient114 {
         for(Iterator names = properties.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
             String value = (String) properties.get(name);
-            result.add(new PropertyData(this, path, name, value, (value != null) ? value.getBytes() : null));
+//            result.add(new PropertyData(this, path, name, value, (value != null) ? value.getBytes() : null));
         }
         return (PropertyData[]) result.toArray(new PropertyData[result.size()]);
     }
@@ -1206,7 +1206,8 @@ public class SVNClient114 {
         if (value == null) {
             return null;
         }
-        return new PropertyData(this, path, name, value, value.getBytes());
+        return null;
+//        return new PropertyData(this, path, name, value, value.getBytes());
     }
 
     /**
@@ -1308,7 +1309,8 @@ public class SVNClient114 {
         if (value == null) {
             return null;
         }
-        return new PropertyData(this, path, name, value, value.getBytes());
+        return null;
+//        return new PropertyData(this, path, name, value, value.getBytes());
     }
 
     /**
@@ -1617,11 +1619,14 @@ public class SVNClient114 {
 
         String urlCopiedFrom= (String) properties.get(SVNProperty.COPYFROM_URL);
         long revisionCopiedFrom = SVNProperty.longValue((String) properties.get(SVNProperty.COPYFROM_REVISION));
+        /*
         Status st = new Status(path, url, nodeKind, revision, lastChangedRevision, lastChangedDate, lastCommitAuthor, textStatus, propStatus,
                 repositoryTextStatus, repositoryPropStatus, locked, copied, conflictOld, conflictNew, conflictWorking, urlCopiedFrom, revisionCopiedFrom,
                 switched);
-        DebugLog.log(path + ": created status: " + st.getTextStatus() + ":" + st.getPropStatus() + ":" + st.getNodeKind());
-        return st;
+                */
+//        DebugLog.log(path + ": created status: " + st.getTextStatus() + ":" + st.getPropStatus() + ":" + st.getNodeKind());
+        return null;
+//        return st;
     }
     
     private static LogMessage createLogMessage(SVNLogEntry svnLogEntry) {
