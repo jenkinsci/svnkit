@@ -45,9 +45,10 @@ import java.util.List;
 import java.util.Map;
 /*
  * This example program illustrates how you can export a clean directory tree 
- * from a repository using the SVNRepository.update method. Actually, checkout works in 
- * the similar way but additionally administrative directories are created (one .svn 
- * directory per each exported directory).
+ * from a repository using the SVNRepository.update method. Actually, a checkout 
+ * (compatible with the native Subversion command line client) works in a similar 
+ * way but additionally administrative directories are created (one .svn directory
+ * per each exported directory).
  * 
  * Basic aspects of this example:
  * 
@@ -62,13 +63,16 @@ import java.util.Map;
  * the example shows how to provide user's credentials;
  * 
  * 3)INTRO: you have to implement ISVNReporterBaton and ISVNEditor to affect the 
- * behaviour of the SVNRepository.update method (it depends on whether you want to 
- * update your copy of a repository node that may have been changed since you last 
- * updated it (or checked out) or you have no copy yet but want to check it out). 
+ * behaviour of the SVNRepository.update method (for ISVNReporterBaton an 
+ * implementation depends on whether you want to update your copy of a repository 
+ * node that may have been changed since you last updated it (or checked out) or you
+ * have no copy yet but want to check it out; for ISVNEditor an implementation 
+ * depends on how exactly you would like either to save the exported copy - if you 
+ * perform a checkout, - or bring  the copy up to date if you already have the copy). 
  * The aim of ISVNReporterBaton is to report to the repository server about the state 
  * of the user's working files and directories when they are updated as well as report
- * that there are no directories and files yet, they are to be exported - in the case of
- * an export and checkout. Then having got the description information the server sends
+ * that there are no directories and files yet, they are to be exported - in the case 
+ * of a checkout. Then having got this description information the server sends
  * commands which are translated into calls to your ISVNEditor implementation methods 
  * where you define how exactly files and directories to be updated/exported.
  * 
@@ -229,7 +233,7 @@ public class Export {
              * the local copy of "/doc". 
              */
             repository.update(latestRevision, null, true,
-                    new UpdateReporterBaton(), new UpdateEditor(
+                    new ExportReporterBaton(), new ExportEditor(
                             exportDirPath, new WorkspaceMediator()));
         } catch (SVNException svne) {
             System.err.println("error while exporting '" + url + "': "
@@ -347,10 +351,10 @@ public class Export {
      * 
      * Well, that's about how it works in common words. As for this example program 
      * there's no need in a full report since we're only going to export entry(ies) from 
-     * a repository. So, UpdateReporterBaton is a simple implementation of 
+     * a repository. So, ExportReporterBaton is a simple implementation of 
      * ISVNReporterBaton that describes that intention.
 	 */ 
-    private static class UpdateReporterBaton implements ISVNReporterBaton {
+    private static class ExportReporterBaton implements ISVNReporterBaton {
         /*
 		 * Reports that the repository node tree (the location to which the 
 		 * SVNRepository is created) is to be exported.
@@ -407,7 +411,10 @@ public class Export {
      *        
      * Assume that only file1.txt is out of date and must be updated. The server sends 
      * commands to update the file which are translated into series of calls to 
-     * ISVNEditor methods. Here is the scheme of this process:
+     * ISVNEditor methods. Here is the scheme of this process (an implementor himself
+     * doesn't make these calls, his aim is only to provide an ISVNEditor 
+     * implementation; the following is only an illustration describing the order
+     * how the JavaSVN library invokes ISVNEditor methods):
      * 		
      * 		//sets the target revision the copy is being updated to.
      * 		editor.targetRevision(revision)
@@ -506,26 +513,29 @@ public class Export {
      * 		//setting root directory properties.
      * 		editor.changeDirProperty(propertyName, propertyValue);
      * 		
-     * 		//adds "/dirA". CopyDirFromPath & CopyFromRevision - set if the directory
-     * 		//is a copy (usually called branch) of an existing one in the repository.
-     * 		//In the case of a checkout (not simply an export) an implementation of 
-     * 		//this method creates an administrative area (.svn directory) for the 
-     * 		//directory being added ("/dirA"). 
+     * 		//adds "/dirA". copyDirFromPath & copyFromRevision - are irrelevant in
+     * 		//an update editor.
+     * 		//If you want to have a compatibility with the native Subversion command
+     * 		//line client in the case of a checkout (not simply an export) an 
+     * 		//implementation of this method should create an administrative area 
+     * 		//(.svn directory) for the directory being added ("/dirA"). 
      * 		editor.addDir("/dirA", copyDirFromPath, CopyFromRevision);
      *
-     * 		//setting the directory properties - they should be stored in the 
-     * 		//previously created .svn directory.
+     * 		//setting the directory properties - they may be stored in the 
+     * 		//previously created .svn directory (SVN command line client 
+     * 		//compatibility).
      *  	//Also all further calls like editor.addFile(...)/editor.addDir(...)
      * 		//are relative to the added directory.
      * 		editor.changeDirProperty(propertyName1, propertyValue1);
      * 		editor.changeDirProperty(propertyName2, propertyValue2);
      *      .....................................
      *  
-     * 		//adds file "file1.txt". CopyFileFromPath & CopyFromRevision - if the file
-     * 		//is a copy of an existing one in the repository.
+     * 		//adds file "file1.txt". copyFileFromPath & copyFromRevision - are irrelevant
+     * 		//in an update editor.
      * 		editor.addFile("/dirA/file1.txt", copyFileFromPath, CopyFromRevision);
      * 		
-     * 		//setting properties of "file1.txt". Save them in .svn directory.
+     * 		//setting properties of "file1.txt". May be saved them in .svn directory
+     * 		//for compatibility with the native SVN command line client.
      * 		editor.changeFileProperty(propertyName1, propertyValue1);
      * 		editor.changeFileProperty(propertyName2, propertyValue2);
      * 		.....................................
@@ -538,18 +548,25 @@ public class Export {
      * 	    editor.applyTextDelta(baseChecksum);
      * 		
      * 		//writing file contents (delta is contents in this case).
-     * 		OutputStream os=editor.textDeltaChunk(diffWindow);
+     * 		OutputStream os1=editor.textDeltaChunk(diffWindow1);
+     *		//if "file1.txt" is too big...
+     * 		OutputStream os2=editor.textDeltaChunk(diffWindow2);
+     * 		.....................................
+     * 		
+     * 		//all contents are received, "file1.txt" can be created
      * 		editor.textDeltaEnd();
      * 		
      * 		//the final point of the file modification: once again the server sends 
      * 		//a checksum to control if the resultant file ("file1.txt") was transmitted 
-     * 		//correctly; the client compares the got checksum
+     * 		// and constructed correctly; the client compares the got checksum
      * 		//with the own one evaluated upon the resultant file contents.
      * 		//It may be this method implementation where a copy of the file ("file1.txt")
-     * 		// - the BASE revision file copy - is stored in .svn directory. 
+     * 		// - the BASE revision file copy - is stored in .svn directory (for 
+     * 		//compatibility with the native SVN command line client). 
      * 		editor.closeFile(textChecksum);
      * 
-     *		//each entry (wheteher it's a file or a directory) that is added 
+     *		//again if you want to have a compatibility with the native SVN command line
+     *		//client each entry (wheteher it's a file or a directory) that is added 
      *		//should be reflected in its parent's administrative directory - .svn
      * 
      * 		//adds file "file2.txt".  
@@ -565,11 +582,14 @@ public class Export {
      * 		
      * 		SVNCommitInfo commitInfo = editor.closeEdit();
      * 
-     * Update editor is a simple ISVNEditor implementation that stores exported 
-     * directories and files to a client's fylesystem (not creating .svn directories for
-     * them).
+     * ExportEditor is a simple ISVNEditor implementation that stores exported 
+     * directories and files to a client's fylesystem (not creating .svn directories
+     * for them). ExportEditor implements the following methods of the ISVNEditor
+     * interface: addDir, addFile, textDeltaChunk, textDeltaEnd, closeFile, 
+     * changeFileProperty. The rest ISVNEditor methods are empty - not used in this
+     * example program.
      */
-    private static class UpdateEditor implements ISVNEditor {
+    private static class ExportEditor implements ISVNEditor {
         private String myRootDirectory;
 
         private ISVNWorkspaceMediator myMediator;
@@ -583,13 +603,10 @@ public class Export {
          * root - the local directory where the node tree is to be exported into.
          * mediator - used for temporary delta storage allocations.
          */
-        public UpdateEditor(String root, ISVNWorkspaceMediator mediator) {
+        public ExportEditor(String root, ISVNWorkspaceMediator mediator) {
             myRootDirectory = (root != null) ? root : myRootDirectory;
             myMediator = (mediator != null) ? mediator
                     : new WorkspaceMediator();
-        }
-
-        public void targetRevision(long revision) throws SVNException {
         }
 
         /*
@@ -754,14 +771,14 @@ public class Export {
             }
         }
         /*
-         * Save a file property.
+         * Saves a file property.
          */
         public void changeFileProperty(String name, String value)
                 throws SVNException {
             myFileProperties.put(name, value);
         }
         /*
-         * Check if the file has been updated correctly.
+         * Checks up if the file has been updated correctly.
          */
         public void closeFile(String textChecksum) throws SVNException {
             File file = new File(myRootDirectory, myCurrentPath);
@@ -792,45 +809,97 @@ public class Export {
         /*
          * The rest ISVNEditor methods are left empty since there's no work for them.
          */
+        
+        /*
+         * Should be implemented to receive the revision a copy is being 
+         * updated to.
+         */
+        public void targetRevision(long revision) throws SVNException {
+        }
+        
+        /*
+         * Should be implemented to perform actions after an update finishes. 
+         */
         public SVNCommitInfo closeEdit() throws SVNException {
             return null;
         }
 
+        /*
+         * Should be implemented to perform actions when the root directory
+         * is opened. Not called during a checkout.
+         */
         public void openRoot(long revision) throws SVNException {
         }
-
+        
+        /*
+         * Should be implemented to delete a local entry as it was deleted in
+         * a repository.
+         */
         public void deleteEntry(String path, long revision) throws SVNException {
         }
-
+        
+        /*
+         * Should be implemented to perform actions on that fact that 
+         * a directory can not be checked out from a repository - will
+         * be absent in a local copy.
+         */
         public void absentDir(String path) throws SVNException {
         }
 
+        /*
+         * Should be implemented to perform actions on that fact that 
+         * a file can not be checked out from a repository - will
+         * be absent in a local copy.
+         */
         public void absentFile(String path) throws SVNException {
         }
-
+        
+        /*
+         * Should be implemented to perform actions on opening a file
+         * for further modifications.
+         */
         public void openFile(String path, long revision) throws SVNException {
         }
-
+        
+        /*
+         * Should be implemented to compare the received baseChecksum with the
+         * one which an implementor evaluates upon the BASE revision copy of the
+         * file. baseChecksum is irrelevant in a checkout.
+         */
         public void applyTextDelta(String baseChecksum) throws SVNException {
         }
-
+        
+        /*
+         * Should be implemented to perform actions on closing the currently
+         * opened directory.
+         */
         public void closeDir() throws SVNException {
         }
-
+        
+        /*
+         * Should be implemented to perform actions on opening a directory
+         * that is to be modified.
+         */
         public void openDir(String path, long revision) throws SVNException {
         }
-
+        
+        /*
+         * Should be implemented to change/save directory properties.
+         */
         public void changeDirProperty(String name, String value)
                 throws SVNException {
         }
-
+        
+        /*
+         * Should be implemented to perform actions if an editor fails.
+         */
         public void abortEdit() throws SVNException {
         }
     }
 
     /*
      * This class is to be used for temporary storage allocations needed by an
-     * ISVNEditor to write file delta received from the server. 
+     * ISVNEditor to store file delta received from the server. 
      */
     private static class WorkspaceMediator implements ISVNWorkspaceMediator {
         private Map myTmpFiles = new HashMap();

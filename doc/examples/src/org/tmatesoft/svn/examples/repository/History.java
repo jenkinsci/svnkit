@@ -70,7 +70,7 @@ public class History {
         String name = "anonymous";
         String password = "anonymous";
         long startRevision = 0;
-        long endRevision = -1;
+        long endRevision = -1;//HEAD (the latest) revision
         /*
          * Initializes the library (it must be done before ever using the
          * library itself)
@@ -154,21 +154,23 @@ public class History {
              * 
              * the 2nd parameter if non-null - is a user's Collection that will
              * be filled up with found SVNLogEntry objects; it's just another
-             * way to get reach the scope.
+             * way to reach the scope.
              * 
-             * startRevision, endRevision - to define the revisions range; by
-             * default in this program - startRevision=0, endRevision=-1 meaning
-             * the latest (HEAD) revision of the repository.
+             * startRevision, endRevision - to define a range of revisions you are
+             * interested in; by default in this program - startRevision=0, endRevision=-1
+             * meaning the latest (HEAD) revision of the repository.
              * 
-             * the 5th parameter -a bulean flag changedPath - if true then for
+             * the 5th parameter - a boolean flag changedPath - if true then for
              * each revision a corresponding SVNLogEntry will contain a map of
              * all paths which were changed in that revision.
              * 
-             * the 6th parameter - boolean flag strictNode - if true and a
-             * changed path is a copy of an existing one in the repository then
-             * the history for its origin won't be traversed; it means it will
+             * the 6th parameter - a boolean flag strictNode - if true and a
+             * changed path is a copy (branch) of an existing one in the repository
+             * then the history for its origin won't be traversed; it means it will
              * be possible to know what path at what revision it was copied
              * from.
+             * 
+             * The return value is a Collection filled up with SVNLogEntry Objects.
              */
             logEntries = repository.log(new String[] { "" }, null,
                     startRevision, endRevision, true, true);
@@ -225,7 +227,7 @@ public class History {
                      * how the path was changed ('A' - added, 'D' - deleted or
                      * 'M' - modified);
                      * 
-                     * If the path was copied from another (branched) then
+                     * If the path was copied from another one (branched) then
                      * SVNLogEntryPath.getCopyPath &
                      * SVNLogEntryPath.getCopyRevision tells where it was copied
                      * from and what revision the origin path was at.

@@ -10,4 +10,5 @@ javasvn-test/bin
 javasvn-test/test.properties
 /javasvn.iws
 javasvn/bin
+javasvn/src/org/tmatesoft/svn/examples
 /lib
