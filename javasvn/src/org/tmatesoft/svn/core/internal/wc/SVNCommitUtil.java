@@ -11,6 +11,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.DebugLog;
 
 import java.io.File;
 import java.util.Arrays;
@@ -48,11 +49,11 @@ public class SVNCommitUtil {
         }
         for (; index < pathsArray.length; index++) {
             String commitPath = pathsArray[index];
+            DebugLog.log("driver: processing path: " + commitPath);
             String commonAncestor = lastPath == null || "".equals(lastPath) ? "" /* root or first path */ :
                     SVNPathUtil.getCommonPathAncestor(commitPath, lastPath);
             if (lastPath != null) {
                 while(!lastPath.equals(commonAncestor)) {
-                    System.out.println("close dir");
                     editor.closeDir();
                     if (lastPath.lastIndexOf('/') >= 0) {
                         lastPath = lastPath.substring(0, lastPath.lastIndexOf('/'));
@@ -61,14 +62,19 @@ public class SVNCommitUtil {
                     }
                 }
             }
+            DebugLog.log("driver: last path: " + lastPath);
+            DebugLog.log("driver: common ancestor: " + commonAncestor);
             String relativeCommitPath = commitPath.substring(commonAncestor.length());
             if (relativeCommitPath.startsWith("/")) {
                 relativeCommitPath = relativeCommitPath.substring(1);
             }
+            DebugLog.log("driver: relative commit path: " + relativeCommitPath);
+
             for(StringTokenizer tokens = new StringTokenizer(relativeCommitPath, "/"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
                 commonAncestor = "".equals(commonAncestor) ? token : commonAncestor + "/" + token;
                 if (!commonAncestor.equals(commitPath)) {
+                    DebugLog.log("driver: open dir: " + commonAncestor);
                     editor.openDir(commonAncestor, revision);
                 } else {
                     break;
@@ -76,6 +82,7 @@ public class SVNCommitUtil {
             }
             handler.handleCommitPath(commitPath, editor);
             lastPath = commitPath;
+            DebugLog.log("driver: last open path: " + lastPath);
         }
         while(lastPath != null && !"".equals(lastPath)) {
             editor.closeDir();
@@ -396,7 +403,17 @@ public class SVNCommitUtil {
             SVNProperties props = dir.getProperties(entry.getName(), false);
             SVNProperties baseProps = dir.getBaseProperties(entry.getName(), false);
             Map propDiff = baseProps.compareTo(props);
-            textModified = propDiff != null && propDiff.containsKey(SVNProperty.EOL_STYLE);
+            boolean eolChanged = textModified = propDiff != null && propDiff.containsKey(SVNProperty.EOL_STYLE);
+            if (entry.getKind() == SVNNodeKind.FILE) {
+                if (commitCopy) {
+                    textModified = propDiff != null && propDiff.containsKey(SVNProperty.EOL_STYLE);
+                    if (!textModified) {
+                        textModified = dir.hasTextModifications(entry.getName(), eolChanged);
+                    }
+                } else {
+                    textModified = true;
+                }
+            }
             propsModified = propDiff != null && !propDiff.isEmpty();
         } else if (!commitDeletion) {
             SVNProperties props = dir.getProperties(entry.getName(), false);
@@ -416,7 +433,13 @@ public class SVNCommitUtil {
             SVNCommitItem item = new SVNCommitItem(path, url, cfURL, entry.getKind(),
                     cfURL != null ? SVNRevision.create(cfRevision) : SVNRevision.create(entry.getRevision()),
                     commitAddition, commitDeletion, propsModified, textModified, commitCopy, commitLock);
-            item.setPath(PathUtil.append(dir.getPath(), entry.getName()));
+            String itemPath = dir.getPath();
+            if ("".equals(itemPath)) {
+                itemPath += entry.getName();
+            } else if (!"".equals(entry.getName())) {
+                itemPath += "/" + entry.getName();
+            }
+            item.setPath(itemPath);
             commitables.put(path, item);
             if (lockTokens != null && entry.getLockToken() != null) {
                 lockTokens.put(url, entry.getLockToken());

@@ -752,7 +752,7 @@ public class SVNClient114 {
                 } else {
                 	DebugLog.log("adding file " + srcPath);
                 	editor.addFile(newPath, srcPath, revNumber);
-                	editor.closeFile(null);
+                	editor.closeFile(newPath, null);
                 }
                 if (newPathParent != null) {
                 	editor.closeDir();
@@ -872,7 +872,7 @@ public class SVNClient114 {
                 } else {
 					DebugLog.log("MOVE: add file: " + destPath + " : " + deletePath);
                 	editor.addFile(destPath, deletePath, revNumber);
-                	editor.closeFile(null);
+                	editor.closeFile(destPath, null);
                 }
                 for (Iterator dirs = parentDstDirs.iterator(); dirs.hasNext();) {
                 	dirs.next();

@@ -20,18 +20,18 @@ public class SVNAllDeltaGenerator implements ISVNDeltaGenerator {
 
 	// Accessing ==============================================================
 
-	public void generateDiffWindow(ISVNDeltaConsumer consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
+	public void generateDiffWindow(String commitPath, ISVNDeltaConsumer consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
         long length = workFile.length();
 		SVNDiffWindow window = SVNDiffWindowBuilder.createReplacementDiffWindow(length);
         DebugLog.log("NEW FILE LENGTH: " + length);
-		OutputStream os = consumer.textDeltaChunk(window);
+		OutputStream os = consumer.textDeltaChunk(commitPath, window);
         OutputStream fos = null;
         if (length == 0) {
             try {
                 os.close();
             } catch (IOException e1) {
             }
-            consumer.textDeltaEnd();
+            consumer.textDeltaEnd(commitPath);
             return;
         }
 		InputStream is = null;
@@ -63,6 +63,6 @@ public class SVNAllDeltaGenerator implements ISVNDeltaGenerator {
 				}
 			}
 		}
-		consumer.textDeltaEnd();
+		consumer.textDeltaEnd(commitPath);
 	}
 }

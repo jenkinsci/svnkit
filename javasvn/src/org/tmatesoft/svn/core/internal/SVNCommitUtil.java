@@ -239,7 +239,7 @@ public class SVNCommitUtil {
             DebugLog.log("ROOT OPEN: " + path);
             editor.openRoot(-1);
             if (root != null) {
-                if (root.sendChangedProperties(editor)) {
+                if (root.sendChangedProperties(null, editor)) {
                     ws.fireEntryCommitted(root, SVNStatus.MODIFIED);
                 }
             }
@@ -264,12 +264,12 @@ public class SVNCommitUtil {
             }
             // here we could have alias.
             editor.addDir(path, copyFromURL, copyFromRevision);
-			root.sendChangedProperties(editor);
+			root.sendChangedProperties(null, editor);
             ws.fireEntryCommitted(root, SVNStatus.ADDED);
         } else if (root != null && root.isPropertiesModified()) {
             DebugLog.log("DIR OPEN: " + path + ", " + revision);
             editor.openDir(path, revision); 
-            if (root.sendChangedProperties(editor)) {
+            if (root.sendChangedProperties(null, editor)) {
                 ws.fireEntryCommitted(root, SVNStatus.MODIFIED);
             }
         } else if (root == null) {
@@ -313,9 +313,9 @@ public class SVNCommitUtil {
                     doCommit(childPath, url, entries, editor, ws, progressViewer, committedPaths);
                 } else {
                     editor.addFile(childPath, null, -1);
-                    child.sendChangedProperties(editor);
-                    child.asFile().generateDelta(editor);
-                    editor.closeFile(null);
+                    child.sendChangedProperties(childPath, editor);
+                    child.asFile().generateDelta(childPath, editor);
+                    editor.closeFile(childPath, null);
                 }
                 ws.fireEntryCommitted(child, SVNStatus.REPLACED);
                 DebugLog.log("FILE REPLACE: DONE");
@@ -352,7 +352,7 @@ public class SVNCommitUtil {
                         DebugLog.log("copyfrom path:" + copyFromURL);
                     }
                     editor.addFile(childPath, copyFromURL, copyFromRev);
-					editor.closeFile(null);
+					editor.closeFile(childPath, null);
                     ws.fireEntryCommitted(child, SVNStatus.ADDED);
                     DebugLog.log("FILE COPY: DONE");
 				}
@@ -374,21 +374,21 @@ public class SVNCommitUtil {
                         DebugLog.log("copyfrom path:" + copyFromURL);
                     }
                     editor.addFile(childPath, copyFromURL, copyFromRevision);
-                    child.sendChangedProperties(editor);
-                    digest = child.asFile().generateDelta(editor);
-                    editor.closeFile(digest);
+                    child.sendChangedProperties(childPath, editor);
+                    digest = child.asFile().generateDelta(childPath, editor);
+                    editor.closeFile(childPath, digest);
                     ws.fireEntryCommitted(child, SVNStatus.ADDED);
                     DebugLog.log("FILE ADD: DONE");
                 } else if (child.asFile().isContentsModified() || child.isPropertiesModified()) {
                     DebugLog.log("FILE COMMIT: " + childPath + " : " + revision);
                     child.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
                     editor.openFile(childPath, revision);
-                    child.sendChangedProperties(editor);
+                    child.sendChangedProperties(childPath, editor);
                     DebugLog.log("contents modified: " + child.asFile().isContentsModified());
                     if (child.asFile().isContentsModified()) {
-                        digest = child.asFile().generateDelta(editor);
+                        digest = child.asFile().generateDelta(childPath, editor);
                     }
-                    editor.closeFile(digest);
+                    editor.closeFile(childPath, digest);
                     ws.fireEntryCommitted(child, SVNStatus.MODIFIED);
                     DebugLog.log("FILE COMMIT: DONE: " + digest);
                 }

@@ -147,6 +147,10 @@ public class SVNBasicClient implements ISVNEventListener {
         }
     }
 
+    protected ISVNEventListener getEventDispatcher() {
+        return myEventDispatcher;
+    }
+
     protected SVNWCAccess createWCAccess(File file) throws SVNException {
         return createWCAccess(file, null);
     }
@@ -238,6 +242,7 @@ public class SVNBasicClient implements ISVNEventListener {
             locations = (List) repos.getLocations("", locations, pegRevNumber, new long[] {revNumber});
             if (locations == null || locations.size() != 1) {
                 SVNErrorManager.error("svn: Unable to find repository location for '" + url + "' in revision " + revNumber);
+                return null;
             }
         } catch (SVNException e) {
             DebugLog.error(e);

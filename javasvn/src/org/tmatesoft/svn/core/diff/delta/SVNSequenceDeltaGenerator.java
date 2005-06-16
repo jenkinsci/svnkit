@@ -33,14 +33,14 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 
     // Implemented ============================================================
 
-    public void generateDiffWindow(ISVNDeltaConsumer consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
+    public void generateDiffWindow(String commitPath, ISVNDeltaConsumer consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
         try {
             if (!canProcess(workFile, baseFile)) {
-                ALL_DELTA_GENERATOR.generateDiffWindow(consumer, workFile, baseFile);
+                ALL_DELTA_GENERATOR.generateDiffWindow(commitPath, consumer, workFile, baseFile);
                 return;
             }
 
-            doGenerateDiffWindow(workFile, baseFile, consumer);
+            doGenerateDiffWindow(commitPath, workFile, baseFile, consumer);
         } catch (IOException ex) {
             throw new SVNException(ex);
         }
@@ -48,7 +48,7 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 
     // Utils ==================================================================
 
-    private static void doGenerateDiffWindow(ISVNRAData workFile, ISVNRAData baseFile, ISVNDeltaConsumer consumer) throws IOException, SVNException {
+    private static void doGenerateDiffWindow(String commitPath, ISVNRAData workFile, ISVNRAData baseFile, ISVNDeltaConsumer consumer) throws IOException, SVNException {
 	    final QSequenceLineResult result;
 	    try {
 		    result = QSequenceLineMedia.createBlocks(new SVNSequenceLineRAData(baseFile), new SVNSequenceLineRAData(workFile), null);
@@ -68,10 +68,10 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 		    final long targetLength = workLines.getLineCount() > 0 ? workLines.getLine(workLines.getLineCount() - 1).getTo() + 1 : 0;
 		    final long newDataLength = determineNewDataLength(newDatas);
 		    final SVNDiffInstruction[] instructionsArray = (SVNDiffInstruction[]) instructions.toArray(new SVNDiffInstruction[instructions.size()]);
-		    final OutputStream stream = consumer.textDeltaChunk(new SVNDiffWindow(0, sourceLength, targetLength, instructionsArray, newDataLength));
+		    final OutputStream stream = consumer.textDeltaChunk(commitPath, new SVNDiffWindow(0, sourceLength, targetLength, instructionsArray, newDataLength));
 		    sendData(newDatas, stream);
 		    stream.close();
-		    consumer.textDeltaEnd();
+		    consumer.textDeltaEnd(commitPath);
 	    }
 	    finally {
 		    result.close();

@@ -1137,7 +1137,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                     && !entry.isMissing() && entry.isDirectory()) {
                 ISVNEntry child = entry.asDirectory().scheduleForAddition(name,
                         mkdir, recurse);
-                doApplyAutoProperties(child, recurse);
+                doApplyAutoProperties(child.getPath(), child, recurse);
                 fireEntryModified(child, SVNStatus.ADDED, true);
                 entry.save();
                 entry.dispose();
@@ -1151,15 +1151,15 @@ public class SVNWorkspace implements ISVNWorkspace {
         }
     }
 
-    private void doApplyAutoProperties(ISVNEntry addedEntry, boolean recurse)
+    private void doApplyAutoProperties(String commitPath, ISVNEntry addedEntry, boolean recurse)
             throws SVNException {
-        applyAutoProperties(addedEntry, null);
+        applyAutoProperties(commitPath, addedEntry, null);
         if (recurse && addedEntry.isDirectory()) {
             for (Iterator children = addedEntry.asDirectory().childEntries(); children
                     .hasNext();) {
                 ISVNEntry childEntry = (ISVNEntry) children.next();
                 if (childEntry.isScheduledForAddition()) {
-                    doApplyAutoProperties(childEntry, recurse);
+                    doApplyAutoProperties(PathUtil.append(commitPath, childEntry.getName()), childEntry, recurse);
                 }
             }
         }
@@ -1825,7 +1825,7 @@ public class SVNWorkspace implements ISVNWorkspace {
         if (entry.isDirectory()) {
             DebugLog.log("IMPORT: ADDING DIR: " + rootPath + entry.getPath());
             editor.addDir(rootPath + entry.getPath(), null, -1);
-            applyAutoProperties(entry, editor);
+            applyAutoProperties(null, entry, editor);
             for (Iterator children = entry.asDirectory().unmanagedChildEntries(
                     false); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
@@ -1835,16 +1835,16 @@ public class SVNWorkspace implements ISVNWorkspace {
         } else {
             DebugLog.log("IMPORT: ADDING FILE: " + rootPath + entry.getPath());
             editor.addFile(rootPath + entry.getPath(), null, -1);
-            applyAutoProperties(entry, editor);
+            applyAutoProperties(rootPath + entry.getPath(), entry, editor);
             entry.setPropertyValue(SVNProperty.SCHEDULE,
                     SVNProperty.SCHEDULE_ADD);
-            entry.asFile().generateDelta(editor);
-            editor.closeFile(null);
+            String digest = entry.asFile().generateDelta(rootPath + entry.getPath(), editor);
+            editor.closeFile(rootPath + entry.getPath(), digest);
         }
         fireEntryCommitted(entry, SVNStatus.ADDED);
     }
 
-    private void applyAutoProperties(ISVNEntry entry, ISVNEditor editor)
+    private void applyAutoProperties(String commitPath, ISVNEntry entry, ISVNEditor editor)
             throws SVNException {
         if (myCompiledAutoProperties == null) {
             myCompiledAutoProperties = compileAutoProperties(myAutoProperties);
@@ -1866,7 +1866,7 @@ public class SVNWorkspace implements ISVNWorkspace {
                     if (entry.isDirectory()) {
                         editor.changeDirProperty(name, value);
                     } else {
-                        editor.changeFileProperty(name, value);
+                        editor.changeFileProperty(commitPath, name, value);
                     }
                 }
             }

@@ -1,5 +1,19 @@
 package org.tmatesoft.svn.core.internal.wc;
 
+import de.regnis.q.sequence.line.QSequenceLineRAData;
+import de.regnis.q.sequence.line.QSequenceLineRAFileData;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.ws.fs.FSMergerBySequence;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.core.wc.ISVNEventListener;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.TimeUtil;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -16,22 +30,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.TreeMap;
-
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.ws.fs.FSMergerBySequence;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.io.SVNCommitInfo;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.TimeUtil;
-
-import de.regnis.q.sequence.line.QSequenceLineRAData;
-import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 
 public class SVNDirectory {
     
@@ -45,6 +43,10 @@ public class SVNDirectory {
         myDirectory = dir;
         myPath = path;
         myWCAccess = wcAccess;
+    }
+
+    public SVNWCAccess getWCAccess() {
+        return myWCAccess;
     }
     
     public String getPath() {
@@ -209,9 +211,9 @@ public class SVNDirectory {
                 File prejFile = SVNFileUtil.createUniqueFile(getRoot(), prejPath, ".prej");
                 prejPath = SVNFileUtil.getBasePath(prejFile);
             }
-            OutputStream os = null;
+            File file = getFile(prejTmpPath, false);
+            OutputStream os = SVNFileUtil.openFileForWriting(file);
             try {
-                os = new FileOutputStream(new File(getRoot(), prejTmpPath));
                 for (Iterator lines = conflicts.iterator(); lines.hasNext();) {
                     String line = (String) lines.next();
                     os.write(line.getBytes("UTF-8"));
@@ -219,12 +221,7 @@ public class SVNDirectory {
             } catch (IOException e) {
                 SVNErrorManager.error(0, e);
             } finally {
-                if (os != null) {
-                    try {
-                        os.close();
-                    } catch (IOException e) {
-                    }
-                }
+                SVNFileUtil.closeFile(os);
             }
             if (log != null) {
                 command.put(SVNLog.NAME_ATTR, prejTmpPath);
@@ -290,7 +287,7 @@ public class SVNDirectory {
             latestIS = new RandomAccessFile(getFile(latestPath, false), "r");
             baseIS = new RandomAccessFile(getFile(basePath, false), "r");
             OutputStream dummy = new OutputStream() {
-                public void write(int b) throws IOException {}
+                public void write(int b) {}
             };
             result = resultFile == null ?  dummy : new FileOutputStream(resultFile);
             
@@ -306,11 +303,15 @@ public class SVNDirectory {
             SVNErrorManager.error(0, e);
         } finally {
             try {
-                result.close();
+                if (result != null) {
+                    result.close();
+                }
                 localIS.close();
                 baseIS.close();
                 latestIS.close();
-            } catch (IOException e) {}
+            } catch (IOException e) {
+                //
+            }
         }
         SVNStatusType status = SVNStatusType.UNCHANGED;
         if (mergeResult == 2) {
@@ -347,7 +348,9 @@ public class SVNDirectory {
             entry.setConflictWorking(minePath);                
         }
         localTmpFile.delete();
-        resultFile.delete();
+        if (resultFile != null) {
+            resultFile.delete();
+        }
         return status;
     }
     
@@ -421,11 +424,11 @@ public class SVNDirectory {
                 entry.setPropTime(null);
             }
             getEntries().save(false);            
-            wasReverted |= true;
+            wasReverted = true;
         } else if (entry.isScheduledForReplacement()) {
             baseProps.copyTo(wcProps);
             entry.setPropTime(TimeUtil.formatDate(new Date(wcProps.getFile().lastModified())));
-            wasReverted |= true;
+            wasReverted = true;
         }
         DebugLog.log("m.props changed: " + magicPropsChanged);
         
@@ -437,13 +440,6 @@ public class SVNDirectory {
             File file = getFile(entry.getName(), false);
             if (textModified || magicPropsChanged || !file.exists()) {
                 // copy base to wc and expand.
-                String eolStyle = wcProps.getPropertyValue(SVNProperty.EOL_STYLE);
-                String keywords = wcProps.getPropertyValue(SVNProperty.KEYWORDS);
-
-                String url = entry.getURL();
-                String author = entry.getAuthor();
-                String date = entry.getCommittedDate();
-                String rev = Long.toString(entry.getCommittedRevision());
                 boolean special = wcProps.getPropertyValue(SVNProperty.SPECIAL) != null;
                 
                 File src = getBaseFile(name, false);
@@ -495,6 +491,10 @@ public class SVNDirectory {
         }
         if (!force) {
             String textTime = entry.getTextTime();
+            if (textTime == null) {
+                // for added files?
+                return true;
+            }
             long textTimeAsLong = SVNFileUtil.roundTimeStamp(TimeUtil.parseDate(textTime).getTime());
             long tstamp = SVNFileUtil.roundTimeStamp(getFile(name, false).lastModified());
             if (textTimeAsLong == tstamp ) {
@@ -541,8 +541,8 @@ public class SVNDirectory {
     }
 
     public boolean hasPropModifications(String name) throws SVNException {
-        File propFile = null;
-        File baseFile = null;
+        File propFile;
+        File baseFile;
         if ("".equals(name)) {
             propFile = getFile(".svn/dir-props", false);
             baseFile = getFile(".svn/dir-prop-base", false);
@@ -694,19 +694,20 @@ public class SVNDirectory {
     }
     
     public void runLogs() throws SVNException {
-        Map logFiles = new TreeMap();
-        File dir = getAdminDirectory();
-        File[] children = dir.listFiles();
         SVNLogRunner runner = new SVNLogRunner();
         int index = 0;
-        while(true) {
-            SVNLog log = new SVNLog(this, index);
-            index++;
-            if (log.exists()) {
-                log.run(runner);
-                continue;
+        try {
+            while(true) {
+                SVNLog log = new SVNLog(this, index);
+                index++;
+                if (log.exists()) {
+                    log.run(runner);
+                    continue;
+                }
+                return;
             }
-            return;
+        } finally {
+            runner.logCompleted(this);
         }
     }
 
@@ -749,14 +750,15 @@ public class SVNDirectory {
                     try {
                         os.close();
                     } catch (IOException e) {
+                        //
                     }
                 }
             }
         }
         File readme = new File(adminDir, "README.txt");
         if (!readme.exists()) {
+            os = SVNFileUtil.openFileForWriting(readme);
             try {
-                os = new FileOutputStream(readme);
                 String eol = System.getProperty("line.separator");
                 eol = eol == null ? "\n" : eol;
                 os.write(("This is a Subversion working copy administrative directory." + eol + 
@@ -764,12 +766,7 @@ public class SVNDirectory {
             } catch (IOException e) {
                 SVNErrorManager.error(0, e);
             } finally {
-                if (os != null) { 
-                    try {
-                        os.close();
-                    } catch (IOException e) {
-                    }
-                }
+                SVNFileUtil.closeFile(os);
             }
         }
         File empty = new File(adminDir, "empty-file");
@@ -834,15 +831,16 @@ public class SVNDirectory {
             }
         } else {
             File file = getFile(name, false);
-            if (file.isFile() || !file.exists()) {
-                destroyFile(name, deleteWorkingFiles);
-            } else if (file.exists()) {
+            SVNFileType type = SVNFileType.getType(file);
+            if (type == SVNFileType.DIRECTORY) {
                 SVNDirectory childDir = getChildDirectory(name);
                 if (childDir != null && childDir.isVersioned()) {
                     destroyDirectory(this, childDir, deleteWorkingFiles);
                     myWCAccess.removeDirectory(childDir.getPath());
                 }
-            } 
+            } else {
+                destroyFile(name, deleteWorkingFiles);
+            }
         }
         getEntries().save(true);
     }
@@ -859,9 +857,9 @@ public class SVNDirectory {
         SVNNodeKind kind = entry.getKind();
         if (entry.getKind() == SVNNodeKind.DIR) {
             // try to get parent entry
-            SVNDirectory parent = null;
-            SVNDirectory child = null;
-            String nameInParent = null;
+            SVNDirectory parent;
+            SVNDirectory child;
+            String nameInParent;
             if (!"".equals(name)) {
                 parent = this;
                 nameInParent = name;
@@ -1091,7 +1089,79 @@ public class SVNDirectory {
         DebugLog.log(label + ":" + sb.toString());
     }
 
-    public void commit(String target, SVNCommitInfo info, Map wcPropChanges, boolean removeLock, boolean recursive) {
-        
+    public void commit(String target, SVNCommitInfo info, Map wcPropChanges, boolean removeLock, boolean recursive) throws SVNException {
+        SVNLog log = getLog(0);
+
+        //
+        String checksum = null;
+        if (!"".equals(target)) {
+            File baseFile = getBaseFile(target, true);
+            SVNFileType baseType = SVNFileType.getType(baseFile);
+            if (baseType == SVNFileType.NONE) {
+                baseFile = getBaseFile(target, false);
+                baseType = SVNFileType.getType(baseFile);
+            }
+            if (baseType == SVNFileType.FILE) {
+                checksum = SVNFileUtil.computeChecksum(baseFile);
+            }
+            recursive = false;
+        } else {
+
+        }
+        Map command = new HashMap();
+        if (info != null) {
+            command.put(SVNLog.NAME_ATTR, target);
+            command.put(SVNProperty.COMMITTED_REVISION, Long.toString(info.getNewRevision()));
+            command.put(SVNProperty.COMMITTED_DATE, TimeUtil.formatDate(info.getDate()));
+            command.put(SVNProperty.LAST_AUTHOR, info.getAuthor());
+            log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+            command.clear();
+        }
+        if (checksum != null) {
+            command.put(SVNLog.NAME_ATTR, target);
+            command.put(SVNProperty.CHECKSUM, checksum);
+            log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+            command.clear();
+        }
+        if (removeLock) {
+            command.put(SVNLog.NAME_ATTR, target);
+            log.addCommand(SVNLog.DELETE_LOCK, command, false);
+            command.clear();
+        }
+        command.put(SVNLog.NAME_ATTR, target);
+        command.put(SVNLog.REVISION_ATTR, info == null ? null : Long.toString(info.getNewRevision()));
+        log.addCommand(SVNLog.COMMIT, command, false);
+        command.clear();
+        if (wcPropChanges != null && !wcPropChanges.isEmpty()) {
+            for (Iterator propNames = wcPropChanges.keySet().iterator(); propNames.hasNext();) {
+                String propName = (String) propNames.next();
+                String propValue = (String) wcPropChanges.get(propName);
+                command.put(SVNLog.NAME_ATTR, target);
+                command.put(SVNLog.PROPERTY_NAME_ATTR, propName);
+                command.put(SVNLog.PROPERTY_VALUE_ATTR, propValue);
+                log.addCommand(SVNLog.MODIFY_WC_PROPERTY, command, false);
+                command.clear();
+            }
+        }
+        log.save();
+        runLogs();
+
+        if (recursive) {
+            SVNEntries entries = getEntries();
+            for(Iterator ents = entries.entries(true); ents.hasNext();) {
+                SVNEntry entry = (SVNEntry) ents.next();
+                if ("".equals(entry.getName())) {
+                    continue;
+                }
+                if (entry.getKind() == SVNNodeKind.DIR) {
+                    SVNDirectory childDir = getChildDirectory(entry.getName());
+                    if (childDir != null) {
+                        childDir.commit("", info, null, removeLock, true);
+                    }
+                } else {
+                    commit(entry.getName(), info, null, removeLock, false);
+                }
+            }
+        }
     }
 }

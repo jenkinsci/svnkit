@@ -24,6 +24,7 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
     private boolean myIsExternalChanged;
     private boolean myIsCheckout;
     private boolean myIsExport;
+    private boolean myIsDelta;
 
     private final PrintStream myPrintStream;
     private PrintStream myErrStream;
@@ -40,7 +41,18 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
     }
 
     public void svnEvent(SVNEvent event, double progress) {
-        if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
+        if (event.getAction() == SVNEventAction.COMMIT_MODIFIED) {
+            SVNCommand.println(myPrintStream, "Sending        " + SVNCommand.getPath(event.getFile()));
+        } else if (event.getAction() == SVNEventAction.COMMIT_DELETED) {
+            SVNCommand.println(myPrintStream, "Deleting       " + SVNCommand.getPath(event.getFile()));
+        } else if (event.getAction() == SVNEventAction.COMMIT_REPLACED) {
+            SVNCommand.println(myPrintStream, "Replacing      " + SVNCommand.getPath(event.getFile()));
+        } else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
+            if (!myIsDelta) {
+                SVNCommand.print(myPrintStream, "Transmitting file data ");
+            }
+            SVNCommand.print(myPrintStream, ".");
+        } else if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
             String mimeType = event.getMimeType();
             if (SVNWCUtil.isBinaryMimetype(mimeType)) {
                 SVNCommand.println(myPrintStream, "Adding  (bin)  " + SVNCommand.getPath(event.getFile()));

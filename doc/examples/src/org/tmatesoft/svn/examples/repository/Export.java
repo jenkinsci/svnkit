@@ -667,7 +667,7 @@ public class Export {
          * For too "weighty" files delta may be devided into parts, therefore
          * ISVNEditor.textDeltaChunk will be called a number of times.   
          */
-        public OutputStream textDeltaChunk(SVNDiffWindow diffWindow)
+        public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow)
                 throws SVNException {
             if (myDiffWindows == null) {
                 /*
@@ -688,7 +688,7 @@ public class Export {
         /*
          * All delta is transmitted. Now it's time to apply it.
          */
-        public void textDeltaEnd() throws SVNException {
+        public void textDeltaEnd(String path) throws SVNException {
             File newFile = new File(myRootDirectory, myCurrentPath);
             try {
                 newFile.createNewFile();
@@ -773,14 +773,14 @@ public class Export {
         /*
          * Saves a file property.
          */
-        public void changeFileProperty(String name, String value)
+        public void changeFileProperty(String path, String name, String value)
                 throws SVNException {
             myFileProperties.put(name, value);
         }
         /*
          * Checks up if the file has been updated correctly.
          */
-        public void closeFile(String textChecksum) throws SVNException {
+        public void closeFile(String path, String textChecksum) throws SVNException {
             File file = new File(myRootDirectory, myCurrentPath);
             if (textChecksum == null) {
                 textChecksum = (String) myFileProperties
@@ -866,7 +866,7 @@ public class Export {
          * one which an implementor evaluates upon the BASE revision copy of the
          * file. baseChecksum is irrelevant in a checkout.
          */
-        public void applyTextDelta(String baseChecksum) throws SVNException {
+        public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         }
         
         /*

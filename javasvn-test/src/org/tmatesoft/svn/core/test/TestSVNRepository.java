@@ -339,13 +339,13 @@ public class TestSVNRepository extends AbstractRepositoryTest {
             editor.addDir("dir2", null, -1); // open
             editor.changeDirProperty("testDirProperty", "testDirValue");
             editor.addFile("dir2/test.txt", null, -1);
-            editor.applyTextDelta(null);
+            editor.applyTextDelta("dir2/test.txt", null);
             SVNDiffWindow window = SVNDiffWindowBuilder.createReplacementDiffWindow(4);
-            OutputStream os = editor.textDeltaChunk(window);
+            OutputStream os = editor.textDeltaChunk("dir2/test.txt", window);
             os.write("test".getBytes());
             os.close();
-            editor.textDeltaEnd();
-            editor.closeFile(null);            
+            editor.textDeltaEnd("dir2/test.txt");
+            editor.closeFile("dir2/test.txt", null);
             editor.closeDir(); // added dir2
             
             editor.closeDir(); // ROOT
@@ -362,13 +362,13 @@ public class TestSVNRepository extends AbstractRepositoryTest {
             
             editor.openDir("dir2", 2); //open
             editor.openFile("dir2/test.txt", 2);
-            editor.applyTextDelta(null);
+            editor.applyTextDelta("dir2/test.txt", null);
             window = SVNDiffWindowBuilder.createReplacementDiffWindow(8);
-            os = editor.textDeltaChunk(window);
+            os = editor.textDeltaChunk("dir2/test.txt", window);
             os.write("modified".getBytes());
             os.close();
-            editor.textDeltaEnd();
-            editor.closeFile(null);
+            editor.textDeltaEnd("dir2/test.txt");
+            editor.closeFile("dir2/test.txt", null);
             editor.closeDir(); // close
 
             // like here close dir is called for root?

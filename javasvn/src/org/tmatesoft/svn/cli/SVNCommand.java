@@ -228,6 +228,11 @@ public abstract class SVNCommand {
         DebugLog.log(line);
     }
 
+    public final static void print(PrintStream out, String line) {
+        out.print(line);
+        DebugLog.log(line);
+    }
+
     public final static void println(PrintStream out) {
         out.println();
         DebugLog.log("");

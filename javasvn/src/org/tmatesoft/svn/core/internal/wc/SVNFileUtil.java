@@ -3,16 +3,31 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.*;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Writer;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.StringTokenizer;
-import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.core.io.SVNException;
+import com.jcraft.jsch.HASH;
 
 public class SVNFileUtil {
 
@@ -63,21 +78,22 @@ public class SVNFileUtil {
 
     public static void rename(File src, File dst) throws IOException {
         if (!src.exists()) {
-            throw new IOException("can't rename file '" + src.getAbsolutePath() + "' : file doesn't exist.");
+            throw new IOException("can't rename file '" + src.getAbsolutePath() + "' : file doesn't exist");
         }
         if (dst.isDirectory()) {
-            throw new IOException("can't overwrite file '" + dst.getAbsolutePath() + "' : it is a directory.");
+            throw new IOException("can't overwrite file '" + dst.getAbsolutePath() + "' : it is a directory");
         }
         boolean renamed = src.renameTo(dst);
         if (!renamed) {
             if (dst.exists()) {
                 boolean deleted = dst.delete();
-                if (!deleted || dst.exists()) {
-                    throw new IOException("can't overwrite file '" + dst.getAbsolutePath() + "'.");
+                if (!deleted && dst.exists()) {
+                    DebugLog.log("open files count: " + ourFilesCount);
+                    throw new IOException("can't overwrite file '" + dst.getAbsolutePath() + "'");
                 }
             }
             if (!src.renameTo(dst)) {
-                throw new IOException("can't rename file '" + src.getAbsolutePath() + "'.");
+                throw new IOException("can't rename file '" + src.getAbsolutePath() + "'");
             }
         }
     }
@@ -204,7 +220,7 @@ public class SVNFileUtil {
         if (file == null || !file.exists() || file.isDirectory()) {
             return null;
         }
-        MessageDigest digest = null;
+        MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException e) {
@@ -471,10 +487,17 @@ public class SVNFileUtil {
             throw new SVNException("svn: Cannot write to '" + file + "': path refers to directory or write access denied");
         }
         try {
+            ourFilesCount++;
             return new BufferedOutputStream(new FileOutputStream(file, append));
         } catch (FileNotFoundException e) {
             throw new SVNException("svn: Cannot write to '" + file + "': " + e.getMessage());
         }
+    }
+
+    private static long ourFilesCount = 0;
+
+    public static long getOpenFilesCount() {
+        return ourFilesCount;
     }
 
     public static InputStream openFileForReading(File file) throws SVNException  {
@@ -488,6 +511,7 @@ public class SVNFileUtil {
             return new ByteArrayInputStream(new byte[0]);
         }
         try {
+            ourFilesCount++;
             return new BufferedInputStream(new FileInputStream(file));
         } catch (FileNotFoundException e) {
             throw new SVNException("svn: Cannot read from '" + file + "': " + e.getMessage());
@@ -499,6 +523,7 @@ public class SVNFileUtil {
             return;
         }
         try {
+            ourFilesCount--;
             is.close();
         } catch (IOException e) {
             //
@@ -510,6 +535,7 @@ public class SVNFileUtil {
             return;
         }
         try {
+            ourFilesCount--;
             os.close();
         } catch (IOException e) {
             //
@@ -574,4 +600,14 @@ public class SVNFileUtil {
     }
 
 
+    public static void closeFile(Writer os) {
+        if (os != null) {
+            try {
+                ourFilesCount--;
+                os.close();
+            } catch (IOException e) {
+                //
+            }
+        }
+    }
 }

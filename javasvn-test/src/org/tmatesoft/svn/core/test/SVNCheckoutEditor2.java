@@ -94,17 +94,17 @@ public class SVNCheckoutEditor2 implements ISVNEditor {
         myCurrentFile = (ISVNFileEntry) getCurrentEntry().getChild(name);
     }
     
-    public void closeFile(String textChecksum) throws SVNException {
+    public void closeFile(String path, String textChecksum) throws SVNException {
         myCurrentFile.setPropertyValue("svn:entry:checksum", textChecksum);
         myCurrentFile.merge(true);
         myCurrentFile.dispose();
         myCurrentFile = null;
     }
     
-    public void applyTextDelta(String baseChecksum)  throws SVNException {
+    public void applyTextDelta(String path, String baseChecksum)  throws SVNException {
         // do nothing.
     }
-    public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
+    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         myDiffWindow = diffWindow;
         try {
             return myMediator.createTemporaryLocation(myCurrentFile.getPath(), diffWindow);
@@ -113,7 +113,7 @@ public class SVNCheckoutEditor2 implements ISVNEditor {
             throw new SVNException(e);
         }
     }    
-    public void textDeltaEnd() throws SVNException {
+    public void textDeltaEnd(String path) throws SVNException {
         
         InputStream newData = null;
         try {
@@ -135,7 +135,7 @@ public class SVNCheckoutEditor2 implements ISVNEditor {
     }
     
     
-    public void changeFileProperty(String name, String value) throws SVNException {
+    public void changeFileProperty(String path, String name, String value) throws SVNException {
         myCurrentFile.setPropertyValue(name, value);
     }
 

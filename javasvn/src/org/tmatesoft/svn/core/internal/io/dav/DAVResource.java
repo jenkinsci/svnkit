@@ -47,6 +47,7 @@ class DAVResource {
     private DAVConnection myConnection;
     private List myDeltaFiles;
     private Map myProperties;
+    private boolean myIsAdded;
 
     public DAVResource(ISVNWorkspaceMediator mediator, DAVConnection connection, String path, long revision) {
         this(mediator, connection, path, revision, false);
@@ -59,6 +60,14 @@ class DAVResource {
         myRevision = revision;
         myConnection = connection;
         myIsCopy = isCopy;
+    }
+
+    public void setAdded(boolean added) {
+        myIsAdded = added;
+    }
+
+    public boolean isAdded() {
+        return myIsAdded;
     }
     
     public boolean isCopy() {

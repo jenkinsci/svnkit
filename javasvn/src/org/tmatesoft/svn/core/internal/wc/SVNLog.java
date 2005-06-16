@@ -35,12 +35,14 @@ public class SVNLog {
     public static final String MERGE = "merge";
     public static final String MAYBE_READONLY = "maybe-readonly";
     public static final String SET_TIMESTAMP = "set-timestamp";
+    public static final String COMMIT = "committed";
 
     public static final String NAME_ATTR = "name";
     public static final String PROPERTY_NAME_ATTR = "propname";
     public static final String PROPERTY_VALUE_ATTR = "propvalue";
     public static final String DEST_ATTR = "dest";
     public static final String TIMESTAMP_ATTR = "timestamp";
+    public static final String REVISION_ATTR = "revision";
     public static final String ATTR1 = "attr1";
     public static final String ATTR2 = "attr2";
     public static final String ATTR3 = "attr3";
@@ -117,7 +119,7 @@ public class SVNLog {
         Writer os = null;
         
         try {
-            os = new OutputStreamWriter(new FileOutputStream(myTmpFile), "UTF-8");
+            os = new OutputStreamWriter(SVNFileUtil.openFileForWriting(myTmpFile), "UTF-8");
             for (Iterator commands = myCache.iterator(); commands.hasNext();) {
                 Map command = (Map) commands.next();
                 String name = (String) command.remove("");
@@ -141,12 +143,7 @@ public class SVNLog {
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (IOException e) {
-                }
-            }
+            SVNFileUtil.closeFile(os);
             myCache = null;
         }
         try {
@@ -230,13 +227,6 @@ public class SVNLog {
                 delete();
             }
         } finally {
-            try {
-                runner.logCompleted(myDirectory);
-            } catch (SVNException e) {
-                if (error == null) {
-                    error = e;
-                }
-            }
             if (error != null) {
                 throw error;
             }

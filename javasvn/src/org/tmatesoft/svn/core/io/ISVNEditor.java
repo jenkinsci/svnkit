@@ -228,7 +228,7 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
      * @param  baseChecksum		a server's checksum for the file to be modified
      * @throws SVNException		server's and client's checksums differ
      */
-    public void applyTextDelta(String baseChecksum) throws SVNException;
+    public void applyTextDelta(String path, String baseChecksum) throws SVNException;
     
     /**
      * Changes the value of a property of the currently "opened" file.
@@ -237,7 +237,7 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
      * @param  value			a new value for the property
      * @throws SVNException
      */
-    public void changeFileProperty(String name, String value) throws SVNException;
+    public void changeFileProperty(String path, String name, String value) throws SVNException;
     
     /**
      * "Closes" the currently opened file fixing all changes in its properties
@@ -251,7 +251,7 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
      * @param  textChecksum		a server's checksum for the modified file 
      * @throws SVNException		if server's and client's checksums differ
      */
-    public void closeFile(String textChecksum) throws SVNException;
+    public void closeFile(String path, String textChecksum) throws SVNException;
     
     /**
      * Closes this editor completing the whole operation the editor

@@ -152,14 +152,14 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         return SVNStatus.UPDATED;
     }
 
-    public String generateDelta(ISVNEditor target) throws SVNException {
+    public String generateDelta(String commitPath, ISVNEditor target) throws SVNException {
         if (!isContentsModified() && !isScheduledForAddition()) {
             return null;
         }
         String digest = null;
         File file = getRootEntry().getWorkingCopyFile(this);
         if (file.exists()) {
-            target.applyTextDelta(null);
+            target.applyTextDelta(commitPath, null);
             String eolType = getPropertyValue(SVNProperty.EOL_STYLE);
             boolean sendAsIs = isBinary();// || eolType == null;
             File tmpFile = null;
@@ -186,7 +186,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             SVNRAFileData baseFile = generator instanceof SVNSequenceDeltaGenerator ? 
                     new SVNRAFileData(getAdminArea().getBaseFile(this), true) : null;
             try {
-                generator.generateDiffWindow(target, workFile, baseFile);
+                generator.generateDiffWindow(commitPath, target, workFile, baseFile);
             } finally {
                 try {
                     if (baseFile != null) {

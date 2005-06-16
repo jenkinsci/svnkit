@@ -123,13 +123,13 @@ public class DebugDefaultLogger implements DebugLogger, LoggingStreamLogger {
 
 	public LoggingInputStream getLoggingInputStream(String protocol, InputStream stream) {
 		protocol = protocol == null ? "svn" : protocol;
-		final boolean enabled = Boolean.getBoolean("javasvn.log." + protocol);
+		final boolean enabled = true;//Boolean.getBoolean("javasvn.log." + protocol);
 		return new LoggingInputStream(stream, enabled ? this : null);
 	}
 
 	public LoggingOutputStream getLoggingOutputStream(String protocol, OutputStream stream) {
 		protocol = protocol == null ? "svn" : protocol;
-		final boolean enabled = Boolean.getBoolean("javasvn.log." + protocol);
+		final boolean enabled = true;//Boolean.getBoolean("javasvn.log." + protocol);
 		return new LoggingOutputStream(stream, enabled ? this : null);
 	}
 

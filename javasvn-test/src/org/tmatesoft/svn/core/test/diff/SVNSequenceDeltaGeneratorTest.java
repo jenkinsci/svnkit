@@ -51,7 +51,7 @@ public class SVNSequenceDeltaGeneratorTest extends TestCase {
 
 		final ISVNDeltaGenerator generator = new SVNSequenceDeltaGenerator();
 		final DeltaConsumer consumer = new DeltaConsumer();
-		generator.generateDiffWindow(consumer, new RAData(workFile), new RAData(baseFile));
+		generator.generateDiffWindow("", consumer, new RAData(workFile), new RAData(baseFile));
 
 		final RAData testData = new RAData("");
 
@@ -102,14 +102,14 @@ public class SVNSequenceDeltaGeneratorTest extends TestCase {
 		private final List windows = new ArrayList();
 		private final List streams = new ArrayList();
 
-		public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
+		public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
 			final ByteArrayOutputStream stream = new ByteArrayOutputStream();
 			windows.add(diffWindow);
 			streams.add(stream);
 			return stream;
 		}
 
-		public void textDeltaEnd() throws SVNException {
+		public void textDeltaEnd(String path) throws SVNException {
 			try {
 				((ByteArrayOutputStream)streams.get(streams.size() - 1)).close();
 			}

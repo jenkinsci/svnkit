@@ -225,7 +225,7 @@ public abstract class FSEntry implements ISVNEntry {
         return myModifiedProperties.isEmpty() ? SVNStatus.NOT_MODIFIED : SVNStatus.UPDATED;
     }
 
-    public boolean sendChangedProperties(ISVNEditor editor) throws SVNException {
+    public boolean sendChangedProperties(String commitPath, ISVNEditor editor) throws SVNException {
         if (myBaseProperties == null) {
             myBaseProperties = getAdminArea().loadBaseProperties(this);            
         }
@@ -245,7 +245,7 @@ public abstract class FSEntry implements ISVNEntry {
                 if (isDirectory()) {
                     editor.changeDirProperty(key, (String) newValue);
                 } else {
-                    editor.changeFileProperty(key, (String) newValue);
+                    editor.changeFileProperty(commitPath, key, (String) newValue);
                 }
             }
         }
@@ -255,7 +255,7 @@ public abstract class FSEntry implements ISVNEntry {
                 if (isDirectory()) {
                     editor.changeDirProperty(key, null);
                 } else {
-                    editor.changeFileProperty(key, null);
+                    editor.changeFileProperty(commitPath, key, null);
                 }
                 myModifiedProperties.add(key);
             }

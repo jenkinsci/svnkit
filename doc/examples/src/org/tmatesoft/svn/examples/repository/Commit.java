@@ -490,7 +490,7 @@ public class Commit {
          * The next steps are directed to applying and writing the file delta
          * (that is the full contents of the file in this case).
          */
-        editor.applyTextDelta(null);
+        editor.applyTextDelta(filePath, null);
         long deltaLength = data.length;
         /*
          * Creating a new diff window (provided the size of the delta -
@@ -502,7 +502,7 @@ public class Commit {
         /*
          * Gets an OutputStream where the delta will be written to.
          */
-        OutputStream os = editor.textDeltaChunk(diffWindow);
+        OutputStream os = editor.textDeltaChunk(filePath, diffWindow);
 
         try {
             /*
@@ -534,11 +534,11 @@ public class Commit {
          * this point the previously defined diff window knows how to apply the
          * delta to the file (that will be created in the repository).
          */
-        editor.textDeltaEnd();
+        editor.textDeltaEnd(filePath);
         /*
          * Closes the new added file.
          */
-        editor.closeFile(null);
+        editor.closeFile(filePath, null);
         /*
          * Closes the new added directory.
          */
@@ -584,7 +584,7 @@ public class Commit {
         /*
          * The next steps are directed to applying and writing the file delta.
          */
-        editor.applyTextDelta(null);
+        editor.applyTextDelta(filePath, null);
         long deltaLength = newData.length;
         /*
          * Creating a new diff window (provided the size of the delta -
@@ -596,7 +596,7 @@ public class Commit {
         /*
          * Gets an OutputStream where the delta will be written to.
          */
-        OutputStream os = editor.textDeltaChunk(diffWindow);
+        OutputStream os = editor.textDeltaChunk(filePath, diffWindow);
         try {
             /*
              * If there's non-empty file delta this code writes the delta to the
@@ -627,12 +627,12 @@ public class Commit {
          * this point the previously defined diff window knows how to apply the
          * delta to the file.
          */
-        editor.textDeltaEnd();
+        editor.textDeltaEnd(filePath);
 
         /*
          * Closes the file.
          */
-        editor.closeFile(null);
+        editor.closeFile(filePath, null);
 
         /*
          * Closes the directory.

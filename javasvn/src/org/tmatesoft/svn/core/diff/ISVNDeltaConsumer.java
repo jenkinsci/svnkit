@@ -9,7 +9,7 @@ import org.tmatesoft.svn.core.io.SVNException;
  */
 public interface ISVNDeltaConsumer {
 
-	public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException;
+	public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException;
 
-	public void textDeltaEnd() throws SVNException;
+	public void textDeltaEnd(String path) throws SVNException;
 }

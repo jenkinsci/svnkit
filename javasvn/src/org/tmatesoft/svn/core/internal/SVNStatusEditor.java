@@ -129,7 +129,7 @@ public class SVNStatusEditor implements ISVNEditor {
         myCurrentFilePath = path;
         myCurrentFileRevision = revision;
     }
-    public void applyTextDelta(String baseChecksum)  throws SVNException {
+    public void applyTextDelta(String path, String baseChecksum)  throws SVNException {
         RemoteSVNStatus status = (RemoteSVNStatus) myRemoteStatuses.get(myCurrentFilePath);
         if (status == null) {
             status = new RemoteSVNStatus(myCurrentFileRevision, SVNStatus.MODIFIED, SVNStatus.NOT_MODIFIED);
@@ -140,18 +140,18 @@ public class SVNStatusEditor implements ISVNEditor {
         }
         status.isDirectory = false;
     }
-    public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
+    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         return null;
     }    
-    public void textDeltaEnd() throws SVNException {
+    public void textDeltaEnd(String path) throws SVNException {
     }
-    public void closeFile(String textChecksum) throws SVNException {
+    public void closeFile(String path, String textChecksum) throws SVNException {
         myCurrentFilePath = null;
         myCurrentFileRevision = -1;
     }
     
     
-    public void changeFileProperty(String name, String value) throws SVNException {
+    public void changeFileProperty(String path, String name, String value) throws SVNException {
         RemoteSVNStatus status = (RemoteSVNStatus) myRemoteStatuses.get(myCurrentFilePath);
         if (!name.startsWith(SVNProperty.SVN_ENTRY_PREFIX) && !name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             if (status == null) {

@@ -15,9 +15,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNCommitter;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.SVNImportMediator;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
@@ -253,7 +253,7 @@ public class SVNCommitClient extends SVNBasicClient {
         if (commitMessage == null) {
             return -1;
         }
-        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, new ImportMediator(srcKind == SVNFileType.DIRECTORY ? path : path.getParentFile()));
+        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, new SVNImportMediator(srcKind == SVNFileType.DIRECTORY ? path : path.getParentFile()));
         String filePath = "";
         if (srcKind != SVNFileType.DIRECTORY) {
             filePath = (String) newPaths.remove(0);
@@ -300,23 +300,24 @@ public class SVNCommitClient extends SVNBasicClient {
     }
 
     public long doCommit(File[] paths, boolean keepLocks, String commitMessage, boolean recursive) throws SVNException {
-        SVNCommitPacket commitPacket = null;
+        SVNCommitPacket packet = doCollectCommitItems(paths, keepLocks, recursive);
+        return doCommit(packet, keepLocks, commitMessage, recursive);
+    }
+
+    public long doCommit(SVNCommitPacket commitPacket, boolean keepLocks, String commitMessage, boolean recursive) throws SVNException {
         Collection tmpFiles = null;
         SVNCommitInfo info = null;
         ISVNEditor commitEditor = null;
         try {
-            commitPacket = doCollectCommitItems(paths, keepLocks, recursive);
             if (commitPacket == null || commitPacket == SVNCommitPacket.EMPTY) {
                 return -1;
             }
-            System.out.println(commitPacket);
             commitMessage = getCommitHandler().getCommitMessage(commitMessage, commitPacket.getCommitItems());
             if (commitMessage == null) {
                 return -1;
             }
             Map commitables = new TreeMap();
             String baseURL = SVNCommitUtil.translateCommitables(commitPacket.getCommitItems(), commitables);
-            System.out.println("base URL: " + baseURL);
             Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket.getLockTokens(), baseURL);
 
             SVNRepository repository = createRepository(baseURL);
@@ -324,9 +325,10 @@ public class SVNCommitClient extends SVNBasicClient {
             tmpFiles = mediator.getTmpFiles();
             commitEditor = repository.getCommitEditor(commitMessage, lockTokens, keepLocks, mediator);
             // commit.
-            info = commit(commitPacket.getWCAccess(), mediator.getTmpFiles(), commitables, commitEditor);
-            // update wc.
             SVNWCAccess wcAccess = commitPacket.getWCAccess();
+            wcAccess.setEventDispatcher(getEventDispatcher());
+            info = SVNCommitter.commit(commitPacket.getWCAccess(), mediator.getTmpFiles(), commitables, commitEditor);
+            // update wc.
             Collection processedItems = new HashSet();
             for (Iterator urls = commitables.keySet().iterator(); urls.hasNext();) {
                 String url = (String) urls.next();
@@ -378,7 +380,10 @@ public class SVNCommitClient extends SVNBasicClient {
                 boolean removeLock = !keepLocks && item.isLocked();
                 // update entry in dir.
                 Map wcPropChanges = mediator.getWCProperties(item);
-                dir.commit(target, info, wcPropChanges, removeLock,  recursive);
+                dir.commit(target, info, wcPropChanges, removeLock,  recurse);
+            }
+            if (!isDoNotSleepForTimeStamp()) {
+                SVNFileUtil.sleepForTimestamp();
             }
         } finally {
             if (info == null && commitEditor != null) {
@@ -425,14 +430,6 @@ public class SVNCommitClient extends SVNBasicClient {
             wcAccess.close(true);
             throw e;
         }
-    }
-
-    private SVNCommitInfo commit(SVNWCAccess wcAccess, Collection tmpFiles, Map commitItems, ISVNEditor commitEditor) throws SVNException {
-        SVNCommitter committer = new SVNCommitter(wcAccess, commitItems);
-        SVNCommitUtil.driveCommitEditor(committer, commitItems.keySet(), commitEditor, -1);
-        committer.sendTextDeltas(commitEditor, tmpFiles);
-
-        return commitEditor.closeEdit();
     }
 
     private boolean importDir(File rootFile, File dir, String importPath, boolean recursive, ISVNEditor editor) throws SVNException {
@@ -491,12 +488,12 @@ public class SVNCommitClient extends SVNBasicClient {
         for (Iterator names = autoProperties.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
             String value = (String) autoProperties.get(name);
-            editor.changeFileProperty(name, value);
+            editor.changeFileProperty(filePath, name, value);
         }
         // send "adding"
         SVNEvent addedEvent = SVNEventFactory.createCommitEvent(rootFile, file, SVNEventAction.COMMIT_ADDED, SVNNodeKind.FILE, mimeType);
         svnEvent(addedEvent, ISVNEventListener.UNKNOWN);
-        editor.applyTextDelta(null);
+        editor.applyTextDelta(filePath, null);
         // translate and send file.
         String eolStyle = (String) autoProperties.get(SVNProperty.EOL_STYLE);
         String keywords = (String) autoProperties.get(SVNProperty.KEYWORDS);
@@ -510,7 +507,7 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         File importedFile = tmpFile != null ? tmpFile : file;
         String checksum = SVNFileUtil.computeChecksum(importedFile);
-        OutputStream os = editor.textDeltaChunk(SVNDiffWindowBuilder.createReplacementDiffWindow(importedFile.length()));
+        OutputStream os = editor.textDeltaChunk(filePath, SVNDiffWindowBuilder.createReplacementDiffWindow(importedFile.length()));
         InputStream is = SVNFileUtil.openFileForReading(importedFile);
         int r;
         try {
@@ -529,8 +526,8 @@ public class SVNCommitClient extends SVNBasicClient {
                 tmpFile.delete();
             }
         }
-        editor.textDeltaEnd();
-        editor.closeFile(checksum);
+        editor.textDeltaEnd(filePath);
+        editor.closeFile(filePath, checksum);
         return true;
     }
 
@@ -546,65 +543,6 @@ public class SVNCommitClient extends SVNBasicClient {
             return false;
         }
         return hasProcessedParents(paths, path);
-    }
-
-    private static class ImportMediator implements ISVNWorkspaceMediator {
-
-        private File myRoot;
-        private Map myLocations;
-
-        public ImportMediator(File root) {
-            myRoot = root;
-            myLocations = new HashMap();
-        }
-
-        public String getWorkspaceProperty(String path, String name) throws SVNException {
-            return null;
-        }
-        public void setWorkspaceProperty(String path, String name, String value) throws SVNException {
-        }
-
-        public OutputStream createTemporaryLocation(String path, Object id) throws IOException {
-            File tmpFile = SVNFileUtil.createUniqueFile(myRoot, PathUtil.tail(path), ".tmp");
-            OutputStream os;
-            try {
-                os = SVNFileUtil.openFileForWriting(tmpFile);
-            } catch (SVNException e) {
-                throw new IOException(e.getMessage());
-            }
-            myLocations.put(id, tmpFile);
-            return os;
-        }
-
-        public InputStream getTemporaryLocation(Object id) throws IOException {
-            File file = (File) myLocations.get(id);
-            if (file != null) {
-                try {
-                    return SVNFileUtil.openFileForReading(file);
-                } catch (SVNException e) {
-                    throw new IOException(e.getMessage());
-                }
-            }
-            return null;
-        }
-
-        public long getLength(Object id) throws IOException {
-            File file = (File) myLocations.get(id);
-            if (file != null) {
-                return file.length();
-            }
-            return 0;
-        }
-
-        public void deleteTemporaryLocation(Object id) {
-            File file = (File) myLocations.remove(id);
-            if (file != null) {
-                file.delete();
-            }
-        }
-
-        public void deleteAdminFiles(String path) {
-        }
     }
 
 }

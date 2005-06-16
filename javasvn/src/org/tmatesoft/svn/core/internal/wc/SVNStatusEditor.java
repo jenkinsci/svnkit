@@ -1,29 +1,28 @@
 package org.tmatesoft.svn.core.internal.wc;
 
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNCommitInfo;
-import org.tmatesoft.svn.core.io.SVNLock;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNOptions;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
-import org.tmatesoft.svn.util.DebugLog;
 
-import java.io.OutputStream;
 import java.io.File;
-import java.util.StringTokenizer;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Collections;
+import java.util.StringTokenizer;
 
 public class SVNStatusEditor implements ISVNEditor {
 
@@ -95,20 +94,20 @@ public class SVNStatusEditor implements ISVNEditor {
     public void openFile(String path, long revision) throws SVNException {
     }
 
-    public void applyTextDelta(String baseChecksum) throws SVNException {
+    public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
     }
 
-    public void changeFileProperty(String name, String value) throws SVNException {
+    public void changeFileProperty(String commitPath, String name, String value) throws SVNException {
     }
 
-    public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
+    public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
         return null;
     }
 
-    public void textDeltaEnd() throws SVNException {
+    public void textDeltaEnd(String commitPath) throws SVNException {
     }
 
-    public void closeFile(String textChecksum) throws SVNException {
+    public void closeFile(String commitPath, String textChecksum) throws SVNException {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
@@ -231,7 +230,6 @@ public class SVNStatusEditor implements ISVNEditor {
             parentDir = dir;
         }
         SVNEntry entryInParent = entry;
-        entry = null;
         if (dir == parentDir) {
             path = PathUtil.append(dir.getPath(), name);
             file = dir.getFile(name, false);

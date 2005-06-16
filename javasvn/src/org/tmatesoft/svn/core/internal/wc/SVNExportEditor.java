@@ -3,8 +3,17 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
+import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNEventListener;
+import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.TimeUtil;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,16 +24,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
-
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.SVNCommitInfo;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.TimeUtil;
 
 public class SVNExportEditor implements ISVNEditor {
     
@@ -107,14 +106,14 @@ public class SVNExportEditor implements ISVNEditor {
         myFileProperties = new HashMap();
     }
 
-    public void changeFileProperty(String name, String value) throws SVNException {
+    public void changeFileProperty(String commitPath, String name, String value) throws SVNException {
         myFileProperties.put(name, value);
     }
 
-    public void applyTextDelta(String baseChecksum) throws SVNException {
+    public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
     }
 
-    public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
+    public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
         if (myDiffWindows == null) {
             myDiffWindows = new LinkedList();
             myDataFiles = new LinkedList();
@@ -131,7 +130,7 @@ public class SVNExportEditor implements ISVNEditor {
         return null;
     }
 
-    public void textDeltaEnd() throws SVNException {
+    public void textDeltaEnd(String commitPath) throws SVNException {
         // apply all deltas
         myCurrentTmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory, myCurrentFile.getName(), ".tmp");
         try {
@@ -182,7 +181,7 @@ public class SVNExportEditor implements ISVNEditor {
         }
     }
 
-    public void closeFile(String textChecksum) throws SVNException {
+    public void closeFile(String commitPath, String textChecksum) throws SVNException {
         if (textChecksum == null) {
             textChecksum = (String) myFileProperties.get(SVNProperty.CHECKSUM);
         }

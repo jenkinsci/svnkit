@@ -479,7 +479,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     } else {
                         DebugLog.log("adding file " + dstPath + " from " + srcPath);
                         commitEditor.addFile(dstPath, srcPath, srcRevNumber);
-                        commitEditor.closeFile(null);
+                        commitEditor.closeFile(dstPath, null);
                     }
                 }
             }

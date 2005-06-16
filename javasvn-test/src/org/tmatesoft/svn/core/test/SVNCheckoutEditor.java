@@ -80,14 +80,14 @@ public class SVNCheckoutEditor implements ISVNEditor {
     public void openFile(String path, long revision) throws SVNException {
         myStack.push(new File(myRoot, path));
     }
-    public void closeFile(String textChecksum) throws SVNException {
+    public void closeFile(String path, String textChecksum) throws SVNException {
         myStack.pop();
     }
     
-    public void applyTextDelta(String baseChecksum)  throws SVNException {
+    public void applyTextDelta(String path, String baseChecksum)  throws SVNException {
         // do nothing.
     }
-    public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
+    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         try {
         //  create temp file.
             myTempFile = File.createTempFile("svn", "test");
@@ -101,7 +101,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
         }
     }
     
-    public void textDeltaEnd() throws SVNException {
+    public void textDeltaEnd(String path) throws SVNException {
         SVNRAFileData target = null;
         SVNRAFileData source = null;
         InputStream is = null;
@@ -142,7 +142,7 @@ public class SVNCheckoutEditor implements ISVNEditor {
         }
     }
     
-    public void changeFileProperty(String name, String value) throws SVNException {
+    public void changeFileProperty(String path, String name, String value) throws SVNException {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {

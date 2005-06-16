@@ -485,7 +485,7 @@ class DAVRepository extends SVNRepository {
             }
         }
         myConnection.setLocks(translatedLocks, keepLocks);
-        return new DAVCommitEditor(this, myConnection, logMessage, locks, mediator, new Runnable() {
+        return new DAVCommitEditor(this, myConnection, logMessage, mediator, new Runnable() {
             public void run() {
                 closeConnection();
             }

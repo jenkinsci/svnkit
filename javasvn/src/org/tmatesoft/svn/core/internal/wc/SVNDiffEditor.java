@@ -3,8 +3,18 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.diff.ISVNRAData;
+import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
+import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
+import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,17 +28,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.diff.ISVNRAData;
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.SVNCommitInfo;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
 
 public class SVNDiffEditor implements ISVNEditor {
 
@@ -162,7 +161,7 @@ public class SVNDiffEditor implements ISVNEditor {
         myCurrentDirectory.myComparedEntries.add(name);
     }
 
-    public void changeFileProperty(String name, String value) throws SVNException {
+    public void changeFileProperty(String path, String name, String value) throws SVNException {
         if (name.startsWith(SVNProperty.SVN_WC_PREFIX) || name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
             return;
         }
@@ -181,7 +180,7 @@ public class SVNDiffEditor implements ISVNEditor {
         }
     }
 
-    public void applyTextDelta(String baseChecksum) throws SVNException {
+    public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
         String fileName = PathUtil.tail(myCurrentFile.myPath);
         if (dir != null) {
@@ -227,7 +226,7 @@ public class SVNDiffEditor implements ISVNEditor {
         myCurrentFile.myDataFiles = new ArrayList();
     }
 
-    public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
+    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         myCurrentFile.myDiffWindows.add(diffWindow);
         String fileName = PathUtil.tail(myCurrentFile.myPath);
         File chunkFile = SVNFileUtil.createUniqueFile(myCurrentFile.myFile.getParentFile(), fileName, ".tmp");
@@ -240,12 +239,11 @@ public class SVNDiffEditor implements ISVNEditor {
         return null;
     }
 
-    public void textDeltaEnd() throws SVNException {
+    public void textDeltaEnd(String path) throws SVNException {
         // combine deltas to tmp file
         if (myCurrentFile.myDiffWindows == null) {
             return;
         }
-        int index = 0;
         File baseTmpFile = myCurrentFile.myBaseFile;
         File targetFile = myCurrentFile.myFile;
         ISVNRAData baseData = new SVNRAFileData(baseTmpFile, true);
@@ -260,7 +258,6 @@ public class SVNDiffEditor implements ISVNEditor {
                 SVNFileUtil.closeFile(data);
             }
             dataFile.delete();
-            index++;
         }
         try {
             target.close();
@@ -270,7 +267,7 @@ public class SVNDiffEditor implements ISVNEditor {
         }
     }
 
-    public void closeFile(String textChecksum) throws SVNException {
+    public void closeFile(String commitPath, String textChecksum) throws SVNException {
         String reposMimeType = (String) (myCurrentFile.myPropertyDiff != null ? myCurrentFile.myPropertyDiff.get(SVNProperty.MIME_TYPE) : null);
         String fileName = PathUtil.tail(myCurrentFile.myPath);
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
@@ -492,7 +489,6 @@ public class SVNDiffEditor implements ISVNEditor {
             path = PathUtil.removeLeadingSlash(path);
             path = PathUtil.removeTrailingSlash(path);
         }
-        info.myParent = parent;
         info.myPath = path;
         info.myIsAdded = added;
         return info;
@@ -502,8 +498,7 @@ public class SVNDiffEditor implements ISVNEditor {
         
         private boolean myIsAdded;
         private String myPath;
-        private File myFile;
-        
+
         private Map myBaseProperties;
         private Map myPropertyDiff;
         
@@ -522,8 +517,7 @@ public class SVNDiffEditor implements ISVNEditor {
         private Map myPropertyDiff;
         
         private boolean myIsScheduledForDeletion;
-        private SVNDirectoryInfo myParent;
-        
+
         private List myDiffWindows;
         private List myDataFiles;
     }

@@ -104,56 +104,54 @@ class SVNCommitEditor implements ISVNEditor {
         } else {
             myConnection.write("(w(sss()))", new Object[] {"add-file", path, myCurrentPath, path});
         }
-        myCurrentPath = path;
     }
+
     public void openFile(String path, long revision) throws SVNException {
-        myCurrentPath = path;
         myConnection.write("(w(sss(n)))", new Object[] {"open-file", path, computeParentPath(path), path, getRevisionObject(revision)});
     }
 
-    public void applyTextDelta(String baseChecksum) throws SVNException {
-        myConnection.write("(w(s(s)))", new Object[] {"apply-textdelta", myCurrentPath, baseChecksum});
+    public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+        myConnection.write("(w(s(s)))", new Object[] {"apply-textdelta", path, baseChecksum});
     }
-    public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
-        myConnection.write("(w(s", new Object[] {"textdelta-chunk", myCurrentPath});
+
+    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
+        myConnection.write("(w(s", new Object[] {"textdelta-chunk", path});
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
             SVNDiffWindowBuilder.save(diffWindow, bos);
             myConnection.write("b))", new Object[] {bos.toByteArray()});
-            DebugLog.log(myCurrentPath + " window sent: " + bos.size());
-            OutputStream os = myMediator.createTemporaryLocation(myCurrentPath, myCurrentPath);
-            return os;
+            return myMediator.createTemporaryLocation(path, path);
         } catch (IOException e) {
             throw new SVNException(e);
         }
     }
-    public void textDeltaEnd() throws SVNException {
+    public void textDeltaEnd(String path) throws SVNException {
         InputStream is;
         try {
-            DebugLog.log("closing delta for " + myCurrentPath);
-            long length = myMediator.getLength(myCurrentPath);
-            if (myMediator.getLength(myCurrentPath) > 0) {
-                is = myMediator.getTemporaryLocation(myCurrentPath);
+            long length = myMediator.getLength(path);
+            if (myMediator.getLength(path) > 0) {
+                is = myMediator.getTemporaryLocation(path);
                 // create
                 SVNDataSource source = new SVNDataSource(is, length);
-                myConnection.write("(w(si))", new Object[] {"textdelta-chunk", myCurrentPath, source});
+                myConnection.write("(w(si))", new Object[] {"textdelta-chunk", path, source});
                 is.close();
             }
             DebugLog.log("new data sent" + length);
         } catch (IOException e) {
             throw new SVNException();
         } finally {
-            myMediator.deleteTemporaryLocation(myCurrentPath);
+            myMediator.deleteTemporaryLocation(path);
         }
-        myConnection.write("(w(s))", new Object[] {"textdelta-end", myCurrentPath});
+        myConnection.write("(w(s))", new Object[] {"textdelta-end", path});
     }
 
-    public void changeFileProperty(String name, String value) throws SVNException {
-        myConnection.write("(w(ss(s)))", new Object[] {"change-file-prop", myCurrentPath, name, value});
+    public void changeFileProperty(String path, String name, String value) throws SVNException {
+        myConnection.write("(w(ss(s)))", new Object[] {"change-file-prop", path, name, value});
     }
-    public void closeFile(String textChecksum) throws SVNException {
-        myConnection.write("(w(s(s)))", new Object[] {"close-file", myCurrentPath, textChecksum});
-        myCurrentPath = computeParentPath(myCurrentPath);
+
+    public void closeFile(String path, String textChecksum) throws SVNException {
+        myConnection.write("(w(s(s)))", new Object[] {"close-file", path, textChecksum});
+//        myCurrentPath = computeParentPath(myCurrentPath);
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {

@@ -282,14 +282,14 @@ public class SVNUpdateEditor implements ISVNEditor {
         myCurrentFile = createFileInfo(myCurrentDirectory, path, false);
     }
 
-    public void changeFileProperty(String name, String value) throws SVNException {
+    public void changeFileProperty(String commitPath, String name, String value) throws SVNException {
         myCurrentFile.propertyChanged(name, value);
         if (myWCAccess.getOptions().isUseCommitTimes() && SVNProperty.COMMITTED_DATE.equals(name)) {
             myCurrentFile.CommitTime = value; 
         }
     }
 
-    public void applyTextDelta(String baseChecksum) throws SVNException {
+    public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
         SVNDirectory dir = myCurrentFile.getDirectory();
         SVNEntries entries = dir.getEntries();
         SVNEntry entry = entries.getEntry(myCurrentFile.Name, true);
@@ -314,7 +314,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         }
     }
 
-    public OutputStream textDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
+    public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
         if (myCurrentFile.myDiffWindows == null) {
             myCurrentFile.myDiffWindows = new ArrayList();
         }
@@ -330,7 +330,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         return null;
     }
 
-    public void textDeltaEnd() throws SVNException {
+    public void textDeltaEnd(String commitPath) throws SVNException {
         if (myCurrentFile.myDiffWindows == null) {
             return;
         }
@@ -365,7 +365,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         }
     }
 
-    public void closeFile(String textChecksum) throws SVNException {
+    public void closeFile(String commitPath, String textChecksum) throws SVNException {
         // check checksum.
         String checksum = null;
         if (myCurrentFile.myDiffWindows != null && textChecksum != null) {
@@ -406,7 +406,6 @@ public class SVNUpdateEditor implements ISVNEditor {
         }
         
         // merge contents.
-        File textBase = dir.getBaseFile(name, false);
         File textTmpBase = dir.getBaseFile(name, true);
         String tmpPath = ".svn/tmp/text-base/" + name + ".svn-base";
         String basePath = ".svn/text-base/" + name + ".svn-base";

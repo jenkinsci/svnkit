@@ -75,7 +75,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         final StringBuffer report = buffer;
         try {
             reporterBaton.report(new ISVNReporter() {
-                public void setPath(String path, String locktoken, long revision, boolean startEmpty) throws SVNException {
+                public void setPath(String path, String locktoken, long revision, boolean startEmpty) {
                     path = DAVUtil.xmlEncode(path);
                     report.append("<S:entry rev=\"");
                     report.append(revision);
@@ -93,7 +93,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                     report.append("</S:entry>\n");
                 }
                 
-                public void deletePath(String path) throws SVNException {
+                public void deletePath(String path) {
                     path = DAVUtil.xmlEncode(path);
                     report.append("<S:missing>");
                     report.append(path);
@@ -127,7 +127,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                     report.append("</S:entry>\n");
                 }
                 
-                public void finishReport() throws SVNException {
+                public void finishReport() {
                 }
                 public void abortReport() throws SVNException {
                     throw new SVNException();
@@ -234,7 +234,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (isDir(myPath)) {
                 myEditor.changeDirProperty(name, null);
             } else {
-                myEditor.changeFileProperty(name, null);
+                myEditor.changeFileProperty(myPath.toString(), name, null);
             }            
         } else if (element == RESOURCE || element == FETCH_FILE || element == FETCH_PROPS) {
             throw new SVNException(element + " element is not supported in update-report");
@@ -242,7 +242,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (myIsFetchContent) {
                 setDeltaProcessing(true);
             }
-            myEditor.applyTextDelta(myChecksum);
+            myEditor.applyTextDelta(myPath.toString(), myChecksum);
         }
 	}
     
@@ -255,7 +255,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                     myEditor.closeEdit();
                 }
             } else {
-                myEditor.closeFile(myChecksum);
+                myEditor.closeFile(myPath.toString(), myChecksum);
             }
             myChecksum = null;
             myPath = removeTail(myPath);
@@ -276,7 +276,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (isDir(myPath)) {
                 myEditor.changeDirProperty(myPropertyName, value);
             } else {
-                myEditor.changeFileProperty(myPropertyName, value);
+                myEditor.changeFileProperty(myPath.toString(), myPropertyName, value);
             }
             myPropertyName = null;
             myEncoding = null;
@@ -328,10 +328,10 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     }
 
     protected OutputStream handleDiffWindow(SVNDiffWindow window) throws SVNException {
-        return myEditor.textDeltaChunk(window);
+        return myEditor.textDeltaChunk(myPath.toString(), window);
     }
 
     protected void handleDiffWindowClosed() throws SVNException {
-        myEditor.textDeltaEnd();
+        myEditor.textDeltaEnd(myPath.toString());
     }
 }

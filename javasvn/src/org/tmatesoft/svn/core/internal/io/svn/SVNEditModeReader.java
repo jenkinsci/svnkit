@@ -53,6 +53,7 @@ public class SVNEditModeReader {
     private SVNDiffWindowBuilder myBuilder;
     private OutputStream myDiffStream;
     private long myLenght;
+    private String myFilePath;
     
     public void setEditor(ISVNEditor editor) {
         myEditor = editor;
@@ -78,7 +79,7 @@ public class SVNEditModeReader {
                 myBuilder.accept(bytes, 0);
                 if (myBuilder.getDiffWindow() != null) {
                     myLenght = myBuilder.getDiffWindow().getNewDataLength();
-                    myDiffStream = myEditor.textDeltaChunk(myBuilder.getDiffWindow());
+                    myDiffStream = myEditor.textDeltaChunk(myFilePath, myBuilder.getDiffWindow());
                     if (myDiffStream == null) {
                         myDiffStream = new OutputStream() {
                             public void write(int b) {}
@@ -90,7 +91,7 @@ public class SVNEditModeReader {
                 }
             } else if (myDiffStream != null) {
                 if (myLenght > 0) {
-                    byte[] line = null;
+                    byte[] line;
                     line = (byte[]) SVNReader.parse(parameters, "(sB))", null)[0];
                     myLenght -= line.length;
                     try {
@@ -124,19 +125,21 @@ public class SVNEditModeReader {
             myEditor.closeDir();
         } else if ("add-file".equals(commandName)) {
             myEditor.addFile((String) items[0], (String) items[3], SVNReader.getLong(items, 4));
+            myFilePath = (String) items[0];
         } else if ("open-file".equals(commandName)) {                
             myEditor.openFile((String) items[0], SVNReader.getLong(items, 3));
-        } else if ("change-file-prop".equals(commandName)) {                
-            myEditor.changeFileProperty((String) items[1], (String) items[2]);
+            myFilePath = (String) items[0];
+        } else if ("change-file-prop".equals(commandName)) {
+            myEditor.changeFileProperty(myFilePath, (String) items[1], (String) items[2]);
         } else if ("close-file".equals(commandName)) {                
-            myEditor.closeFile((String) items[1]);
+            myEditor.closeFile(myFilePath, (String) items[1]);
         } else if ("apply-textdelta".equals(commandName)) {                
             myBuilder.reset();
             myLenght = 0;
             myDiffStream = null;
-            myEditor.applyTextDelta((String) items[1]);            
+            myEditor.applyTextDelta(myFilePath, (String) items[1]);
         } else if ("textdelta-end".equals(commandName)) {
-            myEditor.textDeltaEnd();
+            myEditor.textDeltaEnd(myFilePath);
         } else if ("close-edit".equals(commandName)) {
             myEditor.closeEdit();
         } else if ("abort-edit".equals(commandName)) {                
