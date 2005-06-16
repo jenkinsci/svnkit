@@ -96,7 +96,7 @@ public class SVNDiffClient extends SVNBasicClient {
             try {
                 repos.diff(url, revN, target, !useAncestry, recursive, reporter, editor);
             } finally {
-                wcAccess.close(true, recursive);
+                wcAccess.close(true);
             }
         } else {
             // URL:URL diff
@@ -106,7 +106,7 @@ public class SVNDiffClient extends SVNBasicClient {
                 url2 = wcAccess.getTargetEntryProperty(SVNProperty.URL);
                 rev2 = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
             } finally {
-                wcAccess.close(true, false);
+                wcAccess.close(true);
             }
             getDiffGenerator().setBasePath(wcAccess.getAnchor().getRoot());
             doDiff(url, pegRevision, url2, rev2, rN, rM, recursive, useAncestry, result);
@@ -137,7 +137,7 @@ public class SVNDiffClient extends SVNBasicClient {
             try {
                 repos.diff(url, revM, target, !useAncestry, recursive, reporter, editor);
             } finally {
-                wcAccess.close(true, recursive);
+                wcAccess.close(true);
             }
         } else {
             String url1;
@@ -146,7 +146,7 @@ public class SVNDiffClient extends SVNBasicClient {
                 url1 = wcAccess.getTargetEntryProperty(SVNProperty.URL);
                 rev1 = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
             } finally {
-                wcAccess.close(true, false);
+                wcAccess.close(true);
             }
             getDiffGenerator().setBasePath(wcAccess.getAnchor().getRoot());
             doDiff(url1, rev1, url, pegRevision, rN, rM, recursive, useAncestry, result);
@@ -186,7 +186,7 @@ public class SVNDiffClient extends SVNBasicClient {
         try {
             url1 = wcAccess.getTargetEntryProperty(SVNProperty.URL);
         } finally {
-            wcAccess.close(true, false);
+            wcAccess.close(true);
         }
 
         SVNWCAccess wcAccess2 = SVNWCAccess.create(path2);
@@ -197,7 +197,7 @@ public class SVNDiffClient extends SVNBasicClient {
         try {
             url2 = wcAccess2.getTargetEntryProperty(SVNProperty.URL);
         } finally {
-            wcAccess.close(true, false);
+            wcAccess.close(true);
         }
         long revN = getRevisionNumber(path, rN);
         long revM = getRevisionNumber(path, rM);
@@ -328,7 +328,7 @@ public class SVNDiffClient extends SVNBasicClient {
                         recursive, useAncestry, result);
             }
         } finally {
-            wcAccess.close(true, recursive);
+            wcAccess.close(true);
         }
     }
     
@@ -385,7 +385,7 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
             }, mergeEditor);
         } finally {
-            wcAccess.close(true, recursive);
+            wcAccess.close(true);
         }        
     }
 
@@ -404,7 +404,7 @@ public class SVNDiffClient extends SVNBasicClient {
             // url as it at revision N
             url1 = getURL(url1, revision, rN);
         } finally {
-            wcAccess.close(true, false);
+            wcAccess.close(true);
         }
         wcAccess = createWCAccess(path2);
         String url2 = null;
@@ -418,7 +418,7 @@ public class SVNDiffClient extends SVNBasicClient {
             // url as it at revision N
             url2 = getURL(url2, revision, rM);
         } finally {
-            wcAccess.close(true, false);
+            wcAccess.close(true);
         }
         doMerge(url1, url2, rN, rM, dstPath, recursive, useAncestry, force, dryRun);
     }
@@ -442,7 +442,7 @@ public class SVNDiffClient extends SVNBasicClient {
             }
             url = getURL(url, revision, pegRev);
         } finally {
-            wcAccess.close(true, false);
+            wcAccess.close(true);
         }
         if (url != null) {
             // we have url as it is at pegrev, later will change it to ones at rN:rM

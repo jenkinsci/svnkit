@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.ws.fs.FSMergerBySequence;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
@@ -812,7 +813,7 @@ public class SVNDirectory {
                         parent.getEntries().save(true);
                     }
                     if (parentWCAccess != null) {
-                        parentWCAccess.close(true, false);
+                        parentWCAccess.close(true);
                     }
                     myWCAccess.removeDirectory("");
                 }
@@ -1088,5 +1089,9 @@ public class SVNDirectory {
         }
         is.close();
         DebugLog.log(label + ":" + sb.toString());
+    }
+
+    public void commit(String target, SVNCommitInfo info, Map wcPropChanges, boolean removeLock, boolean recursive) {
+        
     }
 }

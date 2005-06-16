@@ -270,12 +270,12 @@ public class SVNWCAccess implements ISVNEventListener {
                 });
             }
         } catch (SVNException e) {
-            close(lock, recursive);
+            close(lock);
             SVNErrorManager.error(2, e);
         }
     }
 
-    public void close(boolean unlock, boolean recursive) throws SVNException {
+    public void close(boolean unlock) throws SVNException {
         if (!unlock || myDirectories == null) {
             if (myDirectories != null) {
                 myDirectories = null;
@@ -290,11 +290,10 @@ public class SVNWCAccess implements ISVNEventListener {
             myTarget.dispose();
             myTarget.unlock();
         }
-        if (recursive) {
-            for (Iterator dirs = myDirectories.values().iterator(); dirs.hasNext();) {
-                SVNDirectory directory = (SVNDirectory) dirs.next();
-                directory.unlock();
-            }
+        for (Iterator dirs = myDirectories.values().iterator(); dirs.hasNext();) {
+            SVNDirectory directory = (SVNDirectory) dirs.next();
+            directory.unlock();
+            directory.dispose();
         }
         myDirectories = null;
     }

@@ -84,7 +84,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             return editor.getTargetRevision();
         } finally {            
-            wcAccess.close(true, recursive);
+            wcAccess.close(true);
             if (!isDoNotSleepForTimeStamp()) {
                 SVNFileUtil.sleepForTimestamp();
             }            
@@ -109,7 +109,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             return editor.getTargetRevision();
         } finally {
-            wcAccess.close(true, recursive);
+            wcAccess.close(true);
             if (!isDoNotSleepForTimeStamp()) {
                 SVNFileUtil.sleepForTimestamp();
             }            
@@ -315,7 +315,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
                 dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(null, -1));
             } finally {
-                wcAccess.close(true, recursive);
+                wcAccess.close(true);
             }
         }
         return -1;
@@ -336,7 +336,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             doRelocate(wcAccess.getAnchor(), wcAccess.getTargetName(), oldURL, newURL, recursive);
         } finally {
-            wcAccess.close(true, recursive);
+            wcAccess.close(true);
             
         }
     }
@@ -396,7 +396,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                             SVNWCAccess externalAccess = createWCAccess(external.getFile());
                             externalAccess.open(true, true);
                             externalAccess.getAnchor().destroy("", true);
-                            externalAccess.close(true, true);
+                            externalAccess.close(true);
                         }
                     } else if (external.isModified()) {
                         deleteExternal(external);
@@ -448,7 +448,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             } catch (Throwable th) {
                 DebugLog.error(th);
             } finally {
-                externalAccess.close(true, true);
+                externalAccess.close(true);
             }
         }
         if (external.getFile().exists()) {

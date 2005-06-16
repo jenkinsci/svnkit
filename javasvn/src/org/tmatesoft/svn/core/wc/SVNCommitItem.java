@@ -24,9 +24,12 @@ public class SVNCommitItem {
     private boolean myIsPropertiesModified;
     private boolean myIsContentsModified;
     private boolean myIsCopied;
+    private boolean myIsLocked;
+    private String myPath;
 
     public SVNCommitItem(File file, String URL, String copyFromURL, SVNNodeKind kind, SVNRevision revision,
-                         boolean isAdded, boolean isDeleted, boolean isPropertiesModified, boolean isContentsModified, boolean isCopied) {
+                         boolean isAdded, boolean isDeleted, boolean isPropertiesModified, boolean isContentsModified, boolean isCopied,
+                         boolean locked) {
         myRevision = revision;
         myFile = file;
         myURL = URL;
@@ -37,6 +40,7 @@ public class SVNCommitItem {
         myIsPropertiesModified = isPropertiesModified;
         myIsContentsModified = isContentsModified;
         myIsCopied = isCopied;
+        myIsLocked = locked;
     }
 
     public SVNRevision getRevision() {
@@ -59,23 +63,35 @@ public class SVNCommitItem {
         return myKind;
     }
 
-    public boolean isIsAdded() {
+    public boolean isAdded() {
         return myIsAdded;
     }
 
-    public boolean isIsDeleted() {
+    public boolean isDeleted() {
         return myIsDeleted;
     }
 
-    public boolean isIsPropertiesModified() {
+    public boolean isPropertiesModified() {
         return myIsPropertiesModified;
     }
 
-    public boolean isIsContentsModified() {
+    public boolean isContentsModified() {
         return myIsContentsModified;
     }
 
-    public boolean isIsCopied() {
+    public boolean isCopied() {
         return myIsCopied;
+    }
+
+    public boolean isLocked() {
+        return myIsLocked;
+    }
+
+    public String getPath() {
+        return myPath;
+    }
+
+    public void setPath(String path) {
+        myPath = path;
     }
 }

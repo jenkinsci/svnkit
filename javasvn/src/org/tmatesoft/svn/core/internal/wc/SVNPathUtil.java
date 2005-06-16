@@ -143,6 +143,66 @@ public class SVNPathUtil {
         return rootURL;
     }
 
+    public static String condencePaths(String[] paths, Collection condencedPaths, boolean removeRedundantPaths) {
+        if (paths == null || paths.length == 0) {
+            return null;
+        }
+        if (paths.length == 1) {
+            return paths[0];
+        }
+        String rootPath = paths[0];
+        for (int i = 0; i < paths.length; i++) {
+            String url = paths[i];
+            rootPath = getCommonPathAncestor(rootPath, url);
+        }
+        if (condencedPaths != null && removeRedundantPaths) {
+            for (int i = 0; i < paths.length; i++) {
+                String path1 = paths[i];
+                if (path1 == null) {
+                    continue;
+                }
+                for (int j = 0; j < paths.length; j++) {
+                    String path2 = paths[j];
+                    if (path2 == null) {
+                        continue;
+                    }
+                    String common = getCommonPathAncestor(path1, path2);
+                    if ("".equals(common) || common == null) {
+                        continue;
+                    }
+                    if (common.equals(path1)) {
+                        paths[i] = null;
+                    } else if (common.equals(path2)) {
+                        paths[j] = null;
+                    }
+                }
+            }
+            for (int j = 0; j < paths.length; j++) {
+                String path = paths[j];
+                if (path != null && path.equals(rootPath)) {
+                    paths[j] = null;
+                }
+            }
+        }
+
+        if (condencedPaths != null) {
+            for (int i = 0; i < paths.length; i++) {
+                String path = paths[i];
+                if (path == null) {
+                    continue;
+                }
+                if (rootPath != null && !"".equals(rootPath)) {
+                    path = path.substring(rootPath.length());
+                    if (path.startsWith("/")) {
+                        path = path.substring(1);
+                    }
+                }
+                condencedPaths.add(path);
+            }
+        }
+        return rootPath;
+    }
+
     public static String validateFilePath(String path) {
         path = path.replace(File.separatorChar, '/');
         StringBuffer result = new StringBuffer();

@@ -28,6 +28,10 @@ public class SVNEventFactory {
         return new SVNEvent(rootFile, file, action, kind, -1, mimeType, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, null, null);
     }
 
+    public static SVNEvent createCommitEvent(File rootFile, File file, SVNEventAction action, SVNNodeKind kind, SVNStatusType textType, SVNStatusType propType) {
+        return new SVNEvent(rootFile, file, action, kind, -1, null, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, null, null);
+    }
+
     public static SVNEvent createSkipEvent(File rootFile, File file, SVNEventAction action, SVNNodeKind kind) {
         return new SVNEvent(rootFile, file, action, kind, -1, null, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, null, null);
     }

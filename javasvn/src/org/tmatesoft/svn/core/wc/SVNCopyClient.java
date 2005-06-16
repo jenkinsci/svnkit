@@ -287,9 +287,9 @@ public class SVNCopyClient extends SVNBasicClient {
                 srcAccess.getAnchor().scheduleForDeletion(srcPath.getName());
             }
         } finally {
-            dstAccess.close(true, true);
+            dstAccess.close(true);
             if (move && srcAccess != dstAccess) {
-                srcAccess.close(true, true);
+                srcAccess.close(true);
             }
         }
     }
@@ -344,7 +344,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     }
                 } finally {
                     setDoNotSleepForTimeStamp(false);
-                    wcAccess2.close(true, true);
+                    wcAccess2.close(true);
                 }
             } else {
                 Map properties = new HashMap();
@@ -379,7 +379,7 @@ public class SVNCopyClient extends SVNBasicClient {
             }
         } finally {
             if (wcAccess != null) {
-                wcAccess.close(true, false);
+                wcAccess.close(true);
             }
             if (!isDoNotSleepForTimeStamp()) {
                 SVNFileUtil.sleepForTimestamp();
@@ -435,9 +435,9 @@ public class SVNCopyClient extends SVNBasicClient {
         DebugLog.log("repos created at " + commonURL);
 
         Collection commitItems = new ArrayList(2);
-        commitItems.add(new SVNCommitItem(null, dstURL, srcURL, srcKind, SVNRevision.create(srcRevision), true, false, false, false, true));
+        commitItems.add(new SVNCommitItem(null, dstURL, srcURL, srcKind, SVNRevision.create(srcRevision), true, false, false, false, true, false));
         if (move) {
-            commitItems.add(new SVNCommitItem(null, srcURL, null, srcKind, SVNRevision.create(srcRevision), false, true, false, false, false));
+            commitItems.add(new SVNCommitItem(null, srcURL, null, srcKind, SVNRevision.create(srcRevision), false, true, false, false, false, false));
         }
         commitMessage = getCommitHandler().getCommitMessage(commitMessage, (SVNCommitItem[]) commitItems.toArray(new SVNCommitItem[commitItems.size()]));
         if (commitMessage == null) {
@@ -489,7 +489,8 @@ public class SVNCopyClient extends SVNBasicClient {
 
         SVNCommitInfo result = null;
         try {
-            result = SVNCommitUtil.driveCommitEditor(committer, paths, commitEditor, -1);
+            SVNCommitUtil.driveCommitEditor(committer, paths, commitEditor, -1);
+            result = commitEditor.closeEdit();
         } catch (SVNException e) {
             try {
                 commitEditor.abortEdit();

@@ -27,13 +27,10 @@ import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -230,7 +227,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNWCAccess wcAccess = createWCAccess(path);
         wcAccess.open(true, true, true);
         wcAccess.getAnchor().cleanup();
-        wcAccess.close(true, true);
+        wcAccess.close(true);
     }
     
     public void doSetProperty(File path, String propName, String propValue, boolean force, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
@@ -246,7 +243,7 @@ public class SVNWCClient extends SVNBasicClient {
             wcAccess.open(true, recursive);
             doSetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(), propName, propValue, force, recursive, handler);
         } finally {
-            wcAccess.close(true, recursive);
+            wcAccess.close(true);
         }
     }
 
@@ -262,7 +259,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNRevision pegRevision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
             doSetRevisionProperty(url, pegRevision, revision, propName, propValue, force, handler);
         } finally {
-            wcAccess.close(true, false);
+            wcAccess.close(true);
         }
     }
 
@@ -310,7 +307,7 @@ public class SVNWCClient extends SVNBasicClient {
             // local prop.
             doGetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(), propName, revision, recursive, handler);
         } finally {
-            wcAccess.close(true, recursive);
+            wcAccess.close(true);
         }
     }
 
@@ -344,7 +341,7 @@ public class SVNWCClient extends SVNBasicClient {
             url = getURL(url, pegRev, revision);
             doGetRevisionProperty(url, propName, revision, handler);
         } finally {
-            wcAccess.close(true, false);
+            wcAccess.close(true);
         }
     }
 
@@ -385,7 +382,7 @@ public class SVNWCClient extends SVNBasicClient {
         		wcAccess.getAnchor().scheduleForDeletion(wcAccess.getTargetName());
         	}
         } finally {
-        	wcAccess.close(true, true);
+        	wcAccess.close(true);
         }
     }
 
@@ -427,7 +424,7 @@ public class SVNWCClient extends SVNBasicClient {
 	    		dir.add(wcAccess.getTargetName(), false);
             }
     	} finally {
-    		wcAccess.close(true, recursive);
+    		wcAccess.close(true);
     	}
     }
 
@@ -533,7 +530,7 @@ public class SVNWCClient extends SVNBasicClient {
                 svnEvent(event, ISVNEventListener.UNKNOWN);
             }
         } finally {
-            wcAccess.close(true, false);
+            wcAccess.close(true);
         }
         // recurse
         if (kind == SVNNodeKind.DIR && recursive) {
@@ -565,7 +562,7 @@ public class SVNWCClient extends SVNBasicClient {
                 entriesMap.put(entry.getURL(), new LockInfo(paths[i], revision));
                 wcAccess.getAnchor().getEntries().close();
             } finally {
-                wcAccess.close(true, false);
+                wcAccess.close(true);
             }
         }
         for (Iterator urls = entriesMap.keySet().iterator(); urls.hasNext();) {
@@ -604,7 +601,7 @@ public class SVNWCClient extends SVNBasicClient {
                 svnEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCK_FAILED, lock, e.getMessage()),
                         ISVNEventListener.UNKNOWN);
             } finally {
-                wcAccess.close(true, false);
+                wcAccess.close(true);
             }
         }
     }
@@ -646,7 +643,7 @@ public class SVNWCClient extends SVNBasicClient {
                 entriesMap.put(entry.getURL(), new LockInfo(paths[i], lockToken));
                 wcAccess.getAnchor().getEntries().close();
             } finally {
-                wcAccess.close(true, false);
+                wcAccess.close(true);
             }
         }
         for (Iterator urls = entriesMap.keySet().iterator(); urls.hasNext();) {
@@ -691,7 +688,7 @@ public class SVNWCClient extends SVNBasicClient {
                         e.getMessage()),
                         ISVNEventListener.UNKNOWN);
             } finally {
-                wcAccess.close(true, false);
+                wcAccess.close(true);
             }
         }
     }
@@ -743,7 +740,7 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 wcRevision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
             } finally {
-                wcAccess.close(true, false);
+                wcAccess.close(true);
             }
             doInfo(url, wcRevision, revision, recursive, handler);
             return;
@@ -753,7 +750,7 @@ public class SVNWCClient extends SVNBasicClient {
             wcAccess.open(true, recursive);
             collectInfo(wcAccess.getAnchor(), wcAccess.getTargetName(), recursive, handler);
         } finally {
-            wcAccess.close(true, recursive);
+            wcAccess.close(true);
         }
     }
     

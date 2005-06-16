@@ -67,7 +67,7 @@ public class SVNStatusClient extends SVNBasicClient {
         } else {
             // do report, collect repos locks, and drive the editor.
         }
-        wcAccess.close(false, recursive);
+        wcAccess.close(false);
         if (!isIgnoreExternals() && recursive) {
             Map externals = statusEditor.getCollectedExternals();
             for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
