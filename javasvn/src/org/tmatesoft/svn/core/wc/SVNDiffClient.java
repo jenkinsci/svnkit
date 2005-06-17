@@ -3,15 +3,6 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -30,6 +21,12 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
+
+import java.io.File;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class SVNDiffClient extends SVNBasicClient {
 
@@ -182,7 +179,6 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         SVNWCAccess wcAccess = SVNWCAccess.create(path);
         String url1;
-        SVNRevision peg1;
         try {
             url1 = wcAccess.getTargetEntryProperty(SVNProperty.URL);
         } finally {
@@ -314,14 +310,11 @@ public class SVNDiffClient extends SVNBasicClient {
                 // rev:rev
                 long revN = getRevisionNumber(path, rN);
                 long revM = getRevisionNumber(path, rM);
-                SVNRevision wcRev = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
-                
+
                 String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
                 if (wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL) != null) {
                     url = wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL);
                 }
-                String url1 = getURL(url, wcRev, SVNRevision.create(revN));
-                String url2 = getURL(url, wcRev, SVNRevision.create(revM));
                 SVNRevision pegRev = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
                 getDiffGenerator().setBasePath(wcAccess.getTarget().getRoot());
                 doDiff(url, pegRev, url, pegRev, SVNRevision.create(revN), SVNRevision.create(revM), 
@@ -462,10 +455,8 @@ public class SVNDiffClient extends SVNBasicClient {
     private void doWCReposDiff(SVNWCAccess wcAccess, SVNRevision reposRev, SVNRevision localRev,
             boolean reverse,
             boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-        
         // get wc url and revision
-        url = wcAccess.getAnchor().getEntries().getEntry("", true).getURL();
+        String url = wcAccess.getAnchor().getEntries().getEntry("", true).getURL();
         String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
         SVNRevision wcRevNumber = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
         
@@ -492,28 +483,14 @@ public class SVNDiffClient extends SVNBasicClient {
         File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile1.getParentFile(), name, ".tmp");
         Map props1 = new HashMap();
         Map props2 = new HashMap();
-        OutputStream os1 = null;
-        OutputStream os2 = null;
+        OutputStream os1 = SVNFileUtil.openFileForWriting(tmpFile1);
+        OutputStream os2 = SVNFileUtil.openFileForWriting(tmpFile2);
         try {
-            os1 = new FileOutputStream(tmpFile1);
-            os2 = new FileOutputStream(tmpFile2);
             repos1.getFile("", revN, props1, os1);
             repos2.getFile("", revM, props2, os2);
-        } catch (FileNotFoundException e) {
-            SVNErrorManager.error(0, e);
         } finally {
-            if (os1 != null) {
-                try {
-                    os1.close();
-                } catch (IOException e) {
-                }
-            } 
-            if (os2 != null) {
-                try {
-                    os2.close();
-                } catch (IOException e) {
-                }
-            }
+            SVNFileUtil.closeFile(os1);
+            SVNFileUtil.closeFile(os2);
         }
         String mimeType1 = (String) props1.get(SVNProperty.MIME_TYPE);
         String mimeType2 = (String) props2.get(SVNProperty.MIME_TYPE);
@@ -529,7 +506,6 @@ public class SVNDiffClient extends SVNBasicClient {
         svnEvent(SVNEventFactory.createUpdateModifiedEvent(wcAccess, wcAccess.getAnchor(), name,
                 SVNEventAction.UPDATE_UPDATE, mimeType2, mergeResult[0], mergeResult[1], SVNStatusType.LOCK_INAPPLICABLE), 
                 ISVNEventListener.UNKNOWN);
-        return;
     }
 
     private static Map computePropsDiff(Map props1, Map props2) {

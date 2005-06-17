@@ -11,7 +11,6 @@ import org.tmatesoft.svn.core.wc.SVNOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -154,7 +153,6 @@ public class SVNStatusEditor implements ISVNEditor {
             if (entry != null) {
                 sendVersionedStatus(dir, entryName);
             } else if (dir.getFile(entryName, false).exists()) {
-                DebugLog.log("sending unversioned status (1) for " + dir.getFile(entryName, false));
                 sendUnversionedStatus(dir, entryName);
             }
             return;
@@ -274,10 +272,7 @@ public class SVNStatusEditor implements ISVNEditor {
         pathKind = pathKind == null || pathKind == SVNFileType.UNKNOWN ?
                 SVNFileType.getType(file) : pathKind;
 
-        DebugLog.log("creating status for " + file);
-        DebugLog.log("path kind: " + pathKind);
         if (entry == null) {
-            DebugLog.log("no entry " + file);
             SVNStatusType textStatus = SVNStatusType.STATUS_NONE;
             if (pathKind != SVNFileType.NONE) {
                 textStatus = isIgnored ? SVNStatusType.STATUS_IGNORED : SVNStatusType.STATUS_UNVERSIONED;
@@ -319,7 +314,6 @@ public class SVNStatusEditor implements ISVNEditor {
             }
             boolean propsModified = entryDir.hasPropModifications(entry.getName());
             boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
-            DebugLog.log("special : " + special);
             boolean textModified = false;
             if (entry.isFile() && special == (pathKind == SVNFileType.SYMLINK)) {
                 textModified = entryDir.hasTextModifications(entry.getName(), false);

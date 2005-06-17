@@ -80,8 +80,15 @@ public class SVNCommitUtil {
                     break;
                 }
             }
-            handler.handleCommitPath(commitPath, editor);
-            lastPath = commitPath;
+            boolean closeDir = handler.handleCommitPath(commitPath, editor);
+            if (closeDir) {
+                lastPath = commitPath;
+            } else {
+                lastPath = PathUtil.removeTail(commitPath);
+                if (PathUtil.isEmpty(lastPath)) {
+                    lastPath = "";
+                }
+            }
             DebugLog.log("driver: last open path: " + lastPath);
         }
         while(lastPath != null && !"".equals(lastPath)) {
@@ -246,6 +253,7 @@ public class SVNCommitUtil {
                                       "for addition.  Perhaps you're committing a target that is\n" +
                                       "inside an unversioned (or not-yet-versioned) directory?");
             }
+            DebugLog.log("collecting commitables for " + targetFile);
             harvestCommitables(commitables, dir, targetFile, null, entry, url, null, false, false, justLocked, lockTokens, recursive);
         } while(targets.hasNext());
 

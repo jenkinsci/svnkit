@@ -226,8 +226,8 @@ public class SVNCopyClient extends SVNBasicClient {
         return url2urlCopy(srcURL, srcRevNumber, dstURL, commitMessage, move);
     }
 
-    private void wc2urlCopy(File srcPath, String dstURL, String commitMessage) throws SVNException {
-
+    private long wc2urlCopy(File srcPath, String dstURL, String commitMessage) throws SVNException {
+        return -1;
     }
 
     private void wc2wcCopy(File srcPath, File dstPath, boolean force, boolean move) throws SVNException {
@@ -450,7 +450,7 @@ public class SVNCopyClient extends SVNBasicClient {
         final long srcRevNumber = srcRevision;
         final boolean isRessurect = resurrect;
         ISVNCommitPathHandler committer = new ISVNCommitPathHandler() {
-            public void handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
+            public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
                 boolean doAdd = false;
                 boolean doDelete = false;
                 if (isRessurect) {
@@ -472,16 +472,19 @@ public class SVNCopyClient extends SVNBasicClient {
                     DebugLog.log("deleting " + srcPath);
                     commitEditor.deleteEntry(srcPath, -1);
                 }
+                boolean closeDir = false;
                 if (doAdd) {
                     if (srcKind == SVNNodeKind.DIR) {
                         DebugLog.log("adding dir " + dstPath + " from " + srcPath);
                         commitEditor.addDir(dstPath, srcPath, srcRevNumber);
+                        closeDir = true;
                     } else {
                         DebugLog.log("adding file " + dstPath + " from " + srcPath);
                         commitEditor.addFile(dstPath, srcPath, srcRevNumber);
                         commitEditor.closeFile(dstPath, null);
                     }
                 }
+                return closeDir;
             }
         };
         Collection paths = move ? Arrays.asList(new String[] {srcRelative, dstRelative}) :

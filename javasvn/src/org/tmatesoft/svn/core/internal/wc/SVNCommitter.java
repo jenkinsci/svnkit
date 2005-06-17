@@ -45,7 +45,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         myTmpFiles = tmpFiles;
     }
 
-    public void handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
+    public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
         SVNCommitItem item = (SVNCommitItem) myCommitItems.get(commitPath);
         if (item.isCopied()) {
             if (item.getCopyFromURL() == null) {
@@ -55,6 +55,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             }
         }
         SVNEvent event = null;
+        boolean closeDir = false;
 
         if (item.isAdded() && item.isDeleted()) {
             event = SVNEventFactory.createCommitEvent(myWCAccess.getAnchor().getRoot(), item.getFile(), SVNEventAction.COMMIT_REPLACED, item.getKind(), null);
@@ -87,6 +88,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                 fileOpen = true;
             } else {
                 commitEditor.addDir(commitPath, item.getCopyFromURL(), cfRev);
+                closeDir = true;
             }
         }
         if (item.isPropertiesModified()) {
@@ -104,6 +106,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                     DebugLog.log("comitter: open dir: " + commitPath);
                     commitEditor.openDir(commitPath, rev);
                 }
+                closeDir = true;
             }
             sendPropertiedDelta(item, commitEditor);
         }
@@ -115,6 +118,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         } else if (fileOpen) {
             commitEditor.closeFile(commitPath, null);
         }
+        return closeDir;
     }
 
     public void sendTextDeltas(ISVNEditor editor) throws SVNException {
@@ -143,7 +147,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                     SVNErrorManager.error("svn: Checksum mismatch for '" + dir.getFile(name, false) + "'; expected '" + realChecksum + "', actual: '" + checksum + "'");
                 }
             }
-            editor.applyTextDelta(item.getPath(), checksum);
+            editor.applyTextDelta(path, checksum);
             boolean binary = dir.getProperties(name, false).getPropertyValue(SVNProperty.MIME_TYPE) != null ||
                     dir.getBaseProperties(name, false).getPropertyValue(SVNProperty.MIME_TYPE) != null;
             ISVNDeltaGenerator generator;
@@ -155,7 +159,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             SVNRAFileData base = new SVNRAFileData(dir.getBaseFile(name, false), true);
             SVNRAFileData work = new SVNRAFileData(tmpFile, true);
             try {
-                generator.generateDiffWindow(item.getPath(), editor, work, base);
+                generator.generateDiffWindow(path, editor, work, base);
             } finally {
                 try {
                     base.close();
@@ -168,7 +172,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                     //
                 }
             }
-            editor.closeFile(item.getPath(), newChecksum);
+            editor.closeFile(path, newChecksum);
         }
     }
 

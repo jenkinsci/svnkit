@@ -130,8 +130,9 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, null);
         ISVNCommitPathHandler deleter = new ISVNCommitPathHandler() {
-            public void handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
+            public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
                 commitEditor.deleteEntry(commitPath, -1);
+                return false;
             }
         };
         SVNCommitInfo info;
@@ -198,8 +199,9 @@ public class SVNCommitClient extends SVNBasicClient {
         SVNRepository repos = createRepository(rootURL);
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, null);
         ISVNCommitPathHandler creater = new ISVNCommitPathHandler() {
-            public void handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
+            public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
                 commitEditor.addDir(commitPath, null, -1);
+                return true;
             }
         };
         SVNCommitInfo info;
@@ -308,10 +310,12 @@ public class SVNCommitClient extends SVNBasicClient {
         Collection tmpFiles = null;
         SVNCommitInfo info = null;
         ISVNEditor commitEditor = null;
+
         try {
             if (commitPacket == null || commitPacket == SVNCommitPacket.EMPTY) {
                 return -1;
             }
+            DebugLog.log("commit packet: " + commitPacket);
             commitMessage = getCommitHandler().getCommitMessage(commitMessage, commitPacket.getCommitItems());
             if (commitMessage == null) {
                 return -1;

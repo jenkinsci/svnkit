@@ -102,6 +102,9 @@ public class SVNPathUtil {
                     continue;
                 }
                 for (int j = 0; j < urls.length; j++) {
+                    if (i == j) {
+                        continue;
+                    }
                     String url2 = urls[j];
                     if (url2 == null) {
                         continue;
@@ -162,11 +165,15 @@ public class SVNPathUtil {
                     continue;
                 }
                 for (int j = 0; j < paths.length; j++) {
+                    if (i == j) {
+                        continue;
+                    }
                     String path2 = paths[j];
                     if (path2 == null) {
                         continue;
                     }
                     String common = getCommonPathAncestor(path1, path2);
+
                     if ("".equals(common) || common == null) {
                         continue;
                     }

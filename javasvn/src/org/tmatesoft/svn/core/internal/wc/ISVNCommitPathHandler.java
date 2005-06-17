@@ -12,5 +12,6 @@ import org.tmatesoft.svn.core.io.SVNException;
  */
 public interface ISVNCommitPathHandler {
 
-    public void handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException;
+    // return 'true' for dirs.
+    public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException;
 }
