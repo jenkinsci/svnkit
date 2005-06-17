@@ -164,15 +164,17 @@ public class History {
              * each revision a corresponding SVNLogEntry will contain a map of
              * all paths which were changed in that revision.
              * 
-             * the 6th parameter - a boolean flag strictNode - if true and a
+             * the 6th parameter - a boolean flag strictNode - if false and a
              * changed path is a copy (branch) of an existing one in the repository
-             * then the history for its origin won't be traversed; it means it will
-             * be possible to know what path at what revision it was copied
-             * from.
+             * then the history for its origin will be traversed; it means the 
+             * history of changes of the target URL (and all that there's in that 
+             * URL) will include the history of the origin path(s).
+             * Otherwise if strictNode is true then the origin path history won't be
+             * included.
              * 
              * The return value is a Collection filled up with SVNLogEntry Objects.
              */
-            logEntries = repository.log(new String[] { "" }, null,
+            logEntries = repository.log(new String[] {""}, null,
                     startRevision, endRevision, true, true);
         } catch (SVNException svne) {
             System.out.println("error while collecting log information for '"
