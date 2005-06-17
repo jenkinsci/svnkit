@@ -328,7 +328,7 @@ public class SVNCommitUtil {
         return lockTokens;
     }
 
-    private static void harvestCommitables(Map commitables, SVNDirectory dir, File path, SVNEntry parentEntry, SVNEntry entry,
+    public static void harvestCommitables(Map commitables, SVNDirectory dir, File path, SVNEntry parentEntry, SVNEntry entry,
                                            String url, String copyFromURL, boolean copyMode, boolean addsOnly, boolean justLocked,
                                            Map lockTokens, boolean recursive) throws SVNException {
         if (commitables.containsKey(path)) {

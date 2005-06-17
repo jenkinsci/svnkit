@@ -14,14 +14,10 @@ package org.tmatesoft.svn.cli.command;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.SVNUtil;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -111,14 +107,13 @@ public class CopyCommand extends SVNCommand {
             return;
         }
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
-        srcPath = srcPath.replace(File.separatorChar, '/');
-
-        final ISVNWorkspace ws = createWorkspace(srcPath);
-        String wsPath = SVNUtil.getWorkspacePath(ws, srcPath);
-        DebugLog.log("workspace path is : " + wsPath);
-        long revision = ws.copy(wsPath, SVNRepositoryLocation.parseURL(dstURL), message);
-
+        SVNRevision revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
+        if (revision == null || !revision.isValid()) {
+            revision = SVNRevision.WORKING;
+        }
+        SVNCopyClient updater = new SVNCopyClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+        long revNumber = updater.doCopy(new File(srcPath), getCommandLine().getPathPegRevision(0), revision, dstURL, getCommandLine().getPegRevision(0), false, message);
         out.println();
-        out.println("Committed revision " + revision + ".");
+        out.println("Committed revision " + revNumber + ".");
     }
 }

@@ -16,6 +16,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
+import org.tmatesoft.svn.core.internal.wc.SVNCommitter;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
@@ -36,6 +38,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeSet;
+import java.util.TreeMap;
 
 /**
  * Created by IntelliJ IDEA.
@@ -109,7 +113,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 dstPegRevision = SVNRevision.parse(dstAccess.getTargetEntryProperty(SVNProperty.REVISION));
             }
             dstURL = getURL(dstURL, dstPegRevision, SVNRevision.HEAD);
-            wc2urlCopy(srcPath, dstURL, commitMessage);
+            return wc2urlCopy(srcPath, dstURL, commitMessage);
         } else if (dstRevision == SVNRevision.WORKING) {
             // url->wc
             if (move) {
@@ -168,9 +172,8 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNErrorManager.error("svn: Only WC to WC or URL to URL move is supported");
             }
             dstURL = getURL(dstURL, dstPegRevision, SVNRevision.HEAD);
-            wc2urlCopy(srcPath, dstURL, commitMessage);
+            return wc2urlCopy(srcPath, dstURL, commitMessage);
         }
-        return -1;
     }
 
     // url, path (url->url or url->wc)
@@ -227,6 +230,63 @@ public class SVNCopyClient extends SVNBasicClient {
     }
 
     private long wc2urlCopy(File srcPath, String dstURL, String commitMessage) throws SVNException {
+        dstURL = validateURL(dstURL);
+        SVNRepository repos = createRepository(dstURL);
+        SVNNodeKind dstKind = repos.checkPath("", -1);
+        if (dstKind == SVNNodeKind.DIR) {
+            dstURL = PathUtil.append(dstURL, PathUtil.encode(srcPath.getName()));
+        } else if (dstKind == SVNNodeKind.FILE) {
+            SVNErrorManager.error("svn: File '" + dstURL + "' already exists");
+        }
+        SVNCommitItem[] items = new SVNCommitItem[] {new SVNCommitItem(null, dstURL, null, SVNNodeKind.NONE, SVNRevision.UNDEFINED, true, false, false, false, true, false)};
+        commitMessage = getCommitHandler().getCommitMessage(commitMessage, items);
+        if (commitMessage == null) {
+            return -1;
+        }
+        // collect commitables.
+        Collection targets = new TreeSet();
+        Collection tmpFiles = null;
+        SVNCommitInfo info = null;
+        ISVNEditor commitEditor = null;
+        SVNWCAccess wcAccess = createWCAccess(srcPath);
+        try {
+            wcAccess.open(true, true);
+
+            Map commitables = new TreeMap();
+            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), false);
+            if (entry == null) {
+                SVNErrorManager.error("svn: '" + srcPath + "' is not under version control");
+                return -1;
+            }
+            SVNCommitUtil.harvestCommitables(commitables, wcAccess.getAnchor(), srcPath, null, entry, dstURL, entry.getURL(), true, false, false, null, true);
+
+            items = (SVNCommitItem[]) commitables.values().toArray(new SVNCommitItem[commitables.values().size()]);
+            DebugLog.log(new SVNCommitPacket(wcAccess, items, null) + "");
+            commitables = new TreeMap();
+            dstURL = SVNCommitUtil.translateCommitables(items, commitables);
+
+            SVNRepository repository = createRepository(dstURL);
+            SVNCommitMediator mediator = new SVNCommitMediator(wcAccess, commitables);
+            tmpFiles = mediator.getTmpFiles();
+
+            commitEditor = repository.getCommitEditor(commitMessage, null, false, mediator);
+            info = SVNCommitter.commit(wcAccess, tmpFiles, commitables, repository.getRepositoryRoot(true), commitEditor);
+            commitEditor = null;
+        } finally {
+            if (tmpFiles != null) {
+                for (Iterator files = tmpFiles.iterator(); files.hasNext();) {
+                    File file = (File) files.next();
+                    file.delete();
+                }
+            }
+            if (commitEditor != null && info == null) {
+                commitEditor.abortEdit();
+            }
+            if (wcAccess != null) {
+                wcAccess.close(true);
+            }
+        }
+
         return -1;
     }
 
