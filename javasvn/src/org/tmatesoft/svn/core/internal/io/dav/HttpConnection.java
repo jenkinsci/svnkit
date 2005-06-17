@@ -356,7 +356,18 @@ class HttpConnection {
         } finally {
 	        logInputStream(stream);
             close();
-            status.setErrorText(text.toString());
+            String errorMessage = text.toString();
+            if (errorMessage.indexOf("<m:human-readable") >= 0) {
+                errorMessage = errorMessage.substring(errorMessage.indexOf("<m:human-readable") + "<m:human-readable".length());
+                if (errorMessage.indexOf('>') >= 0) {
+                    errorMessage = errorMessage.substring(errorMessage.indexOf('<') + 1);
+                }
+                if (errorMessage.indexOf("</m:human-readable>") >= 0) {
+                    errorMessage = errorMessage.substring(0, errorMessage.indexOf("</m:human-readable>"));
+                }
+            }
+            errorMessage = errorMessage.trim();
+            status.setErrorText(errorMessage);
         }
     }
 
@@ -657,7 +668,7 @@ class HttpConnection {
                 return;
             }
             readError(status);
-            throw new SVNException("server reports an error: " + status);
+            throw new SVNException(status.getErrorText());
         }
         for (int i = 0; i < codes.length; i++) {
             if (code == codes[i]) {
@@ -665,7 +676,7 @@ class HttpConnection {
             }
         }
         readError(status);
-        throw new SVNException("server reports an error: " + status);
+        throw new SVNException(status.getErrorText());
     }
 
     private static Map initHeader(int depth, String label, Map map) {
