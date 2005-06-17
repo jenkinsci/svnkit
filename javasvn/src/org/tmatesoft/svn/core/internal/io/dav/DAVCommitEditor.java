@@ -123,7 +123,7 @@ class DAVCommitEditor implements ISVNEditor {
         checkoutResource(parentResource);
         String wPath = parentResource.getWorkingURL();
 
-        DAVResource newDir = new DAVResource(myCommitMediator, myConnection, PathUtil.encode(path), -1, copyPath != null);
+        DAVResource newDir = new DAVResource(myCommitMediator, myConnection, path, -1, copyPath != null);
         newDir.setWorkingURL(PathUtil.append(wPath, PathUtil.tail(path)));
 
         myDirsStack.push(newDir);
@@ -138,7 +138,7 @@ class DAVCommitEditor implements ISVNEditor {
 
             // full url.
             wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() +
-            	PathUtil.encode(newDir.getWorkingURL());
+            	newDir.getWorkingURL();
             DAVStatus status = myConnection.doCopy(copyPath, wPath);
             if (status.getResponseCode() != 201 && status.getResponseCode() != 204) {
                 throw new SVNException("COPY failed: " + status);
@@ -214,7 +214,7 @@ class DAVCommitEditor implements ISVNEditor {
 
             // do "COPY" copyPath to parents working url ?
             wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() +
-            	PathUtil.encode(newFile.getWorkingURL());
+            	newFile.getWorkingURL();
             DAVStatus status = myConnection.doCopy(copyPath, wPath);
             if (status.getResponseCode() != 201 && status.getResponseCode() != 204) {
                 throw new SVNException("COPY failed: " + status);
@@ -371,6 +371,7 @@ class DAVCommitEditor implements ISVNEditor {
         DAVStatus status = myConnection.doCheckout(myActivity, resource.getURL(), resource.getVersionURL());
         String location = (String) status.getResponseHeader().get("Location");
         if (status.getResponseCode() == 201 && location != null) {
+            location = PathUtil.encode(location);
             DebugLog.log("wURL: " + location);
             resource.setWorkingURL(location);
             DebugLog.log("CHECKED OUT: " + resource);

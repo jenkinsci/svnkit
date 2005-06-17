@@ -500,6 +500,7 @@ public class SVNCopyClient extends SVNBasicClient {
             } catch (SVNException inner) {
                 //
             }
+            DebugLog.error(e);
             SVNErrorManager.error("svn: " + e.getMessage());
         }
         return result != null ? result.getNewRevision() : -1;
