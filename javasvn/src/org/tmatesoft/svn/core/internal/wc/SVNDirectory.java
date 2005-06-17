@@ -491,10 +491,6 @@ public class SVNDirectory {
         }
         if (!force) {
             String textTime = entry.getTextTime();
-            if (textTime == null) {
-                // for added files?
-                return true;
-            }
             long textTimeAsLong = SVNFileUtil.roundTimeStamp(TimeUtil.parseDate(textTime).getTime());
             long tstamp = SVNFileUtil.roundTimeStamp(getFile(name, false).lastModified());
             if (textTimeAsLong == tstamp ) {
@@ -533,7 +529,6 @@ public class SVNDirectory {
         }
         
         if (equals && isLocked()) {
-            System.out.println("new text time: " + TimeUtil.formatDate(new Date(versionedFile.lastModified())));
             entry.setTextTime(TimeUtil.formatDate(new Date(versionedFile.lastModified())));
             entries.save(false);
         }        
@@ -1090,6 +1085,7 @@ public class SVNDirectory {
     }
 
     public void commit(String target, SVNCommitInfo info, Map wcPropChanges, boolean removeLock, boolean recursive) throws SVNException {
+        DebugLog.log("commit is called on " + getRoot() + ", target: " + target);
         SVNLog log = getLog(0);
 
         //
@@ -1148,6 +1144,7 @@ public class SVNDirectory {
 
         if (recursive) {
             SVNEntries entries = getEntries();
+            DebugLog.log("iterating entries...");
             for(Iterator ents = entries.entries(true); ents.hasNext();) {
                 SVNEntry entry = (SVNEntry) ents.next();
                 if ("".equals(entry.getName())) {

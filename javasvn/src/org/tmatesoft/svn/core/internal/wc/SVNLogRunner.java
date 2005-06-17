@@ -181,6 +181,9 @@ public class SVNLogRunner {
             }
             SVNEntry entry = dir.getEntries().getEntry(fileName, true);
             if (entry == null || (!"".equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
+                DebugLog.log("entry: " + entry);
+                DebugLog.log("kind: " + entry.getKind());
+                DebugLog.log("name: " + fileName);
                 SVNErrorManager.error("svn: Log command for directory '" + dir.getRoot() + "' is mislocated");
             }
             setEntriesChanged(true);

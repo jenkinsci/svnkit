@@ -388,6 +388,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 // update entry in dir.
                 Map wcPropChanges = mediator.getWCProperties(item);
                 dir.commit(target, info, wcPropChanges, removeLock,  recurse);
+                processedItems.add(path);
             }
             if (!isDoNotSleepForTimeStamp()) {
                 SVNFileUtil.sleepForTimestamp();

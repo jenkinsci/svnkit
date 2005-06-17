@@ -178,7 +178,7 @@ class HttpConnection {
     public DAVStatus request(String method, String path, Map header, InputStream body, DefaultHandler handler, int[] okCodes) throws SVNException {
         DAVStatus status = sendRequest(method, path, initHeader(0, null, header), body);
         // check okCodes, read to status if not ok.
-        assertOk(status, okCodes);
+        assertOk(path, status, okCodes);
         if (status != null && status.getResponseCode() == 204) {
             finishResponse(status.getResponseHeader());
             return status;
@@ -228,7 +228,7 @@ class HttpConnection {
 			}
 		}
         DAVStatus status = sendRequest(method, path, header, request != null ? new ByteArrayInputStream(request) : null);
-        assertOk(status, okCodes);
+        assertOk(path, status, okCodes);
         return status;
     }
 
@@ -266,11 +266,13 @@ class HttpConnection {
                 myLastUsedCredentials = null;                
                 try {
                     skipRequestBody(readHeader);
-                } catch (IOException e1) {}
+                } catch (IOException e1) {
+                    //
+                }
                 close();
                 myCredentialsChallenge = DAVUtil.parseAuthParameters((String) readHeader.get("WWW-Authenticate"));
                 if (myCredentialsChallenge == null) {
-                    throw new SVNAuthenticationException("Authentication challenge is not supported:\n" + (String) readHeader.get("WWW-Authenticate"));
+                    throw new SVNAuthenticationException("Authentication challenge is not supported:\n" + readHeader.get("WWW-Authenticate"));
                 }
                 myCredentialsChallenge.put("methodname", method);
                 myCredentialsChallenge.put("uri", path);
@@ -297,7 +299,9 @@ class HttpConnection {
                     (status.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM || status.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP)) {
                 try {
                     skipRequestBody(readHeader);
-                } catch (IOException e1) {}
+                } catch (IOException e1) {
+                    //
+                }
                 close();
                 // reconnect
                 String newLocation = (String) readHeader.get("Location");
@@ -338,7 +342,7 @@ class HttpConnection {
         }
     }
 
-    private void readError(DAVStatus status) throws SVNException {
+    private void readError(String url, DAVStatus status) throws SVNException {
         StringBuffer text = new StringBuffer();
         LoggingInputStream stream = null;
         try {
@@ -356,6 +360,10 @@ class HttpConnection {
         } finally {
 	        logInputStream(stream);
             close();
+            if (status.getResponseCode() == 404) {
+                status.setErrorText("svn: '" + url + "' path not found");
+                return;
+            }
             String errorMessage = text.toString();
             if (errorMessage.indexOf("<m:human-readable") >= 0) {
                 errorMessage = errorMessage.substring(errorMessage.indexOf("<m:human-readable") + "<m:human-readable".length());
@@ -364,9 +372,9 @@ class HttpConnection {
                 }
                 if (errorMessage.indexOf("</m:human-readable>") >= 0) {
                     errorMessage = errorMessage.substring(0, errorMessage.indexOf("</m:human-readable>"));
+                    errorMessage = "svn: " + errorMessage.trim();
                 }
             }
-            errorMessage = errorMessage.trim();
             status.setErrorText(errorMessage);
         }
     }
@@ -660,14 +668,14 @@ class HttpConnection {
         return ourSAXParserFactory;
     }
 
-    private void assertOk(DAVStatus status, int[] codes) throws SVNException {
+    private void assertOk(String url, DAVStatus status, int[] codes) throws SVNException {
         int code = status.getResponseCode();
         if (codes == null) {
             // check that all are > 200.
             if (code >= 200 && code < 300) {
                 return;
             }
-            readError(status);
+            readError(url, status);
             throw new SVNException(status.getErrorText());
         }
         for (int i = 0; i < codes.length; i++) {
@@ -675,7 +683,7 @@ class HttpConnection {
                 return;
             }
         }
-        readError(status);
+        readError(url, status);
         throw new SVNException(status.getErrorText());
     }
 

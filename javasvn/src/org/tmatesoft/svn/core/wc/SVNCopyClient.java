@@ -287,7 +287,7 @@ public class SVNCopyClient extends SVNBasicClient {
             }
         }
 
-        return -1;
+        return info != null ? info.getNewRevision() : -1;
     }
 
     private void wc2wcCopy(File srcPath, File dstPath, boolean force, boolean move) throws SVNException {

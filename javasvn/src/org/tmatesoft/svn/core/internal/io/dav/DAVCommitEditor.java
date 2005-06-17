@@ -159,6 +159,8 @@ class DAVCommitEditor implements ISVNEditor {
         if (parent != null && parent.isCopy()) {
             // part of copied structure -> derive wurl
             directory.setWorkingURL(PathUtil.append(parent.getWorkingURL(), PathUtil.tail(path)));
+        } else {
+            directory.getVersionURL();
         }
         myDirsStack.push(directory);
         myPathsMap.put(directory.getURL(), directory.getPath());
