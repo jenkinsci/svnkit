@@ -37,6 +37,7 @@ public class AddCommand extends SVNCommand {
 
     	for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
+            matchTabsInPath(absolutePath, err);
             DebugLog.log("adding path: " + absolutePath);
             wcClient.doAdd(new File(absolutePath), force, true, false, recursive);
         }
