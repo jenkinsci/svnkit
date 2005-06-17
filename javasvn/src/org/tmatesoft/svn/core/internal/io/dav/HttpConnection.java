@@ -360,7 +360,7 @@ class HttpConnection {
             if (errorMessage.indexOf("<m:human-readable") >= 0) {
                 errorMessage = errorMessage.substring(errorMessage.indexOf("<m:human-readable") + "<m:human-readable".length());
                 if (errorMessage.indexOf('>') >= 0) {
-                    errorMessage = errorMessage.substring(errorMessage.indexOf('<') + 1);
+                    errorMessage = errorMessage.substring(errorMessage.indexOf('>') + 1);
                 }
                 if (errorMessage.indexOf("</m:human-readable>") >= 0) {
                     errorMessage = errorMessage.substring(0, errorMessage.indexOf("</m:human-readable>"));
