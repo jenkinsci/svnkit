@@ -4,9 +4,12 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNReporter;
+import org.tmatesoft.svn.core.internal.wc.SVNStatusReporter;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.SVNProperty;
 
 import java.io.File;
@@ -44,9 +47,9 @@ public class SVNStatusClient extends SVNBasicClient {
     }
 
 
-    public void doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler) throws SVNException {
+    public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler) throws SVNException {
         if (handler == null) {
-            return;
+            return -1;
         }
         SVNWCAccess wcAccess = createWCAccess(path);
         wcAccess.open(false, recursive);
@@ -65,7 +68,15 @@ public class SVNStatusClient extends SVNBasicClient {
         if (!remote) {
             statusEditor.closeEdit();
         } else {
-            // do report, collect repos locks, and drive the editor.
+            String url = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), true).getURL();
+            SVNRepository repos = createRepository(url);
+            SVNRepository locksRepos = createRepository(url);
+
+            SVNReporter reporter = new SVNReporter(wcAccess, recursive);
+            SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter);
+            String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
+
+            repos.status(-1, target, recursive, statusReporter, statusEditor);
         }
         wcAccess.close(false);
         if (!isIgnoreExternals() && recursive) {
@@ -87,6 +98,7 @@ public class SVNStatusClient extends SVNBasicClient {
                 }
             }
         }
+        return statusEditor.getTargetRevision();
     }
 
     public SVNStatus doStatus(final File path, boolean remote) throws SVNException {

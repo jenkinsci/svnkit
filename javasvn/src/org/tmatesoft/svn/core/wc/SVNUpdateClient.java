@@ -212,7 +212,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (eolStyle == null) {
                     eolStyle = (String) properties.get(SVNProperty.EOL_STYLE);
                 }
-                byte[] eols = eolStyle == null ? null : SVNTranslator.getEOL(eolStyle);
+                byte[] eols = SVNTranslator.getWorkingEOL(eolStyle);
                 SVNTranslator.translate(tmpFile, dstPath, eols, keywords, properties.get(SVNProperty.SPECIAL) != null, true);
                 if (properties.get(SVNProperty.EXECUTABLE) != null) {
                     SVNFileUtil.setExecutable(dstPath, true);
@@ -517,8 +517,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
         if (eols == null) {
             eol = props.getPropertyValue(SVNProperty.EOL_STYLE); 
-            eols =  eol != null ? 
-                    SVNTranslator.getEOL(eol) : null;
+            eols =  SVNTranslator.getWorkingEOL(eol);
         }
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;

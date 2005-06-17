@@ -508,7 +508,7 @@ public class SVNCommitClient extends SVNBasicClient {
         boolean special = autoProperties.get(SVNProperty.SPECIAL) != null;
         File tmpFile = null;
         if (eolStyle != null || keywords != null || special) {
-            byte[] eolBytes = eolStyle != null ? SVNTranslator.LF : null;
+            byte[] eolBytes = SVNTranslator.getBaseEOL(eolStyle);
             Map keywordsMap = keywords != null ? SVNTranslator.computeKeywords(keywords, null, null, null, null) : null;
             tmpFile = SVNFileUtil.createUniqueFile(file.getParentFile(), file.getName(), ".tmp");
             SVNTranslator.translate(file, tmpFile, eolBytes, keywordsMap, special, false);

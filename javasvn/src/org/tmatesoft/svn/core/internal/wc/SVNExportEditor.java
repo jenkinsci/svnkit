@@ -204,7 +204,7 @@ public class SVNExportEditor implements ISVNEditor {
                 keywordsMap = SVNTranslator.computeKeywords(keywords, url, author, date, revStr);
             }
             String eolStyle = myEOLStyle != null ? myEOLStyle : (String) myFileProperties.get(SVNProperty.EOL_STYLE);
-            byte[] eolBytes = eolStyle == null ? null : SVNTranslator.getEOL(eolStyle);
+            byte[] eolBytes = SVNTranslator.getWorkingEOL(eolStyle);
             boolean special = myFileProperties.get(SVNProperty.SPECIAL) != null;
             boolean executable = myFileProperties.get(SVNProperty.EXECUTABLE) != null;
 

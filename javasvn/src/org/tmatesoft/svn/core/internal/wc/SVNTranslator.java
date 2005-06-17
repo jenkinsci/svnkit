@@ -3,10 +3,13 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.TimeUtil;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,11 +18,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
-
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.TimeUtil;
 
 public class SVNTranslator {
     
@@ -51,7 +49,9 @@ public class SVNTranslator {
             }
         }
         if (!expand) {
-            eols = eolStyle != null ? LF : null;
+            eols = getBaseEOL(eolStyle);
+        } else {
+            eols = getWorkingEOL(eolStyle);
         }
         translate(src, dst, eols, keywordsMap, special, expand);
         if (safe) {
@@ -409,5 +409,31 @@ public class SVNTranslator {
             result.append(ch);
         }
         return result.toString();
+    }
+
+    public static byte[] getBaseEOL(String eolStyle) {
+        if ("native".equals(eolStyle)) {
+            return LF;
+        } else if ("CR".equals(eolStyle)) {
+            return CR;
+        } else if ("LF".equals(eolStyle)) {
+            return LF;
+        } else if ("CRLF".equals(eolStyle)) {
+            return CRLF;
+        }
+        return null;
+    }
+
+    public static byte[] getWorkingEOL(String eolStyle) {
+        if ("native".equals(eolStyle)) {
+            return NATIVE;
+        } else if ("CR".equals(eolStyle)) {
+            return CR;
+        } else if ("LF".equals(eolStyle)) {
+            return LF;
+        } else if ("CRLF".equals(eolStyle)) {
+            return CRLF;
+        }
+        return null;
     }
 }

@@ -7,6 +7,7 @@ import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -38,6 +39,7 @@ public class SVNStatusEditor implements ISVNEditor {
     private long myTargetRevision;
     private boolean myIsRootOpened;
     private Map myExternalsMap;
+    private SVNStatusReporter myStatusReporter;
 
     public SVNStatusEditor(SVNOptions globalOptions, SVNWCAccess wcAccess, ISVNStatusHandler handler,
                            Map externals,
@@ -52,10 +54,19 @@ public class SVNStatusEditor implements ISVNEditor {
         myIsRecursive = recursive;
         myExternalsMap = externals;
         myTarget = "".equals(myWCAccess.getTargetName()) ? null : myWCAccess.getTargetName();
+        myTargetRevision = -1;
+    }
+
+    public void setStatusReporter(SVNStatusReporter reporter) {
+        myStatusReporter = reporter;
     }
 
     public Map getCollectedExternals() {
         return myExternalsMap;
+    }
+
+    public long getTargetRevision() {
+        return myTargetRevision;
     }
 
     public void targetRevision(long revision) throws SVNException {
@@ -64,49 +75,79 @@ public class SVNStatusEditor implements ISVNEditor {
 
     public void openRoot(long revision) throws SVNException {
         myIsRootOpened = true;
+        // create dirinfo
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
-    }
+        path = PathUtil.removeLeadingSlash(path);
+        path = PathUtil.removeTrailingSlash(path);
+        String name = PathUtil.tail(path);
 
-    public void absentDir(String path) throws SVNException {
-    }
+        File ioFile = new File(myWCAccess.getAnchor().getRoot(), path);
+        SVNFileType type = SVNFileType.getType(ioFile);
+        String dirPath = path;
+        if (type != SVNFileType.DIRECTORY) {
+            dirPath = PathUtil.removeTail(path);
+        } else {
+            name = "";
+        }
+        SVNDirectory dir = myWCAccess.getDirectory(dirPath);
+        if (dir == null) {
+            return;
+        }
+        // get dirinfo here and pass to add remote status.
+        if (dir.getEntries().getEntry(name, false) != null) {
+            // deleted in parent dir.
+            addRemoteStatus(new RemoteStatus(path, null, SVNStatusType.STATUS_DELETED, null, type == SVNFileType.DIRECTORY));
+        } else if (myTarget == null /* and check that there is a grand-parent */) {
+            // parent dir is modifined in grand-parent dir.
+            addRemoteStatus(new RemoteStatus(path, null, SVNStatusType.STATUS_MODIFIED, null, type == SVNFileType.DIRECTORY));
+        }
 
-    public void absentFile(String path) throws SVNException {
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        // create dirinfo
+        // mark parent contents as changed.
     }
 
     public void openDir(String path, long revision) throws SVNException {
+        // create dirinfo
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
+        // dirinfo propchanged
     }
 
     public void closeDir() throws SVNException {
+        // 1. if this dir is somehow changed-> mark it as changed in parent's map
+        // 2. if recursive and there is a parent -> handle this dir entries
+
+        // 3. if this is a root:
+        // 4. if there is a target: report target.
+        // 5. if there is no target: report root.
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        // create fileinfo
+        // mark parent as changed
+        // mark fileinfo as added
     }
 
     public void openFile(String path, long revision) throws SVNException {
+        // create fileinfo.
     }
 
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
+        // mark file as changed.
     }
 
     public void changeFileProperty(String commitPath, String name, String value) throws SVNException {
-    }
-
-    public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
-        return null;
-    }
-
-    public void textDeltaEnd(String commitPath) throws SVNException {
+        // mark file as changed.
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {
+        // if it is somehow modified or added -> add info to parent's map.
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
@@ -140,13 +181,30 @@ public class SVNStatusEditor implements ISVNEditor {
     public void abortEdit() throws SVNException {
     }
 
+    public void absentDir(String path) throws SVNException {
+    }
+
+    public void absentFile(String path) throws SVNException {
+    }
+
+    public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
+        return null;
+    }
+
+    public void textDeltaEnd(String commitPath) throws SVNException {
+    }
+
     private void reportStatus(SVNDirectory dir, String entryName, boolean ignoreRootEntry, boolean recursive) throws SVNException {
         SVNEntries entries = dir.getEntries();
 
-        SVNExternalInfo[] externals = SVNWCAccess.parseExternals(dir.getPath(), dir.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS));
-        for (int i = 0; i < externals.length; i++) {
-            SVNExternalInfo external = externals[i];
-            myExternalsMap.put(external.getPath(), external);
+        if (!(myTarget != null && (dir == myWCAccess.getAnchor()) || "".equals(dir.getPath()))) {
+            // if we have a target -> no externals from anchor should be collected by default.
+            SVNExternalInfo[] externals = SVNWCAccess.parseExternals(dir.getPath(), dir.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS));
+
+            for (int i = 0; i < externals.length; i++) {
+                SVNExternalInfo external = externals[i];
+                myExternalsMap.put(external.getPath(), external);
+            }
         }
         if (entryName != null) {
             SVNEntry entry = entries.getEntry(entryName, true);
@@ -200,7 +258,6 @@ public class SVNStatusEditor implements ISVNEditor {
     }
 
     private void sendVersionedStatus(SVNDirectory dir, String name) throws SVNException {
-        String path;
         File file;
         SVNEntry parentEntry;
         SVNDirectory parentDir = null;
@@ -229,15 +286,13 @@ public class SVNStatusEditor implements ISVNEditor {
         }
         SVNEntry entryInParent = entry;
         if (dir == parentDir) {
-            path = PathUtil.append(dir.getPath(), name);
             file = dir.getFile(name, false);
             entry = dir.getEntries().getEntry(name, true);
             parentEntry = dir.getEntries().getEntry("", true);
         } else {
-            path = dir.getPath();
             file = dir.getRoot();
             entry = dir.getEntries().getEntry("", true);
-            if (entry == null && entryInParent != null) {
+            if (entry == null) {
                 // probably missing dir.
                 entry = entryInParent;
                 dir = parentDir;
@@ -245,7 +300,7 @@ public class SVNStatusEditor implements ISVNEditor {
             parentEntry = parentDir != null ? parentDir.getEntries().getEntry("", true) : null;
         }
         SVNFileType fileType = SVNFileType.getType(file);
-        SVNStatus status = createStatus(path, file, dir, parentEntry, entry, false, fileType, entry != null ? Collections.unmodifiableMap(entry.asMap()) : null);
+        SVNStatus status = createStatus(entry.getURL(), file, dir, parentEntry, entry, false, fileType, Collections.unmodifiableMap(entry.asMap()));
 
         if (status != null) {
             myHandler.handleStatus(status);
@@ -256,7 +311,9 @@ public class SVNStatusEditor implements ISVNEditor {
         boolean ignored = isIgnored(parent, name);
         String path = "".equals(name) ? parent.getPath() : PathUtil.append(parent.getPath(), name);
         path = PathUtil.removeLeadingSlash(path);
-        SVNStatus status = createStatus(path, parent.getFile(name, false), parent, null, null, ignored, null, null);
+        String url = parent.getEntries().getEntry("", true).getURL();
+        url = PathUtil.append(url, PathUtil.encode(name));
+        SVNStatus status = createStatus(url, parent.getFile(name, false), parent, null, null, ignored, null, null);
         if (myExternalsMap.containsKey(path)) {
             status.markExternal();
         }
@@ -267,10 +324,16 @@ public class SVNStatusEditor implements ISVNEditor {
         }
     }
 
-    private SVNStatus createStatus(String path, File file, SVNDirectory entryDir, SVNEntry parentEntry, SVNEntry entry /* this could be dir entry in parent*/,
+    private SVNStatus createStatus(String url, File file, SVNDirectory entryDir, SVNEntry parentEntry, SVNEntry entry /* this could be dir entry in parent*/,
                                    boolean isIgnored, SVNFileType pathKind, Map allEntryProperties) throws SVNException {
         pathKind = pathKind == null || pathKind == SVNFileType.UNKNOWN ?
                 SVNFileType.getType(file) : pathKind;
+
+        SVNLock remoteLock = null;
+        if (url != null) {
+            remoteLock = getRepositoryLock(url);
+            // probably get remote text and prop statuses.
+        }
 
         if (entry == null) {
             SVNStatusType textStatus = SVNStatusType.STATUS_NONE;
@@ -281,7 +344,7 @@ public class SVNStatusEditor implements ISVNEditor {
                     textStatus, SVNStatusType.STATUS_NONE,
                     SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
                     false, false, false,
-                    null, null, null, null, null, null, null, null, null);
+                    null, null, null, null, null, null, remoteLock, null, null);
         }
         SVNStatusType textStatus = SVNStatusType.STATUS_NORMAL;
         SVNStatusType propStatus = SVNStatusType.STATUS_NONE;
@@ -390,7 +453,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 textStatus, propStatus,
                 SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
                 isLocked, entry.isCopied(), isSwitched,
-                conflictNew, conflictOld, conflictWrk, propReject, entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()), null, localLock,
+                conflictNew, conflictOld, conflictWrk, propReject, entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()), remoteLock, localLock,
                 allEntryProperties);
     }
 
@@ -412,5 +475,34 @@ public class SVNStatusEditor implements ISVNEditor {
             }
         }
         return false;
+    }
+
+    private SVNLock getRepositoryLock(String url) {
+        if (myStatusReporter == null) {
+            return null;
+        }
+        return myStatusReporter.getLock(url);
+    }
+
+    private void addRemoteStatus(RemoteStatus remoteStatus) {
+
+    }
+
+    private static class RemoteStatus {
+
+        public RemoteStatus(String path, SVNEventAction action, SVNStatusType t, SVNStatusType p, boolean dir) {
+            Path = path;
+            Action = action;
+            TextStatus = t;
+            PropStatus = p;
+            IsDirectory = dir;
+        }
+
+        public String Path;
+        public SVNStatusType TextStatus;
+        public SVNStatusType PropStatus;
+        public SVNEventAction Action;
+
+        public boolean IsDirectory;
     }
 }

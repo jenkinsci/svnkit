@@ -193,7 +193,7 @@ public class SVNWCClient extends SVNBasicClient {
                 // use props at committed (peg) revision, not those.
                 String keywords = (String) properties.get(SVNProperty.KEYWORDS);
                 String eol = (String) properties.get(SVNProperty.EOL_STYLE);
-                byte[] eolBytes = eol != null ? SVNTranslator.getEOL(eol) : null;
+                byte[] eolBytes = SVNTranslator.getWorkingEOL(eol);
                 Map keywordsMap = SVNTranslator.computeKeywords(keywords, url, (String) properties.get("svn:author"),
                   (String) properties.get("svn:date"), Long.toString(revNumber));
                 SVNTranslator.translate(file, file2, eolBytes, keywordsMap, false, true);
