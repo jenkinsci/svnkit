@@ -158,13 +158,13 @@ public class SVNDirectory {
                 //if (workingValue != null) {
                     if (workingValue == null && propValue != null) {
                         conflict = MessageFormat.format("Property ''{0}'' locally deleted, but update sets it to ''{1}''\n", 
-                                new String[] {propName, propValue});                        
+                                new Object[] {propName, propValue});
                     } else if (workingValue != null && propValue == null) {
                         conflict = MessageFormat.format("Property ''{0}'' locally changed to ''{1}'', but update deletes it\n", 
-                                new String[] {propName, workingValue});                        
+                                new Object[] {propName, workingValue});
                     } else if (workingValue != null && !workingValue.equals(propValue)) {
                         conflict = MessageFormat.format("Property ''{0}'' locally changed to ''{1}'', but update sets it to ''{2}''\n", 
-                                new String[] {propName, workingValue, propValue});                        
+                                new Object[] {propName, workingValue, propValue});
                     }
                     if (conflict != null) {          
                         conflicts.add(conflict);
