@@ -249,7 +249,8 @@ public class SVNPathUtil {
         if (parentFile == null || childFile == null) {
             return false;
         }
-        childFile = childFile.getParentFile();
+        childFile = new File(SVNPathUtil.validateFilePath(childFile.getParentFile().getAbsolutePath()));
+        parentFile = new File(SVNPathUtil.validateFilePath(parentFile.getAbsolutePath()));
         while(childFile != null) {
             if (childFile.equals(parentFile)) {
                 return true;

@@ -323,6 +323,8 @@ public class SVNCommitClient extends SVNBasicClient {
             Map commitables = new TreeMap();
             String baseURL = SVNCommitUtil.translateCommitables(commitPacket.getCommitItems(), commitables);
             Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket.getLockTokens(), baseURL);
+            DebugLog.log("base URL    : " + baseURL);
+            DebugLog.log("commitables : " + commitables);
 
             SVNRepository repository = createRepository(baseURL);
             SVNCommitMediator mediator = new SVNCommitMediator(commitPacket.getWCAccess(), commitables);
@@ -331,7 +333,8 @@ public class SVNCommitClient extends SVNBasicClient {
             // commit.
             SVNWCAccess wcAccess = commitPacket.getWCAccess();
             wcAccess.setEventDispatcher(getEventDispatcher());
-            info = SVNCommitter.commit(commitPacket.getWCAccess(), mediator.getTmpFiles(), commitables, commitEditor);
+            String repositoryRoot = repository.getRepositoryRoot(true);
+            info = SVNCommitter.commit(commitPacket.getWCAccess(), mediator.getTmpFiles(), commitables, repositoryRoot, commitEditor);
             // update wc.
             Collection processedItems = new HashSet();
             for (Iterator urls = commitables.keySet().iterator(); urls.hasNext();) {

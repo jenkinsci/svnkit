@@ -36,6 +36,7 @@ public class CommitCommand extends SVNCommand {
 
         File[] localPaths = new File[getCommandLine().getPathCount()];
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
+            matchTabsInPath(getCommandLine().getPathAt(i), err);
             localPaths[i] = new File(getCommandLine().getPathAt(i));
         }
         SVNCommitClient client = new SVNCommitClient(getCredentialsProvider(), getOptions(), new SVNCommandEventProcessor(out, err, false));

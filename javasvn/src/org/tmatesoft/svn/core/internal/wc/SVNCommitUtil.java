@@ -47,6 +47,10 @@ public class SVNCommitUtil {
         } else {
             editor.openRoot(revision);
         }
+        DebugLog.log("driver: paths count: " + pathsArray.length);
+        for (int i = 0; i < pathsArray.length; i++) {
+            DebugLog.log("driver: commit path: " + pathsArray[i]);
+        }
         for (; index < pathsArray.length; index++) {
             String commitPath = pathsArray[index];
             DebugLog.log("driver: processing path: " + commitPath);
@@ -141,10 +145,12 @@ public class SVNCommitUtil {
         } else {
             baseDir = adjustRelativePaths(baseDir, relativePaths);
             // there are multiple paths.
+            DebugLog.log("targets : " + relativePaths);
+            DebugLog.log("base dir: " + baseDir);
             for (Iterator targets = relativePaths.iterator(); targets.hasNext();) {
                 String targetPath = (String) targets.next();
-                String target = getTargetName(new File(rootPath, targetPath));
-                File targetFile = new File(rootPath, targetPath);
+                File targetFile = new File(baseDir, targetPath);
+                String target = getTargetName(targetFile);
                 if (!"".equals(target)) {
                     SVNFileType targetType = SVNFileType.getType(targetFile);
                     if (targetType == SVNFileType.DIRECTORY) {
@@ -552,6 +558,7 @@ public class SVNCommitUtil {
     }
 
     private static String getTargetName(File file) throws SVNException {
+        DebugLog.log("creating wc access for: " + file);
         SVNWCAccess wcAccess = SVNWCAccess.create(file);
         return wcAccess.getTargetName();
     }

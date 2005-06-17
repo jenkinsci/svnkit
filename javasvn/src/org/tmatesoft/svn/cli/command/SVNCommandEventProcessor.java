@@ -3,10 +3,8 @@
  */
 package org.tmatesoft.svn.cli.command;
 
-import java.io.File;
-import java.io.PrintStream;
-
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.internal.wc.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
@@ -16,6 +14,9 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.DebugLog;
+
+import java.io.File;
+import java.io.PrintStream;
 
 public class SVNCommandEventProcessor implements ISVNEventListener {
 
@@ -41,23 +42,35 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
     }
 
     public void svnEvent(SVNEvent event, double progress) {
+        String commitPath = null;
+        if (event.getAction() == SVNEventAction.COMMIT_ADDED || event.getAction() == SVNEventAction.COMMIT_MODIFIED ||
+                event.getAction() == SVNEventAction.COMMIT_DELETED || event.getAction() == SVNEventAction.COMMIT_REPLACED) {
+            File root = new File(".");
+            File file = event.getFile();
+            if (root.equals(file) || SVNPathUtil.isChildOf(root, file)) {
+                commitPath = SVNCommand.getPath(event.getFile());
+            } else {
+                commitPath = event.getPath();
+            }
+        }
         if (event.getAction() == SVNEventAction.COMMIT_MODIFIED) {
-            SVNCommand.println(myPrintStream, "Sending        " + SVNCommand.getPath(event.getFile()));
+            SVNCommand.println(myPrintStream, "Sending        " + commitPath);
         } else if (event.getAction() == SVNEventAction.COMMIT_DELETED) {
-            SVNCommand.println(myPrintStream, "Deleting       " + SVNCommand.getPath(event.getFile()));
+            SVNCommand.println(myPrintStream, "Deleting       " + commitPath);
         } else if (event.getAction() == SVNEventAction.COMMIT_REPLACED) {
-            SVNCommand.println(myPrintStream, "Replacing      " + SVNCommand.getPath(event.getFile()));
+            SVNCommand.println(myPrintStream, "Replacing      " + commitPath);
         } else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
             if (!myIsDelta) {
                 SVNCommand.print(myPrintStream, "Transmitting file data ");
+                myIsDelta = true;
             }
             SVNCommand.print(myPrintStream, ".");
         } else if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
             String mimeType = event.getMimeType();
             if (SVNWCUtil.isBinaryMimetype(mimeType)) {
-                SVNCommand.println(myPrintStream, "Adding  (bin)  " + SVNCommand.getPath(event.getFile()));
+                SVNCommand.println(myPrintStream, "Adding  (bin)  " + commitPath);
             } else {
-                SVNCommand.println(myPrintStream, "Adding         " + SVNCommand.getPath(event.getFile()));
+                SVNCommand.println(myPrintStream, "Adding         " + commitPath);
             }
         } else if (event.getAction() == SVNEventAction.REVERT) {
             SVNCommand.println(myPrintStream, "Reverted '" + SVNCommand.getPath(event.getFile()) + "'");

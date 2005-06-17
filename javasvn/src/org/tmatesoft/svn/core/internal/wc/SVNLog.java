@@ -19,6 +19,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.DebugLog;
 
 public class SVNLog {
 
@@ -62,7 +63,7 @@ public class SVNLog {
         myTmpFile = new File(directory.getRoot(), ".svn/tmp/" + name);
         myDirectory = directory;
     }
-    
+
     public void addCommand(String name, Map attributes, boolean save) throws SVNException {
         if (myCache == null) {
             myCache = new ArrayList();
@@ -72,7 +73,7 @@ public class SVNLog {
         myCache.add(attributes);
         if (save) {
             save();
-        }        
+        }
     }
 
     public SVNStatusType logChangedEntryProperties(String name, Map modifiedEntryProps) throws SVNException {
@@ -91,7 +92,7 @@ public class SVNLog {
                     command.put(propName, propValue);
                     addCommand(SVNLog.MODIFY_ENTRY, command, false);
                     command.remove(SVNTranslator.xmlEncode(propName));
-                } 
+                }
             }
         }
         return status;
@@ -101,7 +102,7 @@ public class SVNLog {
         if (modifiedWCProps != null) {
             Map command = new HashMap();
             command.put(SVNLog.NAME_ATTR, name);
-            for (Iterator names = modifiedWCProps.keySet().iterator(); names.hasNext();) {                
+            for (Iterator names = modifiedWCProps.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
                 String propValue = (String) modifiedWCProps.get(propName);
                 command.put(SVNLog.PROPERTY_NAME_ATTR, propName);
@@ -114,10 +115,10 @@ public class SVNLog {
             }
         }
     }
-    
+
     public void save() throws SVNException {
         Writer os = null;
-        
+
         try {
             os = new OutputStreamWriter(SVNFileUtil.openFileForWriting(myTmpFile), "UTF-8");
             for (Iterator commands = myCache.iterator(); commands.hasNext();) {
@@ -139,7 +140,7 @@ public class SVNLog {
                     os.write("\"");
                 }
                 os.write("/>\n");
-            }            
+            }
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {
@@ -153,7 +154,7 @@ public class SVNLog {
             SVNErrorManager.error(0, e);
         }
     }
-    
+
     public void run(SVNLogRunner runner) throws SVNException {
         if (!myFile.exists()) {
             return;
@@ -176,17 +177,17 @@ public class SVNLog {
                         String attrName = line.substring(0, index).trim();
                         String value = line.substring(index + 1).trim();
                         if (value.endsWith("/>")) {
-                            value = value.substring(0, value.length() - "/>".length());                            
+                            value = value.substring(0, value.length() - "/>".length());
                         }
                         if (value.startsWith("\"")) {
                             value = value.substring(1);
                         }
                         if (value.endsWith("\"")) {
-                            value = value.substring(0, value.length() - 1);                            
+                            value = value.substring(0, value.length() - 1);
                         }
                         value = SVNTranslator.xmlDecode(value);
                         attrs.put(attrName, value);
-                    }                    
+                    }
                 }
                 if (line.endsWith("/>") && name != null) {
                     // run command
@@ -216,6 +217,7 @@ public class SVNLog {
                         runner.runCommand(myDirectory, name, command);
                         cmds.remove();
                     } catch (SVNException th) {
+                        DebugLog.error(th);
                         command.put("", name);
                         myCache = commands;
                         save();
@@ -232,11 +234,11 @@ public class SVNLog {
             }
         }
     }
-    
+
     public String toString() {
         return "Log: " + myFile;
     }
-    
+
     public void delete() {
         myFile.delete();
         myTmpFile.delete();

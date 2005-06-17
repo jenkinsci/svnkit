@@ -77,13 +77,13 @@ public class SVNDirectory {
         try {
             created = getLockFile().createNewFile();
         } catch (IOException e) {
-            SVNErrorManager.error("svn: can't create lock file for '" + getRoot().getAbsolutePath() + "'.");
+            SVNErrorManager.error("svn: Cannot lock working copy '" + getRoot() + "': " + e.getMessage());
         }
         if (!created) {
-            if (getLockFile().exists()) {
-                SVNErrorManager.error("svn: can't create lock file for '" + getRoot().getAbsolutePath() + "'; directory is already locked.");
+            if (getLockFile().isFile()) {
+                SVNErrorManager.error("svn: Working copy '" + getRoot() + "' locked");
             } else {
-                SVNErrorManager.error("svn: can't create lock file for '" + getRoot().getAbsolutePath() + "'.");
+                SVNErrorManager.error("svn: Cannot lock working copy '" + getRoot() + "'");
             }
         }
         return created;
@@ -842,7 +842,7 @@ public class SVNDirectory {
                 destroyFile(name, deleteWorkingFiles);
             }
         }
-        getEntries().save(true);
+        getEntries().save(false);
     }
     
     public void scheduleForDeletion(String name) throws SVNException {
@@ -1111,15 +1111,15 @@ public class SVNDirectory {
         Map command = new HashMap();
         if (info != null) {
             command.put(SVNLog.NAME_ATTR, target);
-            command.put(SVNProperty.COMMITTED_REVISION, Long.toString(info.getNewRevision()));
-            command.put(SVNProperty.COMMITTED_DATE, TimeUtil.formatDate(info.getDate()));
-            command.put(SVNProperty.LAST_AUTHOR, info.getAuthor());
+            command.put(SVNProperty.shortPropertyName(SVNProperty.COMMITTED_REVISION), Long.toString(info.getNewRevision()));
+            command.put(SVNProperty.shortPropertyName(SVNProperty.COMMITTED_DATE), TimeUtil.formatDate(info.getDate()));
+            command.put(SVNProperty.shortPropertyName(SVNProperty.LAST_AUTHOR), info.getAuthor());
             log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
             command.clear();
         }
         if (checksum != null) {
             command.put(SVNLog.NAME_ATTR, target);
-            command.put(SVNProperty.CHECKSUM, checksum);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), checksum);
             log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
             command.clear();
         }

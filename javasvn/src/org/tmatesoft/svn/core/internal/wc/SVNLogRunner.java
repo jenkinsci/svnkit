@@ -183,6 +183,7 @@ public class SVNLogRunner {
             if (entry == null || (!"".equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
                 SVNErrorManager.error("svn: Log command for directory '" + dir.getRoot() + "' is mislocated");
             }
+            setEntriesChanged(true);
             long revisionNumber = Long.parseLong((String) attributes.get(SVNLog.REVISION_ATTR));
             if (entry.isScheduledForDeletion()) {
                 if ("".equals(fileName)) {
@@ -206,7 +207,6 @@ public class SVNLogRunner {
                         fileEntry.setRevision(revisionNumber);
                     }
                 }
-                setEntriesChanged(true);
                 return;
             }
 
