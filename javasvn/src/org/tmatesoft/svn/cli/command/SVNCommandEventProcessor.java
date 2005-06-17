@@ -17,6 +17,7 @@ import org.tmatesoft.svn.util.DebugLog;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.io.IOException;
 
 public class SVNCommandEventProcessor implements ISVNEventListener {
 
@@ -47,10 +48,16 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
                 event.getAction() == SVNEventAction.COMMIT_DELETED || event.getAction() == SVNEventAction.COMMIT_REPLACED) {
             File root = new File(".");
             File file = event.getFile();
-            if (root.equals(file) || SVNPathUtil.isChildOf(root, file)) {
-                commitPath = SVNCommand.getPath(event.getFile());
-            } else {
-                commitPath = event.getPath();
+            try {
+                if (root.getCanonicalFile().equals(file.getCanonicalFile()) || SVNPathUtil.isChildOf(root, file)) {
+                    commitPath = SVNCommand.getPath(event.getFile());
+                } else {
+                    commitPath = event.getPath();
+                    if ("".equals(commitPath)) {
+                        commitPath = ".";
+                    }
+                }
+            } catch (IOException e) {
             }
         }
         if (event.getAction() == SVNEventAction.COMMIT_MODIFIED) {
@@ -76,7 +83,7 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
             SVNCommand.println(myPrintStream, "Reverted '" + SVNCommand.getPath(event.getFile()) + "'");
         } else if (event.getAction() == SVNEventAction.FAILED_REVERT) {
             SVNCommand.println(myPrintStream, "Failed to revert '" + SVNCommand.getPath(event.getFile()) + "' -- try updating instead.");
-        } else if (event.getAction() == SVNEventAction.LOCKED) {        
+        } else if (event.getAction() == SVNEventAction.LOCKED) {
             String path = event.getPath();
             if (event.getFile() != null) {
                 path = SVNCommand.getPath(event.getFile());
@@ -134,7 +141,7 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
             if (sb.toString().trim().length() != 0) {
                 if (myIsExternal) {
                     myIsExternalChanged = true;
-                } else { 
+                } else {
                     myIsChanged = true;
                 }
             }
@@ -146,7 +153,7 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
             if (sb.toString().trim().length() > 0) {
                 UpdateCommand.println(myPrintStream, sb.toString() + "  " + UpdateCommand.getPath(event.getFile()));
             }
-        } else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {                    
+        } else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {
             if (!myIsExternal) {
                 if (myIsChanged) {
                     if (myIsCheckout) {
@@ -201,7 +208,7 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
             SVNCommand.println(myPrintStream, "D    " + SVNCommand.getPath(event.getFile()));
         } else if (event.getAction() == SVNEventAction.SKIP) {
             SVNCommand.println(myPrintStream, "Skipped '" + SVNCommand.getPath(event.getFile()) + "'");
-        } 
+        }
 
     }
 
