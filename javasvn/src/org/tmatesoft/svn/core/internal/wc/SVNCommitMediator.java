@@ -5,6 +5,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.DebugLog;
 
 import java.io.OutputStream;
 import java.io.IOException;
@@ -68,11 +69,14 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         if (name == null) {
             return;
         }
+        DebugLog.log("setting wc props for path: " + path);
         SVNCommitItem item = (SVNCommitItem) myCommitItems.get(path);
+        DebugLog.log("item: " + item);
         if (!myWCPropsMap.containsKey(item)) {
-            myWCPropsMap.put(path, new HashMap());
+            myWCPropsMap.put(item, new HashMap());
         }
-        ((Map) myWCPropsMap.get(path)).put(item, value);
+
+        ((Map) myWCPropsMap.get(item)).put(name, value);
     }
 
     public OutputStream createTemporaryLocation(String path, Object id) throws IOException {

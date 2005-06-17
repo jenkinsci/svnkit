@@ -40,7 +40,7 @@ class DAVCommitEditor implements ISVNEditor {
 	private DAVRepository myRepository;
     private Runnable myCloseCallback;
     private String myActivity;
-    
+
     private Stack myDirsStack;
     private ISVNWorkspaceMediator myCommitMediator;
     private Map myPathsMap;
@@ -75,7 +75,7 @@ class DAVCommitEditor implements ISVNEditor {
         myDirsStack.push(root);
         myPathsMap.put(root.getURL(), root.getPath());
     }
-    
+
     public void deleteEntry(String path, long revision) throws SVNException {
         path = PathUtil.encode(path);
         // get parent's working copy. (checkout? or use checked out?)
@@ -83,7 +83,7 @@ class DAVCommitEditor implements ISVNEditor {
         checkoutResource(parentResource);
         String wPath = parentResource.getWorkingURL();
 		// get root wURL and delete from it!
-        
+
         // append name part of the path to the checked out location
 		// should we append full name here?
         String url;
@@ -95,7 +95,7 @@ class DAVCommitEditor implements ISVNEditor {
 			wPath = PathUtil.append(wPath, PathUtil.tail(path));
             url = PathUtil.append(parentResource.getURL(), PathUtil.tail(path));
 		}
-        
+
         // call DELETE for the composed path
         DAVStatus status = myConnection.doDelete(url, wPath, revision);
         if (status.getResponseCode() != 204 && status.getResponseCode() != 404) {
@@ -107,17 +107,17 @@ class DAVCommitEditor implements ISVNEditor {
 			myPathsMap.put(PathUtil.append(parentResource.getURL(), PathUtil.tail(path)), path);
 		}
     }
-    
-    
+
+
     public void addDir(String path, String copyPath, long copyRevision) throws SVNException {
         path = PathUtil.encode(path);
-        
+
         DAVResource parentResource = (DAVResource) myDirsStack.peek();
         if (parentResource.getWorkingURL() == null) {
         	String filePath = PathUtil.append(parentResource.getURL(), PathUtil.tail(path));
     		DAVResponse responce = DAVUtil.getResourceProperties(myConnection, filePath, null, DAVElement.STARTING_PROPERTIES, true);
     		if (responce != null) {
-    			throw new SVNException("Directory '"  + filePath + "' already exists"); 
+    			throw new SVNException("Directory '"  + filePath + "' already exists");
     		}
         }
         checkoutResource(parentResource);
@@ -130,14 +130,14 @@ class DAVCommitEditor implements ISVNEditor {
         myPathsMap.put(newDir.getURL(), path);
 
         if (copyPath != null) {
-            // convert to full path? 
+            // convert to full path?
 	        copyPath = PathUtil.encode(copyPath);
             copyPath = myRepository.getFullPath(copyPath);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, copyPath, copyRevision, false, false, null);
             copyPath = PathUtil.append(info.baselineBase, info.baselinePath);
-            
+
             // full url.
-            wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + 
+            wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() +
             	PathUtil.encode(newDir.getWorkingURL());
             DAVStatus status = myConnection.doCopy(copyPath, wPath);
             if (status.getResponseCode() != 201 && status.getResponseCode() != 204) {
@@ -153,7 +153,7 @@ class DAVCommitEditor implements ISVNEditor {
 
     public void openDir(String path, long revision) throws SVNException {
         path = PathUtil.encode(path);
-        // do nothing, 
+        // do nothing,
         DAVResource parent = myDirsStack.peek() != null ? (DAVResource) myDirsStack.peek() : null;
         DAVResource directory = new DAVResource(myCommitMediator, myConnection, path, revision, parent == null ? false : parent.isCopy());
         if (parent != null && parent.isCopy()) {
@@ -163,14 +163,14 @@ class DAVCommitEditor implements ISVNEditor {
         myDirsStack.push(directory);
         myPathsMap.put(directory.getURL(), directory.getPath());
     }
-    
+
     public void changeDirProperty(String name, String value) throws SVNException {
         DAVResource directory = (DAVResource) myDirsStack.peek();
         checkoutResource(directory);
         directory.putProperty(name, value);
         myPathsMap.put(directory.getURL(), directory.getPath());
     }
-    
+
     public void closeDir() throws SVNException {
         DAVResource resource = (DAVResource) myDirsStack.pop();
         // do proppatch if there were property changes.
@@ -184,8 +184,9 @@ class DAVCommitEditor implements ISVNEditor {
         }
         resource.dispose();
     }
-    
+
     public void addFile(String path, String copyPath, long copyRevision) throws SVNException {
+        String originalPath = path;
         path = PathUtil.encode(path);
         // checkout parent collection.
         DAVResource parentResource = (DAVResource) myDirsStack.peek();
@@ -193,7 +194,7 @@ class DAVCommitEditor implements ISVNEditor {
         	String filePath = PathUtil.append(parentResource.getURL(), PathUtil.tail(path));
     		DAVResponse responce = DAVUtil.getResourceProperties(myConnection, filePath, null, DAVElement.STARTING_PROPERTIES, true);
     		if (responce != null) {
-    			throw new SVNException("File '"  + filePath + "' already exists"); 
+    			throw new SVNException("File '"  + filePath + "' already exists");
     		}
         }
         checkoutResource(parentResource);
@@ -203,16 +204,16 @@ class DAVCommitEditor implements ISVNEditor {
         newFile.setWorkingURL(PathUtil.append(wPath, PathUtil.tail(path)));
         // put to have working URL to make PUT or PROPPATCH later (in closeFile())
         myPathsMap.put(newFile.getURL(), newFile.getPath());
-        myFilesMap.put(path, newFile);
+        myFilesMap.put(originalPath, newFile);
 
         if (copyPath != null) {
 	        copyPath = PathUtil.encode(copyPath);
             copyPath = myRepository.getFullPath(copyPath);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, copyPath, copyRevision, false, false, null);
             copyPath = PathUtil.append(info.baselineBase, info.baselinePath);
-            
+
             // do "COPY" copyPath to parents working url ?
-            wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + 
+            wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() +
             	PathUtil.encode(newFile.getWorkingURL());
             DAVStatus status = myConnection.doCopy(copyPath, wPath);
             if (status.getResponseCode() != 201 && status.getResponseCode() != 204) {
@@ -225,6 +226,7 @@ class DAVCommitEditor implements ISVNEditor {
     }
 
     public void openFile(String path, long revision) throws SVNException {
+        String originalPath = path;
         path = PathUtil.encode(path);
         DAVResource file = new DAVResource(myCommitMediator, myConnection, path, revision);
         DAVResource parent = (DAVResource) myDirsStack.peek();
@@ -234,7 +236,7 @@ class DAVCommitEditor implements ISVNEditor {
         }
         checkoutResource(file);
         myPathsMap.put(file.getURL(), file.getPath());
-        myFilesMap.put(path, file);
+        myFilesMap.put(originalPath, file);
     }
     
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
