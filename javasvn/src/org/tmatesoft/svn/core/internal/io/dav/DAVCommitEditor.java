@@ -305,6 +305,19 @@ class DAVCommitEditor implements ISVNEditor {
     }
     
     public SVNCommitInfo closeEdit() throws SVNException {
+        if (!myDirsStack.isEmpty()) {
+            DAVResource resource = (DAVResource) myDirsStack.pop();
+            // do proppatch if there were property changes.
+            if (resource.getProperties() != null) {
+                StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, resource.getProperties());
+                try {
+                    myConnection.doProppatch(resource.getURL(), resource.getWorkingURL(), request, null);
+                } catch (SVNException e) {
+                    throw new SVNException("At least one property change failed for " + resource.getURL());
+                }
+            }
+            resource.dispose();
+        }
         DAVMergeHandler handler = new DAVMergeHandler(myCommitMediator, myPathsMap);
         DAVStatus status = myConnection.doMerge(myActivity, true, handler);
         if (status == null || status.getResponseCode() != 200) {

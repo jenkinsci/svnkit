@@ -478,9 +478,14 @@ class DAVRepository extends SVNRepository {
             for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
                 String path = (String) paths.next();
                 String lock = (String) locks.get(path);
+
                 
                 path = PathUtil.encode(path);
-                path = PathUtil.append(root, path);
+                if (path.startsWith("/")) {
+                    path = PathUtil.append(root, path);
+                } else {
+                    path = getFullPath(path);
+                }
                 translatedLocks.put(path, lock);
             }
         }
@@ -509,7 +514,7 @@ class DAVRepository extends SVNRepository {
         } else {
             path = PathUtil.append(getLocation().getPath(), path);
         }
-        if (path.charAt(0) != '/') {
+        if (!path.startsWith("/")) {
             path = '/' + path;            
         }
         return path;
