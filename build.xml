@@ -346,6 +346,48 @@
         </java>
     </target>
 
+    <target name="test-python-only">
+        <copy file="javasvn-test/test.${os}.properties"
+              tofile="javasvn-test/test.properties"
+              failonerror="false"
+              overwrite="false"
+        />
+
+        <copy file="javasvn-test/python/cmdline/svntest/main.py"
+              overwrite="true"
+              tofile="javasvn-test/python/cmdline/svntest/main.py.bak"
+              failonerror="true"
+        />
+        <copy file="javasvn-test/python/patch/main.py"
+              overwrite="true"
+              tofile="javasvn-test/python/cmdline/svntest/main.py"
+              failonerror="true"
+        />
+
+        <path id="python.classpath">
+            <pathelement path="build/lib/javasvn.jar" />
+            <pathelement path="build/lib/javasvn-cli.jar" />
+            <pathelement path="contrib/junit/junit.jar" />
+            <pathelement path="javasvn-test/bin" />
+        </path>
+        <delete dir="${user.home}/.javasvn"/>
+
+        <java classpathref="python.classpath"
+              dir="javasvn-test"
+              fork="true"
+              classname="org.tmatesoft.svn.core.test.PythonTests"
+        >
+            <jvmarg value="-Djavasvn.log.path=%home%/.javasvn/.python.%g.%u.log" />
+            <arg line="test.properties" />
+        </java>
+
+        <move file="javasvn-test/python/cmdline/svntest/main.py.bak"
+              tofile="javasvn-test/python/cmdline/svntest/main.py"
+              overwrite="true"
+              failonerror="true"
+        />
+    </target>
+
     <target name="test-python" depends="init-environment,compile-tests,build-library,build-cli">
         <copy file="javasvn-test/test.${os}.properties"
               tofile="javasvn-test/test.properties"
