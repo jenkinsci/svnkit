@@ -387,10 +387,7 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive) throws SVNException {
-    	if (mkdir && !path.exists()) {
-    		path.mkdirs();
-    	}
-    	if (!path.exists()) {
+    	if (!path.exists() && !mkdir) {
             SVNErrorManager.error("svn: '" + path + "' doesn't exist");
         }
         if (climbUnversionedParents) {
@@ -421,7 +418,7 @@ public class SVNWCClient extends SVNBasicClient {
     			addDirectory(wcAccess, wcAccess.getAnchor(), name, force);
 	    	} else {
 	    		// add single dir, no force - report error anyway.
-	    		dir.add(wcAccess.getTargetName(), false);
+	    		dir.add(wcAccess.getTargetName(), mkdir, false);
             }
     	} finally {
     		wcAccess.close(true);
@@ -896,7 +893,7 @@ public class SVNWCClient extends SVNBasicClient {
 
     private void addDirectory(SVNWCAccess wcAccess, SVNDirectory dir, String name, boolean force) throws SVNException {
 		DebugLog.log("ading file " + name + " into " + dir.getRoot());
-		dir.add(name, force);
+		dir.add(name, false, force);
 			
 		SVNDirectory childDir = dir.getChildDirectory(name);
     	File file = dir.getFile(name, false);
@@ -928,7 +925,7 @@ public class SVNWCClient extends SVNBasicClient {
 
 	private void addSingleFile(SVNWCAccess wcAccess, SVNDirectory dir, String name) throws SVNException {
 		File file = dir.getFile(name, false);
-        dir.add(name, false);
+        dir.add(name, false, false);
 
         String mimeType;
 		SVNProperties properties = dir.getProperties(name, false);

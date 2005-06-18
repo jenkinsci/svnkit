@@ -901,12 +901,13 @@ public class SVNDirectory {
         entries.save(true);
     }
     
-    public SVNEntry add(String name, boolean force) throws SVNException {
+    public SVNEntry add(String name, boolean mkdir, boolean force) throws SVNException {
     	File file = getFile(name, false);
-    	if (!file.exists()) {
+        SVNFileType fileType = SVNFileType.getType(file);
+        if (fileType == SVNFileType.NONE && !mkdir) {
     		SVNErrorManager.error("svn: '" + file + "' not found");
     	}
-    	SVNNodeKind fileKind = file.isFile() || SVNFileUtil.isSymlink(file) ? SVNNodeKind.FILE : SVNNodeKind.DIR;
+    	SVNNodeKind fileKind = fileType == SVNFileType.NONE || fileType == SVNFileType.DIRECTORY ? SVNNodeKind.DIR : SVNNodeKind.FILE;
     	SVNEntry entry = getEntries().getEntry(name, true);
 
     	if (entry != null && !entry.isDeleted() && !entry.isScheduledForDeletion()) {

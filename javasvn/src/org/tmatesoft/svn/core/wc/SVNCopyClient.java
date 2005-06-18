@@ -735,7 +735,7 @@ public class SVNCopyClient extends SVNBasicClient {
         String copyFromURL = srcAccess.getTargetEntryProperty(SVNProperty.URL);
         long copyFromRevision = SVNRevision.parse(srcAccess.getTargetEntryProperty(SVNProperty.REVISION)).getNumber();
 
-        SVNEntry entry = dstAccess.getAnchor().add(dstName, false);
+        SVNEntry entry = dstAccess.getAnchor().add(dstName, false, false);
         entry.setCopied(true);
         entry.setCopyFromRevision(copyFromRevision);
         entry.setCopyFromURL(copyFromURL);
