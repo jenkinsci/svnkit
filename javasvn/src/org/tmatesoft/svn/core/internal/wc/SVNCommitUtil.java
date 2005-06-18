@@ -480,7 +480,7 @@ public class SVNCommitUtil {
                     childDir = dir.getChildDirectory(currentEntry.getName());
                     if (childDir == null) {
                         SVNFileType currentType = SVNFileType.getType(currentFile);
-                        if (currentType == SVNFileType.NONE && entry.isScheduledForDeletion()) {
+                        if (currentType == SVNFileType.NONE && currentEntry.isScheduledForDeletion()) {
                             SVNCommitItem item = new SVNCommitItem(currentFile, currentURL, null, currentEntry.getKind(), SVNRevision.UNDEFINED,
                                     false, true, false, false, false, false);
                             item.setPath(PathUtil.append(dir.getPath(), currentEntry.getName()));
