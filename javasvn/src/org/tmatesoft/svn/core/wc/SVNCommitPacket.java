@@ -83,6 +83,10 @@ public class SVNCommitPacket {
                 result.append("+");
                 result.append(commitItem.getCopyFromURL());
             }
+            if (commitItem.isLocked()) {
+                result.append("\n");
+                result.append("LOCKED");                
+            }
         }
         return result.toString();
     }
