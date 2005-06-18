@@ -89,7 +89,7 @@ class DAVResource {
         // do fetch from server if empty...
         if (myVURL == null) {
             if (myMediator != null) {
-                myVURL = myMediator.getWorkspaceProperty(myPath, "svn:wc:ra_dav:version-url");
+                myVURL = myMediator.getWorkspaceProperty(PathUtil.decode(myPath), "svn:wc:ra_dav:version-url");
                 DebugLog.log("cached vURL for " + myPath + " : " + myVURL);
                 if (myVURL != null) {
                     return myVURL;

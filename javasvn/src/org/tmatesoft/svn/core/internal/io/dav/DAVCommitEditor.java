@@ -386,7 +386,6 @@ class DAVCommitEditor implements ISVNEditor {
         DAVStatus status = myConnection.doCheckout(myActivity, resource.getURL(), resource.getVersionURL());
         String location = (String) status.getResponseHeader().get("Location");
         if (status.getResponseCode() == 201 && location != null) {
-            location = PathUtil.encode(location);
             DebugLog.log("wURL: " + location);
             resource.setWorkingURL(location);
             DebugLog.log("CHECKED OUT: " + resource);
