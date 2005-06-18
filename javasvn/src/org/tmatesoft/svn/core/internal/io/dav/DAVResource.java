@@ -57,6 +57,9 @@ class DAVResource {
         myPath = path;
         myMediator = mediator;
         myURL = PathUtil.append(connection.getLocation().getPath(), path);
+        if (myURL.endsWith("/")) {
+            myURL = PathUtil.removeTrailingSlash(myURL);
+        }
         myRevision = revision;
         myConnection = connection;
         myIsCopy = isCopy;

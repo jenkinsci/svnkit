@@ -151,8 +151,10 @@ public class DAVMergeHandler extends BasicDAVHandler {
             } else {
             	DebugLog.log("COMMIT: saving new vurl for " + myRepositoryPath);
                 String path = (String) myPathsMap.get(myRepositoryPath);
-            	DebugLog.log("COMMIT: wc path " + path);
-            	DebugLog.log("COMMIT: existing wc paths " + myPathsMap);
+                DebugLog.log("COMMIT: wc path " + path);
+                if (path == null) {
+                    DebugLog.log("COMMIT: existing wc paths " + myPathsMap);
+                }
                 if (path != null && myMediator != null) {
                     myMediator.setWorkspaceProperty(path, "svn:wc:ra_dav:version-url", myVersionPath);
                 } 

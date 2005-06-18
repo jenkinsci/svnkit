@@ -355,8 +355,12 @@ class DAVRepository extends SVNRepository {
             	path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
             	myConnection.doReport(path, request, handler);
             } else {
+                // try editor.closeEdit to remove target that is deleted in target revision?
+                editor.closeEdit();
+                /*
                 String revisionStr = revision < 0 ? "HEAD" : Long.toString(revision);
                 throw new SVNException("svn: Location '" + path + "' doesn't exists in repository at revision " + revisionStr);
+                */
             }
 
         } finally {
