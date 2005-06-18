@@ -31,6 +31,8 @@ import java.util.Date;
  * @see 	ISVNEditor
  */
 public class SVNCommitInfo {
+
+    public static final SVNCommitInfo NULL = new SVNCommitInfo(-1, null, null);
     
     private long myNewRevision;
     private Date myDate;

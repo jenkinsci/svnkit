@@ -15,6 +15,7 @@ package org.tmatesoft.svn.cli.command;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -74,10 +75,10 @@ public class MkDirCommand extends SVNCommand {
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
         SVNCommitClient client = new SVNCommitClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
         String[] paths = (String[]) urls.toArray(new String[urls.size()]);
-        long revision = client.doMkDir(paths, message == null ? "" : message);
-        if (revision >= 0) {
+        SVNCommitInfo info = client.doMkDir(paths, message == null ? "" : message);
+        if (info != SVNCommitInfo.NULL) {
             out.println();
-            out.println("Committed revision " + revision + ".");
+            out.println("Committed revision " + info.getNewRevision() + ".");
         }
     }
 }

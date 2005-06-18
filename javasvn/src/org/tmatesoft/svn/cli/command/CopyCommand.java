@@ -15,6 +15,7 @@ package org.tmatesoft.svn.cli.command;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.PathUtil;
@@ -82,10 +83,10 @@ public class CopyCommand extends SVNCommand {
 
         String commitMessage = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
         SVNCopyClient updater = new SVNCopyClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
-        long committedRevision = updater.doCopy(srcURL, srcPegRevision, srcRevision, dstURL, dstPegRevision, false, commitMessage);
-        if (committedRevision >= 0) {
+        SVNCommitInfo result = updater.doCopy(srcURL, srcPegRevision, srcRevision, dstURL, dstPegRevision, false, commitMessage);
+        if (result != SVNCommitInfo.NULL) {
             out.println();
-            out.println("Committed revision " + committedRevision + ".");
+            out.println("Committed revision " + result.getNewRevision() + ".");
         }
     }
 
@@ -112,8 +113,10 @@ public class CopyCommand extends SVNCommand {
             revision = SVNRevision.WORKING;
         }
         SVNCopyClient updater = new SVNCopyClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
-        long revNumber = updater.doCopy(new File(srcPath), getCommandLine().getPathPegRevision(0), revision, dstURL, getCommandLine().getPegRevision(0), false, message);
-        out.println();
-        out.println("Committed revision " + revNumber + ".");
+        SVNCommitInfo info = updater.doCopy(new File(srcPath), getCommandLine().getPathPegRevision(0), revision, dstURL, getCommandLine().getPegRevision(0), false, message);
+        if (info != SVNCommitInfo.NULL) {
+            out.println();
+            out.println("Committed revision " + info.getNewRevision() + ".");
+        }
     }
 }

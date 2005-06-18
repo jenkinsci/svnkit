@@ -2,35 +2,35 @@ package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
+import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCommitter;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNLog;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNReporter;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
-import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
-import org.tmatesoft.svn.core.internal.wc.SVNCommitter;
+import org.tmatesoft.svn.core.internal.wc.SVNReporter;
+import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.TreeMap;
 
 /**
@@ -88,7 +87,7 @@ public class SVNCopyClient extends SVNBasicClient {
 
     // path, path (this could be anything).
     // dstRevision: WORKING or HEAD only
-    public long doCopy(File srcPath, SVNRevision srcPegRevision, SVNRevision srcRevision, File dstPath, SVNRevision dstPegRevision, SVNRevision dstRevision,
+    public SVNCommitInfo doCopy(File srcPath, SVNRevision srcPegRevision, SVNRevision srcRevision, File dstPath, SVNRevision dstPegRevision, SVNRevision dstRevision,
                        boolean force, boolean move, String commitMessage) throws SVNException {
         if (srcRevision == null || !srcRevision.isValid()) {
             srcRevision = SVNRevision.WORKING;
@@ -145,12 +144,12 @@ public class SVNCopyClient extends SVNBasicClient {
             dstURL = getURL(dstURL, dstPegRevision, SVNRevision.HEAD);
             return url2urlCopy(srcURL, srcRevNumber, dstURL, commitMessage, move);
         }
-        return -1;
+        return SVNCommitInfo.NULL;
     }
 
 
     // path, url (url->url or wc->url)
-    public long doCopy(File srcPath, SVNRevision srcPegRevision, SVNRevision srcRevision, String dstURL, SVNRevision dstPegRevision,
+    public SVNCommitInfo doCopy(File srcPath, SVNRevision srcPegRevision, SVNRevision srcRevision, String dstURL, SVNRevision dstPegRevision,
                        boolean move, String commitMessage) throws SVNException {
         if (srcRevision == null || !srcRevision.isValid()) {
             srcRevision = SVNRevision.WORKING;
@@ -178,7 +177,7 @@ public class SVNCopyClient extends SVNBasicClient {
 
     // url, path (url->url or url->wc)
     // dstRevision: WORKING or HEAD only
-    public long doCopy(String srcURL, SVNRevision srcPegRevision, SVNRevision srcRevision, File dstPath, SVNRevision dstPegRevision, SVNRevision dstRevision,
+    public SVNCommitInfo doCopy(String srcURL, SVNRevision srcPegRevision, SVNRevision srcRevision, File dstPath, SVNRevision dstPegRevision, SVNRevision dstRevision,
                        boolean move, String commitMessage) throws SVNException {
         if (dstRevision == null || !dstRevision.isValid()) {
             dstRevision = SVNRevision.WORKING;
@@ -204,11 +203,11 @@ public class SVNCopyClient extends SVNBasicClient {
             dstURL = getURL(dstURL, dstPegRevision, dstRevision);
             return url2urlCopy(srcURL, srcRevisionNumber, dstURL, commitMessage, move);
         }
-        return -1;
+        return SVNCommitInfo.NULL;
     }
 
     // url, url (url->url only)
-    public long doCopy(String srcURL, SVNRevision srcPegRevision, SVNRevision srcRevision, String dstURL, SVNRevision dstPegRevision,
+    public SVNCommitInfo doCopy(String srcURL, SVNRevision srcPegRevision, SVNRevision srcRevision, String dstURL, SVNRevision dstPegRevision,
                        boolean move, String commitMessage) throws SVNException {
         if (srcRevision == null) {
             srcRevision = SVNRevision.HEAD;
@@ -229,7 +228,7 @@ public class SVNCopyClient extends SVNBasicClient {
         return url2urlCopy(srcURL, srcRevNumber, dstURL, commitMessage, move);
     }
 
-    private long wc2urlCopy(File srcPath, String dstURL, String commitMessage) throws SVNException {
+    private SVNCommitInfo wc2urlCopy(File srcPath, String dstURL, String commitMessage) throws SVNException {
         dstURL = validateURL(dstURL);
         SVNRepository repos = createRepository(dstURL);
         SVNNodeKind dstKind = repos.checkPath("", -1);
@@ -241,10 +240,9 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNCommitItem[] items = new SVNCommitItem[] {new SVNCommitItem(null, dstURL, null, SVNNodeKind.NONE, SVNRevision.UNDEFINED, true, false, false, false, true, false)};
         commitMessage = getCommitHandler().getCommitMessage(commitMessage, items);
         if (commitMessage == null) {
-            return -1;
+            return SVNCommitInfo.NULL;
         }
         // collect commitables.
-        Collection targets = new TreeSet();
         Collection tmpFiles = null;
         SVNCommitInfo info = null;
         ISVNEditor commitEditor = null;
@@ -256,7 +254,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), false);
             if (entry == null) {
                 SVNErrorManager.error("svn: '" + srcPath + "' is not under version control");
-                return -1;
+                return SVNCommitInfo.NULL;
             }
             SVNCommitUtil.harvestCommitables(commitables, wcAccess.getAnchor(), srcPath, null, entry, dstURL, entry.getURL(), true, false, false, null, true);
 
@@ -287,7 +285,7 @@ public class SVNCopyClient extends SVNBasicClient {
             }
         }
 
-        return info != null ? info.getNewRevision() : -1;
+        return info != null ? info : SVNCommitInfo.NULL;
     }
 
     private void wc2wcCopy(File srcPath, File dstPath, boolean force, boolean move) throws SVNException {
@@ -448,7 +446,7 @@ public class SVNCopyClient extends SVNBasicClient {
 
     }
 
-    private long url2urlCopy(String srcURL, long srcRevision, String dstURL, String commitMessage, final boolean move) throws SVNException {
+    private SVNCommitInfo url2urlCopy(String srcURL, long srcRevision, String dstURL, String commitMessage, final boolean move) throws SVNException {
         String commonURL = SVNPathUtil.getCommonURLAncestor(srcURL, dstURL);
         if (commonURL.length() == 0 || commonURL.indexOf("://") < 0) {
             SVNErrorManager.error("svn: Source and dest appear not to be in the same repository (src: '" + srcURL + "'; dst: '" +dstURL + "'");
@@ -501,7 +499,7 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         commitMessage = getCommitHandler().getCommitMessage(commitMessage, (SVNCommitItem[]) commitItems.toArray(new SVNCommitItem[commitItems.size()]));
         if (commitMessage == null) {
-            return -1;
+            return SVNCommitInfo.NULL;
         }
 
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, null);
@@ -563,7 +561,7 @@ public class SVNCopyClient extends SVNBasicClient {
             DebugLog.error(e);
             SVNErrorManager.error("svn: " + e.getMessage());
         }
-        return result != null ? result.getNewRevision() : -1;
+        return result != null ? result : SVNCommitInfo.NULL;
     }
 
     private void addDir(SVNDirectory dir, String name, String copyFromURL, long copyFromRev) throws SVNException {

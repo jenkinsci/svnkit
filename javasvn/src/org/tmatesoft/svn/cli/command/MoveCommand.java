@@ -15,6 +15,7 @@ package org.tmatesoft.svn.cli.command;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -54,10 +55,10 @@ public class MoveCommand extends SVNCommand {
 
         String commitMessage = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
         SVNCopyClient updater = new SVNCopyClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
-        long committedRevision = updater.doCopy(srcURL, srcPegRevision, srcRevision, dstURL, dstPegRevision, true, commitMessage);
-        if (committedRevision >= 0) {
+        SVNCommitInfo result = updater.doCopy(srcURL, srcPegRevision, srcRevision, dstURL, dstPegRevision, true, commitMessage);
+        if (result != SVNCommitInfo.NULL) {
             out.println();
-            out.println("Committed revision " + committedRevision + ".");
+            out.println("Committed revision " + result.getNewRevision() + ".");
         }
 	}
 

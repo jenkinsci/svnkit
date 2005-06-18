@@ -177,7 +177,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 SVNStatus targetStatus = (SVNStatus) myCurrentDirectory.ChildrenStatuses.get(myTarget);
                 if (targetStatus != null) {
                     if (myIsRecursive && targetStatus.getURL() != null && targetStatus.getKind() == SVNNodeKind.DIR) {
-                        reportStatus(myWCAccess.getAnchor(), myTarget, true, true);
+                        reportStatus(myWCAccess.getTarget(), null, true, true);
                     }
                     if (isSendableStatus(targetStatus)) {
                         myHandler.handleStatus(targetStatus);
@@ -329,6 +329,10 @@ public class SVNStatusEditor implements ISVNEditor {
 
     private void reportStatus(SVNDirectory dir, String entryName, boolean ignoreRootEntry, boolean recursive) throws SVNException {
         SVNEntries entries = dir.getEntries();
+        DebugLog.log("reporting status on: " + dir.getRoot());
+        DebugLog.log("entry name: " + entryName);
+        DebugLog.log("recursive: " + recursive);
+        DebugLog.log("ignore root: " + ignoreRootEntry);
 
         if (!(myTarget != null && (dir == myWCAccess.getAnchor()) || "".equals(dir.getPath()))) {
             // if we have a target -> no externals from anchor should be collected by default.
@@ -377,7 +381,8 @@ public class SVNStatusEditor implements ISVNEditor {
                 continue;
             }
             File file = dir.getFile(childEntry.getName(), false);
-            if (file.isDirectory()) {
+            SVNFileType fType = SVNFileType.getType(file);
+            if (fType == SVNFileType.DIRECTORY) {
                 SVNDirectory childDir = dir.getChildDirectory(childEntry.getName());
                 if (childDir != null && recursive) {
                     reportStatus(childDir, null, false, recursive);
@@ -395,16 +400,27 @@ public class SVNStatusEditor implements ISVNEditor {
         SVNEntry parentEntry;
         SVNDirectory parentDir = null;
         SVNEntry entry = dir.getEntries().getEntry(name, true);
+        String path = null;
 
         if (entry.isDirectory() && !"".equals(name)) {
+            DebugLog.log("fetching parent dir 0");
             // we are in the parent dir, with 'short' entry
             parentDir = dir;
             dir = dir.getChildDirectory(name);
             if (dir == null) {
-                dir = new SVNDirectory(myWCAccess, PathUtil.append(parentDir.getPath(), name), parentDir.getFile(name, false));
+                // why no through wc access???
+                dir = new SVNDirectory(myWCAccess, "".equals(parentDir.getPath()) ? name : PathUtil.append(parentDir.getPath(), name), parentDir.getFile(name, false));
+
             }
+            SVNEntry fullEntry = dir.getEntries().getEntry("", false);
+            if (fullEntry != null) {
+                entry = fullEntry;
+            }
+            path = dir.getPath();
         } else  if (entry.isDirectory() && "".equals(name)) {
+            DebugLog.log("fetching parent dir 1");
             // we are in the dir itself already, try to get parent dir.
+            path = dir.getPath();
             if (!"".equals(dir.getPath())) {
                 // there is parent dir
                 String parentPath = PathUtil.removeTail(dir.getPath());
@@ -415,10 +431,17 @@ public class SVNStatusEditor implements ISVNEditor {
             }
         } else if (entry.isFile()) {
             // it is a file, dir and parentDir are the same.
+            DebugLog.log("fetching parent dir 2");
             parentDir = dir;
+            path = "".equals(dir.getPath()) ? name : PathUtil.append(dir.getPath(), name);
         }
         SVNEntry entryInParent = entry;
-        String path = "".equals(name) ? dir.getPath() : "".equals(dir.getPath()) ? name : PathUtil.append(dir.getPath(), name);
+        DebugLog.log("lock path: " + path); // we have to use url for lock path, not wc path!!!
+        DebugLog.log("found parent dir: " + parentDir.getRoot());
+        DebugLog.log("our dir: " + dir.getRoot());
+        if (entry != null) {
+            DebugLog.log("our entry: " + entry.asMap());
+        }
         if (dir == parentDir) {
             file = dir.getFile(name, false);
             entry = dir.getEntries().getEntry(name, true);
@@ -433,7 +456,14 @@ public class SVNStatusEditor implements ISVNEditor {
             }
             parentEntry = parentDir != null ? parentDir.getEntries().getEntry("", true) : null;
         }
+        if (parentEntry != null) {
+            DebugLog.log("parent entry: " + parentEntry.asMap());
+        }
         SVNFileType fileType = SVNFileType.getType(file);
+        DebugLog.log("passing as entry: " + entry.asMap());
+        if (parentEntry != null) {
+            DebugLog.log("passing as parent entry: " + parentEntry.asMap());
+        }
         SVNStatus status = createStatus(path, file, dir, parentEntry, entry, false, fileType, Collections.unmodifiableMap(entry.asMap()));
 
         if (status != null) {
@@ -494,14 +524,19 @@ public class SVNStatusEditor implements ISVNEditor {
                 textStatus = SVNStatusType.STATUS_OBSTRUCTED;
             }
         }
-        if (parentEntry != null && entry.getURL() != null && parentEntry.getURL() != null) {
 
-            if (entry.isFile() && !entry.getName().equals(PathUtil.decode(PathUtil.tail(entry.getURL())))) {
+        if (parentEntry != null && entry.getURL() != null && parentEntry.getURL() != null) {
+            String realName = entry.getName();
+            if ("".equals(entry.getName())) {
+                realName = file.getName();
+            }
+            if (!realName.equals(PathUtil.decode(PathUtil.tail(entry.getURL())))) {
                 isSwitched = true;
             }
             if (!isSwitched && !PathUtil.removeTail(entry.getURL()).equals(parentEntry.getURL())) {
                 isSwitched = true;
             }
+            DebugLog.log("considered switched: " + isSwitched);
         }
         if (textStatus != SVNStatusType.OBSTRUCTED) {
             SVNProperties props = entryDir.getProperties(entry.getName(), false);

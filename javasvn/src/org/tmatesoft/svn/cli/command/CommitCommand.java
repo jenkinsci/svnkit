@@ -15,6 +15,7 @@ package org.tmatesoft.svn.cli.command;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 
 import java.io.ByteArrayOutputStream;
@@ -40,10 +41,10 @@ public class CommitCommand extends SVNCommand {
             localPaths[i] = new File(getCommandLine().getPathAt(i));
         }
         SVNCommitClient client = new SVNCommitClient(getCredentialsProvider(), getOptions(), new SVNCommandEventProcessor(out, err, false));
-        long revision = client.doCommit(localPaths, keepLocks, message, recursive);
-        if (revision >= 0) {
+        SVNCommitInfo result = client.doCommit(localPaths, keepLocks, message, recursive);
+        if (result != SVNCommitInfo.NULL) {
             out.println();
-            out.println("Committed revision " + revision + ".");
+            out.println("Committed revision " + result.getNewRevision() + ".");
         }
     }
 

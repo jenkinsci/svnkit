@@ -839,6 +839,11 @@ public class SVNWCClient extends SVNBasicClient {
         collectInfo(repos, rootEntry, SVNRevision.create(revNum), rootPath, reposRoot, reposUUID, url, locksMap, recursive, handler);
     }
 
+    public String doGetWorkingCopyID(File path, String trailURL, boolean lastChanged) {
+        
+        return null;
+    }
+
     public SVNInfo doInfo(File path, SVNRevision revision) throws SVNException {
         final SVNInfo[] result = new SVNInfo[1];
         doInfo(path, revision, false, new ISVNInfoHandler() {

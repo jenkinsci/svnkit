@@ -15,6 +15,7 @@ package org.tmatesoft.svn.cli.command;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -45,10 +46,10 @@ public class DeleteCommand extends SVNCommand {
             urls.add(getCommandLine().getURL(i));
         }
         String[] urlsArray = (String[]) urls.toArray(new String[urls.size()]);
-        long revision = client.doDelete(urlsArray, commitMessage);
-        if (revision >= 0) {
+        SVNCommitInfo info = client.doDelete(urlsArray, commitMessage);
+        if (info != SVNCommitInfo.NULL) {
             out.println();
-            out.println("Committed revision " + revision + ".");
+            out.println("Committed revision " + info.getNewRevision() + ".");
         }
     }
 

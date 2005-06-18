@@ -12,20 +12,14 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.File;
-
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.SVNUtil;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
+
+import java.io.File;
+import java.io.PrintStream;
 
 /**
  * @author TMate Software Ltd.
@@ -41,10 +35,10 @@ public class ImportCommand extends SVNCommand {
         boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
         SVNCommitClient commitClient = new SVNCommitClient(getCredentialsProvider(), getOptions(), new SVNCommandEventProcessor(out, err, false));
-        long revision = commitClient.doImport(new File(path), url, message, recursive);
-        if (revision >= 0) {
+        SVNCommitInfo info = commitClient.doImport(new File(path), url, message, recursive);
+        if (info != SVNCommitInfo.NULL) {
             out.println();
-            out.println("Imported revision " + revision + ".");
+            out.println("Imported revision " + info.getNewRevision() + ".");
         }
     }
 
