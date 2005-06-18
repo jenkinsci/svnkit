@@ -484,7 +484,7 @@ public class SVNCommitUtil {
                             SVNCommitItem item = new SVNCommitItem(currentFile, currentURL, null, currentEntry.getKind(), SVNRevision.UNDEFINED,
                                     false, true, false, false, false, false);
                             item.setPath(PathUtil.append(dir.getPath(), currentEntry.getName()));
-                            commitables.put(path, item);
+                            commitables.put(currentFile, item);
                             continue;
                         }
                         // error.
