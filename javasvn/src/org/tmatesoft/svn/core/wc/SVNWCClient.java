@@ -540,6 +540,56 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     public void doResolve(File path, boolean recursive) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess(path);
+        try {
+            wcAccess.open(true, recursive);
+            String target = wcAccess.getTargetName();
+            SVNDirectory dir = wcAccess.getAnchor();
+
+            if (wcAccess.getTarget() != wcAccess.getAnchor()) {
+                target = "";
+                dir = wcAccess.getTarget();
+            }
+            SVNEntry entry = dir.getEntries().getEntry(target, false);
+            if (entry == null) {
+                SVNErrorManager.error("svn: '" + path + "' is not under version control");
+            }
+
+            if (!recursive || entry.getKind() != SVNNodeKind.DIR) {
+                if (dir.markResolved(target, true, true)) {
+                    SVNEvent event = SVNEventFactory.createResolvedEvent(wcAccess, dir, entry);
+                    svnEvent(event, ISVNEventListener.UNKNOWN);
+                }
+            } else {
+                doResolveAll(wcAccess, dir);
+            }
+        } finally {
+            wcAccess.close(true);
+        }
+    }
+
+    private void doResolveAll(SVNWCAccess access, SVNDirectory dir) throws SVNException {
+        SVNEntries entries = dir.getEntries();
+        Collection childDirs = new ArrayList();
+        for(Iterator ents = entries.entries(false); ents.hasNext();) {
+            SVNEntry entry = (SVNEntry) ents.next();
+            if ("".equals(entry.getName()) || entry.isFile()) {
+                if (dir.markResolved(entry.getName(), true, true)) {
+                    SVNEvent event = SVNEventFactory.createResolvedEvent(access, dir, entry);
+                    svnEvent(event, ISVNEventListener.UNKNOWN);
+                }
+            } else if (entry.isDirectory()) {
+                SVNDirectory childDir = dir.getChildDirectory(entry.getName());
+                if (childDir != null) {
+                    childDirs.add(childDir);
+                }
+            }
+        }
+        entries.save(true);
+        for (Iterator dirs = childDirs.iterator(); dirs.hasNext();) {
+            SVNDirectory child = (SVNDirectory) dirs.next();
+            doResolveAll(access, child);
+        }
     }
 
     public void doLock(File[] paths, boolean stealLock, String lockMessage) throws SVNException {

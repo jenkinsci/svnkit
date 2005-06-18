@@ -129,6 +129,12 @@ public class SVNEventFactory {
                 entry.getRevision(), null, null, null, null, null, null);
     }
 
+    public static SVNEvent createResolvedEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
+        return new SVNEvent(source, dir, entry.getName(),
+                SVNEventAction.RESOLVED, entry.getKind(), 
+                entry.getRevision(), null, null, null, null, null, null);
+    }
+
     public static SVNEvent createNotRevertedEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
         return new SVNEvent(source, dir, entry.getName(), 
                 SVNEventAction.FAILED_REVERT, entry.getKind(), 

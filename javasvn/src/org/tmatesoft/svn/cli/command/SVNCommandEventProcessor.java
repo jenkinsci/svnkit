@@ -208,8 +208,9 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
             SVNCommand.println(myPrintStream, "D    " + SVNCommand.getPath(event.getFile()));
         } else if (event.getAction() == SVNEventAction.SKIP) {
             SVNCommand.println(myPrintStream, "Skipped '" + SVNCommand.getPath(event.getFile()) + "'");
+        } else if (event.getAction() == SVNEventAction.RESOLVED) {
+            SVNCommand.println(myPrintStream, "Resolved conflicted state of '" + SVNCommand.getPath(event.getFile()) + "'");
         }
-
     }
 
     public void checkCancelled() throws SVNCancelException {
