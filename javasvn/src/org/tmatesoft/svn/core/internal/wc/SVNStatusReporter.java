@@ -48,6 +48,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
         if (!url.startsWith("/")) {
             url = "/" + url;
         }
+        url = PathUtil.decode(url);
         return (SVNLock) myLocks.get(url);
     }
 

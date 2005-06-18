@@ -70,7 +70,7 @@ public class SVNStatusEditor implements ISVNEditor {
             SVNEntry anchorEntry = myWCAccess.getAnchor().getEntries().getEntry("", false);
             boolean oldReportAll = myIsReportAll;
             myIsReportAll = true;
-            myAnchorStatus = createStatus("", myWCAccess.getAnchor().getRoot(), myWCAccess.getAnchor(), null, anchorEntry, false, SVNFileType.DIRECTORY, anchorEntry.asMap());
+            myAnchorStatus = createStatus(anchorEntry.getURL(), myWCAccess.getAnchor().getRoot(), myWCAccess.getAnchor(), null, anchorEntry, false, SVNFileType.DIRECTORY, anchorEntry.asMap());
             myIsReportAll = oldReportAll;
             DebugLog.log("anchor status: " + myAnchorStatus);
         }
@@ -437,11 +437,9 @@ public class SVNStatusEditor implements ISVNEditor {
         }
         SVNEntry entryInParent = entry;
         DebugLog.log("lock path: " + path); // we have to use url for lock path, not wc path!!!
-        DebugLog.log("found parent dir: " + parentDir.getRoot());
+//        DebugLog.log("found parent dir: " + parentDir.getRoot());
         DebugLog.log("our dir: " + dir.getRoot());
-        if (entry != null) {
-            DebugLog.log("our entry: " + entry.asMap());
-        }
+        DebugLog.log("our entry: " + entry.asMap());
         if (dir == parentDir) {
             file = dir.getFile(name, false);
             entry = dir.getEntries().getEntry(name, true);
@@ -464,7 +462,7 @@ public class SVNStatusEditor implements ISVNEditor {
         if (parentEntry != null) {
             DebugLog.log("passing as parent entry: " + parentEntry.asMap());
         }
-        SVNStatus status = createStatus(path, file, dir, parentEntry, entry, false, fileType, Collections.unmodifiableMap(entry.asMap()));
+        SVNStatus status = createStatus(entry.getURL(), file, dir, parentEntry, entry, false, fileType, Collections.unmodifiableMap(entry.asMap()));
 
         if (status != null) {
             myHandler.handleStatus(status);
@@ -495,7 +493,7 @@ public class SVNStatusEditor implements ISVNEditor {
 
         SVNLock remoteLock = null;
         if (path != null && myAnchorStatus != null && myAnchorStatus.getURL() != null) {
-            remoteLock = getRepositoryLock(PathUtil.append(myAnchorStatus.getURL(), path));
+            remoteLock = getRepositoryLock(path);
         }
 
         if (entry == null) {
@@ -536,7 +534,6 @@ public class SVNStatusEditor implements ISVNEditor {
             if (!isSwitched && !PathUtil.removeTail(entry.getURL()).equals(parentEntry.getURL())) {
                 isSwitched = true;
             }
-            DebugLog.log("considered switched: " + isSwitched);
         }
         if (textStatus != SVNStatusType.OBSTRUCTED) {
             SVNProperties props = entryDir.getProperties(entry.getName(), false);
@@ -780,9 +777,18 @@ public class SVNStatusEditor implements ISVNEditor {
                     }
                 }
                 boolean oldReportAll = myIsReportAll;
+                String url;
+                if (entry != null) {
+                    url = entry.getURL();
+                } else {
+                    url = getURL();
+                    if (url != null) {
+                        url = PathUtil.append(getURL(), PathUtil.encode(name));
+                    }
+                }
                 try {
                     myIsReportAll = true;
-                    existingStatus = createStatus(path, new File(myWCAccess.getAnchor().getRoot(), path), dir, parentEntry, entry,
+                    existingStatus = createStatus(url, new File(myWCAccess.getAnchor().getRoot(), path), dir, parentEntry, entry,
                         false, SVNFileType.UNKNOWN, entry != null ? entry.asMap() : null);
                 } finally {
                     myIsReportAll = oldReportAll;
