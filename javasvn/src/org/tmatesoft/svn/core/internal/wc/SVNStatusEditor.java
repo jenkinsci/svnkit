@@ -14,7 +14,6 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
-import org.tmatesoft.svn.util.DebugLog;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -65,14 +64,12 @@ public class SVNStatusEditor implements ISVNEditor {
 
     public void setStatusReporter(SVNStatusReporter reporter) throws SVNException {
         myStatusReporter = reporter;
-        DebugLog.log("setting status reporter");
         if (myStatusReporter != null) {
             SVNEntry anchorEntry = myWCAccess.getAnchor().getEntries().getEntry("", false);
             boolean oldReportAll = myIsReportAll;
             myIsReportAll = true;
             myAnchorStatus = createStatus(anchorEntry.getURL(), myWCAccess.getAnchor().getRoot(), myWCAccess.getAnchor(), null, anchorEntry, false, SVNFileType.DIRECTORY, anchorEntry.asMap());
             myIsReportAll = oldReportAll;
-            DebugLog.log("anchor status: " + myAnchorStatus);
         }
     }
 
@@ -89,7 +86,6 @@ public class SVNStatusEditor implements ISVNEditor {
     }
 
     public void openRoot(long revision) throws SVNException {
-        DebugLog.log("root opened");
         myIsRootOpened = true;
         myCurrentDirectory = new DirectoryInfo(null, "", false);
     }
@@ -131,7 +127,6 @@ public class SVNStatusEditor implements ISVNEditor {
 
     public void openDir(String path, long revision) throws SVNException {
         myCurrentDirectory = new DirectoryInfo(myCurrentDirectory, path, false);
-        DebugLog.log("open dir");
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
@@ -142,7 +137,6 @@ public class SVNStatusEditor implements ISVNEditor {
     }
 
     public void closeDir() throws SVNException {
-        DebugLog.log("close dir");
         if (myCurrentDirectory.IsAdded || myCurrentDirectory.IsContentsChanged || myCurrentDirectory.IsPropertiesChanged) {
             SVNStatusType reposContentsStatus;
             SVNStatusType reposPropStatus;
@@ -209,18 +203,15 @@ public class SVNStatusEditor implements ISVNEditor {
         }
         SVNDirectory dir = myWCAccess.getDirectory(dirInfo.Path);
         File dirFile = new File(myWCAccess.getAnchor().getRoot(), dirInfo.Path);
-        DebugLog.log("handling dir status: " + dirFile);
         for(Iterator names = dirInfo.ChildrenStatuses.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
             SVNStatus status = (SVNStatus) dirInfo.ChildrenStatuses.get(name);
             File childFile = new File(dirFile, name);
-            DebugLog.log("processing file: " + childFile);
             SVNFileType currentFileType = SVNFileType.getType(childFile);
             if (currentFileType == SVNFileType.NONE && (dir != null && dir.getEntries().getEntry(name, false) != null)) {
                 SVNEntry currentEntry = dir.getEntries().getEntry(name, false);
                 if (currentEntry != null && !currentEntry.isScheduledForDeletion()) {
                     status.setContentsStatus(SVNStatusType.STATUS_MISSING);
-                    DebugLog.log("entry map: " + status.getEntryProperties());
                 }
             } else if (myIsRecursive && status.getURL() != null && status.getKind() == SVNNodeKind.DIR) {
                 String path = "".equals(dirInfo.Path) ? name : PathUtil.append(dirInfo.Path, name);
@@ -233,10 +224,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null);
             }
             if (isSendableStatus(status)) {
-                DebugLog.log("sending status");
                 myHandler.handleStatus(status);
-            } else {
-                DebugLog.log("not sending status");
             }
         }
         dirInfo.ChildrenStatuses.clear();
@@ -283,7 +271,6 @@ public class SVNStatusEditor implements ISVNEditor {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
-        DebugLog.log("close edit");
         if (myIsRootOpened) {
             return new SVNCommitInfo(myTargetRevision, null, null);
         }
@@ -329,10 +316,6 @@ public class SVNStatusEditor implements ISVNEditor {
 
     private void reportStatus(SVNDirectory dir, String entryName, boolean ignoreRootEntry, boolean recursive) throws SVNException {
         SVNEntries entries = dir.getEntries();
-        DebugLog.log("reporting status on: " + dir.getRoot());
-        DebugLog.log("entry name: " + entryName);
-        DebugLog.log("recursive: " + recursive);
-        DebugLog.log("ignore root: " + ignoreRootEntry);
 
         if (!(myTarget != null && (dir == myWCAccess.getAnchor()) || "".equals(dir.getPath()))) {
             // if we have a target -> no externals from anchor should be collected by default.
@@ -400,11 +383,8 @@ public class SVNStatusEditor implements ISVNEditor {
         SVNEntry parentEntry;
         SVNDirectory parentDir = null;
         SVNEntry entry = dir.getEntries().getEntry(name, true);
-        String path = null;
 
         if (entry.isDirectory() && !"".equals(name)) {
-            DebugLog.log("fetching parent dir 0");
-            // we are in the parent dir, with 'short' entry
             parentDir = dir;
             dir = dir.getChildDirectory(name);
             if (dir == null) {
@@ -416,11 +396,8 @@ public class SVNStatusEditor implements ISVNEditor {
             if (fullEntry != null) {
                 entry = fullEntry;
             }
-            path = dir.getPath();
         } else  if (entry.isDirectory() && "".equals(name)) {
-            DebugLog.log("fetching parent dir 1");
             // we are in the dir itself already, try to get parent dir.
-            path = dir.getPath();
             if (!"".equals(dir.getPath())) {
                 // there is parent dir
                 String parentPath = PathUtil.removeTail(dir.getPath());
@@ -430,16 +407,9 @@ public class SVNStatusEditor implements ISVNEditor {
                 parentDir = null;
             }
         } else if (entry.isFile()) {
-            // it is a file, dir and parentDir are the same.
-            DebugLog.log("fetching parent dir 2");
             parentDir = dir;
-            path = "".equals(dir.getPath()) ? name : PathUtil.append(dir.getPath(), name);
         }
         SVNEntry entryInParent = entry;
-        DebugLog.log("lock path: " + path); // we have to use url for lock path, not wc path!!!
-//        DebugLog.log("found parent dir: " + parentDir.getRoot());
-        DebugLog.log("our dir: " + dir.getRoot());
-        DebugLog.log("our entry: " + entry.asMap());
         if (dir == parentDir) {
             file = dir.getFile(name, false);
             entry = dir.getEntries().getEntry(name, true);
@@ -454,14 +424,7 @@ public class SVNStatusEditor implements ISVNEditor {
             }
             parentEntry = parentDir != null ? parentDir.getEntries().getEntry("", true) : null;
         }
-        if (parentEntry != null) {
-            DebugLog.log("parent entry: " + parentEntry.asMap());
-        }
         SVNFileType fileType = SVNFileType.getType(file);
-        DebugLog.log("passing as entry: " + entry.asMap());
-        if (parentEntry != null) {
-            DebugLog.log("passing as parent entry: " + parentEntry.asMap());
-        }
         SVNStatus status = createStatus(entry.getURL(), file, dir, parentEntry, entry, false, fileType, Collections.unmodifiableMap(entry.asMap()));
 
         if (status != null) {
