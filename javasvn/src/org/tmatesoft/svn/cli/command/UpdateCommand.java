@@ -43,7 +43,7 @@ public class UpdateCommand extends SVNCommand {
             SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), 
                     new SVNCommandEventProcessor(out, err, false));
             
-            File file = new File(path);
+            File file = new File(path).getAbsoluteFile();
             if (!file.exists()) {
                 File parent = file.getParentFile();
                 if (!parent.exists() || !SVNWCAccess.isVersionedDirectory(parent)) {

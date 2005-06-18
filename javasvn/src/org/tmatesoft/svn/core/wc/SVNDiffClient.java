@@ -82,7 +82,7 @@ public class SVNDiffClient extends SVNBasicClient {
             
             SVNRepository repos = createRepository(wcURL);
             wcAccess.open(true, recursive);
-            SVNReporter reporter = new SVNReporter(wcAccess, recursive);
+            SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
             
             SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, 
                     false /*reverse*/, rM == SVNRevision.BASE /*compare to base*/, result);
@@ -123,7 +123,7 @@ public class SVNDiffClient extends SVNBasicClient {
             
             SVNRepository repos = createRepository(wcURL);
             wcAccess.open(true, recursive);
-            SVNReporter reporter = new SVNReporter(wcAccess, recursive);
+            SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
             
             SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, 
                     true /*reverse*/, rM == SVNRevision.BASE /*compare to base*/, result);
@@ -461,7 +461,7 @@ public class SVNDiffClient extends SVNBasicClient {
         SVNRevision wcRevNumber = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
         
         SVNRepository repos = createRepository(url);
-        SVNReporter reporter = new SVNReporter(wcAccess, recursive);
+        SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
         
         SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(), useAncestry, 
                 reverse /*reverse*/, localRev == SVNRevision.BASE /*compare to base*/, result);

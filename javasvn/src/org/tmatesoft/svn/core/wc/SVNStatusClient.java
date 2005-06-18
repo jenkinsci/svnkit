@@ -65,18 +65,22 @@ public class SVNStatusClient extends SVNBasicClient {
             }
         }
         SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(), wcAccess, handler, parentExternals, includeIgnored, reportAll, recursive);
-        if (!remote) {
-            statusEditor.closeEdit();
-        } else {
+        if (remote) {
             String url = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), true).getURL();
             SVNRepository repos = createRepository(url);
             SVNRepository locksRepos = createRepository(url);
 
-            SVNReporter reporter = new SVNReporter(wcAccess, recursive);
-            SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter);
+            SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
+            SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, statusEditor);
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
 
             repos.status(-1, target, recursive, statusReporter, statusEditor);
+        }
+        // to report all when there is completely no changes
+        statusEditor.closeEdit();
+        if (remote && statusEditor.getTargetRevision() >= 0) {
+            SVNEvent event = SVNEventFactory.createStatusCompletedEvent(wcAccess, statusEditor.getTargetRevision());
+            svnEvent(event, ISVNEventListener.UNKNOWN);
         }
         wcAccess.close(false);
         if (!isIgnoreExternals() && recursive) {

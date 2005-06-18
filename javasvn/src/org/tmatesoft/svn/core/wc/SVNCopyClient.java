@@ -389,7 +389,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 wcAccess2.open(true, true);
                 setDoNotSleepForTimeStamp(true);
                 try {
-                    SVNReporter reporter = new SVNReporter(wcAccess2, true);
+                    SVNReporter reporter = new SVNReporter(wcAccess2, true, true);
                     SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess2, null, true);
 
                     repos.update(srcRevision, null, true, reporter, editor);

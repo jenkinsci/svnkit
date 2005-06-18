@@ -65,7 +65,7 @@ public class SVNUpdateClient extends SVNBasicClient {
     public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {        
         long revNumber = getRevisionNumber(file, revision);
         SVNWCAccess wcAccess = createWCAccess(file);
-        final SVNReporter reporter = new SVNReporter(wcAccess, recursive);
+        final SVNReporter reporter = new SVNReporter(wcAccess, true, recursive);
         try {
             wcAccess.open(true, recursive);
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, recursive);
@@ -95,7 +95,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         url = validateURL(url);
         long revNumber = getRevisionNumber(file, revision);
         SVNWCAccess wcAccess = createWCAccess(file);
-        final SVNReporter reporter = new SVNReporter(wcAccess, recursive);
+        final SVNReporter reporter = new SVNReporter(wcAccess, true, recursive);
         try {
             wcAccess.open(true, recursive);
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url, recursive);

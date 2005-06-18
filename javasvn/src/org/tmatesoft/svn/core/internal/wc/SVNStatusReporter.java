@@ -7,6 +7,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.DebugLog;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -26,15 +27,18 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     private SVNRepository myRepository;
     private String myRepositoryRoot;
     private Map myLocks;
+    private SVNStatusEditor myEditor;
 
-    public SVNStatusReporter(SVNRepository repos, ISVNReporterBaton baton) {
+    public SVNStatusReporter(SVNRepository repos, ISVNReporterBaton baton, SVNStatusEditor editor) {
         myBaton = baton;
         myRepository = repos;
         myRepositoryLocation = repos.getLocation().toString();
+        myEditor = editor;
         myLocks = new HashMap();
     }
 
     public SVNLock getLock(String url) {
+        DebugLog.log("fetching lock for " + url);
         if (myRepositoryRoot == null || myLocks.isEmpty()) {
             return null;
         }
@@ -87,6 +91,10 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
                 myLocks.put(lock.getPath(), lock);
             }
         }
+        DebugLog.log("collected locks : " + myLocks);
+        DebugLog.log("status call root: " + myRepositoryLocation);
+        DebugLog.log("repository root : " + myRepositoryRoot);
+        myEditor.setStatusReporter(this);
     }
 
     public void abortReport() throws SVNException {

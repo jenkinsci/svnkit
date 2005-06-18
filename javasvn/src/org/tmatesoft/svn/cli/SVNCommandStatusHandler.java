@@ -3,6 +3,7 @@ package org.tmatesoft.svn.cli;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.util.DebugLog;
 
 import java.io.PrintStream;
@@ -57,6 +58,9 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
                 wcRevision = "-";
             } else {
                 wcRevision = Long.toString(status.getRevision().getNumber());
+                if (status.getKind() == SVNNodeKind.DIR && status.getContentsStatus() == SVNStatusType.STATUS_MISSING) {
+                    wcRevision = " ? ";
+                }
             }
             if (status.getRemotePropertiesStatus() != SVNStatusType.STATUS_NONE || status.getRemoteContentsStatus() != SVNStatusType.STATUS_NONE) {
                 remoteStatus = '*';
@@ -65,7 +69,17 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
             }
             char lockStatus;
             if (myShowReposLocks) {
-                lockStatus = ' ';
+                if (status.getRemoteLock() != null) {
+                    if (status.getLocalLock() != null) {
+                        lockStatus = status.getLocalLock().getID().equals(status.getRemoteLock().getID()) ? 'K' : 'T';
+                    } else {
+                        lockStatus = 'O';
+                    }
+                } else if (status.getLocalLock() != null) {
+                    lockStatus = 'B';
+                } else {
+                    lockStatus = ' ';
+                }
             } else {
                 lockStatus = status.getLocalLock() != null ? 'K' : ' ';
             }
@@ -91,11 +105,11 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
                 result.append(lockStatus);
                 result.append(" ");
                 result.append(remoteStatus);
-                result.append("    ");
+                result.append("   ");
                 result.append(formatString(wcRevision, 6, false)); // 6 chars
-                result.append("    ");
+                result.append("   ");
                 result.append(formatString(commitRevision, 6, false)); // 6 chars
-                result.append("    ");
+                result.append(" ");
                 result.append(formatString(commitAuthor, 12, true)); // 12 chars
                 result.append(" ");
                 result.append(SVNCommand.getPath(status.getFile()));

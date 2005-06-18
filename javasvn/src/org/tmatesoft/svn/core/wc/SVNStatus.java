@@ -173,4 +173,22 @@ public class SVNStatus {
     public void markExternal() {
         myContentsStatus = SVNStatusType.STATUS_EXTERNAL;
     }
+
+    public void setRemoteStatus(SVNStatusType contents, SVNStatusType props, SVNLock lock) {
+        if (contents == SVNStatusType.STATUS_ADDED && myRemoteContentsStatus == SVNStatusType.STATUS_DELETED) {
+            contents = SVNStatusType.STATUS_REPLACED;
+        }
+
+        myRemoteContentsStatus = contents != null ? contents : myRemoteContentsStatus;
+        myRemotePropertiesStatus = props != null ? props : myRemotePropertiesStatus;
+        if (lock != null) {
+            myRemoteLock = lock;
+        }
+    }
+
+    public void setContentsStatus(SVNStatusType statusType) {
+        if (statusType != null) {
+            myContentsStatus = statusType;
+        }
+    }
 }

@@ -13,11 +13,10 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.DebugLog;
 
 import java.io.File;
-import java.io.PrintStream;
 import java.io.IOException;
+import java.io.PrintStream;
 
 public class SVNCommandEventProcessor implements ISVNEventListener {
 
@@ -58,6 +57,7 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
                     }
                 }
             } catch (IOException e) {
+                //
             }
         }
         if (event.getAction() == SVNEventAction.COMMIT_MODIFIED) {
@@ -210,6 +210,8 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
             SVNCommand.println(myPrintStream, "Skipped '" + SVNCommand.getPath(event.getFile()) + "'");
         } else if (event.getAction() == SVNEventAction.RESOLVED) {
             SVNCommand.println(myPrintStream, "Resolved conflicted state of '" + SVNCommand.getPath(event.getFile()) + "'");
+        } else if (event.getAction() == SVNEventAction.STATUS_COMPLETED) {
+            SVNCommand.println(myPrintStream, "Status against revision: " + SVNCommand.formatString(Long.toString(event.getRevision()), 6, false));
         }
     }
 

@@ -21,10 +21,12 @@ public class SVNReporter implements ISVNReporterBaton {
 
     private SVNWCAccess myWCAccess;
     private boolean myIsRecursive;
+    private boolean myIsRestore;
 
-    public SVNReporter(SVNWCAccess wcAccess, boolean recursive) {
+    public SVNReporter(SVNWCAccess wcAccess, boolean restoreFiles, boolean recursive) {
         myWCAccess = wcAccess;
         myIsRecursive = recursive;
+        myIsRestore = restoreFiles;
     }
 
     public void report(ISVNReporter reporter) throws SVNException {
@@ -170,6 +172,9 @@ public class SVNReporter implements ISVNReporterBaton {
     }
     
     private void restoreFile(SVNDirectory dir, String name) throws SVNException {
+        if (!myIsRestore) {
+            return;
+        }
         SVNProperties props = dir.getProperties(name, false);
         SVNEntry entry = dir.getEntries().getEntry(name, true);
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;

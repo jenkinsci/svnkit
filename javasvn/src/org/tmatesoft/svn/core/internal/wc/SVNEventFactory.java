@@ -93,6 +93,12 @@ public class SVNEventFactory {
                 revision, null, null, null, null, null, null);
     }
 
+    public static SVNEvent createStatusCompletedEvent(SVNWCAccess source, long revision) {
+        return new SVNEvent(source, source != null ? source.getTarget() : null, "",
+                SVNEventAction.STATUS_COMPLETED, null, 
+                revision, null, null, null, null, null, null);
+    }
+
     public static SVNEvent createUpdateModifiedEvent(SVNWCAccess source, SVNDirectory dir, String name,
             SVNEventAction action, String mimeType, SVNStatusType contents, SVNStatusType props, SVNStatusType lock) {
         return new SVNEvent(source, dir, name, 
@@ -131,7 +137,7 @@ public class SVNEventFactory {
 
     public static SVNEvent createResolvedEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
         return new SVNEvent(source, dir, entry.getName(),
-                SVNEventAction.RESOLVED, entry.getKind(), 
+                SVNEventAction.RESOLVED, entry.getKind(),
                 entry.getRevision(), null, null, null, null, null, null);
     }
 

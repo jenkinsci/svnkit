@@ -318,4 +318,21 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "lock" }, "org.tmatesoft.svn.cli.command.LockCommand");
         ourCommands.put(new String[] { "unlock" }, "org.tmatesoft.svn.cli.command.UnlockCommand");
     }
+
+    public static String formatString(String str, int chars, boolean left) {
+        if (str.length() > chars) {
+            return str.substring(0, chars);
+        }
+        StringBuffer formatted = new StringBuffer();
+        if (left) {
+            formatted.append(str);
+        }
+        for(int i = 0; i < chars - str.length(); i++) {
+            formatted.append(' ');
+        }
+        if (!left) {
+            formatted.append(str);
+        }
+        return formatted.toString();
+    }
 }
