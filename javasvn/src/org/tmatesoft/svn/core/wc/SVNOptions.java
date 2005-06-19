@@ -30,14 +30,12 @@ public class SVNOptions {
     private long myTimeStamp;
 
     public SVNOptions() {
-        this(getDefaultConfigFile());
+        this(getDefaultConfigDir());
     }
     
-    public SVNOptions(File configFile) {
-        myConfigFile = configFile;
-        if (myConfigFile == null || !myConfigFile.exists()) {
-        	myConfigFile = getDefaultConfigFile();
-        }
+    public SVNOptions(File configDir) {
+        configDir = configDir == null ? getDefaultConfigDir() : configDir;
+        myConfigFile = new File(configDir, "config");
         initDefaults();
     }
 
@@ -181,13 +179,13 @@ public class SVNOptions {
         return Pattern.compile(wildcard);
     }
 
-    private static File getDefaultConfigFile() {
+    private static File getDefaultConfigDir() {
         String userHome = System.getProperty("user.home");
         File file = new File(userHome);
         if (SVNFileUtil.isWindows) {
-            file = new File(file, "Application Data/Subversion/config");
+            file = new File(file, "Application Data/Subversion");
         } else {
-            file = new File(file, ".subversion/config");
+            file = new File(file, ".subversion");
         }
         return file;
     }
@@ -204,7 +202,7 @@ public class SVNOptions {
     }
 
 	public void setUseAutoProperties(boolean useAutoProps) {
-        load();        
+        load();
         myIsAutoProperties = useAutoProps;
 	}
 }

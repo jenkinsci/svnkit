@@ -502,7 +502,7 @@ public class SVNClient implements SVNClientInterface {
     }
     
     protected SVNOptions getSVNOptions(){
-        return new SVNOptions(new File(myConfigDir+"/config"));
+        return new SVNOptions(new File(myConfigDir));
     }
     
     protected ISVNEventListener getEventListener(){

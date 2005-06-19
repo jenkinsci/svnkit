@@ -72,9 +72,7 @@ public abstract class SVNCommand {
         if (dir == null) {
             return new SVNOptions();
         }
-        DebugLog.log("creating options for: " + new File(dir, "config"));
-        DebugLog.log("exists: " + new File(dir, "config").exists());
-        return new SVNOptions(new File(dir, "config"));
+        return new SVNOptions(new File(dir));
     }
 
     protected ISVNWorkspace createWorkspace(String absolutePath, boolean root) throws SVNException {
