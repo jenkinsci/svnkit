@@ -225,7 +225,7 @@ public class PythonTests {
 
 			if (tokenizer.hasMoreTokens()) {
 				final String hint = tokenizer.nextToken();
-				if (hint.equalsIgnoreCase("SKIP")) {
+				if (hint.equalsIgnoreCase("SKIP") || hint.equalsIgnoreCase("XFAIL")) {
 					continue;
 				}
 			}

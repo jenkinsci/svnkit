@@ -30,12 +30,18 @@ public class AddCommand extends SVNCommand {
         final boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
         boolean disableAutoProps = getCommandLine().hasArgument(SVNArgument.NO_AUTO_PROPS);
+        boolean enableAutoProps = getCommandLine().hasArgument(SVNArgument.AUTO_PROPS);
         
         SVNWCClient wcClient = new SVNWCClient(getCredentialsProvider(), getOptions(), new SVNCommandEventProcessor(out, err, false));
-    	wcClient.getOptions().setUseAutoProperties(!disableAutoProps);
-    	DebugLog.log("ignored? (foo.o) " + wcClient.getOptions().isIgnored("foo.o"));
+        if (disableAutoProps) {
+            wcClient.getOptions().setUseAutoProperties(false);
+        }
+        if (enableAutoProps) {
+            wcClient.getOptions().setUseAutoProperties(true);
+        }
+        DebugLog.log("auto props enabled: " + wcClient.getOptions().isUseAutoProperties());
 
-    	for (int i = 0; i < getCommandLine().getPathCount(); i++) {
+        for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
             matchTabsInPath(absolutePath, err);
             DebugLog.log("adding path: " + absolutePath);

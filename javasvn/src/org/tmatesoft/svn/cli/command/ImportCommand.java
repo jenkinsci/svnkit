@@ -33,8 +33,19 @@ public class ImportCommand extends SVNCommand {
         }
         String url = getCommandLine().getURL(0);
         boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
+        boolean disableAutoProps = getCommandLine().hasArgument(SVNArgument.NO_AUTO_PROPS);
+        boolean enableAutoProps = getCommandLine().hasArgument(SVNArgument.AUTO_PROPS);
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
+
         SVNCommitClient commitClient = new SVNCommitClient(getCredentialsProvider(), getOptions(), new SVNCommandEventProcessor(out, err, false));
+
+        if (disableAutoProps) {
+            commitClient.getOptions().setUseAutoProperties(false);
+        }
+        if (enableAutoProps) {
+            commitClient.getOptions().setUseAutoProperties(true);
+        }
+
         SVNCommitInfo info = commitClient.doImport(new File(path), url, message, recursive);
         if (info != SVNCommitInfo.NULL) {
             out.println();

@@ -204,6 +204,7 @@ public class SVNOptions {
     }
 
 	public void setUseAutoProperties(boolean useAutoProps) {
-		myIsAutoProperties = useAutoProps;
+        load();        
+        myIsAutoProperties = useAutoProps;
 	}
 }

@@ -122,7 +122,7 @@ public class SVNWCClient extends SVNBasicClient {
         } else {
             String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
             if (wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL) != null) {
-                url = wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL); 
+                url = wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL);
             }
             if (pegRevision == null || !pegRevision.isValid()) {
                 pegRevision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
@@ -415,7 +415,7 @@ public class SVNWCClient extends SVNBasicClient {
 			SVNDirectory dir = wcAccess.getAnchor();
             SVNFileType ftype = SVNFileType.getType(path);
             if (ftype == SVNFileType.FILE || ftype == SVNFileType.SYMLINK) {
-    			addSingleFile(wcAccess, dir, name);
+    			addSingleFile(dir, name);
     		} else if (ftype == SVNFileType.DIRECTORY && recursive) {
 	    		// add dir and recurse.
     			addDirectory(wcAccess, wcAccess.getAnchor(), name, force);
@@ -973,7 +973,7 @@ public class SVNWCClient extends SVNBasicClient {
         			DebugLog.log("this entry will not be added: " + entry.getName());
     				continue;
     			}
-    			addSingleFile(wcAccess, childDir, childFile.getName());
+    			addSingleFile(childDir, childFile.getName());
     		} else if (SVNFileType.DIRECTORY == fileType) {
     			DebugLog.log("recursing into " + childFile.getName());
     			addDirectory(wcAccess, childDir, childFile.getName(), force);
@@ -981,7 +981,7 @@ public class SVNWCClient extends SVNBasicClient {
 		}
     }
 
-	private void addSingleFile(SVNWCAccess wcAccess, SVNDirectory dir, String name) throws SVNException {
+	private void addSingleFile(SVNDirectory dir, String name) throws SVNException {
 		File file = dir.getFile(name, false);
         dir.add(name, false, false);
 
@@ -993,7 +993,8 @@ public class SVNWCClient extends SVNBasicClient {
 			Map props = new HashMap();
 			boolean executable;
 			props = getOptions().getAutoProperties(name, props);
-			mimeType = (String) props.get(SVNProperty.MIME_TYPE);
+            DebugLog.log("auto properties for file: " + name + " : " + props);
+            mimeType = (String) props.get(SVNProperty.MIME_TYPE);
 			if (mimeType == null) {
 				mimeType = SVNFileUtil.detectMimeType(file);
 				if (mimeType != null) {
