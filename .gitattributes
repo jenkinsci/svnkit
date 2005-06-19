@@ -26,6 +26,8 @@ doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java -text
 doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayRepositoryTree.java -text
 doc/examples/src/org/tmatesoft/svn/examples/repository/Export.java -text
 doc/examples/src/org/tmatesoft/svn/examples/repository/History.java -text
+doc/examples/src/org/tmatesoft/svn/examples/wc/InfoHandler.java -text
+doc/examples/src/org/tmatesoft/svn/examples/wc/StatusHandler.java -text
 doc/examples/src/org/tmatesoft/svn/examples/wc/WorkingCopy.java -text
 javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.properties eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.xml eol=lf
