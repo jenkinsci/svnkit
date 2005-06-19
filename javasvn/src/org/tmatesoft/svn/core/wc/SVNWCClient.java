@@ -75,13 +75,18 @@ public class SVNWCClient extends SVNBasicClient {
         }
         SVNWCAccess wcAccess = createWCAccess(path);
         if ("".equals(wcAccess.getTargetName()) || wcAccess.getTarget() != wcAccess.getAnchor()) {
-            return;
+            SVNErrorManager.error("svn: '" + path + "' refers to a directory");
         }
         String name = wcAccess.getTargetName();
         if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
             File file = wcAccess.getAnchor().getBaseFile(name, false);
             boolean delete = false;
+            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), false);
+            if (entry == null) {
+                SVNErrorManager.error("svn: '" + path + "' is not under version control or doesn't exist");
+            }
             try {
+
                 if (revision == SVNRevision.BASE) {
                     if (expandKeywords) {
                         delete = true;
@@ -180,6 +185,9 @@ public class SVNWCClient extends SVNBasicClient {
         Map properties = new HashMap();
         SVNRepository repos = createRepository(url);
         SVNNodeKind nodeKind = repos.checkPath("", revNumber);
+        if (nodeKind == SVNNodeKind.DIR) {
+            SVNErrorManager.error("svn: URL '" + url + " refers to a directory");
+        }
         if (nodeKind != SVNNodeKind.FILE) {
             return;
         }
@@ -210,7 +218,7 @@ public class SVNWCClient extends SVNBasicClient {
                 dst.write(r);
             }
         } catch (IOException e) {
-            return;
+            //
         } finally {
             SVNFileUtil.closeFile(os);
             SVNFileUtil.closeFile(is);
@@ -621,7 +629,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNWCAccess wcAccess = createWCAccess(info.myFile);
 
             SVNRepository repos = createRepository(url);
-            SVNLock lock = null;
+            SVNLock lock;
             try {
                 lock = repos.setLock("", lockMessage, stealLock, info.myRevision.getNumber());
             } catch (SVNException error) {
@@ -641,6 +649,7 @@ public class SVNWCClient extends SVNBasicClient {
                     try {
                         SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName(), false), false);
                     } catch (IOException e) {
+                        //
                     }
                 }
                 wcAccess.getAnchor().getEntries().save(true);
@@ -703,7 +712,7 @@ public class SVNWCClient extends SVNBasicClient {
 
             SVNRepository repos = createRepository(url);
             SVNLock lock = null;
-            boolean removeLock = false;
+            boolean removeLock;
             try {
                 repos.removeLock("", info.myToken, breakLock);
                 removeLock = true;
@@ -729,6 +738,7 @@ public class SVNWCClient extends SVNBasicClient {
                     try {
                         SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName(), false), true);
                     } catch (IOException e) {
+                        //
                     }
                 }
                 svnEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCKED, lock, null),
@@ -820,7 +830,7 @@ public class SVNWCClient extends SVNBasicClient {
         String reposRoot = repos.getRepositoryRoot(true);
         String reposUUID = repos.getRepositoryUUID();
         // 1. get locks for this dir and below.
-        SVNLock[] locks = null;
+        SVNLock[] locks;
         try {
             locks = repos.getLocks("");
         } catch (SVNException e) {
@@ -1168,6 +1178,7 @@ public class SVNWCClient extends SVNBasicClient {
                     try {
                         SVNFileUtil.setReadonly(wcFile, false);
                     } catch (IOException e) {
+                        //
                     }
                 }
                 handler.handleProperty(anchor.getFile(name, false), new SVNPropertyData(propName, propValue));
@@ -1235,7 +1246,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (externalInfos != null) {
                     DebugLog.log("validating externals: " + externalInfos.length);
                 }
-                for (int i = 0; i < externalInfos.length; i++) {
+                for (int i = 0; externalInfos != null && i < externalInfos.length; i++) {
                     String path = externalInfos[i].getPath();
                     DebugLog.log("checking path: " + path);
                     if (path.indexOf(".") >=0 || path.indexOf("..") >= 0 ||
