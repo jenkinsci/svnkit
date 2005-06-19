@@ -66,7 +66,7 @@ public class SVNStatusClient extends SVNBasicClient {
         }
         SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(), wcAccess, handler, parentExternals, includeIgnored, reportAll, recursive);
         if (remote) {
-            String url = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), true).getURL();
+            String url = wcAccess.getAnchor().getEntries().getEntry("", true).getURL();
             SVNRepository repos = createRepository(url);
             SVNRepository locksRepos = createRepository(url);
 
