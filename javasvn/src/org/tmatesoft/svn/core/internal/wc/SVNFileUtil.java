@@ -88,7 +88,6 @@ public class SVNFileUtil {
             if (dst.exists()) {
                 boolean deleted = dst.delete();
                 if (!deleted && dst.exists()) {
-                    DebugLog.log("open files count: " + ourFilesCount);
                     throw new IOException("can't overwrite file '" + dst.getAbsolutePath() + "'");
                 }
             }
@@ -127,7 +126,6 @@ public class SVNFileUtil {
             return false;
         }
         String line = execCommand(new String[] {"ls", "-ld", file.getAbsolutePath()});
-        DebugLog.log("ls output: " + line);
         return line != null && line.startsWith("l");
     }
 
@@ -402,7 +400,6 @@ public class SVNFileUtil {
         if (isWindows) {
             return false;
         }
-        DebugLog.log("checking file mod: " + file);
         String[] commandLine = new String[] {"ls", "-ln", file.getAbsolutePath()};
         String line = execCommand(commandLine);
         if (line == null || line.indexOf(' ') < 0) {
@@ -429,11 +426,6 @@ public class SVNFileUtil {
         if (mod == null) {
             return false;
         }
-        DebugLog.log("fuid: " + fuid);
-        DebugLog.log("guid: " + fgid);
-        DebugLog.log("mod: " + mod);
-        DebugLog.log("c.user: " + getCurrentUser());
-        DebugLog.log("c.group: " + getCurrentGroup());
         if (getCurrentUser().equals(fuid)) {
             return mod.toLowerCase().indexOf('x') >= 0 &&
                 mod.toLowerCase().indexOf('x') < 4;

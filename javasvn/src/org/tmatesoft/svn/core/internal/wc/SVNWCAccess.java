@@ -414,7 +414,7 @@ public class SVNWCAccess implements ISVNEventListener {
                 continue;
             }
             File dir = new File(root.getRoot(), entry.getName());
-            if (dir.isDirectory() && entry.getKind() == SVNNodeKind.DIR) {
+            if (entry.getKind() == SVNNodeKind.DIR && SVNFileType.getType(dir) == SVNFileType.DIRECTORY) {
                 String path = PathUtil.append(parentPath, dir.getName());
                 path = PathUtil.removeLeadingSlash(path);
                 SVNDirectory svnDir = new SVNDirectory(this,

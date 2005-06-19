@@ -388,13 +388,18 @@ public class SVNStatusEditor implements ISVNEditor {
             parentDir = dir;
             dir = dir.getChildDirectory(name);
             if (dir == null) {
-                // why no through wc access???
-                dir = new SVNDirectory(myWCAccess, "".equals(parentDir.getPath()) ? name : PathUtil.append(parentDir.getPath(), name), parentDir.getFile(name, false));
+                File dirFile = parentDir.getFile(name, false);
+                if (SVNFileType.getType(dirFile) == SVNFileType.DIRECTORY) {
+                     dir = new SVNDirectory(myWCAccess, "".equals(parentDir.getPath()) ? name : PathUtil.append(parentDir.getPath(), name), parentDir.getFile(name, false));
+                }
 
             }
-            SVNEntry fullEntry = dir.getEntries().getEntry("", false);
+            SVNEntry fullEntry = dir != null ? dir.getEntries().getEntry("", false) : null;
             if (fullEntry != null) {
                 entry = fullEntry;
+            }
+            if (dir == null) {
+                dir = parentDir;
             }
         } else  if (entry.isDirectory() && "".equals(name)) {
             // we are in the dir itself already, try to get parent dir.
