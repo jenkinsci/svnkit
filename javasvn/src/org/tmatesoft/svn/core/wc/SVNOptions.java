@@ -135,7 +135,9 @@ public class SVNOptions {
                     } else if (misc && "global-ignores".equals(name)) {
                         for(StringTokenizer tokens = new StringTokenizer(value, " \t"); tokens.hasMoreTokens();) {
                             String token = tokens.nextToken();
-                            myIgnorePatterns.add(compileNamePatter(token));
+                            if (!"".equals(token.trim())) {
+                                myIgnorePatterns.add(compileNamePatter(token));
+                            }
                         }
                     } else if (props) {
                         Pattern pattern = compileNamePatter(name);
@@ -144,13 +146,9 @@ public class SVNOptions {
                 }
             }
         } catch (IOException e) {
+            //
         } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                }
-            }
+            SVNFileUtil.closeFile(reader);
         }
     }
     
@@ -165,7 +163,9 @@ public class SVNOptions {
             } else {
                 String name = token.substring(0, i).trim();
                 String value = i == token.length() - 1 ? "" : token.substring(i + 1).trim();
-                result.add(new AutoProperty(name, value));
+                if (!"".equals(name.trim())) {
+                    result.add(new AutoProperty(name, value));
+                }
             }
         }
         return (AutoProperty[]) result.toArray(new AutoProperty[result.size()]);

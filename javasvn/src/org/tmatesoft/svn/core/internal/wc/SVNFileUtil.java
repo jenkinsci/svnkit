@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.io.Reader;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -479,17 +480,10 @@ public class SVNFileUtil {
             throw new SVNException("svn: Cannot write to '" + file + "': path refers to directory or write access denied");
         }
         try {
-            ourFilesCount++;
             return new BufferedOutputStream(new FileOutputStream(file, append));
         } catch (FileNotFoundException e) {
             throw new SVNException("svn: Cannot write to '" + file + "': " + e.getMessage());
         }
-    }
-
-    private static long ourFilesCount = 0;
-
-    public static long getOpenFilesCount() {
-        return ourFilesCount;
     }
 
     public static InputStream openFileForReading(File file) throws SVNException  {
@@ -503,7 +497,6 @@ public class SVNFileUtil {
             return new ByteArrayInputStream(new byte[0]);
         }
         try {
-            ourFilesCount++;
             return new BufferedInputStream(new FileInputStream(file));
         } catch (FileNotFoundException e) {
             throw new SVNException("svn: Cannot read from '" + file + "': " + e.getMessage());
@@ -515,7 +508,6 @@ public class SVNFileUtil {
             return;
         }
         try {
-            ourFilesCount--;
             is.close();
         } catch (IOException e) {
             //
@@ -527,7 +519,6 @@ public class SVNFileUtil {
             return;
         }
         try {
-            ourFilesCount--;
             os.close();
         } catch (IOException e) {
             //
@@ -595,8 +586,17 @@ public class SVNFileUtil {
     public static void closeFile(Writer os) {
         if (os != null) {
             try {
-                ourFilesCount--;
                 os.close();
+            } catch (IOException e) {
+                //
+            }
+        }
+    }
+
+    public static void closeFile(Reader is) {
+        if (is != null) {
+            try {
+                is.close();
             } catch (IOException e) {
                 //
             }
