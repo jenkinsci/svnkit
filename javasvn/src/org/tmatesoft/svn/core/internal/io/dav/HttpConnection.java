@@ -67,8 +67,6 @@ class HttpConnection {
     private SVNRepositoryLocation mySVNRepositoryLocation;
     private SAXParser mySAXParser;
 
-    private int myConnectCount;
-
     private static SAXParserFactory ourSAXParserFactory;
 
     private ISVNCredentials myLastUsedCredentials;
@@ -120,8 +118,7 @@ class HttpConnection {
                 mySocket = isSecured() ? SocketFactory.createSSLSocket(DAVRepositoryFactory.getSSLManager(), host, port)
                         : SocketFactory.createPlainSocket(host, port);
             }
-            myConnectCount++;
-        } 
+        }
     }
 
     private boolean isSecured() {
@@ -168,7 +165,9 @@ class HttpConnection {
                     myOutputStream.flush();
                 }
                 mySocket.close();
-            } catch (IOException e) {}
+            } catch (IOException e) {
+                //
+            }
             mySocket = null;
             myOutputStream = null;
             myInputStream = null;
@@ -181,9 +180,9 @@ class HttpConnection {
         assertOk(path, status, okCodes);
         if (status != null && status.getResponseCode() == 204) {
             finishResponse(status.getResponseHeader());
-            return status;
+        } else if (status != null) {
+            readResponse(handler, status.getResponseHeader());
         }
-        readResponse(handler, status.getResponseHeader());
         return status;
     }
 
@@ -191,9 +190,9 @@ class HttpConnection {
         DAVStatus status = sendRequest(method, path, initHeader(0, null, header), reqBody, okCodes);
         if (status != null && status.getResponseCode() == 204) {
             finishResponse(status.getResponseHeader());
-            return status;
+        } else if (status != null) {
+            readResponse(handler, status.getResponseHeader());
         }
-        readResponse(handler, status.getResponseHeader());
         return status;
     }
 
@@ -201,9 +200,9 @@ class HttpConnection {
         DAVStatus status = sendRequest(method, path, initHeader(depth, label, null), requestBody, okCodes);
         if (status != null && status.getResponseCode() == 204) {
             finishResponse(status.getResponseHeader());
-            return status;
+        } else if (status != null) {
+            readResponse(result, status.getResponseHeader());
         }
-        readResponse(result, status.getResponseHeader());
         return status;
     }
 
@@ -212,9 +211,9 @@ class HttpConnection {
         DAVStatus status = sendRequest(method, path, initHeader(depth, label, null), requestBody, okCodes);
         if (status != null && status.getResponseCode() == 204) {
             finishResponse(status.getResponseHeader());
-            return status;
+        } else if (status != null) {
+            readResponse(handler, status.getResponseHeader());
         }
-        readResponse(handler, status.getResponseHeader());
         return status;
     }
 
@@ -291,7 +290,11 @@ class HttpConnection {
                 }
                 // reset stream!
                 if (requestBody instanceof ByteArrayInputStream) {
-                    ((ByteArrayInputStream) requestBody).reset();
+                    try {
+                        requestBody.reset();
+                    } catch (IOException e) {
+                        //
+                    }
                 } else if (requestBody != null) {
                     throw new SVNAuthenticationException("Authentication failed");
                 }
@@ -331,11 +334,10 @@ class HttpConnection {
                 myLastUsedCredentials = credentials;
                 status.setResponseHeader(readHeader);
                 return status;
-            } else {
+            } else if (credentials != null) {
                 close();
                 throw new SVNException("can't connect");
-            }
-            if (credentials == null) {
+            } else {
                 close();
                 throw new SVNCancelException();
             }
@@ -362,20 +364,20 @@ class HttpConnection {
             close();
             if (status.getResponseCode() == 404) {
                 status.setErrorText("svn: '" + url + "' path not found");
-                return;
-            }
-            String errorMessage = text.toString();
-            if (errorMessage.indexOf("<m:human-readable") >= 0) {
-                errorMessage = errorMessage.substring(errorMessage.indexOf("<m:human-readable") + "<m:human-readable".length());
-                if (errorMessage.indexOf('>') >= 0) {
-                    errorMessage = errorMessage.substring(errorMessage.indexOf('>') + 1);
+            } else {
+                String errorMessage = text.toString();
+                if (errorMessage.indexOf("<m:human-readable") >= 0) {
+                    errorMessage = errorMessage.substring(errorMessage.indexOf("<m:human-readable") + "<m:human-readable".length());
+                    if (errorMessage.indexOf('>') >= 0) {
+                        errorMessage = errorMessage.substring(errorMessage.indexOf('>') + 1);
+                    }
+                    if (errorMessage.indexOf("</m:human-readable>") >= 0) {
+                        errorMessage = errorMessage.substring(0, errorMessage.indexOf("</m:human-readable>"));
+                        errorMessage = "svn: " + errorMessage.trim();
+                    }
                 }
-                if (errorMessage.indexOf("</m:human-readable>") >= 0) {
-                    errorMessage = errorMessage.substring(0, errorMessage.indexOf("</m:human-readable>"));
-                    errorMessage = "svn: " + errorMessage.trim();
-                }
+                status.setErrorText(errorMessage);
             }
-            status.setErrorText(errorMessage);
         }
     }
 
@@ -482,7 +484,7 @@ class HttpConnection {
         boolean chunked = false;
         if (requestBody instanceof ByteArrayInputStream) {
             sb.append("Content-Length: ");
-            sb.append(((ByteArrayInputStream) requestBody).available());
+            sb.append(requestBody.available());
         } else if (requestBody != null) {
             sb.append("Transfer-Encoding: chunked");
             chunked = true;
@@ -740,7 +742,8 @@ class HttpConnection {
 				getOutputStream().log();
 			}
 		} catch (IOException ex) {
-		}
+            //
+        }
 	}
 
     private String getProxyAuthString() {
@@ -751,61 +754,5 @@ class HttpConnection {
             return "Basic " + Base64.byteArrayToBase64(auth.getBytes());
         }
         return null;
-    }
-    
-    private static boolean readConnectResponce(InputStream is) {
-        //is.mark(1024);
-        StringBuffer responce = new StringBuffer();
-        try {
-            while(true) {
-                int r = is.read();
-                if (r < 0) {
-                    is.reset();
-                    return false;
-                }
-                responce.append((char) r);
-                if (r != '\r' && r != '\n') {
-                    continue;
-                }
-                break;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            try {
-                is.reset();
-            } catch (IOException e1) {
-            }
-            return false;
-        }
-        // parse line.
-        String responceStr = responce.toString();
-        int index0 = responceStr.indexOf(' ');
-        if (index0 >= 0) {
-            int index1 = responceStr.indexOf(' ', index0 + 1);
-            if (index1 >= 0) {
-                String code = responceStr.substring(index0 + 1, index1);
-                try {
-                    int codeValue = Integer.parseInt(code);
-                    if (codeValue >= 200 && codeValue < 300) {
-                        while(!responce.toString().endsWith("\r\n\r\n")) {
-                            int r = is.read();
-                            if (r < 0) {
-                                break;
-                            }
-                            responce.append((char) r); 
-                        }
-                        return true;
-                    }
-                } catch (Throwable th) {
-                    th.printStackTrace();
-                }
-            }
-        }
-        try {
-            is.reset();
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-        return false;
     }
 }

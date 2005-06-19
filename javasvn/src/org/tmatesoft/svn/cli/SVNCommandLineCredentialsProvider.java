@@ -42,6 +42,9 @@ public class SVNCommandLineCredentialsProvider implements
     }
 
     public ISVNCredentials nextCredentials(String realm) {
+        if (realm == null) {
+            DebugLog.error(new Exception());
+        }
         myRealm = realm == null ? "default" : realm;
         if (myCurrentCredentials == null) {
             Integer index = (Integer) myRealmIndexes.get(myRealm);

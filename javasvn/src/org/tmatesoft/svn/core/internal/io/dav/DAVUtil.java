@@ -12,21 +12,21 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.PathUtil;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.PathUtil;
-
 
 /**
  * @author Alexander Kitaev
  */
 public class DAVUtil {
-    
+
     public static DAVResponse getResourceProperties(DAVConnection connection, String path, String label, DAVElement[] properties, boolean skipNotFound) throws SVNException {
         final DAVResponse[] result = new DAVResponse[1];
         connection.doPropfind(path, 0, label, properties, new IDAVResponseHandler() {
@@ -57,40 +57,41 @@ public class DAVUtil {
     public static void getChildren(DAVConnection connection, final String parentPath, DAVElement[] properties, IDAVResponseHandler handler) throws SVNException {
         connection.doPropfind(parentPath, 1, null, properties, handler);
     }
-    
+
     public static DAVBaselineInfo getBaselineInfo(DAVConnection connection, String path, long revision,
-            boolean includeType, boolean includeRevision, DAVBaselineInfo info) throws SVNException {
+                                                  boolean includeType, boolean includeRevision, DAVBaselineInfo info) throws SVNException {
         DAVElement[] properties = includeRevision ? DAVElement.BASELINE_PROPERTIES : new DAVElement[] {DAVElement.BASELINE_COLLECTION};
         DAVResponse baselineProperties = getBaselineProperties(connection, path, revision, properties);
 
-        info = info == null ? new DAVBaselineInfo() : info;        
+        info = info == null ? new DAVBaselineInfo() : info;
         info.baselinePath = baselineProperties.getHref();
         info.baselineBase = (String) baselineProperties.getPropertyValue(DAVElement.BASELINE_COLLECTION);
         info.baselineBase = PathUtil.encode(info.baselineBase);
         if (includeRevision) {
             info.revision = Long.parseLong((String) baselineProperties.getPropertyValue(DAVElement.VERSION_NAME));
-        } 
-        if (includeType) {            
-            info.isDirectory = getPropertyValue(connection, PathUtil.append(info.baselineBase, info.baselinePath), 
+        }
+        if (includeType) {
+            info.isDirectory = getPropertyValue(connection, PathUtil.append(info.baselineBase, info.baselinePath),
                     null, DAVElement.RESOURCE_TYPE) != null;
         }
         return info;
     }
-    
+
     public static DAVResponse getBaselineProperties(DAVConnection connection, String path, long revision, DAVElement[] elements) throws SVNException {
         DAVResponse properties = null;
         String loppedPath = "";
         while(true) {
-	        try {
-	            properties = getResourceProperties(connection, path, null, DAVElement.STARTING_PROPERTIES, false);
-	            break;
-	        } catch (SVNException e) {
-	        }
-	        loppedPath = PathUtil.append(PathUtil.tail(path), loppedPath);
-	        path = PathUtil.removeTail(path);
-	        if (PathUtil.isEmpty(path)) {
-	            break;
-	        }
+            try {
+                properties = getResourceProperties(connection, path, null, DAVElement.STARTING_PROPERTIES, false);
+                break;
+            } catch (SVNException e) {
+                //
+            }
+            loppedPath = PathUtil.append(PathUtil.tail(path), loppedPath);
+            path = PathUtil.removeTail(path);
+            if (PathUtil.isEmpty(path)) {
+                break;
+            }
         }
         if (properties == null) {
             throw new SVNException("resource " + path + " is not part of repository");
@@ -100,15 +101,15 @@ public class DAVUtil {
         String baselineRelativePath = (String) properties.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
         if (vcc == null) {
             throw new SVNException("important properties are missing for " + path);
-        } 
+        }
         if (baselineRelativePath == null) {
             baselineRelativePath = "";
         }
-        baselineRelativePath = PathUtil.append(baselineRelativePath, loppedPath);        
+        baselineRelativePath = PathUtil.append(baselineRelativePath, loppedPath);
         baselineRelativePath = PathUtil.removeLeadingSlash(baselineRelativePath);
         baselineRelativePath = PathUtil.removeTrailingSlash(baselineRelativePath);
         baselineRelativePath = PathUtil.encode(baselineRelativePath);
-        
+
         String label = null;
         if (revision < 0) {
             // get vcc's "checked-in"
@@ -120,59 +121,55 @@ public class DAVUtil {
         result.setHref(baselineRelativePath);
         return result;
     }
-    
+
     public static Map filterProperties(DAVResponse source, Map target) {
         target = target == null ? new HashMap() : target;
         for(Iterator props = source.properties(); props.hasNext();) {
             DAVElement property = (DAVElement) props.next();
             String namespace = property.getNamespace();
-            Object value = source.getPropertyValue(property);
-            if (value != null) {
-                value = value.toString();
-            }
             if (namespace.equals(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE)) {
-            	String name = property.getName();
-            	// hack!
-            	if (name.startsWith("svk_")) {
-            		name = name.substring(0, "svk".length()) + ":" + name.substring("svk".length() + 1);
-            	}
+                String name = property.getName();
+                // hack!
+                if (name.startsWith("svk_")) {
+                    name = name.substring(0, "svk".length()) + ":" + name.substring("svk".length() + 1);
+                }
                 target.put(name, source.getPropertyValue(property));
             } else if (namespace.equals(DAVElement.SVN_SVN_PROPERTY_NAMESPACE)) {
-                target.put("svn:" + property.getName(), source.getPropertyValue(property));                
+                target.put("svn:" + property.getName(), source.getPropertyValue(property));
             } else if (property == DAVElement.CHECKED_IN) {
                 target.put("svn:wc:ra_dav:version-url", source.getPropertyValue(property));
             }
         }
         return target;
     }
-    
+
     public static StringBuffer getCanonicalPath(String path, StringBuffer target) {
         target = target == null ? new StringBuffer() : target;
         if (path.startsWith("http:") || path.startsWith("https:")) {
             target.append(path);
             return target;
         }
-                
-    	int end = path.length() - 1;
-    	for(int i = 0; i <= end; i++) {
-    		char ch = path.charAt(i);
-    		switch (ch) {
-    		case '/': 
-    			if (i == end && i != 0) {
-    				// skip trailing slash
-    				break;
-    			} else if (i > 0 && path.charAt(i - 1) == '/') {
-    				// skip duplicated slashes
-    				break;
-    			}
-    		default:
-    			target.append(ch);
-    		}
-    	}
-    	return target;
-    			
+
+        int end = path.length() - 1;
+        for(int i = 0; i <= end; i++) {
+            char ch = path.charAt(i);
+            switch (ch) {
+            case '/':
+                if (i == end && i != 0) {
+                    // skip trailing slash
+                    break;
+                } else if (i > 0 && path.charAt(i - 1) == '/') {
+                    // skip duplicated slashes
+                    break;
+                }
+            default:
+                target.append(ch);
+            }
+        }
+        return target;
+
     }
-    
+
     public static boolean matchHost(String pattern, String host) {
         if (pattern == null || host == null) {
             return false;
@@ -207,7 +204,7 @@ public class DAVUtil {
         value = value.replaceAll("&amp;", "&");
         return value;
     }
-    
+
     public static Map parseAuthParameters(String source) {
         if (source == null) {
             return null;
@@ -221,15 +218,29 @@ public class DAVUtil {
         }
         String method = source.substring(0, index);
         parameters.put("", method);
-        
+
         source = source.substring(index).trim();
+        if ("Basic".equalsIgnoreCase(method)) {
+            if (source.indexOf("realm=") >= 0) {
+                source = source.substring(source.indexOf("realm=") + "realm=".length());
+                source = source.trim();
+                if (source.startsWith("\"")) {
+                    source = source.substring(1);
+                }
+                if (source.endsWith("\"")) {
+                    source = source.substring(0, source.length() - 1);
+                }
+                parameters.put("realm", source);
+            }
+            return parameters;
+        }
         char[] chars = source.toCharArray();
         int tokenIndex = 0;
         boolean parsingToken = true;
         String name = null;
-        String value = null;
+        String value;
         int quotesCount = 0;
-        
+
         for(int i = 0; i < chars.length; i++) {
             if (parsingToken) {
                 if (chars[i] == '=') {
@@ -241,7 +252,6 @@ public class DAVUtil {
             } else {
                 if (chars[i] == '\"') {
                     quotesCount = quotesCount > 0 ? 0 : 1;
-                    continue;
                 } else if ( i + 1 >= chars.length || (chars[i] == ',' && quotesCount == 0)) {
                     value = new String(chars, tokenIndex, i - tokenIndex);
                     value = value.trim();
@@ -251,10 +261,10 @@ public class DAVUtil {
                     }
                     parameters.put(name, value);
                     tokenIndex = i + 1;
-                    parsingToken = true;                    
-                }                
+                    parsingToken = true;
+                }
             }
-        }        
+        }
         return parameters;
     }
 
