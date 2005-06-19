@@ -121,6 +121,9 @@ public class SVNWCClient extends SVNBasicClient {
             }
         } else {
             String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+            if (wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL) != null) {
+                url = wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL); 
+            }
             if (pegRevision == null || !pegRevision.isValid()) {
                 pegRevision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
             }

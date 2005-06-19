@@ -680,7 +680,7 @@ public class SVNCopyClient extends SVNBasicClient {
     }
 
     private void copyFile(SVNWCAccess dstAccess, SVNWCAccess srcAccess, String dstName) throws SVNException {
-        SVNEntry dstEntry = dstAccess.getAnchor().getEntries().getEntry(dstName, true);
+        SVNEntry dstEntry = dstAccess.getAnchor().getEntries().getEntry(dstName, false);
         File dstPath = new File(dstAccess.getAnchor().getRoot(), dstName);
         File srcPath = new File(srcAccess.getAnchor().getRoot(), srcAccess.getTargetName());
         if (dstEntry != null && dstEntry.isFile()) {
@@ -743,7 +743,7 @@ public class SVNCopyClient extends SVNBasicClient {
     }
 
     private void copyDirectory(SVNWCAccess dstAccess, SVNWCAccess srcAccess, String dstName) throws SVNException {
-        SVNEntry srcEntry = dstAccess.getTarget().getEntries().getEntry("", true);
+        SVNEntry srcEntry = dstAccess.getTarget().getEntries().getEntry("", false);
         if (srcEntry == null) {
             SVNErrorManager.error("svn: '" + srcAccess.getTarget().getRoot() + "' is not under version control");
         } else if (srcEntry.isScheduledForDeletion() || srcEntry.getURL() == null || srcEntry.isCopied()) {
