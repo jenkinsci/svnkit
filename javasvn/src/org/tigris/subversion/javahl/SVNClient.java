@@ -17,6 +17,8 @@ import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNOptions;
@@ -70,7 +72,7 @@ public class SVNClient implements SVNClientInterface {
         final Collection statuses = new LinkedList();
         SVNStatusClient stClient = createSVNStatusClient();
         try {
-            stClient.doStatus(new File(path), descend, onServer, getAll, noIgnore, !ignoreExternals, new ISVNStatusHandler(){
+            stClient.doStatus(new File(path).getAbsoluteFile(), descend, onServer, getAll, noIgnore, !ignoreExternals, new ISVNStatusHandler(){
                 public void handleStatus(SVNStatus status) {
                     statuses.add(SVNConverterUtil.createStatus(path, status));
                 }
@@ -135,11 +137,11 @@ public class SVNClient implements SVNClientInterface {
             location = SVNRepositoryLocation.parseURL(moduleName);
             final String url = location.toCanonicalForm();
 
-            String path = new File("", PathUtil.decode(PathUtil.tail(url))).getAbsolutePath();
+            File path = new File("", PathUtil.decode(PathUtil.tail(url))).getAbsoluteFile();
 
             SVNUpdateClient updater = createSVNUpdateClient();
             updater.setIgnoreExternals(ignoreExternals);
-            return updater.doCheckout(url, new File(path), SVNConverterUtil.getSVNRevision(pegRevision),
+            return updater.doCheckout(url, path, SVNConverterUtil.getSVNRevision(pegRevision),
                     SVNConverterUtil.getSVNRevision(revision), recurse);
         } catch (SVNException e) {
             throwException(e);
@@ -148,7 +150,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public long checkout(String moduleName, String destPath, Revision revision, boolean recurse) throws ClientException {
-        return checkout(moduleName, destPath, revision, revision, recurse, false);
+        return checkout(moduleName, destPath, revision, null, recurse, false);
     }
 
     public void notification(Notify notify) {
@@ -165,8 +167,13 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void remove(String[] path, String message, boolean force) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        // XXX: force?
+        SVNCommitClient client = createSVNCommitClient();
+        try {
+            client.doDelete(path, message);
+        } catch (SVNException e) {
+            throwException(e);
+        }
     }
 
     public void revert(String path, boolean recurse) throws ClientException {
@@ -175,19 +182,22 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void add(String path, boolean recurse) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        add(path, recurse, false);
     }
 
     public void add(String path, boolean recurse, boolean force) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        SVNWCClient wcClient = createSVNWCClient();
+        try {
+            wcClient.doAdd(new File(path).getAbsoluteFile(), force, true, false, recurse);
+        } catch (SVNException e) {
+            throwException(e);
+        }
     }
 
     public long update(String path, Revision revision, boolean recurse) throws ClientException {
         SVNUpdateClient client = createSVNUpdateClient();
         try {
-            return client.doUpdate(new File(path), SVNConverterUtil.getSVNRevision(revision), recurse);
+            return client.doUpdate(new File(path).getAbsoluteFile(), SVNConverterUtil.getSVNRevision(revision), recurse);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -206,28 +216,49 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public long commit(String[] path, String message, boolean recurse) throws ClientException {
-        // TODO Auto-generated method stub
-        return 0;
+        // XXX: noUnlock : do NOT remove any locks, default == false
+        return commit(path, message, recurse, false);
     }
 
     public long commit(String[] path, String message, boolean recurse, boolean noUnlock) throws ClientException {
-        // TODO Auto-generated method stub
-        return 0;
+        if(path == null || path.length == 0){
+            return 0;
+        }
+        SVNCommitClient client = createSVNCommitClient();
+        File[] files = new File[path.length];
+        for (int i = 0; i < path.length; i++) {
+            files[i] = new File(path[i]).getAbsoluteFile();
+        }
+        try {
+            return client.doCommit(files, noUnlock, message, recurse).getNewRevision();
+        } catch (SVNException e) {
+            throwException(e);
+        }
+        return -1;
     }
 
     public void copy(String srcPath, String destPath, String message, Revision revision) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        SVNCopyClient client = createSVNCopyClient();
+        try {
+            client.doCopy(new File(srcPath).getAbsoluteFile(), null, SVNConverterUtil.getSVNRevision(revision),
+                    new File(destPath), null, SVNRevision.WORKING, false, false, null);
+        } catch (SVNException e) {
+            throwException(e);
+        }
     }
 
     public void move(String srcPath, String destPath, String message, Revision revision, boolean force) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        SVNCopyClient updater = createSVNCopyClient();
+        try {
+            updater.doCopy(srcPath, null, SVNConverterUtil.getSVNRevision(revision),
+                    destPath, null, true, message);
+        } catch (SVNException e) {
+            throwException(e);
+        }
     }
 
     public void move(String srcPath, String destPath, String message, boolean force) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        move(srcPath, destPath, message, Revision.WORKING, force);
     }
 
     public void mkdir(String[] path, String message) throws ClientException {
@@ -246,7 +277,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public long doExport(String srcPath, String destPath, Revision revision, boolean force) throws ClientException {
-        return doExport(srcPath, destPath, revision, revision, force, false, true, "");
+        return doExport(srcPath, destPath, revision, null, force, false, true, "");
     }
 
     public long doExport(String srcPath, String destPath, Revision revision, Revision pegRevision, boolean force, boolean ignoreExternals, boolean recurse, String nativeEOL) throws ClientException {
@@ -271,8 +302,12 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void doImport(String path, String url, String message, boolean recurse) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        SVNCommitClient commitClient = createSVNCommitClient();
+        try {
+            commitClient.doImport(new File(path), url, message, recurse);
+        } catch (SVNException e) {
+            throwException(e);
+        }
     }
 
     public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, boolean force, boolean recurse) throws ClientException {
@@ -280,7 +315,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void merge(String path1, Revision revision1, String path2, Revision revision2, String localPath, boolean force, boolean recurse, boolean ignoreAncestry, boolean dryRun) throws ClientException {
-        SVNDiffClient differ = new SVNDiffClient(getCredentialsProvider());
+        SVNDiffClient differ = createSVNDiffClient();
         try {
             differ.doMerge(path1, path2, SVNConverterUtil.getSVNRevision(revision1), SVNConverterUtil.getSVNRevision(revision2), new File(localPath).getAbsoluteFile(), recurse, !ignoreAncestry, force, dryRun);
         } catch (SVNException e) {
@@ -289,7 +324,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void merge(String path, Revision pegRevision, Revision revision1, Revision revision2, String localPath, boolean force, boolean recurse, boolean ignoreAncestry, boolean dryRun) throws ClientException {
-        SVNDiffClient differ = new SVNDiffClient(getCredentialsProvider());
+        SVNDiffClient differ = createSVNDiffClient();
         try {
             differ.doMerge(path, SVNConverterUtil.getSVNRevision(pegRevision), SVNConverterUtil.getSVNRevision(revision1), SVNConverterUtil.getSVNRevision(revision2), new File(localPath).getAbsoluteFile(), recurse, !ignoreAncestry, force, dryRun);
         } catch (SVNException e) {
@@ -342,7 +377,7 @@ public class SVNClient implements SVNClientInterface {
     public void propertySet(String path, String name, String value, boolean recurse, boolean force) throws ClientException {
         SVNWCClient client = createSVNWCClient();
         try {
-            client.doSetProperty(new File(path), name, value, force, recurse, new ISVNPropertyHandler(){
+            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, recurse, new ISVNPropertyHandler(){
                 public void handleProperty(File fpath, SVNPropertyData property) throws SVNException {}
                 public void handleProperty(String url, SVNPropertyData property) throws SVNException {}
             });
@@ -354,7 +389,7 @@ public class SVNClient implements SVNClientInterface {
     public void propertyRemove(String path, String name, boolean recurse) throws ClientException {
         SVNWCClient client = createSVNWCClient();
         try {
-            client.doSetProperty(new File(path), name, null, false, recurse, new ISVNPropertyHandler(){
+            client.doSetProperty(new File(path).getAbsoluteFile(), name, null, false, recurse, new ISVNPropertyHandler(){
                 public void handleProperty(File fpath, SVNPropertyData property) throws SVNException {}
                 public void handleProperty(String url, SVNPropertyData property) throws SVNException {}
             });
@@ -373,7 +408,7 @@ public class SVNClient implements SVNClientInterface {
         }
         SVNWCClient client = createSVNWCClient();
         try {
-            client.doSetProperty(new File(path), name, value, force, recurse, new ISVNPropertyHandler(){
+            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, recurse, new ISVNPropertyHandler(){
                 public void handleProperty(File fpath, SVNPropertyData property) throws SVNException {}
                 public void handleProperty(String url, SVNPropertyData property) throws SVNException {}
             });
@@ -410,7 +445,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public PropertyData propertyGet(String path, String name, Revision revision) throws ClientException {
-        return propertyGet(path, name, revision, revision);
+        return propertyGet(path, name, revision, null);
     }
     
     public PropertyData propertyGet(String path, String name, Revision revision, Revision pegRevision) throws ClientException {
@@ -547,6 +582,10 @@ public class SVNClient implements SVNClientInterface {
         return mySVNEventListener;
     }
     
+    protected SVNCommitClient createSVNCommitClient(){
+        return new SVNCommitClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
+    }
+    
     protected SVNUpdateClient createSVNUpdateClient(){
         return new SVNUpdateClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
     }
@@ -557,6 +596,14 @@ public class SVNClient implements SVNClientInterface {
     
     protected SVNWCClient createSVNWCClient(){
         return new SVNWCClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
+    }
+    
+    protected SVNDiffClient createSVNDiffClient(){
+        return new SVNDiffClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
+    }
+    
+    protected SVNCopyClient createSVNCopyClient(){
+        return new SVNCopyClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
     }
     
     private static void throwException(SVNException e) throws ClientException {
