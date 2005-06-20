@@ -1,3 +1,14 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.  The terms
+ * are also available at http://tmate.org/svn/license.html.
+ * If newer versions of this license are posted there, you may use a
+ * newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.examples.wc;
 
 import org.tmatesoft.svn.core.io.SVNLock;
@@ -5,7 +16,7 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
-public class StatusHandler implements ISVNStatusHandler{
+public class StatusHandler implements ISVNStatusHandler {
     private boolean myIsRemote;
 
     public StatusHandler(boolean isRemote) {
@@ -62,20 +73,20 @@ public class StatusHandler implements ISVNStatusHandler{
                 /*
                  * finds out if the file is locally locKed or not
                  */
-                lockLabel = (localLock.getID() != null && !localLock
-                        .getID().equals("")) ? "K" : " ";
+                lockLabel = (localLock.getID() != null && !localLock.getID()
+                        .equals("")) ? "K" : " ";
             }
         } else {
             if (localLock != null) {
                 /*
-                 * at first suppose the file is locally locKed as well as in
-                 * the repository
+                 * at first suppose the file is locally locKed as well as in the
+                 * repository
                  */
                 lockLabel = "K";
                 if (remoteLock != null) {
                     /*
-                     * author of the local lock differs from the author of
-                     * the remote lock - the lock was sTolen!
+                     * author of the local lock differs from the author of the
+                     * remote lock - the lock was sTolen!
                      */
                     if (!remoteLock.getOwner().equals(localLock.getOwner())) {
                         lockLabel = "T";
@@ -89,29 +100,28 @@ public class StatusHandler implements ISVNStatusHandler{
                 }
             } else if (remoteLock != null) {
                 /*
-                 * the file is not locally locked but locked in the
-                 * repository - the lock token is in some Other working
-                 * copy.
+                 * the file is not locally locked but locked in the repository -
+                 * the lock token is in some Other working copy.
                  */
                 lockLabel = "O";
             }
         }
         long workingRevision = status.getRevision().getNumber();
-        long lastChangedRevision = status.getCommittedRevision()
-                .getNumber();
+        long lastChangedRevision = status.getCommittedRevision().getNumber();
         String offset = "                    ";
         String[] offsets = new String[3];
-        offsets[0] = offset.substring(0, 6 - String
-                .valueOf(workingRevision).length());
-        offsets[1] = offset.substring(0, 6 - String.valueOf(
-                lastChangedRevision).length());
+        offsets[0] = offset.substring(0, 6 - String.valueOf(workingRevision)
+                .length());
+        offsets[1] = offset.substring(0, 6 - String
+                .valueOf(lastChangedRevision).length());
         //status
-        offsets[2] = offset.substring(0, offset.length()
-                - (status.getAuthor() != null ? status.getAuthor().length()
-                        : 1));
+        offsets[2] = offset.substring(0,
+                offset.length()
+                        - (status.getAuthor() != null ? status.getAuthor()
+                                .length() : 1));
         /*
-         * status is shown in the manner of the native Subversion command
-         * line client's command "svn status"
+         * status is shown in the manner of the native Subversion command line
+         * client's command "svn status"
          */
         System.out.println(pathChangeType
                 + propertiesChangeType

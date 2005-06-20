@@ -1,3 +1,14 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.  The terms
+ * are also available at http://tmate.org/svn/license.html.
+ * If newer versions of this license are posted there, you may use a
+ * newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.examples.wc;
 
 import java.io.File;
@@ -18,14 +29,85 @@ import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
 import org.tmatesoft.svn.util.PathUtil;
-
+/*
+ * This is a complex example program that demonstrates how you can manage local
+ * working copies as well as URLs by means of the API provided in the 
+ * org.tmatesoft.svn.core.wc package. The package itself represents a high-level API
+ * (consisting of classes and interfaces) which allows to perform commands compatible
+ * with commands of the native Subversion command line client. Most of the  methods 
+ * of those classes are named like 'doSomething(...)' where 'Something' corresponds 
+ * to the name of a Subversion command line client's command. So, for users 
+ * familiar with the Subversion command line client it's quite easy to match a method
+ * and an appropriate client's command.
+ * 
+ * The program illustrates a number of main operations usually carried out upon 
+ * working copies and URLs. A brief description of what the program does:
+ * 
+ * 0)first of all initializes the JavaSVN library (it must be done prior to using
+ * the library);
+ * 
+ * 1)if the program was run with some in parameters it fetches them out of the args 
+ * parameter;
+ * 
+ * 2)next a user's credentials provider is created - almost all methods require
+ * an ISVNCredentialsProvider to authenticate the user when it becomes necessary
+ * during an access to a repository server;
+ * 
+ * 3)the first operation - making an empty directory in a repository; String url is 
+ * to be a directory that will be created (it should consist of the URL of anexisting
+ * repository and the name of the directory itself that will be created just under
+ * the repository directory - that is like 'svn mkdir URL' which creates a new 
+ * directory given all the intermediate directories created); this operation is based
+ * upon an URL - so, it's immediately committed to the repository;
+ * 
+ * 4)the next operation - checking out the directory created in the previous 
+ * step to a local directory defined by myWorkspacePath; analogous to 
+ * 'svn co URL PATH';
+ * 
+ * 5)the next operation - recursively getting and displaying info for each item  at 
+ * the working revision in the working copy that was checked out in the previous 
+ * step; analogous to 'svn info -R' (certainly not the method itself but how the info
+ * is shown);
+ * 
+ * 6)the next operation - creating a new directory with a file in the working copy
+ * and then recursively scheduling (if any subdirictories existed they would be also
+ * added) the created directory for addition; analogous to 'svn add newDir';
+ * 
+ * 7)the next operation - recursively getting and displaying the working copy status
+ * not including unchanged (normal) paths; the result must include those paths which
+ * were scheduled for addition in the previous step; similar to 
+ * 'svn status --no-ignore --show-updates --verbose' (certainly not the method itself
+ * but how the status info is shown);
+ * 
+ * 8)the next operation - recursively updating the working copy; if any local items
+ * are out of date they will be updated to the latest revision;
+ * 
+ * 9)the next operation - showing status once again (for example, to see whether 
+ * there're any conflicts);
+ * 
+ * 10)the next operation - committing local changes to the repository; this operation
+ * will add the directory with the file that were scheduled for addition to the 
+ * repository;
+ * 
+ * 11)the next operation - locking the file added in the previous step (for example, 
+ * if you temporarily need to keep a file locked to prevent someone's else 
+ * modifications);
+ * 
+ * 12)the next operation - showing status once again (for example, to see that the 
+ * file was locked);
+ * 
+ * 13)the next operation - copying one URL - url -  to another one - copyURL - 
+ * within the same repository;
+ * 
+ * 14)  
+ */
 public class WorkingCopy {
 
     public static void main(String[] args) {
         /*
          * Default values:
          */
-        String url = "svn://localhost/rep/MyRepos";//"http://72.9.228.230:8080/svn/jsvn/branches/0.9.0/doc";
+        String url = "svn://localhost/rep/MyRepos";
         String copyURL = "svn://localhost/rep/MyReposCopy";
         String myWorkspacePath = "/MyWorkingCopy";
         SVNRevision revision = SVNRevision.HEAD;//HEAD (the latest) revision
@@ -70,6 +152,23 @@ public class WorkingCopy {
              */
             password = (args.length >= 6) ? args[5] : password;
         }
+        /*
+         * Creates a usre's credentials provider.
+         */
+        ISVNCredentialsProvider scp = new SVNSimpleCredentialsProvider(name,
+                password);
+        
+        long committedRevision = -1;
+        System.out.println("Making a new directory at '" + url + "'...");
+        try{
+            committedRevision = makeDirectory(scp, url, "making a new directory at '" + url + "'").getNewRevision();
+        }catch(SVNException svne){
+            System.err.println("error while making a new directory at '" + url + "': " + svne.getMessage());
+            System.exit(1);
+        }
+        System.out.println("Committed to revision " + committedRevision);
+        System.out.println();
+        
         File wcDir = new File(myWorkspacePath);
         if (wcDir.exists()) {
             System.err.println("the destination directory '"
@@ -77,12 +176,8 @@ public class WorkingCopy {
             System.exit(1);
         }
         wcDir.mkdirs();
-        /*
-         * Creates a usre's credentials provider.
-         */
-        ISVNCredentialsProvider scp = new SVNSimpleCredentialsProvider(name,
-                password);
 
+        System.out.println("Checking out a working copy from '" + url + "'...");
         long checkoutRevision = -1;
         try {
             checkoutRevision = checkout(scp, url, revision, wcDir, true);
@@ -96,7 +191,8 @@ public class WorkingCopy {
             System.exit(1);
         }
         System.out.println("Checked out revision " + checkoutRevision);
-
+        System.out.println();
+        
         /*
          * show info for the working copy
          */
@@ -110,6 +206,7 @@ public class WorkingCopy {
                             + svne.getMessage());
             System.exit(1);
         }
+        System.out.println();
 
         /*
          * creating a new directory
@@ -160,6 +257,7 @@ public class WorkingCopy {
             }
         }
 
+        System.out.println("Recursively scheduling a new directory '" + aNewDir.getAbsolutePath() + "' for addition...");
         try {
             addDirectory(scp, aNewDir);
         } catch (SVNException svne) {
@@ -167,13 +265,13 @@ public class WorkingCopy {
                     + aNewDir.getAbsolutePath() + "': " + svne.getMessage());
             System.exit(1);
         }
+        System.out.println();
 
         boolean isRecursive = true;
         boolean isRemote = false;
         boolean isReportAll = false;
         boolean isIncludeIgnored = true;
         boolean isCollectParentExternals = true;
-        System.out.println();
         System.out.println("Status for '" + wcDir.getAbsolutePath() + "':");
         try {
             showStatus(scp, wcDir, isRecursive, isRemote, isReportAll,
@@ -183,7 +281,9 @@ public class WorkingCopy {
                     + wcDir.getAbsolutePath() + "': " + svne.getMessage());
             System.exit(1);
         }
+        System.out.println();
 
+        System.out.println("Updating '" + wcDir.getAbsolutePath() + "'...");
         long updatedRevision = -1;
         try {
             updatedRevision = update(scp, wcDir, SVNRevision.HEAD, true);
@@ -195,8 +295,7 @@ public class WorkingCopy {
                             + svne.getMessage());
             System.exit(1);
         }
-        System.out.println();
-        System.out.println("Updating '" + wcDir.getAbsolutePath() + "'...");
+        
         try {
             showStatus(scp, wcDir, isRecursive, isRemote, isReportAll,
                     isIncludeIgnored, isCollectParentExternals);
@@ -206,10 +305,9 @@ public class WorkingCopy {
             System.exit(1);
         }
         System.out.println("Updated to revision " + updatedRevision);
-
         System.out.println();
+
         System.out.println("Committing '" + wcDir.getAbsolutePath() + "'...");
-        long committedRevision = -1;
         try {
             committedRevision = commit(scp, wcDir, true,
                     "'/newDir' with '/newDir/newFile.txt' were added")
@@ -223,7 +321,11 @@ public class WorkingCopy {
             System.exit(1);
         }
         System.out.println("Committed to revision " + committedRevision);
+        System.out.println();
 
+        System.out
+                .println("Locking (with stealing if the entry is already locked) '"
+                        + aNewFile.getAbsolutePath() + "'.");
         try {
             lock(scp, aNewFile, true, "locking '/newDir'");
         } catch (SVNException svne) {
@@ -232,11 +334,7 @@ public class WorkingCopy {
             System.exit(1);
         }
         System.out.println();
-        System.out
-                .println("Locking (with stealing if the entry is already locked) '"
-                        + aNewDir.getAbsolutePath() + "'.");
 
-        System.out.println();
         System.out.println("Status for '" + wcDir.getAbsolutePath() + "':");
         try {
             showStatus(scp, wcDir, isRecursive, isRemote, isReportAll,
@@ -246,18 +344,8 @@ public class WorkingCopy {
                     + wcDir.getAbsolutePath() + "': " + svne.getMessage());
             System.exit(1);
         }
+        System.out.println();
 
-        System.out.println();
-        System.out.println("Making a new directory at '" + copyURL + "'...");
-        try{
-            committedRevision = makeDirectory(scp, copyURL, "making a new directory at '" + copyURL + "'").getNewRevision();
-        }catch(SVNException svne){
-            System.err.println("error while making a new directory at '" + copyURL + "': " + svne.getMessage());
-            System.exit(1);
-        }
-        System.out.println("Committed to revision " + committedRevision);
-        
-        System.out.println();
         System.out.println("Copying '" + url + "' to '" + copyURL + "'...");
         try {
             committedRevision = copy(scp, url,
@@ -270,8 +358,8 @@ public class WorkingCopy {
             System.exit(1);
         }
         System.out.println("Committed to revision " + committedRevision);
-
         System.out.println();
+
         System.out.println("Switching '" + wcDir.getAbsolutePath() + "' to '"
                 + copyURL + "'...");
         try {
@@ -284,13 +372,13 @@ public class WorkingCopy {
             System.exit(1);
         }
         System.out.println("Updated to revision " + updatedRevision);
+        System.out.println();
 
         /*
          * show info for the working copy
          */
-        System.out.println();
         try {
-            showInfo(scp, wcDir, SVNRevision.WORKING, false);
+            showInfo(scp, wcDir, SVNRevision.WORKING, true);
         } catch (SVNException svne) {
             System.err
                     .println("error while getting info for the working copy at'"
@@ -299,9 +387,9 @@ public class WorkingCopy {
                             + svne.getMessage());
             System.exit(1);
         }
-
         System.out.println();
-        System.out.println("Scheduling '" + wcDir.getAbsolutePath() + "' for deletion ...");
+
+        System.out.println("Scheduling '" + aNewDir.getAbsolutePath() + "' for deletion ...");
         try {
             delete(scp, aNewDir, true);
         } catch (SVNException svne) {
@@ -310,8 +398,8 @@ public class WorkingCopy {
                     + svne.getMessage());
             System.exit(1);
         }
-
         System.out.println();
+
         System.out.println("Status for '" + wcDir.getAbsolutePath() + "':");
         try {
             showStatus(scp, wcDir, isRecursive, isRemote, isReportAll,
@@ -321,8 +409,8 @@ public class WorkingCopy {
                     + wcDir.getAbsolutePath() + "': " + svne.getMessage());
             System.exit(1);
         }
-
         System.out.println();
+
         System.out.println("Committing '" + wcDir.getAbsolutePath() + "'...");
         try {
             committedRevision = commit(

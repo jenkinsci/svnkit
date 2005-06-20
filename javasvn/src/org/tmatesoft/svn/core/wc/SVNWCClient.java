@@ -909,13 +909,13 @@ public class SVNWCClient extends SVNBasicClient {
                         if ("".equals(childEntry.getName())) {
                             continue;
                         }
-                        if (entry.isDirectory()) {
+                        if (childEntry.isDirectory()) {
                             SVNDirectory childDir = dir.getChildDirectory(childEntry.getName());
                             if (childDir != null) {
                                 collectInfo(childDir, "", recursive, handler);
                             }
-                        } else if (entry.isFile()) {
-                            handler.handleInfo(SVNInfo.createInfo(dir.getFile(childEntry.getName(), false), entry));
+                        } else if (childEntry.isFile()) {
+                            handler.handleInfo(SVNInfo.createInfo(dir.getFile(childEntry.getName(), false), childEntry));
                         }
                     }
                 }
