@@ -54,7 +54,7 @@ import org.tmatesoft.svn.util.PathUtil;
  * during an access to a repository server;
  * 
  * 3)the first operation - making an empty directory in a repository; String url is 
- * to be a directory that will be created (it should consist of the URL of anexisting
+ * to be a directory that will be created (it should consist of the URL of an existing
  * repository and the name of the directory itself that will be created just under
  * the repository directory - that is like 'svn mkdir URL' which creates a new 
  * directory given all the intermediate directories created); this operation is based
@@ -69,9 +69,10 @@ import org.tmatesoft.svn.util.PathUtil;
  * step; analogous to 'svn info -R' (certainly not the method itself but how the info
  * is shown);
  * 
- * 6)the next operation - creating a new directory with a file in the working copy
- * and then recursively scheduling (if any subdirictories existed they would be also
- * added) the created directory for addition; analogous to 'svn add newDir';
+ * 6)the next operation - creating a new directory (newDir) with a file (newFile) in
+ * the working copy and then recursively scheduling (if any subdirictories existed 
+ * they would be also added) the created directory for addition; analogous to 
+ * 'svn add newDir';
  * 
  * 7)the next operation - recursively getting and displaying the working copy status
  * not including unchanged (normal) paths; the result must include those paths which
@@ -96,10 +97,142 @@ import org.tmatesoft.svn.util.PathUtil;
  * 12)the next operation - showing status once again (for example, to see that the 
  * file was locked);
  * 
- * 13)the next operation - copying one URL - url -  to another one - copyURL - 
+ * 13)the next operation - copying with history one URL (url) to another one (copyURL)
  * within the same repository;
  * 
- * 14)  
+ * 14)the next operation - switching the working copy to a different URL - to copyURL
+ * where url was copied in the previous step;
+ * 
+ * 15)the next operation - recursively getting and displaying info on the root 
+ * directory of the working copy to demonstrate that the working copy is now really
+ * switched against copyURL;
+ * 
+ * 16)the next operation - scheduling the directory (newDir) for deletion;
+ * 
+ * 17)the next operation - showing status once again (for example, to see that the 
+ * directory with all its entries were scheduled for deletion);
+ * 
+ * 18)the next operation - committing local changes to the repository; this operation
+ * will delete the directory (newDir) with the file (newFile) that were scheduled for
+ * deletion from the repository;
+ * 
+ * This example can be run for a locally installed Subversion repository via the
+ * svn:// protocol. This is how you can do it:
+ * 
+ * 1)after you install the Subversion (available for download at 
+ * http://subversion.tigris.org/) you should create a new repository in a
+ * directory, like this (in a command line under Windows OS):
+ * 
+ * >svnadmin create X:\path\to\rep
+ * 
+ * 2)after the repository is created you can add a new account: open
+ * X:\path\to\rep\, then move to \conf and open the file - passwd. In the file you'll
+ * see the section [users]. Uncomment it and add a new account below the section
+ * name, like:
+ * 
+ * [users] 
+ * userName = userPassword.
+ * 
+ * In the program you may further use this account as user's credentials.
+ * 
+ * 3)the next step is to launch the custom Subversion server - svnserve - in a
+ * background mode for the just created repository:
+ * 
+ * >svnserve -d -r X:\path\to
+ * 
+ * That's all. The repository is now available via svn://localhost/rep.
+ * As it has been already mentioned url parameter should not be an existing path 
+ * within the directory where you have created your repository (svn://localhost/rep)
+ * but one level below (for example, svn://localhost/rep/MyRepos which is used by
+ * default in the program) since the program starts with creating a new directory in
+ * a repository. If this directory already exists the program will certainly fail.
+ * 
+ * While the program is running you'll see something like this:
+ * 
+ * Making a new directory at 'svn://localhost/rep/MyRepos'...
+ * Committed to revision 155
+ *
+ * Checking out a working copy from 'svn://localhost/rep/MyRepos'...
+ * Checked out revision 155
+ *
+ * -----------------INFO-----------------
+ * Local Path: N:\MyWorkingCopy
+ * URL: svn://localhost/rep/MyRepos
+ * Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
+ * Revision: 155
+ * Node Kind: dir
+ * Schedule: normal
+ * Last Changed Author: userName
+ * Last Changed Revision: 155
+ * Last Changed Date: Mon Jun 20 23:07:56 NOVST 2005
+ * 
+ * Recursively scheduling a new directory 'N:\MyWorkingCopy\newDir' for addition...
+ *
+ * Status for 'N:\MyWorkingCopy':
+ * A          0     ?    ?                   N:\MyWorkingCopy\newDir
+ * A          0     ?    ?                   N:\MyWorkingCopy\newDir\newFile.txt
+ * 
+ * Updating 'N:\MyWorkingCopy'...
+ * A          0     ?    ?                   N:\MyWorkingCopy\newDir
+ * A          0     ?    ?                   N:\MyWorkingCopy\newDir\newFile.txt
+ * Updated to revision 155
+ *
+ * Committing 'N:\MyWorkingCopy'...
+ * Committed to revision 156
+ *
+ * Locking (with stealing if the entry is already locked) 'N:\MyWorkingCopy\newDir\newFile.txt'.
+ *
+ * Status for 'N:\MyWorkingCopy':
+ *     K     156   156   userName            N:\MyWorkingCopy\newDir\newFile.txt
+ *
+ * Copying 'svn://localhost/rep/MyRepos' to 'svn://localhost/rep/MyReposCopy'...
+ * Committed to revision 157
+ * 
+ * Switching 'N:\MyWorkingCopy' to 'svn://localhost/rep/MyReposCopy'...
+ * Updated to revision 157
+ * 
+ * -----------------INFO-----------------
+ * Local Path: N:\MyWorkingCopy
+ * URL: svn://localhost/rep/MyReposCopy
+ * Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
+ * Revision: 157
+ * Node Kind: dir
+ * Schedule: normal
+ * Last Changed Author: userName
+ * Last Changed Revision: 157
+ * Last Changed Date: Mon Jun 20 23:08:00 NOVST 2005
+ * -----------------INFO-----------------
+ * Local Path: N:\MyWorkingCopy\newDir
+ * URL: svn://localhost/rep/MyReposCopy/newDir
+ * Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
+ * Revision: 157
+ * Node Kind: dir
+ * Schedule: normal
+ * Last Changed Author: userName
+ * Last Changed Revision: 156
+ * Last Changed Date: Mon Jun 20 23:07:59 NOVST 2005
+ * -----------------INFO-----------------
+ * Local Path: N:\MyWorkingCopy\newDir\newFile.txt
+ * URL: svn://localhost/rep/MyReposCopy/newDir/newFile.txt
+ * Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
+ * Revision: 157
+ * Node Kind: file
+ * Schedule: normal
+ * Last Changed Author: userName
+ * Last Changed Revision: 156
+ * Last Changed Date: Mon Jun 20 23:07:59 NOVST 2005
+ * Properties Last Updated: Mon Jun 20 23:08:02 NOVST 2005
+ * Checksum: 023b67e9660b2faabaf84b10ba32c6cf
+ * 
+ * Scheduling 'N:\MyWorkingCopy\newDir' for deletion ...
+ * 
+ * Status for 'N:\MyWorkingCopy':
+ * D          157   156   userName            N:\MyWorkingCopy\newDir
+ * D          157   156   userName            N:\MyWorkingCopy\newDir\newFile.txt
+ * 
+ * Committing 'N:\MyWorkingCopy'...
+ * Committed to revision 158
+ * 
  */
 public class WorkingCopy {
 

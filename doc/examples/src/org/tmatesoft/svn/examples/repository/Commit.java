@@ -66,7 +66,8 @@ import java.util.Map;
  * This example can be run for a locally installed Subversion repository via the
  * svn:// protocol. This is how you can do it:
  * 
- * 1)after you install the Subversion you should create a new repository in a
+ * 1)after you install the Subversion (available for download at 
+ * http://subversion.tigris.org/) you should create a new repository in a
  * directory, like this (in a command line under Windows OS):
  * 
  * >svnadmin create X:\path\to\rep
