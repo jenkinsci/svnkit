@@ -163,8 +163,8 @@ public class SVNLogClient extends SVNBasicClient {
 
     public void doLog(String url, String[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths,
                       ISVNLogEntryHandler handler) throws SVNException {
-        if (startRevision == null || !startRevision.isValid()) {
-            startRevision = SVNRevision.HEAD;
+        if (endRevision == null || !endRevision.isValid()) {
+            endRevision = SVNRevision.HEAD;
         }
         if (startRevision == null || !startRevision.isValid()) {
             startRevision = endRevision;
@@ -174,7 +174,7 @@ public class SVNLogClient extends SVNBasicClient {
         SVNRepository repos = createRepository(url);
         long startRev = getRevisionNumber(null, url, repos, startRevision);
         long endRev = getRevisionNumber(null, url, repos, endRevision);
-        repos.log(paths, startRev,  endRev, reportPaths, stopOnCopy, handler);
+        repos.log(paths, endRev,  startRev, reportPaths, stopOnCopy, handler);
     }
 
     public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {

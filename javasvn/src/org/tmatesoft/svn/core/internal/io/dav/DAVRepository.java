@@ -293,8 +293,10 @@ class DAVRepository extends SVNRepository {
 			}
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, false, null);
             path = PathUtil.append(info.baselineBase, info.baselinePath);
-            
-            myConnection.doReport(path, request, davHandler);
+            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, true);
+            if (response != null) {
+                myConnection.doReport(path, request, davHandler);
+            }
 		} finally {
 			closeConnection();
 		}

@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * @author TMate Software Ltd.
@@ -43,9 +44,9 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
     private PrintStream myPrintStream;
     private boolean myReportPaths;
     private boolean myIsQuiet;
+    private boolean myHasLogEntries;
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
-        // parse revisions range.
         String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
         SVNRevision startRevision = SVNRevision.UNDEFINED;
         SVNRevision endRevision = SVNRevision.UNDEFINED;
@@ -67,7 +68,6 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
                 buffer.append(s);
             }
         };
-
         SVNLogClient logClient = new SVNLogClient(getCredentialsProvider(), getOptions(), null);
         if (getCommandLine().hasURLs()) {
             String url = getCommandLine().getURL(0);
@@ -86,13 +86,16 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
             logClient.doLog(paths, startRevision ,endRevision, stopOnCopy, myReportPaths, this);
         }
         DebugLog.log(buffer.toString());
-        myPrintStream.print(SEPARATOR);
+        if (myHasLogEntries) {
+            myPrintStream.print(SEPARATOR);
+        }
     }
 
     public void handleLogEntry(SVNLogEntry logEntry) {
         if (logEntry == null || (logEntry.getMessage() == null && logEntry.getRevision() == 0)) {
             return;
         }
+        myHasLogEntries = true;
         String author = logEntry.getAuthor() == null ? "(no author)" : logEntry.getAuthor();
         String date = logEntry.getDate() == null ? "(no date)" : DATE_FORMAT.format(logEntry.getDate());
         String message = logEntry.getMessage();
