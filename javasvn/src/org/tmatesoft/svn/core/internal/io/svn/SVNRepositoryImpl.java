@@ -52,6 +52,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     private SVNConnection myConnection;
     private ISVNCredentials myCredentials;
 	private String myFullRoot;
+    private String myRealm;
 
     protected SVNRepositoryImpl(SVNRepositoryLocation location) {
         super(location);
@@ -153,21 +154,22 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             Object[] buffer = new Object[] { "get-locations", path, getRevisionObject(pegRevision), revisions };
             write("(w(sn(*n)))", buffer);
             authenticate();
-            try {
-                while (true) {
+            while (true) {
+                try {
                     read("(NS)", buffer);
-                    count++;
-                    if (handler != null) {
-                        long revision = SVNReader.getLong(buffer, 0);
-                        String location = SVNReader.getString(buffer, 1);
-                        if (location != null) {
-                            handler.handleLocationEntry(new SVNLocationEntry(revision, location));
-                        }
+                } catch (SVNException e) {
+                    break;
+                }
+                count++;
+                if (handler != null) {
+                    long revision = SVNReader.getLong(buffer, 0);
+                    String location = SVNReader.getString(buffer, 1);
+                    if (location != null) {
+                        handler.handleLocationEntry(new SVNLocationEntry(revision, location));
                     }
                 }
-            } catch (SVNException e) {
-                read("x", buffer);
             }
+            read("x", buffer);
             read("[()]", buffer);
         } finally {
             closeConnection();
@@ -244,6 +246,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     count++;
                 } catch (SVNException e) {
                     read("x", buffer);
+                    // there are could be error message
+                    read("[()]", buffer);
                     return count;
                 }
                 String name = null;
@@ -260,7 +264,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
                 if (handler != null && fileRevision != null) {
                     handler.handleFileRevision(fileRevision);
-                    fileRevision = null;
                 }
                 SVNDiffWindowBuilder builder = SVNDiffWindowBuilder.newInstance();
                 while (true) {
@@ -311,12 +314,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         int count = 0;
         try {
             openConnection();
-            String[] realTargetPaths = new String[targetPaths.length];
-            // convert all paths to paths relative to repos root.
-            for (int i = 0; i < realTargetPaths.length; i++) {
-                realTargetPaths[i] = getRepositoryPath(targetPaths[i]);
-            }
-            Object[] buffer = new Object[] { "log", realTargetPaths, getRevisionObject(startRevision), getRevisionObject(endRevision),
+            Object[] buffer = new Object[] { "log", getRepositoryPaths(targetPaths), getRevisionObject(startRevision), getRevisionObject(endRevision),
                     Boolean.valueOf(changedPaths), Boolean.valueOf(strictNode) };
 
             write("(w((*s)(n)(n)ww))", buffer);
@@ -461,12 +459,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             }
             authenticate();
             read("[()]", null);
-            SVNCommitEditor editor = new SVNCommitEditor(this, myConnection, mediator, new Runnable() {
+            return new SVNCommitEditor(this, myConnection, mediator, new Runnable() {
                 public void run() {
                     closeConnection();
                 }
             });
-            return editor;
         } catch (SVNException e) {
             closeConnection();
             throw e;
@@ -581,8 +578,16 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         lock();
         ISVNConnector connector = SVNRepositoryFactoryImpl.getConnectorFactory().createConnector(this);
         myConnection = new SVNConnection(connector);
-        myConnection.open(this);
-        authenticate();
+        try {
+            myConnection.open(this);
+            authenticate();
+        } finally {
+            myRealm = myConnection.getRealm();
+        }
+    }
+
+    public String getRealm() {
+        return myRealm;
     }
 
     void authenticate() throws SVNException {
@@ -595,7 +600,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         if (myConnection != null) {
             try {
                 myConnection.close();
-            } catch (SVNException e) {} finally {
+            } catch (SVNException e) {
+                //
+            } finally {
                 myConnection = null;
             }
         }
@@ -648,6 +655,17 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     public void abortReport() throws SVNException {
         write("(w())", new Object[] { "abort-report" });
+    }
+
+    public String[] getRepositoryPaths(String[] paths) {
+        if (paths == null || paths.length == 0) {
+            return paths;
+        }
+        String[] fullPaths = new String[paths.length];
+        for (int i = 0; i < paths.length; i++) {
+            fullPaths[i] = getRepositoryPath(paths[i]);
+        }
+        return fullPaths;
     }
 
     public String getRepositoryPath(String path) {

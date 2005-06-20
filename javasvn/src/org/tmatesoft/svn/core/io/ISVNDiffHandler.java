@@ -23,8 +23,8 @@ import org.tmatesoft.svn.core.diff.SVNDiffWindow;
  */
 public interface ISVNDiffHandler {
     
-    public OutputStream handleDiffWindow(String token, SVNDiffWindow diffWindow);
+    public OutputStream handleDiffWindow(String token, SVNDiffWindow diffWindow) throws SVNException;
     
-    public void handleDiffWindowClosed(String token);
+    public void handleDiffWindowClosed(String token) throws SVNException;
 
 }

@@ -283,6 +283,10 @@ class HttpConnection {
                 if (credentials != null) {
                     myUserCredentialsProvider.notAccepted(credentials, "forbidden");
                 }
+                /*
+                if (realm == null) {
+                    realm = my
+                } */
                 credentials = SVNUtil.nextCredentials(myUserCredentialsProvider, mySVNRepositoryLocation ,realm);
                 if (credentials == null) {
                     // no more to try.

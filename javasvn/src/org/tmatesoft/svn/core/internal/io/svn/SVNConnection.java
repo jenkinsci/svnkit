@@ -29,6 +29,7 @@ import org.tmatesoft.svn.util.LoggingOutputStream;
 class SVNConnection {
 
     private final ISVNConnector myConnector;
+    private String myRealm;
 
     private LoggingOutputStream myOutputStream;
     private LoggingInputStream myInputStream;
@@ -48,6 +49,10 @@ class SVNConnection {
         handshake(repository);
     }
 
+    public String getRealm() {
+        return myRealm;
+    }
+
     protected void handshake(SVNRepositoryImpl repository) throws SVNException {
         Object[] items = read("[(*N(*W)(*W))]", null);
         if (!SVNReader.hasValue(items, 0, 2) || !SVNReader.hasValue(items, 2, EDIT_PIPELINE)) {
@@ -62,6 +67,7 @@ class SVNConnection {
         String failureReason = null;
         Object[] items = read("[((*W)?S)]", null);
         List mechs = SVNReader.getList(items, 0);
+        myRealm = SVNReader.getString(items, 1);
         if (mechs == null || mechs.size() == 0) {
             return;
         }
@@ -94,6 +100,9 @@ class SVNConnection {
                             Object[] creds = read("[(S?S)]", null);
                             if (creds != null && creds.length == 2 && creds[0] != null && creds[1] != null) {
                                 repository.updateCredentials((String) creds[0], (String) creds[1]);
+                                if (myRealm == null) {
+                                    myRealm = (String) creds[0];
+                                }
                             }
                             myIsCredentialsReceived = true;
                         }
@@ -127,6 +136,9 @@ class SVNConnection {
                 if (repository != null && repository.getRepositoryRoot() == null) {
                     repository.updateCredentials((String) creds[0], (String) creds[1]);
                 }
+                if (myRealm == null) {
+                    myRealm = (String) creds[0];
+                }
                 myIsCredentialsReceived = true;
             }
             return null;
@@ -155,8 +167,10 @@ class SVNConnection {
 		    try {
 				getOutputStream().flush();
 			} catch (IOException e) {
-			} catch (SVNException e) {
-			}
+                //
+            } catch (SVNException e) {
+                //
+            }
 		    getOutputStream().log();
         }
     }

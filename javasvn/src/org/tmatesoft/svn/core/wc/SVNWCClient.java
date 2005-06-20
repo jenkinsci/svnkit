@@ -357,7 +357,7 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     public void doGetRevisionProperty(String url, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
-        if (propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+        if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
         }
         if (revision == null || !revision.isValid()) {
@@ -564,6 +564,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNEntry entry = dir.getEntries().getEntry(target, false);
             if (entry == null) {
                 SVNErrorManager.error("svn: '" + path + "' is not under version control");
+                return;
             }
 
             if (!recursive || entry.getKind() != SVNNodeKind.DIR) {
@@ -763,6 +764,7 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNLock lock = repos.getLock("");
                 if (lock == null) {
                     SVNErrorManager.error("svn: '" + url+ "' is not locked");
+                    return;
                 }                
                 lockTokens.put(url, lock.getID());
             }
@@ -883,9 +885,9 @@ public class SVNWCClient extends SVNBasicClient {
     
     private static void collectInfo(SVNDirectory dir, String name, boolean recursive, ISVNInfoHandler handler) throws SVNException {
         SVNEntries entries = dir.getEntries();
-        SVNEntry entry = entries.getEntry(name, true);
+        SVNEntry entry = entries.getEntry(name, false);
         try {
-            if (entry != null && !entry.isHidden()) {
+            if (entry != null) {
                 if (entry.isFile()) {
                     // child file
                     File file = dir.getFile(name, false);
@@ -1213,6 +1215,7 @@ public class SVNWCClient extends SVNBasicClient {
     private static String validatePropertyName(String name) throws SVNException {
         if (name == null || name.trim().length() == 0) {
             SVNErrorManager.error("svn: Bad property name: '" + name + "'");
+            return name;
         }
         name = name.trim();
         if (!(Character.isLetter(name.charAt(0)) || name.charAt(0) == ':' || name.charAt(0) == '_')) {

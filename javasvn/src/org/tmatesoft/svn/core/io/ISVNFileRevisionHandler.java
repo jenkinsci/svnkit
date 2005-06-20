@@ -42,7 +42,7 @@ public interface ISVNFileRevisionHandler extends ISVNDiffHandler {
      * 							revision information
      * @see 					SVNFileRevision
      */
-	public void handleFileRevision(SVNFileRevision fileRevision);
+	public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException;
 
 }
 

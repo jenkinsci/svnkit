@@ -10,7 +10,8 @@ public interface ISVNConnectorFactory {
 	public static final ISVNConnectorFactory DEFAULT = new ISVNConnectorFactory() {
 		public ISVNConnector createConnector(SVNRepository repository) {
 			if ("svn+ssh".equals(repository.getLocation().getProtocol())) {
-				return new SVNJSchConnector();
+                // get user name from url or use default user.name
+                return new SVNJSchConnector();
 			}
 			return new SVNPlainConnector();
 		}

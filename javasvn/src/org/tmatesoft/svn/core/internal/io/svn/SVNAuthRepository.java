@@ -87,7 +87,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -103,7 +103,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return revision;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -119,7 +119,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return revision;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -135,7 +135,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return properties;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -151,7 +151,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -167,7 +167,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return value;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -183,7 +183,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return kind;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -199,7 +199,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return rev;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -215,7 +215,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return rev;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -231,7 +231,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return count;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -248,7 +248,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return count;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -264,7 +264,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return count;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -281,7 +281,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -299,7 +299,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             } 
         }
     }
@@ -315,7 +315,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -331,7 +331,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -347,7 +347,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return editor;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             } catch (SVNException e) {
                 DebugLog.error(e);
                 throw e;
@@ -366,7 +366,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return editor;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             } catch (SVNException e) {
                 DebugLog.error(e);
                 throw e;
@@ -385,7 +385,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return lock;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -401,7 +401,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return locks;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -417,7 +417,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return lock;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -433,7 +433,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -447,7 +447,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return myDelegate.info(path, revision);
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }
@@ -463,7 +463,7 @@ public class SVNAuthRepository extends SVNRepository {
                 return;
             } catch (SVNAuthenticationException e) {
                 notAccept(provider, credentials, e.getMessage());
-                credentials = nextCredentials(provider, e.getMessage());
+                credentials = nextCredentials(provider, myDelegate.getRealm());
             }
         }
     }

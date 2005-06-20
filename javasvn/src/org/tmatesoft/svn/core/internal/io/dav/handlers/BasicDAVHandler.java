@@ -51,8 +51,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
             startElement(getParent(), element, attributes);
         } catch(SVNException e) {
             DebugLog.error(e.getMessage());
-            e.printStackTrace();
-            throw new SAXException(e); 
+            throw new SAXException(e);
         }
         myParent.push(element);
         myCDATA = new StringBuffer();

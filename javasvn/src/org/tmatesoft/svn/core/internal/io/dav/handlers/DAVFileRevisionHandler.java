@@ -19,8 +19,12 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.Base64;
 import org.xml.sax.Attributes;
 
 /**
@@ -39,7 +43,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
         if (endRevision >= 0) {
         	buffer.append("<S:end-revision>"  + endRevision + "</S:end-revision>");
         }
-        buffer.append("<S:path>"  + path + "</S:path>");
+        buffer.append("<S:path>"  + DAVUtil.xmlEncode(PathUtil.decode(path)) + "</S:path>");
         buffer.append("</S:file-revs-report>");
         return buffer;
 	}
@@ -47,14 +51,18 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
     private static final DAVElement REVISION_PROPERTY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "rev-prop");
     private static final DAVElement FILE_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "file-rev");
 
+    private static final DAVElement SET_PROPERTY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "set-prop");
+    private static final DAVElement DELETE_PROPERTY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "remove-prop");
+
 	private ISVNFileRevisionHandler myFileRevisionsHandler;
     private String myPath;
     private long myRevision;
     private Map myProperties;
     private Map myPropertiesDelta;
     private String myPropertyName;
+    private String myPropertyEncoding;
 	
-	private int myCount;
+    private int myCount;
 
 	public DAVFileRevisionHandler(ISVNFileRevisionHandler handler) {
 		myFileRevisionsHandler = handler;
@@ -62,12 +70,13 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
 		init();
 	}
 	
-	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) {
+	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (element == FILE_REVISION) {
             myPath = attrs.getValue("path");
             myRevision = Long.parseLong(attrs.getValue("rev"));
-        } else if (element == REVISION_PROPERTY) {
+        } else if (element == REVISION_PROPERTY || element == SET_PROPERTY || element == DELETE_PROPERTY) {
             myPropertyName = attrs.getValue("name");
+            myPropertyEncoding = attrs.getValue("encoding");
         } if (element == TX_DELTA) {
             if (myPath != null && myFileRevisionsHandler != null) {
                 if (myProperties == null) {
@@ -78,10 +87,10 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                 }
                 SVNFileRevision revision = new SVNFileRevision(myPath, myRevision, myProperties, myPropertiesDelta);
                 myFileRevisionsHandler.handleFileRevision(revision);
-				myPath = null;
+                myPath = null;
             }
             setDeltaProcessing(true);
-		} 
+		}
 	}
     
 	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
@@ -89,6 +98,8 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             myPath = null;
             myProperties = null;
             myPropertiesDelta = null;
+            myPropertyEncoding = null;
+            myPropertyName = null;
         } else if (element == TX_DELTA) {
             setDeltaProcessing(false);
 			myCount++;
@@ -96,7 +107,32 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             if (myProperties == null) {
                 myProperties = new HashMap();
             }
-            myProperties.put(myPropertyName, cdata);
+            myProperties.put(myPropertyName, cdata != null ? cdata.toString() : "");
+            myPropertyName = null;
+        } else if (element == SET_PROPERTY) {
+            if (myPropertiesDelta == null) {
+                myPropertiesDelta = new HashMap();
+            }
+            if (myPropertyName != null) {
+                String value;
+                if ("base64".equals(myPropertyEncoding)) {
+                    byte[] bytes = Base64.base64ToByteArray(cdata, null);
+                    value = new String(bytes);
+                } else {
+                    value = cdata.toString();
+                }
+                myPropertiesDelta.put(myPropertyName, value);
+            }
+            myPropertyName = null;
+            myPropertyEncoding = null;
+        } else if (element == DELETE_PROPERTY) {
+            if (myPropertiesDelta == null) {
+                myPropertiesDelta = new HashMap();
+            }
+            if (myPropertyName != null) {
+                myPropertiesDelta.put(myPropertyName, null);
+            }
+            myPropertyEncoding = null;
             myPropertyName = null;
         }
 	}
@@ -105,11 +141,11 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
 		return myCount;
 	}
 
-    protected void handleDiffWindowClosed() {
+    protected void handleDiffWindowClosed() throws SVNException {
         myFileRevisionsHandler.handleDiffWindowClosed(myPath);
     }
     
-    protected OutputStream handleDiffWindow(SVNDiffWindow window) {
+    protected OutputStream handleDiffWindow(SVNDiffWindow window) throws SVNException {
         return myFileRevisionsHandler.handleDiffWindow(myPath, window);
     }
 }

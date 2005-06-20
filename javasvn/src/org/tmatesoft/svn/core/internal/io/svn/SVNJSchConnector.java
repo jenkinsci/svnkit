@@ -37,7 +37,16 @@ public class SVNJSchConnector implements ISVNConnector {
         }
         provider.reset();
 
-        ISVNCredentials credentials = SVNUtil.nextCredentials(provider, repository.getLocation(), null);
+        // 1. fetch credentials for default user?
+        String realm = repository.getLocation().toCanonicalForm();
+        String userName = System.getProperty("user.name");
+        ISVNCredentials credentials = SVNUtil.nextCredentials(provider, repository.getLocation(), realm);
+        if (credentials != null) {
+            userName = credentials.getName();
+            if (userName != null) {
+                realm = "svn+ssh://" + userName + "@" + realm.substring("svn+ssh://".length());
+            }
+        }
         SVNAuthenticationException lastException = null;
         Session session = null;
         
@@ -52,13 +61,14 @@ public class SVNJSchConnector implements ISVNConnector {
                 lastException = null;
                 break;
             } catch (SVNAuthenticationException e) {
-            	if (session != null && session.isConnected()) {
+                provider.notAccepted(credentials, e.getMessage());
+                if (session != null && session.isConnected()) {
             		DebugLog.log("DISCONNECTING: " + session);
             		session.disconnect();
             		session = null;
             	}
                 lastException = e;
-                credentials = SVNUtil.nextCredentials(provider, repository.getLocation(), e.getMessage());
+                credentials = SVNUtil.nextCredentials(provider, repository.getLocation(), realm);
             }
         }
         if (lastException != null || session == null) {
@@ -102,12 +112,12 @@ public class SVNJSchConnector implements ISVNConnector {
         }
         
 		myInputStream = new FilterInputStream(myInputStream) {
-			public void close() throws IOException {
-			}
+			public void close() {
+            }
 		};
 		myOutputStream = new FilterOutputStream(myOutputStream) {
-			public void close() throws IOException {
-			}
+			public void close() {
+            }
 		};
     }
 
