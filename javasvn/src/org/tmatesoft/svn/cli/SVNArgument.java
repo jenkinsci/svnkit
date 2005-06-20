@@ -49,6 +49,7 @@ public abstract class SVNArgument {
     public static final SVNArgument FILE = createStringArgument(new String[] { "-F" });
     public static final SVNArgument EDITOR_CMD = createStringArgument(new String[] { "--editor-cmd" });
     public static final SVNArgument STRICT = createUnaryArgument(new String[] { "--strict" });
+    public static final SVNArgument STOP_ON_COPY = createUnaryArgument(new String[] { "--stop-on-copy" });
     public static final SVNArgument NO_UNLOCK = createUnaryArgument(new String[] { "--no-unlock" });
     public static final SVNArgument RELOCATE = createUnaryArgument(new String[] { "--relocate" });
     public static final SVNArgument EOL_STYLE = createStringArgument(new String[] { "--native-eol" });
@@ -104,6 +105,7 @@ public abstract class SVNArgument {
         ourArguments.add(SVNArgument.REV_PROP);
         ourArguments.add(SVNArgument.INCREMENTAL);
         ourArguments.add(SVNArgument.XML);
+        ourArguments.add(SVNArgument.STOP_ON_COPY);
     }
 
     private static SVNArgument createStringArgument(String[] names) {

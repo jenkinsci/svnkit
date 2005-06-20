@@ -392,7 +392,8 @@ public class SVNBasicClient implements ISVNEventListener {
         return new RepositoryReference[] {new RepositoryReference(startPath, startRev), new RepositoryReference(endPath, endRev)};
     }
 
-    private SVNEntry getEntry(File path) throws SVNException {SVNEntry entry;
+    protected SVNEntry getEntry(File path) throws SVNException {
+        SVNEntry entry;
         SVNWCAccess wcAccess = createWCAccess(path);
         if (wcAccess.getTarget() != wcAccess.getAnchor()) {
             entry = wcAccess.getTarget().getEntries().getEntry("", false);
@@ -462,4 +463,5 @@ public class SVNBasicClient implements ISVNEventListener {
         public String URL;
         public long Revision;
     }
+
 }

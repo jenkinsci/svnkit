@@ -335,4 +335,13 @@ public abstract class SVNCommand {
         }
         return formatted.toString();
     }
+
+    protected static int getLinesCount(String str) {
+        int count = 0;
+        for(StringTokenizer lines = new StringTokenizer(str, "\n"); lines.hasMoreTokens();) {
+            lines.nextToken();
+            count++;
+        }
+        return count;
+    }
 }

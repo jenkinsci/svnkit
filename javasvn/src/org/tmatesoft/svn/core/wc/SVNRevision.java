@@ -107,6 +107,10 @@ public class SVNRevision {
     public static SVNRevision create(Date date) {
         return new SVNRevision(date);
     }
+
+    public boolean isLocal() {
+        return !(!isValid() || this == SVNRevision.HEAD || getNumber() >= 0 || getDate() != null);
+    }
     
     public static SVNRevision parse(String value) {
         if (value == null) {

@@ -173,13 +173,4 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
     private static String formatDate(Date date) {
         return DATE_FORMAT.format(date);
     }
-    
-    private static int getLinesCount(String str) {
-        int count = 0;
-        for(StringTokenizer lines = new StringTokenizer(str, "\n"); lines.hasMoreTokens();) {
-            lines.nextToken();
-            count++;
-        }
-        return count;
-    }
 }
