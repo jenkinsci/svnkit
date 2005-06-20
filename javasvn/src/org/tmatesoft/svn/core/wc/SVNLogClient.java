@@ -57,10 +57,6 @@ public class SVNLogClient extends SVNBasicClient {
         if (endRev < startRev) {
             SVNErrorManager.error("svn: Start revision must precede end revision (" + startRev + ":" + endRev + ")");
         }
-//        SVNNodeKind nodeKind = repos.checkPath("", endRev);
-//        if (nodeKind == SVNNodeKind.DIR) {
-//            SVNErrorManager.error("svn: URL '" + path + "' refers to a directory");
-//        }
         File tmpFile = new File(path.getParentFile(), ".svn/tmp/text-base");
         if (!tmpFile.exists()) {
             tmpFile = new File(System.getProperty("user.home"), ".javasvn");
@@ -89,10 +85,6 @@ public class SVNLogClient extends SVNBasicClient {
         File tmpFile = new File(System.getProperty("user.home"), ".javasvn");
         if (!tmpFile.exists()) {
             tmpFile.mkdirs();
-        }
-        SVNNodeKind nodeKind = repos.checkPath("", endRev);
-        if (nodeKind == SVNNodeKind.DIR) {
-            SVNErrorManager.error("svn: URL '" + url + "' refers to a directory");
         }
         SVNAnnotationGenerator generator = new SVNAnnotationGenerator(url, startRev, tmpFile);
         try {
