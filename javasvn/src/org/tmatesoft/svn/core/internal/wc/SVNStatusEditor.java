@@ -317,10 +317,9 @@ public class SVNStatusEditor implements ISVNEditor {
     private void reportStatus(SVNDirectory dir, String entryName, boolean ignoreRootEntry, boolean recursive) throws SVNException {
         SVNEntries entries = dir.getEntries();
 
-        if (!(myTarget != null && (dir == myWCAccess.getAnchor()) || "".equals(dir.getPath()))) {
-            // if we have a target -> no externals from anchor should be collected by default.
+        boolean anchorOfTarget = myTarget != null && dir == myWCAccess.getAnchor();
+        if (!anchorOfTarget) {
             SVNExternalInfo[] externals = SVNWCAccess.parseExternals(dir.getPath(), dir.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS));
-
             for (int i = 0; i < externals.length; i++) {
                 SVNExternalInfo external = externals[i];
                 myExternalsMap.put(external.getPath(), external);
