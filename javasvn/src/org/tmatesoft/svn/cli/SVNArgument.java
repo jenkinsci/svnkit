@@ -53,6 +53,8 @@ public abstract class SVNArgument {
     public static final SVNArgument RELOCATE = createUnaryArgument(new String[] { "--relocate" });
     public static final SVNArgument EOL_STYLE = createStringArgument(new String[] { "--native-eol" });
     public static final SVNArgument DRY_RUN = createUnaryArgument(new String[] { "--dry-run" });
+    public static final SVNArgument INCREMENTAL = createUnaryArgument(new String[] { "--incremental" });
+    public static final SVNArgument XML = createUnaryArgument(new String[] { "--xml" });
 
     public static SVNArgument findArgument(String name) {
         for (Iterator arguments = ourArguments.iterator(); arguments.hasNext();) {
@@ -100,6 +102,8 @@ public abstract class SVNArgument {
         ourArguments.add(SVNArgument.NO_AUTO_PROPS);
         ourArguments.add(SVNArgument.AUTO_PROPS);
         ourArguments.add(SVNArgument.REV_PROP);
+        ourArguments.add(SVNArgument.INCREMENTAL);
+        ourArguments.add(SVNArgument.XML);
     }
 
     private static SVNArgument createStringArgument(String[] names) {

@@ -36,7 +36,7 @@ import java.util.Date;
  * @author 	TMate Software Ltd.
  * @see 	ISVNDirEntryHandler
  */
-public class SVNDirEntry {
+public class SVNDirEntry implements Comparable {
 
     private String myName;
     private SVNNodeKind myKind;
@@ -45,7 +45,8 @@ public class SVNDirEntry {
     private long myFirstRevision;
     private Date myCreatedDate;
     private String myLastAuthor;
-    
+    private String myPath;
+
     /**
      * Constructs an instance of <code>SVNDirEntry</code> given a directory entry's 
      * name, kind, size, flag saying if it has properties, revision when it was last
@@ -60,8 +61,8 @@ public class SVNDirEntry {
      * @param lastAuthor 	the person who was the recent to update the entry
      */
     public SVNDirEntry(String name, SVNNodeKind kind, long size,
-            		   boolean hasProperties, long firstRevision, Date createdDate,
-					   String lastAuthor) {
+                       boolean hasProperties, long firstRevision, Date createdDate,
+                       String lastAuthor) {
         myName = name;
         myKind = kind;
         mySize = size;
@@ -69,6 +70,14 @@ public class SVNDirEntry {
         myFirstRevision = firstRevision;
         myCreatedDate = createdDate;
         myLastAuthor = lastAuthor;
+    }
+
+    public void setPath(String path) {
+        myPath = path;
+    }
+
+    public String getPath() {
+        return myPath;
     }
     
     /**
@@ -175,5 +184,16 @@ public class SVNDirEntry {
             result.append(myCreatedDate);
         }
         return result.toString();
+    }
+
+    public int compareTo(Object o) {
+        if (o == null || o.getClass() != SVNDirEntry.class) {
+            return -1;
+        }
+        String otherName = ((SVNDirEntry) o).getName();
+        if (myName == null || otherName == null) {
+            return myName == otherName ? 0 : (myName == null ? -1 : 1); 
+        }
+        return myName.compareTo(otherName);
     }
 }

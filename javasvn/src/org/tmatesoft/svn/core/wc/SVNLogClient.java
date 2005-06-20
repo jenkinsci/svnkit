@@ -1,18 +1,26 @@
 package org.tmatesoft.svn.core.wc;
 
+import org.tmatesoft.svn.core.internal.SVNAnnotationGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.SVNAnnotationGenerator;
+import org.tmatesoft.svn.core.io.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.Date;
 
 /**
  * Created by IntelliJ IDEA.
@@ -51,7 +59,6 @@ public class SVNLogClient extends SVNBasicClient {
             startRevision = SVNRevision.create(1);
         }
         SVNRepository repos = createRepository(path, null, pegRevision, endRevision, null);
-        DebugLog.log("end revision: " + endRevision);
         long endRev = getRevisionNumber(path, null, repos, endRevision);
         long startRev = getRevisionNumber(path, null, repos, startRevision);
         if (endRev < startRev) {
@@ -105,10 +112,47 @@ public class SVNLogClient extends SVNBasicClient {
     }
 
     public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
-
+        if (revision == null || !revision.isValid()) {
+            revision = SVNRevision.BASE;
+        }
+        SVNRepository repos = createRepository(path, null, pegRevision, revision, null);
+        long rev = getRevisionNumber(path, null, repos, revision);
+        doList(repos, rev, handler, recursive);
     }
 
     public void doList(String url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
+        if (revision == null || !revision.isValid()) {
+            revision = SVNRevision.HEAD;
+        }
+        SVNRepository repos = createRepository(null, url, pegRevision, revision, null);
+        long rev = getRevisionNumber(null, url, repos, revision);
+        doList(repos, rev, handler, recursive);
+    }
 
+    private void doList(SVNRepository repos, long rev, ISVNDirEntryHandler handler, boolean recursive) throws SVNException {
+        if (repos.checkPath("", rev) == SVNNodeKind.FILE) {
+            Map props = new HashMap();
+            long size = repos.getFile("", rev, props, null);
+            String name = PathUtil.tail(repos.getLocation().getPath());
+            SVNDirEntry entry = new SVNDirEntry(name, SVNNodeKind.FILE, size, false, 0, new Date(0), "");
+            handler.handleDirEntry(entry);
+        } else {
+            list(repos, "", rev, recursive, handler);
+        }
+    }
+
+    private static void list(SVNRepository repository, String path, long rev, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
+        Collection entries = new TreeSet();
+        entries = repository.getDir(path, rev, null, entries);
+
+        for (Iterator iterator = entries.iterator(); iterator.hasNext();) {
+            SVNDirEntry entry = (SVNDirEntry) iterator.next();
+            String childPath = "".equals(path) ? entry.getName() : PathUtil.append(path, entry.getName());
+            entry.setPath(childPath);
+            handler.handleDirEntry(entry);
+            if (entry.getKind() == SVNNodeKind.DIR && recursive) {
+                list(repository, childPath, rev, recursive, handler);
+            }
+        }
     }
 }
