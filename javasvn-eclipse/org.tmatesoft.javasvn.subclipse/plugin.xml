@@ -26,11 +26,11 @@
    </runtime>
 
    <requires>
+      <import plugin="org.tmatesoft.javasvn"/>
       <import plugin="org.eclipse.core.resources"/>
       <import plugin="org.eclipse.team.core"/>
       <import plugin="org.eclipse.core.runtime"/>
       <import plugin="org.eclipse.osgi"/>
-      <import plugin="org.tmatesoft.javasvn"/>
    </requires>
    <extension-point id="svnPropertyTypes" name="SVN Property Type Definitions" schema="schema/svnPropertyTypes.exsd"/>
 
@@ -216,6 +216,18 @@
          <description>
 svn:executable
 If present, make the file executable.  The value you enter for this property will
+be canonicalized to *, so just enter *.
+        </description>
+      </svnPropertyTypes>
+      <svnPropertyTypes
+            type="String"
+            fileOrFolder="file"
+            name="svn:needs-lock">
+         <description>
+svn:needs-lock
+If present, makes the file read-only unless the file is locked.  The purpose of this
+property is to serve as a communication mechanism to let the user know that they should
+lock the file before attempting to edit it.  The value you enter for this property will
 be canonicalized to *, so just enter *.
         </description>
       </svnPropertyTypes>
