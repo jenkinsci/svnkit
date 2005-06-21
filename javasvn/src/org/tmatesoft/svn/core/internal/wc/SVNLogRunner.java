@@ -287,17 +287,19 @@ public class SVNLogRunner {
                     boolean overwritten = false;
                     SVNFileType fileType = SVNFileType.getType(tmpFile);
                     boolean special = dir.getProperties(fileName, false).getPropertyValue(SVNProperty.SPECIAL) != null;
-                    if (fileType == SVNFileType.FILE) {
-                        SVNTranslator.translate(dir, fileName, SVNFileUtil.getBasePath(tmpFile), SVNFileUtil.getBasePath(tmpFile2), true, false);
-                    } else {
-                        SVNTranslator.translate(dir, fileName, fileName, SVNFileUtil.getBasePath(tmpFile2), true, false);
-                    }
-                    if (!special && !SVNFileUtil.compareFiles(tmpFile2, wcFile, null)) {
-                        try {
-                            SVNFileUtil.copy(tmpFile2, wcFile, true);
-                            overwritten = true;
-                        } catch (IOException e) {
-                            SVNErrorManager.error(0, e);
+                    if (SVNFileUtil.isWindows || !special) {
+                        if (fileType == SVNFileType.FILE ) {
+                            SVNTranslator.translate(dir, fileName, SVNFileUtil.getBasePath(tmpFile), SVNFileUtil.getBasePath(tmpFile2), true, false);
+                        } else {
+                            SVNTranslator.translate(dir, fileName, fileName, SVNFileUtil.getBasePath(tmpFile2), true, false);
+                        }
+                        if (!SVNFileUtil.compareFiles(tmpFile2, wcFile, null)) {
+                            try {
+                                SVNFileUtil.copy(tmpFile2, wcFile, true);
+                                overwritten = true;
+                            } catch (IOException e) {
+                                SVNErrorManager.error(0, e);
+                            }
                         }
                     }
                     boolean needsReadonly = dir.getProperties(fileName, false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null && entry.getLockToken() == null;
