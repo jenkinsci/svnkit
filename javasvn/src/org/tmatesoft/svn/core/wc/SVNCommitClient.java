@@ -301,8 +301,8 @@ public class SVNCommitClient extends SVNBasicClient {
         return info != null ? info : SVNCommitInfo.NULL;
     }
 
-    public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, String commitMessage, boolean recursive) throws SVNException {
-        SVNCommitPacket packet = doCollectCommitItems(paths, keepLocks, recursive);
+    public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, String commitMessage, boolean force, boolean recursive) throws SVNException {
+        SVNCommitPacket packet = doCollectCommitItems(paths, keepLocks, force, recursive);
         try {
             packet = packet.removeSkippedItems();
             return doCommit(packet, keepLocks, commitMessage);
@@ -421,9 +421,9 @@ public class SVNCommitClient extends SVNBasicClient {
         return info != null ? info : SVNCommitInfo.NULL;
     }
 
-    public SVNCommitPacket doCollectCommitItems(File[] paths, boolean keepLocks, boolean recursive) throws SVNException {
+    public SVNCommitPacket doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, boolean recursive) throws SVNException {
         Set targets = new TreeSet();
-        SVNWCAccess wcAccess = SVNCommitUtil.createCommitWCAccess(paths, recursive, targets);
+        SVNWCAccess wcAccess = SVNCommitUtil.createCommitWCAccess(paths, recursive, force, targets);
         try {
             Map lockTokens = new HashMap();
             SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targets, lockTokens, !keepLocks, recursive);

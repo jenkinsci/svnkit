@@ -41,7 +41,7 @@ public class CommitCommand extends SVNCommand {
             localPaths[i] = new File(getCommandLine().getPathAt(i));
         }
         SVNCommitClient client = new SVNCommitClient(getCredentialsProvider(), getOptions(), new SVNCommandEventProcessor(out, err, false));
-        SVNCommitInfo result = client.doCommit(localPaths, keepLocks, message, recursive);
+        SVNCommitInfo result = client.doCommit(localPaths, keepLocks, message, false, recursive);
         if (result != SVNCommitInfo.NULL) {
             out.println();
             out.println("Committed revision " + result.getNewRevision() + ".");

@@ -230,7 +230,7 @@ public class SVNClient implements SVNClientInterface {
             files[i] = new File(path[i]).getAbsoluteFile();
         }
         try {
-            return client.doCommit(files, noUnlock, message, recurse).getNewRevision();
+            return client.doCommit(files, noUnlock, message, false, recurse).getNewRevision();
         } catch (SVNException e) {
             throwException(e);
         }

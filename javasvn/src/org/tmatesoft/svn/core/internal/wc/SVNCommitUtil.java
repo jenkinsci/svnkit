@@ -101,7 +101,7 @@ public class SVNCommitUtil {
         }
     }
 
-    public static SVNWCAccess createCommitWCAccess(File[] paths, boolean recursive, Collection relativePaths) throws SVNException {
+    public static SVNWCAccess createCommitWCAccess(File[] paths, boolean recursive, boolean force, Collection relativePaths) throws SVNException {
         File wcRoot = null;
         for (int i = 0; i < paths.length; i++) {
             File path = paths[i];
@@ -171,7 +171,7 @@ public class SVNCommitUtil {
         }
         SVNDirectory anchor = new SVNDirectory(null, "", baseDir);
         SVNWCAccess baseAccess = new SVNWCAccess(anchor, anchor, "");
-        if (!recursive) {
+        if (!recursive && !force) {
             SVNStatusClient statusClient = new SVNStatusClient();
             for (Iterator targets = relativePaths.iterator(); targets.hasNext();) {
                 String targetPath = (String) targets.next();
@@ -181,7 +181,7 @@ public class SVNCommitUtil {
                         SVNStatus status = statusClient.doStatus(targetFile, false);
                         if (status != null &&
                                 (status.getContentsStatus() == SVNStatusType.STATUS_DELETED || status.getContentsStatus() == SVNStatusType.STATUS_REPLACED)) {
-                            SVNErrorManager.error("svn: Cannot non-recusively commit a directory deletion");
+                            SVNErrorManager.error("svn: Cannot non-recursively commit a directory deletion");
                         }
                     } catch (SVNException e) {
                         SVNErrorManager.error(0, e);

@@ -588,7 +588,7 @@ public class WorkingCopy {
             throws SVNException {
         SVNCommitClient myCommitClient = new SVNCommitClient(cp);
         return myCommitClient.doCommit(new File[] { wcPath }, keepLocks,
-                commitMessage, true);
+                commitMessage, false, true);
     }
 
     private static long checkout(ISVNCredentialsProvider cp, String url,
