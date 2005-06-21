@@ -107,12 +107,14 @@ public class SVNCommandLine {
     public void setPathAt(int index, String path) {
         if (index >= myPaths.size()) {
             myPaths.add(path);
+            myPegPathRevisions.add(SVNRevision.UNDEFINED.toString());
             return;
         }
         if (path != null) {
             myPaths.set(index, path);
         } else {
             myPaths.remove(index);
+            myPegPathRevisions.remove(index);
         }
     }
 
@@ -209,6 +211,7 @@ public class SVNCommandLine {
 
         if (myPathURLs.isEmpty()) {
             myPaths.add(".");
+            myPegPathRevisions.add(SVNRevision.UNDEFINED.toString());
             myPathURLs.add(".");
         }
     }

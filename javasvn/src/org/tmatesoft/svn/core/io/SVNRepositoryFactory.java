@@ -144,7 +144,7 @@ public abstract class SVNRepositoryFactory {
      */
     public static SVNRepository create(SVNRepositoryLocation location) throws SVNException {
         if (!canCreate(location)) {
-            throw new SVNException("no connection protocol implementation for " + location.toString());
+            throw new SVNException("svn: Unable to open an ra_local session to URL '" + location + "'\nsvn: No connection protocol implementation for " + location.toString());
         }
     	for(Iterator keys = myFactoriesMap.keySet().iterator(); keys.hasNext();) {
     		String key = (String) keys.next();

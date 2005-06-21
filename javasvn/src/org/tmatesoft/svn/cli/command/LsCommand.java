@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
+import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -55,7 +56,7 @@ public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
 
         SVNRevision revision = parseRevision(getCommandLine());
         SVNLogClient logClient = new SVNLogClient(getCredentialsProvider(), getOptions(), null);
-        if (getCommandLine().getURLCount() == 0 && getCommandLine().getPathCount() == 0) {
+        if (!getCommandLine().hasURLs() && !getCommandLine().hasPaths()) {
             getCommandLine().setPathAt(0, ".");
         }
         for(int i = 0; i < getCommandLine().getURLCount(); i++) {
@@ -64,6 +65,7 @@ public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
         }
         for(int i = 0; i < getCommandLine().getPathCount(); i++) {
             File path = new File(getCommandLine().getPathAt(i)).getAbsoluteFile();
+            DebugLog.log("calling ls on " + path);
             logClient.doList(path, getCommandLine().getPathPegRevision(i), revision == null || !revision.isValid() ? SVNRevision.BASE : revision, recursive, this);
         }
     }

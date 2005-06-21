@@ -207,6 +207,7 @@ public class SVNLogClient extends SVNBasicClient {
             long size = repos.getFile("", rev, props, null);
             String name = PathUtil.tail(repos.getLocation().getPath());
             SVNDirEntry entry = new SVNDirEntry(name, SVNNodeKind.FILE, size, false, 0, new Date(0), "");
+            entry.setPath(name);
             handler.handleDirEntry(entry);
         } else {
             list(repos, "", rev, recursive, handler);
