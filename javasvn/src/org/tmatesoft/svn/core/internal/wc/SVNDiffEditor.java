@@ -428,6 +428,7 @@ public class SVNDiffEditor implements ISVNEditor {
                     return;
                 }
             }
+            
             File tmpFile = null;
             try {
                 if (added || replaced) {
@@ -446,7 +447,7 @@ public class SVNDiffEditor implements ISVNEditor {
                         // display prop diff.
                         myDiffGenerator.displayPropDiff(fullPath, baseProps, propDiff, result);
                     }
-                    return;
+                    continue;
                 }
                 boolean isTextModified = dir.hasTextModifications(name, false);
                 DebugLog.log("modified: " + isTextModified);
