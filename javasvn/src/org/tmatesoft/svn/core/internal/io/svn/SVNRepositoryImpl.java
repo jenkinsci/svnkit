@@ -354,6 +354,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     count++;
                 } catch (SVNException e) {
                     read("x", buffer);
+                    read("[()]", buffer);
                     return count;
                 }
             }
