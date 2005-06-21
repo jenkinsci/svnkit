@@ -529,7 +529,18 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (!fileType.isFile()) {
             SVNErrorManager.error(0, null);
         }
-        SVNTranslator.translate(srcFile, dstPath, eols, keywordsMap, special, true);
+        if (fileType == SVNFileType.SYMLINK && revision == SVNRevision.WORKING) {
+            // base will be translated OK, but working not.
+            File tmpBaseFile = dir.getBaseFile(fileName, true);
+            try {
+                SVNTranslator.translate(srcFile, tmpBaseFile, eols, keywordsMap, special, false);
+                SVNTranslator.translate(tmpBaseFile, dstPath, eols, keywordsMap, special, true);
+            } finally {
+                tmpBaseFile.delete();
+            }
+        } else {
+            SVNTranslator.translate(srcFile, dstPath, eols, keywordsMap, special, true);
+        }
         if (executable) {
             SVNFileUtil.setExecutable(dstPath, true);
         }
@@ -538,4 +549,3 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 }
- 
