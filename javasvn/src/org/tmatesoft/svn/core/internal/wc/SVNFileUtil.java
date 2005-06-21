@@ -186,10 +186,12 @@ public class SVNFileUtil {
         if (linkTarget.startsWith("link")) {
             linkTarget = linkTarget.substring("link".length()).trim();
         }
-        DebugLog.log("running command: ln -s " + linkTarget + " " + link.getAbsolutePath());
-        execCommand(new String[] {"ln", "-s", linkTarget, link.getAbsolutePath()});
+        return createSymlink(link, linkTarget);
+    }
 
-        //Runtime.getRuntime().exec("ln -s '" + linkTarget + "' '" + link.getAbsolutePath() + "'");
+    public static boolean createSymlink(File link, String linkName) throws IOException {
+        DebugLog.log("running command: ln -s " + linkName + " " + link.getAbsolutePath());
+        execCommand(new String[] {"ln", "-s", linkName, link.getAbsolutePath()});
         return isSymlink(link);
     }
 
@@ -480,7 +482,8 @@ public class SVNFileUtil {
                     setHidden(dst, true);
                 }
             } else if (fileType == SVNFileType.SYMLINK) {
-                // special case, copy of symlink.
+                String name = getSymlinkName(file);
+                createSymlink(dst, name);
             }
         }
     }

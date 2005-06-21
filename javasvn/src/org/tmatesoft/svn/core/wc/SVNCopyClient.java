@@ -696,10 +696,16 @@ public class SVNCopyClient extends SVNBasicClient {
         } else if (srcEntry.isScheduledForAddition() || srcEntry.getURL() == null || srcEntry.isCopied()) {
             SVNErrorManager.error("svn: Cannot copy or move '" + srcPath + "': it's not in repository yet; try committing first");
         }
-        // copy wc file.
-        // TODO treat 'special' files in a special way.
+        SVNFileType srcType = SVNFileType.getType(srcPath);
         try {
-            SVNFileUtil.copy(srcPath, dstPath, false);
+            if (srcType == SVNFileType.SYMLINK) {
+                String name = SVNFileUtil.getSymlinkName(srcPath);
+                if (name != null) {
+                    SVNFileUtil.createSymlink(dstPath, name);
+                }
+            } else {
+                SVNFileUtil.copy(srcPath, dstPath, false);
+            }
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         }
