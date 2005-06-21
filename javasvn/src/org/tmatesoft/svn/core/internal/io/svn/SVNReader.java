@@ -280,9 +280,12 @@ class SVNReader {
                                 readChar(is2, ')');
                                 readChar(is2, ')');
                             } catch (IOException e1) {
-                            } catch (SVNException e2) {}
+                                //
+                            } catch (SVNException e2) {
+                                //
+                            }
                         }
-                        String message = errors.isEmpty() ? "svnserver reported an error" : ((SVNError) errors.get(0)).getMessage();
+                        String message = errors.isEmpty() ? "svnserver reported an error" : "svn: " + ((SVNError) errors.get(0)).getMessage();
                         throw new SVNException(message);
                     } else if (!"success".equals(word)) {
                         throw new SVNException("network data doesn't match template, 'success' or 'failure' expected, '" + word + "' read");
@@ -344,6 +347,7 @@ class SVNReader {
                 try {
                     is.reset();
                 } catch (IOException e1) {
+                    //
                 }
                 if (optional) {
                     if (doRead) {
@@ -404,10 +408,12 @@ class SVNReader {
 	            }
 	            out.flush();
             } catch (IOException e) {
+                //
             } finally {
                 try {
                     while(in.read() >= 0) {}
                 } catch (IOException e1) {
+                    //
                 }
             }
         }
