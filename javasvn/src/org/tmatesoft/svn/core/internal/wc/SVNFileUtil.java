@@ -175,19 +175,19 @@ public class SVNFileUtil {
         }
     }
 
-    public static boolean createSymlink(File src, File linkFile) throws IOException {
+    public static boolean createSymlink(File link, File linkName) throws IOException {
         if (isWindows) {
             return false;
         }
-        if (src.exists() || isSymlink(src)) {
-            throw new IOException("can't create symlink '" + src.getAbsolutePath() + "' : file already exists.");
+        if (link.exists() || isSymlink(link)) {
+            throw new IOException("can't create symlink '" + link.getAbsolutePath() + "' : file already exists.");
         }
-        String linkTarget = readSingleLine(linkFile);
+        String linkTarget = readSingleLine(linkName);
         if (linkTarget.startsWith("link")) {
             linkTarget = linkTarget.substring("link".length()).trim();
         }
-        Runtime.getRuntime().exec("ln -s '" + linkTarget + "' '" + src.getAbsolutePath() + "'");
-        return isSymlink(src);
+        Runtime.getRuntime().exec("ln -s '" + linkTarget + "' '" + link.getAbsolutePath() + "'");
+        return isSymlink(link);
     }
 
     public static boolean detranslateSymlink(File src, File linkFile) throws IOException, SVNException {

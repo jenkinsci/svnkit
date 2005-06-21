@@ -35,7 +35,7 @@ public class SVNTranslator {
         String eolStyle = props.getPropertyValue(SVNProperty.EOL_STYLE);
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         Map keywordsMap = null;
-        byte[] eols = getEOL(eolStyle);
+        byte[] eols;
         if (keywords != null) {
             if (expand) {
                 SVNEntry entry = dir.getEntries().getEntry(name, true);
@@ -79,7 +79,8 @@ public class SVNTranslator {
                 if (SVNFileUtil.isWindows) {
                     SVNFileUtil.copy(src, dst, true);
                 } else if (expand) {
-                    SVNFileUtil.createSymlink(src, dst);
+                    // create symlink to target, and create it at dst
+                    SVNFileUtil.createSymlink(dst, src);
                 } else {
                     SVNFileUtil.detranslateSymlink(src, dst);
                 }
@@ -176,13 +177,11 @@ public class SVNTranslator {
                         break;
                     }
                 }
-                if (keywordLength < 0) {
-                    continue;
-                } else if (keywordLength == 0) {
+                if (keywordLength == 0) {
                     if (length > 0) {
                         dst.write(keywordBuffer, 0, length);
                     }
-                } else {
+                } else if (keywordLength > 0) {
                     int from = translateKeyword(dst, keywords, keywordBuffer, keywordLength);
                     in.unread(keywordBuffer, from, length - from);
                 }
@@ -317,7 +316,9 @@ public class SVNTranslator {
                     map.put("Id", expand ? id : null);
                 }
             }
-        } catch (IOException e) {}
+        } catch (IOException e) {
+            //
+        }
         return map;
     }
 
