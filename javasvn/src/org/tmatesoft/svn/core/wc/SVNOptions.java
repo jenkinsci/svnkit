@@ -109,7 +109,6 @@ public class SVNOptions {
             while((line = reader.readLine()) != null) {
                 line = line.trim();
                 if (line.startsWith("#") || line.length() == 0) {
-                    continue;
                 } else if ("[miscellany]".equals(line)) {
                     misc = true; 
                     props = false;
@@ -157,7 +156,6 @@ public class SVNOptions {
             int i = token.indexOf('=');
             if (i < 0) {
                 result.add(new AutoProperty(token, ""));
-                continue;
             } else {
                 String name = token.substring(0, i).trim();
                 String value = i == token.length() - 1 ? "" : token.substring(i + 1).trim();
@@ -173,10 +171,42 @@ public class SVNOptions {
         if (wildcard == null) {
             return null;
         }
-        wildcard = wildcard.replaceAll("\\.", "\\\\.");
-        wildcard = wildcard.replaceAll("\\*", ".*");
-        wildcard = wildcard.replaceAll("\\?", ".");
-        return Pattern.compile(wildcard);
+        // iterate wildcard escaping all escapable chars and replacing pattern chars.
+        // metachrs: .?* !$()+<>[\]^{|}
+        StringBuffer result = new StringBuffer();
+        for(int i = 0; i < wildcard.length(); i++) {
+            char ch = wildcard.charAt(i);
+            switch (ch) {
+                case '.':
+                    result.append("\\\\.");
+                    break;
+                case '?':
+                    result.append(".");
+                    break;
+                case '*':
+                    result.append(".*");
+                    break;
+
+                case '!':
+                case '$':
+                case '(':
+                case ')':
+                case '+':
+                case '<':
+                case '>':
+                case '|':
+                case '[':
+                case ']':
+                case '\\':
+                case '^':
+                case '{':
+                case '}':
+                    result.append("\\");
+                default:
+                    result.append(ch);
+            }
+        }
+        return Pattern.compile(result.toString());
     }
 
     private static File getDefaultConfigDir() {
