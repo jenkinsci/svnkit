@@ -54,10 +54,22 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
             startRevision = SVNRevision.parse(revStr.substring(0, revStr.indexOf(':')));
             endRevision = SVNRevision.parse(revStr.substring(revStr.indexOf(':') + 1));
         } else if (revStr != null) {
-            endRevision = SVNRevision.parse(revStr);
-        } else {
-            startRevision = SVNRevision.create(1);
+            startRevision = SVNRevision.parse(revStr);
         }
+
+        if (startRevision.isValid() && !endRevision.isValid()) {
+            endRevision = startRevision;
+        } else if (!startRevision.isValid()) {
+            if (getCommandLine().hasURLs()) {
+                startRevision = SVNRevision.HEAD;
+            } else {
+                startRevision  = SVNRevision.BASE;
+            }
+            if (!endRevision.isValid()) {
+                endRevision = SVNRevision.create(0);
+            }
+        }
+
         boolean stopOnCopy = getCommandLine().hasArgument(SVNArgument.STOP_ON_COPY);
         myReportPaths = getCommandLine().hasArgument(SVNArgument.VERBOSE);
         myIsQuiet = getCommandLine().hasArgument(SVNArgument.QUIET);

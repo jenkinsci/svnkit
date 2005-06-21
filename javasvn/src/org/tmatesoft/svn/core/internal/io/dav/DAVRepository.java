@@ -287,16 +287,10 @@ class DAVRepository extends SVNRepository {
 	        		changedPath, strictNode, fullPaths);
 	        
             davHandler = new DAVLogHandler(handler); 
-			long revision = -1;
-			if (isValidRevision(startRevision) && isValidRevision(endRevision)) {
-				revision = Math.max(startRevision, endRevision);				
-			}
+			long revision = Math.max(startRevision, endRevision);;
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, false, null);
             path = PathUtil.append(info.baselineBase, info.baselinePath);
-            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, true);
-            if (response != null) {
-                myConnection.doReport(path, request, davHandler);
-            }
+            myConnection.doReport(path, request, davHandler);
 		} finally {
 			closeConnection();
 		}

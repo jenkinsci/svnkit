@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNLogEntry;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.Date;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * Created by IntelliJ IDEA.
@@ -109,11 +111,13 @@ public class SVNLogClient extends SVNBasicClient {
         if (paths == null || paths.length == 0) {
             return;
         }
-        if (endRevision == null || !endRevision.isValid()) {
-            endRevision = SVNRevision.BASE;
-        }
-        if (startRevision == null || !startRevision.isValid()) {
-            startRevision = endRevision;
+        if (startRevision.isValid() && !endRevision.isValid()) {
+            endRevision = startRevision;
+        } else if (!startRevision.isValid()) {
+            startRevision = SVNRevision.BASE;
+            if (!endRevision.isValid()) {
+                endRevision = SVNRevision.create(0);
+            }
         }
         String[] urls = new String[paths.length];
         for (int i = 0; i < paths.length; i++) {
@@ -151,30 +155,32 @@ public class SVNLogClient extends SVNBasicClient {
                 long startRev = getRevisionNumber(paths[i], baseURL, repos, startRevision);
                 long endRev = getRevisionNumber(paths[i], baseURL, repos, endRevision);
                 DebugLog.log("calling log for " + startRev + ":" + endRev);
-                repos.log(targetPaths, endRev, startRev, reportPaths, stopOnCopy, handler);
+                repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, handler);
             }
         } else {
             long startRev = getRevisionNumber(null, baseURL, repos, startRevision);
             long endRev = getRevisionNumber(null, baseURL, repos, endRevision);
             DebugLog.log("calling log for " + startRev + ":" + endRev);
-            repos.log(targetPaths, endRev, startRev, reportPaths, stopOnCopy, handler);
+            repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, handler);
         }
     }
 
     public void doLog(String url, String[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths,
                       ISVNLogEntryHandler handler) throws SVNException {
-        if (endRevision == null || !endRevision.isValid()) {
-            endRevision = SVNRevision.HEAD;
-        }
-        if (startRevision == null || !startRevision.isValid()) {
-            startRevision = endRevision;
+        if (startRevision.isValid() && !endRevision.isValid()) {
+            endRevision = startRevision;
+        } else if (!startRevision.isValid()) {
+            startRevision = SVNRevision.HEAD;
+            if (!endRevision.isValid()) {
+                endRevision = SVNRevision.create(0);
+            }
         }
         paths = paths == null || paths.length == 0 ? new String[] {""} : paths;
         url = validateURL(url);
         SVNRepository repos = createRepository(url);
         long startRev = getRevisionNumber(null, url, repos, startRevision);
         long endRev = getRevisionNumber(null, url, repos, endRevision);
-        repos.log(paths, endRev,  startRev, reportPaths, stopOnCopy, handler);
+        repos.log(paths, startRev,  endRev, reportPaths, stopOnCopy, handler);
     }
 
     public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
