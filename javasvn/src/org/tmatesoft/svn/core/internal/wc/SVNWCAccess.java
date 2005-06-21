@@ -34,15 +34,9 @@ public class SVNWCAccess implements ISVNEventListener {
     private Map myExternals;
 
     public static SVNWCAccess create(File file) throws SVNException {
-        file = file.getAbsoluteFile();
+        file = new File(SVNPathUtil.validateFilePath(file.getAbsolutePath()));
         File parentFile = file.getParentFile();
         String name = file.getName();
-        try {
-            if (file.exists()) {
-                name = file.getCanonicalFile().getName();
-            }
-        } catch (IOException e) {
-        }
         if (parentFile != null && (!parentFile.exists() || !parentFile.isDirectory())) {
             // parent doesn't exist or not a directory
             SVNErrorManager.error("svn: '" + parentFile + "' does not exist");
