@@ -261,7 +261,7 @@
                 <![CDATA[Copyright &#169; 2004-2005 TMate Software Ltd. All Rights Reserved.]]>
             </bottom>
         </javadoc>
-        <copy todir="build/doc">
+        <copy todir="build/doc" failonerror="false">
             <fileset dir="www">
                 <include name="usage.html" />
                 <include name="build.html" />
