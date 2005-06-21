@@ -344,7 +344,7 @@ public class SVNCommitUtil {
             SVNErrorManager.error("svn: Unknown entry kind for '" + path + "'");
         }
         boolean specialFile = fileType == SVNFileType.SYMLINK;
-        if (specialFile != (dir.getProperties(entry.getName(), false).getPropertyValue(SVNProperty.SPECIAL) != null)) {
+        if (specialFile != (dir.getProperties(entry.getName(), false).getPropertyValue(SVNProperty.SPECIAL) != null) && fileType != SVNFileType.NONE) {
             SVNErrorManager.error("svn: Entry '" + path + "' has unexpectedly changed special status");
         }
         boolean propConflicts;
