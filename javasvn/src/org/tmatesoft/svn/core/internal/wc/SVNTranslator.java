@@ -80,7 +80,7 @@ public class SVNTranslator {
                     SVNFileUtil.copy(src, dst, true);
                 } else if (expand) {
                     SVNFileUtil.createSymlink(src, dst);
-                } else if (!expand) {
+                } else {
                     SVNFileUtil.detranslateSymlink(src, dst);
                 }
             } catch (IOException e) {

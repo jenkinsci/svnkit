@@ -19,16 +19,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Writer;
 import java.io.Reader;
+import java.io.Writer;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.StringTokenizer;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.jcraft.jsch.HASH;
 
 public class SVNFileUtil {
 
@@ -162,12 +158,16 @@ public class SVNFileUtil {
             if (dstChannel != null) {
                 try {
                     dstChannel.close();
-                } catch (IOException e) {}
+                } catch (IOException e) {
+                    //
+                }
             }
             if (srcChannel != null) {
                 try {
                     srcChannel.close();
-                } catch (IOException e) {}
+                } catch (IOException e) {
+                    //
+                }
             }
         }
         if (safe && tmpDst != dst) {
@@ -226,7 +226,7 @@ public class SVNFileUtil {
             }
             return linkPath;
         }
-        return ls.substring(ls.lastIndexOf(" - >") + " -> ".length()).trim();
+        return ls.substring(ls.lastIndexOf(" -> ") + " -> ".length()).trim();
     }
 
     public static String computeChecksum(File file) throws SVNException {
@@ -304,7 +304,9 @@ public class SVNFileUtil {
         }
         try {
             Runtime.getRuntime().exec("attrib " + (hidden ? "+" : "-") + "H \"" + file.getAbsolutePath() + "\"");
-        } catch (Throwable th) {}
+        } catch (Throwable th) {
+            //
+        }
     }
 
     public static void deleteAll(File dir) {
@@ -338,11 +340,7 @@ public class SVNFileUtil {
             reader = new BufferedReader(new FileReader(file));
             line = reader.readLine();
         } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {}
-            }
+            closeFile(reader);
         }
         return line;
     }
@@ -375,7 +373,9 @@ public class SVNFileUtil {
         time = 1010 - (time - (time / 1000) * 1000);
         try {
             Thread.sleep(time);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+            //
+        }
     }
 
     public static String detectMimeType(File file) {
@@ -559,11 +559,7 @@ public class SVNFileUtil {
         } catch (InterruptedException e) {
             DebugLog.error(e);
         } finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-            }
-
+            closeFile(is);
         }
         return null;
     }
