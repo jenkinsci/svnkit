@@ -186,7 +186,7 @@ public class SVNFileUtil {
         if (linkTarget.startsWith("link")) {
             linkTarget = linkTarget.substring("link".length()).trim();
         }
-        DebugLog.log("running command: ln -s " + linkTarget + " " + link.getAbsolutePath()); 
+        DebugLog.log("running command: ln -s " + linkTarget + " " + link.getAbsolutePath());
         execCommand(new String[] {"ln", "-s", linkTarget, link.getAbsolutePath()});
 
         //Runtime.getRuntime().exec("ln -s '" + linkTarget + "' '" + link.getAbsolutePath() + "'");
@@ -197,7 +197,7 @@ public class SVNFileUtil {
         if (isWindows) {
             return false;
         }
-        if (!src.exists() || !isSymlink(src)) {
+        if (!isSymlink(src)) {
             throw new IOException("can't detranslate symlink '" + src.getAbsolutePath() + "' : file doesn't exists or not a symlink.");
         }
         String linkPath = getSymlinkName(src);
