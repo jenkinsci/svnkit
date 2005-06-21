@@ -599,7 +599,7 @@ public class SVNStatusEditor implements ISVNEditor {
         }
         for(StringTokenizer tokens = new StringTokenizer(ignoredProperty, "\r\n"); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
-            if (token.length() == 0) {
+            if (token.trim().length() == 0) {
                 continue;
             }
             if (SVNOptions.compileNamePatter(token).matcher(name).matches()) {

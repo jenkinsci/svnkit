@@ -177,9 +177,6 @@ public class SVNOptions {
         for(int i = 0; i < wildcard.length(); i++) {
             char ch = wildcard.charAt(i);
             switch (ch) {
-                case '.':
-                    result.append("\\\\.");
-                    break;
                 case '?':
                     result.append(".");
                     break;
@@ -187,6 +184,7 @@ public class SVNOptions {
                     result.append(".*");
                     break;
 
+                case '.':
                 case '!':
                 case '$':
                 case '(':
