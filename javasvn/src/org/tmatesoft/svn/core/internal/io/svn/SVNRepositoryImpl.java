@@ -576,7 +576,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
         DebugLog.log("root: " + root);
         DebugLog.log("full root: " + myFullRoot);
-        setRepositoryCredentials(uuid, root);
+        setRepositoryCredentials(uuid, root, myFullRoot);
     }
 
     private void openConnection() throws SVNException {

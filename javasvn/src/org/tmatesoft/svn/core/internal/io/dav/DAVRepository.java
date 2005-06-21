@@ -294,10 +294,7 @@ class DAVRepository extends SVNRepository {
 		} finally {
 			closeConnection();
 		}
-        if (davHandler != null) {
-            return davHandler.getEntriesCount();
-        }
-        return -1;
+        return davHandler.getEntriesCount();
     }
     
     private void openConnection() throws SVNException {
@@ -524,10 +521,11 @@ class DAVRepository extends SVNRepository {
     	return DAVUtil.getCanonicalPath(getLocation().getPath(), null).toString();
     }
 
-    void updateCredentials(String uuid, String root) {
+    void updateCredentials(String uuid, String root, String rootURL) throws SVNException {
+        rootURL = rootURL == null ? getRepositoryRootURL(false) : rootURL;
         root = root == null ? getRepositoryRoot() : root;
         uuid = uuid == null ? getRepositoryUUID() : uuid;
-        setRepositoryCredentials(uuid, root);
+        setRepositoryCredentials(uuid, root, rootURL);
     }
 
     public SVNLock getLock(String path) throws SVNException {

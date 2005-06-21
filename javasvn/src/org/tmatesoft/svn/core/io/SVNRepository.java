@@ -12,16 +12,15 @@
 
 package org.tmatesoft.svn.core.io;
 
-import java.io.IOException;
+import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.io.SVNAnnotate;
+import org.tmatesoft.svn.util.DebugLog;
+
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Map;
-
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.internal.io.SVNAnnotate;
-import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * The abstract class <code>SVNRepository</code> declares all the basic
@@ -106,20 +105,21 @@ public abstract class SVNRepository {
     private int myLockCount;
     private Thread myLocker;
     private ISVNCredentialsProvider myUserCredentialsProvider;
-	
+    private String myRepositoryRootURL;
+
     /**
-	 * Constructs an <code>SVNRepository</code> instance (representing a 
-	 * Repository Access Layer session to work with a repository)
-	 * given the Subversion repository location as an
-	 * <code>SVNRepositoryLocation</code> object.   
-	 * 
-	 * @param location 		an <code>SVNRepositoryLocation</code> object that 
-	 * 						incapsulates the repository location (that is 
-	 * 						a <code>URL</code> pointing to a repository
-	 * 						tree node - not necessarily the repository root
-	 * 						directory which it was installed to).
-	 * @see 				SVNRepositoryLocation
-	 */
+     * Constructs an <code>SVNRepository</code> instance (representing a
+     * Repository Access Layer session to work with a repository)
+     * given the Subversion repository location as an
+     * <code>SVNRepositoryLocation</code> object.
+     *
+     * @param location 		an <code>SVNRepositoryLocation</code> object that
+     * 						incapsulates the repository location (that is
+     * 						a <code>URL</code> pointing to a repository
+     * 						tree node - not necessarily the repository root
+     * 						directory which it was installed to).
+     * @see 				SVNRepositoryLocation
+     */
     protected SVNRepository(SVNRepositoryLocation location) {
         myLocation = location;
     }
@@ -200,6 +200,13 @@ public abstract class SVNRepository {
         return myRepositoryRoot;
     }
 
+    public String getRepositoryRootURL(boolean forceConnection) throws SVNException {
+        if (forceConnection && myRepositoryRootURL == null) {
+            testConnection();
+        }
+        return myRepositoryRootURL;
+    }
+
     /**
 	 * Sets a provider that will contain user credentials for accessing a repository.
 	 * 
@@ -250,11 +257,12 @@ public abstract class SVNRepository {
      * @see 			#getRepositoryUUID()
      * @see				org.tmatesoft.svn.util.DebugLog
      */
-    protected void setRepositoryCredentials(String uuid, String root) {
+    protected void setRepositoryCredentials(String uuid, String root, String rootURL) {
         if (uuid != null && root != null) {
             myRepositoryUUID = uuid;
             myRepositoryRoot = root;
-            DebugLog.log("REPOSITORY: " + uuid + ":" + root);
+            myRepositoryRootURL = rootURL;
+            DebugLog.log("REPOSITORY: " + uuid + ":" + root + " <" + rootURL + ">");
         }
     }
     
@@ -586,9 +594,9 @@ public abstract class SVNRepository {
             }
             public OutputStream handleDiffWindow(String token, SVNDiffWindow delta) {
             	return new OutputStream() {
-                    public void write(byte[] b, int o, int l) throws IOException {
+                    public void write(byte[] b, int o, int l) {
                     }
-                    public void write(int r) throws IOException {
+                    public void write(int r) {
                     }
                 };
             }
@@ -619,7 +627,7 @@ public abstract class SVNRepository {
      */
     public Collection getDir(String path, long revision, Map properties, Collection dirEntries) throws SVNException {
         final Collection result = dirEntries != null ? dirEntries : new LinkedList();
-        ISVNDirEntryHandler handler = null;        
+        ISVNDirEntryHandler handler;
         handler = new ISVNDirEntryHandler() {
             public void handleDirEntry(SVNDirEntry dirEntry) {
                 result.add(dirEntry);

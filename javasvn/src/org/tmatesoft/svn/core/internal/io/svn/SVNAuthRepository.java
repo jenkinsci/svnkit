@@ -58,7 +58,11 @@ public class SVNAuthRepository extends SVNRepository {
         if (credentials != null && provider != null) {
             provider.accepted(credentials);
         }
-        setRepositoryCredentials(myDelegate.getRepositoryUUID(), myDelegate.getRepositoryRoot());
+        try {
+            setRepositoryCredentials(myDelegate.getRepositoryUUID(), myDelegate.getRepositoryRoot(), myDelegate.getRepositoryRootURL(false));
+        } catch (SVNException e) {
+            // will never happen
+        }
     }
     private void notAccept(ISVNCredentialsProvider provider, ISVNCredentials credentials, String msg) {
         if (credentials != null && provider != null) {
