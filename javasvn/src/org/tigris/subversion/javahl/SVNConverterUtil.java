@@ -11,6 +11,7 @@ import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNLogEntryPath;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -182,5 +183,35 @@ public class SVNConverterUtil {
         }
         return new LogMessage(logEntry.getMessage(), logEntry.getDate(),
                 logEntry.getRevision(), logEntry.getAuthor(), cp);
+    }
+
+    public static CommitItem[] getCommitItems(SVNCommitItem[] commitables) {
+        if(commitables == null){
+            return null;
+        }
+        CommitItem[] items = new CommitItem[commitables.length];
+        for (int i = 0; i < items.length; i++) {
+            SVNCommitItem sc = commitables[i];
+            if(sc == null){
+                items[i] = null;
+            }else{
+                int stateFlag = 0;
+                if (sc.isDeleted()) {
+                    stateFlag += CommitItemStateFlags.Delete; 
+                } else if (sc.isAdded()) {
+                    stateFlag += CommitItemStateFlags.Add; 
+                } else if (sc.isContentsModified()) {
+                    stateFlag += CommitItemStateFlags.TextMods; 
+                } 
+                if (sc.isPropertiesModified()) {
+                    stateFlag += CommitItemStateFlags.PropMods; 
+                }
+                if(sc.isCopied()){
+                    stateFlag += CommitItemStateFlags.IsCopy; 
+                }
+                items[i] = new CommitItem(sc.getPath(), getNodeKind(sc.getKind()), stateFlag, sc.getURL(), sc.getCopyFromURL(), sc.getRevision().getNumber()); 
+            }
+        }
+        return items;
     }
 }

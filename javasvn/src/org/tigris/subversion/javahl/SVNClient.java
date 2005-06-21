@@ -6,7 +6,7 @@ package org.tigris.subversion.javahl;
 import java.io.File;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
@@ -20,10 +20,12 @@ import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
+import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -50,6 +52,7 @@ public class SVNClient implements SVNClientInterface {
     private ISVNEventListener mySVNEventListener;
     private Notify myNotify;
     private Notify2 myNotify2;
+    private CommitMessage myMessageHandler;
     
     public void dispose() {
         SVNJSchSession.shutdown();
@@ -76,7 +79,7 @@ public class SVNClient implements SVNClientInterface {
         DebugLog.log("STATUS PARAMS: "+ descend + "," + onServer + "," + getAll + "," + noIgnore);
         DebugLog.log("IO fetching status for: " + path);
        
-        final Collection statuses = new LinkedList();
+        final Collection statuses = new ArrayList();
         SVNStatusClient stClient = createSVNStatusClient();
         try {
             stClient.doStatus(new File(path).getAbsoluteFile(), descend, onServer, getAll, noIgnore, !ignoreExternals, new ISVNStatusHandler(){
@@ -93,7 +96,7 @@ public class SVNClient implements SVNClientInterface {
     public DirEntry[] list(String url, Revision revision, boolean recurse) throws ClientException {
         return list(url, revision, null, recurse);
     }
-
+    
     public DirEntry[] list(String url, Revision revision, Revision pegRevision, boolean recurse) throws ClientException {
         final TreeSet allEntries = new TreeSet(new Comparator() {
             public int compare(Object o1, Object o2) {
@@ -166,7 +169,7 @@ public class SVNClient implements SVNClientInterface {
 
     public LogMessage[] logMessages(String path, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, long limit) throws ClientException {
         SVNLogClient client = createSVNLogClient();
-        final Collection entries = new LinkedList();
+        final Collection entries = new ArrayList();
         try {
             client.doLog(
                     new File[]{new File(path).getAbsoluteFile()},
@@ -215,12 +218,11 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void commitMessageHandler(CommitMessage messageHandler) {
-        // TODO Auto-generated method stub
-        
+        myMessageHandler = messageHandler;
     }
 
     public void remove(String[] path, String message, boolean force) throws ClientException {
-        // XXX: force?
+        // XXX: force ?
         SVNCommitClient client = createSVNCommitClient();
         try {
             client.doDelete(path, message);
@@ -230,8 +232,12 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void revert(String path, boolean recurse) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        SVNWCClient client = createSVNWCClient();
+        try {
+            client.doRevert(new File(path).getAbsoluteFile(), recurse);
+        } catch (SVNException e) {
+            throwException(e);
+        }
     }
 
     public void add(String path, boolean recurse) throws ClientException {
@@ -283,6 +289,14 @@ public class SVNClient implements SVNClientInterface {
             files[i] = new File(path[i]).getAbsoluteFile();
         }
         try {
+            if(myMessageHandler != null){
+                client.setCommitHander(new ISVNCommitHandler(){
+                    public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) throws SVNException {
+                        CommitItem[] items = SVNConverterUtil.getCommitItems(commitables);
+                        return myMessageHandler.getLogMessage(items);
+                    }
+                });
+            }
             return client.doCommit(files, noUnlock, message, false, recurse).getNewRevision();
         } catch (SVNException e) {
             throwException(e);
