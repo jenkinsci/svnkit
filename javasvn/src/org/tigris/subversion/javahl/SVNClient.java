@@ -5,13 +5,19 @@ package org.tigris.subversion.javahl;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
+import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
+import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.SVNCancelException;
+import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLock;
+import org.tmatesoft.svn.core.io.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
@@ -21,6 +27,7 @@ import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNOptions;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -84,18 +91,52 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public DirEntry[] list(String url, Revision revision, boolean recurse) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return list(url, revision, null, recurse);
     }
 
     public DirEntry[] list(String url, Revision revision, Revision pegRevision, boolean recurse) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        final TreeSet allEntries = new TreeSet(new Comparator() {
+            public int compare(Object o1, Object o2) {
+                DirEntry d1 = (DirEntry) o1;
+                DirEntry d2 = (DirEntry) o2;
+                if (d1 == null || d1.getPath() == null) {
+                    return d2 == null || d2.getPath() == null ? 0 : -1;
+                } else if (d2 == null || d2.getPath() == null) {
+                    return 1;
+                }                
+                return d1.getPath().toLowerCase().compareTo(d2.getPath().toLowerCase());
+            }
+        });
+        SVNLogClient client = createSVNLogClient();
+        DebugLog.log("LIST is called for " + url);
+        try {
+            client.doList(url, SVNConverterUtil.getSVNRevision(pegRevision),
+                    SVNConverterUtil.getSVNRevision(revision), recurse, new ISVNDirEntryHandler(){
+                        public void handleDirEntry(SVNDirEntry dirEntry) {
+                            allEntries.add(SVNConverterUtil.createDirEntry(dirEntry));
+                        }
+            });
+        } catch (SVNException e) {
+            throwException(e);
+        }
+        return (DirEntry[]) allEntries.toArray(new DirEntry[allEntries.size()]);
     }
 
-    public Status singleStatus(String path, boolean onServer) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+    public Status singleStatus(final String path, boolean onServer) throws ClientException {
+        if (path == null) {
+            return null;
+        }
+        DebugLog.log("IO fetching 'single' status for: " + path);
+        
+        SVNStatusClient client = createSVNStatusClient();
+        SVNSingleStatusRetriever retriever = new SVNSingleStatusRetriever();
+        try {
+            client.doStatus(new File(path).getAbsoluteFile(), false, onServer, false, false, false,
+                    retriever);
+        } catch (SVNException e) {
+            throwException(e);
+        }
+        return SVNConverterUtil.createStatus(path, retriever.getStatus());
     }
 
     public void username(String username) {
@@ -112,23 +153,35 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public LogMessage[] logMessages(String path, Revision revisionStart, Revision revisionEnd) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return logMessages(path, revisionStart, revisionEnd, true, false, 0);
     }
 
     public LogMessage[] logMessages(String path, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return logMessages(path, revisionStart, revisionEnd, stopOnCopy, false, 0);
     }
 
     public LogMessage[] logMessages(String path, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return logMessages(path, revisionStart, revisionEnd, stopOnCopy, discoverPath, 0);
     }
 
     public LogMessage[] logMessages(String path, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, long limit) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        SVNLogClient client = createSVNLogClient();
+        final Collection entries = new LinkedList();
+        try {
+            client.doLog(
+                    new File[]{new File(path).getAbsoluteFile()},
+                    SVNConverterUtil.getSVNRevision(revisionStart),
+                    SVNConverterUtil.getSVNRevision(revisionEnd),
+                    stopOnCopy, discoverPath, limit, new ISVNLogEntryHandler(){
+                        public void handleLogEntry(SVNLogEntry logEntry) {
+                            entries.add(SVNConverterUtil.createLogMessage(logEntry));
+                        }
+                    }
+                    );
+        } catch (SVNException e) {
+            throwException(e);
+        }
+        return (LogMessage[]) entries.toArray(new LogMessage[entries.size()]);
     }
 
     public long checkout(String moduleName, String destPath, Revision revision, Revision pegRevision, boolean recurse, boolean ignoreExternals) throws ClientException {
@@ -537,6 +590,9 @@ public class SVNClient implements SVNClientInterface {
     }
     
     protected SVNOptions getSVNOptions(){
+        if(myConfigDir == null){
+            return new SVNOptions();
+        }
         return new SVNOptions(new File(myConfigDir));
     }
     
@@ -604,6 +660,10 @@ public class SVNClient implements SVNClientInterface {
     
     protected SVNCopyClient createSVNCopyClient(){
         return new SVNCopyClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
+    }
+    
+    protected SVNLogClient createSVNLogClient(){
+        return new SVNLogClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
     }
     
     private static void throwException(SVNException e) throws ClientException {

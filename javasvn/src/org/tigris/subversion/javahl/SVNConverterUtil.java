@@ -4,9 +4,12 @@
 package org.tigris.subversion.javahl;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
-import org.tigris.subversion.javahl.Notify.Action;
+import org.tmatesoft.svn.core.io.SVNDirEntry;
+import org.tmatesoft.svn.core.io.SVNLogEntry;
+import org.tmatesoft.svn.core.io.SVNLogEntryPath;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -112,6 +115,9 @@ public class SVNConverterUtil {
     }
     
     public static SVNRevision getSVNRevision(Revision r){
+        if(r == null){
+            return SVNRevision.UNDEFINED;
+        }
         return (SVNRevision)REVISION_KIND_CONVERSION_MAP.get(new Integer(r.getKind()));
     }
     
@@ -140,5 +146,41 @@ public class SVNConverterUtil {
             return -1;
         }
         return ((Integer)status).intValue();
+    }
+
+    public static DirEntry createDirEntry(SVNDirEntry dirEntry) {
+        if(dirEntry == null){
+            return null;
+        }
+        return new DirEntry(
+                dirEntry.getName(),
+                getNodeKind(dirEntry.getKind()),
+                dirEntry.size(),
+                dirEntry.hasProperties(),
+                dirEntry.getRevision(),
+                dirEntry.getDate().getTime(),
+                dirEntry.getAuthor()
+                );
+    }
+
+    public static LogMessage createLogMessage(SVNLogEntry logEntry) {
+        if(logEntry == null){
+            return null;
+        }
+        Map cpaths = logEntry.getChangedPaths();
+        ChangePath[] cp = new ChangePath[cpaths.size()];
+        int i = 0;
+        for (Iterator iter = cpaths.keySet().iterator(); iter.hasNext();) {
+            String path = (String) iter.next();
+            SVNLogEntryPath entryPath = (SVNLogEntryPath)cpaths.get(path);
+            if(entryPath == null){
+                cp[i] = null;
+            }else{
+                cp[i] = new ChangePath(path, entryPath.getCopyRevision(), entryPath.getCopyPath(), entryPath.getType());
+            }
+            i++;
+        }
+        return new LogMessage(logEntry.getMessage(), logEntry.getDate(),
+                logEntry.getRevision(), logEntry.getAuthor(), cp);
     }
 }
