@@ -303,10 +303,10 @@ public class SVNCommitClient extends SVNBasicClient {
 
     public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, String commitMessage, boolean recursive) throws SVNException {
         SVNCommitPacket packet = doCollectCommitItems(paths, keepLocks, recursive);
-        return doCommit(packet, keepLocks, commitMessage, recursive);
+        return doCommit(packet, keepLocks, commitMessage);
     }
 
-    public SVNCommitInfo doCommit(SVNCommitPacket commitPacket, boolean keepLocks, String commitMessage, boolean recursive) throws SVNException {
+    public SVNCommitInfo doCommit(SVNCommitPacket commitPacket, boolean keepLocks, String commitMessage) throws SVNException {
         Collection tmpFiles = null;
         SVNCommitInfo info = null;
         ISVNEditor commitEditor = null;
