@@ -228,9 +228,15 @@ public class SVNCopyClient extends SVNBasicClient {
         return url2urlCopy(srcURL, srcRevNumber, dstURL, commitMessage, move);
     }
 
-    // schedules unscheduled files at 'dst path' for addition with history.
-    // if move, schedules files at 'src path' for deletion.
-    public void doVirtualCopy(File srcPath, File dstPath, boolean move) {
+    // for dirs:
+    // if move, and src is missing, and dst looks like copied from src (url matches) -> copy dst back to src.
+    // if move -> schedule src for deletion.
+    // schedules 'dst path' for addition with history.
+
+    // for files:
+    // if move, and src is missing, and dst looks like copied from src  -> just shcedule src for deletion.
+    // schedules 'dst path' for addition with history.
+    public void doVirtualCopy(File srcPath, File dstPath, boolean move) throws SVNException {
 
     }
 
