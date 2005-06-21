@@ -383,6 +383,8 @@ public class SVNLogRunner {
             if (entryInParent != null) {
                 entryInParent.unschedule();
                 entryInParent.setCopied(false);
+                entryInParent.setCopyFromRevision(-1);
+                entryInParent.setCopyFromURL(null);
                 entryInParent.setDeleted(false);
             }
             parentDir.getEntries().save(false);
