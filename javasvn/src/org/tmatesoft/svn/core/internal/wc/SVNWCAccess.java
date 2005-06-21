@@ -34,7 +34,7 @@ public class SVNWCAccess implements ISVNEventListener {
     private Map myExternals;
 
     public static SVNWCAccess create(File file) throws SVNException {
-        file = new File(SVNPathUtil.validateFilePath(file.getAbsolutePath()));
+        file = new File(file.getAbsolutePath());
         File parentFile = file.getParentFile();
         String name = file.getName();
         if (parentFile != null && (!parentFile.exists() || !parentFile.isDirectory())) {

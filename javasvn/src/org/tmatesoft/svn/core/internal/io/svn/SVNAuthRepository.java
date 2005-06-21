@@ -236,14 +236,14 @@ public class SVNAuthRepository extends SVNRepository {
         }
     }
 
-    public int log(String[] targetPaths, long startRevision, long endRevision, boolean changedPath, boolean strictNode, ISVNLogEntryHandler handler)
+    public long log(String[] targetPaths, long startRevision, long endRevision, boolean changedPath, boolean strictNode, long limit, ISVNLogEntryHandler handler)
             throws SVNException {
         ISVNCredentials credentials = null;
         ISVNCredentialsProvider provider = initProvider();
         while(true) {
             try {
                 myDelegate.setCredentials(credentials);
-                int count = myDelegate.log(targetPaths, startRevision, endRevision, changedPath,  strictNode, handler);
+                long count = myDelegate.log(targetPaths, startRevision, endRevision, changedPath,  strictNode, limit, handler);
                 accept(provider, credentials);
                 return count;
             } catch (SVNAuthenticationException e) {

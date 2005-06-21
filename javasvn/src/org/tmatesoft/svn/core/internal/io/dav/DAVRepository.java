@@ -256,8 +256,8 @@ class DAVRepository extends SVNRepository {
 		}
     }
     
-    public int log(String[] targetPaths, long startRevision, long endRevision,
-            boolean changedPath, boolean strictNode, ISVNLogEntryHandler handler) throws SVNException {
+    public long log(String[] targetPaths, long startRevision, long endRevision,
+            boolean changedPath, boolean strictNode, long limit, ISVNLogEntryHandler handler) throws SVNException {
         if (targetPaths == null || targetPaths.length == 0) {
             return 0;
         }
@@ -284,7 +284,7 @@ class DAVRepository extends SVNRepository {
 				DebugLog.log("LOG: log path: " + fullPaths[i]);
 			}
 	        StringBuffer request = DAVLogHandler.generateLogRequest(null, startRevision, endRevision,
-	        		changedPath, strictNode, fullPaths);
+	        		changedPath, strictNode, limit, fullPaths);
 	        
             davHandler = new DAVLogHandler(handler); 
 			long revision = Math.max(startRevision, endRevision);;

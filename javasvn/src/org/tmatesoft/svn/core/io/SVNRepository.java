@@ -530,7 +530,11 @@ public abstract class SVNRepository {
      * @see 					ISVNLogEntryHandler
      * @see 					SVNLogEntry
      */
-    public abstract int log(String[] targetPaths, long startRevision, long endRevision, boolean changedPath, boolean strictNode,
+    public long log(String[] targetPaths, long startRevision, long endRevision, boolean changedPath, boolean strictNode,
+            ISVNLogEntryHandler handler) throws SVNException {
+        return log(targetPaths, startRevision, endRevision,changedPath,strictNode, 0, handler);
+    }
+    public abstract long log(String[] targetPaths, long startRevision, long endRevision, boolean changedPath, boolean strictNode, long limit,
             ISVNLogEntryHandler handler) throws SVNException;
     
     /**

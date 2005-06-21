@@ -88,14 +88,14 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
                 targets.add(getCommandLine().getPathAt(i));
             }
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);
-            logClient.doLog(url, paths, startRevision ,endRevision, stopOnCopy, myReportPaths, this);
+            logClient.doLog(url, paths, startRevision ,endRevision, stopOnCopy, myReportPaths, 0, this);
         } else if (getCommandLine().hasPaths()) {
             Collection targets = new ArrayList();
             for(int i = 0; i < getCommandLine().getPathCount(); i++) {
                 targets.add(new File(getCommandLine().getPathAt(i)).getAbsoluteFile());
             }
             File[] paths = (File[]) targets.toArray(new File[targets.size()]);
-            logClient.doLog(paths, startRevision ,endRevision, stopOnCopy, myReportPaths, this);
+            logClient.doLog(paths, startRevision ,endRevision, stopOnCopy, myReportPaths, 0, this);
         }
         DebugLog.log(buffer.toString());
         if (myHasLogEntries) {

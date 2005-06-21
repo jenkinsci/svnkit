@@ -309,15 +309,15 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public int log(String[] targetPaths, long startRevision, long endRevision, boolean changedPaths, boolean strictNode, ISVNLogEntryHandler handler)
+    public long log(String[] targetPaths, long startRevision, long endRevision, boolean changedPaths, boolean strictNode, long limit, ISVNLogEntryHandler handler)
             throws SVNException {
-        int count = 0;
+        long count = 0;
         try {
             openConnection();
             Object[] buffer = new Object[] { "log", getRepositoryPaths(targetPaths), getRevisionObject(startRevision), getRevisionObject(endRevision),
-                    Boolean.valueOf(changedPaths), Boolean.valueOf(strictNode) };
+                        Boolean.valueOf(changedPaths), Boolean.valueOf(strictNode), limit > 0 ? new Long(limit) : null};
 
-            write("(w((*s)(n)(n)ww))", buffer);
+            write("(w((*s)(n)(n)wwn))", buffer);
             authenticate();
             while (true) {
                 try {
@@ -343,18 +343,22 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         }
                     }
                     read(")N(?S)(?S)(?S))", buffer);
+                    count++;
                     if (handler != null) {
                         long revision = SVNReader.getLong(buffer, 0);
                         String author = SVNReader.getString(buffer, 1);
                         Date date = SVNReader.getDate(buffer, 2);
                         String message = SVNReader.getString(buffer, 3);
                         // remove all
-                        handler.handleLogEntry(new SVNLogEntry(changedPathsMap, revision, author, date, message));
+                        if (!(limit > 0 && count > limit)) {
+                            handler.handleLogEntry(new SVNLogEntry(changedPathsMap, revision, author, date, message));
+                        }
                     }
-                    count++;
                 } catch (SVNException e) {
                     read("x", buffer);
-                    read("[()]", buffer);
+                    if (limit <= 0 || (limit > 0 && count <= limit)) {
+                        read("[()]", buffer);
+                    }
                     return count;
                 }
             }

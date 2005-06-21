@@ -106,7 +106,7 @@ public class SVNLogClient extends SVNBasicClient {
         }
     }
 
-    public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths,
+    public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit,
                       ISVNLogEntryHandler handler) throws SVNException {
         if (paths == null || paths.length == 0) {
             return;
@@ -155,17 +155,17 @@ public class SVNLogClient extends SVNBasicClient {
                 long startRev = getRevisionNumber(paths[i], baseURL, repos, startRevision);
                 long endRev = getRevisionNumber(paths[i], baseURL, repos, endRevision);
                 DebugLog.log("calling log for " + startRev + ":" + endRev);
-                repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, handler);
+                repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, handler);
             }
         } else {
             long startRev = getRevisionNumber(null, baseURL, repos, startRevision);
             long endRev = getRevisionNumber(null, baseURL, repos, endRevision);
             DebugLog.log("calling log for " + startRev + ":" + endRev);
-            repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, handler);
+            repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, handler);
         }
     }
 
-    public void doLog(String url, String[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths,
+    public void doLog(String url, String[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit,
                       ISVNLogEntryHandler handler) throws SVNException {
         if (startRevision.isValid() && !endRevision.isValid()) {
             endRevision = startRevision;
@@ -180,7 +180,7 @@ public class SVNLogClient extends SVNBasicClient {
         SVNRepository repos = createRepository(url);
         long startRev = getRevisionNumber(null, url, repos, startRevision);
         long endRev = getRevisionNumber(null, url, repos, endRevision);
-        repos.log(paths, startRev,  endRev, reportPaths, stopOnCopy, handler);
+        repos.log(paths, startRev,  endRev, reportPaths, stopOnCopy, limit, handler);
     }
 
     public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
