@@ -35,12 +35,11 @@ public class UpdateCommand extends SVNCommand {
             path = getCommandLine().getPathAt(i);
             DebugLog.log("updating path: " + path);
 
-            long revNumber = parseRevision(getCommandLine(), null, null);
-            SVNRevision revision = SVNRevision.HEAD;
-            if (revNumber >= 0) {
-                revision = SVNRevision.create(revNumber);
+            SVNRevision revision = parseRevision(getCommandLine());
+            if (!revision.isValid()) {
+                revision = SVNRevision.HEAD;
             }
-            SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), 
+            SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(),
                     new SVNCommandEventProcessor(out, err, false));
             
             File file = new File(path).getAbsoluteFile();

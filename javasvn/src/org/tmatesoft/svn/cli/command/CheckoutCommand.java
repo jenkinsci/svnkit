@@ -38,16 +38,19 @@ public class CheckoutCommand extends SVNCommand {
             path = new File("", PathUtil.decode(PathUtil.tail(url))).getAbsolutePath();
         }
 
-        long revision = parseRevision(getCommandLine(), null, null);
+        SVNRevision revision = parseRevision(getCommandLine());
+        if (!revision.isValid()) {
+            revision = SVNRevision.HEAD;
+        }
         SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), getOptions(),
                 new SVNCommandEventProcessor(out, err, true));
         if (getCommandLine().getURLCount() == 1) {
-            updater.doCheckout(url, new File(path), SVNRevision.UNDEFINED, SVNRevision.create(revision), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+            updater.doCheckout(url, new File(path), SVNRevision.UNDEFINED, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
         } else {
             for(int i = 0; i < getCommandLine().getURLCount(); i++) {
                 String curl = getCommandLine().getURL(i);
                 File dstPath = new File(path, PathUtil.decode(PathUtil.tail(curl)));
-                updater.doCheckout(url, dstPath, SVNRevision.UNDEFINED, SVNRevision.create(revision), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+                updater.doCheckout(url, dstPath, SVNRevision.UNDEFINED, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             }
         }
 	}

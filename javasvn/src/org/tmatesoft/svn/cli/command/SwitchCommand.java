@@ -31,10 +31,9 @@ public class SwitchCommand extends SVNCommand {
         String url = getCommandLine().getURL(0);
         String absolutePath = getCommandLine().getPathAt(0);
 
-        long revNumber = parseRevision(getCommandLine(), null, null);
-        SVNRevision revision = SVNRevision.HEAD;
-        if (revNumber >= 0) {
-            revision = SVNRevision.create(revNumber);
+        SVNRevision revision = parseRevision(getCommandLine());
+        if (!revision.isValid()) {
+            revision = SVNRevision.HEAD;
         }
         SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false, false));
         try {

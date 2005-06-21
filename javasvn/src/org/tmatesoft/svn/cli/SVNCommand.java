@@ -12,31 +12,20 @@
 
 package org.tmatesoft.svn.cli;
 
+import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.SVNOptions;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
+
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
-
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNStatus;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.wc.SVNOptions;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -63,10 +52,6 @@ public abstract class SVNCommand {
 
     public abstract void run(PrintStream out, PrintStream err) throws SVNException;
 
-    protected ISVNWorkspace createWorkspace(String absolutePath) throws SVNException {
-        return createWorkspace(absolutePath, true);
-    }
-    
     protected SVNOptions getOptions() {
         String dir = (String) getCommandLine().getArgumentValue(SVNArgument.CONFIG_DIR);
         if (dir == null) {
@@ -75,20 +60,6 @@ public abstract class SVNCommand {
         return new SVNOptions(new File(dir));
     }
 
-    protected ISVNWorkspace createWorkspace(String absolutePath, boolean root) throws SVNException {
-        ISVNWorkspace ws = SVNUtil.createWorkspace(absolutePath, root);
-        //ws.setCredentials(myUserName, myPassword);
-        ws.setCredentials(new SVNCommandLineCredentialsProvider(myUserName, myPassword, myIsStoreCreds));
-        return ws;
-    }
-
-    protected final SVNRepository createRepository(String url) throws SVNException {
-        SVNRepository repository = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-        repository.setCredentialsProvider(new SVNCommandLineCredentialsProvider(myUserName, myPassword, myIsStoreCreds));
-        //repository.setCredentialsProvider(new SVNSimpleCredentialsProvider(myUserName, myPassword));
-        return repository;
-    }
-    
     protected ISVNCredentialsProvider getCredentialsProvider() {
         return new SVNCommandLineCredentialsProvider(myUserName, myPassword, myIsStoreCreds);
     }
@@ -118,124 +89,36 @@ public abstract class SVNCommand {
             if (clazz != null) {
                 return (SVNCommand) clazz.newInstance();
             }
-        } catch (Throwable th) {}
+        } catch (Throwable th) {
+            //
+        }
         return null;
     }
 
-    protected String convertPath(String homePath, ISVNWorkspace ws, String path) throws IOException {
-        if ("".equals(homePath)) {
-            homePath = ".";
-        }
-        String absolutePath = SVNUtil.getAbsolutePath(ws, path);
-        String absoluteHomePath = new File(homePath).getCanonicalPath();
-        if (".".equals(homePath) || new File(homePath).isAbsolute()) {
-            homePath = "";
-        }
-        String relativePath = absolutePath.substring(absoluteHomePath.length());
-        String result = PathUtil.append(homePath, relativePath);
-        result = result.replace(File.separatorChar, '/');
-        result = PathUtil.removeLeadingSlash(result);
-        result = PathUtil.removeTrailingSlash(result);
-        result = result.replace('/', File.separatorChar);
-
-        if ("".equals(result)) {
-            return ".";
-        }
-        return result;
-    }
-
-    protected final static long parseRevision(SVNCommandLine commandLine, ISVNWorkspace workspace, String path) throws SVNException {
-        if (commandLine.hasArgument(SVNArgument.REVISION)) {
-            final String revStr = (String) commandLine.getArgumentValue(SVNArgument.REVISION);
-            if (revStr.equalsIgnoreCase("HEAD")) {
-                return ISVNWorkspace.HEAD;
-            }
-	          else if (revStr.equalsIgnoreCase("BASE")) {
-		          if (workspace == null ||path == null) {
-			          throw new SVNException("Revision BASE not allowed in this context!");
-		          }
-
-		          final SVNStatus status = workspace.status(path, false);
-		          return status.getWorkingCopyRevision();
-	          }
-            return Long.parseLong(revStr);
-        }
-        return -1;
-    }
-    
-    protected final static SVNRevision parseRevision(SVNCommandLine commandLine) throws SVNException {
+    protected static SVNRevision parseRevision(SVNCommandLine commandLine) {
         if (commandLine.hasArgument(SVNArgument.REVISION)) {
             final String revStr = (String) commandLine.getArgumentValue(SVNArgument.REVISION);
             DebugLog.log("parsing revision: " + revStr);
             return SVNRevision.parse(revStr);
         }
-        return SVNRevision.UNDEFINED;        
-    }
-    
-    protected final static long getRevisionNumber(String rev, String path, ISVNWorkspace ws, SVNRepository repository) throws SVNException {
-        if (rev == null) {
-            return -2;
-        }
-        rev = rev.trim();
-        long result = -1;
-        try {
-            return Long.parseLong(rev);
-        } catch (NumberFormatException nfe) {
-        }
-        if ("HEAD".equals(rev) && repository != null) {
-            return repository.getLatestRevision();
-        } else if (("COMMITTED".equals(rev) || 
-                   "WORKING".equals(rev) ||
-                   "BASE".equals(rev) ||
-                   "PREV".equals(rev)) && ws != null && path != null) {
-            if ("BASE".equals(rev) || "WORKING".equals(rev)) {
-                String revisionStr = ws.getPropertyValue(path, SVNProperty.REVISION);
-                if (revisionStr != null) {
-                    return SVNProperty.longValue(revisionStr);
-                }
-            } else {
-                String revisionStr = ws.getPropertyValue(path, SVNProperty.COMMITTED_REVISION);
-                if (revisionStr != null) {
-                    long value = SVNProperty.longValue(revisionStr);
-                    if ("PREV".equals(rev)) {                        
-                        value--;
-                    }
-                    return value;
-                }
-            }
-        } else if (rev.startsWith("{") && rev.endsWith("}") &&
-                 repository != null) {
-            rev = rev.substring(1);
-            rev = rev.substring(0, rev.length() - 1);
-            Date date = null;
-            try {
-                date = SimpleDateFormat.getDateTimeInstance().parse(rev);
-            } catch (ParseException e) {
-                DebugLog.error(e);
-            }
-            if (date != null) {
-                return repository.getDatedRevision(date);
-            }
-        } 
-        return -2;
-        
+        return SVNRevision.UNDEFINED;
     }
 
-    public final static void println(PrintStream out, String line) {
+    public static void println(PrintStream out, String line) {
         out.println(line);
         DebugLog.log(line);
     }
 
-    public final static void print(PrintStream out, String line) {
+    public static void print(PrintStream out, String line) {
         out.print(line);
         DebugLog.log(line);
     }
 
-    public final static void println(PrintStream out) {
+    public static void println(PrintStream out) {
         out.println();
         DebugLog.log("");
     }
-    
+
     protected static boolean matchTabsInPath(String path, PrintStream out) {
         if (path != null && path.indexOf('\t') >= 0) {
             out.println("svn: Invalid control character '0x09' in path '" + path + "'");
@@ -245,8 +128,8 @@ public abstract class SVNCommand {
     }
 
     public static String getPath(File file) {
-        String path = "";
-        String rootPath = "";
+        String path;
+        String rootPath;
         path = file.getAbsolutePath();
         rootPath = new File("").getAbsolutePath();
         path = path.replace(File.separatorChar, '/');

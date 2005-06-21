@@ -316,7 +316,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             openConnection();
             Object[] buffer = new Object[] { "log", getRepositoryPaths(targetPaths), getRevisionObject(startRevision), getRevisionObject(endRevision),
                         Boolean.valueOf(changedPaths), Boolean.valueOf(strictNode), limit > 0 ? new Long(limit) : null};
-
             write("(w((*s)(n)(n)wwn))", buffer);
             authenticate();
             while (true) {
