@@ -13,9 +13,10 @@
 package org.tmatesoft.svn.core.io;
 
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.internal.io.SVNAnnotate;
+import org.tmatesoft.svn.core.internal.SVNAnnotationGenerator;
 import org.tmatesoft.svn.util.DebugLog;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
@@ -724,14 +725,18 @@ public abstract class SVNRepository {
 			long lastRevision = getLatestRevision();
 			startRevision = startRevision < 0 ? lastRevision : startRevision;
 			endRevision = endRevision < 0 ? lastRevision : endRevision;
-		} 
-		SVNAnnotate annotate = new SVNAnnotate();
-		annotate.setAnnotateHandler(handler);
-		try {
-			getFileRevisions(path, startRevision, endRevision, annotate);
-		} finally {
-			annotate.dispose();
 		}
+
+        File tmpDir = new File(System.getProperty("user.home"), ".javasvn");
+        tmpDir.mkdirs();
+
+        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, startRevision, tmpDir);
+        try {
+            getFileRevisions(path, startRevision, endRevision, generator);
+            generator.reportAnnotations(handler, System.getProperty("file.encoding"));
+        } finally {
+            generator.dispose();
+        }
 	}
     
     /* edit-mode methods */
