@@ -345,7 +345,7 @@ public class SVNCommitUtil {
         }
         boolean specialFile = fileType == SVNFileType.SYMLINK;
         if (specialFile != (dir.getProperties(entry.getName(), false).getPropertyValue(SVNProperty.SPECIAL) != null)) {
-            SVNErrorManager.error("svn: entry '" + path + "' has unexpectedly changed special status");
+            SVNErrorManager.error("svn: Entry '" + path + "' has unexpectedly changed special status");
         }
         boolean propConflicts;
         boolean textConflicts = false;

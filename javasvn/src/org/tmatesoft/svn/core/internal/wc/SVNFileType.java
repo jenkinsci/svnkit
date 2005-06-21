@@ -82,4 +82,8 @@ public class SVNFileType {
     public int getID() {
         return myType;
     }
+
+    public boolean isFile() {
+        return this == SVNFileType.FILE || this == SVNFileType.SYMLINK;
+    }
 }

@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -524,7 +525,8 @@ public class SVNUpdateClient extends SVNBasicClient {
             
         File srcFile = revision == SVNRevision.BASE ? 
                 dir.getBaseFile(fileName, false) : dir.getFile(fileName, false);
-        if (!srcFile.isFile()) {
+        SVNFileType fileType = SVNFileType.getType(srcFile);
+        if (!fileType.isFile()) {
             SVNErrorManager.error(0, null);
         }
         SVNTranslator.translate(srcFile, dstPath, eols, keywordsMap, special, true);
