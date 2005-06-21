@@ -4,11 +4,16 @@
 package org.tigris.subversion.javahl;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.TreeSet;
 
+import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
@@ -20,6 +25,7 @@ import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
+import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
@@ -329,18 +335,30 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void mkdir(String[] path, String message) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        SVNCommitClient client = createSVNCommitClient();
+        try {
+            client.doMkDir(path, message);
+        } catch (SVNException e) {
+            throwException(e);
+        }
     }
 
     public void cleanup(String path) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        SVNWCClient client = createSVNWCClient();
+        try {
+            client.doCleanup(new File(path).getAbsoluteFile());
+        } catch (SVNException e) {
+            throwException(e);
+        }
     }
 
     public void resolved(String path, boolean recurse) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        SVNWCClient client = createSVNWCClient();
+        try {
+            client.doResolve(new File(path).getAbsoluteFile(), recurse);
+        } catch (SVNException e) {
+            throwException(e);
+        }
     }
 
     public long doExport(String srcPath, String destPath, Revision revision, boolean force) throws ClientException {
@@ -405,13 +423,65 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void diff(String target1, Revision revision1, String target2, Revision revision2, String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
-        // TODO Auto-generated method stub
-        
+        SVNDiffClient differ = createSVNDiffClient();
+        differ.setDiffGenerator(new DefaultSVNDiffGenerator() {            
+            public String getDisplayPath(File file) {
+                return SVNCommand.getPath(file).replace(File.separatorChar, '/');
+            }
+            public void displayFileDiff(String path, File file1, File file2,
+                    String rev1, String rev2, String mimeType1, String mimeType2,
+                    OutputStream result) throws SVNException {
+                super.displayFileDiff(path, file1, file2, rev1, rev2, mimeType1, mimeType2, result);
+            }
+            public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException {
+                super.displayPropDiff(path.replace('/', File.separatorChar), baseProps, diff, result);
+            }
+        });
+        differ.getDiffGenerator().setDiffDeleted(!noDiffDeleted);
+        differ.getDiffGenerator().setForcedBinaryDiff(force);
+        SVNRevision peg1 = SVNRevision.UNDEFINED;
+        SVNRevision peg2 = SVNRevision.UNDEFINED;
+        SVNRevision rev1 = SVNConverterUtil.getSVNRevision(revision1);
+        SVNRevision rev2 = SVNConverterUtil.getSVNRevision(revision2);
+        try {
+            FileOutputStream fos = new FileOutputStream(new File(outFileName));
+            differ.doDiff(target1, peg1, target2, peg2, rev1, rev2, recurse, !ignoreAncestry, fos);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (SVNException e) {
+            throwException(e);
+        }
     }
 
     public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
         // TODO Auto-generated method stub
-        
+        SVNDiffClient differ = createSVNDiffClient();
+        differ.setDiffGenerator(new DefaultSVNDiffGenerator() {            
+            public String getDisplayPath(File file) {
+                return SVNCommand.getPath(file).replace(File.separatorChar, '/');
+            }
+            public void displayFileDiff(String path, File file1, File file2,
+                    String rev1, String rev2, String mimeType1, String mimeType2,
+                    OutputStream result) throws SVNException {
+                super.displayFileDiff(path, file1, file2, rev1, rev2, mimeType1, mimeType2, result);
+            }
+            public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException {
+                super.displayPropDiff(path.replace('/', File.separatorChar), baseProps, diff, result);
+            }
+        });
+        differ.getDiffGenerator().setDiffDeleted(!noDiffDeleted);
+        differ.getDiffGenerator().setForcedBinaryDiff(force);
+        SVNRevision peg = SVNRevision.UNDEFINED;
+        SVNRevision rev1 = SVNConverterUtil.getSVNRevision(startRevision);
+        SVNRevision rev2 = SVNConverterUtil.getSVNRevision(endRevision);
+        try {
+            FileOutputStream fos = new FileOutputStream(new File(outFileName));
+            differ.doDiff(target, peg, null/*XXX: File path?*/, rev1, rev2, recurse, !ignoreAncestry, fos);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (SVNException e) {
+            throwException(e);
+        }
     }
 
     public PropertyData[] properties(String path) throws ClientException {
