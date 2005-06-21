@@ -228,6 +228,12 @@ public class SVNCopyClient extends SVNBasicClient {
         return url2urlCopy(srcURL, srcRevNumber, dstURL, commitMessage, move);
     }
 
+    // schedules unscheduled files at 'dst path' for addition with history.
+    // if move, schedules files at 'src path' for deletion.
+    public void doVirtualCopy(File srcPath, File dstPath, boolean move) {
+
+    }
+
     private SVNCommitInfo wc2urlCopy(File srcPath, String dstURL, String commitMessage) throws SVNException {
         dstURL = validateURL(dstURL);
         SVNRepository repos = createRepository(dstURL);
