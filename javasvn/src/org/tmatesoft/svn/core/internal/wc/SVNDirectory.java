@@ -478,7 +478,8 @@ public class SVNDirectory {
     }
     
     public boolean hasTextModifications(String name, boolean force) throws SVNException {
-        if (!getFile(name, false).isFile()) {
+        SVNFileType fType = SVNFileType.getType(getFile(name, false));
+        if (fType == SVNFileType.DIRECTORY || fType == SVNFileType.NONE) {
             return false;
         }
         SVNEntries entries = getEntries();
