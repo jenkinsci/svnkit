@@ -371,11 +371,8 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         DebugLog.log("local diff: " + dir.getRoot());
         SVNEntries svnEntries = dir.getEntries();
-        for (Iterator entries = svnEntries.entries(true); entries.hasNext();) {
+        for (Iterator entries = svnEntries.entries(false); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
-            if (entry.isHidden()) {
-                continue;
-            }
             if (anchor && !myWCAccess.getTargetName().equals(entry.getName())) {
                 continue;
             }

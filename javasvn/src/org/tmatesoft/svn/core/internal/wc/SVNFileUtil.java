@@ -190,29 +190,43 @@ public class SVNFileUtil {
         return isSymlink(src);
     }
 
-    public static boolean detranslateSymlink(File src, File linkFile) throws IOException {
+    public static boolean detranslateSymlink(File src, File linkFile) throws IOException, SVNException {
         if (isWindows) {
             return false;
         }
         if (!src.exists() || !isSymlink(src)) {
             throw new IOException("can't detranslate symlink '" + src.getAbsolutePath() + "' : file doesn't exists or not a symlink.");
         }
-        String linkPath = src.getCanonicalPath();
-        String locationPath = src.getAbsolutePath();
-        if (linkPath.startsWith(locationPath)) {
-            linkPath = PathUtil.removeLeadingSlash(linkPath.substring(locationPath.length()));
-        }
-        OutputStream os = null;
+        String linkPath = getSymlinkName(src);
+        OutputStream os = openFileForWriting(linkFile);
         try {
-            os = new FileOutputStream(linkFile);
             os.write("link ".getBytes("UTF-8"));
             os.write(linkPath.getBytes("UTF-8"));
         } finally {
-            if (os != null) {
-                os.close();
-            }
+            SVNFileUtil.closeFile(os);
         }
         return true;
+    }
+
+    public static String getSymlinkName(File link) {
+        if (isWindows || link == null) {
+            return null;
+        }
+        String ls = execCommand(new String[] {"ls", "-ld", link.getAbsolutePath()});
+        if (ls == null || ls.lastIndexOf(" -> ") < 0) {
+            String linkPath = null;
+            try {
+                linkPath = link.getCanonicalPath();
+                String locationPath = link.getAbsolutePath();
+                if (linkPath.startsWith(locationPath)) {
+                    linkPath = PathUtil.removeLeadingSlash(linkPath.substring(locationPath.length()));
+                }
+            } catch (IOException e) {
+                //
+            }
+            return linkPath;
+        }
+        return ls.substring(ls.lastIndexOf(" - >") + " -> ".length()).trim();
     }
 
     public static String computeChecksum(File file) throws SVNException {
