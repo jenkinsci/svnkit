@@ -74,7 +74,7 @@ public class SVNFileUtil {
     }
 
     public static void rename(File src, File dst) throws IOException {
-        if (!src.exists()) {
+        if (!src.exists() && !isSymlink(src)) {
             throw new IOException("can't rename file '" + src.getAbsolutePath() + "' : file doesn't exist");
         }
         if (dst.isDirectory()) {
@@ -186,7 +186,10 @@ public class SVNFileUtil {
         if (linkTarget.startsWith("link")) {
             linkTarget = linkTarget.substring("link".length()).trim();
         }
-        Runtime.getRuntime().exec("ln -s '" + linkTarget + "' '" + link.getAbsolutePath() + "'");
+        DebugLog.log("running command: ln -s " + linkTarget + " " + link.getAbsolutePath()); 
+        execCommand(new String[] {"ln", "-s", linkTarget, link.getAbsolutePath()});
+
+        //Runtime.getRuntime().exec("ln -s '" + linkTarget + "' '" + link.getAbsolutePath() + "'");
         return isSymlink(link);
     }
 

@@ -6,6 +6,7 @@ package org.tmatesoft.svn.core.internal.wc;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.TimeUtil;
 
 import java.io.ByteArrayOutputStream;
@@ -80,6 +81,9 @@ public class SVNTranslator {
                     SVNFileUtil.copy(src, dst, true);
                 } else if (expand) {
                     // create symlink to target, and create it at dst
+                    DebugLog.log("creating symlink: ");
+                    DebugLog.log("link file: " + dst);
+                    DebugLog.log("link name file: " + src);
                     SVNFileUtil.createSymlink(dst, src);
                 } else {
                     SVNFileUtil.detranslateSymlink(src, dst);
