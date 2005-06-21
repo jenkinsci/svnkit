@@ -42,7 +42,8 @@ public class SVNException extends Exception {
     private static final long serialVersionUID = 1661853897041563030L;
     
     private SVNError[] myErrors;
-   
+    private String myMessage;
+
     /**
      * A default constructor.
      *
@@ -155,6 +156,9 @@ public class SVNException extends Exception {
      * @return	an exception description message
      */
     public String getMessage() {
+        if (myMessage != null) {
+            return myMessage;
+        }
         if (myErrors == null || myErrors.length == 0) {
             return super.getMessage();
         }
@@ -165,5 +169,9 @@ public class SVNException extends Exception {
             sb.append(myErrors[i].getMessage());            
         }
         return sb.toString();
+    }
+
+    public void setMessage(String s) {
+        myMessage = s;
     }
 }
