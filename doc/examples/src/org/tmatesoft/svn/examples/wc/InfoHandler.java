@@ -16,7 +16,6 @@ import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 
 public class InfoHandler implements ISVNInfoHandler{
-    
     /*
      * This is an implementation of ISVNHandler.handleInfo(SVNInfo info)
      */
@@ -24,6 +23,9 @@ public class InfoHandler implements ISVNInfoHandler{
         System.out.println("-----------------INFO-----------------");
         System.out.println("Local Path: " + info.getFile().getPath());
         System.out.println("URL: " + info.getURL());
+        if(info.isRemote() && info.getRepositoryRootURL()!=null){
+            System.out.println("Repository Root URL: " + info.getRepositoryRootURL());
+        }
         System.out.println("Repository UUID: " + info.getRepositoryUUID());
         System.out.println("Revision: " + info.getRevision().getNumber());
         System.out.println("Node Kind: " + info.getKind().toString());
@@ -36,8 +38,24 @@ public class InfoHandler implements ISVNInfoHandler{
 	        System.out
 	                .println("Properties Last Updated: " + info.getPropTime());
         }
-        if(info.getKind()==SVNNodeKind.FILE){
+        if(info.getKind()==SVNNodeKind.FILE && info.getChecksum()!=null){
+            if(info.getTextTime()!=null){
+                System.out.println("Text Last Updated: " + info.getTextTime());
+            }
             System.out.println("Checksum: " + info.getChecksum());
+        }
+        if(info.getLock()!=null){
+            if(info.getLock().getID()!=null){
+                System.out.println("Lock Token: " + info.getLock().getID());
+            }
+            System.out.println("Lock Owner: " + info.getLock().getOwner());
+            System.out.println("Lock Created: " + info.getLock().getCreationDate());
+            if(info.getLock().getExpirationDate()!=null){
+                System.out.println("Lock Expires: " + info.getLock().getExpirationDate());
+            }
+            if(info.getLock().getComment()!=null){
+                System.out.println("Lock Comment: " + info.getLock().getComment());
+            }
         }
     }
 }

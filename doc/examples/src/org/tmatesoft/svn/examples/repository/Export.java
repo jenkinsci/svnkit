@@ -413,8 +413,8 @@ public class Export {
      * commands to update the file which are translated into series of calls to 
      * ISVNEditor methods. Here is the scheme of this process (an implementor himself
      * doesn't make these calls, his aim is only to provide an ISVNEditor 
-     * implementation; the following is only an illustration describing the order
-     * how the JavaSVN library invokes ISVNEditor methods):
+     * implementation; the following is only an illustration describing how the JavaSVN
+     * library invokes ISVNEditor methods):
      * 		
      * 		//sets the target revision the copy is being updated to.
      * 		editor.targetRevision(revision)

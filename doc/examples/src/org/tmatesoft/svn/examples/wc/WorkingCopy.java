@@ -21,12 +21,14 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNWorkspaceManager;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
-import org.tmatesoft.svn.core.io.SVNLock;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNCopyClient;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
 import org.tmatesoft.svn.util.PathUtil;
 /*
@@ -37,8 +39,8 @@ import org.tmatesoft.svn.util.PathUtil;
  * with commands of the native Subversion command line client. Most of the  methods 
  * of those classes are named like 'doSomething(...)' where 'Something' corresponds 
  * to the name of a Subversion command line client's command. So, for users 
- * familiar with the Subversion command line client it's quite easy to match a method
- * and an appropriate client's command.
+ * familiar with the Subversion command line client it won't take much time to match a 
+ * method and an appropriate Subversion client's command.
  * 
  * The program illustrates a number of main operations usually carried out upon 
  * working copies and URLs. A brief description of what the program does:
@@ -240,10 +242,13 @@ public class WorkingCopy {
         /*
          * Default values:
          */
+        /*
+         * Assuming that svn://localhost/rep already exists while
+         * MyRepos is to be created
+         */
         String url = "svn://localhost/rep/MyRepos";
         String copyURL = "svn://localhost/rep/MyReposCopy";
         String myWorkspacePath = "/MyWorkingCopy";
-        SVNRevision revision = SVNRevision.HEAD;//HEAD (the latest) revision
         String name = "userName";
         String password = "userPassword";
 
@@ -259,31 +264,27 @@ public class WorkingCopy {
 
         if (args != null) {
             /*
-             * Obtains a repository location URL
+             * Obtains a URL that represents a new directory relative to an existing 
+             * path in a repository
              */
             url = (args.length >= 1) ? args[0] : url;
             /*
-             * Obtains a URL where a copy of the previuos url will be created
+             * Obtains a URL where a copy of the previuos url will be created (with
+             * history)
              */
             copyURL = (args.length >= 2) ? args[1] : copyURL;
             /*
-             * Obtains a path for a workspace
+             * Obtains a path to be a working copy root directory
              */
             myWorkspacePath = (args.length >= 3) ? args[2] : myWorkspacePath;
             /*
-             * Obtains a revision
+             * Obtains an account name 
              */
-            revision = (args.length >= 4) ? SVNRevision.create(Long
-                    .parseLong(args[3])) : revision;
-            /*
-             * Obtains an account name (will be used to authenticate the user to
-             * the server)
-             */
-            name = (args.length >= 5) ? args[4] : name;
+            name = (args.length >= 4) ? args[3] : name;
             /*
              * Obtains a password
              */
-            password = (args.length >= 6) ? args[5] : password;
+            password = (args.length >= 5) ? args[4] : password;
         }
         /*
          * Creates a usre's credentials provider.
@@ -294,6 +295,10 @@ public class WorkingCopy {
         long committedRevision = -1;
         System.out.println("Making a new directory at '" + url + "'...");
         try{
+            /*
+             * Creating a new version comtrolled directory in a repository.
+             * Like 'svn mkdir URL' command
+             */
             committedRevision = makeDirectory(scp, url, "making a new directory at '" + url + "'").getNewRevision();
         }catch(SVNException svne){
             System.err.println("error while making a new directory at '" + url + "': " + svne.getMessage());
@@ -313,7 +318,8 @@ public class WorkingCopy {
         System.out.println("Checking out a working copy from '" + url + "'...");
         long checkoutRevision = -1;
         try {
-            checkoutRevision = checkout(scp, url, revision, wcDir, true);
+            //HEAD (the latest) revision
+            checkoutRevision = checkout(scp, url, SVNRevision.HEAD, wcDir, true);
         } catch (SVNException svne) {
             /*
              * Perhaps a malformed URL is the cause of this exception.
@@ -392,7 +398,7 @@ public class WorkingCopy {
 
         System.out.println("Recursively scheduling a new directory '" + aNewDir.getAbsolutePath() + "' for addition...");
         try {
-            addDirectory(scp, aNewDir);
+            addEntry(scp, aNewDir);
         } catch (SVNException svne) {
             System.err.println("error while recursively adding the directory '"
                     + aNewDir.getAbsolutePath() + "': " + svne.getMessage());
@@ -440,7 +446,7 @@ public class WorkingCopy {
         System.out.println("Updated to revision " + updatedRevision);
         System.out.println();
 
-        System.out.println("Committing '" + wcDir.getAbsolutePath() + "'...");
+        System.out.println("Committing changes for '" + wcDir.getAbsolutePath() + "'...");
         try {
             committedRevision = commit(scp, wcDir, true,
                     "'/newDir' with '/newDir/newFile.txt' were added")
@@ -544,7 +550,7 @@ public class WorkingCopy {
         }
         System.out.println();
 
-        System.out.println("Committing '" + wcDir.getAbsolutePath() + "'...");
+        System.out.println("Committing changes for '" + wcDir.getAbsolutePath() + "'...");
         try {
             committedRevision = commit(
                     scp,
@@ -583,97 +589,380 @@ public class WorkingCopy {
         FSEntryFactory.setup();
     }
 
+    /*
+     * Creates a new version controlled directory (doesn't create any intermediate
+     * directories) right in a repository. Like 'svn mkdir URL -m "some comment"' 
+     * command. It's done by invoking 
+     * SVNCommitClient.doMkDir(String[] urls, String commitMessage) which takes the 
+     * following parameters:
+     * 
+     * urls - a String array of URL strings that are to be created;
+     * 
+     * commitMessage - a commit log message since a URL-based directory creation is 
+     * immediately committed to a repository.
+     */
+    private static SVNCommitInfo makeDirectory(ISVNCredentialsProvider cp,
+            String url, String commitMessage) throws SVNException{
+        /*
+         * passing credentials provider when creating an instance of
+         * SVNCommitClient
+         */
+        SVNCommitClient myCommitClient = new SVNCommitClient(cp);
+        /*
+         * Returns SVNCommitInfo containing information on the commit (revision number, 
+         * etc.) 
+         */
+        return myCommitClient.doMkDir(new String[]{url}, commitMessage);
+    }
+
+    /*
+     * Committs changes in a working copy to the repository. Like 
+     * 'svn commit PATH -m "some comment"' command. It's done by invoking 
+     * SVNCommitClient.doCommit(File[] paths, boolean keepLocks, String commitMessage,
+     * boolean recursive) which takes the following parameters:
+     * 
+     * paths - working copy paths which changes are to be committed;
+     * 
+     * keepLocks - if true then doCommit(..) won't unlock locked paths; otherwise they will
+     * be unlocked after a successful commit; 
+     * 
+     * commitMessage - a commit log message;
+     * 
+     * recursive - if true and a path corresponds to a directory then doCommit(..) recursively 
+     * committs changes for the entire directory, otherwise - only for child entries of the 
+     * directory;
+     */
     private static SVNCommitInfo commit(ISVNCredentialsProvider cp,
             File wcPath, boolean keepLocks, String commitMessage)
             throws SVNException {
+        /*
+         * passing credentials provider when creating an instance of
+         * SVNCommitClient
+         */
         SVNCommitClient myCommitClient = new SVNCommitClient(cp);
+        /*
+         * Recursive commit on wcPath.
+         * Returns SVNCommitInfo containing information on the commit (revision number, 
+         * etc.) 
+         */
         return myCommitClient.doCommit(new File[] { wcPath }, keepLocks,
                 commitMessage, false, true);
     }
 
+    /*
+     * Checks out a working copy from a repository. Like 'svn checkout URL[@REV] PATH (-r..)'
+     * command; It's done by invoking 
+     * SVNUpdateClient.doCheckout(String url, File dstPath, SVNRevision pegRevision, 
+     * SVNRevision revision, boolean recursive) which takes the following parameters:
+     * 
+     * url - a URL - repository location where a working copy is to be checked out from;
+     * 
+     * dstPath - a local path where the working copy will be fetched into;
+     * 
+     * pegRevision - an SVNRevision representing a revision to concretize
+     * url (what exactly URL a user means and is sure of being the URL he needs); in other
+     * words that is the revision in which the URL is first looked up;
+     * 
+     * revision - a revision at which a working copy being checked out is to be; 
+     * 
+     * recursive - if true and url corresponds to a directory then doCheckout(..) recursively 
+     * fetches out the entire directory, otherwise - only child entries of the directory;   
+     */
     private static long checkout(ISVNCredentialsProvider cp, String url,
             SVNRevision revision, File destPath, boolean isRecursive)
             throws SVNException {
+        /*
+         * passing credentials provider when creating an instance of
+         * SVNUpdateClient
+         */
         SVNUpdateClient myUpdateClient = new SVNUpdateClient(cp);
+        /*
+         * sets externals not to be ignored during the checkout
+         */
         myUpdateClient.setIgnoreExternals(false);
+        /*
+         * returns the number of the revision at which the working copy is 
+         */
         return myUpdateClient.doCheckout(url, destPath, revision, revision,
                 isRecursive);
     }
-
+    
+    /*
+     * Updates a working copy (brings changes from the repository into the working copy). 
+     * Like 'svn update PATH' command; It's done by invoking 
+     * SVNUpdateClient.doUpdate(File file, SVNRevision revision, boolean recursive) which 
+     * takes the following parameters:
+     * 
+     * file - a working copy entry that is to be updated;
+     * 
+     * revision - a revision to which a working copy is to be updated;
+     * 
+     * recursive - if true and an entry (FILE) is a directory then doUpdate(..) recursively 
+     * updates the entire directory, otherwise - only child entries of the directory;   
+     */
     private static long update(ISVNCredentialsProvider cp, File wcPath,
             SVNRevision updateToRevision, boolean isRecursive)
             throws SVNException {
+        /*
+         * passing credentials provider when creating an instance of
+         * SVNUpdateClient
+         */
         SVNUpdateClient myUpdateClient = new SVNUpdateClient(cp);
+        /*
+         * sets externals not to be ignored during the update
+         */
         myUpdateClient.setIgnoreExternals(false);
+        /*
+         * returns the number of the revision wcPath was updated to
+         */
         return myUpdateClient.doUpdate(wcPath, updateToRevision, isRecursive);
     }
-
+    
+    /*
+     * Updates a working copy to a different URL. Like 'svn switch URL' command;
+     * It's done by invoking SVNUpdateClient.doSwitch(File file, String url, 
+     * SVNRevision revision, boolean recursive) which takes the following parameters:
+     * 
+     * file - a working copy entry that is to be switched to a new url;
+     * 
+     * url - a target url a working copy is to be updated against;
+     * 
+     * revision - a revision to which a working copy is to be updated;
+     * 
+     * recursive - if true and an entry (FILE) is a directory then doSwitch(..) recursively 
+     * switches the entire directory, otherwise - only child entries of the directory;   
+     */
     private static long switchToURL(ISVNCredentialsProvider cp, File wcPath,
             String url, SVNRevision updateToRevision, boolean isRecursive)
             throws SVNException {
+        /*
+         * passing credentials provider when creating an instance of
+         * SVNUpdateClient
+         */
         SVNUpdateClient myUpdateClient = new SVNUpdateClient(cp);
+        /*
+         * sets externals not to be ignored during the switch
+         */
         myUpdateClient.setIgnoreExternals(false);
+        /*
+         * returns the number of the revision wcPath was updated to
+         */
         return myUpdateClient.doSwitch(wcPath, url, updateToRevision,
                 isRecursive);
     }
 
     /*
-     * Responsible for a performance of the working copy status.
+     * Collects status information on local path(s). Like 'svn status (-u) (-N)'. 
+     * command. It's done by invoking 
+     * SVNStatusClient.doStatus(File path, boolean recursive, 
+     * boolean remote, boolean reportAll, boolean includeIgnored, 
+     * boolean collectParentExternals, ISVNStatusHandler handler) which takes the following 
+     * parameters:
+     * 
+     * path - an entry which status info to be gathered;
+     * 
+     * recursive - if true and an entry is a directory then doStatus(..) collects status 
+     * info not only for that directory but for each item inside stepping down recursively;
+     * 
+     * remote - if true then doStatus(..) will cover the repository (not only the working copy)
+     * as well to find out what entries are out of date;
+     * 
+     * reportAll - if true then doStatus(..) will also include unmodified entries;
+     * 
+     * includeIgnored - if true then doStatus(..) will also include entries set to ignore 
+     * (disregarding svn:ignore property ignores);
+     * 
+     * collectParentExternals - if true then externals definitions won't be ignored;
+     * 
+     * handler - an implementation of ISVNStatusHandler to process status info per each entry
+     * doStatus(..) traverses; such info is incapsulated in an SVNStatus instance and
+     * is passed to a handler's handleStatus(SVNStatus status) method where an implementor
+     * decides what to do with it.  
      */
     private static void showStatus(ISVNCredentialsProvider cp, File wcPath,
             boolean isRecursive, boolean isRemote, boolean isReportAll,
             boolean isIncludeIgnored, boolean isCollectParentExternals)
             throws SVNException {
+        /*
+         * passing credentials provider when creating an instance of
+         * SVNStatusClient
+         */
         SVNStatusClient myStatusClient = new SVNStatusClient(cp);
+        /*
+         * StatusHandler displays status information for each entry in the console (in the 
+         * manner of the native Subversion command line client)
+         */
         myStatusClient.doStatus(wcPath, isRecursive, isRemote, isReportAll,
                 isIncludeIgnored, isCollectParentExternals, new StatusHandler(
                         isRemote));
     }
 
     /*
-     * Info
+     * Collects information on local path(s). Like 'svn info (-R)' command.
+     * It's done by invoking SVNWCClient.doInfo(File path, SVNRevision revision,
+     * boolean recursive, ISVNInfoHandler handler) which takes the following 
+     * parameters:
+     * 
+     * path - a local entry which info will be collected;
+     * 
+     * revision - a revision of an entry which info is interested in;
+     * 
+     * recursive - if true and an entry is a directory then doInfo(..) collects info 
+     * not only for that directory but for each item inside stepping down recursively;
+     * 
+     * handler - an implementation of ISVNInfoHandler to process info per each entry
+     * doInfo(..) traverses; such info is incapsulated in an SVNInfo instance and
+     * is passed to a handler's handleInfo(SVNInfo info) method where an implementor
+     * decides what to do with it.     
      */
     private static void showInfo(ISVNCredentialsProvider cp, File wcPath,
             SVNRevision revision, boolean isRecursive) throws SVNException {
+        /*
+         * passing credentials provider when creating an instance of
+         * SVNWCClient
+         */
         SVNWCClient myWCClient = new SVNWCClient(cp);
+        /*
+         * InfoHandler displays information for each entry in the console (in the manner of
+         * the native Subversion command line client)
+         */
         myWCClient.doInfo(wcPath, revision, isRecursive, new InfoHandler());
-        myWCClient = null;
-
     }
-
-    private static void addDirectory(ISVNCredentialsProvider cp, File newDir)
+    
+    /*
+     * Puts directories and files under version control scheduling them for addition
+     * to a repository. They will be added in a next commit. Like 'svn add PATH' 
+     * command. It's done by invoking SVNWCClient.doAdd(File path, boolean force, 
+     * boolean mkdir, boolean climbUnversionedParents, boolean recursive) which takes
+     * the following parameters:
+     * 
+     * path - an entry to be scheduled for addition;
+     * 
+     * force - set to true to force an addition of an entry anyway;
+     * 
+     * mkdir - if true doAdd(..) creates an empty directory at path and schedules
+     * it for addition, like 'svn mkdir PATH' command;
+     * 
+     * climbUnversionedParents - if true and the parent of the entry to be scheduled
+     * for addition is not under version control doAdd(..) automatically schedules
+     * the parent for addition, too;
+     * 
+     * recursive - if true and an entry is a directory then doAdd(..) recursively 
+     * schedules all its inner entries for addition as well. 
+     */
+    private static void addEntry(ISVNCredentialsProvider cp, File wcPath)
             throws SVNException {
+        /*
+         * passing credentials provider when creating an instance of
+         * SVNWCClient
+         */
         SVNWCClient myWCClient = new SVNWCClient(cp);
-        myWCClient.doAdd(newDir, false, false, false, true);
-        myWCClient = null;
+        myWCClient.doAdd(wcPath, false, false, false, true);
     }
-
+    
+    /*
+     * Locks working copy paths, so that no other user can commit changes to them.
+     * Like 'svn lock PATH' command. It's done by invoking 
+     * SVNWCClient.doLock(File[] paths, boolean stealLock, String lockMessage) which
+     * takes the following parameters:
+     * 
+     * paths - an array of local entries to be locked;
+     * 
+     * stealLock - set to true to steal the lock from another user or working copy;
+     * 
+     * lockMessage - an optional lock comment string.
+     */
     private static void lock(ISVNCredentialsProvider cp, File wcPath,
             boolean isStealLock, String lockComment) throws SVNException {
+        /*
+         * passing credentials provider when creating an instance of
+         * SVNWCClient
+         */
         SVNWCClient myWCClient = new SVNWCClient(cp);
         myWCClient.doLock(new File[] { wcPath }, isStealLock, lockComment);
-        myWCClient = null;
     }
-
+    
+    /*
+     * Schedules directories and files for deletion from version control upon the next
+     * commit (locally). Like 'svn delete PATH' command. It's done by invoking 
+     * SVNWCClient.doDelete(File path, boolean force, boolean dryRun) which takes the
+     * following parameters:
+     * 
+     * path - an entry to be scheduled for deletion;
+     * 
+     * force - a boolean flag which is set to true to force a deletion even if an entry
+     * has local modifications;
+     * 
+     * dryRun - set to true not to delete an entry but to check if it can be deleted;
+     * if false - then it's a deletion itself.  
+     */
     private static void delete(ISVNCredentialsProvider cp, File wcPath,
             boolean force) throws SVNException {
+        /*
+         * passing credentials provider when creating an instance of
+         * SVNWCClient
+         */
         SVNWCClient myWCClient = new SVNWCClient(cp);
         myWCClient.doDelete(wcPath, force, false);
-        myWCClient = null;
     }
-
+    
+    /*
+     * Duplicates srcURL to dstURL (URL->URL)in a repository remembering history.
+     * Like 'svn copy srcURL dstURL -m "some comment"' command. It's done by
+     * invoking SVNCopyClient.doCopy(String srcURL, SVNRevision srcPegRevision, 
+     * SVNRevision srcRevision, String dstURL, SVNRevision dstPegRevision,
+     * boolean move, String commitMessage) which takes the following parameters:
+     * 
+     * srcURL - a URL that is to be copied;
+     * 
+     * srcPegRevision - an SVNRevision representing a revision to concretize
+     * srcURL (what exactly URL a user means and is sure of being the URL he needs);
+     * 
+     * srcRevision - while the previous parameter is only used to concretize the URL
+     * this one is provided to define what revision of srcURL exactly must be
+     * duplicated;
+     * 
+     * dstURL - a URL where srcURL will be copied; if srcURL & dstURL are both 
+     * directories then there are two cases: 
+     * a) dstURL already exists - then doCopy(..) will duplicate the entire source 
+     * directory and put it inside dstURL (for example, 
+     * consider srcURL = svn://localhost/rep/MyRepos, 
+     * dstURL = svn://localhost/rep/MyReposCopy, in this case if doCopy(..) succeeds 
+     * MyRepos will be in MyReposCopy - svn://localhost/rep/MyReposCopy/MyRepos); 
+     * b) dstURL doesn't exist yet - then doCopy(..) will create a directory and
+     * recursively copy entries from srcURL into dstURL (for example, consider 
+     * srcURL = svn://localhost/rep/MyRepos, dstURL = svn://localhost/rep/MyReposCopy, 
+     * in this case if doCopy(..) succeeds MyRepos entries will be in MyReposCopy, like:
+     * svn://localhost/rep/MyRepos/Dir1 -> svn://localhost/rep/MyReposCopy/Dir1...);  
+     * 
+     * dstPegRevision - like srcPegRevision but concretizes the destination URL (if
+     * it exists, of course); if dstURL does not exist yet dstPegRevision is set to 
+     * null;
+     * 
+     * move - if false (as in this example) then srcURL is only copied to dstURL what
+     * corresponds to 'svn copy srcURL dstURL -m "some comment"'; but if it's true then
+     * srcURL will be copied and deleted - 'svn move srcURL dstURL -m "some comment"' 
+     * per se; 
+     * 
+     * commitMessage - a commit log message since URL->URL copying is immediately 
+     * committed to a repository.
+     */
     private static SVNCommitInfo copy(ISVNCredentialsProvider cp,
             String srcURL, SVNRevision srcPegRevision, String dstURL,
             boolean isMove, String commitMessage) throws SVNException {
+        /*
+         * passing credentials provider when creating an instance of
+         * SVNCopyClient
+         */
         SVNCopyClient myCopyClient = new SVNCopyClient(cp);
+        /*
+         * SVNRevision.HEAD means the latest revision.
+         * Returns SVNCommitInfo containing information on the commit (revision number, 
+         * etc.) 
+         */
         return myCopyClient.doCopy(srcURL, srcPegRevision, SVNRevision.HEAD,
                 dstURL, null, isMove, commitMessage);
     }
     
-    private static SVNCommitInfo makeDirectory(ISVNCredentialsProvider cp,
-            String url, String commitMessage) throws SVNException{
-        SVNCommitClient myCommitClient = new SVNCommitClient(cp);
-        return myCommitClient.doMkDir(new String[]{url}, commitMessage);
-    }
 
 }
