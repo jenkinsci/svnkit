@@ -78,7 +78,7 @@ public class SVNEvent {
         
         myRoot = file != null ? file.getParentFile() : null;
         myRootFile = rootFile;
-        myName = file.getName();        
+        myName = file != null ? file.getName() : "";
     }
 
     public SVNEvent(String path, File rootFile, File file, 
@@ -100,7 +100,7 @@ public class SVNEvent {
         
         myRoot = file != null ? file.getParentFile() : null;
         myRootFile = rootFile;
-        myName = file.getName();        
+        myName = file != null ? file.getName() : "";
     }
     
     public SVNWCAccess getSource() {

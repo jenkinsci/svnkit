@@ -8,10 +8,10 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -27,7 +27,7 @@ import java.util.StringTokenizer;
 
 public class SVNStatusEditor implements ISVNEditor {
 
-    private SVNOptions myOptions;
+    private ISVNOptions myOptions;
     private SVNWCAccess myWCAccess;
     private String myTarget;
 
@@ -46,7 +46,7 @@ public class SVNStatusEditor implements ISVNEditor {
     private FileInfo myCurrentFile;
     private SVNStatus myAnchorStatus;
 
-    public SVNStatusEditor(SVNOptions globalOptions, SVNWCAccess wcAccess, ISVNStatusHandler handler,
+    public SVNStatusEditor(ISVNOptions globalOptions, SVNWCAccess wcAccess, ISVNStatusHandler handler,
                            Map externals,
                            boolean includeIgnored,
                            boolean reportAll,
@@ -602,7 +602,7 @@ public class SVNStatusEditor implements ISVNEditor {
             if (token.trim().length() == 0) {
                 continue;
             }
-            if (SVNOptions.compileNamePatter(token).matcher(name).matches()) {
+            if (myWCAccess.getOptions().matches(token, name)) {
                 return true;
             }
         }

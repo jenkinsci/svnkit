@@ -189,7 +189,7 @@ public class SVNFileUtil {
         return createSymlink(link, linkTarget);
     }
 
-    public static boolean createSymlink(File link, String linkName) throws IOException {
+    public static boolean createSymlink(File link, String linkName) {
         DebugLog.log("running command: ln -s " + linkName + " " + link.getAbsolutePath());
         execCommand(new String[] {"ln", "-s", linkName, link.getAbsolutePath()});
         return isSymlink(link);
@@ -232,6 +232,24 @@ public class SVNFileUtil {
             return linkPath;
         }
         return ls.substring(ls.lastIndexOf(" -> ") + " -> ".length()).trim();
+    }
+
+    public static String computeChecksum(String line) {
+        if (line == null) {
+            return null;
+        }
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            return null;
+        }
+        if (digest == null) {
+            return null;
+        }
+        digest.update(line.getBytes());
+        return toHexDigest(digest);
+
     }
 
     public static String computeChecksum(File file) throws SVNException {

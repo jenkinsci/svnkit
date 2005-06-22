@@ -34,11 +34,11 @@ public class SVNStatusClient extends SVNBasicClient {
         super(credentialsProvider, eventDispatcher);
     }
 
-    public SVNStatusClient(final ISVNCredentialsProvider credentialsProvider, SVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNStatusClient(final ISVNCredentialsProvider credentialsProvider, ISVNOptions options, ISVNEventListener eventDispatcher) {
         super(credentialsProvider, options, eventDispatcher);
     }
 
-    public SVNStatusClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNStatusClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
 

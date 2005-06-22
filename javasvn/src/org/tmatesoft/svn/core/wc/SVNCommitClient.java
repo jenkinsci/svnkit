@@ -66,11 +66,11 @@ public class SVNCommitClient extends SVNBasicClient {
         super(credentialsProvider, eventDispatcher);
     }
 
-    public SVNCommitClient(final ISVNCredentialsProvider credentialsProvider, SVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNCommitClient(final ISVNCredentialsProvider credentialsProvider, ISVNOptions options, ISVNEventListener eventDispatcher) {
         super(credentialsProvider, options, eventDispatcher);
     }
 
-    public SVNCommitClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNCommitClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
 
@@ -490,7 +490,7 @@ public class SVNCommitClient extends SVNBasicClient {
         String mimeType = null;
         Map autoProperties = new HashMap();
         if (fileType != SVNFileType.SYMLINK) {
-            autoProperties = getOptions().getAutoProperties(file.getName(), autoProperties);
+            autoProperties = getOptions().applyAutoProperties(file.getName(), autoProperties);
             if (!autoProperties.containsKey(SVNProperty.MIME_TYPE)) {
                 mimeType = SVNFileUtil.detectMimeType(file);
                 if (mimeType != null) {

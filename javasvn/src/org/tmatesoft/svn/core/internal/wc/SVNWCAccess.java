@@ -1,7 +1,6 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,7 +17,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNOptions;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.DebugLog;
 
@@ -27,7 +26,7 @@ public class SVNWCAccess implements ISVNEventListener {
     private SVNDirectory myAnchor;
     private SVNDirectory myTarget;
     private String myName;
-    private SVNOptions myOptions;
+    private ISVNOptions myOptions;
     private ISVNEventListener myDispatcher;
 
     private Map myDirectories;
@@ -125,7 +124,7 @@ public class SVNWCAccess implements ISVNEventListener {
         }
     }
 
-    public void setOptions(SVNOptions options) {
+    public void setOptions(ISVNOptions options) {
         myOptions = options;
     }
 
@@ -133,7 +132,7 @@ public class SVNWCAccess implements ISVNEventListener {
         myDispatcher = dispatcher;
     }
 
-    public SVNOptions getOptions() {
+    public ISVNOptions getOptions() {
         if (myOptions == null) {
             myOptions = new SVNOptions();
         }
@@ -323,7 +322,7 @@ public class SVNWCAccess implements ISVNEventListener {
                 continue;
             }
             String url = null;
-            String path = null;
+            String path;
             long rev = -1;
             List parts = new ArrayList(4);
             for(StringTokenizer tokens = new StringTokenizer(line, " \t"); tokens.hasMoreTokens();) {

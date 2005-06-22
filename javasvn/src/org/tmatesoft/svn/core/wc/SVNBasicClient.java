@@ -10,6 +10,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.SVNOptions;
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -30,7 +31,7 @@ import java.util.List;
 public class SVNBasicClient implements ISVNEventListener {
 
     private ISVNRepositoryFactory myRepositoryFactory;
-    private SVNOptions myOptions;
+    private ISVNOptions myOptions;
     private ISVNEventListener myEventDispatcher;
     private List myPathPrefixesStack;
     private boolean myIsIgnoreExternals;
@@ -53,7 +54,7 @@ public class SVNBasicClient implements ISVNEventListener {
         this(credentialsProvider, null, eventDispatcher);
     }
 
-    protected SVNBasicClient(final ISVNCredentialsProvider credentialsProvider, SVNOptions options, ISVNEventListener eventDispatcher) {
+    protected SVNBasicClient(final ISVNCredentialsProvider credentialsProvider, ISVNOptions options, ISVNEventListener eventDispatcher) {
         this(new ISVNRepositoryFactory() {
             public SVNRepository createRepository(String url) throws SVNException {
                 SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
@@ -65,7 +66,7 @@ public class SVNBasicClient implements ISVNEventListener {
         }, options, eventDispatcher);
     }
 
-    protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
+    protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
         myRepositoryFactory = repositoryFactory;
         myOptions = options;
         myEventDispatcher = eventDispatcher;
@@ -75,7 +76,7 @@ public class SVNBasicClient implements ISVNEventListener {
         }
     }
     
-    public SVNOptions getOptions() {
+    public ISVNOptions getOptions() {
     	return myOptions;
     }
     

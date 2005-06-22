@@ -12,16 +12,15 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.File;
-import java.io.PrintStream;
-
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.PathUtil;
+
+import java.io.File;
+import java.io.PrintStream;
 
 /**
  * @author TMate Software Ltd.
@@ -35,7 +34,7 @@ public class CheckoutCommand extends SVNCommand {
         if (getCommandLine().getPathCount() > 0) {
             path = getCommandLine().getPathAt(0);
         } else {
-            path = new File("", PathUtil.decode(PathUtil.tail(url))).getAbsolutePath();
+            path = new File(".", PathUtil.decode(PathUtil.tail(url))).getAbsolutePath();
         }
 
         SVNRevision revision = parseRevision(getCommandLine());

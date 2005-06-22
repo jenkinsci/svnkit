@@ -47,11 +47,11 @@ public class SVNDiffClient extends SVNBasicClient {
         super(credentialsProvider, eventDispatcher);
     }
 
-    public SVNDiffClient(final ISVNCredentialsProvider credentials, SVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNDiffClient(final ISVNCredentialsProvider credentials, ISVNOptions options, ISVNEventListener eventDispatcher) {
         super(credentials, options, eventDispatcher);
     }
 
-    public SVNDiffClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNDiffClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
     

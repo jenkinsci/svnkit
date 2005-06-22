@@ -14,8 +14,9 @@ package org.tmatesoft.svn.cli;
 
 import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.wc.SVNOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.internal.wc.SVNOptions;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -52,7 +53,7 @@ public abstract class SVNCommand {
 
     public abstract void run(PrintStream out, PrintStream err) throws SVNException;
 
-    protected SVNOptions getOptions() {
+    protected ISVNOptions getOptions() {
         String dir = (String) getCommandLine().getArgumentValue(SVNArgument.CONFIG_DIR);
         if (dir == null) {
             return new SVNOptions();

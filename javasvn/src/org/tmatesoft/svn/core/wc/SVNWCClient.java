@@ -55,11 +55,11 @@ public class SVNWCClient extends SVNBasicClient {
         super(credentialsProvider, eventDispatcher);
     }
 
-    public SVNWCClient(final ISVNCredentialsProvider credentialsProvider, SVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNWCClient(final ISVNCredentialsProvider credentialsProvider, ISVNOptions options, ISVNEventListener eventDispatcher) {
         super(credentialsProvider, options, eventDispatcher);
     }
 
-    public SVNWCClient(ISVNRepositoryFactory repositoryFactory, SVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNWCClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
 
@@ -1004,7 +1004,7 @@ public class SVNWCClient extends SVNBasicClient {
 		} else {
 			Map props = new HashMap();
 			boolean executable;
-			props = getOptions().getAutoProperties(name, props);
+			props = getOptions().applyAutoProperties(name, props);
             DebugLog.log("auto properties for file: " + name + " : " + props);
             mimeType = (String) props.get(SVNProperty.MIME_TYPE);
 			if (mimeType == null) {
