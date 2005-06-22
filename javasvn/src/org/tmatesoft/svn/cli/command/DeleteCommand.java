@@ -40,7 +40,7 @@ public class DeleteCommand extends SVNCommand {
     private void runRemote(PrintStream out) throws SVNException {
         final String commitMessage = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
 
-        SVNCommitClient client = new SVNCommitClient(getCredentialsProvider());
+        SVNCommitClient client = new SVNCommitClient(getOptions(), null);
         Collection urls  = new ArrayList(getCommandLine().getURLCount());
         for(int i = 0; i < getCommandLine().getURLCount(); i++) {
             urls.add(getCommandLine().getURL(i));
@@ -55,7 +55,7 @@ public class DeleteCommand extends SVNCommand {
 
     private void runLocally(final PrintStream out, PrintStream err) {
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
-        SVNWCClient client = new SVNWCClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+        SVNWCClient client = new SVNWCClient(new SVNCommandEventProcessor(out, err, false));
 
         boolean error = false;
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {

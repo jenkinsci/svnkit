@@ -18,7 +18,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -58,16 +57,8 @@ public class SVNCopyClient extends SVNBasicClient {
         super(eventDispatcher);
     }
 
-    public SVNCopyClient(ISVNCredentialsProvider credentialsProvider) {
-        super(credentialsProvider);
-    }
-
-    public SVNCopyClient(ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
-        super(credentialsProvider, eventDispatcher);
-    }
-
-    public SVNCopyClient(final ISVNCredentialsProvider credentialsProvider, ISVNOptions options, ISVNEventListener eventDispatcher) {
-        super(credentialsProvider, options, eventDispatcher);
+    public SVNCopyClient(ISVNOptions options, ISVNEventListener eventDispatcher) {
+        super(options, eventDispatcher);
     }
 
     public SVNCopyClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {

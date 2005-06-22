@@ -54,7 +54,7 @@ public class MoveCommand extends SVNCommand {
         }
 
         String commitMessage = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
-        SVNCopyClient updater = new SVNCopyClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+        SVNCopyClient updater = new SVNCopyClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
         SVNCommitInfo result = updater.doCopy(srcURL, srcPegRevision, srcRevision, dstURL, dstPegRevision, true, commitMessage);
         if (result != SVNCommitInfo.NULL) {
             out.println();
@@ -72,7 +72,7 @@ public class MoveCommand extends SVNCommand {
         if (matchTabsInPath(absoluteDstPath, err) || matchTabsInPath(absoluteSrcPath, err)) {
             return;
         }
-        SVNCopyClient updater = new SVNCopyClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+        SVNCopyClient updater = new SVNCopyClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
         updater.doCopy(new File(absoluteSrcPath), null, SVNRevision.WORKING, new File(absoluteDstPath), null, SVNRevision.WORKING, force, true, null);
 	}

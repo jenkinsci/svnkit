@@ -37,7 +37,7 @@ public class ImportCommand extends SVNCommand {
         boolean enableAutoProps = getCommandLine().hasArgument(SVNArgument.AUTO_PROPS);
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
 
-        SVNCommitClient commitClient = new SVNCommitClient(getCredentialsProvider(), getOptions(), new SVNCommandEventProcessor(out, err, false));
+        SVNCommitClient commitClient = new SVNCommitClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
 
         if (disableAutoProps) {
             commitClient.getOptions().setUseAutoProperties(false);

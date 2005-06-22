@@ -12,11 +12,10 @@
 
 package org.tmatesoft.svn.cli;
 
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNOptions;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -59,10 +58,6 @@ public abstract class SVNCommand {
         SVNOptions options = new SVNOptions(dirFile, false, myUserName, myPassword);
         options.setAuthStorageEnabled(myIsStoreCreds);
         return options;
-    }
-
-    protected ISVNCredentialsProvider getCredentialsProvider() {
-        return new SVNCommandLineCredentialsProvider(myUserName, myPassword, myIsStoreCreds);
     }
 
     public static SVNCommand getCommand(String name) {

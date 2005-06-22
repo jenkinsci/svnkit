@@ -1,21 +1,20 @@
 package org.tmatesoft.svn.core.wc;
 
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNReporter;
+import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusReporter;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
+import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.SVNProperty;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.HashMap;
 
 public class SVNStatusClient extends SVNBasicClient {
 
@@ -26,16 +25,8 @@ public class SVNStatusClient extends SVNBasicClient {
         super(eventDispatcher);
     }
 
-    public SVNStatusClient(ISVNCredentialsProvider credentialsProvider) {
-        super(credentialsProvider);
-    }
-
-    public SVNStatusClient(ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
-        super(credentialsProvider, eventDispatcher);
-    }
-
-    public SVNStatusClient(final ISVNCredentialsProvider credentialsProvider, ISVNOptions options, ISVNEventListener eventDispatcher) {
-        super(credentialsProvider, options, eventDispatcher);
+    public SVNStatusClient(ISVNOptions options, ISVNEventListener eventDispatcher) {
+        super(options, eventDispatcher);
     }
 
     public SVNStatusClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {

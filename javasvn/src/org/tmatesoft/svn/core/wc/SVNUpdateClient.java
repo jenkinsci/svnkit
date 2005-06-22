@@ -11,14 +11,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExportEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -46,16 +45,8 @@ public class SVNUpdateClient extends SVNBasicClient {
         super(eventDispatcher);
     }
 
-    public SVNUpdateClient(ISVNCredentialsProvider credentialsProvider) {
-        super(credentialsProvider);
-    }
-
-    public SVNUpdateClient(ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
-        super(credentialsProvider, eventDispatcher);
-    }
-
-    public SVNUpdateClient(final ISVNCredentialsProvider credentialsProvider, ISVNOptions options, ISVNEventListener eventDispatcher) {
-        super(credentialsProvider, options, eventDispatcher);
+    public SVNUpdateClient(ISVNOptions options, ISVNEventListener eventDispatcher) {
+        super(options, eventDispatcher);
     }
 
     public SVNUpdateClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {

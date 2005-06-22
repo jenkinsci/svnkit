@@ -43,7 +43,7 @@ public class PropgetCommand extends SVNCommand implements ISVNPropertyHandler {
         if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
             revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION)); 
         }
-        SVNWCClient wcClient = new SVNWCClient(getCredentialsProvider(), getOptions(), null);
+        SVNWCClient wcClient = new SVNWCClient(getOptions(), null);
         if (getCommandLine().hasURLs()) {
             String url = getCommandLine().getURL(0);
             if (revProp) {

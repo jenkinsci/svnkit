@@ -77,6 +77,7 @@ class HttpConnection {
         mySVNRepositoryLocation = location;
         myAuthManager = repos.getAuthenticationManager();
     }
+
     public void connect() throws IOException {
         if (mySocket == null || isStale()) {
             if (mySocket != null) {
@@ -86,7 +87,7 @@ class HttpConnection {
             String host = mySVNRepositoryLocation.getHost();
             int port = mySVNRepositoryLocation.getPort();
             String realm = host + ":" + port;
-            myProxyAuth = myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PROXY, realm);
+            myProxyAuth = myAuthManager != null ? myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PROXY, realm) : null;
             if (myProxyAuth != null && myProxyAuth.getProxyHost() != null) {
                 mySocket = SocketFactory.createPlainSocket(myProxyAuth.getProxyHost(), myProxyAuth.getProxyPort());
                 if (isSecured()) {

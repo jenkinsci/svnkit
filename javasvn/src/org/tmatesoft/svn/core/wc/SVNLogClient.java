@@ -1,12 +1,11 @@
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.internal.SVNAnnotationGenerator;
+import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNAnnotateHandler;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
@@ -18,11 +17,11 @@ import org.tmatesoft.svn.util.PathUtil;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.Date;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,16 +39,8 @@ public class SVNLogClient extends SVNBasicClient {
         super(eventDispatcher);
     }
 
-    public SVNLogClient(ISVNCredentialsProvider credentialsProvider) {
-        super(credentialsProvider);
-    }
-
-    public SVNLogClient(ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
-        super(credentialsProvider, eventDispatcher);
-    }
-
-    public SVNLogClient(final ISVNCredentialsProvider credentialsProvider, ISVNOptions options, ISVNEventListener eventDispatcher) {
-        super(credentialsProvider, options, eventDispatcher);
+    public SVNLogClient(ISVNOptions options, ISVNEventListener eventDispatcher) {
+        super(options, eventDispatcher);
     }
 
     public SVNLogClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {

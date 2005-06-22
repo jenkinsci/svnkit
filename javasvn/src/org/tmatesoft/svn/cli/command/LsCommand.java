@@ -55,7 +55,7 @@ public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
         myPrintStream = out;
 
         SVNRevision revision = parseRevision(getCommandLine());
-        SVNLogClient logClient = new SVNLogClient(getCredentialsProvider(), getOptions(), null);
+        SVNLogClient logClient = new SVNLogClient(getOptions(), null);
         if (!getCommandLine().hasURLs() && !getCommandLine().hasPaths()) {
             getCommandLine().setPathAt(0, ".");
         }

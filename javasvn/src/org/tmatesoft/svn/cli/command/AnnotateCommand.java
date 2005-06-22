@@ -34,7 +34,7 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
     private PrintStream myPrintStream;
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
-        SVNLogClient logClient = new SVNLogClient(getCredentialsProvider(), getOptions(), null);
+        SVNLogClient logClient = new SVNLogClient(getOptions(), null);
         myIsVerbose = getCommandLine().hasArgument(SVNArgument.VERBOSE);
         myPrintStream = out;
         SVNRevision endRevision = parseRevision(getCommandLine());

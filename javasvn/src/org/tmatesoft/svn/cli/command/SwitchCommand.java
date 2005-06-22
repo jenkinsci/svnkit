@@ -35,7 +35,7 @@ public class SwitchCommand extends SVNCommand {
         if (!revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
-        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false, false));
+        SVNUpdateClient updater = new SVNUpdateClient(getOptions(), new SVNCommandEventProcessor(out, err, false, false));
         try {
             if (getCommandLine().hasArgument(SVNArgument.RELOCATE)) {
                 updater.doRelocate(new File(absolutePath).getAbsoluteFile(), url, getCommandLine().getURL(1), !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));

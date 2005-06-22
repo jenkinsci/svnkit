@@ -40,7 +40,7 @@ public class CommitCommand extends SVNCommand {
             matchTabsInPath(getCommandLine().getPathAt(i), err);
             localPaths[i] = new File(getCommandLine().getPathAt(i));
         }
-        SVNCommitClient client = new SVNCommitClient(getCredentialsProvider(), getOptions(), new SVNCommandEventProcessor(out, err, false));
+        SVNCommitClient client = new SVNCommitClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
         SVNCommitInfo result = client.doCommit(localPaths, keepLocks, message, false, recursive);
         if (result != SVNCommitInfo.NULL) {
             out.println();

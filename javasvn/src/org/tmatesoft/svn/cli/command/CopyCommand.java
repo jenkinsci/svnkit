@@ -62,7 +62,7 @@ public class CopyCommand extends SVNCommand {
             srcRevision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         }
 
-        SVNCopyClient updater = new SVNCopyClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+        SVNCopyClient updater = new SVNCopyClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
         updater.doCopy(new File(absoluteSrcPath), null, srcRevision, new File(absoluteDstPath), null, SVNRevision.WORKING, force, false, null);
     }
@@ -82,7 +82,7 @@ public class CopyCommand extends SVNCommand {
         }
 
         String commitMessage = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
-        SVNCopyClient updater = new SVNCopyClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+        SVNCopyClient updater = new SVNCopyClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
         SVNCommitInfo result = updater.doCopy(srcURL, srcPegRevision, srcRevision, dstURL, dstPegRevision, false, commitMessage);
         if (result != SVNCommitInfo.NULL) {
             out.println();
@@ -97,7 +97,7 @@ public class CopyCommand extends SVNCommand {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
-        SVNCopyClient updater = new SVNCopyClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+        SVNCopyClient updater = new SVNCopyClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
         updater.doCopy(srcURL, getCommandLine().getPegRevision(0), revision, new File(dstPath), null, SVNRevision.WORKING, false, null);
     }
     
@@ -112,7 +112,7 @@ public class CopyCommand extends SVNCommand {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.WORKING;
         }
-        SVNCopyClient updater = new SVNCopyClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+        SVNCopyClient updater = new SVNCopyClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
         SVNCommitInfo info = updater.doCopy(new File(srcPath), getCommandLine().getPathPegRevision(0), revision, dstURL, getCommandLine().getPegRevision(0), false, message);
         if (info != SVNCommitInfo.NULL) {
             out.println();

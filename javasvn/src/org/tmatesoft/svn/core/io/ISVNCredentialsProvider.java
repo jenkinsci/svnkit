@@ -38,7 +38,6 @@ package org.tmatesoft.svn.core.io;
  * 
  * @version 1.0
  * @author 	TMate Software Ltd.
- * @see 	ISVNCredentialsProviderEx
  * @see 	ISVNCredentials
  * @see 	ISVNSSHCredentials
  * @see 	SVNRepository#setCredentialsProvider(ISVNCredentialsProvider)

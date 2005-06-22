@@ -298,27 +298,27 @@ public class WorkingCopy {
          * passing credentials provider when creating an instance of
          * SVNCommitClient
          */
-        myCommitClient = new SVNCommitClient(scp, new CommitEventListener());
+        myCommitClient = new SVNCommitClient(null, new CommitEventListener());
         /*
          * passing credentials provider when creating an instance of
          * SVNCopyClient
          */
-        myCopyClient = new SVNCopyClient(scp);
+        myCopyClient = new SVNCopyClient(null);
         /*
          * passing credentials provider when creating an instance of
          * SVNWCClient
          */
-        myWCClient = new SVNWCClient(scp);
+        myWCClient = new SVNWCClient(null);
         /*
          * passing credentials provider when creating an instance of
          * SVNStatusClient
          */
-        myStatusClient = new SVNStatusClient(scp);
+        myStatusClient = new SVNStatusClient(null);
         /*
          * passing credentials provider when creating an instance of
          * SVNUpdateClient
          */
-        myUpdateClient = new SVNUpdateClient(scp, new UpdateEventListener());
+        myUpdateClient = new SVNUpdateClient(new UpdateEventListener());
 
         long committedRevision = -1;
         System.out.println("Making a new directory at '" + url + "'...");
@@ -611,7 +611,7 @@ public class WorkingCopy {
      * Initializes the library to work with a repository either via svn:// (and
      * svn+ssh://) or via http:// (and https://)
      */
-    private final static void setupLibrary() {
+    private static void setupLibrary() {
         /*
          * for DAV (over http and https)
          */
@@ -638,7 +638,7 @@ public class WorkingCopy {
      * commitMessage - a commit log message since a URL-based directory creation is 
      * immediately committed to a repository.
      */
-    private final static SVNCommitInfo makeDirectory(String url, String commitMessage) throws SVNException{
+    private static SVNCommitInfo makeDirectory(String url, String commitMessage) throws SVNException{
         /*
          * Returns SVNCommitInfo containing information on the commit (revision number, 
          * etc.) 
@@ -663,7 +663,7 @@ public class WorkingCopy {
      * committs changes for the entire directory, otherwise - only for child entries of the 
      * directory;
      */
-    private final static SVNCommitInfo commit(File wcPath, boolean keepLocks, String commitMessage)
+    private static SVNCommitInfo commit(File wcPath, boolean keepLocks, String commitMessage)
             throws SVNException {
         /*
          * Recursive commit on wcPath.
@@ -693,7 +693,7 @@ public class WorkingCopy {
      * recursive - if true and url corresponds to a directory then doCheckout(..) recursively 
      * fetches out the entire directory, otherwise - only child entries of the directory;   
      */
-    private final static long checkout(String url,
+    private static long checkout(String url,
             SVNRevision revision, File destPath, boolean isRecursive)
             throws SVNException {
         /*
@@ -720,7 +720,7 @@ public class WorkingCopy {
      * recursive - if true and an entry (FILE) is a directory then doUpdate(..) recursively 
      * updates the entire directory, otherwise - only child entries of the directory;   
      */
-    private final static long update(File wcPath,
+    private static long update(File wcPath,
             SVNRevision updateToRevision, boolean isRecursive)
             throws SVNException {
         /*
@@ -747,7 +747,7 @@ public class WorkingCopy {
      * recursive - if true and an entry (FILE) is a directory then doSwitch(..) recursively 
      * switches the entire directory, otherwise - only child entries of the directory;   
      */
-    private final static long switchToURL(File wcPath,
+    private static long switchToURL(File wcPath,
             String url, SVNRevision updateToRevision, boolean isRecursive)
             throws SVNException {
         /*
@@ -789,7 +789,7 @@ public class WorkingCopy {
      * is passed to a handler's handleStatus(SVNStatus status) method where an implementor
      * decides what to do with it.  
      */
-    private final static void showStatus(File wcPath, boolean isRecursive, boolean isRemote, boolean isReportAll,
+    private static void showStatus(File wcPath, boolean isRecursive, boolean isRemote, boolean isReportAll,
             boolean isIncludeIgnored, boolean isCollectParentExternals)
             throws SVNException {
         /*
@@ -819,7 +819,7 @@ public class WorkingCopy {
      * is passed to a handler's handleInfo(SVNInfo info) method where an implementor
      * decides what to do with it.     
      */
-    private final static void showInfo(File wcPath, SVNRevision revision, boolean isRecursive) throws SVNException {
+    private static void showInfo(File wcPath, SVNRevision revision, boolean isRecursive) throws SVNException {
         /*
          * InfoHandler displays information for each entry in the console (in the manner of
          * the native Subversion command line client)
@@ -848,7 +848,7 @@ public class WorkingCopy {
      * recursive - if true and an entry is a directory then doAdd(..) recursively 
      * schedules all its inner entries for addition as well. 
      */
-    private final static void addEntry(File wcPath) throws SVNException {
+    private static void addEntry(File wcPath) throws SVNException {
         myWCClient.doAdd(wcPath, false, false, false, true);
     }
     
@@ -864,7 +864,7 @@ public class WorkingCopy {
      * 
      * lockMessage - an optional lock comment string.
      */
-    private final static void lock(File wcPath, boolean isStealLock, String lockComment) throws SVNException {
+    private static void lock(File wcPath, boolean isStealLock, String lockComment) throws SVNException {
         myWCClient.doLock(new File[] { wcPath }, isStealLock, lockComment);
     }
     
@@ -882,7 +882,7 @@ public class WorkingCopy {
      * dryRun - set to true not to delete an entry but to check if it can be deleted;
      * if false - then it's a deletion itself.  
      */
-    private final static void delete(File wcPath, boolean force) throws SVNException {
+    private static void delete(File wcPath, boolean force) throws SVNException {
         myWCClient.doDelete(wcPath, force, false);
     }
     
@@ -927,7 +927,7 @@ public class WorkingCopy {
      * commitMessage - a commit log message since URL->URL copying is immediately 
      * committed to a repository.
      */
-    private final static SVNCommitInfo copy(String srcURL, SVNRevision srcPegRevision, String dstURL,
+    private static SVNCommitInfo copy(String srcURL, SVNRevision srcPegRevision, String dstURL,
             boolean isMove, String commitMessage) throws SVNException {
         /*
          * SVNRevision.HEAD means the latest revision.
@@ -941,7 +941,7 @@ public class WorkingCopy {
     /*
      * Displays error information and exits. 
      */
-    private final static void error(String message, Exception e){
+    private static void error(String message, Exception e){
         System.err.println(message+(e!=null ? ": "+e.getMessage() : ""));
         System.exit(1);
     }

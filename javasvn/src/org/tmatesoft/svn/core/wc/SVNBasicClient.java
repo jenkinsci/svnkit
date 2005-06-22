@@ -9,9 +9,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.SVNOptions;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
+import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -39,44 +38,37 @@ public class SVNBasicClient implements ISVNEventListener {
     private boolean myIsCommandRunning;
 
     protected SVNBasicClient() {
-        this((ISVNCredentialsProvider) null, null, null);
+        this(new SVNOptions(), null);
     }
 
     protected SVNBasicClient(ISVNEventListener eventDispatcher) {
-        this((ISVNCredentialsProvider) null, null, eventDispatcher);
+        this(new SVNOptions(), eventDispatcher);
     }
 
-    protected SVNBasicClient(ISVNCredentialsProvider credentialsProvider) {
-        this(credentialsProvider, null, null);
-    }
-
-    protected SVNBasicClient(ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
-        this(credentialsProvider, null, eventDispatcher);
-    }
-
-    protected SVNBasicClient(final ISVNCredentialsProvider credentialsProvider, final ISVNOptions options, ISVNEventListener eventDispatcher) {
-        this(new ISVNRepositoryFactory() {
-            public SVNRepository createRepository(String url) throws SVNException {
-                SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
-                if (repos != null && credentialsProvider != null) {
-                    repos.setCredentialsProvider(credentialsProvider);
-                }
-                if (repos != null && options != null) {
-                    repos.setAuthenticationManager(options);
-                }
-                return repos;
-            }
-        }, options, eventDispatcher);
+    protected SVNBasicClient(final ISVNOptions options, ISVNEventListener eventDispatcher) {
+        this(null, options, eventDispatcher);
     }
 
     protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
         myRepositoryFactory = repositoryFactory;
         myOptions = options;
-        myEventDispatcher = eventDispatcher;
-        myPathPrefixesStack = new LinkedList();
         if (myOptions == null)  {
             myOptions = new SVNOptions();
         }
+        if (myRepositoryFactory == null) {
+            myRepositoryFactory = new ISVNRepositoryFactory() {
+                public SVNRepository createRepository(String url) throws SVNException {
+                    SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
+                    if (repos != null) {
+                        repos.setAuthenticationManager(myOptions);
+                    }
+                    return repos;
+                }
+            };
+        }
+
+        myEventDispatcher = eventDispatcher;
+        myPathPrefixesStack = new LinkedList();
     }
     
     public ISVNOptions getOptions() {

@@ -39,7 +39,7 @@ public class ExportCommand extends SVNCommand {
         }
 
         SVNRevision revision = parseRevision(getCommandLine());
-        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), 
+        SVNUpdateClient updater = new SVNUpdateClient(getOptions(),
                 new SVNCommandEventProcessor(out, err, false, true));
         String eol = (String) getCommandLine().getArgumentValue(SVNArgument.EOL_STYLE);
         if (url != null) {

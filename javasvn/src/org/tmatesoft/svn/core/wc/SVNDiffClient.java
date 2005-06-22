@@ -13,7 +13,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNMerger;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -39,16 +38,8 @@ public class SVNDiffClient extends SVNBasicClient {
         super(eventDispatcher);
     }
 
-    public SVNDiffClient(ISVNCredentialsProvider credentialsProvider) {
-        super(credentialsProvider);
-    }
-
-    public SVNDiffClient(ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
-        super(credentialsProvider, eventDispatcher);
-    }
-
-    public SVNDiffClient(final ISVNCredentialsProvider credentials, ISVNOptions options, ISVNEventListener eventDispatcher) {
-        super(credentials, options, eventDispatcher);
+    public SVNDiffClient(ISVNOptions options, ISVNEventListener eventDispatcher) {
+        super(options, eventDispatcher);
     }
 
     public SVNDiffClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {

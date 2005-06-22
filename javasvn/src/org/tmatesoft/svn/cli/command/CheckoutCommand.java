@@ -41,7 +41,7 @@ public class CheckoutCommand extends SVNCommand {
         if (!revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
-        SVNUpdateClient updater = new SVNUpdateClient(getCredentialsProvider(), getOptions(),
+        SVNUpdateClient updater = new SVNUpdateClient(getOptions(),
                 new SVNCommandEventProcessor(out, err, true));
         if (getCommandLine().getURLCount() == 1) {
             updater.doCheckout(url, new File(path), SVNRevision.UNDEFINED, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));

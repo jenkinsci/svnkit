@@ -33,7 +33,7 @@ public class DiffCommand extends SVNCommand {
 
 	public void run(final PrintStream out, PrintStream err) throws SVNException {
         boolean error = false;
-        SVNDiffClient differ = new SVNDiffClient(getCredentialsProvider(), null);
+        SVNDiffClient differ = new SVNDiffClient(getOptions(), null);
         differ.setDiffGenerator(new DefaultSVNDiffGenerator() {            
             public String getDisplayPath(File file) {
                 return getPath(file).replace(File.separatorChar, '/');

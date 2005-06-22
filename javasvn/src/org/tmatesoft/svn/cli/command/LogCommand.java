@@ -80,7 +80,7 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
                 buffer.append(s);
             }
         };
-        SVNLogClient logClient = new SVNLogClient(getCredentialsProvider(), getOptions(), null);
+        SVNLogClient logClient = new SVNLogClient(getOptions(), null);
         if (getCommandLine().hasURLs()) {
             String url = getCommandLine().getURL(0);
             Collection targets = new ArrayList();

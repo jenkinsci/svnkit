@@ -25,7 +25,7 @@ public class LockCommand extends SVNCommand {
         }
         File[] filesArray = (File[]) files.toArray(new File[files.size()]);
         if (filesArray.length > 0) {
-            SVNWCClient wcClient = new SVNWCClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+            SVNWCClient wcClient = new SVNWCClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
             wcClient.doLock(filesArray, force, message);
         }
         files.clear();
@@ -35,7 +35,7 @@ public class LockCommand extends SVNCommand {
         }
         String[] urls = (String[]) files.toArray(new String[files.size()]);
         if (urls.length > 0) {
-            SVNWCClient wcClient = new SVNWCClient(getCredentialsProvider(), new SVNCommandEventProcessor(out, err, false));
+            SVNWCClient wcClient = new SVNWCClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
             wcClient.doLock(urls, force, message);
         }
     }

@@ -3,20 +3,19 @@ package org.tmatesoft.svn.core.wc;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
+import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCommitter;
+import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
+import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNImportMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc.SVNCommitter;
-import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
-import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
-import org.tmatesoft.svn.core.internal.wc.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.SVNImportMediator;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -30,15 +29,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.Collection;
-import java.util.HashSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -58,16 +57,8 @@ public class SVNCommitClient extends SVNBasicClient {
         super(eventDispatcher);
     }
 
-    public SVNCommitClient(ISVNCredentialsProvider credentialsProvider) {
-        super(credentialsProvider);
-    }
-
-    public SVNCommitClient(ISVNCredentialsProvider credentialsProvider, ISVNEventListener eventDispatcher) {
-        super(credentialsProvider, eventDispatcher);
-    }
-
-    public SVNCommitClient(final ISVNCredentialsProvider credentialsProvider, ISVNOptions options, ISVNEventListener eventDispatcher) {
-        super(credentialsProvider, options, eventDispatcher);
+    public SVNCommitClient(ISVNOptions options, ISVNEventListener eventDispatcher) {
+        super(options, eventDispatcher);
     }
 
     public SVNCommitClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {

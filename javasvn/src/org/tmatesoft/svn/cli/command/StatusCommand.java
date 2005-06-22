@@ -50,7 +50,7 @@ public class StatusCommand extends SVNCommand {
         boolean ignored = getCommandLine().hasArgument(SVNArgument.NO_IGNORE);
         boolean quiet = getCommandLine().hasArgument(SVNArgument.QUIET);
 
-        SVNStatusClient stClient = new SVNStatusClient(getCredentialsProvider(), getOptions(), new SVNCommandEventProcessor(out, err, false));
+        SVNStatusClient stClient = new SVNStatusClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
         org.tmatesoft.svn.core.wc.ISVNStatusHandler handler = new SVNCommandStatusHandler(System.out, reportAll || showUpdates, reportAll, quiet, showUpdates);
         boolean error = false;
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
