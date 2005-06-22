@@ -19,7 +19,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.wc.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.SVNAuthentication;
-import org.tmatesoft.svn.core.internal.io.svn.SVNAuthenticator;
 import org.tmatesoft.svn.util.Base64;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.LoggingInputStream;
@@ -56,7 +55,7 @@ import java.util.zip.GZIPInputStream;
 
 /**
  * @author TMate Software Ltd.
- * 
+ *
  */
 class HttpConnection {
 
@@ -72,6 +71,7 @@ class HttpConnection {
     private Map myCredentialsChallenge;
     private ISVNAuthenticationManager myAuthManager;
     private SVNAuthentication myLastValidAuth;
+    private SVNAuthentication myProxyAuth;
 
     public HttpConnection(SVNRepositoryLocation location, SVNRepository repos) {
         mySVNRepositoryLocation = location;
@@ -85,17 +85,14 @@ class HttpConnection {
             close();
             String host = mySVNRepositoryLocation.getHost();
             int port = mySVNRepositoryLocation.getPort();
-            IDAVProxyManager proxyManager = DAVRepositoryFactory.getProxyManager();
-            String proxyHost = proxyManager.getProxyHost(mySVNRepositoryLocation);
-            int proxyPort = proxyManager.getProxyPort(mySVNRepositoryLocation);
-            if (proxyManager.isProxyEnabled(mySVNRepositoryLocation) && 
-                    proxyPort > 0 && 
-                    proxyHost != null) {
-                mySocket = SocketFactory.createPlainSocket(proxyHost, proxyPort);
+            String realm = host + ":" + port;
+            myProxyAuth = myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PROXY, realm);
+            if (myProxyAuth != null && myProxyAuth.getProxyHost() != null) {
+                mySocket = SocketFactory.createPlainSocket(myProxyAuth.getProxyHost(), myProxyAuth.getProxyPort());
                 if (isSecured()) {
                     Map props = new HashMap();
-                    if (getProxyAuthString() != null) {
-                        props.put("Proxy-Authorization", getProxyAuthString());
+                    if (myProxyAuth.getUserName() != null && myProxyAuth.getProxyPassword() != null) {
+                        props.put("Proxy-Authorization", getProxyAuthString(myProxyAuth.getProxyUserName(), myProxyAuth.getProxyPassword()));
                     }
                     myOutputStream = DebugLog.getLoggingOutputStream("http", mySocket.getOutputStream());
                     sendHeader("CONNECT", mySVNRepositoryLocation.getHost() + ":" + mySVNRepositoryLocation.getPort(), props, null);
@@ -143,7 +140,7 @@ class HttpConnection {
             } catch (InterruptedIOException e) {
                 if (!SocketTimeoutException.class.isInstance(e)) {
                     throw e;
-                    
+
                 }
             } catch (IOException e) {
                 isStale = true;
@@ -251,7 +248,7 @@ class HttpConnection {
                 close();
                 acknowledgeSSLContext(false);
                 throw new SVNException(e);
-            } 
+            }
             acknowledgeSSLContext(true);
             if (status != null
                     && (status.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED || status.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN)) {
@@ -427,7 +424,7 @@ class HttpConnection {
         } catch (ParserConfigurationException e) {
             throw new SVNException(e);
         } catch (EOFException e) {
-            // skip it.  
+            // skip it.
         } catch (IOException e) {
             throw new SVNException(e);
         } finally {
@@ -443,13 +440,13 @@ class HttpConnection {
         StringBuffer sb = new StringBuffer();
         sb.append(method);
         sb.append(' ');
-        boolean isProxied = DAVRepositoryFactory.getProxyManager().isProxyEnabled(mySVNRepositoryLocation); 
+        boolean isProxied = DAVRepositoryFactory.getProxyManager().isProxyEnabled(mySVNRepositoryLocation);
         if (isProxied && !isSecured()) {
             // prepend path with host name.
             sb.append("http://");
             sb.append(mySVNRepositoryLocation.getHost());
             sb.append(":");
-            sb.append(mySVNRepositoryLocation.getPort());            
+            sb.append(mySVNRepositoryLocation.getPort());
         }
         DAVUtil.getCanonicalPath(path, sb);
         sb.append(' ');
@@ -469,8 +466,8 @@ class HttpConnection {
         sb.append(HttpConnection.CRLF);
         sb.append("TE: trailers");
         sb.append(HttpConnection.CRLF);
-        if (isProxied && !isSecured() && getProxyAuthString() != null) {
-            sb.append("Proxy-Authorization: " + getProxyAuthString());
+        if (isProxied && !isSecured() && myProxyAuth != null) {
+            sb.append("Proxy-Authorization: " + getProxyAuthString(myProxyAuth.getUserName(), myProxyAuth.getPassword()));
             sb.append(HttpConnection.CRLF);
         }
         boolean chunked = false;
@@ -531,7 +528,7 @@ class HttpConnection {
     }
 
     private DAVStatus readHeader(Map headerProperties) throws IOException {
-        return readHeader(headerProperties, false);        
+        return readHeader(headerProperties, false);
     }
     private DAVStatus readHeader(Map headerProperties, boolean firstLineOnly) throws IOException {
         DAVStatus responseCode = null;
@@ -574,7 +571,7 @@ class HttpConnection {
 	                break;
 	            }
 	            firstLine = false;
-	
+
 	            int index = line.indexOf(":");
 	            if (index >= 0 && headerProperties != null) {
 	                String name = line.substring(0, index);
@@ -583,7 +580,7 @@ class HttpConnection {
 	            } else if (responseCode == null) {
 	                responseCode = DAVStatus.parse(lineStr);
 	            }
-	
+
 	            line.delete(0, line.length());
 	        }
         } finally {
@@ -597,7 +594,7 @@ class HttpConnection {
         while (is.skip(2048) > 0) {}
     }
 
-    private LoggingOutputStream getOutputStream() throws IOException {    	
+    private LoggingOutputStream getOutputStream() throws IOException {
         if (myOutputStream == null) {
         	if (mySocket == null) {
         		return null;
@@ -715,7 +712,7 @@ class HttpConnection {
             }
         }
 
-        if ("close".equals(readHeader.get("Connection")) || 
+        if ("close".equals(readHeader.get("Connection")) ||
                 "close".equals(readHeader.get("Proxy-Connection"))) {
             DebugLog.log("closing connection due to server request");
             close();
@@ -738,9 +735,7 @@ class HttpConnection {
         }
 	}
 
-    private String getProxyAuthString() {
-        String username = DAVRepositoryFactory.getProxyManager().getProxyUserName(mySVNRepositoryLocation);
-        String password = DAVRepositoryFactory.getProxyManager().getProxyPassword(mySVNRepositoryLocation);
+    private String getProxyAuthString(String username, String password) {
         if (username != null && password != null) {
             String auth = username + ":" + password;
             return "Basic " + Base64.byteArrayToBase64(auth.getBytes());
