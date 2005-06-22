@@ -32,6 +32,7 @@ public class SVNOptions implements ISVNOptions {
 
     private File myConfigDirectory;
     private boolean myIsConfigStorageEnabled;
+    private SVNAuthentication myDefaultCredentials;
 
     private SVNConfigFile myConfigFile;
     private SVNConfigFile myServersFile;
@@ -53,12 +54,7 @@ public class SVNOptions implements ISVNOptions {
         myConfigDirectory = configDirectory == null ? getDefaultConfigDir() : configDirectory;
         myIsConfigStorageEnabled = storeConfig;
         if (userName != null && password != null) {
-            Collection pwd = new ArrayList();
-            pwd.add(new SVNAuthentication(PASSWORD, null, userName, password));
-            Collection usr = new ArrayList();
-            usr.add(new SVNAuthentication(USERNAME, null, userName));
-            myCachedAuths.put(PASSWORD, pwd);
-            myCachedAuths.put(USERNAME, usr);
+            setDefaultAuthentication(userName, password);
         }
     }
 
@@ -273,7 +269,10 @@ public class SVNOptions implements ISVNOptions {
 
     public SVNAuthentication[] getAvailableAuthentications(String kind, String realm) {
         // load from files (for ssh, user, password)
-        Collection allAuths = new ArrayList();
+        List allAuths = new ArrayList();
+        if (myDefaultCredentials != null && PASSWORD.equals(kind)) {
+            allAuths.add(0, myDefaultCredentials);
+        }
         if (myCachedAuths.containsKey(kind)) {
             Collection cachedAuths = (Collection) myCachedAuths.get(kind);
             for (Iterator iterator = cachedAuths.iterator(); iterator.hasNext();) {
@@ -289,6 +288,7 @@ public class SVNOptions implements ISVNOptions {
                 allAuths.add(auth);
             }
         }
+        DebugLog.log("number of creds: " + allAuths.size());
         return (SVNAuthentication[]) allAuths.toArray(new SVNAuthentication[allAuths.size()]);
     }
 
@@ -303,6 +303,10 @@ public class SVNOptions implements ISVNOptions {
                 myCachedAuths.put(kind, new ArrayList());
             }
             List cached = (List) myCachedAuths.get(kind);
+            // force removal of 'default' creds.
+            if (cached.size() > 0 && ((SVNAuthentication) cached.get(0)).getRealm() == null) {
+                cached.remove(0);
+            }
             cached.remove(credentials);
             cached.add(0, credentials);
         } else {
@@ -310,6 +314,14 @@ public class SVNOptions implements ISVNOptions {
                 realm = credentials.getRealm();
             }
             saveCredentials(kind, realm, credentials);
+        }
+    }
+
+    public void setDefaultAuthentication(String userName, String password) {
+        if (userName != null && password != null) {
+            myDefaultCredentials = new SVNAuthentication(PASSWORD, null, userName, password);
+        } else {
+            myDefaultCredentials = null;
         }
     }
 

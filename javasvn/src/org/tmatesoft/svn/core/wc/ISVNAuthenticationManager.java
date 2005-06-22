@@ -29,6 +29,8 @@ public interface ISVNAuthenticationManager {
 
     public void addAuthentication(String realm, SVNAuthentication credentials, boolean store);
 
+    public void setDefaultAuthentication(String userName, String password);
+
     public void deleteAuthentication(SVNAuthentication credentials);
 
     public boolean isAuthStorageEnabled();

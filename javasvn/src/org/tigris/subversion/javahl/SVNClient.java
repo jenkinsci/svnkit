@@ -16,7 +16,6 @@ import java.util.TreeSet;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.internal.wc.SVNOptions;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
 import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.io.SVNCancelException;
@@ -25,7 +24,6 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
@@ -60,7 +58,8 @@ public class SVNClient implements SVNClientInterface {
     private Notify myNotify;
     private Notify2 myNotify2;
     private CommitMessage myMessageHandler;
-    
+    private ISVNOptions myOptions;
+
     public void dispose() {
         SVNJSchSession.shutdown();
     }
@@ -151,10 +150,12 @@ public class SVNClient implements SVNClientInterface {
 
     public void username(String username) {
         myUserName = username;
+        getSVNOptions();
     }
 
     public void password(String password) {
         myPassword = password;
+        getSVNOptions();
     }
 
     public void setPrompt(PromptUserPassword prompt) {
@@ -669,16 +670,15 @@ public class SVNClient implements SVNClientInterface {
         // TODO Auto-generated method stub
         return null;
     }
-    
-    protected ISVNCredentialsProvider getCredentialsProvider() {
-        return new SVNSimpleCredentialsProvider(myUserName, myPassword);
-    }
-    
+
     protected ISVNOptions getSVNOptions(){
-        if(myConfigDir == null){
-            return new SVNOptions();
+        if (myOptions == null) {
+            File dir = myConfigDir == null ? null : new File(myConfigDir);
+            myOptions = new SVNOptions(dir, false, myUserName, myPassword);
+        } else {
+            myOptions.setDefaultAuthentication(myUserName, myPassword);
         }
-        return new SVNOptions(new File(myConfigDir));
+        return myOptions;
     }
     
     protected ISVNEventListener getEventListener(){
@@ -724,31 +724,31 @@ public class SVNClient implements SVNClientInterface {
     }
     
     protected SVNCommitClient createSVNCommitClient(){
-        return new SVNCommitClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
+        return new SVNCommitClient(getSVNOptions(), getEventListener());
     }
     
     protected SVNUpdateClient createSVNUpdateClient(){
-        return new SVNUpdateClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
+        return new SVNUpdateClient(getSVNOptions(), getEventListener());
     }
     
     protected SVNStatusClient createSVNStatusClient(){
-        return new SVNStatusClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
+        return new SVNStatusClient(getSVNOptions(), getEventListener());
     }
     
     protected SVNWCClient createSVNWCClient(){
-        return new SVNWCClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
+        return new SVNWCClient(getSVNOptions(), getEventListener());
     }
     
     protected SVNDiffClient createSVNDiffClient(){
-        return new SVNDiffClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
+        return new SVNDiffClient(getSVNOptions(), getEventListener());
     }
     
     protected SVNCopyClient createSVNCopyClient(){
-        return new SVNCopyClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
+        return new SVNCopyClient(getSVNOptions(), getEventListener());
     }
     
     protected SVNLogClient createSVNLogClient(){
-        return new SVNLogClient(getCredentialsProvider(), getSVNOptions(), getEventListener());
+        return new SVNLogClient(getSVNOptions(), getEventListener());
     }
     
     private static void throwException(SVNException e) throws ClientException {
