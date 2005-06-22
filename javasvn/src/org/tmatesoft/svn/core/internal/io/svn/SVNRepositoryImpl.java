@@ -581,7 +581,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     private void openConnection() throws SVNException {
         lock();
         ISVNConnector connector = SVNRepositoryFactoryImpl.getConnectorFactory().createConnector(this);
-        myConnection = new SVNConnection(connector);
+        myConnection = new SVNConnection(connector, getLocation(), getAuthenticationManager());
         try {
             myConnection.open(this);
             authenticate();

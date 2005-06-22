@@ -1,21 +1,19 @@
 package org.tmatesoft.svn.core.internal.io.svn;
 
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import org.tmatesoft.svn.core.io.SVNAuthenticationException;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.wc.SVNAuthentication;
+import org.tmatesoft.svn.util.DebugLog;
+
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import org.tmatesoft.svn.core.io.ISVNCredentials;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
-import org.tmatesoft.svn.core.io.SVNAuthenticationException;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.SVNUtil;
-
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 
 /**
  * @author Marc Strapetz
@@ -31,44 +29,34 @@ public class SVNJSchConnector implements ISVNConnector {
     private OutputStream myOutputStream;
 
     public void open(SVNRepositoryImpl repository) throws SVNException {
-        ISVNCredentialsProvider provider = repository.getCredentialsProvider();
-        if (provider == null) {
-            throw new SVNException("Credentials provider is required for SSH connection");
-        }
-        provider.reset();
+        ISVNAuthenticationManager authManager = repository.getAuthenticationManager();
 
-        // 1. fetch credentials for default user?
-        String realm = repository.getLocation().toCanonicalForm();
-        String userName = System.getProperty("user.name");
-        ISVNCredentials credentials = SVNUtil.nextCredentials(provider, repository.getLocation(), realm);
-        if (credentials != null) {
-            userName = credentials.getName();
-            if (userName != null) {
-                realm = "svn+ssh://" + userName + "@" + realm.substring("svn+ssh://".length());
-            }
+        String realm = repository.getLocation().getHost() + ":" + repository.getLocation().getPort();
+        SVNAuthentication authentication = authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm);
+        if (authentication == null) {
+            throw new SVNAuthenticationException();
         }
         SVNAuthenticationException lastException = null;
         Session session = null;
         
-        while (credentials != null) {
+        while (authentication != null) {
             try {
-            	session = SVNJSchSession.getSession(repository.getLocation(), credentials);
+            	session = SVNJSchSession.getSession(repository.getLocation(), authentication);
             	if (session != null && !session.isConnected()) {
             		session = null;
             		continue;
             	}
-                provider.accepted(credentials);
                 lastException = null;
+                authManager.addAuthentication(authentication, authManager.isAuthStorageEnabled());
                 break;
             } catch (SVNAuthenticationException e) {
-                provider.notAccepted(credentials, e.getMessage());
                 if (session != null && session.isConnected()) {
             		DebugLog.log("DISCONNECTING: " + session);
             		session.disconnect();
             		session = null;
             	}
                 lastException = e;
-                credentials = SVNUtil.nextCredentials(provider, repository.getLocation(), realm);
+                authentication = authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm);
             }
         }
         if (lastException != null || session == null) {
@@ -77,7 +65,6 @@ public class SVNJSchConnector implements ISVNConnector {
             }
             throw new SVNAuthenticationException("Can't establish SSH connection without credentials");
         }
-        repository.setCredentials(credentials);
         try {
             int retry = 1;
             while(true) {

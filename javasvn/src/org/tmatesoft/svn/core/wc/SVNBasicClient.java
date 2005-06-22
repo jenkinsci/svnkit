@@ -54,12 +54,15 @@ public class SVNBasicClient implements ISVNEventListener {
         this(credentialsProvider, null, eventDispatcher);
     }
 
-    protected SVNBasicClient(final ISVNCredentialsProvider credentialsProvider, ISVNOptions options, ISVNEventListener eventDispatcher) {
+    protected SVNBasicClient(final ISVNCredentialsProvider credentialsProvider, final ISVNOptions options, ISVNEventListener eventDispatcher) {
         this(new ISVNRepositoryFactory() {
             public SVNRepository createRepository(String url) throws SVNException {
                 SVNRepository repos = SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(url));
                 if (repos != null && credentialsProvider != null) {
                     repos.setCredentialsProvider(credentialsProvider);
+                }
+                if (repos != null && options != null) {
+                    repos.setAuthenticationManager(options);
                 }
                 return repos;
             }

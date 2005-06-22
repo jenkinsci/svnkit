@@ -23,6 +23,7 @@ public class SVNAuthentication {
     private int myProxyPort;
     private String myProxyPassword;
     private String myProxyUserName;
+    private String myPassphrase;
 
     // password ot ssh2
     public SVNAuthentication(String kind, String realm, String username,
@@ -46,9 +47,11 @@ public class SVNAuthentication {
     }
 
     // ssh2
-    public SVNAuthentication(String kind, String realm, String username, String password, File sshKeyFile) {
+    public SVNAuthentication(String kind, String realm, String username, String password, File sshKeyFile, String passphrase) {
         this(kind, realm, username);
         mySSHKeyFile = sshKeyFile;
+        myPassphrase = passphrase;
+        myPassword = password;
     }
 
     // https client cert.
@@ -100,5 +103,9 @@ public class SVNAuthentication {
 
     public String getProxyUserName() {
         return myProxyUserName;
+    }
+
+    public String getPassphrase() {
+        return myPassphrase;
     }
 }

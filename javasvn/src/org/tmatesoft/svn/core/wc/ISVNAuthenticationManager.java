@@ -27,7 +27,7 @@ public interface ISVNAuthenticationManager {
 
     public SVNAuthentication getNextAuthentication(String kind, String realm);
 
-    public void addAuthentication(SVNAuthentication credentials, boolean store);
+    public void addAuthentication(String realm, SVNAuthentication credentials, boolean store);
 
     public void deleteAuthentication(SVNAuthentication credentials);
 

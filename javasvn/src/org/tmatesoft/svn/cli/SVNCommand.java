@@ -55,10 +55,10 @@ public abstract class SVNCommand {
 
     protected ISVNOptions getOptions() {
         String dir = (String) getCommandLine().getArgumentValue(SVNArgument.CONFIG_DIR);
-        if (dir == null) {
-            return new SVNOptions();
-        }
-        return new SVNOptions(new File(dir));
+        File dirFile = dir == null ? null : new File(dir);
+        SVNOptions options = new SVNOptions(dirFile, false, myUserName, myPassword);
+        options.setAuthStorageEnabled(myIsStoreCreds);
+        return options;
     }
 
     protected ISVNCredentialsProvider getCredentialsProvider() {

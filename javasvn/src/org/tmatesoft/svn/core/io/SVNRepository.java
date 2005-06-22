@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.io;
 
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.internal.SVNAnnotationGenerator;
+import org.tmatesoft.svn.core.wc.ISVNAuthenticationManager;
 import org.tmatesoft.svn.util.DebugLog;
 
 import java.io.File;
@@ -107,6 +108,7 @@ public abstract class SVNRepository {
     private Thread myLocker;
     private ISVNCredentialsProvider myUserCredentialsProvider;
     private String myRepositoryRootURL;
+    private ISVNAuthenticationManager myAuthManager;
 
     /**
      * Constructs an <code>SVNRepository</code> instance (representing a
@@ -230,6 +232,10 @@ public abstract class SVNRepository {
     public void setCredentialsProvider(ISVNCredentialsProvider provider) {
         myUserCredentialsProvider = provider;
     }
+
+    public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
+        myAuthManager = authManager;
+    }
     /**
      * Gets the set (if any) provider of client's credentials. The Client's 
      * cridentials that can be obtained from the provider are used then to
@@ -243,6 +249,9 @@ public abstract class SVNRepository {
      */
     public ISVNCredentialsProvider getCredentialsProvider() {
         return myUserCredentialsProvider;
+    }
+    public ISVNAuthenticationManager getAuthenticationManager() {
+        return myAuthManager;
     }
     
     /**
