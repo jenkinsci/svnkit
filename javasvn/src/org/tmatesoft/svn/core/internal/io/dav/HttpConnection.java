@@ -12,6 +12,31 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
+import org.tmatesoft.svn.core.io.SVNAuthenticationException;
+import org.tmatesoft.svn.core.io.SVNCancelException;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.wc.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.wc.SVNAuthentication;
+import org.tmatesoft.svn.core.internal.io.svn.SVNAuthenticator;
+import org.tmatesoft.svn.util.Base64;
+import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.LoggingInputStream;
+import org.tmatesoft.svn.util.LoggingOutputStream;
+import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.SocketFactory;
+import org.tmatesoft.svn.util.Version;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.helpers.DefaultHandler;
+
+import javax.xml.parsers.FactoryConfigurationError;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -29,31 +54,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-import javax.xml.parsers.FactoryConfigurationError;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.tmatesoft.svn.core.io.ISVNCredentials;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
-import org.tmatesoft.svn.core.io.SVNAuthenticationException;
-import org.tmatesoft.svn.core.io.SVNCancelException;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.util.Base64;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.LoggingInputStream;
-import org.tmatesoft.svn.util.LoggingOutputStream;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.SVNUtil;
-import org.tmatesoft.svn.util.SocketFactory;
-import org.tmatesoft.svn.util.Version;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXNotSupportedException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.helpers.DefaultHandler;
-
 /**
  * @author TMate Software Ltd.
  * 
@@ -69,19 +69,14 @@ class HttpConnection {
 
     private static SAXParserFactory ourSAXParserFactory;
 
-    private ISVNCredentials myLastUsedCredentials;
-    private ISVNCredentialsProvider myUserCredentialsProvider;
     private Map myCredentialsChallenge;
+    private ISVNAuthenticationManager myAuthManager;
+    private SVNAuthentication myLastValidAuth;
 
-    public HttpConnection(SVNRepositoryLocation location, ISVNCredentialsProvider provider) {
+    public HttpConnection(SVNRepositoryLocation location, SVNRepository repos) {
         mySVNRepositoryLocation = location;
-        myUserCredentialsProvider = provider;
+        myAuthManager = repos.getAuthenticationManager();
     }
-    
-    public ISVNCredentials getLastCredentials() {
-        return myLastUsedCredentials;
-    }
-
     public void connect() throws IOException {
         if (mySocket == null || isStale()) {
             if (mySocket != null) {
@@ -233,21 +228,19 @@ class HttpConnection {
 
     private DAVStatus sendRequest(String method, String path, Map header, InputStream requestBody) throws SVNException {
         Map readHeader = new HashMap();
-        if (myUserCredentialsProvider != null) {
-            myUserCredentialsProvider.reset();
-        }
         path = PathUtil.removeTrailingSlash(path);
         if (myCredentialsChallenge != null) {
             myCredentialsChallenge.put("methodname", method);
             myCredentialsChallenge.put("uri", path);
         }
-        ISVNCredentials credentials = myLastUsedCredentials;
+        String realm = null;
+        SVNAuthentication auth = myLastValidAuth;
         while (true) {
             DAVStatus status;
             try {
                 connect();
-                if (credentials != null && myCredentialsChallenge != null) {
-                    header.put("Authorization", composeAuthResponce(credentials, myCredentialsChallenge));
+                if (auth != null && myCredentialsChallenge != null) {
+                    header.put("Authorization", composeAuthResponce(auth, myCredentialsChallenge));
                 }
                 sendHeader(method, path, header, requestBody);
 	            logOutputStream();
@@ -262,7 +255,7 @@ class HttpConnection {
             acknowledgeSSLContext(true);
             if (status != null
                     && (status.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED || status.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN)) {
-                myLastUsedCredentials = null;                
+                myLastValidAuth = null;
                 try {
                     skipRequestBody(readHeader);
                 } catch (IOException e1) {
@@ -275,21 +268,16 @@ class HttpConnection {
                 }
                 myCredentialsChallenge.put("methodname", method);
                 myCredentialsChallenge.put("uri", path);
-                String realm = (String) myCredentialsChallenge.get("realm");
-                if (myUserCredentialsProvider == null) {
+                realm = (String) myCredentialsChallenge.get("realm");
+                if (myAuthManager == null) {
                     throw new SVNAuthenticationException("No credentials defined");
                 }
-                // get credentials and continue
-                if (credentials != null) {
-                    myUserCredentialsProvider.notAccepted(credentials, "forbidden");
+                if (auth == null) {
+                    auth = myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm);
+                } else {
+                    auth = myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm);
                 }
-                /*
-                if (realm == null) {
-                    realm = my
-                } */
-                credentials = SVNUtil.nextCredentials(myUserCredentialsProvider, mySVNRepositoryLocation ,realm);
-                if (credentials == null) {
-                    // no more to try.
+                if (auth == null) {
                     throw new SVNAuthenticationException("Authentication failed");
                 }
                 // reset stream!
@@ -331,14 +319,14 @@ class HttpConnection {
                 }
                 throw new SVNException("HTTP 301 MOVED PERMANENTLY: " + newLocation);
             } else if (status != null) {
-                if (credentials != null && myUserCredentialsProvider != null) {
-                    myUserCredentialsProvider.accepted(credentials);
+                if (auth != null && myAuthManager != null && realm != null) {
+                    myAuthManager.addAuthentication(realm, auth, myAuthManager.isAuthStorageEnabled());
                 }
                 // remember creds
-                myLastUsedCredentials = credentials;
+                myLastValidAuth = auth;
                 status.setResponseHeader(readHeader);
                 return status;
-            } else if (credentials != null) {
+            } else if (auth != null) {
                 close();
                 throw new SVNException("can't connect");
             } else {
@@ -643,11 +631,11 @@ class HttpConnection {
     }
 
 
-    private static String composeAuthResponce(ISVNCredentials credentials, Map credentialsChallenge) throws SVNAuthenticationException {
+    private static String composeAuthResponce(SVNAuthentication credentials, Map credentialsChallenge) throws SVNAuthenticationException {
         String method = (String) credentialsChallenge.get("");
         StringBuffer result = new StringBuffer();
         if ("basic".equalsIgnoreCase(method)) {
-            String auth = credentials.getName() + ":" + credentials.getPassword();
+            String auth = credentials.getUserName() + ":" + credentials.getPassword();
             auth = Base64.byteArrayToBase64(auth.getBytes());
             result.append("Basic ");
             result.append(auth);
@@ -758,5 +746,9 @@ class HttpConnection {
             return "Basic " + Base64.byteArrayToBase64(auth.getBytes());
         }
         return null;
+    }
+
+    public SVNAuthentication getLastValidCredentials() {
+        return myLastValidAuth;
     }
 }

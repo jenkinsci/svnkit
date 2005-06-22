@@ -47,7 +47,7 @@ public class SVNJSchConnector implements ISVNConnector {
             		continue;
             	}
                 lastException = null;
-                authManager.addAuthentication(authentication, authManager.isAuthStorageEnabled());
+                authManager.addAuthentication(realm, authentication, authManager.isAuthStorageEnabled());
                 break;
             } catch (SVNAuthenticationException e) {
                 if (session != null && session.isConnected()) {

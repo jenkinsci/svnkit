@@ -56,7 +56,7 @@ public class DAVConnection {
     
     public void open(DAVRepository repository) throws SVNException {
         if (myHttpConnection == null) {
-        	myHttpConnection = new HttpConnection(myLocation, repository.getCredentialsProvider());
+        	myHttpConnection = new HttpConnection(myLocation, repository);
             if (repository.getRepositoryUUID() == null) {
                 String path = myLocation.getPath();
                 final DAVResponse[] result = new DAVResponse[1];
@@ -157,7 +157,7 @@ public class DAVConnection {
         DAVGetLockHandler handler = new DAVGetLockHandler();
         DAVStatus status = myHttpConnection.request("LOCK", path, header, body, handler, null);
         if (status != null) {
-            String userName = myHttpConnection.getLastCredentials() != null ? myHttpConnection.getLastCredentials().getName() : null; 
+            String userName = myHttpConnection.getLastValidCredentials() != null ? myHttpConnection.getLastValidCredentials().getUserName() : null; 
             String created = (String) status.getResponseHeader().get("X-SVN-Creation-Date");
             Date createdDate = created != null ? TimeUtil.parseDate(created) : null;            
             return new SVNLock(info.baselinePath, handler.getID(), userName, comment, createdDate, null);
