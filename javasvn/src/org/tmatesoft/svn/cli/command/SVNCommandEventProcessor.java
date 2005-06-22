@@ -133,8 +133,8 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
                 sb.append("U");
             } else if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
                 sb.append("C");
-            } else if (event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
-                sb.append("M");
+            } else if (event.getPropertiesStatus() == SVNStatusType.MERGED) {
+                sb.append("G");
             } else {
                 sb.append(" ");
             }
