@@ -298,7 +298,7 @@ public class WorkingCopy {
          * passing credentials provider when creating an instance of
          * SVNCommitClient
          */
-        myCommitClient = new SVNCommitClient(scp, new UpdateEventListener());
+        myCommitClient = new SVNCommitClient(scp, new CommitEventListener());
         /*
          * passing credentials provider when creating an instance of
          * SVNCopyClient
