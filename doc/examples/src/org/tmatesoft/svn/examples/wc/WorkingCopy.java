@@ -298,7 +298,7 @@ public class WorkingCopy {
          * passing credentials provider when creating an instance of
          * SVNCommitClient
          */
-        myCommitClient = new SVNCommitClient(scp);
+        myCommitClient = new SVNCommitClient(scp, new UpdateEventListener());
         /*
          * passing credentials provider when creating an instance of
          * SVNCopyClient
@@ -318,7 +318,7 @@ public class WorkingCopy {
          * passing credentials provider when creating an instance of
          * SVNUpdateClient
          */
-        myUpdateClient = new SVNUpdateClient(scp);
+        myUpdateClient = new SVNUpdateClient(scp, new UpdateEventListener());
 
         long committedRevision = -1;
         System.out.println("Making a new directory at '" + url + "'...");

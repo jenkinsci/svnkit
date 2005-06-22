@@ -213,7 +213,7 @@ public class StatusHandler implements ISVNStatusHandler {
          * Obtains the number of the revision when the item was last changed. 
          */
         long lastChangedRevision = status.getCommittedRevision().getNumber();
-        String offset = "                                                  ";
+        String offset = "                                ";
         String[] offsets = new String[3];
         offsets[0] = offset.substring(0, 6 - String.valueOf(workingRevision)
                 .length());
