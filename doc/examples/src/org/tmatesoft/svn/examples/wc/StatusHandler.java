@@ -16,62 +16,162 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
+/*
+ * An implementation of ISVNStatusHandler that is used in WorkingCopy to display
+ * status information. This implementation is passed to
+ * SVNStatusClient.doStatus(File path, boolean recursive, boolean remote, 
+ * boolean reportAll, boolean includeIgnored, boolean collectParentExternals, 
+ * ISVNStatusHandler handler). For each item to be processed doStatus(..) collects
+ * status information and creates an SVNStatus which incapsulates that information.
+ * Then doStatus(..) calls an implementor's handler.handleStatus(SVNStatus) where it
+ * passes the gathered status info.
+ */
 public class StatusHandler implements ISVNStatusHandler {
     private boolean myIsRemote;
 
     public StatusHandler(boolean isRemote) {
         myIsRemote = isRemote;
     }
-
+    /*
+     * This is an implementation of ISVNStatusHandler.handleStatus(SVNStatus status)
+     */
     public void handleStatus(SVNStatus status) {
+        /*
+         * Gets the status of a file, directory or symbolic link and/or file contents. 
+         * It is SVNStatusType who contains information on the state of an item. 
+         */
         SVNStatusType contentsStatus = status.getContentsStatus();
         String pathChangeType = " ";
         boolean isAddedWithHistory = status.isCopied();
         if (contentsStatus == SVNStatusType.STATUS_MODIFIED) {
+            /*
+             * The contents of the file have been Modified.
+             */
             pathChangeType = "M";
         } else if (contentsStatus == SVNStatusType.STATUS_CONFLICTED) {
+            /*
+             * The file item is in a state of Conflict. That is, changes received from 
+             * the server during an update overlap with local changes the user has in 
+             * his working copy. 
+             */
             pathChangeType = "C";
         } else if (contentsStatus == SVNStatusType.STATUS_MERGED) {
+            /*
+             * The file item was merGed (changes that came from the repository did not
+             * overlap local changes and were merged into the file).
+             */
             pathChangeType = "G";
         } else if (contentsStatus == SVNStatusType.STATUS_DELETED) {
+            /*
+             * The file, directory or symbolic link item has been scheduled for 
+             * Deletion from the repository.
+             */
             pathChangeType = "D";
         } else if (contentsStatus == SVNStatusType.STATUS_ADDED) {
+            /*
+             * The file, directory or symbolic link item has been scheduled for 
+             * Addition into the repository.
+             */
             pathChangeType = "A";
         } else if (contentsStatus == SVNStatusType.STATUS_UNVERSIONED) {
+            /*
+             * The file, directory or symbolic link item is not under version control.
+             */
             pathChangeType = "?";
         } else if (contentsStatus == SVNStatusType.STATUS_EXTERNAL) {
+            /*
+             * The item is unversioned, but is used by an eXternals definition.
+             */
             pathChangeType = "X";
         } else if (contentsStatus == SVNStatusType.STATUS_IGNORED) {
+            /*
+             * The file, directory or symbolic link item is not under version control, 
+             * and is configured to be Ignored during svn add, svn import and
+             * svn status operations. 
+             */
             pathChangeType = "I";
         } else if (contentsStatus == SVNStatusType.STATUS_MISSING
                 || contentsStatus == SVNStatusType.STATUS_INCOMPLETE) {
+            /*
+             * The file, directory or symbolic link item is under version control
+             * but is missing or somehow incomplete. The item can be missing if it's 
+             * removed using a command incompatible with the native Subversion command
+             * line client (for example, just removed from the filesystem). In the case
+             * of a directory, it can be incomplete if the user happened to interrupt a
+             * checkout or update.
+             */
             pathChangeType = "!";
         } else if (contentsStatus == SVNStatusType.STATUS_OBSTRUCTED) {
+            /*
+             * The file, directory or symbolic link item is in the repository as one 
+             * kind of object, but what's actually in the user's  working copy is some
+             * other kind. For example, Subversion might have a file in the repository,
+             * but the user removed the file and created a directory in its place, 
+             * without using the 'svn delete' or 'svn add' command (or JavaSVN analogues
+             * for them).
+             */
             pathChangeType = "~";
         } else if (contentsStatus == SVNStatusType.STATUS_REPLACED) {
+            /*
+             * The file, directory or symbolic link item was Replaced in the user's 
+             * working copy; that is, the item was deleted, and a new item with the same
+             * name was added. While they may have the same name, the repository 
+             * considers them to be distinct objects with distinct histories.
+             */
             pathChangeType = "R";
         } else if (contentsStatus == SVNStatusType.STATUS_NONE
                 || contentsStatus == SVNStatusType.STATUS_NORMAL) {
+            /*
+             * The item was not modified (normal).
+             */
             pathChangeType = " ";
         }
 
+        /*
+         * Now getting the status of properties of an item. SVNStatusType also contains
+         * information on the properties state.
+         */
         SVNStatusType propertiesStatus = status.getPropertiesStatus();
+        /*
+         * Default - properties are normal (unmodified).
+         */
         String propertiesChangeType = " ";
         if (propertiesStatus == SVNStatusType.STATUS_MODIFIED) {
+            /*
+             * Properties were modified.
+             */
             propertiesChangeType = "M";
         } else if (propertiesStatus == SVNStatusType.STATUS_CONFLICTED) {
+            /*
+             * Properties are in conflict with the repository.
+             */
             propertiesChangeType = "C";
         }
 
+        /*
+         * Whether the item was locked in the .svn working area (for example, during 
+         * a commit or maybe the previous operation was interrupted, in this case
+         * the lock needs to be cleaned up). 
+         */
         boolean isLocked = status.isLocked();
+        /*
+         * Whether the item is switshed to a different URL (branch).
+         */
         boolean isSwitched = status.isSwitched();
+        /*
+         * If the item is a file it may be locked.
+         */
         SVNLock localLock = status.getLocalLock();
+        /*
+         * If the status was run with remote=true and the item is a file checks whether
+         * a remote lock presents.
+         */
         SVNLock remoteLock = status.getRemoteLock();
         String lockLabel = " ";
         if (!myIsRemote) {
             if (localLock != null) {
                 /*
-                 * finds out if the file is locally locKed or not
+                 * finds out if the file is locKed or not
                  */
                 lockLabel = (localLock.getID() != null && !localLock.getID()
                         .equals("")) ? "K" : " ";
@@ -79,8 +179,7 @@ public class StatusHandler implements ISVNStatusHandler {
         } else {
             if (localLock != null) {
                 /*
-                 * at first suppose the file is locally locKed as well as in the
-                 * repository
+                 * at first suppose the file is locKed
                  */
                 lockLabel = "K";
                 if (remoteLock != null) {
@@ -106,9 +205,15 @@ public class StatusHandler implements ISVNStatusHandler {
                 lockLabel = "O";
             }
         }
+        /*
+         * Obtains the working revision number of the item.
+         */
         long workingRevision = status.getRevision().getNumber();
+        /*
+         * Obtains the number of the revision when the item was last changed. 
+         */
         long lastChangedRevision = status.getCommittedRevision().getNumber();
-        String offset = "                    ";
+        String offset = "                                                  ";
         String[] offsets = new String[3];
         offsets[0] = offset.substring(0, 6 - String.valueOf(workingRevision)
                 .length());

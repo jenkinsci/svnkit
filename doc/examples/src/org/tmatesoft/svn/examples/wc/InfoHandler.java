@@ -14,10 +14,18 @@ package org.tmatesoft.svn.examples.wc;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-
+/*
+ * An implementation of ISVNInfoHandler that is used in WorkingCopy to display
+ * info on a working copy path. This implementation is passed to
+ * SVNWCClient.doInfo(File path, SVNRevision revision, boolean recursive, 
+ * ISVNInfoHandler handler). For each item to be processed doInfo(..) collects
+ * information and creates an SVNInfo which incapsulates that information.
+ * Then doInfo(..) calls implementor's handler.handleInfo(SVNInfo) where it passes
+ * the gathered info.
+ */
 public class InfoHandler implements ISVNInfoHandler{
     /*
-     * This is an implementation of ISVNHandler.handleInfo(SVNInfo info)
+     * This is an implementation of ISVNInfoHandler.handleInfo(SVNInfo info)
      */
     public void handleInfo(SVNInfo info) {
         System.out.println("-----------------INFO-----------------");
