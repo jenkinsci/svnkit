@@ -15,6 +15,8 @@ import java.util.Iterator;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.Comparator;
 import java.util.regex.Pattern;
 import java.io.File;
 
@@ -235,20 +237,19 @@ public class SVNOptions implements ISVNOptions {
     public SVNAuthentication getFirstAuthentication(String kind, String realm) {
         SVNAuthentication[] auths = getAvailableAuthentications(kind, realm);
         myProvidedAuthentications.remove(kind);
+        SVNAuthentication auth = null;
         if (auths == null || auths.length <= 0) {
-            // get from provider!!!
-            SVNAuthentication auth = null;
             if (getAuthenticationProvider() != null) {
                 String userName = System.getProperty("user.name");
                 auth = getAuthenticationProvider().requestClientAuthentication(kind, realm, userName, this);
-                if (auth != null) {
-                    myProvidedAuthentications.put(kind, new Integer(1));
-                }
             }
-            return auth;
+        } else if (auths.length > 0) {
+            auth = auths[0];
         }
-        myProvidedAuthentications.put(kind, new Integer(1));
-        return auths[0];
+        if (auth != null) {
+            myProvidedAuthentications.put(kind, new Integer(1));
+        }
+        return auth;
     }
 
     public SVNAuthentication getNextAuthentication(String kind, String realm) {
@@ -282,7 +283,6 @@ public class SVNOptions implements ISVNOptions {
     }
 
     public SVNAuthentication[] getAvailableAuthentications(String kind, String realm) {
-        // load from files (for ssh, user, password)
         List allAuths = new ArrayList();
         if (myDefaultCredentials != null && PASSWORD.equals(kind)) {
             allAuths.add(0, myDefaultCredentials);
@@ -291,7 +291,7 @@ public class SVNOptions implements ISVNOptions {
             Collection cachedAuths = (Collection) myCachedAuths.get(kind);
             for (Iterator iterator = cachedAuths.iterator(); iterator.hasNext();) {
                 SVNAuthentication cachedAuth = (SVNAuthentication) iterator.next();
-                if (cachedAuth != null && (realm.equals(cachedAuth.getRealm()) || cachedAuth.getRealm() == null)) {
+                if (cachedAuth != null && (realm == null || realm.equals(cachedAuth.getRealm()) || cachedAuth.getRealm() == null)) {
                     allAuths.add(cachedAuth);
                 }
             }
@@ -300,6 +300,48 @@ public class SVNOptions implements ISVNOptions {
             SVNAuthentication auth = loadCredentials(kind, realm);
             if (auth != null) {
                 allAuths.add(auth);
+            }
+        } else if (SSL_CLIENT.equals(kind)) {
+            // get all for realm == null
+            Map groups = new TreeMap(new GroupsComparator());
+            groups.putAll(getServersFile().getProperties("groups"));
+            groups.put("global", "*");
+            for (Iterator groupNames = groups.keySet().iterator(); groupNames.hasNext();) {
+                String groupName = (String) groupNames.next();
+                String groupRealm = (String) groups.get(groupName);
+                if (realm == null || matches(groupRealm, realm)) {
+                    Map groupProperties = getServersFile().getProperties(groupName);
+                    String certFile = (String) groupProperties.get("ssl-client-cert-file");
+                    if (certFile != null) {
+                        allAuths.add(new SVNAuthentication(SSL_CLIENT, realm == null ? groupRealm : realm, new File(certFile)));
+                    }
+                }
+            }
+        } else if (PROXY.equals(kind)) {
+            Map groups = new TreeMap(new GroupsComparator());
+            groups.putAll(getServersFile().getProperties("groups"));
+            groups.put("global", "*");
+            for (Iterator groupNames = groups.keySet().iterator(); groupNames.hasNext();) {
+                String groupName = (String) groupNames.next();
+                String groupRealm = (String) groups.get(groupName);
+                if (realm == null || matches(groupRealm, realm)) {
+                    Map groupProperties = getServersFile().getProperties(groupName);
+                    String proxyHost = (String) groupProperties.get("http-proxy-host");
+                    if (proxyHost != null) {
+                        String proxyPortStr = (String) groupProperties.get("http-proxy-port");
+                        String proxyUser = (String) groupProperties.get("http-proxy-username");
+                        String proxyPassword = (String) groupProperties.get("http-proxy-password");
+                        int port = 80;
+                        if (proxyPortStr != null) {
+                            try {
+                                port = Integer.parseInt(proxyPortStr);
+                            } catch (NumberFormatException e) {
+                                //
+                            }
+                        }
+                        allAuths.add(new SVNAuthentication(PROXY, realm == null ? groupRealm : realm, proxyHost, port, proxyUser, proxyPassword));
+                    }
+                }
             }
         }
         DebugLog.log("number of creds: " + allAuths.size());
@@ -315,6 +357,7 @@ public class SVNOptions implements ISVNOptions {
         }
         DebugLog.log("saving credentials, store auth: " + store);
         String kind = credentials.getKind();
+        credentials.setStorageAllowed(store);
         if (!store) {
             if (!myCachedAuths.containsKey(kind)) {
                 myCachedAuths.put(kind, new ArrayList());
@@ -373,6 +416,28 @@ public class SVNOptions implements ISVNOptions {
 
     public ISVNAuthenticationProvider getAuthenticationProvider() {
         return myAuthenticationProvider;
+    }
+
+    public void deleteAllAuthentications() {
+        if (isAuthStorageEnabled()) {
+            File dir = new File(myConfigDirectory, "auth");
+            SVNFileUtil.deleteAll(dir, false);
+        }
+        myCachedAuths.clear();
+        myProvidedAuthentications.clear();
+        myDefaultCredentials = null;
+    }
+
+    public boolean isModified() {
+        return getServersFile().isModified() || getConfigFile().isModified();
+    }
+
+    public void save(boolean force) {
+        if (!force && !myIsConfigStorageEnabled) {
+            return;
+        }
+        getServersFile().save();
+        getConfigFile().save();
     }
 
     private SVNConfigFile getConfigFile() {
@@ -455,10 +520,26 @@ public class SVNOptions implements ISVNOptions {
     }
 
     private void deleteCredentials(String kind, String realm) {
+        if (realm == null) {
+            return;
+        }
         if (PROXY.equals(kind)) {
-            String groupName = findGroupForHost(realm, false);
-            String host = getServersFile().getPropertyValue(groupName, "http-proxy-host");
-            if (host != null) {
+            String groupName = null;
+            if ("*".equals(realm)) {
+                groupName = "global";
+            } else {
+                Map groupNames = getServersFile().getProperties("groups");
+                for (Iterator names = groupNames.keySet().iterator(); names.hasNext();) {
+                    String name = (String) names.next();
+                    String value = (String) groupNames.get(name);
+                    if (realm.equals(value)) {
+                        // exact match.
+                        groupName = name;
+                        break;
+                    }
+                }
+            }
+            if (groupName != null) {
                 getServersFile().setPropertyValue(groupName, "http-proxy-host", null, false);
                 getServersFile().setPropertyValue(groupName, "http-proxy-port", null, false);
                 getServersFile().setPropertyValue(groupName, "http-proxy-username", null, false);
@@ -469,13 +550,29 @@ public class SVNOptions implements ISVNOptions {
             }
             return;
         } else if (SSL_CLIENT.equals(kind)) {
-            String groupName = findGroupForHost(realm, false);
-            String path = getServersFile().getPropertyValue(groupName, "ssl-client-cert-file");
-            if (path != null) {
+            // realm could be exact group value (or "*" for global) or host.
+            // now process exact only.
+            String groupName = null;
+            if ("*".equals(realm)) {
+                groupName = "global";
+            } else {
+                Map groupNames = getServersFile().getProperties("groups");
+                for (Iterator names = groupNames.keySet().iterator(); names.hasNext();) {
+                    String name = (String) names.next();
+                    String value = (String) groupNames.get(name);
+                    if (realm.equals(value)) {
+                        // exact match.
+                        groupName = name;
+                        break;
+                    }
+                }
+            }
+            if (groupName != null) {
                 getServersFile().setPropertyValue(groupName, "ssl-client-cert-file", null, myIsConfigStorageEnabled);
             }
             return;
         }
+
         if (kind == null || realm == null) {
             return;
         }
@@ -632,6 +729,20 @@ public class SVNOptions implements ISVNOptions {
             file = new File(file, ".subversion");
         }
         return file;
+    }
+
+    private static class GroupsComparator implements Comparator {
+        public int compare(Object o1, Object o2) {
+            int result = ((String) o1).compareTo(((String) o2));
+            if (result != 0) {
+                if ("global".equals(o1)) {
+                    return 1;
+                } else if ("global".equals(o2)) {
+                    return -1;
+                }
+            }
+            return result;
+        }
     }
 }
 

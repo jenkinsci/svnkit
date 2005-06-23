@@ -40,4 +40,8 @@ public interface ISVNOptions extends ISVNAuthenticationManager {
     public Map applyAutoProperties(String fileName, Map target);
 
     public boolean matches(String pattern, String fileName);
+
+    public boolean isModified();
+
+    public void save(boolean forceSave);
 }

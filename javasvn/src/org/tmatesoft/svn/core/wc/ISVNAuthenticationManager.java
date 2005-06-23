@@ -40,4 +40,6 @@ public interface ISVNAuthenticationManager {
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider);
 
     public ISVNAuthenticationProvider getAuthenticationProvider();
+
+    public void deleteAllAuthentications();
 }

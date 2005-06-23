@@ -172,7 +172,8 @@ public class SVNConfigFile {
             myFile.getParentFile().mkdirs();
         }
         Writer writer = null;
-        String eol = System.getProperty("line.sepatator");
+        String eol = System.getProperty("line.separator");
+        eol = eol == null ? "\n" : eol;
         try {
             writer = new FileWriter(myFile);
             for (int i = 0; i < myLines.length; i++) {
@@ -189,6 +190,7 @@ public class SVNConfigFile {
             SVNFileUtil.closeFile(writer);
         }
         myLastModified = myFile.lastModified();
+        myLines = doLoad(myFile);
     }
 
     private void load() {
@@ -196,9 +198,33 @@ public class SVNConfigFile {
             return;
         }
         myLastModified = myFile.lastModified();
-        if (!myFile.isFile() || !myFile.canRead()) {
-            myLines = new String[0];
-            return;
+        myLines = doLoad(myFile);
+        myLastModified = myFile.lastModified();
+    }
+
+    public boolean isModified() {
+        if (myLines == null) {
+            return false;
+        }
+        String[] lines = doLoad(myFile);
+        if (lines.length != myLines.length) {
+            return true;
+        }
+        for (int i = 0; i < myLines.length; i++) {
+            String line = myLines[i];
+            if (line == null) {
+                return true;
+            }
+            if (!line.equals(lines[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String[] doLoad(File file) {
+        if (!file.isFile() || !file.canRead()) {
+            return new String[0];
         }
         BufferedReader reader = null;
         Collection lines = new ArrayList();
@@ -213,7 +239,6 @@ public class SVNConfigFile {
         } finally {
             SVNFileUtil.closeFile(reader);
         }
-        myLines = (String[]) lines.toArray(new String[lines.size()]);
-        myLastModified = myFile.lastModified();
+        return (String[]) lines.toArray(new String[lines.size()]);
     }
 }

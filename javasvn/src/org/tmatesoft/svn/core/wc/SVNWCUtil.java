@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNOptions;
 import org.tmatesoft.svn.core.io.SVNException;
 
 public class SVNWCUtil {
@@ -29,6 +30,21 @@ public class SVNWCUtil {
             //
         }
         return null;
+    }
+
+    public static File getDefaultConfigurationDirectory() {
+        if (SVNFileUtil.isWindows) {
+            return new File(System.getProperty("user.home"), "Application Data/Subversion");
+        }
+        return new File(System.getProperty("user.home"), ".subversion");
+    }
+
+    public static ISVNOptions createDefaultOptions(File dir, boolean readonly) {
+        return new SVNOptions(dir, !readonly);
+    }
+
+    public static ISVNOptions createDefaultOptions(boolean readonly) {
+        return new SVNOptions(null, !readonly);
     }
 
     public static boolean isVersionedDirectory(File dir) {

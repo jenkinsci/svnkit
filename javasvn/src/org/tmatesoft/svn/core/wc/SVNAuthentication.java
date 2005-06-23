@@ -119,4 +119,41 @@ public class SVNAuthentication {
     public void setStorageAllowed(boolean allowed) {
         myIsStorageEnabled = allowed;
     }
+
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final SVNAuthentication that = (SVNAuthentication) o;
+
+        if (myProxyPort != that.myProxyPort) return false;
+        if (myHttpsClientCertFile != null ? !myHttpsClientCertFile.equals(that.myHttpsClientCertFile) : that.myHttpsClientCertFile != null) return false;
+        if (!myKind.equals(that.myKind)) return false;
+        if (myPassphrase != null ? !myPassphrase.equals(that.myPassphrase) : that.myPassphrase != null) return false;
+        if (myPassword != null ? !myPassword.equals(that.myPassword) : that.myPassword != null) return false;
+        if (myProxyHost != null ? !myProxyHost.equals(that.myProxyHost) : that.myProxyHost != null) return false;
+        if (myProxyPassword != null ? !myProxyPassword.equals(that.myProxyPassword) : that.myProxyPassword != null) return false;
+        if (myProxyUserName != null ? !myProxyUserName.equals(that.myProxyUserName) : that.myProxyUserName != null) return false;
+        if (myRealm != null ? !myRealm.equals(that.myRealm) : that.myRealm != null) return false;
+        if (mySSHKeyFile != null ? !mySSHKeyFile.equals(that.mySSHKeyFile) : that.mySSHKeyFile != null) return false;
+        if (myUserName != null ? !myUserName.equals(that.myUserName) : that.myUserName != null) return false;
+
+        return true;
+    }
+
+    public int hashCode() {
+        int result;
+        result = myKind.hashCode();
+        result = 29 * result + (myRealm != null ? myRealm.hashCode() : 0);
+        result = 29 * result + (myUserName != null ? myUserName.hashCode() : 0);
+        result = 29 * result + (myHttpsClientCertFile != null ? myHttpsClientCertFile.hashCode() : 0);
+        result = 29 * result + (mySSHKeyFile != null ? mySSHKeyFile.hashCode() : 0);
+        result = 29 * result + (myPassword != null ? myPassword.hashCode() : 0);
+        result = 29 * result + (myProxyHost != null ? myProxyHost.hashCode() : 0);
+        result = 29 * result + myProxyPort;
+        result = 29 * result + (myProxyPassword != null ? myProxyPassword.hashCode() : 0);
+        result = 29 * result + (myProxyUserName != null ? myProxyUserName.hashCode() : 0);
+        result = 29 * result + (myPassphrase != null ? myPassphrase.hashCode() : 0);
+        return result;
+    }
 }
