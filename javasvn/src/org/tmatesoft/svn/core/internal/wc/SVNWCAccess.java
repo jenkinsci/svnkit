@@ -134,7 +134,7 @@ public class SVNWCAccess implements ISVNEventListener {
 
     public ISVNOptions getOptions() {
         if (myOptions == null) {
-            myOptions = new SVNOptions();
+                myOptions = new SVNOptions();
         }
         return myOptions;
     }

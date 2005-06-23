@@ -27,7 +27,7 @@ import java.io.PrintStream;
 public class CatCommand extends SVNCommand {
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
-        SVNWCClient wcClient = new SVNWCClient();
+        SVNWCClient wcClient = new SVNWCClient(getOptions(), null);
         SVNRevision revision = SVNRevision.BASE;
 
         if (getCommandLine().hasArgument(SVNArgument.REVISION)) {

@@ -131,6 +131,9 @@ public class SVNConfigFile {
 
     private static boolean matchProperty(String line, String name) {
         line = line.trim();
+        if (line.startsWith("#")) {
+            return false;
+        }
         if (line.indexOf('=') < 0) {
             return false;
         }

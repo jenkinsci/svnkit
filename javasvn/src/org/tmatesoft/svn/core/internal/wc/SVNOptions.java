@@ -38,6 +38,8 @@ public class SVNOptions implements ISVNOptions {
     private SVNConfigFile myServersFile;
     private ISVNAuthenticationProvider myAuthenticationProvider;
 
+    private static final String DEFAULT_IGNORES = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";
+
     public SVNOptions() {
         this(null, true);
     }
@@ -60,7 +62,7 @@ public class SVNOptions implements ISVNOptions {
 
     public boolean isUseCommitTimes() {
         String value = getServersFile().getPropertyValue(MISCELLANY, "use-commit-times");
-        return getBooleanValue(value, false);
+        return getBooleanValue(value, true);
     }
 
     public void setUseCommitTimes(boolean useCommitTimes) {
@@ -90,7 +92,7 @@ public class SVNOptions implements ISVNOptions {
     public String[] getIgnorePatterns() {
         String value = getConfigFile().getPropertyValue(MISCELLANY, "global-ignores");
         if (value == null) {
-            return new String[0];
+            value = DEFAULT_IGNORES;
         }
         Collection tokensList = new ArrayList();
         for(StringTokenizer tokens = new StringTokenizer(value, " \t"); tokens.hasMoreTokens();) {
@@ -193,8 +195,11 @@ public class SVNOptions implements ISVNOptions {
     }
 
     public Map applyAutoProperties(String fileName, Map target) {
-        Map autoProperties = getAutoProperties();
         target = target == null ? new HashMap() : target;
+        if (!isUseAutoProperties()) {
+            return target;
+        }
+        Map autoProperties = getAutoProperties();
         for (Iterator names = autoProperties.keySet().iterator(); names.hasNext();) {
             String pattern = (String) names.next();
             String value = (String) autoProperties.get(pattern);
