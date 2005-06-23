@@ -25,6 +25,8 @@ public class SVNAuthentication {
     private String myProxyUserName;
     private String myPassphrase;
 
+    private boolean myIsStorageEnabled;
+
     // password ot ssh2
     public SVNAuthentication(String kind, String realm, String username,
                              String password) {
@@ -63,6 +65,7 @@ public class SVNAuthentication {
     private SVNAuthentication(String kind, String realm) {
         myKind = kind;
         myRealm = realm;
+        myIsStorageEnabled = true;
     }
 
     public String getKind() {
@@ -107,5 +110,13 @@ public class SVNAuthentication {
 
     public String getPassphrase() {
         return myPassphrase;
+    }
+
+    public boolean isStorageAllowed() {
+        return myIsStorageEnabled;
+    }
+
+    public void setStorageAllowed(boolean allowed) {
+        myIsStorageEnabled = allowed;
     }
 }

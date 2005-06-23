@@ -38,6 +38,9 @@ public class SVNOptions implements ISVNOptions {
     private SVNConfigFile myServersFile;
     private ISVNAuthenticationProvider myAuthenticationProvider;
 
+    private Map myProvidedAuthentications = new HashMap();
+    private Map myCachedAuths = new HashMap();
+
     private static final String DEFAULT_IGNORES = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";
 
     public SVNOptions() {
@@ -229,14 +232,20 @@ public class SVNOptions implements ISVNOptions {
         return compileNamePatter(pattern).matcher(fileName).matches();
     }
 
-    private Map myProvidedAuthentications = new HashMap();
-    private Map myCachedAuths = new HashMap();
-
     public SVNAuthentication getFirstAuthentication(String kind, String realm) {
         SVNAuthentication[] auths = getAvailableAuthentications(kind, realm);
         myProvidedAuthentications.remove(kind);
         if (auths == null || auths.length <= 0) {
-            return null;
+            // get from provider!!!
+            SVNAuthentication auth = null;
+            if (getAuthenticationProvider() != null) {
+                String userName = System.getProperty("user.name");
+                auth = getAuthenticationProvider().requestClientAuthentication(kind, realm, userName, this);
+                if (auth != null) {
+                    myProvidedAuthentications.put(kind, new Integer(1));
+                }
+            }
+            return auth;
         }
         myProvidedAuthentications.put(kind, new Integer(1));
         return auths[0];
@@ -262,7 +271,7 @@ public class SVNOptions implements ISVNOptions {
             if (userName == null && previousAuth != null) {
                 userName = System.getProperty("user.name");
             }
-            SVNAuthentication auth = getAuthenticationProvider().requestAuthentication(kind, realm, userName, this);
+            SVNAuthentication auth = getAuthenticationProvider().requestClientAuthentication(kind, realm, userName, this);
             if (auth != null) {
                 myProvidedAuthentications.put(kind, new Integer(i + 1));
                 return auth;
@@ -298,7 +307,10 @@ public class SVNOptions implements ISVNOptions {
     }
 
     public void addAuthentication(String realm, SVNAuthentication credentials, boolean store) {
-        if (!isAuthStorageEnabled()) {
+        if (credentials == null) {
+            return;
+        }
+        if (!isAuthStorageEnabled() || !credentials.isStorageAllowed()) {
             store = false;
         }
         DebugLog.log("saving credentials, store auth: " + store);
