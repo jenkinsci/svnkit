@@ -163,8 +163,8 @@ public class StatusHandler implements ISVNStatusHandler {
          */
         SVNLock localLock = status.getLocalLock();
         /*
-         * If the status was run with remote=true and the item is a file checks whether
-         * a remote lock presents.
+         * If the status was run with remote=true and the item is a file, checks 
+         * whether a remote lock presents.
          */
         SVNLock remoteLock = status.getRemoteLock();
         String lockLabel = " ";

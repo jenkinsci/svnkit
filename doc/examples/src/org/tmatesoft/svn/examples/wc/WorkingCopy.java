@@ -143,87 +143,92 @@ import org.tmatesoft.svn.util.PathUtil;
  * While the program is running you'll see something like this:
  * 
 	Making a new directory at 'svn://localhost/rep/MyRepos'...
-	Committed to revision 165
+	Committed to revision 219
 	
 	Checking out a working copy from 'svn://localhost/rep/MyRepos'...
-	Checked out revision 165
+	At revision 219
 	
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy
 	URL: svn://localhost/rep/MyRepos
 	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 165
+	Revision: 219
 	Node Kind: dir
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 165
-	Last Changed Date: Wed Jun 22 16:51:34 NOVST 2005
+	Last Changed Revision: 219
+	Last Changed Date: Thu Jun 23 19:56:27 NOVST 2005
 	
 	Recursively scheduling a new directory 'N:\MyWorkingCopy\newDir' for addition...
 	
 	Status for 'N:\MyWorkingCopy':
-	A          0     ?    ?                       N:\MyWorkingCopy\newDir
-	A          0     ?    ?                       N:\MyWorkingCopy\newDir\newFile.txt
+	A          0     ?    ?                               N:\MyWorkingCopy\newDir
+	A          0     ?    ?                               N:\MyWorkingCopy\newDir\newFile.txt
 	
 	Updating 'N:\MyWorkingCopy'...
-	Updated to revision 165
+	At revision 219
 	
 	Committing changes for 'N:\MyWorkingCopy'...
-	Committed to revision 166
+	Adding         newDir
+	Adding         newDir/newFile.txt
+	Transmitting file data....
+	Committed to revision 220
 	
 	Locking (with stealing if the entry is already locked) 'N:\MyWorkingCopy\newDir\newFile.txt'.
 	
 	Status for 'N:\MyWorkingCopy':
-	     K     166   166   userName               N:\MyWorkingCopy\newDir\newFile.txt
+	     K     220   220   userName                        N:\MyWorkingCopy\newDir\newFile.txt
 	
 	Copying 'svn://localhost/rep/MyRepos' to 'svn://localhost/rep/MyReposCopy'...
-	Committed to revision 167
+	Committed to revision 221
 	
 	Switching 'N:\MyWorkingCopy' to 'svn://localhost/rep/MyReposCopy'...
-	Updated to revision 167
+	U B       newDir/newFile.txt
+	At revision 221
 	
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy
 	URL: svn://localhost/rep/MyReposCopy
 	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 167
+	Revision: 221
 	Node Kind: dir
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 167
-	Last Changed Date: Wed Jun 22 16:51:39 NOVST 2005
+	Last Changed Revision: 221
+	Last Changed Date: Thu Jun 23 19:56:32 NOVST 2005
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy\newDir
 	URL: svn://localhost/rep/MyReposCopy/newDir
 	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 167
+	Revision: 221
 	Node Kind: dir
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 166
-	Last Changed Date: Wed Jun 22 16:51:38 NOVST 2005
+	Last Changed Revision: 220
+	Last Changed Date: Thu Jun 23 19:56:31 NOVST 2005
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy\newDir\newFile.txt
 	URL: svn://localhost/rep/MyReposCopy/newDir/newFile.txt
 	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 167
+	Revision: 221
 	Node Kind: file
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 166
-	Last Changed Date: Wed Jun 22 16:51:38 NOVST 2005
-	Properties Last Updated: Wed Jun 22 16:51:40 NOVST 2005
-	Text Last Updated: Wed Jun 22 16:51:38 NOVST 2005
+	Last Changed Revision: 220
+	Last Changed Date: Thu Jun 23 19:56:31 NOVST 2005
+	Properties Last Updated: Thu Jun 23 19:56:34 NOVST 2005
+	Text Last Updated: Thu Jun 23 19:56:32 NOVST 2005
 	Checksum: 023b67e9660b2faabaf84b10ba32c6cf
 	
 	Scheduling 'N:\MyWorkingCopy\newDir' for deletion ...
 	
 	Status for 'N:\MyWorkingCopy':
-	D          167   166   userName               N:\MyWorkingCopy\newDir
-	D          167   166   userName               N:\MyWorkingCopy\newDir\newFile.txt
+	D          221   220   userName                        N:\MyWorkingCopy\newDir
+	D          221   220   userName                        N:\MyWorkingCopy\newDir\newFile.txt
 	
 	Committing changes for 'N:\MyWorkingCopy'...
-	Committed to revision 168
+	Deleting   newDir
+	Committed to revision 222
  * 
  */
 public class WorkingCopy {
@@ -356,7 +361,6 @@ public class WorkingCopy {
             error("error while checking out a working copy for the location '"
                             + url + "'", svne);
         }
-        System.out.println("Checked out revision " + checkoutRevision);
         System.out.println();
         
         /*
@@ -461,17 +465,16 @@ public class WorkingCopy {
             error("error while recursively updating the working copy at '"
                     + wcDir.getAbsolutePath() + "'", svne);
         }
-        System.out.println("Updated to revision " + updatedRevision);
         System.out.println();
 
         System.out.println("Committing changes for '" + wcDir.getAbsolutePath() + "'...");
         try {
             /*
-             * commiting changes in wcDir to the repository with saving items locked
-             * after the commit succeeds (if they were locked); this will add
-             * aNewDir & aNewFile to the repository. 
+             * commiting changes in wcDir to the repository with not saving items 
+             * locked (if any) after the commit succeeds; this will add aNewDir & 
+             * aNewFile to the repository. 
              */
-            committedRevision = commit(wcDir, true,
+            committedRevision = commit(wcDir, false,
                     "'/newDir' with '/newDir/newFile.txt' were added")
                     .getNewRevision();
         } catch (SVNException svne) {
@@ -545,7 +548,6 @@ public class WorkingCopy {
             error("error while switching '"
                     + wcDir.getAbsolutePath() + "' to '" + copyURL + "'", svne);
         }
-        System.out.println("Updated to revision " + updatedRevision);
         System.out.println();
 
         /*
@@ -589,9 +591,9 @@ public class WorkingCopy {
         System.out.println("Committing changes for '" + wcDir.getAbsolutePath() + "'...");
         try {
             /*
-             * lastly committing changes in wcDir to the repository; all locked items
-             * will be unlocked after the commit succeeds; this commit will remove
-             * aNewDir from the repository. 
+             * lastly committing changes in wcDir to the repository; all items that
+             * were locked by the user (if any) will be unlocked after the commit 
+             * succeeds; this commit will remove aNewDir from the repository. 
              */
             committedRevision = commit(
                     wcDir,
