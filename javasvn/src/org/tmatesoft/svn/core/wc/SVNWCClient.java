@@ -296,7 +296,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         SVNWCAccess wcAccess = createWCAccess(path);
         try {
-            wcAccess.open(true, recursive);
+            wcAccess.open(false, recursive);
             if (revision != SVNRevision.WORKING && revision != SVNRevision.BASE) {
                 String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
                 if (pegRevision == null || !pegRevision.isValid()) {
@@ -309,7 +309,7 @@ public class SVNWCClient extends SVNBasicClient {
             // local prop.
             doGetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(), propName, revision, recursive, handler);
         } finally {
-            wcAccess.close(true);
+            wcAccess.close(false);
         }
     }
 
