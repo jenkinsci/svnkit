@@ -114,9 +114,9 @@ public class SVNPathUtil {
                         continue;
                     }
                     if (common.equals(url1)) {
-                        urls[i] = null;
-                    } else if (common.equals(url2)) {
                         urls[j] = null;
+                    } else if (common.equals(url2)) {
+                        urls[i] = null;
                     }
                 }
             }
@@ -177,10 +177,11 @@ public class SVNPathUtil {
                     if ("".equals(common) || common == null) {
                         continue;
                     }
+                    // remove logner path here
                     if (common.equals(path1)) {
-                        paths[i] = null;
-                    } else if (common.equals(path2)) {
                         paths[j] = null;
+                    } else if (common.equals(path2)) {
+                        paths[i] = null;
                     }
                 }
             }
