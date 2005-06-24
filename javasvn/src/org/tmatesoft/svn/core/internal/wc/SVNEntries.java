@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,7 +54,7 @@ public class SVNEntries {
         myEntries = new TreeSet();
         BufferedReader reader = null;
         try {
-            reader = new BufferedReader(new FileReader(myFile));
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(myFile), "UTF-8"));
             String line;
             Map entry = null;
             while((line = reader.readLine()) != null) {
@@ -96,11 +97,7 @@ public class SVNEntries {
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {}
-            }
+            SVNFileUtil.closeFile(reader);
         }
     }
     

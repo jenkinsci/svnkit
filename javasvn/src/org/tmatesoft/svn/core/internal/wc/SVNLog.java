@@ -10,6 +10,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -162,7 +163,7 @@ public class SVNLog {
         BufferedReader reader = null;
         Collection commands = new ArrayList();
         try {
-            reader = new BufferedReader(new FileReader(myFile));
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(myFile), "UTF-8"));
             String line;
             Map attrs = new HashMap();
             String name = null;
