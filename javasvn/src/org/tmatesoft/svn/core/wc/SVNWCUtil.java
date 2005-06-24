@@ -63,18 +63,16 @@ public class SVNWCUtil {
         try {
             stClient.doStatus(versionedDir.getParentFile(), false, false, true, true, new ISVNStatusHandler() {
                 public void handleStatus(SVNStatus status) {
-                    if (!isRoot[0] && versionedDir.equals(status.getFile())) {
+                    if (versionedDir.equals(status.getFile())) {
+                        isRoot[0] = false;
                         if (status.getContentsStatus() == SVNStatusType.STATUS_IGNORED ||
                                 status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
                                 status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL) {
                             if (status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL && !considerExternalAsRoot) {
-                                isRoot[0] = false;
                                 return;
                             }
                             isRoot[0] = true;
-                        } else {
-                            isRoot[0] = false;
-                        }
+                        } 
                     }
                 }
             });

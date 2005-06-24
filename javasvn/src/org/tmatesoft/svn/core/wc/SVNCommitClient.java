@@ -417,7 +417,7 @@ public class SVNCommitClient extends SVNBasicClient {
         SVNWCAccess wcAccess = SVNCommitUtil.createCommitWCAccess(paths, recursive, force, targets);
         try {
             Map lockTokens = new HashMap();
-            SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targets, lockTokens, !keepLocks, recursive);
+            SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targets, lockTokens, !keepLocks, recursive, force);
             boolean hasModifications = false;
             for (int i = 0; commitItems != null && i < commitItems.length; i++) {
                 SVNCommitItem commitItem = commitItems[i];

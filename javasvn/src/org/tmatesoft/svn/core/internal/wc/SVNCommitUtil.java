@@ -10,8 +10,8 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
 
 import java.io.File;
 import java.util.Arrays;
@@ -215,7 +215,7 @@ public class SVNCommitUtil {
         return baseAccess;
     }
 
-    public static SVNCommitItem[] harvestCommitables(SVNWCAccess baseAccess, Collection paths, Map lockTokens, boolean justLocked, boolean recursive) throws SVNException {
+    public static SVNCommitItem[] harvestCommitables(SVNWCAccess baseAccess, Collection paths, Map lockTokens, boolean justLocked, boolean recursive, boolean force) throws SVNException {
         Map commitables = new TreeMap();
         Collection danglers = new HashSet();
         Iterator targets = paths.iterator();
@@ -255,13 +255,25 @@ public class SVNCommitUtil {
                     danglers.add(targetFile.getParentFile());
                 }
             }
+            boolean recurse = recursive;
             if (entry != null && entry.isCopied() && entry.getSchedule() == null) {
-                SVNErrorManager.error("svn: Entry for '" + targetFile + "' is marked as 'copied' but is not itself scheduled\n" +
-                                      "for addition.  Perhaps you're committing a target that is\n" +
-                                      "inside an unversioned (or not-yet-versioned) directory?");
+                // if commit is forced => we could collect this entry, assuming that its parent is already included into commit
+                // it will be later removed from commit anyway.
+                if (!force) {
+                    SVNErrorManager.error("svn: Entry for '" + targetFile + "' is marked as 'copied' but is not itself scheduled\n" +
+                                          "for addition.  Perhaps you're committing a target that is\n" +
+                                          "inside an unversioned (or not-yet-versioned) directory?");
+                } else {
+                    // just do not process this item as in case of recursive commit.
+                    continue;
+                }
+            } else if (entry != null && entry.isCopied() && entry.isScheduledForAddition()) {
+                if (force) {
+                    recurse = true;
+                }
             }
             DebugLog.log("collecting commitables for " + targetFile);
-            harvestCommitables(commitables, dir, targetFile, null, entry, url, null, false, false, justLocked, lockTokens, recursive);
+            harvestCommitables(commitables, dir, targetFile, null, entry, url, null, false, false, justLocked, lockTokens, recurse);
         } while(targets.hasNext());
 
 
@@ -286,6 +298,7 @@ public class SVNCommitUtil {
             }
             itemsMap.put(item.getURL(), item);
         }
+
         Iterator urls = itemsMap.keySet().iterator();
         String baseURL = (String) urls.next();
         while(urls.hasNext()) {
@@ -330,8 +343,8 @@ public class SVNCommitUtil {
     }
 
     public static void harvestCommitables(Map commitables, SVNDirectory dir, File path, SVNEntry parentEntry, SVNEntry entry,
-                                           String url, String copyFromURL, boolean copyMode, boolean addsOnly, boolean justLocked,
-                                           Map lockTokens, boolean recursive) throws SVNException {
+                                          String url, String copyFromURL, boolean copyMode, boolean addsOnly, boolean justLocked,
+                                          Map lockTokens, boolean recursive) throws SVNException {
         if (commitables.containsKey(path)) {
             return;
         }
