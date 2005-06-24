@@ -957,7 +957,10 @@ public class SVNWCClient extends SVNBasicClient {
 		dir.add(name, false, force);
 			
 		SVNDirectory childDir = dir.getChildDirectory(name);
-    	File file = dir.getFile(name, false);
+        if (childDir == null) {
+            return;
+        }
+        File file = dir.getFile(name, false);
     	File[] children = file.listFiles();
     	for (int i = 0; children != null && i < children.length; i++) {
     		File childFile = children[i];
@@ -978,7 +981,7 @@ public class SVNWCClient extends SVNBasicClient {
     			}
     			addSingleFile(childDir, childFile.getName());
     		} else if (SVNFileType.DIRECTORY == fileType) {
-    			DebugLog.log("recursing into " + childFile.getName());
+                DebugLog.log("recursing into " + childFile.getName());
     			addDirectory(wcAccess, childDir, childFile.getName(), force);
     		}
 		}
