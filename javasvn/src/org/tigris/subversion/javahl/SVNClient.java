@@ -179,6 +179,9 @@ public class SVNClient implements SVNClientInterface {
     public void setPrompt(PromptUserPassword prompt) {
         DebugLog.log("prompt set: " + prompt);
         myPrompt = prompt;
+        if(myOptions != null && myPrompt != null){
+            myOptions.setAuthenticationProvider(new PromptAuthenticationProvider(myPrompt));
+        }
     }
 
     public LogMessage[] logMessages(String path, Revision revisionStart, Revision revisionEnd) throws ClientException {
@@ -988,6 +991,9 @@ public class SVNClient implements SVNClientInterface {
             myOptions = SVNWCUtil.createDefaultOptions(dir, true);
             if (myUserName != null && myPassword != null) {
                 myOptions.setDefaultAuthentication(myUserName, myPassword);
+            }
+            if(myPrompt != null){
+                myOptions.setAuthenticationProvider(new PromptAuthenticationProvider(myPrompt));
             }
         }
         return myOptions;
