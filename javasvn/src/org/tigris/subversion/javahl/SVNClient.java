@@ -657,7 +657,7 @@ public class SVNClient implements SVNClientInterface {
         SVNRevision svnPegRevision = SVNConverterUtil.getSVNRevision(pegRevision);
         SVNPropertyRetriever retriever = new SVNPropertyRetriever(this);
         try {
-            client.doGetProperty(path, name, svnPegRevision, svnRevision, false, retriever);
+            client.doGetProperty(new File(path).getAbsoluteFile(), name, svnPegRevision, svnRevision, false, retriever);
         } catch (SVNException e) {
             throwException(e);
         }

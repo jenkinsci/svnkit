@@ -28,6 +28,9 @@ class SVNPropertyRetriever implements ISVNPropertyHandler{
     }
     
     public PropertyData getPropertyData(){
+        if(myData == null){
+            return null;
+        }
         if(myData.getValue() == null){
             return null;
         }
