@@ -47,6 +47,7 @@ import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @author evgeny
@@ -913,8 +914,20 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void lock(String[] path, String comment, boolean force) throws ClientException {
+        boolean allFiles = true;
+        for (int i = 0; i < path.length; i++) {
+            allFiles = allFiles && !isURL(path[i]);
+        }
         try {
-            getSVNWCClient().doLock(path, force, comment);
+            if(allFiles){
+                File[] files = new File[path.length];
+                for (int i = 0; i < files.length; i++) {
+                    files[i] = new File(path[i]).getAbsoluteFile();
+                }
+                getSVNWCClient().doLock(files, force, comment);
+            }else{
+                getSVNWCClient().doLock(path, force, comment);
+            }
         } catch (SVNException e) {
             throwException(e);
         }
@@ -1084,7 +1097,7 @@ public class SVNClient implements SVNClientInterface {
         throw ec;
     }
     
-    private boolean isURL(String path){
-        return path != null && path.indexOf("://")>-1; 
+    private static boolean isURL(String path){
+        return PathUtil.isURL(path); 
     }
 }
