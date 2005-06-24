@@ -223,8 +223,14 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     public void doCleanup(File path) throws SVNException {
+        SVNFileType fType = SVNFileType.getType(path);
+        if (fType == SVNFileType.NONE) {
+            SVNErrorManager.error("svn: '" + path + "' does not exist");
+        } else if (fType == SVNFileType.FILE || fType == SVNFileType.SYMLINK) {
+            path = path.getParentFile();
+        }
         if (!SVNWCAccess.isVersionedDirectory(path)) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: '" + path + "' is not under version control");
         }
         SVNWCAccess wcAccess = createWCAccess(path);
         wcAccess.open(true, true, true);

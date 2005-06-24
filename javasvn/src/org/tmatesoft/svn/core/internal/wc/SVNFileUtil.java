@@ -518,6 +518,7 @@ public class SVNFileUtil {
         if (file.exists() && (!file.isFile() || !file.canWrite())) {
             throw new SVNException("svn: Cannot write to '" + file + "': path refers to directory or write access denied");
         }
+        file.getParentFile().mkdirs();
         try {
             return new BufferedOutputStream(new FileOutputStream(file, append));
         } catch (FileNotFoundException e) {
