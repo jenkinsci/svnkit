@@ -786,24 +786,24 @@ public class SVNWCClient extends SVNBasicClient {
             SVNRevision wcRevision = null;
             String url = null;
             try {
-                wcAccess.open(true, false);
+                wcAccess.open(false, false);
                 url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
                 if (url == null) {
                     SVNErrorManager.error("svn: '" + path.getAbsolutePath() + "' has no URL");
                 }
                 wcRevision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
             } finally {
-                wcAccess.close(true);
+                wcAccess.close(false);
             }
             doInfo(url, wcRevision, revision, recursive, handler);
             return;
         }
         SVNWCAccess wcAccess = createWCAccess(path);
         try {
-            wcAccess.open(true, recursive);
+            wcAccess.open(false, recursive);
             collectInfo(wcAccess.getAnchor(), wcAccess.getTargetName(), recursive, handler);
         } finally {
-            wcAccess.close(true);
+            wcAccess.close(false);
         }
     }
     
