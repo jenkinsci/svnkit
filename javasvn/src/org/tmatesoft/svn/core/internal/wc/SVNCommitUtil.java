@@ -487,8 +487,7 @@ public class SVNCommitUtil {
                             commitables.put(currentFile, item);
                             continue;
                         }
-                        // error.
-                        SVNErrorManager.error("svn: Aborting commit, invalid entry '" + currentFile + "'");
+                        SVNErrorManager.error("svn: Working copy '" + currentFile + "' is missing or not locked");
                     }
                 }
                 harvestCommitables(commitables, dir, currentFile, entry, currentEntry, currentURL,
