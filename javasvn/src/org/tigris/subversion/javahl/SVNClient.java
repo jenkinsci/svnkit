@@ -5,8 +5,6 @@ package org.tigris.subversion.javahl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -18,6 +16,7 @@ import java.util.TreeSet;
 
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
@@ -528,26 +527,30 @@ public class SVNClient implements SVNClientInterface {
         differ.getDiffGenerator().setForcedBinaryDiff(force);
         SVNRevision peg1 = SVNRevision.UNDEFINED;
         SVNRevision peg2 = SVNRevision.UNDEFINED;
+        SVNRevision peg = SVNRevision.UNDEFINED;
         SVNRevision rev1 = SVNConverterUtil.getSVNRevision(revision1);
         SVNRevision rev2 = SVNConverterUtil.getSVNRevision(revision2);
         try {
-            FileOutputStream fos = new FileOutputStream(new File(outFileName));
+            OutputStream out = SVNFileUtil.openFileForWriting(new File(outFileName));
             if(!isURL(target1)&&!isURL(target2)){
                 differ.doDiff(new File(target1).getAbsoluteFile(),
                         new File(target2).getAbsoluteFile(),
-                        rev1, rev2, recurse, !ignoreAncestry, fos);
-            }else{
-                differ.doDiff(target1, peg1, target2, peg2, rev1, rev2, recurse, !ignoreAncestry, fos);
+                        rev1, rev2, recurse, !ignoreAncestry, out);
+            }else if(isURL(target1)&&isURL(target2)){
+                differ.doDiff(target1, peg1, target2, peg2, rev1, rev2, recurse, !ignoreAncestry, out);
+            }else if(!isURL(target1)&&isURL(target2)){
+                differ.doDiff(new File(target1).getAbsoluteFile(), target2,
+                        peg, rev1, rev2, recurse, !ignoreAncestry, out);
+            }else if(isURL(target1)&&!isURL(target2)){
+                differ.doDiff(target1, peg, new File(target2), rev1, rev2, recurse, !ignoreAncestry, out);
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            SVNFileUtil.closeFile(out);
         } catch (SVNException e) {
             throwException(e);
         }
     }
 
     public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
-        // TODO Auto-generated method stub
         SVNDiffClient differ = getSVNDiffClient();
         differ.setDiffGenerator(new DefaultSVNDiffGenerator() {            
             public String getDisplayPath(File file) {
@@ -564,22 +567,18 @@ public class SVNClient implements SVNClientInterface {
         });
         differ.getDiffGenerator().setDiffDeleted(!noDiffDeleted);
         differ.getDiffGenerator().setForcedBinaryDiff(force);
-        SVNRevision peg = SVNRevision.UNDEFINED;
+        SVNRevision peg = SVNConverterUtil.getSVNRevision(pegRevision);
         SVNRevision rev1 = SVNConverterUtil.getSVNRevision(startRevision);
         SVNRevision rev2 = SVNConverterUtil.getSVNRevision(endRevision);
         try {
-            FileOutputStream fos = new FileOutputStream(new File(outFileName));
+            OutputStream out = SVNFileUtil.openFileForWriting(new File(outFileName));
             if(isURL(target)){
-                differ.doDiff(target, peg, null/*XXX: File path?*/, rev1, rev2, recurse, !ignoreAncestry, fos);
+                differ.doDiff(target, peg, target, peg, rev1, rev2, recurse, !ignoreAncestry, out);
             }else{
-                differ.doDiff(new File(target).getAbsoluteFile(), null, peg,
-                        rev1, rev2, recurse, !ignoreAncestry, fos);
+                differ.doDiff(new File(target).getAbsoluteFile(), new File(target).getAbsoluteFile(),
+                        rev1, rev2, recurse, !ignoreAncestry, out);
             }
-            fos.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            SVNFileUtil.closeFile(out);
         } catch (SVNException e) {
             throwException(e);
         }
