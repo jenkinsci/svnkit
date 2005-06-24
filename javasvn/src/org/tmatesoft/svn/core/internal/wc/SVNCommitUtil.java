@@ -106,6 +106,7 @@ public class SVNCommitUtil {
         for (int i = 0; i < paths.length; i++) {
             File path = paths[i];
             File newWCRoot = SVNWCUtil.getWorkingCopyRoot(path, true);
+            DebugLog.log("wc root of " + path + " is " + newWCRoot);
             if (wcRoot != null && !wcRoot.equals(newWCRoot)) {
                 SVNErrorManager.error("svn: commit targets should belong to the same working copy");
             }

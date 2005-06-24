@@ -3,24 +3,18 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNOptions;
+import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNException;
 
+import java.io.File;
+
 public class SVNWCUtil {
-    
+
     public static String getURL(File versionedFile) {
         SVNWCAccess wcAccess;
         try {
@@ -65,7 +59,7 @@ public class SVNWCUtil {
             return true;
         }
         SVNStatusClient stClient = new SVNStatusClient(null, null);
-        final boolean[] isRoot = new boolean[] {false};
+        final boolean[] isRoot = new boolean[] {true}; // if no status is reporter, this may be ignored dir in parent's folder.
         try {
             stClient.doStatus(versionedDir.getParentFile(), false, false, true, true, new ISVNStatusHandler() {
                 public void handleStatus(SVNStatus status) {
@@ -74,9 +68,12 @@ public class SVNWCUtil {
                                 status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
                                 status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL) {
                             if (status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL && !considerExternalAsRoot) {
+                                isRoot[0] = false;
                                 return;
                             }
                             isRoot[0] = true;
+                        } else {
+                            isRoot[0] = false;
                         }
                     }
                 }
@@ -88,6 +85,7 @@ public class SVNWCUtil {
     }
 
     public static File getWorkingCopyRoot(File versionedDir, boolean stopOnExtenrals) {
+        versionedDir = versionedDir.getAbsoluteFile();
         if (versionedDir == null ||
                 (!SVNWCAccess.isVersionedDirectory(versionedDir) && !SVNWCAccess.isVersionedDirectory(versionedDir.getParentFile()))) {
             // both this dir and its parent are not versioned.
@@ -121,6 +119,7 @@ public class SVNWCUtil {
                         }
                     }
                 } catch (SVNException e) {
+                    //
                 }
                 if (parent.equals(parentRoot)) {
                     break;
