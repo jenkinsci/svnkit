@@ -3,21 +3,8 @@
  */
 package org.tigris.subversion.javahl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Map;
-import java.util.TreeSet;
-
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
-import org.tmatesoft.svn.core.internal.wc.SVNOptions;
 import org.tmatesoft.svn.core.io.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
@@ -45,7 +32,20 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.DebugLog;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Map;
+import java.util.TreeSet;
 
 /**
  * @author evgeny
@@ -301,7 +301,7 @@ public class SVNClient implements SVNClientInterface {
         try {
             if(myMessageHandler != null){
                 client.setCommitHander(new ISVNCommitHandler(){
-                    public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) throws SVNException {
+                    public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
                         CommitItem[] items = SVNConverterUtil.getCommitItems(commitables);
                         return myMessageHandler.getLogMessage(items);
                     }
@@ -506,11 +506,11 @@ public class SVNClient implements SVNClientInterface {
         final Collection properties = new ArrayList();
         try {
             client.doGetProperty(new File(path).getAbsoluteFile(), null, svnPegRevision, svnRevision, false, new ISVNPropertyHandler(){
-                public void handleProperty(File fpath, SVNPropertyData property) throws SVNException {
+                public void handleProperty(File fpath, SVNPropertyData property) {
                     properties.add(new PropertyData(SVNClient.this, fpath.getAbsolutePath(),
                             property.getName(), property.getValue(), property.getValue().getBytes()));
                 }
-                public void handleProperty(String url, SVNPropertyData property) throws SVNException {
+                public void handleProperty(String url, SVNPropertyData property) {
                     properties.add(new PropertyData(SVNClient.this, url,
                             property.getName(), property.getValue(), property.getValue().getBytes()));
                 }
@@ -536,10 +536,7 @@ public class SVNClient implements SVNClientInterface {
     public void propertySet(String path, String name, String value, boolean recurse, boolean force) throws ClientException {
         SVNWCClient client = createSVNWCClient();
         try {
-            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, recurse, new ISVNPropertyHandler(){
-                public void handleProperty(File fpath, SVNPropertyData property) throws SVNException {}
-                public void handleProperty(String url, SVNPropertyData property) throws SVNException {}
-            });
+            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, recurse, ISVNPropertyHandler.NULL);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -548,10 +545,7 @@ public class SVNClient implements SVNClientInterface {
     public void propertyRemove(String path, String name, boolean recurse) throws ClientException {
         SVNWCClient client = createSVNWCClient();
         try {
-            client.doSetProperty(new File(path).getAbsoluteFile(), name, null, false, recurse, new ISVNPropertyHandler(){
-                public void handleProperty(File fpath, SVNPropertyData property) throws SVNException {}
-                public void handleProperty(String url, SVNPropertyData property) throws SVNException {}
-            });
+            client.doSetProperty(new File(path).getAbsoluteFile(), name, null, false, recurse, ISVNPropertyHandler.NULL);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -567,10 +561,7 @@ public class SVNClient implements SVNClientInterface {
         }
         SVNWCClient client = createSVNWCClient();
         try {
-            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, recurse, new ISVNPropertyHandler(){
-                public void handleProperty(File fpath, SVNPropertyData property) throws SVNException {}
-                public void handleProperty(String url, SVNPropertyData property) throws SVNException {}
-            });
+            client.doSetProperty(new File(path).getAbsoluteFile(), name, value, force, recurse, ISVNPropertyHandler.NULL);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -608,11 +599,11 @@ public class SVNClient implements SVNClientInterface {
         final Collection properties = new ArrayList();
         try {
             client.doGetRevisionProperty(path, null, svnRevision, new ISVNPropertyHandler(){
-                public void handleProperty(File fpath, SVNPropertyData property) throws SVNException {
+                public void handleProperty(File fpath, SVNPropertyData property) {
                     properties.add(new PropertyData(SVNClient.this, fpath.getAbsolutePath(),
                             property.getName(), property.getValue(), property.getValue().getBytes()));
                 }
-                public void handleProperty(String url, SVNPropertyData property) throws SVNException {
+                public void handleProperty(String url, SVNPropertyData property) {
                     properties.add(new PropertyData(SVNClient.this, url,
                             property.getName(), property.getValue(), property.getValue().getBytes()));
                 }
@@ -631,10 +622,7 @@ public class SVNClient implements SVNClientInterface {
         SVNRevision svnRevision = SVNConverterUtil.getSVNRevision(rev);
         try {
             client.doSetRevisionProperty(new File(path).getAbsoluteFile(),
-                    svnRevision, name, value, force, new ISVNPropertyHandler(){
-                        public void handleProperty(File fpath, SVNPropertyData property) throws SVNException {}
-                        public void handleProperty(String url, SVNPropertyData property) throws SVNException {}
-            });
+                    svnRevision, name, value, force, ISVNPropertyHandler.NULL);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -805,7 +793,10 @@ public class SVNClient implements SVNClientInterface {
     protected ISVNOptions getSVNOptions(){
         if (myOptions == null) {
             File dir = myConfigDir == null ? null : new File(myConfigDir);
-            myOptions = new SVNOptions(dir, false, myUserName, myPassword);
+            myOptions = SVNWCUtil.createDefaultOptions(dir, true);
+            if (myUserName != null && myPassword != null) {
+                myOptions.setDefaultAuthentication(myUserName, myPassword);
+            }
         }
         return myOptions;
     }
@@ -841,7 +832,7 @@ public class SVNClient implements SVNClientInterface {
                         myNotify2.onNotify(info);
                     }
                 }
-                public void checkCancelled() throws SVNCancelException {
+                public void checkCancelled() {
                 }
             };
         }

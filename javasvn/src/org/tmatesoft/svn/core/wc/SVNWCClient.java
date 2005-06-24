@@ -1186,7 +1186,9 @@ public class SVNWCClient extends SVNBasicClient {
                         //
                     }
                 }
-                handler.handleProperty(anchor.getFile(name, false), new SVNPropertyData(propName, propValue));
+                if (handler != null) {
+                    handler.handleProperty(anchor.getFile(name, false), new SVNPropertyData(propName, propValue));
+                }
             }
             entries.close();
             return;
@@ -1201,7 +1203,9 @@ public class SVNWCClient extends SVNBasicClient {
             }
         } else {
             props.setPropertyValue(propName, propValue);
-            handler.handleProperty(anchor.getFile(name, false), new SVNPropertyData(propName, propValue));
+            if (handler != null) {
+                handler.handleProperty(anchor.getFile(name, false), new SVNPropertyData(propName, propValue));
+            }
         }
         if (!recursive) {
             return;

@@ -8,6 +8,13 @@ import java.io.File;
 import org.tmatesoft.svn.core.io.SVNException;
 
 public interface ISVNPropertyHandler {
+
+    public static ISVNPropertyHandler NULL = new ISVNPropertyHandler() {
+        public void handleProperty(File path, SVNPropertyData property) {
+        }
+        public void handleProperty(String url, SVNPropertyData property) {
+        }
+    };
     
     public void handleProperty(File path, SVNPropertyData property) throws SVNException;
 
