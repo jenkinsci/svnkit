@@ -156,12 +156,12 @@ public class SVNClient implements SVNClientInterface {
 
     public void username(String username) {
         myUserName = username;
-        getSVNOptions();
+        getSVNOptions().setDefaultAuthentication(myUserName, myPassword);
     }
 
     public void password(String password) {
         myPassword = password;
-        getSVNOptions();
+        getSVNOptions().setDefaultAuthentication(myUserName, myPassword);
     }
 
     public void setPrompt(PromptUserPassword prompt) {
@@ -739,6 +739,8 @@ public class SVNClient implements SVNClientInterface {
 
     public void setConfigDirectory(String configDir) throws ClientException {
         myConfigDir = configDir;
+        myOptions = null;
+        // TODO set all clients to null
     }
 
     public String getConfigDirectory() throws ClientException {
@@ -804,8 +806,6 @@ public class SVNClient implements SVNClientInterface {
         if (myOptions == null) {
             File dir = myConfigDir == null ? null : new File(myConfigDir);
             myOptions = new SVNOptions(dir, false, myUserName, myPassword);
-        } else {
-            myOptions.setDefaultAuthentication(myUserName, myPassword);
         }
         return myOptions;
     }
@@ -847,7 +847,8 @@ public class SVNClient implements SVNClientInterface {
         }
         return mySVNEventListener;
     }
-    
+
+    // TODO store clients, do not create them every time.
     protected SVNCommitClient createSVNCommitClient(){
         return new SVNCommitClient(getSVNOptions(), getEventListener());
     }
