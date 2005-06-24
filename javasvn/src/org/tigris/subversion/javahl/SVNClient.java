@@ -8,7 +8,6 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.io.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLogEntry;
@@ -93,11 +92,6 @@ public class SVNClient implements SVNClientInterface {
             stClient.doStatus(new File(path).getAbsoluteFile(), descend, onServer, getAll, noIgnore, !ignoreExternals, new ISVNStatusHandler(){
                 public void handleStatus(SVNStatus status) {
                     statuses.add(SVNConverterUtil.createStatus(status.getFile().getPath(), status));
-                    /*try {
-                        statuses.add(SVNConverterUtil.createStatus(status.getFile().getCanonicalPath(), status));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }*/
                 }
             });
         } catch (SVNException e) {
@@ -145,13 +139,13 @@ public class SVNClient implements SVNClientInterface {
         DebugLog.log("IO fetching 'single' status for: " + path);
         
         SVNStatusClient client = createSVNStatusClient();
-        SVNSingleStatusRetriever retriever = new SVNSingleStatusRetriever();
+        SVNStatus status = null;
         try {
-            client.doStatus(new File(path).getAbsoluteFile(), false, onServer, false, false, false, retriever);
+            status = client.doStatus(new File(path).getAbsoluteFile(), onServer);
         } catch (SVNException e) {
             throwException(e);
         }
-        return SVNConverterUtil.createStatus(path, retriever.getStatus());
+        return SVNConverterUtil.createStatus(path, status);
     }
 
     public void username(String username) {

@@ -60,7 +60,6 @@ javasvn/cli/svn.bat eol=crlf
 javasvn/src/org/tigris/subversion/javahl/SVNClient.java -text
 javasvn/src/org/tigris/subversion/javahl/SVNConverterUtil.java -text
 javasvn/src/org/tigris/subversion/javahl/SVNPropertyRetriever.java -text
-javasvn/src/org/tigris/subversion/javahl/SVNSingleStatusRetriever.java -text
 /plugin.xml -text
 www/.htaccess eol=lf
 www/ant.html eol=lf
