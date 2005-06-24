@@ -34,6 +34,8 @@ public class SVNConverterUtil {
     private static final Map STATUS_CONVERSION_MAP = new HashMap();
     private static final Map REVISION_KIND_CONVERSION_MAP = new HashMap();
     private static final Map ACTION_CONVERSION_MAP = new HashMap();
+    private static final Map LOCK_CONVERSION_MAP = new HashMap();
+
     static{
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_ADDED, new Integer(StatusKind.added));
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_CONFLICTED, new Integer(StatusKind.conflicted));
@@ -49,6 +51,12 @@ public class SVNConverterUtil {
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_OBSTRUCTED, new Integer(StatusKind.obstructed));
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_REPLACED, new Integer(StatusKind.replaced));
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_UNVERSIONED, new Integer(StatusKind.unversioned));
+
+        LOCK_CONVERSION_MAP.put(SVNStatusType.LOCK_INAPPLICABLE, new Integer(LockStatus.inapplicable));
+        LOCK_CONVERSION_MAP.put(SVNStatusType.LOCK_LOCKED, new Integer(LockStatus.inapplicable));
+        LOCK_CONVERSION_MAP.put(SVNStatusType.LOCK_UNCHANGED, new Integer(LockStatus.unchanged));
+        LOCK_CONVERSION_MAP.put(SVNStatusType.LOCK_UNKNOWN, new Integer(LockStatus.unknown));
+        LOCK_CONVERSION_MAP.put(SVNStatusType.LOCK_UNLOCKED, new Integer(LockStatus.unlocked));
 
         REVISION_KIND_CONVERSION_MAP.put(new Integer(RevisionKind.base), SVNRevision.BASE);
         REVISION_KIND_CONVERSION_MAP.put(new Integer(RevisionKind.committed), SVNRevision.COMMITTED);
@@ -168,6 +176,14 @@ public class SVNConverterUtil {
 
     public static int getStatusValue(SVNStatusType svnStatusType){
         Object status = STATUS_CONVERSION_MAP.get(svnStatusType);
+        if(status == null){
+            return -1;
+        }
+        return ((Integer)status).intValue();
+    }
+
+    public static int getLockStatusValue(SVNStatusType svnStatusType){
+        Object status = LOCK_CONVERSION_MAP.get(svnStatusType);
         if(status == null){
             return -1;
         }

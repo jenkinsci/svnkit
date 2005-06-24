@@ -780,8 +780,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public String getVersionInfo(String path, String trailUrl, boolean lastChanged) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return createSVNWCClient().doGetWorkingCopyID(new File(path).getAbsoluteFile(), trailUrl, lastChanged);
     }
 
     protected ISVNOptions getSVNOptions(){
@@ -801,7 +800,7 @@ public class SVNClient implements SVNClientInterface {
                 public void svnEvent(SVNEvent event, double progress) {
                     if(myNotify != null){
                         myNotify.onNotify(
-                                event.getPath(),
+                                event.getFile() == null ? event.getPath() : event.getFile().getAbsolutePath(),
                                 SVNConverterUtil.getNotifyActionValue(event.getAction()),
                                 SVNConverterUtil.getNodeKind(event.getNodeKind()), 
                                 event.getMimeType(),
@@ -820,7 +819,7 @@ public class SVNClient implements SVNClientInterface {
                                 event.getErrorMessage(),
                                 SVNConverterUtil.getStatusValue(event.getContentsStatus()),
                                 SVNConverterUtil.getStatusValue(event.getPropertiesStatus()),
-                                SVNConverterUtil.getStatusValue(event.getLockStatus()),
+                                SVNConverterUtil.getLockStatusValue(event.getLockStatus()),
                                 event.getRevision()
                                 );
                         myNotify2.onNotify(info);
