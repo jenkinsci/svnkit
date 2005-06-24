@@ -3,16 +3,21 @@
  */
 package org.tigris.subversion.javahl;
 
+import java.io.File;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
+import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNLogEntryPath;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -80,14 +85,24 @@ public class SVNConverterUtil {
     }
 
     public static Status createStatus(String path, SVNStatus status) {
-        String url = "";
+        if(status == null){
+            return null;
+        }
+        String url = status.getURL();
         int nodeKind = getNodeKind(status.getKind());
         if (status.getContentsStatus() == SVNStatusType.STATUS_IGNORED) {
             nodeKind = NodeKind.unknown;
         }
         long revision = status.getRevision().getNumber();
-        long lastChangedRevision = status.getCommittedRevision().getNumber();
-        long lastChangedDate = status.getCommittedDate().getTime();
+        long lastChangedRevision = 0;
+        if(status.getCommittedRevision() != null){
+            lastChangedRevision = status.getCommittedRevision().getNumber();
+        }
+        Date d = status.getCommittedDate();
+        long lastChangedDate = 0;
+        if(d != null){
+            lastChangedDate = d.getTime();
+        }
         String lastCommitAuthor = status.getAuthor();
         int textStatus = getStatusValue(status.getContentsStatus());
         int propStatus = getStatusValue(status.getPropertiesStatus());
@@ -97,16 +112,32 @@ public class SVNConverterUtil {
         boolean copied = status.isCopied();
         boolean switched = status.isSwitched();
         
-        String conflictOld = status.getConflictOldFile().getAbsolutePath();
-        String conflictNew = status.getConflictNewFile().getAbsolutePath();
-        String conflictWorking = status.getConflictWrkFile().getAbsolutePath();
+        String conflictOld = "";
+        if(status.getConflictOldFile()!=null){
+            conflictOld = status.getConflictOldFile().getAbsolutePath();
+        }
+        String conflictNew = "";
+        if(status.getConflictNewFile()!=null){
+            conflictNew = status.getConflictNewFile().getAbsolutePath();
+        }
+        String conflictWorking = "";
+        if(status.getConflictWrkFile()!=null){
+            conflictWorking = status.getConflictWrkFile().getAbsolutePath();
+        }
         String urlCopiedFrom = status.getCopyFromURL();
         long revisionCopiedFrom = status.getCopyFromRevision().getNumber();
-        String lockToken = status.getLocalLock().getID();
-        String lockOwner = status.getLocalLock().getOwner();
-        String lockComment = status.getLocalLock().getComment();
-        long lockCreationDate = status.getLocalLock().getCreationDate().getTime();
-        Lock reposLock = new Lock(lockOwner, status.getLocalLock().getPath(), lockToken, lockComment, lockCreationDate, status.getLocalLock().getExpirationDate().getTime());
+        Lock reposLock = null;
+        String lockToken = "";
+        String lockOwner = "";
+        String lockComment = "";
+        long lockCreationDate = 0;
+        if(status.getLocalLock() != null){
+            lockToken = status.getLocalLock().getID();
+            lockOwner = status.getLocalLock().getOwner();
+            lockComment = status.getLocalLock().getComment();
+            lockCreationDate = status.getLocalLock().getCreationDate().getTime();
+            reposLock = new Lock(lockOwner, status.getLocalLock().getPath(), lockToken, lockComment, lockCreationDate, status.getLocalLock().getExpirationDate().getTime());
+        }
         
         Status st = new Status(path, url, nodeKind, revision, lastChangedRevision, lastChangedDate, lastCommitAuthor, textStatus, propStatus,
                 repositoryTextStatus, repositoryPropStatus, locked, copied, conflictOld, conflictNew, conflictWorking, urlCopiedFrom, revisionCopiedFrom,
@@ -213,5 +244,87 @@ public class SVNConverterUtil {
             }
         }
         return items;
+    }
+    
+    public static Lock createLock(SVNLock svnLock){
+        if(svnLock == null){
+            return null;
+        }
+        return new Lock(svnLock.getOwner(), svnLock.getPath(), svnLock.getID(),
+                svnLock.getComment(), svnLock.getCreationDate().getTime(),
+                svnLock.getExpirationDate().getTime());
+    }
+
+    public static Info createInfo(SVNInfo info) {
+        if(info == null){
+            return null;
+        }
+        int schedule = ScheduleKind.normal;
+        if (SVNProperty.SCHEDULE_ADD.equals(info.getSchedule())) {
+            schedule = ScheduleKind.add;
+        } else if (SVNProperty.SCHEDULE_DELETE.equals(info.getSchedule())) {
+            schedule = ScheduleKind.delete;
+        }
+        File file = info.getFile();
+        
+        boolean deleted = !file.exists() && schedule == ScheduleKind.delete;
+        boolean absent = !deleted && !file.exists();
+        boolean incomplete = false;
+
+        long copyRev = info.getCopyFromRevision().getNumber(); 
+        String copyUrl = info.getCopyFromURL();
+
+        return new Info(
+                info.getFile().getName(),
+                info.getURL(),
+                info.getRepositoryUUID(),
+                info.getRepositoryRootURL(),
+                schedule,
+                getNodeKind(info.getKind()),
+                info.getAuthor(),
+                info.getRevision().getNumber(),
+                info.getCommittedRevision().getNumber(),
+                info.getCommittedDate(),
+                info.getTextTime(),
+                info.getPropTime(),
+                info.getCopyFromRevision() != null || info.getCopyFromURL()!=null,
+                deleted, absent, incomplete, copyRev, copyUrl
+                );
+    }
+
+    public static Info2 createInfo2(SVNInfo info) {
+        if(info == null){
+            return null;
+        }
+        int schedule = ScheduleKind.normal;
+        if (SVNProperty.SCHEDULE_ADD.equals(info.getSchedule())) {
+            schedule = ScheduleKind.add;
+        } else if (SVNProperty.SCHEDULE_DELETE.equals(info.getSchedule())) {
+            schedule = ScheduleKind.delete;
+        }
+        long copyRev = info.getCopyFromRevision().getNumber(); 
+        String copyUrl = info.getCopyFromURL();
+
+        return new Info2(
+                info.getFile().getPath(),
+                info.getURL(),
+                info.getRevision().getNumber(),
+                getNodeKind(info.getKind()),
+                info.getRepositoryRootURL(),
+                info.getRepositoryUUID(),
+                info.getCommittedRevision().getNumber(),
+                info.getCommittedDate().getTime(),
+                info.getAuthor(),
+                null /*XXX: Lock*/,
+                false /*XXX: hasWCInfo*/,
+                schedule, copyUrl, copyRev,
+                info.getTextTime().getTime(),
+                info.getPropTime().getTime(),
+                info.getChecksum(),
+                info.getConflictOldFile().getAbsolutePath(),
+                info.getConflictNewFile().getAbsolutePath(),
+                info.getConflictWrkFile().getAbsolutePath(),
+                "" /*XXX: prejfile*/
+                );
     }
 }
