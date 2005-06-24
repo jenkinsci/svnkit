@@ -147,6 +147,7 @@ public class SVNFileUtil {
         }
         FileChannel srcChannel = null;
         FileChannel dstChannel = null;
+        dst.getParentFile().mkdirs();
         try {
             srcChannel = new FileInputStream(src).getChannel();
             dstChannel = new FileOutputStream(tmpDst).getChannel();
