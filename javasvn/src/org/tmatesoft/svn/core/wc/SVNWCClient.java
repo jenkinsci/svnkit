@@ -954,13 +954,16 @@ public class SVNWCClient extends SVNBasicClient {
 
     private void addDirectory(SVNWCAccess wcAccess, SVNDirectory dir, String name, boolean force) throws SVNException {
 		DebugLog.log("ading file " + name + " into " + dir.getRoot());
-		dir.add(name, false, force);
+
+        if (dir.add(name, false, force) == null) {
+            return;
+        }
 			
+        File file = dir.getFile(name, false);
 		SVNDirectory childDir = dir.getChildDirectory(name);
         if (childDir == null) {
             return;
         }
-        File file = dir.getFile(name, false);
     	File[] children = file.listFiles();
     	for (int i = 0; children != null && i < children.length; i++) {
     		File childFile = children[i];

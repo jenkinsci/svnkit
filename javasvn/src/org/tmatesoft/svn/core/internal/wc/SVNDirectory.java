@@ -10,6 +10,7 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.ISVNEventListener;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
@@ -919,7 +920,12 @@ public class SVNDirectory {
     	} else if (entry != null && entry.getKind() != fileKind) {
     		SVNErrorManager.error("svn: Can't replace '" + file + "' with a node of different type; commit the deletion, update the parent," +
     				" and then add '" + file + "'");
-    	}
+    	} else if (entry == null && SVNWCUtil.isVersionedDirectory(file)) {
+            if (!force) {
+                SVNErrorManager.error("svn: '" + file + "' already under version control");
+            }
+            return null;            
+        }
     	boolean replace = entry != null && entry.isScheduledForDeletion();
     	// TODO check parent dir
     	if (entry == null) {
