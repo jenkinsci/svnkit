@@ -23,6 +23,7 @@ public class PromptAuthenticationProvider implements ISVNAuthenticationProvider 
                 SVNAuthentication auth = new SVNAuthentication(kind, realm,
                         prompt3.getUsername(), prompt3.getPassword());
                 auth.setStorageAllowed(prompt3.userAllowedSave());
+                return auth;
             }
         }else{
             if(myPrompt.prompt(realm, userName)){
