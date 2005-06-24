@@ -17,13 +17,18 @@ public class PromptAuthenticationProvider implements ISVNAuthenticationProvider 
 
     public SVNAuthentication requestClientAuthentication(String kind,
             String realm, String userName, ISVNAuthenticationManager manager) {
-        if(myPrompt.prompt(realm, userName)){
-            SVNAuthentication auth = new SVNAuthentication(kind, realm, myPrompt.getUsername(), myPrompt.getPassword());
-            if (myPrompt instanceof PromptUserPassword3) {
-                PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
+        if (myPrompt instanceof PromptUserPassword3) {
+            PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
+            if(prompt3.prompt(realm, userName, manager.isAuthStorageEnabled())){
+                SVNAuthentication auth = new SVNAuthentication(kind, realm,
+                        prompt3.getUsername(), prompt3.getPassword());
                 auth.setStorageAllowed(prompt3.userAllowedSave());
             }
-            return auth;
+        }else{
+            if(myPrompt.prompt(realm, userName)){
+                SVNAuthentication auth = new SVNAuthentication(kind, realm, myPrompt.getUsername(), myPrompt.getPassword());
+                return auth;
+            }
         }
         return null;
     }
