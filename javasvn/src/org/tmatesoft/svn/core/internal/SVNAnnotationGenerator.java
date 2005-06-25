@@ -76,8 +76,17 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         }
         myCurrentDiffWindows = null;
         myCurrentRevision = fileRevision.getRevision();
-        myCurrentAuthor = fileRevision.getProperties().get("svn:author").toString();
-        myCurrentDate = TimeUtil.parseDate(fileRevision.getProperties().get("svn:date").toString());
+        Map props = fileRevision.getProperties();
+        if (props != null && props.get("svn:author") != null) {
+            myCurrentAuthor = props.get("svn:author").toString();
+        } else {
+            myCurrentAuthor = null;
+        }
+        if (props != null && props.get("svn:author") != null) {
+            myCurrentDate = TimeUtil.parseDate(fileRevision.getProperties().get("svn:date").toString());
+        } else {
+            myCurrentDate = null;
+        }
         if (myCurrentFile != null) {
             myCurrentFile.delete();
         }
