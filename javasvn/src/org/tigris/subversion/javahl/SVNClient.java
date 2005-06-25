@@ -1018,7 +1018,7 @@ public class SVNClient implements SVNClientInterface {
                 public void svnEvent(SVNEvent event, double progress) {
                     if(myNotify != null){
                         myNotify.onNotify(
-                                event.getFile() == null ? event.getPath() : event.getFile().getAbsolutePath(),
+                                event.getFile() == null ? event.getPath() : event.getFile().getPath(),
                                 SVNConverterUtil.getNotifyActionValue(event.getAction()),
                                 SVNConverterUtil.getNodeKind(event.getNodeKind()), 
                                 event.getMimeType(),
@@ -1029,7 +1029,7 @@ public class SVNClient implements SVNClientInterface {
                     }
                     if(myNotify2 != null){
                         NotifyInformation info = new NotifyInformation(
-                                event.getFile() == null ? event.getPath() : event.getFile().getAbsolutePath(),
+                                event.getFile() == null ? event.getPath() : event.getFile().getPath(),
                                 SVNConverterUtil.getNotifyActionValue(event.getAction()),
                                 SVNConverterUtil.getNodeKind(event.getNodeKind()), 
                                 event.getMimeType(),

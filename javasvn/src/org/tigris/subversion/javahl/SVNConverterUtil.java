@@ -64,8 +64,6 @@ public class SVNConverterUtil {
         REVISION_KIND_CONVERSION_MAP.put(new Integer(RevisionKind.previous), SVNRevision.PREVIOUS);
         REVISION_KIND_CONVERSION_MAP.put(new Integer(RevisionKind.unspecified), SVNRevision.UNDEFINED);
         REVISION_KIND_CONVERSION_MAP.put(new Integer(RevisionKind.working), SVNRevision.WORKING);
-        REVISION_KIND_CONVERSION_MAP.put(new Integer(RevisionKind.number), SVNRevision.UNDEFINED);
-        REVISION_KIND_CONVERSION_MAP.put(new Integer(RevisionKind.date), SVNRevision.UNDEFINED);
 
         ACTION_CONVERSION_MAP.put(SVNEventAction.ADD, new Integer(NotifyAction.add));
         ACTION_CONVERSION_MAP.put(SVNEventAction.ANNOTATE, new Integer(NotifyAction.blame_revision));
@@ -160,6 +158,12 @@ public class SVNConverterUtil {
         if(r == null){
             return SVNRevision.UNDEFINED;
         }
+        if(r.getKind() == RevisionKind.number){
+            return SVNRevision.create(((Revision.Number)r).getNumber());
+        }
+        if(r.getKind() == RevisionKind.date){
+            return SVNRevision.create(((Revision.DateSpec)r).getDate());
+        }
         return (SVNRevision)REVISION_KIND_CONVERSION_MAP.get(new Integer(r.getKind()));
     }
 
@@ -218,15 +222,20 @@ public class SVNConverterUtil {
             return null;
         }
         Map cpaths = logEntry.getChangedPaths();
-        Collection clientChangePaths = new ArrayList();
-        for (Iterator iter = cpaths.keySet().iterator(); iter.hasNext();) {
-            String path = (String) iter.next();
-            SVNLogEntryPath entryPath = (SVNLogEntryPath)cpaths.get(path);
-            if(entryPath != null){
-                clientChangePaths.add(new ChangePath(path, entryPath.getCopyRevision(), entryPath.getCopyPath(), entryPath.getType()));
+        ChangePath[] cp = null;
+        if(cpaths == null){
+            cp = new ChangePath[]{};
+        }else{
+            Collection clientChangePaths = new ArrayList();
+            for (Iterator iter = cpaths.keySet().iterator(); iter.hasNext();) {
+                String path = (String) iter.next();
+                SVNLogEntryPath entryPath = (SVNLogEntryPath)cpaths.get(path);
+                if(entryPath != null){
+                    clientChangePaths.add(new ChangePath(path, entryPath.getCopyRevision(), entryPath.getCopyPath(), entryPath.getType()));
+                }
             }
+            cp = (ChangePath[]) clientChangePaths.toArray(new ChangePath[clientChangePaths.size()]);
         }
-        ChangePath[] cp = (ChangePath[]) clientChangePaths.toArray(new ChangePath[clientChangePaths.size()]);
         return new LogMessage(logEntry.getMessage(), logEntry.getDate(),
                 logEntry.getRevision(), logEntry.getAuthor(), cp);
     }
