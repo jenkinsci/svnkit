@@ -82,7 +82,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         } else {
             myCurrentAuthor = null;
         }
-        if (props != null && props.get("svn:author") != null) {
+        if (props != null && props.get("svn:date") != null) {
             myCurrentDate = TimeUtil.parseDate(fileRevision.getProperties().get("svn:date").toString());
         } else {
             myCurrentDate = null;
