@@ -19,6 +19,7 @@ import java.util.TreeMap;
 import java.util.Comparator;
 import java.util.regex.Pattern;
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -637,6 +638,11 @@ public class SVNOptions implements ISVNOptions {
                 String path = SVNPathUtil.validateFilePath(credentials.getSSHKeyFile().getAbsolutePath());
                 props.setPropertyValue("key", path);
                 props.setPropertyValue("passphrase", credentials.getPassphrase());
+            }
+            try {
+                SVNFileUtil.setReadonly(props.getFile(), true);
+            } catch (IOException e) {
+                //
             }
         } catch (SVNException e) {
             //
