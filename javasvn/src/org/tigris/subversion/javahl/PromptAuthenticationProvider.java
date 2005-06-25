@@ -16,10 +16,11 @@ public class PromptAuthenticationProvider implements ISVNAuthenticationProvider 
     }
 
     public SVNAuthentication requestClientAuthentication(String kind,
-            String realm, String userName, ISVNAuthenticationManager manager) {
+            String realm, SVNAuthentication previousAuth, ISVNAuthenticationManager manager) {
         if(!ISVNAuthenticationManager.PASSWORD.equals(kind)){
             return null;
         }
+        String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : System.getProperty("user.name");
         if (myPrompt instanceof PromptUserPassword3) {
             PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
             if(prompt3.prompt(realm, userName, manager.isAuthStorageEnabled())){
@@ -30,8 +31,7 @@ public class PromptAuthenticationProvider implements ISVNAuthenticationProvider 
             }
         }else{
             if(myPrompt.prompt(realm, userName)){
-                SVNAuthentication auth = new SVNAuthentication(kind, realm, myPrompt.getUsername(), myPrompt.getPassword());
-                return auth;
+                return new SVNAuthentication(kind, realm, myPrompt.getUsername(), myPrompt.getPassword());
             }
         }
         return null;

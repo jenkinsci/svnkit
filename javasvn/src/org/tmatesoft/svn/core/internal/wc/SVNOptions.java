@@ -241,8 +241,7 @@ public class SVNOptions implements ISVNOptions {
         SVNAuthentication auth = null;
         if (auths == null || auths.length <= 0) {
             if (getAuthenticationProvider() != null) {
-                String userName = System.getProperty("user.name");
-                auth = getAuthenticationProvider().requestClientAuthentication(kind, realm, userName, this);
+                auth = getAuthenticationProvider().requestClientAuthentication(kind, realm, null, this);
             }
         } else if (auths.length > 0) {
             auth = auths[0];
@@ -269,11 +268,7 @@ public class SVNOptions implements ISVNOptions {
             if (auths.length > 0) {
                 previousAuth = auths[auths.length - 1];
             }
-            String userName = previousAuth != null ? previousAuth.getUserName() : System.getProperty("user.name");
-            if (userName == null && previousAuth != null) {
-                userName = System.getProperty("user.name");
-            }
-            SVNAuthentication auth = getAuthenticationProvider().requestClientAuthentication(kind, realm, userName, this);
+            SVNAuthentication auth = getAuthenticationProvider().requestClientAuthentication(kind, realm, previousAuth, this);
             if (auth != null) {
                 myProvidedAuthentications.put(kind, new Integer(i + 1));
                 return auth;

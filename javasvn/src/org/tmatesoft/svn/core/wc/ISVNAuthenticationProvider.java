@@ -14,7 +14,7 @@ public interface ISVNAuthenticationProvider {
     public int ACCEPTED = 2;
 
     // null for cancellation.
-    public SVNAuthentication requestClientAuthentication(String kind, String realm, String userName, ISVNAuthenticationManager manager);
+    public SVNAuthentication requestClientAuthentication(String kind, String realm, SVNAuthentication previousAuth, ISVNAuthenticationManager manager);
 
     public int acceptServerAuthentication(SVNAuthentication authentication, ISVNAuthenticationManager manager);
 }
