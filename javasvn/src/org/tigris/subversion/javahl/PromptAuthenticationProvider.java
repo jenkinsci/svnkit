@@ -17,6 +17,9 @@ public class PromptAuthenticationProvider implements ISVNAuthenticationProvider 
 
     public SVNAuthentication requestClientAuthentication(String kind,
             String realm, String userName, ISVNAuthenticationManager manager) {
+        if(!ISVNAuthenticationManager.PASSWORD.equals(kind)){
+            return null;
+        }
         if (myPrompt instanceof PromptUserPassword3) {
             PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
             if(prompt3.prompt(realm, userName, manager.isAuthStorageEnabled())){
