@@ -53,6 +53,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     private ISVNCredentials myCredentials;
 	private String myFullRoot;
     private String myRealm;
+    private String myExternalUserName;
 
     protected SVNRepositoryImpl(SVNRepositoryLocation location) {
         super(location);
@@ -698,5 +699,13 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     
     public String getFullRoot() {
     	return myFullRoot;
+    }
+
+    public void setExternalUserName(String userName) {
+        myExternalUserName = userName;
+    }
+
+    public String getExternalUserName() {
+        return myExternalUserName;
     }
 }

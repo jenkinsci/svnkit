@@ -12,20 +12,18 @@
 
 package org.tmatesoft.svn.core.internal.io.svn;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.util.List;
-
 import org.tmatesoft.svn.core.io.ISVNCredentials;
-import org.tmatesoft.svn.core.io.SVNAuthenticationException;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.wc.SVNAuthentication;
 import org.tmatesoft.svn.core.wc.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.wc.SVNAuthentication;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.LoggingInputStream;
 import org.tmatesoft.svn.util.LoggingOutputStream;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * @author Alexander Kitaev
@@ -85,25 +83,12 @@ class SVNConnection {
         for (int i = 0; i < mechs.size(); i++) {
             String mech = (String) mechs.get(i);
             if ("EXTERNAL".equals(mech)) {
-                while(true) {
-                    if (auth == null && myAuthManager != null) {
-                        auth = myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.USERNAME, getRealm());
-                    } else if (myAuthManager != null) {
-                        auth = myAuthManager.getNextAuthentication(ISVNAuthenticationManager.USERNAME, getRealm());
-                    }
-                    if (auth == null || auth.getUserName() == null) {
-                        failureReason = "no credentials for '" + mech + "'";
-                        break;
-                    }
-                    write("(w(s))", new Object[] { mech, auth.getUserName()});
-                    failureReason = readAuthResponse(repository);
-                    if (failureReason == null) {
-                        myAuthManager.addAuthentication(getRealm(), auth, myAuthManager.isAuthStorageEnabled());
-                        return;
-                    }
+                write("(w(s))", new Object[] { mech, repository.getExternalUserName()});
+                failureReason = readAuthResponse(repository);
+                if (failureReason == null) {
+                    return;
                 }
-                // continue.
-            } else if ("ANONYMOUS".equals(mech)) { 
+            } else if ("ANONYMOUS".equals(mech)) {
                 write("(w())", new Object[] { mech });
                 failureReason = readAuthResponse(repository);
                 if (failureReason == null) {
