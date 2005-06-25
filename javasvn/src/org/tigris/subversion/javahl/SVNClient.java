@@ -360,23 +360,21 @@ public class SVNClient implements SVNClientInterface {
         try {
             if(isURL(srcPath)){
                 if(isURL(destPath)){
-                    client.doCopy(srcPath, null, SVNConverterUtil.getSVNRevision(revision),
-                            destPath, null, false, null);
+                    client.doCopy(srcPath, SVNRevision.UNDEFINED, SVNConverterUtil.getSVNRevision(revision),
+                            destPath, SVNRevision.UNDEFINED, false, null);
                 }else{
-                    client.doCopy(srcPath, null, SVNConverterUtil.getSVNRevision(revision),
-                            new File(destPath), null, SVNRevision.WORKING, false, null);
+                    client.doCopy(srcPath, SVNRevision.UNDEFINED, SVNConverterUtil.getSVNRevision(revision),
+                            new File(destPath), SVNRevision.UNDEFINED, SVNRevision.WORKING, false, null);
                 }
             }else{
                 if(isURL(destPath)){
-                    client.doCopy(new File(srcPath).getAbsoluteFile(), null, SVNConverterUtil.getSVNRevision(revision),
-                            destPath, null, false, null);
+                    client.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED, SVNConverterUtil.getSVNRevision(revision),
+                            destPath, SVNRevision.UNDEFINED, false, null);
                 }else{
-                    client.doCopy(new File(srcPath).getAbsoluteFile(), null, SVNConverterUtil.getSVNRevision(revision),
-                            new File(destPath), null, SVNRevision.WORKING, false, false, null);
+                    client.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED, SVNConverterUtil.getSVNRevision(revision),
+                            new File(destPath), SVNRevision.UNDEFINED, SVNRevision.WORKING, false, false, null);
                 }
             }
-            client.doCopy(new File(srcPath).getAbsoluteFile(), null, SVNConverterUtil.getSVNRevision(revision),
-                    new File(destPath), null, SVNRevision.WORKING, false, false, null);
         } catch (SVNException e) {
             throwException(e);
         }
@@ -385,12 +383,27 @@ public class SVNClient implements SVNClientInterface {
     public void move(String srcPath, String destPath, String message, Revision revision, boolean force) throws ClientException {
         SVNCopyClient updater = getSVNCopyClient();
         try {
-            if(isURL(srcPath)||isURL(destPath)){
-                updater.doCopy(srcPath, null, SVNConverterUtil.getSVNRevision(revision),
-                        destPath, null, true, message);
+            if(isURL(srcPath)){
+                if(isURL(destPath)){
+                    updater.doCopy(srcPath, SVNRevision.UNDEFINED, SVNConverterUtil.getSVNRevision(revision),
+                            destPath, SVNRevision.UNDEFINED, true, message);
+                }else{
+                    updater.doCopy(srcPath, SVNRevision.UNDEFINED,
+                            SVNConverterUtil.getSVNRevision(revision),
+                            new File(destPath).getAbsoluteFile(), SVNRevision.UNDEFINED,
+                            SVNConverterUtil.getSVNRevision(revision),
+                            true, message);
+                }
             }else{
-                updater.doCopy(new File(srcPath), null, SVNConverterUtil.getSVNRevision(revision),
-                        new File(destPath), null, SVNRevision.WORKING, force, true, message);
+                if(isURL(destPath)){
+                    updater.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED,
+                            SVNConverterUtil.getSVNRevision(revision),
+                            destPath, SVNRevision.UNDEFINED,
+                            true, message);
+                }else{
+                    updater.doCopy(new File(srcPath), SVNRevision.UNDEFINED, SVNConverterUtil.getSVNRevision(revision),
+                            new File(destPath), SVNRevision.UNDEFINED, SVNRevision.WORKING, force, true, message);
+                }
             }
         } catch (SVNException e) {
             throwException(e);
