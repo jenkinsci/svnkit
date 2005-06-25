@@ -267,6 +267,8 @@ class HttpConnection {
                 myCredentialsChallenge.put("methodname", method);
                 myCredentialsChallenge.put("uri", path);
                 realm = (String) myCredentialsChallenge.get("realm");
+                realm = realm == null ? "" : " " + realm;
+                realm = "<" + mySVNRepositoryLocation.getProtocol() + "://" + mySVNRepositoryLocation.getHost() + ":" + mySVNRepositoryLocation.getPort() + ">" + realm;
                 if (myAuthManager == null) {
                     throw new SVNAuthenticationException("No credentials defined");
                 }
