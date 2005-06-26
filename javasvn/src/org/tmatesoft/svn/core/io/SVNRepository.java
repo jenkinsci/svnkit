@@ -1227,15 +1227,17 @@ public abstract class SVNRepository {
      * @see 	#unlock()
      */
     protected synchronized void lock() {
-    	try {
-    	    while ((myLockCount > 0) || (myLocker != null)) {
-	    		if (Thread.currentThread() == myLocker) {
-	    			throw new Error("SVNRerpository methods are not reenterable");
-	            }
-	    		wait();
-    	    }
-    	    myLocker = Thread.currentThread();
-            myLockCount = 1;
+        try {
+            synchronized(this) {
+                while ((myLockCount > 0) || (myLocker != null)) {
+                    if (Thread.currentThread() == myLocker) {
+                        throw new Error("SVNRerpository methods are not reenterable");
+                    }
+                    wait();
+                }
+                myLocker = Thread.currentThread();
+                myLockCount = 1;
+            }
     	} catch (InterruptedException e) {
     	    throw new Error("Interrupted attempt to aquire write lock");
     	}
@@ -1254,10 +1256,12 @@ public abstract class SVNRepository {
      * @see 	#lock()
      */
     protected synchronized void unlock() {
-        if (--myLockCount <= 0) {
-            myLockCount = 0;
-            myLocker = null;
-            notifyAll();
+        synchronized(this) {
+            if (--myLockCount <= 0) {
+                myLockCount = 0;
+                myLocker = null;
+                notifyAll();
+            }
         }
     }
     
