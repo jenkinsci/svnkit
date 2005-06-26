@@ -366,7 +366,7 @@ public class SVNClient implements SVNClientInterface {
                 if(isURL(destPath)){
                     // url->url copy
                     client.doCopy(srcPath, SVNRevision.UNDEFINED, srcRevision,
-                            destPath, SVNRevision.UNDEFINED, false, null);
+                            destPath, SVNRevision.UNDEFINED, false, message);
                 }else{
                     // url->wc copy
                     client.doCopy(srcPath, SVNRevision.UNDEFINED, srcRevision,
@@ -378,7 +378,7 @@ public class SVNClient implements SVNClientInterface {
                 if(isURL(destPath)){
                     // wc->url copy
                     client.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED, srcRevision,
-                            destPath, SVNRevision.UNDEFINED, false, null);
+                            destPath, SVNRevision.UNDEFINED, false, message);
                 }else{
                     // wc->wc copy 
                     client.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED, srcRevision,
@@ -1134,6 +1134,7 @@ public class SVNClient implements SVNClientInterface {
         ClientException ec = new ClientException(e.getMessage(), "", 0);
         DebugLog.error(ec);
         DebugLog.error(e);
+        e.printStackTrace();
         if (e.getErrors() != null) {
             for(int i = 0; i < e.getErrors().length; i++) {
                 DebugLog.log(e.getErrors()[i].getMessage());
