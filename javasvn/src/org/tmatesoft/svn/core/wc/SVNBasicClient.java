@@ -83,6 +83,10 @@ public class SVNBasicClient implements ISVNEventListener {
         return myIsIgnoreExternals;
     }
     
+    public void setEventHandler(ISVNEventListener dispatcher) {
+        myEventDispatcher = dispatcher;
+    }
+    
     public void runCommand(ISVNRunnable command) throws SVNException {
         try {
             myIsCommandRunning = true;

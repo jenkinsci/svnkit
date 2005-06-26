@@ -1114,7 +1114,11 @@ public class SVNClient implements SVNClientInterface {
         return mySVNLogClient;
     }
     
-    private static void throwException(SVNException e) throws ClientException {
+    protected CommitMessage getCommitMessage() {
+        return myMessageHandler;
+    }
+    
+    protected static void throwException(SVNException e) throws ClientException {
         ClientException ec = new ClientException(e.getMessage(), "", 0);
         DebugLog.error(ec);
         DebugLog.error(e);
