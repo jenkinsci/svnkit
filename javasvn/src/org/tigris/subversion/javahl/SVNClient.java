@@ -16,7 +16,9 @@ import java.util.Map;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
+import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
@@ -76,13 +78,10 @@ public class SVNClient implements SVNClientInterface {
 
     
     public SVNClient() {
-       DebugLog.log("SVNClient created");
+        DAVRepositoryFactory.setup();
+        SVNRepositoryFactoryImpl.setup();
     }
     
-    public void dispose() {
-        SVNJSchSession.shutdown();
-    }
-
     public String getLastPath() {
         return null;
     }
@@ -904,6 +903,10 @@ public class SVNClient implements SVNClientInterface {
         } catch (SVNException e) {
             throwException(e);
         }
+    }
+
+    public void dispose() {
+        SVNJSchSession.shutdown();
     }
 
     public void setConfigDirectory(String configDir) throws ClientException {

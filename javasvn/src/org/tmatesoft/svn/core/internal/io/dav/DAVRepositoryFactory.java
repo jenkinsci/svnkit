@@ -43,8 +43,10 @@ public class DAVRepositoryFactory extends SVNRepositoryFactory {
         if (ourProxyManager == null) {
             ourProxyManager = proxyManager == null ? IDAVProxyManager.DEFAULT : proxyManager;
         }
-        DAVRepositoryFactory factory = new DAVRepositoryFactory();
-        SVNRepositoryFactory.registerRepositoryFactory("^https?://.*$", factory);
+        if (!SVNRepositoryFactory.hasRepositoryFactory("^https?://.*$")) {
+            DAVRepositoryFactory factory = new DAVRepositoryFactory();
+            SVNRepositoryFactory.registerRepositoryFactory("^https?://.*$", factory);
+        }
     }
 
     public SVNRepository createRepositoryImpl(SVNRepositoryLocation location) {

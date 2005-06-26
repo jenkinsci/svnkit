@@ -31,15 +31,13 @@ public final class SVNRepositoryFactoryImpl extends SVNRepositoryFactory {
     	if (ourConnectorFactory == null) {
     		ourConnectorFactory = connectorFactory == null ? ISVNConnectorFactory.DEFAULT : connectorFactory;
     	}
-        SVNRepositoryFactory.registerRepositoryFactory("^svn(\\+ssh)?://.*$", new SVNRepositoryFactoryImpl());
+        if (!SVNRepositoryFactory.hasRepositoryFactory("^svn(\\+ssh)?://.*$")) {
+            SVNRepositoryFactory.registerRepositoryFactory("^svn(\\+ssh)?://.*$", new SVNRepositoryFactoryImpl());
+        }
     }
 
     public SVNRepository createRepositoryImpl(SVNRepositoryLocation location) {
-//        if ("svn+ssh".equals(location.getProtocol())) {
-            // there is auth code in connector.
         return new SVNRepositoryImpl(location);
-//        }
-//        return new SVNAuthRepository(location, new SVNRepositoryImpl(location));
     }
 
     static ISVNConnectorFactory getConnectorFactory() {

@@ -89,6 +89,13 @@ public abstract class SVNRepositoryFactory {
         }
     }
     
+    protected static boolean hasRepositoryFactory(String protocol) {
+        if (protocol != null) {
+            return myFactoriesMap.get(protocol) != null;
+        }
+        return false;
+    }
+    
     /**
      * Determines if the factory can create a protocol dependent 
      * <code>SVNRepository</code> instance.
