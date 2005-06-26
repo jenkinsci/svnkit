@@ -12,16 +12,6 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import org.tmatesoft.svn.cli.SVNArgument;
-import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNLogEntry;
-import org.tmatesoft.svn.core.io.SVNLogEntryPath;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.util.DebugLog;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.text.DateFormat;
@@ -31,7 +21,16 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.TreeSet;
+
+import org.tmatesoft.svn.cli.SVNArgument;
+import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNLogEntry;
+import org.tmatesoft.svn.core.io.SVNLogEntryPath;
+import org.tmatesoft.svn.core.wc.SVNLogClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.

@@ -12,6 +12,10 @@
 
 package org.tmatesoft.svn.cli.command;
 
+import java.io.File;
+import java.io.PrintStream;
+import java.util.Date;
+
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.io.ISVNAnnotateHandler;
@@ -19,11 +23,6 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.TimeUtil;
-import org.tmatesoft.svn.util.PathUtil;
-
-import java.io.File;
-import java.io.PrintStream;
-import java.util.Date;
 
 /**
  * @author TMate Software Ltd.

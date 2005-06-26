@@ -14,10 +14,9 @@ package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.util.Date;
-import java.util.StringTokenizer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
@@ -30,7 +29,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.TimeUtil;
 
 /**
  * @author TMate Software Ltd.

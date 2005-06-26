@@ -12,17 +12,13 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.IOException;
-import java.io.PrintStream;
 import java.io.File;
+import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNWorkspaceAdapter;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.SVNUtil;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 /**
  * @author TMate Software Ltd.

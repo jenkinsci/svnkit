@@ -12,28 +12,17 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.io.PrintStream;
 
-import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.cli.SVNArgument;
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
+import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.SVNUtil;
+import org.tmatesoft.svn.core.wc.SVNLogClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.DebugLog;
 
 /**
@@ -41,16 +30,9 @@ import org.tmatesoft.svn.util.DebugLog;
  */
 public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
 
-    private boolean myIsVerbose;
-    private boolean myIsIncremental;
-    private boolean myIsXML;
-
     private PrintStream myPrintStream;
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
-        myIsVerbose = getCommandLine().hasArgument(SVNArgument.VERBOSE);
-        myIsIncremental = getCommandLine().hasArgument(SVNArgument.INCREMENTAL);
-        myIsXML = getCommandLine().hasArgument(SVNArgument.XML);
         boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
         myPrintStream = out;
 
