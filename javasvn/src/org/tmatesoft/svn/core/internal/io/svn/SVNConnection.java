@@ -15,6 +15,7 @@ package org.tmatesoft.svn.core.internal.io.svn;
 import org.tmatesoft.svn.core.io.ISVNCredentials;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.wc.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.SVNAuthentication;
 import org.tmatesoft.svn.util.DebugLog;
@@ -146,6 +147,9 @@ class SVNConnection {
             } else {
                 failureReason = mech + " authorization requested, but not supported";
             }
+        }
+        if (auth == null) {
+            throw new SVNCancelException();
         }
         throw new SVNException(failureReason);
     }

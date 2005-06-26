@@ -278,7 +278,7 @@ class HttpConnection {
                     auth = myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm);
                 }
                 if (auth == null) {
-                    throw new SVNAuthenticationException("Authentication failed");
+                    throw new SVNCancelException();
                 }
                 // reset stream!
                 if (requestBody instanceof ByteArrayInputStream) {

@@ -5,6 +5,7 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import org.tmatesoft.svn.core.io.SVNAuthenticationException;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.wc.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.SVNAuthentication;
 import org.tmatesoft.svn.util.DebugLog;
@@ -34,7 +35,7 @@ public class SVNJSchConnector implements ISVNConnector {
         String realm = repository.getLocation().getProtocol() + "://" + repository.getLocation().getHost() + ":" + repository.getLocation().getPort();
         SVNAuthentication authentication = authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm);
         if (authentication == null) {
-            throw new SVNAuthenticationException();
+            throw new SVNCancelException();
         }
         SVNAuthenticationException lastException = null;
         Session session = null;
@@ -47,9 +48,7 @@ public class SVNJSchConnector implements ISVNConnector {
             		continue;
             	}
                 lastException = null;
-                if (authentication.isStorageAllowed()) {
-                    authManager.addAuthentication(realm, authentication, authManager.isAuthStorageEnabled());
-                }
+                authManager.addAuthentication(realm, authentication, authManager.isAuthStorageEnabled());
                 repository.setExternalUserName(authentication.getUserName());
                 break;
             } catch (SVNAuthenticationException e) {
@@ -59,7 +58,14 @@ public class SVNJSchConnector implements ISVNConnector {
             		session = null;
             	}
                 lastException = e;
-                authentication = authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm);
+                if (e.getMessage() != null && e.getMessage().toLowerCase().indexOf("Auth") >= 0) {
+                    authentication = authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm);
+                    if (authentication == null) {
+                        throw new SVNCancelException();
+                    }
+                } else {
+                    throw e;
+                }
             }
         }
         if (lastException != null || session == null) {

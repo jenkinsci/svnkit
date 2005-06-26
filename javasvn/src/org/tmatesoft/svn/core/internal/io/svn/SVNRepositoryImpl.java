@@ -206,10 +206,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         Long rev = getRevisionObject(revision);
         // convert path to path relative to repos root.
         try {
-            long start = System.currentTimeMillis();
             openConnection();
-            DebugLog.log("openConnection(): " + (System.currentTimeMillis() - start));
-            start = System.currentTimeMillis();
             path = getRepositoryPath(path);
             Object[] buffer = new Object[] { "get-dir", path, rev, Boolean.valueOf(properties != null), Boolean.valueOf(handler != null) };
             write("(w(s(n)ww))", buffer);
@@ -222,11 +219,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 buffer[0] = handler;
                 read("(*D)))", buffer);
             }
-            DebugLog.log("getDir() finished: " + (System.currentTimeMillis() - start));
         } finally {
-            long start = System.currentTimeMillis();
             closeConnection();
-            DebugLog.log("closeConnection(): " + (System.currentTimeMillis() - start));
         }
         return revision;
     }

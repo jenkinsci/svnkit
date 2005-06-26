@@ -4,6 +4,7 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNAuthentication;
 import org.tmatesoft.svn.core.wc.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.util.DebugLog;
 
 import java.util.Map;
@@ -40,6 +41,7 @@ public class SVNOptions implements ISVNOptions {
     private SVNConfigFile myConfigFile;
     private SVNConfigFile myServersFile;
     private ISVNAuthenticationProvider myAuthenticationProvider;
+    private SVNAuthentication myLastProvidedAuthentication;
 
     private Map myProvidedAuthentications = new HashMap();
     private Map myCachedAuths = new HashMap();
@@ -236,6 +238,7 @@ public class SVNOptions implements ISVNOptions {
     }
 
     public SVNAuthentication getFirstAuthentication(String kind, String realm) {
+        myLastProvidedAuthentication = null;
         SVNAuthentication[] auths = getAvailableAuthentications(kind, realm);
         myProvidedAuthentications.remove(kind);
         SVNAuthentication auth = null;
@@ -249,32 +252,33 @@ public class SVNOptions implements ISVNOptions {
         if (auth != null) {
             myProvidedAuthentications.put(kind, new Integer(1));
         }
+        myLastProvidedAuthentication = auth;
         return auth;
     }
 
     public SVNAuthentication getNextAuthentication(String kind, String realm) {
         Integer index = (Integer) myProvidedAuthentications.get(kind);
         if (index == null) {
+            myLastProvidedAuthentication = null;
             return null;
         }
         int i = index.intValue();
         SVNAuthentication[] auths = getAvailableAuthentications(kind, realm);
         if (i < auths.length) {
             myProvidedAuthentications.put(kind, new Integer(i + 1));
+            myLastProvidedAuthentication = auths[i];
             return auths[i];
         }
         if (getAuthenticationProvider() != null) {
-            SVNAuthentication previousAuth = null;
-            if (auths.length > 0) {
-                previousAuth = auths[auths.length - 1];
-            }
-            SVNAuthentication auth = getAuthenticationProvider().requestClientAuthentication(kind, realm, previousAuth, this);
+            SVNAuthentication auth = getAuthenticationProvider().requestClientAuthentication(kind, realm, myLastProvidedAuthentication, this);
             if (auth != null) {
                 myProvidedAuthentications.put(kind, new Integer(i + 1));
+                myLastProvidedAuthentication = auth;
                 return auth;
             }
         }
         myProvidedAuthentications.put(kind, null);
+        myLastProvidedAuthentication = null;
         return null;
     }
 
@@ -422,6 +426,8 @@ public class SVNOptions implements ISVNOptions {
         myCachedAuths.clear();
         myProvidedAuthentications.clear();
         myDefaultCredentials = null;
+
+        SVNJSchSession.shutdown();
     }
 
     public boolean isModified() {
@@ -569,7 +575,7 @@ public class SVNOptions implements ISVNOptions {
             return;
         }
 
-        if (kind == null || realm == null) {
+        if (kind == null) {
             return;
         }
         if (!(PASSWORD.equals(kind) || SSH.equals(kind) || USERNAME.equals(kind))) {
