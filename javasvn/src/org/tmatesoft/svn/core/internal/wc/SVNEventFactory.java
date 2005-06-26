@@ -73,7 +73,7 @@ public class SVNEventFactory {
 
     public static SVNEvent createUpdateExternalEvent(SVNWCAccess source, String path) {
         SVNEvent event = new SVNEvent(source, null, null,
-                SVNEventAction.UPDATE_EXTERNAL, null,
+                SVNEventAction.UPDATE_EXTERNAL, SVNNodeKind.DIR,
                 -1, null, null, null, null, null, null);
         event.setPath(path);
         return event;
@@ -89,7 +89,7 @@ public class SVNEventFactory {
 
     public static SVNEvent createUpdateCompletedEvent(SVNWCAccess source, long revision) {
         return new SVNEvent(source, source != null ? source.getTarget() : null, "", 
-                SVNEventAction.UPDATE_COMPLETED, null, 
+                SVNEventAction.UPDATE_COMPLETED, SVNNodeKind.NONE, 
                 revision, null, null, null, null, null, null);
     }
 
@@ -99,20 +99,20 @@ public class SVNEventFactory {
                 revision, null, null, null, null, null, null);
     }
 
-    public static SVNEvent createUpdateModifiedEvent(SVNWCAccess source, SVNDirectory dir, String name,
+    public static SVNEvent createUpdateModifiedEvent(SVNWCAccess source, SVNDirectory dir, String name, SVNNodeKind kind,
             SVNEventAction action, String mimeType, SVNStatusType contents, SVNStatusType props, SVNStatusType lock) {
         return new SVNEvent(source, dir, name, 
-                action, null, 
+                action, kind, 
                 -1, mimeType, contents, props, lock, null, null);
     }
 
-    public static SVNEvent createUpdateAddEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
+    public static SVNEvent createUpdateAddEvent(SVNWCAccess source, SVNDirectory dir, SVNNodeKind kind, SVNEntry entry) {
         return new SVNEvent(source, dir, entry.getName(), 
-                SVNEventAction.UPDATE_ADD, entry.getKind(), 
+                SVNEventAction.UPDATE_ADD, kind, 
                 entry.getRevision(), null, null, null, null, null, null);
     }
 
-    public static SVNEvent createExportAddedEvent(File root, File file) {
+    public static SVNEvent createExportAddedEvent(File root, File file) {        
         return new SVNEvent(root, file, 
                 SVNEventAction.UPDATE_ADD, null, 
                 -1, null, null, null, null, null, null);
@@ -120,7 +120,7 @@ public class SVNEventFactory {
 
     public static SVNEvent createUpdateDeleteEvent(SVNWCAccess source, SVNDirectory dir, String name) {
         return new SVNEvent(source, dir, name, 
-                SVNEventAction.UPDATE_DELETE, null, 
+                SVNEventAction.UPDATE_DELETE, SVNNodeKind.UNKNOWN, 
                 -1, null, null, null, null, null, null);
     }
 

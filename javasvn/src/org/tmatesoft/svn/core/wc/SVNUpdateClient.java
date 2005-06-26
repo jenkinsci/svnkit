@@ -66,7 +66,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             DebugLog.log("calling repos update");
             repos.update(revNumber, target, recursive, reporter, editor);
             DebugLog.log("completed");
-
+            
             if (editor.getTargetRevision() >= 0) {
             	if (recursive && !isIgnoreExternals()) {
             		handleExternals(wcAccess);

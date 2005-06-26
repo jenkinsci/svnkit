@@ -3,7 +3,6 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -317,7 +316,6 @@ public class SVNProperties {
         // read names, till name is met, then insert value or skip this property.
         try {
             if (is != null) {
-                ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
                 int l = 0;
                 while((l = readLength(is, 'K')) > 0) {
                     byte[] nameBytes = new byte[l];

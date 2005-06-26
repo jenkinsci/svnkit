@@ -1,10 +1,9 @@
 package org.tmatesoft.svn.core.internal.wc;
 
-import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.util.DebugLog;
-
 import java.io.File;
 import java.io.IOException;
+
+import org.tmatesoft.svn.core.io.SVNNodeKind;
 
 /**
  * Created by IntelliJ IDEA.

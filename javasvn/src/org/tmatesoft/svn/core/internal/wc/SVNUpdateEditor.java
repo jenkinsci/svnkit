@@ -152,7 +152,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             SVNErrorManager.error(0, null);
         }
         dir.lock();
-        myWCAccess.svnEvent(SVNEventFactory.createUpdateAddEvent(myWCAccess, parentDir, entry));
+        myWCAccess.svnEvent(SVNEventFactory.createUpdateAddEvent(myWCAccess, parentDir, SVNNodeKind.DIR, entry));
     }
 
     public void openDir(String path, long revision) throws SVNException {
@@ -249,7 +249,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         myCurrentDirectory.runLogs();
         completeDirectory(myCurrentDirectory);
         if (!myCurrentDirectory.IsAdded && propStatus != SVNStatusType.UNCHANGED) {
-            myWCAccess.svnEvent(SVNEventFactory.createUpdateModifiedEvent(myWCAccess, dir, "", SVNEventAction.UPDATE_UPDATE, 
+            myWCAccess.svnEvent(SVNEventFactory.createUpdateModifiedEvent(myWCAccess, dir, "", SVNNodeKind.DIR, SVNEventAction.UPDATE_UPDATE, 
                     null, SVNStatusType.UNCHANGED, propStatus, null));
         }
         myCurrentDirectory = myCurrentDirectory.Parent;
@@ -508,7 +508,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         completeDirectory(myCurrentDirectory);
         // notify.
         SVNEventAction action = myCurrentFile.IsAdded ? SVNEventAction.UPDATE_ADD : SVNEventAction.UPDATE_UPDATE;
-        myWCAccess.svnEvent(SVNEventFactory.createUpdateModifiedEvent(myWCAccess, dir, myCurrentFile.Name, action, null, 
+        myWCAccess.svnEvent(SVNEventFactory.createUpdateModifiedEvent(myWCAccess, dir, myCurrentFile.Name, SVNNodeKind.FILE, action, null, 
                 textStatus, propStatus, lockStatus));
         myCurrentFile = null;
     }

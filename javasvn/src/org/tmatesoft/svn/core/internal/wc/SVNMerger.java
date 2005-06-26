@@ -142,7 +142,6 @@ public class SVNMerger {
         }
         String name = PathUtil.tail(path);
         File file = parentDir.getFile(name, false);
-        String pathInURL = path;
         if (!file.exists()) {
             SVNEntry entry = parentDir.getEntries().getEntry(name, true);
             if (entry != null && !entry.isScheduledForDeletion()) {

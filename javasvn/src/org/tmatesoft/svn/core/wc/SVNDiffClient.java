@@ -494,7 +494,7 @@ public class SVNDiffClient extends SVNBasicClient {
         DebugLog.log("props diff: " + propsDiff);
         SVNStatusType[] mergeResult = merger.fileChanged(wcAccess.getTargetName(), tmpFile1, tmpFile2, revN, revM, 
                 mimeType1, mimeType2, props1, propsDiff);
-        svnEvent(SVNEventFactory.createUpdateModifiedEvent(wcAccess, wcAccess.getAnchor(), name,
+        svnEvent(SVNEventFactory.createUpdateModifiedEvent(wcAccess, wcAccess.getAnchor(), name, SVNNodeKind.FILE,
                 SVNEventAction.UPDATE_UPDATE, mimeType2, mergeResult[0], mergeResult[1], SVNStatusType.LOCK_INAPPLICABLE), 
                 ISVNEventListener.UNKNOWN);
     }

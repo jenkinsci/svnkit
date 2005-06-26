@@ -133,8 +133,6 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
     }
 
     public boolean isScheduledForAddition() throws SVNException {
-        File file = getRootEntry().getWorkingCopyFile(this);
-        boolean missing = !FSUtil.isFileOrSymlinkExists(file);
         if (!isMissing() || getRootEntry() == this) {
             return super.isScheduledForAddition();
         }

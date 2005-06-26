@@ -179,9 +179,9 @@ public class SVNConverterUtil {
     public static int getNodeKind(SVNNodeKind svnKind){
         if(svnKind == SVNNodeKind.DIR ){
             return NodeKind.dir;
-        }else if(svnKind == SVNNodeKind.DIR ){
-            return NodeKind.dir;
-        }else if(svnKind == SVNNodeKind.FILE ){
+        } else if(svnKind == SVNNodeKind.NONE ){
+            return NodeKind.none;
+        } else if(svnKind == SVNNodeKind.FILE ){
             return NodeKind.file;
         }
         return NodeKind.unknown;

@@ -1461,8 +1461,6 @@ public class SVNWorkspace implements ISVNWorkspace {
             repository = SVNRepositoryFactory.create(SVNRepositoryLocation
                     .parseURL(url));
             repository.setCredentialsProvider(myCredentialsProvider);
-            ISVNEditor editor = repository.getCommitEditor(message, getRoot());
-
             myIsCopyCommit = true;
             SVNStatus[] committablePaths = getCommittables(
                     new String[] { src }, true, false);
