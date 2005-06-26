@@ -856,7 +856,6 @@ public class SVNClient implements SVNClientInterface {
                     baos.write(result.toString().getBytes());
                     baos.write('\n');
                 } catch (IOException e) {
-                    e.printStackTrace();
                 }
             }
         };
@@ -1134,7 +1133,6 @@ public class SVNClient implements SVNClientInterface {
         ClientException ec = new ClientException(e.getMessage(), "", 0);
         DebugLog.error(ec);
         DebugLog.error(e);
-        e.printStackTrace();
         if (e.getErrors() != null) {
             for(int i = 0; i < e.getErrors().length; i++) {
                 DebugLog.log(e.getErrors()[i].getMessage());
