@@ -66,9 +66,17 @@ www/.htaccess eol=lf
 www/ant.html eol=lf
 www/build.html eol=lf
 www/feed/feedcreator.class.php eol=lf
+www/feed/folder.gif -text
+www/feed/geshi/contrib/cssgen.php -text
+www/feed/geshi/geshi.php -text
+www/feed/geshi/geshi/diff.php -text
+www/feed/geshi/geshi/html4strict.php -text
+www/feed/geshi/geshi/java.php -text
 www/feed/lgpl.txt eol=lf
 www/feed/rss.php eol=lf
 www/feed/rss_util.php eol=lf
+www/feed/stylesheet.css -text
+www/feed/text.gif -text
 www/index.php eol=lf
 www/license.html eol=lf
 www/list.html eol=lf

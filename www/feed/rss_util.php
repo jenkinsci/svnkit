@@ -1,5 +1,12 @@
 <?
 
+if(strcmp($function, "display_file")==0){
+	//code for displaying examples
+	display_file($fileURL);
+}else if(strcmp($function, "publish_examples")==0){
+	publish_examples($url);
+}
+
 function publish_html($rss) {
 $cacheFile = $_SERVER["DOCUMENT_ROOT"] . "/svn/feed/html.cache";
                                        
@@ -8,7 +15,7 @@ if (file_exists($cacheFile)) {
     return;
 } 
                                      
-$repository = "http://72.9.228.230/svn/jsvn/tags/";
+$repository = "http://72.9.228.230:8080/svn/jsvn/tags/";
 $contents = read_contents($repository);
 $handle = fopen($cacheFile, "w+");
 if (!$contents) {
@@ -105,7 +112,7 @@ return $items;
 }
 
 function read_contents($url) {
-	$fp = fsockopen("72.9.228.230", 80, $errno, $errstr, 1);	
+	$fp = fsockopen("72.9.228.230", 8080, $errno, $errstr, 1);	
         if (!$fp) {
         	return false; 
         }
@@ -148,4 +155,146 @@ if (is_dir($dir)) {
 }    
 return $result;
 }
+
+function publish_examples($url){
+	$docURL = "http://72.9.228.230:8080/svn/jsvn/branches/0.9.0/doc/examples/src/org/tmatesoft/svn/examples";
+	$examplesPath = array("http://test1.ru/doc/examples/src/org/tmatesoft/svn/examples/repository/","http://test1.ru/doc/examples/src/org/tmatesoft/svn/examples/wc/");//array($docURL."/repository/",$docURL."/wc/");
+	$result = array();
+	for($k = 0; $k < count($examplesPath); $k++){
+		$result[$examplesPath[$k]] = collect_examples($examplesPath[$k]);
+	}
+	if(count($result)<1){
+		return $url;
+	}		
+	
+	$examplesListFrameFile = $_SERVER["DOCUMENT_ROOT"] . "/feed/ExamplesList.html";
+
+	$fhandle = fopen($examplesListFrameFile, "w+");
+
+
+	fwrite($fhandle, "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>Example Programs :: Documentation :: Pure Java Subversion (SVN) Client Library</title><link rel=\"stylesheet\" href=\"stylesheet.css\" /><meta name=\"KEYWORDS\" content=\"Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development\"><meta name=\"DESCRIPTION\" content=\"Pure Java Subversion Library. Open Source, provided by TMate Software\"><style>html body {    margin: 0px;    padding: 0px;    padding-top: 0.2em;    margin-left: 1em;    margin-right: 1em;    font-family: trebuchet ms, verdana, tahoma, arial;    line-height: 1.5em;    color: #333;    text-align: left;    max-width: 30em;    width: 30em;    font-size: 82%;}".
+				"h4 { font-size: 120%;  margin-bottom: 0.5em;} code {   font-weight: bold;   font-size: 100%;   color: darkblue;} #normal {    padding-left: 0;} small {    color: #669999;    font-size: 100%;} p, pre {    margin: 0px;    padding: 0px;    margin-top: 0.5em;} li {    padding-bottom: 0.5em;}</style><!-- base href=\"http://tmate.org/svn/\" --></head>".
+				"<body  style=\"width: 370px;\"><div  style=\"width: 370px;\"><small><a id=\"normal\" href=\"".$url."\" target=_top>Home</a>&nbsp;::&nbsp;Documentation&nbsp;::&nbsp;Example&nbsp;Programs</small>".
+				"<h4>Example Programs</h4><p style=\"color: darkblue; margin: 4px; padding: 0.5em; font-size: 110%; width: 19em; background-color: #eee;\">".
+				"The following examples may help you<br>".
+				"to become more familiar with the<br>".
+				"JavaSVN API:<br><hr>");
+	
+
+	for($k = 0; $k < count($examplesPath); $k++) {
+		$matches = array();
+		$exampleDirectory = $examplesPath[$k];
+		if(ereg("org/tmatesoft/svn/examples/[^/]+", $examplesPath[$k], $matches)){
+			$exampleDirectory = str_replace("/", ".", $matches[0]);
+		}
+	
+		fwrite($fhandle, "<div style=\"color: black; margin: 4px; padding: 0.5em; font-size: 100%; line-height: 150%; width: 28em; background-color: white;\">");
+		fwrite($fhandle, "<br><span style=\"font-size: 110%; width: 25em;\"><!--p style=\"color: black; margin: 4px; padding: 0.5em; font-size: 110%; width: 25em; background-color: white;\"--><img src=\"/feed/folder.gif\" border=\"0\">".$exampleDirectory."</span>");
+
+		for($l = 0; $l < count($result[$examplesPath[$k]][$examplesPath[$k]]); $l++){
+			fwrite($fhandle, "<br><span class=\"tree-icon\" style=\"font-size: 100%; width: 25em;\">&nbsp;&nbsp;&nbsp;...<a style=\"text-decoration: none;\" href=\"/feed/rss_util.php?function=display_file&fileURL=".$examplesPath[$k].$result[$examplesPath[$k]][$examplesPath[$k]][$l]."\" TARGET=\"ExamplesDisplay\"><img src=\"/feed/text.gif\" border=\"0\">".$result[$examplesPath[$k]][$examplesPath[$k]][$l]."</a></span>");
+		}
+		fwrite($fhandle, "</div>");
+	}
+	fwrite($fhandle, "<div style=\"max-width: 800px; width: 350px;\"><center><small><span style=\"font-size: 80%;\">(c) 2004-2005 TMate Software. All rights reserved.</span></small></center></div></body></html>");
+
+	fclose($fhandle);
+	
+/*
+	$examplesFramesFile = $_SERVER["DOCUMENT_ROOT"] . "/ExamplesFrames.html";
+	$fhandle = fopen($examplesFramesFile, "w+");
+	$file = $_SERVER["DOCUMENT_ROOT"] . "/tmp.txt";
+	$fhandle = fopen($file, "w+");
+	fwrite($fhandle, $doc_contents);
+	fclose($fhandle);
+*/
+
+	echo "<html><head><title>Example Programs :: Documentation :: Pure Java Subversion (SVN) Client Library</title><meta name=\"KEYWORDS\" content=\"Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development\"><meta name=\"DESCRIPTION\" content=\"Pure Java Subversion Library. Open Source, provided by TMate Software\"></head><frameset COLS=\"30%, *\" ><frame SRC=\"ExamplesList.html\" NAME=\"ExamplesList\" MARGINWIDTH=5><frame NAME=\"ExamplesDisplay\"></frameset>";
+
+}
+
+
+function collect_examples($examplesPath) {
+
+      $handle = fopen($examplesPath, "rt");
+      if (!$handle) {
+	     	return false;
+      }
+	$contents = '';
+	while (!feof($handle)) {
+	  $contents .= fread($handle, 8192);
+	}
+	fclose($handle);
+
+	if (preg_match_all("|<A HREF=\"(.+\.java)\">|U", $contents, $matches, PREG_PATTERN_ORDER)) {
+		$entries = array();
+		$index=0;
+		for($i = 0; $i < count($matches[0]); $i++) {
+			$entries[$index++] = $matches[1][$i];
+		}
+		$directoryEntries = array();
+		$directoryEntries[$examplesPath] = $entries;
+		return $directoryEntries;
+	}
+	return false;
+}
+
+function display_file($fileURL){
+      $handle = fopen($fileURL, "rt");
+      if (!$handle) {
+	     	return false;
+      }
+	$contents = '';
+	while (!feof($handle)) {
+	  $contents .= fread($handle, 8192);
+	}
+	fclose($handle);
+
+	$fileName = $fileURL;
+
+	if(ereg("[^/]+\.java", $fileURL, $matches)){
+		$fileName = $matches[0];
+	}
+
+	include_once 'geshi/geshi.php';
+
+	$geshi = new GeSHi($contents, 'java');
+	$geshi->set_header_type(GESHI_HEADER_PRE);
+	$geshi->set_numbers_highlighting(false); 	
+	$geshi->set_overall_style('color: rgb(0,0,0); border: 1px solid #d0d0d0; background-color: #f0f0f0;', true);
+	// Note the use of set_code_style to revert colours...
+	$geshi->set_line_style('font: normal normal 95% \'Courier New\', Courier, monospace; color: black;', 'font-weight: bold; color: blue;', true);
+
+	//for methods 
+	$geshi->set_methods_style(1, "color: black;", false);
+	
+	//for multi-line comments /**/
+	$geshi->set_comments_style('MULTI','color: rgb(63,127,95); font-style: code;', false);
+
+	//for 'import' keyword
+	$geshi->set_comments_style(2,'color: rgb(127,0,85); font-weight: bold;', false);
+
+	//for string constants
+	$geshi->set_strings_style('color: rgb(42,0,255);', true);
+
+	//for links (standard classes, etc.)
+	$geshi->set_link_styles(GESHI_LINK, 'color: #000060;');
+	$geshi->set_link_styles(GESHI_HOVER, 'background-color: #f0f000;');
+
+	//for keywords
+	$geshi->set_keyword_group_style(1,'color: rgb(127,0,85); font-weight: bold;', false);
+	$geshi->set_keyword_group_style(2,'color: rgb(127,0,85); font-weight: bold;', false); 
+	$geshi->set_keyword_group_style(4,'color: rgb(127,0,85); font-weight: bold;', false); 
+	//new keyword group for 'package'
+	$geshi->add_keyword_group(5, 'color: rgb(127,0,85); font-weight: bold;', true, array('package', 'import'));
+
+	$geshi->set_header_content('JavaSVN API examlpe: '.$fileName);
+	$geshi->set_header_content_style('font-family: Verdana, Arial, sans-serif; color: #808080; font-size: 70%; font-weight: bold; background-color: #f0f0ff; border-bottom: 1px solid #d0d0d0; padding: 2px;');
+	$geshi->set_symbols_highlighting(false);
+	$geshi->set_footer_content_style('font-family: Verdana, Arial, sans-serif; color: #808080; font-size: 70%; font-weight: bold; background-color: #f0f0ff; border-top: 1px solid #d0d0d0; padding: 2px;');
+
+	$code = $geshi->parse_code();
+	echo "<html><body>".$code."<div style=\"max-width: 800px; width: 800px;\"><center><small style=\"color: #669999; font-size: 100%; margin: 0px; padding: 0px; margin-top: 0.5em; font-weight: normal;\"><span style=\"font-size: 80%;\">(c) 2004-2005 TMate Software. All rights reserved.</span></small></center></div></body></html>";
+}
+
 ?>
