@@ -6,7 +6,6 @@ package org.tmatesoft.svn.core.wc;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -38,7 +37,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
     private boolean myIsForcedBinaryDiff;
     private String myAnchorPath1;
-    private String myAnchorPath2;
     private String myEncoding;
     private boolean myIsDiffDeleted;
     private File myBasePath;
@@ -50,7 +48,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
     public void init(String anchorPath1, String anchorPath2) {
         myAnchorPath1 = anchorPath1.replace(File.separatorChar, '/');
-        myAnchorPath2 = anchorPath2.replace(File.separatorChar, '/');
     }
     
     public void setBasePath(File basePath) {
