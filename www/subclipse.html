@@ -78,7 +78,7 @@ private key and passphrase for private key authentication. You may use the follo
 know about your private key and passphrase (you need to provide these properties when starting Eclipse): </p>
 <pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; width: 43em; background-color: #eee;">
 $ eclipse -vmargs -Djavasvn.ssh2.key=/path/to/private/key/file \
--Djavasvn.ssh2.passphrase=optionalPassphrase
+-Djavasvn.ssh2.username=userName -Djavasvn.ssh2.passphrase=optionalPassphrase
 </pre>
 <p><b>Note:</b> User name for ssh connection will be taken from SVN Repository properties that may be altered in Subclipse
 SVN Repositories view.</p>
@@ -89,6 +89,7 @@ Eclipse config.ini file <code>ECLIPSE_HOME/configuration/config.ini</code> (tip 
   ...
   javasvn.ssh2.key=path/to/private/key/file
   javasvn.ssh2.passphrase=passphrase
+  javasvn.ssh2.username=username
 </pre>
 </p>
 <p>

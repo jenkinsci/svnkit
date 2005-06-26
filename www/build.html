@@ -70,11 +70,15 @@ protocol.</p>
 <pre style="padding: 0.5em; background-color:#eee; width: 40em;">
 $ svn co http://72.9.228.230:8080/svn/jsvn/trunk javasvn
 </pre>
+<p>or  (to check out specific version):</p>
+<pre style="padding: 0.5em; background-color:#eee; width: 45em;">
+$ svn co http://72.9.228.230:8080/svn/jsvn/tags/TAG_NAME javasvn
+</pre>
 <p>Go to checked out directory</p>
 <pre style="padding: 0.5em; background-color:#eee; width: 40em;">
 $ cd javasvn
 </pre>
-<p>Set ECLIPSE_HOME environment variable (should point to <b>Eclipse 3.1M6</b> home directory)</p>
+<p>Set ECLIPSE_HOME environment variable (should point to <b>Eclipse 3.1M6</b> (or newer) home directory)</p>
 <pre style="padding: 0.5em; background-color:#eee; width: 40em;">
 $ set ECLIPSE_HOME=/home/user/java/eclipse31M6
 </pre>
@@ -84,7 +88,11 @@ $ ant deploy
 </pre>
 <p><code>build/eclipse</code> directory will contain Eclipse javasvn plugin, feature and update site files.</p>
 <p>To make Eclipse use the plugin you've just built, replace existing files in <code>ECLIPSE_HOME/plugins/org.tmatesoft.javasvn_VERSION/</code> 
-directory with the files from <code>build/eclipse/plugins/org.tmatesoft.javasvn_VERSION</code> and restart Eclipse.
+directory with the files from <code>build/eclipse/plugins/org.tmatesoft.javasvn_VERSION</code> and restart Eclipse:
+<pre style="padding: 0.5em; background-color:#eee; width: 40em;">
+$ eclipse -clean
+</pre>
+
 <p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
 <a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
 <center><small><span>(c) 2004-2005 TMate Software. All rights reserved.</span></small></center>
