@@ -52,6 +52,15 @@ public class SVNConverterUtil {
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_REPLACED, new Integer(StatusKind.replaced));
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_UNVERSIONED, new Integer(StatusKind.unversioned));
 
+        STATUS_CONVERSION_MAP.put(SVNStatusType.CHANGED, new Integer(NotifyStatus.changed));
+        STATUS_CONVERSION_MAP.put(SVNStatusType.CONFLICTED, new Integer(NotifyStatus.conflicted));
+        STATUS_CONVERSION_MAP.put(SVNStatusType.INAPPLICABLE, new Integer(NotifyStatus.inapplicable));
+        STATUS_CONVERSION_MAP.put(SVNStatusType.MERGED, new Integer(NotifyStatus.merged));
+        STATUS_CONVERSION_MAP.put(SVNStatusType.MISSING, new Integer(NotifyStatus.missing));
+        STATUS_CONVERSION_MAP.put(SVNStatusType.OBSTRUCTED, new Integer(NotifyStatus.obstructed));
+        STATUS_CONVERSION_MAP.put(SVNStatusType.UNCHANGED, new Integer(NotifyStatus.unchanged));
+        STATUS_CONVERSION_MAP.put(SVNStatusType.UNKNOWN, new Integer(NotifyStatus.unknown));
+
         LOCK_CONVERSION_MAP.put(SVNStatusType.LOCK_INAPPLICABLE, new Integer(LockStatus.inapplicable));
         LOCK_CONVERSION_MAP.put(SVNStatusType.LOCK_LOCKED, new Integer(LockStatus.inapplicable));
         LOCK_CONVERSION_MAP.put(SVNStatusType.LOCK_UNCHANGED, new Integer(LockStatus.unchanged));
