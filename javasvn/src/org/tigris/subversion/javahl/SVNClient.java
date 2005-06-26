@@ -97,12 +97,8 @@ public class SVNClient implements SVNClientInterface {
 
     public Status[] status(final String path, boolean descend, boolean onServer, boolean getAll, boolean noIgnore, boolean ignoreExternals) throws ClientException {
         if (path == null) {
-            DebugLog.log("status doesn't accept NULL path");
             return null;
         }        
-        DebugLog.log("STATUS PARAMS: "+ descend + "," + onServer + "," + getAll + "," + noIgnore);
-        DebugLog.log("IO fetching status for: " + path);
-       
         final Collection statuses = new ArrayList();
         SVNStatusClient stClient = getSVNStatusClient();
         try {
@@ -1029,6 +1025,14 @@ public class SVNClient implements SVNClientInterface {
         return myOptions;
     }
     
+    protected Notify getNotify() {
+        return myNotify;
+    }
+    
+    protected Notify2 getNotify2() {
+        return myNotify2;
+    }
+    
     protected ISVNEventHandler getEventListener(){
         if(mySVNEventListener == null){
             mySVNEventListener = new ISVNEventHandler(){
@@ -1047,21 +1051,11 @@ public class SVNClient implements SVNClientInterface {
                                 );
                     }
                     if(myNotify2 != null){
-                        NotifyInformation info = new NotifyInformation(
-                                path,
-                                SVNConverterUtil.getNotifyActionValue(event.getAction()),
-                                SVNConverterUtil.getNodeKind(event.getNodeKind()), 
-                                event.getMimeType(),
-                                SVNConverterUtil.createLock(event.getLock()),
-                                event.getErrorMessage(),
-                                SVNConverterUtil.getStatusValue(event.getContentsStatus()),
-                                SVNConverterUtil.getStatusValue(event.getPropertiesStatus()),
-                                SVNConverterUtil.getLockStatusValue(event.getLockStatus()),
-                                event.getRevision()
-                                );
+                        NotifyInformation info = createNotifyInformation(event, path);
                         myNotify2.onNotify(info);
                     }
                 }
+
                 public void checkCancelled() throws SVNCancelException {
                     if(myCancelOperation){
                         myCancelOperation = false;
@@ -1140,5 +1134,21 @@ public class SVNClient implements SVNClientInterface {
     
     protected static boolean isURL(String path){
         return PathUtil.isURL(path); 
+    }
+
+    protected static NotifyInformation createNotifyInformation(SVNEvent event, String path) {
+        NotifyInformation info = new NotifyInformation(
+                path,
+                SVNConverterUtil.getNotifyActionValue(event.getAction()),
+                SVNConverterUtil.getNodeKind(event.getNodeKind()), 
+                event.getMimeType(),
+                SVNConverterUtil.createLock(event.getLock()),
+                event.getErrorMessage(),
+                SVNConverterUtil.getStatusValue(event.getContentsStatus()),
+                SVNConverterUtil.getStatusValue(event.getPropertiesStatus()),
+                SVNConverterUtil.getLockStatusValue(event.getLockStatus()),
+                event.getRevision()
+                );
+        return info;
     }
 }
