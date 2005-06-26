@@ -70,7 +70,6 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException {
         Map propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);
-        DebugLog.log("mime:type at revision: " + fileRevision.getRevision() + " = " + newMimeType);
         if (SVNWCUtil.isBinaryMimetype(newMimeType)) {
             SVNErrorManager.error("svn: Cannot calculate blame information for binary file '" + myPath + "'");
         }
@@ -246,10 +245,17 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         for(int i = 0; i < myLines.size(); i++) {
             LineInfo info = (LineInfo) myLines.get(i);
             String lineAsString;
+            byte[] bytes = info.line;
+            int length = bytes.length;
+            if (bytes.length >=2 && bytes[length - 2] == '\r' && bytes[length - 1] == '\n') {
+                length -= 2;
+            } else if (bytes.length >= 1 && (bytes[length - 1] == '\r' || bytes[length - 1] == '\n')) {
+                length -= 1;
+            } 
             try {
-                lineAsString = new String(info.line, inputEncoding);
+                lineAsString = new String(info.line, 0, length, inputEncoding);
             } catch (UnsupportedEncodingException e) {
-                lineAsString = new String(info.line);
+                lineAsString = new String(info.line, 0, length);
             }
             handler.handleLine(info.date, info.revision, info.author, lineAsString);
         }
