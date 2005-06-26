@@ -1138,7 +1138,7 @@ public class SVNClient implements SVNClientInterface {
         throw ec;
     }
     
-    private static boolean isURL(String path){
+    protected static boolean isURL(String path){
         return PathUtil.isURL(path); 
     }
 }
