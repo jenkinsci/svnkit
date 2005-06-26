@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLogEntry;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
@@ -58,7 +58,7 @@ public class SVNClient implements SVNClientInterface {
     private PromptUserPassword myPrompt;
     private String myUserName;
     private String myPassword;
-    private ISVNEventListener mySVNEventListener;
+    private ISVNEventHandler mySVNEventListener;
     private Notify myNotify;
     private Notify2 myNotify2;
     private CommitMessage myMessageHandler;
@@ -366,19 +366,23 @@ public class SVNClient implements SVNClientInterface {
         SVNCopyClient client = getSVNCopyClient();
         try {
             if(isURL(srcPath)){
+                SVNRevision srcRevision = revision == null || revision.getKind() == Revision.Kind.unspecified ?
+                        SVNRevision.HEAD : SVNConverterUtil.getSVNRevision(revision);
                 if(isURL(destPath)){
-                    client.doCopy(srcPath, SVNRevision.UNDEFINED, SVNConverterUtil.getSVNRevision(revision),
+                    client.doCopy(srcPath, SVNRevision.UNDEFINED, srcRevision,
                             destPath, SVNRevision.UNDEFINED, false, null);
                 }else{
-                    client.doCopy(srcPath, SVNRevision.UNDEFINED, SVNConverterUtil.getSVNRevision(revision),
+                    client.doCopy(srcPath, SVNRevision.UNDEFINED, srcRevision,
                             new File(destPath), SVNRevision.UNDEFINED, SVNRevision.WORKING, false, null);
                 }
             }else{
+                SVNRevision srcRevision = revision == null || revision.getKind() == Revision.Kind.unspecified ?
+                        SVNRevision.WORKING : SVNConverterUtil.getSVNRevision(revision);
                 if(isURL(destPath)){
-                    client.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED, SVNConverterUtil.getSVNRevision(revision),
+                    client.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED, srcRevision,
                             destPath, SVNRevision.UNDEFINED, false, null);
                 }else{
-                    client.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED, SVNConverterUtil.getSVNRevision(revision),
+                    client.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED, srcRevision,
                             new File(destPath), SVNRevision.UNDEFINED, SVNRevision.WORKING, false, false, null);
                 }
             }
@@ -391,24 +395,28 @@ public class SVNClient implements SVNClientInterface {
         SVNCopyClient updater = getSVNCopyClient();
         try {
             if(isURL(srcPath)){
+                SVNRevision srcRevision = revision == null || revision.getKind() == Revision.Kind.unspecified ?
+                        SVNRevision.HEAD : SVNConverterUtil.getSVNRevision(revision);
                 if(isURL(destPath)){
-                    updater.doCopy(srcPath, SVNRevision.UNDEFINED, SVNConverterUtil.getSVNRevision(revision),
+                    updater.doCopy(srcPath, SVNRevision.UNDEFINED, srcRevision,
                             destPath, SVNRevision.UNDEFINED, true, message);
                 }else{
                     updater.doCopy(srcPath, SVNRevision.UNDEFINED,
-                            SVNConverterUtil.getSVNRevision(revision),
+                            srcRevision,
                             new File(destPath).getAbsoluteFile(), SVNRevision.UNDEFINED,
-                            SVNConverterUtil.getSVNRevision(revision),
+                            SVNRevision.WORKING,
                             true, message);
                 }
             }else{
+                SVNRevision srcRevision = revision == null || revision.getKind() == Revision.Kind.unspecified ?
+                        SVNRevision.WORKING : SVNConverterUtil.getSVNRevision(revision);
                 if(isURL(destPath)){
                     updater.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED,
-                            SVNConverterUtil.getSVNRevision(revision),
+                            srcRevision,
                             destPath, SVNRevision.UNDEFINED,
                             true, message);
                 }else{
-                    updater.doCopy(new File(srcPath), SVNRevision.UNDEFINED, SVNConverterUtil.getSVNRevision(revision),
+                    updater.doCopy(new File(srcPath), SVNRevision.UNDEFINED, srcRevision,
                             new File(destPath), SVNRevision.UNDEFINED, SVNRevision.WORKING, force, true, message);
                 }
             }
@@ -1021,11 +1029,11 @@ public class SVNClient implements SVNClientInterface {
         return myOptions;
     }
     
-    protected ISVNEventListener getEventListener(){
+    protected ISVNEventHandler getEventListener(){
         if(mySVNEventListener == null){
-            mySVNEventListener = new ISVNEventListener(){
+            mySVNEventListener = new ISVNEventHandler(){
                 
-                public void svnEvent(SVNEvent event, double progress) {
+                public void handleEvent(SVNEvent event, double progress) {
                     String path = event.getFile() == null ? event.getPath() : event.getFile().getAbsolutePath();
                     if(myNotify != null){
                         myNotify.onNotify(

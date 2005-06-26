@@ -53,15 +53,15 @@ public class SVNCopyClient extends SVNBasicClient {
     public SVNCopyClient() {
     }
 
-    public SVNCopyClient(ISVNEventListener eventDispatcher) {
+    public SVNCopyClient(ISVNEventHandler eventDispatcher) {
         super(eventDispatcher);
     }
 
-    public SVNCopyClient(ISVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNCopyClient(ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(options, eventDispatcher);
     }
 
-    public SVNCopyClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNCopyClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
 

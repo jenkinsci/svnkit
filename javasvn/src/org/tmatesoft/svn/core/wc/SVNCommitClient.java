@@ -53,15 +53,15 @@ public class SVNCommitClient extends SVNBasicClient {
     public SVNCommitClient() {
     }
 
-    public SVNCommitClient(ISVNEventListener eventDispatcher) {
+    public SVNCommitClient(ISVNEventHandler eventDispatcher) {
         super(eventDispatcher);
     }
 
-    public SVNCommitClient(ISVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNCommitClient(ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(options, eventDispatcher);
     }
 
-    public SVNCommitClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNCommitClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
 
@@ -449,7 +449,7 @@ public class SVNCommitClient extends SVNBasicClient {
             File file = children[i];
             if (".svn".equals(file.getName())) {
                 SVNEvent skippedEvent = SVNEventFactory.createSkipEvent(rootFile, file, SVNEventAction.SKIP, SVNNodeKind.NONE);
-                svnEvent(skippedEvent, ISVNEventListener.UNKNOWN);
+                handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
                 continue;
             }
             if (getOptions().isIgnored(file.getName())) {
@@ -461,7 +461,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 editor.addDir(path, null, -1);
                 changed |= true;
                 SVNEvent event = SVNEventFactory.createCommitEvent(rootFile, file, SVNEventAction.COMMIT_ADDED, SVNNodeKind.DIR, null);
-                svnEvent(event, ISVNEventListener.UNKNOWN);
+                handleEvent(event, ISVNEventHandler.UNKNOWN);
                 importDir(rootFile, file, path, recursive, editor);
                 editor.closeDir();
             } else {
@@ -501,7 +501,7 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         // send "adding"
         SVNEvent addedEvent = SVNEventFactory.createCommitEvent(rootFile, file, SVNEventAction.COMMIT_ADDED, SVNNodeKind.FILE, mimeType);
-        svnEvent(addedEvent, ISVNEventListener.UNKNOWN);
+        handleEvent(addedEvent, ISVNEventHandler.UNKNOWN);
         editor.applyTextDelta(filePath, null);
         // translate and send file.
         String eolStyle = (String) autoProperties.get(SVNProperty.EOL_STYLE);

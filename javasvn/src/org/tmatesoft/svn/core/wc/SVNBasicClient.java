@@ -27,11 +27,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class SVNBasicClient implements ISVNEventListener {
+public class SVNBasicClient implements ISVNEventHandler {
 
     private ISVNRepositoryFactory myRepositoryFactory;
     private ISVNOptions myOptions;
-    private ISVNEventListener myEventDispatcher;
+    private ISVNEventHandler myEventDispatcher;
     private List myPathPrefixesStack;
     private boolean myIsIgnoreExternals;
     private boolean myIsDoNotSleepForTimeStamp;
@@ -41,15 +41,15 @@ public class SVNBasicClient implements ISVNEventListener {
         this(new SVNOptions(), null);
     }
 
-    protected SVNBasicClient(ISVNEventListener eventDispatcher) {
+    protected SVNBasicClient(ISVNEventHandler eventDispatcher) {
         this(new SVNOptions(), eventDispatcher);
     }
 
-    protected SVNBasicClient(final ISVNOptions options, ISVNEventListener eventDispatcher) {
+    protected SVNBasicClient(final ISVNOptions options, ISVNEventHandler eventDispatcher) {
         this(null, options, eventDispatcher);
     }
 
-    protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
+    protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventHandler eventDispatcher) {
         myRepositoryFactory = repositoryFactory;
         myOptions = options;
         if (myOptions == null)  {
@@ -83,7 +83,7 @@ public class SVNBasicClient implements ISVNEventListener {
         return myIsIgnoreExternals;
     }
     
-    public void setEventHandler(ISVNEventListener dispatcher) {
+    public void setEventHandler(ISVNEventHandler dispatcher) {
         myEventDispatcher = dispatcher;
     }
     
@@ -117,7 +117,7 @@ public class SVNBasicClient implements ISVNEventListener {
     }
     
     protected void dispatchEvent(SVNEvent event) {
-        dispatchEvent(event, ISVNEventListener.UNKNOWN);
+        dispatchEvent(event, ISVNEventHandler.UNKNOWN);
         
     }
     protected void dispatchEvent(SVNEvent event, double progress) {
@@ -135,7 +135,7 @@ public class SVNBasicClient implements ISVNEventListener {
                 path = PathUtil.removeTrailingSlash(path);
                 event.setPath(path);
             }
-            myEventDispatcher.svnEvent(event, progress);
+            myEventDispatcher.handleEvent(event, progress);
         }
     }
 
@@ -147,7 +147,7 @@ public class SVNBasicClient implements ISVNEventListener {
         }
     }
 
-    protected ISVNEventListener getEventDispatcher() {
+    protected ISVNEventHandler getEventDispatcher() {
         return myEventDispatcher;
     }
 
@@ -158,8 +158,8 @@ public class SVNBasicClient implements ISVNEventListener {
     protected SVNWCAccess createWCAccess(File file, final String pathPrefix) throws SVNException {
         SVNWCAccess wcAccess = SVNWCAccess.create(file);
         if (pathPrefix != null) {
-            wcAccess.setEventDispatcher(new ISVNEventListener() {
-                public void svnEvent(SVNEvent event, double progress) {
+            wcAccess.setEventDispatcher(new ISVNEventHandler() {
+                public void handleEvent(SVNEvent event, double progress) {
                     String fullPath = PathUtil.append(pathPrefix, event.getPath());
                     fullPath = PathUtil.removeTrailingSlash(fullPath);
                     fullPath = PathUtil.removeLeadingSlash(fullPath);
@@ -270,7 +270,7 @@ public class SVNBasicClient implements ISVNEventListener {
         return url;
     }
 
-    public void svnEvent(SVNEvent event, double progress) {
+    public void handleEvent(SVNEvent event, double progress) {
         dispatchEvent(event, progress);
     }
 

@@ -13,7 +13,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -52,16 +52,16 @@ public class SVNMerger {
         DebugLog.log("target file for deletion: " + targetFile);
         if (targetFile.isDirectory()) {
             // check for normal entry?
-            final ISVNEventListener oldDispatcher = myWCAccess.getEventDispatcher();
-            myWCAccess.setEventDispatcher(new ISVNEventListener() {
-                public void svnEvent(SVNEvent event, double progress) {
+            final ISVNEventHandler oldDispatcher = myWCAccess.getEventDispatcher();
+            myWCAccess.setEventDispatcher(new ISVNEventHandler() {
+                public void handleEvent(SVNEvent event, double progress) {
                     String eventPath = event.getPath();
                     eventPath = eventPath.replace(File.separatorChar, '/');
                     if (event.getPath().equals(path)) {
                         return;
                     }
                     if (oldDispatcher != null) {
-                        oldDispatcher.svnEvent(event, progress);
+                        oldDispatcher.handleEvent(event, progress);
                     }
                 }
                 public void checkCancelled() throws SVNCancelException {
@@ -107,7 +107,7 @@ public class SVNMerger {
         if (targetFile.isDirectory()) {
             return SVNStatusType.OBSTRUCTED;
         } else if (targetFile.isFile()) {
-            ISVNEventListener oldDispatcher = myWCAccess.getEventDispatcher();
+            ISVNEventHandler oldDispatcher = myWCAccess.getEventDispatcher();
             try {
                 myWCAccess.setEventDispatcher(null);
                 if (!myIsForce) {

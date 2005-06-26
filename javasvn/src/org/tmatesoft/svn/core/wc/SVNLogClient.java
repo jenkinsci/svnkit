@@ -35,15 +35,15 @@ public class SVNLogClient extends SVNBasicClient {
     public SVNLogClient() {
     }
 
-    public SVNLogClient(ISVNEventListener eventDispatcher) {
+    public SVNLogClient(ISVNEventHandler eventDispatcher) {
         super(eventDispatcher);
     }
 
-    public SVNLogClient(ISVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNLogClient(ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(options, eventDispatcher);
     }
 
-    public SVNLogClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNLogClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
 

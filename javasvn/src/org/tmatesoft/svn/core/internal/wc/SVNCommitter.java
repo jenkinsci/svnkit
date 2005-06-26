@@ -9,7 +9,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -77,7 +77,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         }
         if (event != null) {
             event.setPath(item.getPath());
-            myWCAccess.svnEvent(event, ISVNEventListener.UNKNOWN);
+            myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         long rev = item.getRevision().getNumber();
         long cfRev = item.getCopyFromURL() != null ? rev : -1;
@@ -132,7 +132,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
 
             SVNEvent event = SVNEventFactory.createCommitEvent(myWCAccess.getAnchor().getRoot(), item.getFile(),
                 SVNEventAction.COMMIT_DELTA_SENT, SVNNodeKind.FILE, null);
-            myWCAccess.svnEvent(event, ISVNEventListener.UNKNOWN);
+            myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
 
             SVNDirectory dir = myWCAccess.getDirectory(PathUtil.removeTail(item.getPath()));
             String name = PathUtil.tail(item.getPath());

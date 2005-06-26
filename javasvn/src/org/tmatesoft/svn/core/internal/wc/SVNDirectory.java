@@ -7,7 +7,7 @@ import org.tmatesoft.svn.core.internal.ws.fs.FSMergerBySequence;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -894,7 +894,7 @@ public class SVNDirectory {
             entry.scheduleForDeletion();
         }
         SVNEvent event = SVNEventFactory.createDeletedEvent(myWCAccess, this, entry.getName());
-        myWCAccess.svnEvent(event);
+        myWCAccess.handleEvent(event);
         if (added) {
             SVNFileUtil.deleteAll(getFile(name, false));
         } else {
@@ -965,7 +965,7 @@ public class SVNDirectory {
     		childDir.getEntries().save(true);
         }
         SVNEvent event = SVNEventFactory.createAddedEvent(myWCAccess, this, entry);
-        myWCAccess.svnEvent(event, ISVNEventListener.UNKNOWN);
+        myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
     	getEntries().save(false);
         return entry;
     }
@@ -984,7 +984,7 @@ public class SVNDirectory {
             entries.setPropertyValue(entry.getName(), propertyName, value);
             if (SVNProperty.SCHEDULE_DELETE.equals(value)) {
                 SVNEvent event = SVNEventFactory.createDeletedEvent(myWCAccess, this, entry.getName());
-                myWCAccess.svnEvent(event);
+                myWCAccess.handleEvent(event);
             }
         }
         SVNEntry root = entries.getEntry("", true);

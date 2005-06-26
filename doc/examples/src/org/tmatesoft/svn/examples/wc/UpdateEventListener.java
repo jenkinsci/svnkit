@@ -12,27 +12,27 @@
 package org.tmatesoft.svn.examples.wc;
 
 import org.tmatesoft.svn.core.io.SVNCancelException;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 /*
- * This class is an implementation of ISVNEventListener intended to reflect the 
+ * This class is an implementation of ISVNEventHandler intended to reflect the 
  * status of an update operation. Think of an SVN*Client's operation (for example, 
  * updating a working copy with invoking SVNUpdateClient.doUpdate(..)) as of a 
  * number of actions it performs, - for example, for updating, a current action can 
  * be deleting a directory or updating a file. And there can be several of them. So, 
- * the SVN*Client notifies an ISVNEventListener provided by an implementor of each 
+ * the SVN*Client notifies an ISVNEventHandler provided by an implementor of each 
  * action it's running. Information on each action is incapsulated by SVNEvent and is
- * reported by ISVNEventListener.svnEvent(SVNEvent event, double progress).    
+ * reported by ISVNEventHandler.svnEvent(SVNEvent event, double progress).    
  */
-public class UpdateEventListener implements ISVNEventListener {
+public class UpdateEventListener implements ISVNEventHandler {
     /*
      * progress - will be the current percentage stage of an operation (how many of
      * operation has passed) 
      */
-    public void svnEvent(SVNEvent event, double progress) {
+    public void handleEvent(SVNEvent event, double progress) {
         /*
          * Gets the current action. An action is represented by SVNEventAction.
          * In case of an update a current action can be determined via 

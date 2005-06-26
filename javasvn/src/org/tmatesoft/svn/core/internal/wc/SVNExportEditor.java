@@ -9,7 +9,7 @@ import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -39,10 +39,10 @@ public class SVNExportEditor implements ISVNEditor {
     private Map myFileProperties;
     private Collection myDiffWindows;
     private Collection myDataFiles;
-    private ISVNEventListener myEventDispatcher;
+    private ISVNEventHandler myEventDispatcher;
     private String myURL;
 
-    public SVNExportEditor(ISVNEventListener eventDispatcher, String url, File dstPath, boolean force, String eolStyle) {
+    public SVNExportEditor(ISVNEventHandler eventDispatcher, String url, File dstPath, boolean force, String eolStyle) {
         myRoot = dstPath;
         myIsForce = force;
         myEOLStyle = eolStyle;
@@ -78,7 +78,7 @@ public class SVNExportEditor implements ISVNEditor {
                 SVNErrorManager.error(0, null);
             }
         }
-        myEventDispatcher.svnEvent(SVNEventFactory.createExportAddedEvent(myRoot, myCurrentDirectory), ISVNEventListener.UNKNOWN);
+        myEventDispatcher.handleEvent(SVNEventFactory.createExportAddedEvent(myRoot, myCurrentDirectory), ISVNEventHandler.UNKNOWN);
     }
 
     public void changeDirProperty(String name, String value)
@@ -215,7 +215,7 @@ public class SVNExportEditor implements ISVNEditor {
             if (!special && date != null) {
                 myCurrentFile.setLastModified(TimeUtil.parseDate(date).getTime());
             }
-            myEventDispatcher.svnEvent(SVNEventFactory.createExportAddedEvent(myRoot, myCurrentFile), ISVNEventListener.UNKNOWN);
+            myEventDispatcher.handleEvent(SVNEventFactory.createExportAddedEvent(myRoot, myCurrentFile), ISVNEventHandler.UNKNOWN);
         } finally {
             myCurrentTmpFile.delete();
         }

@@ -42,15 +42,15 @@ public class SVNWCClient extends SVNBasicClient {
     public SVNWCClient() {
     }
 
-    public SVNWCClient(ISVNEventListener eventDispatcher) {
+    public SVNWCClient(ISVNEventHandler eventDispatcher) {
         super(eventDispatcher);
     }
 
-    public SVNWCClient(ISVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNWCClient(ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(options, eventDispatcher);
     }
 
-    public SVNWCClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNWCClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
 
@@ -451,7 +451,7 @@ public class SVNWCClient extends SVNBasicClient {
             File file = wcAccess.getAnchor().getFile(wcAccess.getTargetName(), false);
             if (entry.isDirectory()) {
                 if (!entry.isScheduledForAddition() && !file.isDirectory()) {
-                    svnEvent(SVNEventFactory.createNotRevertedEvent(wcAccess, wcAccess.getAnchor(), entry), ISVNEventListener.UNKNOWN);
+                    handleEvent(SVNEventFactory.createNotRevertedEvent(wcAccess, wcAccess.getAnchor(), entry), ISVNEventHandler.UNKNOWN);
                     return;
                 }
             }
@@ -532,7 +532,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
             if (reverted) {
                 // fire reverted event.
-                svnEvent(event, ISVNEventListener.UNKNOWN);
+                handleEvent(event, ISVNEventHandler.UNKNOWN);
             }
         } finally {
             wcAccess.close(true);
@@ -567,7 +567,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (!recursive || entry.getKind() != SVNNodeKind.DIR) {
                 if (dir.markResolved(target, true, true)) {
                     SVNEvent event = SVNEventFactory.createResolvedEvent(wcAccess, dir, entry);
-                    svnEvent(event, ISVNEventListener.UNKNOWN);
+                    handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
             } else {
                 doResolveAll(wcAccess, dir);
@@ -585,7 +585,7 @@ public class SVNWCClient extends SVNBasicClient {
             if ("".equals(entry.getName()) || entry.isFile()) {
                 if (dir.markResolved(entry.getName(), true, true)) {
                     SVNEvent event = SVNEventFactory.createResolvedEvent(access, dir, entry);
-                    svnEvent(event, ISVNEventListener.UNKNOWN);
+                    handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
             } else if (entry.isDirectory()) {
                 SVNDirectory childDir = dir.getChildDirectory(entry.getName());
@@ -631,9 +631,9 @@ public class SVNWCClient extends SVNBasicClient {
             try {
                 lock = repos.setLock("", lockMessage, stealLock, info.myRevision.getNumber());
             } catch (SVNException error) {
-                svnEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCK_FAILED, null,
+                handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCK_FAILED, null,
                         error.getMessage()),
-                        ISVNEventListener.UNKNOWN);
+                        ISVNEventHandler.UNKNOWN);
                 continue;
             }
             try {
@@ -652,11 +652,11 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 wcAccess.getAnchor().getEntries().save(true);
                 wcAccess.getAnchor().getEntries().close();
-                svnEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCKED, lock, null),
-                        ISVNEventListener.UNKNOWN);
+                handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCKED, lock, null),
+                        ISVNEventHandler.UNKNOWN);
             } catch (SVNException e) {
-                svnEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCK_FAILED, lock, e.getMessage()),
-                        ISVNEventListener.UNKNOWN);
+                handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCK_FAILED, lock, e.getMessage()),
+                        ISVNEventHandler.UNKNOWN);
             } finally {
                 wcAccess.close(true);
             }
@@ -671,12 +671,12 @@ public class SVNWCClient extends SVNBasicClient {
             try {
                 lock = repos.setLock("", lockMessage, stealLock, -1);
             } catch (SVNException error) {
-                svnEvent(SVNEventFactory.createLockEvent(url, SVNEventAction.LOCK_FAILED, lock, null),
-                        ISVNEventListener.UNKNOWN);
+                handleEvent(SVNEventFactory.createLockEvent(url, SVNEventAction.LOCK_FAILED, lock, null),
+                        ISVNEventHandler.UNKNOWN);
                 continue;
             }
-            svnEvent(SVNEventFactory.createLockEvent(url, SVNEventAction.LOCKED, lock, null),
-                    ISVNEventListener.UNKNOWN);
+            handleEvent(SVNEventFactory.createLockEvent(url, SVNEventAction.LOCKED, lock, null),
+                    ISVNEventHandler.UNKNOWN);
         }
     }
     
@@ -719,8 +719,8 @@ public class SVNWCClient extends SVNBasicClient {
                 removeLock = true;
             }
             if (!removeLock) {
-                svnEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCK_FAILED, null, 
-                        "unlock failed"), ISVNEventListener.UNKNOWN);
+                handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCK_FAILED, null, 
+                        "unlock failed"), ISVNEventHandler.UNKNOWN);
                 continue;
             }
             try {
@@ -739,12 +739,12 @@ public class SVNWCClient extends SVNBasicClient {
                         //
                     }
                 }
-                svnEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCKED, lock, null),
-                        ISVNEventListener.UNKNOWN);
+                handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCKED, lock, null),
+                        ISVNEventHandler.UNKNOWN);
             } catch (SVNException e) {
-                svnEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCK_FAILED, lock, 
+                handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCK_FAILED, lock, 
                         e.getMessage()),
-                        ISVNEventListener.UNKNOWN);
+                        ISVNEventHandler.UNKNOWN);
             } finally {
                 wcAccess.close(true);
             }
@@ -774,12 +774,12 @@ public class SVNWCClient extends SVNBasicClient {
             try {
                 repos.removeLock("", id, breakLock);
             } catch (SVNException e) {
-                svnEvent(SVNEventFactory.createLockEvent(url, SVNEventAction.UNLOCK_FAILED, null, null),
-                        ISVNEventListener.UNKNOWN);
+                handleEvent(SVNEventFactory.createLockEvent(url, SVNEventAction.UNLOCK_FAILED, null, null),
+                        ISVNEventHandler.UNKNOWN);
                 continue;
             }
-            svnEvent(SVNEventFactory.createLockEvent(url, SVNEventAction.UNLOCKED, null, null),
-                    ISVNEventListener.UNKNOWN);
+            handleEvent(SVNEventFactory.createLockEvent(url, SVNEventAction.UNLOCKED, null, null),
+                    ISVNEventHandler.UNKNOWN);
         }
     }
     

@@ -13,7 +13,7 @@ import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -90,7 +90,7 @@ public class SVNMergeEditor implements ISVNEditor {
             action = SVNEventAction.UPDATE_DELETE;
         }
         SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess, path, action, null, null);
-        myWCAccess.svnEvent(event, ISVNEventListener.UNKNOWN);
+        myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
@@ -112,7 +112,7 @@ public class SVNMergeEditor implements ISVNEditor {
             action = SVNEventAction.SKIP;
         }
         SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess, myCurrentDirectory.myWCPath, action, null, null);
-        myWCAccess.svnEvent(event, ISVNEventListener.UNKNOWN);
+        myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
     }
 
     public void openDir(String path, long revision) throws SVNException {
@@ -147,7 +147,7 @@ public class SVNMergeEditor implements ISVNEditor {
             SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myWCPath);
             if (dir == null) {
                 SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess, myCurrentDirectory.myWCPath, SVNEventAction.SKIP, null, null);
-                myWCAccess.svnEvent(event, ISVNEventListener.UNKNOWN);
+                myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
                 myCurrentDirectory = myCurrentDirectory.myParent;
                 return;
             } else {
@@ -159,7 +159,7 @@ public class SVNMergeEditor implements ISVNEditor {
         }
         if (propStatus != SVNStatusType.UNCHANGED) {
             SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess, myCurrentDirectory.myWCPath, SVNEventAction.UPDATE_UPDATE, null, propStatus);
-            myWCAccess.svnEvent(event, ISVNEventListener.UNKNOWN);
+            myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         myCurrentDirectory = myCurrentDirectory.myParent;
     }
@@ -268,7 +268,7 @@ public class SVNMergeEditor implements ISVNEditor {
         if (dir == null && !myMerger.isDryRun()) {
             // not for dry run?
             SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess, myCurrentFile.myWCPath, SVNEventAction.SKIP, null, null);
-            myWCAccess.svnEvent(event, ISVNEventListener.UNKNOWN);
+            myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
         } else {
             SVNStatusType contents = SVNStatusType.UNCHANGED;
             SVNStatusType props = SVNStatusType.UNCHANGED;
@@ -319,7 +319,7 @@ public class SVNMergeEditor implements ISVNEditor {
             }
             DebugLog.log("close file, merge result: " + contents + ":" + props);
             SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess, myCurrentFile.myWCPath, action, contents, props);
-            myWCAccess.svnEvent(event, ISVNEventListener.UNKNOWN);
+            myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         if (myCurrentFile.myFile != null) {
             myCurrentFile.myFile.delete();

@@ -206,6 +206,6 @@ public class SVNReporter implements ISVNReporterBaton {
         }
         dir.getEntries().save(false);
         
-        myWCAccess.svnEvent(SVNEventFactory.createRestoredEvent(myWCAccess, dir, entry));
+        myWCAccess.handleEvent(SVNEventFactory.createRestoredEvent(myWCAccess, dir, entry));
     }
 }

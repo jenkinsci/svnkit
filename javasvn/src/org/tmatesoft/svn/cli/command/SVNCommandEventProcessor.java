@@ -8,7 +8,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -18,7 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
-public class SVNCommandEventProcessor implements ISVNEventListener {
+public class SVNCommandEventProcessor implements ISVNEventHandler {
 
     private boolean myIsExternal;
     private boolean myIsChanged;
@@ -41,7 +41,7 @@ public class SVNCommandEventProcessor implements ISVNEventListener {
         myIsExport = export;
     }
 
-    public void svnEvent(SVNEvent event, double progress) {
+    public void handleEvent(SVNEvent event, double progress) {
         String commitPath = null;
         if (event.getAction() == SVNEventAction.COMMIT_ADDED || event.getAction() == SVNEventAction.COMMIT_MODIFIED ||
                 event.getAction() == SVNEventAction.COMMIT_DELETED || event.getAction() == SVNEventAction.COMMIT_REPLACED) {

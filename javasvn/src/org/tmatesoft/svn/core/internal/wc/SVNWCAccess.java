@@ -15,19 +15,19 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.ISVNEventListener;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.DebugLog;
 
-public class SVNWCAccess implements ISVNEventListener {
+public class SVNWCAccess implements ISVNEventHandler {
 
     private SVNDirectory myAnchor;
     private SVNDirectory myTarget;
     private String myName;
     private ISVNOptions myOptions;
-    private ISVNEventListener myDispatcher;
+    private ISVNEventHandler myDispatcher;
 
     private Map myDirectories;
     private Map myExternals;
@@ -128,7 +128,7 @@ public class SVNWCAccess implements ISVNEventListener {
         myOptions = options;
     }
 
-    public void setEventDispatcher(ISVNEventListener dispatcher) {
+    public void setEventDispatcher(ISVNEventHandler dispatcher) {
         myDispatcher = dispatcher;
     }
 
@@ -475,14 +475,14 @@ public class SVNWCAccess implements ISVNEventListener {
         return result.toString();
     }
 
-    public void svnEvent(SVNEvent event) {
-        svnEvent(event, ISVNEventListener.UNKNOWN);
+    public void handleEvent(SVNEvent event) {
+        handleEvent(event, ISVNEventHandler.UNKNOWN);
     }
 
-    public void svnEvent(SVNEvent event, double progress) {
+    public void handleEvent(SVNEvent event, double progress) {
         if (myDispatcher != null) {
             try {
-                myDispatcher.svnEvent(event, progress);
+                myDispatcher.handleEvent(event, progress);
             } catch (Throwable th) {
             }
         }
@@ -494,7 +494,7 @@ public class SVNWCAccess implements ISVNEventListener {
         }
     }
 
-    public ISVNEventListener getEventDispatcher() {
+    public ISVNEventHandler getEventDispatcher() {
         return myDispatcher;
     }
 }

@@ -21,15 +21,15 @@ public class SVNStatusClient extends SVNBasicClient {
     public SVNStatusClient() {
     }
 
-    public SVNStatusClient(ISVNEventListener eventDispatcher) {
+    public SVNStatusClient(ISVNEventHandler eventDispatcher) {
         super(eventDispatcher);
     }
 
-    public SVNStatusClient(ISVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNStatusClient(ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(options, eventDispatcher);
     }
 
-    public SVNStatusClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNStatusClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
 
@@ -71,7 +71,7 @@ public class SVNStatusClient extends SVNBasicClient {
         statusEditor.closeEdit();
         if (remote && statusEditor.getTargetRevision() >= 0) {
             SVNEvent event = SVNEventFactory.createStatusCompletedEvent(wcAccess, statusEditor.getTargetRevision());
-            svnEvent(event, ISVNEventListener.UNKNOWN);
+            handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         wcAccess.close(false);
         if (!isIgnoreExternals() && recursive) {
@@ -82,7 +82,7 @@ public class SVNStatusClient extends SVNBasicClient {
                 if (!externalFile.exists() || !externalFile.isDirectory() || !SVNWCUtil.isWorkingCopyRoot(externalFile, true)) {
                      continue;
                 }
-                svnEvent(SVNEventFactory.createStatusExternalEvent(wcAccess, externalPath), ISVNEventListener.UNKNOWN);
+                handleEvent(SVNEventFactory.createStatusExternalEvent(wcAccess, externalPath), ISVNEventHandler.UNKNOWN);
                 setEventPathPrefix(externalPath);
                 try {
                     doStatus(externalFile, recursive, remote, reportAll, includeIgnored, false, handler);

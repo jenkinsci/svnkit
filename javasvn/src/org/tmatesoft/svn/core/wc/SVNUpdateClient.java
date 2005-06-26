@@ -41,15 +41,15 @@ public class SVNUpdateClient extends SVNBasicClient {
     public SVNUpdateClient() {
     }
 
-    public SVNUpdateClient(ISVNEventListener eventDispatcher) {
+    public SVNUpdateClient(ISVNEventHandler eventDispatcher) {
         super(eventDispatcher);
     }
 
-    public SVNUpdateClient(ISVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNUpdateClient(ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(options, eventDispatcher);
     }
 
-    public SVNUpdateClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventListener eventDispatcher) {
+    public SVNUpdateClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
 
