@@ -98,7 +98,7 @@ what features are planned, but not yet implemented.
 <a id="normal" href="subclipse.html">For&nbsp;Subclipse&nbsp;(and&nbsp;svnant)&nbsp;Users</a><br/>
 <a id="normal" href="ant.html">Using&nbsp;JavaSVN&nbsp;with&nbsp;Ant</a><br/>
 <a id="normal" href="javadoc/index.html">JavaDoc</a><br/>
-<a id="normal" href="feed/rss_util.php?function=publish_examples&url=http://www.test1.ru">Example programs</a>
+<a id="normal" href="feed/rss_util.php?function=publish_examples&url=http://www.tmate.org/svn">Example programs</a>
 <h5>Issue Tracker</h5>
 Use the following link to view JavaSVN issues or submit a new one:
 <a id="normal" href="http://tmate.org/tracker/">JavaSVN Issue Tracker</a>.<br/> 

@@ -158,7 +158,7 @@ return $result;
 
 function publish_examples($url){
 	$docURL = "http://72.9.228.230:8080/svn/jsvn/branches/0.9.0/doc/examples/src/org/tmatesoft/svn/examples";
-	$examplesPath = array("http://test1.ru/doc/examples/src/org/tmatesoft/svn/examples/repository/","http://test1.ru/doc/examples/src/org/tmatesoft/svn/examples/wc/");//array($docURL."/repository/",$docURL."/wc/");
+	$examplesPath = array($docURL."/repository/",$docURL."/wc/");
 	$result = array();
 	for($k = 0; $k < count($examplesPath); $k++){
 		$result[$examplesPath[$k]] = collect_examples($examplesPath[$k]);
@@ -167,7 +167,7 @@ function publish_examples($url){
 		return $url;
 	}		
 	
-	$examplesListFrameFile = $_SERVER["DOCUMENT_ROOT"] . "/feed/ExamplesList.html";
+	$examplesListFrameFile = $_SERVER["DOCUMENT_ROOT"] . "/svn/feed/ExamplesList.html";
 
 	$fhandle = fopen($examplesListFrameFile, "w+");
 
@@ -189,10 +189,10 @@ function publish_examples($url){
 		}
 	
 		fwrite($fhandle, "<div style=\"color: black; margin: 4px; padding: 0.5em; font-size: 100%; line-height: 150%; width: 28em; background-color: white;\">");
-		fwrite($fhandle, "<br><span style=\"font-size: 110%; width: 25em;\"><!--p style=\"color: black; margin: 4px; padding: 0.5em; font-size: 110%; width: 25em; background-color: white;\"--><img src=\"/feed/folder.gif\" border=\"0\">".$exampleDirectory."</span>");
+		fwrite($fhandle, "<br><span style=\"font-size: 110%; width: 25em;\"><!--p style=\"color: black; margin: 4px; padding: 0.5em; font-size: 110%; width: 25em; background-color: white;\"--><img src=\"folder.gif\" border=\"0\">".$exampleDirectory."</span>");
 
 		for($l = 0; $l < count($result[$examplesPath[$k]][$examplesPath[$k]]); $l++){
-			fwrite($fhandle, "<br><span class=\"tree-icon\" style=\"font-size: 100%; width: 25em;\">&nbsp;&nbsp;&nbsp;...<a style=\"text-decoration: none;\" href=\"/feed/rss_util.php?function=display_file&fileURL=".$examplesPath[$k].$result[$examplesPath[$k]][$examplesPath[$k]][$l]."\" TARGET=\"ExamplesDisplay\"><img src=\"/feed/text.gif\" border=\"0\">".$result[$examplesPath[$k]][$examplesPath[$k]][$l]."</a></span>");
+			fwrite($fhandle, "<br><span class=\"tree-icon\" style=\"font-size: 100%; width: 25em;\">&nbsp;&nbsp;&nbsp;...<a style=\"text-decoration: none;\" href=\"rss_util.php?function=display_file&fileURL=".$examplesPath[$k].$result[$examplesPath[$k]][$examplesPath[$k]][$l]."\" TARGET=\"ExamplesDisplay\"><img src=\"text.gif\" border=\"0\">".$result[$examplesPath[$k]][$examplesPath[$k]][$l]."</a></span>");
 		}
 		fwrite($fhandle, "</div>");
 	}
@@ -200,15 +200,6 @@ function publish_examples($url){
 
 	fclose($fhandle);
 	
-/*
-	$examplesFramesFile = $_SERVER["DOCUMENT_ROOT"] . "/ExamplesFrames.html";
-	$fhandle = fopen($examplesFramesFile, "w+");
-	$file = $_SERVER["DOCUMENT_ROOT"] . "/tmp.txt";
-	$fhandle = fopen($file, "w+");
-	fwrite($fhandle, $doc_contents);
-	fclose($fhandle);
-*/
-
 	echo "<html><head><title>Example Programs :: Documentation :: Pure Java Subversion (SVN) Client Library</title><meta name=\"KEYWORDS\" content=\"Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development\"><meta name=\"DESCRIPTION\" content=\"Pure Java Subversion Library. Open Source, provided by TMate Software\"></head><frameset COLS=\"30%, *\" ><frame SRC=\"ExamplesList.html\" NAME=\"ExamplesList\" MARGINWIDTH=5><frame NAME=\"ExamplesDisplay\"></frameset>";
 
 }
@@ -226,7 +217,7 @@ function collect_examples($examplesPath) {
 	}
 	fclose($handle);
 
-	if (preg_match_all("|<A HREF=\"(.+\.java)\">|U", $contents, $matches, PREG_PATTERN_ORDER)) {
+	if (preg_match_all("|<a href=\"(.+\.java)\">|U", $contents, $matches, PREG_PATTERN_ORDER)) {
 		$entries = array();
 		$index=0;
 		for($i = 0; $i < count($matches[0]); $i++) {
