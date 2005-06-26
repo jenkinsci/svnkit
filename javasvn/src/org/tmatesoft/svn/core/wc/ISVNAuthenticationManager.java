@@ -1,5 +1,7 @@
 package org.tmatesoft.svn.core.wc;
 
+import java.util.Map;
+
 /**
  * Created by IntelliJ IDEA.
  * User: alex
@@ -42,4 +44,6 @@ public interface ISVNAuthenticationManager {
     public ISVNAuthenticationProvider getAuthenticationProvider();
 
     public void deleteAllAuthentications();
+    
+    public void setRuntimeAuthenticationCache(Map cache);
 }

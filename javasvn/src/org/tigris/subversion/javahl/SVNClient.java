@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.TreeSet;
 
@@ -70,7 +71,14 @@ public class SVNClient implements SVNClientInterface {
     private SVNDiffClient mySVNDiffClient;
     private SVNCopyClient mySVNCopyClient;
     private SVNLogClient mySVNLogClient;
+    
+    private static Map ourCredentialsCache = new Hashtable();
 
+    
+    public SVNClient() {
+       DebugLog.log("SVNClient created");
+    }
+    
     public void dispose() {
         SVNJSchSession.shutdown();
     }
@@ -179,9 +187,8 @@ public class SVNClient implements SVNClientInterface {
     public void setPrompt(PromptUserPassword prompt) {
         DebugLog.log("prompt set: " + prompt);
         myPrompt = prompt;
-        if(myOptions != null && myPrompt != null){
-            myOptions.setAuthenticationProvider(new PromptAuthenticationProvider(myPrompt));
-        }
+        getSVNOptions().setAuthenticationProvider(
+                myPrompt != null ? new PromptAuthenticationProvider(myPrompt) : null);
     }
 
     public LogMessage[] logMessages(String path, Revision revisionStart, Revision revisionEnd) throws ClientException {
@@ -897,6 +904,7 @@ public class SVNClient implements SVNClientInterface {
 
     public void setConfigDirectory(String configDir) throws ClientException {
         myConfigDir = configDir;
+        DebugLog.log("config directory set: " + configDir);
         myOptions = null;
         mySVNCommitClient = null;
         mySVNUpdateClient = null;
@@ -1008,6 +1016,7 @@ public class SVNClient implements SVNClientInterface {
             if(myPrompt != null){
                 myOptions.setAuthenticationProvider(new PromptAuthenticationProvider(myPrompt));
             }
+            myOptions.setRuntimeAuthenticationCache(ourCredentialsCache);
         }
         return myOptions;
     }

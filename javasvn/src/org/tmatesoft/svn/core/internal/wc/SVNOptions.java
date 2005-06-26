@@ -284,7 +284,7 @@ public class SVNOptions implements ISVNOptions {
 
     public SVNAuthentication[] getAvailableAuthentications(String kind, String realm) {
         List allAuths = new ArrayList();
-        if (myDefaultCredentials != null && PASSWORD.equals(kind)) {
+        if (myDefaultCredentials != null && (PASSWORD.equals(kind) || SSH.equals(kind))) {
             allAuths.add(0, myDefaultCredentials);
         }
         if (myCachedAuths.containsKey(kind)) {
@@ -295,7 +295,7 @@ public class SVNOptions implements ISVNOptions {
                     allAuths.add(cachedAuth);
                 }
             }
-        }
+        } 
         if (SSH.equals(kind) || USERNAME.equals(kind) || PASSWORD.equals(kind)) {
             SVNAuthentication auth = loadCredentials(kind, realm);
             if (auth != null) {
@@ -750,6 +750,10 @@ public class SVNOptions implements ISVNOptions {
             }
             return result;
         }
+    }
+
+    public void setRuntimeAuthenticationCache(Map cache) {
+        myCachedAuths = cache;
     }
 }
 

@@ -264,7 +264,7 @@ public class SVNWCAccess implements ISVNEventListener {
             }
         } catch (SVNException e) {
             close(lock);
-            SVNErrorManager.error(2, e);
+            throw e;
         }
     }
 
