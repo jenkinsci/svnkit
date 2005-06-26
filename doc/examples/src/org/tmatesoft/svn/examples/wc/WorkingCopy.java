@@ -12,23 +12,21 @@
 package org.tmatesoft.svn.examples.wc;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.FileNotFoundException;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.core.io.ISVNCredentialsProvider;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
-import org.tmatesoft.svn.core.io.SVNCommitInfo;
-import org.tmatesoft.svn.core.wc.SVNCopyClient;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.wc.SVNCopyClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusClient;
+import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.util.PathUtil;
 /*
  * This is a complex example program that demonstrates how you can manage local
@@ -287,11 +285,6 @@ public class WorkingCopy {
              */
             password = (args.length >= 5) ? args[4] : password;
         }
-        /*
-         * Creates a usre's credentials provider.
-         */
-        ISVNCredentialsProvider scp = new SVNSimpleCredentialsProvider(name,
-                password);
         
         /*
          * The following 'SVN*Client' objects come from org.tmatesoft.svn.core.io
@@ -465,7 +458,7 @@ public class WorkingCopy {
             error("error while recursively updating the working copy at '"
                     + wcDir.getAbsolutePath() + "'", svne);
         }
-        System.out.println();
+        System.out.println("Updated to revision " + updatedRevision + ".");
 
         System.out.println("Committing changes for '" + wcDir.getAbsolutePath() + "'...");
         try {
