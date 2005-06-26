@@ -364,9 +364,11 @@ public class SVNClient implements SVNClientInterface {
                 SVNRevision srcRevision = revision == null || revision.getKind() == Revision.Kind.unspecified ?
                         SVNRevision.HEAD : SVNConverterUtil.getSVNRevision(revision);
                 if(isURL(destPath)){
+                    // url->url copy
                     client.doCopy(srcPath, SVNRevision.UNDEFINED, srcRevision,
                             destPath, SVNRevision.UNDEFINED, false, null);
                 }else{
+                    // url->wc copy
                     client.doCopy(srcPath, SVNRevision.UNDEFINED, srcRevision,
                             new File(destPath), SVNRevision.UNDEFINED, SVNRevision.WORKING, false, null);
                 }
@@ -374,9 +376,11 @@ public class SVNClient implements SVNClientInterface {
                 SVNRevision srcRevision = revision == null || revision.getKind() == Revision.Kind.unspecified ?
                         SVNRevision.WORKING : SVNConverterUtil.getSVNRevision(revision);
                 if(isURL(destPath)){
+                    // wc->url copy
                     client.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED, srcRevision,
                             destPath, SVNRevision.UNDEFINED, false, null);
                 }else{
+                    // wc->wc copy 
                     client.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED, srcRevision,
                             new File(destPath), SVNRevision.UNDEFINED, SVNRevision.WORKING, false, false, null);
                 }
@@ -393,9 +397,11 @@ public class SVNClient implements SVNClientInterface {
                 SVNRevision srcRevision = revision == null || revision.getKind() == Revision.Kind.unspecified ?
                         SVNRevision.HEAD : SVNConverterUtil.getSVNRevision(revision);
                 if(isURL(destPath)){
+                    // url->url move.
                     updater.doCopy(srcPath, SVNRevision.UNDEFINED, srcRevision,
                             destPath, SVNRevision.UNDEFINED, true, message);
                 }else{
+                    // url->wc move (not supported).
                     updater.doCopy(srcPath, SVNRevision.UNDEFINED,
                             srcRevision,
                             new File(destPath).getAbsoluteFile(), SVNRevision.UNDEFINED,
@@ -403,14 +409,15 @@ public class SVNClient implements SVNClientInterface {
                             true, message);
                 }
             }else{
-                SVNRevision srcRevision = revision == null || revision.getKind() == Revision.Kind.unspecified ?
-                        SVNRevision.WORKING : SVNConverterUtil.getSVNRevision(revision);
+                SVNRevision srcRevision = SVNRevision.WORKING;
                 if(isURL(destPath)){
+                    // wc->url move(?), not supported
                     updater.doCopy(new File(srcPath).getAbsoluteFile(), SVNRevision.UNDEFINED,
                             srcRevision,
                             destPath, SVNRevision.UNDEFINED,
                             true, message);
                 }else{
+                    // working->working only
                     updater.doCopy(new File(srcPath), SVNRevision.UNDEFINED, srcRevision,
                             new File(destPath), SVNRevision.UNDEFINED, SVNRevision.WORKING, force, true, message);
                 }
