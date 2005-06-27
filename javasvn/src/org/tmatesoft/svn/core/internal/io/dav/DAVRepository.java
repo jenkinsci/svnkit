@@ -494,22 +494,19 @@ class DAVRepository extends SVNRepository {
         });
     }
 
-    
+    // always encoded.
     public String getFullPath(String path) {    	
         if (path != null && path.startsWith("/")) {
         	if ("/".equals(path)) {
-        		return getRepositoryRoot();
+        		return PathUtil.encode(getRepositoryRoot());
         	}
-            // assume it is full path in repository
-            // prepend root only.            
-            return PathUtil.append(getRepositoryRoot(), path);
+            return PathUtil.encode(PathUtil.append(getRepositoryRoot(), path));
         }
-        // it was a relative path relative to location path.
-        // decode??
+        String locationPath = getLocation().getPath();
         if ("".equals(path)) {
-            path = getLocation().getPath();
+            path = locationPath; // it is always encoded, while we assume not encoded?
         } else {
-            path = PathUtil.append(getLocation().getPath(), path);
+            path = PathUtil.append(locationPath, PathUtil.encode(path));
         }
         if (!path.startsWith("/")) {
             path = '/' + path;            
