@@ -68,6 +68,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     }
 
     public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException {
+
         Map propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);
         if (SVNWCUtil.isBinaryMimetype(newMimeType)) {
@@ -167,7 +168,6 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         }
         if (myCurrentRevision >= myStartRevision) {
             // compute lines info.
-            DebugLog.log("generating lines");
             RandomAccessFile left = null;
             RandomAccessFile right = null;
             try {
@@ -177,7 +177,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                 ArrayList newLines = new ArrayList();
                 int lastStart = 0;
 
-                final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right), null);
+                final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right), new byte[0]);
                 try {
                     List blocksList = result.getBlocks();
                     for(int i = 0; i < blocksList.size(); i++) {
