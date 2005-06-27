@@ -170,12 +170,12 @@ public class SVNWCClient extends SVNBasicClient {
     public void doGetFileContents(String url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
         url = validateURL(url);
         revision = revision == null || !revision.isValid() ? SVNRevision.HEAD : revision;
-        long revNumber = getRevisionNumber(url, revision);
-        url = getURL(url, pegRevision, SVNRevision.create(revNumber));
         // now get contents from URL.
         Map properties = new HashMap();
-        SVNRepository repos = createRepository(url);
-        SVNNodeKind nodeKind = repos.checkPath("", revNumber);
+        long[] revs = new long[1];
+        SVNRepository repos = createRepository(null, url, pegRevision, revision, revs);
+
+        SVNNodeKind nodeKind = repos.checkPath("", revs[0]);
         if (nodeKind == SVNNodeKind.DIR) {
             SVNErrorManager.error("svn: URL '" + url + " refers to a directory");
         }
@@ -188,7 +188,7 @@ public class SVNWCClient extends SVNBasicClient {
         File file2 = SVNFileUtil.createUniqueFile(new File("."), "svn-contents", ".tmp2");
         try {
             os = new FileOutputStream(file);
-            repos.getFile("", revNumber, properties, os);
+            repos.getFile("", revs[0], properties, os);
             os.close();
             os = null;
             if (expandKeywords) {
@@ -197,7 +197,7 @@ public class SVNWCClient extends SVNBasicClient {
                 String eol = (String) properties.get(SVNProperty.EOL_STYLE);
                 byte[] eolBytes = SVNTranslator.getWorkingEOL(eol);
                 Map keywordsMap = SVNTranslator.computeKeywords(keywords, url, (String) properties.get("svn:author"),
-                  (String) properties.get("svn:date"), Long.toString(revNumber));
+                  (String) properties.get("svn:date"), Long.toString(revs[0]));
                 SVNTranslator.translate(file, file2, eolBytes, keywordsMap, false, true);
             } else {
                 file2 = file;
@@ -210,6 +210,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
         } catch (IOException e) {
             //
+            e.printStackTrace();
         } finally {
             SVNFileUtil.closeFile(os);
             SVNFileUtil.closeFile(is);
