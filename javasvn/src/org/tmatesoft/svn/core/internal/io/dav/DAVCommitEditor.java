@@ -131,8 +131,8 @@ class DAVCommitEditor implements ISVNEditor {
 
         if (copyPath != null) {
             // convert to full path?
-	        copyPath = PathUtil.encode(copyPath);
             copyPath = myRepository.getFullPath(copyPath);
+            copyPath = PathUtil.encode(copyPath);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, copyPath, copyRevision, false, false, null);
             copyPath = PathUtil.append(info.baselineBase, info.baselinePath);
 
@@ -209,8 +209,8 @@ class DAVCommitEditor implements ISVNEditor {
         myFilesMap.put(originalPath, newFile);
 
         if (copyPath != null) {
-	        copyPath = PathUtil.encode(copyPath);
             copyPath = myRepository.getFullPath(copyPath);
+            copyPath = PathUtil.encode(copyPath);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, copyPath, copyRevision, false, false, null);
             copyPath = PathUtil.append(info.baselineBase, info.baselinePath);
 

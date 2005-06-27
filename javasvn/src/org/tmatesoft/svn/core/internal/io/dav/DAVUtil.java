@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.io.dav;
 
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.DebugLog;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -105,11 +106,10 @@ public class DAVUtil {
         if (baselineRelativePath == null) {
             baselineRelativePath = "";
         }
+        baselineRelativePath = PathUtil.encode(baselineRelativePath);
         baselineRelativePath = PathUtil.append(baselineRelativePath, loppedPath);
         baselineRelativePath = PathUtil.removeLeadingSlash(baselineRelativePath);
         baselineRelativePath = PathUtil.removeTrailingSlash(baselineRelativePath);
-        // is it encoded?
-//        baselineRelativePath = PathUtil.encode(baselineRelativePath);
 
         String label = null;
         if (revision < 0) {

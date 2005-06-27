@@ -95,6 +95,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             path = getFullPath(path);
+            path = PathUtil.encode(path);
             info = DAVUtil.getBaselineInfo(myConnection, path, revision, true, false, info);
             kind = info.isDirectory ? SVNNodeKind.DIR : SVNNodeKind.FILE;
         } catch (SVNException e) {
@@ -129,6 +130,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             path = getFullPath(path);
+            path = PathUtil.encode(path);
             if (revision != -2) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
                 path = PathUtil.append(info.baselineBase, info.baselinePath);
@@ -170,6 +172,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             path = getFullPath(path);
+            path = PathUtil.encode(path);
             if (revision != -2) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
                 path = PathUtil.append(info.baselineBase, info.baselinePath);
@@ -318,15 +321,20 @@ class DAVRepository extends SVNRepository {
             String root = getLocation().getPath();
             if (path.startsWith("/")) {
                 path = PathUtil.removeLeadingSlash(path);
-                root = getLocationPath();
+                root = PathUtil.decode(getLocationPath());
                 path = path.substring(root.length());
+
+                root = PathUtil.encode(root);
+                // path is decoded here, root is encoded
             }
+            DebugLog.log("get locations: " + path + ", root: " + root);
             StringBuffer request = DAVLocationsHandler.generateLocationsRequest(null, path, pegRevision, revisions);
             
             DAVLocationsHandler davHandler = new DAVLocationsHandler(handler);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, root, pegRevision, false, false, null);            
             
             path = PathUtil.append(info.baselineBase, info.baselinePath);
+            DebugLog.log("making report on: " + path);
             myConnection.doReport(path, request, davHandler);
             
             return davHandler.getEntriesCount();
@@ -476,12 +484,11 @@ class DAVRepository extends SVNRepository {
                 String path = (String) paths.next();
                 String lock = (String) locks.get(path);
 
-                
-                path = PathUtil.encode(path);
                 if (path.startsWith("/")) {
-                    path = PathUtil.append(root, path);
+                    path = PathUtil.append(root, PathUtil.encode(path));
                 } else {
                     path = getFullPath(path);
+                    path = PathUtil.encode(path);
                 }
                 translatedLocks.put(path, lock);
             }
@@ -494,22 +501,22 @@ class DAVRepository extends SVNRepository {
         });
     }
 
-    // always encoded.
-    public String getFullPath(String path) {    	
+    // always decoded!
+    public String getFullPath(String path) {
         if (path != null && path.startsWith("/")) {
         	if ("/".equals(path)) {
-        		return PathUtil.encode(getRepositoryRoot());
+        		return getRepositoryRoot();
         	}
-            return PathUtil.encode(PathUtil.append(getRepositoryRoot(), path));
+            return PathUtil.append(getRepositoryRoot(), path);
         }
-        String locationPath = getLocation().getPath();
+        String locationPath = PathUtil.decode(getLocation().getPath());
         if ("".equals(path)) {
             path = locationPath; // it is always encoded, while we assume not encoded?
         } else {
-            path = PathUtil.append(locationPath, PathUtil.encode(path));
+            path = PathUtil.append(locationPath, path);
         }
         if (!path.startsWith("/")) {
-            path = '/' + path;            
+            path = '/' + path;
         }
         return path;
     }
