@@ -12,20 +12,19 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
-import java.io.OutputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
-import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.util.Base64;
 import org.xml.sax.Attributes;
+
+import java.io.OutputStream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author TMate Software Ltd.
@@ -43,7 +42,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
         if (endRevision >= 0) {
         	buffer.append("<S:end-revision>"  + endRevision + "</S:end-revision>");
         }
-        buffer.append("<S:path>"  + DAVUtil.xmlEncode(PathUtil.decode(path)) + "</S:path>");
+        buffer.append("<S:path>"  + DAVUtil.xmlEncode(path) + "</S:path>");
         buffer.append("</S:file-revs-report>");
         return buffer;
 	}
