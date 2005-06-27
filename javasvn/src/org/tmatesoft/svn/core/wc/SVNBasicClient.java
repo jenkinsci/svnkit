@@ -378,11 +378,11 @@ public class SVNBasicClient implements ISVNEventHandler {
             }
         }
         if (startLocation == null) {
-            SVNErrorManager.error("svn: Unable to find repository location for '" + path != null ? path.toString() : url + "' in revision " + startRev);
+            SVNErrorManager.error("svn: Unable to find repository location for '" + (path != null ? path.toString() : url) + "' in revision " + startRev);
             return null;
         }
         if (endLocation == null) {
-            SVNErrorManager.error("svn: The location for '" + path != null ? path.toString() : url + "' for revision " + endRev  + " does not exist in repository" +
+            SVNErrorManager.error("svn: The location for '" + (path != null ? path.toString() : url) + "' for revision " + endRev  + " does not exist in repository" +
                 " or refers to an unrelated object");
             return null;
         }
