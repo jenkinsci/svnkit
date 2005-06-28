@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -37,7 +38,7 @@ public class PropsetCommand extends SVNCommand {
         final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
         boolean revProps = getCommandLine().hasArgument(SVNArgument.REV_PROP);
-        
+
         int pathIndex = 2;
         if (getCommandLine().hasArgument(SVNArgument.FILE)) {
             File file = new File((String) getCommandLine().getArgumentValue(SVNArgument.FILE));
@@ -71,14 +72,14 @@ public class PropsetCommand extends SVNCommand {
         }
 
         SVNWCClient wcClient = new SVNWCClient(getOptions(), null);
-        
+
         if (revProps) {
             SVNRevision revision = SVNRevision.UNDEFINED;
             if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
                 revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
             }
             if (getCommandLine().hasURLs()) {
-                wcClient.doSetRevisionProperty(getCommandLine().getURL(0), getCommandLine().getPegRevision(0), 
+                wcClient.doSetRevisionProperty(getCommandLine().getURL(0), getCommandLine().getPegRevision(0),
                         revision, propertyName, propertyValue, force, new ISVNPropertyHandler() {
                             public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                             }
@@ -86,7 +87,7 @@ public class PropsetCommand extends SVNCommand {
                                 out.println("Property '" + propertyName +"' set on repository revision " + url);
                             }
                 });
-                        
+
             } else {
                 File tgt = new File(".");
                 if (getCommandLine().getPathCount() > 2) {
@@ -100,18 +101,18 @@ public class PropsetCommand extends SVNCommand {
                             }
                 });
             }
-            
+
         } else {
             for (int i = pathIndex; i < getCommandLine().getPathCount(); i++) {
                 final String absolutePath = getCommandLine().getPathAt(i);
                 if (!recursive) {
                     wcClient.doSetProperty(new File(absolutePath), propertyName, propertyValue, force, recursive, new ISVNPropertyHandler() {
                         public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-                            out.println("Property '" + propertyName + "' set on '" + getPath(path) + "'");
+                            out.println("Property '" + propertyName + "' set on '" + SVNUtil.getPath(path) + "'");
                         }
                         public void handleProperty(String url, SVNPropertyData property) throws SVNException {
                         }
-                        
+
                     });
                 } else {
                     final boolean wasSet[] = new boolean[] {false};
@@ -120,7 +121,7 @@ public class PropsetCommand extends SVNCommand {
                            wasSet[0] = true;
                         }
                         public void handleProperty(String url, SVNPropertyData property) throws SVNException {
-                        }                        
+                        }
                     });
                     if (wasSet[0]) {
                         out.println("Property '" + propertyName + "' set (recursively) on '" + absolutePath + "'");

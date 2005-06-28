@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -42,7 +43,7 @@ public class PropdelCommand extends SVNCommand {
                 revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
             }
             if (getCommandLine().hasURLs()) {
-                wcClient.doSetRevisionProperty(getCommandLine().getURL(0), getCommandLine().getPegRevision(0), 
+                wcClient.doSetRevisionProperty(getCommandLine().getURL(0), getCommandLine().getPegRevision(0),
                         revision, propertyName, null, force, new ISVNPropertyHandler() {
                             public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                             }
@@ -50,7 +51,7 @@ public class PropdelCommand extends SVNCommand {
                                 out.println("Property '" + propertyName +"' deleted on repository revision " + url);
                             }
                 });
-                        
+
             } else {
                 File tgt = new File(".");
                 if (getCommandLine().getPathCount() > 1) {
@@ -70,11 +71,11 @@ public class PropdelCommand extends SVNCommand {
                 if (!recursive) {
                     wcClient.doSetProperty(new File(absolutePath), propertyName, null, force, recursive, new ISVNPropertyHandler() {
                         public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-                            out.println("Property '" + propertyName + "' deleted on '" + getPath(path) + "'");
+                            out.println("Property '" + propertyName + "' deleted on '" + SVNUtil.getPath(path) + "'");
                         }
                         public void handleProperty(String url, SVNPropertyData property) throws SVNException {
                         }
-                        
+
                     });
                 } else {
                     final boolean wasSet[] = new boolean[] {false};
@@ -83,13 +84,13 @@ public class PropdelCommand extends SVNCommand {
                            wasSet[0] = true;
                         }
                         public void handleProperty(String url, SVNPropertyData property) throws SVNException {
-                        }                        
+                        }
                     });
                     if (wasSet[0]) {
                         out.println("Property '" + propertyName + "' deleted (recursively) on '" + absolutePath + "'");
                     }
                 }
-                
+
             }
         }
     }

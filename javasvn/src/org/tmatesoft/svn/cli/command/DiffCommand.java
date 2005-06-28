@@ -25,34 +25,35 @@ import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
  */
 public class DiffCommand extends SVNCommand {
 
-	public void run(final PrintStream out, PrintStream err) throws SVNException {
+    public void run(final PrintStream out, PrintStream err) throws SVNException {
         boolean error = false;
         SVNDiffClient differ = new SVNDiffClient(getOptions(), null);
-        differ.setDiffGenerator(new DefaultSVNDiffGenerator() {            
+        differ.setDiffGenerator(new DefaultSVNDiffGenerator() {
             public String getDisplayPath(File file) {
-                return getPath(file).replace(File.separatorChar, '/');
+                return SVNUtil.getPath(file).replace(File.separatorChar, '/');
             }
             public void displayFileDiff(String path, File file1, File file2,
-                    String rev1, String rev2, String mimeType1, String mimeType2,
-                    OutputStream result) throws SVNException {
+                                        String rev1, String rev2, String mimeType1, String mimeType2,
+                                        OutputStream result) throws SVNException {
                 super.displayFileDiff(path, file1, file2, rev1, rev2, mimeType1, mimeType2, result);
             }
             public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException {
                 super.displayPropDiff(path.replace('/', File.separatorChar), baseProps, diff, result);
             }
         });
-        
+
         boolean useAncestry = getCommandLine().hasArgument(SVNArgument.USE_ANCESTRY);
         boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
         differ.getDiffGenerator().setDiffDeleted(!getCommandLine().hasArgument(SVNArgument.NO_DIFF_DELETED));
         differ.getDiffGenerator().setForcedBinaryDiff(getCommandLine().hasArgument(SVNArgument.FORCE));
-        
+
         if (getCommandLine().getURLCount() == 2 && !getCommandLine().hasPaths()) {
             // diff url1[@r] url2[@r]
             String url1 = getCommandLine().getURL(0);
@@ -65,7 +66,7 @@ public class DiffCommand extends SVNCommand {
             if (peg2 == SVNRevision.UNDEFINED) {
                 peg2 = SVNRevision.HEAD;
             }
-            
+
             differ.doDiff(url1, peg1, url2, peg2, peg1, peg2, recursive, useAncestry, out);
         } else {
             SVNRevision rN = SVNRevision.UNDEFINED;
@@ -158,5 +159,5 @@ public class DiffCommand extends SVNCommand {
         if (error) {
             System.exit(1);
         }
-	}
+    }
 }

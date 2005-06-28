@@ -15,7 +15,6 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.TreeSet;
 
-import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -50,6 +49,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author evgeny
@@ -73,15 +73,15 @@ public class SVNClient implements SVNClientInterface {
     private SVNDiffClient mySVNDiffClient;
     private SVNCopyClient mySVNCopyClient;
     private SVNLogClient mySVNLogClient;
-    
+
     private static Map ourCredentialsCache = new Hashtable();
 
-    
+
     public SVNClient() {
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
     }
-    
+
     public String getLastPath() {
         return null;
     }
@@ -97,7 +97,7 @@ public class SVNClient implements SVNClientInterface {
     public Status[] status(final String path, boolean descend, boolean onServer, boolean getAll, boolean noIgnore, boolean ignoreExternals) throws ClientException {
         if (path == null) {
             return null;
-        }        
+        }
         final Collection statuses = new ArrayList();
         SVNStatusClient stClient = getSVNStatusClient();
         try {
@@ -115,7 +115,7 @@ public class SVNClient implements SVNClientInterface {
     public DirEntry[] list(String url, Revision revision, boolean recurse) throws ClientException {
         return list(url, revision, null, recurse);
     }
-    
+
     public DirEntry[] list(String url, Revision revision, Revision pegRevision, boolean recurse) throws ClientException {
         final TreeSet allEntries = new TreeSet(new Comparator() {
             public int compare(Object o1, Object o2) {
@@ -125,7 +125,7 @@ public class SVNClient implements SVNClientInterface {
                     return d2 == null || d2.getPath() == null ? 0 : -1;
                 } else if (d2 == null || d2.getPath() == null) {
                     return 1;
-                }                
+                }
                 return d1.getPath().toLowerCase().compareTo(d2.getPath().toLowerCase());
             }
         });
@@ -158,7 +158,7 @@ public class SVNClient implements SVNClientInterface {
             return null;
         }
         DebugLog.log("IO fetching 'single' status for: " + path);
-        
+
         SVNStatusClient client = getSVNStatusClient();
         SVNStatus status = null;
         try {
@@ -543,13 +543,13 @@ public class SVNClient implements SVNClientInterface {
 
     public void diff(String target1, Revision revision1, String target2, Revision revision2, String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
         SVNDiffClient differ = getSVNDiffClient();
-        differ.setDiffGenerator(new DefaultSVNDiffGenerator() {            
+        differ.setDiffGenerator(new DefaultSVNDiffGenerator() {
             public String getDisplayPath(File file) {
-                return SVNCommand.getPath(file).replace(File.separatorChar, '/');
+                return SVNUtil.getPath(file).replace(File.separatorChar, '/');
             }
             public void displayFileDiff(String path, File file1, File file2,
-                    String rev1, String rev2, String mimeType1, String mimeType2,
-                    OutputStream result) throws SVNException {
+                                        String rev1, String rev2, String mimeType1, String mimeType2,
+                                        OutputStream result) throws SVNException {
                 super.displayFileDiff(path, file1, file2, rev1, rev2, mimeType1, mimeType2, result);
             }
             public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException {
@@ -585,13 +585,13 @@ public class SVNClient implements SVNClientInterface {
 
     public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String outFileName, boolean recurse, boolean ignoreAncestry, boolean noDiffDeleted, boolean force) throws ClientException {
         SVNDiffClient differ = getSVNDiffClient();
-        differ.setDiffGenerator(new DefaultSVNDiffGenerator() {            
+        differ.setDiffGenerator(new DefaultSVNDiffGenerator() {
             public String getDisplayPath(File file) {
-                return SVNCommand.getPath(file).replace(File.separatorChar, '/');
+                return SVNUtil.getPath(file).replace(File.separatorChar, '/');
             }
             public void displayFileDiff(String path, File file1, File file2,
-                    String rev1, String rev2, String mimeType1, String mimeType2,
-                    OutputStream result) throws SVNException {
+                                        String rev1, String rev2, String mimeType1, String mimeType2,
+                                        OutputStream result) throws SVNException {
                 super.displayFileDiff(path, file1, file2, rev1, rev2, mimeType1, mimeType2, result);
             }
             public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException {
@@ -788,7 +788,7 @@ public class SVNClient implements SVNClientInterface {
     public PropertyData propertyGet(String path, String name, Revision revision) throws ClientException {
         return propertyGet(path, name, revision, null);
     }
-    
+
     public PropertyData propertyGet(String path, String name, Revision revision, Revision pegRevision) throws ClientException {
         if(name == null || name.equals("")){
             return null;
@@ -849,7 +849,7 @@ public class SVNClient implements SVNClientInterface {
             public void handleLine(Date date, long revision, String author, String line) {
                 StringBuffer result = new StringBuffer();
                 result.append(Long.toString(revision));
-                result.append(author != null ? SVNCommand.formatString(author, 10, false) : "         -");
+                result.append(author != null ? SVNUtil.formatString(author, 10, false) : "         -");
                 result.append(' ');
                 result.append(line);
                 try {
@@ -991,7 +991,7 @@ public class SVNClient implements SVNClientInterface {
 
     public Info2[] info2(String pathOrUrl, Revision revision, Revision pegRevision, boolean recurse) throws ClientException {
         SVNWCClient client = getSVNWCClient();
-        final Collection infos = new ArrayList(); 
+        final Collection infos = new ArrayList();
         ISVNInfoHandler handler = new ISVNInfoHandler(){
             public void handleInfo(SVNInfo info) {
                 infos.add(SVNConverterUtil.createInfo2(info));
@@ -1033,26 +1033,26 @@ public class SVNClient implements SVNClientInterface {
         }
         return myOptions;
     }
-    
+
     protected Notify getNotify() {
         return myNotify;
     }
-    
+
     protected Notify2 getNotify2() {
         return myNotify2;
     }
-    
+
     protected ISVNEventHandler getEventListener(){
         if(mySVNEventListener == null){
             mySVNEventListener = new ISVNEventHandler(){
-                
+
                 public void handleEvent(SVNEvent event, double progress) {
                     String path = event.getFile() == null ? event.getPath() : event.getFile().getAbsolutePath();
                     if(myNotify != null){
                         myNotify.onNotify(
                                 path,
                                 SVNConverterUtil.getNotifyActionValue(event.getAction()),
-                                SVNConverterUtil.getNodeKind(event.getNodeKind()), 
+                                SVNConverterUtil.getNodeKind(event.getNodeKind()),
                                 event.getMimeType(),
                                 SVNConverterUtil.getStatusValue(event.getContentsStatus()),
                                 SVNConverterUtil.getStatusValue(event.getPropertiesStatus()),
@@ -1082,53 +1082,53 @@ public class SVNClient implements SVNClientInterface {
         }
         return mySVNCommitClient;
     }
-    
+
     protected SVNUpdateClient getSVNUpdateClient(){
         if(mySVNUpdateClient == null){
             mySVNUpdateClient = new SVNUpdateClient(getSVNOptions(), getEventListener());
         }
         return mySVNUpdateClient;
     }
-    
+
     protected SVNStatusClient getSVNStatusClient(){
         if(mySVNStatusClient == null){
             mySVNStatusClient = new SVNStatusClient(getSVNOptions(), getEventListener());
         }
         return mySVNStatusClient;
     }
-    
+
     protected SVNWCClient getSVNWCClient(){
         if(mySVNWCClient == null){
             mySVNWCClient = new SVNWCClient(getSVNOptions(), getEventListener());
         }
         return mySVNWCClient;
     }
-    
+
     protected SVNDiffClient getSVNDiffClient(){
         if(mySVNDiffClient == null){
             mySVNDiffClient = new SVNDiffClient(getSVNOptions(), getEventListener());
         }
         return mySVNDiffClient;
     }
-    
+
     protected SVNCopyClient getSVNCopyClient(){
         if(mySVNCopyClient == null){
             mySVNCopyClient = new SVNCopyClient(getSVNOptions(), getEventListener());
         }
         return mySVNCopyClient;
     }
-    
+
     protected SVNLogClient getSVNLogClient(){
         if(mySVNLogClient == null){
             mySVNLogClient = new SVNLogClient(getSVNOptions(), getEventListener());
         }
         return mySVNLogClient;
     }
-    
+
     protected CommitMessage getCommitMessage() {
         return myMessageHandler;
     }
-    
+
     protected static void throwException(SVNException e) throws ClientException {
         ClientException ec = new ClientException(e.getMessage(), "", 0);
         DebugLog.error(ec);
@@ -1140,16 +1140,16 @@ public class SVNClient implements SVNClientInterface {
         }
         throw ec;
     }
-    
+
     protected static boolean isURL(String path){
-        return PathUtil.isURL(path); 
+        return PathUtil.isURL(path);
     }
 
     protected static NotifyInformation createNotifyInformation(SVNEvent event, String path) {
         NotifyInformation info = new NotifyInformation(
                 path,
                 SVNConverterUtil.getNotifyActionValue(event.getAction()),
-                SVNConverterUtil.getNodeKind(event.getNodeKind()), 
+                SVNConverterUtil.getNodeKind(event.getNodeKind()),
                 event.getMimeType(),
                 SVNConverterUtil.createLock(event.getLock()),
                 event.getErrorMessage(),

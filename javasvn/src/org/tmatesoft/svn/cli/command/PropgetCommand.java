@@ -22,12 +22,13 @@ import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
  */
 public class PropgetCommand extends SVNCommand implements ISVNPropertyHandler {
-    
+
     private boolean myIsStrict;
     private boolean myIsRecursive;
     private PrintStream myOut;
@@ -39,9 +40,9 @@ public class PropgetCommand extends SVNCommand implements ISVNPropertyHandler {
         myIsStrict = getCommandLine().hasArgument(SVNArgument.STRICT);
         myOut = out;
         myIsRecursive = myIsRecursive & !revProp;
-        SVNRevision revision = SVNRevision.UNDEFINED; 
+        SVNRevision revision = SVNRevision.UNDEFINED;
         if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
-            revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION)); 
+            revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         }
         SVNWCClient wcClient = new SVNWCClient(getOptions(), null);
         if (getCommandLine().hasURLs()) {
@@ -53,7 +54,7 @@ public class PropgetCommand extends SVNCommand implements ISVNPropertyHandler {
                 wcClient.doGetProperty(url, propertyName, pegRevision, revision, myIsRecursive, this);
             }
         } else if (getCommandLine().getPathCount() > 1) {
-            String path = getCommandLine().getPathAt(1);            
+            String path = getCommandLine().getPathAt(1);
             SVNRevision pegRevision = getCommandLine().getPathPegRevision(1);
             if (revProp) {
                 wcClient.doGetRevisionProperty(new File(path), propertyName, pegRevision, revision, this);
@@ -65,7 +66,7 @@ public class PropgetCommand extends SVNCommand implements ISVNPropertyHandler {
 
     public void handleProperty(File path, SVNPropertyData property) throws SVNException {
         if (!myIsStrict && myIsRecursive) {
-            myOut.print(getPath(path) + " - ");
+            myOut.print(SVNUtil.getPath(path) + " - ");
         }
         myOut.print(property.getValue());
         if (!myIsStrict) {

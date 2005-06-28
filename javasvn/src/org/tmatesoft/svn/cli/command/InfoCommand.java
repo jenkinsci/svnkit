@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -49,7 +50,7 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
         }
         SVNWCClient wcClient = new SVNWCClient(getOptions(), null);
         myOut = out;
-        
+
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             myBaseFile = new File(getCommandLine().getPathAt(i));
             wcClient.doInfo(myBaseFile, revision, recursive, this);
@@ -69,14 +70,14 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
 
     public void handleInfo(SVNInfo info) {
         if (!info.isRemote()) {
-            print("Path: " + getPath(info.getFile()), myOut);
+            print("Path: " + SVNUtil.getPath(info.getFile()), myOut);
         } else if (info.getPath() != null) {
             String path = info.getPath();
             path = PathUtil.removeLeadingSlash(path);
             path = PathUtil.removeTrailingSlash(path);
             if (myBaseFile != null) {
                 File file = new File(myBaseFile, path);
-                path = getPath(file);
+                path = SVNUtil.getPath(file);
             } else {
                 path = path.replace('/', File.separatorChar);
             }
@@ -87,7 +88,7 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
                 print("Name: " + PathUtil.tail(info.getPath()), myOut);
             } else {
                 print("Name: " + info.getFile().getName(), myOut);
-            }            
+            }
         }
         print("URL: " + info.getURL(), myOut);
         if (info.getRepositoryRootURL() != null) {
@@ -100,13 +101,13 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
             print("Revision: " + info.getRevision(), myOut);
         }
         if (info.getKind() == SVNNodeKind.DIR) {
-        	print("Node Kind: directory", myOut);
+            print("Node Kind: directory", myOut);
         } else if (info.getKind() == SVNNodeKind.FILE) {
-        	print("Node Kind: file", myOut);
+            print("Node Kind: file", myOut);
         } else if (info.getKind() == SVNNodeKind.NONE) {
-        	print("Node Kind: none", myOut);
+            print("Node Kind: none", myOut);
         } else {
-        	print("Node Kind: unknown", myOut);
+            print("Node Kind: unknown", myOut);
         }
         if (info.getSchedule() == null && !info.isRemote()) {
             print("Schedule: normal", myOut);
@@ -117,17 +118,17 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
             print("Last Changed Author: " + info.getAuthor(), myOut);
         }
         if (info.getCommittedRevision() != null && info.getCommittedRevision().getNumber() >= 0) {
-            print("Last Changed Rev: " + info.getCommittedRevision(), myOut);            
+            print("Last Changed Rev: " + info.getCommittedRevision(), myOut);
         }
         if (info.getCommittedDate() != null) {
             print("Last Changed Date: " + formatDate(info.getCommittedDate()), myOut);
         }
         if (!info.isRemote()) {
             if (info.getTextTime() != null) {
-                print("Text Last Updated: " + formatDate(info.getTextTime()), myOut);                
+                print("Text Last Updated: " + formatDate(info.getTextTime()), myOut);
             }
             if (info.getPropTime() != null) {
-                print("Properties Last Updated: " + formatDate(info.getPropTime()), myOut);                
+                print("Properties Last Updated: " + formatDate(info.getPropTime()), myOut);
             }
             if (info.getChecksum() != null) {
                 print("Checksum: " + info.getChecksum(), myOut);
@@ -167,7 +168,7 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
         }
         println(myOut);
     }
-    
+
     private static String formatDate(Date date) {
         return DATE_FORMAT.format(date);
     }

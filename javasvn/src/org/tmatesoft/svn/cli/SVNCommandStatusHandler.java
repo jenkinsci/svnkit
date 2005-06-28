@@ -5,6 +5,7 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNUtil;
 
 import java.io.PrintStream;
 
@@ -46,7 +47,7 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
             result.append(status.isSwitched() ? 'S' : ' ');
             result.append(status.getLocalLock() != null ? 'K' : ' ');
             result.append(" ");
-            result.append(SVNCommand.getPath(status.getFile()));
+            result.append(SVNUtil.getPath(status.getFile()));
         } else {
             String wcRevision;
             char remoteStatus;
@@ -112,7 +113,7 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
                 result.append(" ");
                 result.append(formatString(commitAuthor, 12, true)); // 12 chars
                 result.append(" ");
-                result.append(SVNCommand.getPath(status.getFile()));
+                result.append(SVNUtil.getPath(status.getFile()));
             }  else {
                 result.append(getStatusChar(status.getContentsStatus()));
                 result.append(getStatusChar(status.getPropertiesStatus()));
@@ -125,7 +126,7 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
                 result.append("    ");
                 result.append(formatString(wcRevision, 6, false)); // 6 chars
                 result.append("    ");
-                result.append(SVNCommand.getPath(status.getFile()));
+                result.append(SVNUtil.getPath(status.getFile()));
             }
         }
         DebugLog.log(result.toString());

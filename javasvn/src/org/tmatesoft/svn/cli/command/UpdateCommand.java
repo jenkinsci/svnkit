@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -41,13 +42,13 @@ public class UpdateCommand extends SVNCommand {
             }
             SVNUpdateClient updater = new SVNUpdateClient(getOptions(),
                     new SVNCommandEventProcessor(out, err, false));
-            
+
             File file = new File(path).getAbsoluteFile();
             if (!file.exists()) {
                 File parent = file.getParentFile();
                 if (!parent.exists() || !SVNWCAccess.isVersionedDirectory(parent)) {
                     if (!getCommandLine().hasArgument(SVNArgument.QUIET)) {
-                        println(out, "Skipped '" +  getPath(file).replace('/', File.separatorChar) + "'");
+                        println(out, "Skipped '" +  SVNUtil.getPath(file).replace('/', File.separatorChar) + "'");
                     }
                     return;
                 }
@@ -61,7 +62,7 @@ public class UpdateCommand extends SVNCommand {
                 println(err);
                 error = true;
             }
-        }    
+        }
         if (error) {
             System.exit(1);
         }
