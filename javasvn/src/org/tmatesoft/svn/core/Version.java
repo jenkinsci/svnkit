@@ -46,12 +46,13 @@ public class Version {
                 is = url.openStream();
                 properties.load(is);
             } catch (IOException e) {
-
+                //
             } finally {
                 SVNFileUtil.closeFile(is);
             }
             allProperties.putAll(properties);
         }
+
         IS_STABLE = Boolean.valueOf(allProperties.getProperty("javasvn.version.stable", "false")).booleanValue();
         REVISION = Long.parseLong(allProperties.getProperty("javasvn.version.revision", "0"));
 

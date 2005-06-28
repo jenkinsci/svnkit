@@ -3,6 +3,8 @@
  */
 package org.tmatesoft.svn.util;
 
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -36,7 +38,8 @@ public class Version {
 		try {
 			return Integer.parseInt(ourProperties.getProperty(VERSION_MAJOR_PROPERTY, VERSION_MAJOR_DEFAULT));
 		} catch (NumberFormatException nfe) {
-		}
+            //
+        }
 		return 0;
 	}
 	
@@ -45,7 +48,8 @@ public class Version {
 		try {
 			return Integer.parseInt(ourProperties.getProperty(VERSION_MINOR_PROPERTY, VERSION_MINOR_DEFAULT));
 		} catch (NumberFormatException nfe) {
-		}
+            //
+        }
 		return 0;
 	}
 
@@ -54,7 +58,8 @@ public class Version {
 		try {
 			return Integer.parseInt(ourProperties.getProperty(VERSION_MICRO_PROPERTY, VERSION_MICRO_DEFAULT));
 		} catch (NumberFormatException nfe) {
-		}
+            //
+        }
 		return 0;
 	}
 	
@@ -70,11 +75,9 @@ public class Version {
 		try {
 			ourProperties.load(is);
 		} catch (IOException e) {
-		} finally {
-			try {
-				is.close();
-			} catch (IOException e1) {
-			}
+            //
+        } finally {
+            SVNFileUtil.closeFile(is);
 		}
 		
 	}}

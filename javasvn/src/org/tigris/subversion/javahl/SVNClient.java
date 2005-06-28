@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
+import org.tmatesoft.svn.util.Version;
 
 /**
  * @author evgeny
@@ -76,6 +77,9 @@ public class SVNClient implements SVNClientInterface {
 
     private static Map ourCredentialsCache = new Hashtable();
 
+    public static final class LogLevel implements SVNClientLogLevel {
+
+    }
 
     public SVNClient() {
         DAVRepositoryFactory.setup();
@@ -1017,6 +1021,26 @@ public class SVNClient implements SVNClientInterface {
 
     public String getVersionInfo(String path, String trailUrl, boolean lastChanged) throws ClientException {
         return getSVNWCClient().doGetWorkingCopyID(new File(path).getAbsoluteFile(), trailUrl, lastChanged);
+    }
+
+    public static void enableLogging(int logLevel, String logFilePath) {
+
+    }
+
+    public static String version() {
+        return Version.getVersionString();
+    }
+
+    public static int versionMajor() {
+        return Version.getMajorVersion();
+    }
+
+    public static int versionMinor() {
+        return Version.getMinorVersion();
+    }
+
+    public static int versionMicro() {
+        return Version.getMicroVersion();
     }
 
     protected ISVNOptions getSVNOptions(){
