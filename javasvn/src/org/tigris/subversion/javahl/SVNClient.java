@@ -739,11 +739,11 @@ public class SVNClient implements SVNClientInterface {
         SVNRevision svnPegRevision = SVNConverterUtil.getSVNRevision(null);
         final Collection properties = new ArrayList();
         ISVNPropertyHandler propHandler = new ISVNPropertyHandler(){
-            public void handleProperty(File fpath, SVNPropertyData property) throws SVNException {
+            public void handleProperty(File fpath, SVNPropertyData property) {
                 properties.add(new PropertyData(SVNClient.this, fpath.getAbsolutePath(),
                         property.getName(), property.getValue(), property.getValue().getBytes()));
             }
-            public void handleProperty(String url, SVNPropertyData property) throws SVNException {
+            public void handleProperty(String url, SVNPropertyData property) {
                 properties.add(new PropertyData(SVNClient.this, url,
                         property.getName(), property.getValue(), property.getValue().getBytes()));
             }
@@ -1146,7 +1146,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     protected static NotifyInformation createNotifyInformation(SVNEvent event, String path) {
-        NotifyInformation info = new NotifyInformation(
+        return new NotifyInformation(
                 path,
                 SVNConverterUtil.getNotifyActionValue(event.getAction()),
                 SVNConverterUtil.getNodeKind(event.getNodeKind()),
@@ -1158,6 +1158,5 @@ public class SVNClient implements SVNClientInterface {
                 SVNConverterUtil.getLockStatusValue(event.getLockStatus()),
                 event.getRevision()
                 );
-        return info;
     }
 }
