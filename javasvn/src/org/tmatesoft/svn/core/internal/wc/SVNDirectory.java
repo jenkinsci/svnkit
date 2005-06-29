@@ -972,14 +972,16 @@ public class SVNDirectory {
     
     private void updateEntryProperty(String propertyName, String value, boolean recursive) throws SVNException {
         SVNEntries entries = getEntries();
-        for (Iterator ents = entries.entries(true); ents.hasNext();) {
+        for (Iterator ents = entries.entries(false); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
             if ("".equals(entry.getName())) {
                 continue;
             }
             if (entry.isDirectory() && recursive) {
-                SVNDirectory childDir = getChildDirectory(entry.getName());                    
-                childDir.updateEntryProperty(propertyName, value, recursive);
+                SVNDirectory childDir = getChildDirectory(entry.getName());
+                if (childDir != null) {
+                    childDir.updateEntryProperty(propertyName, value, recursive);
+                }
             } 
             entries.setPropertyValue(entry.getName(), propertyName, value);
             if (SVNProperty.SCHEDULE_DELETE.equals(value)) {
