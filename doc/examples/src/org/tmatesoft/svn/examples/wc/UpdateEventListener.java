@@ -42,13 +42,19 @@ public class UpdateEventListener implements ISVNEventHandler {
         String actionType = " ";
         String pathChangeType = " ";
         if (action == SVNEventAction.UPDATE_ADD) {
+            /*
+             * the item was added
+             */
             actionType = "A";
         } else if (action == SVNEventAction.UPDATE_DELETE) {
+            /*
+             * the item was deleted
+             */
             actionType = "D";
         } else if (action == SVNEventAction.UPDATE_UPDATE) {
-            actionType = "U";
             /*
-             * Find out in details what state the file is.
+             * Find out in details what state the item is (after having
+             * been updated).
              */
             /*
              * Gets the status of a file, directory or symbolic link and/or file
@@ -56,7 +62,13 @@ public class UpdateEventListener implements ISVNEventHandler {
              * state of an item.
              */
             SVNStatusType contentsStatus = event.getContentsStatus();
-            if (contentsStatus == SVNStatusType.CONFLICTED) {
+            if (contentsStatus == SVNStatusType.CHANGED) {
+                /*
+                 * the local item was updated - got the changes
+                 * from the repository
+                 */
+                pathChangeType = "U";
+            }else if (contentsStatus == SVNStatusType.CONFLICTED) {
                 /*
                  * The file item is in a state of Conflict. That is, changes
                  * received from the server during an update overlap with local
@@ -116,6 +128,7 @@ public class UpdateEventListener implements ISVNEventHandler {
          */
         String lockLabel = " ";
         SVNStatusType lockType = event.getLockStatus();
+        
         if (lockType == SVNStatusType.LOCK_UNLOCKED) {
             /*
              * The lock is broken by someone.
@@ -132,7 +145,9 @@ public class UpdateEventListener implements ISVNEventHandler {
     }
 
     /*
-     * Should be implemented to react on a user's cancel of the operation. 
+     * Should be implemented to react on a user's cancel of the operation.
+     * If the operation was cancelled this method should throw an 
+     * SVNCancelException. 
      */
     public void checkCancelled() throws SVNCancelException {
     }

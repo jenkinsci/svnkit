@@ -21,12 +21,14 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.PathUtil;
 /*
  * This is a complex example program that demonstrates how you can manage local
@@ -48,9 +50,9 @@ import org.tmatesoft.svn.util.PathUtil;
  * 1)if the program was run with some in parameters it fetches them out of the args 
  * parameter;
  * 
- * 2)next a user's credentials provider is created - almost all methods require
- * an ISVNCredentialsProvider to authenticate the user when it becomes necessary
- * during an access to a repository server;
+ * 2)next a user's authentication manager is created - almost all methods require
+ * an ISVNOptions (a subinterface of ISVNAuthenticationManager) to authenticate 
+ * the user when it becomes necessary during an access to a repository server;
  * 
  * 3)the first operation - making an empty directory in a repository; String url is 
  * to be a directory that will be created (it should consist of the URL of an existing
@@ -287,34 +289,46 @@ public class WorkingCopy {
         }
         
         /*
+         * Creates a usre's authentication manager.
+         * User's authentication is generally required in
+         * write-operations when the repository contents are changed.
+         * readonly=true - not to save to a config file any configuration 
+         * changes that can be done during the program run 
+         */
+        ISVNOptions myOptions = SVNWCUtil.createDefaultOptions(true);
+        myOptions.setDefaultAuthentication(name, password);
+
+        /*
          * The following 'SVN*Client' objects come from org.tmatesoft.svn.core.io
          * package and are only a part of that client's high-level API indended for 
          * managing working copies.    
          */
         
         /*
-         * passing credentials provider when creating an instance of
+         * passing options when creating an instance of
          * SVNCommitClient
          */
-        myCommitClient = new SVNCommitClient(null, new CommitEventListener());
+        myCommitClient = new SVNCommitClient(myOptions, new CommitEventListener());
         /*
-         * passing credentials provider when creating an instance of
+         * passing options when creating an instance of
          * SVNCopyClient
          */
-        myCopyClient = new SVNCopyClient(null);
+        myCopyClient = new SVNCopyClient(myOptions, null);
         /*
-         * passing credentials provider when creating an instance of
+         * passing options when creating an instance of
          * SVNWCClient
          */
-        myWCClient = new SVNWCClient(null);
+        myWCClient = new SVNWCClient();
         /*
-         * passing credentials provider when creating an instance of
-         * SVNStatusClient
+         * not passing options when creating an instance of
+         * SVNStatusClient - all status commands will be invoked on localp 
+         * aths, there's no need in authentication
          */
         myStatusClient = new SVNStatusClient(null);
         /*
-         * passing credentials provider when creating an instance of
-         * SVNUpdateClient
+         * not passing options when creating an instance of
+         * SVNUpdateClient - assuming that the repository server is configured
+         * to allow reading operations for non-authenticated users
          */
         myUpdateClient = new SVNUpdateClient(new UpdateEventListener());
 
@@ -428,14 +442,14 @@ public class WorkingCopy {
         boolean isRemote = false;
         boolean isReportAll = false;
         boolean isIncludeIgnored = true;
-        boolean isCollectParentExternals = true;
+        boolean isCollectParentExternals = false;
         System.out.println("Status for '" + wcDir.getAbsolutePath() + "':");
         try {
             /*
              * status will be recursive on wcDir, won't cover the repository 
              * (only local status), won't cover unmodified entries, will disregard
-             * svn:ignore property ignores (if any), won't ignore externals definitions
-             * (if any as well)
+             * svn:ignore property ignores (if any), will ignore externals definitions
+             * (anyway this program doesn't deal with externals;))
              */
             showStatus(wcDir, isRecursive, isRemote, isReportAll,
                     isIncludeIgnored, isCollectParentExternals);

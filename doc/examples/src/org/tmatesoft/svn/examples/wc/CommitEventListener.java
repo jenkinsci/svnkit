@@ -66,7 +66,9 @@ public class CommitEventListener implements ISVNEventHandler {
     }
     
     /*
-     * Should be implemented to react on a user's cancel of the operation. 
+     * Should be implemented to react on a user's cancel of the operation.
+     * If the operation was cancelled this method should throw an 
+     * SVNCancelException. 
      */
     public void checkCancelled() throws SVNCancelException {
     }

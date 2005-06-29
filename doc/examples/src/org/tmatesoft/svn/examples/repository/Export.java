@@ -30,6 +30,8 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNSimpleCredentialsProvider;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.PathUtil;
 
 import java.io.ByteArrayInputStream;
@@ -162,17 +164,17 @@ public class Export {
         }
 
         /*
-         * Creates a usre's credentials provider.
+         * Creates a usre's authentication manager.
          */
-        ISVNCredentialsProvider scp = new SVNSimpleCredentialsProvider(name,
-                password);
+        ISVNOptions myOptions = SVNWCUtil.createDefaultOptions(true);
+        myOptions.setDefaultAuthentication(name, password);
 
         /*
-         * Sets the provider of the user's credentials that will be used to
-         * authenticate the user to the server (if needed) during operations
-         * handled by the SVNRepository.
+         * Sets the manager of the user's authentication credentials that will 
+         * be used to authenticate the user to the server (if needed) during 
+         * operations handled by the SVNRepository.
          */
-        repository.setCredentialsProvider(scp);
+        repository.setAuthenticationManager(myOptions);
 
         SVNNodeKind nodeKind = null;
         try {
