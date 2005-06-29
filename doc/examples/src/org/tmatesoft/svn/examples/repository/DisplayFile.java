@@ -129,12 +129,15 @@ public class DisplayFile {
 
         /*
          * Creates a usre's authentication manager.
+         * readonly=true - should be always true when providing options to 
+         * SVNRepository since this low-level class is not intended to work
+         * with working copy config files 
          */
         ISVNOptions myOptions = SVNWCUtil.createDefaultOptions(true);
         myOptions.setDefaultAuthentication(name, password);
 
         /*
-         * Sets the manager of the user's authentication credentials that will 
+         * Sets the manager of the user's authentication information that will 
          * be used to authenticate the user to the server (if needed) during 
          * operations handled by the SVNRepository.
          */

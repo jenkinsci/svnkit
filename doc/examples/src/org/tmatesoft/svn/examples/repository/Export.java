@@ -60,9 +60,9 @@ import java.util.Map;
  * 1)an SVNRepository is created to the location (represented by an
  * SVNRepositoryLocation) that will be the root of the repository tree to be exported;
  * 
- * 2)user's credentials are usually non-necessary for reading operations however the
+ * 2)user's authentication is usually non-necessary for reading operations however the
  * repository may have a restriction to accept requests of only authenticated users;
- * the example shows how to provide user's credentials;
+ * the example shows how to provide user's authentication info;
  * 
  * 3)INTRO: you have to implement ISVNReporterBaton and ISVNEditor to affect the 
  * behaviour of the SVNRepository.update method (for ISVNReporterBaton an 
@@ -165,12 +165,15 @@ public class Export {
 
         /*
          * Creates a usre's authentication manager.
+         * readonly=true - should be always true when providing options to 
+         * SVNRepository since this low-level class is not intended to work
+         * with working copy config files
          */
         ISVNOptions myOptions = SVNWCUtil.createDefaultOptions(true);
         myOptions.setDefaultAuthentication(name, password);
 
         /*
-         * Sets the manager of the user's authentication credentials that will 
+         * Sets the manager of the user's authentication information that will 
          * be used to authenticate the user to the server (if needed) during 
          * operations handled by the SVNRepository.
          */

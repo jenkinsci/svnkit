@@ -183,7 +183,7 @@ import org.tmatesoft.svn.util.PathUtil;
 	Committed to revision 221
 	
 	Switching 'N:\MyWorkingCopy' to 'svn://localhost/rep/MyReposCopy'...
-	U B       newDir/newFile.txt
+	  B       newDir/newFile.txt
 	At revision 221
 	
 	-----------------INFO-----------------

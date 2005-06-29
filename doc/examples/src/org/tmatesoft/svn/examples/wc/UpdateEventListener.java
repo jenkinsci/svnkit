@@ -39,18 +39,17 @@ public class UpdateEventListener implements ISVNEventHandler {
          * SVNEvent.getAction() and  SVNEventAction.UPDATE_-like constants. 
          */
         SVNEventAction action = event.getAction();
-        String actionType = " ";
         String pathChangeType = " ";
         if (action == SVNEventAction.UPDATE_ADD) {
             /*
              * the item was added
              */
-            actionType = "A";
+            pathChangeType = "A";
         } else if (action == SVNEventAction.UPDATE_DELETE) {
             /*
              * the item was deleted
              */
-            actionType = "D";
+            pathChangeType = "D";
         } else if (action == SVNEventAction.UPDATE_UPDATE) {
             /*
              * Find out in details what state the item is (after having
@@ -136,8 +135,7 @@ public class UpdateEventListener implements ISVNEventHandler {
             lockLabel = "B";
         }
 
-        System.out.println((!pathChangeType.equals(" ") ? pathChangeType
-                : actionType)
+        System.out.println(pathChangeType
                 + propertiesChangeType
                 + lockLabel
                 + "       "

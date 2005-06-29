@@ -47,7 +47,7 @@ import java.util.Map;
  * SVNRepositoryLocation) that will be the root for committing - that is all
  * paths that are being committed will be below that root;
  * 
- * 2)provide user's credentials (committing generally requires authentication);
+ * 2)provide user's authentication (committing generally requires authentication);
  * 
  * 3)"ask" your SVNRepository for a commit editor (use an
  * SVNRepository.getCommitEditor method);
@@ -210,12 +210,15 @@ public class Commit {
 
         /*
          * Creates a usre's authentication manager.
+         * readonly=true - should be always true when providing options to 
+         * SVNRepository since this low-level class is not intended to work
+         * with working copy config files 
          */
         ISVNOptions myOptions = SVNWCUtil.createDefaultOptions(true);
         myOptions.setDefaultAuthentication(name, password);
 
         /*
-         * Sets the manager of the user's authentication credentials that will 
+         * Sets the manager of the user's authentication information that will 
          * be used to authenticate the user to the server (if needed) during 
          * operations handled by the SVNRepository.
          */
