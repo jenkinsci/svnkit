@@ -384,6 +384,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         Map modifiedProps = myCurrentFile.getChangedProperties();
         String name = myCurrentFile.Name;
         String commitTime = myCurrentFile.CommitTime;
+        boolean lockRemoved = myCurrentFile.getChangedEntryProperties().containsKey(SVNProperty.LOCK_TOKEN);
 
         Map command = new HashMap();
         
@@ -506,8 +507,9 @@ public class SVNUpdateEditor implements ISVNEditor {
         log.save();
         myCurrentFile.myDiffWindows = null;
         completeDirectory(myCurrentDirectory);
+
         // notify.
-        if (!myCurrentFile.IsAdded && textStatus == SVNStatusType.UNCHANGED && propStatus == SVNStatusType.UNCHANGED) {
+        if (!myCurrentFile.IsAdded && textStatus == SVNStatusType.UNCHANGED && propStatus == SVNStatusType.UNCHANGED && !lockRemoved) {
             // no changes, probably just wcurl switch.
             myCurrentFile = null;
             return;
