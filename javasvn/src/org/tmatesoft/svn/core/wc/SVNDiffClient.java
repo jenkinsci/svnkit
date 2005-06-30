@@ -195,8 +195,14 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(String url1, SVNRevision pegRevision1, String url2, SVNRevision pegRevision2, SVNRevision rN, SVNRevision rM,
             boolean recursive, final boolean useAncestry, final OutputStream result) throws SVNException {
         DebugLog.log("diff: -r" + rN + ":" + rM  + " " + url1 + "@" + pegRevision1 + "  " + url2 + "@" + pegRevision2);
-        rN = rN == null || rN == SVNRevision.UNDEFINED ? pegRevision1 : rN;
-        rM = rM == null || rM == SVNRevision.UNDEFINED ? pegRevision2 : rM;
+        if (rN == null || !rN.isValid()) {
+            rN = pegRevision1;
+        }
+        if (rM == null || !rM.isValid()) {
+            rM = pegRevision2;
+        }
+        rN = rN == null || !rN.isValid() ? SVNRevision.HEAD : rN;
+        rM = rM == null || !rM.isValid() ? SVNRevision.HEAD : rM;
         if (rN != SVNRevision.HEAD && rN.getNumber() < 0 && rN.getDate() == null) {
             SVNErrorManager.error("svn: invalid revision: '" + rN + "'");
         }
