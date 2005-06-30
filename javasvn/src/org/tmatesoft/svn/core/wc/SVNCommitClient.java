@@ -305,14 +305,15 @@ public class SVNCommitClient extends SVNBasicClient {
     }
 
     public SVNCommitInfo doCommit(SVNCommitPacket commitPacket, boolean keepLocks, String commitMessage) throws SVNException {
+        if (commitPacket == null || commitPacket == SVNCommitPacket.EMPTY) {
+            return SVNCommitInfo.NULL;
+        }
+
         Collection tmpFiles = null;
         SVNCommitInfo info = null;
         ISVNEditor commitEditor = null;
 
         try {
-            if (commitPacket == null || commitPacket == SVNCommitPacket.EMPTY) {
-                return SVNCommitInfo.NULL;
-            }
             DebugLog.log("commit packet: " + commitPacket);
             commitMessage = getCommitHandler().getCommitMessage(commitMessage, commitPacket.getCommitItems());
             if (commitMessage == null) {
@@ -413,6 +414,9 @@ public class SVNCommitClient extends SVNBasicClient {
     }
 
     public SVNCommitPacket doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, boolean recursive) throws SVNException {
+        if (paths == null || paths.length == 0) {
+            return SVNCommitPacket.EMPTY;
+        }
         Set targets = new TreeSet();
         SVNWCAccess wcAccess = SVNCommitUtil.createCommitWCAccess(paths, recursive, force, targets);
         try {
