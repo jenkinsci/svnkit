@@ -9,7 +9,6 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-
 package org.tmatesoft.svn.core.io;
 
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
@@ -96,7 +95,6 @@ import java.util.Map;
  * @see			SVNRepositoryFactory
  * @see 		org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory
  */
-
 public abstract class SVNRepository {
         
     private OutputStream myLoggingOutput;

@@ -315,8 +315,8 @@ public class WorkingCopy {
          */
         myCopyClient = new SVNCopyClient(myOptions, null);
         /*
-         * passing options when creating an instance of
-         * SVNWCClient
+         * not passing options when creating an instance of
+         * SVNWCClient - all the operations will be local 
          */
         myWCClient = new SVNWCClient();
         /*
