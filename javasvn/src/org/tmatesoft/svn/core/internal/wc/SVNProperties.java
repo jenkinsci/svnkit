@@ -299,12 +299,13 @@ public class SVNProperties {
     public void delete() {
         myFile.delete();
     }
-    
+
+    /** @noinspection ResultOfMethodCallIgnored*/
     private static void copyProperties(InputStream is, OutputStream os, String name, InputStream value, int length) {
         // read names, till name is met, then insert value or skip this property.
         try {
             if (is != null) {
-                int l = 0x0;
+                int l = 0;
                 while((l = readLength(is, 'K')) > 0) {
                     byte[] nameBytes = new byte[l];
                     is.read(nameBytes);
@@ -331,7 +332,8 @@ public class SVNProperties {
             e.printStackTrace();
         }
     }
-    
+
+    /** @noinspection ResultOfMethodCallIgnored*/
     private static boolean readProperty(char type, InputStream is, OutputStream os) throws IOException {
         int length = readLength(is, type);
         if (length < 0) {

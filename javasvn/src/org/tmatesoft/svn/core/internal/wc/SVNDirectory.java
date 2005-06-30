@@ -984,6 +984,26 @@ public class SVNDirectory {
         entries.save(false);
     }
 
+    public void updateURL(String rootURL, boolean recursive) throws SVNException {
+        SVNEntries entries = getEntries();
+        for (Iterator ents = entries.entries(false); ents.hasNext();) {
+            SVNEntry entry = (SVNEntry) ents.next();
+            if ("".equals(entry.getName()) && entry.isDirectory() && recursive) {
+                SVNDirectory childDir = getChildDirectory(entry.getName());
+                if (childDir != null) {
+                    String childURL = PathUtil.append(rootURL, PathUtil.encode(entry.getName()));
+                    childDir.updateURL(childURL, recursive);
+                }
+                continue;
+            } 
+            entries.setPropertyValue(entry.getName(), SVNProperty.URL, 
+                    "".equals(entry.getName()) ? 
+                            rootURL : 
+                            PathUtil.append(rootURL, PathUtil.encode(entry.getName())));
+        }
+        entries.save(false);
+    }
+
     private void deleteWorkingFiles(String name) throws SVNException {
         File file = getFile(name, false);
         if (file.isFile()) {

@@ -573,7 +573,7 @@ public class SVNCopyClient extends SVNBasicClient {
         dir.getEntries().save(true);
     }
 
-    private void updateCopiedDirectory(SVNDirectory dir, String name, String newURL, String copyFromURL, long copyFromRevision) throws SVNException {
+    static void updateCopiedDirectory(SVNDirectory dir, String name, String newURL, String copyFromURL, long copyFromRevision) throws SVNException {
         SVNEntries entries = dir.getEntries();
         SVNEntry entry = entries.getEntry(name, true);
         if (entry != null) {
