@@ -271,6 +271,10 @@ public class SVNCommitUtil {
                 if (force) {
                     recurse = true;
                 }
+            } else if (entry != null && entry.isScheduledForDeletion() && entry.isDirectory()) {
+                if (force) {
+                    recurse = true;
+                }
             }
             DebugLog.log("collecting commitables for " + targetFile);
             harvestCommitables(commitables, dir, targetFile, null, entry, url, null, false, false, justLocked, lockTokens, recurse);
