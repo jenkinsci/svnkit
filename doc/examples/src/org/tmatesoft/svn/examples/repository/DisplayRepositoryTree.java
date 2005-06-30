@@ -36,8 +36,8 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * java.util.Collection. As an example here's one of the program layouts (for
  * the default url used in the program ):
  * 
- * Repository Root: /svn/jsvn Repository UUID:
- * 0a862816-5deb-0310-9199-c792c6ae6c6e
+ * Repository Root: /svn/jsvn 
+ * Repository UUID: 0a862816-5deb-0310-9199-c792c6ae6c6e
  * 
  * /rss2.php (author:alex; revision:345) 
  * /build.html (author:alex; revision:406)

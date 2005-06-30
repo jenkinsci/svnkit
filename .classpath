@@ -9,7 +9,7 @@
 	<classpathentry excluding="**/SVNClient.java|org/tigris/subversion/javahl/tests/" output="contrib/javahl/bin" kind="src" path="contrib/javahl/src"/>
 	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src"/>
 	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src-test"/>
-	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="javasvn/bin"/>
 </classpath>
