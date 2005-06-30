@@ -530,7 +530,7 @@ public class SVNFileUtil {
                 }
             } else if (fileType == SVNFileType.DIRECTORY) {
                 copyDirectory(file, dst, copyAdminDir);
-                if (file.isHidden()) {
+                if (file.isHidden() || ".svn".equals(file.getName())) {
                     setHidden(dst, true);
                 }
             } else if (fileType == SVNFileType.SYMLINK) {
