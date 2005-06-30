@@ -12,13 +12,6 @@
 
 package org.tmatesoft.svn.cli;
 
-import org.tmatesoft.svn.core.internal.wc.SVNOptions;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -26,6 +19,12 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
+
+import org.tmatesoft.svn.core.internal.wc.SVNOptions;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.

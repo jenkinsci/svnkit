@@ -305,7 +305,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         }
         File baseTmpFile = dir.getBaseFile(myCurrentFile.Name, true);
         try {
-            SVNFileUtil.copy(baseFile, baseTmpFile, false);
+            SVNFileUtil.copyFile(baseFile, baseTmpFile, false);
             if (!baseTmpFile.exists()) {
                 baseTmpFile.createNewFile();
             }
@@ -358,11 +358,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         }
-        try {
-            SVNFileUtil.rename(targetFile, baseTmpFile);
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
-        }
+        SVNFileUtil.rename(targetFile, baseTmpFile);
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {

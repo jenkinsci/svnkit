@@ -146,12 +146,8 @@ public class SVNLog {
             SVNFileUtil.closeFile(os);
             myCache = null;
         }
-        try {
-            SVNFileUtil.rename(myTmpFile, myFile);
-            SVNFileUtil.setReadonly(myFile, true);
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
-        }
+        SVNFileUtil.rename(myTmpFile, myFile);
+        SVNFileUtil.setReadonly(myFile, true);
     }
 
     public void run(SVNLogRunner runner) throws SVNException {
@@ -199,12 +195,7 @@ public class SVNLog {
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                }
-            }
+            SVNFileUtil.closeFile(reader);
         }
         SVNException error = null;
         try {

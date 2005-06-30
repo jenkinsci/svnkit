@@ -78,19 +78,11 @@ public class SVNLogRunner {
             file.delete();
         } else if (SVNLog.READONLY.equals(name)) {
             File file = new File(dir.getRoot(), fileName);
-            try {
-                SVNFileUtil.setReadonly(file, true);
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            SVNFileUtil.setReadonly(file, true);
         } else if (SVNLog.MOVE.equals(name)) {
             File src = new File(dir.getRoot(), fileName);
             File dst = new File(dir.getRoot(), (String) attributes.get(SVNLog.DEST_ATTR));
-            try {
-                SVNFileUtil.rename(src, dst);
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            SVNFileUtil.rename(src, dst);
         } else if (SVNLog.APPEND.equals(name)) {
             File src = new File(dir.getRoot(), fileName);
             File dst = new File(dir.getRoot(), (String) attributes.get(SVNLog.DEST_ATTR));
@@ -120,11 +112,7 @@ public class SVNLogRunner {
             SVNEntries entries = dir.getEntries();
             if (entries.getEntry(fileName, true) != null &&
                     entries.getEntry(fileName, true).getLockToken() == null) {
-                try {
-                    SVNFileUtil.setReadonly(new File(dir.getRoot(), fileName), true);
-                } catch (IOException e) {
-                    SVNErrorManager.error(0, e);
-                }
+                SVNFileUtil.setReadonly(new File(dir.getRoot(), fileName), true);
             }
         } else if (SVNLog.COPY_AND_TRANSLATE.equals(name)) {
             String dstName = (String) attributes.get(SVNLog.DEST_ATTR);
@@ -139,11 +127,7 @@ public class SVNLogRunner {
             }
             SVNEntry entry = dir.getEntries().getEntry(dstName, true);
             if (entry.getLockToken() == null && props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
-                try {
-                    SVNFileUtil.setReadonly(dst, true);
-                } catch (IOException e) {
-                    SVNErrorManager.error(0, e);
-                }
+                SVNFileUtil.setReadonly(dst, true);
             }
         } else if (SVNLog.COPY_AND_DETRANSLATE.equals(name)) {
             String dstName = (String) attributes.get(SVNLog.DEST_ATTR);
@@ -168,11 +152,7 @@ public class SVNLogRunner {
                 SVNFileUtil.setExecutable(target, true);
             }
             if (props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null && entry.getLockToken() == null) {
-                try {
-                    SVNFileUtil.setReadonly(target, true);
-                } catch (IOException e) {
-                    SVNErrorManager.error(0, e);
-                }
+                SVNFileUtil.setReadonly(target, true);
             }
             setEntriesChanged(mergeResult == SVNStatusType.CONFLICTED);
         } else if (SVNLog.COMMIT.equals(name)) {
@@ -271,8 +251,6 @@ public class SVNLogRunner {
                 try {
                     SVNFileUtil.rename(tmpProps.getFile(), baseProps.getFile());
                     SVNFileUtil.setReadonly(baseProps.getFile(), true);
-                } catch (IOException e) {
-                    SVNErrorManager.error(0, e);
                 } finally {
                     tmpProps.delete();
                 }
@@ -294,42 +272,26 @@ public class SVNLogRunner {
                             SVNTranslator.translate(dir, fileName, fileName, SVNFileUtil.getBasePath(tmpFile2), true, false);
                         }
                         if (!SVNFileUtil.compareFiles(tmpFile2, wcFile, null)) {
-                            try {
-                                SVNFileUtil.copy(tmpFile2, wcFile, true);
-                                overwritten = true;
-                            } catch (IOException e) {
-                                SVNErrorManager.error(0, e);
-                            }
+                            SVNFileUtil.copyFile(tmpFile2, wcFile, true);
+                            overwritten = true;
                         }
                     }
                     boolean needsReadonly = dir.getProperties(fileName, false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null && entry.getLockToken() == null;
                     boolean needsExecutable = dir.getProperties(fileName, false).getPropertyValue(SVNProperty.EXECUTABLE) != null;
                     if (needsReadonly) {
-                        try {
-                            SVNFileUtil.setReadonly(wcFile, true);
-                            overwritten = true;
-                        } catch (IOException e) {
-                            SVNErrorManager.error(0, e);
-                        }
+                        SVNFileUtil.setReadonly(wcFile, true);
+                        overwritten = true;
                     }
                     if (needsExecutable) {
                         SVNFileUtil.setExecutable(wcFile, true);
                         overwritten = true;
                     }
                     if (fileType == SVNFileType.FILE) {
-                        try {
-                            SVNFileUtil.rename(tmpFile, baseFile);
-                        } catch (IOException e) {
-                            SVNErrorManager.error(0, e);
-                        }
+                        SVNFileUtil.rename(tmpFile, baseFile);
                     }
                     if (setReadWrite) {
-                        try {
-                            SVNFileUtil.setReadonly(wcFile, false);
-                            overwritten = true;
-                        } catch (IOException e) {
-                            SVNErrorManager.error(0, e);
-                        }
+                        SVNFileUtil.setReadonly(wcFile, false);
+                        overwritten = true;
                     }
                     if (setNotExecutable) {
                         SVNFileUtil.setExecutable(wcFile, false);

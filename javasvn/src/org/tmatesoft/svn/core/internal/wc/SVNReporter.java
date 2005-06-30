@@ -13,7 +13,6 @@ import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Date;
 import java.util.Iterator;
 
@@ -190,11 +189,7 @@ public class SVNReporter implements ISVNReporterBaton {
             SVNFileUtil.setExecutable(dst, true);
         }
         if (needsLock) {
-            try {
-                SVNFileUtil.setReadonly(dst, entry.getLockToken() == null);
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            SVNFileUtil.setReadonly(dst, entry.getLockToken() == null);
         }
         long tstamp = dst.lastModified();
         if (myWCAccess.getOptions().isUseCommitTimes() && !special) {

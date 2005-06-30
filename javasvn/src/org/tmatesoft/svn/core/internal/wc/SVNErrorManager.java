@@ -17,4 +17,9 @@ public class SVNErrorManager {
         throw new SVNException(message == null ? "" : message);
     }
 
+    public static void error(Throwable reason) throws SVNException {
+        DebugLog.error(reason);
+        throw new SVNException("svn: " + reason.getMessage());
+    }
+
 }

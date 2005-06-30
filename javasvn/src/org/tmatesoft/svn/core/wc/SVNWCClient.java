@@ -645,11 +645,7 @@ public class SVNWCClient extends SVNBasicClient {
                 entry.setLockOwner(lock.getOwner());
                 entry.setLockCreationDate(TimeUtil.formatDate(lock.getCreationDate()));
                 if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
-                    try {
-                        SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName(), false), false);
-                    } catch (IOException e) {
-                        //
-                    }
+                    SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName(), false), false);
                 }
                 wcAccess.getAnchor().getEntries().save(true);
                 wcAccess.getAnchor().getEntries().close();
@@ -734,11 +730,7 @@ public class SVNWCClient extends SVNBasicClient {
                 wcAccess.getAnchor().getEntries().save(true);
                 wcAccess.getAnchor().getEntries().close();
                 if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
-                    try {
-                        SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName(), false), true);
-                    } catch (IOException e) {
-                        //
-                    }
+                    SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName(), false), true);
                 }
                 handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCKED, lock, null),
                         ISVNEventHandler.UNKNOWN);
@@ -1181,11 +1173,7 @@ public class SVNWCClient extends SVNBasicClient {
                     entry.setTextTime(null);
                     entries.save(false);
                 } else if (SVNProperty.NEEDS_LOCK.equals(propName) && propValue == null) {
-                    try {
-                        SVNFileUtil.setReadonly(wcFile, false);
-                    } catch (IOException e) {
-                        //
-                    }
+                    SVNFileUtil.setReadonly(wcFile, false);
                 }
                 if (handler != null) {
                     handler.handleProperty(anchor.getFile(name, false), new SVNPropertyData(propName, propValue));

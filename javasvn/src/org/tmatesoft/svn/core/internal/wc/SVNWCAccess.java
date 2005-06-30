@@ -151,6 +151,10 @@ public class SVNWCAccess implements ISVNEventHandler {
         return myTarget;
     }
 
+    public SVNEntry getTargetEntry() throws SVNException {
+        return getAnchor().getEntries().getEntry(getTargetName(), false);
+    }
+
     public String getTargetEntryProperty(String propertyName) throws SVNException {
         SVNEntries anchorEntries = getAnchor().getEntries();
         SVNEntries targetEntries = getTarget().getEntries();

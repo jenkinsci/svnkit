@@ -446,11 +446,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (external.getFile().exists()) {
             external.getFile().getParentFile().mkdirs();
             File newLocation = SVNFileUtil.createUniqueFile(external.getFile().getParentFile(), external.getFile().getName(), ".OLD");
-            try {
-                SVNFileUtil.rename(external.getFile(), newLocation);
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            SVNFileUtil.rename(external.getFile(), newLocation);
         }
     }
 

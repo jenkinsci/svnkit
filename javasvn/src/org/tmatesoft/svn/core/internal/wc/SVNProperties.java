@@ -190,6 +190,7 @@ public class SVNProperties {
             try {
                 return new String(bytes, "UTF-8");
             } catch (IOException e) {
+                //
             }
             return new String(bytes);
         }
@@ -246,22 +247,13 @@ public class SVNProperties {
             }
             dst = SVNFileUtil.openFileForWriting(tmpFile);
             copyProperties(src, dst, name, is, length);
-        } catch(IOException e) {
-            SVNErrorManager.error(0, e);
         } finally {
             SVNFileUtil.closeFile(src);
             SVNFileUtil.closeFile(dst);
         }
-        try {
-            if (tmpFile != null) {
-                SVNFileUtil.rename(tmpFile, myFile);
-                SVNFileUtil.setReadonly(myFile, true);
-            }            
-        } catch (IOException e) {
-            if (tmpFile != null) {
-                tmpFile.delete();
-            }
-            SVNErrorManager.error(0, e);
+        if (tmpFile != null) {
+            SVNFileUtil.rename(tmpFile, myFile);
+            SVNFileUtil.setReadonly(myFile, true);
         }
     }
     
@@ -300,11 +292,7 @@ public class SVNProperties {
             destination.setPropertyValue("tmp", null);
             // this will leave "end\n";
         } else {
-            try {
-                SVNFileUtil.copy(getFile(), destination.getFile(), true);
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            SVNFileUtil.copyFile(getFile(), destination.getFile(), true);
         }
     }
     
@@ -312,11 +300,11 @@ public class SVNProperties {
         myFile.delete();
     }
     
-    private static void copyProperties(InputStream is, OutputStream os, String name, InputStream value, int length) throws IOException {
+    private static void copyProperties(InputStream is, OutputStream os, String name, InputStream value, int length) {
         // read names, till name is met, then insert value or skip this property.
         try {
             if (is != null) {
-                int l = 0;
+                int l = 0x0;
                 while((l = readLength(is, 'K')) > 0) {
                     byte[] nameBytes = new byte[l];
                     is.read(nameBytes);
@@ -325,14 +313,14 @@ public class SVNProperties {
                         // skip property, will be appended. 
                         readProperty('V', is, null);
                         continue;
-                    } 
+                    }
                     // save name
                     writeProperty(os, 'K', nameBytes);
                     l = readLength(is, 'V');
                     writeProperty(os, 'V', is, l);
                     is.read();
                 }
-            } 
+            }
             if (value != null && length >= 0) {
                 byte[] nameBytes = name.getBytes("UTF-8");
                 writeProperty(os, 'K', nameBytes);
@@ -416,9 +404,6 @@ public class SVNProperties {
         if (!getFile().exists() || !getFile().isFile())  {
             return true;
         }
-        if (getFile().length() <= 4) {
-            return true;
-        }
-        return false;
+        return getFile().length() <= 4;
     }
 }

@@ -219,18 +219,6 @@ public class SVNCopyClient extends SVNBasicClient {
         return url2urlCopy(srcURL, srcRevNumber, dstURL, commitMessage, move);
     }
 
-    // for dirs:
-    // if move, and src is missing, and dst looks like copied from src (url matches) -> copy dst back to src.
-    // if move -> schedule src for deletion.
-    // schedules 'dst path' for addition with history.
-
-    // for files:
-    // if move, and src is missing, and dst looks like copied from src  -> just shcedule src for deletion.
-    // schedules 'dst path' for addition with history.
-    public void doVirtualCopy(File srcPath, File dstPath, boolean move) throws SVNException {
-
-    }
-
     private SVNCommitInfo wc2urlCopy(File srcPath, String dstURL, String commitMessage) throws SVNException {
         dstURL = validateURL(dstURL);
         SVNRepository repos = createRepository(dstURL);
@@ -700,17 +688,13 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNErrorManager.error("svn: Cannot copy or move '" + srcPath + "': it's not in repository yet; try committing first");
         }
         SVNFileType srcType = SVNFileType.getType(srcPath);
-        try {
-            if (srcType == SVNFileType.SYMLINK) {
-                String name = SVNFileUtil.getSymlinkName(srcPath);
-                if (name != null) {
-                    SVNFileUtil.createSymlink(dstPath, name);
-                }
-            } else {
-                SVNFileUtil.copy(srcPath, dstPath, false);
+        if (srcType == SVNFileType.SYMLINK) {
+            String name = SVNFileUtil.getSymlinkName(srcPath);
+            if (name != null) {
+                SVNFileUtil.createSymlink(dstPath, name);
             }
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+        } else {
+            SVNFileUtil.copyFile(srcPath, dstPath, false);
         }
         // copy props, props base and text-base
         File srcTextBase = srcAccess.getAnchor().getBaseFile(srcAccess.getTargetName(), false);
@@ -723,11 +707,7 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNProperties dstProps = dstAccess.getAnchor().getProperties(dstName, false);
         SVNProperties dstBaseProps = srcAccess.getAnchor().getBaseProperties(dstName, false);
         if (srcTextBase.exists()) {
-            try {
-                SVNFileUtil.copy(srcTextBase, dstTextBase, false);
-            } catch (IOException e) {
-                //
-            }
+            SVNFileUtil.copyFile(srcTextBase, dstTextBase, false);
         }
         if (srcProps.getFile().exists()) {
             srcProps.copyTo(dstProps);
@@ -755,8 +735,8 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNEntry srcEntry = dstAccess.getTarget().getEntries().getEntry("", false);
         if (srcEntry == null) {
             SVNErrorManager.error("svn: '" + srcAccess.getTarget().getRoot() + "' is not under version control");
-        } else if (srcEntry.isScheduledForDeletion() || srcEntry.getURL() == null || srcEntry.isCopied()) {
-            SVNErrorManager.error("svn: Cannot copy or move '" + srcAccess.getTarget().getRoot() + "': it is in repository yet; try committing first");
+        } else if (srcEntry.isScheduledForAddition() || srcEntry.getURL() == null || srcEntry.isCopied()) {
+            SVNErrorManager.error("svn: Cannot copy or move '" + srcAccess.getTarget().getRoot() + "': it is not in repository yet; try committing first");
         }
         String copyFromURL = srcAccess.getTargetEntryProperty(SVNProperty.URL);
         long copyFromRev = SVNRevision.parse(srcAccess.getTargetEntryProperty(SVNProperty.REVISION)).getNumber();
@@ -766,11 +746,7 @@ public class SVNCopyClient extends SVNBasicClient {
 
         File dstPath = new File(dstAccess.getAnchor().getRoot(), dstName);
 
-        try {
-            SVNFileUtil.copyDirectory(srcAccess.getTarget().getRoot(), dstPath);
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
-        }
+        SVNFileUtil.copyDirectory(srcAccess.getTarget().getRoot(), dstPath, true);
 
         SVNDirectory newDir = dstAccess.addDirectory(dstName, dstPath, true, true);
 

@@ -230,11 +230,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
 
         }
 
-        try {
-            SVNFileUtil.rename(myCurrentFile, myPreviousFile);
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
-        }
+        SVNFileUtil.rename(myCurrentFile, myPreviousFile);
     }
 
     public void reportAnnotations(ISVNAnnotateHandler handler, String inputEncoding) {

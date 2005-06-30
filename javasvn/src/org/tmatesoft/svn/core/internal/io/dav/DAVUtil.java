@@ -12,15 +12,14 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.DebugLog;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
+
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.PathUtil;
 
 
 /**

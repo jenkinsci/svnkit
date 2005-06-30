@@ -4,7 +4,6 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -212,11 +211,7 @@ public class SVNMerger {
                     boolean equals = SVNFileUtil.compareFiles(mine, older, null);
                     if (equals) {
                         if (!myIsDryRun) {
-                            try {
-                                SVNFileUtil.rename(yours, mine);
-                            } catch (IOException e) {
-                                SVNErrorManager.error(0, e);
-                            }
+                            SVNFileUtil.rename(yours, mine);
                         }
                         mergeResult = SVNStatusType.MERGED;
                     }

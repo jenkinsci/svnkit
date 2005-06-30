@@ -1,26 +1,25 @@
 package org.tmatesoft.svn.core.internal.wc;
 
+import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNAuthentication;
-import org.tmatesoft.svn.core.wc.ISVNAuthenticationProvider;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.util.DebugLog;
 
-import java.util.Map;
-import java.util.StringTokenizer;
-import java.util.Collection;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.TreeMap;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -640,11 +639,7 @@ public class SVNOptions implements ISVNOptions {
                 props.setPropertyValue("key", path);
                 props.setPropertyValue("passphrase", credentials.getPassphrase());
             }
-            try {
-                SVNFileUtil.setReadonly(props.getFile(), true);
-            } catch (IOException e) {
-                //
-            }
+            SVNFileUtil.setReadonly(props.getFile(), true);
         } catch (SVNException e) {
             //
         }

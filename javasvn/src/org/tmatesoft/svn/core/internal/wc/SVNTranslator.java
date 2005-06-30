@@ -56,11 +56,7 @@ public class SVNTranslator {
         }
         translate(src, dst, eols, keywordsMap, special, expand);
         if (safe) {
-            try {
-                SVNFileUtil.rename(dst, dir.getFile(dstPath, false));
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            SVNFileUtil.rename(dst, dir.getFile(dstPath, false));
         }
     }
     
@@ -73,23 +69,19 @@ public class SVNTranslator {
             return;
         }
         if (special) {
-            try {
-                if (dst.exists()) {
-                    dst.delete();
-                }
-                if (SVNFileUtil.isWindows) {
-                    SVNFileUtil.copy(src, dst, true);
-                } else if (expand) {
-                    // create symlink to target, and create it at dst
-                    DebugLog.log("creating symlink: ");
-                    DebugLog.log("link file: " + dst);
-                    DebugLog.log("link name file: " + src);
-                    SVNFileUtil.createSymlink(dst, src);
-                } else {
-                    SVNFileUtil.detranslateSymlink(src, dst);
-                }
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
+            if (dst.exists()) {
+                dst.delete();
+            }
+            if (SVNFileUtil.isWindows) {
+                SVNFileUtil.copyFile(src, dst, true);
+            } else if (expand) {
+                // create symlink to target, and create it at dst
+                DebugLog.log("creating symlink: ");
+                DebugLog.log("link file: " + dst);
+                DebugLog.log("link name file: " + src);
+                SVNFileUtil.createSymlink(dst, src);
+            } else {
+                SVNFileUtil.detranslateSymlink(src, dst);
             }
             return;
 

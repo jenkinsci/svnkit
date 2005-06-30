@@ -164,16 +164,12 @@ public class SVNEntries {
                 try {
                     os.close();
                 } catch (IOException e) {
+                    //
                 }
             }            
         }
-        try {
-            SVNFileUtil.rename(tmpFile, myFile);
-            SVNFileUtil.setReadonly(myFile, true);
-        } catch (IOException e) {
-            tmpFile.delete();
-            SVNErrorManager.error(0, e);
-        }
+        SVNFileUtil.rename(tmpFile, myFile);
+        SVNFileUtil.setReadonly(myFile, true);
         if (close) {
             close();
         }

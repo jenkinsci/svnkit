@@ -253,13 +253,9 @@ public class SVNDirectory {
             // binary
             if (!dryRun) {
                 File oldFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, baseLabel); 
-                File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel); 
-                try {
-                    SVNFileUtil.copy(getFile(basePath, false), oldFile, false);
-                    SVNFileUtil.copy(getFile(latestPath, false), newFile, false);
-                } catch (IOException e) {
-                    SVNErrorManager.error(0, e);
-                }
+                File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel);
+                SVNFileUtil.copyFile(getFile(basePath, false), oldFile, false);
+                SVNFileUtil.copyFile(getFile(latestPath, false), newFile, false);
                 // update entry props
                 entry.setConflictNew(SVNFileUtil.getBasePath(newFile));
                 entry.setConflictOld(SVNFileUtil.getBasePath(oldFile));
@@ -330,11 +326,7 @@ public class SVNDirectory {
             // copy all to wc.
             File mineFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, localLabel);
             String minePath = SVNFileUtil.getBasePath(mineFile);
-            try {
-                SVNFileUtil.copy(getFile(localPath, false), mineFile, false);
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            SVNFileUtil.copyFile(getFile(localPath, false), mineFile, false);
             File oldFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, baseLabel);
             String oldPath = SVNFileUtil.getBasePath(oldFile);
             File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel);
@@ -456,11 +448,7 @@ public class SVNDirectory {
                     SVNFileUtil.setExecutable(dst, true);
                 }
                 if (needsLock) {
-                    try {
-                        SVNFileUtil.setReadonly(dst, entry.getLockToken() == null);
-                    } catch (IOException e) {
-                        SVNErrorManager.error(0, e);
-                    }
+                    SVNFileUtil.setReadonly(dst, entry.getLockToken() == null);
                 }
                 long tstamp = dst.lastModified();
                 if (myWCAccess.getOptions().isUseCommitTimes() && !special) {
@@ -970,7 +958,7 @@ public class SVNDirectory {
         return entry;
     }
     
-    private void updateEntryProperty(String propertyName, String value, boolean recursive) throws SVNException {
+    public void updateEntryProperty(String propertyName, String value, boolean recursive) throws SVNException {
         SVNEntries entries = getEntries();
         for (Iterator ents = entries.entries(false); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
