@@ -2,7 +2,6 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -136,7 +135,7 @@ public class SVNMover {
                         dstAccess = SVNWCAccess.create(dst); 
                         dstAccess.open(false, true);
                         SVNDirectory dstDir = dstAccess.getTarget();
-                        dstDir.updateURL(SVNProperty.URL, true);
+                        dstDir.updateURL(dstURL, true);
                     } finally {
                         dstAccess.close(false);
                     }

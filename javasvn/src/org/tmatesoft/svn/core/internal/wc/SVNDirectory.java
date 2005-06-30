@@ -988,7 +988,7 @@ public class SVNDirectory {
         SVNEntries entries = getEntries();
         for (Iterator ents = entries.entries(false); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
-            if ("".equals(entry.getName()) && entry.isDirectory() && recursive) {
+            if (!"".equals(entry.getName()) && entry.isDirectory() && recursive) {
                 SVNDirectory childDir = getChildDirectory(entry.getName());
                 if (childDir != null) {
                     String childURL = PathUtil.append(rootURL, PathUtil.encode(entry.getName()));
