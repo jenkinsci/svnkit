@@ -314,7 +314,7 @@ public class SVNStatusEditor implements ISVNEditor {
     public void textDeltaEnd(String commitPath) throws SVNException {
     }
 
-    private void reportStatus(SVNDirectory dir, String entryName, boolean ignoreRootEntry, boolean recursive) throws SVNException {
+    public void reportStatus(SVNDirectory dir, String entryName, boolean ignoreRootEntry, boolean recursive) throws SVNException {
         SVNEntries entries = dir.getEntries();
 
         boolean anchorOfTarget = myTarget != null && dir == myWCAccess.getAnchor();
