@@ -76,10 +76,16 @@ public class SVNReporter implements ISVNReporterBaton {
             }
             reporter.finishReport();
         } catch (Throwable th) {
-            th.printStackTrace();
             DebugLog.error(th);
-            reporter.abortReport();
-            SVNErrorManager.error(0, th);
+            try {
+                reporter.abortReport();
+            } catch (SVNException e) {
+                DebugLog.error(e);
+            }
+            if (th instanceof SVNException) {
+                throw (SVNException) th;
+            }
+            SVNErrorManager.error("svn: Working copy state was not reported properly: " + th.getMessage());
         }
     }
     
