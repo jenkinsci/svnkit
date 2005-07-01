@@ -19,7 +19,6 @@ import org.tmatesoft.svn.util.PathUtil;
  */
 public class SVNMover {
 
-    // real move.
     public static void doMove(File src, File dst) throws SVNException {
         if (dst.exists()) {
             throw new SVNException("svn: Cannot move '" + src + "' over existing file '" + dst);
@@ -190,6 +189,45 @@ public class SVNMover {
 
     // move that considered as move undo.
     public static void undoMove(File src, File dst) throws SVNException {
+        // dst could exists, if it is deleted directory.
+        if (!src.exists()) {
+            throw new SVNException("svn: Cannot undo move of '" + dst + "'; file '"  + src + "' does not exist");
+        }
+        // src condidered as unversioned when it is not versioned
+        boolean srcIsVersioned = isVersionedFile(src);
+        // dst is considered as unversioned when its parent is not versioned.
+        boolean dstParentIsVersioned = isVersionedFile(dst.getParentFile());
+        
+        if (!srcIsVersioned && !dstParentIsVersioned) {
+            // world:world
+            SVNFileUtil.rename(src, dst);
+        } else if (!dstParentIsVersioned) {
+            // wc:world
+            // 1. export to world
+            SVNFileUtil.copy(src, dst, false, false);
+            
+            // 2. delete in wc.
+            SVNWCClient client = new SVNWCClient();
+            client.doDelete(src, true, false);
+        } else if (!srcIsVersioned) {
+            // world:wc (add, if dst is 'deleted' it will be replaced)
+            SVNFileUtil.rename(src, dst);
+            SVNWCClient client = new SVNWCClient();
+            // dst should probably be deleted, in this case - revert it
+            SVNWCAccess dstAccess = SVNWCAccess.create(dst);
+            SVNEntry dstEntry = dstAccess.getTargetEntry();
+            if (dstEntry != null && dstEntry.isScheduledForDeletion()) {
+                client.doRevert(dst, true);
+            } else {
+                client.doAdd(dst, false, false, false, true);
+            }
+        } else {
+            // wc:wc.
+
+            SVNWCClient client = new SVNWCClient();
+            client.doRevert(dst, true);
+            client.doDelete(src, true, false);
+        }
 
     }
 
