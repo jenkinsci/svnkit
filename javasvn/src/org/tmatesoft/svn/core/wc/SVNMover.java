@@ -102,7 +102,7 @@ public class SVNMover extends SVNWCClient {
                     dstEntry.setKind(SVNNodeKind.FILE);
                     dstEntry.setRevision(srcRevision);
                     dstEntry.setCopied(true);
-                } else if (!srcEntry.isCopied()) {
+                } else if (!srcEntry.isCopied() && !srcEntry.isScheduledForAddition()) {
                     dstEntry.setCopied(true);
                     dstEntry.scheduleForAddition();
                     dstEntry.setKind(SVNNodeKind.FILE);
@@ -146,7 +146,8 @@ public class SVNMover extends SVNWCClient {
                     } finally {
                         dstAccess.close(false);
                     }
-                } else if (!srcEntry.isCopied()) {
+                } else if (!srcEntry.isCopied() && !srcEntry.isScheduledForAddition()) {
+                    // versioned (deleted, replaced, or normal).
                     dstEntry.setCopied(true);
                     dstEntry.scheduleForAddition();
                     dstEntry.setKind(SVNNodeKind.DIR);
@@ -172,7 +173,7 @@ public class SVNMover extends SVNWCClient {
                         dstAccess.close(false);
                     }
                 } else {
-                    // replay
+                    // unversioned entry (copied or added)
                     dstAccess.getAnchor().getEntries().deleteEntry(dst.getName());
                     dstAccess.getAnchor().getEntries().save(true);
                     SVNFileUtil.deleteAll(dst);
@@ -278,7 +279,7 @@ public class SVNMover extends SVNWCClient {
                     dstEntry.setKind(SVNNodeKind.FILE);
                     dstEntry.setRevision(srcRevision);
                     dstEntry.setCopied(true);
-                } else if (!srcEntry.isCopied()) {
+                } else if (!srcEntry.isCopied() && !srcEntry.isScheduledForAddition()) {
                     dstEntry.setCopied(true);
                     dstEntry.scheduleForAddition();
                     dstEntry.setKind(SVNNodeKind.FILE);
@@ -322,7 +323,7 @@ public class SVNMover extends SVNWCClient {
                     } finally {
                         dstAccess.close(false);
                     }
-                } else if (!srcEntry.isCopied()) {
+                } else if (!srcEntry.isCopied() && !srcEntry.isScheduledForAddition()) {
                     dstEntry.setCopied(true);
                     dstEntry.scheduleForAddition();
                     dstEntry.setKind(SVNNodeKind.DIR);
