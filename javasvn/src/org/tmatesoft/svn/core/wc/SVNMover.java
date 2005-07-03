@@ -6,6 +6,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.util.PathUtil;
@@ -56,6 +57,10 @@ public class SVNMover extends SVNWCClient {
             SVNWCAccess dstAccess = SVNWCAccess.create(dst);
             SVNEntry srcEntry = srcAccess.getTargetEntry();
             SVNEntry dstEntry = dstAccess.getTargetEntry();
+
+            SVNProperties srcProps = srcAccess.getAnchor().getProperties(srcAccess.getTargetName(), false);
+            SVNProperties dstProps = dstAccess.getAnchor().getProperties(dstAccess.getTargetName(), false);
+
             SVNEntry dstParentEntry = dstAccess.getAnchor().getEntries().getEntry("", false);
             
             boolean sameWC = dstParentEntry.getUUID() != null &&
@@ -94,6 +99,8 @@ public class SVNMover extends SVNWCClient {
                 String srcCFURL = srcEntry.getCopyFromURL();
                 long srcRevision = srcEntry.getRevision();
                 long srcCFRevision = srcEntry.getCopyFromRevision();
+                // copy props!
+                srcProps.copyTo(dstProps);
 
                 if (srcEntry.isScheduledForAddition() && srcEntry.isCopied()) {
                     dstEntry.scheduleForAddition();
@@ -130,6 +137,7 @@ public class SVNMover extends SVNWCClient {
                 
                 dstURL = PathUtil.append(dstURL, PathUtil.encode(dst.getName()));
                 if (srcEntry.isScheduledForAddition() && srcEntry.isCopied()) {
+                    srcProps.copyTo(dstProps);
                     dstEntry.scheduleForAddition();
                     dstEntry.setCopyFromRevision(srcCFRevision);
                     dstEntry.setCopyFromURL(srcCFURL);
@@ -148,6 +156,7 @@ public class SVNMover extends SVNWCClient {
                     }
                 } else if (!srcEntry.isCopied() && !srcEntry.isScheduledForAddition()) {
                     // versioned (deleted, replaced, or normal).
+                    srcProps.copyTo(dstProps);
                     dstEntry.setCopied(true);
                     dstEntry.scheduleForAddition();
                     dstEntry.setKind(SVNNodeKind.DIR);
