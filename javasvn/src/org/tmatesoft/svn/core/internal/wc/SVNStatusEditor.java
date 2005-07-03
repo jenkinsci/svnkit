@@ -440,8 +440,11 @@ public class SVNStatusEditor implements ISVNEditor {
         boolean ignored = isIgnored(parent, name);
         String path = "".equals(name) ? parent.getPath() : PathUtil.append(parent.getPath(), name);
         path = PathUtil.removeLeadingSlash(path);
-        String url = parent.getEntries().getEntry("", true).getURL();
-        url = PathUtil.append(url, PathUtil.encode(name));
+        String url = null;
+        if (parent.getEntries() != null && parent.getEntries().getEntry("", false) != null) {
+            url = parent.getEntries().getEntry("", false).getURL();
+            url = PathUtil.append(url, PathUtil.encode(name));
+        }
         SVNStatus status = createStatus(url, parent.getFile(name, false), parent, null, null, ignored, null, null);
         if (myExternalsMap.containsKey(path)) {
             status.markExternal();
