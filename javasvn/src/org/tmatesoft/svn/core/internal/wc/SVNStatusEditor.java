@@ -443,7 +443,9 @@ public class SVNStatusEditor implements ISVNEditor {
         String url = null;
         if (parent.getEntries() != null && parent.getEntries().getEntry("", false) != null) {
             url = parent.getEntries().getEntry("", false).getURL();
-            url = PathUtil.append(url, PathUtil.encode(name));
+            if (url != null) {
+                url = PathUtil.append(url, PathUtil.encode(name));
+            }
         }
         SVNStatus status = createStatus(url, parent.getFile(name, false), parent, null, null, ignored, null, null);
         if (myExternalsMap.containsKey(path)) {
