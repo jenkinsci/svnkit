@@ -239,7 +239,7 @@ public class SVNWCAccess implements ISVNEventHandler {
 
     public void open(final boolean lock, final boolean stealLock, boolean recursive) throws SVNException {
         if (myDirectories == null) {
-            myDirectories = new HashMap();
+            myDirectories = new TreeMap();
         }
         try {
             if (lock) {
@@ -289,7 +289,9 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
         for (Iterator dirs = myDirectories.values().iterator(); dirs.hasNext();) {
             SVNDirectory directory = (SVNDirectory) dirs.next();
-            directory.unlock();
+            if (!directory.unlock()) {
+                break;
+            }
             directory.dispose();
         }
         myDirectories = null;

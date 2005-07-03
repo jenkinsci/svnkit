@@ -68,7 +68,7 @@ public class SVNOptions implements ISVNOptions {
     }
 
     public boolean isUseCommitTimes() {
-        String value = getServersFile().getPropertyValue(MISCELLANY, "use-commit-times");
+        String value = getConfigFile().getPropertyValue(MISCELLANY, "use-commit-times");
         return getBooleanValue(value, true);
     }
 

@@ -423,6 +423,10 @@ public class SVNUpdateEditor implements ISVNEditor {
         command.put(SVNProperty.shortPropertyName(SVNProperty.REVISION), Long.toString(myTargetRevision));
         command.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), Boolean.FALSE.toString());
         command.put(SVNProperty.shortPropertyName(SVNProperty.ABSENT), Boolean.FALSE.toString());
+        log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+        command.clear();
+
+        command.put(SVNLog.NAME_ATTR, name);
         command.put(SVNProperty.shortPropertyName(SVNProperty.URL), myCurrentFile.URL);
         log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
         command.clear();

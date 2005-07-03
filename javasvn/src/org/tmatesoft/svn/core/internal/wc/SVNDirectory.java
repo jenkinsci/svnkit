@@ -95,9 +95,22 @@ public class SVNDirectory {
         if (!getLockFile().exists()) {
             return true;
         }
+        // only if there are not locks or killme files.
+        boolean killMe = new File(getRoot(), ".svn/killme").exists();
+        if (killMe) {
+            return false;
+        }
+        File[] logs = getAdminDirectory().listFiles();
+        for (int i = 0; logs != null &&  i < logs.length; i++) {
+            File log = logs[i];
+            if ("log".equals(log.getName()) || log.getName().startsWith("log.")) {
+                return false;
+            }
+
+        }
         boolean deleted = getLockFile().delete();
         if (!deleted) {
-            SVNErrorManager.error(1, null);
+            SVNErrorManager.error("svn: Cannot unlock working copy '" + getRoot() + "'");
         }
         return deleted;
     }
@@ -682,19 +695,16 @@ public class SVNDirectory {
     public void runLogs() throws SVNException {
         SVNLogRunner runner = new SVNLogRunner();
         int index = 0;
-        try {
-            while(true) {
-                SVNLog log = new SVNLog(this, index);
-                index++;
-                if (log.exists()) {
-                    log.run(runner);
-                    continue;
-                }
-                return;
+        while(true) {
+            SVNLog log = new SVNLog(this, index);
+            index++;
+            if (log.exists()) {
+                log.run(runner);
+                continue;
             }
-        } finally {
-            runner.logCompleted(this);
+            break;
         }
+        runner.logCompleted(this);
     }
 
     public SVNDirectory createChildDirectory(String name, String url, long revision) throws SVNException {

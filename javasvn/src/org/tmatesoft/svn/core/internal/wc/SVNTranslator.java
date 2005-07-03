@@ -56,7 +56,11 @@ public class SVNTranslator {
         }
         translate(src, dst, eols, keywordsMap, special, expand);
         if (safe) {
-            SVNFileUtil.rename(dst, dir.getFile(dstPath, false));
+            try {
+                SVNFileUtil.rename(dst, dir.getFile(dstPath, false));
+            } finally {
+                dst.delete();
+            }
         }
     }
     

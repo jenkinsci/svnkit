@@ -3,6 +3,10 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -14,11 +18,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.DebugLog;
 
 public class SVNLog {
 
@@ -39,7 +38,7 @@ public class SVNLog {
 
     public static final String NAME_ATTR = "name";
     public static final String PROPERTY_NAME_ATTR = "propname";
-    public static final String PROPERTY_VALUE_ATTR = "propvalue";
+    public static final String PROPERTY_VALUE_ATTR = "propval";
     public static final String DEST_ATTR = "dest";
     public static final String TIMESTAMP_ATTR = "timestamp";
     public static final String REVISION_ATTR = "revision";
@@ -197,32 +196,15 @@ public class SVNLog {
         } finally {
             SVNFileUtil.closeFile(reader);
         }
-        SVNException error = null;
-        try {
-            for (Iterator cmds = commands.iterator(); error == null && cmds.hasNext();) {
-                Map command = (Map) cmds.next();
-                String name = (String) command.remove("");
-                if (runner != null) {
-                    try {
-                        runner.runCommand(myDirectory, name, command);
-                        cmds.remove();
-                    } catch (SVNException th) {
-                        DebugLog.error(th);
-                        command.put("", name);
-                        myCache = commands;
-                        save();
-                        error = th;
-                    }
-                }
-            }
-            if (error == null) {
-                delete();
-            }
-        } finally {
-            if (error != null) {
-                throw error;
+
+        for (Iterator cmds = commands.iterator(); cmds.hasNext();) {
+            Map command = (Map) cmds.next();
+            String name = (String) command.remove("");
+            if (runner != null) {
+                runner.runCommand(myDirectory, name, command);
             }
         }
+        delete();
     }
 
     public String toString() {

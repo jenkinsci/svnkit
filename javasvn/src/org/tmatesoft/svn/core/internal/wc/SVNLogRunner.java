@@ -177,7 +177,7 @@ public class SVNLogRunner {
                         try {
                             killMe.createNewFile();
                         } catch (IOException e) {
-                            SVNErrorManager.error(0, e);
+                            SVNErrorManager.error("svn: Cannot create file '" + killMe + "'");
                         }
                     }
                 } else {
