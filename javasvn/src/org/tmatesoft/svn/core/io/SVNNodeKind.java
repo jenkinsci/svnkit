@@ -28,27 +28,29 @@ package org.tmatesoft.svn.core.io;
  * @author 	TMate Software Ltd.
  * @see 	SVNDirEntry
  */
-public final class SVNNodeKind {
+public final class SVNNodeKind implements Comparable {
     /**
      * Defines the none node kind 
      */
-    public static final SVNNodeKind NONE = new SVNNodeKind();
+    public static final SVNNodeKind NONE = new SVNNodeKind(2);
     /**
      * Defines the file node kind
      */
-    public static final SVNNodeKind FILE = new SVNNodeKind();
+    public static final SVNNodeKind FILE = new SVNNodeKind(1);
     /**
      * Defines the directory node kind
      */
-    public static final SVNNodeKind DIR = new SVNNodeKind();
+    public static final SVNNodeKind DIR = new SVNNodeKind(0);
     /**
      * Defines the unknown node kind
      */
-    public static final SVNNodeKind UNKNOWN = new SVNNodeKind();
-    /**
-     * Default constructor.
-     */
-    private SVNNodeKind() {}
+    public static final SVNNodeKind UNKNOWN = new SVNNodeKind(3);
+
+    private int myID;
+
+    private SVNNodeKind(int id) {
+        myID = id;
+    }
     
     /**
      * Parses the passed string and finds out the node kind. For instance,
@@ -83,5 +85,13 @@ public final class SVNNodeKind {
             return "dir";
         }
         return "unknown";
+    }
+
+    public int compareTo(Object o) {
+        if (o == null || o.getClass() != SVNNodeKind.class) {
+            return -1;
+        }
+        int otherID = ((SVNNodeKind) o).myID;
+        return myID > otherID ? 1 : myID < otherID ? -1 : 0;
     }
 }

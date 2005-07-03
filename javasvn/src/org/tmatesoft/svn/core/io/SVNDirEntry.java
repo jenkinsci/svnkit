@@ -190,6 +190,10 @@ public class SVNDirEntry implements Comparable {
         if (o == null || o.getClass() != SVNDirEntry.class) {
             return -1;
         }
+        SVNNodeKind otherKind = ((SVNDirEntry) o).getKind();
+        if (otherKind != getKind()) {
+            return getKind().compareTo(otherKind);    
+        }
         String otherName = ((SVNDirEntry) o).getName();
         if (myName == null || otherName == null) {
             return myName == otherName ? 0 : (myName == null ? -1 : 1); 
