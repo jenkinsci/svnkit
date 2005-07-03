@@ -82,6 +82,9 @@ public class SVNLogRunner {
         } else if (SVNLog.MOVE.equals(name)) {
             File src = new File(dir.getRoot(), fileName);
             File dst = new File(dir.getRoot(), (String) attributes.get(SVNLog.DEST_ATTR));
+            if (!src.exists() && dst.exists()) {
+                return;
+            }
             SVNFileUtil.rename(src, dst);
         } else if (SVNLog.APPEND.equals(name)) {
             File src = new File(dir.getRoot(), fileName);

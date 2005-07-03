@@ -313,10 +313,8 @@ public class SVNDirectory {
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {
+            SVNFileUtil.closeFile(result);
             try {
-                if (result != null) {
-                    result.close();
-                }
                 localIS.close();
                 baseIS.close();
                 latestIS.close();
