@@ -234,14 +234,21 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             Object[] buffer = new Object[] { "get-file-revs", getRepositoryPath(path), srev, erev };
             write("(w(s(n)(n)))", buffer);
             authenticate();
+            buffer = new Object[5];
             while (true) {
                 SVNFileRevision fileRevision = null;
+                boolean skipDelta = false;
                 try {
-                    read("(SN(*P)(*Z))", buffer);
+                    buffer = read("(SN(*P)(*Z)?S", buffer);
+                    if (buffer[4] != null && ((String) buffer[4]).length() == 0) {
+                        buffer[4] = null;
+                        skipDelta = true;
+                    } else {
+                        read(")", null);
+                    }
                     count++;
                 } catch (SVNException e) {
                     read("x", buffer);
-                    // there are could be error message
                     read("[()]", buffer);
                     return count;
                 }
@@ -259,6 +266,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
                 if (handler != null && fileRevision != null) {
                     handler.handleFileRevision(fileRevision);
+                }
+                if (skipDelta) {
+                    continue;
                 }
                 SVNDiffWindowBuilder builder = SVNDiffWindowBuilder.newInstance();
                 while (true) {

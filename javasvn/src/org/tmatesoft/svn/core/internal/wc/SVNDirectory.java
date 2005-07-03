@@ -75,6 +75,9 @@ public class SVNDirectory {
         if (!isVersioned()) {
             return false;
         }
+        if (getLockFile().isFile()) {
+            SVNErrorManager.error("svn: Working copy '" + getRoot() + "' locked; try performing 'cleanup'");
+        }
         boolean created = false;
         try {
             created = getLockFile().createNewFile();
@@ -83,7 +86,7 @@ public class SVNDirectory {
         }
         if (!created) {
             if (getLockFile().isFile()) {
-                SVNErrorManager.error("svn: Working copy '" + getRoot() + "' locked");
+                SVNErrorManager.error("svn: Working copy '" + getRoot() + "' locked; try performing 'cleanup'");
             } else {
                 SVNErrorManager.error("svn: Cannot lock working copy '" + getRoot() + "'");
             }

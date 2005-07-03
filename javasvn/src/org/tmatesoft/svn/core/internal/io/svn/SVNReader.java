@@ -51,9 +51,6 @@ class SVNReader {
         if (items[index] instanceof Long) {
             return ((Long) items[index]).longValue();
         } else if (items[index] instanceof Integer) {
-            System.err.println("fetching integer when should be long");
-            new Exception().printStackTrace();
-            
             return ((Integer) items[index]).intValue();
         }
         return -1;
@@ -341,7 +338,7 @@ class SVNReader {
                     targetIndex++;
                 }
             } catch(SVNException e) {
-            	if (unconditionalThrow) {
+                if (unconditionalThrow) {
             		throw e;
             	}
                 try {
