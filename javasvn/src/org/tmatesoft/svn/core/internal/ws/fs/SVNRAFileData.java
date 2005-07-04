@@ -61,6 +61,9 @@ public class SVNRAFileData implements ISVNRAData {
         if (myBuffer == null || myBuffer.length < length) {
             myBuffer = new byte[lLength];
         }
+        if (myFile == null) {
+            getRAFile().seek(myFile.length());
+        }
         int read;
         do {
             read = source.read(myBuffer, 0, lLength);
