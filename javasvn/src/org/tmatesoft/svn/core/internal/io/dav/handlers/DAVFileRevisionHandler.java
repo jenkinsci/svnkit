@@ -92,7 +92,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
 		}
 	}
     
-	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
+	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == FILE_REVISION) {
             myPath = null;
             myProperties = null;
@@ -101,8 +101,8 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             myPropertyName = null;
         } else if (element == TX_DELTA) {
             setDeltaProcessing(false);
-			myCount++;
-		} else if (element == REVISION_PROPERTY) {
+            myCount++;
+        } else if (element == REVISION_PROPERTY) {
             if (myProperties == null) {
                 myProperties = new HashMap();
             }
@@ -134,7 +134,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             myPropertyEncoding = null;
             myPropertyName = null;
         }
-	}
+    }
 
 	public int getEntriesCount() {
 		return myCount;

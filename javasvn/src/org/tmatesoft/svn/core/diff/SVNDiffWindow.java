@@ -69,7 +69,7 @@ public class SVNDiffWindow {
         if (target == null) {
             throw new SVNException("target shouldn't be null");
         }
-        InputStream src = null;
+        InputStream src;
         try {
             for(int i = 0; i < myInstructions.length; i++) {
                 myInstructions[i].offset += offset;
@@ -86,7 +86,6 @@ public class SVNDiffWindow {
                 target.append(src, myInstructions[i].length);
             }
         } catch (IOException e) {
-            DebugLog.error(e);
             throw new SVNException(e);
         } finally {
             try {

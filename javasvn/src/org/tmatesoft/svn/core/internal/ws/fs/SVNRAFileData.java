@@ -44,12 +44,18 @@ public class SVNRAFileData implements ISVNRAData {
         }
         ByteBuffer buffer = ByteBuffer.allocate((int) length);
         int read = channel.read(buffer, offset);
-        buffer.flip();
-        if (read != length) {
+        if (read == 0 && read != length) {
             throw new IOException("svn: Error when applying delta: expected to read '" + length + "' bytes, actually read '" + read + "' bytes");
         }
-        byte[] resultingArray = new byte[buffer.limit()];
-        buffer.get(resultingArray);
+        buffer.flip();
+        byte[] resultingArray = new byte[(int) length];
+        buffer.get(resultingArray, 0, read);
+        int chunkLength = read;
+        while(read < length) {
+            chunkLength = (int) Math.min(length - read, chunkLength);
+            System.arraycopy(resultingArray, 0, resultingArray, read, chunkLength);
+            read += chunkLength;
+        }
         return new ByteArrayInputStream(resultingArray);
     }
     

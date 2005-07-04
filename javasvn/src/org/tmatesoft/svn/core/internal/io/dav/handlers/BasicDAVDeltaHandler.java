@@ -35,7 +35,7 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
     private StringBuffer myDeltaOutputStream;
     private byte[] myByteBuffer;
 
-    protected void setDeltaProcessing(boolean processing) {
+    protected void setDeltaProcessing(boolean processing) throws SVNException {
         myIsDeltaProcessing = processing;
 
         if (!myIsDeltaProcessing) {
@@ -59,13 +59,18 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
                     os = handleDiffWindow(window);
                     if (os != null) {
                         os.write(myByteBuffer, newOffset, (int) window.getNewDataLength());
-                        os.close();
                     }
                 } catch (IOException e) {
-                    DebugLog.error(e);
-                } catch (SVNException e) {
-                    DebugLog.error(e);
-                } 
+                    throw new SVNException(e);
+                } finally {
+                    try {
+                        if (os != null) {
+                            os.close();
+                        }
+                    } catch (IOException e) {
+                        //
+                    }
+                }
                 newOffset = newOffset + (int) window.getNewDataLength();
                 if (newOffset < Base64.lastLength()) {
                     myDiffBuilder.reset(1);
@@ -75,11 +80,7 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
                     window = null;
                 }
             }
-            try {
-                handleDiffWindowClosed();
-            } catch (SVNException e) {
-                DebugLog.error(e);
-            }
+            handleDiffWindowClosed();
         } else {
             myDiffBuilder.reset();
             myDeltaOutputStream.delete(0, myDeltaOutputStream.length());

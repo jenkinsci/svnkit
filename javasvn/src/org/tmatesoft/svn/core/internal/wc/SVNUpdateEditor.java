@@ -363,7 +363,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             File baseTmpFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name, true);
             checksum = SVNFileUtil.computeChecksum(baseTmpFile);
             if (!textChecksum.equals(checksum)) {
-                SVNErrorManager.error(0, null);
+                SVNErrorManager.error("svn: Checksum differs, expected '" + textChecksum + "'; actual: '" + checksum + "'");
             }
         }
         SVNDirectory dir = myCurrentFile.getDirectory();
