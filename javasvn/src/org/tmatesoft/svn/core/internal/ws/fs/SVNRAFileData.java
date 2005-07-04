@@ -16,6 +16,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.io.ByteArrayInputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 
 import org.tmatesoft.svn.core.diff.ISVNRAData;
 
@@ -24,48 +27,9 @@ import org.tmatesoft.svn.core.diff.ISVNRAData;
  */
 public class SVNRAFileData implements ISVNRAData {
     
-    private final class SelfStream extends InputStream {
-        private long myOffset;
-        private int myLength;
-
-        private SelfStream(long length, long offset) {
-            myOffset = offset;
-            myLength = (int) length;
-        }
-        
-        public void reset(long length, long offset) {
-            myOffset = offset;
-            myLength = (int) length;            
-        }
-
-        public int read() throws IOException {
-            byte[] buffer = new byte[] {-1};
-            read(buffer, 0, 1);
-            return buffer[0];
-        }
-
-        public int read(byte[] buffer, int userOffset, int userLength) throws IOException {
-            if (myLength <= 0) {
-                return -1;
-            }
-            int available = (int) (getRAFile().length() - myOffset);
-            int toRead = Math.min(available, myLength);
-            toRead = Math.min(userLength, toRead);
-            myLength -= toRead;
-            
-            long pos = getRAFile().length();
-            myFile.seek(myOffset);
-            int result = myFile.read(buffer, userOffset, toRead);
-            myFile.seek(pos);
-            myOffset += toRead;
-            return result;
-        }
-    }
-
     private RandomAccessFile myFile;
     private File myRawFile;
     private byte[] myBuffer;
-    private SelfStream mySelfStream;
     private boolean myIsReadonly;
     
     public SVNRAFileData(File file, boolean readonly) {        
@@ -74,12 +38,19 @@ public class SVNRAFileData implements ISVNRAData {
     }
 
     public InputStream read(final long offset, final long length) throws IOException {
-        if (mySelfStream != null) {
-            mySelfStream.reset(length, offset);
-        } else {
-            mySelfStream = new SelfStream(length, offset);
+        FileChannel channel = getRAFile().getChannel();
+        if (channel == null) {
+            throw new IOException("svn: Error when applying delta: cannot get IO channel for '" + myRawFile + "'");
         }
-        return mySelfStream;
+        ByteBuffer buffer = ByteBuffer.allocate((int) length);
+        int read = channel.read(buffer, offset);
+        buffer.flip();
+        if (read != length) {
+            throw new IOException("svn: Error when applying delta: expected to read '" + length + "' bytes, actually read '" + read + "' bytes");
+        }
+        byte[] resultingArray = new byte[buffer.limit()];
+        buffer.get(resultingArray);
+        return new ByteArrayInputStream(resultingArray);
     }
     
     public void append(InputStream source, long length) throws IOException {
