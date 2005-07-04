@@ -1,17 +1,5 @@
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.diff.ISVNRAData;
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
@@ -24,6 +12,16 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class SVNUpdateEditor implements ISVNEditor {
     
@@ -150,8 +148,9 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNDirectory dir = parentDir.createChildDirectory(name, myCurrentDirectory.URL, myTargetRevision);
         if (dir == null) {
             SVNErrorManager.error(0, null);
+        } else {
+            dir.lock();
         }
-        dir.lock();
         myWCAccess.handleEvent(SVNEventFactory.createUpdateAddEvent(myWCAccess, parentDir, SVNNodeKind.DIR, entry));
     }
 
@@ -190,12 +189,14 @@ public class SVNUpdateEditor implements ISVNEditor {
             SVNErrorManager.error(0, null);
         }
         if (entry == null) {
-            entries.addEntry(name);
+            entry = entries.addEntry(name);
         }
-        entry.setKind(kind);
-        entry.setDeleted(false);
-        entry.setRevision(myTargetRevision);
-        entry.setAbsent(true);
+        if (entry != null) {
+            entry.setKind(kind);
+            entry.setDeleted(false);
+            entry.setRevision(myTargetRevision);
+            entry.setAbsent(true);
+        }
         entries.save(true);        
         
     }
@@ -304,13 +305,13 @@ public class SVNUpdateEditor implements ISVNEditor {
             }
         }
         File baseTmpFile = dir.getBaseFile(myCurrentFile.Name, true);
+        SVNFileUtil.copyFile(baseFile, baseTmpFile, false);
         try {
-            SVNFileUtil.copyFile(baseFile, baseTmpFile, false);
             if (!baseTmpFile.exists()) {
                 baseTmpFile.createNewFile();
             }
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Cannot create file '" + baseTmpFile + "'");
         }
     }
 
@@ -321,13 +322,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         int number = myCurrentFile.myDiffWindows.size();
         File file = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name + "." + number + ".txtdelta", true);
         myCurrentFile.myDiffWindows.add(diffWindow);
-        try {
-            return new FileOutputStream(file);
-        } catch (FileNotFoundException e) {
-            SVNErrorManager.error(0, e);
-        }
-        SVNErrorManager.error(0, null);
-        return null;
+        return SVNFileUtil.openFileForWriting(file);
     }
 
     public void textDeltaEnd(String commitPath) throws SVNException {
@@ -582,7 +577,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         }
         boolean save = false;
         if (url != null) {
-            save |= entry.setURL(url);
+            save = entry.setURL(url);
         }
         if (revision >=0 && !entry.isScheduledForAddition() && !entry.isScheduledForReplacement()) {
             save |= entry.setRevision(revision);
@@ -656,7 +651,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             }
             if (mySwitchURL != null || entry == null) {
                 info.URL = PathUtil.append(parent.URL, PathUtil.encode(info.Name));
-            } else if (entry != null) {
+            } else {
                 info.URL = entry.getURL();
             } 
         } finally {
