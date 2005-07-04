@@ -50,11 +50,8 @@ public class SVNRAFileData implements ISVNRAData {
         buffer.flip();
         byte[] resultingArray = new byte[(int) length];
         buffer.get(resultingArray, 0, read);
-        int chunkLength = read;
-        while(read < length) {
-            chunkLength = (int) Math.min(length - read, chunkLength);
-            System.arraycopy(resultingArray, 0, resultingArray, read, chunkLength);
-            read += chunkLength;
+        for(int i = read; i < length; i++) {
+            resultingArray[i] = resultingArray[i - read];
         }
         return new ByteArrayInputStream(resultingArray);
     }
@@ -63,9 +60,6 @@ public class SVNRAFileData implements ISVNRAData {
         int lLength = (int) length;
         if (myBuffer == null || myBuffer.length < length) {
             myBuffer = new byte[lLength];
-        }
-        if (myFile == null) {
-            getRAFile().seek(myFile.length());
         }
         int read;
         do {
