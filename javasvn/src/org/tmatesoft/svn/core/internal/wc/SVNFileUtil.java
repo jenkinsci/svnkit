@@ -375,7 +375,7 @@ public class SVNFileUtil {
         if (children != null) {
             for (int i = 0; i < children.length; i++) {
                 File child = children[i];
-                deleteAll(child);
+                deleteAll(child, deleteDirs);
             }
         }
         if (dir.isDirectory() && !deleteDirs) {
