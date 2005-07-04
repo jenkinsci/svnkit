@@ -293,7 +293,37 @@ public class SVNWCClient extends SVNBasicClient {
             handler.handleProperty(revNumber + "", new SVNPropertyData(propName, propValue));
         }
     }
-    
+
+    public SVNPropertyData doGetProperty(final File path, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
+        final SVNPropertyData[] data = new SVNPropertyData[1];
+        doGetProperty(path, propName, pegRevision, revision, recursive, new ISVNPropertyHandler() {
+            public void handleProperty(File file, SVNPropertyData property) throws SVNException {
+                if (data[0] == null && path.equals(file)) {
+                    data[0] = property;
+                }
+            }
+            public void handleProperty(String url, SVNPropertyData property) throws SVNException {
+            }
+        });
+        return data[0];
+    }
+
+    public SVNPropertyData doGetProperty(String url, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
+        final SVNPropertyData[] data = new SVNPropertyData[1];
+        final String canonURL = SVNRepositoryLocation.parseURL(url).toCanonicalForm();
+        doGetProperty(url, propName, pegRevision, revision, recursive, new ISVNPropertyHandler() {
+            public void handleProperty(File file, SVNPropertyData property) throws SVNException {
+            }
+            public void handleProperty(String location, SVNPropertyData property) throws SVNException {
+                location = SVNRepositoryLocation.parseURL(location).toCanonicalForm();
+                if (data[0] == null && canonURL.equals(location)) {
+                    data[0] = property;
+                }
+            }
+        });
+        return data[0];
+    }
+
     public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
