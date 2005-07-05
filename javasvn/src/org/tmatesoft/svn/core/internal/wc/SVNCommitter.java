@@ -147,7 +147,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             if (!item.isAdded()) {
                 checksum = SVNFileUtil.computeChecksum(dir.getBaseFile(name, false));
                 String realChecksum = entry.getChecksum();
-                if (realChecksum == null || !realChecksum.equals(checksum)) {
+                if (realChecksum != null && !realChecksum.equals(checksum)) {
                     SVNErrorManager.error("svn: Checksum mismatch for '" + dir.getFile(name, false) + "'; expected '" + realChecksum + "', actual: '" + checksum + "'");
                 }
             }
