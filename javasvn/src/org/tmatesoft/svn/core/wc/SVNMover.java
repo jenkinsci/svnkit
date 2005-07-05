@@ -127,7 +127,9 @@ public class SVNMover extends SVNWCClient {
             } else if (srcEntry.isDirectory()) {
                 if (dstEntry == null) {
                     dstEntry = dstAccess.getAnchor().getEntries().addEntry(dst.getName());
-                } 
+                }
+
+                srcEntry = srcAccess.getTarget().getEntries().getEntry("", false);
                 
                 String srcURL = srcEntry.getURL();
                 String srcCFURL = srcEntry.getCopyFromURL();
@@ -194,7 +196,7 @@ public class SVNMover extends SVNWCClient {
             srcAccess.close(false);
             dstAccess.close(false);
 
-            // now delete src.
+            // now delete src (if it is not the same as dst :))
             try {
                 doDelete(src, true, false);
             } catch (SVNException e) {
