@@ -1,7 +1,7 @@
 /*
  * ====================================================================
  * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
- * 
+ *
  * This software is licensed as described in the file COPYING, which you should
  * have received as part of this distribution. The terms are also available at
  * http://tmate.org/svn/license.html. If newer versions of this license are
@@ -362,13 +362,8 @@ public class SVNDirectory {
 
             QSequenceLineRAData baseData = new QSequenceLineRAFileData(baseIS);
             QSequenceLineRAData localData = new QSequenceLineRAFileData(localIS);
-            QSequenceLineRAData latestData = new QSequenceLineRAFileData(
-                    latestIS);
-            debugQData("base  :\n", baseData);
-            debugQData("local :\n", localData);
-            debugQData("latest:\n", latestData);
+            QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
             mergeResult = merger.merge(baseData, localData, latestData, result);
-            DebugLog.log("merge result: " + mergeResult);
         } catch (IOException e) {
             SVNErrorManager.error(0, e);
         } finally {
@@ -389,7 +384,7 @@ public class SVNDirectory {
             }
             if (latestIS != null) {
                 try {
-                    baseIS.close();
+                    latestIS.close();
                 } catch (IOException e) {
                     //
                 }
@@ -1013,7 +1008,7 @@ public class SVNDirectory {
         }
         entries.save(true);
     }
-    
+
     public SVNEntry add(String name, boolean mkdir, boolean force) throws SVNException {
     	File file = getFile(name);
         SVNFileType fileType = SVNFileType.getType(file);

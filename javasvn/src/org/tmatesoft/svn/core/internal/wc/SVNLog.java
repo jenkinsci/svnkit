@@ -1,7 +1,7 @@
 /*
  * ====================================================================
  * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
- * 
+ *
  * This software is licensed as described in the file COPYING, which you should
  * have received as part of this distribution. The terms are also available at
  * http://tmate.org/svn/license.html. If newer versions of this license are
@@ -72,15 +72,11 @@ public class SVNLog {
 
     public static final String REVISION_ATTR = "revision";
 
-    public static final String ATTR1 = "attr1";
-
-    public static final String ATTR2 = "attr2";
-
-    public static final String ATTR3 = "attr3";
-
-    public static final String ATTR4 = "attr4";
-
-    public static final String ATTR5 = "attr5";
+    public static final String ATTR1 = "arg1";
+    public static final String ATTR2 = "arg2";
+    public static final String ATTR3 = "arg3";
+    public static final String ATTR4 = "arg4";
+    public static final String ATTR5 = "arg5";
 
     public static final String WC_TIMESTAMP = "working";
 
