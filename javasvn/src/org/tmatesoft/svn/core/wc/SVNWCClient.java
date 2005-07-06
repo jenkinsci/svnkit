@@ -1,7 +1,7 @@
 /*
  * ====================================================================
  * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
- * 
+ *
  * This software is licensed as described in the file COPYING, which you should
  * have received as part of this distribution. The terms are also available at
  * http://tmate.org/svn/license.html. If newer versions of this license are
@@ -85,10 +85,10 @@ public class SVNWCClient extends SVNBasicClient {
         }
         String name = wcAccess.getTargetName();
         if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
+            wcAccess.open(true, false);
             File file = wcAccess.getAnchor().getBaseFile(name, false);
             boolean delete = false;
-            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(
-                    wcAccess.getTargetName(), false);
+            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), false);
             if (entry == null) {
                 SVNErrorManager.error("svn: '" + path
                         + "' is not under version control or doesn't exist");
@@ -118,6 +118,7 @@ public class SVNWCClient extends SVNBasicClient {
                     }
                 }
             } finally {
+                wcAccess.close(true);
                 if (file != null && file.exists()) {
                     InputStream is = SVNFileUtil.openFileForReading(file);
                     try {
@@ -343,7 +344,7 @@ public class SVNWCClient extends SVNBasicClient {
         url = validateURL(url);
         url = getURL(url, pegRevision, revision);
         long revNumber = getRevisionNumber(url, revision);
-        // 
+        //
         SVNRepository repos = createRepository(url);
         repos.setRevisionPropertyValue(revNumber, propName, propValue);
         if (handler != null) {
