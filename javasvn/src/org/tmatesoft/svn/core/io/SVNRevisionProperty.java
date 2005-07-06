@@ -1,6 +1,4 @@
 /*
- * SVNRevisionProperty.java, created 25.10.2004
- * 
  * ====================================================================
  * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
  *

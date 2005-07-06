@@ -1,3 +1,13 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.core.internal.wc;
 
 import org.tmatesoft.svn.core.io.ISVNReporter;
@@ -13,23 +23,27 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 18.06.2005
- * Time: 0:55:55
- * To change this template use File | Settings | File Templates.
+ * @version 1.0
+ * @author TMate Software Ltd.
  */
 public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
 
     private ISVNReporter myReporter;
+
     private ISVNReporterBaton myBaton;
+
     private String myRepositoryLocation;
+
     private SVNRepository myRepository;
+
     private String myRepositoryRoot;
+
     private Map myLocks;
+
     private SVNStatusEditor myEditor;
 
-    public SVNStatusReporter(SVNRepository repos, ISVNReporterBaton baton, SVNStatusEditor editor) {
+    public SVNStatusReporter(SVNRepository repos, ISVNReporterBaton baton,
+            SVNStatusEditor editor) {
         myBaton = baton;
         myRepository = repos;
         myRepositoryLocation = repos.getLocation().toString();
@@ -57,7 +71,8 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
         myBaton.report(this);
     }
 
-    public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
+    public void setPath(String path, String lockToken, long revision,
+            boolean startEmpty) throws SVNException {
         myReporter.setPath(path, lockToken, revision, startEmpty);
     }
 
@@ -65,9 +80,12 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
         myReporter.deletePath(path);
     }
 
-    public void linkPath(SVNRepositoryLocation repository, String path, String lockToken, long revison, boolean startEmtpy) throws SVNException {
+    public void linkPath(SVNRepositoryLocation repository, String path,
+            String lockToken, long revison, boolean startEmtpy)
+            throws SVNException {
         String url = repository.toString();
-        String rootURL = SVNPathUtil.getCommonURLAncestor(url, myRepositoryLocation);
+        String rootURL = SVNPathUtil.getCommonURLAncestor(url,
+                myRepositoryLocation);
         if (rootURL.length() < myRepositoryLocation.length()) {
             myRepositoryLocation = rootURL;
         }
@@ -77,7 +95,8 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     public void finishReport() throws SVNException {
         myReporter.finishReport();
         // collect locks
-        String path = myRepositoryLocation.substring(myRepository.getLocation().toString().length());
+        String path = myRepositoryLocation.substring(myRepository.getLocation()
+                .toString().length());
         SVNLock[] locks = null;
         try {
             myRepositoryRoot = myRepository.getRepositoryRoot(true);

@@ -1,3 +1,13 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.core.internal.wc;
 
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
@@ -17,18 +27,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 16.06.2005
- * Time: 5:16:55
- * To change this template use File | Settings | File Templates.
+ * @version 1.0
+ * @author TMate Software Ltd.
  */
 public class SVNCommitMediator implements ISVNWorkspaceMediator {
 
     private Collection myTmpFiles;
+
     private Map myTmpFilesMap;
+
     private Map myWCPropsMap;
+
     private SVNWCAccess myWCAccess;
+
     private Map myCommitItems;
 
     public SVNCommitMediator(SVNWCAccess wcAccess, Map commitItems) {
@@ -47,7 +58,8 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         return myTmpFiles;
     }
 
-    public String getWorkspaceProperty(String path, String name) throws SVNException {
+    public String getWorkspaceProperty(String path, String name)
+            throws SVNException {
         SVNCommitItem item = (SVNCommitItem) myCommitItems.get(path);
         if (item == null) {
             return null;
@@ -65,7 +77,8 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         return wcProps.getPropertyValue(name);
     }
 
-    public void setWorkspaceProperty(String path, String name, String value) throws SVNException {
+    public void setWorkspaceProperty(String path, String name, String value)
+            throws SVNException {
         if (name == null) {
             return;
         }
@@ -79,7 +92,8 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         ((Map) myWCPropsMap.get(item)).put(name, value);
     }
 
-    public OutputStream createTemporaryLocation(String path, Object id) throws IOException {
+    public OutputStream createTemporaryLocation(String path, Object id)
+            throws IOException {
         SVNCommitItem item = (SVNCommitItem) myCommitItems.get(path);
         SVNDirectory dir;
         String target;

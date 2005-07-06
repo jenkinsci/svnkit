@@ -1,3 +1,13 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
@@ -6,18 +16,19 @@ import java.io.IOException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 07.06.2005
- * Time: 21:20:24
- * To change this template use File | Settings | File Templates.
+ * @version 1.0
+ * @author TMate Software Ltd.
  */
 public class SVNFileType {
 
     public static final SVNFileType UNKNOWN = new SVNFileType(0);
+
     public static final SVNFileType NONE = new SVNFileType(1);
+
     public static final SVNFileType FILE = new SVNFileType(2);
+
     public static final SVNFileType SYMLINK = new SVNFileType(3);
+
     public static final SVNFileType DIRECTORY = new SVNFileType(4);
 
     private int myType;

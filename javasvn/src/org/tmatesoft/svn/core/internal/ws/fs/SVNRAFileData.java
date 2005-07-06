@@ -1,12 +1,11 @@
 /*
  * ====================================================================
- * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
- *
- * This software is licensed as described in the file COPYING, which
- * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
- * If newer versions of this license are posted there, you may use a
- * newer version instead, at your option.
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
  * ====================================================================
  */
 
@@ -23,30 +22,35 @@ import java.nio.channels.FileChannel;
 import org.tmatesoft.svn.core.diff.ISVNRAData;
 
 /**
+ * @version 1.0
  * @author TMate Software Ltd.
  */
 public class SVNRAFileData implements ISVNRAData {
-    
+
     private RandomAccessFile myFile;
+
     private File myRawFile;
+
     private byte[] myBuffer;
+
     private boolean myIsReadonly;
-    
-    public SVNRAFileData(File file, boolean readonly) {        
+
+    public SVNRAFileData(File file, boolean readonly) {
         myRawFile = file;
         myIsReadonly = readonly;
     }
 
-    public InputStream read(final long offset, final long length) throws IOException {
+    public InputStream read(final long offset, final long length)
+            throws IOException {
         byte[] resultingArray = new byte[(int) length];
         getRAFile().seek(offset);
         int read = getRAFile().read(resultingArray);
-        for(int i = read; i < length; i++) {
+        for (int i = read; i < length; i++) {
             resultingArray[i] = resultingArray[i - read];
         }
         return new ByteArrayInputStream(resultingArray);
     }
-    
+
     public void append(InputStream source, long length) throws IOException {
         int lLength = (int) length;
         if (myBuffer == null || myBuffer.length < length) {
@@ -58,7 +62,7 @@ public class SVNRAFileData implements ISVNRAData {
         getRAFile().seek(getRAFile().length());
         getRAFile().write(myBuffer, 0, read);
     }
-    
+
     public void close() throws IOException {
         if (myFile == null) {
             return;
@@ -72,9 +76,9 @@ public class SVNRAFileData implements ISVNRAData {
     }
 
     public long lastModified() {
-        return myRawFile.lastModified(); 
+        return myRawFile.lastModified();
     }
-    
+
     private RandomAccessFile getRAFile() throws IOException {
         if (myFile == null) {
             if (!myRawFile.exists()) {

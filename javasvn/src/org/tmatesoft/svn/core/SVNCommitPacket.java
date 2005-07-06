@@ -1,30 +1,41 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.core;
 
-
 /**
- * @author Marc Strapetz
+ * @version 1.0
+ * @author TMate Software Ltd.
  */
 public class SVNCommitPacket {
 
-	// Fields =================================================================
+    // Fields =================================================================
 
-	private final String myRoot;
-	private final SVNStatus[] myStatuses;
+    private final String myRoot;
 
-	// Setup ==================================================================
+    private final SVNStatus[] myStatuses;
 
-	public SVNCommitPacket(String root, SVNStatus[] statuses) {
-		this.myRoot = root;
-		this.myStatuses = statuses;
-	}
+    // Setup ==================================================================
 
-	// Accessing ==============================================================
+    public SVNCommitPacket(String root, SVNStatus[] statuses) {
+        this.myRoot = root;
+        this.myStatuses = statuses;
+    }
 
-	public String getRoot() {
-		return myRoot;
-	}
+    // Accessing ==============================================================
 
-	public SVNStatus[] getStatuses() {
-		return myStatuses;
-	}
+    public String getRoot() {
+        return myRoot;
+    }
+
+    public SVNStatus[] getStatuses() {
+        return myStatuses;
+    }
 }

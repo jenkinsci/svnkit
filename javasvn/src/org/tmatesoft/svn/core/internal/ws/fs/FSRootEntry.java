@@ -1,12 +1,11 @@
 /*
  * ====================================================================
- * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
- *
- * This software is licensed as described in the file COPYING, which
- * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
- * If newer versions of this license are posted there, you may use a
- * newer version instead, at your option.
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
  * ====================================================================
  */
 
@@ -31,18 +30,22 @@ import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
+ * @version 1.0
  * @author TMate Software Ltd.
  */
 public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
-    
+
     private static final String DEFAULT_GLOBAL_IGNORE = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";
 
     private Map myTempLocations;
+
     private String myID;
+
     private FSMerger myMerger;
+
     private String myGlobalIgnore;
 
-    private boolean myIsUseCommitTimes; 
+    private boolean myIsUseCommitTimes;
 
     public FSRootEntry(FSAdminArea area, String id, String location) {
         super(area, null, "", location);
@@ -50,16 +53,17 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         id = id.replace(File.separatorChar, '/');
         myID = id;
     }
-    
+
     public String getType() {
         return "file";
     }
-    
+
     public String getID() {
         return myID;
     }
 
-    public String getWorkspaceProperty(String path, String name) throws SVNException {
+    public String getWorkspaceProperty(String path, String name)
+            throws SVNException {
         if (path == null || name == null) {
             return null;
         }
@@ -70,7 +74,8 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         return null;
     }
 
-    public void setWorkspaceProperty(String path, String name, String value) throws SVNException {
+    public void setWorkspaceProperty(String path, String name, String value)
+            throws SVNException {
         if (path == null || name == null) {
             return;
         }
@@ -78,30 +83,31 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         if (entry != null) {
             entry.setPropertyValue(name, value);
         } else {
-        	DebugLog.log("can't locate entry at: " + path);
+            DebugLog.log("can't locate entry at: " + path);
         }
     }
-    
+
     public void setGlobalIgnore(String ignore) {
         myGlobalIgnore = ignore;
     }
-    
+
     public String getGlobalIgnore() {
         if (myGlobalIgnore == null) {
             return DEFAULT_GLOBAL_IGNORE;
         }
         return myGlobalIgnore;
     }
-    
+
     public void setUseCommitTimes(boolean useCommitTimes) {
         myIsUseCommitTimes = useCommitTimes;
     }
-    
+
     public boolean isUseCommitTimes() {
         return myIsUseCommitTimes;
     }
 
-    public OutputStream createTemporaryLocation(String path, Object id) throws IOException {
+    public OutputStream createTemporaryLocation(String path, Object id)
+            throws IOException {
         if (id == null) {
             throw new IOException("id could not be null");
         }
@@ -120,7 +126,8 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
             parent.mkdirs();
             FSUtil.setHidden(parent.getParentFile(), true);
         }
-        File tempFile = File.createTempFile("svn." + name + ".", ".tmp", parent);
+        File tempFile = File
+                .createTempFile("svn." + name + ".", ".tmp", parent);
         tempFile.deleteOnExit();
         myTempLocations.put(id, tempFile);
         return new BufferedOutputStream(new FileOutputStream(tempFile));
@@ -136,7 +143,7 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
         }
         return new BufferedInputStream(new FileInputStream(file));
     }
-    
+
     public void deleteAdminFiles(String path) {
         path = PathUtil.append(path, ".svn");
         File parent = new File(myID, path);
@@ -145,7 +152,7 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
             myTempLocations.clear();
         }
     }
-    
+
     public long getLength(Object id) throws IOException {
         if (myTempLocations == null || id == null) {
             throw new IOException("no such location: " + id);
@@ -166,57 +173,60 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
             file.delete();
         }
     }
-    
+
     public File getWorkingCopyFile(ISVNEntry entry) {
         return new File(myID, entry.getPath());
     }
-    
+
     public File createTemporaryFile(FSFileEntry source) throws SVNException {
-        File parent = new File(source.getAdminArea().getAdminArea(source), "tmp");
+        File parent = new File(source.getAdminArea().getAdminArea(source),
+                "tmp");
         if (!parent.exists()) {
             parent.mkdirs();
             FSUtil.setHidden(parent.getParentFile(), true);
         }
         File file = null;
         try {
-             file = File.createTempFile("svn." + source.getName() + ".", ".tmp", parent);
-             file.deleteOnExit();
+            file = File.createTempFile("svn." + source.getName() + ".", ".tmp",
+                    parent);
+            file.deleteOnExit();
         } catch (IOException e) {
             DebugLog.error(e);
         }
         return file;
     }
-    
+
     public boolean isObstructed() {
         return false;
     }
-    
+
     public boolean revert(String childName) throws SVNException {
         if (childName == null) {
-            revertProperties();            
+            revertProperties();
         } else {
             return super.revert(childName);
         }
         return true;
     }
-    
+
     public FSMerger getMerger() {
         if (myMerger == null) {
             myMerger = new FSMerger();
         }
         return myMerger;
     }
-    
+
     protected FSRootEntry getRootEntry() {
         return this;
     }
-    
+
     protected ISVNEntry locateEntry(String path) throws SVNException {
         if (path == null) {
             return null;
         }
         ISVNEntry entry = this;
-        for(StringTokenizer tokens = new StringTokenizer(path, "/"); tokens.hasMoreTokens();) {
+        for (StringTokenizer tokens = new StringTokenizer(path, "/"); tokens
+                .hasMoreTokens();) {
             String token = tokens.nextToken();
             if (entry.isDirectory()) {
                 entry = entry.asDirectory().getUnmanagedChild(token);
@@ -226,7 +236,7 @@ public class FSRootEntry extends FSDirEntry implements ISVNRootEntry {
             if (entry == null) {
                 return null;
             }
-        }    
+        }
         return entry;
     }
 }

@@ -18,8 +18,10 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
+
 /**
- * @author TMate Software Ltd.
+ * @version 1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNDiffWindowBuilder {
 	

@@ -12,8 +12,10 @@
 
 package org.tmatesoft.svn.core.diff;
 
+
 /**
- * @author Alexander Kitaev
+ * @version 1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNDiffInstruction {
     

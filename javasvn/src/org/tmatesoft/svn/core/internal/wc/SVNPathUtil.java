@@ -1,3 +1,13 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
@@ -8,11 +18,8 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 12.06.2005
- * Time: 19:20:52
- * To change this template use File | Settings | File Templates.
+ * @version 1.0
+ * @author TMate Software Ltd.
  */
 public class SVNPathUtil {
 
@@ -25,7 +32,7 @@ public class SVNPathUtil {
 
         int index = 0;
         int separatorIndex = 0;
-        while(index < path1.length() && index < path2.length()) {
+        while (index < path1.length() && index < path2.length()) {
             if (path1.charAt(index) != path2.charAt(index)) {
                 break;
             }
@@ -51,7 +58,7 @@ public class SVNPathUtil {
         }
         int index = 0;
         StringBuffer protocol = new StringBuffer();
-        while(index < url1.length() && index < url2.length()) {
+        while (index < url1.length() && index < url2.length()) {
             char ch1 = url1.charAt(index);
             if (ch1 != url2.charAt(index)) {
                 return "";
@@ -67,7 +74,8 @@ public class SVNPathUtil {
         if (index >= url1.length() || index >= url2.length()) {
             return "";
         }
-        protocol.append(getCommonPathAncestor(url1.substring(index), url2.substring(index)));
+        protocol.append(getCommonPathAncestor(url1.substring(index), url2
+                .substring(index)));
         return protocol.toString();
     }
 
@@ -83,7 +91,8 @@ public class SVNPathUtil {
         return null;
     }
 
-    public static String condenceURLs(String[] urls, Collection condencedPaths, boolean removeRedundantURLs) {
+    public static String condenceURLs(String[] urls, Collection condencedPaths,
+            boolean removeRedundantURLs) {
         if (urls == null || urls.length == 0) {
             return null;
         }
@@ -146,7 +155,8 @@ public class SVNPathUtil {
         return rootURL;
     }
 
-    public static String condencePaths(String[] paths, Collection condencedPaths, boolean removeRedundantPaths) {
+    public static String condencePaths(String[] paths,
+            Collection condencedPaths, boolean removeRedundantPaths) {
         if (paths == null || paths.length == 0) {
             return null;
         }
@@ -215,14 +225,15 @@ public class SVNPathUtil {
         path = path.replace(File.separatorChar, '/');
         StringBuffer result = new StringBuffer();
         List segments = new LinkedList();
-        for(StringTokenizer tokens = new StringTokenizer(path, "/", false); tokens.hasMoreTokens();) {
+        for (StringTokenizer tokens = new StringTokenizer(path, "/", false); tokens
+                .hasMoreTokens();) {
             String segment = tokens.nextToken();
             if ("..".equals(segment)) {
                 if (!segments.isEmpty()) {
                     segments.remove(segments.size() - 1);
                 } else {
                     File root = new File(System.getProperty("user.dir"));
-                    while(root.getParentFile() != null) {
+                    while (root.getParentFile() != null) {
                         segments.add(0, root.getParentFile().getName());
                         root = root.getParentFile();
                     }
@@ -250,9 +261,11 @@ public class SVNPathUtil {
         if (parentFile == null || childFile == null) {
             return false;
         }
-        childFile = new File(SVNPathUtil.validateFilePath(childFile.getParentFile().getAbsolutePath()));
-        parentFile = new File(SVNPathUtil.validateFilePath(parentFile.getAbsolutePath()));
-        while(childFile != null) {
+        childFile = new File(SVNPathUtil.validateFilePath(childFile
+                .getParentFile().getAbsolutePath()));
+        parentFile = new File(SVNPathUtil.validateFilePath(parentFile
+                .getAbsolutePath()));
+        while (childFile != null) {
             if (childFile.equals(parentFile)) {
                 return true;
             }

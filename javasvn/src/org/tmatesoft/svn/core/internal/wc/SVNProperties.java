@@ -1,3 +1,13 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.ByteArrayInputStream;
@@ -16,24 +26,29 @@ import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.io.SVNException;
 
+/**
+ * @version 1.0
+ * @author TMate Software Ltd.
+ */
 public class SVNProperties {
-    
+
     private File myFile;
+
     private String myPath;
-    
+
     public SVNProperties(File properitesFile, String path) {
         myFile = properitesFile;
         myPath = path;
     }
-    
+
     public File getFile() {
         return myFile;
     }
-    
+
     public String getPath() {
         return myPath;
     }
-    
+
     public Collection properties(Collection target) throws SVNException {
         target = target == null ? new TreeSet() : target;
         if (!myFile.exists()) {
@@ -42,7 +57,7 @@ public class SVNProperties {
         ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
         InputStream is = SVNFileUtil.openFileForReading(myFile);
         try {
-            while(readProperty('K', is, nameOS)) {
+            while (readProperty('K', is, nameOS)) {
                 target.add(new String(nameOS.toByteArray(), "UTF-8"));
                 nameOS.reset();
                 readProperty('V', is, null);
@@ -54,25 +69,26 @@ public class SVNProperties {
         }
         return target;
     }
-    
+
     public Map asMap() throws SVNException {
         Map result = new HashMap();
         if (!getFile().exists()) {
             return result;
         }
-        for(Iterator names = properties(null).iterator(); names.hasNext();) {
+        for (Iterator names = properties(null).iterator(); names.hasNext();) {
             String name = (String) names.next();
-            String value  = getPropertyValue(name);
+            String value = getPropertyValue(name);
             result.put(name, value);
         }
         return result;
     }
-    
-    public boolean compareTo(SVNProperties properties, ISVNPropertyComparator comparator) throws SVNException {
+
+    public boolean compareTo(SVNProperties properties,
+            ISVNPropertyComparator comparator) throws SVNException {
         boolean equals = true;
-        Collection props1 = properties(null); 
+        Collection props1 = properties(null);
         Collection props2 = properties.properties(null);
-        
+
         // missed in props2.
         Collection tmp = new TreeSet(props1);
         tmp.removeAll(props2);
@@ -81,11 +97,11 @@ public class SVNProperties {
             comparator.propertyDeleted(missing);
             equals = false;
         }
-        
+
         // added in props2.
         tmp = new TreeSet(props2);
-        tmp.removeAll(props1);        
-        
+        tmp.removeAll(props1);
+
         File tmpFile = null;
         File tmpFile1 = null;
         File tmpFile2 = null;
@@ -97,8 +113,9 @@ public class SVNProperties {
         for (Iterator props = tmp.iterator(); props.hasNext();) {
             String added = (String) props.next();
             try {
-                tmpFile = SVNFileUtil.createUniqueFile(myFile.getParentFile(), myFile.getName(), ".tmp");
-    
+                tmpFile = SVNFileUtil.createUniqueFile(myFile.getParentFile(),
+                        myFile.getName(), ".tmp");
+
                 os = SVNFileUtil.openFileForWriting(tmpFile);
                 properties.getPropertyValue(added, os);
                 SVNFileUtil.closeFile(os);
@@ -117,17 +134,19 @@ public class SVNProperties {
                 is = null;
                 os = null;
             }
-        }        
-        
+        }
+
         // changed in props2
         props2.retainAll(props1);
         for (Iterator props = props2.iterator(); props.hasNext();) {
             String changed = (String) props.next();
-            
+
             try {
-                tmpFile1 = SVNFileUtil.createUniqueFile(myFile.getParentFile(), myFile.getName(), ".tmp1");
-                tmpFile2 = SVNFileUtil.createUniqueFile(myFile.getParentFile(), myFile.getName(), ".tmp2");
-                
+                tmpFile1 = SVNFileUtil.createUniqueFile(myFile.getParentFile(),
+                        myFile.getName(), ".tmp1");
+                tmpFile2 = SVNFileUtil.createUniqueFile(myFile.getParentFile(),
+                        myFile.getName(), ".tmp2");
+
                 os = new FileOutputStream(tmpFile1);
                 getPropertyValue(changed, os);
                 os.close();
@@ -136,14 +155,15 @@ public class SVNProperties {
                 os.close();
                 if (tmpFile2.length() != tmpFile1.length()) {
                     is = SVNFileUtil.openFileForReading(tmpFile2);
-                    comparator.propertyChanged(changed, is, (int) tmpFile2.length());
+                    comparator.propertyChanged(changed, is, (int) tmpFile2
+                            .length());
                     equals = false;
                     SVNFileUtil.closeFile(is);
                 } else {
                     is1 = SVNFileUtil.openFileForReading(tmpFile1);
                     is2 = SVNFileUtil.openFileForReading(tmpFile2);
                     boolean differs = false;
-                    for(int i = 0; i < tmpFile1.length(); i++) {
+                    for (int i = 0; i < tmpFile1.length(); i++) {
                         if (is1.read() != is2.read()) {
                             differs = true;
                             break;
@@ -153,7 +173,8 @@ public class SVNProperties {
                     SVNFileUtil.closeFile(is2);
                     if (differs) {
                         is2 = SVNFileUtil.openFileForReading(tmpFile2);
-                        comparator.propertyChanged(changed, is2, (int) tmpFile2.length());
+                        comparator.propertyChanged(changed, is2, (int) tmpFile2
+                                .length());
                         equals = false;
                         SVNFileUtil.closeFile(is2);
                     }
@@ -178,7 +199,7 @@ public class SVNProperties {
         }
         return equals;
     }
-    
+
     public String getPropertyValue(String name) throws SVNException {
         if (!myFile.exists()) {
             return null;
@@ -197,14 +218,15 @@ public class SVNProperties {
         return null;
     }
 
-    public OutputStream getPropertyValue(String name, OutputStream os) throws SVNException {
+    public OutputStream getPropertyValue(String name, OutputStream os)
+            throws SVNException {
         if (!myFile.exists()) {
             return null;
         }
         ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
         InputStream is = SVNFileUtil.openFileForReading(myFile);
         try {
-            while(readProperty('K', is, nameOS)) {
+            while (readProperty('K', is, nameOS)) {
                 String currentName = new String(nameOS.toByteArray(), "UTF-8");
                 nameOS.reset();
                 if (currentName.equals(name)) {
@@ -223,7 +245,7 @@ public class SVNProperties {
     }
 
     public void setPropertyValue(String name, String value) throws SVNException {
-        
+
         byte[] bytes = null;
         if (value != null) {
             try {
@@ -233,15 +255,18 @@ public class SVNProperties {
             }
         }
         int length = bytes != null && bytes.length >= 0 ? bytes.length : -1;
-        setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes) : null, length);
+        setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes)
+                : null, length);
     }
 
-    public void setPropertyValue(String name, InputStream is, int length) throws SVNException {
+    public void setPropertyValue(String name, InputStream is, int length)
+            throws SVNException {
         InputStream src = null;
         OutputStream dst = null;
         File tmpFile = null;
         try {
-            tmpFile = SVNFileUtil.createUniqueFile(myFile.getParentFile(), myFile.getName(), ".tmp");
+            tmpFile = SVNFileUtil.createUniqueFile(myFile.getParentFile(),
+                    myFile.getName(), ".tmp");
             if (myFile.exists()) {
                 src = SVNFileUtil.openFileForReading(myFile);
             }
@@ -256,16 +281,18 @@ public class SVNProperties {
             SVNFileUtil.setReadonly(myFile, true);
         }
     }
-    
+
     public Map compareTo(SVNProperties properties) throws SVNException {
         final Map locallyChangedProperties = new HashMap();
         compareTo(properties, new ISVNPropertyComparator() {
             public void propertyAdded(String name, InputStream value, int length) {
                 propertyChanged(name, value, length);
             }
-            public void propertyChanged(String name, InputStream newValue, int length) {
+
+            public void propertyChanged(String name, InputStream newValue,
+                    int length) {
                 ByteArrayOutputStream os = new ByteArrayOutputStream(length);
-                for(int i = 0; i < length; i++) {
+                for (int i = 0; i < length; i++) {
                     try {
                         os.write(newValue.read());
                     } catch (IOException e) {
@@ -273,18 +300,20 @@ public class SVNProperties {
                 }
                 byte[] bytes = os.toByteArray();
                 try {
-                    locallyChangedProperties.put(name, new String(bytes, "UTF-8"));
+                    locallyChangedProperties.put(name, new String(bytes,
+                            "UTF-8"));
                 } catch (UnsupportedEncodingException e) {
                     locallyChangedProperties.put(name, new String(bytes));
                 }
             }
+
             public void propertyDeleted(String name) {
                 locallyChangedProperties.put(name, null);
             }
         });
-        return locallyChangedProperties;        
+        return locallyChangedProperties;
     }
-    
+
     public void copyTo(SVNProperties destination) throws SVNException {
         if (!getFile().exists()) {
             // just create empty dst.
@@ -295,23 +324,25 @@ public class SVNProperties {
             SVNFileUtil.copyFile(getFile(), destination.getFile(), true);
         }
     }
-    
+
     public void delete() {
         myFile.delete();
     }
 
-    /** @noinspection ResultOfMethodCallIgnored*/
-    private static void copyProperties(InputStream is, OutputStream os, String name, InputStream value, int length) {
-        // read names, till name is met, then insert value or skip this property.
+    /** @noinspection ResultOfMethodCallIgnored */
+    private static void copyProperties(InputStream is, OutputStream os,
+            String name, InputStream value, int length) {
+        // read names, till name is met, then insert value or skip this
+        // property.
         try {
             if (is != null) {
                 int l = 0;
-                while((l = readLength(is, 'K')) > 0) {
+                while ((l = readLength(is, 'K')) > 0) {
                     byte[] nameBytes = new byte[l];
                     is.read(nameBytes);
                     is.read();
                     if (name.equals(new String(nameBytes, "UTF-8"))) {
-                        // skip property, will be appended. 
+                        // skip property, will be appended.
                         readProperty('V', is, null);
                         continue;
                     }
@@ -327,20 +358,21 @@ public class SVNProperties {
                 writeProperty(os, 'K', nameBytes);
                 writeProperty(os, 'V', value, length);
             }
-            os.write(new byte[] {'E', 'N', 'D', '\n'});
+            os.write(new byte[] { 'E', 'N', 'D', '\n' });
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    /** @noinspection ResultOfMethodCallIgnored*/
-    private static boolean readProperty(char type, InputStream is, OutputStream os) throws IOException {
+    /** @noinspection ResultOfMethodCallIgnored */
+    private static boolean readProperty(char type, InputStream is,
+            OutputStream os) throws IOException {
         int length = readLength(is, type);
         if (length < 0) {
             return false;
         }
         if (os != null) {
-            for(int i = 0; i < length; i++) {
+            for (int i = 0; i < length; i++) {
                 int r = is.read();
                 os.write(r);
             }
@@ -349,8 +381,9 @@ public class SVNProperties {
         }
         return is.read() == '\n';
     }
-    
-    private static void writeProperty(OutputStream os, char type, byte[] value) throws IOException {
+
+    private static void writeProperty(OutputStream os, char type, byte[] value)
+            throws IOException {
         os.write((byte) type);
         os.write(' ');
         os.write(Integer.toString(value.length).getBytes());
@@ -359,12 +392,13 @@ public class SVNProperties {
         os.write('\n');
     }
 
-    private static void writeProperty(OutputStream os, char type, InputStream value, int length) throws IOException {
+    private static void writeProperty(OutputStream os, char type,
+            InputStream value, int length) throws IOException {
         os.write((byte) type);
         os.write(' ');
         os.write(Integer.toString(length).getBytes());
         os.write('\n');
-        for(int i = 0; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             int r = value.read();
             os.write(r);
         }
@@ -377,13 +411,14 @@ public class SVNProperties {
         if (r != 4) {
             throw new IOException("invalid properties file format");
         }
-        // either END\n or K x\n 
-        if (buffer[0] == 'E' && buffer[1] == 'N' && buffer[2] == 'D' && buffer[3] == '\n') {
+        // either END\n or K x\n
+        if (buffer[0] == 'E' && buffer[1] == 'N' && buffer[2] == 'D'
+                && buffer[3] == '\n') {
             return -1;
         } else if (buffer[0] == type && buffer[1] == ' ') {
             int i = 4;
             if (buffer[3] != '\n') {
-                while(true) {
+                while (true) {
                     int b = is.read();
                     if (b < 0) {
                         throw new IOException("invalid properties file format");
@@ -403,7 +438,7 @@ public class SVNProperties {
     }
 
     public boolean isEmpty() {
-        if (!getFile().exists() || !getFile().isFile())  {
+        if (!getFile().exists() || !getFile().isFile()) {
             return true;
         }
         return getFile().length() <= 4;

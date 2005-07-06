@@ -1,12 +1,11 @@
 /*
  * ====================================================================
- * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
- *
- * This software is licensed as described in the file COPYING, which
- * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
- * If newer versions of this license are posted there, you may use a
- * newer version instead, at your option.
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
  * ====================================================================
  */
 
@@ -17,14 +16,17 @@ import java.io.InputStream;
 import java.io.PushbackInputStream;
 
 /**
- * @author Alexander Kitaev
+ * @version 1.0
+ * @author TMate Software Ltd.
  */
 class RollbackInputStream extends InputStream {
 
     private PushbackInputStream mySource;
+
     private byte[] myBuffer;
+
     private int myLength;
-    
+
     public RollbackInputStream(InputStream source) {
         mySource = new PushbackInputStream(source, 0x100);
     }
@@ -44,12 +46,12 @@ class RollbackInputStream extends InputStream {
         }
         return read;
     }
-    
+
     public synchronized void mark(int readlimit) {
         myBuffer = new byte[readlimit];
         myLength = 0;
     }
-    
+
     public synchronized void reset() throws IOException {
         if (myLength < 0) {
             throw new IOException("maximum read limit exceeded");
@@ -61,4 +63,4 @@ class RollbackInputStream extends InputStream {
         myBuffer = null;
         myLength = 0;
     }
-} 
+}

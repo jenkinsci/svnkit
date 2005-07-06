@@ -1,12 +1,11 @@
 /*
  * ====================================================================
- * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
- *
- * This software is licensed as described in the file COPYING, which
- * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
- * If newer versions of this license are posted there, you may use a
- * newer version instead, at your option.
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
  * ====================================================================
  */
 
@@ -24,33 +23,37 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 
 /**
+ * @version 1.0
  * @author TMate Software Ltd.
  */
 public class SVNUtil {
-    
-    public static ISVNWorkspace createWorkspace(String filePath) throws SVNException {
+
+    public static ISVNWorkspace createWorkspace(String filePath)
+            throws SVNException {
         return createWorkspace(filePath, true);
     }
-    
-    public static ISVNWorkspace createWorkspace(String filePath, boolean root) throws SVNException {
+
+    public static ISVNWorkspace createWorkspace(String filePath, boolean root)
+            throws SVNException {
         File file = new File(filePath);
         if (file.exists() && !file.isDirectory()) {
             file = file.getAbsoluteFile().getParentFile();
-            if (file == null) { 
+            if (file == null) {
                 return null;
             }
         }
         filePath = file.getAbsolutePath();
-        ISVNWorkspace ws = SVNWorkspaceManager.createWorkspace("file", filePath);
+        ISVNWorkspace ws = SVNWorkspaceManager
+                .createWorkspace("file", filePath);
         if (root && ws != null) {
             return ws.getRootWorkspace(true, false);
-        } 
+        }
         return ws;
     }
 
     public static String getWorkspacePath(ISVNWorkspace ws, String absolutePath) {
         File file = new File(absolutePath);
-        
+
         String root = new File(ws.getID()).getAbsolutePath();
         root = root.replace(File.separatorChar, '/');
         String path = file.getAbsolutePath().replace(File.separatorChar, '/');
@@ -69,12 +72,13 @@ public class SVNUtil {
         }
         return path;
     }
-    
+
     public static String getAbsolutePath(ISVNWorkspace ws, String relativePath) {
         return PathUtil.append(ws.getID(), relativePath);
     }
-    
-    public static SVNRepository createRepository(ISVNWorkspace ws, String relativePath) throws SVNException {
+
+    public static SVNRepository createRepository(ISVNWorkspace ws,
+            String relativePath) throws SVNException {
         SVNRepositoryLocation location = ws.getLocation(relativePath);
         SVNRepository repository = null;
         if (location != null) {
@@ -107,7 +111,8 @@ public class SVNUtil {
 
     private static String condensePath(String path) {
         StringBuffer result = new StringBuffer();
-        for(StringTokenizer tokens = new StringTokenizer(path, "/", true); tokens.hasMoreTokens();) {
+        for (StringTokenizer tokens = new StringTokenizer(path, "/", true); tokens
+                .hasMoreTokens();) {
             String token = tokens.nextToken();
             if (".".equals(token)) {
                 if (tokens.hasMoreTokens()) {
@@ -131,7 +136,7 @@ public class SVNUtil {
         if (left) {
             formatted.append(str);
         }
-        for(int i = 0; i < chars - str.length(); i++) {
+        for (int i = 0; i < chars - str.length(); i++) {
             formatted.append(' ');
         }
         if (!left) {

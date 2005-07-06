@@ -1,12 +1,11 @@
 /*
  * ====================================================================
- * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
- *
- * This software is licensed as described in the file COPYING, which
- * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
- * If newer versions of this license are posted there, you may use a
- * newer version instead, at your option.
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
  * ====================================================================
  */
 
@@ -38,12 +37,12 @@ import org.tmatesoft.svn.util.*;
  * @author Alexander Kitaev
  */
 class SVNReader {
-    
+
     public static Date getDate(Object[] items, int index) {
         String str = getString(items, index);
         return TimeUtil.parseDate(str);
     }
-    
+
     public static long getLong(Object[] items, int index) {
         if (items == null || index >= items.length) {
             return -1;
@@ -55,7 +54,7 @@ class SVNReader {
         }
         return -1;
     }
-    
+
     public static boolean getBoolean(Object[] items, int index) {
         if (items == null || index >= items.length) {
             return false;
@@ -66,7 +65,7 @@ class SVNReader {
             return Boolean.valueOf((String) items[index]).booleanValue();
         }
         return false;
-        
+
     }
 
     public static Map getMap(Object[] items, int index) {
@@ -88,7 +87,7 @@ class SVNReader {
         }
         return Collections.EMPTY_LIST;
     }
-    
+
     public static String getString(Object[] items, int index) {
         if (items == null || index >= items.length) {
             return null;
@@ -106,20 +105,21 @@ class SVNReader {
     }
 
     public static boolean hasValue(Object[] items, int index, boolean value) {
-        return hasValue(items, index, Boolean.valueOf(value));        
+        return hasValue(items, index, Boolean.valueOf(value));
     }
 
     public static boolean hasValue(Object[] items, int index, int value) {
-        return hasValue(items, index, new Long(value));        
+        return hasValue(items, index, new Long(value));
     }
-    
+
     public static boolean hasValue(Object[] items, int index, Object value) {
         if (items == null || index >= items.length) {
             return false;
         }
         if (items[index] instanceof List) {
             // look in list.
-            for (Iterator iter = ((List) items[index]).iterator(); iter.hasNext();) {
+            for (Iterator iter = ((List) items[index]).iterator(); iter
+                    .hasNext();) {
                 Object element = iter.next();
                 if (element.equals(value)) {
                     return true;
@@ -142,40 +142,36 @@ class SVNReader {
     }
 
     /**
-     * upper case - read or delegate
-     * lower case - skip
+     * upper case - read or delegate lower case - skip
      * 
-     * 's' - read string as string or delegate
-     * 'w' - read word as string or delegate
-     * 't' - read word as Boolean
-     * 'b' - read string as byte[] or delegate
-     * 'i' - push input to passed output stream
-     * 'n' - read number as Integer
-     * 'p' - properties map entry (name => value)
-     * 'l' - lock description
+     * 's' - read string as string or delegate 'w' - read word as string or
+     * delegate 't' - read word as Boolean 'b' - read string as byte[] or
+     * delegate 'i' - push input to passed output stream 'n' - read number as
+     * Integer 'p' - properties map entry (name => value) 'l' - lock description
      * 
-     * 'd' - dir entry (get-dir svn command response)
-     * 'f' - stat command responce
-     * 'e' - edit command
+     * 'd' - dir entry (get-dir svn command response) 'f' - stat command
+     * responce 'e' - edit command
      * 
-     * '(' and ')' - list brackets
-     * '[' and ']' - command response, check for 'failure', equals to '(w?(*e))' where w = success | failure  
+     * '(' and ')' - list brackets '[' and ']' - command response, check for
+     * 'failure', equals to '(w?(*e))' where w = success | failure
      * 
-     * '?' - 0..1 tokens
-     * '*' - 0..* tokens
-     * cardinality only applicable for tokens, not for groups.
+     * '?' - 0..1 tokens '*' - 0..* tokens cardinality only applicable for
+     * tokens, not for groups.
      * 
      */
-    
-    public static Object[] parse(LoggingInputStream is, String templateStr, Object[] target) throws SVNException {
+
+    public static Object[] parse(LoggingInputStream is, String templateStr,
+            Object[] target) throws SVNException {
         if (!is.markSupported()) {
-            throw new SVNException("SVNReader works only with markable input streams");
+            throw new SVNException(
+                    "SVNReader works only with markable input streams");
         }
         if (target != null) {
             for (int i = 0; i < target.length; i++) {
-                if (target[i] instanceof Collection || target[i] instanceof Map ||
-                        target[i] instanceof ISVNDirEntryHandler ||
-                        target[i] instanceof ISVNEditor || target[i] instanceof OutputStream) {
+                if (target[i] instanceof Collection || target[i] instanceof Map
+                        || target[i] instanceof ISVNDirEntryHandler
+                        || target[i] instanceof ISVNEditor
+                        || target[i] instanceof OutputStream) {
                     continue;
                 }
                 target[i] = null;
@@ -185,19 +181,23 @@ class SVNReader {
         SVNEditModeReader editorBaton = null;
         int targetIndex = 0;
         boolean unconditionalThrow = false;
-        for(int i = 0; i < template.length(); i++) {
+        for (int i = 0; i < template.length(); i++) {
             char ch = template.charAt(i);
             boolean optional = ch == '?' || ch == '*';
             boolean multiple = ch == '*';
-            boolean doRead = Character.isUpperCase(ch) && !isListed(INVALID_CARDINALITY_SUBJECTS, ch);
+            boolean doRead = Character.isUpperCase(ch)
+                    && !isListed(INVALID_CARDINALITY_SUBJECTS, ch);
             ch = Character.toLowerCase(ch);
             if (optional) {
                 // cardinality
-                char next = i + 1 < template.length() ? template.charAt(i + 1) : '<';
-                doRead = Character.isUpperCase(next) && !isListed(INVALID_CARDINALITY_SUBJECTS, next);
+                char next = i + 1 < template.length() ? template.charAt(i + 1)
+                        : '<';
+                doRead = Character.isUpperCase(next)
+                        && !isListed(INVALID_CARDINALITY_SUBJECTS, next);
                 next = Character.toLowerCase(next);
                 if (isListed(INVALID_CARDINALITY_SUBJECTS, next)) {
-                    throw new SVNException("malformed template '" + templateStr + "' invalid type after cardinality: " + next);                    
+                    throw new SVNException("malformed template '" + templateStr
+                            + "' invalid type after cardinality: " + next);
                 }
                 i++;
                 ch = next;
@@ -228,15 +228,15 @@ class SVNReader {
                             is2.reset();
                         } catch (IOException e1) {
                         }
-                    } 
+                    }
                     readChar(is, ')');
-                    result = new String[] {name, value};
+                    result = new String[] { name, value };
                 } else if (ch == 'z') {
                     readChar(is, '(');
                     String name = readString(is);
                     String value = null;
                     // may not be there
-					readChar(is, '(');
+                    readChar(is, '(');
                     InputStream is2 = new RollbackInputStream(is);
                     is2.mark(0x100);
                     try {
@@ -247,10 +247,10 @@ class SVNReader {
                             is2.reset();
                         } catch (IOException e1) {
                         }
-                    } 
-					readChar(is, ')');
+                    }
                     readChar(is, ')');
-                    result = new String[] {name, value};
+                    readChar(is, ')');
+                    result = new String[] { name, value };
                 } else if (ch == 'w') {
                     String word = readWord(is);
                     result = word;
@@ -258,7 +258,7 @@ class SVNReader {
                     result = Boolean.valueOf(readBoolean(is));
                 } else if (ch == 'n') {
                     result = new Long(readNumber(is));
-                } else if (ch == '[') {                    
+                } else if (ch == '[') {
                     readChar(is, '(');
                     String word = readWord(is);
                     if ("failure".equals(word)) {
@@ -267,10 +267,10 @@ class SVNReader {
                         List errors = new ArrayList();
                         RollbackInputStream is2 = new RollbackInputStream(is);
                         try {
-                            while(true) {
+                            while (true) {
                                 is2.mark(0x5);
                                 errors.add(readError(is2));
-                            }                            
+                            }
                         } catch (SVNException e) {
                             try {
                                 is2.reset();
@@ -282,24 +282,32 @@ class SVNReader {
                                 //
                             }
                         }
-                        String message = errors.isEmpty() ? "svnserver reported an error" : "svn: " + ((SVNError) errors.get(0)).getMessage();
+                        String message = errors.isEmpty() ? "svnserver reported an error"
+                                : "svn: "
+                                        + ((SVNError) errors.get(0))
+                                                .getMessage();
                         throw new SVNException(message);
                     } else if (!"success".equals(word)) {
-                        throw new SVNException("network data doesn't match template, 'success' or 'failure' expected, '" + word + "' read");
+                        throw new SVNException(
+                                "network data doesn't match template, 'success' or 'failure' expected, '"
+                                        + word + "' read");
                     }
-                } else if (ch == ')' || ch == ']') {                    
+                } else if (ch == ')' || ch == ']') {
                     readChar(is, ')');
                 } else if (ch == '(') {
                     readChar(is, '(');
                 } else if (ch == 'd') {
-                    result = readDirEntry(DebugLog.getLoggingInputStream("svn", new RollbackInputStream(is)));
+                    result = readDirEntry(DebugLog.getLoggingInputStream("svn",
+                            new RollbackInputStream(is)));
                 } else if (ch == 'f') {
-                    result = readStatEntry(DebugLog.getLoggingInputStream("svn", new RollbackInputStream(is)));
+                    result = readStatEntry(DebugLog.getLoggingInputStream(
+                            "svn", new RollbackInputStream(is)));
                 } else if (ch == 'e') {
                     if (editorBaton == null) {
-                        editorBaton = new SVNEditModeReader(); 
+                        editorBaton = new SVNEditModeReader();
                         if (target[targetIndex] instanceof ISVNEditor) {
-                            editorBaton.setEditor((ISVNEditor) target[targetIndex]);
+                            editorBaton
+                                    .setEditor((ISVNEditor) target[targetIndex]);
                         }
                     }
                     readChar(is, '(');
@@ -308,14 +316,14 @@ class SVNReader {
                     try {
                         hasMore = editorBaton.processCommand(commandName, is);
                     } catch (Throwable th) {
-                    	unconditionalThrow = true;
+                        unconditionalThrow = true;
                         DebugLog.error(th);
                         if (th instanceof SVNException) {
                             throw ((SVNException) th);
                         }
                         throw new SVNException(th);
                     }
-                    if (!"textdelta-chunk".equals(commandName)){
+                    if (!"textdelta-chunk".equals(commandName)) {
                         readChar(is, ')');
                     }
                     if (!hasMore) {
@@ -324,23 +332,26 @@ class SVNReader {
                 } else if (ch == 'x') {
                     String word = readWord(is);
                     if (!"done".equals(word)) {
-                        throw new SVNException("netword data doesn't match template, 'done' was expected, but '" + word + "' read.");
+                        throw new SVNException(
+                                "netword data doesn't match template, 'done' was expected, but '"
+                                        + word + "' read.");
                     }
                 } else if (ch == 'l') {
-                    result = readLock(DebugLog.getLoggingInputStream("svn", new RollbackInputStream(is)));
+                    result = readLock(DebugLog.getLoggingInputStream("svn",
+                            new RollbackInputStream(is)));
                 }
                 if (doRead) {
                     target = reportResult(target, targetIndex, result, multiple);
                 }
                 if (multiple) {
-                    i -= 2; 
-                } else if (doRead){
+                    i -= 2;
+                } else if (doRead) {
                     targetIndex++;
                 }
-            } catch(SVNException e) {
+            } catch (SVNException e) {
                 if (unconditionalThrow) {
-            		throw e;
-            	}
+                    throw e;
+                }
                 try {
                     is.reset();
                 } catch (IOException e1) {
@@ -358,19 +369,22 @@ class SVNReader {
         if (target == null) {
             target = new Object[0];
         }
-        return target;        
+        return target;
     }
-    
-    private static final char[] VALID_TEMPLATE_CHARS = {'(', ')', '[', ']', // groups 
+
+    private static final char[] VALID_TEMPLATE_CHARS = { '(', ')', '[', ']', // groups
             's', 'w', 'b', 'i', 'n', 't', 'p', // items
             'd', 'f', 'l', 'a', 'r', 'e', 'x', 'l', // command-specific
-            '?', '*', 'z'};
-    private static final char[] INVALID_CARDINALITY_SUBJECTS = {'(', ')', '[', ']', '?', '*', '<'};
-    
-    private static Object[] reportResult(Object[] target, int index, Object result, boolean multiple) {
+            '?', '*', 'z' };
+
+    private static final char[] INVALID_CARDINALITY_SUBJECTS = { '(', ')', '[',
+            ']', '?', '*', '<' };
+
+    private static Object[] reportResult(Object[] target, int index,
+            Object result, boolean multiple) {
         // capacity
         if (target == null) {
-            target = new Object[index + 1];            
+            target = new Object[index + 1];
         } else if (index >= target.length) {
             Object[] array = new Object[index + 1];
             System.arraycopy(target, 0, array, 0, target.length);
@@ -390,25 +404,27 @@ class SVNReader {
             } else {
                 target[index] = result;
             }
-        } else if (target[index] instanceof OutputStream && result instanceof InputStream) {
+        } else if (target[index] instanceof OutputStream
+                && result instanceof InputStream) {
             InputStream in = (InputStream) result;
             OutputStream out = (OutputStream) target[index];
             try {
-	            while(true) {
-		            int read;
-	                    read = in.read();
-	                if (read >= 0) {
-		                out.write(read);
-		            } else {
-		                break;
-		            }
-	            }
-	            out.flush();
+                while (true) {
+                    int read;
+                    read = in.read();
+                    if (read >= 0) {
+                        out.write(read);
+                    } else {
+                        break;
+                    }
+                }
+                out.flush();
             } catch (IOException e) {
                 //
             } finally {
                 try {
-                    while(in.read() >= 0) {}
+                    while (in.read() >= 0) {
+                    }
                 } catch (IOException e1) {
                     //
                 }
@@ -418,14 +434,15 @@ class SVNReader {
             ((List) target[index]).add(result);
         } else if (target[index] instanceof Map && result instanceof String[]) {
             String[] property = (String[]) result;
-            ((Map) target[index]).put(property[0], property[1]);                
+            ((Map) target[index]).put(property[0], property[1]);
         }
         return target;
     }
 
-    private static StringBuffer normalizeTemplate(String template) throws SVNException {
+    private static StringBuffer normalizeTemplate(String template)
+            throws SVNException {
         StringBuffer sb = new StringBuffer(template.length());
-        for(int i = 0; i < template.length(); i++) {
+        for (int i = 0; i < template.length(); i++) {
             char ch = template.charAt(i);
             if (Character.isWhitespace(ch)) {
                 continue;
@@ -435,13 +452,14 @@ class SVNReader {
                 sb.append(ch);
                 continue;
             }
-            throw new SVNException("malformed template' " + template + "' invalid char: " + ch);
+            throw new SVNException("malformed template' " + template
+                    + "' invalid char: " + ch);
         }
         return sb;
     }
-    
+
     private static boolean isListed(char[] chars, char test) {
-        for(int i = 0; i < chars.length; i++) {
+        for (int i = 0; i < chars.length; i++) {
             if (test == chars[i]) {
                 return true;
             }
@@ -451,18 +469,18 @@ class SVNReader {
 
     private static char skipWhitespace(InputStream is) throws SVNException {
         try {
-	        while(true) {
-	            char read = (char) is.read();
-	            if (Character.isWhitespace(read)) {
-	                continue;
-	            }
-	            return read;
-	        }
+            while (true) {
+                char read = (char) is.read();
+                if (Character.isWhitespace(read)) {
+                    continue;
+                }
+                return read;
+            }
         } catch (IOException e) {
             throw new SVNException(e);
         }
     }
-    
+
     private static byte[] readStringAsBytes(InputStream is) throws SVNException {
         int length = readStringLength(is);
         return readBytes(is, length, null);
@@ -480,7 +498,7 @@ class SVNReader {
     private static int readStringLength(InputStream is) throws SVNException {
         char ch = skipWhitespace(is);
         int length = 0;
-        while(Character.isDigit(ch)) {
+        while (Character.isDigit(ch)) {
             length *= 10;
             length += (ch - '0');
             try {
@@ -492,13 +510,14 @@ class SVNReader {
         if (ch == ':') {
             return length;
         }
-        throw new SVNException("network data doesn't match template, can't read string length.");
+        throw new SVNException(
+                "network data doesn't match template, can't read string length.");
     }
 
     private static int readNumber(InputStream is) throws SVNException {
         char ch = skipWhitespace(is);
         int length = 0;
-        while(Character.isDigit(ch)) {
+        while (Character.isDigit(ch)) {
             length *= 10;
             length += (ch - '0');
             try {
@@ -510,7 +529,8 @@ class SVNReader {
         if (Character.isWhitespace(ch)) {
             return length;
         }
-        throw new SVNException("network data doesn't match template, can't read number.");
+        throw new SVNException(
+                "network data doesn't match template, can't read number.");
     }
 
     private static String readWord(InputStream is) throws SVNException {
@@ -523,9 +543,14 @@ class SVNReader {
                     break;
                 }
                 if (count == 0 && !Character.isLetter(ch)) {
-                    throw new SVNException("network data doesn't match template, invalid word start: " + ch);
-                } else if (count > 0 && !(Character.isLetterOrDigit(ch) || ch == '-')) {
-                    throw new SVNException("network data doesn't match template, invalid word symbol: " + ch);                    
+                    throw new SVNException(
+                            "network data doesn't match template, invalid word start: "
+                                    + ch);
+                } else if (count > 0
+                        && !(Character.isLetterOrDigit(ch) || ch == '-')) {
+                    throw new SVNException(
+                            "network data doesn't match template, invalid word symbol: "
+                                    + ch);
                 }
                 buffer.append(ch);
                 count++;
@@ -536,7 +561,7 @@ class SVNReader {
         }
         return buffer.toString();
     }
-    
+
     private static boolean readBoolean(InputStream is) throws SVNException {
         String word = readWord(is);
         if ("true".equalsIgnoreCase(word)) {
@@ -544,20 +569,24 @@ class SVNReader {
         } else if ("false".equalsIgnoreCase(word)) {
             return false;
         }
-        throw new SVNException("network data doesn't match template, can't read boolean.");
+        throw new SVNException(
+                "network data doesn't match template, can't read boolean.");
     }
-    
+
     private static void readChar(InputStream is, char test) throws SVNException {
         char ch = skipWhitespace(is);
         if (ch != test) {
             if (ch < 0) {
                 throw new SVNException("no more data to read");
             }
-            throw new SVNException("network data doesn't match template, expected " + test + ", read " + ch + " (" + ((int) ch) + ")");
+            throw new SVNException(
+                    "network data doesn't match template, expected " + test
+                            + ", read " + ch + " (" + ((int) ch) + ")");
         }
     }
 
-    private static byte[] readBytes(InputStream is, int length, byte[] buffer) throws SVNException {
+    private static byte[] readBytes(InputStream is, int length, byte[] buffer)
+            throws SVNException {
         if (buffer == null || buffer.length < length) {
             buffer = new byte[length];
         }
@@ -568,13 +597,14 @@ class SVNReader {
         }
         return buffer;
     }
-    
-    private static InputStream createDelegatingStream(final InputStream source) throws SVNException {
-        int length = readStringLength(source); 
-        final int[] counter = new int[] {length};
+
+    private static InputStream createDelegatingStream(final InputStream source)
+            throws SVNException {
+        int length = readStringLength(source);
+        final int[] counter = new int[] { length };
         return new InputStream() {
             public int read() throws IOException {
-                while(counter[0] > 0) {
+                while (counter[0] > 0) {
                     counter[0]--;
                     return source.read();
                 }
@@ -582,7 +612,7 @@ class SVNReader {
             }
         };
     }
-    
+
     private static SVNError readError(InputStream is) throws SVNException {
         InputStream pis = new RollbackInputStream(is);
         readChar(pis, '(');
@@ -610,13 +640,14 @@ class SVNReader {
             }
         }
         readChar(pis, ')');
-        return new SVNError(errorMessage, location, errorCode, lineNumber);  
+        return new SVNError(errorMessage, location, errorCode, lineNumber);
     }
-    
-    private static SVNDirEntry readDirEntry(LoggingInputStream is) throws SVNException {
+
+    private static SVNDirEntry readDirEntry(LoggingInputStream is)
+            throws SVNException {
         Object[] items = SVNReader.parse(is, "(SWNTN(?S)(?S))", null);
         is.log();
-        
+
         String name = SVNReader.getString(items, 0);
         SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader.getString(items, 1));
         long size = SVNReader.getLong(items, 2);
@@ -624,37 +655,41 @@ class SVNReader {
         long revision = SVNReader.getLong(items, 4);
         Date date = TimeUtil.parseDate(SVNReader.getString(items, 5));
         String author = SVNReader.getString(items, 6);
-        return new SVNDirEntry(name, kind, size, hasProps, revision, date, author);
+        return new SVNDirEntry(name, kind, size, hasProps, revision, date,
+                author);
     }
 
-    private static SVNDirEntry readStatEntry(LoggingInputStream is) throws SVNException {
+    private static SVNDirEntry readStatEntry(LoggingInputStream is)
+            throws SVNException {
         Object[] items = SVNReader.parse(is, "(WNTN(?S)(?S))", null);
         is.log();
-        
+
         SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader.getString(items, 0));
         long size = SVNReader.getLong(items, 1);
         boolean hasProps = SVNReader.getBoolean(items, 2);
         long revision = SVNReader.getLong(items, 3);
         Date date = TimeUtil.parseDate(SVNReader.getString(items, 4));
         String author = SVNReader.getString(items, 5);
-        return new SVNDirEntry(null, kind, size, hasProps, revision, date, author);
+        return new SVNDirEntry(null, kind, size, hasProps, revision, date,
+                author);
     }
 
     private static SVNLock readLock(LoggingInputStream is) throws SVNException {
         Object[] items = SVNReader.parse(is, "(SSS(?S)S(?S))", new Object[6]);
         is.log();
-        
+
         String path = (String) items[0];
         String id = (String) items[1];
         String owner = (String) items[2];
         String comment = (String) items[3];
         String creationDate = (String) items[4];
         String expirationDate = (String) items[5];
-        Date created = creationDate != null ? TimeUtil.parseDate(creationDate) : null;
-        Date expires = expirationDate != null ? TimeUtil.parseDate(expirationDate) : null;
-        
+        Date created = creationDate != null ? TimeUtil.parseDate(creationDate)
+                : null;
+        Date expires = expirationDate != null ? TimeUtil
+                .parseDate(expirationDate) : null;
+
         return new SVNLock(path, id, owner, comment, created, expires);
     }
 
 }
- 

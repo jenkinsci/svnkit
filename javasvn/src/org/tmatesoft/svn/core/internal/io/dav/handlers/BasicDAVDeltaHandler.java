@@ -23,8 +23,10 @@ import org.tmatesoft.svn.util.Base64;
 import org.tmatesoft.svn.util.DebugLog;
 import org.xml.sax.SAXException;
 
+
 /**
- * @author TMate Software Ltd.
+ * @version 1.0
+ * @author  TMate Software Ltd.
  */
 public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
 

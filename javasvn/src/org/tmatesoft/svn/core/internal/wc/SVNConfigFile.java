@@ -1,3 +1,13 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.BufferedReader;
@@ -12,16 +22,15 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 22.06.2005
- * Time: 20:47:19
- * To change this template use File | Settings | File Templates.
+ * @version 1.0
+ * @author TMate Software Ltd.
  */
 public class SVNConfigFile {
 
     private File myFile;
+
     private String[] myLines;
+
     private long myLastModified;
 
     public SVNConfigFile(File file) {
@@ -71,7 +80,8 @@ public class SVNConfigFile {
         return null;
     }
 
-    public void setPropertyValue(String groupName, String propertyName, String propertyValue, boolean save) {
+    public void setPropertyValue(String groupName, String propertyName,
+            String propertyValue, boolean save) {
         load();
         boolean groupMatched = false;
         for (int i = 0; i < myLines.length; i++) {
@@ -87,7 +97,8 @@ public class SVNConfigFile {
                     if (propertyValue != null) {
                         String[] lines = new String[myLines.length + 1];
                         System.arraycopy(myLines, 0, lines, 0, i);
-                        System.arraycopy(myLines, i, lines, i + 1, myLines.length - i);
+                        System.arraycopy(myLines, i, lines, i + 1,
+                                myLines.length - i);
                         lines[i] = propertyName + "  = " + propertyValue;
                         myLines = lines;
                         if (save) {
@@ -124,7 +135,8 @@ public class SVNConfigFile {
     private static boolean matchGroup(String line, String name) {
         line = line.trim();
         if (line.startsWith("[") && line.endsWith("]")) {
-            return name == null ? true : line.substring(1, line.length() - 1).equals(name);
+            return name == null ? true : line.substring(1, line.length() - 1)
+                    .equals(name);
         }
         return false;
     }
@@ -158,7 +170,6 @@ public class SVNConfigFile {
         line = line.substring(0, line.indexOf('='));
         return line.trim();
     }
-
 
     // parse all lines from the file, keep them as lines array.
     public void save() {
@@ -231,7 +242,7 @@ public class SVNConfigFile {
         try {
             reader = new BufferedReader(new FileReader(myFile));
             String line;
-            while((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 lines.add(line);
             }
         } catch (IOException e) {

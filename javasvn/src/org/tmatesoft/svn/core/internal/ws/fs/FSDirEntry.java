@@ -1,12 +1,11 @@
 /*
  * ====================================================================
- * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
- *
- * This software is licensed as described in the file COPYING, which
- * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
- * If newer versions of this license are posted there, you may use a
- * newer version instead, at your option.
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
  * ====================================================================
  */
 
@@ -40,45 +39,50 @@ import org.tmatesoft.svn.util.FileTypeUtil;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
+ * @version 1.0
  * @author TMate Software Ltd.
  */
 public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
 
     private Map myChildEntries;
+
     private Map myDeletedEntries;
+
     private Map myChildren;
+
     private Map myDirEntry;
-    
-    public FSDirEntry(FSAdminArea area, FSRootEntry root, String path, String location) {
+
+    public FSDirEntry(FSAdminArea area, FSRootEntry root, String path,
+            String location) {
         super(area, root, path);
         if (location != null) {
-                if (!getAdminArea().getAdminArea(this).exists()) {
-                    try {
-                        setPropertyValue(SVNProperty.URL, location);
-                    } catch (SVNException e) {
-                        DebugLog.error(e);
-                    }
+            if (!getAdminArea().getAdminArea(this).exists()) {
+                try {
+                    setPropertyValue(SVNProperty.URL, location);
+                } catch (SVNException e) {
+                    DebugLog.error(e);
                 }
+            }
         }
     }
-    
+
     public File getIOFile() {
         return getRootEntry().getWorkingCopyFile(this);
     }
-    
+
     public ISVNEntry getChild(String name) throws SVNException {
         loadEntries();
         return (ISVNEntry) myChildren.get(name);
     }
-    
+
     public void rename(String oldName, String newName) throws SVNException {
         loadEntries();
         Object info = myChildEntries.remove(oldName);
         myChildEntries.put(newName, info);
         Object child = myChildren.remove(oldName);
         myChildren.put(newName, child);
-        
-        ((FSEntry) child).setName(newName);        
+
+        ((FSEntry) child).setName(newName);
     }
 
     public ISVNEntry getUnmanagedChild(String name) throws SVNException {
@@ -115,7 +119,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 myDeletedEntries = new HashMap();
             }
             myDeletedEntries.put(name, map);
-        }        
+        }
     }
 
     public boolean isScheduledForDeletion() throws SVNException {
@@ -124,10 +128,13 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         if (!missing || getRootEntry() == this) {
             return super.isScheduledForDeletion();
         }
-        FSDirEntry parent = (FSDirEntry) getRootEntry().locateEntry(PathUtil.removeTail(getPath()));
+        FSDirEntry parent = (FSDirEntry) getRootEntry().locateEntry(
+                PathUtil.removeTail(getPath()));
         if (parent != null) {
             Map entry = parent.getChildEntry(getName());
-            return entry != null && SVNProperty.SCHEDULE_DELETE.equals(entry.get(SVNProperty.SCHEDULE));
+            return entry != null
+                    && SVNProperty.SCHEDULE_DELETE.equals(entry
+                            .get(SVNProperty.SCHEDULE));
         }
         return false;
     }
@@ -136,32 +143,36 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         if (!isMissing() || getRootEntry() == this) {
             return super.isScheduledForAddition();
         }
-        FSDirEntry parent = (FSDirEntry) getRootEntry().locateEntry(PathUtil.removeTail(getPath()));
+        FSDirEntry parent = (FSDirEntry) getRootEntry().locateEntry(
+                PathUtil.removeTail(getPath()));
         if (parent != null) {
             Map entry = parent.getChildEntry(getName());
-            return entry != null && SVNProperty.SCHEDULE_ADD.equals(entry.get(SVNProperty.SCHEDULE));
+            return entry != null
+                    && SVNProperty.SCHEDULE_ADD.equals(entry
+                            .get(SVNProperty.SCHEDULE));
         }
         return false;
     }
-    
+
     public boolean isObstructed() {
-        return super.isObstructed() || 
-         getRootEntry().getWorkingCopyFile(this).isFile() ||
-         !getAdminArea().getAdminArea(this).exists();
+        return super.isObstructed()
+                || getRootEntry().getWorkingCopyFile(this).isFile()
+                || !getAdminArea().getAdminArea(this).exists();
     }
 
     public boolean isDirectory() {
         return true;
     }
-    
+
     public Map getChildEntryMap(String name) throws SVNException {
         loadEntries();
         return (Map) myChildEntries.get(name);
     }
-    
-    public void markAsCopied(String name, SVNRepositoryLocation source, long revision) throws SVNException {
+
+    public void markAsCopied(String name, SVNRepositoryLocation source,
+            long revision) throws SVNException {
         loadEntries();
-        boolean wasDeleted = false; 
+        boolean wasDeleted = false;
         if (myDeletedEntries != null && myDeletedEntries.containsKey(name)) {
             wasDeleted = true;
             myDeletedEntries.remove(name);
@@ -182,30 +193,39 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         myChildEntries = null;
         ISVNEntry copiedEntry = getChild(name);
         copiedEntry.setPropertyValue(SVNProperty.COPIED, "true");
-        copiedEntry.setPropertyValue(SVNProperty.COPYFROM_URL, source.toCanonicalForm());
-        copiedEntry.setPropertyValue(SVNProperty.COPYFROM_REVISION, Long.toString(revision));
-        copiedEntry.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
+        copiedEntry.setPropertyValue(SVNProperty.COPYFROM_URL, source
+                .toCanonicalForm());
+        copiedEntry.setPropertyValue(SVNProperty.COPYFROM_REVISION, Long
+                .toString(revision));
+        copiedEntry.setPropertyValue(SVNProperty.SCHEDULE,
+                SVNProperty.SCHEDULE_ADD);
         if (wasDeleted) {
-            copiedEntry.setPropertyValue(SVNProperty.DELETED, Boolean.TRUE.toString());
+            copiedEntry.setPropertyValue(SVNProperty.DELETED, Boolean.TRUE
+                    .toString());
         }
         updateURL(copiedEntry, getPropertyValue(SVNProperty.URL));
         setPropertyValueRecursively(copiedEntry, SVNProperty.COPIED, "true");
         copiedEntry.save();
     }
 
-    public void markAsCopied(InputStream contents, long length, Map properties, String name, SVNRepositoryLocation source) throws SVNException {
-        long revision = SVNProperty.longValue((String) properties.get(SVNProperty.REVISION));
+    public void markAsCopied(InputStream contents, long length, Map properties,
+            String name, SVNRepositoryLocation source) throws SVNException {
+        long revision = SVNProperty.longValue((String) properties
+                .get(SVNProperty.REVISION));
         FSFileEntry file = (FSFileEntry) addFile(name, revision);
         file.initProperties();
         file.applyChangedProperties(properties);
-        SVNDiffWindow window = SVNDiffWindowBuilder.createReplacementDiffWindow(length);
+        SVNDiffWindow window = SVNDiffWindowBuilder
+                .createReplacementDiffWindow(length);
         file.applyDelta(window, contents, false);
         file.deltaApplied(false);
         file.merge(false);
         if (source != null) {
             file.setPropertyValue(SVNProperty.COPIED, "true");
-            file.setPropertyValue(SVNProperty.COPYFROM_URL, source.toCanonicalForm());
-            file.setPropertyValue(SVNProperty.COPYFROM_REVISION, Long.toString(revision));
+            file.setPropertyValue(SVNProperty.COPYFROM_URL, source
+                    .toCanonicalForm());
+            file.setPropertyValue(SVNProperty.COPYFROM_REVISION, Long
+                    .toString(revision));
         }
         file.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
         file.setPropertyValue(SVNProperty.REVISION, "0");
@@ -220,7 +240,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             file.setPropertyValue(SVNProperty.PROP_TIME, null);
             file.setPropertyValue(SVNProperty.TEXT_TIME, null);
             file.setPropertyValue(SVNProperty.CHECKSUM, null);
-        } 
+        }
         if (myDeletedEntries != null && myDeletedEntries.containsKey(name)) {
             file.setPropertyValue(SVNProperty.DELETED, Boolean.TRUE.toString());
             myDeletedEntries.remove(name);
@@ -228,12 +248,13 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
 
         save(false);
     }
-    
+
     public ISVNEntry copy(String asName, ISVNEntry toCopy) throws SVNException {
         File dst = getRootEntry().getWorkingCopyFile(this);
         doCopyFiles(toCopy, dst, asName);
-        
-        long revision = SVNProperty.longValue(toCopy.getPropertyValue(SVNProperty.REVISION));
+
+        long revision = SVNProperty.longValue(toCopy
+                .getPropertyValue(SVNProperty.REVISION));
         String url = toCopy.getPropertyValue(SVNProperty.URL);
         ISVNEntry added = null;
         if (toCopy.isDirectory()) {
@@ -242,12 +263,15 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             childEntry.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
             if (!toCopy.isScheduledForAddition()) {
                 childEntry.put(SVNProperty.COPIED, SVNProperty.toString(true));
-                childEntry.put(SVNProperty.COPYFROM_REVISION, SVNProperty.toString(revision));
+                childEntry.put(SVNProperty.COPYFROM_REVISION, SVNProperty
+                        .toString(revision));
                 childEntry.put(SVNProperty.COPYFROM_URL, url);
             } else if (toCopy.getPropertyValue(SVNProperty.COPYFROM_URL) != null) {
                 childEntry.put(SVNProperty.COPIED, SVNProperty.toString(true));
-                childEntry.put(SVNProperty.COPYFROM_REVISION, toCopy.getPropertyValue(SVNProperty.COPYFROM_REVISION));
-                childEntry.put(SVNProperty.COPYFROM_URL, toCopy.getPropertyValue(SVNProperty.COPYFROM_URL));
+                childEntry.put(SVNProperty.COPYFROM_REVISION, toCopy
+                        .getPropertyValue(SVNProperty.COPYFROM_REVISION));
+                childEntry.put(SVNProperty.COPYFROM_URL, toCopy
+                        .getPropertyValue(SVNProperty.COPYFROM_URL));
             }
             updateURL(added, getPropertyValue(SVNProperty.URL));
             updateDeletedEntries(added);
@@ -255,40 +279,53 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             added = addFile(asName, revision);
             added.setPropertyValue(SVNProperty.COMMITTED_REVISION, null);
             // inherit copyfrom info
-            added.setPropertyValue(SVNProperty.COPIED, toCopy.getPropertyValue(SVNProperty.COPIED));
+            added.setPropertyValue(SVNProperty.COPIED, toCopy
+                    .getPropertyValue(SVNProperty.COPIED));
         }
-        // do not mark as copied if source was just locally scheduled for addition
+        // do not mark as copied if source was just locally scheduled for
+        // addition
         added.setPropertyValue(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
         if (!toCopy.isScheduledForAddition()) {
-            added.setPropertyValue(SVNProperty.COPYFROM_REVISION, SVNProperty.toString(revision));
+            added.setPropertyValue(SVNProperty.COPYFROM_REVISION, SVNProperty
+                    .toString(revision));
             added.setPropertyValue(SVNProperty.COPYFROM_URL, url);
         } else if (toCopy.getPropertyValue(SVNProperty.COPYFROM_URL) != null) {
-            added.setPropertyValue(SVNProperty.COPYFROM_REVISION, toCopy.getPropertyValue(SVNProperty.COPYFROM_REVISION));
-            added.setPropertyValue(SVNProperty.COPYFROM_URL, toCopy.getPropertyValue(SVNProperty.COPYFROM_URL));
+            added.setPropertyValue(SVNProperty.COPYFROM_REVISION, toCopy
+                    .getPropertyValue(SVNProperty.COPYFROM_REVISION));
+            added.setPropertyValue(SVNProperty.COPYFROM_URL, toCopy
+                    .getPropertyValue(SVNProperty.COPYFROM_URL));
         }
         if (myDeletedEntries != null && myDeletedEntries.containsKey(asName)) {
-            added.setPropertyValue(SVNProperty.DELETED, Boolean.TRUE.toString());
+            added
+                    .setPropertyValue(SVNProperty.DELETED, Boolean.TRUE
+                            .toString());
             myDeletedEntries.remove(asName);
         }
-        if (!toCopy.isScheduledForAddition() || toCopy.getPropertyValue(SVNProperty.COPYFROM_URL) != null) {
-            setPropertyValueRecursively(added, SVNProperty.COPIED, SVNProperty.toString(true));
+        if (!toCopy.isScheduledForAddition()
+                || toCopy.getPropertyValue(SVNProperty.COPYFROM_URL) != null) {
+            setPropertyValueRecursively(added, SVNProperty.COPIED, SVNProperty
+                    .toString(true));
         } else {
-            setPropertyValueRecursively(added, SVNProperty.REVISION, SVNProperty.toString(0));
+            setPropertyValueRecursively(added, SVNProperty.REVISION,
+                    SVNProperty.toString(0));
         }
-        return added;    
+        return added;
     }
-    
-    public ISVNDirectoryEntry addDirectory(String name, long revision) throws SVNException {
+
+    public ISVNDirectoryEntry addDirectory(String name, long revision)
+            throws SVNException {
         if (getChild(name) != null) {
             return (ISVNDirectoryEntry) getChild(name);
         }
         loadEntries();
-        
+
         String url = (String) myDirEntry.get(SVNProperty.URL);
         url = PathUtil.append(url, PathUtil.encode(name));
-        FSDirEntry entry = new FSDirEntry(getAdminArea(), getRootEntry(), PathUtil.append(getPath(), name), url);
+        FSDirEntry entry = new FSDirEntry(getAdminArea(), getRootEntry(),
+                PathUtil.append(getPath(), name), url);
         if (revision >= 0) {
-            entry.setPropertyValue(SVNProperty.COMMITTED_REVISION, SVNProperty.toString(revision));
+            entry.setPropertyValue(SVNProperty.COMMITTED_REVISION, SVNProperty
+                    .toString(revision));
         }
         myChildren.put(name, entry);
         Map entryMap = new HashMap();
@@ -301,20 +338,23 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         }
         return entry;
     }
-    
-    public ISVNFileEntry addFile(String name, long revision) throws SVNException {
+
+    public ISVNFileEntry addFile(String name, long revision)
+            throws SVNException {
         loadEntries();
 
         Map entryMap = new HashMap();
         entryMap.put(SVNProperty.NAME, name);
         entryMap.put(SVNProperty.KIND, SVNProperty.KIND_FILE);
-        FSFileEntry entry = new FSFileEntry(getAdminArea(), getRootEntry(), PathUtil.append(getPath(), name), entryMap);
+        FSFileEntry entry = new FSFileEntry(getAdminArea(), getRootEntry(),
+                PathUtil.append(getPath(), name), entryMap);
         if (revision >= 0) {
-            entry.setPropertyValue(SVNProperty.COMMITTED_REVISION, SVNProperty.toString(revision));
-        }        
+            entry.setPropertyValue(SVNProperty.COMMITTED_REVISION, SVNProperty
+                    .toString(revision));
+        }
         myChildren.put(name, entry);
         myChildEntries.put(name, entryMap);
-        
+
         return entry;
     }
 
@@ -322,15 +362,16 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         loadEntries();
         return new LinkedList(myChildren.values()).iterator();
     }
-    
+
     public Iterator deletedEntries() throws SVNException {
         loadEntries();
         Collection result = new LinkedList();
         if (myDeletedEntries != null) {
             result.addAll(myDeletedEntries.values());
-        } 
+        }
         if (myChildEntries != null) {
-            for(Iterator entries = myChildEntries.values().iterator(); entries.hasNext();) {
+            for (Iterator entries = myChildEntries.values().iterator(); entries
+                    .hasNext();) {
                 Map entry = (Map) entries.next();
                 if (entry.get(SVNProperty.DELETED) != null) {
                     result.add(entry);
@@ -339,24 +380,24 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         }
         return result.iterator();
     }
-    
+
     public void dispose() throws SVNException {
         if (myChildren != null) {
-            for(Iterator children = childEntries(); children.hasNext();) {
+            for (Iterator children = childEntries(); children.hasNext();) {
                 ((ISVNEntry) children.next()).dispose();
             }
         }
-        
+
         myChildEntries = null;
         myDeletedEntries = null;
         myChildren = null;
         myDirEntry = null;
         myUnmanagedChildren = null;
         myAllUnmanagedChildren = null;
-        
+
         super.dispose();
     }
-    
+
     public boolean revert(String childName) throws SVNException {
         DebugLog.log("REVERT: " + childName + " in " + getPath());
         ISVNEntry child = getChild(childName);
@@ -367,19 +408,21 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         myAllUnmanagedChildren = null;
         if (child.isMissing() && child.isDirectory()) {
             Map childProperties = (Map) myChildEntries.get(child.getName());
-            if (SVNProperty.SCHEDULE_ADD.equals(childProperties.get(SVNProperty.SCHEDULE))) {
+            if (SVNProperty.SCHEDULE_ADD.equals(childProperties
+                    .get(SVNProperty.SCHEDULE))) {
                 boolean keepInfo = childProperties.get(SVNProperty.DELETED) != null;
                 deleteChild(child.getName(), keepInfo);
                 return true;
             }
             return false;
         }
-        
+
         if (child.isScheduledForAddition()) {
             myChildEntries.remove(childName);
             myChildren.remove(childName);
             if (child.isDirectory()) {
-                for(Iterator children = child.asDirectory().childEntries(); children.hasNext();) {
+                for (Iterator children = child.asDirectory().childEntries(); children
+                        .hasNext();) {
                     ISVNEntry ch = (ISVNEntry) children.next();
                     child.asDirectory().revert(ch.getName());
                 }
@@ -387,8 +430,10 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 FSUtil.deleteAll(adminArea);
             }
         } else {
-            DebugLog.log("REVERT: reverting file, base file is: " + getAdminArea().getBaseFile(child));
-            if (!child.isDirectory() && !getAdminArea().getBaseFile(child).exists()) {
+            DebugLog.log("REVERT: reverting file, base file is: "
+                    + getAdminArea().getBaseFile(child));
+            if (!child.isDirectory()
+                    && !getAdminArea().getBaseFile(child).exists()) {
                 DebugLog.log("REVERT: no base file to revert contents from");
                 return false;
             }
@@ -401,7 +446,8 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 if (myChildEntries != null) {
                     Map entryInParent = (Map) myChildEntries.get(childName);
                     if (entryInParent != null) {
-                        entryInParent.put(SVNProperty.PROP_TIME, child.getPropertyValue(SVNProperty.PROP_TIME));
+                        entryInParent.put(SVNProperty.PROP_TIME, child
+                                .getPropertyValue(SVNProperty.PROP_TIME));
                     }
                 }
             }
@@ -414,36 +460,43 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         String revision = getPropertyValue(SVNProperty.REVISION);
         Set obstructedChildren = new HashSet();
         if (myChildren != null) {
-            Collection entries = new ArrayList(myChildren.values()); 
-            for(Iterator children = entries.iterator(); children.hasNext();) {
+            Collection entries = new ArrayList(myChildren.values());
+            for (Iterator children = entries.iterator(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
                 if (!recursive && child.isDirectory()) {
                     continue;
                 }
-                boolean isCorrupted = child.getPropertyValue(SVNProperty.CORRUPTED) != null;
+                boolean isCorrupted = child
+                        .getPropertyValue(SVNProperty.CORRUPTED) != null;
                 child.setPropertyValue(SVNProperty.CORRUPTED, null);
                 if (child.getPropertyValue(SVNProperty.REVISION) == null) {
                     // missing child that was deleted.
-                    DebugLog.log("MERGING: MISSING ENTRY DELETED: " + child.getPath());
+                    DebugLog.log("MERGING: MISSING ENTRY DELETED: "
+                            + child.getPath());
                     deleteChild(child.getName(), true);
                     continue;
                 }
-                long rollbackRevision = -1; 
-                if (child.isScheduledForAddition() || child.isScheduledForDeletion() || isCorrupted) {
+                long rollbackRevision = -1;
+                if (child.isScheduledForAddition()
+                        || child.isScheduledForDeletion() || isCorrupted) {
                     // obstructed!
                     obstructedChildren.add(child.getName());
-                    // if it is copied, update revision for children, but not for this entry!
-                    if (child.getPropertyValue(SVNProperty.COPIED) != null && child.isDirectory()) {
-                        rollbackRevision = SVNProperty.longValue(child.getPropertyValue(SVNProperty.REVISION));
+                    // if it is copied, update revision for children, but not
+                    // for this entry!
+                    if (child.getPropertyValue(SVNProperty.COPIED) != null
+                            && child.isDirectory()) {
+                        rollbackRevision = SVNProperty.longValue(child
+                                .getPropertyValue(SVNProperty.REVISION));
                         child.setPropertyValue(SVNProperty.REVISION, revision);
                     }
                 } else {
                     child.setPropertyValue(SVNProperty.REVISION, revision);
                 }
-                
+
                 child.merge(recursive);
                 if (rollbackRevision >= 0) {
-                    child.setPropertyValue(SVNProperty.REVISION, SVNProperty.toString(rollbackRevision));
+                    child.setPropertyValue(SVNProperty.REVISION, SVNProperty
+                            .toString(rollbackRevision));
                     rollbackRevision = -1;
                     child.save();
                 }
@@ -452,7 +505,8 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         super.merge();
         // update revision in all direct entries (but obstructed!)
         // if it is was not a single child file update!
-        for(Iterator entries = myChildEntries.values().iterator(); entries.hasNext();) {
+        for (Iterator entries = myChildEntries.values().iterator(); entries
+                .hasNext();) {
             Map entry = (Map) entries.next();
             if (!obstructedChildren.contains(entry.get(SVNProperty.NAME))) {
                 entry.put(SVNProperty.REVISION, revision);
@@ -461,7 +515,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         myDeletedEntries = null;
         saveEntries();
     }
-    
+
     public void commit() throws SVNException {
         if (!getRootEntry().getWorkingCopyFile(this).exists()) {
             return;
@@ -477,20 +531,20 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         super.save(recursive);
         if (recursive && myChildren != null) {
             // only if children was loaded?
-            for(Iterator children = childEntries(); children.hasNext();) {
+            for (Iterator children = childEntries(); children.hasNext();) {
                 ISVNEntry entry = (ISVNEntry) children.next();
                 entry.save();
             }
         }
         saveEntries();
     }
-    
-    
+
     private void saveEntries() throws SVNException {
         DebugLog.log("SAVING ENTRIES FOR " + getPath());
         DebugLog.log("MISSING " + isMissing());
         if (myDirEntry != null && !isMissing()) {
-            getAdminArea().saveEntries(this, myDirEntry, myChildEntries, myDeletedEntries);
+            getAdminArea().saveEntries(this, myDirEntry, myChildEntries,
+                    myDeletedEntries);
         }
     }
 
@@ -507,10 +561,11 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         }
         myChildren = new HashMap();
         myChildEntries = new HashMap();
-        
+
         String baseURL = (String) myDirEntry.get(SVNProperty.URL);
         String revision = (String) myDirEntry.get(SVNProperty.REVISION);
-        for(Iterator childEntries = childEntriesMap.values().iterator(); childEntries.hasNext();) {
+        for (Iterator childEntries = childEntriesMap.values().iterator(); childEntries
+                .hasNext();) {
             Map entry = (Map) childEntries.next();
             String name = (String) entry.get(SVNProperty.NAME);
             if (entry.containsKey(SVNProperty.DELETED)) {
@@ -518,7 +573,8 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                     myDeletedEntries = new HashMap();
                 }
                 // if not added, skip.
-                if (!SVNProperty.SCHEDULE_ADD.equals(entry.get(SVNProperty.SCHEDULE))) {
+                if (!SVNProperty.SCHEDULE_ADD.equals(entry
+                        .get(SVNProperty.SCHEDULE))) {
                     myDeletedEntries.put(name, entry);
                     continue;
                 }
@@ -534,36 +590,41 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 entry.put(SVNProperty.REVISION, revision);
             }
             if (SVNProperty.KIND_DIR.equals(entry.get(SVNProperty.KIND))) {
-                child = new FSDirEntry(getAdminArea(), getRootEntry(), PathUtil.append(getPath(), name), url);
+                child = new FSDirEntry(getAdminArea(), getRootEntry(), PathUtil
+                        .append(getPath(), name), url);
             } else {
-                child = new FSFileEntry(getAdminArea(), getRootEntry(), PathUtil.append(getPath(), name), entry);
+                child = new FSFileEntry(getAdminArea(), getRootEntry(),
+                        PathUtil.append(getPath(), name), entry);
             }
             myChildren.put(name, child);
             myChildEntries.put(name, entry);
         }
     }
-    
+
     protected Map getEntry() throws SVNException {
-        loadEntries();            
+        loadEntries();
         return myDirEntry;
     }
-    
+
     protected Map getChildEntry(String name) {
         if (myChildEntries != null && name != null) {
             return (Map) myChildEntries.get(name);
         }
         return null;
     }
-    
+
     private Map myUnmanagedChildren;
+
     private Map myAllUnmanagedChildren;
-    
-    public Iterator unmanagedChildEntries(boolean includeIgnored) throws SVNException {
+
+    public Iterator unmanagedChildEntries(boolean includeIgnored)
+            throws SVNException {
         loadUnmanagedChildren();
-        Collection unmanagedChildren = includeIgnored ? myAllUnmanagedChildren.values() : myUnmanagedChildren.values();
+        Collection unmanagedChildren = includeIgnored ? myAllUnmanagedChildren
+                .values() : myUnmanagedChildren.values();
         return new ArrayList(unmanagedChildren).iterator();
     }
-    
+
     private void loadUnmanagedChildren() throws SVNException {
         if (myAllUnmanagedChildren != null) {
             return;
@@ -571,24 +632,26 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         loadEntries();
         myAllUnmanagedChildren = new HashMap();
         myUnmanagedChildren = new HashMap();
-        
+
         File dir = getRootEntry().getWorkingCopyFile(this);
         final File[] children = dir.listFiles();
         if (children != null) {
             for (int i = 0; i < children.length; i++) {
                 File child = children[i];
-                if (myChildren != null &&
-                        (myChildren.containsKey(child.getName()) || ".svn".equals(child.getName()))) {
+                if (myChildren != null
+                        && (myChildren.containsKey(child.getName()) || ".svn"
+                                .equals(child.getName()))) {
                     continue;
                 }
                 if (FSUtil.isWindows) {
                     // check for files with different case in name
                     boolean obsturcted = false;
-                    for(Iterator names = myChildren.keySet().iterator(); names.hasNext();) {
+                    for (Iterator names = myChildren.keySet().iterator(); names
+                            .hasNext();) {
                         String name = (String) names.next();
                         if (name.equalsIgnoreCase(child.getName())) {
                             obsturcted = true;
-                            break;                            
+                            break;
                         }
                     }
                     if (obsturcted) {
@@ -598,16 +661,20 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 String path = PathUtil.append(getPath(), child.getName());
                 ISVNEntry childEntry;
                 if (child.isDirectory()) {
-                    childEntry = new FSDirEntry(getAdminArea(), getRootEntry(), path, null);
-                    ((FSDirEntry) childEntry).getEntry().put(SVNProperty.KIND, SVNProperty.KIND_DIR);
+                    childEntry = new FSDirEntry(getAdminArea(), getRootEntry(),
+                            path, null);
+                    ((FSDirEntry) childEntry).getEntry().put(SVNProperty.KIND,
+                            SVNProperty.KIND_DIR);
                 } else {
                     Map entryMap = new HashMap();
                     entryMap.put(SVNProperty.NAME, child.getName());
                     entryMap.put(SVNProperty.KIND, SVNProperty.KIND_FILE);
-                    childEntry = new FSFileEntry(getAdminArea(), getRootEntry(), path, entryMap);                        
+                    childEntry = new FSFileEntry(getAdminArea(),
+                            getRootEntry(), path, entryMap);
                 }
                 // if it is not external!
-                ((FSEntry) childEntry).setManaged(childEntry.getPropertyValue(SVNProperty.URL) != null);
+                ((FSEntry) childEntry).setManaged(childEntry
+                        .getPropertyValue(SVNProperty.URL) != null);
                 if (!isIgnored(child.getName())) {
                     myUnmanagedChildren.put(child.getName(), childEntry);
                 }
@@ -616,23 +683,32 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         }
     }
 
-    public ISVNEntry scheduleForAddition(String name, boolean mkdir, boolean recurse) throws SVNException {
+    public ISVNEntry scheduleForAddition(String name, boolean mkdir,
+            boolean recurse) throws SVNException {
         loadEntries();
         ISVNEntry child = getChild(name);
-	    File file = new File(getRootEntry().getWorkingCopyFile(this), name);
+        File file = new File(getRootEntry().getWorkingCopyFile(this), name);
         if (child != null && !child.isScheduledForDeletion()) {
-            throw new SVNException("working copy file " + name + " already exists in " + getPath());
+            throw new SVNException("working copy file " + name
+                    + " already exists in " + getPath());
         }
-	    if (child != null && ((child.isDirectory() && file.isFile()) || (!child.isDirectory() && !file.isFile()))) {
-		    throw new SVNException("Cannot change node kind of " + name + " within path " + getPath());
-	    }
-	    if (myDeletedEntries != null && myDeletedEntries.get(name) != null) {
-		    final Map deletedProperties = (Map)myDeletedEntries.get(name);
-		    final String kind = (String)deletedProperties.get(SVNProperty.KIND);
-		    if (kind != null && ((file.isFile() && kind.equals(SVNProperty.KIND_DIR)) || (!file.isFile() && kind.equals(SVNProperty.KIND_FILE)))) {
-			    throw new SVNException("Cannot change node kind of " + name + " within path " + getPath());
-		    }
-	    }
+        if (child != null
+                && ((child.isDirectory() && file.isFile()) || (!child
+                        .isDirectory() && !file.isFile()))) {
+            throw new SVNException("Cannot change node kind of " + name
+                    + " within path " + getPath());
+        }
+        if (myDeletedEntries != null && myDeletedEntries.get(name) != null) {
+            final Map deletedProperties = (Map) myDeletedEntries.get(name);
+            final String kind = (String) deletedProperties
+                    .get(SVNProperty.KIND);
+            if (kind != null
+                    && ((file.isFile() && kind.equals(SVNProperty.KIND_DIR)) || (!file
+                            .isFile() && kind.equals(SVNProperty.KIND_FILE)))) {
+                throw new SVNException("Cannot change node kind of " + name
+                        + " within path " + getPath());
+            }
+        }
 
         if (mkdir && !file.exists()) {
             file.mkdirs();
@@ -642,7 +718,7 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         }
         myUnmanagedChildren = null;
         myAllUnmanagedChildren = null;
-        
+
         String path = PathUtil.append(getPath(), name);
         FSEntry entry = null;
         Map entryMap = null;
@@ -656,43 +732,55 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             entryMap.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_REPLACE);
         } else {
             entryMap.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
-            entryMap.put(SVNProperty.KIND, file.isDirectory() ? SVNProperty.KIND_DIR : SVNProperty.KIND_FILE);
+            entryMap.put(SVNProperty.KIND,
+                    file.isDirectory() ? SVNProperty.KIND_DIR
+                            : SVNProperty.KIND_FILE);
         }
         String url = (String) getEntry().get(SVNProperty.URL);
         url = PathUtil.append(url, PathUtil.encode(name));
-        
+
         if (myDeletedEntries != null && myDeletedEntries.containsKey(name)) {
             myDeletedEntries.remove(name);
             entryMap.put(SVNProperty.DELETED, Boolean.TRUE.toString());
         }
-        
+
         if (file.isDirectory()) {
             if (child == null) {
-                entry = new FSDirEntry(getAdminArea(), getRootEntry(), path, url);            
+                entry = new FSDirEntry(getAdminArea(), getRootEntry(), path,
+                        url);
                 myChildren.put(name, entry);
                 myChildEntries.put(name, entryMap);
-                entry.getEntry().put(SVNProperty.REVISION, SVNProperty.toString(0));
-                entry.getEntry().put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
+                entry.getEntry().put(SVNProperty.REVISION,
+                        SVNProperty.toString(0));
+                entry.getEntry().put(SVNProperty.SCHEDULE,
+                        SVNProperty.SCHEDULE_ADD);
             } else {
                 entry = (FSEntry) child;
-                entry.getEntry().put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_REPLACE);
+                entry.getEntry().put(SVNProperty.SCHEDULE,
+                        SVNProperty.SCHEDULE_REPLACE);
             }
             if (recurse) {
-                for(Iterator children = ((ISVNDirectoryEntry) entry).childEntries(); children.hasNext();) {
+                for (Iterator children = ((ISVNDirectoryEntry) entry)
+                        .childEntries(); children.hasNext();) {
                     ISVNEntry ch = (ISVNEntry) children.next();
-                    if (ch.isScheduledForDeletion() && getRootEntry().getWorkingCopyFile(ch).exists()) {
-                        ((FSDirEntry) entry).scheduleForAddition(ch.getName(), false, recurse);
+                    if (ch.isScheduledForDeletion()
+                            && getRootEntry().getWorkingCopyFile(ch).exists()) {
+                        ((FSDirEntry) entry).scheduleForAddition(ch.getName(),
+                                false, recurse);
                     }
                 }
-                for(Iterator children = ((ISVNDirectoryEntry) entry).unmanagedChildEntries(false); children.hasNext();) {
+                for (Iterator children = ((ISVNDirectoryEntry) entry)
+                        .unmanagedChildEntries(false); children.hasNext();) {
                     ISVNEntry ch = (ISVNEntry) children.next();
-                    ((FSDirEntry) entry).scheduleForAddition(ch.getName(), false, recurse);
+                    ((FSDirEntry) entry).scheduleForAddition(ch.getName(),
+                            false, recurse);
                 }
             }
         } else if (child == null) {
             entryMap.put(SVNProperty.REVISION, SVNProperty.toString(0));
             entryMap.put(SVNProperty.URL, url);
-            entry = new FSFileEntry(getAdminArea(), getRootEntry(), path, entryMap);
+            entry = new FSFileEntry(getAdminArea(), getRootEntry(), path,
+                    entryMap);
             myChildren.put(name, entry);
             myChildEntries.put(name, entryMap);
         } else if (child != null) {
@@ -703,28 +791,33 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             entry = (FSEntry) child;
         }
         try {
-            if (!entry.isDirectory() && !FileTypeUtil.isTextFile(getRootEntry().getWorkingCopyFile(entry))) {
-                entry.setPropertyValue(SVNProperty.MIME_TYPE, "application/octet-stream");
+            if (!entry.isDirectory()
+                    && !FileTypeUtil.isTextFile(getRootEntry()
+                            .getWorkingCopyFile(entry))) {
+                entry.setPropertyValue(SVNProperty.MIME_TYPE,
+                        "application/octet-stream");
             }
         } catch (IOException e) {
             throw new SVNException(e);
         }
-    
+
         return entry;
     }
 
     public ISVNEntry scheduleForDeletion(String name) throws SVNException {
         return scheduleForDeletion(name, false);
     }
-    
-    public ISVNEntry scheduleForDeletion(String name, boolean moved) throws SVNException {
+
+    public ISVNEntry scheduleForDeletion(String name, boolean moved)
+            throws SVNException {
         DebugLog.log("DELETING: " + name + " from " + getPath());
         ISVNEntry entry = getChild(name);
         if (entry == null) {
             DebugLog.log("entry not found: " + name);
             // force file deletion
             if (moved) {
-                DebugLog.log("DELETING UNMANAGED CHILD: " + name + " from " + getPath());
+                DebugLog.log("DELETING UNMANAGED CHILD: " + name + " from "
+                        + getPath());
                 deleteChild(name, false);
             }
             return entry;
@@ -736,13 +829,16 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 // keep "deleted" state
                 boolean storeInfo = entry.getPropertyValue(SVNProperty.DELETED) != null;
                 if (!storeInfo && entry.isDirectory()) {
-                    storeInfo = ((Map) myChildEntries.get(name)).get(SVNProperty.DELETED) != null;
+                    storeInfo = ((Map) myChildEntries.get(name))
+                            .get(SVNProperty.DELETED) != null;
                 }
                 deleteChild(name, storeInfo);
             } else {
-                if (!FSUtil.isFileOrSymlinkExists(getRootEntry().getWorkingCopyFile(entry))) {
+                if (!FSUtil.isFileOrSymlinkExists(getRootEntry()
+                        .getWorkingCopyFile(entry))) {
                     // missing, but scheduled for addition.
-                    deleteChild(entry.getName(), entry.getPropertyValue(SVNProperty.DELETED) != null);
+                    deleteChild(entry.getName(), entry
+                            .getPropertyValue(SVNProperty.DELETED) != null);
                 } else {
                     myChildEntries.remove(name);
                     myChildren.remove(name);
@@ -751,19 +847,24 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             return entry;
         }
         // to file's entry or dir entry
-        ((FSEntry) entry).getEntry().put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_DELETE);
+        ((FSEntry) entry).getEntry().put(SVNProperty.SCHEDULE,
+                SVNProperty.SCHEDULE_DELETE);
         if (entry.isDirectory()) {
             Map entryMap = (Map) myChildEntries.get(name);
             if (entryMap != null) {
                 entryMap.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_DELETE);
             }
-            for(Iterator children = ((ISVNDirectoryEntry) entry).childEntries(); children.hasNext();) {
+            for (Iterator children = ((ISVNDirectoryEntry) entry)
+                    .childEntries(); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
-                ((ISVNDirectoryEntry) entry).scheduleForDeletion(child.getName(), moved);
+                ((ISVNDirectoryEntry) entry).scheduleForDeletion(child
+                        .getName(), moved);
             }
-            for(Iterator children = ((ISVNDirectoryEntry) entry).unmanagedChildEntries(true); children.hasNext();) {
+            for (Iterator children = ((ISVNDirectoryEntry) entry)
+                    .unmanagedChildEntries(true); children.hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
-                ((ISVNDirectoryEntry) entry).scheduleForDeletion(child.getName(), moved);
+                ((ISVNDirectoryEntry) entry).scheduleForDeletion(child
+                        .getName(), moved);
             }
         } else {
             File file = getRootEntry().getWorkingCopyFile(entry);
@@ -782,37 +883,38 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             if (entryMap != null) {
                 unschedule(entryMap);
             }
-            if (child.getPropertyValue(SVNProperty.DELETED) == null &&
-                    entryMap.get(SVNProperty.DELETED) != null) {
+            if (child.getPropertyValue(SVNProperty.DELETED) == null
+                    && entryMap.get(SVNProperty.DELETED) != null) {
                 entryMap.remove(SVNProperty.DELETED);
             }
         }
-        unschedule(((FSEntry) child).getEntry()); 
+        unschedule(((FSEntry) child).getEntry());
     }
-    
+
     private static void unschedule(Map entryMap) {
         entryMap.remove(SVNProperty.SCHEDULE);
         entryMap.remove(SVNProperty.COPIED);
         entryMap.remove(SVNProperty.COPYFROM_URL);
         entryMap.remove(SVNProperty.COPYFROM_REVISION);
     }
-    
-    public ISVNFileEntry asFile() { 
+
+    public ISVNFileEntry asFile() {
         return null;
     }
-    
+
     public ISVNDirectoryEntry asDirectory() {
         return this;
     }
-    
+
     public boolean isManaged(String name) throws SVNException {
-    	loadEntries();
-    	return myChildEntries.containsKey(name);
+        loadEntries();
+        return myChildEntries.containsKey(name);
     }
-    
+
     public boolean isIgnored(String name) throws SVNException {
         String ignored = getRootEntry().getGlobalIgnore();
-        for(StringTokenizer tokens = new StringTokenizer(ignored, " \t\n\r"); tokens.hasMoreTokens();) {
+        for (StringTokenizer tokens = new StringTokenizer(ignored, " \t\n\r"); tokens
+                .hasMoreTokens();) {
             String token = tokens.nextToken();
             if (token.length() == 0) {
                 continue;
@@ -820,10 +922,11 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
             if (ignoreMatches(token, name)) {
                 return true;
             }
-        }        
+        }
         ignored = getPropertyValue(SVNProperty.IGNORE);
         if (ignored != null) {
-            for(StringTokenizer tokens = new StringTokenizer(ignored, "\n\r"); tokens.hasMoreTokens();) {
+            for (StringTokenizer tokens = new StringTokenizer(ignored, "\n\r"); tokens
+                    .hasMoreTokens();) {
                 String token = tokens.nextToken();
                 if (token.length() == 0) {
                     continue;
@@ -831,25 +934,27 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
                 if (ignoreMatches(token, name)) {
                     return true;
                 }
-            }        
+            }
         }
-        return false;        
+        return false;
     }
-    
+
     private static boolean ignoreMatches(String token, String name) {
         token = token.replaceAll("\\.", "\\\\.");
         token = token.replaceAll("\\*", ".*");
         token = token.replaceAll("\\?", ".");
         return Pattern.matches(token, name);
     }
-    
-    private void doCopyFiles(ISVNEntry copy, File dst, String asName) throws SVNException {
+
+    private void doCopyFiles(ISVNEntry copy, File dst, String asName)
+            throws SVNException {
         File src = getRootEntry().getWorkingCopyFile(copy);
         try {
             if (copy.isDirectory()) {
                 File dir = new File(dst, asName);
                 dir.mkdirs();
-                for(Iterator children = copy.asDirectory().childEntries(); children.hasNext();) {
+                for (Iterator children = copy.asDirectory().childEntries(); children
+                        .hasNext();) {
                     ISVNEntry child = (ISVNEntry) children.next();
                     doCopyFiles(child, dir, child.getName());
                 }
@@ -865,12 +970,14 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
 
     private void doDeleteFiles(ISVNEntry entry) throws SVNException {
         if (entry.isDirectory()) {
-            for(Iterator children = entry.asDirectory().childEntries(); children.hasNext();) {
+            for (Iterator children = entry.asDirectory().childEntries(); children
+                    .hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
                 doDeleteFiles(child);
             }
         }
-        boolean keepWC = !entry.isDirectory() && entry.asFile().isContentsModified();
+        boolean keepWC = !entry.isDirectory()
+                && entry.asFile().isContentsModified();
         getAdminArea().deleteArea(entry);
         if (keepWC) {
             return;
@@ -881,59 +988,71 @@ public class FSDirEntry extends FSEntry implements ISVNDirectoryEntry {
         }
     }
 
-    public static void setPropertyValueRecursively(ISVNEntry root, String name, String value) throws SVNException {
+    public static void setPropertyValueRecursively(ISVNEntry root, String name,
+            String value) throws SVNException {
         root.setPropertyValue(name, value);
         if (root.isDirectory()) {
-            for(Iterator children = root.asDirectory().childEntries(); children.hasNext();) {
+            for (Iterator children = root.asDirectory().childEntries(); children
+                    .hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
-                if (SVNProperty.COPIED.equals(name) && child instanceof FSDirEntry) {
+                if (SVNProperty.COPIED.equals(name)
+                        && child instanceof FSDirEntry) {
                     if (value != null) {
-                        ((Map) ((FSDirEntry) root).myChildEntries.get(child.getName())).put(name, value);
+                        ((Map) ((FSDirEntry) root).myChildEntries.get(child
+                                .getName())).put(name, value);
                     } else {
-                        ((Map) ((FSDirEntry) root).myChildEntries.get(child.getName())).remove(name);
+                        ((Map) ((FSDirEntry) root).myChildEntries.get(child
+                                .getName())).remove(name);
                     }
-                }                    
+                }
                 setPropertyValueRecursively(child, name, value);
             }
         }
     }
-    
-    public static void updateURL(ISVNEntry target, String parentURL) throws SVNException {
-        parentURL = PathUtil.append(parentURL, PathUtil.encode(target.getName()));
+
+    public static void updateURL(ISVNEntry target, String parentURL)
+            throws SVNException {
+        parentURL = PathUtil.append(parentURL, PathUtil
+                .encode(target.getName()));
         target.setPropertyValue(SVNProperty.URL, parentURL);
         DebugLog.log("url set: " + parentURL);
         if (target.isDirectory()) {
-            for(Iterator children = target.asDirectory().childEntries(); children.hasNext();) {
+            for (Iterator children = target.asDirectory().childEntries(); children
+                    .hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
                 updateURL(child, parentURL);
             }
         }
     }
 
-    private static void updateDeletedEntries(ISVNEntry target) throws SVNException {
+    private static void updateDeletedEntries(ISVNEntry target)
+            throws SVNException {
         if (target.isDirectory()) {
             FSDirEntry dir = (FSDirEntry) target;
-            for(Iterator deletedEntries = dir.deletedEntries(); deletedEntries.hasNext();) {
+            for (Iterator deletedEntries = dir.deletedEntries(); deletedEntries
+                    .hasNext();) {
                 Map deletedEntry = (Map) deletedEntries.next();
                 // remove deleted entry in dir and replace it with deleted entry
                 String name = (String) deletedEntry.get(SVNProperty.NAME);
 
                 deletedEntry.remove(SVNProperty.DELETED);
-                deletedEntry.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_DELETE);
+                deletedEntry.put(SVNProperty.SCHEDULE,
+                        SVNProperty.SCHEDULE_DELETE);
                 deletedEntry.put(SVNProperty.COPIED, "true");
                 deletedEntry.put(SVNProperty.KIND, SVNProperty.KIND_FILE);
-                
+
                 dir.myDeletedEntries.remove(name);
                 dir.myChildEntries.put(name, deletedEntry);
             }
-            for(Iterator children = target.asDirectory().childEntries(); children.hasNext();) {
+            for (Iterator children = target.asDirectory().childEntries(); children
+                    .hasNext();) {
                 ISVNEntry child = (ISVNEntry) children.next();
                 updateDeletedEntries(child);
             }
         }
     }
 
-	public ISVNEntryContent getContent() throws SVNException {
-		return new FSDirEntryContent(this);
-	}
+    public ISVNEntryContent getContent() throws SVNException {
+        return new FSDirEntryContent(this);
+    }
 }

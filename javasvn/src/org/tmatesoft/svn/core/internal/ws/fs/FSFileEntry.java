@@ -1,12 +1,11 @@
 /*
  * ====================================================================
- * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
- *
- * This software is licensed as described in the file COPYING, which
- * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
- * If newer versions of this license are posted there, you may use a
- * newer version instead, at your option.
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
  * ====================================================================
  */
 
@@ -39,14 +38,17 @@ import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
+ * @version 1.0
  * @author TMate Software Ltd.
  */
 public class FSFileEntry extends FSEntry implements ISVNFileEntry {
-    
+
     private Map myEntry;
+
     private File myTempFile;
 
-    public FSFileEntry(FSAdminArea area, FSRootEntry root, String path, Map entryProperties) {
+    public FSFileEntry(FSAdminArea area, FSRootEntry root, String path,
+            Map entryProperties) {
         super(area, root, path);
         myEntry = entryProperties;
     }
@@ -57,16 +59,18 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         }
         super.setPropertyValue(name, value);
     }
-    
+
     public boolean isDirectory() {
         return false;
     }
-    
+
     public boolean isObstructed() {
-        return super.isObstructed() || getRootEntry().getWorkingCopyFile(this).isDirectory();
+        return super.isObstructed()
+                || getRootEntry().getWorkingCopyFile(this).isDirectory();
     }
 
-    public void applyDelta(SVNDiffWindow window, InputStream newData, boolean overwrite) throws SVNException {
+    public void applyDelta(SVNDiffWindow window, InputStream newData,
+            boolean overwrite) throws SVNException {
         if (overwrite) {
             ISVNRAData contents = null;
             if (window == null) {
@@ -77,13 +81,16 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                     throw new SVNException(e);
                 }
             } else {
-                if (!isBinary() && SVNProperty.EOL_STYLE_NATIVE.equals(getPropertyValue(SVNProperty.EOL_STYLE))) {
+                if (!isBinary()
+                        && SVNProperty.EOL_STYLE_NATIVE
+                                .equals(getPropertyValue(SVNProperty.EOL_STYLE))) {
                     if (myTempFile == null) {
                         myTempFile = getRootEntry().createTemporaryFile(this);
                     }
                     contents = new SVNRAFileData(myTempFile, false);
                 } else {
-                    contents = new SVNRAFileData(getRootEntry().getWorkingCopyFile(this), false);
+                    contents = new SVNRAFileData(getRootEntry()
+                            .getWorkingCopyFile(this), false);
                 }
                 window.apply(contents, contents, newData, contents.length());
             }
@@ -102,18 +109,21 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 throw new SVNException(e);
             }
         } else {
-            if (myIsCheckout || !getAdminArea().getBaseFile(this).exists()){
-                ISVNRAData source = new SVNRAFileData(getAdminArea().getBaseFile(this), false);
+            if (myIsCheckout || !getAdminArea().getBaseFile(this).exists()) {
+                ISVNRAData source = new SVNRAFileData(getAdminArea()
+                        .getBaseFile(this), false);
                 long offset = 0;
                 if (getAdminArea().getBaseFile(this).exists()) {
                     offset = getAdminArea().getBaseFile(this).length();
                 }
                 window.apply(source, source, newData, offset);
                 myIsCheckout = true;
-                
+
             } else {
-                ISVNRAData source = new SVNRAFileData(getAdminArea().getBaseFile(this), true);
-                ISVNRAData target = new SVNRAFileData(getAdminArea().getTemporaryBaseFile(this), false);
+                ISVNRAData source = new SVNRAFileData(getAdminArea()
+                        .getBaseFile(this), true);
+                ISVNRAData target = new SVNRAFileData(getAdminArea()
+                        .getTemporaryBaseFile(this), false);
                 long offset = 0;
                 if (getAdminArea().getTemporaryBaseFile(this).exists()) {
                     offset = getAdminArea().getTemporaryBaseFile(this).length();
@@ -122,25 +132,27 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             }
         }
     }
-    
+
     private boolean myIsCheckout;
-    
+
     public int deltaApplied(boolean overwrite) throws SVNException {
         if (myIsCheckout) {
             myIsCheckout = false;
             return SVNStatus.UPDATED;
         }
         if (!overwrite && isContentsModified()) {
-            return getRootEntry().getMerger().pretendMergeFiles(getAdminArea().getBaseFile(this), 
-                    getRootEntry().getWorkingCopyFile(this), 
+            return getRootEntry().getMerger().pretendMergeFiles(
+                    getAdminArea().getBaseFile(this),
+                    getRootEntry().getWorkingCopyFile(this),
                     getAdminArea().getTemporaryBaseFile(this));
         } else if (overwrite) {
             File dst = getRootEntry().getWorkingCopyFile(this);
             if (myTempFile != null) {
-                FSUtil.copy(myTempFile, dst, isBinary() ? null : SVNProperty.EOL_STYLE_NATIVE, null);
+                FSUtil.copy(myTempFile, dst, isBinary() ? null
+                        : SVNProperty.EOL_STYLE_NATIVE, null);
                 myTempFile.delete();
                 myTempFile = null;
-            } 
+            }
             if (getRootEntry().isUseCommitTimes()) {
                 String date = getPropertyValue(SVNProperty.COMMITTED_DATE);
                 if (date != null) {
@@ -152,7 +164,8 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         return SVNStatus.UPDATED;
     }
 
-    public String generateDelta(String commitPath, ISVNEditor target) throws SVNException {
+    public String generateDelta(String commitPath, ISVNEditor target)
+            throws SVNException {
         if (!isContentsModified() && !isScheduledForAddition()) {
             return null;
         }
@@ -173,20 +186,25 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 FSUtil.copy(file, tmpFile, eolType, keywords, null);
             }
             ISVNDeltaGenerator generator;
-            if (isBinary() || isScheduledForAddition() || DebugLog.isGeneratorDisabled() ||
-                    !getAdminArea().hasBaseFile(this)) {
+            if (isBinary() || isScheduledForAddition()
+                    || DebugLog.isGeneratorDisabled()
+                    || !getAdminArea().hasBaseFile(this)) {
                 generator = new SVNAllDeltaGenerator();
             } else {
                 generator = new SVNSequenceDeltaGenerator();
             }
-            
+
             File digestFile = getRootEntry().createTemporaryFile(this);
-            digest = FSUtil.copy(tmpFile != null ? tmpFile : file, digestFile, null, null, createDigest());
-            SVNRAFileData workFile = new SVNRAFileData(tmpFile != null ? tmpFile : file, true);
-            SVNRAFileData baseFile = generator instanceof SVNSequenceDeltaGenerator ? 
-                    new SVNRAFileData(getAdminArea().getBaseFile(this), true) : null;
+            digest = FSUtil.copy(tmpFile != null ? tmpFile : file, digestFile,
+                    null, null, createDigest());
+            SVNRAFileData workFile = new SVNRAFileData(
+                    tmpFile != null ? tmpFile : file, true);
+            SVNRAFileData baseFile = generator instanceof SVNSequenceDeltaGenerator ? new SVNRAFileData(
+                    getAdminArea().getBaseFile(this), true)
+                    : null;
             try {
-                generator.generateDiffWindow(commitPath, target, workFile, baseFile);
+                generator.generateDiffWindow(commitPath, target, workFile,
+                        baseFile);
             } finally {
                 try {
                     if (baseFile != null) {
@@ -208,9 +226,10 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         }
         return digest;
     }
-    
+
     public boolean isContentsModified() throws SVNException {
-        if (isPropertyModified(SVNProperty.EOL_STYLE) || isPropertyModified(SVNProperty.KEYWORDS)
+        if (isPropertyModified(SVNProperty.EOL_STYLE)
+                || isPropertyModified(SVNProperty.KEYWORDS)
                 || isPropertyModified(SVNProperty.SPECIAL)) {
             return true;
         }
@@ -224,13 +243,13 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             if (time != file.lastModified()) {
                 return isContentsDifferent();
             }
-        } 
+        }
         return false;
     }
 
-	public ISVNEntryContent getContent() throws SVNException {
-		return new FSFileEntryContent(this);
-	}
+    public ISVNEntryContent getContent() throws SVNException {
+        return new FSFileEntryContent(this);
+    }
 
     private boolean isContentsDifferent() throws SVNException {
         File file = getRootEntry().getWorkingCopyFile(this);
@@ -241,14 +260,16 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         File tmpFile = null;
         try {
             if (!isBinary() && getPropertyValue(SVNProperty.KEYWORDS) != null) {
-                // unexpand keywords before comparing files... (for text files only).
+                // unexpand keywords before comparing files... (for text files
+                // only).
                 // only when there are keywords
                 tmpFile = getRootEntry().createTemporaryFile(this);
                 Map keywords = computeKeywords(false);
                 FSUtil.copy(file, tmpFile, null, keywords, null);
             }
             // no keywords, use original file.
-            return !FSUtil.compareFiles(baseFile, tmpFile == null ? file : tmpFile, isBinary());
+            return !FSUtil.compareFiles(baseFile, tmpFile == null ? file
+                    : tmpFile, isBinary());
         } catch (IOException e) {
             throw new SVNException(e);
         } finally {
@@ -257,7 +278,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             }
         }
     }
-    
+
     public boolean isCorrupted() throws SVNException {
         File baseFile = getAdminArea().getBaseFile(this);
         if (getPropertyValue(SVNProperty.CHECKSUM) == null) {
@@ -267,24 +288,29 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             return false;
         }
         String checksum = FSUtil.getChecksum(baseFile, createDigest());
-        if (checksum == null || !checksum.equals(getPropertyValue(SVNProperty.CHECKSUM))) {
+        if (checksum == null
+                || !checksum.equals(getPropertyValue(SVNProperty.CHECKSUM))) {
             return true;
         }
         return false;
     }
-    
+
     public void commit() throws SVNException {
         super.commit();
-        
+
         File actualFile = getRootEntry().getWorkingCopyFile(this);
         File baseFile = getAdminArea().getBaseFile(this);
         String checksum = null;
         Map keywords = computeKeywords(true);
         if (actualFile.exists()) {
             String eolStyle = getPropertyValue(SVNProperty.EOL_STYLE);
-            if (!isBinary()) {// && ((isPropertyModified(SVNProperty.EOL_STYLE) && eolStyle != null) || isPropertyModified(SVNProperty.KEYWORDS))) {
+            if (!isBinary()) {// &&
+                                // ((isPropertyModified(SVNProperty.EOL_STYLE)
+                                // && eolStyle != null) ||
+                                // isPropertyModified(SVNProperty.KEYWORDS))) {
                 File tmpFile = getRootEntry().createTemporaryFile(this);
-                FSUtil.copy(actualFile, tmpFile, eolStyle, computeKeywords(false), null);
+                FSUtil.copy(actualFile, tmpFile, eolStyle,
+                        computeKeywords(false), null);
                 FSUtil.copy(tmpFile, actualFile, null, keywords, null);
                 tmpFile.delete();
             }
@@ -292,15 +318,18 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             if (SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) {
                 eolStyle = SVNProperty.EOL_STYLE_LF;
             }
-            checksum = FSUtil.copy(actualFile, baseFile, storeAsIs ? null : eolStyle, isBinary() ? null : computeKeywords(false), createDigest());
+            checksum = FSUtil.copy(actualFile, baseFile, storeAsIs ? null
+                    : eolStyle, isBinary() ? null : computeKeywords(false),
+                    createDigest());
             if (!getRootEntry().isUseCommitTimes()) {
                 Date date = new Date(actualFile.lastModified());
-                getEntry().put(SVNProperty.TEXT_TIME, TimeUtil.formatDate(date));
+                getEntry()
+                        .put(SVNProperty.TEXT_TIME, TimeUtil.formatDate(date));
             } else {
                 String date = (String) getPropertyValue(SVNProperty.COMMITTED_DATE);
                 getEntry().put(SVNProperty.TEXT_TIME, date);
                 actualFile.setLastModified(TimeUtil.parseDate(date).getTime());
-            }            
+            }
         } else {
             baseFile.delete();
             getEntry().remove(SVNProperty.TEXT_TIME);
@@ -310,7 +339,8 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         } else {
             getEntry().put(SVNProperty.CHECKSUM, checksum);
         }
-        if (getPropertyValue(SVNProperty.NEEDS_LOCK) != null && getPropertyValue(SVNProperty.LOCK_TOKEN) == null) {
+        if (getPropertyValue(SVNProperty.NEEDS_LOCK) != null
+                && getPropertyValue(SVNProperty.LOCK_TOKEN) == null) {
             FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), true);
         }
     }
@@ -330,20 +360,23 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             getAdminArea().saveProperties(this, Collections.EMPTY_MAP);
             long lastModified = getAdminArea().propertiesLastModified(this);
             if (lastModified != 0) {
-                getEntry().put(SVNProperty.PROP_TIME, TimeUtil.formatDate(new Date(lastModified)));
+                getEntry().put(SVNProperty.PROP_TIME,
+                        TimeUtil.formatDate(new Date(lastModified)));
             } else {
                 getEntry().remove(SVNProperty.PROP_TIME);
             }
         }
 
-        File tmpBaseFile = getAdminArea().getTemporaryBaseFile(this);        
+        File tmpBaseFile = getAdminArea().getTemporaryBaseFile(this);
         File actualFile = getRootEntry().getWorkingCopyFile(this);
         File baseFile = getAdminArea().getBaseFile(this);
         Map keywords = computeKeywords(true);
 
         if (!tmpBaseFile.exists() && !isScheduledForDeletion()) {
             if (baseFile.exists() && (!actualFile.exists() || isNewKeywords)) {
-                FSUtil.copy(baseFile, actualFile, !isBinary() ? getPropertyValue(SVNProperty.EOL_STYLE) : null, isBinary() ? null : keywords, null);
+                FSUtil.copy(baseFile, actualFile,
+                        !isBinary() ? getPropertyValue(SVNProperty.EOL_STYLE)
+                                : null, isBinary() ? null : keywords, null);
                 updateTextTime(actualFile);
             }
             updateReadonlyState();
@@ -355,14 +388,17 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             DebugLog.log("tmpBaseFile: " + tmpBaseFile.getAbsolutePath());
             DebugLog.log("tmpBaseFile.exists(): " + tmpBaseFile.exists());
             if (tmpBaseFile.exists()) {
-                checksum = FSUtil.copy(tmpBaseFile, baseFile, null, createDigest());
-                DebugLog.log("deleted file merged: "  + getPath());
+                checksum = FSUtil.copy(tmpBaseFile, baseFile, null,
+                        createDigest());
+                DebugLog.log("deleted file merged: " + getPath());
             }
         } else if (!isContentsModified()) {
-            String eolStyle = isBinary() ? null : getPropertyValue(SVNProperty.EOL_STYLE);
-            
+            String eolStyle = isBinary() ? null
+                    : getPropertyValue(SVNProperty.EOL_STYLE);
+
             checksum = FSUtil.copy(tmpBaseFile, baseFile, null, createDigest());
-            FSUtil.copy(baseFile, actualFile,  isBinary() ? null : eolStyle, isBinary() ? null : keywords, null);
+            FSUtil.copy(baseFile, actualFile, isBinary() ? null : eolStyle,
+                    isBinary() ? null : keywords, null);
             updateTextTime(actualFile);
         } else {
             int mergeResult = SVNStatus.CONFLICTED;
@@ -372,44 +408,67 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 FSMerger merger = getRootEntry().getMerger();
                 File remote = getAdminArea().getTemporaryBaseFile(this);
                 File base = getAdminArea().getBaseFile(this);
-    
+
                 localFile = getRootEntry().createTemporaryFile(this);
                 File result = getRootEntry().createTemporaryFile(this);
                 // no need to convert eols, merger should merge just lines.
-                FSUtil.copy(getRootEntry().getWorkingCopyFile(this), localFile, null, computeKeywords(false), null);
-                mergeResult = merger.mergeFiles(base, localFile, remote, result, ".mine", ".r" + getPropertyValue(SVNProperty.COMMITTED_REVISION));
+                FSUtil.copy(getRootEntry().getWorkingCopyFile(this), localFile,
+                        null, computeKeywords(false), null);
+                mergeResult = merger
+                        .mergeFiles(
+                                base,
+                                localFile,
+                                remote,
+                                result,
+                                ".mine",
+                                ".r"
+                                        + getPropertyValue(SVNProperty.COMMITTED_REVISION));
                 localFile.delete();
                 localFile = result;
             }
             if (mergeResult == SVNStatus.CONFLICTED) {
-                File newRevFile = new File(getRootEntry().getWorkingCopyFile(this).getParentFile(), getName() + ".r" + getPropertyValue(SVNProperty.COMMITTED_REVISION)); 
-                File oldRevFile = new File(getRootEntry().getWorkingCopyFile(this).getParentFile(), getName() + ".r" + getOldRevision());
+                File newRevFile = new File(getRootEntry().getWorkingCopyFile(
+                        this).getParentFile(), getName() + ".r"
+                        + getPropertyValue(SVNProperty.COMMITTED_REVISION));
+                File oldRevFile = new File(getRootEntry().getWorkingCopyFile(
+                        this).getParentFile(), getName() + ".r"
+                        + getOldRevision());
 
-                FSUtil.copy(getAdminArea().getTemporaryBaseFile(this), newRevFile, null, null, null);
-                FSUtil.copy(getAdminArea().getBaseFile(this), oldRevFile, null, null, null);
-            
+                FSUtil.copy(getAdminArea().getTemporaryBaseFile(this),
+                        newRevFile, null, null, null);
+                FSUtil.copy(getAdminArea().getBaseFile(this), oldRevFile, null,
+                        null, null);
+
                 setPropertyValue(SVNProperty.CONFLICT_OLD, oldRevFile.getName());
                 setPropertyValue(SVNProperty.CONFLICT_NEW, newRevFile.getName());
                 if (!isBinary()) {
                     // save wc to "mine"
-                    File mineFile = new File(getRootEntry().getWorkingCopyFile(this).getParentFile(), getName() + ".mine");
-                    FSUtil.copy(getRootEntry().getWorkingCopyFile(this), mineFile, null, null, null);
-                    setPropertyValue(SVNProperty.CONFLICT_WRK, mineFile.getName());
+                    File mineFile = new File(getRootEntry().getWorkingCopyFile(
+                            this).getParentFile(), getName() + ".mine");
+                    FSUtil.copy(getRootEntry().getWorkingCopyFile(this),
+                            mineFile, null, null, null);
+                    setPropertyValue(SVNProperty.CONFLICT_WRK, mineFile
+                            .getName());
                 }
             }
             if (localFile != null) {
                 // replace "wc" with merge result.
                 keywords = computeKeywords(true);
                 String eolStyle = getPropertyValue(SVNProperty.EOL_STYLE);
-                FSUtil.copy(localFile, getRootEntry().getWorkingCopyFile(this), eolStyle, keywords, null);
+                FSUtil.copy(localFile, getRootEntry().getWorkingCopyFile(this),
+                        eolStyle, keywords, null);
                 localFile.delete();
             }
-            checksum = FSUtil.copy(getAdminArea().getTemporaryBaseFile(this), getAdminArea().getBaseFile(this), null, null, createDigest());
+            checksum = FSUtil.copy(getAdminArea().getTemporaryBaseFile(this),
+                    getAdminArea().getBaseFile(this), null, null,
+                    createDigest());
         }
         if (getPropertyValue(SVNProperty.CHECKSUM) == null) {
             setPropertyValue(SVNProperty.CHECKSUM, checksum);
-        } else if (checksum != null && !checksum.equals(getPropertyValue(SVNProperty.CHECKSUM))) {
-            throw new SVNException(getPath() + " local checksum differs from repository.");
+        } else if (checksum != null
+                && !checksum.equals(getPropertyValue(SVNProperty.CHECKSUM))) {
+            throw new SVNException(getPath()
+                    + " local checksum differs from repository.");
         }
         getAdminArea().deleteTemporaryBaseFile(this);
         updateReadonlyState();
@@ -418,14 +477,16 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
     private void updateReadonlyState() throws SVNException {
         boolean setReadonly = false;
         boolean setReadWrite = false;
-        if (isPropertyModified(SVNProperty.NEEDS_LOCK) && getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
+        if (isPropertyModified(SVNProperty.NEEDS_LOCK)
+                && getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
             setReadonly = !isContentsModified();
-        } else if (isPropertyModified(SVNProperty.NEEDS_LOCK) && getPropertyValue(SVNProperty.NEEDS_LOCK) == null) {
-            setReadWrite = true; 
-        } else if (getPropertyValue(SVNProperty.NEEDS_LOCK) != null && 
-                getPropertyValue(SVNProperty.LOCK_TOKEN) == null &&
-                isLockPropertyChanged()) {
-            setReadonly = !isContentsModified(); 
+        } else if (isPropertyModified(SVNProperty.NEEDS_LOCK)
+                && getPropertyValue(SVNProperty.NEEDS_LOCK) == null) {
+            setReadWrite = true;
+        } else if (getPropertyValue(SVNProperty.NEEDS_LOCK) != null
+                && getPropertyValue(SVNProperty.LOCK_TOKEN) == null
+                && isLockPropertyChanged()) {
+            setReadonly = !isContentsModified();
         }
         if (setReadonly) {
             FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), true);
@@ -433,15 +494,17 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), false);
         }
     }
+
     public void save(boolean recursive) throws SVNException {
         super.save(recursive);
         if (getPropertyValue(SVNProperty.NEEDS_LOCK) == null) {
             FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), false);
-        } else {            
-            FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this), getPropertyValue(SVNProperty.LOCK_TOKEN) == null);            
+        } else {
+            FSUtil.setReadonly(getRootEntry().getWorkingCopyFile(this),
+                    getPropertyValue(SVNProperty.LOCK_TOKEN) == null);
         }
     }
-    
+
     private void updateTextTime(File file) throws SVNException {
         long lastModified = file.lastModified();
         if (getRootEntry().isUseCommitTimes()) {
@@ -451,22 +514,23 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 file.setLastModified(lastModified);
             }
         }
-        getEntry().put(SVNProperty.TEXT_TIME, TimeUtil.formatDate(new Date(lastModified)));
+        getEntry().put(SVNProperty.TEXT_TIME,
+                TimeUtil.formatDate(new Date(lastModified)));
     }
-    
+
     public boolean isConflict() throws SVNException {
         if (super.isConflict()) {
             return true;
         }
-        return getPropertyValue(SVNProperty.CONFLICT_OLD) != null || 
-            getPropertyValue(SVNProperty.CONFLICT_NEW) != null ||
-            getPropertyValue(SVNProperty.CONFLICT_NEW) != null;
+        return getPropertyValue(SVNProperty.CONFLICT_OLD) != null
+                || getPropertyValue(SVNProperty.CONFLICT_NEW) != null
+                || getPropertyValue(SVNProperty.CONFLICT_NEW) != null;
     }
 
     public void markResolved() throws SVNException {
         markResolved(false);
     }
-    
+
     public void markResolved(boolean contentsOnly) throws SVNException {
         if (!contentsOnly) {
             super.markResolved();
@@ -478,7 +542,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
         setPropertyValue(SVNProperty.CONFLICT_NEW, null);
         setPropertyValue(SVNProperty.CONFLICT_OLD, null);
         setPropertyValue(SVNProperty.CONFLICT_WRK, null);
-        
+
         File folder = getRootEntry().getWorkingCopyFile(this).getParentFile();
         if (oldFileName != null) {
             new File(folder, oldFileName).delete();
@@ -490,24 +554,26 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             new File(folder, wrkFileName).delete();
         }
     }
-    
+
     public void restoreContents() throws SVNException {
         // replace working copy with base.
         restoreProperties();
         File base = getAdminArea().getBaseFile(this);
         File local = getRootEntry().getWorkingCopyFile(this);
         if (base.exists()) {
-            FSUtil.copy(base, local, isBinary() ? null : getPropertyValue(SVNProperty.EOL_STYLE), isBinary() ? null : computeKeywords(true), null);
+            FSUtil.copy(base, local, isBinary() ? null
+                    : getPropertyValue(SVNProperty.EOL_STYLE),
+                    isBinary() ? null : computeKeywords(true), null);
             updateTextTime(local);
         } else {
             local.delete();
         }
     }
-    
-    public ISVNFileEntry asFile() { 
+
+    public ISVNFileEntry asFile() {
         return this;
     }
-    
+
     public ISVNDirectoryEntry asDirectory() {
         return null;
     }
@@ -515,7 +581,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
     protected Map getEntry() {
         return myEntry;
     }
-    
+
     protected boolean isBinary() throws SVNException {
         String type = getPropertyValue(SVNProperty.MIME_TYPE);
         return !(type == null || type.startsWith("text/"));
@@ -528,21 +594,23 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
             throw new SVNException(e);
         }
     }
-    
+
     public Map computeKeywords(boolean expand) throws SVNException {
         String keywordsProperty = getPropertyValue(SVNProperty.KEYWORDS);
         if (keywordsProperty == null) {
             return Collections.EMPTY_MAP;
         }
         Map map = new HashMap();
-        for(StringTokenizer tokens = new StringTokenizer(keywordsProperty, " "); tokens.hasMoreTokens();) {
+        for (StringTokenizer tokens = new StringTokenizer(keywordsProperty, " "); tokens
+                .hasMoreTokens();) {
             String token = tokens.nextToken();
             if ("LastChangedDate".equals(token) || "Date".equals(token)) {
                 String dateStr = getPropertyValue(SVNProperty.COMMITTED_DATE);
                 dateStr = TimeUtil.toHumanDate(dateStr);
                 map.put("LastChangedDate", expand ? dateStr : null);
-                map.put("Date",  expand ? dateStr : null);
-            } else if ("LastChangedRevision".equals(token) || "Revision".equals(token) || "Rev".equals(token)) {
+                map.put("Date", expand ? dateStr : null);
+            } else if ("LastChangedRevision".equals(token)
+                    || "Revision".equals(token) || "Rev".equals(token)) {
                 String revStr = getPropertyValue(SVNProperty.COMMITTED_REVISION);
                 map.put("LastChangedRevision", expand ? revStr : null);
                 map.put("Revision", expand ? revStr : null);
@@ -552,7 +620,7 @@ public class FSFileEntry extends FSEntry implements ISVNFileEntry {
                 author = author == null ? "" : author;
                 map.put("LastChangedBy", expand ? author : null);
                 map.put("Author", expand ? author : null);
-            } else if ("HeadURL".equals(token) || "URL".equals(token)) {                
+            } else if ("HeadURL".equals(token) || "URL".equals(token)) {
                 String url = getPropertyValue(SVNProperty.URL);
                 map.put("HeadURL", expand ? url : null);
                 map.put("URL", expand ? url : null);

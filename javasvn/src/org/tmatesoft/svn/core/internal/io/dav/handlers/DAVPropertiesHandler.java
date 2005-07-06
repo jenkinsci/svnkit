@@ -18,8 +18,10 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVStatus;
 import org.tmatesoft.svn.core.internal.io.dav.IDAVResponseHandler;
 import org.xml.sax.Attributes;
 
+
 /**
- * @author Alexander Kitaev
+ * @version 1.0
+ * @author  TMate Software Ltd.
  */
 public class DAVPropertiesHandler extends BasicDAVHandler {
 	

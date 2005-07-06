@@ -29,6 +29,10 @@ import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
+/**
+ * @version 1.0
+ * @author TMate Software Ltd.
+ */
 
 class SVNReporterBaton implements ISVNReporterBaton {
     

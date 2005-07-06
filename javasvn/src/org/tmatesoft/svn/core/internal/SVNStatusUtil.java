@@ -35,6 +35,7 @@ import org.tmatesoft.svn.util.TimeUtil;
 import org.tmatesoft.svn.util.DebugLog;
 
 /**
+ * @version 1.0
  * @author TMate Software Ltd.
  */
 class SVNStatusUtil {

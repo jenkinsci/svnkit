@@ -1,12 +1,11 @@
 /*
  * ====================================================================
- * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
- *
- * This software is licensed as described in the file COPYING, which
- * you should have received as part of this distribution.  The terms
- * are also available at http://tmate.org/svn/license.html.
- * If newer versions of this license are posted there, you may use a
- * newer version instead, at your option.
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
  * ====================================================================
  */
 
@@ -32,24 +31,37 @@ import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
+ * @version 1.0
  * @author TMate Software Ltd.
  */
 public abstract class FSEntry implements ISVNEntry {
-    
+
     private String myPath;
+
     private String myName;
+
     private Map myProperties;
+
     private Map myWCProperties;
+
     private Map myBaseProperties;
+
     private Set myModifiedProperties;
+
     private FSAdminArea myAdminArea;
+
     private FSRootEntry myRootEntry;
+
     private boolean myIsManaged;
-    private long myOldRevision; 
+
+    private long myOldRevision;
+
     private boolean myIsLockChanged;
-    
-    public static final String WC_PREFIX = "svn:wc:"; 
+
+    public static final String WC_PREFIX = "svn:wc:";
+
     public static final String ENTRY_PREFIX = "svn:entry:";
+
     private String myAlias;
 
     public FSEntry(FSAdminArea adminArea, FSRootEntry entry, String path) {
@@ -61,31 +73,31 @@ public abstract class FSEntry implements ISVNEntry {
         }
         myRootEntry = entry;
     }
-    
+
     public boolean isManaged() {
         return myIsManaged;
     }
-    
+
     protected void setManaged(boolean managed) {
         myIsManaged = managed;
     }
-    
+
     public boolean isMissing() throws SVNException {
         File file = getRootEntry().getWorkingCopyFile(this);
         return !FSUtil.isFileOrSymlinkExists(file) && !isScheduledForDeletion();
     }
-    
+
     public String getPath() {
         return myPath;
     }
-    
+
     public String getName() {
         if (myName == null) {
             myName = PathUtil.tail(getPath());
         }
         return myName;
     }
-    
+
     public void setName(String name) {
         myName = name;
         myPath = PathUtil.append(PathUtil.removeTail(myPath), name);
@@ -94,7 +106,7 @@ public abstract class FSEntry implements ISVNEntry {
 
     public String getPropertyValue(String name) throws SVNException {
         if (name.startsWith(ENTRY_PREFIX)) {
-            return (String) getEntry().get(name);            
+            return (String) getEntry().get(name);
         } else if (name.startsWith(WC_PREFIX)) {
             if (myWCProperties == null) {
                 myWCProperties = getAdminArea().loadWCProperties(this);
@@ -106,7 +118,7 @@ public abstract class FSEntry implements ISVNEntry {
         }
         return (String) myProperties.get(name);
     }
-    
+
     public Iterator propertyNames() throws SVNException {
         if (myProperties == null) {
             myProperties = getAdminArea().loadProperties(this);
@@ -145,32 +157,39 @@ public abstract class FSEntry implements ISVNEntry {
             }
         }
     }
-    
+
     void initProperties() throws SVNException {
         myProperties = getAdminArea().loadProperties(this);
         myBaseProperties = getAdminArea().loadBaseProperties(this);
     }
-    
+
     public boolean isScheduledForAddition() throws SVNException {
-        return SVNProperty.SCHEDULE_ADD.equals(getEntry().get(SVNProperty.SCHEDULE)) || 
-            SVNProperty.SCHEDULE_REPLACE.equals(getEntry().get(SVNProperty.SCHEDULE));
-    }
-    
-    public boolean isScheduledForDeletion() throws SVNException {
-        return SVNProperty.SCHEDULE_DELETE.equals(getEntry().get(SVNProperty.SCHEDULE)) || 
-        SVNProperty.SCHEDULE_REPLACE.equals(getEntry().get(SVNProperty.SCHEDULE));
-    }
-    
-    public boolean isModified() throws SVNException {
-        return isScheduledForAddition() || isScheduledForDeletion() || isPropertiesModified();
+        return SVNProperty.SCHEDULE_ADD.equals(getEntry().get(
+                SVNProperty.SCHEDULE))
+                || SVNProperty.SCHEDULE_REPLACE.equals(getEntry().get(
+                        SVNProperty.SCHEDULE));
     }
 
-    public int applyChangedProperties(Map changedProperties) throws SVNException {        
+    public boolean isScheduledForDeletion() throws SVNException {
+        return SVNProperty.SCHEDULE_DELETE.equals(getEntry().get(
+                SVNProperty.SCHEDULE))
+                || SVNProperty.SCHEDULE_REPLACE.equals(getEntry().get(
+                        SVNProperty.SCHEDULE));
+    }
+
+    public boolean isModified() throws SVNException {
+        return isScheduledForAddition() || isScheduledForDeletion()
+                || isPropertiesModified();
+    }
+
+    public int applyChangedProperties(Map changedProperties)
+            throws SVNException {
         myIsLockChanged = false;
         if (isScheduledForAddition()) {
             return SVNStatus.OBSTRUCTED;
         }
-        setOldRevision(SVNProperty.longValue(getPropertyValue(SVNProperty.COMMITTED_REVISION)));
+        setOldRevision(SVNProperty
+                .longValue(getPropertyValue(SVNProperty.COMMITTED_REVISION)));
         if (changedProperties.isEmpty()) {
             return SVNStatus.NOT_MODIFIED;
         }
@@ -183,8 +202,9 @@ public abstract class FSEntry implements ISVNEntry {
         if (myModifiedProperties == null) {
             myModifiedProperties = new HashSet();
         }
-        Map latestProperties = new HashMap(myBaseProperties); 
-        for(Iterator entries = changedProperties.entrySet().iterator(); entries.hasNext();) {
+        Map latestProperties = new HashMap(myBaseProperties);
+        for (Iterator entries = changedProperties.entrySet().iterator(); entries
+                .hasNext();) {
             Map.Entry entry = (Map.Entry) entries.next();
             String name = (String) entry.getKey();
             if (name.startsWith(ENTRY_PREFIX) || name.startsWith(WC_PREFIX)) {
@@ -200,8 +220,10 @@ public abstract class FSEntry implements ISVNEntry {
         getAdminArea().saveTemporaryProperties(this, latestProperties);
         if (isPropertiesModified()) {
             // just compare propkeys.
-            // if latest (remote) has the same keys as local (that differs from base), then it is a conflict.
-            for(Iterator localEntries = myProperties.entrySet().iterator(); localEntries.hasNext();) {
+            // if latest (remote) has the same keys as local (that differs from
+            // base), then it is a conflict.
+            for (Iterator localEntries = myProperties.entrySet().iterator(); localEntries
+                    .hasNext();) {
                 Map.Entry localEntry = (Map.Entry) localEntries.next();
                 if (myBaseProperties.entrySet().contains(localEntry)) {
                     // not changed
@@ -222,12 +244,14 @@ public abstract class FSEntry implements ISVNEntry {
             }
             return SVNStatus.MERGED;
         }
-        return myModifiedProperties.isEmpty() ? SVNStatus.NOT_MODIFIED : SVNStatus.UPDATED;
+        return myModifiedProperties.isEmpty() ? SVNStatus.NOT_MODIFIED
+                : SVNStatus.UPDATED;
     }
 
-    public boolean sendChangedProperties(String commitPath, ISVNEditor editor) throws SVNException {
+    public boolean sendChangedProperties(String commitPath, ISVNEditor editor)
+            throws SVNException {
         if (myBaseProperties == null) {
-            myBaseProperties = getAdminArea().loadBaseProperties(this);            
+            myBaseProperties = getAdminArea().loadBaseProperties(this);
         }
         if (myProperties == null) {
             myProperties = getAdminArea().loadProperties(this);
@@ -236,7 +260,7 @@ public abstract class FSEntry implements ISVNEntry {
             myModifiedProperties = new HashSet();
         }
         // send properties that were added or changed
-        for(Iterator keys = myProperties.keySet().iterator(); keys.hasNext();) {
+        for (Iterator keys = myProperties.keySet().iterator(); keys.hasNext();) {
             String key = (String) keys.next();
             Object newValue = myProperties.get(key);
             Object oldValue = myBaseProperties.get(key);
@@ -245,11 +269,13 @@ public abstract class FSEntry implements ISVNEntry {
                 if (isDirectory()) {
                     editor.changeDirProperty(key, (String) newValue);
                 } else {
-                    editor.changeFileProperty(commitPath, key, (String) newValue);
+                    editor.changeFileProperty(commitPath, key,
+                            (String) newValue);
                 }
             }
         }
-        for(Iterator keys = myBaseProperties.keySet().iterator(); keys.hasNext();) {
+        for (Iterator keys = myBaseProperties.keySet().iterator(); keys
+                .hasNext();) {
             String key = (String) keys.next();
             if (!myProperties.containsKey(key)) {
                 if (isDirectory()) {
@@ -262,17 +288,17 @@ public abstract class FSEntry implements ISVNEntry {
         }
         return !myModifiedProperties.isEmpty();
     }
-    
+
     public void save() throws SVNException {
         save(true);
     }
-    
+
     public void save(boolean recursive) throws SVNException {
         getAdminArea().saveProperties(this, myProperties);
         getAdminArea().saveBaseProperties(this, myBaseProperties);
         getAdminArea().saveWCProperties(this, myWCProperties);
     }
-    
+
     public void merge() throws SVNException {
         getAdminArea().saveWCProperties(this, myWCProperties);
         if (!getAdminArea().getTemporaryPropertiesFile(this).exists()) {
@@ -280,12 +306,13 @@ public abstract class FSEntry implements ISVNEntry {
         }
         Map latestProperties = getAdminArea().loadTemporaryProperties(this);
         getAdminArea().saveBaseProperties(this, latestProperties);
-        
+
         if (!isPropertiesModified()) {
             getAdminArea().saveProperties(this, latestProperties);
             long lastModified = getAdminArea().propertiesLastModified(this);
             if (lastModified != 0) {
-                getEntry().put(SVNProperty.PROP_TIME, TimeUtil.formatDate(new Date(lastModified)));
+                getEntry().put(SVNProperty.PROP_TIME,
+                        TimeUtil.formatDate(new Date(lastModified)));
             } else {
                 getEntry().remove(SVNProperty.PROP_TIME);
             }
@@ -303,19 +330,27 @@ public abstract class FSEntry implements ISVNEntry {
                 myBaseProperties = getAdminArea().loadBaseProperties(this);
             }
             Set conflict = new HashSet();
-            for(Iterator entries = latestProperties.entrySet().iterator(); entries.hasNext();) {
+            for (Iterator entries = latestProperties.entrySet().iterator(); entries
+                    .hasNext();) {
                 Map.Entry entry = (Map.Entry) entries.next();
                 String localValue = (String) myProperties.get(entry.getKey());
                 String newValue = (String) entry.getValue();
                 if (localValue == null) {
                     myProperties.put(entry.getKey(), entry.getValue());
-                } else if ((newValue == null && localValue != null) || (newValue != null && !newValue.equals(localValue)) ||
-                        (localValue != null && !localValue.equals(newValue))) {
+                } else if ((newValue == null && localValue != null)
+                        || (newValue != null && !newValue.equals(localValue))
+                        || (localValue != null && !localValue.equals(newValue))) {
                     if (newValue != null) {
-                        conflict.add("Property '" + entry.getKey() + "' locally changed to '" + myProperties.get(entry.getKey()) + "', but update sets it to '" +
-                                entry.getValue() + "'\n");
+                        conflict.add("Property '" + entry.getKey()
+                                + "' locally changed to '"
+                                + myProperties.get(entry.getKey())
+                                + "', but update sets it to '"
+                                + entry.getValue() + "'\n");
                     } else {
-                        conflict.add("Property '" + entry.getKey() + "' locally changed to '" + myProperties.get(entry.getKey()) + "', but update deletes it\n");
+                        conflict.add("Property '" + entry.getKey()
+                                + "' locally changed to '"
+                                + myProperties.get(entry.getKey())
+                                + "', but update deletes it\n");
                     }
                 } else {
                     myProperties.put(entry.getKey(), entry.getValue());
@@ -326,11 +361,13 @@ public abstract class FSEntry implements ISVNEntry {
                 if (!parent.isDirectory()) {
                     parent = parent.getParentFile();
                 }
-                File prej = new File(parent, isDirectory() ? "dir_conflicts.prej" : getName() + ".prej");
+                File prej = new File(parent,
+                        isDirectory() ? "dir_conflicts.prej" : getName()
+                                + ".prej");
                 OutputStream os = null;
                 try {
                     os = new FileOutputStream(prej, true);
-                    for(Iterator lines = conflict.iterator(); lines.hasNext();) {
+                    for (Iterator lines = conflict.iterator(); lines.hasNext();) {
                         String line = (String) lines.next();
                         os.write(line.getBytes());
                     }
@@ -350,27 +387,28 @@ public abstract class FSEntry implements ISVNEntry {
         }
         getAdminArea().deleteTemporaryProperties(this);
     }
-    
+
     public void commit() throws SVNException {
         if (myProperties == null) {
             myProperties = getAdminArea().loadProperties(this);
         }
         getAdminArea().saveProperties(this, myProperties);
         getAdminArea().saveBaseProperties(this, myProperties);
-        
-        long lastModified = getAdminArea().propertiesLastModified(this); 
+
+        long lastModified = getAdminArea().propertiesLastModified(this);
         if (lastModified != 0) {
-            getEntry().put(SVNProperty.PROP_TIME, TimeUtil.formatDate(new Date(lastModified)));
+            getEntry().put(SVNProperty.PROP_TIME,
+                    TimeUtil.formatDate(new Date(lastModified)));
         } else {
             getEntry().remove(SVNProperty.PROP_TIME);
         }
         getAdminArea().saveWCProperties(this, myWCProperties);
     }
-    
+
     public boolean isConflict() throws SVNException {
         return getPropertyValue(SVNProperty.PROP_REJECT_FILE) != null;
     }
-    
+
     public void markResolved() throws SVNException {
         // remove .prej file and corresponding property.
         String fileName = getPropertyValue(SVNProperty.PROP_REJECT_FILE);
@@ -385,7 +423,7 @@ public abstract class FSEntry implements ISVNEntry {
         }
         setPropertyValue(SVNProperty.PROP_REJECT_FILE, null);
     }
-    
+
     protected void revertProperties() throws SVNException {
         // 1. replace props with base props.
         File base = getAdminArea().getBasePropertiesFile(this);
@@ -393,7 +431,8 @@ public abstract class FSEntry implements ISVNEntry {
         if (base.exists()) {
             FSUtil.copy(base, local, null, null, null);
             long lm = local.lastModified();
-            setPropertyValue(SVNProperty.PROP_TIME, TimeUtil.formatDate(new Date(lm)));
+            setPropertyValue(SVNProperty.PROP_TIME, TimeUtil
+                    .formatDate(new Date(lm)));
         } else {
             local.delete();
         }
@@ -401,17 +440,18 @@ public abstract class FSEntry implements ISVNEntry {
             myProperties = getAdminArea().loadProperties(this);
         }
     }
-    
+
     protected void restoreProperties() throws SVNException {
         File base = getAdminArea().getBasePropertiesFile(this);
         File local = getAdminArea().getPropertiesFile(this);
         if (!local.exists() && base.exists()) {
             FSUtil.copy(base, local, null, null, null);
             long lm = local.lastModified();
-            setPropertyValue(SVNProperty.PROP_TIME, TimeUtil.formatDate(new Date(lm)));
+            setPropertyValue(SVNProperty.PROP_TIME, TimeUtil
+                    .formatDate(new Date(lm)));
         }
     }
-    
+
     public void dispose() throws SVNException {
         myIsLockChanged = false;
         myModifiedProperties = null;
@@ -420,15 +460,16 @@ public abstract class FSEntry implements ISVNEntry {
         myBaseProperties = null;
         myAlias = null;
     }
-    
+
     protected boolean isLockPropertyChanged() {
         return myIsLockChanged;
     }
-    
+
     protected boolean isPropertyModified(String name) {
-        return myModifiedProperties != null && myModifiedProperties.contains(name);
+        return myModifiedProperties != null
+                && myModifiedProperties.contains(name);
     }
-    
+
     public boolean isPropertiesModified() throws SVNException {
         // if equals => compare file stmap with prop-time.
         if (myProperties != null) {
@@ -444,7 +485,7 @@ public abstract class FSEntry implements ISVNEntry {
             return !myProperties.equals(myBaseProperties);
         }
         // may be props were saved after modification.
-        long timeStamp = getAdminArea().propertiesLastModified(this); 
+        long timeStamp = getAdminArea().propertiesLastModified(this);
         String savedTimeStr = (String) getEntry().get(SVNProperty.PROP_TIME);
         long savedTime = TimeUtil.parseDate(savedTimeStr).getTime();
         if (timeStamp != savedTime) {
@@ -457,7 +498,7 @@ public abstract class FSEntry implements ISVNEntry {
         }
         return false;
     }
-    
+
     public boolean isObstructed() {
         File wcFile = getRootEntry().getWorkingCopyFile(this);
         if (FSUtil.isWindows) {
@@ -467,29 +508,30 @@ public abstract class FSEntry implements ISVNEntry {
             } catch (IOException e) {
                 return false;
             }
-            if (!getName().equals(name) &&
-                    getName().equalsIgnoreCase(name)) {
+            if (!getName().equals(name) && getName().equalsIgnoreCase(name)) {
                 return true;
             }
             return false;
         }
         return FSUtil.isSymlink(wcFile);
     }
-    
+
     protected FSAdminArea getAdminArea() {
         return myAdminArea;
     }
-    
+
     protected FSRootEntry getRootEntry() {
         return myRootEntry;
     }
+
     protected void setOldRevision(long rev) {
         myOldRevision = rev;
     }
+
     protected long getOldRevision() {
         return myOldRevision;
     }
-    
+
     private static String normalizePropertyValue(String name, String value) {
         if (value == null) {
             return null;
@@ -497,9 +539,11 @@ public abstract class FSEntry implements ISVNEntry {
         if (name.startsWith(SVNProperty.SVN_PREFIX)) {
             value = convertEolsToNative(value);
         }
-        if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.NEEDS_LOCK.equals(name)) {
+        if (SVNProperty.EXECUTABLE.equals(name)
+                || SVNProperty.NEEDS_LOCK.equals(name)) {
             return "*";
-        } else if (SVNProperty.IGNORE.equals(name) || SVNProperty.EXTERNALS.equals(name)) {
+        } else if (SVNProperty.IGNORE.equals(name)
+                || SVNProperty.EXTERNALS.equals(name)) {
             value = value.trim();
             value += System.getProperty("line.separator");
             return value;
@@ -509,13 +553,13 @@ public abstract class FSEntry implements ISVNEntry {
             return value.trim();
         } else if (SVNProperty.MIME_TYPE.equals(name)) {
             return value.trim();
-        }            
+        }
         return value;
     }
 
     private static String convertEolsToNative(String value) {
         StringBuffer realValue = new StringBuffer(value.length());
-        for(int i = 0; i < value.length(); i++) {
+        for (int i = 0; i < value.length(); i++) {
             char ch = value.charAt(i);
             if (ch == '\n') {
                 realValue.append(System.getProperty("line.separator"));
@@ -529,7 +573,7 @@ public abstract class FSEntry implements ISVNEntry {
         }
         return realValue.toString();
     }
-    
+
     public String getAlias() {
         return myAlias;
     }

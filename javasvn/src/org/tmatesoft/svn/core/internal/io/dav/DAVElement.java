@@ -15,8 +15,10 @@ package org.tmatesoft.svn.core.internal.io.dav;
 import java.util.HashMap;
 import java.util.Map;
 
+
 /**
- * @author Alexander Kitaev
+ * @version 1.0
+ * @author  TMate Software Ltd.
  */
 public class DAVElement {
 

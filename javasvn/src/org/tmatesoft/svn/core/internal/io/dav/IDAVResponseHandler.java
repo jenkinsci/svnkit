@@ -12,8 +12,10 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
+
 /**
- * @author Alexander Kitaev
+ * @version 1.0
+ * @author  TMate Software Ltd.
  */
 public interface IDAVResponseHandler {
     

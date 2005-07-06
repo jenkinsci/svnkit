@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 
 /**
+ * @version 1.0
  * @author TMate Software Ltd.
  */
 class QuietSVNExternalsHandler extends DefaultSVNExternalsHandler {

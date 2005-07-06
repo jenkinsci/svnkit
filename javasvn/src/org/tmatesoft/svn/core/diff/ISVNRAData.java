@@ -15,8 +15,10 @@ package org.tmatesoft.svn.core.diff;
 import java.io.IOException;
 import java.io.InputStream;
 
+
 /**
- * @author TMate Software Ltd.
+ * @version 1.0
+ * @author  TMate Software Ltd.
  */
 public interface ISVNRAData {
     

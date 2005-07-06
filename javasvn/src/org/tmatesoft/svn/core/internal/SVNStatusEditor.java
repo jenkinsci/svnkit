@@ -29,8 +29,10 @@ import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
+
 /**
- * @author TMate Software Ltd.
+ * @version 1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNStatusEditor implements ISVNEditor {
 

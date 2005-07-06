@@ -1,3 +1,13 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.util;
 
 import java.io.File;
@@ -18,12 +28,13 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 /**
- * @author Marc Strapetz
+ * @version 1.0
+ * @author TMate Software Ltd.
  */
 public class DebugDefaultLogger implements DebugLogger, LoggingStreamLogger {
 
-	private static final DateFormat ourDateFormat = new SimpleDateFormat(
-			"yyyy-MM-dd' 'HH:mm:ss.SSS");
+    private static final DateFormat ourDateFormat = new SimpleDateFormat(
+            "yyyy-MM-dd' 'HH:mm:ss.SSS");
 
 	static {
 		try {
@@ -74,77 +85,79 @@ public class DebugDefaultLogger implements DebugLogger, LoggingStreamLogger {
 					dir.mkdirs();
 				}
 
-				Handler handler = new FileHandler(path, 1024 * 1024, 10, true);
-				handler.setFormatter(f);
-				handler.setLevel(level);
-				Logger.getLogger("svn").addHandler(handler);
-			}
-			if (Boolean.getBoolean("javasvn.log.console")) {
-				ConsoleHandler cHandler = new ConsoleHandler();
-				cHandler.setLevel(level);
-				cHandler.setFilter(null);
-				cHandler.setFormatter(f);
-				Logger.getLogger("svn").addHandler(cHandler);
-			}
-			Logger.getLogger("svn").setLevel(level);
-		} catch (SecurityException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+                Handler handler = new FileHandler(path, 1024 * 1024, 10, true);
+                handler.setFormatter(f);
+                handler.setLevel(level);
+                Logger.getLogger("svn").addHandler(handler);
+            }
+            if (Boolean.getBoolean("javasvn.log.console")) {
+                ConsoleHandler cHandler = new ConsoleHandler();
+                cHandler.setLevel(level);
+                cHandler.setFilter(null);
+                cHandler.setFormatter(f);
+                Logger.getLogger("svn").addHandler(cHandler);
+            }
+            Logger.getLogger("svn").setLevel(level);
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-	public boolean isFineEnabled() {
-		return true;
-	}
+    public boolean isFineEnabled() {
+        return true;
+    }
 
-	public void logFine(String message) {
-		Logger.getLogger("svn").log(Level.FINE, message);
-	}
+    public void logFine(String message) {
+        Logger.getLogger("svn").log(Level.FINE, message);
+    }
 
-	public boolean isInfoEnabled() {
-		return true;
-	}
+    public boolean isInfoEnabled() {
+        return true;
+    }
 
-	public void logInfo(String message) {
-		Logger.getLogger("svn").log(Level.INFO, message);
-	}
+    public void logInfo(String message) {
+        Logger.getLogger("svn").log(Level.INFO, message);
+    }
 
-	public boolean isErrorEnabled() {
-		return true;
-	}
+    public boolean isErrorEnabled() {
+        return true;
+    }
 
-	public void logError(String message, Throwable th) {
-		if (th == null) {
-			Logger.getLogger("svn").log(Level.SEVERE, message);
-		} else {
-			Logger.getLogger("svn").log(Level.SEVERE, message, th);
-		}
-	}
+    public void logError(String message, Throwable th) {
+        if (th == null) {
+            Logger.getLogger("svn").log(Level.SEVERE, message);
+        } else {
+            Logger.getLogger("svn").log(Level.SEVERE, message, th);
+        }
+    }
 
-	public LoggingInputStream getLoggingInputStream(String protocol, InputStream stream) {
-		protocol = protocol == null ? "svn" : protocol;
-		final boolean enabled = Boolean.getBoolean("javasvn.log." + protocol);
-		return new LoggingInputStream(stream, enabled ? this : null);
-	}
+    public LoggingInputStream getLoggingInputStream(String protocol,
+            InputStream stream) {
+        protocol = protocol == null ? "svn" : protocol;
+        final boolean enabled = Boolean.getBoolean("javasvn.log." + protocol);
+        return new LoggingInputStream(stream, enabled ? this : null);
+    }
 
-	public LoggingOutputStream getLoggingOutputStream(String protocol, OutputStream stream) {
-		protocol = protocol == null ? "svn" : protocol;
-		final boolean enabled = Boolean.getBoolean("javasvn.log." + protocol);
-		return new LoggingOutputStream(stream, enabled ? this : null);
-	}
+    public LoggingOutputStream getLoggingOutputStream(String protocol,
+            OutputStream stream) {
+        protocol = protocol == null ? "svn" : protocol;
+        final boolean enabled = Boolean.getBoolean("javasvn.log." + protocol);
+        return new LoggingOutputStream(stream, enabled ? this : null);
+    }
 
-	public void logStream(String content, boolean writeNotRead) {
-		final String prefix = writeNotRead ? "SVN.SENT: " : "SVN.READ: ";
-		content = content.replaceAll("\n", "\\\\n");
-		content = content.replaceAll("\r", "\\\\r");
-		logFine(prefix + content);
-	}
+    public void logStream(String content, boolean writeNotRead) {
+        final String prefix = writeNotRead ? "SVN.SENT: " : "SVN.READ: ";
+        content = content.replaceAll("\n", "\\\\n");
+        content = content.replaceAll("\r", "\\\\r");
+        logFine(prefix + content);
+    }
 
-	private static boolean isFileLoggingEnabled() {
-		if (System.getProperty("javasvn.log.file") == null) {
-			return true;
-		}
-		return Boolean.getBoolean("javasvn.log.file");
-	}
+    private static boolean isFileLoggingEnabled() {
+        if (System.getProperty("javasvn.log.file") == null) {
+            return true;
+        }
+        return Boolean.getBoolean("javasvn.log.file");
+    }
 }
