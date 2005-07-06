@@ -261,9 +261,8 @@ public class SVNStatusEditor implements ISVNEditor {
                 }
             }
             if (dirIsDeleted) {
-                status
-                        .setRemoteStatus(SVNStatusType.STATUS_DELETED, null,
-                                null);
+                status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null,
+                                null, null);
             }
             if (isSendableStatus(status)) {
                 myHandler.handleStatus(status);
@@ -550,13 +549,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 textStatus = isIgnored ? SVNStatusType.STATUS_IGNORED
                         : SVNStatusType.STATUS_UNVERSIONED;
             }
-            SVNNodeKind kind = SVNNodeKind.UNKNOWN;
-            if (pathKind == SVNFileType.DIRECTORY) {
-                kind = SVNNodeKind.DIR;
-            } else if (pathKind == SVNFileType.FILE || pathKind == SVNFileType.SYMLINK) {
-                kind = SVNNodeKind.FILE;
-            }
-            return new SVNStatus(null, file, kind, null, null, null, null,
+            return new SVNStatus(null, file, null, null, null, null, null,
                     textStatus, SVNStatusType.STATUS_NONE,
                     SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
                     false, false, false, null, null, null, null, null, null,
@@ -872,23 +865,17 @@ public class SVNStatusEditor implements ISVNEditor {
                 }
                 try {
                     myIsReportAll = true;
-                    SVNFileType fileType = SVNFileType.UNKNOWN;
-                    if (kind == SVNNodeKind.DIR) {
-                        fileType = SVNFileType.DIRECTORY;
-                    } else if (kind == SVNNodeKind.FILE) {
-                        fileType = SVNFileType.FILE;
-                    }
                     existingStatus = createStatus(url, new File(myWCAccess
                             .getAnchor().getRoot(), path), dir, parentEntry,
-                            entry, false, fileType,
+                            entry, false, SVNFileType.UNKNOWN,
                             entry != null ? entry.asMap() : null);
                 } finally {
                     myIsReportAll = oldReportAll;
                 }
-                existingStatus.setRemoteStatus(contents, props, lock);
+                existingStatus.setRemoteStatus(contents, props, lock, kind);
                 ChildrenStatuses.put(name, existingStatus);
             } else {
-                existingStatus.setRemoteStatus(contents, props, null);
+                existingStatus.setRemoteStatus(contents, props, null, kind);
             }
         }
 

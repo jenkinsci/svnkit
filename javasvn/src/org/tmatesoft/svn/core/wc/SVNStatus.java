@@ -205,7 +205,7 @@ public class SVNStatus {
     }
 
     public void setRemoteStatus(SVNStatusType contents, SVNStatusType props,
-            SVNLock lock) {
+            SVNLock lock, SVNNodeKind kind) {
         if (contents == SVNStatusType.STATUS_ADDED
                 && myRemoteContentsStatus == SVNStatusType.STATUS_DELETED) {
             contents = SVNStatusType.STATUS_REPLACED;
@@ -217,6 +217,9 @@ public class SVNStatus {
                 : myRemotePropertiesStatus;
         if (lock != null) {
             myRemoteLock = lock;
+        }
+        if (kind != null) {
+            myKind = kind;
         }
     }
 
