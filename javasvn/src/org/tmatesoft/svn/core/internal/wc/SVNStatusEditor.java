@@ -275,7 +275,7 @@ public class SVNStatusEditor implements ISVNEditor {
             return new SVNCommitInfo(myTargetRevision, null, null);
         }
         if (myTarget != null) {
-            File file = myWCAccess.getAnchor().getFile(myTarget, false);
+            File file = myWCAccess.getAnchor().getFile(myTarget);
             if (file.isDirectory()) {
                 SVNEntries entries = myWCAccess.getAnchor().getEntries();
                 SVNEntry entry = entries.getEntry(myTarget, true);
@@ -329,7 +329,7 @@ public class SVNStatusEditor implements ISVNEditor {
             SVNEntry entry = entries.getEntry(entryName, true);
             if (entry != null) {
                 sendVersionedStatus(dir, entryName);
-            } else if (dir.getFile(entryName, false).exists()) {
+            } else if (dir.getFile(entryName).exists()) {
                 sendUnversionedStatus(dir, entryName);
             }
             return;
@@ -362,7 +362,7 @@ public class SVNStatusEditor implements ISVNEditor {
             if ("".equals(childEntry.getName())) {
                 continue;
             }
-            File file = dir.getFile(childEntry.getName(), false);
+            File file = dir.getFile(childEntry.getName());
             SVNFileType fType = SVNFileType.getType(file);
             if (fType == SVNFileType.DIRECTORY) {
                 SVNDirectory childDir = dir.getChildDirectory(childEntry.getName());
@@ -387,9 +387,9 @@ public class SVNStatusEditor implements ISVNEditor {
             parentDir = dir;
             dir = dir.getChildDirectory(name);
             if (dir == null) {
-                File dirFile = parentDir.getFile(name, false);
+                File dirFile = parentDir.getFile(name);
                 if (SVNFileType.getType(dirFile) == SVNFileType.DIRECTORY) {
-                     dir = new SVNDirectory(myWCAccess, "".equals(parentDir.getPath()) ? name : PathUtil.append(parentDir.getPath(), name), parentDir.getFile(name, false));
+                     dir = new SVNDirectory(myWCAccess, "".equals(parentDir.getPath()) ? name : PathUtil.append(parentDir.getPath(), name), parentDir.getFile(name));
                 }
 
             }
@@ -415,7 +415,7 @@ public class SVNStatusEditor implements ISVNEditor {
         }
         SVNEntry entryInParent = entry;
         if (dir == parentDir) {
-            file = dir.getFile(name, false);
+            file = dir.getFile(name);
             entry = dir.getEntries().getEntry(name, true);
             parentEntry = dir.getEntries().getEntry("", true);
         } else {
@@ -447,7 +447,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 url = PathUtil.append(url, PathUtil.encode(name));
             }
         }
-        SVNStatus status = createStatus(url, parent.getFile(name, false), parent, null, null, ignored, null, null);
+        SVNStatus status = createStatus(url, parent.getFile(name), parent, null, null, ignored, null, null);
         if (myExternalsMap.containsKey(path)) {
             status.markExternal();
         }
@@ -552,7 +552,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 textStatus = SVNStatusType.STATUS_OBSTRUCTED;
             }
             if (entry.isDirectory() && pathKind == SVNFileType.DIRECTORY) {
-                isLocked = entryDir.getFile(".svn/lock", false).exists();
+                isLocked = entryDir.getFile(".svn/lock").exists();
             }
         }
         if (!myIsReportAll) {
@@ -572,16 +572,16 @@ public class SVNStatusEditor implements ISVNEditor {
         File conflictWrk = null;
         File propReject = null;
         if (entry.getConflictOld() != null) {
-            conflictOld = entryDir.getFile(entry.getConflictOld(), false);
+            conflictOld = entryDir.getFile(entry.getConflictOld());
         }
         if (entry.getConflictNew() != null) {
-            conflictNew = entryDir.getFile(entry.getConflictNew(), false);
+            conflictNew = entryDir.getFile(entry.getConflictNew());
         }
         if (entry.getConflictWorking() != null) {
-            conflictWrk = entryDir.getFile(entry.getConflictWorking(), false);
+            conflictWrk = entryDir.getFile(entry.getConflictWorking());
         }
         if (entry.getPropRejectFile() != null) {
-            propReject = entryDir.getFile(entry.getPropRejectFile(), false);
+            propReject = entryDir.getFile(entry.getPropRejectFile());
         }
 
         return new SVNStatus(entry.getURL(), file, entry.getKind(),

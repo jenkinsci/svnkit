@@ -492,7 +492,7 @@ public class SVNCommitUtil {
                 if (copyMode || entry.getURL() == null) {
                     currentURL = PathUtil.append(url, PathUtil.encode(currentEntry.getName()));
                 }
-                File currentFile = dir.getFile(currentEntry.getName(), false);
+                File currentFile = dir.getFile(currentEntry.getName());
                 SVNDirectory childDir;
                 if (currentEntry.getKind() == SVNNodeKind.DIR) {
                     childDir = dir.getChildDirectory(currentEntry.getName());

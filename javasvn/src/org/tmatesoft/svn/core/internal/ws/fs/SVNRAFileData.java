@@ -38,18 +38,9 @@ public class SVNRAFileData implements ISVNRAData {
     }
 
     public InputStream read(final long offset, final long length) throws IOException {
-        FileChannel channel = getRAFile().getChannel();
-        if (channel == null) {
-            throw new IOException("svn: Error when applying delta: cannot get IO channel for '" + myRawFile + "'");
-        }
-        ByteBuffer buffer = ByteBuffer.allocate((int) length);
-        int read = channel.read(buffer, offset);
-        if (read == 0 && read != length) {
-            throw new IOException("svn: Error when applying delta: expected to read '" + length + "' bytes, actually read '" + read + "' bytes");
-        }
-        buffer.flip();
         byte[] resultingArray = new byte[(int) length];
-        buffer.get(resultingArray, 0, read);
+        getRAFile().seek(offset);
+        int read = getRAFile().read(resultingArray);
         for(int i = read; i < length; i++) {
             resultingArray[i] = resultingArray[i - read];
         }
@@ -61,15 +52,11 @@ public class SVNRAFileData implements ISVNRAData {
         if (myBuffer == null || myBuffer.length < length) {
             myBuffer = new byte[lLength];
         }
-        if (myFile == null) {
-            getRAFile().seek(myFile.length());
-        }
+
         int read;
-        do {
-            read = source.read(myBuffer, 0, lLength);
-            myFile.write(myBuffer, 0, read);
-            lLength -= read;
-        } while(lLength > 0);
+        read = source.read(myBuffer, 0, lLength);
+        getRAFile().seek(getRAFile().length());
+        getRAFile().write(myBuffer, 0, read);
     }
     
     public void close() throws IOException {

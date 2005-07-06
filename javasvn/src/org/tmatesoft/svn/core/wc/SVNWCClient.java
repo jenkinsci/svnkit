@@ -98,7 +98,8 @@ public class SVNWCClient extends SVNBasicClient {
                 if (revision == SVNRevision.BASE) {
                     if (expandKeywords) {
                         delete = true;
-                        file = wcAccess.getAnchor().getBaseFile(name, true);
+                        file = wcAccess.getAnchor().getBaseFile(name, true).getParentFile();
+                        file = SVNFileUtil.createUniqueFile(file, name, ".tmp");
                         SVNTranslator.translate(wcAccess.getAnchor(), name,
                                 SVNFileUtil.getBasePath(wcAccess.getAnchor()
                                         .getBaseFile(name, false)), SVNFileUtil
@@ -107,12 +108,13 @@ public class SVNWCClient extends SVNBasicClient {
                 } else {
                     if (!expandKeywords) {
                         delete = true;
-                        file = wcAccess.getAnchor().getBaseFile(name, true);
+                        file = wcAccess.getAnchor().getBaseFile(name, true).getParentFile();
+                        file = SVNFileUtil.createUniqueFile(file, name, ".tmp");
                         SVNTranslator.translate(wcAccess.getAnchor(), name,
                                 name, SVNFileUtil.getBasePath(file), false,
                                 false);
                     } else {
-                        file = wcAccess.getAnchor().getFile(name, false);
+                        file = wcAccess.getAnchor().getFile(name);
                     }
                 }
             } finally {
@@ -127,9 +129,9 @@ public class SVNWCClient extends SVNBasicClient {
                         DebugLog.error(e);
                     } finally {
                         SVNFileUtil.closeFile(is);
-                    }
-                    if (delete) {
-                        file.delete();
+                        if (delete) {
+                            file.delete();
+                        }
                     }
                 }
             }
@@ -354,19 +356,15 @@ public class SVNWCClient extends SVNBasicClient {
             SVNRevision pegRevision, SVNRevision revision, boolean recursive)
             throws SVNException {
         final SVNPropertyData[] data = new SVNPropertyData[1];
-        doGetProperty(path, propName, pegRevision, revision, recursive,
-                new ISVNPropertyHandler() {
-                    public void handleProperty(File file,
-                            SVNPropertyData property) throws SVNException {
-                        if (data[0] == null && path.equals(file)) {
-                            data[0] = property;
-                        }
-                    }
-
-                    public void handleProperty(String url,
-                            SVNPropertyData property) throws SVNException {
-                    }
-                });
+        doGetProperty(path, propName, pegRevision, revision, recursive, new ISVNPropertyHandler() {
+            public void handleProperty(File file, SVNPropertyData property) {
+                if (data[0] == null && path.equals(file)) {
+                    data[0] = property;
+                }
+            }
+            public void handleProperty(String url, SVNPropertyData property) {
+            }
+        });
         return data[0];
     }
 
@@ -374,23 +372,17 @@ public class SVNWCClient extends SVNBasicClient {
             SVNRevision pegRevision, SVNRevision revision, boolean recursive)
             throws SVNException {
         final SVNPropertyData[] data = new SVNPropertyData[1];
-        final String canonURL = SVNRepositoryLocation.parseURL(url)
-                .toCanonicalForm();
-        doGetProperty(url, propName, pegRevision, revision, recursive,
-                new ISVNPropertyHandler() {
-                    public void handleProperty(File file,
-                            SVNPropertyData property) throws SVNException {
-                    }
-
-                    public void handleProperty(String location,
-                            SVNPropertyData property) throws SVNException {
-                        location = SVNRepositoryLocation.parseURL(location)
-                                .toCanonicalForm();
-                        if (data[0] == null && canonURL.equals(location)) {
-                            data[0] = property;
-                        }
-                    }
-                });
+        final String canonURL = SVNRepositoryLocation.parseURL(url).toCanonicalForm();
+        doGetProperty(url, propName, pegRevision, revision, recursive, new ISVNPropertyHandler() {
+            public void handleProperty(File file, SVNPropertyData property) {
+            }
+            public void handleProperty(String location, SVNPropertyData property) throws SVNException {
+                location = SVNRepositoryLocation.parseURL(location).toCanonicalForm();
+                if (data[0] == null && canonURL.equals(location)) {
+                    data[0] = property;
+                }
+            }
+        });
         return data[0];
     }
 
@@ -582,8 +574,7 @@ public class SVNWCClient extends SVNBasicClient {
                         + "' is not under version control");
             }
             kind = entry.getKind();
-            File file = wcAccess.getAnchor().getFile(wcAccess.getTargetName(),
-                    false);
+            File file = wcAccess.getAnchor().getFile(wcAccess.getTargetName());
             if (entry.isDirectory()) {
                 if (!entry.isScheduledForAddition() && !file.isDirectory()) {
                     handleEvent(SVNEventFactory.createNotRevertedEvent(
@@ -672,8 +663,7 @@ public class SVNWCClient extends SVNBasicClient {
                     if ("".equals(childEntry.getName())) {
                         continue;
                     }
-                    recursiveFiles.add(wcAccess.getTarget().getFile(
-                            childEntry.getName(), false));
+                    recursiveFiles.add(wcAccess.getTarget().getFile(childEntry.getName()));
                 }
             }
             if (reverted) {
@@ -800,12 +790,9 @@ public class SVNWCClient extends SVNBasicClient {
                 entry.setLockToken(lock.getID());
                 entry.setLockComment(lock.getComment());
                 entry.setLockOwner(lock.getOwner());
-                entry.setLockCreationDate(TimeUtil.formatDate(lock
-                        .getCreationDate()));
-                if (wcAccess.getAnchor().getProperties(entry.getName(), false)
-                        .getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
-                    SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(
-                            entry.getName(), false), false);
+                entry.setLockCreationDate(TimeUtil.formatDate(lock.getCreationDate()));
+                if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
+                    SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName()), false);
                 }
                 wcAccess.getAnchor().getEntries().save(true);
                 wcAccess.getAnchor().getEntries().close();
@@ -901,10 +888,8 @@ public class SVNWCClient extends SVNBasicClient {
                 entry.setLockCreationDate(null);
                 wcAccess.getAnchor().getEntries().save(true);
                 wcAccess.getAnchor().getEntries().close();
-                if (wcAccess.getAnchor().getProperties(entry.getName(), false)
-                        .getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
-                    SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(
-                            entry.getName(), false), true);
+                if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
+                    SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName()), true);
                 }
                 handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess
                         .getTargetName(), SVNEventAction.UNLOCKED, lock, null),
@@ -1070,7 +1055,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (entry != null) {
                 if (entry.isFile()) {
                     // child file
-                    File file = dir.getFile(name, false);
+                    File file = dir.getFile(name);
                     handler.handleInfo(SVNInfo.createInfo(file, entry));
                     return;
                 } else if (entry.isDirectory() && !"".equals(name)) {
@@ -1100,8 +1085,7 @@ public class SVNWCClient extends SVNBasicClient {
                                 collectInfo(childDir, "", recursive, handler);
                             }
                         } else if (childEntry.isFile()) {
-                            handler.handleInfo(SVNInfo.createInfo(dir.getFile(
-                                    childEntry.getName(), false), childEntry));
+                            handler.handleInfo(SVNInfo.createInfo(dir.getFile(childEntry.getName()), childEntry));
                         }
                     }
                 }
@@ -1160,7 +1144,7 @@ public class SVNWCClient extends SVNBasicClient {
             return;
         }
 
-        File file = dir.getFile(name, false);
+        File file = dir.getFile(name);
         SVNDirectory childDir = dir.getChildDirectory(name);
         if (childDir == null) {
             return;
@@ -1194,9 +1178,8 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private void addSingleFile(SVNDirectory dir, String name)
-            throws SVNException {
-        File file = dir.getFile(name, false);
+    private void addSingleFile(SVNDirectory dir, String name) throws SVNException {
+        File file = dir.getFile(name);
         dir.add(name, false, false);
 
         String mimeType;
@@ -1316,8 +1299,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (propName != null) {
                     String value = props.getPropertyValue(propName);
                     if (value != null) {
-                        handler.handleProperty(anchor.getFile(name, false),
-                                new SVNPropertyData(propName, value));
+                        handler.handleProperty(anchor.getFile(name), new SVNPropertyData(propName, value));
                     }
                 } else {
                     Map propsMap = props.asMap();
@@ -1325,8 +1307,7 @@ public class SVNWCClient extends SVNBasicClient {
                             .hasNext();) {
                         String pName = (String) names.next();
                         String value = (String) propsMap.get(pName);
-                        handler.handleProperty(anchor.getFile(name, false),
-                                new SVNPropertyData(pName, value));
+                        handler.handleProperty(anchor.getFile(name), new SVNPropertyData(pName, value));
                     }
                 }
             }
@@ -1339,16 +1320,14 @@ public class SVNWCClient extends SVNBasicClient {
         if (propName != null) {
             String value = props.getPropertyValue(propName);
             if (value != null) {
-                handler.handleProperty(anchor.getFile(name, false),
-                        new SVNPropertyData(propName, value));
+                handler.handleProperty(anchor.getFile(name), new SVNPropertyData(propName, value));
             }
         } else {
             Map propsMap = props.asMap();
             for (Iterator names = propsMap.keySet().iterator(); names.hasNext();) {
                 String pName = (String) names.next();
                 String value = (String) propsMap.get(pName);
-                handler.handleProperty(anchor.getFile(name, false),
-                        new SVNPropertyData(pName, value));
+                handler.handleProperty(anchor.getFile(name), new SVNPropertyData(pName, value));
             }
         }
         if (!recursive) {
@@ -1393,7 +1372,7 @@ public class SVNWCClient extends SVNBasicClient {
                     return;
                 }
                 SVNProperties props = anchor.getProperties(name, false);
-                File wcFile = anchor.getFile(name, false);
+                File wcFile = anchor.getFile(name);
                 if (SVNProperty.EXECUTABLE.equals(propName)) {
                     SVNFileUtil.setExecutable(wcFile, propValue != null);
                 }
@@ -1423,8 +1402,7 @@ public class SVNWCClient extends SVNBasicClient {
                     SVNFileUtil.setReadonly(wcFile, false);
                 }
                 if (handler != null) {
-                    handler.handleProperty(anchor.getFile(name, false),
-                            new SVNPropertyData(propName, propValue));
+                    handler.handleProperty(anchor.getFile(name), new SVNPropertyData(propName, propValue));
                 }
             }
             entries.close();
@@ -1444,8 +1422,7 @@ public class SVNWCClient extends SVNBasicClient {
         } else {
             props.setPropertyValue(propName, propValue);
             if (handler != null) {
-                handler.handleProperty(anchor.getFile(name, false),
-                        new SVNPropertyData(propName, propValue));
+                handler.handleProperty(anchor.getFile(name), new SVNPropertyData(propName, propValue));
             }
         }
         if (!recursive) {

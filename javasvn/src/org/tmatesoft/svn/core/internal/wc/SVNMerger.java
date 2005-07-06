@@ -47,7 +47,7 @@ public class SVNMerger {
             return SVNStatusType.MISSING;
         }
         String name = PathUtil.tail(path);
-        File targetFile = parentDir.getFile(name, false);
+        File targetFile = parentDir.getFile(name);
         DebugLog.log("target file for deletion: " + targetFile);
         if (targetFile.isDirectory()) {
             // check for normal entry?
@@ -102,7 +102,7 @@ public class SVNMerger {
             return SVNStatusType.MISSING;
         }
         String name = PathUtil.tail(path);
-        File targetFile = parentDir.getFile(name, false);
+        File targetFile = parentDir.getFile(name);
         if (targetFile.isDirectory()) {
             return SVNStatusType.OBSTRUCTED;
         } else if (targetFile.isFile()) {
@@ -140,7 +140,7 @@ public class SVNMerger {
             return SVNStatusType.MISSING;
         }
         String name = PathUtil.tail(path);
-        File file = parentDir.getFile(name, false);
+        File file = parentDir.getFile(name);
         if (!file.exists()) {
             SVNEntry entry = parentDir.getEntries().getEntry(name, true);
             if (entry != null && !entry.isScheduledForDeletion()) {
@@ -190,7 +190,7 @@ public class SVNMerger {
         }
 
         String name = PathUtil.tail(path);
-        File mine = parentDir.getFile(name, false);
+        File mine = parentDir.getFile(name);
         SVNEntry entry = parentDir.getEntries().getEntry(name, true);
         
         if (!mine.isFile() || entry == null || entry.isHidden()) {
@@ -259,7 +259,7 @@ public class SVNMerger {
             return result; 
         }
         String name = PathUtil.tail(path);
-        File mine = parentDir.getFile(name, false);
+        File mine = parentDir.getFile(name);
         
         if (!mine.exists()) {
             SVNEntry entry = parentDir.getEntries().getEntry(name, true);
@@ -321,7 +321,7 @@ public class SVNMerger {
         String name = PathUtil.tail(path);
         if (dir != null) {
             String extension = base ? ".tmp-base" : ".tmp-work";
-            return SVNFileUtil.createUniqueFile(dir.getFile(".svn/tmp/text-base", false), name , extension);
+            return SVNFileUtil.createUniqueFile(dir.getFile(".svn/tmp/text-base"), name , extension);
         }
         return null;
     }

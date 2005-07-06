@@ -556,10 +556,8 @@ public class SVNUpdateClient extends SVNBasicClient {
                 continue;
             }
             if (entry.isFile()) {
-                copyVersionedFile(new File(dstPath, entry.getName()), dir,
-                        entry.getName(), revision, force, eol);
-            } else if (recursive && entry.isDirectory()
-                    && dir.getFile(entry.getName(), false).isDirectory()) {
+                copyVersionedFile(new File(dstPath, entry.getName()), dir, entry.getName(), revision, force, eol);                
+            } else if (recursive && entry.isDirectory() && dir.getFile(entry.getName()).isDirectory()) {
                 SVNDirectory childDir = dir.getChildDirectory(entry.getName());
                 if (childDir != null) {
                     copyVersionedDir(new File(dstPath, entry.getName()),
@@ -605,8 +603,8 @@ public class SVNUpdateClient extends SVNBasicClient {
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
 
-        File srcFile = revision == SVNRevision.BASE ? dir.getBaseFile(fileName,
-                false) : dir.getFile(fileName, false);
+        File srcFile = revision == SVNRevision.BASE ? 
+                dir.getBaseFile(fileName, false) : dir.getFile(fileName);
         SVNFileType fileType = SVNFileType.getType(srcFile);
         if (!fileType.isFile()) {
             SVNErrorManager.error(0, null);

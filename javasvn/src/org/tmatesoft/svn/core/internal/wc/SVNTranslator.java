@@ -28,8 +28,8 @@ public class SVNTranslator {
     public static final byte[] NATIVE = System.getProperty("line.separator").getBytes();
     
     public static void translate(SVNDirectory dir, String name, String srcPath, String dstPath, boolean expand, boolean safe) throws SVNException {
-        File src = dir.getFile(srcPath, false);
-        File dst = safe ? SVNFileUtil.createUniqueFile(dir.getRoot(), dstPath, ".tmp") : dir.getFile(dstPath, false);
+        File src = dir.getFile(srcPath);
+        File dst = safe ? SVNFileUtil.createUniqueFile(dir.getRoot(), dstPath, ".tmp") : dir.getFile(dstPath);
         
         SVNProperties props = dir.getProperties(name, false);
         String keywords = props.getPropertyValue(SVNProperty.KEYWORDS);
@@ -57,7 +57,7 @@ public class SVNTranslator {
         translate(src, dst, eols, keywordsMap, special, expand);
         if (safe) {
             try {
-                SVNFileUtil.rename(dst, dir.getFile(dstPath, false));
+                SVNFileUtil.rename(dst, dir.getFile(dstPath));
             } finally {
                 dst.delete();
             }

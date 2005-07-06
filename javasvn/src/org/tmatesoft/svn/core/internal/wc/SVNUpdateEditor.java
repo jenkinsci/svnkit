@@ -126,7 +126,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, true);
         
         String name = PathUtil.tail(path);
-        File file = parentDir.getFile(name, false);
+        File file = parentDir.getFile(name);
         if (file.exists()) {
             SVNErrorManager.error("svn: Failed to add directory '" + path + "': object of the same name already exists");
         } else if (".svn".equals(name)) {
@@ -257,7 +257,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
-        if (myTarget != null && !myWCAccess.getAnchor().getFile(myTarget, false).exists()) {
+        if (myTarget != null && !myWCAccess.getAnchor().getFile(myTarget).exists()) {
             
             myCurrentDirectory = createDirectoryInfo(null, "", false);
             deleteEntry(myTarget, myTargetRevision);
@@ -427,7 +427,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         command.clear();
 
         boolean isLocallyModified = !myCurrentFile.IsAdded && dir.hasTextModifications(name, false);
-        File workingFile = dir.getFile(name, false);
+        File workingFile = dir.getFile(name);
         if (textTmpBase.exists()) {
             textStatus = SVNStatusType.CHANGED;
             // there is a text replace working copy with.
@@ -636,7 +636,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         info.IsAdded = added;
         info.Name = PathUtil.tail(path);
         SVNDirectory dir = parent.getDirectory();
-        if (added && dir.getFile(info.Name, false).exists()) {            
+        if (added && dir.getFile(info.Name).exists()) {
             SVNErrorManager.error("svn: Failed to add file '" + path + "': object of the same name already exists");
         }
         SVNEntries entries = null;

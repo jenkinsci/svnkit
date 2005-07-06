@@ -202,8 +202,8 @@ public class SVNDiffEditor implements ISVNEditor {
             while(info != null) {
                 SVNDirectory parentDir = myWCAccess.getDirectory(info.myPath);
                 if (parentDir != null) {
-                    tmpFile = SVNFileUtil.createUniqueFile(parentDir.getFile(".svn/tmp/text-base", false), fileName, ".tmp");
-                    myCurrentFile.myBaseFile = parentDir.getFile(".svn/empty-file", false);
+                    tmpFile = SVNFileUtil.createUniqueFile(parentDir.getFile(".svn/tmp/text-base"), fileName, ".tmp");
+                    myCurrentFile.myBaseFile = parentDir.getFile(".svn/empty-file");
                     if (myCurrentFile.myBaseFile.exists()) {
                         break;
                     }
@@ -305,7 +305,7 @@ public class SVNDiffEditor implements ISVNEditor {
             if (myCurrentFile.myFile != null) {
                 String wcMimeType = dir.getProperties(fileName, false).getPropertyValue(SVNProperty.MIME_TYPE);
                 if (!myIsCompareToBase && myCurrentFile.myIsScheduledForDeletion) {
-                    myCurrentFile.myBaseFile = dir.getFile(".svn/empty-file", false);
+                    myCurrentFile.myBaseFile = dir.getFile(".svn/empty-file");
                 } else if (!myIsCompareToBase) {
                     File wcTmpFile = SVNFileUtil.createUniqueFile(myCurrentFile.myFile.getParentFile(), fileName, ".tmp");
                     String path = SVNFileUtil.getBasePath(wcTmpFile);
@@ -408,7 +408,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 replaced = false;
             }
             SVNProperties props = dir.getProperties(name, false);
-            String fullPath = myDiffGenerator.getDisplayPath(dir.getFile(name, false));
+            String fullPath = myDiffGenerator.getDisplayPath(dir.getFile(name));
             DebugLog.log("entry: " + fullPath);
             Map baseProps = dir.getBaseProperties(name, false).asMap();
             Map propDiff = null;

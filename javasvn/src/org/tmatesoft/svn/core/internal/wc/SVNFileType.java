@@ -41,18 +41,21 @@ public class SVNFileType {
         } catch (IOException e) {
             canonicalPath = file.getAbsolutePath();
         }
-        if (!file.exists()) {
-            File[] children = file.getParentFile().listFiles();
-            for (int i = 0; children != null && i < children.length; i++) {
-                File child = children[i];
-                if (child.getName().equals(file.getName())) {
-                    if (SVNFileUtil.isSymlink(file)) {
-                           return SVNFileType.SYMLINK;
-                    } 
+
+        if (!SVNFileUtil.isWindows) {
+            if (!file.exists()) {
+                File[] children = file.getParentFile().listFiles();
+                for (int i = 0; children != null && i < children.length; i++) {
+                    File child = children[i];
+                    if (child.getName().equals(file.getName())) {
+                        if (SVNFileUtil.isSymlink(file)) {
+                               return SVNFileType.SYMLINK;
+                        }
+                    }
                 }
+            } else if (!absolutePath.equals(canonicalPath) && SVNFileUtil.isSymlink(file)) {
+                return SVNFileType.SYMLINK;
             }
-        } else if (!absolutePath.equals(canonicalPath) && SVNFileUtil.isSymlink(file)) {
-            return SVNFileType.SYMLINK;
         }
 
         if (file.isDirectory()) {

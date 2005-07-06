@@ -90,7 +90,7 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
             dir = myWCAccess.getDirectory(PathUtil.removeTail(item.getPath()));
             target = PathUtil.tail(item.getPath());
         }
-        File tmpFile = dir.getFile(".svn/tmp/text-base", false);
+        File tmpFile = dir.getFile(".svn/tmp/text-base");
         tmpFile = SVNFileUtil.createUniqueFile(tmpFile, target, ".tmp");
         myTmpFiles.add(tmpFile);
         myTmpFilesMap.put(id, tmpFile);

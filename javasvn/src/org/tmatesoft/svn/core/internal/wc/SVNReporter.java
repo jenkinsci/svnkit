@@ -50,7 +50,7 @@ public class SVNReporter implements ISVNReporterBaton {
             }
             reporter.setPath("", null, revision, targetEntry.isIncomplete());
             boolean missing = !targetEntry.isScheduledForDeletion() &&  
-                !myWCAccess.getAnchor().getFile(myWCAccess.getTargetName(), false).exists();
+                !myWCAccess.getAnchor().getFile(myWCAccess.getTargetName()).exists();
             
             if (targetEntry.isDirectory()) {
                 if (missing) {
@@ -114,7 +114,7 @@ public class SVNReporter implements ISVNReporterBaton {
             if (entry.isScheduledForAddition()) {
                 continue;
             }        
-            File file = directory.getFile(entry.getName(), false);
+            File file = directory.getFile(entry.getName());
             boolean missing = !file.exists(); 
             if (entry.isFile()) {
                 if (!reportAll) {
@@ -185,7 +185,7 @@ public class SVNReporter implements ISVNReporterBaton {
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
         
         File src = dir.getBaseFile(name, false);
-        File dst = dir.getFile(name, false);
+        File dst = dir.getFile(name);
         SVNTranslator.translate(dir, name, SVNFileUtil.getBasePath(src), SVNFileUtil.getBasePath(dst), true, true);
         dir.markResolved(name, true, false);
         

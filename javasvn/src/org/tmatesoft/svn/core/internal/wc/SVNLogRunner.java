@@ -175,7 +175,7 @@ public class SVNLogRunner {
                 if ("".equals(fileName)) {
                     entry.setRevision(revisionNumber);
                     entry.setKind(SVNNodeKind.DIR);
-                    File killMe = dir.getFile(".svn/KILLME", false);
+                    File killMe = dir.getFile(".svn/KILLME");
                     if (killMe.getParentFile().isDirectory()) {
                         try {
                             killMe.createNewFile();
@@ -224,7 +224,7 @@ public class SVNLogRunner {
                         tmpFile2.delete();
                     }
                     if (equals) {
-                        textTime = dir.getFile(fileName, false).lastModified();
+                        textTime = dir.getFile(fileName).lastModified();
                     } else {
                         textTime = tmpFile.lastModified();
                     }
@@ -262,7 +262,7 @@ public class SVNLogRunner {
             if (!"".equals(fileName)) {
                 File tmpFile = dir.getBaseFile(fileName, true);
                 File baseFile = dir.getBaseFile(fileName, false);
-                File wcFile = dir.getFile(fileName, false);
+                File wcFile = dir.getFile(fileName);
                 File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp");
                 try {
                     boolean overwritten = false;
@@ -364,7 +364,7 @@ public class SVNLogRunner {
     }
 
     public void logCompleted(SVNDirectory dir) throws SVNException {
-        boolean killMe = dir.getFile(".svn/KILLME", false).isFile();
+        boolean killMe = dir.getFile(".svn/KILLME").isFile();
         long dirRevision = killMe ? dir.getEntries().getEntry("", true).getRevision() : -1;
         if (myIsEntriesChanged) {
             dir.getEntries().save(false);
