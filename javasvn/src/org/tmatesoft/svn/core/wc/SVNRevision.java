@@ -1,5 +1,12 @@
 /*
- * Created on 23.05.2005
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
  */
 package org.tmatesoft.svn.core.wc;
 
@@ -9,17 +16,26 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @version 1.0
+ * @author TMate Software Ltd.
+ */
 public class SVNRevision {
-    
+
     public static final SVNRevision HEAD = new SVNRevision("HEAD", 0);
+
     public static final SVNRevision WORKING = new SVNRevision("WORKING", 1);
+
     public static final SVNRevision PREVIOUS = new SVNRevision("PREV", 3);
+
     public static final SVNRevision BASE = new SVNRevision("BASE", 2);
+
     public static final SVNRevision COMMITTED = new SVNRevision("COMMITTED", 4);
+
     public static final SVNRevision UNDEFINED = new SVNRevision("UNDEFINED", 30);
-    
+
     private static final Map ourValidRevisions = new HashMap();
-    
+
     static {
         ourValidRevisions.put(HEAD.getName(), HEAD);
         ourValidRevisions.put(WORKING.getName(), WORKING);
@@ -27,10 +43,13 @@ public class SVNRevision {
         ourValidRevisions.put(BASE.getName(), BASE);
         ourValidRevisions.put(COMMITTED.getName(), COMMITTED);
     }
-    
+
     private long myRevision;
+
     private String myName;
+
     private Date myDate;
+
     private int myID;
 
     private SVNRevision(long number) {
@@ -38,39 +57,44 @@ public class SVNRevision {
         myName = null;
         myID = 10;
     }
-    
+
     private SVNRevision(String name, int id) {
         this(-1);
         myName = name;
         myID = id;
     }
-    
+
+    /**
+     * @param date
+     * 
+     */
     private SVNRevision(Date date) {
         this(-1);
         myDate = date;
         myID = 20;
     }
-    
+
     public String getName() {
         return myName;
     }
-    
+
     public long getNumber() {
         return myRevision;
     }
-    
+
     public Date getDate() {
         return myDate;
     }
-    
+
     public boolean isValid() {
-        return this != UNDEFINED && (myDate != null || myRevision >= 0 || myName != null);
+        return this != UNDEFINED
+                && (myDate != null || myRevision >= 0 || myName != null);
     }
 
     public int getID() {
         return myID;
     }
-    
+
     public int hashCode() {
         if (myRevision >= 0) {
             return (int) myRevision & 0xFFFFFFFF;
@@ -79,9 +103,9 @@ public class SVNRevision {
         } else if (myName != null) {
             return myName.hashCode();
         }
-        return -1;        
+        return -1;
     }
-    
+
     public boolean equals(Object o) {
         if (o == null || o.getClass() != SVNRevision.class) {
             return false;
@@ -111,7 +135,7 @@ public class SVNRevision {
     public boolean isLocal() {
         return !(!isValid() || this == SVNRevision.HEAD || getNumber() >= 0 || getDate() != null);
     }
-    
+
     public static SVNRevision parse(String value) {
         if (value == null) {
             return SVNRevision.UNDEFINED;
@@ -136,13 +160,14 @@ public class SVNRevision {
             } catch (NumberFormatException nfe) {
             }
         }
-        SVNRevision revision = (SVNRevision) ourValidRevisions.get(value.toUpperCase());
+        SVNRevision revision = (SVNRevision) ourValidRevisions.get(value
+                .toUpperCase());
         if (revision == null) {
             return UNDEFINED;
         }
         return revision;
     }
-    
+
     public String toString() {
         if (myRevision >= 0) {
             return Long.toString(myRevision);
@@ -155,4 +180,3 @@ public class SVNRevision {
     }
 
 }
- 

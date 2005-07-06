@@ -1,3 +1,13 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
@@ -9,19 +19,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 16.06.2005
- * Time: 3:03:11
- * To change this template use File | Settings | File Templates.
+ * @version 1.0
+ * @author TMate Software Ltd.
  */
 public class SVNCommitPacket {
 
-    public static final SVNCommitPacket EMPTY = new SVNCommitPacket(null, new SVNCommitItem[0], null);
+    public static final SVNCommitPacket EMPTY = new SVNCommitPacket(null,
+            new SVNCommitItem[0], null);
 
     private SVNWCAccess myWCAccess;
+
     private SVNCommitItem[] myCommitItems;
+
     private Map myLockTokens;
+
     private boolean[] myIsSkipped;
 
     SVNCommitPacket(SVNWCAccess wcAccess, SVNCommitItem[] items, Map lockTokens) {
@@ -84,7 +95,8 @@ public class SVNCommitPacket {
             return EMPTY;
         }
         Collection items = new ArrayList();
-        Map lockTokens = myLockTokens == null ? null : new HashMap(myLockTokens);
+        Map lockTokens = myLockTokens == null ? null
+                : new HashMap(myLockTokens);
         for (int i = 0; myCommitItems != null && i < myCommitItems.length; i++) {
             SVNCommitItem commitItem = myCommitItems[i];
             if (!myIsSkipped[i]) {
@@ -93,7 +105,8 @@ public class SVNCommitPacket {
                 lockTokens.remove(commitItem.getURL());
             }
         }
-        SVNCommitItem[] filteredItems = (SVNCommitItem[]) items.toArray(new SVNCommitItem[items.size()]);
+        SVNCommitItem[] filteredItems = (SVNCommitItem[]) items
+                .toArray(new SVNCommitItem[items.size()]);
         return new SVNCommitPacket(myWCAccess, filteredItems, lockTokens);
     }
 

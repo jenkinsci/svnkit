@@ -1,3 +1,13 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.io.SVNNodeKind;
@@ -8,62 +18,81 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 07.06.2005
- * Time: 19:35:58
- * To change this template use File | Settings | File Templates.
+ * @version 1.0
+ * @author TMate Software Ltd.
  */
 public class SVNStatus {
     private String myURL;
+
     private File myFile;
+
     private SVNNodeKind myKind;
+
     private SVNRevision myRevision;
+
     private SVNRevision myCommittedRevision;
+
     private Date myCommittedDate;
+
     private String myAuthor;
 
     private SVNStatusType myContentsStatus;
+
     private SVNStatusType myPropertiesStatus;
+
     private SVNStatusType myRemoteContentsStatus;
+
     private SVNStatusType myRemotePropertiesStatus;
 
     private boolean myIsLocked;
+
     private boolean myIsCopied;
+
     private boolean myIsSwitched;
 
     private File myConflictNewFile;
+
     private File myConflictOldFile;
+
     private File myConflictWrkFile;
+
     private File myPropRejectFile;
 
     private String myCopyFromURL;
+
     private SVNRevision myCopyFromRevision;
 
     private SVNLock myRemoteLock;
+
     private SVNLock myLocalLock;
 
     private Map myEntryProperties;
 
-    public SVNStatus(String URL, File file, SVNNodeKind kind, SVNRevision revision,
-                     SVNRevision committedRevision, Date committedDate, String author,
-                     SVNStatusType contentsStatus, SVNStatusType propertiesStatus, SVNStatusType remoteContentsStatus, SVNStatusType remotePropertiesStatus,
-                     boolean isLocked, boolean isCopied, boolean isSwitched,
-                     File conflictNewFile, File conflictOldFile, File conflictWrkFile, File projRejectFile,
-                     String copyFromURL, SVNRevision copyFromRevision,
-                     SVNLock remoteLock, SVNLock localLock,
-                     Map entryProperties) {
+    public SVNStatus(String URL, File file, SVNNodeKind kind,
+            SVNRevision revision, SVNRevision committedRevision,
+            Date committedDate, String author, SVNStatusType contentsStatus,
+            SVNStatusType propertiesStatus, SVNStatusType remoteContentsStatus,
+            SVNStatusType remotePropertiesStatus, boolean isLocked,
+            boolean isCopied, boolean isSwitched, File conflictNewFile,
+            File conflictOldFile, File conflictWrkFile, File projRejectFile,
+            String copyFromURL, SVNRevision copyFromRevision,
+            SVNLock remoteLock, SVNLock localLock, Map entryProperties) {
         myURL = URL;
         myFile = file;
         myKind = kind == null ? SVNNodeKind.NONE : kind;
         myRevision = revision == null ? SVNRevision.UNDEFINED : revision;
-        myCommittedRevision = committedRevision == null ? SVNRevision.UNDEFINED : committedRevision;
+        myCommittedRevision = committedRevision == null ? SVNRevision.UNDEFINED
+                : committedRevision;
         myCommittedDate = committedDate;
         myAuthor = author;
-        myContentsStatus = contentsStatus == null ? SVNStatusType.STATUS_NONE : contentsStatus;
-        myPropertiesStatus = propertiesStatus == null ? SVNStatusType.STATUS_NONE : propertiesStatus;
-        myRemoteContentsStatus = remoteContentsStatus == null ? SVNStatusType.STATUS_NONE : remoteContentsStatus;
-        myRemotePropertiesStatus = remotePropertiesStatus == null ? SVNStatusType.STATUS_NONE : remotePropertiesStatus;
+        myContentsStatus = contentsStatus == null ? SVNStatusType.STATUS_NONE
+                : contentsStatus;
+        myPropertiesStatus = propertiesStatus == null ? SVNStatusType.STATUS_NONE
+                : propertiesStatus;
+        myRemoteContentsStatus = remoteContentsStatus == null ? SVNStatusType.STATUS_NONE
+                : remoteContentsStatus;
+        myRemotePropertiesStatus = remotePropertiesStatus == null ? SVNStatusType.STATUS_NONE
+                : remotePropertiesStatus;
         myIsLocked = isLocked;
         myIsCopied = isCopied;
         myIsSwitched = isSwitched;
@@ -71,7 +100,8 @@ public class SVNStatus {
         myConflictOldFile = conflictOldFile;
         myConflictWrkFile = conflictWrkFile;
         myCopyFromURL = copyFromURL;
-        myCopyFromRevision = copyFromRevision == null ? SVNRevision.UNDEFINED : copyFromRevision;
+        myCopyFromRevision = copyFromRevision == null ? SVNRevision.UNDEFINED
+                : copyFromRevision;
         myRemoteLock = remoteLock;
         myLocalLock = localLock;
         myPropRejectFile = projRejectFile;
@@ -174,13 +204,17 @@ public class SVNStatus {
         myContentsStatus = SVNStatusType.STATUS_EXTERNAL;
     }
 
-    public void setRemoteStatus(SVNStatusType contents, SVNStatusType props, SVNLock lock) {
-        if (contents == SVNStatusType.STATUS_ADDED && myRemoteContentsStatus == SVNStatusType.STATUS_DELETED) {
+    public void setRemoteStatus(SVNStatusType contents, SVNStatusType props,
+            SVNLock lock) {
+        if (contents == SVNStatusType.STATUS_ADDED
+                && myRemoteContentsStatus == SVNStatusType.STATUS_DELETED) {
             contents = SVNStatusType.STATUS_REPLACED;
         }
 
-        myRemoteContentsStatus = contents != null ? contents : myRemoteContentsStatus;
-        myRemotePropertiesStatus = props != null ? props : myRemotePropertiesStatus;
+        myRemoteContentsStatus = contents != null ? contents
+                : myRemoteContentsStatus;
+        myRemotePropertiesStatus = props != null ? props
+                : myRemotePropertiesStatus;
         if (lock != null) {
             myRemoteLock = lock;
         }

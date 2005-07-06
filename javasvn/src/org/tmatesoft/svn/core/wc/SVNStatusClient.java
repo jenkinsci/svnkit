@@ -1,3 +1,13 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNProperty;
@@ -16,6 +26,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * @version 1.0
+ * @author TMate Software Ltd.
+ */
 public class SVNStatusClient extends SVNBasicClient {
     public SVNStatusClient() {
     }
@@ -28,16 +42,22 @@ public class SVNStatusClient extends SVNBasicClient {
         super(options, eventDispatcher);
     }
 
-    public SVNStatusClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options, ISVNEventHandler eventDispatcher) {
+    public SVNStatusClient(ISVNRepositoryFactory repositoryFactory,
+            ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
 
-    public void doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler) throws SVNException {
-        doStatus(path, recursive, remote, reportAll, includeIgnored, false, handler);
+    public void doStatus(File path, boolean recursive, boolean remote,
+            boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler)
+            throws SVNException {
+        doStatus(path, recursive, remote, reportAll, includeIgnored, false,
+                handler);
     }
 
-
-    public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, ISVNStatusHandler handler) throws SVNException {
+    public long doStatus(File path, boolean recursive, boolean remote,
+            boolean reportAll, boolean includeIgnored,
+            boolean collectParentExternals, ISVNStatusHandler handler)
+            throws SVNException {
         if (handler == null) {
             return -1;
         }
@@ -45,46 +65,63 @@ public class SVNStatusClient extends SVNBasicClient {
         wcAccess.open(false, recursive);
         Map parentExternals = new HashMap();
         if (collectParentExternals) {
-            parentExternals = collectParentExternals(path, wcAccess.getAnchor() != wcAccess.getTarget());
-            SVNExternalInfo thisExternal = (SVNExternalInfo) parentExternals.remove("");
+            parentExternals = collectParentExternals(path,
+                    wcAccess.getAnchor() != wcAccess.getTarget());
+            SVNExternalInfo thisExternal = (SVNExternalInfo) parentExternals
+                    .remove("");
             if (thisExternal != null) {
                 // report this as external first.
-                handler.handleStatus(new SVNStatus(null, path, SVNNodeKind.DIR, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, null, null, SVNStatusType.STATUS_EXTERNAL,
-                        SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, false, false, false, null, null, null, null, null, SVNRevision.UNDEFINED,
-                        null, null, null));
+                handler.handleStatus(new SVNStatus(null, path, SVNNodeKind.DIR,
+                        SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, null,
+                        null, SVNStatusType.STATUS_EXTERNAL,
+                        SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
+                        SVNStatusType.STATUS_NONE, false, false, false, null,
+                        null, null, null, null, SVNRevision.UNDEFINED, null,
+                        null, null));
             }
         }
-        SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(), wcAccess, handler, parentExternals, includeIgnored, reportAll, recursive);
+        SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(),
+                wcAccess, handler, parentExternals, includeIgnored, reportAll,
+                recursive);
         if (remote) {
-            String url = wcAccess.getAnchor().getEntries().getEntry("", true).getURL();
+            String url = wcAccess.getAnchor().getEntries().getEntry("", true)
+                    .getURL();
             SVNRepository repos = createRepository(url);
             SVNRepository locksRepos = createRepository(url);
 
             SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
-            SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, statusEditor);
-            String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
+            SVNStatusReporter statusReporter = new SVNStatusReporter(
+                    locksRepos, reporter, statusEditor);
+            String target = "".equals(wcAccess.getTargetName()) ? null
+                    : wcAccess.getTargetName();
 
             repos.status(-1, target, recursive, statusReporter, statusEditor);
         }
         // to report all when there is completely no changes
         statusEditor.closeEdit();
         if (remote && statusEditor.getTargetRevision() >= 0) {
-            SVNEvent event = SVNEventFactory.createStatusCompletedEvent(wcAccess, statusEditor.getTargetRevision());
+            SVNEvent event = SVNEventFactory.createStatusCompletedEvent(
+                    wcAccess, statusEditor.getTargetRevision());
             handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         wcAccess.close(false);
         if (!isIgnoreExternals() && recursive) {
             Map externals = statusEditor.getCollectedExternals();
-            for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
+            for (Iterator paths = externals.keySet().iterator(); paths
+                    .hasNext();) {
                 String externalPath = (String) paths.next();
-                File externalFile = new File(wcAccess.getAnchor().getRoot(), externalPath);
-                if (!externalFile.exists() || !externalFile.isDirectory() || !SVNWCUtil.isWorkingCopyRoot(externalFile, true)) {
+                File externalFile = new File(wcAccess.getAnchor().getRoot(),
+                        externalPath);
+                if (!externalFile.exists() || !externalFile.isDirectory()
+                        || !SVNWCUtil.isWorkingCopyRoot(externalFile, true)) {
                     continue;
                 }
-                handleEvent(SVNEventFactory.createStatusExternalEvent(wcAccess, externalPath), ISVNEventHandler.UNKNOWN);
+                handleEvent(SVNEventFactory.createStatusExternalEvent(wcAccess,
+                        externalPath), ISVNEventHandler.UNKNOWN);
                 setEventPathPrefix(externalPath);
                 try {
-                    doStatus(externalFile, recursive, remote, reportAll, includeIgnored, false, handler);
+                    doStatus(externalFile, recursive, remote, reportAll,
+                            includeIgnored, false, handler);
                 } catch (SVNException e) {
                     // fire error event.
                 } finally {
@@ -95,12 +132,15 @@ public class SVNStatusClient extends SVNBasicClient {
         return statusEditor.getTargetRevision();
     }
 
-    public SVNStatus doStatus(final File path, boolean remote) throws SVNException {
-        final SVNStatus[] result = new SVNStatus[]{null};
+    public SVNStatus doStatus(final File path, boolean remote)
+            throws SVNException {
+        final SVNStatus[] result = new SVNStatus[] { null };
         ISVNStatusHandler handler = new ISVNStatusHandler() {
             public void handleStatus(SVNStatus status) {
                 if (path.equals(status.getFile())) {
-                    if (result[0] != null && result[0].getContentsStatus() == SVNStatusType.STATUS_EXTERNAL && path.isDirectory()) {
+                    if (result[0] != null
+                            && result[0].getContentsStatus() == SVNStatusType.STATUS_EXTERNAL
+                            && path.isDirectory()) {
                         result[0] = status;
                         result[0].markExternal();
                     } else if (result[0] == null) {
@@ -112,7 +152,8 @@ public class SVNStatusClient extends SVNBasicClient {
         if (!remote) {
             // faster status.
             SVNWCAccess wcAccess = createWCAccess(path);
-            SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(), wcAccess, handler, new HashMap(), true, true, false);
+            SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(),
+                    wcAccess, handler, new HashMap(), true, true, false);
             String name = wcAccess.getTargetName();
             if (wcAccess.getAnchor() != wcAccess.getTarget()) {
                 name = "";
@@ -124,7 +165,8 @@ public class SVNStatusClient extends SVNBasicClient {
         return result[0];
     }
 
-    private Map collectParentExternals(File path, boolean asTarget) throws SVNException {
+    private Map collectParentExternals(File path, boolean asTarget)
+            throws SVNException {
         Map externals = new HashMap();
         if (path.isFile()) {
             return externals;
@@ -139,9 +181,11 @@ public class SVNStatusClient extends SVNBasicClient {
             path = path.getParentFile();
             SVNWCAccess wcAccess = createWCAccess(path);
             // get externals from anchor.
-            String externalsProperty = wcAccess.getAnchor().getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS);
+            String externalsProperty = wcAccess.getAnchor().getProperties("",
+                    false).getPropertyValue(SVNProperty.EXTERNALS);
             if (externalsProperty != null) {
-                SVNExternalInfo[] infos = SVNWCAccess.parseExternals("", externalsProperty);
+                SVNExternalInfo[] infos = SVNWCAccess.parseExternals("",
+                        externalsProperty);
                 for (int i = 0; i < infos.length; i++) {
                     SVNExternalInfo info = infos[i];
                     String infoPath = info.getPath();
@@ -151,7 +195,8 @@ public class SVNStatusClient extends SVNBasicClient {
                         externals.put(info.getPath(), info);
                     } else if (infoPath.startsWith(currentPath + "/")) {
                         // below target dir.
-                        info.setPath(infoPath.substring((currentPath + "/").length()));
+                        info.setPath(infoPath.substring((currentPath + "/")
+                                .length()));
                         if (asTarget) {
                             info.setPath(baseName + "/" + info.getPath());
                         }

@@ -1,20 +1,32 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd. All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which you should
+ * have received as part of this distribution. The terms are also available at
+ * http://tmate.org/svn/license.html. If newer versions of this license are
+ * posted there, you may use a newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.core.wc;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 22.06.2005
- * Time: 21:33:56
- * To change this template use File | Settings | File Templates.
+ * @version 1.0
+ * @author TMate Software Ltd.
  */
 public interface ISVNAuthenticationProvider {
 
     public int REJECTED = 0;
+
     public int ACCEPTED_TEMPORARY = 1;
+
     public int ACCEPTED = 2;
 
     // null for cancellation.
-    public SVNAuthentication requestClientAuthentication(String kind, String realm, SVNAuthentication previousAuth, ISVNAuthenticationManager manager);
+    public SVNAuthentication requestClientAuthentication(String kind,
+            String realm, SVNAuthentication previousAuth,
+            ISVNAuthenticationManager manager);
 
-    public int acceptServerAuthentication(SVNAuthentication authentication, ISVNAuthenticationManager manager);
+    public int acceptServerAuthentication(SVNAuthentication authentication,
+            ISVNAuthenticationManager manager);
 }
