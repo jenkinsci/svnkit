@@ -250,7 +250,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     SVNFileUtil.setExecutable(dstPath, true);
                 }
                 dispatchEvent(SVNEventFactory.createExportAddedEvent(dstPath
-                        .getParentFile(), dstPath));
+                        .getParentFile(), dstPath, SVNNodeKind.FILE));
             } catch (IOException e) {
                 SVNErrorManager.error(0, e);
             } finally {
@@ -560,8 +560,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             } else if (recursive && entry.isDirectory() && dir.getFile(entry.getName()).isDirectory()) {
                 SVNDirectory childDir = dir.getChildDirectory(entry.getName());
                 if (childDir != null) {
-                    copyVersionedDir(new File(dstPath, entry.getName()),
-                            childDir, recursive, revision, force, eol);
+                    copyVersionedDir(new File(dstPath, entry.getName()), childDir, recursive, revision, force, eol);
                 }
             }
         }

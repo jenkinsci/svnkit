@@ -28,9 +28,9 @@ import org.tmatesoft.svn.util.PathUtil;
 public class SVNEventFactory {
 
     public static SVNEvent createMergeEvent(SVNWCAccess source, String path,
-            SVNEventAction action, SVNStatusType cType, SVNStatusType pType) {
+            SVNEventAction action, SVNStatusType cType, SVNStatusType pType, SVNNodeKind kind) {
         SVNEvent event = new SVNEvent(source, null, PathUtil.tail(path),
-                action, null, -1, null, cType, pType, null, null, null);
+                action, kind, -1, null, cType, pType, null, null, null);
         event.setPath(path);
         return event;
     }
@@ -43,8 +43,7 @@ public class SVNEventFactory {
     }
 
     public static SVNEvent createCommitEvent(File rootFile, File file,
-            SVNEventAction action, SVNNodeKind kind, SVNStatusType textType,
-            SVNStatusType propType) {
+                                             SVNEventAction action, SVNNodeKind kind) {
         return new SVNEvent(rootFile, file, action, kind, -1, null,
                 SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE,
                 SVNStatusType.LOCK_INAPPLICABLE, null, null);
@@ -60,7 +59,7 @@ public class SVNEventFactory {
     public static SVNEvent createLockEvent(SVNWCAccess source, String path,
             SVNEventAction action, SVNLock lock, String message) {
         SVNEvent event = new SVNEvent(source, null, PathUtil.tail(path),
-                action, null, -1, null, null, null, null, lock, message);
+                action, SVNNodeKind.FILE, -1, null, null, null, null, lock, message);
         event.setPath(path);
         return event;
     }
@@ -68,7 +67,7 @@ public class SVNEventFactory {
     public static SVNEvent createLockEvent(String path, SVNEventAction action,
             SVNLock lock, String message) {
         SVNEvent event = new SVNEvent(null, null, PathUtil.tail(path), action,
-                null, -1, null, null, null, null, lock, message);
+                SVNNodeKind.FILE, -1, null, null, null, null, lock, message);
         event.setPath(path);
         return event;
     }
@@ -80,6 +79,7 @@ public class SVNEventFactory {
             mimeType = dir.getProperties(entry.getName(), false)
                     .getPropertyValue(SVNProperty.MIME_TYPE);
         } catch (SVNException e) {
+            //
         }
         return new SVNEvent(source, dir, entry.getName(), SVNEventAction.ADD,
                 entry.getKind(), 0, mimeType, null, null, null, null, null);
@@ -103,7 +103,7 @@ public class SVNEventFactory {
     public static SVNEvent createStatusExternalEvent(SVNWCAccess source,
             String path) {
         SVNEvent event = new SVNEvent(source, null, null,
-                SVNEventAction.STATUS_EXTERNAL, null, -1, null, null, null,
+                SVNEventAction.STATUS_EXTERNAL, SVNNodeKind.DIR, -1, null, null, null,
                 null, null, null);
         event.setPath(path);
         return event;
@@ -119,7 +119,7 @@ public class SVNEventFactory {
     public static SVNEvent createStatusCompletedEvent(SVNWCAccess source,
             long revision) {
         return new SVNEvent(source, source != null ? source.getTarget() : null,
-                "", SVNEventAction.STATUS_COMPLETED, null, revision, null,
+                "", SVNEventAction.STATUS_COMPLETED, SVNNodeKind.NONE, revision, null,
                 null, null, null, null, null);
     }
 
@@ -138,13 +138,14 @@ public class SVNEventFactory {
                 null, null, null, null, null);
     }
 
-    public static SVNEvent createExportAddedEvent(File root, File file) {
-        return new SVNEvent(root, file, SVNEventAction.UPDATE_ADD, null, -1,
+    public static SVNEvent createExportAddedEvent(File root, File file, SVNNodeKind kind) {
+        return new SVNEvent(root, file, SVNEventAction.UPDATE_ADD, kind, -1,
                 null, null, null, null, null, null);
     }
 
     public static SVNEvent createUpdateDeleteEvent(SVNWCAccess source,
             SVNDirectory dir, String name) {
+        // kind should be 'unknown' for deleted entries
         return new SVNEvent(source, dir, name, SVNEventAction.UPDATE_DELETE,
                 SVNNodeKind.UNKNOWN, -1, null, null, null, null, null, null);
     }

@@ -16,16 +16,15 @@ import org.tmatesoft.svn.core.diff.delta.SVNAllDeltaGenerator;
 import org.tmatesoft.svn.core.diff.delta.SVNSequenceDeltaGenerator;
 import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,13 +93,9 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                     .getRoot(), item.getFile(), SVNEventAction.COMMIT_DELETED,
                     item.getKind(), null);
         } else if (item.isContentsModified() || item.isPropertiesModified()) {
-            SVNStatusType propType = item.isPropertiesModified() ? SVNStatusType.CHANGED
-                    : SVNStatusType.UNCHANGED;
-            SVNStatusType textType = item.isContentsModified() ? SVNStatusType.CHANGED
-                    : SVNStatusType.UNCHANGED;
             event = SVNEventFactory.createCommitEvent(myWCAccess.getAnchor()
                     .getRoot(), item.getFile(), SVNEventAction.COMMIT_MODIFIED,
-                    item.getKind(), textType, propType);
+                    item.getKind());
         }
         if (event != null) {
             event.setPath(item.getPath());
