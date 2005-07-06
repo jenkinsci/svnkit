@@ -85,7 +85,6 @@ public class SVNWCClient extends SVNBasicClient {
         }
         String name = wcAccess.getTargetName();
         if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
-            wcAccess.open(true, false);
             File file = wcAccess.getAnchor().getBaseFile(name, false);
             boolean delete = false;
             SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), false);
@@ -93,6 +92,7 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNErrorManager.error("svn: '" + path
                         + "' is not under version control or doesn't exist");
             }
+            wcAccess.open(true, false);
             try {
 
                 if (revision == SVNRevision.BASE) {
