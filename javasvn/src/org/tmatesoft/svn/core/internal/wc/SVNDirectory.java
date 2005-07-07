@@ -502,7 +502,7 @@ public class SVNDirectory {
                 baseProps.copyTo(wcProps);
                 entry.setPropTime(TimeUtil.formatDate(new Date(wcProps
                         .getFile().lastModified())));
-            } else if (wcProps.getFile().isHidden()) {
+            } else {
                 wcProps.delete();
                 entry.setPropTime(null);
             }
@@ -1225,21 +1225,6 @@ public class SVNDirectory {
 
         SVNFileUtil.deleteAll(new File(dir.getRoot(), ".svn"));
         dir.getRoot().delete();
-    }
-
-    private static void debugQData(String label, QSequenceLineRAData baseData)
-            throws IOException {
-        InputStream is = baseData.read(0, baseData.length());
-        StringBuffer sb = new StringBuffer();
-        while (true) {
-            int r = is.read();
-            if (r < 0) {
-                break;
-            }
-            sb.append((char) (r & 0xFF));
-        }
-        is.close();
-        DebugLog.log(label + ":" + sb.toString());
     }
 
     public void commit(String target, SVNCommitInfo info, Map wcPropChanges,
