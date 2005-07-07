@@ -325,9 +325,22 @@ public class SVNCommitUtil {
                 if (force) {
                     recurse = true;
                 }
-            } else if (entry != null && entry.isScheduledForDeletion()
-                    && entry.isDirectory()) {
-                if (force) {
+            } else if (entry != null && entry.isScheduledForDeletion()) {
+                if (force && !recursive) {
+                    // if parent is also deleted -> skip this entry
+                    SVNEntry parentEntry;
+                    if (!"".equals(targetName)) {
+                        parentEntry = dir.getEntries().getEntry("", false);
+                    } else {
+                        File parentFile = targetFile.getParentFile();
+                        SVNWCAccess parentAccess = SVNWCAccess.create(parentFile);
+                        parentEntry = parentAccess.getTarget().getEntries()
+                                .getEntry("", false);
+                    }
+                    if (parentEntry != null && parentEntry.isScheduledForDeletion() &&
+                            paths.contains(parentPath)) {
+                        continue;
+                    }
                     recurse = true;
                 }
             }

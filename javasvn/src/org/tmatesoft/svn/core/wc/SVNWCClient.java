@@ -92,7 +92,6 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNErrorManager.error("svn: '" + path
                         + "' is not under version control or doesn't exist");
             }
-            wcAccess.open(true, false);
             try {
 
                 if (revision == SVNRevision.BASE) {
@@ -118,7 +117,6 @@ public class SVNWCClient extends SVNBasicClient {
                     }
                 }
             } finally {
-                wcAccess.close(true);
                 if (file != null && file.exists()) {
                     InputStream is = SVNFileUtil.openFileForReading(file);
                     try {
