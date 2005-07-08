@@ -226,7 +226,7 @@ public class SVNWCClient extends SVNBasicClient {
                 "svn-contents", ".tmp2");
         try {
             os = new FileOutputStream(file);
-            repos.getFile("", revs[0], properties, os);
+            revs[0] = repos.getFile("", revs[0], properties, os);
             os.close();
             os = null;
             if (expandKeywords) {
@@ -235,9 +235,9 @@ public class SVNWCClient extends SVNBasicClient {
                 String eol = (String) properties.get(SVNProperty.EOL_STYLE);
                 byte[] eolBytes = SVNTranslator.getWorkingEOL(eol);
                 Map keywordsMap = SVNTranslator.computeKeywords(keywords, url,
-                        (String) properties.get("svn:author"),
-                        (String) properties.get("svn:date"), Long
-                                .toString(revs[0]));
+                        (String) properties.get(SVNProperty.LAST_AUTHOR),
+                        (String) properties.get(SVNProperty.COMMITTED_DATE),
+                        (String) properties.get(SVNProperty.COMMITTED_REVISION));
                 SVNTranslator.translate(file, file2, eolBytes, keywordsMap,
                         false, true);
             } else {
