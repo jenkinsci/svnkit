@@ -40,23 +40,14 @@ import java.util.Map;
 public class SVNUpdateEditor implements ISVNEditor {
 
     private String mySwitchURL;
-
     private String myTarget;
-
     private String myTargetURL;
-
     private boolean myIsRecursive;
-
     private SVNWCAccess myWCAccess;
-
     private SVNDirectoryInfo myCurrentDirectory;
-
     private SVNFileInfo myCurrentFile;
-
     private long myTargetRevision;
-
     private boolean myIsRootOpen;
-
     private boolean myIsTargetDeleted;
 
     public SVNUpdateEditor(SVNWCAccess wcAccess, String switchURL,
@@ -471,9 +462,11 @@ public class SVNUpdateEditor implements ISVNEditor {
         File textTmpBase = dir.getBaseFile(name, true);
         String tmpPath = ".svn/tmp/text-base/" + name + ".svn-base";
         String basePath = ".svn/text-base/" + name + ".svn-base";
+        File workingFile = dir.getFile(name);
 
-        if (!textTmpBase.exists() && magicPropsChanged) {
+        if (!textTmpBase.exists() && magicPropsChanged && workingFile.exists()) {
             // only props were changed, but we have to retranslate file.
+            // only if wc file exists (may be locally deleted), otherwise no need to retranslate...
             command.put(SVNLog.NAME_ATTR, name);
             command.put(SVNLog.DEST_ATTR, tmpPath);
             log.addCommand(SVNLog.COPY_AND_DETRANSLATE, command, false);
@@ -504,7 +497,6 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         boolean isLocallyModified = !myCurrentFile.IsAdded
                 && dir.hasTextModifications(name, false);
-        File workingFile = dir.getFile(name);
         if (textTmpBase.exists()) {
             textStatus = SVNStatusType.CHANGED;
             // there is a text replace working copy with.
