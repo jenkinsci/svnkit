@@ -256,7 +256,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         }
         url = url.substring(url.indexOf("://") + 3);
         if (url.indexOf("/") < 0) {
-            return url;
+            return "/";
         }
         url = url.substring(url.indexOf("/"));
         url = PathUtil.decode(url);
