@@ -11,26 +11,35 @@
  */
 package org.tmatesoft.svn.examples.wc;
 
+import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 /*
- * An implementation of ISVNStatusHandler that is used in WorkingCopy to display
- * status information. This implementation is passed to
+ * An implementation of ISVNStatusHandler & ISVNEventHandler that is used in 
+ * WorkingCopy to display status information. This implementation is passed to
  * SVNStatusClient.doStatus(File path, boolean recursive, boolean remote, 
  * boolean reportAll, boolean includeIgnored, boolean collectParentExternals, 
  * ISVNStatusHandler handler). For each item to be processed doStatus(..) collects
  * status information and creates an SVNStatus which incapsulates that information.
  * Then doStatus(..) calls an implementor's handler.handleStatus(SVNStatus) where it
  * passes the gathered status info.
+ * 
+ * Also this implementation is to be passed to those SVNStatusClient's constructors
+ * which receive ISVNEventHandler parameter. For example, if the status was invoked
+ * with the flag remote = true (like 'svn status -u' command), so then the status 
+ * operation will be finished with dispatching an SVNEvent to ISVNEventHandler
+ * that will 'say' that the status is completed (see the implementation for
+ * ISVNEventHandler.handleEvent(SVNEvent event, double progress)). 
  */
-public class StatusHandler implements ISVNStatusHandler {
-    private boolean myIsRemote;
+public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
 
-    public StatusHandler(boolean isRemote) {
-        myIsRemote = isRemote;
+    public StatusHandler() {
     }
     /*
      * This is an implementation of ISVNStatusHandler.handleStatus(SVNStatus status)
@@ -41,7 +50,9 @@ public class StatusHandler implements ISVNStatusHandler {
          * It is SVNStatusType who contains information on the state of an item. 
          */
         SVNStatusType contentsStatus = status.getContentsStatus();
+
         String pathChangeType = " ";
+        
         boolean isAddedWithHistory = status.isCopied();
         if (contentsStatus == SVNStatusType.STATUS_MODIFIED) {
             /*
@@ -126,7 +137,25 @@ public class StatusHandler implements ISVNStatusHandler {
              */
             pathChangeType = " ";
         }
+        
+        /*
+         * If SVNStatusClient.doStatus(..) was invoked with remote = true
+         * and the current item was changed in the repository the following 
+         * code finds out the type of the changes made  
+         */
+        SVNStatusType remoteContentsStatus = status.getRemoteContentsStatus();
+        String pathRemoteChangeType = " ";
 
+        if(remoteContentsStatus!=null){
+            if(remoteContentsStatus == SVNStatusType.STATUS_MODIFIED ||
+               remoteContentsStatus == SVNStatusType.STATUS_DELETED  ||
+               remoteContentsStatus == SVNStatusType.STATUS_REPLACED){
+                /*
+                 * the local item is out of date
+                 */
+                pathRemoteChangeType = "*";
+            }
+        }
         /*
          * Now getting the status of properties of an item. SVNStatusType also contains
          * information on the properties state.
@@ -168,43 +197,35 @@ public class StatusHandler implements ISVNStatusHandler {
          */
         SVNLock remoteLock = status.getRemoteLock();
         String lockLabel = " ";
-        if (!myIsRemote) {
-            if (localLock != null) {
+
+        if (localLock != null) {
+            /*
+             * at first suppose the file is locKed
+             */
+            lockLabel = "K";
+            if (remoteLock != null) {
                 /*
-                 * finds out if the file is locKed or not
+                 * author of the local lock differs from the author of the
+                 * remote lock - the lock was sTolen!
                  */
-                lockLabel = (localLock.getID() != null && !localLock.getID()
-                        .equals("")) ? "K" : " ";
-            }
-        } else {
-            if (localLock != null) {
-                /*
-                 * at first suppose the file is locKed
-                 */
-                lockLabel = "K";
-                if (remoteLock != null) {
-                    /*
-                     * author of the local lock differs from the author of the
-                     * remote lock - the lock was sTolen!
-                     */
-                    if (!remoteLock.getOwner().equals(localLock.getOwner())) {
-                        lockLabel = "T";
-                    }
-                } else {
-                    /*
-                     * the local lock presents but there's no lock in the
-                     * repository - the lock was Broken.
-                     */
-                    lockLabel = "B";
+                if (!remoteLock.getOwner().equals(localLock.getOwner())) {
+                    lockLabel = "T";
                 }
-            } else if (remoteLock != null) {
+            } else {
                 /*
-                 * the file is not locally locked but locked in the repository -
-                 * the lock token is in some Other working copy.
+                 * the local lock presents but there's no lock in the
+                 * repository - the lock was Broken.
                  */
-                lockLabel = "O";
+                lockLabel = "B";
             }
+        } else if (remoteLock != null) {
+            /*
+             * the file is not locally locked but locked in the repository -
+             * the lock token is in some Other working copy.
+             */
+            lockLabel = "O";
         }
+
         /*
          * Obtains the working revision number of the item.
          */
@@ -235,7 +256,7 @@ public class StatusHandler implements ISVNStatusHandler {
                 + (isSwitched ? "S" : " ")
                 + lockLabel
                 + "  "
-                + ((myIsRemote && pathChangeType.equals("M")) ? "*" : " ")
+                + pathRemoteChangeType//((myIsRemote && pathChangeType.equals("M")) ? "*" : " ")
                 + "  "
                 + workingRevision
                 + offsets[0]
@@ -244,5 +265,37 @@ public class StatusHandler implements ISVNStatusHandler {
                 + (status.getAuthor() != null ? status.getAuthor() : "?")
                 + offsets[2] + status.getFile().getPath());
     }
+    
+    /*
+     * This is an implementation for 
+     * ISVNEventHandler.handleEvent(SVNEvent event, double progress)
+     */
+    public void handleEvent(SVNEvent event, double progress) {
+        /*
+         * Gets the current action. An action is represented by SVNEventAction.
+         * In case of a status a current action can be determined via 
+         * SVNEvent.getAction() and  SVNEventAction.STATUS_-like constants. 
+         */
+        SVNEventAction action = event.getAction();
+        /*
+         * Print out the revision against which the status was performed.
+         * This event is dispatched when the SVNStatusClient.doStatus() was 
+         * invoked with the flag remote set to true - this is for a local status
+         * it won't be dispatched.
+         */
+        if(action == SVNEventAction.STATUS_COMPLETED){
+            System.out.println("Status against revision:  "+ event.getRevision());
+        }
+    
+    }
 
+    /*
+     * Should be implemented to react on a user's cancel of the operation.
+     * If the operation was cancelled this method should throw an 
+     * SVNCancelException. 
+     */
+    public void checkCancelled() throws SVNCancelException {
+    
+    }
+    
 }

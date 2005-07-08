@@ -247,9 +247,12 @@
 
     <target name="build-doc">
         <mkdir dir="build/doc/javadoc" />
-        <javadoc destdir="build/doc/javadoc" failonerror="false"
+    	<copy file="doc/javadoc-files/JavaSVN_API_Packages.jpg" todir="build/doc/javadoc"/>
+    	<javadoc destdir="build/doc/javadoc" failonerror="false"
                  windowtitle="JavaDoc :: Documentation :: Pure Java Subversion (SVN) Client Library"
                  breakiterator="yes"
+        		 stylesheetfile="doc/javadoc-files/javadoc.css" 	 
+        		 overview="doc/javadoc-files/overview.html"
         >
             <packageset dir="javasvn/src">
                 <include name="**/core/**" />
@@ -259,7 +262,7 @@
                	<exclude name="**/core/progress/**" />
             </packageset>
             <header>
-                <![CDATA[<a target="_top" href="http://tmate.org/svn/">JavaSVN&nbsp;Home<a/>]]></header>
+                <![CDATA[<a target="_top" href="http://tmate.org/svn/"><span class=style0>JavaSVN</span>&nbsp;Home<a/>]]></header>
             <bottom>
                 <![CDATA[Copyright &#169; 2004-2005 TMate Software Ltd. All Rights Reserved.]]>
             </bottom>

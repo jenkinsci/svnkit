@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * each action it's running. Information on each action is incapsulated by SVNEvent
  * and is reported by ISVNEventHandler.svnEvent(SVNEvent event, double progress).    
  */
-public class CommitEventListener implements ISVNEventHandler {
+public class CommitEventHandler implements ISVNEventHandler {
     /*
      * progress - will be the current percentage stage of an operation (how many of
      * operation has passed) 
@@ -47,7 +47,7 @@ public class CommitEventListener implements ISVNEventHandler {
             System.out.println("Replacing   " + event.getPath());
         } else if (action == SVNEventAction.COMMIT_DELTA_SENT) {
             System.out.println("Transmitting file data....");
-        } else if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
+        } else if (action == SVNEventAction.COMMIT_ADDED) {
             /*
              * Gets the MIME-type of the item.
              */

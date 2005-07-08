@@ -61,51 +61,54 @@ import org.tmatesoft.svn.util.PathUtil;
  * directory given all the intermediate directories created); this operation is based
  * upon an URL - so, it's immediately committed to the repository;
  * 
- * 4)the next operation - checking out the directory created in the previous 
+ * 4)the next operation  - creating a new local directory (importDir) and a new file 
+ * (importFile) in it and then importing the directory into the repository. 
+ * 
+ * 5)the next operation - checking out the directory created in the previous 
  * step to a local directory defined by myWorkspacePath; 
  * 
- * 5)the next operation - recursively getting and displaying info for each item  at 
+ * 6)the next operation - recursively getting and displaying info for each item  at 
  * the working revision in the working copy that was checked out in the previous 
  * step;
  * 
- * 6)the next operation - creating a new directory (newDir) with a file (newFile) in
+ * 7)the next operation - creating a new directory (newDir) with a file (newFile) in
  * the working copy and then recursively scheduling (if any subdirictories existed 
  * they would be also added) the created directory for addition;
  * 
- * 7)the next operation - recursively getting and displaying the working copy status
+ * 8)the next operation - recursively getting and displaying the working copy status
  * not including unchanged (normal) paths; the result must include those paths which
  * were scheduled for addition in the previous step; 
  * 
- * 8)the next operation - recursively updating the working copy; if any local items
+ * 9)the next operation - recursively updating the working copy; if any local items
  * are out of date they will be updated to the latest revision;
  * 
- * 9)the next operation - committing local changes to the repository; this operation
+ * 10)the next operation - committing local changes to the repository; this operation
  * will add the directory with the file that were scheduled for addition to the 
  * repository;
  * 
- * 10)the next operation - locking the file added in the previous step (for example, 
+ * 11)the next operation - locking the file added in the previous step (for example, 
  * if you temporarily need to keep a file locked to prevent someone's else 
  * modifications);
  * 
- * 11)the next operation - showing status once again (for example, to see that the 
+ * 12)the next operation - showing status once again (for example, to see that the 
  * file was locked);
  * 
- * 12)the next operation - copying with history one URL (url) to another one (copyURL)
+ * 13)the next operation - copying with history one URL (url) to another one (copyURL)
  * within the same repository;
  * 
- * 13)the next operation - switching the working copy to a different URL - to copyURL
+ * 14)the next operation - switching the working copy to a different URL - to copyURL
  * where url was copied to in the previous step;
  * 
- * 14)the next operation - recursively getting and displaying info on the root 
+ * 15)the next operation - recursively getting and displaying info on the root 
  * directory of the working copy to demonstrate that the working copy is now really
  * switched against copyURL;
  * 
- * 15)the next operation - scheduling the directory (newDir) for deletion;
+ * 16)the next operation - scheduling the directory (newDir) for deletion;
  * 
- * 16)the next operation - showing status once again (for example, to see that the 
+ * 17)the next operation - showing status once again (for example, to see that the 
  * directory with all its entries were scheduled for deletion);
  * 
- * 17)the next operation - committing local changes to the repository; this operation
+ * 18)the next operation - committing local changes to the repository; this operation
  * will delete the directory (newDir) with the file (newFile) that were scheduled for
  * deletion from the repository;
  * 
@@ -119,7 +122,7 @@ import org.tmatesoft.svn.util.PathUtil;
  * >svnadmin create X:\path\to\rep
  * 
  * 2)after the repository is created you can add a new account: open
- * X:\path\to\rep\, then move to \conf and open the file - passwd. In the file you'll
+ * X:\path\to\rep\, then move into \conf and open the file - passwd. In the file you'll
  * see the section [users]. Uncomment it and add a new account below the section
  * name, like:
  * 
@@ -143,21 +146,50 @@ import org.tmatesoft.svn.util.PathUtil;
  * While the program is running you'll see something like this:
  * 
 	Making a new directory at 'svn://localhost/rep/MyRepos'...
-	Committed to revision 219
+	Committed to revision 312
+	
+	Importing a new directory into 'svn://localhost/rep/MyRepos/importDir'...
+	Adding         importFile.txt
+	Committed to revision 313
 	
 	Checking out a working copy from 'svn://localhost/rep/MyRepos'...
-	At revision 219
+	A         importDir
+	A         importDir/importFile.txt
+	At revision 313
 	
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy
 	URL: svn://localhost/rep/MyRepos
 	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 219
+	Revision: 313
 	Node Kind: dir
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 219
-	Last Changed Date: Thu Jun 23 19:56:27 NOVST 2005
+	Last Changed Revision: 313
+	Last Changed Date: Fri Jul 08 18:35:21 NOVST 2005
+	-----------------INFO-----------------
+	Local Path: N:\MyWorkingCopy\importDir
+	URL: svn://localhost/rep/MyRepos/importDir
+	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
+	Revision: 313
+	Node Kind: dir
+	Schedule: normal
+	Last Changed Author: userName
+	Last Changed Revision: 313
+	Last Changed Date: Fri Jul 08 18:35:21 NOVST 2005
+	-----------------INFO-----------------
+	Local Path: N:\MyWorkingCopy\importDir\importFile.txt
+	URL: svn://localhost/rep/MyRepos/importDir/importFile.txt
+	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
+	Revision: 313
+	Node Kind: file
+	Schedule: normal
+	Last Changed Author: userName
+	Last Changed Revision: 313
+	Last Changed Date: Fri Jul 08 18:35:21 NOVST 2005
+	Properties Last Updated: Fri Jul 08 18:35:24 NOVST 2005
+	Text Last Updated: Fri Jul 08 18:35:22 NOVST 2005
+	Checksum: 75e9e68e21ae4453f318424738aef57e
 	
 	Recursively scheduling a new directory 'N:\MyWorkingCopy\newDir' for addition...
 	
@@ -166,69 +198,92 @@ import org.tmatesoft.svn.util.PathUtil;
 	A          0     ?    ?                               N:\MyWorkingCopy\newDir\newFile.txt
 	
 	Updating 'N:\MyWorkingCopy'...
-	At revision 219
-	
+	At revision 313
+	Updated to revision 313.
 	Committing changes for 'N:\MyWorkingCopy'...
 	Adding         newDir
 	Adding         newDir/newFile.txt
 	Transmitting file data....
-	Committed to revision 220
+	Committed to revision 314
 	
 	Locking (with stealing if the entry is already locked) 'N:\MyWorkingCopy\newDir\newFile.txt'.
 	
 	Status for 'N:\MyWorkingCopy':
-	     K     220   220   userName                        N:\MyWorkingCopy\newDir\newFile.txt
+	     K     314   314   userName                        N:\MyWorkingCopy\newDir\newFile.txt
 	
 	Copying 'svn://localhost/rep/MyRepos' to 'svn://localhost/rep/MyReposCopy'...
-	Committed to revision 221
+	Committed to revision 315
 	
 	Switching 'N:\MyWorkingCopy' to 'svn://localhost/rep/MyReposCopy'...
 	  B       newDir/newFile.txt
-	At revision 221
+	At revision 315
 	
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy
 	URL: svn://localhost/rep/MyReposCopy
 	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 221
+	Revision: 315
 	Node Kind: dir
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 221
-	Last Changed Date: Thu Jun 23 19:56:32 NOVST 2005
+	Last Changed Revision: 315
+	Last Changed Date: Fri Jul 08 18:35:26 NOVST 2005
+	-----------------INFO-----------------
+	Local Path: N:\MyWorkingCopy\importDir
+	URL: svn://localhost/rep/MyReposCopy/importDir
+	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
+	Revision: 315
+	Node Kind: dir
+	Schedule: normal
+	Last Changed Author: userName
+	Last Changed Revision: 313
+	Last Changed Date: Fri Jul 08 18:35:21 NOVST 2005
+	-----------------INFO-----------------
+	Local Path: N:\MyWorkingCopy\importDir\importFile.txt
+	URL: svn://localhost/rep/MyReposCopy/importDir/importFile.txt
+	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
+	Revision: 315
+	Node Kind: file
+	Schedule: normal
+	Last Changed Author: userName
+	Last Changed Revision: 313
+	Last Changed Date: Fri Jul 08 18:35:21 NOVST 2005
+	Properties Last Updated: Fri Jul 08 18:35:24 NOVST 2005
+	Text Last Updated: Fri Jul 08 18:35:22 NOVST 2005
+	Checksum: 75e9e68e21ae4453f318424738aef57e
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy\newDir
 	URL: svn://localhost/rep/MyReposCopy/newDir
 	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 221
+	Revision: 315
 	Node Kind: dir
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 220
-	Last Changed Date: Thu Jun 23 19:56:31 NOVST 2005
+	Last Changed Revision: 314
+	Last Changed Date: Fri Jul 08 18:35:25 NOVST 2005
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy\newDir\newFile.txt
 	URL: svn://localhost/rep/MyReposCopy/newDir/newFile.txt
 	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 221
+	Revision: 315
 	Node Kind: file
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 220
-	Last Changed Date: Thu Jun 23 19:56:31 NOVST 2005
-	Properties Last Updated: Thu Jun 23 19:56:34 NOVST 2005
-	Text Last Updated: Thu Jun 23 19:56:32 NOVST 2005
+	Last Changed Revision: 314
+	Last Changed Date: Fri Jul 08 18:35:25 NOVST 2005
+	Properties Last Updated: Fri Jul 08 18:35:28 NOVST 2005
+	Text Last Updated: Fri Jul 08 18:35:26 NOVST 2005
 	Checksum: 023b67e9660b2faabaf84b10ba32c6cf
 	
 	Scheduling 'N:\MyWorkingCopy\newDir' for deletion ...
 	
 	Status for 'N:\MyWorkingCopy':
-	D          221   220   userName                        N:\MyWorkingCopy\newDir
-	D          221   220   userName                        N:\MyWorkingCopy\newDir\newFile.txt
+	D          315   314   userName                        N:\MyWorkingCopy\newDir
+	D          315   314   userName                        N:\MyWorkingCopy\newDir\newFile.txt
 	
 	Committing changes for 'N:\MyWorkingCopy'...
 	Deleting   newDir
-	Committed to revision 222
+	Committed to revision 316
  * 
  */
 public class WorkingCopy {
@@ -244,50 +299,62 @@ public class WorkingCopy {
          * Default values:
          */
         /*
-         * Assuming that svn://localhost/rep already exists while
-         * MyRepos is to be created
+         * Assuming that 'svn://localhost/rep' is an existing 
+         * repository path
          */
-        String url = "svn://localhost/rep/MyRepos";
-        String copyURL = "svn://localhost/rep/MyReposCopy";
-        String myWorkingCopyPath = "/MyWorkingCopy";
+        String repositoryURL = "svn://localhost/rep";
         String name = "userName";
         String password = "userPassword";
+        String myWorkingCopyPath = "/MyWorkingCopy";
 
+        String importDir = "/importDir";
+        String importFile = importDir + "/importFile.txt";
+        String importFileText = "This unversioned file is imported into a repository";
+        
         String newDir = "/newDir";
-        String newFile = newDir + "/" + "newFile.txt";
-        byte[] fileText = "This is a new file added to the working copy"
-                .getBytes();
+        String newFile = newDir + "/newFile.txt";
+        String fileText = "This is a new file added to the working copy";
+
+        if (args != null) {
+            /*
+             * Obtains a URL that represents an already existing repository
+             */
+            repositoryURL = (args.length >= 1) ? args[0] : repositoryURL;
+            /*
+             * Obtains a path to be a working copy root directory
+             */
+            myWorkingCopyPath = (args.length >= 2) ? args[1] : myWorkingCopyPath;
+            /*
+             * Obtains an account name 
+             */
+            name = (args.length >= 3) ? args[2] : name;
+            /*
+             * Obtains a password
+             */
+            password = (args.length >= 4) ? args[3] : password;
+        }
+
+        /*
+         * That's where a new directory will be created
+         */
+        String url = repositoryURL + "/MyRepos";
+        /*
+         * That's where '/MyRepos' will be copied to (branched)
+         */
+        String copyURL = repositoryURL + "/MyReposCopy";
+        /*
+         * That's where a local directory will be imported into.
+         * Note that it's not necessary that the '/importDir' directory must already
+         * exist - the SVN repository will take care of creating it. 
+         */
+        String importToURL = url + importDir;
+              
         /*
          * Initializes the library (it must be done before ever using the
          * library itself)
          */
         setupLibrary();
 
-        if (args != null) {
-            /*
-             * Obtains a URL that represents a new directory relative to an existing 
-             * path in a repository
-             */
-            url = (args.length >= 1) ? args[0] : url;
-            /*
-             * Obtains a URL where a copy of the previuos url will be created (with
-             * history)
-             */
-            copyURL = (args.length >= 2) ? args[1] : copyURL;
-            /*
-             * Obtains a path to be a working copy root directory
-             */
-            myWorkingCopyPath = (args.length >= 3) ? args[2] : myWorkingCopyPath;
-            /*
-             * Obtains an account name 
-             */
-            name = (args.length >= 4) ? args[3] : name;
-            /*
-             * Obtains a password
-             */
-            password = (args.length >= 5) ? args[4] : password;
-        }
-        
         /*
          * Creates a usre's authentication manager.
          * User's authentication is generally required in
@@ -308,7 +375,7 @@ public class WorkingCopy {
          * passing options when creating an instance of
          * SVNCommitClient
          */
-        myCommitClient = new SVNCommitClient(myOptions, new CommitEventListener());
+        myCommitClient = new SVNCommitClient(myOptions, new CommitEventHandler());
         /*
          * passing options when creating an instance of
          * SVNCopyClient
@@ -324,13 +391,13 @@ public class WorkingCopy {
          * SVNStatusClient - all status commands will be invoked on localp 
          * aths, there's no need in authentication
          */
-        myStatusClient = new SVNStatusClient(null);
+        myStatusClient = new SVNStatusClient(new StatusHandler());
         /*
          * not passing options when creating an instance of
          * SVNUpdateClient - assuming that the repository server is configured
          * to allow reading operations for non-authenticated users
          */
-        myUpdateClient = new SVNUpdateClient(new UpdateEventListener());
+        myUpdateClient = new SVNUpdateClient(new UpdateEventHandler());
 
         long committedRevision = -1;
         System.out.println("Making a new directory at '" + url + "'...");
@@ -345,9 +412,33 @@ public class WorkingCopy {
         }
         System.out.println("Committed to revision " + committedRevision);
         System.out.println();
+
+        File anImportDir = new File(importDir);
+        File anImportFile = new File(anImportDir, PathUtil.tail(importFile));
+        /*
+         * creating a new local directory - "./importDir" and a new file - 
+         * "./importDir/importFile.txt" that will be imported into the repository
+         * (into the '/MyRepos/importDir' directory) 
+         */
+        createLocalDir(anImportDir, new File[]{anImportFile}, new String[]{importFileText});
+        
+        System.out.println("Importing a new directory into '" + importToURL + "'...");
+        try{
+            /*
+             * recursively importing an unversioned directory into a repository 
+             * and displaying what revision the repository was committed to
+             */
+            boolean isRecursive = true;
+            committedRevision = importDirectory(anImportDir, importToURL, "importing a new directory '" + anImportDir.getAbsolutePath() + "'", isRecursive).getNewRevision();
+        }catch(SVNException svne){
+            error("error while importing a new directory '" + anImportDir.getAbsolutePath() + "' into '" + importToURL + "'", svne);
+        }
+        System.out.println("Committed to revision " + committedRevision);
+        System.out.println();
+        
         
         /*
-         * creates a local directory where the working copy will be checked out
+         * creates a local directory where the working copy will be checked out into
          */
         File wcDir = new File(myWorkingCopyPath);
         if (wcDir.exists()) {
@@ -382,50 +473,14 @@ public class WorkingCopy {
         }
         System.out.println();
 
-        /*
-         * creating a new local directory - "wcDir/newDir"
-         */
         File aNewDir = new File(wcDir, newDir);
-        if (!aNewDir.mkdirs()) {
-            error("failed to create a new directory '" + aNewDir.getAbsolutePath() + "'.", null);
-        }
-        /*
-         * creating a new file - "/MyWorkspace/newDir/newFile.txt"
-         */
         File aNewFile = new File(aNewDir, PathUtil.tail(newFile));
-        try {
-            if (!aNewFile.createNewFile()) {
-                error("failed to create a new file '"
-                        + aNewFile.getAbsolutePath() + "'.", null);
-            }
-        } catch (IOException ioe) {
-            aNewFile.delete();
-            error("error while creating a new file '"
-                    + aNewFile.getAbsolutePath() + "'", ioe);
-        }
-
         /*
-         * writing a text into the file
+         * creating a new local directory - "wcDir/newDir" and a new file - 
+         * "/MyWorkspace/newDir/newFile.txt" 
          */
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(aNewFile);
-            fos.write(fileText);
-        } catch (FileNotFoundException fnfe) {
-            error("the file '" + aNewFile.getAbsolutePath() + "' is not found", fnfe);
-        } catch (IOException ioe) {
-            error("error while writing into the file '"
-                    + aNewFile.getAbsolutePath() + "'", ioe);
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (IOException ioe) {
-                    //
-                }
-            }
-        }
-
+        createLocalDir(aNewDir, new File[]{aNewFile}, new String[]{fileText});
+        
         System.out.println("Recursively scheduling a new directory '" + aNewDir.getAbsolutePath() + "' for addition...");
         try {
             /*
@@ -654,7 +709,37 @@ public class WorkingCopy {
          */
         return myCommitClient.doMkDir(new String[]{url}, commitMessage);
     }
-
+    
+    /*
+     * Imports an unversioned directory into a repository location denoted by a
+     * destination URL (the repository itself is responsible for creating all
+     * necessary parent non-existent paths). This operation commits the repository 
+     * to a new revision. Like 'svn import PATH URL (-N) -m "some comment"' command.
+     * It's done by invoking SVNCommitClient.doImport(File path, String dstURL,
+     * String commitMessage, boolean recursive) which takes the following parameters:
+     * 
+     * path - a local unversioned directory or singal file that will be imported into a 
+     * repository;
+     * 
+     * dstURL - a repository location where the local unversioned directory/file will be 
+     * imported into; this URL path may contain non-existent parent paths that will be 
+     * created by the repository server;
+     * 
+     * commitMessage - a commit log message since the new directory/file are immediately
+     * created in the repository;
+     * 
+     * recursive - if true and path parameter corresponds to a directory then the directory
+     * will be added with all its child subdirictories, otherwise the operation will cover
+     * only the directory itself (only those files which are located in the directory).  
+     */
+    private static SVNCommitInfo importDirectory(File localPath, String dstURL, String commitMessage, boolean isRecursive) throws SVNException{
+        /*
+         * Returns SVNCommitInfo containing information on the commit (revision number, 
+         * etc.) 
+         */
+        return myCommitClient.doImport(localPath, dstURL, commitMessage, isRecursive);
+        
+    }
     /*
      * Committs changes in a working copy to the repository. Like 
      * 'svn commit PATH -m "some comment"' command. It's done by invoking 
@@ -806,8 +891,7 @@ public class WorkingCopy {
          * manner of the native Subversion command line client)
          */
         myStatusClient.doStatus(wcPath, isRecursive, isRemote, isReportAll,
-                isIncludeIgnored, isCollectParentExternals, new StatusHandler(
-                        isRemote));
+                isIncludeIgnored, isCollectParentExternals, new StatusHandler());
     }
 
     /*
@@ -954,5 +1038,56 @@ public class WorkingCopy {
         System.err.println(message+(e!=null ? ": "+e.getMessage() : ""));
         System.exit(1);
     }
-
+    
+    /*
+     * This method is not related to JavaSVN API. Just a method which creates
+     * local directories and files :)
+     */
+    private static final void createLocalDir(File aNewDir, File[] localFiles, String[] fileContents){
+        if (!aNewDir.mkdirs()) {
+            error("failed to create a new directory '" + aNewDir.getAbsolutePath() + "'.", null);
+        }
+        for(int i=0; i < localFiles.length; i++){
+	        File aNewFile = localFiles[i];
+            try {
+	            if (!aNewFile.createNewFile()) {
+	                error("failed to create a new file '"
+	                        + aNewFile.getAbsolutePath() + "'.", null);
+	            }
+	        } catch (IOException ioe) {
+	            aNewFile.delete();
+	            error("error while creating a new file '"
+	                    + aNewFile.getAbsolutePath() + "'", ioe);
+	        }
+	
+	        String contents = null;
+	        if(i > fileContents.length-1){
+	            continue;
+	        }else{
+	            contents = fileContents[i];
+	        }
+	        
+	        /*
+	         * writing a text into the file
+	         */
+	        FileOutputStream fos = null;
+	        try {
+	            fos = new FileOutputStream(aNewFile);
+	            fos.write(contents.getBytes());
+	        } catch (FileNotFoundException fnfe) {
+	            error("the file '" + aNewFile.getAbsolutePath() + "' is not found", fnfe);
+	        } catch (IOException ioe) {
+	            error("error while writing into the file '"
+	                    + aNewFile.getAbsolutePath() + "'", ioe);
+	        } finally {
+	            if (fos != null) {
+	                try {
+	                    fos.close();
+	                } catch (IOException ioe) {
+	                    //
+	                }
+	            }
+	        }
+        }
+    }
 }
