@@ -279,7 +279,7 @@ public class SVNStatusEditor implements ISVNEditor {
     }
 
     public void openFile(String path, long revision) throws SVNException {
-        myCurrentFile = new FileInfo(myCurrentDirectory, path, true);
+        myCurrentFile = new FileInfo(myCurrentDirectory, path, false);
     }
 
     public void applyTextDelta(String commitPath, String baseChecksum)
