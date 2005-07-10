@@ -11,13 +11,11 @@
 
 package org.tmatesoft.svn.core.internal.ws.fs;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.io.ByteArrayInputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 
 import org.tmatesoft.svn.core.diff.ISVNRAData;
 
