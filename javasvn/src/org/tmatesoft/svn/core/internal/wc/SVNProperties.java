@@ -75,10 +75,24 @@ public class SVNProperties {
         if (!getFile().exists()) {
             return result;
         }
-        for (Iterator names = properties(null).iterator(); names.hasNext();) {
-            String name = (String) names.next();
-            String value = getPropertyValue(name);
-            result.put(name, value);
+        if (!myFile.exists()) {
+            return result;
+        }
+        ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
+        InputStream is = SVNFileUtil.openFileForReading(myFile);
+        try {
+            while (readProperty('K', is, nameOS)) {
+                String name = new String(nameOS.toByteArray(), "UTF-8");
+                nameOS.reset();
+                readProperty('V', is, nameOS);
+                String value = new String(nameOS.toByteArray(), "UTF-8");
+                result.put(name, value);
+                nameOS.reset();
+            }
+        } catch (IOException e) {
+            SVNErrorManager.error(0, e);
+        } finally {
+            SVNFileUtil.closeFile(is);
         }
         return result;
     }
@@ -201,7 +215,7 @@ public class SVNProperties {
     }
 
     public String getPropertyValue(String name) throws SVNException {
-        if (!myFile.exists()) {
+        if (isEmpty()) {
             return null;
         }
         ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -218,8 +232,7 @@ public class SVNProperties {
         return null;
     }
 
-    public OutputStream getPropertyValue(String name, OutputStream os)
-            throws SVNException {
+    public OutputStream getPropertyValue(String name, OutputStream os) throws SVNException {
         if (!myFile.exists()) {
             return null;
         }
@@ -364,20 +377,19 @@ public class SVNProperties {
         }
     }
 
-    /** @noinspection ResultOfMethodCallIgnored */
-    private static boolean readProperty(char type, InputStream is,
-            OutputStream os) throws IOException {
+    private static boolean readProperty(char type, InputStream is, OutputStream os) throws IOException {
         int length = readLength(is, type);
         if (length < 0) {
             return false;
         }
         if (os != null) {
-            for (int i = 0; i < length; i++) {
-                int r = is.read();
-                os.write(r);
-            }
+            byte[] value = new byte[length];
+            int r = is.read(value);
+            os.write(value, 0, r);
         } else {
-            is.skip(length);
+            while(length > 0) {
+                length -= is.skip(length);
+            }
         }
         return is.read() == '\n';
     }
@@ -438,9 +450,6 @@ public class SVNProperties {
     }
 
     public boolean isEmpty() {
-        if (!getFile().exists() || !getFile().isFile()) {
-            return true;
-        }
         return getFile().length() <= 4;
     }
 }

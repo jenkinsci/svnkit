@@ -14,6 +14,7 @@ package org.tmatesoft.svn.util;
 import java.text.DateFormat;
 import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -28,6 +29,9 @@ public class TimeUtil {
 
     private static final DateFormat ISO8601_FORMAT_IN = new SimpleDateFormat(
             "yyyy-MM-dd'T'HH:mm:ss.SSS");
+    
+    private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+    private static final Date NULL = new Date(0);
 
     static {
         ISO8601_FORMAT_IN.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -47,15 +51,44 @@ public class TimeUtil {
 
     public static final Date parseDate(String str) {
         if (str == null) {
-            return new Date(0);
+            return NULL;
         }
-        // truncate last nanoseconds.
-        str = str.substring(0, 23);
         try {
-            return ISO8601_FORMAT_IN.parse(str);
-        } catch (Throwable e) {
+            int year = Integer.parseInt(str.substring(0, 4));
+            int month = Integer.parseInt(str.substring(5, 7));
+            int date = Integer.parseInt(str.substring(8, 10));
+
+            int hour = Integer.parseInt(str.substring(11, 13));
+            int min = Integer.parseInt(str.substring(14, 16));
+            int sec = Integer.parseInt(str.substring(17, 19));
+            int ms = Integer.parseInt(str.substring(20, 23));
+
+            CALENDAR.clear();
+            CALENDAR.set(year, month - 1, date, hour, min, sec);
+            CALENDAR.set(Calendar.MILLISECOND, ms);
+            return CALENDAR.getTime();
+        } catch (Throwable th) {
         }
-        return new Date(0);
+        return NULL;
+    }
+
+    public static final long parseDateAsLong(String str) {
+        if (str == null) {
+            return -1;
+        }
+        int year = Integer.parseInt(str.substring(0, 4));
+        int month = Integer.parseInt(str.substring(5, 7));
+        int date = Integer.parseInt(str.substring(8, 10));
+
+        int hour = Integer.parseInt(str.substring(11, 13));
+        int min = Integer.parseInt(str.substring(14, 16));
+        int sec = Integer.parseInt(str.substring(17, 19));
+        int ms = Integer.parseInt(str.substring(20, 23));
+
+        CALENDAR.clear();
+        CALENDAR.set(year, month - 1, date, hour, min, sec);
+        CALENDAR.set(Calendar.MILLISECOND, ms);
+        return CALENDAR.getTimeInMillis();
     }
 
     public static final String toHumanDate(String str) {

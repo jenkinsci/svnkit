@@ -45,15 +45,14 @@ public class SVNFileType {
         if (file == null) {
             return SVNFileType.UNKNOWN;
         }
-        String absolutePath = file.getAbsolutePath();
-        String canonicalPath;
-        try {
-            canonicalPath = file.getCanonicalPath();
-        } catch (IOException e) {
-            canonicalPath = file.getAbsolutePath();
-        }
-
         if (!SVNFileUtil.isWindows) {
+            String absolutePath = file.getAbsolutePath();
+            String canonicalPath;
+            try {
+                canonicalPath = file.getCanonicalPath();
+            } catch (IOException e) {
+                canonicalPath = file.getAbsolutePath();
+            }
             if (!file.exists()) {
                 File[] children = file.getParentFile().listFiles();
                 for (int i = 0; children != null && i < children.length; i++) {
@@ -69,10 +68,10 @@ public class SVNFileType {
             }
         }
 
-        if (file.isDirectory()) {
-            return SVNFileType.DIRECTORY;
-        } else if (file.isFile()) {
+        if (file.isFile()) {
             return SVNFileType.FILE;
+        } else if (file.isDirectory()) {
+            return SVNFileType.DIRECTORY;
         } else if (!file.exists()) {
             return SVNFileType.NONE;
         }

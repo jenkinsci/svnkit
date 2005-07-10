@@ -587,7 +587,7 @@ public class SVNDirectory {
         }
         if (!force) {
             String textTime = entry.getTextTime();
-            long textTimeAsLong = SVNFileUtil.roundTimeStamp(TimeUtil.parseDate(textTime).getTime());
+            long textTimeAsLong = SVNFileUtil.roundTimeStamp(TimeUtil.parseDateAsLong(textTime));
             long tstamp = SVNFileUtil.roundTimeStamp(getFile(name).lastModified());
             if (textTimeAsLong == tstamp ) {
                 return false;
@@ -645,32 +645,33 @@ public class SVNDirectory {
             baseFile = getFile(".svn/prop-base/" + name + ".svn-base");
         }
         SVNEntry entry = getEntries().getEntry(name, true);
-        boolean propEmtpy = !propFile.exists() || propFile.length() <= 4;
-        boolean baseEmtpy = !baseFile.exists() || baseFile.length() <= 4;
+        long propLength = propFile.length();
+        boolean propEmtpy = propLength <= 4;
         if (entry.isScheduledForReplacement()) {
             return !propEmtpy;
         }
-        if (baseEmtpy) {
-            return !propEmtpy;
-        }
         if (propEmtpy) {
+            boolean baseEmtpy = baseFile.length() <= 4;
+            if (baseEmtpy) {
+                return !propEmtpy;
+            }
             return true;
         }
-        if (propFile.length() != baseFile.length()) {
+        if (propLength != baseFile.length()) {
             return true;
         }
         String timeStamp = entry.getPropTime();
-        String realTimestamp = TimeUtil.formatDate(new Date(propFile
-                .lastModified()));
+        timeStamp = timeStamp.substring(0, 23);
+        String realTimestamp = TimeUtil.formatDate(new Date(propFile.lastModified()));
+        realTimestamp = realTimestamp.substring(0, 23);
         if (realTimestamp.equals(timeStamp)) {
             return false;
         }
-        Map diff = getProperties(name, false).compareTo(
-                getBaseProperties(name, false));
-        if (diff == null || diff.isEmpty()) {
-            // update tstanp
+        Map m1 = getProperties(name, false).asMap();
+        Map m2 = getBaseProperties(name, false).asMap();
+        if (m1.equals(m2)) {
             if (isLocked()) {
-                entry.setPropTime(realTimestamp);
+                entry.setPropTime(TimeUtil.formatDate(new Date(propFile.lastModified())));
                 getEntries().save(false);
             }
             return false;

@@ -39,9 +39,7 @@ import org.tmatesoft.svn.util.PathUtil;
 public class SVNEntries {
 
     private File myFile;
-
     private Map myData;
-
     private Set myEntries;
 
     private static final Set BOOLEAN_PROPERTIES = new HashSet();
@@ -68,23 +66,21 @@ public class SVNEntries {
         myEntries = new TreeSet();
         BufferedReader reader = null;
         try {
-            reader = new BufferedReader(new InputStreamReader(SVNFileUtil
-                    .openFileForReading(myFile), "UTF-8"));
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(myFile), "UTF-8"));
             String line;
             Map entry = null;
             while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (line.startsWith("<entry")) {
+                if (line.equals("<entry")) {
                     entry = new HashMap();
                     continue;
                 }
                 if (entry != null) {
-                    String name = line.substring(0, line.indexOf('='));
-                    String value = line.substring(line.indexOf('\"') + 1, line
-                            .lastIndexOf('\"'));
+                    String name = line.substring(3, line.indexOf('='));
+                    String value = line.substring(line.indexOf('\"') + 1, 
+                            line.lastIndexOf('\"'));
                     value = SVNTranslator.xmlDecode(value);
                     entry.put(SVNProperty.SVN_ENTRY_PREFIX + name, value);
-                    if (line.endsWith("/>")) {
+                    if (line.charAt(line.length() - 1) == '>') {
                         String entryName = (String) entry.get(SVNProperty.NAME);
                         myData.put(entryName, entry);
                         myEntries.add(new SVNEntry(this, entryName));
@@ -92,26 +88,17 @@ public class SVNEntries {
                             Map rootEntry = (Map) myData.get("");
                             if (rootEntry != null) {
                                 if (entry.get(SVNProperty.REVISION) == null) {
-                                    setPropertyValue(entryName,
-                                            SVNProperty.REVISION,
-                                            (String) rootEntry
-                                                    .get(SVNProperty.REVISION));
+                                    entry.put(SVNProperty.REVISION, rootEntry.get(SVNProperty.REVISION));
                                 }
                                 if (entry.get(SVNProperty.URL) == null) {
-                                    String url = (String) rootEntry
-                                            .get(SVNProperty.URL);
+                                    String url = (String) rootEntry.get(SVNProperty.URL);
                                     if (url != null) {
-                                        url = PathUtil.append(url, PathUtil
-                                                .encode(entryName));
+                                        url +=  '/' + PathUtil.encode(name);//PathUtil.append(url, PathUtil.encode(entryName));
                                     }
-                                    setPropertyValue(entryName,
-                                            SVNProperty.URL, url);
+                                    entry.put(SVNProperty.URL, url);
                                 }
                                 if (entry.get(SVNProperty.UUID) == null) {
-                                    setPropertyValue(entryName,
-                                            SVNProperty.UUID,
-                                            (String) rootEntry
-                                                    .get(SVNProperty.UUID));
+                                    entry.put(SVNProperty.UUID, rootEntry.get(SVNProperty.UUID));
                                 }
                             }
                         }
@@ -248,9 +235,8 @@ public class SVNEntries {
             }
             if (propertyValue == null) {
                 return entry.remove(propertyName) != null;
-            } else if (!propertyValue.equals(entry.get(propertyName))) {
-                entry.put(propertyName, propertyValue);
-                return true;
+            } else {
+                return entry.put(propertyName, propertyValue) != null;
             }
         }
         return false;
