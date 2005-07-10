@@ -309,7 +309,7 @@ public class SVNDirectory {
 
     public SVNStatusType mergeText(String localPath, String basePath,
             String latestPath, String localLabel, String baseLabel,
-            String latestLabel, boolean dryRun) throws SVNException {
+            String latestLabel, boolean leaveConflict, boolean dryRun) throws SVNException {
         String mimeType = getProperties(localPath, false).getPropertyValue(
                 SVNProperty.MIME_TYPE);
         SVNEntry entry = getEntries().getEntry(localPath, true);
@@ -398,6 +398,9 @@ public class SVNDirectory {
         }
         if (dryRun) {
             localTmpFile.delete();
+            if (leaveConflict && status == SVNStatusType.CONFLICTED) {
+                return SVNStatusType.CONFLICTED_UNRESOLVED;
+            }
             return status;
         }
         if (status != SVNStatusType.CONFLICTED) {
@@ -420,8 +423,10 @@ public class SVNDirectory {
             SVNTranslator.translate(this, localPath, latestPath, newPath, true,
                     false);
             // translate result to local
-            SVNTranslator.translate(this, localPath, SVNFileUtil
-                    .getBasePath(resultFile), localPath, true, true);
+            if (!leaveConflict) {
+                SVNTranslator.translate(this, localPath, SVNFileUtil
+                        .getBasePath(resultFile), localPath, true, true);
+            }
 
             entry.setConflictNew(newPath);
             entry.setConflictOld(oldPath);
@@ -430,6 +435,9 @@ public class SVNDirectory {
         localTmpFile.delete();
         if (resultFile != null) {
             resultFile.delete();
+        }
+        if (status == SVNStatusType.CONFLICTED && leaveConflict) {
+            return SVNStatusType.CONFLICTED_UNRESOLVED;
         }
         return status;
     }

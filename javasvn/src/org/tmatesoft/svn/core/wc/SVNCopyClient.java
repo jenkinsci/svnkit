@@ -443,7 +443,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     SVNReporter reporter = new SVNReporter(wcAccess2, true,
                             true);
                     SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess2,
-                            null, true);
+                            null, true, isLeaveConflictsUnresolved());
 
                     repos.update(srcRevision, null, true, reporter, editor);
                     dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(

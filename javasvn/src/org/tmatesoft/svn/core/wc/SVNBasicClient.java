@@ -54,6 +54,8 @@ public class SVNBasicClient implements ISVNEventHandler {
 
     private boolean myIsCommandRunning;
 
+    private boolean myIsLeaveConflictsUnresolved;
+
     protected SVNBasicClient() {
         this(new SVNOptions(), null);
     }
@@ -102,6 +104,14 @@ public class SVNBasicClient implements ISVNEventHandler {
 
     public boolean isIgnoreExternals() {
         return myIsIgnoreExternals;
+    }
+    
+    public void setLeaveConflictsUnresolved(boolean leave) {
+        myIsLeaveConflictsUnresolved = leave;
+    }
+    
+    public boolean isLeaveConflictsUnresolved() {
+        return myIsLeaveConflictsUnresolved;
     }
 
     public void setEventHandler(ISVNEventHandler dispatcher) {

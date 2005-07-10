@@ -173,8 +173,10 @@ public class SVNLogRunner {
             SVNProperties props = dir.getProperties(fileName, false);
             SVNEntry entry = dir.getEntries().getEntry(fileName, true);
 
+            String leaveConglictsAttr = (String) attributes.get(SVNLog.ATTR6);
+            boolean leaveConflicts = Boolean.TRUE.toString().equals(leaveConglictsAttr);
             SVNStatusType mergeResult = dir.mergeText(fileName, leftPath,
-                    rightPath, targetLabel, leftLabel, rightLabel, false);
+                    rightPath, targetLabel, leftLabel, rightLabel, leaveConflicts, false);
 
             if (props.getPropertyValue(SVNProperty.EXECUTABLE) != null) {
                 SVNFileUtil.setExecutable(target, true);
@@ -183,7 +185,8 @@ public class SVNLogRunner {
                     && entry.getLockToken() == null) {
                 SVNFileUtil.setReadonly(target, true);
             }
-            setEntriesChanged(mergeResult == SVNStatusType.CONFLICTED);
+            setEntriesChanged(mergeResult == SVNStatusType.CONFLICTED || 
+                    mergeResult == SVNStatusType.CONFLICTED_UNRESOLVED);
         } else if (SVNLog.COMMIT.equals(name)) {
             if (attributes.get(SVNLog.REVISION_ATTR) == null) {
                 SVNErrorManager.error("svn: Missing revision attribute for '"

@@ -77,6 +77,7 @@ public class SVNLog {
     public static final String ATTR3 = "arg3";
     public static final String ATTR4 = "arg4";
     public static final String ATTR5 = "arg5";
+    public static final String ATTR6 = "arg6";
 
     public static final String WC_TIMESTAMP = "working";
 

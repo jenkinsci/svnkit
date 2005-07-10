@@ -405,7 +405,7 @@ public class SVNDiffClient extends SVNBasicClient {
             if (SVNProperty.KIND_FILE.equals(wcAccess
                     .getTargetEntryProperty(SVNProperty.KIND))) {
                 SVNMerger merger = new SVNMerger(wcAccess, url2, revM, force,
-                        dryRun);
+                        dryRun, isLeaveConflictsUnresolved());
                 mergeSingleFile(wcAccess, repos1, repos3, revN, revM, merger);
                 return;
             }
@@ -425,7 +425,7 @@ public class SVNDiffClient extends SVNBasicClient {
             url2 = PathUtil.decode(url2);
 
             SVNMerger merger = new SVNMerger(wcAccess, url2, revM, force,
-                    dryRun);
+                    dryRun, isLeaveConflictsUnresolved());
             DebugLog.log("wc access: " + wcAccess);
             DebugLog.log("url1: " + url1);
             DebugLog.log("url2: " + url2);

@@ -46,6 +46,8 @@ public class SVNStatusType {
 
     public static final SVNStatusType CONFLICTED = new SVNStatusType(7);
 
+    public static final SVNStatusType CONFLICTED_UNRESOLVED = new SVNStatusType(8);
+
     public static final SVNStatusType LOCK_INAPPLICABLE = new SVNStatusType(0);
 
     public static final SVNStatusType LOCK_UNKNOWN = new SVNStatusType(1);

@@ -71,8 +71,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         final SVNReporter reporter = new SVNReporter(wcAccess, true, recursive);
         try {
             wcAccess.open(true, recursive);
-            SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null,
-                    recursive);
+            SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, recursive, isLeaveConflictsUnresolved());
             SVNRepository repos = createRepository(wcAccess.getAnchor()
                     .getEntries().getEntry("", true).getURL());
             String target = "".equals(wcAccess.getTargetName()) ? null
@@ -107,7 +106,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         try {
             wcAccess.open(true, recursive);
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url,
-                    recursive);
+                    recursive, isLeaveConflictsUnresolved());
             SVNRepository repos = createRepository(wcAccess.getAnchor()
                     .getEntries().getEntry("", true).getURL());
             String target = "".equals(wcAccess.getTargetName()) ? null

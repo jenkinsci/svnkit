@@ -49,14 +49,15 @@ public class SVNUpdateEditor implements ISVNEditor {
     private long myTargetRevision;
     private boolean myIsRootOpen;
     private boolean myIsTargetDeleted;
+    private boolean myIsLeaveConflicts;
 
-    public SVNUpdateEditor(SVNWCAccess wcAccess, String switchURL,
-            boolean recursive) throws SVNException {
+    public SVNUpdateEditor(SVNWCAccess wcAccess, String switchURL, boolean recursive, boolean leaveConflicts) throws SVNException {
         myWCAccess = wcAccess;
         myIsRecursive = recursive;
         myTarget = wcAccess.getTargetName();
         mySwitchURL = switchURL;
         myTargetRevision = -1;
+        myIsLeaveConflicts = leaveConflicts;
 
         SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", true);
         myTargetURL = entry.getURL();
@@ -506,25 +507,28 @@ public class SVNUpdateEditor implements ISVNEditor {
                 log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
                 command.clear();
             } else {
+                // do test merge.
+                textStatus = dir.mergeText(name, basePath, tmpPath, "", "", "", myIsLeaveConflicts, true);
+                if (textStatus == SVNStatusType.UNCHANGED) {
+                    textStatus = SVNStatusType.MERGED;
+                }
                 SVNEntries entries = dir.getEntries();
                 SVNEntry entry = entries.getEntry(name, true);
                 String oldRevisionStr = ".r" + entry.getRevision();
                 String newRevisionStr = ".r" + myTargetRevision;
                 entries.close();
+
                 command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNLog.ATTR1, basePath);
                 command.put(SVNLog.ATTR2, tmpPath);
                 command.put(SVNLog.ATTR3, oldRevisionStr);
                 command.put(SVNLog.ATTR4, newRevisionStr);
                 command.put(SVNLog.ATTR5, ".mine");
+                if (textStatus == SVNStatusType.CONFLICTED_UNRESOLVED) {
+                    command.put(SVNLog.ATTR6, Boolean.TRUE.toString());
+                }
                 log.addCommand(SVNLog.MERGE, command, false);
                 command.clear();
-                // do test merge.
-                textStatus = dir.mergeText(name, basePath, tmpPath, "", "", "",
-                        true);
-                if (textStatus == SVNStatusType.UNCHANGED) {
-                    textStatus = SVNStatusType.MERGED;
-                }
             }
         } else if (lockStatus == SVNStatusType.LOCK_UNLOCKED) {
             command.put(SVNLog.NAME_ATTR, name);

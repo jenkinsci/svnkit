@@ -33,21 +33,17 @@ import org.tmatesoft.svn.util.PathUtil;
 public class SVNMerger {
 
     private boolean myIsDryRun;
-
     private SVNWCAccess myWCAccess;
-
     private boolean myIsForce;
-
     private String myAddedPath;
-
     private String myURL;
-
     private long myTargetRevision;
+    private boolean myIsLeaveConflicts;
 
-    public SVNMerger(SVNWCAccess wcAccess, String url, long rev, boolean force,
-            boolean dryRun) {
+    public SVNMerger(SVNWCAccess wcAccess, String url, long rev, boolean force, boolean dryRun, boolean leaveConflicts) {
         myWCAccess = wcAccess;
         myIsDryRun = dryRun;
+        myIsLeaveConflicts = leaveConflicts;
         myIsForce = force;
         myTargetRevision = rev;
         myURL = url;
@@ -234,10 +230,8 @@ public class SVNMerger {
                     .hasTextModifications(name, false);
             SVNStatusType mergeResult = null;
             if (!isTextModified) {
-                if (SVNWCUtil.isBinaryMimetype(mimeType1)
-                        || SVNWCUtil.isBinaryMimetype(mimeType2)) {
-                    boolean equals = SVNFileUtil
-                            .compareFiles(mine, older, null);
+                if (SVNWCUtil.isBinaryMimetype(mimeType1) || SVNWCUtil.isBinaryMimetype(mimeType2)) {
+                    boolean equals = SVNFileUtil.compareFiles(mine, older, null);
                     if (equals) {
                         if (!myIsDryRun) {
                             SVNFileUtil.rename(yours, mine);
@@ -253,16 +247,15 @@ public class SVNMerger {
                 String targetLabel = ".working";
                 String leftLabel = ".merge-left.r" + rev1;
                 String rightLabel = ".merge-right.r" + rev2;
-                DebugLog.log("merging: " + name + " in dir: "
-                        + parentDir.getPath());
+                DebugLog.log("merging: " + name + " in dir: " + parentDir.getPath());
                 mergeResult = parentDir.mergeText(minePath, olderPath,
                         yoursPath, targetLabel, leftLabel, rightLabel,
-                        myIsDryRun);
+                        myIsLeaveConflicts, myIsDryRun);
                 parentDir.getEntries().save(true);
             }
 
-            if (mergeResult == SVNStatusType.CONFLICTED) {
-                result[0] = SVNStatusType.CONFLICTED;
+            if (mergeResult == SVNStatusType.CONFLICTED || mergeResult == SVNStatusType.CONFLICTED_UNRESOLVED) {
+                result[0] = mergeResult;
             } else if (isTextModified) {
                 result[0] = SVNStatusType.MERGED;
             } else if (mergeResult == SVNStatusType.MERGED) {
