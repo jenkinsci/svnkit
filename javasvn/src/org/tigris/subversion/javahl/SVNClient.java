@@ -9,11 +9,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
@@ -121,35 +119,20 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public DirEntry[] list(String url, Revision revision, Revision pegRevision, boolean recurse) throws ClientException {
-        final TreeSet allEntries = new TreeSet(new Comparator() {
-            public int compare(Object o1, Object o2) {
-                DirEntry d1 = (DirEntry) o1;
-                DirEntry d2 = (DirEntry) o2;
-                if (d1 == null || d1.getPath() == null) {
-                    return d2 == null || d2.getPath() == null ? 0 : -1;
-                } else if (d2 == null || d2.getPath() == null) {
-                    return 1;
-                }
-                return d1.getPath().toLowerCase().compareTo(d2.getPath().toLowerCase());
-            }
-        });
+        final Collection allEntries = new ArrayList();
         SVNLogClient client = getSVNLogClient();
-        DebugLog.log("LIST is called for " + url);
+        ISVNDirEntryHandler handler = new ISVNDirEntryHandler(){
+            public void handleDirEntry(SVNDirEntry dirEntry) {
+                allEntries.add(SVNConverterUtil.createDirEntry(dirEntry));
+            }
+        };
         try {
             if(isURL(url)){
                 client.doList(url, SVNConverterUtil.getSVNRevision(pegRevision),
-                        SVNConverterUtil.getSVNRevision(revision), recurse, new ISVNDirEntryHandler(){
-                    public void handleDirEntry(SVNDirEntry dirEntry) {
-                        allEntries.add(SVNConverterUtil.createDirEntry(dirEntry));
-                    }
-                });
-            }else{
+                        SVNConverterUtil.getSVNRevision(revision), recurse, handler); 
+            } else {
                 client.doList(new File(url).getAbsoluteFile(), SVNConverterUtil.getSVNRevision(pegRevision),
-                        SVNConverterUtil.getSVNRevision(revision), recurse, new ISVNDirEntryHandler(){
-                    public void handleDirEntry(SVNDirEntry dirEntry) {
-                        allEntries.add(SVNConverterUtil.createDirEntry(dirEntry));
-                    }
-                });
+                        SVNConverterUtil.getSVNRevision(revision), recurse, handler);
             }
         } catch (SVNException e) {
             throwException(e);

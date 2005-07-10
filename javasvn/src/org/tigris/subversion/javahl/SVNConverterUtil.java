@@ -216,7 +216,7 @@ public class SVNConverterUtil {
             return null;
         }
         return new DirEntry(
-                dirEntry.getName(),
+                dirEntry.getPath() != null ? dirEntry.getPath() : dirEntry.getName(),
                 getNodeKind(dirEntry.getKind()),
                 dirEntry.size(),
                 dirEntry.hasProperties(),
