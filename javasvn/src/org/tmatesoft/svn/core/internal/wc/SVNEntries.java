@@ -70,12 +70,13 @@ public class SVNEntries {
             String line;
             Map entry = null;
             while ((line = reader.readLine()) != null) {
+                line = line.trim();
                 if (line.equals("<entry")) {
                     entry = new HashMap();
                     continue;
                 }
                 if (entry != null) {
-                    String name = line.substring(3, line.indexOf('='));
+                    String name = line.substring(0, line.indexOf('='));
                     String value = line.substring(line.indexOf('\"') + 1, 
                             line.lastIndexOf('\"'));
                     value = SVNTranslator.xmlDecode(value);
@@ -93,7 +94,7 @@ public class SVNEntries {
                                 if (entry.get(SVNProperty.URL) == null) {
                                     String url = (String) rootEntry.get(SVNProperty.URL);
                                     if (url != null) {
-                                        url +=  '/' + PathUtil.encode(name);//PathUtil.append(url, PathUtil.encode(entryName));
+                                        url = PathUtil.append(url, PathUtil.encode(entryName));
                                     }
                                     entry.put(SVNProperty.URL, url);
                                 }
