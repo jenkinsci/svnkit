@@ -185,7 +185,10 @@ public class SVNStatusClient extends SVNBasicClient {
         }
         // get non-real wc root, just last one with .svn directory in it
         File wcRoot = path.getAbsoluteFile();
-        wcRoot = path.getParentFile();
+        if (wcRoot.getParentFile() == null) {
+          return externals;
+        }
+        wcRoot = wcRoot.getParentFile().getAbsoluteFile();
         if (wcRoot == null || !new File(wcRoot, ".svn").isDirectory()) {
           // parent is not versioned.
           return externals;
