@@ -63,7 +63,7 @@ public class SVNProperties {
                 readProperty('V', is, null);
             }
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Cannot read properties file '" + myFile + "'");
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -90,7 +90,7 @@ public class SVNProperties {
                 nameOS.reset();
             }
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Cannot read properties file '" + myFile + "'");
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -194,7 +194,7 @@ public class SVNProperties {
                     }
                 }
             } catch (IOException e) {
-                SVNErrorManager.error(0, e);
+                SVNErrorManager.error("svn: I/O error while comparing properties files: " + e.getMessage());
             } finally {
                 if (tmpFile2 != null) {
                     tmpFile2.delete();
@@ -250,7 +250,7 @@ public class SVNProperties {
                 }
             }
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Cannot read properties file '" + myFile + "'");
         } finally {
             SVNFileUtil.closeFile(is);
         }

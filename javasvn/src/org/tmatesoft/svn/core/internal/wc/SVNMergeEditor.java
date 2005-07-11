@@ -10,6 +10,19 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.diff.ISVNRAData;
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
@@ -26,20 +39,6 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @version 1.0
@@ -240,21 +239,14 @@ public class SVNMergeEditor implements ISVNEditor {
                 true);
 
         if (myCurrentFile.myIsAdded) {
-            try {
-                myCurrentFile.myBaseFile.createNewFile();
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            SVNFileUtil.createEmptyFile(myCurrentFile.myBaseFile);
         } else {
             myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos,
                     myRevision1);
         }
         myCurrentFile.myFile = myMerger.getFile(myCurrentFile.myWCPath, false);
-        try {
-            myCurrentFile.myFile.createNewFile();
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
-        }
+        SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
+
         DebugLog.log("tmp target file: " + myCurrentFile.myFile);
         DebugLog.log("tmp base file: " + myCurrentFile.myBaseFile);
     }
@@ -266,13 +258,7 @@ public class SVNMergeEditor implements ISVNEditor {
                 .createUniqueFile(myCurrentFile.myBaseFile.getParentFile(),
                         PathUtil.tail(myCurrentFile.myPath), ".chunk");
         myCurrentFile.myDataFiles.add(chunkFile);
-        OutputStream os = null;
-        try {
-            os = new FileOutputStream(chunkFile);
-        } catch (FileNotFoundException e) {
-            SVNErrorManager.error(0, e);
-        }
-        return os;
+        return SVNFileUtil.openFileForWriting(chunkFile);
     }
 
     public void textDeltaEnd(String commitPath) throws SVNException {
@@ -297,7 +283,7 @@ public class SVNMergeEditor implements ISVNEditor {
             target.close();
             baseData.close();
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Cannot apply delta to '" + targetFile + "'");
         }
     }
 
@@ -448,18 +434,10 @@ public class SVNMergeEditor implements ISVNEditor {
             OutputStream os = null;
             myBaseProperties = new HashMap();
             try {
-                os = dst == null ? null : new FileOutputStream(dst);
+                os = dst == null ? null : SVNFileUtil.openFileForWriting(dst);
                 repos.getFile(myPath, revision, myBaseProperties, os);
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
             } finally {
-                if (os != null) {
-                    try {
-                        os.close();
-                    } catch (IOException e) {
-                        //
-                    }
-                }
+                SVNFileUtil.closeFile(os);
             }
             Collection names = new ArrayList(myBaseProperties.keySet());
             for (Iterator propNames = names.iterator(); propNames.hasNext();) {

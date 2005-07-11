@@ -155,15 +155,16 @@ public class SVNUpdateEditor implements ISVNEditor {
             SVNErrorManager.error("svn: Failed to add directory '" + path
                     + "': object of the same name already exists");
         } else if (".svn".equals(name)) {
-            SVNErrorManager
-                    .error("svn: Failed to add directory '"
+            SVNErrorManager.error("svn: Failed to add directory '"
                             + path
                             + "': object of the same name as the administrative directory");
         }
         SVNEntry entry = parentDir.getEntries().getEntry(name, true);
         if (entry != null) {
             if (entry.isScheduledForAddition()) {
-                SVNErrorManager.error(0, null);
+                SVNErrorManager.error("svn: Failed to add directory '"
+                        + path
+                        + "': object of the same name already exists and schedule for addition");
             }
         } else {
             entry = parentDir.getEntries().addEntry(name);
@@ -176,7 +177,9 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNDirectory dir = parentDir.createChildDirectory(name,
                 myCurrentDirectory.URL, myTargetRevision);
         if (dir == null) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: Failed to add directory '"
+                    + path
+                    + "': directory is missing or not locked");
         } else {
             dir.lock();
         }
@@ -217,7 +220,11 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
         SVNEntry entry = entries.getEntry(name, true);
         if (entry != null && entry.isScheduledForAddition()) {
-            SVNErrorManager.error(0, null);
+            if (kind == SVNNodeKind.FILE) {
+                SVNErrorManager.error("svn: Failed to add entry for absent file '" + path + "': object of the same name already exists and scheduled for addition");
+            } else {
+                SVNErrorManager.error("svn: Failed to add entry for absent directory '" + path + "': object of the same name already exists and scheduled for addition");
+            }
         }
         if (entry == null) {
             entry = entries.addEntry(name);
@@ -407,7 +414,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             target.close();
             baseData.close();
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Cannot apply delta to '" + targetFile + "'");
         }
         SVNFileUtil.rename(targetFile, baseTmpFile);
     }
@@ -696,7 +703,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             }
             SVNEntries entries = info.getDirectory().getEntries();
             if (entries.getEntry("", true) == null) {
-                SVNErrorManager.error(0, null);
+                SVNErrorManager.error("svn: Cannot get root entry for '" + info.getDirectory().getPath() + "'");
             }
             for (Iterator ents = entries.entries(true); ents.hasNext();) {
                 SVNEntry entry = (SVNEntry) ents.next();
@@ -748,10 +755,10 @@ public class SVNUpdateEditor implements ISVNEditor {
             entries = dir.getEntries();
             SVNEntry entry = entries.getEntry(info.Name, true);
             if (added && entry != null && entry.isScheduledForAddition()) {
-                SVNErrorManager.error(0, null);
+                SVNErrorManager.error("svn: Failed to add file '" + path + "': object of the same name already exists and scheduled for addition");
             }
             if (!added && entry == null) {
-                SVNErrorManager.error(0, null);
+                SVNErrorManager.error("svn: Failed to update file '" + path + "': no entry found");
             }
             if (mySwitchURL != null || entry == null) {
                 info.URL = PathUtil.append(parent.URL, PathUtil

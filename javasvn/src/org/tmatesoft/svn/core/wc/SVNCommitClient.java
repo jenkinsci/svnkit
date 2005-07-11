@@ -319,7 +319,7 @@ public class SVNCommitClient extends SVNBasicClient {
             } catch (SVNException e1) {
                 // inner
             }
-            SVNErrorManager.error(0, e);
+            throw e;
         }
         return info != null ? info : SVNCommitInfo.NULL;
     }

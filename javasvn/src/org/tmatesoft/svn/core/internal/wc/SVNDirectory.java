@@ -279,7 +279,7 @@ public class SVNDirectory {
                     os.write(line.getBytes("UTF-8"));
                 }
             } catch (IOException e) {
-                SVNErrorManager.error(0, e);
+                SVNErrorManager.error("svn: Cannot save properties conflict file '" + file + "'");
             } finally {
                 SVNFileUtil.closeFile(os);
             }
@@ -365,7 +365,7 @@ public class SVNDirectory {
             QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
             mergeResult = merger.merge(baseData, localData, latestData, result);
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: I/O error while merging file '" + localPath + "'");
         } finally {
             SVNFileUtil.closeFile(result);
             if (localIS != null) {
@@ -617,11 +617,12 @@ public class SVNDirectory {
                 // if checksum differs from expected - throw exception
                 String checksum = SVNFileUtil.toHexDigest(digest);
                 if (!checksum.equals(entry.getChecksum())) {
-                    SVNErrorManager.error(10, null);
+                    SVNErrorManager.error("svn: Checksum for file '" + baseFile + "' differs from expected; expected: '" + entry.getChecksum() + 
+                            "', actual: '" + checksum + "'");
                 }
             }
         } catch (NoSuchAlgorithmException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: MD5 algorithm implementation not found");
         } finally {
             baseTmpFile.delete();
         }
@@ -852,13 +853,13 @@ public class SVNDirectory {
                 os = new FileOutputStream(format);
                 os.write(new byte[] { '4', '\n' });
             } catch (IOException e) {
-                SVNErrorManager.error(0, e);
+                SVNErrorManager.error("svn: Cannot create file '" + format + "'");
             } finally {
                 if (os != null) {
                     try {
                         os.close();
                     } catch (IOException e) {
-                        //
+                        SVNErrorManager.error("svn: Cannot create file '" + format + "'");
                     }
                 }
             }
@@ -869,24 +870,19 @@ public class SVNDirectory {
             try {
                 String eol = System.getProperty("line.separator");
                 eol = eol == null ? "\n" : eol;
-                os
-                        .write(("This is a Subversion working copy administrative directory."
+                os.write(("This is a Subversion working copy administrative directory."
                                 + eol
                                 + "Visit http://subversion.tigris.org/ for more information." + eol)
                                 .getBytes());
             } catch (IOException e) {
-                SVNErrorManager.error(0, e);
+                SVNErrorManager.error("svn: Cannot create file '" + readme + "'");
             } finally {
                 SVNFileUtil.closeFile(os);
             }
         }
         File empty = new File(adminDir, "empty-file");
         if (!empty.exists()) {
-            try {
-                empty.createNewFile();
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            SVNFileUtil.createEmptyFile(empty);
         }
         File[] tmp = {
                 new File(adminDir, "tmp" + File.separatorChar + "props"),

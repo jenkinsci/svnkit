@@ -10,20 +10,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.diff.ISVNRAData;
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.SVNCommitInfo;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
-
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,6 +22,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.diff.ISVNRAData;
+import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
+import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNCommitInfo;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
+import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -253,29 +251,19 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         // it will be repos file.
         myCurrentFile.myFile = tmpFile;
-        // create empty file
-        try {
-            myCurrentFile.myFile.createNewFile();
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
-        }
+        SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
+        
         myCurrentFile.myDiffWindows = new ArrayList();
         myCurrentFile.myDataFiles = new ArrayList();
     }
 
-    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow)
-            throws SVNException {
+    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         myCurrentFile.myDiffWindows.add(diffWindow);
         String fileName = PathUtil.tail(myCurrentFile.myPath);
         File chunkFile = SVNFileUtil.createUniqueFile(myCurrentFile.myFile
                 .getParentFile(), fileName, ".tmp");
         myCurrentFile.myDataFiles.add(chunkFile);
-        try {
-            return new FileOutputStream(chunkFile);
-        } catch (FileNotFoundException e) {
-            SVNErrorManager.error(0, e);
-        }
-        return null;
+        return SVNFileUtil.openFileForWriting(chunkFile);
     }
 
     public void textDeltaEnd(String path) throws SVNException {
@@ -303,7 +291,7 @@ public class SVNDiffEditor implements ISVNEditor {
             target.close();
             baseData.close();
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Cannot apply delta: '" + e.getMessage() + "'");
         }
     }
 
@@ -343,7 +331,6 @@ public class SVNDiffEditor implements ISVNEditor {
                 myDiffGenerator.displayFileDiff(displayPath,
                         myCurrentFile.myFile, null, revStr, null,
                         reposMimeType, null, myResult);
-                // TODO display prop diff.
             }
         } else {
             if (myCurrentFile.myFile != null) {

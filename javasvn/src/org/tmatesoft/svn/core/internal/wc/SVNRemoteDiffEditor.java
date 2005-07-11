@@ -10,6 +10,17 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.diff.ISVNRAData;
 import org.tmatesoft.svn.core.diff.SVNDiffWindow;
@@ -22,19 +33,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @version 1.0
@@ -156,18 +154,10 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         myCurrentFile.myBaseProperties = Collections.EMPTY_MAP;
         myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(myRoot,
                 PathUtil.tail(path), ".tmp");
-        try {
-            myCurrentFile.myBaseFile.createNewFile();
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
-        }
+        SVNFileUtil.createEmptyFile(myCurrentFile.myBaseFile);
         myCurrentFile.myFile = SVNFileUtil.createUniqueFile(myRoot, PathUtil
                 .tail(path), ".tmp");
-        try {
-            myCurrentFile.myFile.createNewFile();
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
-        }
+        SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
     }
 
     public void openFile(String path, long revision) throws SVNException {
@@ -182,11 +172,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 myRevision);
         myCurrentFile.myFile = SVNFileUtil.createUniqueFile(myRoot, PathUtil
                 .tail(path), ".tmp");
-        try {
-            myCurrentFile.myFile.createNewFile();
-        } catch (IOException e) {
-            SVNErrorManager.error(0, e);
-        }
+        SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
     }
 
     public void changeFileProperty(String commitPath, String name, String value)
@@ -213,13 +199,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         File chunkFile = SVNFileUtil.createUniqueFile(myRoot, PathUtil
                 .tail(myCurrentFile.myPath), ".chunk");
         myCurrentFile.myDataFiles.add(chunkFile);
-        OutputStream os = null;
-        try {
-            os = new FileOutputStream(chunkFile);
-        } catch (FileNotFoundException e) {
-            SVNErrorManager.error(0, e);
-        }
-        return os;
+        return SVNFileUtil.openFileForWriting(chunkFile);
     }
 
     public void textDeltaEnd(String commitPath) throws SVNException {
@@ -243,7 +223,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             target.close();
             baseData.close();
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Cannot apply delta to '" + targetFile + "'");
         }
     }
 
@@ -312,21 +292,12 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
         public void loadFromRepository(File dst, SVNRepository repos,
                 long revision) throws SVNException {
-            OutputStream os = null;
+            OutputStream os = SVNFileUtil.openFileForWriting(dst);
             try {
-                os = new FileOutputStream(dst);
                 myBaseProperties = new HashMap();
                 repos.getFile(myPath, revision, myBaseProperties, os);
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
             } finally {
-                if (os != null) {
-                    try {
-                        os.close();
-                    } catch (IOException e) {
-                        //
-                    }
-                }
+                SVNFileUtil.closeFile(os);
             }
         }
 

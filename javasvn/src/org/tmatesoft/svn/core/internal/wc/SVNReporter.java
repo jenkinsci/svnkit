@@ -204,7 +204,7 @@ public class SVNReporter implements ISVNReporterBaton {
                     return;
                 }
                 if (file.isFile()) {
-                    SVNErrorManager.error(3, null);
+                    SVNErrorManager.error("svn: Cannot report information on directory '" + file + "': entry is obstructed with node of another type");
                 }
                 SVNDirectory childDir = directory.getChildDirectory(entry
                         .getName());

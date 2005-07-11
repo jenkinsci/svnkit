@@ -83,7 +83,7 @@ public class SVNTranslator {
     public static void translate(File src, File dst, byte[] eol, Map keywords,
             boolean special, boolean expand) throws SVNException {
         if (src == null || dst == null) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: Invalid agruments in SVNFileUtil.translate method");
             return;
         }
         if (src.equals(dst)) {
@@ -112,7 +112,7 @@ public class SVNTranslator {
         try {
             copy(is, os, eol, keywords);
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: I/O error while transalting file '" + src + "' to '" + dst + "'");
         } finally {
             SVNFileUtil.closeFile(os);
             SVNFileUtil.closeFile(is);

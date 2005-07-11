@@ -181,7 +181,7 @@ public class SVNLog {
                 os.write("/>\n");
             }
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Cannot save log file '" + myFile + "'");
         } finally {
             SVNFileUtil.closeFile(os);
             myCache = null;
@@ -235,7 +235,7 @@ public class SVNLog {
                 }
             }
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Cannot read log file '" + myFile + "'");
         } finally {
             SVNFileUtil.closeFile(reader);
         }

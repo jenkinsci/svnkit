@@ -10,6 +10,12 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
@@ -33,14 +39,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * @version 1.0
@@ -176,7 +174,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                                     + "' already exists at checkout destination");
                 }
             } else {
-                SVNErrorManager.error(0, null);
+                SVNErrorManager.error("svn: '" + dstPath + "' already exists and it is a file");
             }
         } finally {
             if (!isCommandRunning()) {
@@ -213,7 +211,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             if (dstPath.exists()) {
                 if (!force) {
-                    SVNErrorManager.error(0, null);
+                    SVNErrorManager.error("svn: '" + dstPath + "' already exists");
                 }
             } else {
                 dstPath.getParentFile().mkdirs();
@@ -222,48 +220,36 @@ public class SVNUpdateClient extends SVNBasicClient {
             OutputStream os = null;
             File tmpFile = SVNFileUtil.createUniqueFile(
                     dstPath.getParentFile(), dstPath.getName(), ".tmp");
+            os = SVNFileUtil.openFileForWriting(tmpFile);
             try {
-                os = new FileOutputStream(tmpFile);
                 repos.getFile("", revNumber, properties, os);
-                os.close();
-                os = null;
-                if (force && dstPath.exists()) {
-                    SVNFileUtil.deleteAll(dstPath);
-                }
-                Map keywords = SVNTranslator
-                        .computeKeywords((String) properties
-                                .get(SVNProperty.KEYWORDS), url,
-                                (String) properties
-                                        .get(SVNProperty.LAST_AUTHOR),
-                                (String) properties
-                                        .get(SVNProperty.COMMITTED_DATE),
-                                (String) properties
-                                        .get(SVNProperty.COMMITTED_REVISION));
-                if (eolStyle == null) {
-                    eolStyle = (String) properties.get(SVNProperty.EOL_STYLE);
-                }
-                byte[] eols = SVNTranslator.getWorkingEOL(eolStyle);
-                SVNTranslator.translate(tmpFile, dstPath, eols, keywords,
-                        properties.get(SVNProperty.SPECIAL) != null, true);
-                if (properties.get(SVNProperty.EXECUTABLE) != null) {
-                    SVNFileUtil.setExecutable(dstPath, true);
-                }
-                dispatchEvent(SVNEventFactory.createExportAddedEvent(dstPath
-                        .getParentFile(), dstPath, SVNNodeKind.FILE));
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
             } finally {
-                if (os != null) {
-                    try {
-                        os.close();
-                    } catch (IOException e) {
-                        //
-                    }
-                }
-                if (tmpFile != null) {
-                    tmpFile.delete();
-                }
+                SVNFileUtil.closeFile(os);
             }
+            if (force && dstPath.exists()) {
+                SVNFileUtil.deleteAll(dstPath);
+            }
+            Map keywords = SVNTranslator
+                    .computeKeywords((String) properties
+                            .get(SVNProperty.KEYWORDS), url,
+                            (String) properties
+                                    .get(SVNProperty.LAST_AUTHOR),
+                            (String) properties
+                                    .get(SVNProperty.COMMITTED_DATE),
+                            (String) properties
+                                    .get(SVNProperty.COMMITTED_REVISION));
+            if (eolStyle == null) {
+                eolStyle = (String) properties.get(SVNProperty.EOL_STYLE);
+            }
+            byte[] eols = SVNTranslator.getWorkingEOL(eolStyle);
+            SVNTranslator.translate(tmpFile, dstPath, eols, keywords,
+                    properties.get(SVNProperty.SPECIAL) != null, true);
+            tmpFile.delete();
+            if (properties.get(SVNProperty.EXECUTABLE) != null) {
+                SVNFileUtil.setExecutable(dstPath, true);
+            }
+            dispatchEvent(SVNEventFactory.createExportAddedEvent(dstPath
+                    .getParentFile(), dstPath, SVNNodeKind.FILE));
         } else if (targetNodeKind == SVNNodeKind.DIR) {
             SVNExportEditor editor = new SVNExportEditor(this, url, dstPath,
                     force, eolStyle);
@@ -322,7 +308,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNRevision pegRevision, SVNRevision revision, String eolStyle,
             final boolean force, boolean recursive) throws SVNException {
         if (!SVNWCAccess.isVersionedDirectory(srcPath)) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: '" + srcPath + "' is not under version control");
         }
         DebugLog.log("exporting at revision: " + revision);
         SVNWCAccess wcAccess = createWCAccess(srcPath);
@@ -338,7 +324,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     force, recursive);
         } else {
             if (!force && dstPath.exists()) {
-                SVNErrorManager.error(0, null);
+                SVNErrorManager.error("svn: '" + dstPath + "' already exists");
             }
             if (dstPath.exists()) {
                 SVNFileUtil.deleteAll(dstPath);
@@ -537,7 +523,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             boolean recursive, SVNRevision revision, boolean force, String eol)
             throws SVNException {
         if (!force && dstPath.exists()) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: '" + dstPath + "' already exists");
         }
         SVNFileUtil.deleteAll(dstPath);
         dstPath.mkdirs();
@@ -570,7 +556,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             throws SVNException {
 
         if (!force && dstPath.exists()) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: '" + dstPath + "' already exists");
         }
         SVNFileUtil.deleteAll(dstPath);
         Map keywordsMap = null;
@@ -605,7 +591,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 dir.getBaseFile(fileName, false) : dir.getFile(fileName);
         SVNFileType fileType = SVNFileType.getType(srcFile);
         if (!fileType.isFile()) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: '" + srcFile + "' is not a file");
         }
         if (fileType == SVNFileType.SYMLINK && revision == SVNRevision.WORKING) {
             // base will be translated OK, but working not.

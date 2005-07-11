@@ -104,11 +104,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         if (myPreviousFile == null) {
             // create previous file.
             myPreviousFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
-            try {
-                myPreviousFile.createNewFile();
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            SVNFileUtil.createEmptyFile(myPreviousFile);
             DebugLog.log("first base file created: " + myPreviousFile);
         }
     }
@@ -121,11 +117,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         if (myCurrentFile == null) {
             // create file for current revision.
             myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
-            try {
-                myCurrentFile.createNewFile();
-            } catch (IOException e) {
-                SVNErrorManager.error(0, e);
-            }
+            SVNFileUtil.createEmptyFile(myCurrentFile);
             DebugLog.log("tmp file for revision '" + myCurrentRevision + "' created: " + myCurrentFile);
         }
         File tmpFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");

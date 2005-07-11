@@ -108,7 +108,7 @@ public class SVNEntries {
                 }
             }
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Cannot load entries file '" + myFile + "'");
         } finally {
             SVNFileUtil.closeFile(reader);
         }
@@ -181,7 +181,7 @@ public class SVNEntries {
             os.write("</wc-entries>\n");
         } catch (IOException e) {
             tmpFile.delete();
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Cannot save entries file '" + myFile + "'");
         } finally {
             if (os != null) {
                 try {

@@ -10,6 +10,17 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
@@ -35,19 +46,6 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * @version 1.0
@@ -404,16 +402,16 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNRepository repos = createRepository(srcURL);
         SVNNodeKind srcKind = repos.checkPath("", srcRevision);
         if (srcKind == SVNNodeKind.NONE) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: URL '" + srcURL + "' does not exist");
         }
         String srcUUID = repos.getRepositoryUUID();
         if (dstPath.isDirectory()) {
             dstPath = new File(dstPath, PathUtil.decode(PathUtil.tail(srcURL)));
             if (dstPath.exists()) {
-                SVNErrorManager.error(0, null);
+                SVNErrorManager.error("svn: Path '" + dstPath + "' already exists");
             }
         } else if (dstPath.exists()) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: Path '" + dstPath + "' already exists");
         }
 
         boolean sameRepositories;
@@ -421,10 +419,9 @@ public class SVNCopyClient extends SVNBasicClient {
         try {
             wcAccess.open(true, false);
             // check for missing entry.
-            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(
-                    wcAccess.getTargetName(), true);
+            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), false);
             if (entry != null && !entry.isDirectory()) {
-                SVNErrorManager.error(0, null);
+                SVNErrorManager.error("svn: '" + dstPath + "' is already under version control");
             }
             String uuid = wcAccess.getTargetEntryProperty(SVNProperty.UUID);
             sameRepositories = uuid.equals(srcUUID);
@@ -458,7 +455,7 @@ public class SVNCopyClient extends SVNBasicClient {
                                         .getAnchor().getEntries().getEntry(
                                                 dstPath.getName(), true)));
                     } else {
-                        SVNErrorManager.error(0, null);
+                        SVNErrorManager.error("svn: '" + dstPath.getParentFile() + "' belongs to different repository then '" + srcURL + "'");
                     }
                 } finally {
                     setDoNotSleepForTimeStamp(false);
@@ -467,30 +464,18 @@ public class SVNCopyClient extends SVNBasicClient {
             } else {
                 Map properties = new HashMap();
                 File tmpFile = null;
-                OutputStream os = null;
+                File baseTmpFile = wcAccess.getAnchor().getBaseFile(dstPath.getName(), true);
+                tmpFile = SVNFileUtil.createUniqueFile(baseTmpFile.getParentFile(), dstPath.getName(), ".tmp");
+                OutputStream os = SVNFileUtil.openFileForWriting(tmpFile);
+
                 try {
-                    File baseTmpFile = wcAccess.getAnchor().getBaseFile(
-                            dstPath.getName(), true);
-                    tmpFile = SVNFileUtil.createUniqueFile(baseTmpFile
-                            .getParentFile(), dstPath.getName(), ".tmp");
-                    os = new FileOutputStream(tmpFile);
                     repos.getFile("", srcRevision, properties, os);
-                    os.close();
-                    os = null;
-                    SVNFileUtil.rename(tmpFile, baseTmpFile);
-                } catch (IOException e) {
-                    SVNErrorManager.error(0, e);
                 } finally {
-                    if (os != null) {
-                        try {
-                            os.close();
-                        } catch (IOException e) {
-                            //
-                        }
-                    }
-                    if (tmpFile != null) {
-                        tmpFile.delete();
-                    }
+                    SVNFileUtil.closeFile(os);
+                }
+                SVNFileUtil.rename(tmpFile, baseTmpFile);
+                if (tmpFile != null) {
+                    tmpFile.delete();
                 }
                 addFile(wcAccess.getAnchor(), dstPath.getName(), properties,
                         sameRepositories ? srcURL : null, srcRevision);

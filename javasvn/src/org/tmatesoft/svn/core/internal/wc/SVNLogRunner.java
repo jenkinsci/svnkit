@@ -121,7 +121,7 @@ public class SVNLogRunner {
                     os.write(r);
                 }
             } catch (IOException e) {
-                SVNErrorManager.error(0, e);
+                SVNErrorManager.error("svn: Cannot append data to file '" + dst + "'");
             } finally {
                 SVNFileUtil.closeFile(os);
                 SVNFileUtil.closeFile(is);

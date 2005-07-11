@@ -74,6 +74,19 @@ public class SVNFileUtil {
         }
         return path;
     }
+    
+    public static boolean createEmptyFile(File file) throws SVNException {
+        boolean created = false;
+        try {
+            created = file.createNewFile();
+        } catch (IOException e) {
+            created = false;
+        }
+        if (!created) {
+            SVNErrorManager.error("svn: Cannot create new file '" + file + "'");            
+        }
+        return created;
+    }
 
     public static File createUniqueFile(File parent, String name, String suffix) {
         File file = new File(parent, name + suffix);
@@ -120,13 +133,7 @@ public class SVNFileUtil {
         if (readonly) {
             return file.setReadOnly();
         }
-        File tmpFile = null;
-        try {
-            tmpFile = File.createTempFile("javasvn", "tmp", file
-                    .getParentFile());
-        } catch (IOException e) {
-            SVNErrorManager.error(e);
-        }
+        File tmpFile = createUniqueFile(file.getParentFile(), file.getName(), ".tmp");
         copyFile(file, tmpFile, false);
         rename(tmpFile, file);
         return true;
@@ -201,7 +208,7 @@ public class SVNFileUtil {
                         .size());
             }
         } catch (IOException e) {
-            SVNErrorManager.error(e);
+            SVNErrorManager.error("svn: Cannot copy file '" + src + "' to '" + dst + "'");
         } finally {
             if (dstChannel != null) {
                 try {
@@ -323,7 +330,7 @@ public class SVNFileUtil {
         try {
             digest = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException e) {
-            SVNErrorManager.error(e);
+            SVNErrorManager.error("svn: MD5 algorithm implementation not found");
             return null;
         }
         InputStream is = openFileForReading(file);
@@ -336,7 +343,7 @@ public class SVNFileUtil {
                 digest.update((byte) (b & 0xFF));
             }
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: I/O error while computing checksum for '" + file + "'");
         } finally {
             closeFile(is);
         }
@@ -380,7 +387,7 @@ public class SVNFileUtil {
                 }
             }
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: I/O error while comparing files '" + f1 + "' and '" + f2 + "'");
         } finally {
             closeFile(is1);
             closeFile(is2);

@@ -134,7 +134,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             }
             bos.write(EOL);
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
         } finally {
             try {
                 bos.close();
@@ -182,7 +182,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 DebugLog.log(bos.toString());
             } catch (IOException inner) {
             }
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
         }
         if (!isForcedBinaryDiff()
                 && (SVNWCUtil.isBinaryMimetype(mimeType1) || SVNWCUtil
@@ -217,7 +217,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                     }
                 }
             } catch (IOException e) {
-                SVNErrorManager.error(0, e);
+                SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
             } finally {
                 try {
                     bos.close();
@@ -247,7 +247,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 DebugLog.log(bos.toString());
             } catch (IOException inner) {
             }
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
         }
         InputStream is1 = null;
         InputStream is2 = null;
@@ -269,7 +269,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             writer.flush();
             writer.close();
         } catch (IOException e) {
-            SVNErrorManager.error(0, e);
+            SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
         } finally {
             SVNFileUtil.closeFile(is1);
             SVNFileUtil.closeFile(is2);

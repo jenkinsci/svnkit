@@ -93,13 +93,13 @@ public class SVNExportEditor implements ISVNEditor {
 
         if (!myIsForce && myCurrentDirectory.isFile()) {
             // export is obstructed.
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: Failed to add directory '" + myCurrentDirectory + "': file of the same name already exists; use 'force' to overwrite exsiting file");
         } else if (myIsForce && myCurrentDirectory.exists()) {
             SVNFileUtil.deleteAll(myCurrentDirectory);
         }
         if (!myCurrentDirectory.exists()) {
             if (!myCurrentDirectory.mkdirs()) {
-                SVNErrorManager.error(0, null);
+                SVNErrorManager.error("svn: Failed to add directory '" + myCurrentDirectory + "'");
             }
         }
         myEventDispatcher.handleEvent(SVNEventFactory.createExportAddedEvent(
@@ -125,7 +125,7 @@ public class SVNExportEditor implements ISVNEditor {
         File file = new File(myRoot, path);
 
         if (!myIsForce && file.exists()) {
-            SVNErrorManager.error(0, null);
+            SVNErrorManager.error("svn: Failed to add file '" + file + "': file of the same name already exists; use 'force' to overwrite exsiting file");
         }
         myCurrentFile = file;
         myFileProperties = new HashMap();
@@ -151,24 +151,15 @@ public class SVNExportEditor implements ISVNEditor {
                 myCurrentFile.getName(), ".tmp");
         myDataFiles.add(tmpFile);
 
-        try {
-            return new FileOutputStream(tmpFile);
-        } catch (FileNotFoundException e) {
-            SVNErrorManager.error(0, e);
-        }
-        return null;
+        return SVNFileUtil.openFileForWriting(tmpFile);
     }
 
     public void textDeltaEnd(String commitPath) throws SVNException {
         // apply all deltas
         myCurrentTmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory,
                 myCurrentFile.getName(), ".tmp");
-        try {
-            myCurrentTmpFile.createNewFile();
-        } catch (IOException e) {
-            myCurrentTmpFile.delete();
-            SVNErrorManager.error(0, e);
-        }
+        SVNFileUtil.createEmptyFile(myCurrentTmpFile);
+
         SVNRAFileData target = new SVNRAFileData(myCurrentTmpFile, false);
         File fakeBase = SVNFileUtil.createUniqueFile(myCurrentDirectory,
                 myCurrentFile.getName(), ".tmp");
@@ -223,9 +214,10 @@ public class SVNExportEditor implements ISVNEditor {
             myCurrentFile.delete();
         }
         if (textChecksum != null
-                && !textChecksum.equals(SVNFileUtil
-                        .computeChecksum(myCurrentTmpFile))) {
-            SVNErrorManager.error(0, null);
+                && !textChecksum.equals(SVNFileUtil.computeChecksum(myCurrentTmpFile))) {
+            String checksum = SVNFileUtil.computeChecksum(myCurrentTmpFile);
+            SVNErrorManager.error("svn: Checksum differs, expected '"
+                    + textChecksum + "'; actual: '" + checksum + "'");
         }
         // retranslate.
         try {

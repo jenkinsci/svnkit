@@ -207,17 +207,13 @@ public class SVNCommitUtil {
                 String targetPath = (String) targets.next();
                 File targetFile = new File(baseDir, targetPath);
                 if (SVNFileType.getType(targetFile) == SVNFileType.DIRECTORY) {
-                    try {
-                        SVNStatus status = statusClient.doStatus(targetFile,
-                                false);
-                        if (status != null
-                                && (status.getContentsStatus() == SVNStatusType.STATUS_DELETED || status
-                                        .getContentsStatus() == SVNStatusType.STATUS_REPLACED)) {
-                            SVNErrorManager
-                                    .error("svn: Cannot non-recursively commit a directory deletion");
-                        }
-                    } catch (SVNException e) {
-                        SVNErrorManager.error(0, e);
+                    SVNStatus status = statusClient.doStatus(targetFile,
+                            false);
+                    if (status != null
+                            && (status.getContentsStatus() == SVNStatusType.STATUS_DELETED || status
+                                    .getContentsStatus() == SVNStatusType.STATUS_REPLACED)) {
+                        SVNErrorManager
+                                .error("svn: Cannot non-recursively commit a directory deletion");
                     }
                 }
             }
