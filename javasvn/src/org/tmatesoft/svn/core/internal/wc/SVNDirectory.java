@@ -660,18 +660,20 @@ public class SVNDirectory {
         if (propLength != baseFile.length()) {
             return true;
         }
-        String timeStamp = entry.getPropTime();
-        timeStamp = timeStamp.substring(0, 23);
         String realTimestamp = TimeUtil.formatDate(new Date(propFile.lastModified()));
         realTimestamp = realTimestamp.substring(0, 23);
-        if (realTimestamp.equals(timeStamp)) {
-            return false;
+        String timeStamp = entry.getPropTime();
+        if (timeStamp != null) {
+            timeStamp = timeStamp.substring(0, 23);
+            if (realTimestamp.equals(timeStamp)) {
+                return false;
+            }
         }
         Map m1 = getProperties(name, false).asMap();
         Map m2 = getBaseProperties(name, false).asMap();
         if (m1.equals(m2)) {
             if (isLocked()) {
-                entry.setPropTime(TimeUtil.formatDate(new Date(propFile.lastModified())));
+                entry.setPropTime(realTimestamp);
                 getEntries().save(false);
             }
             return false;

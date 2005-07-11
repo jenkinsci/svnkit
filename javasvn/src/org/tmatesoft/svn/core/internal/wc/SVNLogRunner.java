@@ -302,8 +302,10 @@ public class SVNLogRunner {
                 } finally {
                     tmpProps.delete();
                 }
+            } else if (entry.getPropTime() == null && !wcProps.isEmpty()) {
+                propTime = wcProps.getFile().lastModified();
             }
-
+            
             if (!"".equals(fileName)) {
                 File tmpFile = dir.getBaseFile(fileName, true);
                 File baseFile = dir.getBaseFile(fileName, false);
