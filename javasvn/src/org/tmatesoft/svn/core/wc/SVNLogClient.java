@@ -10,6 +10,11 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.TreeSet;
+
 import org.tmatesoft.svn.core.internal.SVNAnnotationGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -24,14 +29,6 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeSet;
 
 /**
  * @version 1.0
@@ -228,15 +225,11 @@ public class SVNLogClient extends SVNBasicClient {
         doList(repos, rev, handler, recursive);
     }
 
-    private void doList(SVNRepository repos, long rev,
-            ISVNDirEntryHandler handler, boolean recursive) throws SVNException {
+    private void doList(SVNRepository repos, long rev, ISVNDirEntryHandler handler, boolean recursive) throws SVNException {
         if (repos.checkPath("", rev) == SVNNodeKind.FILE) {
-            Map props = new HashMap();
-            long size = repos.getFile("", rev, props, null);
+            SVNDirEntry entry = repos.info("", rev);
             String name = PathUtil.tail(repos.getLocation().getPath());
-            SVNDirEntry entry = new SVNDirEntry(name, SVNNodeKind.FILE, size,
-                    false, 0, new Date(0), "");
-            entry.setPath(name);
+            entry.setPath(PathUtil.decode(name));
             handler.handleDirEntry(entry);
         } else {
             list(repos, "", rev, recursive, handler);
@@ -254,7 +247,7 @@ public class SVNLogClient extends SVNBasicClient {
                     .append(path, entry.getName());
             entry.setPath(childPath);
             handler.handleDirEntry(entry);
-            if (entry.getKind() == SVNNodeKind.DIR && recursive) {
+            if (entry.getKind() == SVNNodeKind.DIR && entry.getDate() != null && recursive) {
                 list(repository, childPath, rev, recursive, handler);
             }
         }

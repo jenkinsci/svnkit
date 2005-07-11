@@ -653,7 +653,7 @@ class SVNReader {
         long size = SVNReader.getLong(items, 2);
         boolean hasProps = SVNReader.getBoolean(items, 3);
         long revision = SVNReader.getLong(items, 4);
-        Date date = TimeUtil.parseDate(SVNReader.getString(items, 5));
+        Date date = items[5] != null ? TimeUtil.parseDate(SVNReader.getString(items, 5)) : null;
         String author = SVNReader.getString(items, 6);
         return new SVNDirEntry(name, kind, size, hasProps, revision, date,
                 author);
@@ -668,10 +668,9 @@ class SVNReader {
         long size = SVNReader.getLong(items, 1);
         boolean hasProps = SVNReader.getBoolean(items, 2);
         long revision = SVNReader.getLong(items, 3);
-        Date date = TimeUtil.parseDate(SVNReader.getString(items, 4));
+        Date date = items[4] != null ? TimeUtil.parseDate(SVNReader.getString(items, 4)) : null;
         String author = SVNReader.getString(items, 5);
-        return new SVNDirEntry(null, kind, size, hasProps, revision, date,
-                author);
+        return new SVNDirEntry(null, kind, size, hasProps, revision, date, author);
     }
 
     private static SVNLock readLock(LoggingInputStream is) throws SVNException {

@@ -167,8 +167,6 @@ class DAVRepository extends SVNRepository {
 
     public long getDir(String path, long revision, final Map properties, final ISVNDirEntryHandler handler) throws SVNException {
         long dirRevision = revision;
-        DAVElement[] entryProperties = {DAVElement.VERSION_NAME, DAVElement.GET_CONTENT_LENGTH, 
-                DAVElement.RESOURCE_TYPE, DAVElement.CREATION_DATE, DAVElement.CREATOR_DISPLAY_NAME};
         try {
             openConnection();
             path = getFullPath(path);
@@ -180,7 +178,7 @@ class DAVRepository extends SVNRepository {
             }
             if (handler != null) {
                 final String parentPath = PathUtil.removeTrailingSlash(path);
-                myConnection.doPropfind(path, 1, null, entryProperties, new IDAVResponseHandler() {
+                myConnection.doPropfind(path, 1, null, null, new IDAVResponseHandler() {
                     public void handleDAVResponse(DAVResponse child) {
                         String href = PathUtil.removeTrailingSlash(child.getHref());
                         href = PathUtil.decode(href);
@@ -199,12 +197,12 @@ class DAVRepository extends SVNRepository {
                         }
                         String author = (String) child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
                         String dateStr = (String) child.getPropertyValue(DAVElement.CREATION_DATE);
-                        Date date = TimeUtil.parseDate(dateStr);
+                        Date date = dateStr != null ? TimeUtil.parseDate(dateStr) : null;
                         boolean hasProperties = false;
                         for(Iterator props = child.properties(); props.hasNext();) {
                             DAVElement property = (DAVElement) props.next();
                             if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(property.getNamespace()) || 
-                                    DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(property)) {
+                                    DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(property.getNamespace())) {
                                 hasProperties = true;
                                 break;
                             }
@@ -604,12 +602,12 @@ class DAVRepository extends SVNRepository {
                     }
                     String author = (String) child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
                     String dateStr = (String) child.getPropertyValue(DAVElement.CREATION_DATE);
-                    Date date = TimeUtil.parseDate(dateStr);
+                    Date date = dateStr != null ? TimeUtil.parseDate(dateStr) : null;
                     boolean hasProperties = false;
                     for(Iterator props = child.properties(); props.hasNext();) {
                         DAVElement property = (DAVElement) props.next();
                         if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(property.getNamespace()) || 
-                                DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(property)) {
+                                DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(property.getNamespace())) {
                             hasProperties = true;
                             break;
                         }
