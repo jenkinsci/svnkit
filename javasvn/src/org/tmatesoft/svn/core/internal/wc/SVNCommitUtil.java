@@ -65,12 +65,7 @@ public class SVNCommitUtil {
         for (; index < pathsArray.length; index++) {
             String commitPath = pathsArray[index];
             DebugLog.log("driver: processing path: " + commitPath);
-            String commonAncestor = lastPath == null || "".equals(lastPath) ? "" /*
-                                                                                     * root
-                                                                                     * or
-                                                                                     * first
-                                                                                     * path
-                                                                                     */
+            String commonAncestor = lastPath == null || "".equals(lastPath) ? "" 
                     : SVNPathUtil.getCommonPathAncestor(commitPath, lastPath);
             if (lastPath != null) {
                 while (!lastPath.equals(commonAncestor)) {

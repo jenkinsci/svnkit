@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -63,7 +64,7 @@ public class DAVMergeHandler extends BasicDAVHandler {
                 lockPath = lockPath.substring(root.length());
                 lockPath = PathUtil.removeLeadingSlash(lockPath);
                 
-                target.append(lockPath);
+                target.append(DAVUtil.xmlEncode(PathUtil.decode(lockPath)));
                 target.append("</S:lock-path><S:lock-token>");
                 target.append(token);
                 target.append("</S:lock-token></S:lock>");
