@@ -11,7 +11,6 @@
 package org.tmatesoft.svn.core.internal.io.svn;
 
 import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import org.tmatesoft.svn.core.io.SVNAuthenticationException;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -107,6 +106,7 @@ public class SVNJSchConnector implements ISVNConnector {
                 try {
                     myChannel.connect();
                 } catch (Throwable e) {
+                    DebugLog.error(e);
                     retry--;
                     if (retry < 0) {
                         throw new SVNException(e);
@@ -119,6 +119,7 @@ public class SVNJSchConnector implements ISVNConnector {
                 break;
             }
         } catch (Throwable e) {
+            DebugLog.error(e);
             close();
             if (session.isConnected()) {
                 session.disconnect();

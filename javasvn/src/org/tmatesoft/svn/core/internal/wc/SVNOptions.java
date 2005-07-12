@@ -15,7 +15,6 @@ import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNAuthentication;
-import org.tmatesoft.svn.util.DebugLog;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -403,7 +402,6 @@ public class SVNOptions implements ISVNOptions {
                 }
             }
         }
-        DebugLog.log("number of creds: " + allAuths.size());
         return (SVNAuthentication[]) allAuths
                 .toArray(new SVNAuthentication[allAuths.size()]);
     }
@@ -416,7 +414,6 @@ public class SVNOptions implements ISVNOptions {
         if (!isAuthStorageEnabled() || !credentials.isStorageAllowed()) {
             store = false;
         }
-        DebugLog.log("saving credentials, store auth: " + store);
         String kind = credentials.getKind();
         credentials.setStorageAllowed(store);
         if (!store) {
@@ -524,8 +521,6 @@ public class SVNOptions implements ISVNOptions {
     }
 
     private SVNAuthentication loadCredentials(String kind, String realm) {
-        DebugLog.log("loading credentials of kind '" + kind + " for '" + realm
-                + "'");
         if (kind == null || realm == null) {
             return null;
         }
@@ -566,9 +561,7 @@ public class SVNOptions implements ISVNOptions {
         File file = new File(myConfigDirectory, "auth");
         file = new File(file, "svn." + kind);
         file = new File(file, name);
-        DebugLog.log("loading credentials from file '" + file + "'");
         if (!file.isFile() || !file.canRead()) {
-            DebugLog.log("file doesn't exists: " + file);
             return null;
         }
         SVNProperties props = new SVNProperties(file, "");
@@ -576,13 +569,11 @@ public class SVNOptions implements ISVNOptions {
         try {
             map = props.asMap();
         } catch (SVNException e) {
-            DebugLog.error(e);
             map = null;
         }
         if (map == null) {
             return null;
         }
-        DebugLog.log("map loaded: " + map);
         if (PASSWORD.equals(kind) && !"wincrypt".equals(map.get("passtype"))) {
             return new SVNAuthentication(kind, realm, (String) map
                     .get("username"), (String) map.get("password"));
@@ -683,8 +674,6 @@ public class SVNOptions implements ISVNOptions {
         if (kind == null || realm == null) {
             return;
         }
-        DebugLog.log("saving credentials of kind '" + kind + "' for '" + realm
-                + "'");
         if (PROXY.equals(kind)) {
             String groupName = findGroupForHost(realm, false);
             getServersFile().setPropertyValue(groupName, "http-proxy-host",
@@ -721,7 +710,6 @@ public class SVNOptions implements ISVNOptions {
         file = new File(file, "svn." + kind);
         file = new File(file, name);
         file.getParentFile().mkdirs();
-        DebugLog.log("saving to file: " + file.getAbsolutePath());
         SVNProperties props = new SVNProperties(file, "");
         props.delete();
         try {
@@ -742,11 +730,6 @@ public class SVNOptions implements ISVNOptions {
             SVNFileUtil.setReadonly(props.getFile(), true);
         } catch (SVNException e) {
             //
-        }
-        try {
-            DebugLog.log("saved: " + props.asMap());
-        } catch (SVNException e) {
-            DebugLog.error(e);
         }
     }
 
