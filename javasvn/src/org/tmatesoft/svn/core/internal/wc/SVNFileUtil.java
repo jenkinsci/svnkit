@@ -76,7 +76,7 @@ public class SVNFileUtil {
     }
     
     public static boolean createEmptyFile(File file) throws SVNException {
-        boolean created = false;
+        boolean created;
         try {
             created = file.createNewFile();
         } catch (IOException e) {
@@ -228,6 +228,7 @@ public class SVNFileUtil {
         if (safe && tmpDst != dst) {
             rename(tmpDst, dst);
         }
+        dst.setLastModified(src.lastModified());
     }
 
     public static boolean createSymlink(File link, File linkName)
@@ -558,6 +559,7 @@ public class SVNFileUtil {
             boolean copyAdminDir) throws SVNException {
         if (!dstDir.exists()) {
             dstDir.mkdirs();
+            dstDir.setLastModified(srcDir.lastModified());
         }
         File[] files = srcDir.listFiles();
         for (int i = 0; files != null && i < files.length; i++) {
