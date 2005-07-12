@@ -59,15 +59,13 @@ public class SVNJSchConnector implements ISVNConnector {
 
         while (authentication != null) {
             try {
-                session = SVNJSchSession.getSession(repository.getLocation(),
-                        authentication);
+                session = SVNJSchSession.getSession(repository.getLocation(), authentication);
                 if (session != null && !session.isConnected()) {
                     session = null;
                     continue;
                 }
                 lastException = null;
-                authManager.addAuthentication(realm, authentication,
-                        authManager.isAuthStorageEnabled());
+                authManager.addAuthentication(realm, authentication, authManager.isAuthStorageEnabled());
                 repository.setExternalUserName(authentication.getUserName());
                 break;
             } catch (SVNAuthenticationException e) {
@@ -79,8 +77,7 @@ public class SVNJSchConnector implements ISVNConnector {
                 lastException = e;
                 if (e.getMessage() != null
                         && e.getMessage().toLowerCase().indexOf("Auth") >= 0) {
-                    authentication = authManager.getNextAuthentication(
-                            ISVNAuthenticationManager.SSH, realm);
+                    authentication = authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm);
                     if (authentication == null) {
                         throw new SVNCancelException();
                     }
@@ -109,7 +106,7 @@ public class SVNJSchConnector implements ISVNConnector {
                 DebugLog.log("JSCH command: " + command);
                 try {
                     myChannel.connect();
-                } catch (JSchException e) {
+                } catch (Throwable e) {
                     retry--;
                     if (retry < 0) {
                         throw new SVNException(e);
@@ -126,8 +123,7 @@ public class SVNJSchConnector implements ISVNConnector {
             if (session.isConnected()) {
                 session.disconnect();
             }
-            throw new SVNException("Failed to open SSH session: "
-                    + e.getMessage());
+            throw new SVNException("Failed to open SSH session: " + e.getMessage());
         }
 
         myInputStream = new FilterInputStream(myInputStream) {
