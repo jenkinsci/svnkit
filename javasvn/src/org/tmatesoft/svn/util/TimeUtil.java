@@ -27,29 +27,25 @@ public class TimeUtil {
     private static final DateFormat ISO8601_FORMAT_OUT = new SimpleDateFormat(
             "yyyy-MM-dd'T'HH:mm:ss.SSS'000Z'");
 
-    private static final DateFormat ISO8601_FORMAT_IN = new SimpleDateFormat(
-            "yyyy-MM-dd'T'HH:mm:ss.SSS");
-    
     private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
     private static final Date NULL = new Date(0);
 
     static {
-        ISO8601_FORMAT_IN.setTimeZone(TimeZone.getTimeZone("GMT"));
         ISO8601_FORMAT_OUT.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
 
-    public static final void formatDate(Date date, StringBuffer buffer) {
+    public static void formatDate(Date date, StringBuffer buffer) {
         ISO8601_FORMAT_OUT.format(date, buffer, new FieldPosition(0));
     }
 
-    public static final String formatDate(Date date) {
+    public static String formatDate(Date date) {
         if (date == null || date.getTime() == 0) {
             return null;
         }
         return ISO8601_FORMAT_OUT.format(date);
     }
 
-    public static final Date parseDate(String str) {
+    public static Date parseDate(String str) {
         if (str == null) {
             return NULL;
         }
@@ -68,11 +64,12 @@ public class TimeUtil {
             CALENDAR.set(Calendar.MILLISECOND, ms);
             return CALENDAR.getTime();
         } catch (Throwable th) {
+            //
         }
         return NULL;
     }
 
-    public static final long parseDateAsLong(String str) {
+    public static long parseDateAsLong(String str) {
         if (str == null) {
             return -1;
         }
@@ -91,7 +88,7 @@ public class TimeUtil {
         return CALENDAR.getTimeInMillis();
     }
 
-    public static final String toHumanDate(String str) {
+    public static String toHumanDate(String str) {
         if (str == null) {
             return "";
         }
