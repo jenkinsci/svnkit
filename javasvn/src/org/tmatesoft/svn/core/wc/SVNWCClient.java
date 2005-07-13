@@ -835,9 +835,9 @@ public class SVNWCClient extends SVNBasicClient {
             try {
                 wcAccess.open(true, false);
                 SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(
-                        wcAccess.getTargetName(), true);
-                if (entry == null || entry.isHidden()) {
-                    SVNErrorManager.error("svn: '" + entry.getName()
+                        wcAccess.getTargetName(), false);
+                if (entry == null) {
+                    SVNErrorManager.error("svn: '" + paths[i]
                             + "' is not under version control");
                 }
                 if (entry.getURL() == null) {

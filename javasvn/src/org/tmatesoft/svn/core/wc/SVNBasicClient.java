@@ -41,19 +41,12 @@ import java.util.List;
 public class SVNBasicClient implements ISVNEventHandler {
 
     private ISVNRepositoryFactory myRepositoryFactory;
-
     private ISVNOptions myOptions;
-
     private ISVNEventHandler myEventDispatcher;
-
     private List myPathPrefixesStack;
-
     private boolean myIsIgnoreExternals;
-
     private boolean myIsDoNotSleepForTimeStamp;
-
     private boolean myIsCommandRunning;
-
     private boolean myIsLeaveConflictsUnresolved;
 
     protected SVNBasicClient() {
@@ -284,17 +277,18 @@ public class SVNBasicClient implements ISVNEventHandler {
         try {
             locations = (List) repos.getLocations("", locations, pegRevNumber,
                     new long[] { revNumber });
-            if (locations == null || locations.size() != 1) {
-                SVNErrorManager
-                        .error("svn: Unable to find repository location for '"
-                                + url + "' in revision " + revNumber);
-                return null;
-            }
         } catch (SVNException e) {
             DebugLog.error(e);
             SVNErrorManager
                     .error("svn: Unable to find repository location for '"
                             + url + "' in revision " + revNumber);
+            return null;
+        }
+        if (locations == null || locations.size() != 1) {
+            SVNErrorManager
+                    .error("svn: Unable to find repository location for '"
+                            + url + "' in revision " + revNumber);
+            return null;
         }
         SVNLocationEntry location = (SVNLocationEntry) locations.get(0);
         String path = PathUtil.encode(location.getPath());
@@ -344,17 +338,9 @@ public class SVNBasicClient implements ISVNEventHandler {
         entry.setKind(SVNNodeKind.DIR);
         entry.setRevision(revNumber);
         entry.setIncomplete(true);
-        ;
+
         entries.save(true);
         return dir;
-    }
-
-    protected SVNRepository createRepository(File path,
-            SVNRevision pegRevision, SVNRevision revision, long[] actualRevision)
-            throws SVNException {
-        // get entry URL from path
-
-        return null;
     }
 
     protected SVNRepository createRepository(File path, String url,
@@ -459,8 +445,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                     + " or refers to an unrelated object");
             return null;
         }
-        String host = url
-                .substring(0, url.indexOf('/', url.indexOf("://") + 3));
+        String host = url.substring(0, url.indexOf('/', url.indexOf("://") + 3));
         String startPath = host
                 + PathUtil.encode(PathUtil.append(rootPath, startLocation
                         .getPath()));
