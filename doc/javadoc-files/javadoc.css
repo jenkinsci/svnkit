@@ -17,31 +17,43 @@ body {
 	color: #3E3E3E;
 }
 a {
-	font-weight: bold;
-	color: rgb(0,0,132); /*rgb(184,111,1);*//*#76A32C;*/
+	font-weight:     bold;
+	color:           rgb(0,0,132); /*rgb(184,111,1);*//*#76A32C;*/
 	text-decoration: none;
 }
 .style0 {
 	font-family: Trebuchet MS;/*Verdana;*/
-	font-size: 22px;
-	color: rgb(183, 91, 0);/*#B60606;*/
+	font-size:   22px;
+	color:       rgb(183, 91, 0);/*#B60606;*/
 }
 .style1 {
 	font-family: Verdana;
-	font-size: 22px;
-	color: #3E3E3E;
+	font-size:   22px;
+	color:       #3E3E3E;
+}
+.style2{
+	font-family: Verdana;
+	font-size:   17px;
+	color:       rgb(172, 172, 0);
+}
+.style3{
+	font-family: Courier New;
+	font-weight: bold;
+	font-size:   17px;
+	color:       rgb(128, 64, 0);
 }
 
 /* Headings */
 h1 { font-size: 145% }
 
 a:hover {
+    background: rgb(75%,75%,100%);
 	color: #CF4705;
 	text-decoration: underline;
 }
 
 /* Table colors */
-.TableHeadingColor     { background: rgb(193, 164, 249)/*#F4DEAC*/ } 
+.TableHeadingColor     { background: rgb(137, 80, 243)/*#F4DEAC*/ } 
 .TableSubHeadingColor  { background: rgb(223, 207, 253)/*#F4DEAC*/ }
 .TableRowColor         { background: rgb(223, 207, 253)/*#F0D898*/ } 
 

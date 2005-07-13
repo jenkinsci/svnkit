@@ -19,28 +19,30 @@
 
 <BODY BGCOLOR="white">
 <HR>
-<B><SPAN CLASS="style0">JavaSVN</SPAN><SUP>TM</SUP></B> - The only pure Java<SUP>TM</SUP> Subversion client library in the World.
+<B><SPAN CLASS="style0">JavaSVN</SPAN><SUP>TM</SUP></B> - the only pure Java<SUP>TM</SUP> Subversion client library in the World.
 
 <BR>
 <img src="JavaSVN_API_Packages.jpg"></img>
 
 <P>
-JavaSVN<SUP>TM</SUP> is a powerful pure java Subversion (SVN) client library. This means that users of the library, i.e. java applications 
-do not have to include SVN native binaries or <i>javahl</i> bindings to work with a Subversion repository.
-The library represents two main concepts of working with a Subversion Repository:
+JavaSVN<SUP>TM</SUP> is a powerful pure java Subversion (<span class="style2"">SVN</span>) client library. This means that users of the library, i.e. java applications 
+do not have to include <span class="style2">SVN</span> native binaries or <i>javahl</i> bindings to work with a Subversion repository.
+<P>
+The library represents two main concepts for developers who use a Subversion repository in their projects:
 <ul>
-<li>low-level API 
+<li>Low-level API  - the package <b>org.tmatesoft.svn.core.io</b> - a solution for those developers who doesn't need to work with the native
+Subversion high-level format known as <i>'Working Copy'</i> - that is when all local files are stored in a filesystem and all version controll 
+metadata is concentrated in <i>.svn</i> directories. For instance, those developers who would like to store their versioned files in data bases 
+will certainly find this package pretty good for their purposes.       
+</ul>
+<ul>
+<li>High-level API - the package <b>org.tmatesoft.svn.core.wc</b> - this is a set of classes and interfaces designed to provide developers means
+for working particularly with the native Subversion format - <i>'Working Copy'</i>. All the commands supported by the <span class="style2"">SVN</span> command line client can be 
+also easily performed by using this high-level API. Obviously in those cases when an operation needs an access to a repository this high-level API 
+uses the low-level one.
 </ul> 
 <BR>
-<BR>
-<code>SVNRepository</code> is the central class in this package that provides the basic inerface to carry out the commands
-followed by data interchanging between a client and an SVN server.
-
-<BR>
-For users familiar with the native Subversion source code it may be useful to know that the considerable part
-of the package classes functionality is more or less similar to the <code><b>include/svn_ra.h</b></code> declaration file.
-<BR>
-
+<a href="http://subversion.tigris.org/" target=_top><img src="subversion.png" align="bottom" border=0></img></a>
 
 </BODY>
 </HTML>
