@@ -13,8 +13,12 @@ package org.tmatesoft.svn.core.wc;
 import org.tmatesoft.svn.core.io.SVNCancelException;
 
 /**
+ * The <span class="style0">ISVNEventHandler</span> interface should be implemented in
+ * order to be further provided to an <span class="style0">SVN</span>*<span class="style0">Client</span>
+ * object as a handler of a set of events an implementor is interested in.     
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
  */
 public interface ISVNEventHandler {
 

@@ -24,8 +24,33 @@ import java.util.Map;
 import java.util.Stack;
 
 /**
+ * This class provides methods to get information on the status of Working Copy items.
+ * The functionality of <span class="style0">SVNStatusClient</span> corresponds to the
+ * 'svn status' command of the native <span class="style2">SVN</span> command line client. 
+ * 
+ * <p>
+ * One of the main advantage of <span class="style0">SVNStatusClient</span> lies in that fact
+ * that for each processed item the status information is collected and incapsulated into
+ * an <span class="style0">SVNStatus</span> object. Further there are two ways how this object
+ * can be passed to a developer (depending on the version of the <span class="style3">doStatus(..)</span>
+ * method that was invoked):
+ * <ol>
+ * <li>the <span class="style0">SVNStatus</span> can be passed to a 
+ * developer's <i>status handler</i> (that should implement <span class="style0">ISVNStatusHandler</span>)
+ * in which the developer retrieves status information and decides how to interprete that
+ * info;  
+ * <li> another way is that an appropriate <span class="style3">doStatus(..)</span> method
+ * just returns that <span class="style0">SVNStatus</span> object.
+ * </ol>
+ * 
+ * The first variant can be called recursively - obtaining status information for all child entries, the second
+ * variant just the reverse is called non-recursively and the developer should code that for himself. 
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
+ * @see		ISVNStatusHandler
+ * @see		SVNStatus
+ * 
  */
 public class SVNStatusClient extends SVNBasicClient {
     public SVNStatusClient() {
@@ -43,14 +68,65 @@ public class SVNStatusClient extends SVNBasicClient {
                            ISVNOptions options, ISVNEventHandler eventDispatcher) {
         super(repositoryFactory, options, eventDispatcher);
     }
-
+    
+    /**
+     * Collects status information on Working Copy items. 
+     * 
+     * @param  path				local item's path
+     * @param  recursive		relevant only if <code>path</code> denotes a directory:
+     * 							<code>true</code> to obtain status info recursively for all
+     * 							child entries, <code>false</code> only for items located immediately
+     * 							in the directory itself  
+     * @param  remote			<code>true</code> to check up the status of the item in the repository,
+     * 							that will tell if the local item is out-of-date (like <i>'-u'</i> option in the
+     * 							<span class="style2">SVN</span> client's <i>'svn status'</i> command), otherwise 
+     * 							<code>false</code>
+     * @param  reportAll		<code>true</code> to collect status information on those items that are in a 
+     * 							<i>'normal'</i> state (unchanged), otherwise <code>false</code>
+     * @param  includeIgnored	<code>true</code> to force <span class="style3">doStatus(..)</span> collect information
+     * 							on items that were set to be ignored (like <i>'--no-ignore'</i> option in the <span class="style2">SVN</span> 
+     * 							client's <i>'svn status'</i> command to disregard default and <i>'svn:ignore'</i> property
+     * 							ignores), otherwise <code>false</code>  
+     * @param  handler			an implementation of <span class="style0">ISVNStatusHandler</span> that will be involved
+     * 							in processing status information
+     * @throws SVNException
+     * @see	   ISVNStatusHandler
+     */
     public void doStatus(File path, boolean recursive, boolean remote,
                          boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler)
             throws SVNException {
         doStatus(path, recursive, remote, reportAll, includeIgnored, false,
                  handler);
     }
-
+    
+    /**
+     * Collects status information on Working Copy items. 
+     *
+     *  
+     * @param  path							local item's path
+     * @param  recursive					relevant only if <code>path</code> denotes a directory:
+     * 										<code>true</code> to obtain status info recursively for all
+     * 										child entries, <code>false</code> only for items located 
+     * 										immediately in the directory itself
+     * @param  remote						<code>true</code> to check up the status of the item in the repository,
+     * 										that will tell if the local item is out-of-date (like <i>'-u'</i> option in the
+     * 										<span class="style2">SVN</span> client's <i>'svn status'</i> command), 
+     * 										otherwise <code>false</code>
+     * @param  reportAll					<code>true</code> to collect status information on those items that are in a 
+     * 										<i>'normal'</i> state (unchanged), otherwise <code>false</code>
+     * @param  includeIgnored				<code>true</code> to force <span class="style3">doStatus(..)</span> collect information
+     * 										on items that were set to be ignored (like <i>'--no-ignore'</i> option in the <span class="style2">SVN</span> 
+     * 										client's <i>'svn status'</i> command to disregard default and <i>'svn:ignore'</i> property
+     * 										ignores), otherwise <code>false</code>
+     * @param  collectParentExternals		<code>false</code> to make <span class="style3">doStatus(..)</span> ignore information
+     * 										on externals definitions (like <i>'--ignore-externals'</i> option in the <span class="style2">SVN</span>
+     * 										client's <i>'svn status'</i> command), otherwise <code>true</code>
+     * @param  handler						an implementation of <span class="style0">ISVNStatusHandler</span> that will be involved
+     * 										in processing status information
+     * @return								the revision number the status information was collected
+     * 										against
+     * @throws SVNException
+     */
     public long doStatus(File path, boolean recursive, boolean remote,
                          boolean reportAll, boolean includeIgnored,
                          boolean collectParentExternals, ISVNStatusHandler handler)
@@ -128,11 +204,38 @@ public class SVNStatusClient extends SVNBasicClient {
         }
         return statusEditor.getTargetRevision();
     }
-
+    
+    /**
+     * Collects status information on a single Working Copy item. 
+     * 
+     * @param  path				local item's path
+     * @param  remote			<code>true</code> to check up the status of the item in the repository,
+     * 							that will tell if the local item is out-of-date (like <i>'-u'</i> option in the
+     * 							<span class="style2">SVN</span> client's <i>'svn status'</i> command), 
+     * 							otherwise <code>false</code>
+     * @return					an <span class="style0">SVNStatus</span> object representing status information 
+     * 							for the item
+     * @throws SVNException
+     */
     public SVNStatus doStatus(final File path, boolean remote) throws SVNException {
         return doStatus(path, remote, false);
     }
-
+    
+    /**
+     * Collects status information on a single Working Copy item. 
+     *  
+     * @param  path						local item's path
+     * @param  remote					<code>true</code> to check up the status of the item in the repository,
+     * 									that will tell if the local item is out-of-date (like <i>'-u'</i> option in the
+     * 									<span class="style2">SVN</span> client's <i>'svn status'</i> command), 
+     * 									otherwise <code>false</code>
+     * @param  collectParentExternals	<code>false</code> to make <span class="style3">doStatus(..)</span> ignore information
+     * 									on externals definitions (like <i>'--ignore-externals'</i> option in the <span class="style2">SVN</span>
+     * 									client's <i>'svn status'</i> command), otherwise <code>true</code>
+     * @return							an <span class="style0">SVNStatus</span> object representing status information 
+     * 									for the item
+     * @throws SVNException
+     */
     public SVNStatus doStatus(final File path, boolean remote, boolean collectParentExternals) throws SVNException {
         final SVNStatus[] result = new SVNStatus[] { null };
         ISVNStatusHandler handler = new ISVNStatusHandler() {
