@@ -248,6 +248,7 @@
     <target name="build-doc">
         <mkdir dir="build/doc/javadoc" />
     	<copy file="doc/javadoc-files/JavaSVN_API_Packages.jpg" todir="build/doc/javadoc"/>
+       	<copy file="doc/javadoc-files/subversion.png" todir="build/doc/javadoc"/>
     	<javadoc destdir="build/doc/javadoc" failonerror="false"
                  windowtitle="JavaDoc :: Documentation :: Pure Java Subversion (SVN) Client Library"
                  breakiterator="yes"
