@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.examples.repository;
 
 import java.util.Collection;
-import java.util.LinkedList;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -24,10 +23,8 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNLogEntry;
 import org.tmatesoft.svn.core.io.SVNLogEntryPath;
-import org.tmatesoft.svn.core.io.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.core.wc.*;
 
 /*
  * The following example program demonstrates how you can use SVNRepository to
