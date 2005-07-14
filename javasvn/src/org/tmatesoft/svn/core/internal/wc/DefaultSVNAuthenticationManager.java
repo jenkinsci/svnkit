@@ -32,7 +32,6 @@ import org.tmatesoft.svn.core.io.SVNException;
  */
 public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManager {
 
-    private File myConfigDirectory;
     private boolean myIsStoreAuth;
     private ISVNAuthenticationProvider[] myProviders;
     
@@ -40,7 +39,6 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private String myPreviousErrorMessage;
 
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password) {
-        myConfigDirectory = configDirectory;
         myIsStoreAuth = storeAuth;
         
         myProviders = new ISVNAuthenticationProvider[4];
@@ -54,6 +52,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         ISVNAuthenticationProvider cacheProvider = new CacheAuthenticationProvider(new HashMap());
         myProviders[1] = cacheProvider;
         // disk storage providers
+        myProviders[2] = new PersistentAuthenticationProvider(new File(configDirectory, "auth"));
     }
 
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
@@ -106,7 +105,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             myPreviousAuthentication = authentication;
             return;
         }
-        if (myIsStoreAuth && authentication.isStorageAllowed()) {
+        if (myIsStoreAuth && authentication.isStorageAllowed() && myProviders[2] != null) {
+            ((PersistentAuthenticationProvider) myProviders[2]).saveAuthentication(authentication, kind, realm);
         }
         ((CacheAuthenticationProvider) myProviders[1]).saveAuthentication(authentication, realm);
     }
@@ -178,6 +178,94 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         public int acceptServerAuthentication(String url, Object serverAuth, ISVNAuthenticationManager manager, boolean resultMayBeStored) {
             return ACCEPTED;
         }
+    }
+    
+    private static class PersistentAuthenticationProvider implements ISVNAuthenticationProvider {
+        
+        private File myDirectory;
+
+        public PersistentAuthenticationProvider(File directory) {
+            myDirectory = directory;
+        }
+
+        public SVNAuthentication requestClientAuthentication(String kind, String url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+            File dir = new File(myDirectory, kind);
+            if (!dir.isDirectory()) {
+                return null;
+            }
+            String fileName = SVNFileUtil.computeChecksum(realm);
+            File authFile = new File(dir, fileName);
+            if (authFile.exists()) {
+                SVNProperties props = new SVNProperties(authFile, "");
+                try {
+                    String storedRealm = props.getPropertyValue("svn:realmstring");
+                    if (storedRealm == null || !storedRealm.equals(realm)) {
+                        return null;
+                    }
+                    if ("wincrypt".equals(props.getPropertyValue("passtype"))) {
+                        return null;
+                    }
+                    String password = props.getPropertyValue("password");
+                    String userName = props.getPropertyValue("username");
+                    String path = props.getPropertyValue("key");
+                    String passphrase = props.getPropertyValue("passphrase");
+                    if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
+                        return new SVNPasswordAuthentication(userName, password, true);
+                    } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
+                        if (path != null) {
+                            return new SVNSSHAuthentication(userName, new File(path), passphrase, authMayBeStored);
+                        } else if (password != null) {
+                            return new SVNSSHAuthentication(userName, password, authMayBeStored);
+                        }                    
+                    }
+                } catch (SVNException e) {
+                    //
+                }
+            }
+            return null;
+        }
+        
+        public void saveAuthentication(SVNAuthentication auth, String kind, String realm) {
+            File dir = new File(myDirectory, kind);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            if (!dir.isDirectory()) {
+                return;
+            }
+            // get file name for auth and store password.
+            String fileName = SVNFileUtil.computeChecksum(realm);
+            File authFile = new File(dir, fileName);
+
+            SVNProperties props = new SVNProperties(authFile, "");
+            props.delete();
+            
+            try {
+                props.setPropertyValue("svn:realmstring", realm);
+                props.setPropertyValue("username", auth.getUserName());
+                if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
+                    SVNPasswordAuthentication passwordAuth = (SVNPasswordAuthentication) auth;
+                    props.setPropertyValue("password", passwordAuth.getPassword());
+                } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
+                    SVNSSHAuthentication sshAuth = (SVNSSHAuthentication) auth;
+                    props.setPropertyValue("password", sshAuth.getPassword());
+                    if (sshAuth.getPrivateKeyFile() != null) { 
+                        String path = SVNPathUtil.validateFilePath(sshAuth.getPrivateKeyFile().getAbsolutePath());
+                        props.setPropertyValue("passphrase", sshAuth.getPassphrase());
+                        props.setPropertyValue("key", path);
+                    }
+                }
+                SVNFileUtil.setReadonly(props.getFile(), false);
+            } catch (SVNException e) {
+                props.getFile().delete();
+            }
+        }
+        
+
+        public int acceptServerAuthentication(String url, Object serverAuth, ISVNAuthenticationManager manager, boolean resultMayBeStored) {
+            return ACCEPTED;
+        }
+        
     }
 
 }

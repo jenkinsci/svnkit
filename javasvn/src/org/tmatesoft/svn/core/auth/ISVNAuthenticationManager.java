@@ -19,8 +19,8 @@ import org.tmatesoft.svn.core.io.SVNException;
  */
 public interface ISVNAuthenticationManager {
     
-    public static final String PASSWORD = "password";
-    public static final String SSH = "ssh";
+    public static final String PASSWORD = "svn.simple";
+    public static final String SSH = "svn.ssh";
 
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider);
     
