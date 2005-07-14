@@ -11,17 +11,19 @@
  */
 package org.tmatesoft.svn.core.auth;
 
-import java.io.IOException;
-
-import javax.net.ssl.SSLContext;
-
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public interface ISVNSSLManager {
+public interface ISVNProxyManager {
+    
+    public String getProxyHost();
+    
+    public int getProxyPort();
+    
+    public String getProxyUserName();
+    
+    public String getProxyPassword();
 
-    public SSLContext getSSLContext() throws IOException;
-
-    public void acknowledgeSSLContext(boolean accepted, String errorMessage);
+    public void acknowledgeProxyContext(boolean accepted, String errorMessage);
 }

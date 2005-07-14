@@ -25,7 +25,7 @@ public interface ISVNAuthenticationManager {
 
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider);
     
-    public SVNProxySettings getProxySettings(String url);
+    public ISVNProxyManager getProxyManager(String url);
     
     public ISVNSSLManager getSSLManager(String url);
     
@@ -33,8 +33,6 @@ public interface ISVNAuthenticationManager {
 
     public SVNAuthentication getNextAuthentication(String kind, String realm);
     
-    public void authenticationFailed(String kind, String realm, String errorMessage, SVNAuthentication authentication);
-    
-    public void authenticationSucceeded(String kind, String realm, SVNAuthentication authentication);
+    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, String errorMessage, SVNAuthentication authentication);
 
 }
