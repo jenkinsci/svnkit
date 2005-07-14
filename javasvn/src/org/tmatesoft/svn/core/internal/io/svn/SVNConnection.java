@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.io.svn;
 
 import org.tmatesoft.svn.core.io.ISVNCredentials;
+import org.tmatesoft.svn.core.io.SVNAuthenticationException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.SVNCancelException;
@@ -172,10 +173,11 @@ class SVNConnection {
                         + " authorization requested, but not supported";
             }
         }
-        if (auth == null) {
+        if (auth == null && 
+                myAuthManager != null && myAuthManager.getAuthenticationProvider() != null) {
             throw new SVNCancelException();
         }
-        throw new SVNException(failureReason);
+        throw new SVNAuthenticationException(failureReason);
     }
 
     private String readAuthResponse(SVNRepositoryImpl repository)

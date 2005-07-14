@@ -277,7 +277,11 @@ class HttpConnection {
                 } else {
                     auth = myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm);
                 }
+                
                 if (auth == null) {
+                    if (myAuthManager.getAuthenticationProvider() == null) {
+                        throw new SVNAuthenticationException("svn: Authentication required");
+                    }
                     throw new SVNCancelException();
                 }
                 // reset stream!
