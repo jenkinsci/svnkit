@@ -14,9 +14,11 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.util.PathUtil;
@@ -412,6 +414,68 @@ public class SVNMover extends SVNWCClient {
             }
         }
     }
+    
+    public void doVirtualCopy(File src, File dst, boolean move) throws SVNException {
+        SVNFileType srcType  = SVNFileType.getType(src);
+        SVNFileType dstType  = SVNFileType.getType(dst);
+        
+        if (srcType != SVNFileType.NONE) {
+            SVNErrorManager.error("svn: Cannot perform 'virtual' move: '" + src + "' still exists");
+        }
+        if (dstType == SVNFileType.NONE) {
+            SVNErrorManager.error("svn: Cannot perform 'virtual' move: '" + dst + "' does not exist");
+        }
+        if (dstType == SVNFileType.DIRECTORY) {
+            SVNErrorManager.error("svn: Cannot perform 'virtual' move: '" + dst + "' is a directory");
+        }
+        
+        SVNWCAccess srcAccess = createWCAccess(src);
+        String cfURL = null;
+        boolean added = false;
+        long cfRevision = -1;
+        try {
+            srcAccess.open(true, false);
+            SVNEntry srcEntry = srcAccess.getTargetEntry();
+            if (srcEntry == null) {
+                SVNErrorManager.error("svn: '" + src + "' is not under version control");
+            }
+            if (srcEntry.isCopied() && !srcEntry.isScheduledForAddition()) {
+                SVNErrorManager.error("svn: '" + src + "' is part of the copied tree");
+            }
+            cfURL = srcEntry.isCopied() ? srcEntry.getCopyFromURL() : srcEntry.getURL();
+            cfRevision = srcEntry.isCopied() ? srcEntry.getCopyFromRevision() : srcEntry.getRevision();
+            added = srcEntry.isScheduledForAddition() && !srcEntry.isCopied();
+        } finally {
+            srcAccess.close(true);
+        }
+        if (!move) {
+            doDelete(src, true, false);
+        }
+        if (added) {
+            doAdd(dst, true, false, false, false);            
+            return;
+        }
+
+        SVNWCAccess dstAccess = createWCAccess(dst);
+        try {
+            dstAccess.open(true, false);
+            SVNEntry dstEntry = dstAccess.getTargetEntry();
+            if (dstEntry != null) {
+                SVNErrorManager.error("svn: '" + dst + "' is already under version control");                
+            }
+            dstEntry = dstAccess.getAnchor().getEntries().addEntry(dst.getName());
+            dstEntry.setCopyFromURL(cfURL);
+            dstEntry.setCopyFromRevision(cfRevision);
+            dstEntry.setCopied(true);
+            dstEntry.setKind(SVNNodeKind.FILE);
+            dstEntry.scheduleForAddition();
+            
+            dstAccess.getAnchor().getEntries().save(true);
+        } finally {
+            dstAccess.close(true);
+        }
+        
+    }
 
     private static boolean isVersionedFile(File file) {
         SVNWCAccess wcAccess;
@@ -425,5 +489,5 @@ public class SVNMover extends SVNWCClient {
         } catch (SVNException e) {
             return false;
         }
-    }
+     }
 }
