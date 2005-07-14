@@ -681,7 +681,7 @@ public class SVNStatusEditor implements ISVNEditor {
             if (token.trim().length() == 0) {
                 continue;
             }
-            if (myWCAccess.getOptions().matches(token, name)) {
+            if (DefaultSVNOptions.matches(token, name)) {
                 return true;
             }
         }

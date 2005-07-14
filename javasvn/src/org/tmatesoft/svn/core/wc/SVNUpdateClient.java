@@ -46,20 +46,8 @@ import org.tmatesoft.svn.util.TimeUtil;
  */
 public class SVNUpdateClient extends SVNBasicClient {
 
-    public SVNUpdateClient() {
-    }
-
-    public SVNUpdateClient(ISVNEventHandler eventDispatcher) {
-        super(eventDispatcher);
-    }
-
-    public SVNUpdateClient(ISVNOptions options, ISVNEventHandler eventDispatcher) {
-        super(options, eventDispatcher);
-    }
-
-    public SVNUpdateClient(ISVNRepositoryFactory repositoryFactory,
-            ISVNOptions options, ISVNEventHandler eventDispatcher) {
-        super(repositoryFactory, options, eventDispatcher);
+    protected SVNUpdateClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
+        super(repositoryFactory, options);
     }
 
     public long doUpdate(File file, SVNRevision revision, boolean recursive)

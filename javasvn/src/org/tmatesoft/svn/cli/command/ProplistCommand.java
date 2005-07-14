@@ -44,7 +44,7 @@ public class ProplistCommand extends SVNCommand implements ISVNPropertyHandler {
         if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
             revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         }
-        SVNWCClient wcClient = new SVNWCClient(getOptions(), null);
+        SVNWCClient wcClient = getClientManager().getWCClient();
         if (getCommandLine().hasURLs()) {
             String url = getCommandLine().getURL(0);
             if (myIsRevProp) {

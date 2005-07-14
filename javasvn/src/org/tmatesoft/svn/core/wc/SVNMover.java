@@ -29,8 +29,8 @@ import org.tmatesoft.svn.util.PathUtil;
  */
 public class SVNMover extends SVNWCClient {
 
-    public SVNMover(ISVNOptions options) {
-        super(options, null);
+    protected SVNMover(ISVNRepositoryFactory factory, ISVNOptions options) {
+        super(factory, options);
     }
 
     public void doMove(File src, File dst) throws SVNException {

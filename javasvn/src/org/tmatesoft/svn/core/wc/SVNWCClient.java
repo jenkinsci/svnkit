@@ -51,20 +51,8 @@ import java.util.Map;
  */
 public class SVNWCClient extends SVNBasicClient {
 
-    public SVNWCClient() {
-    }
-
-    public SVNWCClient(ISVNEventHandler eventDispatcher) {
-        super(eventDispatcher);
-    }
-
-    public SVNWCClient(ISVNOptions options, ISVNEventHandler eventDispatcher) {
-        super(options, eventDispatcher);
-    }
-
-    public SVNWCClient(ISVNRepositoryFactory repositoryFactory,
-            ISVNOptions options, ISVNEventHandler eventDispatcher) {
-        super(repositoryFactory, options, eventDispatcher);
+    protected SVNWCClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
+        super(repositoryFactory, options);
     }
 
     public void doGetFileContents(File path, SVNRevision pegRevision,

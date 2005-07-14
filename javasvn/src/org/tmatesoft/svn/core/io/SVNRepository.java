@@ -13,7 +13,7 @@ package org.tmatesoft.svn.core.io;
 
 import org.tmatesoft.svn.core.internal.SVNAnnotationGenerator;
 import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.wc.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.util.DebugLog;
 
 import java.io.File;

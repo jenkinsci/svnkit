@@ -18,6 +18,8 @@ public class LockCommand extends SVNCommand {
     public void run(PrintStream out, PrintStream err) throws SVNException {
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
+        getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
+        SVNWCClient wcClient = getClientManager().getWCClient();
         
         Collection files = new ArrayList();
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
@@ -25,7 +27,6 @@ public class LockCommand extends SVNCommand {
         }
         File[] filesArray = (File[]) files.toArray(new File[files.size()]);
         if (filesArray.length > 0) {
-            SVNWCClient wcClient = new SVNWCClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
             wcClient.doLock(filesArray, force, message);
         }
         files.clear();
@@ -35,7 +36,6 @@ public class LockCommand extends SVNCommand {
         }
         String[] urls = (String[]) files.toArray(new String[files.size()]);
         if (urls.length > 0) {
-            SVNWCClient wcClient = new SVNWCClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
             wcClient.doLock(urls, force, message);
         }
     }

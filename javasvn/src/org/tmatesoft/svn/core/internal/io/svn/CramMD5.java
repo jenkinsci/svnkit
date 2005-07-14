@@ -11,7 +11,7 @@
 
 package org.tmatesoft.svn.core.internal.io.svn;
 
-import org.tmatesoft.svn.core.wc.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -23,9 +23,9 @@ import java.util.Arrays;
  */
 public class CramMD5 {
 
-    private SVNAuthentication myCredentials;
+    private SVNPasswordAuthentication myCredentials;
 
-    public void setUserCredentials(SVNAuthentication credentials) {
+    public void setUserCredentials(SVNPasswordAuthentication credentials) {
         myCredentials = credentials;
     }
 

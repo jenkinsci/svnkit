@@ -80,8 +80,7 @@ public class SVNConfigFile {
         return null;
     }
 
-    public void setPropertyValue(String groupName, String propertyName,
-            String propertyValue, boolean save) {
+    public void setPropertyValue(String groupName, String propertyName, String propertyValue, boolean save) {
         load();
         boolean groupMatched = false;
         for (int i = 0; i < myLines.length; i++) {

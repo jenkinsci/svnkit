@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.auth;
 
+import org.tmatesoft.svn.core.io.SVNException;
+
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
@@ -19,7 +21,6 @@ public interface ISVNAuthenticationManager {
     
     public static final String PASSWORD = "password";
     public static final String SSH = "ssh";
-    public static final String USERNAME = "username";
 
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider);
     
@@ -27,9 +28,9 @@ public interface ISVNAuthenticationManager {
     
     public ISVNSSLManager getSSLManager(String url);
     
-    public SVNAuthentication getFirstAuthentication(String kind, String realm);
+    public SVNAuthentication getFirstAuthentication(String kind, String realm) throws SVNException;
 
-    public SVNAuthentication getNextAuthentication(String kind, String realm);
+    public SVNAuthentication getNextAuthentication(String kind, String realm) throws SVNException;
     
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, String errorMessage, SVNAuthentication authentication);
 

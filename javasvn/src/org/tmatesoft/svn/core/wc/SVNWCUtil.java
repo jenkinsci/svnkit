@@ -10,15 +10,17 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
+
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNException;
-
-import java.io.File;
 
 /**
  * @version 1.0
@@ -36,6 +38,7 @@ public class SVNWCUtil {
         }
         return null;
     }
+    
 
     public static File getDefaultConfigurationDirectory() {
         if (SVNFileUtil.isWindows) {
@@ -45,12 +48,34 @@ public class SVNWCUtil {
         return new File(System.getProperty("user.home"), ".subversion");
     }
 
+    public static ISVNAuthenticationManager createDefaultAuthenticationManager() {
+        return createDefaultAuthenticationManager(getDefaultConfigurationDirectory(), null, null);
+    }
+
+    public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir) {
+        return createDefaultAuthenticationManager(configDir, null, null, true);
+    }
+
+    public static ISVNAuthenticationManager createDefaultAuthenticationManager(String userName, String password) {
+        return createDefaultAuthenticationManager(null, userName, password);
+    }
+
+    public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password) {
+        ISVNOptions options = createDefaultOptions(configDir, true);
+        boolean store = options.isAuthStorageEnabled();
+        return createDefaultAuthenticationManager(configDir, userName, password, store);
+    }
+    
+    public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password, boolean storeAuth) {
+        return new DefaultSVNAuthenticationManager(getDefaultConfigurationDirectory(), storeAuth, userName, password);
+    }
+
     public static ISVNOptions createDefaultOptions(File dir, boolean readonly) {
-        return new SVNOptions(dir, !readonly);
+        return new DefaultSVNOptions(dir, !readonly);
     }
 
     public static ISVNOptions createDefaultOptions(boolean readonly) {
-        return new SVNOptions(null, !readonly);
+        return new DefaultSVNOptions(null, !readonly);
     }
 
     public static boolean isVersionedDirectory(File dir) {

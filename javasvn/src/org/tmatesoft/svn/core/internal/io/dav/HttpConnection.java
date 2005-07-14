@@ -17,8 +17,11 @@ import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.wc.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.wc.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNProxyManager;
+import org.tmatesoft.svn.core.auth.ISVNSSLManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.util.Base64;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.LoggingInputStream;
@@ -71,7 +74,7 @@ class HttpConnection {
     private Map myCredentialsChallenge;
     private ISVNAuthenticationManager myAuthManager;
     private SVNAuthentication myLastValidAuth;
-    private SVNAuthentication myProxyAuth;
+    private ISVNProxyManager myProxyAuth;
 
     public HttpConnection(SVNRepositoryLocation location, SVNRepository repos) {
         mySVNRepositoryLocation = location;
@@ -86,13 +89,13 @@ class HttpConnection {
             close();
             String host = mySVNRepositoryLocation.getHost();
             int port = mySVNRepositoryLocation.getPort();
-            String realm = host + ":" + port;
-            myProxyAuth = myAuthManager != null ? myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PROXY, realm) : null;
+            myProxyAuth = myAuthManager != null ? myAuthManager.getProxyManager(mySVNRepositoryLocation.toCanonicalForm()) : null;
+            ISVNSSLManager sslManager = myAuthManager != null ? myAuthManager.getSSLManager(mySVNRepositoryLocation.toCanonicalForm()) : null;
             if (myProxyAuth != null && myProxyAuth.getProxyHost() != null) {
                 mySocket = SocketFactory.createPlainSocket(myProxyAuth.getProxyHost(), myProxyAuth.getProxyPort());
                 if (isSecured()) {
                     Map props = new HashMap();
-                    if (myProxyAuth.getUserName() != null && myProxyAuth.getProxyPassword() != null) {
+                    if (myProxyAuth.getProxyUserName() != null && myProxyAuth.getProxyPassword() != null) {
                         props.put("Proxy-Authorization", getProxyAuthString(myProxyAuth.getProxyUserName(), myProxyAuth.getProxyPassword()));
                     }
                     myOutputStream = DebugLog.getLoggingOutputStream("http", mySocket.getOutputStream());
@@ -102,14 +105,13 @@ class HttpConnection {
                     if (status != null && status.getResponseCode() == 200) {
                         myInputStream = null;
                         myOutputStream = null;
-                        mySocket = SocketFactory.createSSLSocket(DAVRepositoryFactory.getSSLManager(), host, port, mySocket);
+                        mySocket = SocketFactory.createSSLSocket(sslManager, host, port, mySocket);
                         return;
                     }
                     throw new IOException("couldn't establish http tunnel for proxied secure connection: " + (status != null ? status.getErrorText() + "" : " for unknow reason"));
                 }
             } else {
-                mySocket = isSecured() ? SocketFactory.createSSLSocket(DAVRepositoryFactory.getSSLManager(), host, port)
-                        : SocketFactory.createPlainSocket(host, port);
+                mySocket = isSecured() ? SocketFactory.createSSLSocket(sslManager, host, port) : SocketFactory.createPlainSocket(host, port);
             }
         }
     }
@@ -275,14 +277,8 @@ class HttpConnection {
                 if (auth == null) {
                     auth = myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm);
                 } else {
+                    myAuthManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
                     auth = myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm);
-                }
-                
-                if (auth == null) {
-                    if (myAuthManager.getAuthenticationProvider() == null) {
-                        throw new SVNAuthenticationException("svn: Authentication required");
-                    }
-                    throw new SVNCancelException();
                 }
                 // reset stream!
                 if (requestBody instanceof ByteArrayInputStream) {
@@ -324,9 +320,8 @@ class HttpConnection {
                 throw new SVNException("HTTP 301 MOVED PERMANENTLY: " + newLocation);
             } else if (status != null) {
                 if (auth != null && myAuthManager != null && realm != null) {
-                    myAuthManager.addAuthentication(realm, auth, myAuthManager.isAuthStorageEnabled());
+                    myAuthManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
                 }
-                // remember creds
                 myLastValidAuth = auth;
                 status.setResponseHeader(readHeader);
                 return status;
@@ -447,7 +442,8 @@ class HttpConnection {
         StringBuffer sb = new StringBuffer();
         sb.append(method);
         sb.append(' ');
-        boolean isProxied = DAVRepositoryFactory.getProxyManager().isProxyEnabled(mySVNRepositoryLocation);
+        
+        boolean isProxied = myProxyAuth != null; 
         if (isProxied && !isSecured()) {
             // prepend path with host name.
             sb.append("http://");
@@ -474,7 +470,7 @@ class HttpConnection {
         sb.append("TE: trailers");
         sb.append(HttpConnection.CRLF);
         if (isProxied && !isSecured() && myProxyAuth != null) {
-            sb.append("Proxy-Authorization: " + getProxyAuthString(myProxyAuth.getUserName(), myProxyAuth.getPassword()));
+            sb.append("Proxy-Authorization: " + getProxyAuthString(myProxyAuth.getProxyUserName(), myProxyAuth.getProxyPassword()));
             sb.append(HttpConnection.CRLF);
         }
         boolean chunked = false;
@@ -638,14 +634,16 @@ class HttpConnection {
     private static String composeAuthResponce(SVNAuthentication credentials, Map credentialsChallenge) throws SVNAuthenticationException {
         String method = (String) credentialsChallenge.get("");
         StringBuffer result = new StringBuffer();
-        if ("basic".equalsIgnoreCase(method)) {
-            String auth = credentials.getUserName() + ":" + credentials.getPassword();
-            auth = Base64.byteArrayToBase64(auth.getBytes());
+        if ("basic".equalsIgnoreCase(method) && credentials instanceof SVNPasswordAuthentication) {
+            SVNPasswordAuthentication auth = (SVNPasswordAuthentication) credentials;
+            String authStr = auth.getUserName() + ":" + auth.getPassword();
+            authStr = Base64.byteArrayToBase64(authStr.getBytes());
             result.append("Basic ");
-            result.append(auth);
-        } else if ("digest".equalsIgnoreCase(method)) {
+            result.append(authStr);
+        } else if ("digest".equalsIgnoreCase(method) && credentials instanceof SVNPasswordAuthentication) {
+            SVNPasswordAuthentication auth = (SVNPasswordAuthentication) credentials;
             result.append("Digest ");
-            HttpDigestAuth digestAuth = new HttpDigestAuth(credentials, credentialsChallenge);
+            HttpDigestAuth digestAuth = new HttpDigestAuth(auth, credentialsChallenge);
             String response = digestAuth.authenticate();
             result.append(response);
         } else {
@@ -704,10 +702,12 @@ class HttpConnection {
         if (mySVNRepositoryLocation == null || !"https".equalsIgnoreCase(mySVNRepositoryLocation.getProtocol())) {
             return;
         }
-
-        String host = mySVNRepositoryLocation.getHost();
-        int port = mySVNRepositoryLocation.getPort();
-        DAVRepositoryFactory.getSSLManager().acknowledgeSSLContext(host, port, accepted);
+        if (myAuthManager != null) {
+            ISVNSSLManager sslManager = myAuthManager.getSSLManager(mySVNRepositoryLocation.toCanonicalForm());
+            if (sslManager != null) {
+                sslManager.acknowledgeSSLContext(accepted, null);
+            }
+        }
     }
 
     private void finishResponse(Map readHeader) {

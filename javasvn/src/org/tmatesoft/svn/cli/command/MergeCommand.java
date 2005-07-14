@@ -32,7 +32,8 @@ public class MergeCommand extends SVNCommand {
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
         boolean dryRun = getCommandLine().hasArgument(SVNArgument.DRY_RUN);
 
-        SVNDiffClient differ = new SVNDiffClient(getOptions(), new SVNCommandEventProcessor(out, err, false, false));
+        getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false, false));
+        SVNDiffClient differ = getClientManager().getDiffClient();
         
         if (getCommandLine().hasArgument(SVNArgument.REVISION)) {
             // merge -rN:M urlOrPath@r wcPath

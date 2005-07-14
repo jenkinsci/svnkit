@@ -32,7 +32,9 @@ public class AddCommand extends SVNCommand {
         boolean disableAutoProps = getCommandLine().hasArgument(SVNArgument.NO_AUTO_PROPS);
         boolean enableAutoProps = getCommandLine().hasArgument(SVNArgument.AUTO_PROPS);
         
-        SVNWCClient wcClient = new SVNWCClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
+        getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
+        SVNWCClient wcClient = getClientManager().getWCClient();
+
         if (disableAutoProps) {
             wcClient.getOptions().setUseAutoProperties(false);
         }

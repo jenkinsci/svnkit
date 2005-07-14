@@ -11,22 +11,22 @@
  */
 
 package org.tmatesoft.svn.examples.repository;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.core.SVNProperty;
 
 /*
  * This example shows how to fetch a file and its properties from the repository
@@ -131,15 +131,14 @@ public class DisplayFile {
          * SVNRepository since this low-level class is not intended to work
          * with working copy config files 
          */
-        ISVNOptions myOptions = SVNWCUtil.createDefaultOptions(true);
-        myOptions.setDefaultAuthentication(name, password);
+        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name, password);
 
         /*
          * Sets the manager of the user's authentication information that will 
          * be used to authenticate the user to the server (if needed) during 
          * operations handled by the SVNRepository.
          */
-        repository.setAuthenticationManager(myOptions);
+        repository.setAuthenticationManager(authManager);
 
         /*
          * This Map will be used to get the file properties. Each Map key is a

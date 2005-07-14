@@ -42,20 +42,8 @@ public class SVNDiffClient extends SVNBasicClient {
 
     private ISVNDiffGenerator myDiffGenerator;
 
-    public SVNDiffClient() {
-    }
-
-    public SVNDiffClient(ISVNEventHandler eventDispatcher) {
-        super(eventDispatcher);
-    }
-
-    public SVNDiffClient(ISVNOptions options, ISVNEventHandler eventDispatcher) {
-        super(options, eventDispatcher);
-    }
-
-    public SVNDiffClient(ISVNRepositoryFactory repositoryFactory,
-            ISVNOptions options, ISVNEventHandler eventDispatcher) {
-        super(repositoryFactory, options, eventDispatcher);
+    protected SVNDiffClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
+        super(repositoryFactory, options);
     }
 
     public void setDiffGenerator(ISVNDiffGenerator diffGenerator) {

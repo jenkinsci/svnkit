@@ -10,13 +10,18 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNCancelException;
 import org.tmatesoft.svn.core.io.SVNException;
@@ -27,12 +32,6 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * @version 1.0
@@ -49,41 +48,13 @@ public class SVNBasicClient implements ISVNEventHandler {
     private boolean myIsCommandRunning;
     private boolean myIsLeaveConflictsUnresolved;
 
-    protected SVNBasicClient() {
-        this(new SVNOptions(), null);
-    }
 
-    protected SVNBasicClient(ISVNEventHandler eventDispatcher) {
-        this(new SVNOptions(), eventDispatcher);
-    }
-
-    protected SVNBasicClient(final ISVNOptions options,
-            ISVNEventHandler eventDispatcher) {
-        this(null, options, eventDispatcher);
-    }
-
-    protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory,
-            ISVNOptions options, ISVNEventHandler eventDispatcher) {
+    protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
         myRepositoryFactory = repositoryFactory;
         myOptions = options;
         if (myOptions == null) {
-            myOptions = new SVNOptions();
+            myOptions = SVNWCUtil.createDefaultOptions(true);
         }
-        if (myRepositoryFactory == null) {
-            myRepositoryFactory = new ISVNRepositoryFactory() {
-                public SVNRepository createRepository(String url)
-                        throws SVNException {
-                    SVNRepository repos = SVNRepositoryFactory
-                            .create(SVNRepositoryLocation.parseURL(url));
-                    if (repos != null) {
-                        repos.setAuthenticationManager(myOptions);
-                    }
-                    return repos;
-                }
-            };
-        }
-
-        myEventDispatcher = eventDispatcher;
         myPathPrefixesStack = new LinkedList();
     }
 
@@ -107,7 +78,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return myIsLeaveConflictsUnresolved;
     }
 
-    public void setEventHandler(ISVNEventHandler dispatcher) {
+    protected void setEventHandler(ISVNEventHandler dispatcher) {
         myEventDispatcher = dispatcher;
     }
 
@@ -139,6 +110,10 @@ public class SVNBasicClient implements ISVNEventHandler {
                     .parseURL(PathUtil.decode(url)));
         }
         return myRepositoryFactory.createRepository(PathUtil.decode(url));
+    }
+    
+    protected ISVNRepositoryFactory getRepositoryFactory() {
+        return myRepositoryFactory;
     }
 
     protected void dispatchEvent(SVNEvent event) {

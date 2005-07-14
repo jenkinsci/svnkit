@@ -159,7 +159,7 @@ public class SVNWCAccess implements ISVNEventHandler {
 
     public ISVNOptions getOptions() {
         if (myOptions == null) {
-            myOptions = new SVNOptions();
+            myOptions = new DefaultSVNOptions();
         }
         return myOptions;
     }

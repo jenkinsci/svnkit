@@ -26,7 +26,7 @@ public class CleanupCommand extends SVNCommand {
 
     public void run(final PrintStream out, final PrintStream err) throws SVNException {
         String path = getCommandLine().getPathAt(0);
-        SVNWCClient client = new SVNWCClient(getOptions(), null);
+        SVNWCClient client = getClientManager().getWCClient();
         client.doCleanup(new File(path).getAbsoluteFile());
     }
 }

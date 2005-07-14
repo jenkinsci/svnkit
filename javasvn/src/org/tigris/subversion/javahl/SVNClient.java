@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -31,6 +32,7 @@ import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
@@ -65,15 +67,9 @@ public class SVNClient implements SVNClientInterface {
     private CommitMessage myMessageHandler;
     private ISVNOptions myOptions;
     private boolean myCancelOperation = false;
-    private SVNCommitClient mySVNCommitClient;
-    private SVNUpdateClient mySVNUpdateClient;
-    private SVNStatusClient mySVNStatusClient;
-    private SVNWCClient mySVNWCClient;
-    private SVNDiffClient mySVNDiffClient;
-    private SVNCopyClient mySVNCopyClient;
-    private SVNLogClient mySVNLogClient;
-
-    private static Map ourCredentialsCache = new Hashtable();
+    private SVNClientManager myClientManager;
+    
+    private ISVNAuthenticationManager myAuthenticationManager;
 
     public static final class LogLevel implements SVNClientLogLevel {
 
@@ -82,6 +78,7 @@ public class SVNClient implements SVNClientInterface {
     public SVNClient() {
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
+        myConfigDir = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
     }
 
     public String getLastPath() {
@@ -158,19 +155,29 @@ public class SVNClient implements SVNClientInterface {
 
     public void username(String username) {
         myUserName = username;
-        getSVNOptions().setDefaultAuthentication(myUserName, myPassword);
+        updateClientManager();
     }
 
     public void password(String password) {
         myPassword = password;
-        getSVNOptions().setDefaultAuthentication(myUserName, myPassword);
+        updateClientManager();
     }
 
     public void setPrompt(PromptUserPassword prompt) {
-        DebugLog.log("prompt set: " + prompt);
         myPrompt = prompt;
-        getSVNOptions().setAuthenticationProvider(
-                myPrompt != null ? new PromptAuthenticationProvider(myPrompt) : null);
+        updateClientManager();
+    }
+    
+    private void updateClientManager() {
+        File configDir = myConfigDir == null ? null : new File(myConfigDir);
+        myAuthenticationManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, myPassword);
+        if (myPrompt != null) {
+            myAuthenticationManager.setAuthenticationProvider(new PromptAuthenticationProvider(myPrompt));
+        } else {
+            myAuthenticationManager.setAuthenticationProvider(null);
+        }
+        myOptions = SVNWCUtil.createDefaultOptions(configDir, true);
+        myClientManager = null;
     }
 
     public LogMessage[] logMessages(String path, Revision revisionStart, Revision revisionEnd) throws ClientException {
@@ -904,15 +911,7 @@ public class SVNClient implements SVNClientInterface {
 
     public void setConfigDirectory(String configDir) throws ClientException {
         myConfigDir = configDir;
-        DebugLog.log("config directory set: " + configDir);
-        myOptions = null;
-        mySVNCommitClient = null;
-        mySVNUpdateClient = null;
-        mySVNStatusClient = null;
-        mySVNWCClient = null;
-        mySVNDiffClient = null;
-        mySVNCopyClient = null;
-        mySVNLogClient = null;
+        updateClientManager();
     }
 
     public String getConfigDirectory() throws ClientException {
@@ -1026,21 +1025,6 @@ public class SVNClient implements SVNClientInterface {
         return Version.getMicroVersion();
     }
 
-    protected ISVNOptions getSVNOptions(){
-        if (myOptions == null) {
-            File dir = myConfigDir == null ? null : new File(myConfigDir);
-            myOptions = SVNWCUtil.createDefaultOptions(dir, true);
-            if (myUserName != null && myPassword != null) {
-                myOptions.setDefaultAuthentication(myUserName, myPassword);
-            }
-            if(myPrompt != null){
-                myOptions.setAuthenticationProvider(new PromptAuthenticationProvider(myPrompt));
-            }
-            myOptions.setRuntimeAuthenticationCache(ourCredentialsCache);
-        }
-        return myOptions;
-    }
-
     protected Notify getNotify() {
         return myNotify;
     }
@@ -1082,54 +1066,42 @@ public class SVNClient implements SVNClientInterface {
         }
         return mySVNEventListener;
     }
+    
+    protected SVNClientManager getClientManager() {
+        if (myClientManager == null) {
+            updateClientManager();
+            myClientManager = SVNClientManager.newInstance(myOptions, myAuthenticationManager);
+            myClientManager.setEventHandler(getEventListener());
+        }
+        return myClientManager;
+    }
 
     protected SVNCommitClient getSVNCommitClient(){
-        if(mySVNCommitClient == null){
-            mySVNCommitClient = new SVNCommitClient(getSVNOptions(), getEventListener());
-        }
-        return mySVNCommitClient;
+        return getClientManager().getCommitClient();
     }
 
     protected SVNUpdateClient getSVNUpdateClient(){
-        if(mySVNUpdateClient == null){
-            mySVNUpdateClient = new SVNUpdateClient(getSVNOptions(), getEventListener());
-        }
-        return mySVNUpdateClient;
+        return getClientManager().getUpdateClient();
     }
 
     protected SVNStatusClient getSVNStatusClient(){
-        if(mySVNStatusClient == null){
-            mySVNStatusClient = new SVNStatusClient(getSVNOptions(), getEventListener());
-        }
-        return mySVNStatusClient;
+        return getClientManager().getStatusClient();
     }
 
     protected SVNWCClient getSVNWCClient(){
-        if(mySVNWCClient == null){
-            mySVNWCClient = new SVNWCClient(getSVNOptions(), getEventListener());
-        }
-        return mySVNWCClient;
+        return getClientManager().getWCClient();
     }
 
     protected SVNDiffClient getSVNDiffClient(){
-        if(mySVNDiffClient == null){
-            mySVNDiffClient = new SVNDiffClient(getSVNOptions(), getEventListener());
-        }
-        return mySVNDiffClient;
+        return getClientManager().getDiffClient();
     }
 
     protected SVNCopyClient getSVNCopyClient(){
-        if(mySVNCopyClient == null){
-            mySVNCopyClient = new SVNCopyClient(getSVNOptions(), getEventListener());
-        }
-        return mySVNCopyClient;
+        return getClientManager().getCopyClient();
     }
 
     protected SVNLogClient getSVNLogClient(){
-        if(mySVNLogClient == null){
-            mySVNLogClient = new SVNLogClient(getSVNOptions(), getEventListener());
-        }
-        return mySVNLogClient;
+        return getClientManager().getLogClient();
     }
 
     protected CommitMessage getCommitMessage() {

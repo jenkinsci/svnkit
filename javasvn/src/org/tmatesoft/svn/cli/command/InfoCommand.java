@@ -48,7 +48,7 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
         if (getCommandLine().hasArgument(SVNArgument.RECURSIVE)) {
             revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         }
-        SVNWCClient wcClient = new SVNWCClient(getOptions(), null);
+        SVNWCClient wcClient = getClientManager().getWCClient();
         myOut = out;
 
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {

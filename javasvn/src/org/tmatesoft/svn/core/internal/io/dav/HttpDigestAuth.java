@@ -12,7 +12,7 @@
 package org.tmatesoft.svn.core.internal.io.dav;
 
 import org.tmatesoft.svn.core.io.SVNAuthenticationException;
-import org.tmatesoft.svn.core.wc.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -36,9 +36,9 @@ public class HttpDigestAuth {
     private String myCnonce;
     private String myQop;
 
-    private SVNAuthentication myCredentials;
+    private SVNPasswordAuthentication myCredentials;
 
-    public HttpDigestAuth(SVNAuthentication credentials, Map challenge) throws SVNAuthenticationException {
+    public HttpDigestAuth(SVNPasswordAuthentication credentials, Map challenge) throws SVNAuthenticationException {
         myChallenge = challenge;
         String qop = (String) challenge.get("qop");
         String selectedQop = null;

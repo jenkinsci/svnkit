@@ -27,7 +27,8 @@ public class ResolvedCommand extends SVNCommand {
 
     public void run(final PrintStream out, PrintStream err) throws SVNException {
         final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
-        SVNWCClient wcClient  = new SVNWCClient(new SVNCommandEventProcessor(out, err, false));
+        getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
+        SVNWCClient wcClient  = getClientManager().getWCClient();
         boolean error = false;
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);

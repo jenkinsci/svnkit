@@ -16,7 +16,7 @@ import java.util.Map;
  * @version 1.0
  * @author TMate Software Ltd.
  */
-public interface ISVNOptions extends ISVNAuthenticationManager {
+public interface ISVNOptions {
 
     public boolean isUseCommitTimes();
 
@@ -25,6 +25,10 @@ public interface ISVNOptions extends ISVNAuthenticationManager {
     public boolean isUseAutoProperties();
 
     public void setUseAutoProperties(boolean useAutoProperties);
+    
+    public boolean isAuthStorageEnabled();
+    
+    public void setAuthStorageEnabled(boolean storeAuth);
 
     public boolean isIgnored(String name);
 
@@ -45,10 +49,4 @@ public interface ISVNOptions extends ISVNAuthenticationManager {
     public void setAutoProperty(String pattern, String properties);
 
     public Map applyAutoProperties(String fileName, Map target);
-
-    public boolean matches(String pattern, String fileName);
-
-    public boolean isModified();
-
-    public void save(boolean forceSave);
 }

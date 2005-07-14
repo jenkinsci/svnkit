@@ -11,7 +11,20 @@
  */
 package org.tmatesoft.svn.examples.repository;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.diff.ISVNRAData;
 import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -28,21 +41,8 @@ import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.PathUtil;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 /*
  * This example program illustrates how you can export a clean directory tree 
  * from a repository using the SVNRepository.update method. Actually, a checkout 
@@ -167,15 +167,14 @@ public class Export {
          * SVNRepository since this low-level class is not intended to work
          * with working copy config files
          */
-        ISVNOptions myOptions = SVNWCUtil.createDefaultOptions(true);
-        myOptions.setDefaultAuthentication(name, password);
+        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name, password);
 
         /*
          * Sets the manager of the user's authentication information that will 
          * be used to authenticate the user to the server (if needed) during 
          * operations handled by the SVNRepository.
          */
-        repository.setAuthenticationManager(myOptions);
+        repository.setAuthenticationManager(authManager);
 
         SVNNodeKind nodeKind = null;
         try {

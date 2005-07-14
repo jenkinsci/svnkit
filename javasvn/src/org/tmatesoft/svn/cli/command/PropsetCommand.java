@@ -71,7 +71,7 @@ public class PropsetCommand extends SVNCommand {
             pathIndex = 1;
         }
 
-        SVNWCClient wcClient = new SVNWCClient(getOptions(), null);
+        SVNWCClient wcClient = getClientManager().getWCClient();
 
         if (revProps) {
             SVNRevision revision = SVNRevision.UNDEFINED;

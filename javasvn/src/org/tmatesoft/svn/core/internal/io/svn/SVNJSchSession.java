@@ -10,16 +10,6 @@
  */
 package org.tmatesoft.svn.core.internal.io.svn;
 
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SocketFactory;
-import com.jcraft.jsch.UserInfo;
-import org.tmatesoft.svn.core.io.SVNAuthenticationException;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.wc.SVNAuthentication;
-import org.tmatesoft.svn.util.DebugLog;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -28,6 +18,17 @@ import java.net.UnknownHostException;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
+
+import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
+import org.tmatesoft.svn.core.io.SVNAuthenticationException;
+import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.util.DebugLog;
+
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SocketFactory;
+import com.jcraft.jsch.UserInfo;
 
 /**
  * @version 1.0
@@ -40,7 +41,7 @@ public class SVNJSchSession {
     private static Map ourSessionsPool = new Hashtable();
 
     static Session getSession(SVNRepositoryLocation location,
-            SVNAuthentication credentials) throws SVNAuthenticationException {
+            SVNSSHAuthentication credentials) throws SVNAuthenticationException {
         if ("".equals(credentials.getUserName())
                 || credentials.getUserName() == null) {
             throw new SVNAuthenticationException(
@@ -59,8 +60,8 @@ public class SVNJSchSession {
                 JSch jsch = new JSch();
                 String privateKey = null;
                 String passphrase = null;
-                if (credentials.getSSHKeyFile() != null) {
-                    privateKey = credentials.getSSHKeyFile().getAbsolutePath();
+                if (credentials.getPrivateKeyFile() != null) {
+                    privateKey = credentials.getPrivateKeyFile().getAbsolutePath();
                     passphrase = credentials.getPassphrase();
                     if (privateKey != null && passphrase != null) {
                         jsch.addIdentity(privateKey, passphrase);

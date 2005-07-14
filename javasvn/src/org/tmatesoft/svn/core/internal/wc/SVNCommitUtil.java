@@ -118,7 +118,8 @@ public class SVNCommitUtil {
     }
 
     public static SVNWCAccess createCommitWCAccess(File[] paths,
-            boolean recursive, boolean force, Collection relativePaths)
+            boolean recursive, boolean force, Collection relativePaths,
+            SVNStatusClient statusClient)
             throws SVNException {
         File wcRoot = null;
         for (int i = 0; i < paths.length; i++) {
@@ -197,7 +198,6 @@ public class SVNCommitUtil {
         SVNDirectory anchor = new SVNDirectory(null, "", baseDir);
         SVNWCAccess baseAccess = new SVNWCAccess(anchor, anchor, "");
         if (!recursive && !force) {
-            SVNStatusClient statusClient = new SVNStatusClient();
             for (Iterator targets = relativePaths.iterator(); targets.hasNext();) {
                 String targetPath = (String) targets.next();
                 File targetFile = new File(baseDir, targetPath);

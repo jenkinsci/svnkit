@@ -77,88 +77,6 @@ public class SVNCommitClient extends SVNBasicClient {
     private ISVNCommitHandler myCommitHandler;
     
     /**
-     * Constructs an <span class="style0">SVNCommitClient</span> that will
-     * use default options (<span class="style0">ISVNOptions</span>) and default 
-     * repository factory (<span class="style0">ISVNRepositoryFactory</span>) and
-     * won't be set any event handler (<span class="style0">ISVNEventHandler</span>).
-     * 
-     * <p>
-     * Options are used to provide user's authentication information (since 
-     * <span class="style0">ISVNOptions</span> extends 
-     * <span class="style0">ISVNAuthenticationManager</span>). How to do it, please, see
-     * the description for <span class="style0">ISVNOptions</span>.
-     * By default options are configured with the <span class="style2">SVN</span>'s 
-     * configuration/authentication storage . 
-     * 
-     * <p>
-     * The default repository factory implementation uses 
-     * {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory SVNRepositoryFactory} to 
-     * construct {@link org.tmatesoft.svn.core.io.SVNRepository SVNRepository} objects
-     * when an access to a repository is needed.
-     * 
-     * <p>
-     * An <span class="style0">ISVNEventHandler</span> implementation can be specified
-     * later on by calling the parent's (<span class="style0">SVNBasicClient</span>'s)
-     * method - {@link SVNBasicClient#setEventHandler(ISVNEventHandler)}.
-     * 
-     * @see #SVNCommitClient(ISVNEventHandler)
-     * @see	ISVNOptions
-     * @see ISVNRepositoryFactory
-     * @see ISVNEventHandler  
-     */
-    public SVNCommitClient() {
-    }
-    
-    /**
-     * Constructs an <span class="style0">SVNCommitClient</span> provided an 
-     * <span class="style0">ISVNEventHandler</span> implementation. This handler
-     * will be dispatched events represented by the class <span class="style0">SVNEvent</span>.  
-     * Events are initiated during a run of commit-related methods and passed
-     * to the implemntor's event handler where using <span class="style0">SVNEvent</span>'s
-     * methods the implementor can obtain detailed information on the current action of the running
-     * operation. To do it {@link SVNEvent#getAction()} is used which returns an 
-     * <span class="style0">SVNEventAction</span>. Then to concretize the commit action
-     * that was returned it should be compared with static fields of 
-     * <span class="style0">SVNEventAction</span> that start with <span class="style3"><i>COMMIT_</i></span> - 
-     * exactly that will let the implementor know about the current action. The last
-     * note is that all calls to an event handler are synchronous.
-     * 
-     * <p>      
-     * <span class="style0">SVNCommitClient</span> will use default options
-     * and repository factory (see details for {@link #SVNCommitClient()}). 
-     * 
-     * @param eventDispatcher	an implementor's handler that will be dispatched
-     * 							events for processing
-     * 
-     * @see	  SVNEvent
-     * @see	  SVNEventAction
-     */
-    public SVNCommitClient(ISVNEventHandler eventDispatcher) {
-        super(eventDispatcher);
-    }
-    
-    /**
-     * Constructs an <span class="style0">SVNCommitClient</span> provided an 
-     * event handler and initial options. What options and event handler are for, please,
-     * see {@link SVNCommitClient#SVNCommitClient()} and {@link #SVNCommitClient(ISVNEventHandler)}.  
-     * 
-     * <p>      
-     * This <span class="style0">SVNCommitClient</span> will use default repository factory
-     * (that is {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory})
-     * for constructing {@link org.tmatesoft.svn.core.io.SVNRepository SVNRepository} objects
-     * when an access to a repository is needed. 
-     *  
-     * @param options			an implementor's initial options for authentication
-     * 							and 
-     * @param eventDispatcher	an implementor's handler that will be dispatched
-     * 							events for processing
-     * @see	  #SVNCommitClient(ISVNRepositoryFactory, ISVNOptions, ISVNEventHandler)
-     */
-    public SVNCommitClient(ISVNOptions options, ISVNEventHandler eventDispatcher) {
-        super(options, eventDispatcher);
-    }
-    
-    /**
      * Constructs an <span class="style0">SVNCommitClient</span> provided an 
      * event handler, initial options and a repository factory. What options, event handler and
      * repository factory are for, please, see {@link SVNCommitClient#SVNCommitClient()} 
@@ -166,11 +84,9 @@ public class SVNCommitClient extends SVNBasicClient {
      * 
      * @param repositoryFactory	
      * @param options
-     * @param eventDispatcher
      */
-    public SVNCommitClient(ISVNRepositoryFactory repositoryFactory,
-            ISVNOptions options, ISVNEventHandler eventDispatcher) {
-        super(repositoryFactory, options, eventDispatcher);
+    protected SVNCommitClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
+        super(repositoryFactory, options);
     }
     
     /**
@@ -715,8 +631,9 @@ public class SVNCommitClient extends SVNBasicClient {
             return SVNCommitPacket.EMPTY;
         }
         Set targets = new TreeSet();
+        SVNStatusClient statusClient = new SVNStatusClient(getRepositoryFactory(), getOptions());
         SVNWCAccess wcAccess = SVNCommitUtil.createCommitWCAccess(paths,
-                recursive, force, targets);
+                recursive, force, targets, statusClient);
         try {
             Map lockTokens = new HashMap();
             SVNCommitItem[] commitItems = SVNCommitUtil

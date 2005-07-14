@@ -20,10 +20,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import org.tmatesoft.svn.core.internal.wc.SVNOptions;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.DebugLog;
 
 /**
@@ -37,6 +38,7 @@ public abstract class SVNCommand {
 
     private static Map ourCommands;
     private boolean myIsStoreCreds;
+    private SVNClientManager myClientManager;
 
     protected SVNCommandLine getCommandLine() {
         return myCommandLine;
@@ -51,12 +53,19 @@ public abstract class SVNCommand {
 
     public abstract void run(PrintStream out, PrintStream err) throws SVNException;
 
-    protected ISVNOptions getOptions() {
+    private ISVNOptions getOptions() {
         String dir = (String) getCommandLine().getArgumentValue(SVNArgument.CONFIG_DIR);
         File dirFile = dir == null ? null : new File(dir);
-        SVNOptions options = new SVNOptions(dirFile, false, myUserName, myPassword);
+        ISVNOptions options = SVNWCUtil.createDefaultOptions(dirFile, true);
         options.setAuthStorageEnabled(myIsStoreCreds);
         return options;
+    }
+    
+    protected SVNClientManager getClientManager() {
+        if (myClientManager == null) {
+            myClientManager = SVNClientManager.newInstance(getOptions(), myUserName, myPassword);
+        }
+        return myClientManager;
     }
 
     public static SVNCommand getCommand(String name) {

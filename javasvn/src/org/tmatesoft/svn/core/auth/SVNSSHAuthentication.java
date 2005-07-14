@@ -42,7 +42,7 @@ public class SVNSSHAuthentication extends SVNAuthentication {
         return myPassphrase;
     }
     
-    public File getPrivateKey() {
+    public File getPrivateKeyFile() {
         return myPrivateKey;
     }
 

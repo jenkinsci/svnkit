@@ -28,7 +28,8 @@ public class RevertCommand extends SVNCommand {
     public final void run(final PrintStream out, final PrintStream err) throws SVNException {
         final boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
         
-        SVNWCClient wcClient = new SVNWCClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
+        getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
+        SVNWCClient wcClient = getClientManager().getWCClient();
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
             wcClient.doRevert(new File(absolutePath), recursive);

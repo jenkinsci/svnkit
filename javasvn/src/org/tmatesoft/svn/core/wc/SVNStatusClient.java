@@ -53,20 +53,9 @@ import java.util.Stack;
  * 
  */
 public class SVNStatusClient extends SVNBasicClient {
-    public SVNStatusClient() {
-    }
-
-    public SVNStatusClient(ISVNEventHandler eventDispatcher) {
-        super(eventDispatcher);
-    }
-
-    public SVNStatusClient(ISVNOptions options, ISVNEventHandler eventDispatcher) {
-        super(options, eventDispatcher);
-    }
-
-    public SVNStatusClient(ISVNRepositoryFactory repositoryFactory,
-                           ISVNOptions options, ISVNEventHandler eventDispatcher) {
-        super(repositoryFactory, options, eventDispatcher);
+ 
+    protected SVNStatusClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
+        super(repositoryFactory, options);
     }
     
     /**

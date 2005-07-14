@@ -18,7 +18,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.StringTokenizer;
 
-import org.tmatesoft.svn.core.internal.io.dav.IDAVSSLManager;
+import org.tmatesoft.svn.core.auth.ISVNSSLManager;
 
 /**
  * <code>SocketFactory</code> is a utility class that represents a custom
@@ -56,12 +56,12 @@ public class SocketFactory {
         }
     }
 
-    public static Socket createSSLSocket(IDAVSSLManager manager, String host,
+    public static Socket createSSLSocket(ISVNSSLManager manager, String host,
             int port) throws IOException {
         int attempts = 3;
         while (true) {
             try {
-                return manager.getSSLContext(host, port).getSocketFactory()
+                return manager.getSSLContext().getSocketFactory()
                         .createSocket(createAddres(host), port);
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {
@@ -78,13 +78,12 @@ public class SocketFactory {
         }
     }
 
-    public static Socket createSSLSocket(IDAVSSLManager manager, String host,
+    public static Socket createSSLSocket(ISVNSSLManager manager, String host,
             int port, Socket socket) throws IOException {
         int attempts = 3;
         while (true) {
             try {
-                return manager.getSSLContext(host, port).getSocketFactory()
-                        .createSocket(socket, host, port, true);
+                return manager.getSSLContext().getSocketFactory().createSocket(socket, host, port, true);
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {
                     attempts--;

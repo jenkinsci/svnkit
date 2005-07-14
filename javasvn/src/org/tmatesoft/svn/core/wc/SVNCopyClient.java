@@ -55,20 +55,8 @@ public class SVNCopyClient extends SVNBasicClient {
 
     private ISVNCommitHandler myCommitHandler;
 
-    public SVNCopyClient() {
-    }
-
-    public SVNCopyClient(ISVNEventHandler eventDispatcher) {
-        super(eventDispatcher);
-    }
-
-    public SVNCopyClient(ISVNOptions options, ISVNEventHandler eventDispatcher) {
-        super(options, eventDispatcher);
-    }
-
-    public SVNCopyClient(ISVNRepositoryFactory repositoryFactory,
-            ISVNOptions options, ISVNEventHandler eventDispatcher) {
-        super(repositoryFactory, options, eventDispatcher);
+    protected SVNCopyClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
+        super(repositoryFactory, options);
     }
 
     public void setCommitHandler(ISVNCommitHandler handler) {

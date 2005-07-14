@@ -10,20 +10,20 @@
  */
 package org.tmatesoft.svn.core.internal.io.svn;
 
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.Session;
-import org.tmatesoft.svn.core.io.SVNAuthenticationException;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNCancelException;
-import org.tmatesoft.svn.core.wc.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.wc.SVNAuthentication;
-import org.tmatesoft.svn.util.DebugLog;
-
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
+import org.tmatesoft.svn.core.io.SVNAuthenticationException;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
+
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.Session;
 
 /**
  * @version 1.0
@@ -48,13 +48,7 @@ public class SVNJSchConnector implements ISVNConnector {
         String realm = repository.getLocation().getProtocol() + "://"
                 + repository.getLocation().getHost() + ":"
                 + repository.getLocation().getPort();
-        SVNAuthentication authentication = authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm);
-        if (authentication == null) {
-            if (authManager.getAuthenticationProvider() == null) {
-                throw new SVNAuthenticationException("svn: Authentication required");
-            }
-            throw new SVNCancelException();
-        }
+        SVNSSHAuthentication authentication = (SVNSSHAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm);
         SVNAuthenticationException lastException = null;
         Session session = null;
 
@@ -66,7 +60,7 @@ public class SVNJSchConnector implements ISVNConnector {
                     continue;
                 }
                 lastException = null;
-                authManager.addAuthentication(realm, authentication, authManager.isAuthStorageEnabled());
+                authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
                 repository.setExternalUserName(authentication.getUserName());
                 break;
             } catch (SVNAuthenticationException e) {
@@ -76,12 +70,9 @@ public class SVNJSchConnector implements ISVNConnector {
                     session = null;
                 }
                 lastException = e;
-                if (e.getMessage() != null
-                        && e.getMessage().toLowerCase().indexOf("Auth") >= 0) {
-                    authentication = authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm);
-                    if (authentication == null) {
-                        throw new SVNCancelException();
-                    }
+                if (e.getMessage() != null  && e.getMessage().toLowerCase().indexOf("auth") >= 0) {
+                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getMessage(), authentication);
+                    authentication = (SVNSSHAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm);
                 } else {
                     throw e;
                 }

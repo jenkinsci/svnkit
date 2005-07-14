@@ -49,7 +49,8 @@ public class MkDirCommand extends SVNCommand {
         if (paths.isEmpty()) {
             return;
         }
-        SVNWCClient wcClient = new SVNWCClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
+        getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
+        SVNWCClient wcClient = getClientManager().getWCClient();
         boolean recursive = !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE);
         for (Iterator files = paths.iterator(); files.hasNext();) {
             File file = (File) files.next();
@@ -73,7 +74,8 @@ public class MkDirCommand extends SVNCommand {
             return;
         }
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
-        SVNCommitClient client = new SVNCommitClient(getOptions(), new SVNCommandEventProcessor(out, err, false));
+        getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
+        SVNCommitClient client = getClientManager().getCommitClient();
         String[] paths = (String[]) urls.toArray(new String[urls.size()]);
         SVNCommitInfo info = client.doMkDir(paths, message == null ? "" : message);
         if (info != SVNCommitInfo.NULL) {
