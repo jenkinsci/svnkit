@@ -11,9 +11,9 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.diff.delta.ISVNDeltaGenerator;
-import org.tmatesoft.svn.core.diff.delta.SVNAllDeltaGenerator;
-import org.tmatesoft.svn.core.diff.delta.SVNSequenceDeltaGenerator;
+import org.tmatesoft.svn.core.internal.diff.delta.ISVNDeltaGenerator;
+import org.tmatesoft.svn.core.internal.diff.delta.SVNAllDeltaGenerator;
+import org.tmatesoft.svn.core.internal.diff.delta.SVNSequenceDeltaGenerator;
 import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;

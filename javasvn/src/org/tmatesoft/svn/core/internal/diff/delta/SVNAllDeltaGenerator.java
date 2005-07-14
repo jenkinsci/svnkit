@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.diff.delta;
+package org.tmatesoft.svn.core.internal.diff.delta;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;

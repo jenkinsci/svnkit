@@ -9,17 +9,32 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.diff.delta;
+package org.tmatesoft.svn.core.internal.diff.delta;
 
-import org.tmatesoft.svn.core.internal.diff.ISVNDeltaConsumer;
-import org.tmatesoft.svn.core.internal.diff.ISVNRAData;
-import org.tmatesoft.svn.core.io.SVNException;
+import java.io.*;
+
+import de.regnis.q.sequence.line.*;
+
+import org.tmatesoft.svn.core.internal.diff.*;
 
 
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public interface ISVNDeltaGenerator {
-	void generateDiffWindow(String commitPath, ISVNDeltaConsumer consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException;
+public class SVNSequenceLineRAData implements QSequenceLineRAData {
+
+	private final ISVNRAData myData;
+
+	public SVNSequenceLineRAData(ISVNRAData myData) {
+		this.myData = myData;
+	}
+
+	public long length() throws IOException {
+		return myData.length();
+	}
+
+	public InputStream read(long offset, long length) throws IOException {
+		return myData.read(offset, length);
+	}
 }
