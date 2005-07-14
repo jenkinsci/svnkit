@@ -11,9 +11,6 @@
  */
 package org.tmatesoft.svn.core.auth;
 
-import org.tmatesoft.svn.core.wc.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.wc.SVNAuthentication;
-
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
