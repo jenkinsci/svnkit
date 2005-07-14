@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;

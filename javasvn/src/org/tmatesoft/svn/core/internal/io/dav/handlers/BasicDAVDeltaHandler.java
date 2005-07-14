@@ -15,8 +15,8 @@ package org.tmatesoft.svn.core.internal.io.dav.handlers;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.Base64;

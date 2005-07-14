@@ -20,7 +20,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Stack;
 
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
 import org.tmatesoft.svn.core.io.ISVNEditor;

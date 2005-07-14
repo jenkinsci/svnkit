@@ -15,7 +15,7 @@ import java.io.*;
 
 import de.regnis.q.sequence.line.*;
 
-import org.tmatesoft.svn.core.diff.*;
+import org.tmatesoft.svn.core.internal.diff.*;
 
 
 /**

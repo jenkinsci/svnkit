@@ -28,8 +28,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;

@@ -19,8 +19,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.io.ISVNCredentials;
 import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNEditor;

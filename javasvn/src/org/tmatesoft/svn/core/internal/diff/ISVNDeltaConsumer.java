@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.diff;
+package org.tmatesoft.svn.core.internal.diff;
 
 import java.io.OutputStream;
 

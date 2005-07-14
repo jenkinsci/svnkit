@@ -11,7 +11,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;

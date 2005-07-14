@@ -20,8 +20,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
 
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVProppatchHandler;
 import org.tmatesoft.svn.core.io.ISVNEditor;

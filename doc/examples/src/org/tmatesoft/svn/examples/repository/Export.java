@@ -12,8 +12,8 @@
 package org.tmatesoft.svn.examples.repository;
 
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.diff.ISVNRAData;
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.diff.ISVNRAData;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;

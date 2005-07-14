@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.ISVNDirectoryEntry;
 import org.tmatesoft.svn.core.ISVNEntry;
 import org.tmatesoft.svn.core.ISVNFileEntry;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;

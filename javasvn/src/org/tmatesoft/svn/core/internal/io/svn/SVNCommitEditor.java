@@ -17,8 +17,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
 
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;

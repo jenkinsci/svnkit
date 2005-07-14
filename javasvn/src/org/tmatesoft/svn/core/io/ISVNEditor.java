@@ -12,7 +12,7 @@
 
 package org.tmatesoft.svn.core.io;
 
-import org.tmatesoft.svn.core.diff.ISVNDeltaConsumer;
+import org.tmatesoft.svn.core.internal.diff.ISVNDeltaConsumer;
 
 /**
  * The <code>ISVNEditor</code> interface provides methods that should be used

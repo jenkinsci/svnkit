@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.internal.io.dav.DAVBaselineInfo;
 import org.tmatesoft.svn.core.internal.io.dav.DAVConnection;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;

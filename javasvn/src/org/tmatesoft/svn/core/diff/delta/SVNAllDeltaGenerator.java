@@ -16,10 +16,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.core.diff.ISVNDeltaConsumer;
-import org.tmatesoft.svn.core.diff.ISVNRAData;
-import org.tmatesoft.svn.core.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.diff.SVNDiffWindowBuilder;
+import org.tmatesoft.svn.core.internal.diff.ISVNDeltaConsumer;
+import org.tmatesoft.svn.core.internal.diff.ISVNRAData;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;
