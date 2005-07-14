@@ -419,14 +419,18 @@ public class SVNMover extends SVNWCClient {
         SVNFileType srcType  = SVNFileType.getType(src);
         SVNFileType dstType  = SVNFileType.getType(dst);
         
-        if (srcType != SVNFileType.NONE) {
-            SVNErrorManager.error("svn: Cannot perform 'virtual' move: '" + src + "' still exists");
+        String opName = move ? "move" : "copy";
+        if (move && srcType != SVNFileType.NONE) {
+            SVNErrorManager.error("svn: Cannot perform 'virtual' " + opName + ": '" + src + "' still exists");
         }
         if (dstType == SVNFileType.NONE) {
-            SVNErrorManager.error("svn: Cannot perform 'virtual' move: '" + dst + "' does not exist");
+            SVNErrorManager.error("svn: Cannot perform 'virtual' " + opName + ": '" + dst + "' does not exist");
         }
         if (dstType == SVNFileType.DIRECTORY) {
-            SVNErrorManager.error("svn: Cannot perform 'virtual' move: '" + dst + "' is a directory");
+            SVNErrorManager.error("svn: Cannot perform 'virtual' " + opName + ": '" + dst + "' is a directory");
+        }
+        if (!move && srcType == SVNFileType.DIRECTORY) {
+            SVNErrorManager.error("svn: Cannot perform 'virtual' " + opName + ": '" + src + "' is a directory");
         }
         
         SVNWCAccess srcAccess = createWCAccess(src);
