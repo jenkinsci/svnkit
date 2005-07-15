@@ -28,14 +28,18 @@ import org.tmatesoft.svn.util.PathUtil;
  * @version 1.0
  * @author TMate Software Ltd.
  */
-public class SVNMover extends SVNWCClient {
+public class SVNMoveClient extends SVNBasicClient {
 
-    public SVNMover(ISVNAuthenticationManager authManager, ISVNOptions options) {
+    private SVNWCClient myWCClient;
+
+    public SVNMoveClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
+        myWCClient = new SVNWCClient(authManager, options);
     }
 
-    protected SVNMover(ISVNRepositoryFactory factory, ISVNOptions options) {
+    protected SVNMoveClient(ISVNRepositoryFactory factory, ISVNOptions options) {
         super(factory, options);
+        myWCClient = new SVNWCClient(factory, options);
     }
 
     public void doMove(File src, File dst) throws SVNException {
@@ -60,11 +64,11 @@ public class SVNMover extends SVNWCClient {
             SVNFileUtil.copy(src, dst, false, false);
 
             // 2. delete in wc.
-            doDelete(src, true, false);
+            myWCClient.doDelete(src, true, false);
         } else if (!srcIsVersioned) {
             // world:wc (add, if dst is 'deleted' it will be replaced)
             SVNFileUtil.rename(src, dst);
-            doAdd(dst, false, false, false, true);
+            myWCClient.doAdd(dst, false, false, false, true);
         } else {
             // wc:wc.
 
@@ -92,11 +96,11 @@ public class SVNMover extends SVNWCClient {
                 // attempt replace.
                 SVNFileUtil.copy(src, dst, false, false);
                 try {
-                    doAdd(dst, false, false, false, true);
+                    myWCClient.doAdd(dst, false, false, false, true);
                 } catch (SVNException e) {
                     // will be thrown on obstruction.
                 }
-                doDelete(src, true, false);
+                myWCClient.doDelete(src, true, false);
                 return;
             }
 
@@ -107,7 +111,7 @@ public class SVNMover extends SVNWCClient {
             if (!sameWC) {
                 // just add dst (at least try to add, files already there).
                 try {
-                    doAdd(dst, false, false, false, true);
+                    myWCClient.doAdd(dst, false, false, false, true);
                 } catch (SVNException e) {
                     // obstruction
                 }
@@ -218,7 +222,7 @@ public class SVNMover extends SVNWCClient {
                     dstAccess.getAnchor().getEntries().save(true);
                     SVNFileUtil.deleteAll(dst);
                     SVNFileUtil.copy(src, dst, false, false);
-                    doAdd(dst, false, false, false, true);
+                    myWCClient.doAdd(dst, false, false, false, true);
                 }
             }
 
@@ -227,7 +231,7 @@ public class SVNMover extends SVNWCClient {
 
             // now delete src (if it is not the same as dst :))
             try {
-                doDelete(src, true, false);
+                myWCClient.doDelete(src, true, false);
             } catch (SVNException e) {
                 //
             }
@@ -255,7 +259,7 @@ public class SVNMover extends SVNWCClient {
             SVNFileUtil.copy(src, dst, false, false);
 
             // 2. delete in wc.
-            doDelete(src, true, false);
+            myWCClient.doDelete(src, true, false);
         } else if (!srcIsVersioned) {
             // world:wc (add, if dst is 'deleted' it will be replaced)
             SVNFileUtil.rename(src, dst);
@@ -263,9 +267,9 @@ public class SVNMover extends SVNWCClient {
             SVNWCAccess dstAccess = SVNWCAccess.create(dst);
             SVNEntry dstEntry = dstAccess.getTargetEntry();
             if (dstEntry != null && dstEntry.isScheduledForDeletion()) {
-                doRevert(dst, true);
+                myWCClient.doRevert(dst, true);
             } else {
-                doAdd(dst, false, false, false, true);
+                myWCClient.doAdd(dst, false, false, false, true);
             }
         } else {
             // wc:wc.
@@ -278,8 +282,8 @@ public class SVNMover extends SVNWCClient {
 
             if (dstEntry != null && dstEntry.isScheduledForDeletion()) {
                 // clear undo.
-                doRevert(dst, true);
-                doDelete(src, true, false);
+                myWCClient.doRevert(dst, true);
+                myWCClient.doDelete(src, true, false);
                 return;
             }
 
@@ -293,7 +297,7 @@ public class SVNMover extends SVNWCClient {
             if (dstEntry != null && dstEntry.getKind() != srcEntry.getKind()) {
                 // ops have no sence->target is obstructed, just export src to
                 // dst and delete src.
-                doDelete(src, true, false);
+                myWCClient.doDelete(src, true, false);
                 return;
             }
 
@@ -301,7 +305,7 @@ public class SVNMover extends SVNWCClient {
             if (!sameWC) {
                 // just add dst (at least try to add, files already there).
                 try {
-                    doAdd(dst, false, false, false, true);
+                    myWCClient.doAdd(dst, false, false, false, true);
                 } catch (SVNException e) {
                     // obstruction
                 }
@@ -404,7 +408,7 @@ public class SVNMover extends SVNWCClient {
                     dstAccess.getAnchor().getEntries().save(true);
                     SVNFileUtil.deleteAll(dst);
                     SVNFileUtil.copy(src, dst, false, false);
-                    doAdd(dst, false, false, false, true);
+                    myWCClient.doAdd(dst, false, false, false, true);
                 }
             }
 
@@ -413,7 +417,7 @@ public class SVNMover extends SVNWCClient {
 
             // now delete src.
             try {
-                doDelete(src, true, false);
+                myWCClient.doDelete(src, true, false);
             } catch (SVNException e) {
                 //
             }
@@ -458,10 +462,10 @@ public class SVNMover extends SVNWCClient {
             srcAccess.close(true);
         }
         if (!move) {
-            doDelete(src, true, false);
+            myWCClient.doDelete(src, true, false);
         }
         if (added) {
-            doAdd(dst, true, false, false, false);            
+            myWCClient.doAdd(dst, true, false, false, false);            
             return;
         }
 

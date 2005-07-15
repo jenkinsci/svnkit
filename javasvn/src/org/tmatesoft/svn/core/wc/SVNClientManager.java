@@ -30,7 +30,7 @@ public class SVNClientManager implements ISVNRepositoryFactory {
     private SVNCopyClient myCopyClient;
     private SVNDiffClient myDiffClient;
     private SVNLogClient myLogClient;
-    private SVNMover myMoveClient;
+    private SVNMoveClient myMoveClient;
     private SVNStatusClient myStatusClient;
     private SVNUpdateClient myUpdateClient;
     private SVNWCClient myWCClient;
@@ -133,9 +133,9 @@ public class SVNClientManager implements ISVNRepositoryFactory {
         return myLogClient;
     }
 
-    public SVNMover getMoveClient() {
+    public SVNMoveClient getMoveClient() {
         if (myMoveClient == null) {
-            myMoveClient = new SVNMover(this, myOptions);
+            myMoveClient = new SVNMoveClient(this, myOptions);
             myMoveClient.setEventHandler(myEventHandler);
         }
         return myMoveClient;
