@@ -92,7 +92,8 @@ class HttpConnection {
             String host = mySVNRepositoryLocation.getHost();
             int port = mySVNRepositoryLocation.getPort();
             myProxyAuth = myAuthManager != null ? myAuthManager.getProxyManager(mySVNRepositoryLocation.toCanonicalForm()) : null;
-            ISVNSSLManager sslManager = myAuthManager != null ? myAuthManager.getSSLManager(mySVNRepositoryLocation.toCanonicalForm()) : null;
+            ISVNSSLManager sslManager = myAuthManager != null && isSecured() ? 
+                    myAuthManager.getSSLManager(mySVNRepositoryLocation.toCanonicalForm()) : null;
             if (myProxyAuth != null && myProxyAuth.getProxyHost() != null) {
                 mySocket = SocketFactory.createPlainSocket(myProxyAuth.getProxyHost(), myProxyAuth.getProxyPort());
                 if (isSecured()) {
