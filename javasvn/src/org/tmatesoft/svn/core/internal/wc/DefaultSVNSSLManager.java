@@ -219,6 +219,10 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
         }
         SVNProperties props = new SVNProperties(file, "");
         try {
+            String storedRealm = props.getPropertyValue("svn:realmstring");
+            if (!realm.equals(storedRealm)) {
+                return null;
+            }
             return props.getPropertyValue("ascii_cert");
         } catch (SVNException e) {
         }

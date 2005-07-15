@@ -57,7 +57,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         }
         
         myProviders = new ISVNAuthenticationProvider[4];
-        if (userName != null) {
+        if (userName != null && !"".equals(userName.trim())) {
             // 'default' provider.
             password = password == null ? "" : password;
             ISVNAuthenticationProvider dumbProvider = new DumbAuthenticationProvider(userName, password, myIsStoreAuth);
@@ -303,11 +303,14 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     if (storedRealm == null || !storedRealm.equals(realm)) {
                         return null;
                     }
+                    String userName = props.getPropertyValue("username");
+                    if (userName == null || "".equals(userName.trim())) {
+                        return null;
+                    }
                     if ("wincrypt".equals(props.getPropertyValue("passtype"))) {
                         return null;
                     }
                     String password = props.getPropertyValue("password");
-                    String userName = props.getPropertyValue("username");
                     String path = props.getPropertyValue("key");
                     String passphrase = props.getPropertyValue("passphrase");
                     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
