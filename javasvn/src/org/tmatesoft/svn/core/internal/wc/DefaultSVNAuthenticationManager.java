@@ -176,6 +176,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     
     protected SVNConfigFile getServersFile() {
         if (myServersFile == null) {
+            SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
             myServersFile = new SVNConfigFile(new File(myConfigDirectory, "servers"));
         }
         return myServersFile;

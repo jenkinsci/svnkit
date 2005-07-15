@@ -11,15 +11,20 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
+
+import org.tmatesoft.svn.core.io.SVNException;
 
 /**
  * @version 1.0
@@ -28,9 +33,7 @@ import java.util.HashMap;
 public class SVNConfigFile {
 
     private File myFile;
-
     private String[] myLines;
-
     private long myLastModified;
 
     public SVNConfigFile(File file) {
@@ -234,6 +237,7 @@ public class SVNConfigFile {
 
     private String[] doLoad(File file) {
         if (!file.isFile() || !file.canRead()) {
+            // TODO try to save default text and reload.
             return new String[0];
         }
         BufferedReader reader = null;
@@ -250,5 +254,44 @@ public class SVNConfigFile {
             SVNFileUtil.closeFile(reader);
         }
         return (String[]) lines.toArray(new String[lines.size()]);
+    }
+    
+    public static void createDefaultConfiguration(File configDir) {
+        if (!configDir.isDirectory()) {
+            if (!configDir.mkdirs()) {
+                return;
+            }
+        }
+        File configFile = new File(configDir, "config");
+        File serversFile = new File(configDir, "servers");
+        File readmeFile = new File(configDir, "README.txt");
+        
+        writeFile("/org/tmatesoft/svn/core/internal/wc/config/config", configFile);
+        writeFile("/org/tmatesoft/svn/core/internal/wc/config/servers", serversFile);
+        writeFile("/org/tmatesoft/svn/core/internal/wc/config/README.txt", readmeFile);
+    }
+
+    private static void writeFile(String url, File configFile) {
+        if (configFile.exists()) {
+            return;
+        }
+        BufferedReader is = new BufferedReader(new InputStreamReader(SVNConfigFile.class.getResourceAsStream(url)));
+        String eol = System.getProperty("line.separator", "\n");
+        Writer os = null;
+        try {
+            os = new BufferedWriter(new OutputStreamWriter(SVNFileUtil.openFileForWriting(configFile)));
+            String line;
+            while((line = is.readLine()) != null) {
+                os.write(line);
+                os.write(eol);
+            }
+        } catch (IOException e) {
+            //
+        } catch (SVNException e) {
+            //
+        } finally {
+            SVNFileUtil.closeFile(os);
+            SVNFileUtil.closeFile(is);
+        }
     }
 }

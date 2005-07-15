@@ -227,6 +227,7 @@ public class DefaultSVNOptions implements ISVNOptions {
 
     private SVNConfigFile getConfigFile() {
         if (myConfigFile == null) {
+            SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
             myConfigFile = new SVNConfigFile(new File(myConfigDirectory, "config"));
         }
         return myConfigFile;
