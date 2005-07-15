@@ -24,9 +24,9 @@ public interface ISVNAuthenticationManager {
 
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider);
     
-    public ISVNProxyManager getProxyManager(String url);
+    public ISVNProxyManager getProxyManager(String url) throws SVNException;
     
-    public ISVNSSLManager getSSLManager(String url);
+    public ISVNSSLManager getSSLManager(String url) throws SVNException;
     
     public SVNAuthentication getFirstAuthentication(String kind, String realm) throws SVNException;
 

@@ -19,6 +19,8 @@ import java.net.UnknownHostException;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.SVNException;
 
 /**
  * <code>SocketFactory</code> is a utility class that represents a custom
@@ -35,8 +37,7 @@ import org.tmatesoft.svn.core.auth.ISVNSSLManager;
  */
 public class SocketFactory {
 
-    public static Socket createPlainSocket(String host, int port)
-            throws IOException {
+    public static Socket createPlainSocket(String host, int port) throws SVNException {
         int attempts = 3;
         while (true) {
             try {
@@ -47,39 +48,40 @@ public class SocketFactory {
                     DebugLog.log("SOCKET: attempting to reconnect... ("
                             + attempts + ")");
                     if (attempts <= 0) {
-                        throw timeOut;
+                        SVNErrorManager.error("svn: Connection timeout");
                     }
                     continue;
                 }
-                throw timeOut;
+                SVNErrorManager.error("svn: Connection failed: '" + timeOut.getMessage() + "'");
+            } catch (IOException e) {
+                SVNErrorManager.error("svn: " + e.getMessage());
             }
         }
     }
 
-    public static Socket createSSLSocket(ISVNSSLManager manager, String host,
-            int port) throws IOException {
+    public static Socket createSSLSocket(ISVNSSLManager manager, String host, int port) throws SVNException {
         int attempts = 3;
         while (true) {
             try {
-                return manager.getSSLContext().getSocketFactory()
-                        .createSocket(createAddres(host), port);
+                return manager.getSSLContext().getSocketFactory().createSocket(createAddres(host), port);
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {
                     attempts--;
-                    DebugLog.log("SOCKET: attempting to reconnect... ("
-                            + attempts + ")");
+                    DebugLog.log("SOCKET: attempting to reconnect... (" + attempts + ")");
                     if (attempts <= 0) {
-                        throw timeOut;
+                        SVNErrorManager.error("svn: Connection timeout");
                     }
                     continue;
                 }
-                throw timeOut;
+                SVNErrorManager.error("svn: Connection failed: '" + timeOut.getMessage() + "'");
+            } catch (IOException e) {
+                SVNErrorManager.error("svn: " + e.getMessage());
             }
         }
     }
 
     public static Socket createSSLSocket(ISVNSSLManager manager, String host,
-            int port, Socket socket) throws IOException {
+            int port, Socket socket) throws SVNException {
         int attempts = 3;
         while (true) {
             try {
@@ -87,14 +89,15 @@ public class SocketFactory {
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {
                     attempts--;
-                    DebugLog.log("SOCKET: attempting to reconnect... ("
-                            + attempts + ")");
+                    DebugLog.log("SOCKET: attempting to reconnect... ("+ attempts + ")");
                     if (attempts <= 0) {
-                        throw timeOut;
+                        SVNErrorManager.error("svn: Connection timeout");
                     }
                     continue;
                 }
-                throw timeOut;
+                SVNErrorManager.error("svn: Connection failed: '" + timeOut.getMessage() + "'");
+            } catch (IOException e) {
+                SVNErrorManager.error("svn: " + e.getMessage());
             }
         }
     }

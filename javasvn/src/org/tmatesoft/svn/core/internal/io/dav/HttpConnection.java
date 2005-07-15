@@ -12,33 +12,6 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import org.tmatesoft.svn.core.io.SVNAuthenticationException;
-import org.tmatesoft.svn.core.io.SVNCancelException;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNProxyManager;
-import org.tmatesoft.svn.core.auth.ISVNSSLManager;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.util.Base64;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.LoggingInputStream;
-import org.tmatesoft.svn.util.LoggingOutputStream;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.SocketFactory;
-import org.tmatesoft.svn.util.Version;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXNotSupportedException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.helpers.DefaultHandler;
-
-import javax.xml.parsers.FactoryConfigurationError;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -55,6 +28,35 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
+
+import javax.xml.parsers.FactoryConfigurationError;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNProxyManager;
+import org.tmatesoft.svn.core.auth.ISVNSSLManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.SVNAuthenticationException;
+import org.tmatesoft.svn.core.io.SVNCancelException;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.util.Base64;
+import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.LoggingInputStream;
+import org.tmatesoft.svn.util.LoggingOutputStream;
+import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.SocketFactory;
+import org.tmatesoft.svn.util.Version;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * @author TMate Software Ltd.
@@ -81,7 +83,7 @@ class HttpConnection {
         myAuthManager = repos.getAuthenticationManager();
     }
 
-    public void connect() throws IOException {
+    public void connect() throws SVNException {
         if (mySocket == null || isStale()) {
             if (mySocket != null) {
                 DebugLog.log("connection is silently closed by server, forcing reconnect.");
@@ -98,17 +100,22 @@ class HttpConnection {
                     if (myProxyAuth.getProxyUserName() != null && myProxyAuth.getProxyPassword() != null) {
                         props.put("Proxy-Authorization", getProxyAuthString(myProxyAuth.getProxyUserName(), myProxyAuth.getProxyPassword()));
                     }
-                    myOutputStream = DebugLog.getLoggingOutputStream("http", mySocket.getOutputStream());
-                    sendHeader("CONNECT", mySVNRepositoryLocation.getHost() + ":" + mySVNRepositoryLocation.getPort(), props, null);
-                    myOutputStream.flush();
-                    DAVStatus status = readHeader(new HashMap());
-                    if (status != null && status.getResponseCode() == 200) {
-                        myInputStream = null;
-                        myOutputStream = null;
-                        mySocket = SocketFactory.createSSLSocket(sslManager, host, port, mySocket);
-                        return;
+                    DAVStatus status = null;
+                    try {
+                        myOutputStream = DebugLog.getLoggingOutputStream("http", mySocket.getOutputStream());
+                        sendHeader("CONNECT", mySVNRepositoryLocation.getHost() + ":" + mySVNRepositoryLocation.getPort(), props, null);
+                        myOutputStream.flush();
+                        status = readHeader(new HashMap());
+                        if (status != null && status.getResponseCode() == 200) {
+                            myInputStream = null;
+                            myOutputStream = null;
+                            mySocket = SocketFactory.createSSLSocket(sslManager, host, port, mySocket);
+                            return;
+                        }
+                    } catch (IOException e) {
+                        SVNErrorManager.error("svn: Cannot establish connection to proxy server: '" + e.getMessage() + "'");
                     }
-                    throw new IOException("couldn't establish http tunnel for proxied secure connection: " + (status != null ? status.getErrorText() + "" : " for unknow reason"));
+                    SVNErrorManager.error("svn: Cannot establish http tunnel for proxied secure connection: " + (status != null ? status.getErrorText() + "" : " for unknow reason"));
                 }
             } else {
                 mySocket = isSecured() ? SocketFactory.createSSLSocket(sslManager, host, port) : SocketFactory.createPlainSocket(host, port);
@@ -120,7 +127,7 @@ class HttpConnection {
         return "https".equals(mySVNRepositoryLocation.getProtocol());
     }
 
-    private boolean isStale() throws IOException {
+    private boolean isStale() throws SVNException {
         boolean isStale = true;
         if (mySocket != null) {
             isStale = false;
@@ -142,8 +149,7 @@ class HttpConnection {
                 }
             } catch (InterruptedIOException e) {
                 if (!SocketTimeoutException.class.isInstance(e)) {
-                    throw e;
-
+                    SVNErrorManager.error("svn: Connection timeout while connecting to '" + mySVNRepositoryLocation.toCanonicalForm() + "'");
                 }
             } catch (IOException e) {
                 isStale = true;
@@ -698,7 +704,7 @@ class HttpConnection {
         return map;
     }
 
-    private void acknowledgeSSLContext(boolean accepted) {
+    private void acknowledgeSSLContext(boolean accepted) throws SVNException {
         if (mySVNRepositoryLocation == null || !"https".equalsIgnoreCase(mySVNRepositoryLocation.getProtocol())) {
             return;
         }
