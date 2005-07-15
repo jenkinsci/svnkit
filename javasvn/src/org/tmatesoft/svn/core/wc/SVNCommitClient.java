@@ -11,6 +11,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
@@ -76,6 +77,10 @@ public class SVNCommitClient extends SVNBasicClient {
 
     private ISVNCommitHandler myCommitHandler;
     
+    public SVNCommitClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
+        super(authManager, options);
+    }
+
     /**
      * Constructs an <span class="style0">SVNCommitClient</span> provided an 
      * event handler, initial options and a repository factory. What options, event handler and

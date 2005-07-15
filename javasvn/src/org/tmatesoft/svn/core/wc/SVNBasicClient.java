@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -48,6 +49,18 @@ public class SVNBasicClient implements ISVNEventHandler {
     private boolean myIsCommandRunning;
     private boolean myIsLeaveConflictsUnresolved;
 
+    protected SVNBasicClient(final ISVNAuthenticationManager authManager, ISVNOptions options) {
+        this(new ISVNRepositoryFactory() {
+
+            public SVNRepository createRepository(String url) throws SVNException {
+                SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
+                SVNRepository repository = SVNRepositoryFactory.create(location);
+                repository.setAuthenticationManager(authManager);
+                return repository;
+            }
+            
+        }, options);
+    }
 
     protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
         myRepositoryFactory = repositoryFactory;
@@ -78,7 +91,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return myIsLeaveConflictsUnresolved;
     }
 
-    protected void setEventHandler(ISVNEventHandler dispatcher) {
+    public void setEventHandler(ISVNEventHandler dispatcher) {
         myEventDispatcher = dispatcher;
     }
 

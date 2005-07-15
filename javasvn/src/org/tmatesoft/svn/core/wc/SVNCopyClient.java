@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
@@ -54,6 +55,10 @@ import org.tmatesoft.svn.util.PathUtil;
 public class SVNCopyClient extends SVNBasicClient {
 
     private ISVNCommitHandler myCommitHandler;
+
+    public SVNCopyClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
+        super(authManager, options);
+    }
 
     protected SVNCopyClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
         super(repositoryFactory, options);

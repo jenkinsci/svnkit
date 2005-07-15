@@ -10,18 +10,25 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.wc.*;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.PathUtil;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
+
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNReporter;
+import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNStatusReporter;
+import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * This class provides methods to get information on the status of Working Copy items.
@@ -54,6 +61,10 @@ import java.util.Stack;
  */
 public class SVNStatusClient extends SVNBasicClient {
  
+    public SVNStatusClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
+        super(authManager, options);
+    }
+
     protected SVNStatusClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
         super(repositoryFactory, options);
     }

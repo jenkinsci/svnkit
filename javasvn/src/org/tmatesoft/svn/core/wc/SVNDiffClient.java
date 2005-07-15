@@ -11,6 +11,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -41,6 +42,10 @@ import java.util.Map;
 public class SVNDiffClient extends SVNBasicClient {
 
     private ISVNDiffGenerator myDiffGenerator;
+
+    public SVNDiffClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
+        super(authManager, options);
+    }
 
     protected SVNDiffClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
         super(repositoryFactory, options);

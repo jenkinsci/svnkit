@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -45,6 +46,10 @@ import org.tmatesoft.svn.util.TimeUtil;
  * @author TMate Software Ltd.
  */
 public class SVNUpdateClient extends SVNBasicClient {
+
+    public SVNUpdateClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
+        super(authManager, options);
+    }
 
     protected SVNUpdateClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
         super(repositoryFactory, options);

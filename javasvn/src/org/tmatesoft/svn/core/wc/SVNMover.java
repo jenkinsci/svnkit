@@ -12,6 +12,7 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -28,6 +29,10 @@ import org.tmatesoft.svn.util.PathUtil;
  * @author TMate Software Ltd.
  */
 public class SVNMover extends SVNWCClient {
+
+    public SVNMover(ISVNAuthenticationManager authManager, ISVNOptions options) {
+        super(authManager, options);
+    }
 
     protected SVNMover(ISVNRepositoryFactory factory, ISVNOptions options) {
         super(factory, options);

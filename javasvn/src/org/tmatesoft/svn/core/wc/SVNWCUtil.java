@@ -95,7 +95,7 @@ public class SVNWCUtil {
         if (versionedDir.getParentFile() == null) {
             return true;
         }
-        SVNStatusClient stClient = new SVNStatusClient(null, null);
+        SVNStatusClient stClient = new SVNStatusClient((ISVNAuthenticationManager) null, null);
         final boolean[] isRoot = new boolean[] { true }; // if no status is
                                                             // reporter, this
                                                             // may be ignored
