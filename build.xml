@@ -128,6 +128,9 @@
                 <exclude name="org/tigris/subversion/javahl/SVNClient.class" />
                 <exclude name="org/tigris/subversion/javahl/SVNClient$*.class" />
             </fileset>
+            <fileset dir="javasvn/src">
+                <include name="org/tmatesoft/svn/core/internal/wc/config/**" />
+            </fileset>
         </jar>
         <copy file="contrib/jsch/jsch.jar" todir="build/lib" />
         <!-- copy licences and changelog -->

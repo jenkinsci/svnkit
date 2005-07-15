@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -272,10 +273,14 @@ public class SVNConfigFile {
     }
 
     private static void writeFile(String url, File configFile) {
-        if (configFile.exists()) {
+        if (url == null || configFile == null || configFile.exists()) {
             return;
         }
-        BufferedReader is = new BufferedReader(new InputStreamReader(SVNConfigFile.class.getResourceAsStream(url)));
+        InputStream resource = SVNConfigFile.class.getResourceAsStream(url);
+        if (resource == null) {
+            return;
+        }
+        BufferedReader is = new BufferedReader(new InputStreamReader(resource));
         String eol = System.getProperty("line.separator", "\n");
         Writer os = null;
         try {
