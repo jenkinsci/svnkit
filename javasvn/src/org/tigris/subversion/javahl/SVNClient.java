@@ -14,6 +14,7 @@ import java.util.Hashtable;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -70,6 +71,7 @@ public class SVNClient implements SVNClientInterface {
     private SVNClientManager myClientManager;
     
     private ISVNAuthenticationManager myAuthenticationManager;
+    private static final ISVNAuthenticationStorage ourAuthStorage = new SVNAuthenticationStorage();
 
     public static final class LogLevel implements SVNClientLogLevel {
 
@@ -176,6 +178,7 @@ public class SVNClient implements SVNClientInterface {
         } else {
             myAuthenticationManager.setAuthenticationProvider(null);
         }
+        myAuthenticationManager.setRuntimeStorage(ourAuthStorage);
         myOptions = SVNWCUtil.createDefaultOptions(configDir, true);
         myClientManager = null;
     }

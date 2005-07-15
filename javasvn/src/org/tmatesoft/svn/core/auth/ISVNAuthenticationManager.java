@@ -33,5 +33,7 @@ public interface ISVNAuthenticationManager {
     public SVNAuthentication getNextAuthentication(String kind, String realm) throws SVNException;
     
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, String errorMessage, SVNAuthentication authentication);
+    
+    public void setRuntimeStorage(ISVNAuthenticationStorage storage); 
 
 }

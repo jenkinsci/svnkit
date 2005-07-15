@@ -4,6 +4,8 @@
 package org.tigris.subversion.javahl;
 
 import java.io.File;
+import java.security.MessageDigest;
+import java.security.cert.X509Certificate;
 
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
@@ -52,8 +54,55 @@ public class PromptAuthenticationProvider implements ISVNAuthenticationProvider 
         return null;
     }
 
-    public int acceptServerAuthentication(String url, Object serverAuth, ISVNAuthenticationManager manager, boolean resultMayBeStored) {
-        return 0;
+    public int acceptServerAuthentication(String url, String realm, Object serverAuth,  boolean resultMayBeStored) {
+        if (serverAuth != null && myPrompt instanceof PromptUserPassword2) {
+            PromptUserPassword2 sslPrompt = (PromptUserPassword2) myPrompt;
+            serverAuth = serverAuth instanceof X509Certificate ? 
+                    getServerCertificateInfo((X509Certificate) serverAuth) : serverAuth;
+            if (serverAuth == null) {
+                serverAuth = "";
+            }
+            return sslPrompt.askTrustSSLServer(serverAuth.toString(), resultMayBeStored);
+        }
+        return ACCEPTED;
+    }
+
+    private static String getFingerprint(X509Certificate cert) {
+          StringBuffer s = new StringBuffer();
+          try  {
+             MessageDigest md = MessageDigest.getInstance("SHA1");
+             md.update(cert.getEncoded());
+             byte[] digest = md.digest();
+             for (int i= 0; i < digest.length; i++)  {
+                if (i != 0) {
+                    s.append(':');
+                }
+                int b = digest[i] & 0xFF;
+                String hex = Integer.toHexString(b);
+                if (hex.length() == 1) {
+                    s.append('0');
+                }
+                s.append(hex.toLowerCase());
+             }
+          } catch (Exception e)  {
+          } 
+          return s.toString();
+       }
+
+    private static String getServerCertificateInfo(X509Certificate cert) {
+        StringBuffer info = new StringBuffer();
+        info.append(" - Subject: ");
+        info.append(cert.getSubjectDN().getName());
+        info.append('\n');
+        info.append(" - Valid: ");
+        info.append("from " + cert.getNotBefore() + " until " + cert.getNotAfter());
+        info.append('\n');
+        info.append(" - Issuer: ");
+        info.append(cert.getIssuerDN().getName());
+        info.append('\n');
+        info.append(" - Fingerprint: ");
+        info.append(getFingerprint(cert));
+        return info.toString();
     }
 
 }

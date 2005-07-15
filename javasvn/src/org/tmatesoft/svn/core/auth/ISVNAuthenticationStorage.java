@@ -15,15 +15,10 @@ package org.tmatesoft.svn.core.auth;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public interface ISVNAuthenticationProvider {
+public interface ISVNAuthenticationStorage {
+    
+    public void putData(String kind, String realm, Object data);
+    
+    public Object getData(String kind, String realm);
 
-    public int REJECTED = 0;
-    public int ACCEPTED_TEMPORARY = 1;
-    public int ACCEPTED = 2;
-
-    public SVNAuthentication requestClientAuthentication(String kind,
-            String url, String realm, String errorMessage, SVNAuthentication previousAuth,
-            boolean authMayBeStored);
-
-    public int acceptServerAuthentication(String url, String realm, Object certificate, boolean resultMayBeStored);
 }

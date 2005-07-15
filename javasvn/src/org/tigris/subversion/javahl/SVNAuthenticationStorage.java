@@ -9,21 +9,27 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.auth;
+package org.tigris.subversion.javahl;
+
+import java.util.Hashtable;
+import java.util.Map;
+
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public interface ISVNAuthenticationProvider {
+class SVNAuthenticationStorage implements ISVNAuthenticationStorage {
 
-    public int REJECTED = 0;
-    public int ACCEPTED_TEMPORARY = 1;
-    public int ACCEPTED = 2;
+    private Map myStorage = new Hashtable();
 
-    public SVNAuthentication requestClientAuthentication(String kind,
-            String url, String realm, String errorMessage, SVNAuthentication previousAuth,
-            boolean authMayBeStored);
+    public void putData(String kind, String realm, Object data) {
+        myStorage.put(kind + "$" + realm, data);
+    }
 
-    public int acceptServerAuthentication(String url, String realm, Object certificate, boolean resultMayBeStored);
+    public Object getData(String kind, String realm) {
+        return myStorage.get(kind + "$" + realm);
+    }
+
 }
