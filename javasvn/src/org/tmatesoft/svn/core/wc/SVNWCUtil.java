@@ -86,10 +86,8 @@ public class SVNWCUtil {
         return mimetype != null && !mimetype.startsWith("text/");
     }
 
-    public static boolean isWorkingCopyRoot(final File versionedDir,
-            final boolean considerExternalAsRoot) {
-        if (versionedDir == null
-                || !SVNWCAccess.isVersionedDirectory(versionedDir)) {
+    public static boolean isWorkingCopyRoot(final File versionedDir, final boolean considerExternalAsRoot) {
+        if (versionedDir == null || !SVNWCAccess.isVersionedDirectory(versionedDir)) {
             // unversioned.
             return false;
         }
