@@ -93,8 +93,13 @@ public class UpdateEventHandler implements ISVNEventHandler {
              */
             System.out.println("At revision " + event.getRevision());
             return;
+        } else if (action == SVNEventAction.ADD){
+            System.out.println("A     " + event.getPath());
+            return;
+        } else if (action == SVNEventAction.DELETE){
+            System.out.println("D     " + event.getPath());
+            return;
         }
-
         /*
          * Now getting the status of properties of an item. SVNStatusType also
          * contains information on the properties state.
@@ -133,6 +138,11 @@ public class UpdateEventHandler implements ISVNEventHandler {
              * The lock is broken by someone.
              */
             lockLabel = "B";
+        } else if (lockType == SVNStatusType.LOCK_LOCKED){
+            /*
+             * The lock is broken by someone.
+             */
+            lockLabel = "K";
         }
 
         System.out.println(pathChangeType

@@ -42,7 +42,11 @@ a {
 	font-size:   17px;
 	color:       rgb(128, 64, 0);
 }
-
+.javakeyword{
+	font-family: Courier New;
+	color: rgb(127,0,85); 	
+	font-weight: bold;
+}
 /* Headings */
 h1 { font-size: 145% }
 

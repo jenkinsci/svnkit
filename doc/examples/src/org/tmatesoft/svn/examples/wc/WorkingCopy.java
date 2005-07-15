@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.PathUtil;
 /*
  * This is a complex example program that demonstrates how you can manage local
@@ -286,6 +287,8 @@ import org.tmatesoft.svn.util.PathUtil;
 public class WorkingCopy {
 
     private static SVNClientManager ourClientManager;
+    private static ISVNEventHandler myCommitEventHandler;
+    private static ISVNEventHandler myUpdateEventHandler;
     
     public static void main(String[] args) {
         /*
@@ -347,7 +350,10 @@ public class WorkingCopy {
          * library itself)
          */
         setupLibrary();
-
+        
+        myCommitEventHandler = new CommitEventHandler();
+        myUpdateEventHandler = new UpdateEventHandler();
+        
         /*
          * Creates a usre's authentication manager.
          * User's authentication is generally required in
@@ -357,6 +363,10 @@ public class WorkingCopy {
          */
         ISVNOptions options = SVNWCUtil.createDefaultOptions(true);
         ourClientManager = SVNClientManager.newInstance(options, name, password);
+        ourClientManager.getCommitClient().setEventHandler(myCommitEventHandler);
+        ourClientManager.getUpdateClient().setEventHandler(myUpdateEventHandler);
+        ourClientManager.getWCClient().setEventHandler(myUpdateEventHandler);
+        ourClientManager.getCopyClient().setEventHandler(myCommitEventHandler);
 
         /*
          * The following 'SVN*Client' objects come from org.tmatesoft.svn.core.io
@@ -493,7 +503,7 @@ public class WorkingCopy {
             error("error while recursively updating the working copy at '"
                     + wcDir.getAbsolutePath() + "'", svne);
         }
-        System.out.println("Updated to revision " + updatedRevision + ".");
+        System.out.println();
 
         System.out.println("Committing changes for '" + wcDir.getAbsolutePath() + "'...");
         try {
@@ -710,7 +720,7 @@ public class WorkingCopy {
      * Committs changes in a working copy to the repository. Like 
      * 'svn commit PATH -m "some comment"' command. It's done by invoking 
      * SVNCommitClient.doCommit(File[] paths, boolean keepLocks, String commitMessage,
-     * boolean recursive) which takes the following parameters:
+     * boolean force, boolean recursive) which takes the following parameters:
      * 
      * paths - working copy paths which changes are to be committed;
      * 
@@ -718,6 +728,8 @@ public class WorkingCopy {
      * be unlocked after a successful commit; 
      * 
      * commitMessage - a commit log message;
+     * 
+     * force - if true then a non-recursive commit will be forced anyway;  
      * 
      * recursive - if true and a path corresponds to a directory then doCommit(..) recursively 
      * committs changes for the entire directory, otherwise - only for child entries of the 
