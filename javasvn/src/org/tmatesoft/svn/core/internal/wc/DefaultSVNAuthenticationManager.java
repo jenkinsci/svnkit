@@ -47,6 +47,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private String myPreviousErrorMessage;
     private SVNConfigFile myServersFile;
     private ISVNAuthenticationStorage myRuntimeAuthStorage;
+    private int myLastProviderIndex;
 
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password) {
         myIsStoreAuth = storeAuth;
@@ -134,6 +135,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     public SVNAuthentication getFirstAuthentication(String kind, String realm) throws SVNException {
         myPreviousAuthentication = null;
         myPreviousErrorMessage = null;
+        myLastProviderIndex = 0;
         // iterate over providers and ask for auth till it is found.
         for (int i = 0; i < myProviders.length; i++) {
             if (myProviders[i] == null) {
@@ -142,6 +144,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, null, realm, null, null, myIsStoreAuth);
             if (auth != null) {
                 myPreviousAuthentication = auth;
+                myLastProviderIndex = i;
                 return auth;
             }
             if (i == 3) {
@@ -152,14 +155,22 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     public SVNAuthentication getNextAuthentication(String kind, String realm) throws SVNException {
-        if (myProviders[3] == null) {
-            throw new SVNAuthenticationException("svn: Authentication required for '" + realm + "'");
+        int index = Math.min(myLastProviderIndex + 1, 3);
+        for(int i = index; i < myProviders.length; i++) {
+            if (myProviders[i] == null) {
+                continue;
+            }
+            SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, null, realm, myPreviousErrorMessage, myPreviousAuthentication, myIsStoreAuth);
+            if (auth != null) {
+                myPreviousAuthentication = auth;
+                myLastProviderIndex = i;
+                return auth;
+            }
+            if (i == 3) {
+                throw new SVNCancelException();
+            }
         }
-        SVNAuthentication auth = myProviders[3].requestClientAuthentication(kind, null, realm, myPreviousErrorMessage, myPreviousAuthentication, myIsStoreAuth);
-        if (auth == null) {
-            throw new SVNCancelException();
-        }
-        return auth;
+        throw new SVNAuthenticationException("svn: Authentication required for '" + realm + "'");
     }
 
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, String errorMessage, SVNAuthentication authentication) {
@@ -300,7 +311,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     String path = props.getPropertyValue("key");
                     String passphrase = props.getPropertyValue("passphrase");
                     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
-                        return new SVNPasswordAuthentication(userName, password, true);
+                        return new SVNPasswordAuthentication(userName, password, authMayBeStored);
                     } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
                         if (path != null) {
                             return new SVNSSHAuthentication(userName, new File(path), passphrase, authMayBeStored);

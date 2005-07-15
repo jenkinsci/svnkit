@@ -10,7 +10,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Hashtable;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -172,14 +171,14 @@ public class SVNClient implements SVNClientInterface {
     
     private void updateClientManager() {
         File configDir = myConfigDir == null ? null : new File(myConfigDir);
-        myAuthenticationManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, myPassword);
+        myOptions = SVNWCUtil.createDefaultOptions(configDir, true);
+        myAuthenticationManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, myPassword, myOptions.isAuthStorageEnabled());
         if (myPrompt != null) {
             myAuthenticationManager.setAuthenticationProvider(new PromptAuthenticationProvider(myPrompt));
         } else {
             myAuthenticationManager.setAuthenticationProvider(null);
         }
         myAuthenticationManager.setRuntimeStorage(ourAuthStorage);
-        myOptions = SVNWCUtil.createDefaultOptions(configDir, true);
         myClientManager = null;
     }
 

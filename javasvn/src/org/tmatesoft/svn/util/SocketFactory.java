@@ -16,7 +16,16 @@ import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.StringTokenizer;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -45,8 +54,7 @@ public class SocketFactory {
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {
                     attempts--;
-                    DebugLog.log("SOCKET: attempting to reconnect... ("
-                            + attempts + ")");
+                    DebugLog.log("SOCKET: attempting to reconnect... (" + attempts + ")");
                     if (attempts <= 0) {
                         SVNErrorManager.error("svn: Connection timeout");
                     }
@@ -61,6 +69,7 @@ public class SocketFactory {
 
     public static Socket createSSLSocket(ISVNSSLManager manager, String host, int port) throws SVNException {
         int attempts = 3;
+        manager = manager == null ? DEFAULT_SSL_MANAGER : manager;
         while (true) {
             try {
                 return manager.getSSLContext().getSocketFactory().createSocket(createAddres(host), port);
@@ -80,9 +89,9 @@ public class SocketFactory {
         }
     }
 
-    public static Socket createSSLSocket(ISVNSSLManager manager, String host,
-            int port, Socket socket) throws SVNException {
+    public static Socket createSSLSocket(ISVNSSLManager manager, String host, int port, Socket socket) throws SVNException {
         int attempts = 3;
+        manager = manager == null ? DEFAULT_SSL_MANAGER : manager;
         while (true) {
             try {
                 return manager.getSSLContext().getSocketFactory().createSocket(socket, host, port, true);
@@ -102,8 +111,7 @@ public class SocketFactory {
         }
     }
 
-    private static InetAddress createAddres(String hostName)
-            throws UnknownHostException {
+    private static InetAddress createAddres(String hostName) throws UnknownHostException {
         byte[] bytes = new byte[4];
         int index = 0;
         for (StringTokenizer tokens = new StringTokenizer(hostName, "."); tokens
@@ -128,4 +136,30 @@ public class SocketFactory {
         }
         return InetAddress.getByName(hostName);
     }
+    
+    private static final ISVNSSLManager DEFAULT_SSL_MANAGER = new ISVNSSLManager() {
+        public SSLContext getSSLContext() throws IOException {
+            SSLContext context = null;
+            try {
+                context = SSLContext.getInstance("SSL");
+                context.init(new KeyManager[] {}, new TrustManager[] {new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+                    public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+                    }
+                    public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+                    }
+                    
+                }}, null);
+            } catch (NoSuchAlgorithmException e) {
+                throw new IOException(e.getMessage());                
+            } catch (KeyManagementException e) {
+                throw new IOException(e.getMessage());                
+            }
+            return context;
+        }
+        public void acknowledgeSSLContext(boolean accepted, String errorMessage) {
+        }
+    };
 }
