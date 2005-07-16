@@ -62,14 +62,7 @@ public class DebugDefaultLogger implements DebugLogger, LoggingStreamLogger {
 				}
 			};
 			String levelStr = System.getProperty("javasvn.log.level", "OFF");
-            Level level;
-			try {
-				level = Level.parse(levelStr);
-			} catch (Throwable th) {
-                th.printStackTrace();
-                level = DebugLog.isSafeModeDefault() ? Level.FINEST
-						: Level.FINEST;
-			}
+			Level level = Level.parse(levelStr);
 			if (isFileLoggingEnabled()) {
 				String path = System.getProperty("javasvn.log.path");
 				if (path == null) {

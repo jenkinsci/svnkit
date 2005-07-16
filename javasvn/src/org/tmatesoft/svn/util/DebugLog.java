@@ -11,7 +11,6 @@
 
 package org.tmatesoft.svn.util;
 
-import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -22,8 +21,6 @@ import java.io.OutputStream;
 public class DebugLog {
 
     private static DebugLogger ourLogger;
-
-    private static final File ourSafeModeTrigger = new File(".javasvn.safemode");
 
     public static void setLogger(DebugLogger logger) {
         ourLogger = logger;
@@ -68,20 +65,6 @@ public class DebugLog {
         getLogger().logError(th.getMessage(), th);
     }
 
-    public static boolean isGeneratorDisabled() {
-        if (getLogger() == null) {
-            return false;
-        }
-        if (isSafeModeDefault()) {
-            // have to enable explicitly
-            return !Boolean.getBoolean("javasvn.generator.enabled");
-        }
-        if (System.getProperty("javasvn.generator.enabled") == null) {
-            return false;
-        }
-        return !Boolean.getBoolean("javasvn.generator.enabled");
-    }
-
     public static LoggingInputStream getLoggingInputStream(String protocol,
             InputStream stream) {
         if (getLogger() == null) {
@@ -98,13 +81,6 @@ public class DebugLog {
         }
 
         return getLogger().getLoggingOutputStream(protocol, stream);
-    }
-
-    static boolean isSafeModeDefault() {
-        if (getLogger() == null) {
-            return false;
-        }
-        return ourSafeModeTrigger.exists();
     }
 
     private static DebugLogger getLogger() {
