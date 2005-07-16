@@ -11,17 +11,15 @@
  */
 package org.tmatesoft.svn.core.io;
 
-import org.tmatesoft.svn.core.internal.SVNAnnotationGenerator;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.util.DebugLog;
-
-import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Map;
+
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * The abstract class <code>SVNRepository</code> declares all the basic
@@ -702,50 +700,6 @@ public abstract class SVNRepository {
         return result;        
     }
 	
-    /**
-	 * Gets the contetnts of the specified (by the <code>path</code>
-	 * parameter) file  with revision and author information in-line for all its
-	 * appearances in revisions from <code>startRevision</code> and up to 
-	 * <code>endRevision</code>. 
-	 * 
-	 * <p>
-	 * The method starts with the <code>startRevision</code>. For each revision it 
-	 * gets a delta for the file which in the first case  is the whole file contents.
-	 * And for each of the delta lines the method invokes a <code>handler</code>. Then
-	 * the process passes on to the next revision and gets a new delta but yet 
-	 * against the previous revision file contents. And so on - up to 
-	 * <code>endRevision</code> when all the output lines will be provided author and
-	 * revision labels as a result of the file evolution in those revisions. 
-	 * 
-	 * @param  path					a file path (relative to a repository location path)
-	 * @param  startRevision		a file revision to start from
-	 * @param  endRevision			a file revision to stop at
-	 * @param  handler				will be invoked for each file contetnts delta 
-	 * 								line 
-	 * @throws SVNException
-	 */
-	public void annotate(String path, long startRevision, long endRevision, ISVNAnnotateHandler handler) throws SVNException {
-		if (handler == null) {
-			return;
-		}
-		if (endRevision < 0 || endRevision < 0) {
-			long lastRevision = getLatestRevision();
-			startRevision = startRevision < 0 ? lastRevision : startRevision;
-			endRevision = endRevision < 0 ? lastRevision : endRevision;
-		}
-
-        File tmpDir = new File(System.getProperty("user.home"), ".javasvn");
-        tmpDir.mkdirs();
-
-        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, startRevision, tmpDir);
-        try {
-            getFileRevisions(path, startRevision, endRevision, generator);
-            generator.reportAnnotations(handler, System.getProperty("file.encoding"));
-        } finally {
-            generator.dispose();
-        }
-	}
-    
     /* edit-mode methods */
 	/**
 	 * Asks the Repository Access (RA) Layer to 'diff' a working copy against

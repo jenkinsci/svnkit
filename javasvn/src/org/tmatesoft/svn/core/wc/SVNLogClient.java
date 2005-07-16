@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.SVNAnnotationGenerator;
+import org.tmatesoft.svn.core.internal.wc.SVNAnnotationGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
