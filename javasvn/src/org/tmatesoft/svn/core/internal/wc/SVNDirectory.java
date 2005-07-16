@@ -662,6 +662,7 @@ public class SVNDirectory {
             return true;
         }
         String realTimestamp = TimeUtil.formatDate(new Date(propFile.lastModified()));
+        String fullRealTimestamp = realTimestamp;
         realTimestamp = realTimestamp.substring(0, 23);
         String timeStamp = entry.getPropTime();
         if (timeStamp != null) {
@@ -674,7 +675,7 @@ public class SVNDirectory {
         Map m2 = getBaseProperties(name, false).asMap();
         if (m1.equals(m2)) {
             if (isLocked()) {
-                entry.setPropTime(realTimestamp);
+                entry.setPropTime(fullRealTimestamp);
                 getEntries().save(false);
             }
             return false;
