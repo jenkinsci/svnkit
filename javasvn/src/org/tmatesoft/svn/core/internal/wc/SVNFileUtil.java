@@ -489,24 +489,11 @@ public class SVNFileUtil {
             //
         }
     }
-
-    public static String detectMimeType(File file) {
-        if (file == null || !file.exists()) {
-            return null;
-        }
+    
+    public static String detectMimeType(InputStream is) throws IOException {
         byte[] buffer = new byte[1024];
-        InputStream is = null;
         int read = 0;
-        try {
-            is = openFileForReading(file);
-            read = is.read(buffer);
-        } catch (IOException e) {
-            return null;
-        } catch (SVNException e) {
-            return null;
-        } finally {
-            closeFile(is);
-        }
+        read = is.read(buffer);
         int binaryCount = 0;
         for (int i = 0; i < read; i++) {
             byte b = buffer[i];
@@ -521,6 +508,23 @@ public class SVNFileUtil {
             return BINARY_MIME_TYPE;
         }
         return null;
+    }
+
+    public static String detectMimeType(File file) {
+        if (file == null || !file.exists()) {
+            return null;
+        }
+        InputStream is = null;
+        try {
+            is = openFileForReading(file);
+            return detectMimeType(is);
+        } catch (IOException e) {
+            return null;
+        } catch (SVNException e) {
+            return null;
+        } finally {
+            closeFile(is);
+        }
     }
 
     public static boolean isExecutable(File file) {

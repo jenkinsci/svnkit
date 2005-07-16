@@ -12,16 +12,15 @@
 package org.tmatesoft.svn.core.io.diff;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.util.FileTypeUtil;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
 import de.regnis.q.sequence.core.QSequenceException;
@@ -88,22 +87,22 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
     }
 
     private static boolean canProcess(ISVNRAData workFile, ISVNRAData baseFile) throws IOException {
-        final Reader workReader = new InputStreamReader(workFile.read(0, workFile.length()));
+        InputStream is = workFile.read(0, Math.min(1024, workFile.length()));
         try {
-            if (!FileTypeUtil.isTextFile(workReader, Integer.MAX_VALUE)) {
+            if (SVNFileUtil.detectMimeType(workFile.read(0, Math.min(workFile.length(), 1024))) != null) {
                 return false;
             }
         } finally {
-            workReader.close();
+            SVNFileUtil.closeFile(is);
         }
 
-        final Reader baseReader = new InputStreamReader(baseFile.read(0, baseFile.length()));
+        is = baseFile.read(0, Math.min(1024, baseFile.length()));
         try {
-            if (!FileTypeUtil.isTextFile(baseReader, Integer.MAX_VALUE)) {
+            if (SVNFileUtil.detectMimeType(is) != null) {
                 return false;
             }
         } finally {
-            baseReader.close();
+            SVNFileUtil.closeFile(is);
         }
 
         return true;
