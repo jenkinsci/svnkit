@@ -17,7 +17,6 @@ import java.util.List;
 
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.io.ISVNCredentials;
 import org.tmatesoft.svn.core.io.SVNAuthenticationException;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
@@ -73,8 +72,7 @@ class SVNConnection {
 
     private boolean myIsCredentialsReceived = false;
 
-    public void authenticate(SVNRepositoryImpl repository,
-            ISVNCredentials credentials) throws SVNException {
+    public void authenticate(SVNRepositoryImpl repository) throws SVNException {
         // use provider to get creds.
         String failureReason = null;
         Object[] items = read("[((*W)?S)]", null);

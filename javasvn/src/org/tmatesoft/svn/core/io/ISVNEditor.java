@@ -12,7 +12,9 @@
 
 package org.tmatesoft.svn.core.io;
 
-import org.tmatesoft.svn.core.io.diff.ISVNDeltaConsumer;
+import java.io.OutputStream;
+
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
  * The <code>ISVNEditor</code> interface provides methods that should be used
@@ -42,7 +44,7 @@ import org.tmatesoft.svn.core.io.diff.ISVNDeltaConsumer;
  * @author  TMate Software Ltd.
  * @see		SVNRepository
  */
-public interface ISVNEditor extends ISVNDeltaConsumer {
+public interface ISVNEditor {
     /**
      * Specifies the target revision number a working copy (WC) to be updated to
      * (or the revision number the WC would have if it is updated).
@@ -230,6 +232,10 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
      */
     public void applyTextDelta(String path, String baseChecksum) throws SVNException;
     
+    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException;
+
+    public void textDeltaEnd(String path) throws SVNException;
+
     /**
      * Changes the value of a property of the currently "opened" file.
      * 

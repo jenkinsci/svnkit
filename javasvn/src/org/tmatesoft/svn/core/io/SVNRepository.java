@@ -102,7 +102,6 @@ public abstract class SVNRepository {
     private SVNRepositoryLocation myLocation;
     private int myLockCount;
     private Thread myLocker;
-    private ISVNCredentialsProvider myUserCredentialsProvider;
     private String myRepositoryRootURL;
     private ISVNAuthenticationManager myAuthManager;
 
@@ -206,46 +205,10 @@ public abstract class SVNRepository {
         return myRepositoryRootURL;
     }
 
-    /**
-	 * Sets a provider that will contain user credentials for accessing a repository.
-	 * 
-	 * <p>
-	 * If a Subversion repository server is configured to let only registered
-	 * clients work with a repository it asks the Repository Access Layer for
-	 * the user's cridentials to authenticate him. If those are reliable the user
-	 * is permitted to access the repository.
-	 * 
-	 * <p>
-	 * Cridentials are provided via the interface {@link ISVNCredentialsProvider}
-	 * which implimentation is stored by <code>SVNRepository</code> by calling this
-	 * method.
-	 * 
-     * @param provider	a cridentials provider implementation to authenticate a 
-     * 					client
-     * @see 			#getCredentialsProvider()	
-     */
-    
-    public void setCredentialsProvider(ISVNCredentialsProvider provider) {
-        myUserCredentialsProvider = provider;
-    }
-
     public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
         myAuthManager = authManager;
     }
-    /**
-     * Gets the set (if any) provider of client's credentials. The Client's 
-     * cridentials that can be obtained from the provider are used then to
-     * authenticate the client.
-     *   
-     * @return	the proveder of client's credentials
-     * @see		#setCredentialsProvider(ISVNCredentialsProvider)
-     * @see 	ISVNCredentialsProvider
-     * @see 	ISVNCredentials
-     * @see 	SVNSimpleCredentialsProvider
-     */
-    public ISVNCredentialsProvider getCredentialsProvider() {
-        return myUserCredentialsProvider;
-    }
+
     public ISVNAuthenticationManager getAuthenticationManager() {
         return myAuthManager;
     }

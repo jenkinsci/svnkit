@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.FileTypeUtil;
 import org.tmatesoft.svn.util.SVNAssert;
@@ -42,7 +43,7 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 
     // Implemented ============================================================
 
-    public void generateDiffWindow(String commitPath, ISVNDeltaConsumer consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
+    public void generateDiffWindow(String commitPath, ISVNEditor consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
         try {
             if (!canProcess(workFile, baseFile)) {
                 ALL_DELTA_GENERATOR.generateDiffWindow(commitPath, consumer, workFile, baseFile);
@@ -57,7 +58,7 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 
     // Utils ==================================================================
 
-    private static void doGenerateDiffWindow(String commitPath, ISVNRAData workFile, ISVNRAData baseFile, ISVNDeltaConsumer consumer) throws IOException, SVNException {
+    private static void doGenerateDiffWindow(String commitPath, ISVNRAData workFile, ISVNRAData baseFile, ISVNEditor consumer) throws IOException, SVNException {
 	    final QSequenceLineResult result;
 	    try {
 		    result = QSequenceLineMedia.createBlocks(new SVNSequenceLineRAData(baseFile), new SVNSequenceLineRAData(workFile), null);

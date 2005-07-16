@@ -12,6 +12,10 @@
 
 package org.tmatesoft.svn.core.io;
 
+import java.io.OutputStream;
+
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+
 
 
 /**
@@ -30,7 +34,7 @@ package org.tmatesoft.svn.core.io;
  * @see 	SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler)
  * @see 	ISVNDiffHandler
  */
-public interface ISVNFileRevisionHandler extends ISVNDiffHandler {
+public interface ISVNFileRevisionHandler {
     
     /**
      * Called within the 
@@ -43,6 +47,10 @@ public interface ISVNFileRevisionHandler extends ISVNDiffHandler {
      * @see 					SVNFileRevision
      */
 	public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException;
+
+    public OutputStream handleDiffWindow(String token, SVNDiffWindow diffWindow) throws SVNException;
+    
+    public void handleDiffWindowClosed(String token) throws SVNException;
 
 }
 

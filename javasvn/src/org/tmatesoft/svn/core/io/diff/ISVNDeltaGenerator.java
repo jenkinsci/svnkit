@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.io.diff;
 
+import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNException;
 
 
@@ -19,5 +20,5 @@ import org.tmatesoft.svn.core.io.SVNException;
  * @author  TMate Software Ltd.
  */
 public interface ISVNDeltaGenerator {
-	void generateDiffWindow(String commitPath, ISVNDeltaConsumer consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException;
+	void generateDiffWindow(String commitPath, ISVNEditor consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException;
 }
