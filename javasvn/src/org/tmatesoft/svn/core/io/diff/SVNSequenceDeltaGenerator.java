@@ -22,7 +22,6 @@ import java.util.List;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.FileTypeUtil;
-import org.tmatesoft.svn.util.SVNAssert;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
 import de.regnis.q.sequence.core.QSequenceException;
@@ -127,14 +126,12 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
             if (lastBase < baseFrom) {
                 final long charFrom = baseLines.getLine(lastBase).getFrom();
                 final long charTo = baseLines.getLine(baseFrom - 1).getTo();
-                SVNAssert.assertTrue(charFrom <= charTo);
                 instructions.add(new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_SOURCE, charTo - charFrom + 1, charFrom));
             }
 
             if (workTo >= workFrom) {
                 final long charFrom = workLines.getLine(workFrom).getFrom();
                 final long charTo = workLines.getLine(workTo).getTo();
-                SVNAssert.assertTrue(charFrom <= charTo);
                 instructions.add(new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_NEW_DATA, charTo - charFrom + 1, 0));
                 for (int lineIndex = workFrom; lineIndex <= workTo; lineIndex++) {
                     bytesToSend.add(workLines.getLine(lineIndex).getBytes());
@@ -147,7 +144,6 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
         if (lastBase <= baseLines.getLineCount() - 1) {
             final long baseFrom = baseLines.getLine(lastBase).getFrom();
             final long baseTo = baseLines.getLine((baseLines.getLineCount() - 1)).getTo();
-            SVNAssert.assertTrue(baseFrom <= baseTo);
             instructions.add(new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_SOURCE, baseTo - baseFrom + 1, baseFrom));
         }
     }
