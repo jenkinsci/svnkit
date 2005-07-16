@@ -11,32 +11,35 @@
 
 package org.tmatesoft.svn.core.internal.ws.fs;
 
-import java.io.*;
-
-import org.tmatesoft.svn.core.SVNStatus;
+import java.io.IOException;
+import java.io.OutputStream;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
-import de.regnis.q.sequence.core.*;
-import de.regnis.q.sequence.line.*;
+import de.regnis.q.sequence.core.QSequenceException;
+import de.regnis.q.sequence.line.QSequenceLine;
+import de.regnis.q.sequence.line.QSequenceLineCache;
+import de.regnis.q.sequence.line.QSequenceLineMedia;
+import de.regnis.q.sequence.line.QSequenceLineRAData;
+import de.regnis.q.sequence.line.QSequenceLineResult;
 
 /**
  * @version 1.0
  * @author TMate Software Ltd.
  */
 public class FSMergerBySequence {
+    
+    private static final int NOT_MODIFIED = 0;
+    private static final int MERGED = 4;
+    private static final int CONFLICTED = 2;
 
     // Fields =================================================================
 
     private final byte[] myConflictStart;
-
     private final byte[] myConflictSeparator;
-
     private final byte[] myConflictEnd;
-
     private final byte[] eolBytes;
 
-    private static final byte[] DEFAULT_EOL = System.getProperty(
-            "line.separator").getBytes();
+    private static final byte[] DEFAULT_EOL = System.getProperty("line.separator").getBytes();
 
     // Setup ==================================================================
 
@@ -130,11 +133,11 @@ public class FSMergerBySequence {
             }
 
             if (conflict) {
-                return SVNStatus.CONFLICTED;
+                return CONFLICTED;
             } else if (merged) {
-                return SVNStatus.MERGED;
+                return MERGED;
             } else {
-                return SVNStatus.NOT_MODIFIED;
+                return NOT_MODIFIED;
             }
         } finally {
             latestResult.close();

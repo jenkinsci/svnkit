@@ -11,9 +11,9 @@
 
 package org.tmatesoft.svn.core.internal.ws.fs;
 
-import java.util.*;
+import java.util.List;
 
-import de.regnis.q.sequence.*;
+import de.regnis.q.sequence.QSequenceDifferenceBlock;
 
 /**
  * @author TMate Software Ltd.

@@ -16,7 +16,6 @@ import org.osgi.framework.BundleContext;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
 import org.tmatesoft.svn.util.DebugLog;
 
 /**
@@ -33,8 +32,6 @@ public class JavaSVNPlugin extends Plugin {
         
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
-         
-        FSEntryFactory.setup();
     }
     
     

@@ -14,79 +14,11 @@ package org.tmatesoft.svn.util;
 import java.io.File;
 import java.util.StringTokenizer;
 
-import org.tmatesoft.svn.core.ISVNWorkspace;
-import org.tmatesoft.svn.core.SVNWorkspaceManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.io.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-
 /**
  * @version 1.0
  * @author TMate Software Ltd.
  */
 public class SVNUtil {
-
-    public static ISVNWorkspace createWorkspace(String filePath)
-            throws SVNException {
-        return createWorkspace(filePath, true);
-    }
-
-    public static ISVNWorkspace createWorkspace(String filePath, boolean root)
-            throws SVNException {
-        File file = new File(filePath);
-        if (file.exists() && !file.isDirectory()) {
-            file = file.getAbsoluteFile().getParentFile();
-            if (file == null) {
-                return null;
-            }
-        }
-        filePath = file.getAbsolutePath();
-        ISVNWorkspace ws = SVNWorkspaceManager
-                .createWorkspace("file", filePath);
-        if (root && ws != null) {
-            return ws.getRootWorkspace(true, false);
-        }
-        return ws;
-    }
-
-    public static String getWorkspacePath(ISVNWorkspace ws, String absolutePath) {
-        File file = new File(absolutePath);
-
-        String root = new File(ws.getID()).getAbsolutePath();
-        root = root.replace(File.separatorChar, '/');
-        String path = file.getAbsolutePath().replace(File.separatorChar, '/');
-        if (SVNFileUtil.isWindows) {
-            if (path.toLowerCase().startsWith(root.toLowerCase())) {
-                path = path.substring(root.length());
-            }
-        } else {
-            if (path.startsWith(root)) {
-                path = path.substring(root.length());
-            }
-        }
-        path = PathUtil.removeLeadingSlash(path);
-        if (".".equals(path)) {
-            path = "";
-        }
-        return path;
-    }
-
-    public static String getAbsolutePath(ISVNWorkspace ws, String relativePath) {
-        return PathUtil.append(ws.getID(), relativePath);
-    }
-
-    public static SVNRepository createRepository(ISVNWorkspace ws,
-            String relativePath) throws SVNException {
-        SVNRepositoryLocation location = ws.getLocation(relativePath);
-        SVNRepository repository = null;
-        if (location != null) {
-            repository = SVNRepositoryFactory.create(location);
-            repository.setCredentialsProvider(ws.getCredentialsProvider());
-        }
-        return repository;
-    }
 
     public static String getPath(File file) {
         String path;

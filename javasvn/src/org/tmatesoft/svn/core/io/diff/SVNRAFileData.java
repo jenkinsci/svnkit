@@ -17,7 +17,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
-import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.SVNException;
 
 /**
  * @version 1.0
@@ -84,7 +85,11 @@ public class SVNRAFileData implements ISVNRAData {
                 myRawFile.createNewFile();
             }
             if (!myIsReadonly) {
-                FSUtil.setReadonly(myRawFile, false);
+                try {
+                    SVNFileUtil.setReadonly(myRawFile, false);
+                } catch (SVNException e) {
+                    //
+                }
             }
             myFile = new RandomAccessFile(myRawFile, myIsReadonly ? "r" : "rw");
         }

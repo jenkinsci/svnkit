@@ -18,7 +18,6 @@ import java.io.IOException;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -661,10 +660,6 @@ public class WorkingCopy {
          * for SVN (over svn and svn+ssh)
          */
         SVNRepositoryFactoryImpl.setup();
-        /*
-         * Working copy storage (default is file system).
-         */
-        FSEntryFactory.setup();
     }
 
     /*

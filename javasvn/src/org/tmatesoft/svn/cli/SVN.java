@@ -15,7 +15,6 @@ package org.tmatesoft.svn.cli;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;
 
@@ -54,7 +53,6 @@ public class SVN {
             if (command != null) {
                 DAVRepositoryFactory.setup();
                 SVNRepositoryFactoryImpl.setup();
-                FSEntryFactory.setup();
     
                 command.setCommandLine(commandLine);
                 try {
