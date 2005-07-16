@@ -11,7 +11,7 @@
  */
 package org.tmatesoft.svn.examples.wc;
 
-import org.tmatesoft.svn.core.io.SVNCancelException;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEventAction;

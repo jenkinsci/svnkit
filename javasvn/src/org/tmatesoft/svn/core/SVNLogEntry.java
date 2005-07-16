@@ -10,10 +10,12 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core.io;
+package org.tmatesoft.svn.core;
 
 import java.util.Date;
 import java.util.Map;
+
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
  * The class <code>SVNLogEntry</code> incapsulates log information provided for every

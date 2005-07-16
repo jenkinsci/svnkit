@@ -11,8 +11,8 @@
  */
 package org.tmatesoft.svn.core.io.diff;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.SVNException;
 
 
 /**

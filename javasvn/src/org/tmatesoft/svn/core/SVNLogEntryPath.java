@@ -10,7 +10,7 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core.io;
+package org.tmatesoft.svn.core;
 
 /**
  * <code>SVNLogEntryPath</code> provides information about a changed path, a type of the 

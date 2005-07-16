@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.tmatesoft.svn.core.SVNException;
+
 /**
  * <code>ISVNWorkspaceMediator</code> is a custom interface for managing a workspace.
  * A workspace is a notion that represents a user's disk area where his working copies

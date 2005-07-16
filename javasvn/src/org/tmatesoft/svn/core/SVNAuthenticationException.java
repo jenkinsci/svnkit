@@ -10,7 +10,7 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core.io;
+package org.tmatesoft.svn.core;
 
 /**
  * An exception class that is used to signal about the fact that errors

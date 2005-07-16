@@ -17,6 +17,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.tmatesoft.svn.core.SVNException;
+
 /**
  * <code>SVNRepositoryFactory</code> is an abstract class that is responsible
  * for creating an appropriate <code>SVNRepository</code>-extansion that 

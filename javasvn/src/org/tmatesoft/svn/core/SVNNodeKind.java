@@ -10,7 +10,8 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core.io;
+package org.tmatesoft.svn.core;
+
 
 /**
  * The final class <code>SVNNodeKind</code> incapsulates the kind of a versioned node

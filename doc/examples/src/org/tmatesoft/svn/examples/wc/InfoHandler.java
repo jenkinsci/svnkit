@@ -11,9 +11,9 @@
  */
 package org.tmatesoft.svn.examples.wc;
 
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.io.SVNNodeKind;
 
 /*
  * An implementation of ISVNInfoHandler that is used in WorkingCopy to display

@@ -15,6 +15,7 @@ package org.tmatesoft.svn.core.io;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**

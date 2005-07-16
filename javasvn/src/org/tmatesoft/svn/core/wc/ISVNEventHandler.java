@@ -10,7 +10,7 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import org.tmatesoft.svn.core.io.SVNCancelException;
+import org.tmatesoft.svn.core.SVNCancelException;
 
 /**
  * The <span class="style0">ISVNEventHandler</span> interface should be implemented in

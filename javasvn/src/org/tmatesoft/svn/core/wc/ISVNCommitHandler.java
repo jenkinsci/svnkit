@@ -10,7 +10,7 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * The <span class="style0">ISVNCommitHandler</span> should be implemented to 

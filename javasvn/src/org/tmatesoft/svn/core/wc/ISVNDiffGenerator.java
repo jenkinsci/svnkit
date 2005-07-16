@@ -14,7 +14,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * @version 1.0

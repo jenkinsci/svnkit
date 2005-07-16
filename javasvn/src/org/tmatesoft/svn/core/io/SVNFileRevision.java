@@ -14,6 +14,8 @@ package org.tmatesoft.svn.core.io;
 
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNRevisionProperty;
+
 /**
  * This is a class that represents information on what path a file is located at a 
  * definite revision and what its revision properties and file properties delta

@@ -10,9 +10,11 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core.io;
+package org.tmatesoft.svn.core;
 
 import java.util.Date;
+
+import org.tmatesoft.svn.core.io.ISVNEditor;
 
 /**
  * <code>SVNCommitInfo</code> represents a class that incapsulates the necessary 

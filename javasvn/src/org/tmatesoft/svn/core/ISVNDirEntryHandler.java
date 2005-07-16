@@ -10,7 +10,9 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core.io;
+package org.tmatesoft.svn.core;
+
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
  * The <code>ISVNDirEntryHandler</code> is used as a directory entry processor

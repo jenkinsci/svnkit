@@ -10,7 +10,7 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core.io;
+package org.tmatesoft.svn.core;
 
 /**
  * This class is a wrapper for revision properties.

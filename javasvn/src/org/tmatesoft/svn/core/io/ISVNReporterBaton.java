@@ -12,6 +12,8 @@
 
 package org.tmatesoft.svn.core.io;
 
+import org.tmatesoft.svn.core.SVNException;
+
 /**
  * This interface is provided when manipulating with a working copy (updating it,
  * getting its status, checking it out from a repository). Used to make reports

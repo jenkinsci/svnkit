@@ -11,7 +11,7 @@
  */
 package org.tmatesoft.svn.core.auth;
 
-import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * @version 1.0

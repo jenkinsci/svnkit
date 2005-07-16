@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.SVNException;
 
 
 /**

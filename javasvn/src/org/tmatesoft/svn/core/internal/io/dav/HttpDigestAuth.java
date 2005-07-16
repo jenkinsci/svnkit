@@ -11,7 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import org.tmatesoft.svn.core.io.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 
 import java.io.UnsupportedEncodingException;
