@@ -29,11 +29,11 @@ import org.tmatesoft.svn.core.ISVNFileEntry;
 import org.tmatesoft.svn.core.ISVNRootEntry;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
-import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 

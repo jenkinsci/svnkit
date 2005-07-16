@@ -9,27 +9,20 @@
  * newer version instead, at your option.
  * ====================================================================
  */
+package org.tmatesoft.svn.core.io.diff;
 
-package org.tmatesoft.svn.core.internal.diff;
+import java.io.OutputStream;
 
-import java.io.IOException;
-import java.io.InputStream;
+import org.tmatesoft.svn.core.io.SVNException;
 
 
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public interface ISVNRAData {
-    
-    public InputStream read(long offset, long length) throws IOException;
-    
-    public void append(InputStream source, long length) throws IOException;
-    
-    public long length();
-    
-    public long lastModified();
-    
-    public void close() throws IOException;
+public interface ISVNDeltaConsumer {
 
+	public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException;
+
+	public void textDeltaEnd(String path) throws SVNException;
 }

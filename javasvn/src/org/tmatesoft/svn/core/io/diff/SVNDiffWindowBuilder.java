@@ -10,7 +10,7 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core.internal.diff;
+package org.tmatesoft.svn.core.io.diff;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

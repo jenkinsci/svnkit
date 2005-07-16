@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
-import org.tmatesoft.svn.core.internal.diff.ISVNRAData;
+import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 
 /**
  * @version 1.0

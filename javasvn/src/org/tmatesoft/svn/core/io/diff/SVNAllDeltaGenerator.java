@@ -9,17 +9,13 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.diff.delta;
+package org.tmatesoft.svn.core.io.diff;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.core.internal.diff.ISVNDeltaConsumer;
-import org.tmatesoft.svn.core.internal.diff.ISVNRAData;
-import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.internal.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;

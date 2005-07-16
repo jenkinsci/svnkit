@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.diff.delta;
+package org.tmatesoft.svn.core.io.diff;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -19,10 +19,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.tmatesoft.svn.core.internal.diff.ISVNDeltaConsumer;
-import org.tmatesoft.svn.core.internal.diff.ISVNRAData;
-import org.tmatesoft.svn.core.internal.diff.SVNDiffInstruction;
-import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.FileTypeUtil;
 import org.tmatesoft.svn.util.SVNAssert;

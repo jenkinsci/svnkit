@@ -20,12 +20,12 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;

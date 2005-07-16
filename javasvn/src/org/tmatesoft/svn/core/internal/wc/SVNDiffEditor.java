@@ -24,12 +24,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.diff.ISVNRAData;
-import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.internal.ws.fs.SVNRAFileData;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.diff.ISVNRAData;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;

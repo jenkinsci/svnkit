@@ -9,13 +9,12 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.diff.delta;
+package org.tmatesoft.svn.core.io.diff;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 
-import de.regnis.q.sequence.line.*;
-
-import org.tmatesoft.svn.core.internal.diff.*;
+import de.regnis.q.sequence.line.QSequenceLineRAData;
 
 
 /**

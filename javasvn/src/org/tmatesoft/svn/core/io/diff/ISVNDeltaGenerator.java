@@ -9,9 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.diff;
-
-import java.io.OutputStream;
+package org.tmatesoft.svn.core.io.diff;
 
 import org.tmatesoft.svn.core.io.SVNException;
 
@@ -20,9 +18,6 @@ import org.tmatesoft.svn.core.io.SVNException;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public interface ISVNDeltaConsumer {
-
-	public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException;
-
-	public void textDeltaEnd(String path) throws SVNException;
+public interface ISVNDeltaGenerator {
+	void generateDiffWindow(String commitPath, ISVNDeltaConsumer consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException;
 }

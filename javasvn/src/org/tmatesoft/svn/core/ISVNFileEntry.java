@@ -13,9 +13,9 @@ package org.tmatesoft.svn.core;
 
 import java.io.InputStream;
 
-import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
  * @version 1.0

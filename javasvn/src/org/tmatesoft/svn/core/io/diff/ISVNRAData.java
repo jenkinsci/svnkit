@@ -9,17 +9,27 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.diff.delta;
 
-import org.tmatesoft.svn.core.internal.diff.ISVNDeltaConsumer;
-import org.tmatesoft.svn.core.internal.diff.ISVNRAData;
-import org.tmatesoft.svn.core.io.SVNException;
+package org.tmatesoft.svn.core.io.diff;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public interface ISVNDeltaGenerator {
-	void generateDiffWindow(String commitPath, ISVNDeltaConsumer consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException;
+public interface ISVNRAData {
+    
+    public InputStream read(long offset, long length) throws IOException;
+    
+    public void append(InputStream source, long length) throws IOException;
+    
+    public long length();
+    
+    public long lastModified();
+    
+    public void close() throws IOException;
+
 }

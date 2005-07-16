@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.io;
 
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
  * D

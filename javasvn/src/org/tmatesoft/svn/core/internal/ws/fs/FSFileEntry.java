@@ -27,13 +27,13 @@ import org.tmatesoft.svn.core.ISVNEntryContent;
 import org.tmatesoft.svn.core.ISVNFileEntry;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNStatus;
-import org.tmatesoft.svn.core.internal.diff.ISVNRAData;
-import org.tmatesoft.svn.core.internal.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.internal.diff.delta.ISVNDeltaGenerator;
-import org.tmatesoft.svn.core.internal.diff.delta.SVNAllDeltaGenerator;
-import org.tmatesoft.svn.core.internal.diff.delta.SVNSequenceDeltaGenerator;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNException;
+import org.tmatesoft.svn.core.io.diff.ISVNDeltaGenerator;
+import org.tmatesoft.svn.core.io.diff.ISVNRAData;
+import org.tmatesoft.svn.core.io.diff.SVNAllDeltaGenerator;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.io.diff.SVNSequenceDeltaGenerator;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.TimeUtil;
 
