@@ -9,7 +9,7 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core.internal.ws.fs;
+package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.IOException;
 import java.io.OutputStream;
