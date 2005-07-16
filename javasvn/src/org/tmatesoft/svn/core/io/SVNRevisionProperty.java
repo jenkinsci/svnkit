@@ -27,15 +27,18 @@ public class SVNRevisionProperty {
     /**
      * svn:author property that's responsible for the username of the revision's author
      */
-    public String AUTHOR = "svn:author";
+    public static final String AUTHOR = "svn:author";
     /**
      * svn:log property -  a property to store the log message attached to the revision
      * during commit operation
      */
-    public String LOG = "svn:log";
+    public static final String LOG = "svn:log";
     /**
      * svn:date property that is a datestamp representing the time that the
      * revision was created
      */
-    public String DATE = "svn:date";
+    public static final String DATE = "svn:date";
+    
+    public static final String AUTOVERSIONED = "svn:autoversioned";
+    public static final String ORIGINAL_DATE = "svn:original-date";
 }

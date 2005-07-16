@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.ISVNAnnotateHandler;
+import org.tmatesoft.svn.core.io.SVNRevisionProperty;
 import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
@@ -84,13 +85,13 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myCurrentDiffWindows = null;
         myCurrentRevision = fileRevision.getRevision();
         Map props = fileRevision.getProperties();
-        if (props != null && props.get("svn:author") != null) {
-            myCurrentAuthor = props.get("svn:author").toString();
+        if (props != null && props.get(SVNRevisionProperty.AUTHOR) != null) {
+            myCurrentAuthor = props.get(SVNRevisionProperty.AUTHOR).toString();
         } else {
             myCurrentAuthor = null;
         }
-        if (props != null && props.get("svn:date") != null) {
-            myCurrentDate = TimeUtil.parseDate(fileRevision.getProperties().get("svn:date").toString());
+        if (props != null && props.get(SVNRevisionProperty.DATE) != null) {
+            myCurrentDate = TimeUtil.parseDate(fileRevision.getProperties().get(SVNRevisionProperty.DATE).toString());
         } else {
             myCurrentDate = null;
         }

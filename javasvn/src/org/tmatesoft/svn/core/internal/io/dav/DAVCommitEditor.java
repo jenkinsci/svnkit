@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCommitInfo;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNRevisionProperty;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.util.DebugLog;
@@ -369,7 +370,7 @@ class DAVCommitEditor implements ISVNEditor {
         }
         // proppatch log message.
         logMessage = logMessage == null ? "no message" : logMessage;
-        StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, "svn:log", logMessage);
+        StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, SVNRevisionProperty.LOG, logMessage);
         myConnection.doProppatch(null, location, request, null);
         
         return activity;

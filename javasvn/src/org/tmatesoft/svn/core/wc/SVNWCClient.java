@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNRevisionProperty;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
@@ -322,7 +323,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNRevision revision, String propName, String propValue,
             boolean force, ISVNPropertyHandler handler) throws SVNException {
         propName = validatePropertyName(propName);
-        if (!force && "svn:author".equals(propName) && propValue != null
+        if (!force && SVNRevisionProperty.AUTHOR.equals(propName) && propValue != null
                 && propValue.indexOf('\n') >= 0) {
             SVNErrorManager.error("svn: Value will not be set unless forced");
         }
@@ -1500,11 +1501,11 @@ public class SVNWCClient extends SVNBasicClient {
 
     private static final Collection REVISION_PROPS = new HashSet();
     static {
-        REVISION_PROPS.add("svn:author");
-        REVISION_PROPS.add("svn:log");
-        REVISION_PROPS.add("svn:date");
-        REVISION_PROPS.add("svn:autoversioned");
-        REVISION_PROPS.add("svn:original-date");
+        REVISION_PROPS.add(SVNRevisionProperty.AUTHOR);
+        REVISION_PROPS.add(SVNRevisionProperty.LOG);
+        REVISION_PROPS.add(SVNRevisionProperty.DATE);
+        REVISION_PROPS.add(SVNRevisionProperty.ORIGINAL_DATE);
+        REVISION_PROPS.add(SVNRevisionProperty.AUTOVERSIONED);
     }
 
     private static class LockInfo {
