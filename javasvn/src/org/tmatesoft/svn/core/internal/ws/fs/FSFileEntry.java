@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.io.diff.ISVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNAllDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.io.diff.SVNSequenceDeltaGenerator;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.TimeUtil;

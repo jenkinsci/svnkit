@@ -175,6 +175,13 @@ public class SVNFileUtil {
         }
     }
 
+    public static void copy(InputStream is, OutputStream os) throws IOException {
+        int r;
+        while((r = is.read()) >= 0) {
+            os.write(r);
+        }        
+    }
+
     public static void copyFile(File src, File dst, boolean safe)
             throws SVNException {
         if (src == null || dst == null) {

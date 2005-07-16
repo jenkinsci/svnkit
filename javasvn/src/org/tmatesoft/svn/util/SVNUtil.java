@@ -16,7 +16,7 @@ import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.ISVNWorkspace;
 import org.tmatesoft.svn.core.SVNWorkspaceManager;
-import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -57,7 +57,7 @@ public class SVNUtil {
         String root = new File(ws.getID()).getAbsolutePath();
         root = root.replace(File.separatorChar, '/');
         String path = file.getAbsolutePath().replace(File.separatorChar, '/');
-        if (FSUtil.isWindows) {
+        if (SVNFileUtil.isWindows) {
             if (path.toLowerCase().startsWith(root.toLowerCase())) {
                 path = path.substring(root.length());
             }

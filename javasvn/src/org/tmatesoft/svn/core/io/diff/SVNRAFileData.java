@@ -9,7 +9,7 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core.internal.ws.fs;
+package org.tmatesoft.svn.core.io.diff;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 
-import org.tmatesoft.svn.core.io.diff.ISVNRAData;
+import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
 
 /**
  * @version 1.0

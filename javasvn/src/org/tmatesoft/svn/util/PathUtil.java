@@ -17,7 +17,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.StringTokenizer;
 
-import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 /**
  * This class is a utility which aim is to help in work with path strings. The
@@ -315,7 +315,7 @@ public class PathUtil {
             if (!root.endsWith("/")) {
                 root += "/";
             }
-            boolean rootFound = FSUtil.isWindows ? longerPath.toLowerCase()
+            boolean rootFound = SVNFileUtil.isWindows ? longerPath.toLowerCase()
                     .startsWith(root.toLowerCase()) : longerPath
                     .startsWith(root);
             if (rootFound) {

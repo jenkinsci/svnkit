@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.core.internal.ws.fs.FSUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.util.DebugLog;
 
@@ -46,7 +46,7 @@ public class SVNAllDeltaGenerator implements ISVNDeltaGenerator {
 		InputStream is = null;
 		try {
 			is = new BufferedInputStream(workFile.read(0, workFile.length()));
-			FSUtil.copy(is, os, null, null);
+			SVNFileUtil.copy(is, os);
 		}
 		catch (IOException e) {
 			throw new SVNException(e);
