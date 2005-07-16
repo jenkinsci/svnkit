@@ -258,28 +258,6 @@ public class PathUtil {
     }
 
     /**
-     * Retrieves the common root directory for all the path strings in an array.
-     * 
-     * @param paths
-     * @return
-     */
-    public static String getFSCommonRoot(String[] paths) {
-        if (paths == null || paths.length == 0) {
-            return null;
-        }
-        String root = paths[0].replace(File.separatorChar, '/');
-        for (int i = 1; i < paths.length; i++) {
-            root = getCommonAncestor(root, paths[i].replace(File.separatorChar,
-                    '/'));
-        }
-        File fileRoot = new File(root);
-        if (fileRoot.isFile()) {
-            root = PathUtil.removeTail(root);
-        }
-        return root;
-    }
-
-    /**
      * 
      * @param paths
      * @return
@@ -324,27 +302,5 @@ public class PathUtil {
             root = PathUtil.removeTail(root);
         }
         return PathUtil.removeTrailingSlash(root);
-    }
-
-    /**
-     * Determines if the path is a URL or not.
-     * 
-     * <p>
-     * If <code>pathOrUrl</code> starts with one of the following protocol
-     * schemas: <i>"http://"</i>, <i>"https://"</i>, <i>"svn://"</i>,
-     * <i>"svn+ssh://"</i>, - then it's considered to be a URL. Otherwise it's
-     * not a URL, just a simple path.
-     * 
-     * @param pathOrUrl
-     *            a string to be examined if it's a URL or not
-     * @return <code>true</code> if the string starts with a protocol schema;
-     *         otherwise <code>false</code>
-     */
-    public static boolean isURL(String pathOrUrl) {
-        return pathOrUrl != null
-                && (pathOrUrl.startsWith("http://")
-                        || pathOrUrl.startsWith("https://")
-                        || pathOrUrl.startsWith("svn://") || pathOrUrl
-                        .startsWith("svn+ssh://"));
     }
 }

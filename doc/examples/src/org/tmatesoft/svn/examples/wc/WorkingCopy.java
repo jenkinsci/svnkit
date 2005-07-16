@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.PathUtil;
+
 /*
  * This is a complex example program that demonstrates how you can manage local
  * working copies as well as URLs by means of the API provided in the 

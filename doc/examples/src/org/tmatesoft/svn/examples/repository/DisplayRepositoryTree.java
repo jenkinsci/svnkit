@@ -9,8 +9,8 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-
 package org.tmatesoft.svn.examples.repository;
+
 import java.util.Collection;
 import java.util.Iterator;
 

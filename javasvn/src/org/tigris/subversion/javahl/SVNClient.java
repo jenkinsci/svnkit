@@ -48,7 +48,6 @@ import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
 import org.tmatesoft.svn.util.Version;
 
@@ -1117,8 +1116,12 @@ public class SVNClient implements SVNClientInterface {
         throw ec;
     }
 
-    protected static boolean isURL(String path){
-        return PathUtil.isURL(path);
+    protected static boolean isURL(String pathOrUrl){
+        return pathOrUrl != null
+                && (pathOrUrl.startsWith("http://")
+                        || pathOrUrl.startsWith("https://")
+                        || pathOrUrl.startsWith("svn://") || pathOrUrl
+                        .startsWith("svn+ssh://"));
     }
 
     protected static NotifyInformation createNotifyInformation(SVNEvent event, String path) {

@@ -23,11 +23,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -43,6 +41,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.PathUtil;
+
 /*
  * This example program illustrates how you can export a clean directory tree 
  * from a repository using the SVNRepository.update method. Actually, a checkout 
@@ -779,32 +778,11 @@ public class Export {
             myFileProperties.put(name, value);
         }
         /*
-         * Checks up if the file has been updated correctly.
+         * File update completed.
          */
         public void closeFile(String path, String textChecksum) throws SVNException {
-            File file = new File(myRootDirectory, myCurrentPath);
-            if (textChecksum == null) {
-                textChecksum = (String) myFileProperties
-                        .get(SVNProperty.CHECKSUM);
-            }
-
-            try {
-                /*
-                 * Uses SVNFileUtil.computeChecksum(File) to evaluate the client's
-                 * checksum that should be compared with the one transmitted by the 
-                 * server (textChecksum).
-                 */
-                if (textChecksum != null
-                        && !textChecksum.equals(SVNFileUtil
-                                .computeChecksum(file))) {
-                    throw new SVNException("error: the file '"
-                            + file.getAbsolutePath() + "' is corrupted!");
-                }
-            } finally {
-                myCurrentPath = null;
-                myFileProperties.clear();
-                myFileProperties = null;
-            }
+            myCurrentPath = null;
+            myFileProperties = null;
         }
         
         /*

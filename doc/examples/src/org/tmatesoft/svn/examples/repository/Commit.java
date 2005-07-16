@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+
 /*
  * This is an example of how to commit several types of changes to a repository:
  * a new directory with a file, modification to a file, copying a directory into
