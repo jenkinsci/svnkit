@@ -12,7 +12,17 @@
 
 package org.tmatesoft.svn.core.test;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -27,6 +37,7 @@ import org.tmatesoft.svn.util.DebugLog;
 public class PythonTests {
 
 	private static File ourPropertiesFile;
+    private static Process ourSVNServer;
 
 	public static void main(String[] args) {
 		String fileName = args[0];
@@ -35,7 +46,7 @@ public class PythonTests {
 		Properties properties = null;
 		String defaultTestSuite = null;
 		try {
-			properties = AllTests.loadProperties(ourPropertiesFile);
+			properties = loadProperties(ourPropertiesFile);
 			defaultTestSuite = loadDefaultTestSuite();
 		} catch (IOException e) {
 			System.out.println("can't load properties, exiting");
@@ -48,25 +59,25 @@ public class PythonTests {
 		String url = "svn://localhost";
 		if (Boolean.TRUE.toString().equals(properties.getProperty("python.svn"))) {
 			try {
-				AllTests.startSVNServe(properties);
+				startSVNServe(properties);
 				runPythonTests(properties, defaultTestSuite, url);
 			} catch (Throwable th) {
 				th.printStackTrace();
 			} finally {
-				AllTests.stopSVNServe();
+				stopSVNServe();
 			}
 		}
 		if (Boolean.TRUE.toString().equals(properties.getProperty("python.http"))) {
 			url = "http://localhost:" + properties.getProperty("apache.port", "8082");
 			properties.setProperty("apache.conf", "apache/python.template.conf");
 			try {
-				AllTests.startApache(properties);
+				startApache(properties);
 				runPythonTests(properties, defaultTestSuite, url);
 			} catch (Throwable th) {
 				th.printStackTrace();
 			} finally {
 				try {
-					AllTests.stopApache(properties);
+					stopApache(properties);
 				} catch (Throwable th) {
 					th.printStackTrace();
 				}
@@ -295,4 +306,98 @@ public class PythonTests {
 
 		return defaultTestSuite.toString();
 	}
+    
+    public static Properties loadProperties(File file) throws IOException {
+        FileInputStream is = new FileInputStream(file);
+        Properties props = new Properties();
+        props.load(is);
+        is.close();
+        return props;
+    }
+    public static void startSVNServe(Properties props) throws Throwable {
+        String port = props.getProperty("svn.port", "3690");
+        String path = getRepositoryRoot(props);
+        
+        String svnserve = props.getProperty("svnserve.path");
+        String[] command = {svnserve, "-d", "--foreground", "--listen-port", port, "-r", path};
+        ourSVNServer = execCommand(command, false);
+    }
+    
+    public static void stopSVNServe() {
+        if (ourSVNServer != null) {
+            ourSVNServer.destroy();
+        }
+    }
+
+    public static void startApache(Properties props) throws Throwable {
+        apache(props, true);
+    }
+
+    public static void stopApache(Properties props) throws Throwable {
+        apache(props, false);
+    }
+    
+    private static void apache(Properties props, boolean start) throws Throwable {
+        String[] command = null;
+        File configFile = File.createTempFile("svn", "test");
+        String path = configFile.getAbsolutePath().replace(File.separatorChar, '/');
+        generateApacheConfig(configFile, props);
+
+        String apache = props.getProperty("apache.path");
+        command = new String[] {apache, "-f", path, "-k", (start ? "start" : "stop")};
+        execCommand(command, start);
+    }
+    
+    private static void generateApacheConfig(File destination, Properties props) throws IOException {
+        File template = new File(props.getProperty("apache.conf", "apache/httpd.template.conf"));
+        byte[] contents = new byte[(int) template.length()];
+        InputStream is = new FileInputStream(template);
+        is.read(contents);
+        is.close();
+        
+        File passwdFile = new File("apache/passwd");
+        
+        String config = new String(contents);
+        config = config.replaceAll("%root%", props.getProperty("apache.root"));
+        config = config.replaceAll("%port%", props.getProperty("apache.port"));
+        String path = getRepositoryRoot(props);
+        config = config.replaceAll("%repository.root%", path);
+        config = config.replaceAll("%passwd%", passwdFile.getAbsolutePath().replace(File.separatorChar, '/'));
+        config = config.replaceAll("%home%", System.getProperty("user.home"));
+        
+        String pythonTests = new File(props.getProperty("python.tests")).getAbsolutePath().replace(File.separatorChar, '/');
+        config = config.replaceAll("%python.tests%", pythonTests);
+        
+        FileOutputStream os = new FileOutputStream(destination);
+        os.write(config.getBytes());
+        os.close();
+    }
+    
+    private static String getRepositoryRoot(Properties props) {
+        String path = props.getProperty("repository.root");
+        path = path.replaceAll("%home%", System.getProperty("user.home").replace(File.separatorChar, '/'));
+        path = path.replace(File.separatorChar, '/');
+        new File(path).mkdirs();
+        return path;
+    }
+    
+    private static Process execCommand(String[] command, boolean wait) throws IOException {
+        Process process = Runtime.getRuntime().exec(command);
+        if (process != null) {
+            try {
+                new ReaderThread(process.getInputStream(), null).start();
+                new ReaderThread(process.getErrorStream(), null).start();
+                if (wait) {
+                    int code = process.waitFor();
+                    if (code != 0) {
+                        throw new IOException("process '"  +  command[0] + "' exit code is not 0 : " + code);
+                    }
+                }
+            } catch (InterruptedException e) {
+                throw new IOException("interrupted");
+            }
+        }
+        return process;
+    }
+    
 }
