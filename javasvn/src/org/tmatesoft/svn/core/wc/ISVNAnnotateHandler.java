@@ -9,9 +9,11 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.io;
+package org.tmatesoft.svn.core.wc;
 
 import java.util.Date;
+
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
  * This is an interface for a handler that is to be invoked on each delta line
