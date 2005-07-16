@@ -39,13 +39,17 @@ import java.util.StringTokenizer;
  */
 public class SVNFileUtil {
 
-    private static final String BINARY_MIME_TYPE = "application/octet-stream";
 
     public final static boolean isWindows;
+    public final static OutputStream DUMMY_OUT = new OutputStream() {
+        public void write(int b) throws IOException {
+        }
+    };
+    
 
     private static String ourGroupID;
-
     private static String ourUserID;
+    private static final String BINARY_MIME_TYPE = "application/octet-stream";
 
     static {
         String osName = System.getProperty("os.name");

@@ -22,13 +22,15 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
+import org.tmatesoft.svn.core.wc.ISVNMerger;
+import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class DefaultSVNOptions implements ISVNOptions {
+public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
 
     private static final String MISCELLANY_GROUP = "miscellany";
     private static final String AUTH_GROUP = "auth";
@@ -46,6 +48,7 @@ public class DefaultSVNOptions implements ISVNOptions {
     private boolean myIsReadonly;
     private File myConfigDirectory;
     private SVNConfigFile myConfigFile;
+    private ISVNMergerFactory myMergerFactory;
 
     public DefaultSVNOptions() {
         this(null, true);
@@ -224,6 +227,17 @@ public class DefaultSVNOptions implements ISVNOptions {
         }
         return target;
     }
+    
+    public ISVNMergerFactory getMergerFactory() {
+        if (myMergerFactory == null) {
+            return this;
+        }
+        return myMergerFactory;
+    }
+    
+    public void setMergerFactory(ISVNMergerFactory mergerFactory) {
+        myMergerFactory = mergerFactory;
+    }
 
     private SVNConfigFile getConfigFile() {
         if (myConfigFile == null) {
@@ -296,5 +310,9 @@ public class DefaultSVNOptions implements ISVNOptions {
             }
         }
         return Pattern.compile(result.toString());
+    }
+
+    public ISVNMerger createMerger(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd, byte[] eol) {
+        return new DefaultSVNMerger(conflictStart, conflictSeparator, conflictEnd, eol);
     }
 }

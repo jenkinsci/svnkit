@@ -26,29 +26,28 @@ import de.regnis.q.sequence.line.QSequenceLineResult;
  * @version 1.0
  * @author TMate Software Ltd.
  */
-public class FSMergerBySequence {
+class FSMergerBySequence {
     
-    private static final int NOT_MODIFIED = 0;
-    private static final int MERGED = 4;
-    private static final int CONFLICTED = 2;
+    public static final int NOT_MODIFIED = 0;
+    public static final int MERGED = 4;
+    public static final int CONFLICTED = 2;
 
     // Fields =================================================================
 
     private final byte[] myConflictStart;
     private final byte[] myConflictSeparator;
     private final byte[] myConflictEnd;
-    private final byte[] eolBytes;
+    private final byte[] myEOLBytes;
 
     private static final byte[] DEFAULT_EOL = System.getProperty("line.separator").getBytes();
 
     // Setup ==================================================================
 
-    public FSMergerBySequence(byte[] conflictStart, byte[] conflictSeparator,
-            byte[] conflictEnd, byte[] eolBytesArray) {
-        this.myConflictStart = conflictStart;
-        this.myConflictSeparator = conflictSeparator;
-        this.myConflictEnd = conflictEnd;
-        this.eolBytes = eolBytesArray;
+    public FSMergerBySequence(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd, byte[] eolBytesArray) {
+        myConflictStart = conflictStart;
+        myConflictSeparator = conflictSeparator;
+        myConflictEnd = conflictEnd;
+        myEOLBytes = eolBytesArray;
     }
 
     // Accessing ==============================================================
@@ -60,9 +59,9 @@ public class FSMergerBySequence {
         final QSequenceLineResult latestResult;
         try {
             localResult = QSequenceLineMedia.createBlocks(baseData, localData,
-                    eolBytes);
+                    myEOLBytes);
             latestResult = QSequenceLineMedia.createBlocks(baseData,
-                    latestData, eolBytes);
+                    latestData, myEOLBytes);
         } catch (QSequenceException ex) {
             throw new IOException(ex.getMessage());
         }
@@ -294,8 +293,8 @@ public class FSMergerBySequence {
             throws IOException {
         if (bytes.length > 0) {
             os.write(bytes);
-            if (eolBytes != null) {
-                os.write(eolBytes);
+            if (myEOLBytes != null) {
+                os.write(myEOLBytes);
             } else {
                 os.write(DEFAULT_EOL);
             }

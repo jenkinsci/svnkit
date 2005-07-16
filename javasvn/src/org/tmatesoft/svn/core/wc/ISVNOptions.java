@@ -49,4 +49,8 @@ public interface ISVNOptions {
     public void setAutoProperty(String pattern, String properties);
 
     public Map applyAutoProperties(String fileName, Map target);
+    
+    public ISVNMergerFactory getMergerFactory();
+    
+    public void setMergerFactory(ISVNMergerFactory merger);
 }
