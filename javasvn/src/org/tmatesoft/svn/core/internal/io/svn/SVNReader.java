@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.svn;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -27,11 +26,12 @@ import java.util.Map;
 import org.tmatesoft.svn.core.io.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNDirEntry;
-import org.tmatesoft.svn.core.io.SVNError;
 import org.tmatesoft.svn.core.io.SVNException;
 import org.tmatesoft.svn.core.io.SVNLock;
 import org.tmatesoft.svn.core.io.SVNNodeKind;
-import org.tmatesoft.svn.util.*;
+import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.LoggingInputStream;
+import org.tmatesoft.svn.util.TimeUtil;
 
 /**
  * @author Alexander Kitaev
@@ -160,8 +160,7 @@ class SVNReader {
      * 
      */
 
-    public static Object[] parse(LoggingInputStream is, String templateStr,
-            Object[] target) throws SVNException {
+    public static Object[] parse(LoggingInputStream is, String templateStr, Object[] target) throws SVNException {
         if (!is.markSupported()) {
             throw new SVNException(
                     "SVNReader works only with markable input streams");
@@ -264,12 +263,15 @@ class SVNReader {
                     if ("failure".equals(word)) {
                         // read errors and throw
                         readChar(is, '(');
-                        List errors = new ArrayList();
+                        StringBuffer errorMessage = new StringBuffer();
                         RollbackInputStream is2 = new RollbackInputStream(is);
                         try {
                             while (true) {
                                 is2.mark(0x5);
-                                errors.add(readError(is2));
+                                if (errorMessage.length() > 0) {
+                                    errorMessage.append("\n");
+                                }
+                                errorMessage.append(readError(is2));
                             }
                         } catch (SVNException e) {
                             try {
@@ -282,10 +284,9 @@ class SVNReader {
                                 //
                             }
                         }
-                        String message = errors.isEmpty() ? "svnserver reported an error"
-                                : "svn: "
-                                        + ((SVNError) errors.get(0))
-                                                .getMessage();
+                        String message = "svn: " + (errorMessage.length() == 0 ? 
+                                "svnserve reported an error"
+                                : errorMessage.toString());
                         throw new SVNException(message);
                     } else if (!"success".equals(word)) {
                         throw new SVNException(
@@ -613,13 +614,12 @@ class SVNReader {
         };
     }
 
-    private static SVNError readError(InputStream is) throws SVNException {
+    private static String readError(InputStream is) throws SVNException {
         InputStream pis = new RollbackInputStream(is);
         readChar(pis, '(');
-        int errorCode = -1;
         try {
             pis.mark(0x20);
-            errorCode = readNumber(pis);
+            readNumber(pis);
         } catch (SVNException e) {
             try {
                 pis.reset();
@@ -627,12 +627,10 @@ class SVNReader {
             }
         }
         String errorMessage = readString(pis);
-        int lineNumber = -1;
-        String location = null;
         try {
             pis.mark(0x100);
-            location = readString(pis);
-            lineNumber = readNumber(pis);
+            readString(pis);
+            readNumber(pis);
         } catch (SVNException e) {
             try {
                 pis.reset();
@@ -640,7 +638,7 @@ class SVNReader {
             }
         }
         readChar(pis, ')');
-        return new SVNError(errorMessage, location, errorCode, lineNumber);
+        return errorMessage;
     }
 
     private static SVNDirEntry readDirEntry(LoggingInputStream is)

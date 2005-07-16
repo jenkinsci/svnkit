@@ -334,10 +334,10 @@ class HttpConnection {
                 return status;
             } else if (auth != null) {
                 close();
-                throw new SVNException("can't connect");
+                SVNErrorManager.error("svn: Cannot connecto to host '" + mySVNRepositoryLocation.getHost() + "'");
             } else {
                 close();
-                throw new SVNCancelException();
+                throw new SVNCancelException("svn: Authentication cancelled");
             }
         }
     }

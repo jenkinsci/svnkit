@@ -25,6 +25,7 @@ package org.tmatesoft.svn.core.io;
  */
 public class SVNCancelException extends SVNException {
 
-	private static final long serialVersionUID = 1L;
-
+    public SVNCancelException(String message) {
+        super(message);
+    }
 }

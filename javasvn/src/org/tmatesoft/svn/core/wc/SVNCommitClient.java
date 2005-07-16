@@ -662,11 +662,7 @@ public class SVNCommitClient extends SVNBasicClient {
             return new SVNCommitPacket(wcAccess, commitItems, lockTokens);
         } catch (SVNException e) {
             wcAccess.close(true);
-            if (e.getMessage() != null && e.getMessage().startsWith("svn:")) {
-                e.setMessage("svn: Commit failed (details follow):\n"
-                        + e.getMessage());
-            }
-            throw e;
+            throw new SVNException("svn: Commit failed (details follow):", e);
         }
     }
 

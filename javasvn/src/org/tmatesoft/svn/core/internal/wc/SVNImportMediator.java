@@ -85,7 +85,4 @@ public class SVNImportMediator implements ISVNWorkspaceMediator {
             file.delete();
         }
     }
-
-    public void deleteAdminFiles(String path) {
-    }
 }

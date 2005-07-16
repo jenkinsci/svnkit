@@ -139,7 +139,4 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
             myTmpFiles.remove(file);
         }
     }
-
-    public void deleteAdminFiles(String path) {
-    }
 }

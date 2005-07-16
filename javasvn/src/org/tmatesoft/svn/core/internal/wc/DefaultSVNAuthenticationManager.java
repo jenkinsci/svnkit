@@ -148,7 +148,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 return auth;
             }
             if (i == 3) {
-                throw new SVNCancelException();
+                throw new SVNCancelException("svn: Authentication cancelled");
             }
         }
         throw new SVNAuthenticationException("svn: Authentication required for '" + realm + "'");
@@ -167,7 +167,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 return auth;
             }
             if (i == 3) {
-                throw new SVNCancelException();
+                throw new SVNCancelException("svn: Authentication cancelled");
             }
         }
         throw new SVNAuthenticationException("svn: Authentication required for '" + realm + "'");

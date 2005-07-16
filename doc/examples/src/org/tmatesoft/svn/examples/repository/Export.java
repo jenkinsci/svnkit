@@ -745,8 +745,7 @@ public class Export {
                             window.apply(target, target, newData, target.length());
                         } catch (IOException ioe) {
                             throw new SVNException(
-                                    "error while fetching a temporary delta storage.",
-                                    ioe);
+                                    "error while fetching a temporary delta storage.");
                         } finally {
                             if (newData != null) {
                                 try {
@@ -954,9 +953,6 @@ public class Export {
          */
         public void deleteTemporaryLocation(Object id) {
             myTmpFiles.remove(id);
-        }
-
-        public void deleteAdminFiles(String path) {
         }
     }
 }

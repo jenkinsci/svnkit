@@ -804,8 +804,5 @@ public class Commit {
         public void deleteTemporaryLocation(Object id) {
             myTmpFiles.remove(id);
         }
-
-        public void deleteAdminFiles(String path) {
-        }
     }
 }

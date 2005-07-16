@@ -91,13 +91,4 @@ public interface ISVNWorkspaceMediator {
      * @param id	the id of a temporary file
      */
     public void deleteTemporaryLocation(Object id);
-    
-    /**
-     * Removes an administrative directory (<i>.svn</i> folder) and 
-     * all its contents.
-     * 
-     * @param path	a path to a directory which contains an <i>.svn</i> folder
-     * 				to be entirely removed
-     */
-    public void deleteAdminFiles(String path);
 }

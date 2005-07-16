@@ -1061,7 +1061,7 @@ public class SVNClient implements SVNClientInterface {
                 public void checkCancelled() throws SVNCancelException {
                     if(myCancelOperation){
                         myCancelOperation = false;
-                        throw new SVNCancelException();
+                        throw new SVNCancelException("operation cancelled");
                     }
                 }
             };
@@ -1114,11 +1114,6 @@ public class SVNClient implements SVNClientInterface {
         ClientException ec = new ClientException(e.getMessage(), "", 0);
         DebugLog.error(ec);
         DebugLog.error(e);
-        if (e.getErrors() != null) {
-            for(int i = 0; i < e.getErrors().length; i++) {
-                DebugLog.log(e.getErrors()[i].getMessage());
-            }
-        }
         throw ec;
     }
 
