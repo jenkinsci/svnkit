@@ -1,0 +1,383 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head><title>TMate&nbsp;::&nbsp;Home</title>
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" media="screen" href="home0000.css">
+
+<style>
+code {
+   font-weight: bold;
+   font-size: 100%;
+   color: darkblue;
+}
+</style>
+
+<body>
+
+<div id="content">
+
+    <div id="top2" ><a href="http://tmatesoft.com/company/index.html"><img height="55" width="161" src="tmatelog.png" style="padding:6px; height: 55px; border:none;" border="0" /></a></div>
+	<table cellspacing="0" cellpadding="0" width="100%">
+		<tr>
+		<td valign="top">
+		      <table cellpadding="0" cellspacing="0" width="100%"> 
+			      <tr id="title"><td height="60" align="left" valign="top"><span class="javasvn">JavaSVN&nbsp;</span><span style="color: #fff;" class="nol" >Knowledge Base</span></td></tr>
+                              <tr>
+                              <td>
+                              <table width="100%" cellspacing="1" cellpaddning="0" style="background-color:#fff;">
+                              <tr style="margin:0px; padding:0px;">
+                                  <td class="activeItem">&nbsp;Overview&nbsp;</td> 
+                                  <td class="item"><a href="articles.html" class="item">&nbsp;Articles&nbsp;</a></td> 
+                                  <td class="item"><a href="javadoc/index.html" class="item">&nbsp;JavaSVN&nbsp;API&nbsp;</a></td> 
+                                  <td class="item"><a href="examples/index.php" class="item">&nbsp;Library&nbsp;Usage&nbsp;Examples&nbsp;<a/></td> 
+                                  <td class="item"><a href="mailinglist.html" class="item">&nbsp;Mailing&nbsp;Lists&nbsp;<a/></td> 
+                                  <td class="item"><a href="index.html" class="item">&nbsp;Home&nbsp;<a/></td> 
+                                  </tr>
+                              </table>
+                              </td>
+                              </tr> 
+		      </table>
+	       </td>
+	       </tr>
+	</table>
+<!--Contents-->
+
+<h3 style="padding-top: 1.5em;">Table of Contents</h3>
+<dl>
+
+<dt><span><a href="#build-instructions" class="contents">1. Build Instructions</a></span></dt>
+<dd>
+	<dl>
+	<br>
+	<dt><span><a href="#build-javaSVN-from-sources" class="contents">1.1. How to build JavaSVN library from sources</a></span></dt>
+	<dt><span><a href="#build-javaSVN-Subclipse-plugin-from-sources" class="contents">1.2. How to build JavaSVN Subclipse Extension plugin from sources</a></span></dt>
+	</dl>
+</dd>
+<br>
+<dt><span><a href="#for-subclipse-user" class="contents">2. For Subclipse (and svnant) Users</a></span></dt>
+<dd>
+	<dl>
+	<br>
+	<dt><span><a href="#how-to-make-subclipse-use-javaSVN" class="contents">2.1. How to make Subclipse (0.9.30) use JavaSVN library</a></span></dt>
+	<dt><span><a href="#http-proxy-setup" class="contents">2.2. HTTP proxy setup</a></span></dt>
+	<dt><span><a href="#svn+ssh-auth-with-private-key" class="contents">2.3. SVN+SSH authentication with private key</a></span></dt>
+	<dt><span><a href="#making-svnant-use-javasvn" class="contents">2.4. Making SvnAnt use JavaSVN</a></span></dt>
+	</dl>
+</dd>
+<br>
+<dt><span><a href="#using-javasvn-with-ant" class="contents">3. Using JavaSVN with Ant</a></span></dt>
+<dd>	
+	<dl>
+	<br>
+	<dt><span><a href="#sample-ant-tasks-that-uses-javasvn" class="contents">3.1. Sample Ant tasks that uses JavaSVN <i>(contributed by William Lovins)</i></a></span></dt>
+	<dt><span><a href="#parameters" class="contents">3.2. Parameters</a></span></dt>
+	<dt><span><a href="#ant-examples" class="contents">3.3. Examples</a></span></dt>
+	<dd>
+		<dl>
+		<dt><span><a href="#ant-examples-checking-out-files" class="contents">3.3.1 Checking out files from the repository</a></span></dt>
+		<dt><span><a href="#ant-examples-committing-files-to-repository" class="contents">3.3.2 Commiting files to the repository</a></span></dt>
+		</dl>
+	</dd>
+	
+	</dl>
+</dd>
+<br>
+<dt><span><a href="#logging-javasvn-operations" class="contents">4. Logging JavaSVN operations</a></span></dt>
+<dd>
+	<dl>
+	<br>
+	<dt><span><a href="#logging-javasvn-as-eclipse-plugin" class="contents">4.1. JavaSVN is used as Eclipse plugin (works for Subclipse Extension as well)</a></span></dt>
+	<dt><span><a href="#logging-javasvn-as-standalone" class="contents">4.2. JavaSVN is used as library in standalone application</a></span></dt>
+	<dt><span><a href="#setting-up-your-own-logger" class="contents">4.3. Setting up your own logger</a></span></dt>
+	</dl>
+</dd>
+</dl>
+
+<!--Build Instructions-->
+<a name="build-instructions"></a><h3 style="padding-top: 1.5em;">1. Build Instructions</h3>
+<a name="build-javaSVN-from-sources"></a><h4>1.1. How to build JavaSVN library from sources</h4>
+<p>Get JavaSVN source code with the svn command line client</p>
+<pre style="padding: 0.5em; background-color:#eee;">
+$ svn co http://72.9.228.230/svn/jsvn/trunk javasvn
+</pre>
+<p>Go to checked out directory</p>
+<pre style="padding: 0.5em; background-color:#eee;">
+$ cd javasvn
+</pre>
+<p>Use ANT to build javasvn.jar</p>
+<pre style="padding: 0.5em; background-color:#eee;">
+$ ant build-standalone
+</pre>
+<p><code>javasvn/lib</code> directory will contain built library jar file <code>(javasvn.jar)</code>
+and JSCH library <code>(jsch.jar)</code> that is needed if you are going to use svn+ssh connection
+protocol.</p>
+<a name="build-javaSVN-Subclipse-plugin-from-sources"></a><h4>1.2. How to build JavaSVN Subclipse Extension plugin from sources</h4>
+<p>Get JavaSVN source code with the svn command line client</p>
+<pre style="padding: 0.5em; background-color:#eee;">
+$ svn co http://72.9.228.230/svn/jsvn/trunk javasvn
+</pre>
+<p>or  (to check out specific version):</p>
+<pre style="padding: 0.5em; background-color:#eee;">
+$ svn co http://72.9.228.230/svn/jsvn/tags/TAG_NAME javasvn
+</pre>
+<p>Go to checked out directory</p>
+<pre style="padding: 0.5em; background-color:#eee;">
+$ cd javasvn
+</pre>
+<p>Set ECLIPSE_HOME environment variable (should point to <b>Eclipse 3.1M6</b> (or newer) home directory)</p>
+<pre style="padding: 0.5em; background-color:#eee;">
+$ set ECLIPSE_HOME=/home/user/java/eclipse31M6
+</pre>
+<p>Use ANT to build javasvn.jar</p>
+<pre style="padding: 0.5em; background-color:#eee;">
+$ ant deploy
+</pre>
+<p><code>build/eclipse</code> directory will contain Eclipse javasvn plugin, feature and update site files.</p>
+<p>To make Eclipse use the plugin you've just built, copy all files from
+from <code>JAVASVN/build/eclipse/plugins</code> and <code>JAVASVN/build/eclipse/features</code> to corresponding Eclipse directories and restart Eclipse:
+<pre style="padding: 0.5em; background-color:#eee;">
+$ eclipse -clean
+</pre>
+<p>Or use "Local Update Site" at <code>JAVASVN/build/eclipse/site</code> directory to install JavaSVN Subclipse Extension</p>
+<br/>
+
+<!--For Subclipse (and svnant) Users-->
+<a name="for-subclipse-user"></a><h3 style="padding-top: 1.5em;">2. For Subclipse (and svnant) Users</h3>
+<a name="how-to-make-subclipse-use-javaSVN"></a><h4>2.1. How to make Subclipse (0.9.30) use JavaSVN library</h4>
+<p>Though JavaSVN is not yet fully integrated into Subclipse as an extension, you may already try it with Subclipse. Perform the following 
+easy steps to make Subclipse and JavaSVN work together.</p>
+<br/>
+<b>With Eclipse Update Manager</b> (tested with Eclipse 3.1M6, WinXP):
+<ul>
+<li>Add <b>http://tmate.org/svn/</b> as an update site to Eclipse Update Manager.<br/>
+Use <span style="color:#669999;">Help | Software Updates | Find and Install</span> in main menu.</li>
+<li>Install "JavaSVN  Subclipse Extension" feature.</li>
+</ul>
+<a name="http-proxy-setup"></a><h4>2.2. HTTP proxy setup</h4>
+<p>Define your proxy port and host in Eclipse <b>Install/Update</b> preferences page.</p>
+<p>Additional proxy settings may be defined in <code>ECLIPSE_HOME/configuration/config.ini</code> file:
+<code><br/>
+http.proxyUser&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code>user name if proxy needs authentication<br/>
+<code>http.proxyPassword&nbsp;&nbsp;</code>password if proxy needs authentication<br/>
+<code>http.nonProxyHosts&nbsp;&nbsp;</code>, or | delimited host names that should bypass proxy</code>
+</p>
+<a name="svn+ssh-auth-with-private-key"></a><h4>2.3. SVN+SSH authentication with private key</h4>
+<p>JavaSVN uses pure java <a id=normal href="http://www.jcraft.com">JSCH library</a> to establish SSH 
+connection. This library supports only SSH version 2, with password or private key authentication. Using 
+password authentication is not a problem with Subclipse, but currently it doesn't provide a way to define 
+private key and passphrase for private key authentication. You may use the following properties to let JavaSVN
+know about your private key and passphrase (you need to provide these properties when starting Eclipse): </p>
+<pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; background-color: #eee;">
+$ eclipse -vmargs \ 
+-Djavasvn.ssh2.key=/path/to/private/key/file \
+-Djavasvn.ssh2.username=userName \ 
+-Djavasvn.ssh2.passphrase=optionalPassphrase
+</pre>
+<p><b>Note:</b> User name for ssh connection will be taken from SVN Repository properties that may be altered in Subclipse
+SVN Repositories view.</p>
+<br/>
+<p>To avoid special batch script creation to launch Eclipse you may define ssh related properties in
+Eclipse config.ini file <code>ECLIPSE_HOME/configuration/config.ini</code> (tip provided by Andrew Berman):
+<pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; background-color: #eee;">
+  ...
+  javasvn.ssh2.key=path/to/private/key/file
+  javasvn.ssh2.passphrase=passphrase
+  javasvn.ssh2.username=username
+</pre>
+</p>
+<p>
+In case you work with Mac OS X version of Eclipse it is not 
+too simple to add arguments that make JSCH look for private 
+key file at launch. Instead of command line arguments you can 
+modify Eclipse.app/Contents/Info.plist last array of keys 
+adding something like that (tip provided by Valentin Alekseev):
+<pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; background-color: #eee;">
+&lt;array&gt;
+  ...
+   &lt;string&gt;-Djavasvn.ssh2.key=/path/to/key/file&lt;/string&gt;
+&lt;/array&gt;
+</pre>
+</p>
+<a name="ant"></a>
+<a name="making-svnant-use-javasvn"></a><h4>2.4. Making SvnAnt use JavaSVN</h4>
+<p>Step-by-step instructions:</b>
+<ul>
+<li>Delete existing <code>javahl.jar</code> and <code>svnClientAdapter.jar</code> (libraries distirbuted with the svnant) from your Ant classpath (ANT_HOME/lib/ directory).</li>
+<li><a id="normal" href="http://tmate.org/svn/">Download</a> latest version of JavaSVN library. You will need javasvn.jar file from the library distribution.</li>
+<li>Get patched version of <a id="normal" href="http://tmate.org/svn/svnClientAdapter-0.9.13.jar">svnClientAdapter.jar</a> (version 0.9.13).</li>
+<li>Put <code>javasvn.jar</code> and <code>svnClientAdapter-0.9.13.jar</code> files on your Ant classpath (ANT_HOME/lib/ directory).</li>
+</ul>
+<p>After performing the steps above svnant will use JavaSVN instead of JavaHL bindings.</b>
+<br />
+
+<!--Using JavaSVN with Ant-->
+<a name="using-javasvn-with-ant"></a><h3 style="padding-top: 1.5em;">3. Using JavaSVN with Ant</h3>
+<p>There are two ways of using JavaSVN in Ant tasks. First way is using <b>svnant</b> - part of Subclipce project,
+you may read JavaSVN+Subclipse <a href="subclipse.html#ant">documentation page</a> for details. 
+Another way, that is described below, is using JavaSVN command line interface.</p>
+<a name="sample-ant-tasks-that-uses-javasvn"></a><h4>3.1. Sample Ant tasks that uses JavaSVN <i>(contributed by William Lovins)</i></h4>
+<p><b>Note:</b> There are areas where this library is very inefficient when working
+with large repositories which will be resolved in later versions.
+</p>
+<p><b>Note:</b> The easiest way to use this command is to treat the commands passed to
+the library the same way that you would the normal svn binary.
+There is no svn task at this time as there is in the <a href="http://subclipse.tigris.org/svnant.html">svnant
+library</a>. This too will be resolved in a later version.</p>
+<p>
+The main advantage to this library is that neither subversion nor any
+associated libraries need to be installed on the server.<br>
+Additionally, this documentation will be expanded and improved on later
+versions. This initial page is being made available for people who
+would like to either test this library or who would like to help
+improve it (e.g. - writing a proper &lt;svn&gt; task set or
+fixing bugs).</p>
+<a name="parameters"></a><h4>3.2. Parameters</h4>
+<p>Please see the svn documentation for assistance on what parameters the
+command accepts.
+A large subset of the command line arguments are available via the
+javasvn-cli.jar file, including lesser used switches such as "svn
+status -u".</p>
+<a name="ant-examples"></a><h4>3.3. Examples</h4>
+<a name="ant-examples-checking-out-files"></a><b>3.1.1. Checking out files from the repository</b>
+<p>If you need to do an initial checkout, this target will checkout files
+from http://sources.example.com/TESTING to the local directory
+/usr/src/TESTREPO. The username and password arguments can be omitted if you have
+anonymous checkouts from your repository.</p>
+
+<pre  style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; background-color: #eee;">
+  &lt;target name="svnCheckout"&gt;
+    &lt;property name="source-root" value="/usr/src"/&gt;
+    &lt;property name="repository.URL" value="http://sources.example.com"/&gt;
+    &lt;java classname="org.tmatesoft.svn.cli.SVN"
+       dir="${source-root}/TESTREPO" fork="true"&gt;
+      &lt;arg value="co"/&gt;
+      &lt;arg value="--username"/&gt;
+      &lt;arg value="admin"/&gt;
+      &lt;arg value="--password"/&gt;
+      &lt;arg value="admin"/&gt;
+      &lt;arg value="${repository.URL}/TESTING"/&gt;
+      &lt;classpath&gt;
+        &lt;pathelement location="${antroot}/LIB/javasvn.jar" /&gt;
+        &lt;pathelement location="${antroot}/LIB/javasvn-cli.jar" /&gt;
+      &lt;/classpath&gt;
+    &lt;/java&gt;
+  &lt;/target&gt;
+</pre>
+<br />
+<a name="ant-examples-committing-files-to-repository"></a><b>3.1.2. Commiting files to the repository</b>
+<p>If you had an existing local copy of a repository that you want to
+check files into, you could use the following target to commit the
+files.
+The "-m" argument of "Testing" is set differently than the other
+arguments.
+Please use a single quote "&nbsp; '&nbsp;&nbsp; " to
+surround the
+double-quoted message, as shown in the example below.</p>
+
+<p>This example would commit all changed files from the local directory
+/usr/src/TESTREPO to the repository located at<br>
+http://sources.example.com/TESTING the same way that the command line
+version would.</p>
+<pre  style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; background-color: #eee;">
+  &lt;target name="svnCommit"&gt;
+    &lt;property name="source-root" value="/usr/src"/&gt;
+    &lt;property name="repository.URL" value="http://sources.example.com"/&gt;
+    &lt;java classname="org.tmatesoft.svn.cli.SVN"
+      dir="${source-root}/TESTREPO" fork="true"&gt;
+      &lt;arg value="commit"/&gt;
+      &lt;arg value="--username"/&gt;
+      &lt;arg value="admin"/&gt;
+      &lt;arg value="--password"/&gt;
+      &lt;arg value="admin"/&gt;
+      &lt;arg value="-m"/&gt; 
+      &lt;arg value='"Testing"'/&gt;
+      &lt;arg value="${repository.URL}/TESTING"/&gt;
+      &lt;classpath&gt;
+        &lt;pathelement location="${antroot}/LIB/javasvn.jar" /&gt;
+        &lt;pathelement location="${antroot}/LIB/javasvn-cli.jar" /&gt;
+      &lt;/classpath&gt;
+    &lt;/java&gt;
+  &lt;/target&gt;
+</pre>		              
+
+<!--Logging JavaSVN operations-->
+<a name="logging-javasvn-operations"></a><h3 style="padding-top: 1.5em;">4. Logging JavaSVN operations</h3>
+<p>If you experience problems that you think are JavaSVN related, it is always a 
+good idea to post a bug report into JavaSVN <a href="../tracker/">Issue Tracker</a>. To provide
+more information with the bug report, please consider attaching JavaSVN log file to it. 
+Below you will find detailed instructions on how to get JavaSVN log file.
+</p>
+
+<a name="logging-javasvn-as-eclipse-plugin"></a><h4>4.1. JavaSVN is used as Eclipse plugin (works for Subclipse Extension as well)</h4>
+<p>When used within Eclipse JavaSVN logs its operation using Eclipse built-in logging facilities.
+Logging is turned off by default. To enable JavaSVN logging please do the following:
+</p>
+<ul>
+<li>Copy <code>ECLIPSE_HOME/plugins/org.tmatesoft.javasvn_version/.options</code> file to <code>ECLIPSE_HOME</code> directory</li>
+<li>Start Eclipse with -debug command line argument:<br/><code>$eclipse -debug</code></li>
+<li>In Eclipse, open standard 'Error Log' view - it will contain detailed log of JavaSVN
+operations that you may export to a file.</li>
+</ul>
+<p><b>Note:</b> OS X users may find it useful to read this <a href="http://www.luisdelarosa.com/blog/2004/10/how_to_run_ecli.html">article</a>. It describes how to start Eclipse in "-debug" mode.</p>
+
+<a name="logging-javasvn-as-standalone"></a><h4>4.2. JavaSVN is used as library in standalone application</h4>
+<p>By default JavaSVN uses standard JDK logging API. You may find JavaSVN
+log file at USER_HOME/.javasvn/.javasvn.0.0.log
+</p>
+<p style="margin-bottom: .5em;">Following system properties may be used to control JavaSVN logging output:</p>
+<code>javasvn.log.console=true|false&nbsp;[false]</code> - log to System.out
+<br/><code>javasvn.log.file=true|false&nbsp;&nbsp;&nbsp;&nbsp;[true]&nbsp;</code> - log to file
+<br/><code>javasvn.log.path=path/to/log/file &nbsp;&nbsp;&nbsp;&nbsp;</code> - use specified log file instead of default one
+<br/><code>javasvn.log.svn=true|false&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[false]</code> - log svn protocol messages
+<br/><code>javasvn.log.http=true|false&nbsp;&nbsp;&nbsp;&nbsp;[false]</code> - log DAV protocol requests
+<br/>
+
+<a name="setting-up-your-own-logger"></a><h4>4.3. Setting up your own logger</h4>
+<p>When you're using JavaSVN in your application it is not always an option to let
+JavaSVN use JDK logging API. Instead you may like to have a fine-grained control over
+the way JavaSVN logs its operations. The solution is to provide JavaSVN with custom logger
+class that should extend <code>DebugLoggerAdapter</code> class. The code below demonstrates
+how it could be done.
+</p> 
+<pre style="margin: 4px; padding: 0.5em; font-family: Courier New; font-size: 100%; background-color: #eee;">
+....
+<span class="javaKeyword">import</span> org.tmatesoft.svn.util.<code>DebugLog</code>;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.util.<code>DebugLoggerAdapter</code>;
+....
+    <span class="javaKeyword">public static void</span> initJavaSVNLogger() {
+        DebugLog.setLogger(<span class="javaKeyword">new</span> CustomJavaSVNLogger());
+    }
+
+    <span class="javaKeyword">private static class</span> CustomJavaSVNLogger 
+                                   <span class="javaKeyword">extends</span> <code>DebugLoggerAdapter</code> {
+    	<span class="javaCommentMulti">/* Override superclass methods to redirect logging
+    	 * as you wish. Superclass implementaion is empty, i.e.
+    	 * all log messages are swallowed.
+    	 */</span>
+    }
+....
+</pre>
+<p><b>Note</b>: One have to set up the custom logger before any other calls are made to
+JavaSVN, otherwise default logging will be used.</p>
+<br/>
+<br/>
+</div>
+
+<span style="{text-align: center; font-size: 25px;}">* * *</span>
+
+<div id="content">
+<br>
+<br>
+<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<br />
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
+2004-2005, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
+
+</div>
+
+</body>
+</html>
+<!-- This document saved from http://www.tmatesoft.com/ -->

@@ -4,8 +4,8 @@ text-decoration: none;
 }
 
 a:hover, a:active, a:focus { 
-color: #000090; 
-background-color: rgb(75%,75%,100%); 
+color: /*highlighttext*/#000090; 
+background-color: rgb(75%,75%,100%);/*highlight;*/ 
 text-decoration: none; 
 }
 
