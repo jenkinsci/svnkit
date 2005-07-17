@@ -138,8 +138,7 @@ public class SVNConfigFile {
     private static boolean matchGroup(String line, String name) {
         line = line.trim();
         if (line.startsWith("[") && line.endsWith("]")) {
-            return name == null ? true : line.substring(1, line.length() - 1)
-                    .equals(name);
+            return name == null || line.substring(1, line.length() - 1).equals(name);
         }
         return false;
     }
@@ -153,7 +152,7 @@ public class SVNConfigFile {
             return false;
         }
         line = line.substring(0, line.indexOf('='));
-        return name == null ? true : line.trim().equals(name);
+        return name == null || line.trim().equals(name);
     }
 
     private static String getPropertyValue(String line) {

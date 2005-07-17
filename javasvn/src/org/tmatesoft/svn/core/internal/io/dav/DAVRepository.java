@@ -271,7 +271,7 @@ class DAVRepository extends SVNRepository {
 			for (int i = 0; i < targetPaths.length; i++) {
 				fullPaths[i] = getFullPath(targetPaths[i]);
 				DebugLog.log("LOG: full path: " + fullPaths[i]);
-			}
+            }
 			// now find common root, this will be request path.
 			String path = fullPaths.length > 1 ? PathUtil.getCommonRoot(fullPaths) : fullPaths[0];
 			if (!path.startsWith("/")) {
@@ -282,13 +282,14 @@ class DAVRepository extends SVNRepository {
 			for (int i = 0; i < targetPaths.length; i++) {
 				fullPaths[i] = fullPaths[i].substring(path.length());
 				fullPaths[i] = PathUtil.removeLeadingSlash(fullPaths[i]);
-				DebugLog.log("LOG: log path: " + fullPaths[i]);
+                DebugLog.log("LOG: log path: " + fullPaths[i]);
 			}
 	        StringBuffer request = DAVLogHandler.generateLogRequest(null, startRevision, endRevision,
 	        		changedPath, strictNode, limit, fullPaths);
 	        
             davHandler = new DAVLogHandler(handler); 
-			long revision = Math.max(startRevision, endRevision);;
+			long revision = Math.max(startRevision, endRevision);
+            path = PathUtil.encode(path);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, false, null);
             path = PathUtil.append(info.baselineBase, info.baselinePath);
             myConnection.doReport(path, request, davHandler);
