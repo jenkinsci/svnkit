@@ -86,8 +86,9 @@ public class SVNMoveClient extends SVNBasicClient {
             SVNEntry dstParentEntry = dstAccess.getAnchor().getEntries()
                     .getEntry("", false);
 
-            boolean sameWC = dstParentEntry.getUUID() != null
-                    && dstParentEntry.getUUID().equals(srcEntry.getUUID());
+            File srcWCRoot = SVNWCUtil.getWorkingCopyRoot(src, true);
+            File dstWCRoot = SVNWCUtil.getWorkingCopyRoot(dst, true);
+            boolean sameWC = srcWCRoot != null && srcWCRoot.equals(dstWCRoot);
 
             if (sameWC
                     && dstEntry != null
