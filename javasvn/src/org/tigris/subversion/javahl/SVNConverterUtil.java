@@ -221,7 +221,7 @@ public class SVNConverterUtil {
                 dirEntry.size(),
                 dirEntry.hasProperties(),
                 dirEntry.getRevision(),
-                dirEntry.getDate() != null ? dirEntry.getDate().getTime() : 0,
+                dirEntry.getDate() != null ? dirEntry.getDate().getTime()*1000 : 0,
                 dirEntry.getAuthor()
                 );
     }
