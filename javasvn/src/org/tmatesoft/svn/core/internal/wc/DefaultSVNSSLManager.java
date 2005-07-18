@@ -167,7 +167,8 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
                             } 
                             throw new CertificateException("svn: Server SSL ceritificate for '" + myRealm + "' rejected");
                         } 
-                        throw new CertificateException("svn: Server SSL ceritificate for '" + myRealm + "' is not trusted");
+                        // like as tmp. accepted.
+                        return;
                     }
                 }                    
             }}, null);
