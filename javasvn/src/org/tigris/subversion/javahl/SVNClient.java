@@ -345,7 +345,7 @@ public class SVNClient implements SVNClientInterface {
                     }
                 });
             }
-            return client.doCommit(files, noUnlock, message, false, recurse).getNewRevision();
+            return client.doCommit(files, noUnlock, message, !recurse, recurse).getNewRevision();
         } catch (SVNException e) {
             throwException(e);
         }
