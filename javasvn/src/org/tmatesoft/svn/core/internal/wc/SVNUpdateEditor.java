@@ -90,7 +90,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             entry.setURL(myCurrentDirectory.URL);
             entry.setIncomplete(true);
             if (mySwitchURL != null) {
-                clearWCProperty();
+                clearWCProperty(myCurrentDirectory.getDirectory());
             }
             entries.save(true);
         }
@@ -191,15 +191,14 @@ public class SVNUpdateEditor implements ISVNEditor {
         path = PathUtil.removeLeadingSlash(path);
         path = PathUtil.removeTrailingSlash(path);
 
-        myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path,
-                false);
+        myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, false);
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
         SVNEntry entry = entries.getEntry("", true);
         entry.setRevision(myTargetRevision);
         entry.setURL(myCurrentDirectory.URL);
         entry.setIncomplete(true);
         if (mySwitchURL != null) {
-            clearWCProperty();
+            clearWCProperty(myCurrentDirectory.getDirectory());
         }
         entries.save(true);
     }
@@ -244,18 +243,18 @@ public class SVNUpdateEditor implements ISVNEditor {
         myCurrentDirectory.propertyChanged(name, value);
     }
 
-    private void clearWCProperty() throws SVNException {
-        if (myCurrentDirectory == null
-                || myCurrentDirectory.getDirectory() == null) {
+    private void clearWCProperty(SVNDirectory dir) throws SVNException {
+        if (dir == null) {
             return;
         }
-        SVNDirectory dir = myCurrentDirectory.getDirectory();
         SVNEntries entires = dir.getEntries();
-        for (Iterator ents = entires.entries(true); ents.hasNext();) {
+        for (Iterator ents = entires.entries(false); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
             if (entry.isFile() || "".equals(entry.getName())) {
                 SVNProperties props = dir.getWCProperties(entry.getName());
                 props.setPropertyValue(SVNProperty.WC_URL, null);
+            } else {
+                clearWCProperty(dir.getChildDirectory(entry.getName()));
             }
         }
     }
