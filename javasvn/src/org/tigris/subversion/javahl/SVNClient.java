@@ -871,7 +871,7 @@ public class SVNClient implements SVNClientInterface {
         } catch (SVNException e) {
             throwException(e);
         }
-        return new byte[]{};
+        return baos.toByteArray();
     }
 
     public void blame(String path, Revision revisionStart, Revision revisionEnd, BlameCallback callback) throws ClientException {
