@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
@@ -185,24 +186,23 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
         }
         if (!isForcedBinaryDiff()
-                && (SVNWCUtil.isBinaryMimetype(mimeType1) || SVNWCUtil
-                        .isBinaryMimetype(mimeType2))) {
+                && (SVNProperty.isBinaryMimeType(mimeType1) || SVNProperty.isBinaryMimeType(mimeType2))) {
             try {
                 bos.write("Cannot display: file marked as binary type."
                         .getBytes(getEncoding()));
                 bos.write(EOL);
-                if (SVNWCUtil.isBinaryMimetype(mimeType1)
-                        && !SVNWCUtil.isBinaryMimetype(mimeType2)) {
+                if (SVNProperty.isBinaryMimeType(mimeType1)
+                        && !SVNProperty.isBinaryMimeType(mimeType2)) {
                     bos.write("svn:mime-type = ".getBytes(getEncoding()));
                     bos.write(mimeType1.getBytes(getEncoding()));
                     bos.write(EOL);
-                } else if (!SVNWCUtil.isBinaryMimetype(mimeType1)
-                        && SVNWCUtil.isBinaryMimetype(mimeType2)) {
+                } else if (!SVNProperty.isBinaryMimeType(mimeType1)
+                        && SVNProperty.isBinaryMimeType(mimeType2)) {
                     bos.write("svn:mime-type = ".getBytes(getEncoding()));
                     bos.write(mimeType2.getBytes(getEncoding()));
                     bos.write(EOL);
-                } else if (SVNWCUtil.isBinaryMimetype(mimeType1)
-                        && SVNWCUtil.isBinaryMimetype(mimeType2)) {
+                } else if (SVNProperty.isBinaryMimeType(mimeType1)
+                        && SVNProperty.isBinaryMimeType(mimeType2)) {
                     if (mimeType1.equals(mimeType2)) {
                         bos.write("svn:mime-type = ".getBytes(getEncoding()));
                         bos.write(mimeType2.getBytes(getEncoding()));

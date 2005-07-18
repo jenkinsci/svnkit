@@ -11,37 +11,36 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.TimeUtil;
 import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.TimeUtil;
 
-import java.io.OutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Collection;
-import java.util.Date;
-
-import de.regnis.q.sequence.line.QSequenceLineResult;
+import de.regnis.q.sequence.QSequenceDifferenceBlock;
 import de.regnis.q.sequence.line.QSequenceLineMedia;
 import de.regnis.q.sequence.line.QSequenceLineRAFileData;
-import de.regnis.q.sequence.QSequenceDifferenceBlock;
+import de.regnis.q.sequence.line.QSequenceLineResult;
 
 
 /**
@@ -79,7 +78,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
 
         Map propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);
-        if (SVNWCUtil.isBinaryMimetype(newMimeType)) {
+        if (SVNProperty.isBinaryMimeType(newMimeType)) {
             SVNErrorManager.error("svn: Cannot calculate blame information for binary file '" + myPath + "'");
         }
         myCurrentDiffWindows = null;

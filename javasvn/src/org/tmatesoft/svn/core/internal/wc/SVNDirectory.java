@@ -307,7 +307,7 @@ public class SVNDirectory {
         String mimeType = getProperties(localPath, false).getPropertyValue(
                 SVNProperty.MIME_TYPE);
         SVNEntry entry = getEntries().getEntry(localPath, true);
-        if (mimeType != null && !mimeType.startsWith("text/")) {
+        if (SVNProperty.isBinaryMimeType(mimeType)) {
             // binary
             if (!dryRun) {
                 File oldFile = SVNFileUtil.createUniqueFile(getRoot(),

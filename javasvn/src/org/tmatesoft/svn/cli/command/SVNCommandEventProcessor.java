@@ -3,21 +3,21 @@
  */
 package org.tmatesoft.svn.cli.command;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNUtil;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
 
 public class SVNCommandEventProcessor implements ISVNEventHandler {
 
@@ -75,7 +75,7 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
             SVNCommand.print(myPrintStream, ".");
         } else if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
             String mimeType = event.getMimeType();
-            if (SVNWCUtil.isBinaryMimetype(mimeType)) {
+            if (SVNProperty.isBinaryMimeType(mimeType)) {
                 SVNCommand.println(myPrintStream, "Adding  (bin)  " + commitPath);
             } else {
                 SVNCommand.println(myPrintStream, "Adding         " + commitPath);

@@ -187,7 +187,7 @@ public class DisplayFile {
          * SVNProperty.isTextType method checks up the value of the mime-type
          * file property and says if the file is a text (true) or not (false).
          */
-        boolean isTextType = SVNProperty.isTextType(mimeType);
+        boolean isTextType = SVNProperty.isTextMimeType(mimeType);
 
         Iterator iterator = fileProperties.keySet().iterator();
         /*

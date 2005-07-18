@@ -12,10 +12,10 @@
 package org.tmatesoft.svn.examples.wc;
 
 import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /*
  * This class is an implementation of ISVNEventHandler intended to reflect the 
@@ -52,7 +52,7 @@ public class CommitEventHandler implements ISVNEventHandler {
              * Gets the MIME-type of the item.
              */
             String mimeType = event.getMimeType();
-            if (SVNWCUtil.isBinaryMimetype(mimeType)) {
+            if (SVNProperty.isBinaryMimeType(mimeType)) {
                 /*
                  * If the item is a file and binary
                  */

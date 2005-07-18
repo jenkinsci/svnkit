@@ -22,7 +22,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -230,7 +229,7 @@ public class SVNMerger {
                     .hasTextModifications(name, false);
             SVNStatusType mergeResult = null;
             if (!isTextModified) {
-                if (SVNWCUtil.isBinaryMimetype(mimeType1) || SVNWCUtil.isBinaryMimetype(mimeType2)) {
+                if (SVNProperty.isBinaryMimeType(mimeType1) || SVNProperty.isBinaryMimeType(mimeType2)) {
                     boolean equals = SVNFileUtil.compareFiles(mine, older, null);
                     if (equals) {
                         if (!myIsDryRun) {

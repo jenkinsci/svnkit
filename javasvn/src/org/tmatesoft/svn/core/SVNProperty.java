@@ -139,8 +139,12 @@ public class SVNProperty {
         return name != null && name.startsWith(SVN_PREFIX);
     }
 
-    public static boolean isTextType(String mimeType) {
+    public static boolean isTextMimeType(String mimeType) {
         return mimeType == null || mimeType.startsWith("text/");
+    }
+
+    public static boolean isBinaryMimeType(String mimeType) {
+        return !isTextMimeType(mimeType);
     }
 
     public static byte[] getEOLBytes(String eolType) {

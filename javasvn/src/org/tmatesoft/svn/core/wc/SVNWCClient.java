@@ -1372,7 +1372,7 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 if (!force && SVNProperty.EOL_STYLE.equals(propName)
                         && propValue != null) {
-                    if (SVNWCUtil.isBinaryMimetype(props
+                    if (SVNProperty.isBinaryMimeType(props
                             .getPropertyValue(SVNProperty.MIME_TYPE))) {
                         if (!recursive) {
                             SVNErrorManager.error("svn: File '" + wcFile

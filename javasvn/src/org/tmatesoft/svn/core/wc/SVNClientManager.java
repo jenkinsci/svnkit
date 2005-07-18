@@ -34,6 +34,7 @@ public class SVNClientManager implements ISVNRepositoryFactory {
     private SVNStatusClient myStatusClient;
     private SVNUpdateClient myUpdateClient;
     private SVNWCClient myWCClient;
+    
     private ISVNEventHandler myEventHandler;
 
     private SVNClientManager(ISVNOptions options, ISVNAuthenticationManager authManager) {
