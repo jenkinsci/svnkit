@@ -104,12 +104,9 @@ public class DiffCommand extends SVNCommand {
                 if (getCommandLine().getPathCount() == 0) {
                     getCommandLine().setPathAt(0, "");
                 }
-                DebugLog.log("--old: " + oldPath);
-                DebugLog.log("--new: " + newPath);
                 for (int i = 0; i < getCommandLine().getPathCount(); i++) {
                     String p = getCommandLine().getPathAt(i);
                     p = p.replace(File.separatorChar, '/');
-                    DebugLog.log("--path: " + p);
                     if (".".equals(p)) {
                         p = "";
                     }
@@ -127,7 +124,6 @@ public class DiffCommand extends SVNCommand {
                         }
                     } catch (SVNException e) {
                         DebugLog.error(e);
-                        DebugLog.log(e.getMessage());
                         error = true;
                         println(err, e.getMessage());
                     }
@@ -139,7 +135,6 @@ public class DiffCommand extends SVNCommand {
                     try {
                         differ.doDiff(new File(path).getAbsoluteFile(), rN, rM, recursive, useAncestry, out);
                     } catch (SVNException e) {
-                        DebugLog.log("exception caught: " + e.getMessage());
                         error = true;
                         println(err, e.getMessage());
                     }

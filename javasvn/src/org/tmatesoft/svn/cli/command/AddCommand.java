@@ -19,7 +19,6 @@ import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -41,12 +40,10 @@ public class AddCommand extends SVNCommand {
         if (enableAutoProps) {
             wcClient.getOptions().setUseAutoProperties(true);
         }
-        DebugLog.log("auto props enabled: " + wcClient.getOptions().isUseAutoProperties());
 
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String absolutePath = getCommandLine().getPathAt(i);
             matchTabsInPath(absolutePath, err);
-            DebugLog.log("adding path: " + absolutePath);
             wcClient.doAdd(new File(absolutePath), force, true, false, recursive);
         }
     }

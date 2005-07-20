@@ -30,7 +30,6 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -96,7 +95,6 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
             File[] paths = (File[]) targets.toArray(new File[targets.size()]);
             logClient.doLog(paths, startRevision ,endRevision, stopOnCopy, myReportPaths, 0, this);
         }
-        DebugLog.log(buffer.toString());
         if (myHasLogEntries) {
             myPrintStream.print(SEPARATOR);
         }

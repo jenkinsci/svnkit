@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -102,7 +101,6 @@ public abstract class SVNCommand {
     protected static SVNRevision parseRevision(SVNCommandLine commandLine) {
         if (commandLine.hasArgument(SVNArgument.REVISION)) {
             final String revStr = (String) commandLine.getArgumentValue(SVNArgument.REVISION);
-            DebugLog.log("parsing revision: " + revStr);
             return SVNRevision.parse(revStr);
         }
         return SVNRevision.UNDEFINED;
@@ -110,17 +108,14 @@ public abstract class SVNCommand {
 
     public static void println(PrintStream out, String line) {
         out.println(line);
-        DebugLog.log(line);
     }
 
     public static void print(PrintStream out, String line) {
         out.print(line);
-        DebugLog.log(line);
     }
 
     public static void println(PrintStream out) {
         out.println();
-        DebugLog.log("");
     }
 
     protected static boolean matchTabsInPath(String path, PrintStream out) {

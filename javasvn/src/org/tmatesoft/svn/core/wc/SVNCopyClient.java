@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
@@ -286,7 +287,6 @@ public class SVNCopyClient extends SVNBasicClient {
 
             items = (SVNCommitItem[]) commitables.values().toArray(
                     new SVNCommitItem[commitables.values().size()]);
-            DebugLog.log(new SVNCommitPacket(wcAccess, items, null) + "");
             commitables = new TreeMap();
             dstURL = SVNCommitUtil.translateCommitables(items, commitables);
 
@@ -399,7 +399,7 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         String srcUUID = repos.getRepositoryUUID();
         if (dstPath.isDirectory()) {
-            dstPath = new File(dstPath, PathUtil.decode(PathUtil.tail(srcURL)));
+            dstPath = new File(dstPath, SVNEncodingUtil.uriDecode(PathUtil.tail(srcURL)));
             if (dstPath.exists()) {
                 SVNErrorManager.error("svn: Path '" + dstPath + "' already exists");
             }
@@ -502,16 +502,12 @@ public class SVNCopyClient extends SVNBasicClient {
             commonURL = PathUtil.removeTail(commonURL);
             resurrect = true;
         }
-        String srcRelative = PathUtil.decode(srcURL.substring(commonURL
-                .length()));
-        String dstRelative = PathUtil.decode(dstURL.substring(commonURL
-                .length()));
+        String srcRelative = SVNEncodingUtil.uriDecode(srcURL.substring(commonURL.length()));
+        String dstRelative = SVNEncodingUtil.uriDecode(dstURL.substring(commonURL.length()));
         if (srcRelative.length() == 0 && move) {
             SVNErrorManager.error("svn: Cannot move '" + srcURL
                     + "' into itself");
         }
-        DebugLog.log("dst relative: " + dstRelative);
-        DebugLog.log("src relative: " + srcRelative);
         if (srcRelative.startsWith("/")) {
             srcRelative = srcRelative.substring(1);
         }
@@ -532,9 +528,9 @@ public class SVNCopyClient extends SVNBasicClient {
         if (dstKind == SVNNodeKind.FILE) {
             SVNErrorManager.error("svn: Path '" + dstURL + "' already exists");
         } else if (dstKind == SVNNodeKind.DIR) {
-            String newDstPath = dstRelative.length() == 0 ? PathUtil
-                    .decode(PathUtil.tail(srcURL)) : PathUtil.append(
-                    dstRelative, PathUtil.decode(PathUtil.tail(srcURL)));
+            String newDstPath = dstRelative.length() == 0 ? 
+                    SVNEncodingUtil.uriDecode(PathUtil.tail(srcURL)) : 
+                    PathUtil.append(dstRelative, SVNEncodingUtil.uriDecode(PathUtil.tail(srcURL)));
             dstKind = repos.checkPath(newDstPath, lastRevision);
             if (dstKind != SVNNodeKind.NONE) {
                 SVNErrorManager.error("svn: Path '" + newDstPath
@@ -542,7 +538,6 @@ public class SVNCopyClient extends SVNBasicClient {
             }
             dstRelative = newDstPath;
         }
-        DebugLog.log("repos created at " + commonURL);
 
         Collection commitItems = new ArrayList(2);
         commitItems.add(new SVNCommitItem(null, dstURL, srcURL, srcKind,
@@ -588,19 +583,14 @@ public class SVNCopyClient extends SVNBasicClient {
                     }
                 }
                 if (doDelete) {
-                    DebugLog.log("deleting " + srcPath);
                     commitEditor.deleteEntry(srcPath, -1);
                 }
                 boolean closeDir = false;
                 if (doAdd) {
                     if (srcKind == SVNNodeKind.DIR) {
-                        DebugLog.log("adding dir " + dstPath + " from "
-                                + srcPath);
                         commitEditor.addDir(dstPath, srcPath, srcRevNumber);
                         closeDir = true;
                     } else {
-                        DebugLog.log("adding file " + dstPath + " from "
-                                + srcPath);
                         commitEditor.addFile(dstPath, srcPath, srcRevNumber);
                         commitEditor.closeFile(dstPath, null);
                     }
@@ -808,7 +798,6 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNProperties srcProps = srcAccess.getAnchor().getProperties(
                 srcAccess.getTargetName(), false);
         boolean executable = srcProps.getPropertyValue(SVNProperty.EXECUTABLE) != null;
-        DebugLog.log("source is executable: " + executable);
         SVNProperties srcBaseProps = srcAccess.getAnchor().getBaseProperties(
                 srcAccess.getTargetName(), false);
 

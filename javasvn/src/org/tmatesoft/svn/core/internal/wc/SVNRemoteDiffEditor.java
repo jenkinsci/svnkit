@@ -31,7 +31,6 @@ import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -112,7 +111,6 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void openDir(String path, long revision) throws SVNException {
-        DebugLog.log("open dir");
         myCurrentDirectory = new SVNDirectoryInfo(myCurrentDirectory, path);
 
         myCurrentDirectory.myBaseProperties = new HashMap();
@@ -133,10 +131,6 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void closeDir() throws SVNException {
-        DebugLog.log("close dir");
-        DebugLog.log("path: " + myCurrentDirectory.myPath);
-        DebugLog.log("dir prop changes: " + myCurrentDirectory.myPropertyDiff);
-        DebugLog.log("dir base prop: " + myCurrentDirectory.myBaseProperties);
         if (myCurrentDirectory.myPropertyDiff != null) {
             myDiffGenerator.displayPropDiff(myCurrentDirectory.myPath,
                     myCurrentDirectory.myBaseProperties,

@@ -10,6 +10,16 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -20,18 +30,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * @version 1.0
@@ -103,7 +102,6 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         SVNEntry entry = myCurrentDirectory.getDirectory().getEntries()
                 .getEntry(name, true);
-        DebugLog.log("deleting : " + path);
         if (entry == null) {
             return;
         }
@@ -646,8 +644,6 @@ public class SVNUpdateEditor implements ISVNEditor {
                 if (!entry.isScheduledForAddition()
                         && (childDirectory == null || !childDirectory
                                 .isVersioned())) {
-                    DebugLog
-                            .log("missing dir remains after update: entry deleted");
                     myWCAccess.handleEvent(SVNEventFactory
                             .createUpdateDeleteEvent(myWCAccess, dir, entry));
                     entries.deleteEntry(entry.getName());
@@ -726,8 +722,6 @@ public class SVNUpdateEditor implements ISVNEditor {
                             && (childDirectory == null || !childDirectory
                                     .isVersioned()) && !entry.isAbsent()
                             && !entry.isScheduledForAddition()) {
-                        DebugLog
-                                .log("missing dir remains after update (2): entry deleted");
                         myWCAccess.handleEvent(SVNEventFactory
                                 .createUpdateDeleteEvent(myWCAccess, info
                                         .getDirectory(), entry));

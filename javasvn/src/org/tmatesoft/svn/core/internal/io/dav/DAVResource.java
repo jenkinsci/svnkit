@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -89,8 +89,7 @@ class DAVResource {
         // do fetch from server if empty...
         if (myVURL == null) {
             if (myMediator != null) {
-                myVURL = myMediator.getWorkspaceProperty(PathUtil.decode(myPath), "svn:wc:ra_dav:version-url");
-                DebugLog.log("cached vURL for " + myPath + " : " + myVURL);
+                myVURL = myMediator.getWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), "svn:wc:ra_dav:version-url");
                 if (myVURL != null) {
                     return myVURL;
                 }
@@ -99,7 +98,6 @@ class DAVResource {
             if (myRevision >= 0) {
                 // get baseline collection url for revision from public url.
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, myRevision, false, false, null);
-                DebugLog.log("base line path: " + info.baselineBase + " + " + info.baselinePath);
                 path = PathUtil.append(info.baselineBase, info.baselinePath);
             }
             // get "checked-in" property from baseline collection or from HEAD, this will be vURL.
@@ -121,7 +119,7 @@ class DAVResource {
         if (myMediator != null) {
             Object id = new Integer(myDeltaFiles.size());
             myDeltaFiles.add(id);
-            return myMediator.createTemporaryLocation(PathUtil.decode(myPath), id);
+            return myMediator.createTemporaryLocation(SVNEncodingUtil.uriDecode(myPath), id);
         }
         File tempFile = File.createTempFile("svn", "temp");
         tempFile.deleteOnExit();

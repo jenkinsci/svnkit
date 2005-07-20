@@ -19,13 +19,13 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVBaselineInfo;
 import org.tmatesoft.svn.core.internal.io.dav.DAVConnection;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.Base64;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.xml.sax.Attributes;
 
@@ -117,8 +117,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 String linkedPath = repository.getPath();
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(connection, linkedPath, revision, false, false, null);
 
-                String switchUrl = PathUtil.decode(info.baselinePath);
-                DebugLog.log("REPORTING LINKED PATH: " + switchUrl);
+                String switchUrl = SVNEncodingUtil.uriDecode(info.baselinePath);
                 report.append("linkpath=\"");
                 // switched path relative to connection root.
                 report.append(DAVUtil.xmlEncode(switchUrl));

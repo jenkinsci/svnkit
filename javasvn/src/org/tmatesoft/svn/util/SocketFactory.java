@@ -54,7 +54,6 @@ public class SocketFactory {
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {
                     attempts--;
-                    DebugLog.log("SOCKET: attempting to reconnect... (" + attempts + ")");
                     if (attempts <= 0) {
                         SVNErrorManager.error("svn: Connection timeout");
                     }
@@ -76,7 +75,6 @@ public class SocketFactory {
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {
                     attempts--;
-                    DebugLog.log("SOCKET: attempting to reconnect... (" + attempts + ")");
                     if (attempts <= 0) {
                         SVNErrorManager.error("svn: Connection timeout");
                     }
@@ -98,7 +96,6 @@ public class SocketFactory {
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {
                     attempts--;
-                    DebugLog.log("SOCKET: attempting to reconnect... ("+ attempts + ")");
                     if (attempts <= 0) {
                         SVNErrorManager.error("svn: Connection timeout");
                     }

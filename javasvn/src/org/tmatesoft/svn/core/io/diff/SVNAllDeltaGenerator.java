@@ -19,7 +19,6 @@ import java.io.OutputStream;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.util.DebugLog;
 
 
 /**
@@ -33,7 +32,6 @@ public class SVNAllDeltaGenerator implements ISVNDeltaGenerator {
 	public void generateDiffWindow(String commitPath, ISVNEditor consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
         long length = workFile.length();
 		SVNDiffWindow window = SVNDiffWindowBuilder.createReplacementDiffWindow(length);
-        DebugLog.log("NEW FILE LENGTH: " + length);
 		OutputStream os = consumer.textDeltaChunk(commitPath, window);
         OutputStream fos = null;
         if (length == 0) {

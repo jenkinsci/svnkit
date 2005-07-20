@@ -28,8 +28,8 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVGetLocksHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVOptionsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 import org.xml.sax.helpers.DefaultHandler;
@@ -98,7 +98,7 @@ public class DAVConnection {
                 }
                 // TODO get rootURL
                 String url = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + root;
-                repository.updateCredentials(uuid, PathUtil.decode(root), url);
+                repository.updateCredentials(uuid, SVNEncodingUtil.uriDecode(root), url);
             }
         }
     }    
@@ -126,12 +126,10 @@ public class DAVConnection {
         String owner = (String) rc.getResponseHeader().get("X-SVN-Lock-Owner");
         String created = (String) rc.getResponseHeader().get("X-SVN-Creation-Date");
         Date createdDate = created != null ? TimeUtil.parseDate(created) : null;
-        path = PathUtil.decode(info.baselinePath);
+        path = SVNEncodingUtil.uriDecode(info.baselinePath);
         if (!path.startsWith("/")) {
             path = "/" + path;
         }
-        DebugLog.log("lock owner: " + owner);
-        DebugLog.log("lock comment: " + comment);
         return new SVNLock(path, id, owner, comment, createdDate, null);
     }
 
@@ -249,7 +247,6 @@ public class DAVConnection {
         Map headers = new HashMap();
         headers.put("Content-Type", "application/vnd.svn-svndiff");
         if (myIsHTTP10Connection) {
-            DebugLog.log("HTTP 1.0 connection is detected, chunked encoding should not be used with PUT");
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             try {
                 while(true) {

@@ -10,11 +10,27 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
@@ -32,23 +48,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * This class provides methods to perform operations that relate to commiting changes
@@ -181,7 +181,7 @@ public class SVNCommitClient extends SVNBasicClient {
         List decodedPaths = new ArrayList();
         for (Iterator commitPaths = paths.iterator(); commitPaths.hasNext();) {
             String path = (String) commitPaths.next();
-            decodedPaths.add(PathUtil.decode(path));
+            decodedPaths.add(SVNEncodingUtil.uriDecode(path));
         }
         paths = decodedPaths;
         SVNRepository repos = createRepository(rootURL);
@@ -277,7 +277,7 @@ public class SVNCommitClient extends SVNBasicClient {
         List decodedPaths = new ArrayList();
         for (Iterator commitPaths = paths.iterator(); commitPaths.hasNext();) {
             String path = (String) commitPaths.next();
-            decodedPaths.add(PathUtil.decode(path));
+            decodedPaths.add(SVNEncodingUtil.uriDecode(path));
         }
         paths = decodedPaths;
         SVNRepository repos = createRepository(rootURL);
@@ -342,7 +342,7 @@ public class SVNCommitClient extends SVNBasicClient {
             if (repos == null) {
                 SVNErrorManager.error("svn: invalid URL '" + dstURL + "'");
             } else if (repos.checkPath("", -1) == SVNNodeKind.NONE) {
-                newPaths.add(PathUtil.decode(PathUtil.tail(rootURL)));
+                newPaths.add(SVNEncodingUtil.uriDecode(PathUtil.tail(rootURL)));
                 rootURL = PathUtil.removeTail(rootURL);
             } else {
                 break;
@@ -491,7 +491,6 @@ public class SVNCommitClient extends SVNBasicClient {
         ISVNEditor commitEditor = null;
 
         try {
-            DebugLog.log("commit packet: " + commitPacket);
             commitMessage = getCommitHandler().getCommitMessage(commitMessage,
                     commitPacket.getCommitItems());
             if (commitMessage == null) {
@@ -502,8 +501,6 @@ public class SVNCommitClient extends SVNBasicClient {
                     .getCommitItems(), commitables);
             Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket
                     .getLockTokens(), baseURL);
-            DebugLog.log("base URL    : " + baseURL);
-            DebugLog.log("commitables : " + commitables);
 
             SVNRepository repository = createRepository(baseURL);
             SVNCommitMediator mediator = new SVNCommitMediator(commitPacket
@@ -670,7 +667,6 @@ public class SVNCommitClient extends SVNBasicClient {
             boolean recursive, ISVNEditor editor) throws SVNException {
         File[] children = dir.listFiles();
         boolean changed = false;
-        DebugLog.log("importing dir: " + dir + " to " + importPath);
         for (int i = 0; children != null && i < children.length; i++) {
             File file = children[i];
             if (".svn".equals(file.getName())) {
@@ -708,7 +704,6 @@ public class SVNCommitClient extends SVNBasicClient {
             SVNErrorManager.error("svn: unknown or unversionable type for '"
                     + file + "'");
         }
-        DebugLog.log("importing file: " + file + " to " + filePath);
         editor.addFile(filePath, null, -1);
         String mimeType = null;
         Map autoProperties = new HashMap();

@@ -62,6 +62,7 @@ javasvn/src/org/tigris/subversion/javahl/SVNClient.java -text
 javasvn/src/org/tigris/subversion/javahl/SVNConverterUtil.java -text
 javasvn/src/org/tigris/subversion/javahl/SVNPropertyRetriever.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/util/SVNEncodingUtil.java -text
+javasvn/src/org/tmatesoft/svn/core/internal/util/SVNFormatUtil.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/wc/DefaultSVNMerger.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/wc/config/README.txt eol=lf
 javasvn/src/org/tmatesoft/svn/core/internal/wc/config/config eol=lf

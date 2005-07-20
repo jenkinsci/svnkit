@@ -10,17 +10,17 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.DebugLog;
-
-import java.util.Map;
-import java.util.HashMap;
 
 /**
  * @version 1.0
@@ -52,7 +52,6 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     }
 
     public SVNLock getLock(String url) {
-        DebugLog.log("fetching lock for " + url);
         if (myRepositoryRoot == null || myLocks.isEmpty()) {
             return null;
         }
@@ -62,7 +61,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
         if (!url.startsWith("/")) {
             url = "/" + url;
         }
-        url = PathUtil.decode(url);
+        url = SVNEncodingUtil.uriDecode(url);
         return (SVNLock) myLocks.get(url);
     }
 
@@ -111,9 +110,6 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
                 myLocks.put(lock.getPath(), lock);
             }
         }
-        DebugLog.log("collected locks : " + myLocks);
-        DebugLog.log("status call root: " + myRepositoryLocation);
-        DebugLog.log("repository root : " + myRepositoryRoot);
         myEditor.setStatusReporter(this);
     }
 

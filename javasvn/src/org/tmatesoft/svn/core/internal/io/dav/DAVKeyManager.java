@@ -38,7 +38,6 @@ class DAVKeyManager {
         if (certFileName == null) {
             return null;
         }
-        DebugLog.log("SSL: using client certificate file: " + certFileName);
         char[] passphrase = null;
         if (System.getProperty(CERTIFICATE_PASSPHRASE) != null) {
             passphrase = System.getProperty(CERTIFICATE_PASSPHRASE).toCharArray();

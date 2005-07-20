@@ -141,8 +141,6 @@ public class SVNClient implements SVNClientInterface {
         if (path == null) {
             return null;
         }
-        DebugLog.log("IO fetching 'single' status for: " + path);
-
         SVNStatusClient client = getSVNStatusClient();
         SVNStatus status = null;
         try {

@@ -21,7 +21,6 @@ import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -137,7 +136,6 @@ public class SVNCommandLine {
                     throw new SVNException("argument '" + previousArgumentName + "' requires value");
                 }
                 Object value = previousArgument.parseValue(argument);
-                DebugLog.log("value (2): " + value);
                 myBinaryArguments.put(previousArgument, value);
 
                 previousArgument = null;
@@ -161,7 +159,6 @@ public class SVNCommandLine {
             } else if (argument.startsWith("-")) {
                 for (int j = 1; j < argument.length(); j++) {
                     String name = "-" + argument.charAt(j);
-                    DebugLog.log("parsing argument: " + name);
 
                     SVNArgument svnArgument = SVNArgument.findArgument(name);
                     if (svnArgument != null) {
@@ -169,7 +166,6 @@ public class SVNCommandLine {
                             if (j + 1 < argument.length()) {
                                 String value = argument.substring(j + 1);
                                 Object argValue = svnArgument.parseValue(value);
-                                DebugLog.log("value: " + value);
                                 myBinaryArguments.put(svnArgument, argValue);
                             } else {
                                 previousArgument = svnArgument;

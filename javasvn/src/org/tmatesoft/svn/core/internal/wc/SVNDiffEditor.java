@@ -31,7 +31,6 @@ import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -415,7 +414,6 @@ public class SVNDiffEditor implements ISVNEditor {
                         propDiff, result);
             }
         }
-        DebugLog.log("local diff: " + dir.getRoot());
         SVNEntries svnEntries = dir.getEntries();
         for (Iterator entries = svnEntries.entries(false); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
@@ -425,8 +423,6 @@ public class SVNDiffEditor implements ISVNEditor {
             if ("".equals(entry.getName())) {
                 continue;
             }
-            DebugLog.log("entry: " + entry.getName());
-            DebugLog.log("processed: " + info.myComparedEntries);
             if (info.myComparedEntries.contains(entry.getName())) {
                 continue;
             }
@@ -457,7 +453,6 @@ public class SVNDiffEditor implements ISVNEditor {
             }
             SVNProperties props = dir.getProperties(name, false);
             String fullPath = myDiffGenerator.getDisplayPath(dir.getFile(name));
-            DebugLog.log("entry: " + fullPath);
             Map baseProps = dir.getBaseProperties(name, false).asMap();
             Map propDiff = null;
             if (!deleted && dir.hasPropModifications(name)) {
@@ -465,7 +460,6 @@ public class SVNDiffEditor implements ISVNEditor {
                         dir.getProperties(name, false));
             }
             if (deleted || replaced) {
-                DebugLog.log("as deleted: " + entry.getName());
                 // display text diff for deleted file.
                 String mimeType1 = (String) baseProps
                         .get(SVNProperty.MIME_TYPE);
@@ -481,7 +475,6 @@ public class SVNDiffEditor implements ISVNEditor {
             File tmpFile = null;
             try {
                 if (added || replaced) {
-                    DebugLog.log("as added: " + entry.getName());
                     tmpFile = dir.getBaseFile(name, true);
                     SVNTranslator.translate(dir, name, name, SVNFileUtil
                             .getBasePath(tmpFile), false, false);
@@ -504,9 +497,7 @@ public class SVNDiffEditor implements ISVNEditor {
                     continue;
                 }
                 boolean isTextModified = dir.hasTextModifications(name, false);
-                DebugLog.log("modified: " + isTextModified);
                 if (isTextModified) {
-                    DebugLog.log("as modified: " + entry.getName());
                     tmpFile = dir.getBaseFile(name, true);
                     SVNTranslator.translate(dir, name, name, SVNFileUtil
                             .getBasePath(tmpFile), false, false);

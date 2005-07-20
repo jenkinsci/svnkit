@@ -57,7 +57,6 @@ public class StatusCommand extends SVNCommand {
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
               String path = getCommandLine().getPathAt(i);
               File file = new File(path).getAbsoluteFile();
-              DebugLog.log("calling status on: " + file);
               try {
                 stClient.doStatus(file, recursive, showUpdates, reportAll, ignored, handler);
               } catch (SVNException e) {

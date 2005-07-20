@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
@@ -140,7 +139,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
-                DebugLog.log(bos.toString());
             } catch (IOException e) {
             }
         }
@@ -180,7 +178,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
-                DebugLog.log(bos.toString());
             } catch (IOException inner) {
             }
             SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
@@ -222,7 +219,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 try {
                     bos.close();
                     bos.writeTo(result);
-                    DebugLog.log(bos.toString());
                 } catch (IOException e) {
                 }
             }
@@ -244,7 +240,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
-                DebugLog.log(bos.toString());
             } catch (IOException inner) {
             }
             SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
@@ -275,7 +270,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             SVNFileUtil.closeFile(is2);
             try {
                 bos.close();
-                DebugLog.log(bos.toString());
                 bos.writeTo(result);
             } catch (IOException inner) {
                 //

@@ -10,12 +10,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.TimeUtil;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -23,9 +17,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PushbackInputStream;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.TimeUtil;
 
 /**
  * @version 1.0
@@ -97,9 +99,6 @@ public class SVNTranslator {
                 SVNFileUtil.copyFile(src, dst, true);
             } else if (expand) {
                 // create symlink to target, and create it at dst
-                DebugLog.log("creating symlink: ");
-                DebugLog.log("link file: " + dst);
-                DebugLog.log("link name file: " + src);
                 SVNFileUtil.createSymlink(dst, src);
             } else {
                 SVNFileUtil.detranslateSymlink(src, dst);
@@ -301,6 +300,8 @@ public class SVNTranslator {
         byte[] author = null;
         byte[] name = null;
         byte[] id = null;
+        
+        Date jDate = d == null ? null : TimeUtil.parseDate(d);
 
         Map map = new HashMap();
         try {
@@ -308,8 +309,7 @@ public class SVNTranslator {
                     " \t\n\b\r\f"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
                 if ("LastChangedDate".equals(token) || "Date".equals(token)) {
-                    date = expand && date == null ? TimeUtil.toHumanDate(d)
-                            .getBytes("UTF-8") : date;
+                    date = expand && date == null ? SVNFormatUtil.formatDate(jDate).getBytes("UTF-8") : date;
                     map.put("LastChangedDate", date);
                     map.put("Date", date);
                 } else if ("LastChangedRevision".equals(token)
@@ -326,16 +326,15 @@ public class SVNTranslator {
                     map.put("LastChangedBy", author);
                     map.put("Author", author);
                 } else if ("HeadURL".equals(token) || "URL".equals(token)) {
-                    url = expand && url == null ? PathUtil.decode(u).getBytes(
+                    url = expand && url == null ? SVNEncodingUtil.uriDecode(u).getBytes(
                             "UTF-8") : url;
                     map.put("HeadURL", url);
                     map.put("URL", url);
                 } else if ("Id".equals(token)) {
                     if (expand && id == null) {
                         rev = rev == null ? r.getBytes("UTF-8") : rev;
-                        date = date == null ? TimeUtil.toHumanDate(d).getBytes(
-                                "UTF-8") : date;
-                        name = name == null ? PathUtil.decode(PathUtil.tail(u))
+                        date = date == null ? SVNFormatUtil.formatDate(jDate).getBytes("UTF-8") : date;
+                        name = name == null ? SVNEncodingUtil.uriDecode(PathUtil.tail(u))
                                 .getBytes("UTF-8") : name;
                         author = author == null ? (a == null ? new byte[0] : a
                                 .getBytes("UTF-8")) : author;

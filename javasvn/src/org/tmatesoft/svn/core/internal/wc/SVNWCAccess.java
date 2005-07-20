@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -492,7 +491,6 @@ public class SVNWCAccess implements ISVNEventHandler {
             boolean lock) throws SVNException {
         if (myDirectories != null) {
             SVNDirectory dir = new SVNDirectory(this, path, file);
-            DebugLog.log("adding dir: " + path + " (" + file + ")");
             if (myDirectories.put(path, dir) == null && lock && !dir.isLocked()) {
                 dir.lock();
             }

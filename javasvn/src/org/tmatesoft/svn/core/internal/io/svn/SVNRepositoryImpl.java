@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
@@ -640,8 +641,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 root = "/";
             }
         }
-        DebugLog.log("root: " + root);
-        DebugLog.log("full root: " + myFullRoot);
         setRepositoryCredentials(uuid, root, myFullRoot);
     }
 
@@ -756,8 +755,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             // assuming it is full path.
             return path;
         }
-        String fullPath = PathUtil.append(PathUtil.decode(getLocation()
-                .getPath()), path);
+        String fullPath = PathUtil.append(SVNEncodingUtil.uriDecode(getLocation().getPath()), path);
         // substract root path
         if (fullPath.startsWith(getRepositoryRoot())) {
             fullPath = fullPath.substring(getRepositoryRoot().length());

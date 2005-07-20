@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -634,8 +635,6 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 wcAccess.getAnchor().getEntries().save(false);
                 if (kind == SVNNodeKind.DIR) {
-                    DebugLog.log("reverted, unscheduling target root entry: "
-                            + wcAccess.getTarget().getRoot());
                     SVNEntry inner = wcAccess.getTarget().getEntries()
                             .getEntry("", true);
                     if (inner != null) {
@@ -998,14 +997,13 @@ public class SVNWCClient extends SVNBasicClient {
             SVNLock lock = locks[i];
             locksMap.put(lock.getPath(), lock);
         }
-        String fullPath = SVNRepositoryLocation.parseURL(PathUtil.decode(url))
+        String fullPath = SVNRepositoryLocation.parseURL(SVNEncodingUtil.uriDecode(url))
                 .getPath();
         String rootPath = fullPath.substring(reposRoot.length());
         if (!rootPath.startsWith("/")) {
             rootPath = "/" + rootPath;
         }
-        reposRoot = PathUtil.append(url.substring(0, url.length()
-                - fullPath.length()), reposRoot);
+        reposRoot = PathUtil.append(url.substring(0, url.length() - fullPath.length()), reposRoot);
         collectInfo(repos, rootEntry, SVNRevision.create(revNum), rootPath,
                 reposRoot, reposUUID, url, locksMap, recursive, handler);
     }
@@ -1095,7 +1093,7 @@ public class SVNWCClient extends SVNBasicClient {
             Map locks, boolean recursive, ISVNInfoHandler handler)
             throws SVNException {
         String rootPath = repos.getLocation().getPath();
-        rootPath = PathUtil.decode(rootPath);
+        rootPath = SVNEncodingUtil.uriDecode(rootPath);
         String displayPath = PathUtil.append(repos.getRepositoryRoot(), path)
                 .substring(rootPath.length());
         if ("".equals(displayPath) || "/".equals(displayPath)) {
@@ -1118,21 +1116,8 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    // add, del@path, revert, resolved, *lock, *unlock, *info, +cleanup -> "wc"
-    // client
-
-    // copy, move -> "copy" client
-    // log, cat, blame, ls -> "repos" client
-    // commit, mkdir, import, del@url -> "commit" client
-    // status -> "status" client
-    // export, update, switch -> "update" client
-    // diff, merge -> "diff" client
-
-    // (?) ps,pg,pe,pl -> "prop" client
-
     private void addDirectory(SVNWCAccess wcAccess, SVNDirectory dir,
             String name, boolean force) throws SVNException {
-        DebugLog.log("ading file " + name + " into " + dir.getRoot());
 
         if (dir.add(name, false, force) == null) {
             return;
@@ -1152,21 +1137,16 @@ public class SVNWCClient extends SVNBasicClient {
             if (".svn".equals(childFile.getName())) {
                 continue;
             }
-            DebugLog.log("processing file " + childFile + " in " + file);
             SVNFileType fileType = SVNFileType.getType(childFile);
             if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
                 SVNEntry entry = childDir.getEntries().getEntry(
                         childFile.getName(), true);
-                DebugLog.log("existing entry: " + entry);
                 if (force && entry != null && !entry.isScheduledForDeletion()
                         && !entry.isDeleted()) {
-                    DebugLog.log("this entry will not be added: "
-                            + entry.getName());
                     continue;
                 }
                 addSingleFile(childDir, childFile.getName());
             } else if (SVNFileType.DIRECTORY == fileType) {
-                DebugLog.log("recursing into " + childFile.getName());
                 addDirectory(wcAccess, childDir, childFile.getName(), force);
             }
         }
@@ -1184,7 +1164,6 @@ public class SVNWCClient extends SVNBasicClient {
             Map props = new HashMap();
             boolean executable;
             props = getOptions().applyAutoProperties(name, props);
-            DebugLog.log("auto properties for file: " + name + " : " + props);
             mimeType = (String) props.get(SVNProperty.MIME_TYPE);
             if (mimeType == null) {
                 mimeType = SVNFileUtil.detectMimeType(file);
@@ -1341,10 +1320,8 @@ public class SVNWCClient extends SVNBasicClient {
             String propName, String propValue, boolean force,
             boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         SVNEntries entries = anchor.getEntries();
-        DebugLog.log("anchor: " + anchor.getRoot());
         if (!"".equals(name)) {
             SVNEntry entry = entries.getEntry(name, true);
-            DebugLog.log("entry in anchor: " + entry);
             if (entry == null || (recursive && entry.isDeleted())) {
                 return;
             }
@@ -1355,8 +1332,6 @@ public class SVNWCClient extends SVNBasicClient {
                             recursive, handler);
                 }
             } else if (entry.getKind() == SVNNodeKind.FILE) {
-                DebugLog.log("setting file property: " + propName + "="
-                        + propValue);
                 if (SVNProperty.IGNORE.equals(propName)
                         || SVNProperty.EXTERNALS.equals(propName)) {
                     if (!recursive) {
@@ -1402,8 +1377,6 @@ public class SVNWCClient extends SVNBasicClient {
             entries.close();
             return;
         }
-        DebugLog.log("setting property (" + propName + ") on dir "
-                + anchor.getRoot());
         SVNProperties props = anchor.getProperties(name, false);
         if (SVNProperty.KEYWORDS.equals(propName)
                 || SVNProperty.EOL_STYLE.equals(propName)
@@ -1454,7 +1427,6 @@ public class SVNWCClient extends SVNBasicClient {
 
     private static String validatePropertyValue(String name, String value,
             boolean force) throws SVNException {
-        DebugLog.log("validating: " + name + "=" + value);
         if (value == null) {
             return value;
         }
@@ -1468,20 +1440,13 @@ public class SVNWCClient extends SVNBasicClient {
                 value += "\n";
             }
             if (SVNProperty.EXTERNALS.equals(name)) {
-                DebugLog.log("validating externals: " + value);
                 SVNExternalInfo[] externalInfos = SVNWCAccess.parseExternals(
                         "", value);
-                if (externalInfos != null) {
-                    DebugLog.log("validating externals: "
-                            + externalInfos.length);
-                }
                 for (int i = 0; externalInfos != null
                         && i < externalInfos.length; i++) {
                     String path = externalInfos[i].getPath();
-                    DebugLog.log("checking path: " + path);
                     if (path.indexOf(".") >= 0 || path.indexOf("..") >= 0
                             || path.startsWith("/")) {
-                        DebugLog.log("throwing exception");
                         SVNErrorManager
                                 .error("svn: Invalid external definition: "
                                         + value);

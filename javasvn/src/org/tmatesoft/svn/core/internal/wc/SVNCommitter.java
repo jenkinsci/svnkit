@@ -10,10 +10,18 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.ISVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNAllDeltaGenerator;
@@ -23,15 +31,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * @version 1.0
@@ -126,10 +126,8 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             } else if (!item.isAdded()) {
                 // do not open dir twice.
                 if ("".equals(commitPath)) {
-                    DebugLog.log("comitter: open root: " + commitPath);
                     commitEditor.openRoot(rev);
                 } else {
-                    DebugLog.log("comitter: open dir: " + commitPath);
                     commitEditor.openDir(commitPath, rev);
                 }
                 closeDir = true;
@@ -259,7 +257,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             return "/";
         }
         url = url.substring(url.indexOf("/"));
-        url = PathUtil.decode(url);
+        url = SVNEncodingUtil.uriDecode(url);
         if (url.startsWith(myRepositoryRoot)) {
             url = url.substring(myRepositoryRoot.length());
             if (!url.startsWith("/")) {

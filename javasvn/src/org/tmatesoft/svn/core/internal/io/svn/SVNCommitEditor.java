@@ -24,7 +24,6 @@ import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -172,7 +171,6 @@ class SVNCommitEditor implements ISVNEditor {
                         path, source });
                 is.close();
             }
-            DebugLog.log("new data sent" + length);
         } catch (IOException e) {
             throw new SVNException();
         } finally {

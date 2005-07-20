@@ -53,7 +53,6 @@ public class SVNReporter implements ISVNReporterBaton {
                     || targetEntry.isHidden()
                     || (targetEntry.isDirectory() && targetEntry
                             .isScheduledForAddition())) {
-                DebugLog.log("deleted file reported");
                 long revision = anchorEntries.getEntry("", true).getRevision();
                 reporter
                         .setPath("", null, revision,
@@ -76,7 +75,6 @@ public class SVNReporter implements ISVNReporterBaton {
                 if (missing) {
                     reporter.deletePath("");
                 } else {
-                    DebugLog.log("reporting dir entries: " + myIsRecursive);
                     reportEntries(reporter, myWCAccess.getTarget(), "",
                             targetEntry.isIncomplete(), myIsRecursive);
                 }

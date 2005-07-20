@@ -28,7 +28,6 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * The abstract class <code>SVNRepository</code> declares all the basic
@@ -240,7 +239,6 @@ public abstract class SVNRepository {
             myRepositoryUUID = uuid;
             myRepositoryRoot = root;
             myRepositoryRootURL = rootURL;
-            DebugLog.log("REPOSITORY: " + uuid + ":" + root + " <" + rootURL + ">");
         }
     }
     

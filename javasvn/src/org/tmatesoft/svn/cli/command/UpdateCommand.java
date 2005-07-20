@@ -34,7 +34,6 @@ public class UpdateCommand extends SVNCommand {
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             final String path;
             path = getCommandLine().getPathAt(i);
-            DebugLog.log("updating path: " + path);
 
             SVNRevision revision = parseRevision(getCommandLine());
             if (!revision.isValid()) {
@@ -56,7 +55,6 @@ public class UpdateCommand extends SVNCommand {
             try {
                 updater.doUpdate(file.getAbsoluteFile(), revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             } catch (Throwable th) {
-                DebugLog.log("exception caught: " + th);
                 DebugLog.error(th);
                 println(err, th.getMessage());
                 println(err);

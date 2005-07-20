@@ -23,9 +23,8 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.TimeUtil;
 import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.util.TimeUtil;
 
 /**
  * @version 1.0
@@ -38,7 +37,6 @@ public class SVNLogRunner {
     public void runCommand(SVNDirectory dir, String name, Map attributes)
             throws SVNException {
         String fileName = (String) attributes.remove(SVNLog.NAME_ATTR);
-        DebugLog.log("running: " + name + ":" + fileName + " : " + attributes);
         if (SVNLog.DELETE_ENTRY.equals(name)) {
             // check if it is not disjoint entry not to delete another wc?
             dir.destroy(fileName, true);
@@ -195,9 +193,6 @@ public class SVNLogRunner {
             SVNEntry entry = dir.getEntries().getEntry(fileName, true);
             if (entry == null
                     || (!"".equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
-                DebugLog.log("entry: " + entry);
-                DebugLog.log("kind: " + entry.getKind());
-                DebugLog.log("name: " + fileName);
                 SVNErrorManager.error("svn: Log command for directory '"
                         + dir.getRoot() + "' is mislocated");
             }

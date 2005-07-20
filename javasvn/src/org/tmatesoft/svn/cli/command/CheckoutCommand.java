@@ -15,6 +15,7 @@ package org.tmatesoft.svn.cli.command;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.util.PathUtil;
@@ -34,7 +35,7 @@ public class CheckoutCommand extends SVNCommand {
         if (getCommandLine().getPathCount() > 0) {
             path = getCommandLine().getPathAt(0);
         } else {
-            path = new File(".", PathUtil.decode(PathUtil.tail(url))).getAbsolutePath();
+            path = new File(".", SVNEncodingUtil.uriDecode(PathUtil.tail(url))).getAbsolutePath();
         }
 
         SVNRevision revision = parseRevision(getCommandLine());
@@ -48,7 +49,7 @@ public class CheckoutCommand extends SVNCommand {
         } else {
             for(int i = 0; i < getCommandLine().getURLCount(); i++) {
                 String curl = getCommandLine().getURL(i);
-                File dstPath = new File(path, PathUtil.decode(PathUtil.tail(curl)));
+                File dstPath = new File(path, SVNEncodingUtil.uriDecode(PathUtil.tail(curl)));
                 updater.doCheckout(url, dstPath, SVNRevision.UNDEFINED, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             }
         }

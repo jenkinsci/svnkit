@@ -10,19 +10,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.wc.SVNCommitItem;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,6 +19,19 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.wc.SVNCommitItem;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusClient;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -58,13 +58,8 @@ public class SVNCommitUtil {
         } else {
             editor.openRoot(revision);
         }
-        DebugLog.log("driver: paths count: " + pathsArray.length);
-        for (int i = 0; i < pathsArray.length; i++) {
-            DebugLog.log("driver: commit path: " + pathsArray[i]);
-        }
         for (; index < pathsArray.length; index++) {
             String commitPath = pathsArray[index];
-            DebugLog.log("driver: processing path: " + commitPath);
             String commonAncestor = lastPath == null || "".equals(lastPath) ? "" 
                     : SVNPathUtil.getCommonPathAncestor(commitPath, lastPath);
             if (lastPath != null) {
@@ -78,14 +73,11 @@ public class SVNCommitUtil {
                     }
                 }
             }
-            DebugLog.log("driver: last path: " + lastPath);
-            DebugLog.log("driver: common ancestor: " + commonAncestor);
             String relativeCommitPath = commitPath.substring(commonAncestor
                     .length());
             if (relativeCommitPath.startsWith("/")) {
                 relativeCommitPath = relativeCommitPath.substring(1);
             }
-            DebugLog.log("driver: relative commit path: " + relativeCommitPath);
 
             for (StringTokenizer tokens = new StringTokenizer(
                     relativeCommitPath, "/"); tokens.hasMoreTokens();) {
@@ -93,7 +85,6 @@ public class SVNCommitUtil {
                 commonAncestor = "".equals(commonAncestor) ? token
                         : commonAncestor + "/" + token;
                 if (!commonAncestor.equals(commitPath)) {
-                    DebugLog.log("driver: open dir: " + commonAncestor);
                     editor.openDir(commonAncestor, revision);
                 } else {
                     break;
@@ -108,7 +99,6 @@ public class SVNCommitUtil {
                     lastPath = "";
                 }
             }
-            DebugLog.log("driver: last open path: " + lastPath);
         }
         while (lastPath != null && !"".equals(lastPath)) {
             editor.closeDir();
@@ -125,7 +115,6 @@ public class SVNCommitUtil {
         for (int i = 0; i < paths.length; i++) {
             File path = paths[i];
             File newWCRoot = SVNWCUtil.getWorkingCopyRoot(path, true);
-            DebugLog.log("wc root of " + path + " is " + newWCRoot);
             if (wcRoot != null && !wcRoot.equals(newWCRoot)) {
                 SVNErrorManager
                         .error("svn: commit targets should belong to the same working copy");
@@ -170,8 +159,6 @@ public class SVNCommitUtil {
         } else {
             baseDir = adjustRelativePaths(baseDir, relativePaths);
             // there are multiple paths.
-            DebugLog.log("targets : " + relativePaths);
-            DebugLog.log("base dir: " + baseDir);
             for (Iterator targets = relativePaths.iterator(); targets.hasNext();) {
                 String targetPath = (String) targets.next();
                 File targetFile = new File(baseDir, targetPath);
@@ -336,7 +323,6 @@ public class SVNCommitUtil {
                     recurse = true;
                 }
             }
-            DebugLog.log("collecting commitables for " + targetFile);
             harvestCommitables(commitables, dir, targetFile, null, entry, url,
                     null, false, false, justLocked, lockTokens, recurse);
         } while (targets.hasNext());
@@ -393,7 +379,7 @@ public class SVNCommitUtil {
             if (realPath.startsWith("/")) {
                 realPath = PathUtil.removeLeadingSlash(realPath);
             }
-            decodedPaths.put(PathUtil.decode(realPath), item);
+            decodedPaths.put(SVNEncodingUtil.uriDecode(realPath), item);
         }
         return baseURL;
     }
@@ -406,7 +392,7 @@ public class SVNCommitUtil {
             url = url.substring(baseURL.length());
             if (url.startsWith("/")) {
                 url = PathUtil.removeLeadingSlash(url);
-                translatedLocks.put(PathUtil.decode(url), token);
+                translatedLocks.put(SVNEncodingUtil.uriDecode(url), token);
             }
         }
         lockTokens.clear();
@@ -682,7 +668,6 @@ public class SVNCommitUtil {
     }
 
     private static String getTargetName(File file) throws SVNException {
-        DebugLog.log("creating wc access for: " + file);
         SVNWCAccess wcAccess = SVNWCAccess.create(file);
         return wcAccess.getTargetName();
     }

@@ -19,10 +19,10 @@ import java.util.Date;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.util.TimeUtil;
 import org.tmatesoft.svn.util.SVNUtil;
 
 /**
@@ -80,7 +80,7 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
             result.append(author != null ? SVNUtil.formatString(author, 10, false) : "         -");
             result.append(' ');
             if (date != null) {
-                result.append(TimeUtil.toHumanDate(TimeUtil.formatDate(date)));
+                result.append(SVNFormatUtil.formatDate(date));
             } else {
                 result.append("                                           -");
             }

@@ -10,10 +10,17 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -26,14 +33,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
-
-import java.io.File;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * @version 1.0
@@ -224,8 +224,6 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNRevision pegRevision2, SVNRevision rN, SVNRevision rM,
             boolean recursive, final boolean useAncestry,
             final OutputStream result) throws SVNException {
-        DebugLog.log("diff: -r" + rN + ":" + rM + " " + url1 + "@"
-                + pegRevision1 + "  " + url2 + "@" + pegRevision2);
         if (rN == null || !rN.isValid()) {
             rN = pegRevision1;
         }
@@ -271,7 +269,7 @@ public class SVNDiffClient extends SVNBasicClient {
         String target = null;
         if (nodeKind == SVNNodeKind.FILE || nodeKind2 == SVNNodeKind.FILE) {
             target = PathUtil.tail(url1);
-            target = PathUtil.decode(target);
+            target = SVNEncodingUtil.uriDecode(target);
             url1 = PathUtil.removeTail(url1);
             repos = createRepository(url1);
         }
@@ -382,8 +380,6 @@ public class SVNDiffClient extends SVNBasicClient {
         // (rN|rM)
         url1 = validateURL(url1);
         url2 = validateURL(url2);
-        DebugLog.log("url1: " + url1);
-        DebugLog.log("url2: " + url2);
         rN = rN == null || !rN.isValid() ? SVNRevision.HEAD : rN;
         rM = rM == null || !rM.isValid() ? SVNRevision.HEAD : rM;
         SVNWCAccess wcAccess = createWCAccess(dstPath);
@@ -408,23 +404,16 @@ public class SVNDiffClient extends SVNBasicClient {
 
             String target = null;
             if (nodeKind1 == SVNNodeKind.FILE || nodeKind2 == SVNNodeKind.FILE) {
-                DebugLog.log("one of the targets is file");
                 target = PathUtil.tail(url1);
-                target = PathUtil.decode(target);
+                target = SVNEncodingUtil.uriDecode(target);
                 url1 = PathUtil.removeTail(url1);
                 repos1 = createRepository(url1);
                 repos2 = createRepository(url1);
             }
-            url2 = PathUtil.decode(url2);
+            url2 = SVNEncodingUtil.uriDecode(url2);
 
             SVNMerger merger = new SVNMerger(wcAccess, url2, revM, force,
                     dryRun, isLeaveConflictsUnresolved());
-            DebugLog.log("wc access: " + wcAccess);
-            DebugLog.log("url1: " + url1);
-            DebugLog.log("url2: " + url2);
-            DebugLog.log("revM: " + revM);
-            DebugLog.log("revN: " + revN);
-            DebugLog.log("target: " + target);
             SVNMergeEditor mergeEditor = new SVNMergeEditor(wcAccess, repos2,
                     revN, revM, merger);
             repos1.diff(url2, revM, revN, target, !useAncestry, recursive,
@@ -553,7 +542,7 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         targetURL = getURL(targetURL, wcRevNumber, SVNRevision
                 .create(revNumber));
-        targetURL = PathUtil.decode(targetURL);
+        targetURL = SVNEncodingUtil.uriDecode(targetURL);
         repos.diff(targetURL, revNumber, wcRevNumber.getNumber(), target,
                 !useAncestry, recursive, reporter, editor);
     }
@@ -582,9 +571,6 @@ public class SVNDiffClient extends SVNBasicClient {
         props1 = filterProperties(props1, true, false, false);
         props2 = filterProperties(props2, true, false, false);
         Map propsDiff = computePropsDiff(props1, props2);
-        DebugLog.log("base props: " + props1);
-        DebugLog.log("target props: " + props2);
-        DebugLog.log("props diff: " + propsDiff);
         SVNStatusType[] mergeResult = merger.fileChanged(wcAccess
                 .getTargetName(), tmpFile1, tmpFile2, revN, revM, mimeType1,
                 mimeType2, props1, propsDiff);

@@ -30,7 +30,6 @@ import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 class DAVCommitEditor implements ISVNEditor {
@@ -383,13 +382,10 @@ class DAVCommitEditor implements ISVNEditor {
         if (resource.getVersionURL() == null) {
             throw new SVNException(resource.getURL() + " checkout failed: resource version URL is not set");
         }
-        DebugLog.log("vURL: " + resource.getVersionURL());
         DAVStatus status = myConnection.doCheckout(myActivity, resource.getURL(), resource.getVersionURL());
         String location = (String) status.getResponseHeader().get("Location");
         if (status.getResponseCode() == 201 && location != null) {
-            DebugLog.log("wURL: " + location);
             resource.setWorkingURL(location);
-            DebugLog.log("CHECKED OUT: " + resource);
             return;
         }
         throw new SVNException(resource.getURL() + " checkout failed: " + status.toString());

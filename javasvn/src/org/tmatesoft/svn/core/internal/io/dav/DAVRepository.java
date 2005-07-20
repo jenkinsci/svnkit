@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVFileRevisionHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLocationsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLogHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVProppatchHandler;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
@@ -39,7 +40,6 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -181,8 +181,8 @@ class DAVRepository extends SVNRepository {
                 myConnection.doPropfind(path, 1, null, null, new IDAVResponseHandler() {
                     public void handleDAVResponse(DAVResponse child) {
                         String href = PathUtil.removeTrailingSlash(child.getHref());
-                        href = PathUtil.decode(href);
-                        if (href.equals(PathUtil.decode(parentPath))) {
+                        href = SVNEncodingUtil.uriDecode(href);
+                        if (href.equals(SVNEncodingUtil.uriDecode(parentPath))) {
                             return;
                         }
                         // build direntry
@@ -270,19 +270,16 @@ class DAVRepository extends SVNRepository {
 			// convert these path to be all full paths 
 			for (int i = 0; i < targetPaths.length; i++) {
 				fullPaths[i] = getFullPath(targetPaths[i]);
-				DebugLog.log("LOG: full path: " + fullPaths[i]);
             }
 			// now find common root, this will be request path.
 			String path = fullPaths.length > 1 ? PathUtil.getCommonRoot(fullPaths) : fullPaths[0];
 			if (!path.startsWith("/")) {
 				path = "/".concat(path);
 			}
-			DebugLog.log("LOG: request path: " + path);
 			// make fullPaths to be relative to common root.
 			for (int i = 0; i < targetPaths.length; i++) {
 				fullPaths[i] = fullPaths[i].substring(path.length());
 				fullPaths[i] = PathUtil.removeLeadingSlash(fullPaths[i]);
-                DebugLog.log("LOG: log path: " + fullPaths[i]);
 			}
 	        StringBuffer request = DAVLogHandler.generateLogRequest(null, startRevision, endRevision,
 	        		changedPath, strictNode, limit, fullPaths);
@@ -320,20 +317,18 @@ class DAVRepository extends SVNRepository {
             String root = getLocation().getPath();
             if (path.startsWith("/")) {
                 path = PathUtil.removeLeadingSlash(path);
-                root = PathUtil.decode(getLocationPath());
+                root = SVNEncodingUtil.uriDecode(getLocationPath());
                 path = path.substring(root.length());
 
                 root = PathUtil.encode(root);
                 // path is decoded here, root is encoded
             }
-            DebugLog.log("get locations: " + path + ", root: " + root);
             StringBuffer request = DAVLocationsHandler.generateLocationsRequest(null, path, pegRevision, revisions);
             
             DAVLocationsHandler davHandler = new DAVLocationsHandler(handler);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, root, pegRevision, false, false, null);            
             
             path = PathUtil.append(info.baselineBase, info.baselinePath);
-            DebugLog.log("making report on: " + path);
             myConnection.doReport(path, request, davHandler);
             
             return davHandler.getEntriesCount();
@@ -411,7 +406,6 @@ class DAVRepository extends SVNRepository {
             String path = PathUtil.append(info.baselineBase, info.baselinePath);
             DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
             path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-            DebugLog.log("vcc (report path): " + path);
 
             myConnection.doReport(path, request, handler);
         } finally {
@@ -508,7 +502,7 @@ class DAVRepository extends SVNRepository {
         	}
             return PathUtil.append(getRepositoryRoot(), path);
         }
-        String locationPath = PathUtil.decode(getLocation().getPath());
+        String locationPath = SVNEncodingUtil.uriDecode(getLocation().getPath());
         if ("".equals(path)) {
             path = locationPath; // it is always encoded, while we assume not encoded?
         } else {
@@ -590,7 +584,7 @@ class DAVRepository extends SVNRepository {
             myConnection.doPropfind(path, 0, null, null, new IDAVResponseHandler() {
                 public void handleDAVResponse(DAVResponse child) {
                     String href = PathUtil.removeTrailingSlash(child.getHref());
-                    href = PathUtil.decode(href);
+                    href = SVNEncodingUtil.uriDecode(href);
                     String name = PathUtil.tail(href);
                     // build direntry
                     SVNNodeKind kind = SVNNodeKind.FILE;

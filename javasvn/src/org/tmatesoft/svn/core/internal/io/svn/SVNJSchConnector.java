@@ -66,7 +66,6 @@ public class SVNJSchConnector implements ISVNConnector {
                 break;
             } catch (SVNAuthenticationException e) {
                 if (session != null && session.isConnected()) {
-                    DebugLog.log("DISCONNECTING: " + session);
                     session.disconnect();
                     session = null;
                 }
@@ -96,7 +95,6 @@ public class SVNJSchConnector implements ISVNConnector {
                 myOutputStream = myChannel.getOutputStream();
                 myInputStream = myChannel.getInputStream();
 
-                DebugLog.log("JSCH command: " + command);
                 try {
                     myChannel.connect();
                 } catch (Throwable e) {

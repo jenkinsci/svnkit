@@ -21,13 +21,13 @@ import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAnnotationGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -144,10 +144,8 @@ public class SVNLogClient extends SVNBasicClient {
         }
         SVNRepository repos = createRepository(baseURL);
         String[] targetPaths = (String[]) targets.toArray(new String[targets.size()]);
-        DebugLog.log("base URL is: " + baseURL);
         for (int i = 0; i < targetPaths.length; i++) {
-            targetPaths[i] = PathUtil.decode(targetPaths[i]);
-            DebugLog.log("target path: " + targetPaths[i]);
+            targetPaths[i] = SVNEncodingUtil.uriDecode(targetPaths[i]);
         }
         if (startRevision.isLocal() || endRevision.isLocal()) {
             for (int i = 0; i < paths.length; i++) {
@@ -155,7 +153,6 @@ public class SVNLogClient extends SVNBasicClient {
                         startRevision);
                 long endRev = getRevisionNumber(paths[i], baseURL, repos,
                         endRevision);
-                DebugLog.log("calling log for " + startRev + ":" + endRev);
                 repos.log(targetPaths, startRev, endRev, reportPaths,
                         stopOnCopy, limit, handler);
             }
@@ -163,7 +160,6 @@ public class SVNLogClient extends SVNBasicClient {
             long startRev = getRevisionNumber(null, baseURL, repos,
                     startRevision);
             long endRev = getRevisionNumber(null, baseURL, repos, endRevision);
-            DebugLog.log("calling log for " + startRev + ":" + endRev);
             repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy,
                     limit, handler);
         }
@@ -217,7 +213,7 @@ public class SVNLogClient extends SVNBasicClient {
         if (repos.checkPath("", rev) == SVNNodeKind.FILE) {
             SVNDirEntry entry = repos.info("", rev);
             String name = PathUtil.tail(repos.getLocation().getPath());
-            entry.setPath(PathUtil.decode(name));
+            entry.setPath(SVNEncodingUtil.uriDecode(name));
             handler.handleDirEntry(entry);
         } else {
             list(repos, "", rev, recursive, handler);

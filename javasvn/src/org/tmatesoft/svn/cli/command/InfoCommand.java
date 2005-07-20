@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SVNUtil;
 
@@ -65,7 +64,6 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
 
     private static void print(String str, PrintStream out) {
         out.println(str);
-        DebugLog.log(str);
     }
 
     public void handleInfo(SVNInfo info) {

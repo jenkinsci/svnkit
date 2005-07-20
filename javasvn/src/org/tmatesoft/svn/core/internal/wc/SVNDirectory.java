@@ -35,7 +35,6 @@ import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -189,7 +188,6 @@ public class SVNDirectory {
                 .hasNext();) {
             String propName = (String) propNames.next();
             String propValue = (String) changedProperties.get(propName);
-            DebugLog.log("merging prop change: " + propName + "=" + propValue);
             if (updateBaseProps) {
                 baseTmp.setPropertyValue(propName, propValue);
             }
@@ -223,7 +221,6 @@ public class SVNDirectory {
                 result = SVNStatusType.MERGED;
                 // }
             }
-            DebugLog.log("setting tmp wc value: " + propName + "=" + propValue);
             workingTmp.setPropertyValue(propName, propValue);
         }
         // now log all.
@@ -428,7 +425,6 @@ public class SVNDirectory {
     }
 
     public boolean revert(String name) throws SVNException {
-        DebugLog.log("reverting: " + name + " in " + getRoot());
         boolean magicPropsChanged = false;
         boolean wasReverted = false;
 
@@ -440,7 +436,6 @@ public class SVNDirectory {
         SVNProperties baseProps = getBaseProperties(name, false);
         SVNProperties wcProps = getProperties(name, false);
         if (hasPropModifications(name)) {
-            DebugLog.log("props modified");
             Map propDiff = baseProps.compareTo(wcProps);
             if (propDiff != null && !propDiff.isEmpty()) {
                 magicPropsChanged = propDiff
@@ -467,7 +462,6 @@ public class SVNDirectory {
                     .lastModified())));
             wasReverted = true;
         }
-        DebugLog.log("m.props changed: " + magicPropsChanged);
 
         if (entry.isFile()) {
             boolean textModified = false;
@@ -663,7 +657,6 @@ public class SVNDirectory {
         if (files == null) {
             return;
         }
-        DebugLog.log("can schedule for deletion: " + name + " in " + getRoot());
         if ("".equals(name) && hasPropModifications(name)) {
             SVNErrorManager.error("svn: '"
                     + getPath().replace('/', File.separatorChar)
@@ -677,9 +670,7 @@ public class SVNDirectory {
             if (!"".equals(name) && !childFile.getName().equals(name)) {
                 continue;
             }
-            DebugLog.log("checking file: " + childFile);
             SVNEntry entry = entries.getEntry(childFile.getName(), true);
-            DebugLog.log("entry: " + entry);
             String path = PathUtil.append(getPath(), childFile.getName());
             path = path.replace('/', File.separatorChar);
             if (entry == null || entry.isHidden()) {
@@ -698,8 +689,6 @@ public class SVNDirectory {
                                     + "' is in the way of the resource actually under version control");
                 } else if (kind == SVNNodeKind.FILE) {
                     // chek for mods.
-                    DebugLog
-                            .log("checking for mods (dir props will be checked later)");
                     if (hasTextModifications(entry.getName(), false)
                             || hasPropModifications(entry.getName())) {
                         SVNErrorManager.error("svn: '" + path
@@ -1182,8 +1171,6 @@ public class SVNDirectory {
 
     public void commit(String target, SVNCommitInfo info, Map wcPropChanges,
             boolean removeLock, boolean recursive) throws SVNException {
-        DebugLog
-                .log("commit is called on " + getRoot() + ", target: " + target);
         SVNLog log = getLog(0);
 
         //
@@ -1250,7 +1237,6 @@ public class SVNDirectory {
 
         if (recursive) {
             SVNEntries entries = getEntries();
-            DebugLog.log("iterating entries...");
             for (Iterator ents = entries.entries(true); ents.hasNext();) {
                 SVNEntry entry = (SVNEntry) ents.next();
                 if ("".equals(entry.getName())) {

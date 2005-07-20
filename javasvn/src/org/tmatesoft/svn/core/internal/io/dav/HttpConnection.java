@@ -85,9 +85,6 @@ class HttpConnection {
 
     public void connect() throws SVNException {
         if (mySocket == null || isStale()) {
-            if (mySocket != null) {
-                DebugLog.log("connection is silently closed by server, forcing reconnect.");
-            }
             close();
             String host = mySVNRepositoryLocation.getHost();
             int port = mySVNRepositoryLocation.getPort();
@@ -632,7 +629,6 @@ class HttpConnection {
             is = new ChunkedInputStream(is);
         }
         if ("gzip".equals(readHeader.get("Content-Encoding"))) {
-            DebugLog.log("using GZIP to decode server responce");
             is = new GZIPInputStream(is);
         }
         return DebugLog.getLoggingInputStream("http", is);
@@ -729,7 +725,6 @@ class HttpConnection {
 
         if ("close".equals(readHeader.get("Connection")) ||
                 "close".equals(readHeader.get("Proxy-Connection"))) {
-            DebugLog.log("closing connection due to server request");
             close();
         }
     }

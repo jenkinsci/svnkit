@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -566,7 +567,7 @@ public class SVNStatusEditor implements ISVNEditor {
             if ("".equals(entry.getName())) {
                 realName = file.getName();
             }
-            if (!realName.equals(PathUtil.decode(PathUtil.tail(entry.getURL())))) {
+            if (!realName.equals(SVNEncodingUtil.uriDecode(PathUtil.tail(entry.getURL())))) {
                 isSwitched = true;
             }
             if (!isSwitched && !PathUtil.removeTail(entry.getURL()).equals(parentEntry.getURL())) {

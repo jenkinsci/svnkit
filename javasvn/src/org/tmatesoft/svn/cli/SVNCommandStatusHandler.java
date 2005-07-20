@@ -1,13 +1,12 @@
 package org.tmatesoft.svn.cli;
 
+import java.io.PrintStream;
+
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.SVNUtil;
-
-import java.io.PrintStream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -129,7 +128,6 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
                 result.append(SVNUtil.getPath(status.getFile()));
             }
         }
-        DebugLog.log(result.toString());
         myOut.println(result.toString());
 
     }

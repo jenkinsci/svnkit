@@ -264,8 +264,6 @@ public class SVNFileUtil {
     }
 
     public static boolean createSymlink(File link, String linkName) {
-        DebugLog.log("running command: ln -s " + linkName + " "
-                + link.getAbsolutePath());
         execCommand(new String[] { "ln", "-s", linkName, link.getAbsolutePath() });
         return isSymlink(link);
     }

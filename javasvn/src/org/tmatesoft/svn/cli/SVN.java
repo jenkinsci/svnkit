@@ -25,7 +25,6 @@ public class SVN {
     
     public static void main(String[] args) {
         if (args == null || args.length < 1) {
-            DebugLog.log("invliad arguments!");
             System.err.println("usage: svn commandName commandArguments");
             System.exit(0);
         }
@@ -34,7 +33,6 @@ public class SVN {
         for(int i = 0; i < args.length; i++) {
             commandLineString.append(args[i] + (i < args.length - 1 ? " " : ""));
         }
-        DebugLog.log("command line: " + commandLineString.toString());
         
         SVNCommandLine commandLine = null;
         try {
@@ -46,9 +44,7 @@ public class SVN {
                 System.exit(1);
             }
             String commandName = commandLine.getCommandName();
-            DebugLog.log("COMMAND NAME: " + commandName + " ========================================== ");
             SVNCommand command = SVNCommand.getCommand(commandName);
-            DebugLog.log("command: " + command);
     
             if (command != null) {
                 DAVRepositoryFactory.setup();
@@ -59,7 +55,6 @@ public class SVN {
                     command.run(System.out, System.err);
                 } catch (SVNException e) {
                     System.err.println(e.getMessage());
-                    DebugLog.log("err: " + e.getMessage());
                     DebugLog.error(e);
                 }
             } else {

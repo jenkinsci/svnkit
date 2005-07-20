@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -67,15 +68,12 @@ public class SVNUpdateClient extends SVNBasicClient {
                     .getEntries().getEntry("", true).getURL());
             String target = "".equals(wcAccess.getTargetName()) ? null
                     : wcAccess.getTargetName();
-            DebugLog.log("calling repos update");
             repos.update(revNumber, target, recursive, reporter, editor);
-            DebugLog.log("completed");
 
             if (editor.getTargetRevision() >= 0) {
                 if (recursive && !isIgnoreExternals()) {
                     handleExternals(wcAccess);
                 }
-                DebugLog.log("dispatching completed event");
                 dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(
                         wcAccess, editor.getTargetRevision()));
             }
@@ -200,7 +198,7 @@ public class SVNUpdateClient extends SVNBasicClient {
 
         if (targetNodeKind == SVNNodeKind.FILE) {
             if (dstPath.isDirectory()) {
-                dstPath = new File(dstPath, PathUtil.decode(PathUtil.tail(url)));
+                dstPath = new File(dstPath, SVNEncodingUtil.uriDecode(PathUtil.tail(url)));
             }
             if (dstPath.exists()) {
                 if (!force) {
@@ -303,7 +301,6 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (!SVNWCAccess.isVersionedDirectory(srcPath)) {
             SVNErrorManager.error("svn: '" + srcPath + "' is not under version control");
         }
-        DebugLog.log("exporting at revision: " + revision);
         SVNWCAccess wcAccess = createWCAccess(srcPath);
         String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
         if (revision == null || revision == SVNRevision.UNDEFINED) {

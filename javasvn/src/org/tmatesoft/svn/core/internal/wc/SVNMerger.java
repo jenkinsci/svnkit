@@ -60,7 +60,6 @@ public class SVNMerger {
         }
         String name = PathUtil.tail(path);
         File targetFile = parentDir.getFile(name);
-        DebugLog.log("target file for deletion: " + targetFile);
         if (targetFile.isDirectory()) {
             // check for normal entry?
             final ISVNEventHandler oldDispatcher = myWCAccess
@@ -88,8 +87,6 @@ public class SVNMerger {
                     try {
                         parentDir.canScheduleForDeletion(name);
                     } catch (SVNException e) {
-                        DebugLog.log("can't schedule for deletion: "
-                                + targetFile);
                         DebugLog.error(e);
                         return SVNStatusType.OBSTRUCTED;
                     }
@@ -246,7 +243,6 @@ public class SVNMerger {
                 String targetLabel = ".working";
                 String leftLabel = ".merge-left.r" + rev1;
                 String rightLabel = ".merge-right.r" + rev2;
-                DebugLog.log("merging: " + name + " in dir: " + parentDir.getPath());
                 mergeResult = parentDir.mergeText(minePath, olderPath,
                         yoursPath, targetLabel, leftLabel, rightLabel,
                         myIsLeaveConflicts, myIsDryRun);
@@ -273,8 +269,6 @@ public class SVNMerger {
                 SVNStatusType.UNKNOWN };
         SVNDirectory parentDir = getParentDirectory(path);
         if (parentDir == null) {
-            DebugLog.log("parent dir is null for: " + path);
-            DebugLog.log("added path: " + myAddedPath);
             if (myIsDryRun && myAddedPath != null
                     && path.startsWith(myAddedPath)) {
                 result[0] = SVNStatusType.CHANGED;
@@ -339,7 +333,6 @@ public class SVNMerger {
 
     public File getFile(String path, boolean base) {
         SVNDirectory dir = null;
-        DebugLog.log("fetching tmp file, added path: " + myAddedPath);
         // if (myIsDryRun) {
         String parentPath = path;
         while (dir == null && !PathUtil.isEmpty(parentPath)) {
@@ -374,28 +367,13 @@ public class SVNMerger {
         // 1. convert props to diff (need we?), just use remote diff
         // ->
         // 2. get local mods.
-        DebugLog.log("entry name: " + name);
         SVNProperties localBaseProps = dir.getBaseProperties(name, false);
         SVNProperties localWCProps = dir.getProperties(name, false);
 
         // will contain all deleted and added, but not unchanged.
-        Map wcProps = localWCProps.asMap();
         Map localDiff = localBaseProps.compareTo(localWCProps);
-        // now add all non-null from wc to localDiff.
-        DebugLog.log("all wc props: " + wcProps);
-        /*
-         * for(Iterator wcPropsNames = wcProps.keySet().iterator();
-         * wcPropsNames.hasNext();) { String wcPropName = (String)
-         * wcPropsNames.next(); DebugLog.log("wc prop: " + wcPropName); if
-         * (!localDiff.containsKey(wcPropName)) { DebugLog.log("not modified: " +
-         * wcProps.get(wcPropName)); localDiff.put(wcPropName,
-         * wcProps.get(wcPropName)); } }
-         */
         // 3. merge
-        DebugLog.log("merging props, remote diff:" + propDiff);
-        DebugLog.log("merging props, local diff:" + localDiff);
         result = dir.mergeProperties(name, propDiff, localDiff, false, log);
-        DebugLog.log("running log: " + log);
         if (log != null) {
             log.save();
             dir.runLogs();

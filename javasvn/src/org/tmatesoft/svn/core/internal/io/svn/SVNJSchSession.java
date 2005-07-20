@@ -52,7 +52,6 @@ public class SVNJSchSession {
         Session session = (Session) ourSessionsPool.get(key);
         if (session != null && !session.isConnected()) {
             ourSessionsPool.remove(key);
-            DebugLog.log("SESSION " + key + " disposed");
             session = null;
         }
         try {
@@ -76,25 +75,18 @@ public class SVNJSchSession {
                         credentials.getPassword(), passphrase);
                 session.setUserInfo(userInfo);
                 session.setSocketFactory(new SimpleSocketFactory());
-                DebugLog.log("SESSION " + key + " created");
                 session.setTimeout(TIMEOUT);
                 session.connect();
                 session.setTimeout(0);
                 ourSessionsPool.put(key, session);
-                DebugLog.log("SESSION " + key + " connected");
-            } else {
-                DebugLog.log("SESSION " + key + " reused");
-            }
+            } 
             return session;
         } catch (JSchException e) {
             DebugLog.error(e);
             if (session != null && session.isConnected()) {
                 session.disconnect();
-                DebugLog.log("DISCONNECTING: " + session);
             }
-            DebugLog.log("SESSION " + key + " diconnected");
             ourSessionsPool.remove(key);
-            DebugLog.log("SESSION " + key + " disposed");
             throw new SVNAuthenticationException(e);
         }
     }
@@ -105,7 +97,6 @@ public class SVNJSchSession {
                 Session session = (Session) (e.next());
                 try {
                     session.disconnect();
-                    DebugLog.log("DISCONNECTING: " + session);
                 } catch (Exception ee) {
                 }
             }
@@ -172,7 +163,6 @@ public class SVNJSchSession {
         }
 
         public void showMessage(String arg0) {
-            DebugLog.log("jsch message: " + arg0);
         }
     }
 }
