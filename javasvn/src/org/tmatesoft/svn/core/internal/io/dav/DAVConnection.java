@@ -88,7 +88,7 @@ public class DAVConnection {
                 String root = myLocation.getPath();
                 if (relativePath != null) {
                     relativePath = PathUtil.removeTrailingSlash(relativePath);
-                    relativePath = PathUtil.encode(relativePath);
+                    relativePath = SVNEncodingUtil.uriEncode(relativePath);
                     root = PathUtil.removeTrailingSlash(root);
                     if (root.endsWith(relativePath)) {
                         root = root.substring(0, root.length() - relativePath.length() - 1);                        

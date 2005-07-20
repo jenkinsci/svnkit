@@ -10,18 +10,19 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.File;
+import java.util.Date;
+import java.util.Iterator;
+
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
-
-import java.io.File;
-import java.util.Date;
-import java.util.Iterator;
 
 /**
  * @version 1.0
@@ -86,8 +87,7 @@ public class SVNReporter implements ISVNReporterBaton {
                 String url = targetEntry.getURL();
                 SVNEntry parentEntry = targetEntries.getEntry("", true);
                 String parentURL = parentEntry.getURL();
-                String expectedURL = PathUtil.append(parentURL, PathUtil
-                        .encode(targetEntry.getName()));
+                String expectedURL = PathUtil.append(parentURL, SVNEncodingUtil.uriEncode(targetEntry.getName()));
                 if (!expectedURL.equals(url)) {
                     reporter.linkPath(SVNRepositoryLocation.parseURL(url), "",
                             targetEntry.getLockToken(), targetEntry
@@ -169,8 +169,7 @@ public class SVNReporter implements ISVNReporterBaton {
                 String url = entry.getURL();
                 String parentURL = entries
                         .getPropertyValue("", SVNProperty.URL);
-                String expectedURL = PathUtil.append(parentURL, PathUtil
-                        .encode(entry.getName()));
+                String expectedURL = PathUtil.append(parentURL, SVNEncodingUtil.uriEncode(entry.getName()));
                 if (reportAll) {
                     if (!url.equals(expectedURL)
                             && !entry.isScheduledForAddition()

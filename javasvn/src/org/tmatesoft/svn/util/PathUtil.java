@@ -12,10 +12,6 @@
 package org.tmatesoft.svn.util;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
@@ -181,80 +177,6 @@ public class PathUtil {
             path = path.substring(0, path.length() - 1);
         }
         return path;
-    }
-
-    private static void encode(String urlPart, StringBuffer dst) {
-        for (StringTokenizer tokens = new StringTokenizer(urlPart, " /+()",
-                true); tokens.hasMoreTokens();) {
-            String token = tokens.nextToken();
-            if (" ".equals(token)) {
-                dst.append("%20");
-            } else if ("+".equals(token) || "/".equals(token)
-                    || "(".equals(token) || ")".equals(token)) {
-                dst.append(token);
-            } else {
-                try {
-                    dst.append(URLEncoder.encode(token, "UTF-8"));
-                } catch (IOException e) {
-                    dst.append(token);
-                }
-            }
-        }
-    }
-
-    /**
-     * Encodes a string into the <code>application/x-www-form-urlencoded</code>
-     * format using a specific encoding scheme.
-     * 
-     * <p>
-     * Used to encode URL paths.
-     * 
-     * @param source
-     *            a string to be encoded
-     * @return an encoded string or the input string itself if encoding had no
-     *         effect
-     */
-    public static String encode(String source) {
-        StringBuffer sb = new StringBuffer();
-        encode(source, sb);
-        return sb.toString();
-    }
-
-    /**
-     * Decodes an <code>application/x-www-form-urlencoded</code> string using
-     * a specific encoding scheme.
-     * 
-     * <p>
-     * If the string is not encoded the method has no effect.
-     * 
-     * @param source
-     *            a string to be decoded
-     * @return a decoded string or the input string itself if decoding had no
-     *         effect
-     */
-    public static String decode(String source) {
-        if (source == null) {
-            return source;
-        }
-        StringBuffer dst = new StringBuffer();
-        for (StringTokenizer tokens = new StringTokenizer(source, "+/:", true); tokens
-                .hasMoreTokens();) {
-            String token = tokens.nextToken();
-            if ("+".equals(token)) {
-                dst.append("+");
-            } else if ("/".equals(token)) {
-                dst.append("/");
-            } else if (":".equals(token)) {
-                dst.append(":");
-            } else {
-                try {
-                    dst.append(URLDecoder.decode(token, "UTF-8"));
-                } catch (IOException e) {
-                    dst.append(token);
-                }
-            }
-        }
-        return dst.toString();
     }
 
     /**

@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
@@ -1002,7 +1003,7 @@ public class SVNDirectory {
         if (fileKind == SVNNodeKind.DIR) {
             // compose new url
             String parentURL = getEntries().getEntry("", true).getURL();
-            String childURL = PathUtil.append(parentURL, PathUtil.encode(name));
+            String childURL = PathUtil.append(parentURL, SVNEncodingUtil.uriEncode(name));
             // if child dir exists (deleted) -> check that url is the same and
             // revision is the same
             SVNDirectory childDir = getChildDirectory(name);
@@ -1068,15 +1069,14 @@ public class SVNDirectory {
             if (!"".equals(entry.getName()) && entry.isDirectory() && recursive) {
                 SVNDirectory childDir = getChildDirectory(entry.getName());
                 if (childDir != null) {
-                    String childURL = PathUtil.append(rootURL, PathUtil
-                            .encode(entry.getName()));
+                    String childURL = PathUtil.append(rootURL, SVNEncodingUtil.uriEncode(entry.getName()));
                     childDir.updateURL(childURL, recursive);
                 }
                 continue;
             }
             entries.setPropertyValue(entry.getName(), SVNProperty.URL, ""
                     .equals(entry.getName()) ? rootURL : PathUtil.append(
-                    rootURL, PathUtil.encode(entry.getName())));
+                    rootURL, SVNEncodingUtil.uriEncode(entry.getName())));
         }
         entries.save(false);
     }

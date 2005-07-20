@@ -16,6 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -147,7 +148,7 @@ public class SVNRepositoryLocation {
         myPort = port;
         myPath = path;
         myPath = PathUtil.removeTrailingSlash(myPath);
-        myPath = PathUtil.encode(myPath);
+        myPath = SVNEncodingUtil.uriEncode(myPath);
     }
     
     /**
@@ -201,7 +202,7 @@ public class SVNRepositoryLocation {
         StringBuffer sb = new StringBuffer();
         sb.append(myProtocol);
         sb.append("://");
-        sb.append(PathUtil.encode(myHost));
+        sb.append(SVNEncodingUtil.uriEncode(myHost));
         if (myPort != getDefaultPort(myProtocol)) {
             sb.append(':');
             sb.append(myPort);
@@ -222,7 +223,7 @@ public class SVNRepositoryLocation {
         StringBuffer sb = new StringBuffer();
         sb.append(myProtocol);
         sb.append("://");
-        sb.append(PathUtil.encode(myHost));
+        sb.append(SVNEncodingUtil.uriEncode(myHost));
         sb.append(':');
         sb.append(myPort);
         sb.append(myPath);

@@ -1107,8 +1107,7 @@ public class SVNWCClient extends SVNBasicClient {
                     new ArrayList());
             for (Iterator ents = children.iterator(); ents.hasNext();) {
                 SVNDirEntry child = (SVNDirEntry) ents.next();
-                String childURL = PathUtil.append(url, PathUtil.encode(child
-                        .getName()));
+                String childURL = PathUtil.append(url, SVNEncodingUtil.uriEncode(child.getName()));
                 collectInfo(repos, child, rev, PathUtil.append(path, child
                         .getName()), root, uuid, childURL, locks, recursive,
                         handler);
@@ -1216,8 +1215,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (recursive) {
                 for (Iterator entries = children.iterator(); entries.hasNext();) {
                     SVNDirEntry child = (SVNDirEntry) entries.next();
-                    String childURL = PathUtil.append(url, PathUtil
-                            .encode(child.getName()));
+                    String childURL = PathUtil.append(url, SVNEncodingUtil.uriEncode(child.getName()));
                     String childPath = "".equals(path) ? child.getName()
                             : PathUtil.append(path, child.getName());
                     doGetRemoteProperty(childURL, childPath, repos, propName,

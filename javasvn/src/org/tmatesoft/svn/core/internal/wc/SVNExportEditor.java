@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
@@ -225,10 +226,8 @@ public class SVNExportEditor implements ISVNEditor {
                     .get(SVNProperty.KEYWORDS);
             Map keywordsMap = null;
             if (keywords != null) {
-                String url = PathUtil.append(myURL, PathUtil
-                        .encode(myCurrentPath));
-                url = PathUtil.append(url, PathUtil.encode(myCurrentFile
-                        .getName()));
+                String url = PathUtil.append(myURL, SVNEncodingUtil.uriEncode(myCurrentPath));
+                url = PathUtil.append(url, SVNEncodingUtil.uriEncode(myCurrentFile.getName()));
                 String author = (String) myFileProperties
                         .get(SVNProperty.LAST_AUTHOR);
                 String revStr = (String) myFileProperties

@@ -20,7 +20,6 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -99,7 +98,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
         SVNLock[] locks = null;
         try {
             myRepositoryRoot = myRepository.getRepositoryRoot(true);
-            myRepositoryRoot = PathUtil.encode(myRepositoryRoot);
+            myRepositoryRoot = SVNEncodingUtil.uriEncode(myRepositoryRoot);
             locks = myRepository.getLocks(path);
         } catch (SVNException e) {
             //

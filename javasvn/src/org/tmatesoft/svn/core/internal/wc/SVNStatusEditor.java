@@ -501,7 +501,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 && parent.getEntries().getEntry("", false) != null) {
             url = parent.getEntries().getEntry("", false).getURL();
             if (url != null) {
-                url = PathUtil.append(url, PathUtil.encode(name));
+                url = PathUtil.append(url, SVNEncodingUtil.uriEncode(name));
             }
         }
         SVNStatus status = createStatus(url, parent.getFile(name), parent, null, null, ignored, null, null);
@@ -841,7 +841,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 } else {
                     url = getURL();
                     if (url != null) {
-                        url = PathUtil.append(getURL(), PathUtil.encode(name));
+                        url = PathUtil.append(getURL(), SVNEncodingUtil.uriEncode(name));
                     }
                 }
                 try {

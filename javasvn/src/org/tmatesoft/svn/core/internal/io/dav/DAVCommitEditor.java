@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVProppatchHandler;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
@@ -77,7 +78,7 @@ class DAVCommitEditor implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
-        path = PathUtil.encode(path);
+        path = SVNEncodingUtil.uriEncode(path);
         // get parent's working copy. (checkout? or use checked out?)
         DAVResource parentResource = (DAVResource) myDirsStack.peek();
         checkoutResource(parentResource);
@@ -110,7 +111,7 @@ class DAVCommitEditor implements ISVNEditor {
 
 
     public void addDir(String path, String copyPath, long copyRevision) throws SVNException {
-        path = PathUtil.encode(path);
+        path = SVNEncodingUtil.uriEncode(path);
 
         DAVResource parentResource = (DAVResource) myDirsStack.peek();
         if (parentResource.getWorkingURL() == null) {
@@ -132,7 +133,7 @@ class DAVCommitEditor implements ISVNEditor {
         if (copyPath != null) {
             // convert to full path?
             copyPath = myRepository.getFullPath(copyPath);
-            copyPath = PathUtil.encode(copyPath);
+            copyPath = SVNEncodingUtil.uriEncode(copyPath);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, copyPath, copyRevision, false, false, null);
             copyPath = PathUtil.append(info.baselineBase, info.baselinePath);
 
@@ -152,7 +153,7 @@ class DAVCommitEditor implements ISVNEditor {
     }
 
     public void openDir(String path, long revision) throws SVNException {
-        path = PathUtil.encode(path);
+        path = SVNEncodingUtil.uriEncode(path);
         // do nothing,
         DAVResource parent = myDirsStack.peek() != null ? (DAVResource) myDirsStack.peek() : null;
         DAVResource directory = new DAVResource(myCommitMediator, myConnection, path, revision, parent == null ? false : parent.isCopy());
@@ -189,7 +190,7 @@ class DAVCommitEditor implements ISVNEditor {
 
     public void addFile(String path, String copyPath, long copyRevision) throws SVNException {
         String originalPath = path;
-        path = PathUtil.encode(path);
+        path = SVNEncodingUtil.uriEncode(path);
         // checkout parent collection.
         DAVResource parentResource = (DAVResource) myDirsStack.peek();
         if (parentResource.getWorkingURL() == null) {
@@ -210,7 +211,7 @@ class DAVCommitEditor implements ISVNEditor {
 
         if (copyPath != null) {
             copyPath = myRepository.getFullPath(copyPath);
-            copyPath = PathUtil.encode(copyPath);
+            copyPath = SVNEncodingUtil.uriEncode(copyPath);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, copyPath, copyRevision, false, false, null);
             copyPath = PathUtil.append(info.baselineBase, info.baselinePath);
 
@@ -229,7 +230,7 @@ class DAVCommitEditor implements ISVNEditor {
 
     public void openFile(String path, long revision) throws SVNException {
         String originalPath = path;
-        path = PathUtil.encode(path);
+        path = SVNEncodingUtil.uriEncode(path);
         DAVResource file = new DAVResource(myCommitMediator, myConnection, path, revision);
         DAVResource parent = (DAVResource) myDirsStack.peek();
         if (parent.isCopy()) {

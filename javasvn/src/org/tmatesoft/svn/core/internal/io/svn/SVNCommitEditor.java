@@ -19,6 +19,7 @@ import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
@@ -80,11 +81,9 @@ class SVNCommitEditor implements ISVNEditor {
             if (host == null) {
                 host = location.getProtocol() + "://" + location.getHost()
                         + ":" + location.getPort();
-                host = PathUtil.append(host, PathUtil.encode(myRepository
-                        .getRepositoryRoot()));
+                host = PathUtil.append(host, SVNEncodingUtil.uriEncode(myRepository.getRepositoryRoot()));
             }
-            copyFromPath = PathUtil.append(host, PathUtil.encode(myRepository
-                    .getRepositoryPath(copyFromPath)));
+            copyFromPath = PathUtil.append(host, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
             myConnection.write("(w(sss(sn)))", new Object[] { "add-dir", path,
                     myCurrentPath, path, copyFromPath,
                     getRevisionObject(copyFromRevision) });
@@ -121,11 +120,9 @@ class SVNCommitEditor implements ISVNEditor {
             if (host == null) {
                 host = location.getProtocol() + "://" + location.getHost()
                         + ":" + location.getPort();
-                host = PathUtil.append(host, PathUtil.encode(myRepository
-                        .getRepositoryRoot()));
+                host = PathUtil.append(host, SVNEncodingUtil.uriEncode(myRepository.getRepositoryRoot()));
             }
-            copyFromPath = PathUtil.append(host, PathUtil.encode(myRepository
-                    .getRepositoryPath(copyFromPath)));
+            copyFromPath = PathUtil.append(host, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
             myConnection.write("(w(sss(sn)))", new Object[] { "add-file", path,
                     myCurrentPath, path, copyFromPath,
                     getRevisionObject(copyFromRevision) });

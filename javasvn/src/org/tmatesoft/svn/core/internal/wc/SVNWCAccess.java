@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -98,8 +99,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                     String anchorURL = anchorEntry.getURL();
                     String targetURL = targetEntry.getURL();
                     if (anchorURL != null && targetURL != null) {
-                        String urlName = PathUtil.encode(targetInAnchor
-                                .getName());
+                        String urlName = SVNEncodingUtil.uriEncode(targetInAnchor.getName());
                         String expectedURL = PathUtil
                                 .append(anchorURL, urlName);
                         if (!expectedURL.equals(targetURL)
@@ -199,7 +199,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                             && (SVNProperty.URL.equals(propertyName) || SVNProperty.COPYFROM_URL
                                     .equals(propertyName))) {
                         // special handling for URLs.
-                        value = PathUtil.append(value, PathUtil.encode(myName));
+                        value = PathUtil.append(value, SVNEncodingUtil.uriEncode(myName));
                     }
                 }
             }
@@ -213,7 +213,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                     && (SVNProperty.URL.equals(propertyName) || SVNProperty.COPYFROM_URL
                             .equals(propertyName))) {
                 // special handling for URLs.
-                value = PathUtil.append(value, PathUtil.encode(myName));
+                value = PathUtil.append(value, SVNEncodingUtil.uriEncode(myName));
             }
         }
         return value;

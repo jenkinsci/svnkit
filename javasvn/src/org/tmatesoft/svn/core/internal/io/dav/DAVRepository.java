@@ -95,7 +95,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             path = getFullPath(path);
-            path = PathUtil.encode(path);
+            path = SVNEncodingUtil.uriEncode(path);
             info = DAVUtil.getBaselineInfo(myConnection, path, revision, true, false, info);
             kind = info.isDirectory ? SVNNodeKind.DIR : SVNNodeKind.FILE;
         } catch (SVNException e) {
@@ -130,7 +130,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             path = getFullPath(path);
-            path = PathUtil.encode(path);
+            path = SVNEncodingUtil.uriEncode(path);
             if (revision != -2) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
                 path = PathUtil.append(info.baselineBase, info.baselinePath);
@@ -170,7 +170,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             path = getFullPath(path);
-            path = PathUtil.encode(path);
+            path = SVNEncodingUtil.uriEncode(path);
             if (revision != -2) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
                 path = PathUtil.append(info.baselineBase, info.baselinePath);
@@ -286,7 +286,7 @@ class DAVRepository extends SVNRepository {
 	        
             davHandler = new DAVLogHandler(handler); 
 			long revision = Math.max(startRevision, endRevision);
-            path = PathUtil.encode(path);
+            path = SVNEncodingUtil.uriEncode(path);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, false, null);
             path = PathUtil.append(info.baselineBase, info.baselinePath);
             myConnection.doReport(path, request, davHandler);
@@ -320,7 +320,7 @@ class DAVRepository extends SVNRepository {
                 root = SVNEncodingUtil.uriDecode(getLocationPath());
                 path = path.substring(root.length());
 
-                root = PathUtil.encode(root);
+                root = SVNEncodingUtil.uriEncode(root);
                 // path is decoded here, root is encoded
             }
             StringBuffer request = DAVLocationsHandler.generateLocationsRequest(null, path, pegRevision, revisions);
@@ -472,16 +472,16 @@ class DAVRepository extends SVNRepository {
         if (locks != null) {
             translatedLocks = new HashMap(locks.size());
             String root = getRepositoryRoot();
-            root = PathUtil.encode(root);
+            root = SVNEncodingUtil.uriEncode(root);
             for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
                 String path = (String) paths.next();
                 String lock = (String) locks.get(path);
 
                 if (path.startsWith("/")) {
-                    path = PathUtil.append(root, PathUtil.encode(path));
+                    path = PathUtil.append(root, SVNEncodingUtil.uriEncode(path));
                 } else {
                     path = getFullPath(path);
-                    path = PathUtil.encode(path);
+                    path = SVNEncodingUtil.uriEncode(path);
                 }
                 translatedLocks.put(path, lock);
             }
@@ -529,7 +529,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             path = getFullPath(path);
-            path = PathUtil.encode(path);
+            path = SVNEncodingUtil.uriEncode(path);
             return myConnection.doGetLock(path);
         } finally {
             closeConnection();
@@ -540,7 +540,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             path = getFullPath(path);
-            path = PathUtil.encode(path);
+            path = SVNEncodingUtil.uriEncode(path);
             return myConnection.doGetLocks(path);
         } finally {
             closeConnection();
@@ -551,7 +551,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             path = getFullPath(path);
-            path = PathUtil.encode(path);
+            path = SVNEncodingUtil.uriEncode(path);
             return myConnection.doLock(path, comment, force, revision);
         } finally {
             closeConnection();
@@ -562,7 +562,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             path = getFullPath(path);
-            path = PathUtil.encode(path);
+            path = SVNEncodingUtil.uriEncode(path);
             String url = getLocation().getProtocol() + "://" + getLocation().getHost() + ":" + getLocation().getPort();
             url += path;
             myConnection.doUnlock(url, path, id, force);
@@ -576,7 +576,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             path = getFullPath(path);
-            path = PathUtil.encode(path);
+            path = SVNEncodingUtil.uriEncode(path);
             if (revision < 0) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
                 path = PathUtil.append(info.baselineBase, info.baselinePath);

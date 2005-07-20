@@ -15,6 +15,7 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -168,7 +169,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 long srcCFRevision = srcEntry.getCopyFromRevision();
 
                 dstURL = PathUtil
-                        .append(dstURL, PathUtil.encode(dst.getName()));
+                        .append(dstURL, SVNEncodingUtil.uriEncode(dst.getName()));
                 if (srcEntry.isScheduledForAddition() && srcEntry.isCopied()) {
                     srcProps.copyTo(dstProps);
                     dstEntry.scheduleForAddition();
@@ -357,7 +358,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 long srcCFRevision = srcEntry.getCopyFromRevision();
 
                 dstURL = PathUtil
-                        .append(dstURL, PathUtil.encode(dst.getName()));
+                        .append(dstURL, SVNEncodingUtil.uriEncode(dst.getName()));
                 if (srcEntry.isScheduledForAddition() && srcEntry.isCopied()) {
                     dstEntry.scheduleForAddition();
                     dstEntry.setCopyFromRevision(srcCFRevision);

@@ -276,7 +276,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             return null;
         }
         SVNLocationEntry location = (SVNLocationEntry) locations.get(0);
-        String path = PathUtil.encode(location.getPath());
+        String path = SVNEncodingUtil.uriEncode(location.getPath());
         String rootPath = repos.getRepositoryRoot();
         String fullPath = SVNRepositoryLocation.parseURL(SVNEncodingUtil.uriDecode(url))
                 .getPath();
@@ -427,10 +427,10 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         String host = url.substring(0, url.indexOf('/', url.indexOf("://") + 3));
         String startPath = host
-                + PathUtil.encode(PathUtil.append(rootPath, startLocation
+                + SVNEncodingUtil.uriEncode(PathUtil.append(rootPath, startLocation
                         .getPath()));
         String endPath = host
-                + PathUtil.encode(PathUtil.append(rootPath, endLocation
+                + SVNEncodingUtil.uriEncode(PathUtil.append(rootPath, endLocation
                         .getPath()));
         return new RepositoryReference[] {
                 new RepositoryReference(startPath, startRev),

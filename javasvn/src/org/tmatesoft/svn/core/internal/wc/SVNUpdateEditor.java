@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -61,8 +62,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", true);
         myTargetURL = entry.getURL();
         if (myTarget != null) {
-            myTargetURL = PathUtil.append(myTargetURL, PathUtil
-                    .encode(myTarget));
+            myTargetURL = PathUtil.append(myTargetURL, SVNEncodingUtil.uriEncode(myTarget));
         }
         wcAccess.getTarget().getEntries().close();
 
@@ -633,8 +633,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             if ("".equals(entry.getName())) {
                 continue;
             }
-            String childURL = url != null ? PathUtil.append(url, PathUtil
-                    .encode(entry.getName())) : null;
+            String childURL = url != null ? PathUtil.append(url, SVNEncodingUtil.uriEncode(entry.getName())) : null;
             if (entry.getKind() == SVNNodeKind.FILE) {
                 save |= bumpEntry(entries, entry, childURL, myTargetRevision,
                         true);
@@ -754,8 +753,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 SVNErrorManager.error("svn: Failed to update file '" + path + "': no entry found");
             }
             if (mySwitchURL != null || entry == null) {
-                info.URL = PathUtil.append(parent.URL, PathUtil
-                        .encode(info.Name));
+                info.URL = PathUtil.append(parent.URL, SVNEncodingUtil.uriEncode(info.Name));
             } else {
                 info.URL = entry.getURL();
             }
@@ -781,7 +779,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 info.URL = dir.getEntries().getEntry("", true).getURL();
             }
             if (info.URL == null && parent != null) {
-                info.URL = PathUtil.append(parent.URL, PathUtil.encode(name));
+                info.URL = PathUtil.append(parent.URL, SVNEncodingUtil.uriEncode(name));
             } else if (info.URL == null && parent == null) {
                 info.URL = myTargetURL;
             }
@@ -793,8 +791,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 if (myTarget != null && parent.Parent == null) {
                     info.URL = mySwitchURL;
                 } else {
-                    info.URL = PathUtil.append(parent.URL, PathUtil
-                            .encode(name));
+                    info.URL = PathUtil.append(parent.URL, SVNEncodingUtil.uriEncode(name));
                 }
             }
         }

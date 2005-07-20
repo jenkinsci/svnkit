@@ -253,7 +253,7 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNNodeKind dstKind = repos.checkPath("", -1);
         if (dstKind == SVNNodeKind.DIR) {
             dstURL = PathUtil
-                    .append(dstURL, PathUtil.encode(srcPath.getName()));
+                    .append(dstURL, SVNEncodingUtil.uriEncode(srcPath.getName()));
         } else if (dstKind == SVNNodeKind.FILE) {
             SVNErrorManager.error("svn: File '" + dstURL + "' already exists");
         }
@@ -421,7 +421,7 @@ public class SVNCopyClient extends SVNBasicClient {
             if (srcKind == SVNNodeKind.DIR) {
                 String dstURL = wcAccess.getAnchor().getEntries()
                         .getPropertyValue("", SVNProperty.URL);
-                dstURL = PathUtil.append(dstURL, PathUtil.encode(dstPath
+                dstURL = PathUtil.append(dstURL, SVNEncodingUtil.uriEncode(dstPath
                         .getName()));
                 SVNDirectory targetDir = createVersionedDirectory(dstPath,
                         dstURL, uuid, srcRevision);
@@ -673,8 +673,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNDirectory childDir = dir.getChildDirectory(name);
                 if (childDir != null) {
                     String childCopyFromURL = copyFromURL == null ? null
-                            : PathUtil.append(copyFromURL, PathUtil
-                                    .encode(entry.getName()));
+                            : PathUtil.append(copyFromURL, SVNEncodingUtil.uriEncode(entry.getName()));
                     updateCopiedDirectory(childDir, "", newURL,
                             childCopyFromURL, copyFromRevision);
                 }
@@ -690,11 +689,8 @@ public class SVNCopyClient extends SVNBasicClient {
                         continue;
                     }
                     String childCopyFromURL = copyFromURL == null ? null
-                            : PathUtil.append(copyFromURL, PathUtil
-                                    .encode(childEntry.getName()));
-                    String newChildURL = newURL == null ? null : PathUtil
-                            .append(newURL, PathUtil.encode(childEntry
-                                    .getName()));
+                            : PathUtil.append(copyFromURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
+                    String newChildURL = newURL == null ? null : PathUtil.append(newURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
                     updateCopiedDirectory(dir, childEntry.getName(),
                             newChildURL, childCopyFromURL, copyFromRevision);
                 }
@@ -853,7 +849,7 @@ public class SVNCopyClient extends SVNBasicClient {
 
         String newURL = dstAccess.getAnchor().getEntries().getEntry("", true)
                 .getURL();
-        newURL = PathUtil.append(newURL, PathUtil.encode(dstName));
+        newURL = PathUtil.append(newURL, SVNEncodingUtil.uriEncode(dstName));
 
         File dstPath = new File(dstAccess.getAnchor().getRoot(), dstName);
 

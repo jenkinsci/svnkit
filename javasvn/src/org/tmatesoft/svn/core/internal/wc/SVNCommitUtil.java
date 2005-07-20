@@ -564,13 +564,11 @@ public class SVNCommitUtil {
                 }
                 String currentCFURL = cfURL != null ? cfURL : copyFromURL;
                 if (currentCFURL != null) {
-                    currentCFURL = PathUtil.append(currentCFURL, PathUtil
-                            .encode(currentEntry.getName()));
+                    currentCFURL = PathUtil.append(currentCFURL, SVNEncodingUtil.uriEncode(currentEntry.getName()));
                 }
                 String currentURL = currentEntry.getURL();
                 if (copyMode || entry.getURL() == null) {
-                    currentURL = PathUtil.append(url, PathUtil
-                            .encode(currentEntry.getName()));
+                    currentURL = PathUtil.append(url, SVNEncodingUtil.uriEncode(currentEntry.getName()));
                 }
                 File currentFile = dir.getFile(currentEntry.getName());
                 SVNDirectory childDir;

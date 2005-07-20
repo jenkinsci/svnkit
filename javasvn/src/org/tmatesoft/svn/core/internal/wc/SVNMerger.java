@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -163,8 +164,7 @@ public class SVNMerger {
             }
             if (!myIsDryRun) {
                 file.mkdirs();
-                String url = PathUtil.append(myURL, PathUtil
-                        .encode(getPathInURL(path)));
+                String url = PathUtil.append(myURL, SVNEncodingUtil.uriEncode(getPathInURL(path)));
                 addDirectory(parentDir, name, url, myTargetRevision, entryProps);
             } else {
                 myAddedPath = path + "/";
@@ -176,8 +176,7 @@ public class SVNMerger {
                 if (myIsDryRun) {
                     myAddedPath = path + "/";
                 } else {
-                    String url = PathUtil.append(myURL, PathUtil
-                            .encode(getPathInURL(path)));
+                    String url = PathUtil.append(myURL, SVNEncodingUtil.uriEncode(getPathInURL(path)));
                     addDirectory(parentDir, name, url, myTargetRevision,
                             entryProps);
                 }
@@ -289,8 +288,7 @@ public class SVNMerger {
                 return result;
             } else if (!myIsDryRun) {
                 String pathInURL = getPathInURL(path);
-                String copyFromURL = PathUtil.append(myURL, PathUtil
-                        .encode(pathInURL));
+                String copyFromURL = PathUtil.append(myURL, SVNEncodingUtil.uriEncode(pathInURL));
                 addFile(parentDir, name, SVNFileUtil.getBasePath(yours),
                         propDiff, copyFromURL, myTargetRevision, entryProps);
             }
@@ -405,8 +403,7 @@ public class SVNMerger {
             entry.loadProperties(entryProps);
             entry.setKind(SVNNodeKind.DIR);
             entry.scheduleForAddition();
-            url = PathUtil.append(entries.getEntry("", true).getURL(), PathUtil
-                    .encode(name));
+            url = PathUtil.append(entries.getEntry("", true).getURL(), SVNEncodingUtil.uriEncode(name));
         }
         entry.setCopied(true);
         entry.setCopyFromURL(copyFromURL);
@@ -455,7 +452,7 @@ public class SVNMerger {
         entry.setCopyFromURL(copyFromURL);
         entry.setCopyFromRevision(copyFromRev);
         String url = PathUtil.append(entries.getEntry("", true).getURL(),
-                PathUtil.encode(name));
+                SVNEncodingUtil.uriEncode(name));
         entries.save(false);
         parentDir.getWCProperties(name).delete();
 
