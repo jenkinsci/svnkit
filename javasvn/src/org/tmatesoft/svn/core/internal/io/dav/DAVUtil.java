@@ -15,13 +15,9 @@ package org.tmatesoft.svn.core.internal.io.dav;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.StringTokenizer;
-import java.util.regex.Pattern;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.util.PathUtil;
-
-
 
 /**
  * @version 1.0
@@ -170,21 +166,6 @@ public class DAVUtil {
         }
         return target;
 
-    }
-
-    public static boolean matchHost(String pattern, String host) {
-        if (pattern == null || host == null) {
-            return false;
-        }
-        for(StringTokenizer tokens = new StringTokenizer(pattern, ",|"); tokens.hasMoreTokens();) {
-            String token = tokens.nextToken();
-            token = token.replaceAll("\\.", "\\\\.");
-            token = token.replaceAll("\\*", ".*");
-            if (Pattern.matches(token, host)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public static String xmlEncode(String value) {
