@@ -82,6 +82,7 @@ class SVNConnection {
             return;
         }
         SVNPasswordAuthentication auth = null;
+        String url  = myLocation.toCanonicalForm();
         for (int i = 0; i < mechs.size(); i++) {
             String mech = (String) mechs.get(i);
             if ("EXTERNAL".equals(mech)) {
@@ -107,10 +108,10 @@ class SVNConnection {
                                 + myLocation.getPort() + "> " + realm;
                     }
                     if (auth == null && myAuthManager != null) {
-                        auth = (SVNPasswordAuthentication) myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm);
+                        auth = (SVNPasswordAuthentication) myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, url);
                     } else if (myAuthManager != null) {
                         myAuthManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, failureReason, auth);
-                        auth = (SVNPasswordAuthentication) myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm);
+                        auth = (SVNPasswordAuthentication) myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, url);
                     }
                     if (auth == null || auth.getUserName() == null || auth.getPassword() == null) {
                         failureReason = "no credentials for '" + mech + "'";

@@ -28,9 +28,9 @@ public interface ISVNAuthenticationManager {
     
     public ISVNSSLManager getSSLManager(String url) throws SVNException;
     
-    public SVNAuthentication getFirstAuthentication(String kind, String realm) throws SVNException;
+    public SVNAuthentication getFirstAuthentication(String kind, String realm, String url) throws SVNException;
 
-    public SVNAuthentication getNextAuthentication(String kind, String realm) throws SVNException;
+    public SVNAuthentication getNextAuthentication(String kind, String realm, String url) throws SVNException;
     
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, String errorMessage, SVNAuthentication authentication);
     

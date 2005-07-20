@@ -278,14 +278,15 @@ class HttpConnection {
                 realm = (String) myCredentialsChallenge.get("realm");
                 realm = realm == null ? "" : " " + realm;
                 realm = "<" + mySVNRepositoryLocation.getProtocol() + "://" + mySVNRepositoryLocation.getHost() + ":" + mySVNRepositoryLocation.getPort() + ">" + realm;
+                String url = mySVNRepositoryLocation.toCanonicalForm();
                 if (myAuthManager == null) {
                     throw new SVNAuthenticationException("No credentials defined");
                 }
                 if (auth == null) {
-                    auth = myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm);
+                    auth = myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, url);
                 } else {
                     myAuthManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
-                    auth = myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm);
+                    auth = myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, url);
                 }
                 // reset stream!
                 if (requestBody instanceof ByteArrayInputStream) {

@@ -132,7 +132,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return globalProps;
     }
 
-    public SVNAuthentication getFirstAuthentication(String kind, String realm) throws SVNException {
+    public SVNAuthentication getFirstAuthentication(String kind, String realm, String url) throws SVNException {
         myPreviousAuthentication = null;
         myPreviousErrorMessage = null;
         myLastProviderIndex = 0;
@@ -154,7 +154,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         throw new SVNAuthenticationException("svn: Authentication required for '" + realm + "'");
     }
 
-    public SVNAuthentication getNextAuthentication(String kind, String realm) throws SVNException {
+    public SVNAuthentication getNextAuthentication(String kind, String realm, String url) throws SVNException {
         int index = Math.min(myLastProviderIndex + 1, 3);
         for(int i = index; i < myProviders.length; i++) {
             if (myProviders[i] == null) {
