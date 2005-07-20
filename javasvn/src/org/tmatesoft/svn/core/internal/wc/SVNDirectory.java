@@ -343,7 +343,7 @@ public class SVNDirectory {
         result = resultFile == null ? SVNFileUtil.DUMMY_OUT : SVNFileUtil.openFileForWriting(resultFile);
         SVNStatusType status = SVNStatusType.UNCHANGED;
         try {
-            status = merger.mergeText(getFile(basePath), localTmpFile, getFile(latestPath), result);
+            status = merger.mergeText(getFile(basePath), localTmpFile, getFile(latestPath), dryRun, result);
         } finally {
             SVNFileUtil.closeFile(result);
         }

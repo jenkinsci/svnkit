@@ -23,6 +23,6 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public interface ISVNMerger {
     
-    public SVNStatusType mergeText(File baseFile, File localFile, File latestFile, OutputStream out) throws SVNException;
+    public SVNStatusType mergeText(File baseFile, File localFile, File latestFile, boolean dryRun, OutputStream out) throws SVNException;
 
 }

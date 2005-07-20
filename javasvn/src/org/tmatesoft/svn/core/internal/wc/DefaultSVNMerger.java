@@ -41,7 +41,7 @@ public class DefaultSVNMerger implements ISVNMerger {
         myEOL = eol;
     }
 
-    public SVNStatusType mergeText(File baseFile, File localFile, File latestFile, OutputStream result) throws SVNException {
+    public SVNStatusType mergeText(File baseFile, File localFile, File latestFile, boolean dryRun, OutputStream result) throws SVNException {
         FSMergerBySequence merger = new FSMergerBySequence(myStart, mySeparator, myEnd, myEOL);
         int mergeResult = 0;
         RandomAccessFile localIS = null;
