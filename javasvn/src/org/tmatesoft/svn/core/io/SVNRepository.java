@@ -103,8 +103,6 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  */
 public abstract class SVNRepository {
         
-    private OutputStream myLoggingOutput;
-    private OutputStream myLoggingInput;
     private String myRepositoryUUID;
     private String myRepositoryRoot;
     private SVNRepositoryLocation myLocation;
@@ -142,18 +140,6 @@ public abstract class SVNRepository {
 	 */    
     public SVNRepositoryLocation getLocation() {
         return myLocation;
-    }
-    /**
-     * Set output streams for writing log messages.
-     *   
-     * @param out	All outgoing data that goes to the repository through a socket
-     * 				will be logged into this output stream.  
-     * @param in	All incoming data that comes from the repository will be logged
-     * 				into this output stream.
-     */
-    public void setLoggingStreams(OutputStream out, OutputStream in) {
-        myLoggingOutput = out;
-        myLoggingInput = in;        
     }
 
     /**
@@ -1185,29 +1171,6 @@ public abstract class SVNRepository {
                 notifyAll();
             }
         }
-    }
-    
-    /**
-     * Gets the <code>OutputSream</code> used for logging all outgoing data 
-     * (that is sent to the repository).
-     *  
-     * 
-     * @return 	output stream to write logs for all the output sent to the 
-     * 		   	repository server
-     */
-    protected OutputStream getOutputLoggingStream() {
-        return myLoggingOutput;
-    }
-    
-    /**
-     * Gets the <code>OutputSream</code> used for logging all incoming data
-     * that comes from the repository.
-     *  
-     * @return 	output stream to write logs for all incoming from the repository
-     * 			server.
-     */
-    protected OutputStream getInputLoggingStream() {
-        return myLoggingInput;
     }
     
     /**
