@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 
 
@@ -53,9 +54,9 @@ public class SVNEncodingUtil {
         // this is string in ASCII-US encoding.
         boolean query = false;
         boolean decoded = false;
-        StringBuffer result = new StringBuffer(src.length());
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(src.length());
         for(int i = 0; i < src.length(); i++) {
-            char ch = src.charAt(i);
+            byte ch = (byte) src.charAt(i);
             if (ch == '?') {
                 query = true;
             } else if (ch == '+' && query) {
@@ -63,17 +64,21 @@ public class SVNEncodingUtil {
             } else if (ch == '%' && i + 2 < src.length() &&
                     isHexDigit(src.charAt(i + 1)) && 
                     isHexDigit(src.charAt(i + 2))) {
-                int code = hexValue(src.charAt(i + 1))*0x10 + hexValue(src.charAt(i + 2));
-                ch = (char) code;
+                ch = (byte) (hexValue(src.charAt(i + 1))*0x10 + hexValue(src.charAt(i + 2)));
                 decoded = true;
                 i += 2;    
             }
-            result.append(ch);
+            bos.write(ch);
         }
         if (!decoded) {
             return src;
         }
-        return result.toString();
+        try {
+            return new String(bos.toByteArray(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return src;
     }
     
     public static String xmlEncodeCDATA(String src) {
