@@ -62,9 +62,9 @@ class SVNCommitEditor implements ISVNEditor {
     }
 
     public void openRoot(long revision) throws SVNException {
-        myCurrentPath = "/";
+        myCurrentPath = "";
         myConnection.write("(w((n)s))", new Object[] { "open-root",
-                getRevisionObject(revision), "/" });
+                getRevisionObject(revision), "" });
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
@@ -172,7 +172,6 @@ class SVNCommitEditor implements ISVNEditor {
     public void closeFile(String path, String textChecksum) throws SVNException {
         myConnection.write("(w(s(s)))", new Object[] { "close-file", path,
                 textChecksum });
-        // myCurrentPath = computeParentPath(myCurrentPath);
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
