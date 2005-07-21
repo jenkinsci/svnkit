@@ -22,7 +22,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.util.PathUtil;
@@ -76,14 +75,8 @@ class SVNCommitEditor implements ISVNEditor {
     public void addDir(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
         if (copyFromPath != null) {
-            SVNRepositoryLocation location = myRepository.getLocation();
-            String host = myRepository.getFullRoot();
-            if (host == null) {
-                host = location.getProtocol() + "://" + location.getHost()
-                        + ":" + location.getPort();
-                host = PathUtil.append(host, SVNEncodingUtil.uriEncode(myRepository.getRepositoryRoot()));
-            }
-            copyFromPath = PathUtil.append(host, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
+            String rootURL = myRepository.getRepositoryRoot().toString();
+            copyFromPath = PathUtil.append(rootURL, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
             myConnection.write("(w(sss(sn)))", new Object[] { "add-dir", path,
                     myCurrentPath, path, copyFromPath,
                     getRevisionObject(copyFromRevision) });
@@ -115,13 +108,7 @@ class SVNCommitEditor implements ISVNEditor {
     public void addFile(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
         if (copyFromPath != null) {
-            SVNRepositoryLocation location = myRepository.getLocation();
-            String host = myRepository.getFullRoot();
-            if (host == null) {
-                host = location.getProtocol() + "://" + location.getHost()
-                        + ":" + location.getPort();
-                host = PathUtil.append(host, SVNEncodingUtil.uriEncode(myRepository.getRepositoryRoot()));
-            }
+            String host = myRepository.getRepositoryRoot().toString();
             copyFromPath = PathUtil.append(host, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
             myConnection.write("(w(sss(sn)))", new Object[] { "add-file", path,
                     myCurrentPath, path, copyFromPath,

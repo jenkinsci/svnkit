@@ -38,7 +38,7 @@ import javax.net.ssl.X509TrustManager;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.Base64;
 
 
@@ -69,7 +69,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
         myClientCertFile = clientFile;
         myClientCertPassword = clientPassword;
         try {
-            SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
+            SVNURL location = SVNURL.parse(url);
             myRealm = "https://" + location.getHost() + ":" + location.getPort();
         } catch (SVNException e1) {
         }
@@ -204,7 +204,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
             }
         }
         try {
-            String realHostName = SVNRepositoryLocation.parseURL(myURL).getHost();
+            String realHostName = SVNURL.parse(myURL).getHost();
             if (!realHostName.equals(hostName)) {
                 mask |= 4;
             }

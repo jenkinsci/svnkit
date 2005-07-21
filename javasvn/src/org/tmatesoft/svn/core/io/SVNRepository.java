@@ -27,6 +27,8 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
@@ -97,18 +99,17 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * 
  * @version 	1.0
  * @author 		TMate Software Ltd.
- * @see 		SVNRepositoryLocation
  * @see			SVNRepositoryFactory
  * @see 		org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory
  */
 public abstract class SVNRepository {
         
     private String myRepositoryUUID;
-    private String myRepositoryRoot;
-    private SVNRepositoryLocation myLocation;
+    private SVNURL myRepositoryRoot;
+    private SVNURL myLocation;
+    
     private int myLockCount;
     private Thread myLocker;
-    private String myRepositoryRootURL;
     private ISVNAuthenticationManager myAuthManager;
 
     /**
@@ -122,9 +123,8 @@ public abstract class SVNRepository {
      * 						a <code>URL</code> pointing to a repository
      * 						tree node - not necessarily the repository root
      * 						directory which it was installed to).
-     * @see 				SVNRepositoryLocation
      */
-    protected SVNRepository(SVNRepositoryLocation location) {
+    protected SVNRepository(SVNURL location) {
         myLocation = location;
     }
 	
@@ -136,9 +136,8 @@ public abstract class SVNRepository {
 	 *  
 	 * @return 		repository location as a 
 	 * 				<code>SVNRepositoryLocation</code> instance
-	 * @see 		SVNRepositoryLocation
 	 */    
-    public SVNRepositoryLocation getLocation() {
+    public SVNURL getLocation() {
         return myLocation;
     }
 
@@ -166,7 +165,7 @@ public abstract class SVNRepository {
      * This value will not include a trailing '/'.  The returned <code>URL</code>
      * is guaranteed to be a prefix of the <code>URL</code> used to create the 
      * current session (that is the <code>URL</code> passed to create 
-     * {@link SVNRepositoryLocation} which for its turn was used to create the 
+     * which for its turn was used to create the 
      * current session object <code>SVNRepository</code> for working with the
      * repository).
      * 
@@ -176,7 +175,7 @@ public abstract class SVNRepository {
      * 
      * @return 	the repository root <code>URL</code>
      */
-    public String getRepositoryRoot() {
+    public SVNURL getRepositoryRoot() {
         try {
             return getRepositoryRoot(false);
         } catch (SVNException e) {
@@ -185,18 +184,11 @@ public abstract class SVNRepository {
         return null;
     }
 
-    public String getRepositoryRoot(boolean forceConnection) throws SVNException {
+    public SVNURL getRepositoryRoot(boolean forceConnection) throws SVNException {
         if (forceConnection && myRepositoryRoot == null) {
             testConnection();
         }
         return myRepositoryRoot;
-    }
-
-    public String getRepositoryRootURL(boolean forceConnection) throws SVNException {
-        if (forceConnection && myRepositoryRootURL == null) {
-            testConnection();
-        }
-        return myRepositoryRootURL;
     }
 
     public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
@@ -220,11 +212,14 @@ public abstract class SVNRepository {
      * @see 			#getRepositoryUUID()
      * @see				org.tmatesoft.svn.util.DebugLog
      */
-    protected void setRepositoryCredentials(String uuid, String root, String rootURL) {
-        if (uuid != null && root != null) {
+    protected void setRepositoryCredentials(String uuid, String rootURL) {
+        if (uuid != null && rootURL != null) {
             myRepositoryUUID = uuid;
-            myRepositoryRoot = root;
-            myRepositoryRootURL = rootURL;
+            try {
+                myRepositoryRoot = SVNURL.parse(rootURL);
+            } catch (SVNException e) {
+                //
+            }
         }
     }
     
@@ -885,7 +880,7 @@ public abstract class SVNRepository {
      * <p>
      * To checkout a working copy the current session should have been set to a
      * directory, not a file - i.e. that URL that was used to create 
-     * {@link SVNRepositoryLocation} that in its turn was used to create the current
+     * that in its turn was used to create the current
      * <code>SVNRepository</code> object, that URL should point to a 
      * directory; otherwise a SVNException will be thrown. 
      * 
@@ -1219,7 +1214,7 @@ public abstract class SVNRepository {
      */
     protected static void assertValidRevision(long revision) throws SVNException {
         if (!isValidRevision(revision)) {
-            throw new SVNException("only valid revisions (>=0) are accepted in this method");
+            SVNErrorManager.error("svn: Invalid revision number '" + revision + "'");
         }
     }
     
@@ -1232,16 +1227,50 @@ public abstract class SVNRepository {
      * @return URL 				a URL string in the canonical representation.
      * 							 
      * @throws SVNException
-     * @see 					SVNRepositoryLocation#toCanonicalForm()
      */
     protected static String getCanonicalURL(String url) throws SVNException {
         if (url == null) {
             return null;
         }
-        SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
-        if (location != null) {
-            return location.toString();
+        return SVNURL.parse(url).toString();
+    }
+
+    // all paths are uri-decoded.
+    //
+    // get repository path (path starting with /, relative to repository root).
+    // get full path (path starting with /, relative to host).
+    // get relative path (repository path, now relative to repository location, not starting with '/').
+    
+    public String getRepositoryPath(String relativePath) {
+        if (relativePath == null) {
+            return "/";
         }
-        return null;
+        if (relativePath.length() > 0 && relativePath.charAt(0) == '/') {
+            return relativePath;
+        }
+        String fullPath = SVNPathUtil.append(getLocation().getPath(), relativePath);
+        String repositoryPath = fullPath.substring(getRepositoryRoot().getPath().length());
+        if ("".equals(repositoryPath)) {
+            return "/";
+        }
+        return repositoryPath;
+    }
+    
+    public String getFullPath(String relativeOrRepositoryPath) {
+        if (relativeOrRepositoryPath == null) {
+            return getFullPath("/");
+        }
+        if (relativeOrRepositoryPath.length() > 0 && relativeOrRepositoryPath.charAt(0) == '/') {
+            return SVNPathUtil.append(getRepositoryRoot().getPath(), relativeOrRepositoryPath);
+        }
+        relativeOrRepositoryPath = getRepositoryPath(relativeOrRepositoryPath);
+        return SVNPathUtil.append(getRepositoryRoot().getPath(), relativeOrRepositoryPath);
+    }
+    
+    public String getRelativePath(String repositoryPath) {
+        if (repositoryPath == null) {
+            return "";
+        }
+        return repositoryPath.substring(getLocation().getPath().length() + 1);
     }
 }

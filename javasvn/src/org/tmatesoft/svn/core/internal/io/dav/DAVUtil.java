@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.util.PathUtil;
 
 /**
@@ -105,9 +106,7 @@ public class DAVUtil {
             baselineRelativePath = "";
         }
         baselineRelativePath = SVNEncodingUtil.uriEncode(baselineRelativePath);
-        baselineRelativePath = PathUtil.append(baselineRelativePath, loppedPath);
-        baselineRelativePath = PathUtil.removeLeadingSlash(baselineRelativePath);
-        baselineRelativePath = PathUtil.removeTrailingSlash(baselineRelativePath);
+        baselineRelativePath = SVNPathUtil.append(baselineRelativePath, loppedPath);
 
         String label = null;
         if (revision < 0) {

@@ -28,7 +28,7 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVProppatchHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.util.PathUtil;
@@ -37,7 +37,7 @@ class DAVCommitEditor implements ISVNEditor {
     
     private String myLogMessage;
     private DAVConnection myConnection;
-    private SVNRepositoryLocation myLocation;
+    private SVNURL myLocation;
 	private DAVRepository myRepository;
     private Runnable myCloseCallback;
     private String myActivity;
@@ -352,7 +352,8 @@ class DAVCommitEditor implements ISVNEditor {
     private String createActivity(String logMessage) throws SVNException {
         String activity = myConnection.doMakeActivity();
         // checkout head...
-        String vcc = (String) DAVUtil.getPropertyValue(myConnection, myLocation.getPath(), null, DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+        String path = SVNEncodingUtil.uriEncode(myLocation.getPath());
+        String vcc = (String) DAVUtil.getPropertyValue(myConnection, path, null, DAVElement.VERSION_CONTROLLED_CONFIGURATION);
         
         String location;
         String head;

@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.internal.io.dav;
 
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 
 
 /**
@@ -30,7 +30,7 @@ public class DAVRepositoryFactory extends SVNRepositoryFactory {
         }
     }
 
-    public SVNRepository createRepositoryImpl(SVNRepositoryLocation location) {
+    public SVNRepository createRepositoryImpl(SVNURL location) {
         return new DAVRepository(location);
     }
 }

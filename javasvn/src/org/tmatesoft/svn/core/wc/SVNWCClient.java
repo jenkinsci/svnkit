@@ -10,6 +10,18 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
@@ -30,22 +42,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * 
@@ -367,12 +367,12 @@ public class SVNWCClient extends SVNBasicClient {
             SVNRevision pegRevision, SVNRevision revision, boolean recursive)
             throws SVNException {
         final SVNPropertyData[] data = new SVNPropertyData[1];
-        final String canonURL = SVNRepositoryLocation.parseURL(url).toCanonicalForm();
+        final String canonURL = SVNURL.parse(url).toString();
         doGetProperty(url, propName, pegRevision, revision, recursive, new ISVNPropertyHandler() {
             public void handleProperty(File file, SVNPropertyData property) {
             }
             public void handleProperty(String location, SVNPropertyData property) throws SVNException {
-                location = SVNRepositoryLocation.parseURL(location).toCanonicalForm();
+                location = SVNURL.parse(location).toString();
                 if (data[0] == null && canonURL.equals(location)) {
                     data[0] = property;
                 }
@@ -981,7 +981,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorManager.error("'" + url + "' non-existent in revision "
                     + revNum);
         }
-        String reposRoot = repos.getRepositoryRoot(true);
+        String reposRoot = repos.getRepositoryRoot(true).getPath();
         String reposUUID = repos.getRepositoryUUID();
         // 1. get locks for this dir and below.
         SVNLock[] locks;
@@ -997,8 +997,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNLock lock = locks[i];
             locksMap.put(lock.getPath(), lock);
         }
-        String fullPath = SVNRepositoryLocation.parseURL(SVNEncodingUtil.uriDecode(url))
-                .getPath();
+        String fullPath = SVNURL.parse(url).getPath();
         String rootPath = fullPath.substring(reposRoot.length());
         if (!rootPath.startsWith("/")) {
             rootPath = "/" + rootPath;
@@ -1094,8 +1093,7 @@ public class SVNWCClient extends SVNBasicClient {
             throws SVNException {
         String rootPath = repos.getLocation().getPath();
         rootPath = SVNEncodingUtil.uriDecode(rootPath);
-        String displayPath = PathUtil.append(repos.getRepositoryRoot(), path)
-                .substring(rootPath.length());
+        String displayPath = PathUtil.append(repos.getRepositoryRoot().getPath(), path).substring(rootPath.length());
         if ("".equals(displayPath) || "/".equals(displayPath)) {
             displayPath = path;
         }

@@ -15,7 +15,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 
 /**
  * @version 1.0
@@ -67,8 +66,7 @@ public class SVNClientManager implements ISVNRepositoryFactory {
     }
 
     public SVNRepository createRepository(String url) throws SVNException {
-        SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
-        SVNRepository repository = SVNRepositoryFactoryImpl.create(location);
+        SVNRepository repository = SVNRepositoryFactoryImpl.create(url);
         repository.setAuthenticationManager(myAuthenticationManager);
         return repository;
     }

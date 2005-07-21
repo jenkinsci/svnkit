@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /*
@@ -100,21 +99,9 @@ public class DisplayFile {
              */
             password = (args.length >= 4) ? args[3] : password;
         }
-        SVNRepositoryLocation location;
         SVNRepository repository = null;
         try {
-            /*
-             * Parses the URL string and creates an SVNRepositoryLocation which
-             * represents the repository location - it can be
-             * any versioned entry inside the repository.
-             */
-            location = SVNRepositoryLocation.parseURL(url);
-            /*
-             * Creates an instance of SVNRepository to work with the repository.
-             * All user's requests to the repository are relative to the
-             * repository location used to create this SVNRepository.
-             */
-            repository = SVNRepositoryFactory.create(location);
+            repository = SVNRepositoryFactory.create(url);
         } catch (SVNException svne) {
             /*
              * Perhaps a malformed URL is the cause of this exception

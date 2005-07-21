@@ -31,7 +31,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.PathUtil;
 
@@ -54,8 +54,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         this(new ISVNRepositoryFactory() {
 
             public SVNRepository createRepository(String url) throws SVNException {
-                SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
-                SVNRepository repository = SVNRepositoryFactory.create(location);
+                SVNRepository repository = SVNRepositoryFactory.create(url);
                 repository.setAuthenticationManager(authManager == null ? 
                         SVNWCUtil.createDefaultAuthenticationManager() : authManager);
                 return repository;
@@ -121,7 +120,7 @@ public class SVNBasicClient implements ISVNEventHandler {
 
     protected SVNRepository createRepository(String url) throws SVNException {
         if (myRepositoryFactory == null) {
-            return SVNRepositoryFactory.create(SVNRepositoryLocation.parseURL(SVNEncodingUtil.uriDecode(url)));
+            return SVNRepositoryFactory.create(url);
         }
         return myRepositoryFactory.createRepository(SVNEncodingUtil.uriDecode(url));
     }
@@ -277,9 +276,8 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         SVNLocationEntry location = (SVNLocationEntry) locations.get(0);
         String path = SVNEncodingUtil.uriEncode(location.getPath());
-        String rootPath = repos.getRepositoryRoot();
-        String fullPath = SVNRepositoryLocation.parseURL(SVNEncodingUtil.uriDecode(url))
-                .getPath();
+        String rootPath = repos.getRepositoryRoot().getPath();
+        String fullPath = SVNURL.parse(url).getPath();
         url = url.substring(0, url.length() - fullPath.length());
         url = PathUtil.append(url, rootPath);
         url = PathUtil.append(url, path);
@@ -391,7 +389,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (pegRevision < 0) {
             pegRevision = getRevisionNumber(path, url, repos, revision);
         }
-        String rootPath = repos.getRepositoryRoot(true);
+        String rootPath = repos.getRepositoryRoot(true).getPath();
         List locations = (List) repos.getLocations("", new ArrayList(2),
                 pegRevision, startRev == endRev ? new long[] { startRev }
                         : new long[] { startRev, endRev });

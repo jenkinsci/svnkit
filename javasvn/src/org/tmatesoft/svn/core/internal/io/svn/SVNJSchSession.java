@@ -21,7 +21,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.DebugLog;
 
 import com.jcraft.jsch.JSch;
@@ -40,8 +40,7 @@ public class SVNJSchSession {
 
     private static Map ourSessionsPool = new Hashtable();
 
-    static Session getSession(SVNRepositoryLocation location,
-            SVNSSHAuthentication credentials) throws SVNAuthenticationException {
+    static Session getSession(SVNURL location, SVNSSHAuthentication credentials) throws SVNAuthenticationException {
         if ("".equals(credentials.getUserName())
                 || credentials.getUserName() == null) {
             throw new SVNAuthenticationException(
@@ -134,7 +133,6 @@ public class SVNJSchSession {
     private static class EmptyUserInfo implements UserInfo {
 
         private String myPassword;
-
         private String myPassphrase;
 
         public EmptyUserInfo(String password, String passphrase) {

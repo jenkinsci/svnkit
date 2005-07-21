@@ -19,7 +19,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
 
 /**
  * @version 1.0
@@ -78,16 +77,14 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
         myReporter.deletePath(path);
     }
 
-    public void linkPath(SVNRepositoryLocation repository, String path,
+    public void linkPath(String url, String path,
             String lockToken, long revison, boolean startEmtpy)
             throws SVNException {
-        String url = repository.toString();
-        String rootURL = SVNPathUtil.getCommonURLAncestor(url,
-                myRepositoryLocation);
+        String rootURL = SVNPathUtil.getCommonURLAncestor(url, myRepositoryLocation);
         if (rootURL.length() < myRepositoryLocation.length()) {
             myRepositoryLocation = rootURL;
         }
-        myReporter.linkPath(repository, path, lockToken, revison, startEmtpy);
+        myReporter.linkPath(url, path, lockToken, revison, startEmtpy);
     }
 
     public void finishReport() throws SVNException {
@@ -97,7 +94,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
                 .toString().length());
         SVNLock[] locks = null;
         try {
-            myRepositoryRoot = myRepository.getRepositoryRoot(true);
+            myRepositoryRoot = myRepository.getRepositoryRoot(true).getPath();
             myRepositoryRoot = SVNEncodingUtil.uriEncode(myRepositoryRoot);
             locks = myRepository.getLocks(path);
         } catch (SVNException e) {

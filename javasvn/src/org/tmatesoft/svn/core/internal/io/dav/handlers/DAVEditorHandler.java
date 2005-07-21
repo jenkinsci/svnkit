@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.Base64;
 import org.xml.sax.Attributes;
@@ -101,7 +101,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 report.append("</S:missing>\n");
             }
 
-            public void linkPath(SVNRepositoryLocation repository, String path, String locktoken, long revision, boolean startEmpty) throws SVNException {
+            public void linkPath(String url, String path, String locktoken, long revision, boolean startEmpty) throws SVNException {
                 report.append("<S:entry rev=\"");
                 report.append(revision);
                 report.append("\" ");
@@ -113,7 +113,8 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 if (startEmpty) {
                     report.append("start-empty=\"true\" ");
                 }
-                String linkedPath = repository.getPath();
+                String linkedPath = SVNURL.parse(url).getPath();
+                linkedPath = SVNEncodingUtil.uriEncode(linkedPath);
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(connection, linkedPath, revision, false, false, null);
 
                 String switchUrl = SVNEncodingUtil.uriDecode(info.baselinePath);

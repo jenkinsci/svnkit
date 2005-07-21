@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVOptionsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 import org.xml.sax.helpers.DefaultHandler;
@@ -41,18 +41,18 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class DAVConnection {
     
-    private SVNRepositoryLocation myLocation;
+    private SVNURL myLocation;
     private HttpConnection myHttpConnection;
     private String myActivityCollectionURL;
     private boolean myIsHTTP10Connection;
     private Map myLocks;
     private boolean myKeepLocks;
     
-    public DAVConnection(SVNRepositoryLocation location) {
+    public DAVConnection(SVNURL location) {
         myLocation = location;
     }
     
-    public SVNRepositoryLocation getLocation() {
+    public SVNURL getLocation() {
         return myLocation;
     }
     
@@ -98,7 +98,7 @@ public class DAVConnection {
                 }
                 // TODO get rootURL
                 String url = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + root;
-                repository.updateCredentials(uuid, SVNEncodingUtil.uriDecode(root), url);
+                repository.updateCredentials(uuid, url);
             }
         }
     }    

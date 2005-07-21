@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
@@ -37,7 +36,7 @@ import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.util.DebugLog;
@@ -50,11 +49,10 @@ import org.tmatesoft.svn.util.PathUtil;
 public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     private SVNConnection myConnection;
-    private String myFullRoot;
     private String myRealm;
     private String myExternalUserName;
 
-    protected SVNRepositoryImpl(SVNRepositoryLocation location) {
+    protected SVNRepositoryImpl(SVNURL location) {
         super(location);
     }
 
@@ -622,34 +620,18 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    void updateCredentials(String uuid, String root) {
+    void updateCredentials(String uuid, String rootURL) {
         if (getRepositoryRoot() != null) {
             return;
         }
-        root = root == null ? getRepositoryRoot() : root;
-        uuid = uuid == null ? getRepositoryUUID() : uuid;
-        // remove url path from root.
-        if (root != null) {
-            myFullRoot = root;
-            root = root.startsWith("svn://") ? root
-                    .substring("svn://".length()) : root.substring("svn+ssh://"
-                    .length());
-            root = PathUtil.removeTrailingSlash(root);
-            if (root.indexOf('/') >= 0) {
-                root = root.substring(root.indexOf('/'));
-            } else {
-                root = "/";
-            }
-        }
-        setRepositoryCredentials(uuid, root, myFullRoot);
+        setRepositoryCredentials(uuid, rootURL);
     }
 
     private void openConnection() throws SVNException {
         lock();
         ISVNConnector connector = SVNRepositoryFactoryImpl
                 .getConnectorFactory().createConnector(this);
-        myConnection = new SVNConnection(connector, getLocation(),
-                getAuthenticationManager());
+        myConnection = new SVNConnection(connector, getLocation(), getAuthenticationManager());
         try {
             myConnection.open(this);
             authenticate();
@@ -716,17 +698,17 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         write("(w(s))", new Object[] { "delete-path", path });
     }
 
-    public void linkPath(SVNRepositoryLocation repository, String path,
+    public void linkPath(String url, String path,
             String lockToken, long revison, boolean startEmtpy)
             throws SVNException {
         assertValidRevision(revison);
         if (lockToken == null) {
             write("(w(ssnw))", new Object[] { "link-path", path,
-                    repository.toString(), getRevisionObject(revison),
+                    url, getRevisionObject(revison),
                     Boolean.valueOf(startEmtpy) });
         } else {
             write("(w(ssnw(s)))", new Object[] { "link-path", path,
-                    repository.toString(), getRevisionObject(revison),
+                    url, getRevisionObject(revison),
                     Boolean.valueOf(startEmtpy), lockToken });
         }
     }
@@ -739,7 +721,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         write("(w())", new Object[] { "abort-report" });
     }
 
-    public String[] getRepositoryPaths(String[] paths) {
+    private String[] getRepositoryPaths(String[] paths) {
         if (paths == null || paths.length == 0) {
             return paths;
         }
@@ -750,26 +732,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return fullPaths;
     }
 
-    public String getRepositoryPath(String path) {
-        if (path != null && path.startsWith("/")) {
-            // assuming it is full path.
-            return path;
-        }
-        String fullPath = PathUtil.append(SVNEncodingUtil.uriDecode(getLocation().getPath()), path);
-        // substract root path
-        if (fullPath.startsWith(getRepositoryRoot())) {
-            fullPath = fullPath.substring(getRepositoryRoot().length());
-        }
-        if (!fullPath.startsWith("/")) {
-            fullPath = "/" + fullPath;
-        }
-        return PathUtil.removeTrailingSlash(PathUtil.isEmpty(fullPath) ? "/"
-                : fullPath);
-    }
-
-    public String getFullRoot() {
-        return myFullRoot;
-    }
+    // all paths are uri-decoded.
+    //
+    // get repository path (path starting with /, relative to repository root).
+    // get full path (path starting with /, relative to host).
+    // get relative path (repository path, now relative to repository location, not starting with '/').
 
     public void setExternalUserName(String userName) {
         myExternalUserName = userName;

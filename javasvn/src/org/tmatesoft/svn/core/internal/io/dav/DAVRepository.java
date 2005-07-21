@@ -33,13 +33,14 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLocationsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLogHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVProppatchHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
@@ -50,7 +51,7 @@ class DAVRepository extends SVNRepository {
 
     private DAVConnection myConnection;
     
-    protected DAVRepository(SVNRepositoryLocation location) {
+    protected DAVRepository(SVNURL location) {
         super(location);
     }
     
@@ -66,12 +67,14 @@ class DAVRepository extends SVNRepository {
         DAVBaselineInfo info = null;
         try {
             openConnection();
-            info = DAVUtil.getBaselineInfo(myConnection, getLocationPath(), -1, false, true, info);
+            String path = getLocation().getPath();
+            path = SVNEncodingUtil.uriEncode(path);
+            info = DAVUtil.getBaselineInfo(myConnection, path, -1, false, true, info);
         } finally {
             closeConnection();
         }
         if (info == null) {
-            throw new SVNException("can't get baseline information for " + getLocationPath());
+            SVNErrorManager.error("svn: Cannot get baseline information for '" + getLocation() + "'");
         }
         return info.revision;
     }
@@ -82,7 +85,9 @@ class DAVRepository extends SVNRepository {
 		StringBuffer request = DAVDateRevisionHandler.generateDateRevisionRequest(null, date);
     	try {
     		openConnection();
-			myConnection.doReport(getLocationPath(), request, handler);
+            String path = getLocation().getPath();
+            path = SVNEncodingUtil.uriEncode(path);
+			myConnection.doReport(path, request, handler);
     	} finally {
     		closeConnection();
     	}
@@ -112,7 +117,9 @@ class DAVRepository extends SVNRepository {
         properties = properties == null ? new HashMap() : properties;
         try {
             openConnection();
-            DAVResponse source = DAVUtil.getBaselineProperties(myConnection, getLocationPath(), revision, null);
+            String path = getLocation().getPath();
+            path = SVNEncodingUtil.uriEncode(path);
+            DAVResponse source = DAVUtil.getBaselineProperties(myConnection, path, revision, null);
             properties = DAVUtil.filterProperties(source, properties);
         } finally {
             closeConnection();
@@ -240,8 +247,9 @@ class DAVRepository extends SVNRepository {
 		String bcPath = getLocation().getPath();
 		try {
             openConnection();
-            path = getFullPath(path);
-            path = path.substring(getRepositoryRoot().length());
+            path = getRepositoryPath(path);
+            // do we need that? get "repo" path instead! -> path relative to repo root with leading /
+//            path = path.substring(getRepositoryRoot().length());
             DAVFileRevisionHandler davHandler = new DAVFileRevisionHandler(handler);
             StringBuffer request = DAVFileRevisionHandler.generateFileRevisionsRequest(null, startRevision, endRevision, path);
 			long revision = -1;
@@ -314,18 +322,14 @@ class DAVRepository extends SVNRepository {
     public int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException {
         try {
             openConnection();
-            String root = getLocation().getPath();
             if (path.startsWith("/")) {
-                path = PathUtil.removeLeadingSlash(path);
-                root = SVNEncodingUtil.uriDecode(getLocationPath());
-                path = path.substring(root.length());
-
-                root = SVNEncodingUtil.uriEncode(root);
-                // path is decoded here, root is encoded
+                path = getRelativePath(path);
             }
             StringBuffer request = DAVLocationsHandler.generateLocationsRequest(null, path, pegRevision, revisions);
             
             DAVLocationsHandler davHandler = new DAVLocationsHandler(handler);
+            String root = getLocation().getPath();
+            root = SVNEncodingUtil.uriEncode(root);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, root, pegRevision, false, false, null);            
             
             path = PathUtil.append(info.baselineBase, info.baselinePath);
@@ -471,7 +475,7 @@ class DAVRepository extends SVNRepository {
         Map translatedLocks = null;
         if (locks != null) {
             translatedLocks = new HashMap(locks.size());
-            String root = getRepositoryRoot();
+            String root = getRepositoryRoot().getPath();
             root = SVNEncodingUtil.uriEncode(root);
             for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
                 String path = (String) paths.next();
@@ -494,35 +498,8 @@ class DAVRepository extends SVNRepository {
         });
     }
 
-    // always decoded!
-    public String getFullPath(String path) {
-        if (path != null && path.startsWith("/")) {
-        	if ("/".equals(path)) {
-        		return getRepositoryRoot();
-        	}
-            return PathUtil.append(getRepositoryRoot(), path);
-        }
-        String locationPath = SVNEncodingUtil.uriDecode(getLocation().getPath());
-        if ("".equals(path)) {
-            path = locationPath; // it is always encoded, while we assume not encoded?
-        } else {
-            path = PathUtil.append(locationPath, path);
-        }
-        if (!path.startsWith("/")) {
-            path = '/' + path;
-        }
-        return path;
-    }
-    
-    private String getLocationPath() {
-    	return DAVUtil.getCanonicalPath(getLocation().getPath(), null).toString();
-    }
-
-    void updateCredentials(String uuid, String root, String rootURL) throws SVNException {
-        rootURL = rootURL == null ? getRepositoryRootURL(false) : rootURL;
-        root = root == null ? getRepositoryRoot() : root;
-        uuid = uuid == null ? getRepositoryUUID() : uuid;
-        setRepositoryCredentials(uuid, root, rootURL);
+    void updateCredentials(String uuid, String rootURL) throws SVNException {
+        setRepositoryCredentials(uuid, rootURL);
     }
 
     public SVNLock getLock(String path) throws SVNException {

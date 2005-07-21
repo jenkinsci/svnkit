@@ -44,7 +44,7 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.Base64;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.LoggingInputStream;
@@ -68,7 +68,7 @@ class HttpConnection {
     private InputStream myInputStream;
     private Socket mySocket;
 
-    private SVNRepositoryLocation mySVNRepositoryLocation;
+    private SVNURL mySVNRepositoryLocation;
     private SAXParser mySAXParser;
 
     private static SAXParserFactory ourSAXParserFactory;
@@ -78,7 +78,7 @@ class HttpConnection {
     private SVNAuthentication myLastValidAuth;
     private ISVNProxyManager myProxyAuth;
 
-    public HttpConnection(SVNRepositoryLocation location, SVNRepository repos) {
+    public HttpConnection(SVNURL location, SVNRepository repos) {
         mySVNRepositoryLocation = location;
         myAuthManager = repos.getAuthenticationManager();
     }
@@ -88,9 +88,9 @@ class HttpConnection {
             close();
             String host = mySVNRepositoryLocation.getHost();
             int port = mySVNRepositoryLocation.getPort();
-            myProxyAuth = myAuthManager != null ? myAuthManager.getProxyManager(mySVNRepositoryLocation.toCanonicalForm()) : null;
+            myProxyAuth = myAuthManager != null ? myAuthManager.getProxyManager(mySVNRepositoryLocation.toString()) : null;
             ISVNSSLManager sslManager = myAuthManager != null && isSecured() ? 
-                    myAuthManager.getSSLManager(mySVNRepositoryLocation.toCanonicalForm()) : null;
+                    myAuthManager.getSSLManager(mySVNRepositoryLocation.toString()) : null;
             if (myProxyAuth != null && myProxyAuth.getProxyHost() != null) {
                 mySocket = SocketFactory.createPlainSocket(myProxyAuth.getProxyHost(), myProxyAuth.getProxyPort());
                 if (isSecured()) {
@@ -147,7 +147,7 @@ class HttpConnection {
                 }
             } catch (InterruptedIOException e) {
                 if (!SocketTimeoutException.class.isInstance(e)) {
-                    SVNErrorManager.error("svn: Connection timeout while connecting to '" + mySVNRepositoryLocation.toCanonicalForm() + "'");
+                    SVNErrorManager.error("svn: Connection timeout while connecting to '" + mySVNRepositoryLocation.toString() + "'");
                 }
             } catch (IOException e) {
                 isStale = true;
@@ -275,7 +275,7 @@ class HttpConnection {
                 realm = (String) myCredentialsChallenge.get("realm");
                 realm = realm == null ? "" : " " + realm;
                 realm = "<" + mySVNRepositoryLocation.getProtocol() + "://" + mySVNRepositoryLocation.getHost() + ":" + mySVNRepositoryLocation.getPort() + ">" + realm;
-                String url = mySVNRepositoryLocation.toCanonicalForm();
+                String url = mySVNRepositoryLocation.toString();
                 if (myAuthManager == null) {
                     throw new SVNAuthenticationException("No credentials defined");
                 }
@@ -707,7 +707,7 @@ class HttpConnection {
             return;
         }
         if (myAuthManager != null) {
-            ISVNSSLManager sslManager = myAuthManager.getSSLManager(mySVNRepositoryLocation.toCanonicalForm());
+            ISVNSSLManager sslManager = myAuthManager.getSSLManager(mySVNRepositoryLocation.toString());
             if (sslManager != null) {
                 sslManager.acknowledgeSSLContext(accepted, null);
             }

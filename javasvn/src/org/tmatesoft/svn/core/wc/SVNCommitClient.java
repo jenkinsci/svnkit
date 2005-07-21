@@ -511,7 +511,7 @@ public class SVNCommitClient extends SVNBasicClient {
             // commit.
             SVNWCAccess wcAccess = commitPacket.getWCAccess();
             wcAccess.setEventDispatcher(getEventDispatcher());
-            String repositoryRoot = repository.getRepositoryRoot(true);
+            String repositoryRoot = repository.getRepositoryRoot(true).getPath();
             info = SVNCommitter.commit(commitPacket.getWCAccess(), mediator
                     .getTmpFiles(), commitables, repositoryRoot, commitEditor);
             // update wc.

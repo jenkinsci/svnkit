@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.auth.ISVNSSLManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /**
@@ -76,7 +76,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     public ISVNProxyManager getProxyManager(String url) throws SVNException {
-        SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
+        SVNURL location = SVNURL.parse(url);
         String host = location.getHost();
         
         Map properties = getHostProperties(host);
@@ -98,7 +98,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     public ISVNSSLManager getSSLManager(String url) throws SVNException {
-        SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(url);
+        SVNURL location = SVNURL.parse(url);
         String host = location.getHost();
         
         Map properties = getHostProperties(host);

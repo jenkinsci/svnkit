@@ -32,13 +32,10 @@ import com.jcraft.jsch.Session;
 public class SVNJSchConnector implements ISVNConnector {
 
     private static final String CHANNEL_TYPE = "exec";
-
     private static final String SVNSERVE_COMMAND = "svnserve --tunnel";
 
     private ChannelExec myChannel;
-
     private InputStream myInputStream;
-
     private OutputStream myOutputStream;
 
     public void open(SVNRepositoryImpl repository) throws SVNException {
@@ -48,7 +45,7 @@ public class SVNJSchConnector implements ISVNConnector {
         String realm = repository.getLocation().getProtocol() + "://"
                 + repository.getLocation().getHost() + ":"
                 + repository.getLocation().getPort();
-        String url = repository.getLocation().toCanonicalForm();
+        String url = repository.getLocation().toString();
         SVNSSHAuthentication authentication = (SVNSSHAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm, url);
         SVNAuthenticationException lastException = null;
         Session session = null;

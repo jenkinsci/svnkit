@@ -112,7 +112,7 @@ public interface ISVNReporter {
      *  					occured
      */
 
-    public void linkPath(SVNRepositoryLocation repository, String path, String lockToken, long revison, boolean startEmtpy) throws SVNException;
+    public void linkPath(String url, String path, String lockToken, long revison, boolean startEmtpy) throws SVNException;
     
     /**
      * Finishes describing a working copy.

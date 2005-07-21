@@ -19,7 +19,7 @@ import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.io.SVNRepositoryLocation;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.LoggingInputStream;
 import org.tmatesoft.svn.util.LoggingOutputStream;
@@ -32,7 +32,7 @@ class SVNConnection {
 
     private final ISVNConnector myConnector;
     private ISVNAuthenticationManager myAuthManager;
-    private SVNRepositoryLocation myLocation;
+    private SVNURL myLocation;
     private String myRealm;
     private String myRoot;
     private LoggingOutputStream myOutputStream;
@@ -44,7 +44,7 @@ class SVNConnection {
     private static final String EDIT_PIPELINE = "edit-pipeline";
 
     public SVNConnection(ISVNConnector connector,
-            SVNRepositoryLocation location, ISVNAuthenticationManager manager) {
+            SVNURL location, ISVNAuthenticationManager manager) {
         myConnector = connector;
         myAuthManager = manager;
         myLocation = location;
@@ -82,7 +82,7 @@ class SVNConnection {
             return;
         }
         SVNPasswordAuthentication auth = null;
-        String url  = myLocation.toCanonicalForm();
+        String url  = myLocation.toString();
         for (int i = 0; i < mechs.size(); i++) {
             String mech = (String) mechs.get(i);
             if ("EXTERNAL".equals(mech)) {
