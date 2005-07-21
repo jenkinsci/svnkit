@@ -30,8 +30,8 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVOptionsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.TimeUtil;
 import org.tmatesoft.svn.core.io.SVNURL;
-import org.tmatesoft.svn.util.TimeUtil;
 import org.xml.sax.helpers.DefaultHandler;
 
 

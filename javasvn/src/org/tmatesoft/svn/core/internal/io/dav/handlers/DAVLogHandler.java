@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.TimeUtil;
 import org.xml.sax.Attributes;
 
 

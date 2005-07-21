@@ -38,8 +38,8 @@ import javax.net.ssl.X509TrustManager;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
+import org.tmatesoft.svn.core.internal.util.Base64;
 import org.tmatesoft.svn.core.io.SVNURL;
-import org.tmatesoft.svn.util.Base64;
 
 
 /**

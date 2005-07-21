@@ -15,7 +15,7 @@ package org.tmatesoft.svn.core.internal.io.dav.handlers;
 import java.util.Date;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.TimeUtil;
 import org.xml.sax.Attributes;
 
 

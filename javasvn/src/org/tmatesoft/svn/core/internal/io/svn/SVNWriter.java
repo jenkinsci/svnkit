@@ -19,8 +19,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.TimeUtil;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.TimeUtil;
 
 /**
  * @version 1.0

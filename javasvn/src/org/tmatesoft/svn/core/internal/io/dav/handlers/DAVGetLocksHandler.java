@@ -18,8 +18,8 @@ import java.util.Date;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.util.Base64;
-import org.tmatesoft.svn.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.Base64;
+import org.tmatesoft.svn.core.internal.util.TimeUtil;
 import org.xml.sax.Attributes;
 
 /**

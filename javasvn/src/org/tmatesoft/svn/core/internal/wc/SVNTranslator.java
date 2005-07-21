@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.TimeUtil;
 
 /**
  * @version 1.0

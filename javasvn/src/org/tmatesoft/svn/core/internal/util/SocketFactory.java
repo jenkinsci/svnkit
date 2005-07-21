@@ -9,7 +9,7 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.util;
+package org.tmatesoft.svn.core.internal.util;
 
 import java.io.IOException;
 import java.net.ConnectException;

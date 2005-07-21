@@ -16,8 +16,8 @@ import java.util.Date;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.util.TimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
-import org.tmatesoft.svn.util.TimeUtil;
 
 /**
  * @version 1.0
