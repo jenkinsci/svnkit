@@ -80,8 +80,6 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
         SVNNodeKind nodeKind = myRepos.checkPath(path, myRevision);
         // fire file deleted or dir deleted.
         if (nodeKind == SVNNodeKind.FILE) {
@@ -104,8 +102,6 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void addDir(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
         myCurrentDirectory = new SVNDirectoryInfo(myCurrentDirectory, path);
         myCurrentDirectory.myBaseProperties = Collections.EMPTY_MAP;
     }
@@ -141,9 +137,6 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-
         myCurrentFile = new SVNFileInfo(path);
         myCurrentFile.myBaseProperties = Collections.EMPTY_MAP;
         myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(myRoot,
@@ -155,9 +148,6 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void openFile(String path, long revision) throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-
         myCurrentFile = new SVNFileInfo(path);
         myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(myRoot,
                 PathUtil.tail(path), ".tmp");

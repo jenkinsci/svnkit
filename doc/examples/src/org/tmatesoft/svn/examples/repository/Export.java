@@ -40,7 +40,6 @@ import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.PathUtil;
 
 /*
  * This example program illustrates how you can export a clean directory tree 
@@ -617,17 +616,6 @@ public class Export {
          */
         public void addDir(String path, String copyFromPath,
                 long copyFromRevision) throws SVNException {
-            /*
-             * PathUtil is a utility that helps to work with path strings.
-             * PathUtil.removeLeadingSlash removes the first '/' (if any) from the path
-             * string.
-             */
-            path = PathUtil.removeLeadingSlash(path);
-            /*
-             * PathUtil.removeTrailingSlash removes the last '/' (if any) from the path 
-             * string.
-             */
-            path = PathUtil.removeTrailingSlash(path);
             File newDir = new File(myRootDirectory, path);
             if (!newDir.exists()) {
                 if (!newDir.mkdirs()) {
@@ -645,8 +633,6 @@ public class Export {
          */
         public void addFile(String path, String copyFromPath,
                 long copyFromRevision) throws SVNException {
-            path = PathUtil.removeLeadingSlash(path);
-            path = PathUtil.removeTrailingSlash(path);
             File file = new File(myRootDirectory, path);
 
             if (file.exists()) {

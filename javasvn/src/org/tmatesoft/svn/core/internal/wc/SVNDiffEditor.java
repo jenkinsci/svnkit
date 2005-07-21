@@ -80,9 +80,6 @@ public class SVNDiffEditor implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
-
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
         String name = PathUtil.tail(path);
         SVNEntry entry = dir.getEntries().getEntry(name, true);
@@ -173,18 +170,12 @@ public class SVNDiffEditor implements ISVNEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-
         String name = PathUtil.tail(path);
         myCurrentFile = createFileInfo(myCurrentDirectory, path, true);
         myCurrentDirectory.myComparedEntries.add(name);
     }
 
     public void openFile(String path, long revision) throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-
         String name = PathUtil.tail(path);
         myCurrentFile = createFileInfo(myCurrentDirectory, path, false);
         myCurrentDirectory.myComparedEntries.add(name);
@@ -527,10 +518,6 @@ public class SVNDiffEditor implements ISVNEditor {
     private SVNDirectoryInfo createDirInfo(SVNDirectoryInfo parent,
             String path, boolean added) {
         SVNDirectoryInfo info = new SVNDirectoryInfo();
-        if (!"".equals(path)) {
-            path = PathUtil.removeLeadingSlash(path);
-            path = PathUtil.removeTrailingSlash(path);
-        }
         info.myParent = parent;
         info.myPath = path;
         info.myIsAdded = added;
@@ -540,10 +527,6 @@ public class SVNDiffEditor implements ISVNEditor {
     private SVNFileInfo createFileInfo(SVNDirectoryInfo parent, String path,
             boolean added) {
         SVNFileInfo info = new SVNFileInfo();
-        if (!"".equals(path)) {
-            path = PathUtil.removeLeadingSlash(path);
-            path = PathUtil.removeTrailingSlash(path);
-        }
         info.myPath = path;
         info.myIsAdded = added;
         return info;

@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.ISVNRAData;
@@ -77,15 +78,11 @@ public class SVNMergeEditor implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
         SVNNodeKind nodeKind = myRepos.checkPath(path, myRevision1);
         SVNEventAction action = SVNEventAction.SKIP;
         SVNStatusType mergeResult = null;
 
-        path = PathUtil.append(myTarget, path);
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
+        path = SVNPathUtil.append(myTarget, path);
 
         if (nodeKind == SVNNodeKind.FILE) {
             mergeResult = myMerger.fileDeleted(path);
@@ -103,15 +100,11 @@ public class SVNMergeEditor implements ISVNEditor {
 
     public void addDir(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
         myCurrentDirectory = new SVNDirectoryInfo(myCurrentDirectory, path,
                 true);
         myCurrentDirectory.myBaseProperties = Collections.EMPTY_MAP;
 
-        String wcPath = PathUtil.append(myTarget, path);
-        wcPath = PathUtil.removeLeadingSlash(wcPath);
-        wcPath = PathUtil.removeTrailingSlash(wcPath);
+        String wcPath = SVNPathUtil.append(myTarget, path);
         myCurrentDirectory.myWCPath = wcPath;
 
         // merge dir added.
@@ -133,9 +126,7 @@ public class SVNMergeEditor implements ISVNEditor {
                 false);
 
         myCurrentDirectory.myBaseProperties = new HashMap();
-        String wcPath = PathUtil.append(myTarget, path);
-        wcPath = PathUtil.removeLeadingSlash(wcPath);
-        wcPath = PathUtil.removeTrailingSlash(wcPath);
+        String wcPath = SVNPathUtil.append(myTarget, path);
         myCurrentDirectory.myWCPath = wcPath;
         myCurrentDirectory.loadFromRepository(myRepos, myRevision1);
     }
@@ -189,17 +180,11 @@ public class SVNMergeEditor implements ISVNEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-
         myCurrentFile = new SVNFileInfo(myCurrentDirectory, path, true);
         myCurrentFile.myBaseProperties = new HashMap();
     }
 
     public void openFile(String path, long revision) throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-
         myCurrentFile = new SVNFileInfo(myCurrentDirectory, path, false);
         // props only
         myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos,
@@ -404,9 +389,7 @@ public class SVNMergeEditor implements ISVNEditor {
 
         public SVNFileInfo(SVNDirectoryInfo parent, String path, boolean added) {
             myPath = path;
-            myWCPath = PathUtil.append(parent.myWCPath, PathUtil.tail(path));
-            myWCPath = PathUtil.removeLeadingSlash(myWCPath);
-            myWCPath = PathUtil.removeTrailingSlash(myWCPath);
+            myWCPath = SVNPathUtil.append(parent.myWCPath, PathUtil.tail(path));
             myIsAdded = added;
             if (added) {
                 myEntryProps = new HashMap();

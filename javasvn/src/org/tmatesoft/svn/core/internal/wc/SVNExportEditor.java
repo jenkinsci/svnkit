@@ -85,8 +85,6 @@ public class SVNExportEditor implements ISVNEditor {
 
     public void addDir(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
         myCurrentDirectory = new File(myRoot, path);
         myCurrentPath = path;
 
@@ -119,8 +117,6 @@ public class SVNExportEditor implements ISVNEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
         File file = new File(myRoot, path);
 
         if (!myIsForce && file.exists()) {

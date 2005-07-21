@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -106,8 +107,6 @@ public class SVNStatusEditor implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
         String name = PathUtil.tail(path);
         String originalName = name;
 
@@ -493,9 +492,8 @@ public class SVNStatusEditor implements ISVNEditor {
     private void sendUnversionedStatus(SVNDirectory parent, String name)
             throws SVNException {
         boolean ignored = isIgnored(parent, name);
-        String path = "".equals(name) ? parent.getPath() : PathUtil.append(
+        String path = "".equals(name) ? parent.getPath() : SVNPathUtil.append(
                 parent.getPath(), name);
-        path = PathUtil.removeLeadingSlash(path);
         String url = null;
         if (parent.getEntries() != null
                 && parent.getEntries().getEntry("", false) != null) {
@@ -734,8 +732,6 @@ public class SVNStatusEditor implements ISVNEditor {
                 throws SVNException {
             Parent = parent;
             if (!PathUtil.isEmpty(path)) {
-                path = PathUtil.removeLeadingSlash(path);
-                path = PathUtil.removeTrailingSlash(path);
                 Path = path;
                 Name = PathUtil.tail(path);
             } else {
@@ -767,6 +763,9 @@ public class SVNStatusEditor implements ISVNEditor {
                     boolean oldIncludeIgnored = myIsIncludeIgnored;
 
                     SVNDirectory dir = myWCAccess.getDirectory(path);
+                    if (dir == null) {
+                        return;
+                    }
 
                     myIsRecursive = false;
                     myIsReportAll = true;
@@ -879,8 +878,6 @@ public class SVNStatusEditor implements ISVNEditor {
 
         public FileInfo(DirectoryInfo parent, String path, boolean added) {
             Parent = parent;
-            path = PathUtil.removeLeadingSlash(path);
-            path = PathUtil.removeTrailingSlash(path);
             Path = path;
             Name = PathUtil.tail(path);
             IsAdded = added;

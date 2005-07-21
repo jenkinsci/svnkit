@@ -96,8 +96,6 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
         String name = PathUtil.tail(path);
 
         SVNEntry entry = myCurrentDirectory.getDirectory().getEntries()
@@ -141,9 +139,6 @@ public class SVNUpdateEditor implements ISVNEditor {
 
     public void addDir(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-
         SVNDirectory parentDir = myCurrentDirectory.getDirectory();
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, true);
 
@@ -186,9 +181,6 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public void openDir(String path, long revision) throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, false);
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
         SVNEntry entry = entries.getEntry("", true);
@@ -210,9 +202,6 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     private void absentEntry(String path, SVNNodeKind kind) throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
-
         String name = PathUtil.tail(path);
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
         SVNEntry entry = entries.getEntry(name, true);
@@ -318,14 +307,10 @@ public class SVNUpdateEditor implements ISVNEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
         myCurrentFile = createFileInfo(myCurrentDirectory, path, true);
     }
 
     public void openFile(String path, long revision) throws SVNException {
-        path = PathUtil.removeLeadingSlash(path);
-        path = PathUtil.removeTrailingSlash(path);
         myCurrentFile = createFileInfo(myCurrentDirectory, path, false);
     }
 
@@ -785,8 +770,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             }
         } else {
             if (parent == null) {
-                info.URL = myTarget == null ? mySwitchURL : PathUtil
-                        .removeTail(mySwitchURL);
+                info.URL = myTarget == null ? mySwitchURL : PathUtil.removeTail(mySwitchURL);
             } else {
                 if (myTarget != null && parent.Parent == null) {
                     info.URL = mySwitchURL;
