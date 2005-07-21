@@ -369,7 +369,7 @@ class DAVCommitEditor implements ISVNEditor {
             throw new SVNException("failed to check out " +  head + " into " + activity + " : " + status.toString());
         }
         // proppatch log message.
-        logMessage = logMessage == null ? "no message" : logMessage;
+        logMessage = logMessage == null ? "" : logMessage;
         StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, SVNRevisionProperty.LOG, logMessage);
         myConnection.doProppatch(null, location, request, null);
         

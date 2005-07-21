@@ -18,7 +18,6 @@ import java.util.Date;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.util.Base64;
 import org.tmatesoft.svn.util.TimeUtil;
 import org.xml.sax.Attributes;
@@ -79,25 +78,23 @@ public class DAVGetLocksHandler extends BasicDAVHandler {
             myCreationDate = null;
             myExpirationDate = null;
         } else if (element == DAVElement.SVN_LOCK_PATH && cdata != null) {
-            myPath = DAVUtil.xmlDecode(cdata.toString());
+            myPath = cdata.toString();
         } else if (element == DAVElement.SVN_LOCK_TOKEN && cdata != null) {
-            myToken = DAVUtil.xmlDecode(cdata.toString());
+            myToken = cdata.toString();
         } else if (element == DAVElement.SVN_LOCK_OWNER && cdata != null) {
-            myOwner = DAVUtil.xmlDecode(cdata.toString());
+            myOwner = cdata.toString();
             if (myIsBase64) {
                 myOwner = new String(Base64.base64ToByteArray(new StringBuffer(myComment), null));
             }
         } else if (element == DAVElement.SVN_LOCK_COMMENT && cdata != null) {
-            myComment = DAVUtil.xmlDecode(cdata.toString());
+            myComment = cdata.toString();
             if (myIsBase64) {
                 myComment = new String(Base64.base64ToByteArray(new StringBuffer(myComment), null));
             }
         } else if (element == DAVElement.SVN_LOCK_CREATION_DATE && cdata != null) {
-            String dateStr = DAVUtil.xmlDecode(cdata.toString());
-            myCreationDate = TimeUtil.parseDate(dateStr);
+            myCreationDate = TimeUtil.parseDate(cdata.toString());
         } else if (element == DAVElement.SVN_LOCK_EXPIRATION_DATE && cdata != null) {
-            String dateStr = DAVUtil.xmlDecode(cdata.toString());
-            myExpirationDate = TimeUtil.parseDate(dateStr);
+            myExpirationDate = TimeUtil.parseDate(cdata.toString());
         }
         myIsBase64 = false;
     }

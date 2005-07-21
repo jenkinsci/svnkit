@@ -13,8 +13,8 @@ package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVResponse;
-import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.internal.io.dav.IDAVResponseHandler;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.xml.sax.Attributes;
 
 
@@ -34,7 +34,7 @@ public class DAVGetLockHandler extends DAVPropertiesHandler {
         body.append("<lockinfo xmlns=\"DAV:\" >");
         body.append("<lockscope><exclusive/></lockscope>");
         body.append("<locktype><write/></locktype><owner>");
-        comment = comment == null ? "" : DAVUtil.xmlEncode(comment);
+        comment = comment == null ? "" : SVNEncodingUtil.xmlEncodeAttr(comment);
         body.append(comment);
         body.append("</owner></lockinfo>");
         return body;

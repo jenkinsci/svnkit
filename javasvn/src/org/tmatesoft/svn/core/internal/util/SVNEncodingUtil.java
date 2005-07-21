@@ -82,27 +82,41 @@ public class SVNEncodingUtil {
     }
     
     public static String xmlEncodeCDATA(String src) {
-        StringBuffer sb = new StringBuffer(src.length());
+        StringBuffer sb = null;
         for(int i = 0; i < src.length(); i++) {
             char ch = src.charAt(i);
             switch (ch) {
                 case '&':
+                    if (sb == null) {
+                        sb = createStringBuffer(src, i);
+                    }
                     sb.append("&amp;");
                     break;
                 case '<':
+                    if (sb == null) {
+                        sb = createStringBuffer(src, i);
+                    }
                     sb.append("&lt;");
                     break;
                 case '>':
+                    if (sb == null) {
+                        sb = createStringBuffer(src, i);
+                    }
                     sb.append("&gt;");
                     break;
                 case '\r':
+                    if (sb == null) {
+                        sb = createStringBuffer(src, i);
+                    }
                     sb.append("&#13;");
                     break;
                 default:
-                    sb.append(ch);
+                    if (sb != null) {
+                        sb.append(ch);
+                    }
             }
         }
-        return sb.toString();
+        return sb != null ? sb.toString() : src;
     }
 
     public static String xmlEncodeAttr(String src) {
@@ -111,34 +125,60 @@ public class SVNEncodingUtil {
             char ch = src.charAt(i);
             switch (ch) {
                 case '&':
+                    if (sb == null) {
+                        sb = createStringBuffer(src, i);
+                    }
                     sb.append("&amp;");
                     break;
                 case '<':
+                    if (sb == null) {
+                        sb = createStringBuffer(src, i);
+                    }
                     sb.append("&lt;");
                     break;
                 case '>':
+                    if (sb == null) {
+                        sb = createStringBuffer(src, i);
+                    }
                     sb.append("&gt;");
                     break;
                 case '\'':
+                    if (sb == null) {
+                        sb = createStringBuffer(src, i);
+                    }
                     sb.append("&apos;");
                     break;
                 case '\"':
+                    if (sb == null) {
+                        sb = createStringBuffer(src, i);
+                    }
                     sb.append("&quot;");
                     break;
                 case '\r':
+                    if (sb == null) {
+                        sb = createStringBuffer(src, i);
+                    }
                     sb.append("&#13;");
                     break;
                 case '\n':
+                    if (sb == null) {
+                        sb = createStringBuffer(src, i);
+                    }
                     sb.append("&#10;");
                     break;
                 case '\t':
+                    if (sb == null) {
+                        sb = createStringBuffer(src, i);
+                    }
                     sb.append("&#9;");
                     break;
                 default:
-                    sb.append(ch);
+                    if (sb != null) {
+                        sb.append(ch);
+                    }
             }
         }
-        return sb.toString();
+        return sb != null ? sb.toString() : src;
     }
 
     public static boolean isXMLSafe(String value) {
@@ -162,6 +202,12 @@ public class SVNEncodingUtil {
         }
         ch = Character.toUpperCase(ch);
         return (ch - 'A') + 0x0A;
+    }
+    
+    private static StringBuffer createStringBuffer(String src, int length) {
+        StringBuffer sb = new StringBuffer(src.length());
+        sb.append(src.toCharArray(), 0, length);
+        return sb;
     }
     
     private static final byte[] uri_char_validity = new byte[] {

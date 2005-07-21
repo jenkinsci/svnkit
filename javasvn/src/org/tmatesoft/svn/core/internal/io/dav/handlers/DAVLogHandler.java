@@ -20,7 +20,6 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 import org.xml.sax.Attributes;
 
@@ -127,10 +126,8 @@ public class DAVLogHandler extends BasicDAVHandler {
 			myRevision = Long.parseLong(cdata.toString());
 		} else if (element == DAVElement.CREATOR_DISPLAY_NAME && cdata != null) {
 			myAuthor = cdata.toString();
-            myAuthor = DAVUtil.xmlDecode(myAuthor);
 		} else if (element == DAVElement.COMMENT && cdata != null) {
 			myComment = cdata.toString();
-            myComment = DAVUtil.xmlDecode(myComment);
 		} else if (element == DAVElement.DATE && cdata != null) {
 			myDate = TimeUtil.parseDate(cdata.toString());
 		} else if (element == ADDED_PATH || element == MODIFIED_PATH || element == REPLACED_PATH ||

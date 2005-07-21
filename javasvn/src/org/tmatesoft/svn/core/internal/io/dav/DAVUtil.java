@@ -169,26 +169,6 @@ public class DAVUtil {
 
     }
 
-    public static String xmlEncode(String value) {
-        value = value.replaceAll("&", "&amp;");
-        value = value.replaceAll("<", "&lt;");
-        value = value.replaceAll(">", "&gt;");
-        value = value.replaceAll("\"", "&quot;");
-        value = value.replaceAll("'", "&apos;");
-        value = value.replaceAll("\t", "&#09;");
-        return value;
-    }
-
-    public static String xmlDecode(String value) {
-        value = value.replaceAll("&lt;", "<");
-        value = value.replaceAll("&gt;", ">");
-        value = value.replaceAll("&quot;", "\"");
-        value = value.replaceAll("&apos;", "'");
-        value = value.replaceAll("&#09;", "\t");
-        value = value.replaceAll("&amp;", "&");
-        return value;
-    }
-
     public static Map parseAuthParameters(String source) {
         if (source == null) {
             return null;
@@ -251,15 +231,4 @@ public class DAVUtil {
         }
         return parameters;
     }
-
-    public static boolean isXMLSafe(String value) {
-        for (int i = 0; i < value.length(); i++) {
-            char ch = value.charAt(i);
-            if (ch < 0x20 && ch != 0x0A && ch != 0x0D && ch != 0x09 && ch != 0x08) {
-                return false;
-            }
-        }
-        return true;
-    }
-
 }
