@@ -251,8 +251,6 @@ class DAVRepository extends SVNRepository {
 		try {
             openConnection();
             path = getRepositoryPath(path);
-            // do we need that? get "repo" path instead! -> path relative to repo root with leading /
-//            path = path.substring(getRepositoryRoot().length());
             DAVFileRevisionHandler davHandler = new DAVFileRevisionHandler(handler);
             StringBuffer request = DAVFileRevisionHandler.generateFileRevisionsRequest(null, startRevision, endRevision, path);
 			long revision = -1;
@@ -330,7 +328,6 @@ class DAVRepository extends SVNRepository {
             String root = getLocation().getPath();
             root = SVNEncodingUtil.uriEncode(root);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, root, pegRevision, false, false, null);            
-            
             path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             myConnection.doReport(path, request, davHandler);
             
@@ -411,7 +408,7 @@ class DAVRepository extends SVNRepository {
             String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
             path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-
+            
             myConnection.doReport(path, request, handler);
         } finally {
             closeConnection();

@@ -86,15 +86,14 @@ public class DAVConnection {
                 String relativePath = (String) result[0].getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
                 
                 String root = myLocation.getPath();
-                root = SVNEncodingUtil.uriEncode(root);
                 if (relativePath != null) {
                     if (root.endsWith(relativePath)) {
                         root = root.substring(0, root.length() - relativePath.length() - 1);                        
                     }
+                    root = SVNEncodingUtil.uriEncode(root);
                 } else {
                 	root = path;
                 }
-                // do not use port if location had no port specified
                 String url;
                 if (myLocation.toString().lastIndexOf(':') != myLocation.toString().indexOf("://")) {
                     url = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + root;

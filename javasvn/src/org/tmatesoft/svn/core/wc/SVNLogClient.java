@@ -49,8 +49,7 @@ public class SVNLogClient extends SVNBasicClient {
         if (startRevision == null || !startRevision.isValid()) {
             startRevision = SVNRevision.create(1);
         }
-        SVNRepository repos = createRepository(path, null, pegRevision,
-                endRevision, null);
+        SVNRepository repos = createRepository(path, null, pegRevision, endRevision, null);
         long endRev = getRevisionNumber(path, null, repos, endRevision);
         long startRev = getRevisionNumber(path, null, repos, startRevision);
         if (endRev < startRev) {

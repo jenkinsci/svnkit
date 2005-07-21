@@ -509,7 +509,6 @@ public class SVNDiffClient extends SVNBasicClient {
         url = validateURL(url);
         String url1 = getURL(url, pegRev, rN);
         String url2 = getURL(url, pegRev, rM);
-        // if url is a file and no
         doMerge(url1, url2, rN, rM, dstPath, recursive, useAncestry, force,
                 dryRun);
     }

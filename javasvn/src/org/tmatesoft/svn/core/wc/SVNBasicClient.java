@@ -271,8 +271,8 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         SVNLocationEntry location = (SVNLocationEntry) locations.get(0);
         String path = SVNEncodingUtil.uriEncode(location.getPath());
-        String rootPath = repos.getRepositoryRoot().getPath();
-        String fullPath = SVNURL.parse(url).getPath();
+        String rootPath = SVNEncodingUtil.uriEncode(repos.getRepositoryRoot().getPath());
+        String fullPath = SVNEncodingUtil.uriEncode(SVNURL.parse(url).getPath());
         url = url.substring(0, url.length() - fullPath.length());
         url = SVNPathUtil.append(url, rootPath);
         url = SVNPathUtil.append(url, path);
@@ -336,8 +336,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
 
         // get locations of 'url' (or path) in revision 'revision'.
-        RepositoryReference[] range = getURLRange(path, url, pegRevision,
-                revision, SVNRevision.UNDEFINED);
+        RepositoryReference[] range = getURLRange(path, url, pegRevision, revision, SVNRevision.UNDEFINED);
         long realRevision = range[0].Revision;
         url = range[0].URL;
 
@@ -361,12 +360,10 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (path != null) {
             SVNEntry entry = getEntry(path);
             if (entry == null) {
-                SVNErrorManager.error("svn: '" + path
-                        + "' is not under version control");
+                SVNErrorManager.error("svn: '" + path + "' is not under version control");
                 return null;
             }
-            if (entry.getCopyFromURL() != null
-                    && revision == SVNRevision.WORKING) {
+            if (entry.getCopyFromURL() != null && revision == SVNRevision.WORKING) {
                 url = entry.getCopyFromURL();
                 pegRevision = entry.getCopyFromRevision();
             } else if (entry.getURL() != null) {
@@ -385,16 +382,14 @@ public class SVNBasicClient implements ISVNEventHandler {
             pegRevision = getRevisionNumber(path, url, repos, revision);
         }
         String rootPath = repos.getRepositoryRoot(true).getPath();
-        List locations = (List) repos.getLocations("", new ArrayList(2),
-                pegRevision, startRev == endRev ? new long[] { startRev }
-                        : new long[] { startRev, endRev });
+        List locations = (List) repos.getLocations("", new ArrayList(2), pegRevision, 
+                startRev == endRev ? new long[] { startRev } : new long[] { startRev, endRev });
         SVNLocationEntry endLocation = null;
         SVNLocationEntry startLocation = null;
         if (locations != null && startRev == endRev && locations.size() == 1) {
             startLocation = (SVNLocationEntry) locations.get(0);
             endLocation = (SVNLocationEntry) locations.get(0);
-        } else if (locations != null && startRev != endRev
-                && locations.size() == 2) {
+        } else if (locations != null && startRev != endRev && locations.size() == 2) {
             startLocation = (SVNLocationEntry) locations.get(0);
             endLocation = (SVNLocationEntry) locations.get(1);
             if (startLocation.getRevision() != startRev) {
@@ -420,11 +415,9 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         String host = url.substring(0, url.indexOf('/', url.indexOf("://") + 3));
         String startPath = host
-                + SVNEncodingUtil.uriEncode(SVNPathUtil.append(rootPath, startLocation
-                        .getPath()));
+                + SVNEncodingUtil.uriEncode(SVNPathUtil.append(rootPath, startLocation.getPath()));
         String endPath = host
-                + SVNEncodingUtil.uriEncode(SVNPathUtil.append(rootPath, endLocation
-                        .getPath()));
+                + SVNEncodingUtil.uriEncode(SVNPathUtil.append(rootPath, endLocation.getPath()));
         return new RepositoryReference[] {
                 new RepositoryReference(startPath, startRev),
                 new RepositoryReference(endPath, endRev) };
