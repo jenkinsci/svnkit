@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
-import org.tmatesoft.svn.util.PathUtil;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
 import de.regnis.q.sequence.line.diff.QDiffManager;
@@ -84,11 +83,11 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
 
     public String getDisplayPath(File file) {
-        String fullPath = file.getAbsolutePath().replace(File.separatorChar,
-                '/');
-        if (fullPath.startsWith(myAnchorPath1)) {
-            fullPath = fullPath.substring(myAnchorPath1.length());
-            fullPath = PathUtil.removeLeadingSlash(fullPath);
+        String fullPath = file.getAbsolutePath().replace(File.separatorChar, '/');
+        if (fullPath.equals(myAnchorPath1)) {
+            return "";
+        } else if (fullPath.startsWith(myAnchorPath1 + "/")) {
+            fullPath = fullPath.substring(myAnchorPath1.length() + 1);
         }
         return fullPath;
     }

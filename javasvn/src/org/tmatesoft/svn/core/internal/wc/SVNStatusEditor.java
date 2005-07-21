@@ -33,7 +33,6 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
@@ -107,7 +106,7 @@ public class SVNStatusEditor implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
         String originalName = name;
 
         File ioFile = new File(myWCAccess.getAnchor().getRoot(), path);
@@ -115,7 +114,7 @@ public class SVNStatusEditor implements ISVNEditor {
         String dirPath = path;
         SVNNodeKind kind;
         if (type != SVNFileType.DIRECTORY) {
-            dirPath = PathUtil.removeTail(path);
+            dirPath = SVNPathUtil.removeTail(path);
             kind = SVNNodeKind.FILE;
         } else {
             name = "";
@@ -252,7 +251,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 }
             } else if (myIsRecursive && status.getURL() != null
                     && status.getKind() == SVNNodeKind.DIR) {
-                String path = "".equals(dirInfo.Path) ? name : PathUtil.append(
+                String path = "".equals(dirInfo.Path) ? name : SVNPathUtil.append(
                         dirInfo.Path, name);
                 SVNDirectory childDir = myWCAccess.getDirectory(path);
                 if (childDir != null) {
@@ -305,7 +304,7 @@ public class SVNStatusEditor implements ISVNEditor {
                     : SVNStatusType.STATUS_NONE;
             String dirURL = myCurrentDirectory.getURL();
             if (dirURL != null) {
-                dirURL = PathUtil.append(dirURL, myCurrentFile.Name);
+                dirURL = SVNPathUtil.append(dirURL, myCurrentFile.Name);
                 lock = getRepositoryLock(dirURL);
             }
         } else {
@@ -440,7 +439,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 if (dir == null) {
                     File dirFile = parentDir.getFile(name);
                     if (SVNFileType.getType(dirFile) == SVNFileType.DIRECTORY) {
-                         dir = new SVNDirectory(myWCAccess, "".equals(parentDir.getPath()) ? name : PathUtil.append(parentDir.getPath(), name), parentDir.getFile(name));
+                         dir = new SVNDirectory(myWCAccess, "".equals(parentDir.getPath()) ? name : SVNPathUtil.append(parentDir.getPath(), name), parentDir.getFile(name));
                     }
 
                 }
@@ -455,7 +454,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 // we are in the dir itself already, try to get parent dir.
                 if (!"".equals(dir.getPath())) {
                     // there is parent dir
-                    String parentPath = PathUtil.removeTail(dir.getPath());
+                    String parentPath = SVNPathUtil.removeTail(dir.getPath());
                     parentDir = myWCAccess.getDirectory(parentPath);
                 } else {
                     // it is a root of wc.
@@ -499,7 +498,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 && parent.getEntries().getEntry("", false) != null) {
             url = parent.getEntries().getEntry("", false).getURL();
             if (url != null) {
-                url = PathUtil.append(url, SVNEncodingUtil.uriEncode(name));
+                url = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(name));
             }
         }
         SVNStatus status = createStatus(url, parent.getFile(name), parent, null, null, ignored, null, null);
@@ -565,10 +564,10 @@ public class SVNStatusEditor implements ISVNEditor {
             if ("".equals(entry.getName())) {
                 realName = file.getName();
             }
-            if (!realName.equals(SVNEncodingUtil.uriDecode(PathUtil.tail(entry.getURL())))) {
+            if (!realName.equals(SVNEncodingUtil.uriDecode(SVNPathUtil.tail(entry.getURL())))) {
                 isSwitched = true;
             }
-            if (!isSwitched && !PathUtil.removeTail(entry.getURL()).equals(parentEntry.getURL())) {
+            if (!isSwitched && !SVNPathUtil.removeTail(entry.getURL()).equals(parentEntry.getURL())) {
                 isSwitched = true;
             }
         }
@@ -731,9 +730,9 @@ public class SVNStatusEditor implements ISVNEditor {
         public DirectoryInfo(DirectoryInfo parent, String path, boolean added)
                 throws SVNException {
             Parent = parent;
-            if (!PathUtil.isEmpty(path)) {
+            if (!"".equals(path)) {
                 Path = path;
-                Name = PathUtil.tail(path);
+                Name = SVNPathUtil.tail(path);
             } else {
                 Path = "";
                 Name = null;
@@ -796,7 +795,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 }
                 String url = Parent.getURL();
                 if (url != null) {
-                    return PathUtil.append(url, Name);
+                    return SVNPathUtil.append(url, Name);
                 }
             }
             return null;
@@ -813,8 +812,8 @@ public class SVNStatusEditor implements ISVNEditor {
                 String dirPath = path;
                 String target = "";
                 if (kind == SVNNodeKind.FILE) {
-                    dirPath = PathUtil.removeTail(dirPath);
-                    target = PathUtil.tail(path);
+                    dirPath = SVNPathUtil.removeTail(dirPath);
+                    target = SVNPathUtil.tail(path);
                 }
                 SVNDirectory dir = myWCAccess.getDirectory(dirPath);
                 SVNEntry entry = null;
@@ -826,7 +825,7 @@ public class SVNStatusEditor implements ISVNEditor {
                             parentEntry = dir.getEntries().getEntry("", false);
                         } else {
                             SVNDirectory parentDir = myWCAccess
-                                    .getDirectory(PathUtil.removeTail(dirPath));
+                                    .getDirectory(SVNPathUtil.removeTail(dirPath));
                             if (parentDir != null) {
                                 parentEntry = parentDir.getEntries().getEntry("", false);
                             }
@@ -840,7 +839,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 } else {
                     url = getURL();
                     if (url != null) {
-                        url = PathUtil.append(getURL(), SVNEncodingUtil.uriEncode(name));
+                        url = SVNPathUtil.append(getURL(), SVNEncodingUtil.uriEncode(name));
                     }
                 }
                 try {
@@ -879,7 +878,7 @@ public class SVNStatusEditor implements ISVNEditor {
         public FileInfo(DirectoryInfo parent, String path, boolean added) {
             Parent = parent;
             Path = path;
-            Name = PathUtil.tail(path);
+            Name = SVNPathUtil.tail(path);
             IsAdded = added;
         }
 

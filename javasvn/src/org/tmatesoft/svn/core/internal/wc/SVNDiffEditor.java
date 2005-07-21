@@ -26,12 +26,12 @@ import java.util.Set;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -81,7 +81,7 @@ public class SVNDiffEditor implements ISVNEditor {
 
     public void deleteEntry(String path, long revision) throws SVNException {
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
         SVNEntry entry = dir.getEntries().getEntry(name, true);
         String displayPath = myDiffGenerator.getDisplayPath(new File(dir
                 .getRoot(), name));
@@ -161,7 +161,7 @@ public class SVNDiffEditor implements ISVNEditor {
             myDiffGenerator.displayPropDiff(myCurrentDirectory.myPath, base,
                     diff, myResult);
         }
-        String name = PathUtil.tail(myCurrentDirectory.myPath);
+        String name = SVNPathUtil.tail(myCurrentDirectory.myPath);
         myCurrentDirectory = myCurrentDirectory.myParent;
         if (myCurrentDirectory != null) {
             myCurrentDirectory.myComparedEntries.add(name);
@@ -170,13 +170,13 @@ public class SVNDiffEditor implements ISVNEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
         myCurrentFile = createFileInfo(myCurrentDirectory, path, true);
         myCurrentDirectory.myComparedEntries.add(name);
     }
 
     public void openFile(String path, long revision) throws SVNException {
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
         myCurrentFile = createFileInfo(myCurrentDirectory, path, false);
         myCurrentDirectory.myComparedEntries.add(name);
     }
@@ -194,7 +194,7 @@ public class SVNDiffEditor implements ISVNEditor {
         if (myCurrentFile.myBaseProperties == null) {
             SVNDirectory dir = myWCAccess
                     .getDirectory(myCurrentDirectory.myPath);
-            String fileName = PathUtil.tail(myCurrentFile.myPath);
+            String fileName = SVNPathUtil.tail(myCurrentFile.myPath);
             if (dir != null) {
                 myCurrentFile.myBaseProperties = dir.getBaseProperties(
                         fileName, false).asMap();
@@ -207,7 +207,7 @@ public class SVNDiffEditor implements ISVNEditor {
     public void applyTextDelta(String path, String baseChecksum)
             throws SVNException {
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
-        String fileName = PathUtil.tail(myCurrentFile.myPath);
+        String fileName = SVNPathUtil.tail(myCurrentFile.myPath);
         if (dir != null) {
             SVNEntry entry = dir.getEntries().getEntry(fileName, true);
             if (entry != null && entry.getCopyFromURL() != null) {
@@ -249,7 +249,7 @@ public class SVNDiffEditor implements ISVNEditor {
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         myCurrentFile.myDiffWindows.add(diffWindow);
-        String fileName = PathUtil.tail(myCurrentFile.myPath);
+        String fileName = SVNPathUtil.tail(myCurrentFile.myPath);
         File chunkFile = SVNFileUtil.createUniqueFile(myCurrentFile.myFile
                 .getParentFile(), fileName, ".tmp");
         myCurrentFile.myDataFiles.add(chunkFile);
@@ -290,7 +290,7 @@ public class SVNDiffEditor implements ISVNEditor {
         String reposMimeType = (String) (myCurrentFile.myPropertyDiff != null ? myCurrentFile.myPropertyDiff
                 .get(SVNProperty.MIME_TYPE)
                 : null);
-        String fileName = PathUtil.tail(myCurrentFile.myPath);
+        String fileName = SVNPathUtil.tail(myCurrentFile.myPath);
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
         if (reposMimeType == null) {
             if (myCurrentFile.myBaseProperties == null) {
@@ -420,7 +420,7 @@ public class SVNDiffEditor implements ISVNEditor {
             info.myComparedEntries.add(entry.getName());
             if (entry.isDirectory()) {
                 // recurse here.
-                SVNDirectoryInfo childInfo = createDirInfo(info, PathUtil
+                SVNDirectoryInfo childInfo = createDirInfo(info, SVNPathUtil
                         .append(info.myPath, entry.getName()), false);
                 SVNDirectory childDir = myWCAccess
                         .getDirectory(childInfo.myPath);

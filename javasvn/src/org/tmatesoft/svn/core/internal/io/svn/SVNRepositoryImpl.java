@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
@@ -40,7 +41,6 @@ import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -612,7 +612,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             read("[((?F))]", buffer);
             SVNDirEntry entry = (SVNDirEntry) buffer[0];
             if (entry != null) {
-                entry.setName(PathUtil.tail(path));
+                entry.setName(SVNPathUtil.tail(path));
             }
             return (SVNDirEntry) buffer[0];
         } finally {

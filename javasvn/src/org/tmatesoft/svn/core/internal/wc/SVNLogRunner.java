@@ -21,9 +21,9 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
@@ -387,11 +387,7 @@ public class SVNLogRunner {
             if (SVNWCUtil.isWorkingCopyRoot(dirFile, true)) {
                 return;
             }
-            String parentPath = "".equals(dir.getPath()) ? null : PathUtil
-                    .removeTail(dir.getPath());
-            if (PathUtil.isEmpty(parentPath)) {
-                parentPath = "";
-            }
+            String parentPath = SVNPathUtil.removeTail(dir.getPath());
             SVNDirectory parentDir = dir.getWCAccess().getDirectory(parentPath);
             SVNWCAccess parentAccess = null;
             if (parentDir == null) {
@@ -437,11 +433,7 @@ public class SVNLogRunner {
             if (SVNWCUtil.isWorkingCopyRoot(dirFile, true)) {
                 return;
             }
-            String parentPath = "".equals(dir.getPath()) ? null : PathUtil
-                    .removeTail(dir.getPath());
-            if (PathUtil.isEmpty(parentPath)) {
-                parentPath = "";
-            }
+            String parentPath = SVNPathUtil.removeTail(dir.getPath());
             SVNDirectory parentDir = dir.getWCAccess().getDirectory(parentPath);
             SVNWCAccess parentAccess = null;
             if (parentDir == null) {

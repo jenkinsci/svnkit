@@ -20,13 +20,13 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.util.PathUtil;
 
 /*
  * This is a complex example program that demonstrates how you can manage local
@@ -435,7 +435,7 @@ public class WorkingCopy {
         System.out.println();
 
         File anImportDir = new File(importDir);
-        File anImportFile = new File(anImportDir, PathUtil.tail(importFile));
+        File anImportFile = new File(anImportDir, SVNPathUtil.tail(importFile));
         /*
          * creating a new local directory - "./importDir" and a new file - 
          * "./importDir/importFile.txt" that will be imported into the repository
@@ -495,7 +495,7 @@ public class WorkingCopy {
         System.out.println();
 
         File aNewDir = new File(wcDir, newDir);
-        File aNewFile = new File(aNewDir, PathUtil.tail(newFile));
+        File aNewFile = new File(aNewDir, SVNPathUtil.tail(newFile));
         /*
          * creating a new local directory - "wcDir/newDir" and a new file - 
          * "/MyWorkspace/newDir/newFile.txt" 

@@ -25,13 +25,13 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -62,7 +62,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", true);
         myTargetURL = entry.getURL();
         if (myTarget != null) {
-            myTargetURL = PathUtil.append(myTargetURL, SVNEncodingUtil.uriEncode(myTarget));
+            myTargetURL = SVNPathUtil.append(myTargetURL, SVNEncodingUtil.uriEncode(myTarget));
         }
         wcAccess.getTarget().getEntries().close();
 
@@ -96,7 +96,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
 
         SVNEntry entry = myCurrentDirectory.getDirectory().getEntries()
                 .getEntry(name, true);
@@ -142,7 +142,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNDirectory parentDir = myCurrentDirectory.getDirectory();
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, true);
 
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
         File file = parentDir.getFile(name);
         if (file.exists()) {
             SVNErrorManager.error("svn: Failed to add directory '" + path
@@ -202,7 +202,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     }
 
     private void absentEntry(String path, SVNNodeKind kind) throws SVNException {
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
         SVNEntry entry = entries.getEntry(name, true);
         if (entry != null && entry.isScheduledForAddition()) {
@@ -618,7 +618,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             if ("".equals(entry.getName())) {
                 continue;
             }
-            String childURL = url != null ? PathUtil.append(url, SVNEncodingUtil.uriEncode(entry.getName())) : null;
+            String childURL = url != null ? SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(entry.getName())) : null;
             if (entry.getKind() == SVNNodeKind.FILE) {
                 save |= bumpEntry(entries, entry, childURL, myTargetRevision,
                         true);
@@ -722,7 +722,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             boolean added) throws SVNException {
         SVNFileInfo info = new SVNFileInfo(parent, path);
         info.IsAdded = added;
-        info.Name = PathUtil.tail(path);
+        info.Name = SVNPathUtil.tail(path);
         SVNDirectory dir = parent.getDirectory();
         if (added && dir.getFile(info.Name).exists()) {
             SVNErrorManager.error("svn: Failed to add file '" + path + "': object of the same name already exists");
@@ -738,7 +738,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 SVNErrorManager.error("svn: Failed to update file '" + path + "': no entry found");
             }
             if (mySwitchURL != null || entry == null) {
-                info.URL = PathUtil.append(parent.URL, SVNEncodingUtil.uriEncode(info.Name));
+                info.URL = SVNPathUtil.append(parent.URL, SVNEncodingUtil.uriEncode(info.Name));
             } else {
                 info.URL = entry.getURL();
             }
@@ -756,7 +756,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNDirectoryInfo info = new SVNDirectoryInfo(path);
         info.Parent = parent;
         info.IsAdded = added;
-        String name = path != null ? PathUtil.tail(path) : "";
+        String name = path != null ? SVNPathUtil.tail(path) : "";
 
         if (mySwitchURL == null) {
             SVNDirectory dir = added ? null : info.getDirectory();
@@ -764,18 +764,18 @@ public class SVNUpdateEditor implements ISVNEditor {
                 info.URL = dir.getEntries().getEntry("", true).getURL();
             }
             if (info.URL == null && parent != null) {
-                info.URL = PathUtil.append(parent.URL, SVNEncodingUtil.uriEncode(name));
+                info.URL = SVNPathUtil.append(parent.URL, SVNEncodingUtil.uriEncode(name));
             } else if (info.URL == null && parent == null) {
                 info.URL = myTargetURL;
             }
         } else {
             if (parent == null) {
-                info.URL = myTarget == null ? mySwitchURL : PathUtil.removeTail(mySwitchURL);
+                info.URL = myTarget == null ? mySwitchURL : SVNPathUtil.removeTail(mySwitchURL);
             } else {
                 if (myTarget != null && parent.Parent == null) {
                     info.URL = mySwitchURL;
                 } else {
-                    info.URL = PathUtil.append(parent.URL, SVNEncodingUtil.uriEncode(name));
+                    info.URL = SVNPathUtil.append(parent.URL, SVNEncodingUtil.uriEncode(name));
                 }
             }
         }

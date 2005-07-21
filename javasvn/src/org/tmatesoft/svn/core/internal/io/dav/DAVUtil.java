@@ -19,7 +19,6 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -71,7 +70,7 @@ public class DAVUtil {
             info.revision = Long.parseLong((String) baselineProperties.getPropertyValue(DAVElement.VERSION_NAME));
         }
         if (includeType) {
-            info.isDirectory = getPropertyValue(connection, PathUtil.append(info.baselineBase, info.baselinePath),
+            info.isDirectory = getPropertyValue(connection, SVNPathUtil.append(info.baselineBase, info.baselinePath),
                     null, DAVElement.RESOURCE_TYPE) != null;
         }
         return info;
@@ -87,9 +86,9 @@ public class DAVUtil {
             } catch (SVNException e) {
                 //
             }
-            loppedPath = PathUtil.append(PathUtil.tail(path), loppedPath);
-            path = PathUtil.removeTail(path);
-            if (PathUtil.isEmpty(path)) {
+            loppedPath = SVNPathUtil.append(SVNPathUtil.tail(path), loppedPath);
+            path = SVNPathUtil.removeTail(path);
+            if ("".equals(path)) {
                 break;
             }
         }

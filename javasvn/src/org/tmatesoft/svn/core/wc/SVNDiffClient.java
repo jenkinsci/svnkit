@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -33,7 +34,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -268,9 +268,9 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         String target = null;
         if (nodeKind == SVNNodeKind.FILE || nodeKind2 == SVNNodeKind.FILE) {
-            target = PathUtil.tail(url1);
+            target = SVNPathUtil.tail(url1);
             target = SVNEncodingUtil.uriDecode(target);
-            url1 = PathUtil.removeTail(url1);
+            url1 = SVNPathUtil.removeTail(url1);
             repos = createRepository(url1);
         }
         File tmpFile = getDiffGenerator().createTempDirectory();
@@ -404,9 +404,9 @@ public class SVNDiffClient extends SVNBasicClient {
 
             String target = null;
             if (nodeKind1 == SVNNodeKind.FILE || nodeKind2 == SVNNodeKind.FILE) {
-                target = PathUtil.tail(url1);
+                target = SVNPathUtil.tail(url1);
                 target = SVNEncodingUtil.uriDecode(target);
-                url1 = PathUtil.removeTail(url1);
+                url1 = SVNPathUtil.removeTail(url1);
                 repos1 = createRepository(url1);
                 repos2 = createRepository(url1);
             }

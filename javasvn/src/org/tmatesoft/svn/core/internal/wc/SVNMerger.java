@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -59,7 +58,7 @@ public class SVNMerger {
         if (parentDir == null) {
             return SVNStatusType.MISSING;
         }
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
         File targetFile = parentDir.getFile(name);
         if (targetFile.isDirectory()) {
             // check for normal entry?
@@ -114,7 +113,7 @@ public class SVNMerger {
         if (parentDir == null) {
             return SVNStatusType.MISSING;
         }
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
         File targetFile = parentDir.getFile(name);
         if (targetFile.isDirectory()) {
             return SVNStatusType.OBSTRUCTED;
@@ -153,7 +152,7 @@ public class SVNMerger {
             }
             return SVNStatusType.MISSING;
         }
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
         File file = parentDir.getFile(name);
         if (!file.exists()) {
             SVNEntry entry = parentDir.getEntries().getEntry(name, true);
@@ -163,7 +162,7 @@ public class SVNMerger {
             }
             if (!myIsDryRun) {
                 file.mkdirs();
-                String url = PathUtil.append(myURL, SVNEncodingUtil.uriEncode(getPathInURL(path)));
+                String url = SVNPathUtil.append(myURL, SVNEncodingUtil.uriEncode(getPathInURL(path)));
                 addDirectory(parentDir, name, url, myTargetRevision, entryProps);
             } else {
                 myAddedPath = path + "/";
@@ -175,7 +174,7 @@ public class SVNMerger {
                 if (myIsDryRun) {
                     myAddedPath = path + "/";
                 } else {
-                    String url = PathUtil.append(myURL, SVNEncodingUtil.uriEncode(getPathInURL(path)));
+                    String url = SVNPathUtil.append(myURL, SVNEncodingUtil.uriEncode(getPathInURL(path)));
                     addDirectory(parentDir, name, url, myTargetRevision,
                             entryProps);
                 }
@@ -197,7 +196,7 @@ public class SVNMerger {
             Map baseProps, Map propDiff) throws SVNException {
         SVNStatusType[] result = new SVNStatusType[] { SVNStatusType.UNKNOWN,
                 SVNStatusType.UNKNOWN };
-        String parentPath = PathUtil.removeTail(path);
+        String parentPath = SVNPathUtil.removeTail(path);
         SVNDirectory parentDir = myWCAccess.getDirectory(parentPath);
         if (parentDir == null) {
             result[0] = SVNStatusType.MISSING;
@@ -205,7 +204,7 @@ public class SVNMerger {
             return result;
         }
 
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
         File mine = parentDir.getFile(name);
         SVNEntry entry = parentDir.getEntries().getEntry(name, true);
 
@@ -277,7 +276,7 @@ public class SVNMerger {
             }
             return result;
         }
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
         File mine = parentDir.getFile(name);
 
         if (!mine.exists()) {
@@ -287,7 +286,7 @@ public class SVNMerger {
                 return result;
             } else if (!myIsDryRun) {
                 String pathInURL = getPathInURL(path);
-                String copyFromURL = PathUtil.append(myURL, SVNEncodingUtil.uriEncode(pathInURL));
+                String copyFromURL = SVNPathUtil.append(myURL, SVNEncodingUtil.uriEncode(pathInURL));
                 addFile(parentDir, name, SVNFileUtil.getBasePath(yours),
                         propDiff, copyFromURL, myTargetRevision, entryProps);
             }
@@ -329,11 +328,11 @@ public class SVNMerger {
     public File getFile(String path, boolean base) {
         SVNDirectory dir = null;
         String parentPath = path;
-        while (dir == null && !PathUtil.isEmpty(parentPath)) {
+        while (dir == null && !"".equals(parentPath)) {
             dir = getParentDirectory(parentPath);
-            parentPath = PathUtil.removeTail(parentPath);
+            parentPath = SVNPathUtil.removeTail(parentPath);
         }
-        String name = PathUtil.tail(path);
+        String name = SVNPathUtil.tail(path);
         if (dir != null) {
             String extension = base ? ".tmp-base" : ".tmp-work";
             return SVNFileUtil.createUniqueFile(dir.getFile(".svn/tmp/text-base"), name , extension);
@@ -396,7 +395,7 @@ public class SVNMerger {
             entry.loadProperties(entryProps);
             entry.setKind(SVNNodeKind.DIR);
             entry.scheduleForAddition();
-            url = PathUtil.append(entries.getEntry("", true).getURL(), SVNEncodingUtil.uriEncode(name));
+            url = SVNPathUtil.append(entries.getEntry("", true).getURL(), SVNEncodingUtil.uriEncode(name));
         }
         entry.setCopied(true);
         entry.setCopyFromURL(copyFromURL);
@@ -444,7 +443,7 @@ public class SVNMerger {
         entry.setCopied(true);
         entry.setCopyFromURL(copyFromURL);
         entry.setCopyFromRevision(copyFromRev);
-        String url = PathUtil.append(entries.getEntry("", true).getURL(),
+        String url = SVNPathUtil.append(entries.getEntry("", true).getURL(),
                 SVNEncodingUtil.uriEncode(name));
         entries.save(false);
         parentDir.getWCProperties(name).delete();

@@ -31,7 +31,7 @@ import java.util.TreeSet;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 /**
  * @version 1.0
@@ -95,7 +95,7 @@ public class SVNEntries {
                                 if (entry.get(SVNProperty.URL) == null) {
                                     String url = (String) rootEntry.get(SVNProperty.URL);
                                     if (url != null) {
-                                        url = PathUtil.append(url, SVNEncodingUtil.uriEncode(entryName));
+                                        url = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(entryName));
                                     }
                                     entry.put(SVNProperty.URL, url);
                                 }
@@ -154,7 +154,7 @@ public class SVNEntries {
                             }
                         } else {
                             if (SVNProperty.URL.equals(propName)) {
-                                expectedValue = PathUtil.append(
+                                expectedValue = SVNPathUtil.append(
                                         (String) rootEntry.get(propName),
                                         SVNEncodingUtil.uriEncode(name));
                             } else if (SVNProperty.UUID.equals(propName)

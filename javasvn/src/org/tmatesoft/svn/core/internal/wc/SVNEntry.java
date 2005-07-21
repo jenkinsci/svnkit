@@ -16,7 +16,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 /**
  * @version 1.0
@@ -56,7 +56,7 @@ public class SVNEntry implements Comparable {
         String url = myEntries.getPropertyValue(myName, SVNProperty.URL);
         if (url == null && !"".equals(myName)) {
             url = myEntries.getPropertyValue("", SVNProperty.URL);
-            url = PathUtil.append(url, SVNEncodingUtil.uriEncode(myName));
+            url = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(myName));
         }
         return url;
     }

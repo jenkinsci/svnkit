@@ -21,9 +21,9 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -69,8 +69,8 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
             dir = myWCAccess.getDirectory(item.getPath());
             target = "";
         } else {
-            dir = myWCAccess.getDirectory(PathUtil.removeTail(item.getPath()));
-            target = PathUtil.tail(item.getPath());
+            dir = myWCAccess.getDirectory(SVNPathUtil.removeTail(item.getPath()));
+            target = SVNPathUtil.tail(item.getPath());
         }
         SVNProperties wcProps = dir.getWCProperties(target);
         return wcProps.getPropertyValue(name);
@@ -98,8 +98,8 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
             dir = myWCAccess.getDirectory(item.getPath());
             target = "";
         } else {
-            dir = myWCAccess.getDirectory(PathUtil.removeTail(item.getPath()));
-            target = PathUtil.tail(item.getPath());
+            dir = myWCAccess.getDirectory(SVNPathUtil.removeTail(item.getPath()));
+            target = SVNPathUtil.tail(item.getPath());
         }
         File tmpFile = dir.getFile(".svn/tmp/text-base");
         tmpFile = SVNFileUtil.createUniqueFile(tmpFile, target, ".tmp");

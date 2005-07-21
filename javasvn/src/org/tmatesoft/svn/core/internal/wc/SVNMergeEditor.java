@@ -38,7 +38,6 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -230,7 +229,7 @@ public class SVNMergeEditor implements ISVNEditor {
         myCurrentFile.myDiffWindows.add(diffWindow);
         File chunkFile = SVNFileUtil
                 .createUniqueFile(myCurrentFile.myBaseFile.getParentFile(),
-                        PathUtil.tail(myCurrentFile.myPath), ".chunk");
+                        SVNPathUtil.tail(myCurrentFile.myPath), ".chunk");
         myCurrentFile.myDataFiles.add(chunkFile);
         return SVNFileUtil.openFileForWriting(chunkFile);
     }
@@ -389,7 +388,7 @@ public class SVNMergeEditor implements ISVNEditor {
 
         public SVNFileInfo(SVNDirectoryInfo parent, String path, boolean added) {
             myPath = path;
-            myWCPath = SVNPathUtil.append(parent.myWCPath, PathUtil.tail(path));
+            myWCPath = SVNPathUtil.append(parent.myWCPath, SVNPathUtil.tail(path));
             myIsAdded = added;
             if (added) {
                 myEntryProps = new HashMap();

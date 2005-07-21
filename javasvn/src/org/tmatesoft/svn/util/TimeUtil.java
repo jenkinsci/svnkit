@@ -87,13 +87,4 @@ public class TimeUtil {
         CALENDAR.set(Calendar.MILLISECOND, ms);
         return CALENDAR.getTimeInMillis();
     }
-
-    public static String toHumanDate(String str) {
-        if (str == null) {
-            return "";
-        }
-        str = str.replace('T', ' ');
-        str = str.substring(0, 19) + 'Z';
-        return str;
-    }
 }

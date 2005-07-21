@@ -16,10 +16,10 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -29,7 +29,7 @@ public class SVNEventFactory {
 
     public static SVNEvent createMergeEvent(SVNWCAccess source, String path,
             SVNEventAction action, SVNStatusType cType, SVNStatusType pType, SVNNodeKind kind) {
-        SVNEvent event = new SVNEvent(source, null, PathUtil.tail(path),
+        SVNEvent event = new SVNEvent(source, null, SVNPathUtil.tail(path),
                 action, kind, -1, null, cType, pType, null, null, null);
         event.setPath(path);
         return event;
@@ -58,7 +58,7 @@ public class SVNEventFactory {
 
     public static SVNEvent createLockEvent(SVNWCAccess source, String path,
             SVNEventAction action, SVNLock lock, String message) {
-        SVNEvent event = new SVNEvent(source, null, PathUtil.tail(path),
+        SVNEvent event = new SVNEvent(source, null, SVNPathUtil.tail(path),
                 action, SVNNodeKind.FILE, -1, null, null, null, null, lock, message);
         event.setPath(path);
         return event;
@@ -66,7 +66,7 @@ public class SVNEventFactory {
 
     public static SVNEvent createLockEvent(String path, SVNEventAction action,
             SVNLock lock, String message) {
-        SVNEvent event = new SVNEvent(null, null, PathUtil.tail(path), action,
+        SVNEvent event = new SVNEvent(null, null, SVNPathUtil.tail(path), action,
                 SVNNodeKind.FILE, -1, null, null, null, null, lock, message);
         event.setPath(path);
         return event;

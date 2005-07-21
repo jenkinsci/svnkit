@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
@@ -28,7 +29,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusReporter;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * This class provides methods to get information on the status of Working Copy items.
@@ -301,7 +301,7 @@ public class SVNStatusClient extends SVNBasicClient {
         String baseName = path.getName();
         while(wcRoot.getParentFile() != null && new File(wcRoot.getParentFile(), ".svn").isDirectory()) {
           dirs.push(currentPath);
-          currentPath = PathUtil.append(wcRoot.getName(), currentPath);
+          currentPath = SVNPathUtil.append(wcRoot.getName(), currentPath);
           wcRoot = wcRoot.getParentFile();
         }
         dirs.push(currentPath);
@@ -330,7 +330,7 @@ public class SVNStatusClient extends SVNBasicClient {
             }
 
           }
-          wcRoot = new File(wcRoot, PathUtil.head(currentPath));
+          wcRoot = new File(wcRoot, SVNPathUtil.head(currentPath));
         }
         return externals;
     }

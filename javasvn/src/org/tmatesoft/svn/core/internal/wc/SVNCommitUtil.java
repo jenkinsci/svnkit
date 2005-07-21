@@ -32,7 +32,6 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -95,10 +94,7 @@ public class SVNCommitUtil {
             if (closeDir) {
                 lastPath = commitPath;
             } else {
-                lastPath = PathUtil.removeTail(commitPath);
-                if (PathUtil.isEmpty(lastPath)) {
-                    lastPath = "";
-                }
+                lastPath = SVNPathUtil.removeTail(commitPath);
             }
         }
         while (lastPath != null && !"".equals(lastPath)) {
@@ -176,12 +172,12 @@ public class SVNCommitUtil {
                 }
                 // now lock all dirs from anchor to base dir (non-recursive).
                 targetFile = targetFile.getParentFile();
-                targetPath = PathUtil.removeTail(targetPath);
+                targetPath = SVNPathUtil.removeTail(targetPath);
                 while (targetFile != null && !baseDir.equals(targetFile)
-                        && !PathUtil.isEmpty(targetPath) && !dirsToLock.contains(targetPath)) {
+                        && !"".equals(targetPath) && !dirsToLock.contains(targetPath)) {
                     dirsToLock.add(targetPath);
                     targetFile = targetFile.getParentFile();
-                    targetPath = PathUtil.removeTail(targetPath);
+                    targetPath = SVNPathUtil.removeTail(targetPath);
                 }
             }
         }
@@ -241,7 +237,7 @@ public class SVNCommitUtil {
             String target = targets.hasNext() ? (String) targets.next() : "";
             // get entry for target
             File targetFile = new File(baseAccess.getAnchor().getRoot(), target);
-            String targetName = "".equals(target) ? "" : PathUtil.tail(target);
+            String targetName = "".equals(target) ? "" : SVNPathUtil.tail(target);
             String parentPath = SVNPathUtil.removeTail(target);
             SVNDirectory dir = baseAccess.getDirectory(parentPath);
             SVNEntry entry = dir == null ? null : dir.getEntries().getEntry(
@@ -361,11 +357,11 @@ public class SVNCommitUtil {
         if (itemsMap.containsKey(baseURL)) {
             SVNCommitItem root = (SVNCommitItem) itemsMap.get(baseURL);
             if (root.getKind() != SVNNodeKind.DIR) {
-                baseURL = PathUtil.removeTail(baseURL);
+                baseURL = SVNPathUtil.removeTail(baseURL);
             } else if (root.getKind() == SVNNodeKind.DIR
                     && (root.isAdded() || root.isDeleted() || root.isCopied() || root
                             .isLocked())) {
-                baseURL = PathUtil.removeTail(baseURL);
+                baseURL = SVNPathUtil.removeTail(baseURL);
             }
         }
         urls = itemsMap.keySet().iterator();
@@ -555,11 +551,11 @@ public class SVNCommitUtil {
                 }
                 String currentCFURL = cfURL != null ? cfURL : copyFromURL;
                 if (currentCFURL != null) {
-                    currentCFURL = PathUtil.append(currentCFURL, SVNEncodingUtil.uriEncode(currentEntry.getName()));
+                    currentCFURL = SVNPathUtil.append(currentCFURL, SVNEncodingUtil.uriEncode(currentEntry.getName()));
                 }
                 String currentURL = currentEntry.getURL();
                 if (copyMode || entry.getURL() == null) {
-                    currentURL = PathUtil.append(url, SVNEncodingUtil.uriEncode(currentEntry.getName()));
+                    currentURL = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(currentEntry.getName()));
                 }
                 File currentFile = dir.getFile(currentEntry.getName());
                 SVNDirectory childDir;
@@ -574,7 +570,7 @@ public class SVNCommitUtil {
                                     currentURL, null, currentEntry.getKind(),
                                     SVNRevision.UNDEFINED, false, true, false,
                                     false, false, false);
-                            item.setPath(PathUtil.append(dir.getPath(),
+                            item.setPath(SVNPathUtil.append(dir.getPath(),
                                     currentEntry.getName()));
                             commitables.put(currentFile, item);
                             continue;
@@ -646,7 +642,7 @@ public class SVNCommitUtil {
                 Collection result = new TreeSet();
                 for (Iterator paths = relativePaths.iterator(); paths.hasNext();) {
                     String path = (String) paths.next();
-                    path = "".equals(path) ? targetName : PathUtil.append(targetName, path);
+                    path = "".equals(path) ? targetName : SVNPathUtil.append(targetName, path);
                     result.add(path);
                 }
                 relativePaths.clear();

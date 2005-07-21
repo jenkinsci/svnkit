@@ -20,11 +20,11 @@ import java.util.Date;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -76,7 +76,7 @@ class SVNCommitEditor implements ISVNEditor {
             throws SVNException {
         if (copyFromPath != null) {
             String rootURL = myRepository.getRepositoryRoot().toString();
-            copyFromPath = PathUtil.append(rootURL, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
+            copyFromPath = SVNPathUtil.append(rootURL, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
             myConnection.write("(w(sss(sn)))", new Object[] { "add-dir", path,
                     myCurrentPath, path, copyFromPath,
                     getRevisionObject(copyFromRevision) });
@@ -109,7 +109,7 @@ class SVNCommitEditor implements ISVNEditor {
             throws SVNException {
         if (copyFromPath != null) {
             String host = myRepository.getRepositoryRoot().toString();
-            copyFromPath = PathUtil.append(host, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
+            copyFromPath = SVNPathUtil.append(host, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
             myConnection.write("(w(sss(sn)))", new Object[] { "add-file", path,
                     myCurrentPath, path, copyFromPath,
                     getRevisionObject(copyFromRevision) });
@@ -195,7 +195,7 @@ class SVNCommitEditor implements ISVNEditor {
     }
 
     private static String computeParentPath(String path) {
-        return PathUtil.removeTail(path);
+        return SVNPathUtil.removeTail(path);
     }
 
     private static Long getRevisionObject(long rev) {

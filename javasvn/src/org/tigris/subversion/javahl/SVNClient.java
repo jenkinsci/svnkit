@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
@@ -48,7 +49,6 @@ import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.SVNUtil;
 import org.tmatesoft.svn.util.Version;
 
 /**
@@ -538,7 +538,7 @@ public class SVNClient implements SVNClientInterface {
         SVNDiffClient differ = getSVNDiffClient();
         differ.setDiffGenerator(new DefaultSVNDiffGenerator() {
             public String getDisplayPath(File file) {
-                return SVNUtil.getPath(file).replace(File.separatorChar, '/');
+                return SVNFormatUtil.formatPath(file).replace(File.separatorChar, '/');
             }
             public void displayFileDiff(String path, File file1, File file2,
                                         String rev1, String rev2, String mimeType1, String mimeType2,
@@ -580,7 +580,7 @@ public class SVNClient implements SVNClientInterface {
         SVNDiffClient differ = getSVNDiffClient();
         differ.setDiffGenerator(new DefaultSVNDiffGenerator() {
             public String getDisplayPath(File file) {
-                return SVNUtil.getPath(file).replace(File.separatorChar, '/');
+                return SVNFormatUtil.formatPath(file).replace(File.separatorChar, '/');
             }
             public void displayFileDiff(String path, File file1, File file2,
                                         String rev1, String rev2, String mimeType1, String mimeType2,
@@ -842,7 +842,7 @@ public class SVNClient implements SVNClientInterface {
             public void handleLine(Date date, long revision, String author, String line) {
                 StringBuffer result = new StringBuffer();
                 result.append(Long.toString(revision));
-                result.append(author != null ? SVNUtil.formatString(author, 10, false) : "         -");
+                result.append(author != null ? SVNFormatUtil.formatString(author, 10, false) : "         -");
                 result.append(' ');
                 result.append(line);
                 try {

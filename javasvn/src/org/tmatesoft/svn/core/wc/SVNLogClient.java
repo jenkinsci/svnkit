@@ -28,7 +28,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -212,7 +211,7 @@ public class SVNLogClient extends SVNBasicClient {
     private void doList(SVNRepository repos, long rev, ISVNDirEntryHandler handler, boolean recursive) throws SVNException {
         if (repos.checkPath("", rev) == SVNNodeKind.FILE) {
             SVNDirEntry entry = repos.info("", rev);
-            String name = PathUtil.tail(repos.getLocation().getPath());
+            String name = SVNPathUtil.tail(repos.getLocation().getPath());
             entry.setPath(SVNEncodingUtil.uriDecode(name));
             handler.handleDirEntry(entry);
         } else {
@@ -227,7 +226,7 @@ public class SVNLogClient extends SVNBasicClient {
 
         for (Iterator iterator = entries.iterator(); iterator.hasNext();) {
             SVNDirEntry entry = (SVNDirEntry) iterator.next();
-            String childPath = "".equals(path) ? entry.getName() : PathUtil
+            String childPath = "".equals(path) ? entry.getName() : SVNPathUtil
                     .append(path, entry.getName());
             entry.setPath(childPath);
             handler.handleDirEntry(entry);

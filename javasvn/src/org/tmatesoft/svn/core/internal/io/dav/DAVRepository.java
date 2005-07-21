@@ -44,7 +44,6 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNURL;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
@@ -143,7 +142,7 @@ class DAVRepository extends SVNRepository {
             path = SVNEncodingUtil.uriEncode(path);
             if (revision != -2) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
-                path = PathUtil.append(info.baselineBase, info.baselinePath);
+                path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
                 fileRevision = info.revision; 
             }
             if (properties != null) {
@@ -183,20 +182,20 @@ class DAVRepository extends SVNRepository {
             path = SVNEncodingUtil.uriEncode(path);
             if (revision != -2) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
-                path = PathUtil.append(info.baselineBase, info.baselinePath);
+                path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
                 dirRevision = info.revision; 
             }
             if (handler != null) {
-                final String parentPath = PathUtil.removeTrailingSlash(path);
+                final String parentPath = path;
                 myConnection.doPropfind(path, 1, null, null, new IDAVResponseHandler() {
                     public void handleDAVResponse(DAVResponse child) {
-                        String href = PathUtil.removeTrailingSlash(child.getHref());
+                        String href = child.getHref();
                         href = SVNEncodingUtil.uriDecode(href);
                         if (href.equals(SVNEncodingUtil.uriDecode(parentPath))) {
                             return;
                         }
                         // build direntry
-                        String name = PathUtil.tail(href);
+                        String name = SVNPathUtil.tail(href);
                         SVNNodeKind kind = SVNNodeKind.FILE;
                         Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
                         long lastRevision = Long.parseLong(revisionStr.toString());
@@ -260,7 +259,7 @@ class DAVRepository extends SVNRepository {
 				revision = Math.max(startRevision, endRevision);				
 			}
 			DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, bcPath, revision, false, false, null);
-			bcPath = PathUtil.append(info.baselineBase, info.baselinePath);
+			bcPath = SVNPathUtil.append(info.baselineBase, info.baselinePath);
 			myConnection.doReport(bcPath, request, davHandler);
             return davHandler.getEntriesCount();
 		} finally {
@@ -295,7 +294,7 @@ class DAVRepository extends SVNRepository {
 			long revision = Math.max(startRevision, endRevision);
             path = SVNEncodingUtil.uriEncode(path);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, false, null);
-            path = PathUtil.append(info.baselineBase, info.baselinePath);
+            path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             myConnection.doReport(path, request, davHandler);
 		} finally {
 			closeConnection();
@@ -331,7 +330,7 @@ class DAVRepository extends SVNRepository {
             root = SVNEncodingUtil.uriEncode(root);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, root, pegRevision, false, false, null);            
             
-            path = PathUtil.append(info.baselineBase, info.baselinePath);
+            path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             myConnection.doReport(path, request, davHandler);
             
             return davHandler.getEntriesCount();
@@ -347,7 +346,7 @@ class DAVRepository extends SVNRepository {
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
-            String path = PathUtil.append(info.baselineBase, info.baselinePath);
+            String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, true);
             if (response != null) {
             	path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
@@ -377,7 +376,7 @@ class DAVRepository extends SVNRepository {
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
-            String path = PathUtil.append(info.baselineBase, info.baselinePath);
+            String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
             if (response != null) {
                 path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
@@ -406,7 +405,7 @@ class DAVRepository extends SVNRepository {
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
-            String path = PathUtil.append(info.baselineBase, info.baselinePath);
+            String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
             path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
 
@@ -423,7 +422,7 @@ class DAVRepository extends SVNRepository {
             DAVEditorHandler handler = new DAVEditorHandler(editor, false);
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
-            String path = PathUtil.append(info.baselineBase, info.baselinePath);
+            String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
         	DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, true);
         	if (response != null) {
         		path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
@@ -443,7 +442,7 @@ class DAVRepository extends SVNRepository {
             // 1. get vcc for root.
             
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
-            String path = PathUtil.append(info.baselineBase, info.baselinePath);
+            String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
 
             DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
             path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
@@ -481,7 +480,7 @@ class DAVRepository extends SVNRepository {
                 String lock = (String) locks.get(path);
 
                 if (path.startsWith("/")) {
-                    path = PathUtil.append(root, SVNEncodingUtil.uriEncode(path));
+                    path = SVNPathUtil.append(root, SVNEncodingUtil.uriEncode(path));
                 } else {
                     path = getFullPath(path);
                     path = SVNEncodingUtil.uriEncode(path);
@@ -555,13 +554,13 @@ class DAVRepository extends SVNRepository {
             path = SVNEncodingUtil.uriEncode(path);
             if (revision < 0) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
-                path = PathUtil.append(info.baselineBase, info.baselinePath);
+                path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             }
             myConnection.doPropfind(path, 0, null, null, new IDAVResponseHandler() {
                 public void handleDAVResponse(DAVResponse child) {
-                    String href = PathUtil.removeTrailingSlash(child.getHref());
+                    String href = child.getHref();
                     href = SVNEncodingUtil.uriDecode(href);
-                    String name = PathUtil.tail(href);
+                    String name = SVNPathUtil.tail(href);
                     // build direntry
                     SVNNodeKind kind = SVNNodeKind.FILE;
                     Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);

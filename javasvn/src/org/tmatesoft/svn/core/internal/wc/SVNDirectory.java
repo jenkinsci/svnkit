@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
@@ -70,7 +69,7 @@ public class SVNDirectory {
     }
 
     public SVNDirectory getChildDirectory(String name) {
-        return myWCAccess.getDirectory("".equals(myPath) ? name : PathUtil
+        return myWCAccess.getDirectory("".equals(myPath) ? name : SVNPathUtil
                 .append(myPath, name));
     }
 
@@ -673,7 +672,7 @@ public class SVNDirectory {
                 continue;
             }
             SVNEntry entry = entries.getEntry(childFile.getName(), true);
-            String path = PathUtil.append(getPath(), childFile.getName());
+            String path = SVNPathUtil.append(getPath(), childFile.getName());
             path = path.replace('/', File.separatorChar);
             if (entry == null || entry.isHidden()) {
                 // no entry or entry is 'deleted'
@@ -861,7 +860,7 @@ public class SVNDirectory {
                     return;
                 }
             } else {
-                String parentPath = PathUtil.removeTail(myPath);
+                String parentPath = SVNPathUtil.removeTail(myPath);
                 parent = myWCAccess.getDirectory(parentPath);
                 if (parent != null && !parent.isVersioned()) {
                     parent = null;
@@ -909,7 +908,7 @@ public class SVNDirectory {
                 child = getChildDirectory(name);
             } else {
                 child = this;
-                nameInParent = PathUtil.tail(myPath);
+                nameInParent = SVNPathUtil.tail(myPath);
                 String parentPath = SVNPathUtil.removeTail(myPath);
                 parent = myWCAccess.getDirectory(parentPath);
             }
@@ -1002,7 +1001,7 @@ public class SVNDirectory {
         if (fileKind == SVNNodeKind.DIR) {
             // compose new url
             String parentURL = getEntries().getEntry("", true).getURL();
-            String childURL = PathUtil.append(parentURL, SVNEncodingUtil.uriEncode(name));
+            String childURL = SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(name));
             // if child dir exists (deleted) -> check that url is the same and
             // revision is the same
             SVNDirectory childDir = getChildDirectory(name);
@@ -1068,13 +1067,13 @@ public class SVNDirectory {
             if (!"".equals(entry.getName()) && entry.isDirectory() && recursive) {
                 SVNDirectory childDir = getChildDirectory(entry.getName());
                 if (childDir != null) {
-                    String childURL = PathUtil.append(rootURL, SVNEncodingUtil.uriEncode(entry.getName()));
+                    String childURL = SVNPathUtil.append(rootURL, SVNEncodingUtil.uriEncode(entry.getName()));
                     childDir.updateURL(childURL, recursive);
                 }
                 continue;
             }
             entries.setPropertyValue(entry.getName(), SVNProperty.URL, ""
-                    .equals(entry.getName()) ? rootURL : PathUtil.append(
+                    .equals(entry.getName()) ? rootURL : SVNPathUtil.append(
                     rootURL, SVNEncodingUtil.uriEncode(entry.getName())));
         }
         entries.save(false);

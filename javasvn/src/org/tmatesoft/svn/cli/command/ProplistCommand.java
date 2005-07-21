@@ -18,11 +18,11 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -69,7 +69,7 @@ public class ProplistCommand extends SVNCommand implements ISVNPropertyHandler {
 
     public void handleProperty(File path, SVNPropertyData property) throws SVNException {
         if (!path.equals(myCurrentFile)) {
-            myOut.println("Properties on '" + SVNUtil.getPath(path) + "':");
+            myOut.println("Properties on '" + SVNFormatUtil.formatPath(path) + "':");
             myCurrentFile = path;
         }
         myOut.print("  ");

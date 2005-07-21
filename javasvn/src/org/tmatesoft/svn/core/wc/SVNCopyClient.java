@@ -47,7 +47,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -252,7 +251,7 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNRepository repos = createRepository(dstURL);
         SVNNodeKind dstKind = repos.checkPath("", -1);
         if (dstKind == SVNNodeKind.DIR) {
-            dstURL = PathUtil
+            dstURL = SVNPathUtil
                     .append(dstURL, SVNEncodingUtil.uriEncode(srcPath.getName()));
         } else if (dstKind == SVNNodeKind.FILE) {
             SVNErrorManager.error("svn: File '" + dstURL + "' already exists");
@@ -399,7 +398,7 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         String srcUUID = repos.getRepositoryUUID();
         if (dstPath.isDirectory()) {
-            dstPath = new File(dstPath, SVNEncodingUtil.uriDecode(PathUtil.tail(srcURL)));
+            dstPath = new File(dstPath, SVNEncodingUtil.uriDecode(SVNPathUtil.tail(srcURL)));
             if (dstPath.exists()) {
                 SVNErrorManager.error("svn: Path '" + dstPath + "' already exists");
             }
@@ -421,7 +420,7 @@ public class SVNCopyClient extends SVNBasicClient {
             if (srcKind == SVNNodeKind.DIR) {
                 String dstURL = wcAccess.getAnchor().getEntries()
                         .getPropertyValue("", SVNProperty.URL);
-                dstURL = PathUtil.append(dstURL, SVNEncodingUtil.uriEncode(dstPath
+                dstURL = SVNPathUtil.append(dstURL, SVNEncodingUtil.uriEncode(dstPath
                         .getName()));
                 SVNDirectory targetDir = createVersionedDirectory(dstPath,
                         dstURL, uuid, srcRevision);
@@ -499,7 +498,7 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         boolean resurrect = false;
         if (srcURL.equals(dstURL)) {
-            commonURL = PathUtil.removeTail(commonURL);
+            commonURL = SVNPathUtil.removeTail(commonURL);
             resurrect = true;
         }
         String srcRelative = SVNEncodingUtil.uriDecode(srcURL.substring(commonURL.length()));
@@ -529,8 +528,8 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNErrorManager.error("svn: Path '" + dstURL + "' already exists");
         } else if (dstKind == SVNNodeKind.DIR) {
             String newDstPath = dstRelative.length() == 0 ? 
-                    SVNEncodingUtil.uriDecode(PathUtil.tail(srcURL)) : 
-                    PathUtil.append(dstRelative, SVNEncodingUtil.uriDecode(PathUtil.tail(srcURL)));
+                    SVNEncodingUtil.uriDecode(SVNPathUtil.tail(srcURL)) : 
+                    SVNPathUtil.append(dstRelative, SVNEncodingUtil.uriDecode(SVNPathUtil.tail(srcURL)));
             dstKind = repos.checkPath(newDstPath, lastRevision);
             if (dstKind != SVNNodeKind.NONE) {
                 SVNErrorManager.error("svn: Path '" + newDstPath
@@ -673,7 +672,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNDirectory childDir = dir.getChildDirectory(name);
                 if (childDir != null) {
                     String childCopyFromURL = copyFromURL == null ? null
-                            : PathUtil.append(copyFromURL, SVNEncodingUtil.uriEncode(entry.getName()));
+                            : SVNPathUtil.append(copyFromURL, SVNEncodingUtil.uriEncode(entry.getName()));
                     updateCopiedDirectory(childDir, "", newURL,
                             childCopyFromURL, copyFromRevision);
                 }
@@ -689,8 +688,8 @@ public class SVNCopyClient extends SVNBasicClient {
                         continue;
                     }
                     String childCopyFromURL = copyFromURL == null ? null
-                            : PathUtil.append(copyFromURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
-                    String newChildURL = newURL == null ? null : PathUtil.append(newURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
+                            : SVNPathUtil.append(copyFromURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
+                    String newChildURL = newURL == null ? null : SVNPathUtil.append(newURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
                     updateCopiedDirectory(dir, childEntry.getName(),
                             newChildURL, childCopyFromURL, copyFromRevision);
                 }
@@ -849,7 +848,7 @@ public class SVNCopyClient extends SVNBasicClient {
 
         String newURL = dstAccess.getAnchor().getEntries().getEntry("", true)
                 .getURL();
-        newURL = PathUtil.append(newURL, SVNEncodingUtil.uriEncode(dstName));
+        newURL = SVNPathUtil.append(newURL, SVNEncodingUtil.uriEncode(dstName));
 
         File dstPath = new File(dstAccess.getAnchor().getRoot(), dstName);
 

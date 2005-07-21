@@ -17,10 +17,10 @@ import java.util.Iterator;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
@@ -86,7 +86,7 @@ public class SVNReporter implements ISVNReporterBaton {
                 String url = targetEntry.getURL();
                 SVNEntry parentEntry = targetEntries.getEntry("", true);
                 String parentURL = parentEntry.getURL();
-                String expectedURL = PathUtil.append(parentURL, SVNEncodingUtil.uriEncode(targetEntry.getName()));
+                String expectedURL = SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(targetEntry.getName()));
                 if (!expectedURL.equals(url)) {
                     reporter.linkPath(url, "",
                             targetEntry.getLockToken(), targetEntry
@@ -134,7 +134,7 @@ public class SVNReporter implements ISVNReporterBaton {
             if ("".equals(entry.getName())) {
                 continue;
             }
-            String path = "".equals(dirPath) ? entry.getName() : PathUtil
+            String path = "".equals(dirPath) ? entry.getName() : SVNPathUtil
                     .append(dirPath, entry.getName());
             if (entry.isDeleted() || entry.isAbsent()) {
                 if (!reportAll) {
@@ -168,7 +168,7 @@ public class SVNReporter implements ISVNReporterBaton {
                 String url = entry.getURL();
                 String parentURL = entries
                         .getPropertyValue("", SVNProperty.URL);
-                String expectedURL = PathUtil.append(parentURL, SVNEncodingUtil.uriEncode(entry.getName()));
+                String expectedURL = SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(entry.getName()));
                 if (reportAll) {
                     if (!url.equals(expectedURL)
                             && !entry.isScheduledForAddition()

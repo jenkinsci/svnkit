@@ -15,7 +15,6 @@ import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Stack;
 import java.util.StringTokenizer;
 
 
@@ -52,43 +51,41 @@ public class SVNFormatUtil {
     }
     
     // path relative to the program home directory, or absolute path
-    public static String formatPath(File file, File rootFile) {
-        String rootPath = rootFile == null ? System.getProperty("user.dir") : rootFile.getAbsolutePath();
-        if (rootPath == null) {
-            rootPath = new File("").getAbsolutePath(); 
-        }
-        rootPath = rootPath.replace(File.separatorChar, '/');
-        String path = file.getAbsolutePath();
+    public static String formatPath(File file) {
+        String path;
+        String rootPath;
+        path = file.getAbsolutePath();
+        rootPath = new File("").getAbsolutePath();
         path = path.replace(File.separatorChar, '/');
-        
-        Stack segments = new Stack();
-        for(StringTokenizer tokens = new StringTokenizer(path, "/", false); tokens.hasMoreTokens();) {
+        rootPath = rootPath.replace(File.separatorChar, '/');
+        if (path.startsWith(rootPath)) {
+            path = path.substring(rootPath.length());
+        }
+        // remove all "./"
+        path = condensePath(path);
+        path = path.replace('/', File.separatorChar);
+        if (path.trim().length() == 0) {
+            path = ".";
+        }
+        return path;
+    }
+
+    private static String condensePath(String path) {
+        StringBuffer result = new StringBuffer();
+        for (StringTokenizer tokens = new StringTokenizer(path, "/", true); tokens
+                .hasMoreTokens();) {
             String token = tokens.nextToken();
             if (".".equals(token)) {
-                if (segments.isEmpty()) {
-                    segments.push(rootPath);
-                }
-            } else if ("..".equals(token)) {
-                if (segments.isEmpty()) {
-                    if (rootPath.lastIndexOf('/') > 0) {
-                        segments.push(rootPath.substring(0, rootPath.lastIndexOf('/')));
+                if (tokens.hasMoreTokens()) {
+                    String nextToken = tokens.nextToken();
+                    if (!nextToken.equals("/")) {
+                        result.append(nextToken);
                     }
-                } else {
-                    segments.pop();
                 }
-            } else {
-                segments.push(token);
+                continue;
             }
+            result.append(token);
         }
-        StringBuffer condencedPath = new StringBuffer();
-        while(!segments.isEmpty()) {
-            condencedPath.insert(0, "/" + segments.pop());
-        }
-        if (path.equals(rootPath)) {
-            return ".";
-        } else if (path.startsWith(rootPath + "/")) {
-            return path.substring((rootPath + "/").length());
-        } 
-        return path;
+        return result.toString();
     }
 }

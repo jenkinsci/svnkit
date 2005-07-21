@@ -311,4 +311,22 @@ public class SVNPathUtil {
         }
         return false;
     }
+
+    public static String tail(String path) {
+        for(int i = path.length() - 1; i >= 0; i--) {
+            if (path.charAt(i) == '/') {
+                return path.substring(i + 1); 
+            }
+        }
+        return path;
+    }
+
+    public static String head(String path) {
+        for(int i = 0; i < path.length(); i++) {
+            if (path.charAt(i) == '/') {
+                return path.substring(0, i); 
+            }
+        }
+        return path;
+    }
 }

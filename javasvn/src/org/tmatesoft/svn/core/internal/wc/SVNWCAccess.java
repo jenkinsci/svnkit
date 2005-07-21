@@ -26,10 +26,10 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -101,11 +101,10 @@ public class SVNWCAccess implements ISVNEventHandler {
                     String targetURL = targetEntry.getURL();
                     if (anchorURL != null && targetURL != null) {
                         String urlName = SVNEncodingUtil.uriEncode(targetInAnchor.getName());
-                        String expectedURL = PathUtil
+                        String expectedURL = SVNPathUtil
                                 .append(anchorURL, urlName);
                         if (!expectedURL.equals(targetURL)
-                                || !anchorURL.equals(PathUtil
-                                        .removeTail(targetURL))) {
+                                || !anchorURL.equals(SVNPathUtil.removeTail(targetURL))) {
                             // switched, do not use anchor.
                             anchor = null;
                             if (target != null) {
@@ -200,7 +199,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                             && (SVNProperty.URL.equals(propertyName) || SVNProperty.COPYFROM_URL
                                     .equals(propertyName))) {
                         // special handling for URLs.
-                        value = PathUtil.append(value, SVNEncodingUtil.uriEncode(myName));
+                        value = SVNPathUtil.append(value, SVNEncodingUtil.uriEncode(myName));
                     }
                 }
             }
@@ -214,7 +213,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                     && (SVNProperty.URL.equals(propertyName) || SVNProperty.COPYFROM_URL
                             .equals(propertyName))) {
                 // special handling for URLs.
-                value = PathUtil.append(value, SVNEncodingUtil.uriEncode(myName));
+                value = SVNPathUtil.append(value, SVNEncodingUtil.uriEncode(myName));
             }
         }
         return value;
@@ -243,7 +242,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                     dirs.add(myDirectories.get(p));
                 }
             } else {
-                p = PathUtil.removeTail(p);
+                p = SVNPathUtil.removeTail(p);
                 if (p.equals(path)) {
                     dirs.add(myDirectories.get(p));
                 }
@@ -380,7 +379,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             if (parts.size() < 2) {
                 continue;
             }
-            path = PathUtil.append(rootPath, (String) parts.get(0));
+            path = SVNPathUtil.append(rootPath, (String) parts.get(0));
             if (parts.size() == 2) {
                 url = (String) parts.get(1);
             } else if (parts.size() == 3
@@ -407,17 +406,16 @@ public class SVNWCAccess implements ISVNEventHandler {
                 url = (String) parts.get(3);
             }
             if (path != null && url != null) {
-                path = PathUtil.removeLeadingSlash(path);
-                path = PathUtil.removeTrailingSlash(path);
                 if ("".equals(rootPath)
                         && ((String) parts.get(0)).startsWith("/")) {
                     path = "/" + path;
                 }
-                url = PathUtil.removeTrailingSlash(url);
-
-                SVNExternalInfo info = new SVNExternalInfo("", null, path, url,
-                        rev);
-                // addExternal(directory, path, url, rev);
+                try {
+                    url = SVNURL.parse(url).toString();
+                } catch (SVNException e) {
+                    continue;
+                }
+                SVNExternalInfo info = new SVNExternalInfo("", null, path, url, rev);
                 result.add(info);
             }
         }
@@ -468,7 +466,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                     && SVNFileType.getType(dir) == SVNFileType.DIRECTORY) {
                 String path = SVNPathUtil.append(parentPath, dir.getName());
                 SVNDirectory svnDir = new SVNDirectory(this, ""
-                        .equals(parentPath) ? dir.getName() : PathUtil.append(
+                        .equals(parentPath) ? dir.getName() : SVNPathUtil.append(
                         parentPath, dir.getName()), dir);
                 if (svnDir.isVersioned()) {
                     visitDirectories(path, svnDir, visitor);
@@ -505,7 +503,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                     if (fType == SVNFileType.DIRECTORY
                             && SVNWCAccess.isVersionedDirectory(childDir)) {
                         // recurse
-                        String childPath = PathUtil.append(path, childDir
+                        String childPath = SVNPathUtil.append(path, childDir
                                 .getName());
                         addDirectory(childPath, childDir, recursive, lock);
                     }

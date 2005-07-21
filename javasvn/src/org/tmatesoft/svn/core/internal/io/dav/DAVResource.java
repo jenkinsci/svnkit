@@ -28,8 +28,8 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -56,10 +56,7 @@ class DAVResource {
     public DAVResource(ISVNWorkspaceMediator mediator, DAVConnection connection, String path, long revision, boolean isCopy) {
         myPath = path;
         myMediator = mediator;
-        myURL = PathUtil.append(connection.getLocation().getPath(), path);
-        if (myURL.endsWith("/")) {
-            myURL = PathUtil.removeTrailingSlash(myURL);
-        }
+        myURL = SVNPathUtil.append(connection.getLocation().getPath(), path);
         myRevision = revision;
         myConnection = connection;
         myIsCopy = isCopy;
@@ -98,7 +95,7 @@ class DAVResource {
             if (myRevision >= 0) {
                 // get baseline collection url for revision from public url.
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, myRevision, false, false, null);
-                path = PathUtil.append(info.baselineBase, info.baselinePath);
+                path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             }
             // get "checked-in" property from baseline collection or from HEAD, this will be vURL.
             // this shouldn't be called for copied urls.

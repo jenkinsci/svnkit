@@ -29,8 +29,8 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVOptionsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNURL;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -74,7 +74,7 @@ public class DAVConnection {
                         if ("".equals(path) || "/".equals(path)) {
                             throw new SVNException(status.getErrorText());
                         }
-                        path = PathUtil.removeTail(path);
+                        path = SVNPathUtil.removeTail(path);
                     } else if (status.getResponseCode() == 200 || status.getResponseCode() == 207) {
                         break;
                     } else {
@@ -83,21 +83,22 @@ public class DAVConnection {
                 }
                 String uuid = (String) result[0].getPropertyValue(DAVElement.REPOSITORY_UUID);
                 String relativePath = (String) result[0].getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
-
                 
                 String root = myLocation.getPath();
                 if (relativePath != null) {
-                    relativePath = PathUtil.removeTrailingSlash(relativePath);
-                    relativePath = SVNEncodingUtil.uriEncode(relativePath);
-                    root = PathUtil.removeTrailingSlash(root);
                     if (root.endsWith(relativePath)) {
                         root = root.substring(0, root.length() - relativePath.length() - 1);                        
                     }
                 } else {
                 	root = path;
                 }
-                // TODO get rootURL
-                String url = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + root;
+                // do not use port if location had no port specified
+                String url;
+                if (myLocation.toString().lastIndexOf(':') != myLocation.toString().indexOf("://")) {
+                    url = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + root;
+                } else {
+                    url = myLocation.getProtocol() + "://" + myLocation.getHost() + root;
+                }
                 repository.updateCredentials(uuid, url);
             }
         }

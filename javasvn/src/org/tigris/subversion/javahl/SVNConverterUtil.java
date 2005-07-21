@@ -17,13 +17,13 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @author evgeny
@@ -306,7 +306,7 @@ public class SVNConverterUtil {
         String copyUrl = info.getCopyFromURL();
 
         return new Info(
-                info.getFile() != null ? info.getFile().getName() : PathUtil.tail(info.getPath()),
+                info.getFile() != null ? info.getFile().getName() : SVNPathUtil.tail(info.getPath()),
                 info.getURL(),
                 info.getRepositoryUUID(),
                 info.getRepositoryRootURL(),

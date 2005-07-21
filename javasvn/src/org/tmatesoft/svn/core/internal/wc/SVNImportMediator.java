@@ -11,8 +11,8 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
-import org.tmatesoft.svn.util.PathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +48,7 @@ public class SVNImportMediator implements ISVNWorkspaceMediator {
     public OutputStream createTemporaryLocation(String path, Object id)
             throws IOException {
         File tmpFile = SVNFileUtil.createUniqueFile(myRoot,
-                PathUtil.tail(path), ".tmp");
+                SVNPathUtil.tail(path), ".tmp");
         OutputStream os;
         try {
             os = SVNFileUtil.openFileForWriting(tmpFile);

@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -39,7 +40,6 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
@@ -121,7 +121,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNRevision revision, boolean recursive) throws SVNException {
         url = validateURL(url);
         if (dstPath == null) {
-            dstPath = new File(".", PathUtil.tail(url));
+            dstPath = new File(".", SVNPathUtil.tail(url));
         }
         if (!revision.isValid() && !pegRevision.isValid()) {
             pegRevision = SVNRevision.HEAD;
@@ -181,7 +181,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             boolean recursive) throws SVNException {
         url = validateURL(url);
         if (dstPath == null) {
-            dstPath = new File(".", PathUtil.tail(url));
+            dstPath = new File(".", SVNPathUtil.tail(url));
         }
         if (!revision.isValid() && !pegRevision.isValid()) {
             pegRevision = SVNRevision.HEAD;
@@ -198,7 +198,7 @@ public class SVNUpdateClient extends SVNBasicClient {
 
         if (targetNodeKind == SVNNodeKind.FILE) {
             if (dstPath.isDirectory()) {
-                dstPath = new File(dstPath, SVNEncodingUtil.uriDecode(PathUtil.tail(url)));
+                dstPath = new File(dstPath, SVNEncodingUtil.uriDecode(SVNPathUtil.tail(url)));
             }
             if (dstPath.exists()) {
                 if (!force) {
@@ -264,18 +264,11 @@ public class SVNUpdateClient extends SVNBasicClient {
                     for (int i = 0; i < infos.length; i++) {
                         File targetDir = new File(rootFile, infos[i].getPath());
                         String srcURL = infos[i].getOldURL();
-                        SVNRevision srcRevision = SVNRevision.create(infos[i]
-                                .getOldRevision());
-                        String relativePath = targetDir.getAbsolutePath()
-                                .substring(dstPath.getAbsolutePath().length());
-                        relativePath = relativePath.replace(File.separatorChar,
-                                '/');
-                        relativePath = PathUtil
-                                .removeLeadingSlash(relativePath);
-                        relativePath = PathUtil
-                                .removeTrailingSlash(relativePath);
-                        dispatchEvent(SVNEventFactory
-                                .createUpdateExternalEvent(null, relativePath));
+                        SVNRevision srcRevision = SVNRevision.create(infos[i].getOldRevision());
+                        String relativePath = 
+                            targetDir.equals(dstPath) ? "" : targetDir.getAbsolutePath().substring(dstPath.getAbsolutePath().length() + 1);
+                        relativePath = relativePath.replace(File.separatorChar, '/');
+                        dispatchEvent(SVNEventFactory.createUpdateExternalEvent(null, relativePath));
                         try {
                             setEventPathPrefix(relativePath);
                             doExport(srcURL, targetDir, srcRevision,
@@ -390,7 +383,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             String copyFromURL = entry.getCopyFromURL();
             if (copyFromURL != null && copyFromURL.startsWith(oldURL)) {
                 copyFromURL = copyFromURL.substring(oldURL.length());
-                copyFromURL = PathUtil.append(newURL, copyFromURL);
+                copyFromURL = SVNPathUtil.append(newURL, copyFromURL);
                 copyFromURL = validateURL(copyFromURL);
                 entry.setCopyFromURL(copyFromURL);
             }
@@ -403,7 +396,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 String url = entry.getURL();
                 if (url.startsWith(oldURL)) {
                     url = url.substring(oldURL.length());
-                    url = PathUtil.append(newURL, url);
+                    url = SVNPathUtil.append(newURL, url);
                     url = validateURL(url);
                     entry.setURL(url);
                 }

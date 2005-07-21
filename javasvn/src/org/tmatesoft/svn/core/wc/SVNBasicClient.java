@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -33,7 +34,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -141,13 +141,11 @@ public class SVNBasicClient implements ISVNEventHandler {
                 for (Iterator paths = myPathPrefixesStack.iterator(); paths
                         .hasNext();) {
                     String segment = (String) paths.next();
-                    path = PathUtil.append(path, segment);
+                    path = SVNPathUtil.append(path, segment);
                 }
             }
-            if (path != null && !PathUtil.isEmpty(path)) {
-                path = PathUtil.append(path, event.getPath());
-                path = PathUtil.removeLeadingSlash(path);
-                path = PathUtil.removeTrailingSlash(path);
+            if (path != null && !"".equals(path)) {
+                path = SVNPathUtil.append(path, event.getPath());
                 event.setPath(path);
             }
             myEventDispatcher.handleEvent(event, progress);
@@ -176,10 +174,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (pathPrefix != null) {
             wcAccess.setEventDispatcher(new ISVNEventHandler() {
                 public void handleEvent(SVNEvent event, double progress) {
-                    String fullPath = PathUtil.append(pathPrefix, event
-                            .getPath());
-                    fullPath = PathUtil.removeTrailingSlash(fullPath);
-                    fullPath = PathUtil.removeLeadingSlash(fullPath);
+                    String fullPath = SVNPathUtil.append(pathPrefix, event.getPath());
                     event.setPath(fullPath);
                     dispatchEvent(event, progress);
                 }
@@ -279,8 +274,8 @@ public class SVNBasicClient implements ISVNEventHandler {
         String rootPath = repos.getRepositoryRoot().getPath();
         String fullPath = SVNURL.parse(url).getPath();
         url = url.substring(0, url.length() - fullPath.length());
-        url = PathUtil.append(url, rootPath);
-        url = PathUtil.append(url, path);
+        url = SVNPathUtil.append(url, rootPath);
+        url = SVNPathUtil.append(url, path);
         return url;
     }
 
@@ -425,10 +420,10 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         String host = url.substring(0, url.indexOf('/', url.indexOf("://") + 3));
         String startPath = host
-                + SVNEncodingUtil.uriEncode(PathUtil.append(rootPath, startLocation
+                + SVNEncodingUtil.uriEncode(SVNPathUtil.append(rootPath, startLocation
                         .getPath()));
         String endPath = host
-                + SVNEncodingUtil.uriEncode(PathUtil.append(rootPath, endLocation
+                + SVNEncodingUtil.uriEncode(SVNPathUtil.append(rootPath, endLocation
                         .getPath()));
         return new RepositoryReference[] {
                 new RepositoryReference(startPath, startRev),

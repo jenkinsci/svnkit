@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
-import org.tmatesoft.svn.util.PathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
@@ -334,7 +334,7 @@ public class SVNTranslator {
                     if (expand && id == null) {
                         rev = rev == null ? r.getBytes("UTF-8") : rev;
                         date = date == null ? SVNFormatUtil.formatDate(jDate).getBytes("UTF-8") : date;
-                        name = name == null ? SVNEncodingUtil.uriDecode(PathUtil.tail(u))
+                        name = name == null ? SVNEncodingUtil.uriDecode(SVNPathUtil.tail(u))
                                 .getBytes("UTF-8") : name;
                         author = author == null ? (a == null ? new byte[0] : a
                                 .getBytes("UTF-8")) : author;

@@ -49,7 +49,6 @@ import org.tmatesoft.svn.util.Base64;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.LoggingInputStream;
 import org.tmatesoft.svn.util.LoggingOutputStream;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.SocketFactory;
 import org.tmatesoft.svn.util.Version;
 import org.xml.sax.SAXException;
@@ -232,7 +231,6 @@ class HttpConnection {
 
     private DAVStatus sendRequest(String method, String path, Map header, InputStream requestBody) throws SVNException {
         Map readHeader = new HashMap();
-        path = PathUtil.removeTrailingSlash(path);
         if (myCredentialsChallenge != null) {
             myCredentialsChallenge.put("methodname", method);
             myCredentialsChallenge.put("uri", path);

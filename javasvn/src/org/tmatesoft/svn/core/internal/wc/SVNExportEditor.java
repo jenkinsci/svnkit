@@ -25,11 +25,11 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
@@ -112,7 +112,7 @@ public class SVNExportEditor implements ISVNEditor {
 
     public void closeDir() throws SVNException {
         myCurrentDirectory = myCurrentDirectory.getParentFile();
-        myCurrentPath = PathUtil.tail(myCurrentPath);
+        myCurrentPath = SVNPathUtil.tail(myCurrentPath);
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision)
@@ -222,8 +222,8 @@ public class SVNExportEditor implements ISVNEditor {
                     .get(SVNProperty.KEYWORDS);
             Map keywordsMap = null;
             if (keywords != null) {
-                String url = PathUtil.append(myURL, SVNEncodingUtil.uriEncode(myCurrentPath));
-                url = PathUtil.append(url, SVNEncodingUtil.uriEncode(myCurrentFile.getName()));
+                String url = SVNPathUtil.append(myURL, SVNEncodingUtil.uriEncode(myCurrentPath));
+                url = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(myCurrentFile.getName()));
                 String author = (String) myFileProperties
                         .get(SVNProperty.LAST_AUTHOR);
                 String revStr = (String) myFileProperties

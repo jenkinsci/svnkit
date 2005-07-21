@@ -21,11 +21,11 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -108,7 +108,7 @@ public class PropsetCommand extends SVNCommand {
                 if (!recursive) {
                     wcClient.doSetProperty(new File(absolutePath), propertyName, propertyValue, force, recursive, new ISVNPropertyHandler() {
                         public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-                            out.println("Property '" + propertyName + "' set on '" + SVNUtil.getPath(path) + "'");
+                            out.println("Property '" + propertyName + "' set on '" + SVNFormatUtil.formatPath(path) + "'");
                         }
                         public void handleProperty(String url, SVNPropertyData property) throws SVNException {
                         }

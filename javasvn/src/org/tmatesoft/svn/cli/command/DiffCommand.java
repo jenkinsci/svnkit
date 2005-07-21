@@ -20,12 +20,12 @@ import java.util.Map;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
-import org.tmatesoft.svn.util.SVNUtil;
 
 /**
  * @author TMate Software Ltd.
@@ -37,7 +37,7 @@ public class DiffCommand extends SVNCommand {
         SVNDiffClient differ = getClientManager().getDiffClient();
         differ.setDiffGenerator(new DefaultSVNDiffGenerator() {
             public String getDisplayPath(File file) {
-                return SVNUtil.getPath(file).replace(File.separatorChar, '/');
+                return SVNFormatUtil.formatPath(file).replace(File.separatorChar, '/');
             }
             public void displayFileDiff(String path, File file1, File file2,
                                         String rev1, String rev2, String mimeType1, String mimeType2,
@@ -110,8 +110,8 @@ public class DiffCommand extends SVNCommand {
                     if (".".equals(p)) {
                         p = "";
                     }
-                    String oP = PathUtil.append(oldPath, p);
-                    String nP = PathUtil.append(newPath, p);
+                    String oP = SVNPathUtil.append(oldPath, p);
+                    String nP = SVNPathUtil.append(newPath, p);
                     try {
                         if (!getCommandLine().isURL(oP) && getCommandLine().isURL(nP)) {
                             differ.doDiff(new File(oP).getAbsoluteFile(), nP, peg2, rN, rM, recursive, useAncestry, out);

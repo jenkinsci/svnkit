@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.ISVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNAllDeltaGenerator;
@@ -31,7 +32,6 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.util.PathUtil;
 
 /**
  * @version 1.0
@@ -156,9 +156,8 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                     SVNEventAction.COMMIT_DELTA_SENT, SVNNodeKind.FILE, null);
             myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
 
-            SVNDirectory dir = myWCAccess.getDirectory(PathUtil.removeTail(item
-                    .getPath()));
-            String name = PathUtil.tail(item.getPath());
+            SVNDirectory dir = myWCAccess.getDirectory(SVNPathUtil.removeTail(item.getPath()));
+            String name = SVNPathUtil.tail(item.getPath());
             SVNEntry entry = dir.getEntries().getEntry(name, false);
 
             File tmpFile = dir.getBaseFile(name, true);
@@ -217,8 +216,8 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             dir = myWCAccess.getDirectory(item.getPath());
             name = "";
         } else {
-            dir = myWCAccess.getDirectory(PathUtil.removeTail(item.getPath()));
-            name = PathUtil.tail(item.getPath());
+            dir = myWCAccess.getDirectory(SVNPathUtil.removeTail(item.getPath()));
+            name = SVNPathUtil.tail(item.getPath());
         }
         SVNEntry entry = dir.getEntries().getEntry(name, false);
         boolean replaced = false;

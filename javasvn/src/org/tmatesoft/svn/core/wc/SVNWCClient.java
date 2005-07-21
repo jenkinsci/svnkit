@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -44,7 +45,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
 import org.tmatesoft.svn.util.TimeUtil;
 
 /**
@@ -1002,7 +1002,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (!rootPath.startsWith("/")) {
             rootPath = "/" + rootPath;
         }
-        reposRoot = PathUtil.append(url.substring(0, url.length() - fullPath.length()), reposRoot);
+        reposRoot = SVNPathUtil.append(url.substring(0, url.length() - fullPath.length()), reposRoot);
         collectInfo(repos, rootEntry, SVNRevision.create(revNum), rootPath,
                 reposRoot, reposUUID, url, locksMap, recursive, handler);
     }
@@ -1093,20 +1093,19 @@ public class SVNWCClient extends SVNBasicClient {
             throws SVNException {
         String rootPath = repos.getLocation().getPath();
         rootPath = SVNEncodingUtil.uriDecode(rootPath);
-        String displayPath = PathUtil.append(repos.getRepositoryRoot().getPath(), path).substring(rootPath.length());
+        
+        String displayPath = repos.getRelativePath(repos.getFullPath(path));
         if ("".equals(displayPath) || "/".equals(displayPath)) {
             displayPath = path;
         }
-        displayPath = PathUtil.removeLeadingSlash(displayPath);
-        handler.handleInfo(SVNInfo.createInfo(displayPath, root, uuid, url,
-                rev, entry, (SVNLock) locks.get(path)));
+        handler.handleInfo(SVNInfo.createInfo(displayPath, root, uuid, url, rev, entry, (SVNLock) locks.get(path)));
         if (entry.getKind() == SVNNodeKind.DIR && recursive) {
             Collection children = repos.getDir(path, rev.getNumber(), null,
                     new ArrayList());
             for (Iterator ents = children.iterator(); ents.hasNext();) {
                 SVNDirEntry child = (SVNDirEntry) ents.next();
-                String childURL = PathUtil.append(url, SVNEncodingUtil.uriEncode(child.getName()));
-                collectInfo(repos, child, rev, PathUtil.append(path, child
+                String childURL = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(child.getName()));
+                collectInfo(repos, child, rev, SVNPathUtil.append(path, child
                         .getName()), root, uuid, childURL, locks, recursive,
                         handler);
             }
@@ -1213,9 +1212,9 @@ public class SVNWCClient extends SVNBasicClient {
             if (recursive) {
                 for (Iterator entries = children.iterator(); entries.hasNext();) {
                     SVNDirEntry child = (SVNDirEntry) entries.next();
-                    String childURL = PathUtil.append(url, SVNEncodingUtil.uriEncode(child.getName()));
+                    String childURL = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(child.getName()));
                     String childPath = "".equals(path) ? child.getName()
-                            : PathUtil.append(path, child.getName());
+                            : SVNPathUtil.append(path, child.getName());
                     doGetRemoteProperty(childURL, childPath, repos, propName,
                             rev, recursive, handler);
                 }
