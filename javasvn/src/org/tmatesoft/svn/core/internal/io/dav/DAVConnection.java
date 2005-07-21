@@ -180,7 +180,7 @@ public class DAVConnection {
         if (force) {
             header.put("X-SVN-Options", "lock-break");
         }
-        myHttpConnection.request("UNLOCK", url, header, (StringBuffer) null, null, new int[] {204});
+        myHttpConnection.request("UNLOCK", path, header, (StringBuffer) null, null, new int[] {204});
     }
 
 	public void doGet(String path, OutputStream os) throws SVNException {
@@ -191,11 +191,11 @@ public class DAVConnection {
 		myHttpConnection.request("REPORT", path, 0, null, requestBody, handler, new int[] {200, 207});
 	}
 
-    public void doProppatch(String url, String path, StringBuffer requestBody, DefaultHandler handler) throws SVNException {
+    public void doProppatch(String repositoryPath, String path, StringBuffer requestBody, DefaultHandler handler) throws SVNException {
         Map header = null;
-        if (myLocks != null && url != null && myLocks.containsKey(url)) {
+        if (myLocks != null && repositoryPath != null && myLocks.containsKey(repositoryPath)) {
             header = new HashMap();
-            header.put("If", "(<" + myLocks.get(url) + ">)");
+            header.put("If", "(<" + myLocks.get(repositoryPath) + ">)");
         }
         myHttpConnection.request("PROPPATCH", path, header, requestBody, handler, new int[] {200, 207});
 
@@ -217,23 +217,23 @@ public class DAVConnection {
         return myHttpConnection.request("DELETE", path, null, (StringBuffer) null, null, null);
     }
 
-    public DAVStatus doDelete(String url, String path, long revision) throws SVNException {
+    public DAVStatus doDelete(String repositoryPath, String path, long revision) throws SVNException {
         Map header = new HashMap();
         if (revision >= 0) {
             header.put("X-SVN-Version-Name", Long.toString(revision));
         }
         header.put("Depth", "infinity");
         StringBuffer request = null;
-        if (myLocks != null && DAVMergeHandler.hasChildPaths(url, myLocks)) {
-            if (myLocks.containsKey(url)) {
-                header.put("If", "<" + url + "> (<" + myLocks.get(url) + ">)");
+        if (myLocks != null && DAVMergeHandler.hasChildPaths(repositoryPath, myLocks)) {
+            if (myLocks.containsKey(repositoryPath)) {
+                header.put("If", "<" + repositoryPath + "> (<" + myLocks.get(repositoryPath) + ">)");
             }
             if (myKeepLocks) {
                 header.put("X-SVN-Options", "keep-locks");
             }
             request = new StringBuffer();
             request.append("<?xml version=\"1.0\" encoding=\"utf-8\"?> ");
-            request = DAVMergeHandler.generateLockDataRequest(request, myLocation.getPath(), url, myLocks);
+            request = DAVMergeHandler.generateLockDataRequest(request, myLocation.getPath(), repositoryPath, myLocks);
         }
         return myHttpConnection.request("DELETE", path, header, request, null, null);
     }
@@ -242,7 +242,7 @@ public class DAVConnection {
         return myHttpConnection.request("MKCOL", path, null, (StringBuffer) null, null, null);
     }
     
-    public DAVStatus doPutDiff(String url, String path, InputStream data) throws SVNException {
+    public DAVStatus doPutDiff(String repositoryPath, String path, InputStream data) throws SVNException {
         
         Map headers = new HashMap();
         headers.put("Content-Type", "application/vnd.svn-svndiff");
@@ -267,8 +267,8 @@ public class DAVConnection {
             }
             data = new ByteArrayInputStream(bos.toByteArray());
         }
-        if (myLocks != null && myLocks.containsKey(url)) {
-            headers.put("If", "<" + url + "> (<" + myLocks.get(url) + ">)");
+        if (myLocks != null && myLocks.containsKey(repositoryPath)) {
+            headers.put("If", "<" + repositoryPath + "> (<" + myLocks.get(repositoryPath) + ">)");
         }
         return myHttpConnection.request("PUT", path, headers, data, null, null);
     }
@@ -291,7 +291,7 @@ public class DAVConnection {
         return myHttpConnection.request("MERGE", myLocation.getPath(), header, request, handler, null);
     }
     
-    public DAVStatus doCheckout(String activityPath, String url, String path) throws SVNException {
+    public DAVStatus doCheckout(String activityPath, String repositoryPath, String path) throws SVNException {
         StringBuffer request = new StringBuffer();
         request.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         request.append("<D:checkout xmlns:D=\"DAV:\">");
@@ -301,9 +301,9 @@ public class DAVConnection {
         request.append("</D:href>");
         request.append("</D:activity-set></D:checkout>");
         Map header = null;
-        if (myLocks != null && url != null && myLocks.containsKey(url)) {
+        if (myLocks != null && repositoryPath != null && myLocks.containsKey(repositoryPath)) {
             header = new HashMap();
-            header.put("If", "(<" + myLocks.get(url) + ">)");
+            header.put("If", "(<" + myLocks.get(repositoryPath) + ">)");
         }
         DAVStatus status = myHttpConnection.request("CHECKOUT", path, header, request, null, null);
         // update location to be a path!

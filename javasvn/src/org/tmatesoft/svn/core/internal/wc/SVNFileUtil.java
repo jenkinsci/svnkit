@@ -10,10 +10,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.PathUtil;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -32,6 +28,9 @@ import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.StringTokenizer;
+
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @version 1.0
@@ -295,21 +294,9 @@ public class SVNFileUtil {
         if (isWindows || link == null) {
             return null;
         }
-        String ls = execCommand(new String[] { "ls", "-ld",
-                link.getAbsolutePath() });
+        String ls = execCommand(new String[] { "ls", "-ld", link.getAbsolutePath() });
         if (ls == null || ls.lastIndexOf(" -> ") < 0) {
-            String linkPath = null;
-            try {
-                linkPath = link.getCanonicalPath();
-                String locationPath = link.getAbsolutePath();
-                if (linkPath.startsWith(locationPath)) {
-                    linkPath = PathUtil.removeLeadingSlash(linkPath
-                            .substring(locationPath.length()));
-                }
-            } catch (IOException e) {
-                //
-            }
-            return linkPath;
+            return null;
         }
         return ls.substring(ls.lastIndexOf(" -> ") + " -> ".length()).trim();
     }
