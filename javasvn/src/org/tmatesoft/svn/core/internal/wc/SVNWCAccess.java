@@ -354,8 +354,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                 .size()]);
     }
 
-    public static SVNExternalInfo[] parseExternals(String rootPath,
-            String externals) {
+    public static SVNExternalInfo[] parseExternals(String rootPath, String externals) {
         Collection result = new ArrayList();
         if (externals == null) {
             return (SVNExternalInfo[]) result
@@ -380,6 +379,9 @@ public class SVNWCAccess implements ISVNEventHandler {
                 continue;
             }
             path = SVNPathUtil.append(rootPath, (String) parts.get(0));
+            if (path.endsWith("/")) {
+                path = path.substring(0, path.length() - 1);
+            }
             if (parts.size() == 2) {
                 url = (String) parts.get(1);
             } else if (parts.size() == 3
@@ -419,8 +421,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                 result.add(info);
             }
         }
-        return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result
-                .size()]);
+        return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
     }
 
     private SVNExternalInfo addExternal(SVNDirectory dir, String path,

@@ -56,8 +56,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         super(repositoryFactory, options);
     }
 
-    public long doUpdate(File file, SVNRevision revision, boolean recursive)
-            throws SVNException {
+    public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {
         long revNumber = getRevisionNumber(file, revision);
         SVNWCAccess wcAccess = createWCAccess(file);
         final SVNReporter reporter = new SVNReporter(wcAccess, true, recursive);
@@ -66,16 +65,14 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, recursive, isLeaveConflictsUnresolved());
             SVNRepository repos = createRepository(wcAccess.getAnchor()
                     .getEntries().getEntry("", true).getURL());
-            String target = "".equals(wcAccess.getTargetName()) ? null
-                    : wcAccess.getTargetName();
+            String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             repos.update(revNumber, target, recursive, reporter, editor);
 
             if (editor.getTargetRevision() >= 0) {
                 if (recursive && !isIgnoreExternals()) {
                     handleExternals(wcAccess);
                 }
-                dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(
-                        wcAccess, editor.getTargetRevision()));
+                dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(wcAccess, editor.getTargetRevision()));
             }
             return editor.getTargetRevision();
         } finally {
@@ -410,26 +407,20 @@ public class SVNUpdateClient extends SVNBasicClient {
         try {
             for (Iterator externals = wcAccess.externals(); externals.hasNext();) {
                 SVNExternalInfo external = (SVNExternalInfo) externals.next();
-                if (external.getOldURL() == null
-                        && external.getNewURL() == null) {
+                if (external.getOldURL() == null && external.getNewURL() == null) {
                     continue;
                 }
                 long revNumber = external.getNewRevision();
-                SVNRevision revision = revNumber >= 0 ? SVNRevision
-                        .create(revNumber) : SVNRevision.HEAD;
+                SVNRevision revision = revNumber >= 0 ? SVNRevision.create(revNumber) : SVNRevision.HEAD;
                 setEventPathPrefix(external.getPath());
                 try {
                     if (external.getOldURL() == null) {
                         external.getFile().mkdirs();
-                        dispatchEvent(SVNEventFactory
-                                .createUpdateExternalEvent(wcAccess, ""));
-                        doCheckout(external.getNewURL(), external.getFile(),
-                                revision, revision, true);
+                        dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
+                        doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                     } else if (external.getNewURL() == null) {
-                        if (SVNWCAccess
-                                .isVersionedDirectory(external.getFile())) {
-                            SVNWCAccess externalAccess = createWCAccess(external
-                                    .getFile());
+                        if (SVNWCAccess.isVersionedDirectory(external.getFile())) {
+                            SVNWCAccess externalAccess = createWCAccess(external.getFile());
                             externalAccess.open(true, true);
                             externalAccess.getAnchor().destroy("", true);
                             externalAccess.close(true);
@@ -437,35 +428,26 @@ public class SVNUpdateClient extends SVNBasicClient {
                     } else if (external.isModified()) {
                         deleteExternal(external);
                         external.getFile().mkdirs();
-                        dispatchEvent(SVNEventFactory
-                                .createUpdateExternalEvent(wcAccess, ""));
-                        doCheckout(external.getNewURL(), external.getFile(),
-                                revision, revision, true);
+                        dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
+                        doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                     } else {
                         if (!external.getFile().isDirectory()) {
                             external.getFile().mkdirs();
-                            doCheckout(external.getNewURL(),
-                                    external.getFile(), revision, revision,
-                                    true);
+                            doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                         } else {
                             String url = null;
                             if (SVNWCAccess.isVersionedDirectory(external
                                     .getFile())) {
-                                SVNWCAccess externalAccess = createWCAccess(external
-                                        .getFile());
-                                url = externalAccess
-                                        .getTargetEntryProperty(SVNProperty.URL);
+                                SVNWCAccess externalAccess = createWCAccess(external.getFile());
+                                url = externalAccess.getTargetEntryProperty(SVNProperty.URL);
                             }
                             if (!external.getNewURL().equals(url)) {
                                 deleteExternal(external);
                             }
                             // update or checkout.
                             external.getFile().mkdirs();
-                            dispatchEvent(SVNEventFactory
-                                    .createUpdateExternalEvent(wcAccess, ""));
-                            doCheckout(external.getNewURL(),
-                                    external.getFile(), revision, revision,
-                                    true);
+                            dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
+                            doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                         }
                     }
                 } catch (Throwable th) {
