@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 
 /**
  * @version 1.0
@@ -301,7 +301,7 @@ public class SVNTranslator {
         byte[] name = null;
         byte[] id = null;
         
-        Date jDate = d == null ? null : TimeUtil.parseDate(d);
+        Date jDate = d == null ? null : SVNTimeUtil.parseDate(d);
 
         Map map = new HashMap();
         try {

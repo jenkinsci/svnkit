@@ -28,7 +28,7 @@ import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.util.DebugLog;
 import org.tmatesoft.svn.util.LoggingInputStream;
@@ -40,7 +40,7 @@ class SVNReader {
 
     public static Date getDate(Object[] items, int index) {
         String str = getString(items, index);
-        return TimeUtil.parseDate(str);
+        return SVNTimeUtil.parseDate(str);
     }
 
     public static long getLong(Object[] items, int index) {
@@ -651,7 +651,7 @@ class SVNReader {
         long size = SVNReader.getLong(items, 2);
         boolean hasProps = SVNReader.getBoolean(items, 3);
         long revision = SVNReader.getLong(items, 4);
-        Date date = items[5] != null ? TimeUtil.parseDate(SVNReader.getString(items, 5)) : null;
+        Date date = items[5] != null ? SVNTimeUtil.parseDate(SVNReader.getString(items, 5)) : null;
         String author = SVNReader.getString(items, 6);
         return new SVNDirEntry(name, kind, size, hasProps, revision, date,
                 author);
@@ -666,7 +666,7 @@ class SVNReader {
         long size = SVNReader.getLong(items, 1);
         boolean hasProps = SVNReader.getBoolean(items, 2);
         long revision = SVNReader.getLong(items, 3);
-        Date date = items[4] != null ? TimeUtil.parseDate(SVNReader.getString(items, 4)) : null;
+        Date date = items[4] != null ? SVNTimeUtil.parseDate(SVNReader.getString(items, 4)) : null;
         String author = SVNReader.getString(items, 5);
         return new SVNDirEntry(null, kind, size, hasProps, revision, date, author);
     }
@@ -681,9 +681,9 @@ class SVNReader {
         String comment = (String) items[3];
         String creationDate = (String) items[4];
         String expirationDate = (String) items[5];
-        Date created = creationDate != null ? TimeUtil.parseDate(creationDate)
+        Date created = creationDate != null ? SVNTimeUtil.parseDate(creationDate)
                 : null;
-        Date expires = expirationDate != null ? TimeUtil
+        Date expires = expirationDate != null ? SVNTimeUtil
                 .parseDate(expirationDate) : null;
 
         return new SVNLock(path, id, owner, comment, created, expires);

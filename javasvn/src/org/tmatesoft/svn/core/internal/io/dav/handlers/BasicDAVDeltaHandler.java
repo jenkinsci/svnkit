@@ -17,7 +17,7 @@ import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.util.Base64;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.util.DebugLog;
@@ -44,8 +44,8 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
             SVNDiffWindow window = null;
             OutputStream os = null;
 
-            myByteBuffer = Base64.base64ToByteArray(myDeltaOutputStream, myByteBuffer);
-            if (Base64.lastLength() == 4) {
+            myByteBuffer = SVNBase64.base64ToByteArray(myDeltaOutputStream, myByteBuffer);
+            if (SVNBase64.lastLength() == 4) {
                 try {
                     handleDiffWindowClosed();
                 } catch (SVNException e) {
@@ -74,7 +74,7 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
                     }
                 }
                 newOffset = newOffset + (int) window.getNewDataLength();
-                if (newOffset < Base64.lastLength()) {
+                if (newOffset < SVNBase64.lastLength()) {
                     myDiffBuilder.reset(1);
                     newOffset = myDiffBuilder.accept(myByteBuffer, newOffset);
                     window = myDiffBuilder.getDiffWindow();

@@ -18,7 +18,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.util.Base64;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.xml.sax.Attributes;
 
@@ -93,7 +93,7 @@ public class DAVProppatchHandler extends BasicDAVHandler {
         if (SVNEncodingUtil.isXMLSafe(value)) {
             value = SVNEncodingUtil.xmlEncodeCDATA(value);            
         } else {
-            value = Base64.byteArrayToBase64(value.getBytes());
+            value = SVNBase64.byteArrayToBase64(value.getBytes());
             buffer.append(" V:encoding=\"base64\"");
         }
         buffer.append(">");

@@ -32,7 +32,7 @@ import org.tmatesoft.svn.core.auth.ISVNSSLManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
- * <code>SocketFactory</code> is a utility class that represents a custom
+ * <code>SVNSocketFactory</code> is a utility class that represents a custom
  * socket factory which provides creating either a plain socket or a secure one
  * to encrypt data transmitted over network.
  * 
@@ -44,7 +44,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @author TMate Software Ltd.
  * 
  */
-public class SocketFactory {
+public class SVNSocketFactory {
 
     public static Socket createPlainSocket(String host, int port) throws SVNException {
         int attempts = 3;

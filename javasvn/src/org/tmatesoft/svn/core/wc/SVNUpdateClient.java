@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -595,7 +595,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNFileUtil.setExecutable(dstPath, true);
         }
         if (!special && date != null) {
-            dstPath.setLastModified(TimeUtil.parseDate(date).getTime());
+            dstPath.setLastModified(SVNTimeUtil.parseDate(date).getTime());
         }
     }
 }

@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.xml.sax.Attributes;
 
@@ -158,7 +158,7 @@ public class DAVMergeHandler extends BasicDAVHandler {
                 } 
             }
         } else if (element == DAVElement.CREATION_DATE) {
-            myCommitDate = TimeUtil.parseDate(cdata.toString());
+            myCommitDate = SVNTimeUtil.parseDate(cdata.toString());
         } else if (element == DAVElement.CREATOR_DISPLAY_NAME) {
             myAuthor = cdata.toString();
         } else if (element == DAVElement.VERSION_NAME) {

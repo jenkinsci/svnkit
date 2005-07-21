@@ -31,7 +31,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -783,7 +783,7 @@ public class SVNWCClient extends SVNBasicClient {
                 entry.setLockToken(lock.getID());
                 entry.setLockComment(lock.getComment());
                 entry.setLockOwner(lock.getOwner());
-                entry.setLockCreationDate(TimeUtil.formatDate(lock.getCreationDate()));
+                entry.setLockCreationDate(SVNTimeUtil.formatDate(lock.getCreationDate()));
                 if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
                     SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName()), false);
                 }

@@ -19,7 +19,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.util.Base64;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
@@ -117,7 +117,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             if (myPropertyName != null) {
                 String value;
                 if ("base64".equals(myPropertyEncoding)) {
-                    byte[] bytes = Base64.base64ToByteArray(cdata, null);
+                    byte[] bytes = SVNBase64.base64ToByteArray(cdata, null);
                     value = new String(bytes);
                 } else {
                     value = cdata.toString();

@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVOptionsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.io.SVNURL;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -126,7 +126,7 @@ public class DAVConnection {
         String comment = handler.getComment();
         String owner = (String) rc.getResponseHeader().get("X-SVN-Lock-Owner");
         String created = (String) rc.getResponseHeader().get("X-SVN-Creation-Date");
-        Date createdDate = created != null ? TimeUtil.parseDate(created) : null;
+        Date createdDate = created != null ? SVNTimeUtil.parseDate(created) : null;
         path = SVNEncodingUtil.uriDecode(info.baselinePath);
         if (!path.startsWith("/")) {
             path = "/" + path;
@@ -160,7 +160,7 @@ public class DAVConnection {
         if (status != null) {
             String userName = myHttpConnection.getLastValidCredentials() != null ? myHttpConnection.getLastValidCredentials().getUserName() : null; 
             String created = (String) status.getResponseHeader().get("X-SVN-Creation-Date");
-            Date createdDate = created != null ? TimeUtil.parseDate(created) : null;            
+            Date createdDate = created != null ? SVNTimeUtil.parseDate(created) : null;            
             return new SVNLock(info.baselinePath, handler.getID(), userName, comment, createdDate, null);
         }
         return null;

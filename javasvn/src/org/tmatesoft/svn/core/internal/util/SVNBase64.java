@@ -15,7 +15,7 @@ package org.tmatesoft.svn.core.internal.util;
  * @version 1.0
  * @author TMate Software Ltd.
  */
-public class Base64 {
+public class SVNBase64 {
 
     public static String byteArrayToBase64(byte[] a) {
         return byteArrayToBase64(a, false);
@@ -33,7 +33,7 @@ public class Base64 {
         StringBuffer result = new StringBuffer(resultLen);
         char[] intToAlpha = (alternate ? intToAltBase64 : intToBase64);
 
-        // Translate all full groups from byte array elements to Base64
+        // Translate all full groups from byte array elements to SVNBase64
         int inCursor = 0;
         for (int i = 0; i < numFullGroups; i++) {
             int byte0 = a[inCursor++] & 0xff;
@@ -80,23 +80,23 @@ public class Base64 {
             '5', '6', '7', '8', '9', '+', '?' };
 
     /**
-     * Translates the specified Base64 string (as per Preferences.get(byte[]))
+     * Translates the specified SVNBase64 string (as per Preferences.get(byte[]))
      * into a byte array.
      * 
      * @throws IllegalArgumentException
-     *             if <tt>s</tt> is not a valid Base64 string.
+     *             if <tt>s</tt> is not a valid SVNBase64 string.
      */
     public static byte[] base64ToByteArray(StringBuffer s, byte[] buffer) {
         return base64ToByteArray(s, buffer, false);
     }
 
     /**
-     * Translates the specified "aternate representation" Base64 string into a
+     * Translates the specified "aternate representation" SVNBase64 string into a
      * byte array.
      * 
      * @throws IllegalArgumentException
      *             or ArrayOutOfBoundsException if <tt>s</tt> is not a valid
-     *             alternate representation Base64 string.
+     *             alternate representation SVNBase64 string.
      */
     public static byte[] altBase64ToByteArray(StringBuffer s) {
         return base64ToByteArray(s, null, true);
@@ -164,7 +164,7 @@ public class Base64 {
      * 64 Alphabet" into its equivalent 6-bit positive integer.
      * 
      * @throws IllegalArgumentException
-     *             or ArrayOutOfBoundsException if c is not in the Base64
+     *             or ArrayOutOfBoundsException if c is not in the SVNBase64
      *             Alphabet.
      */
     /*
@@ -175,9 +175,9 @@ public class Base64 {
 
     /**
      * This array is a lookup table that translates unicode characters drawn
-     * from the "Base64 Alphabet" (as specified in Table 1 of RFC 2045) into
+     * from the "SVNBase64 Alphabet" (as specified in Table 1 of RFC 2045) into
      * their 6-bit positive integer equivalents. Characters that are not in the
-     * Base64 alphabet but fall within the bounds of the array are translated to
+     * SVNBase64 alphabet but fall within the bounds of the array are translated to
      * -1.
      */
     private static final byte base64ToInt[] = { -1, -1, -1, -1, -1, -1, -1, -1,

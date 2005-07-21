@@ -16,7 +16,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SocketFactory;
+import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.core.io.SVNURL;
 
 /**
@@ -36,7 +36,7 @@ public class SVNPlainConnector implements ISVNConnector {
             return;
         }
         SVNURL location = repository.getLocation();
-        mySocket = SocketFactory.createPlainSocket(location.getHost(), location.getPort());
+        mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort());
     }
 
     public void close() throws SVNException {

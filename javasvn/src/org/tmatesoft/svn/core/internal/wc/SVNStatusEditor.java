@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -633,7 +633,7 @@ public class SVNStatusEditor implements ISVNEditor {
         SVNLock localLock = null;
         if (entry.getLockToken() != null) {
             localLock = new SVNLock(null, entry.getLockToken(), entry.getLockOwner(), entry.getLockComment(), 
-                    TimeUtil.parseDate(entry.getLockCreationDate()), null);
+                    SVNTimeUtil.parseDate(entry.getLockCreationDate()), null);
         }
         File conflictOld = null;
         File conflictNew = null;
@@ -655,7 +655,7 @@ public class SVNStatusEditor implements ISVNEditor {
         return new SVNStatus(entry.getURL(), file, entry.getKind(), SVNRevision
                 .create(entry.getRevision()),
                 entry.getCommittedRevision() >= 0 ? SVNRevision.create(entry.getCommittedRevision()) : null, 
-                        TimeUtil.parseDate(entry.getCommittedDate()),
+                        SVNTimeUtil.parseDate(entry.getCommittedDate()),
                 entry.getAuthor(), textStatus, propStatus,
                 SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, isLocked,
                 entry.isCopied(), isSwitched, conflictNew, conflictOld,

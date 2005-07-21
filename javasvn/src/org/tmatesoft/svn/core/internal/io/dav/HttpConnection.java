@@ -42,8 +42,8 @@ import org.tmatesoft.svn.core.auth.ISVNProxyManager;
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.internal.util.Base64;
-import org.tmatesoft.svn.core.internal.util.SocketFactory;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNURL;
@@ -91,7 +91,7 @@ class HttpConnection {
             ISVNSSLManager sslManager = myAuthManager != null && isSecured() ? 
                     myAuthManager.getSSLManager(mySVNRepositoryLocation.toString()) : null;
             if (myProxyAuth != null && myProxyAuth.getProxyHost() != null) {
-                mySocket = SocketFactory.createPlainSocket(myProxyAuth.getProxyHost(), myProxyAuth.getProxyPort());
+                mySocket = SVNSocketFactory.createPlainSocket(myProxyAuth.getProxyHost(), myProxyAuth.getProxyPort());
                 if (isSecured()) {
                     Map props = new HashMap();
                     if (myProxyAuth.getProxyUserName() != null && myProxyAuth.getProxyPassword() != null) {
@@ -106,7 +106,7 @@ class HttpConnection {
                         if (status != null && status.getResponseCode() == 200) {
                             myInputStream = null;
                             myOutputStream = null;
-                            mySocket = SocketFactory.createSSLSocket(sslManager, host, port, mySocket);
+                            mySocket = SVNSocketFactory.createSSLSocket(sslManager, host, port, mySocket);
                             return;
                         }
                     } catch (IOException e) {
@@ -115,7 +115,7 @@ class HttpConnection {
                     SVNErrorManager.error("svn: Cannot establish http tunnel for proxied secure connection: " + (status != null ? status.getErrorText() + "" : " for unknow reason"));
                 }
             } else {
-                mySocket = isSecured() ? SocketFactory.createSSLSocket(sslManager, host, port) : SocketFactory.createPlainSocket(host, port);
+                mySocket = isSecured() ? SVNSocketFactory.createSSLSocket(sslManager, host, port) : SVNSocketFactory.createPlainSocket(host, port);
             }
         }
     }
@@ -639,7 +639,7 @@ class HttpConnection {
         if ("basic".equalsIgnoreCase(method) && credentials instanceof SVNPasswordAuthentication) {
             SVNPasswordAuthentication auth = (SVNPasswordAuthentication) credentials;
             String authStr = auth.getUserName() + ":" + auth.getPassword();
-            authStr = Base64.byteArrayToBase64(authStr.getBytes());
+            authStr = SVNBase64.byteArrayToBase64(authStr.getBytes());
             result.append("Basic ");
             result.append(authStr);
         } else if ("digest".equalsIgnoreCase(method) && credentials instanceof SVNPasswordAuthentication) {
@@ -746,7 +746,7 @@ class HttpConnection {
     private String getProxyAuthString(String username, String password) {
         if (username != null && password != null) {
             String auth = username + ":" + password;
-            return "Basic " + Base64.byteArrayToBase64(auth.getBytes());
+            return "Basic " + SVNBase64.byteArrayToBase64(auth.getBytes());
         }
         return null;
     }

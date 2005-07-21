@@ -38,7 +38,7 @@ import javax.net.ssl.X509TrustManager;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
-import org.tmatesoft.svn.core.internal.util.Base64;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.io.SVNURL;
 
 
@@ -140,7 +140,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
                 }
                 public void checkServerTrusted(X509Certificate[] certs, String algorithm) throws CertificateException {
                     if (certs != null && certs.length > 0 && certs[0] != null) {
-                        String data = Base64.byteArrayToBase64(certs[0].getEncoded());
+                        String data = SVNBase64.byteArrayToBase64(certs[0].getEncoded());
                         String stored = (String) myAuthManager.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
                         if (data.equals(stored)) {
                             return;

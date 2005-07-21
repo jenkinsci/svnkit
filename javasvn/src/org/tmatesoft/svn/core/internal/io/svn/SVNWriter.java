@@ -19,7 +19,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.util.DebugLog;
 
 /**
@@ -55,7 +55,7 @@ public class SVNWriter {
                     continue;
                 }
                 if (item instanceof Date) {
-                    item = TimeUtil.formatDate((Date) item);
+                    item = SVNTimeUtil.formatDate((Date) item);
                 }
                 if (ch == 'i') {
 

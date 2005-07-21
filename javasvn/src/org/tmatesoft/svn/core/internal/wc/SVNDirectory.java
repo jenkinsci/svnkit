@@ -31,7 +31,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
@@ -449,7 +449,7 @@ public class SVNDirectory {
             // copy base over wc
             if (baseProps.getFile().isFile()) {
                 baseProps.copyTo(wcProps);
-                entry.setPropTime(TimeUtil.formatDate(new Date(wcProps
+                entry.setPropTime(SVNTimeUtil.formatDate(new Date(wcProps
                         .getFile().lastModified())));
             } else {
                 wcProps.delete();
@@ -459,7 +459,7 @@ public class SVNDirectory {
             wasReverted = true;
         } else if (entry.isScheduledForReplacement()) {
             baseProps.copyTo(wcProps);
-            entry.setPropTime(TimeUtil.formatDate(new Date(wcProps.getFile()
+            entry.setPropTime(SVNTimeUtil.formatDate(new Date(wcProps.getFile()
                     .lastModified())));
             wasReverted = true;
         }
@@ -497,11 +497,11 @@ public class SVNDirectory {
                 long tstamp = dst.lastModified();
                 if (myWCAccess.getOptions().isUseCommitTimes() && !special) {
                     entry.setTextTime(entry.getCommittedDate());
-                    tstamp = TimeUtil.parseDate(entry.getCommittedDate())
+                    tstamp = SVNTimeUtil.parseDate(entry.getCommittedDate())
                             .getTime();
                     dst.setLastModified(tstamp);
                 } else {
-                    entry.setTextTime(TimeUtil.formatDate(new Date(tstamp)));
+                    entry.setTextTime(SVNTimeUtil.formatDate(new Date(tstamp)));
                 }
                 getEntries().save(false);
                 wasReverted |= true;
@@ -527,7 +527,7 @@ public class SVNDirectory {
         }
         if (!force) {
             String textTime = entry.getTextTime();
-            long textTimeAsLong = SVNFileUtil.roundTimeStamp(TimeUtil.parseDateAsLong(textTime));
+            long textTimeAsLong = SVNFileUtil.roundTimeStamp(SVNTimeUtil.parseDateAsLong(textTime));
             long tstamp = SVNFileUtil.roundTimeStamp(getFile(name).lastModified());
             if (textTimeAsLong == tstamp ) {
                 return false;
@@ -568,7 +568,7 @@ public class SVNDirectory {
         }
 
         if (equals && isLocked()) {
-            entry.setTextTime(TimeUtil.formatDate(new Date(versionedFile
+            entry.setTextTime(SVNTimeUtil.formatDate(new Date(versionedFile
                     .lastModified())));
             entries.save(false);
         }
@@ -601,7 +601,7 @@ public class SVNDirectory {
         if (propLength != baseFile.length()) {
             return true;
         }
-        String realTimestamp = TimeUtil.formatDate(new Date(propFile.lastModified()));
+        String realTimestamp = SVNTimeUtil.formatDate(new Date(propFile.lastModified()));
         String fullRealTimestamp = realTimestamp;
         realTimestamp = realTimestamp.substring(0, 23);
         String timeStamp = entry.getPropTime();
@@ -1194,7 +1194,7 @@ public class SVNDirectory {
                     .shortPropertyName(SVNProperty.COMMITTED_REVISION), Long
                     .toString(info.getNewRevision()));
             command.put(SVNProperty
-                    .shortPropertyName(SVNProperty.COMMITTED_DATE), TimeUtil
+                    .shortPropertyName(SVNProperty.COMMITTED_DATE), SVNTimeUtil
                     .formatDate(info.getDate()));
             command.put(SVNProperty.shortPropertyName(SVNProperty.LAST_AUTHOR),
                     info.getAuthor());

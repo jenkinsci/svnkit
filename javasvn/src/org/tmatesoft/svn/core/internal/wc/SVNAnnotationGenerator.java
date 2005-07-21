@@ -28,7 +28,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.internal.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.diff.ISVNRAData;
@@ -90,7 +90,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             myCurrentAuthor = null;
         }
         if (props != null && props.get(SVNRevisionProperty.DATE) != null) {
-            myCurrentDate = TimeUtil.parseDate(fileRevision.getProperties().get(SVNRevisionProperty.DATE).toString());
+            myCurrentDate = SVNTimeUtil.parseDate(fileRevision.getProperties().get(SVNRevisionProperty.DATE).toString());
         } else {
             myCurrentDate = null;
         }

@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.TimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.util.DebugLog;
@@ -259,10 +259,10 @@ public class SVNReporter implements ISVNReporterBaton {
         long tstamp = dst.lastModified();
         if (myWCAccess.getOptions().isUseCommitTimes() && !special) {
             entry.setTextTime(entry.getCommittedDate());
-            tstamp = TimeUtil.parseDate(entry.getCommittedDate()).getTime();
+            tstamp = SVNTimeUtil.parseDate(entry.getCommittedDate()).getTime();
             dst.setLastModified(tstamp);
         } else {
-            entry.setTextTime(TimeUtil.formatDate(new Date(tstamp)));
+            entry.setTextTime(SVNTimeUtil.formatDate(new Date(tstamp)));
         }
         dir.getEntries().save(false);
 

@@ -22,7 +22,7 @@ import java.util.TimeZone;
  * @version 1.0
  * @author TMate Software Ltd.
  */
-public class TimeUtil {
+public class SVNTimeUtil {
 
     private static final DateFormat ISO8601_FORMAT_OUT = new SimpleDateFormat(
             "yyyy-MM-dd'T'HH:mm:ss.SSS'000Z'");
