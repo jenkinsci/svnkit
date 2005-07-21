@@ -58,8 +58,10 @@ public class SVNFormatUtil {
         rootPath = new File("").getAbsolutePath();
         path = path.replace(File.separatorChar, '/');
         rootPath = rootPath.replace(File.separatorChar, '/');
-        if (path.startsWith(rootPath)) {
-            path = path.substring(rootPath.length());
+        if (path.equals(rootPath)) {
+            path  = "";
+        } else if (path.startsWith(rootPath + "/")) {
+            path = path.substring(rootPath.length() + 1);
         }
         // remove all "./"
         path = condensePath(path);
