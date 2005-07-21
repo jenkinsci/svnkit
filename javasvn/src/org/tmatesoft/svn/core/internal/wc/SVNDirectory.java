@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
@@ -760,8 +761,7 @@ public class SVNDirectory {
         File dir = new File(myDirectory, name);
         createVersionedDirectory(dir);
 
-        String childPath = PathUtil.append(myPath, name);
-        childPath = PathUtil.removeLeadingSlash(childPath);
+        String childPath = SVNPathUtil.append(myPath, name);
 
         SVNDirectory child = myWCAccess.addDirectory(childPath, dir);
         SVNEntry rootEntry = child.getEntries().getEntry("", true);
@@ -910,8 +910,7 @@ public class SVNDirectory {
             } else {
                 child = this;
                 nameInParent = PathUtil.tail(myPath);
-                String parentPath = PathUtil.removeTail(myPath);
-                parentPath = PathUtil.removeLeadingSlash(parentPath);
+                String parentPath = SVNPathUtil.removeTail(myPath);
                 parent = myWCAccess.getDirectory(parentPath);
             }
             deleted = parent != null ? parent.getEntries().getEntry(

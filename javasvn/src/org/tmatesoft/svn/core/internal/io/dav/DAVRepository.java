@@ -13,8 +13,10 @@
 package org.tmatesoft.svn.core.internal.io.dav;
 
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -33,6 +35,7 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLocationsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLogHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVProppatchHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
@@ -275,20 +278,16 @@ class DAVRepository extends SVNRepository {
 			openConnection();
 			String[] fullPaths = new String[targetPaths.length];
 			
-			// convert these path to be all full paths 
 			for (int i = 0; i < targetPaths.length; i++) {
 				fullPaths[i] = getFullPath(targetPaths[i]);
             }
-			// now find common root, this will be request path.
-			String path = fullPaths.length > 1 ? PathUtil.getCommonRoot(fullPaths) : fullPaths[0];
-			if (!path.startsWith("/")) {
-				path = "/".concat(path);
-			}
-			// make fullPaths to be relative to common root.
-			for (int i = 0; i < targetPaths.length; i++) {
-				fullPaths[i] = fullPaths[i].substring(path.length());
-				fullPaths[i] = PathUtil.removeLeadingSlash(fullPaths[i]);
-			}
+            Collection relativePaths = new HashSet();
+            String path = SVNPathUtil.condencePaths(fullPaths, relativePaths, false);
+            if (relativePaths.isEmpty()) {
+                relativePaths.add("");
+            }
+            fullPaths = (String[]) relativePaths.toArray(new String[relativePaths.size()]);
+            
 	        StringBuffer request = DAVLogHandler.generateLogRequest(null, startRevision, endRevision,
 	        		changedPath, strictNode, limit, fullPaths);
 	        

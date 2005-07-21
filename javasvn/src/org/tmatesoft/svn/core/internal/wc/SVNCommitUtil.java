@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -241,11 +242,7 @@ public class SVNCommitUtil {
             // get entry for target
             File targetFile = new File(baseAccess.getAnchor().getRoot(), target);
             String targetName = "".equals(target) ? "" : PathUtil.tail(target);
-            String parentPath = "".equals(target) ? "" : PathUtil
-                    .removeTail(target);
-            if (parentPath.startsWith("/")) {
-                parentPath = PathUtil.removeLeadingSlash(parentPath);
-            }
+            String parentPath = SVNPathUtil.removeTail(target);
             SVNDirectory dir = baseAccess.getDirectory(parentPath);
             SVNEntry entry = dir == null ? null : dir.getEntries().getEntry(
                     targetName, false);
@@ -375,10 +372,7 @@ public class SVNCommitUtil {
         while (urls.hasNext()) {
             String url = (String) urls.next();
             SVNCommitItem item = (SVNCommitItem) itemsMap.get(url);
-            String realPath = url.substring(baseURL.length());
-            if (realPath.startsWith("/")) {
-                realPath = PathUtil.removeLeadingSlash(realPath);
-            }
+            String realPath = url.equals(baseURL) ? "" : url.substring(baseURL.length() + 1);
             decodedPaths.put(SVNEncodingUtil.uriDecode(realPath), item);
         }
         return baseURL;
@@ -389,11 +383,8 @@ public class SVNCommitUtil {
         for (Iterator urls = lockTokens.keySet().iterator(); urls.hasNext();) {
             String url = (String) urls.next();
             String token = (String) lockTokens.get(url);
-            url = url.substring(baseURL.length());
-            if (url.startsWith("/")) {
-                url = PathUtil.removeLeadingSlash(url);
-                translatedLocks.put(SVNEncodingUtil.uriDecode(url), token);
-            }
+            url = url.equals(baseURL) ? "" : url.substring(baseURL.length() + 1);
+            translatedLocks.put(SVNEncodingUtil.uriDecode(url), token);
         }
         lockTokens.clear();
         lockTokens.putAll(translatedLocks);

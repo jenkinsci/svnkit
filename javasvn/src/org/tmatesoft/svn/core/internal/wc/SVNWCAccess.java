@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -465,8 +466,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             File dir = new File(root.getRoot(), entry.getName());
             if (entry.getKind() == SVNNodeKind.DIR
                     && SVNFileType.getType(dir) == SVNFileType.DIRECTORY) {
-                String path = PathUtil.append(parentPath, dir.getName());
-                path = PathUtil.removeLeadingSlash(path);
+                String path = SVNPathUtil.append(parentPath, dir.getName());
                 SVNDirectory svnDir = new SVNDirectory(this, ""
                         .equals(parentPath) ? dir.getName() : PathUtil.append(
                         parentPath, dir.getName()), dir);

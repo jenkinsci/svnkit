@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -53,8 +54,7 @@ public class SVNMerger {
         return myIsDryRun;
     }
 
-    public SVNStatusType directoryDeleted(final String path)
-            throws SVNException {
+    public SVNStatusType directoryDeleted(final String path) throws SVNException {
         SVNDirectory parentDir = getParentDirectory(path);
         if (parentDir == null) {
             return SVNStatusType.MISSING;
@@ -144,8 +144,7 @@ public class SVNMerger {
         return SVNStatusType.MISSING;
     }
 
-    public SVNStatusType directoryAdded(String path, Map entryProps,
-            long revision) throws SVNException {
+    public SVNStatusType directoryAdded(String path, Map entryProps, long revision) throws SVNException {
         SVNDirectory parentDir = getParentDirectory(path);
         if (parentDir == null) {
             if (myIsDryRun && myAddedPath != null
@@ -319,8 +318,6 @@ public class SVNMerger {
                 pathInURL = "";
             }
         }
-        pathInURL = PathUtil.removeLeadingSlash(pathInURL);
-        pathInURL = PathUtil.removeTrailingSlash(pathInURL);
         return pathInURL;
     }
 
@@ -331,15 +328,11 @@ public class SVNMerger {
 
     public File getFile(String path, boolean base) {
         SVNDirectory dir = null;
-        // if (myIsDryRun) {
         String parentPath = path;
         while (dir == null && !PathUtil.isEmpty(parentPath)) {
             dir = getParentDirectory(parentPath);
             parentPath = PathUtil.removeTail(parentPath);
         }
-        // } else {
-        // dir = getParentDirectory(path);
-        // }
         String name = PathUtil.tail(path);
         if (dir != null) {
             String extension = base ? ".tmp-base" : ".tmp-work";
@@ -537,8 +530,7 @@ public class SVNMerger {
     }
 
     private SVNDirectory getParentDirectory(String path) {
-        path = PathUtil.removeTail(path);
-        path = PathUtil.removeLeadingSlash(path);
+        path = SVNPathUtil.removeTail(path);
         return myWCAccess.getDirectory(path);
     }
 }

@@ -11,9 +11,6 @@
 
 package org.tmatesoft.svn.util;
 
-import java.io.File;
-
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 /**
  * This class is a utility which aim is to help in work with path strings. The
@@ -177,52 +174,5 @@ public class PathUtil {
             path = path.substring(0, path.length() - 1);
         }
         return path;
-    }
-
-    /**
-     * 
-     * @param paths
-     * @return
-     */
-    public static String getCommonRoot(String[] paths) {
-        if (paths.length == 1) {
-            return PathUtil.removeLeadingSlash(PathUtil.removeTail(paths[0]));
-        }
-        String root = paths[0].replace(File.separatorChar, '/');
-        for (int i = 1; i < paths.length; i++) {
-            root = getCommonAncestor(root, paths[i].replace(File.separatorChar,
-                    '/'));
-        }
-        root = PathUtil.removeLeadingSlash(root);
-        root = PathUtil.removeTrailingSlash(root);
-        for (int i = 0; i < paths.length; i++) {
-            if (paths[i].replace(File.separatorChar, '/').equals(root)) {
-                root = PathUtil.removeTail(root);
-                break;
-            }
-        }
-        return root;
-    }
-
-    private static String getCommonAncestor(String path1, String path2) {
-        // simplest case
-        String longerPath = path1.length() > path2.length() ? path1 : path2;
-        String root = path1.length() > path2.length() ? path2 : path1;
-        if ("".equals(root)) {
-            root = "/";
-        }
-        while (!PathUtil.isEmpty(root)) {
-            if (!root.endsWith("/")) {
-                root += "/";
-            }
-            boolean rootFound = SVNFileUtil.isWindows ? longerPath.toLowerCase()
-                    .startsWith(root.toLowerCase()) : longerPath
-                    .startsWith(root);
-            if (rootFound) {
-                return PathUtil.removeTrailingSlash(root);
-            }
-            root = PathUtil.removeTail(root);
-        }
-        return PathUtil.removeTrailingSlash(root);
     }
 }
