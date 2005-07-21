@@ -61,6 +61,7 @@ public class DAVConnection {
         	myHttpConnection = new HttpConnection(myLocation, repository);
             if (repository.getRepositoryUUID() == null) {
                 String path = myLocation.getPath();
+                path = SVNEncodingUtil.uriEncode(path);
                 final DAVResponse[] result = new DAVResponse[1];
                 StringBuffer body = DAVPropertiesHandler.generatePropertiesRequest(null, DAVElement.STARTING_PROPERTIES);
                 IDAVResponseHandler handler = new IDAVResponseHandler() {
@@ -85,6 +86,7 @@ public class DAVConnection {
                 String relativePath = (String) result[0].getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
                 
                 String root = myLocation.getPath();
+                root = SVNEncodingUtil.uriEncode(root);
                 if (relativePath != null) {
                     if (root.endsWith(relativePath)) {
                         root = root.substring(0, root.length() - relativePath.length() - 1);                        
@@ -203,11 +205,12 @@ public class DAVConnection {
     }
     
     public String doMakeActivity() throws SVNException {
-        String url = getActivityCollectionURL(myLocation.getPath(), false) + generateUUID();
+        String locationPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
+        String url = getActivityCollectionURL(locationPath, false) + generateUUID();
         DAVStatus status = myHttpConnection.request("MKACTIVITY", url, 0, null, null, (OutputStream) null, new int[] {201, 404});
         if (status.getResponseCode() == 404) {
             // refetch
-            url = getActivityCollectionURL(myLocation.getPath(), true) + generateUUID();
+            url = getActivityCollectionURL(locationPath, true) + generateUUID();
             status = myHttpConnection.request("MKACTIVITY", url, 0, null, null, (OutputStream) null, new int[] {201});
         }
         myIsHTTP10Connection = status !=null && status.isHTTP10();
@@ -234,7 +237,9 @@ public class DAVConnection {
             }
             request = new StringBuffer();
             request.append("<?xml version=\"1.0\" encoding=\"utf-8\"?> ");
-            request = DAVMergeHandler.generateLockDataRequest(request, myLocation.getPath(), repositoryPath, myLocks);
+            String locationPath = getLocation().getPath();
+            locationPath = SVNEncodingUtil.uriEncode(locationPath);
+            request = DAVMergeHandler.generateLockDataRequest(request, locationPath, repositoryPath, myLocks);
         }
         return myHttpConnection.request("DELETE", path, header, request, null, null);
     }
@@ -275,7 +280,8 @@ public class DAVConnection {
     }
     
     public DAVStatus doMerge(String activityURL, boolean response, DefaultHandler handler) throws SVNException {
-        StringBuffer request = DAVMergeHandler.generateMergeRequest(null, myLocation.getPath(), activityURL, myLocks);
+        String locationPath = SVNEncodingUtil.uriEncode(myLocation.getPath());
+        StringBuffer request = DAVMergeHandler.generateMergeRequest(null, locationPath, activityURL, myLocks);
         Map header = null;
         if (!response || (myLocks != null && !myKeepLocks)) {
             header = new HashMap();

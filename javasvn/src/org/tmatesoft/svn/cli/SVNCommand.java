@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.DebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -108,6 +109,7 @@ public abstract class SVNCommand {
 
     public static void println(PrintStream out, String line) {
         out.println(line);
+        DebugLog.log(line);
     }
 
     public static void print(PrintStream out, String line) {

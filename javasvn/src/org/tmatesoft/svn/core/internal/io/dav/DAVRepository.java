@@ -247,6 +247,7 @@ class DAVRepository extends SVNRepository {
 
     public int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException {
 		String bcPath = getLocation().getPath();
+        bcPath = SVNEncodingUtil.uriEncode(bcPath);
 		try {
             openConnection();
             path = getRepositoryPath(path);
@@ -345,7 +346,8 @@ class DAVRepository extends SVNRepository {
             StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), revision, target, null, recursive, false, false, true, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
-            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
+            String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, bcPath, revision, false, false, null);
             String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, true);
             if (response != null) {
@@ -375,7 +377,8 @@ class DAVRepository extends SVNRepository {
             StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), revision, target, url, recursive, true, false, true, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
-            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
+            String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, bcPath, revision, false, false, null);
             String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
             if (response != null) {
@@ -404,7 +407,7 @@ class DAVRepository extends SVNRepository {
             StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), targetRevision, target, url, recursive, ignoreAncestry, false, true, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
-            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, SVNEncodingUtil.uriEncode(getLocation().getPath()), revision, false, false, null);
             String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
             path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
@@ -421,7 +424,7 @@ class DAVRepository extends SVNRepository {
             StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), revision, target, null, recursive, false, false, false, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, false);
 
-            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, SVNEncodingUtil.uriEncode(getLocation().getPath()), revision, false, false, null);
             String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
         	DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, true);
         	if (response != null) {
@@ -440,8 +443,7 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             // 1. get vcc for root.
-            
-            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, getLocation().getPath(), revision, false, false, null);
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, SVNEncodingUtil.uriEncode(getLocation().getPath()), revision, false, false, null);
             String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
 
             DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);

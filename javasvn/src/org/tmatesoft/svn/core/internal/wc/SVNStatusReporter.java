@@ -91,8 +91,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     public void finishReport() throws SVNException {
         myReporter.finishReport();
         // collect locks
-        String path = myRepositoryLocation.substring(myRepository.getLocation()
-                .toString().length());
+        String path = myRepositoryLocation.substring(myRepository.getLocation().toString().length());
         SVNLock[] locks = null;
         try {
             myRepositoryRoot = myRepository.getRepositoryRoot(true).getPath();

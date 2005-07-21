@@ -56,7 +56,8 @@ class DAVResource {
     public DAVResource(ISVNWorkspaceMediator mediator, DAVConnection connection, String path, long revision, boolean isCopy) {
         myPath = path;
         myMediator = mediator;
-        myURL = SVNPathUtil.append(connection.getLocation().getPath(), path);
+        String locationPath = SVNEncodingUtil.uriEncode(connection.getLocation().getPath());
+        myURL = SVNPathUtil.append(locationPath, path);
         myRevision = revision;
         myConnection = connection;
         myIsCopy = isCopy;

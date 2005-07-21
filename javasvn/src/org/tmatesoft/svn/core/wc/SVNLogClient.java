@@ -212,7 +212,7 @@ public class SVNLogClient extends SVNBasicClient {
         if (repos.checkPath("", rev) == SVNNodeKind.FILE) {
             SVNDirEntry entry = repos.info("", rev);
             String name = SVNPathUtil.tail(repos.getLocation().getPath());
-            entry.setPath(SVNEncodingUtil.uriDecode(name));
+            entry.setPath(name);
             handler.handleDirEntry(entry);
         } else {
             list(repos, "", rev, recursive, handler);

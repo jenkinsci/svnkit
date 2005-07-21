@@ -1091,9 +1091,6 @@ public class SVNWCClient extends SVNBasicClient {
             SVNRevision rev, String path, String root, String uuid, String url,
             Map locks, boolean recursive, ISVNInfoHandler handler)
             throws SVNException {
-        String rootPath = repos.getLocation().getPath();
-        rootPath = SVNEncodingUtil.uriDecode(rootPath);
-        
         String displayPath = repos.getRelativePath(repos.getFullPath(path));
         if ("".equals(displayPath) || "/".equals(displayPath)) {
             displayPath = path;
