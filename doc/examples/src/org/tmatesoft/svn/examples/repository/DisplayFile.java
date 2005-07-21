@@ -126,10 +126,9 @@ public class DisplayFile {
         }
 
         /*
-         * Creates a usre's authentication manager.
-         * readonly=true - should be always true when providing options to 
-         * SVNRepository since this low-level class is not intended to work
-         * with working copy config files 
+         * User's authentication information is provided via an ISVNAuthenticationManager
+         * instance. SVNWCUtil creates a default usre's authentication manager given user's
+         * name and password.
          */
         ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name, password);
 
@@ -184,7 +183,7 @@ public class DisplayFile {
         String mimeType = (String) fileProperties.get(SVNProperty.MIME_TYPE);
 
         /*
-         * SVNProperty.isTextType method checks up the value of the mime-type
+         * SVNProperty.isTextMimeType(..) method checks up the value of the mime-type
          * file property and says if the file is a text (true) or not (false).
          */
         boolean isTextType = SVNProperty.isTextMimeType(mimeType);

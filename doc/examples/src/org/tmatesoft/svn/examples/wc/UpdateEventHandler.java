@@ -99,7 +99,14 @@ public class UpdateEventHandler implements ISVNEventHandler {
         } else if (action == SVNEventAction.DELETE){
             System.out.println("D     " + event.getPath());
             return;
+        } else if (action == SVNEventAction.LOCKED){
+            System.out.println("L     " + event.getPath());
+            return;
+        } else if (action == SVNEventAction.LOCK_FAILED){
+            System.out.println("failed to lock    " + event.getPath());
+            return;
         }
+
         /*
          * Now getting the status of properties of an item. SVNStatusType also
          * contains information on the properties state.
@@ -144,7 +151,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
              */
             lockLabel = "K";
         }
-
+        
         System.out.println(pathChangeType
                 + propertiesChangeType
                 + lockLabel

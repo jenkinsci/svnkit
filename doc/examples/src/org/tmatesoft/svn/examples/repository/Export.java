@@ -160,10 +160,9 @@ public class Export {
         }
 
         /*
-         * Creates a usre's authentication manager.
-         * readonly=true - should be always true when providing options to 
-         * SVNRepository since this low-level class is not intended to work
-         * with working copy config files
+         * User's authentication information is provided via an ISVNAuthenticationManager
+         * instance. SVNWCUtil creates a default usre's authentication manager given user's
+         * name and password.
          */
         ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name, password);
 

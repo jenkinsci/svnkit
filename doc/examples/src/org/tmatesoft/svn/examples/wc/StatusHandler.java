@@ -38,8 +38,9 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  * ISVNEventHandler.handleEvent(SVNEvent event, double progress)). 
  */
 public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
-
-    public StatusHandler() {
+    private boolean myIsRemote;
+    public StatusHandler(boolean isRemote) {
+        myIsRemote = isRemote;
     }
     /*
      * This is an implementation of ISVNStatusHandler.handleStatus(SVNStatus status)
@@ -205,18 +206,21 @@ public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
             lockLabel = "K";
             if (remoteLock != null) {
                 /*
-                 * author of the local lock differs from the author of the
-                 * remote lock - the lock was sTolen!
+                 * if the lock-token of the local lock differs from the lock-token 
+                 * of the remote lock - the lock was sTolen!
                  */
-                if (!remoteLock.getOwner().equals(localLock.getOwner())) {
+                if (!remoteLock.getID().equals(localLock.getID())) {
                     lockLabel = "T";
                 }
             } else {
-                /*
-                 * the local lock presents but there's no lock in the
-                 * repository - the lock was Broken.
-                 */
-                lockLabel = "B";
+                if(myIsRemote){
+	                /*
+	                 * the local lock presents but there's no lock in the
+	                 * repository - the lock was Broken. This is true only
+	                 * if doStatus(..) was invoked with remote=true.
+	                 */
+	                lockLabel = "B";
+                }
             }
         } else if (remoteLock != null) {
             /*

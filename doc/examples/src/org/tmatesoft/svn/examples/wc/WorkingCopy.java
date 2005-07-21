@@ -30,15 +30,33 @@ import org.tmatesoft.svn.util.PathUtil;
 
 /*
  * This is a complex example program that demonstrates how you can manage local
- * working copies as well as URLs by means of the API provided in the 
- * org.tmatesoft.svn.core.wc package. The package itself represents a high-level API
- * (consisting of classes and interfaces) which allows to perform commands compatible
- * with commands of the native Subversion command line client. Most of the  methods 
- * of those classes are named like 'doSomething(...)' where 'Something' corresponds 
- * to the name of a Subversion command line client's command. So, for users 
- * familiar with the Subversion command line client it won't take much time to match a 
- * method and an appropriate Subversion client's command.
+ * working copies as well as URLs (that is items located in the repository) by means 
+ * of the API provided in the org.tmatesoft.svn.core.wc package. The package itself 
+ * represents a high-level API consisting of classes and interfaces which allow to 
+ * perform operations compatible with ones of the native Subversion command line 
+ * client. These version control operations are logically grouped in a set of classes
+ * which names meet 'SVN*Client' pattern. For example, the package has SVNUpdateClient 
+ * which is responsible for update-related operations (update, switch, check out).  
+ * Most of the  methods of these 'client' classes are named like 'doSomething(...)' where 
+ * 'Something' corresponds to the name of a Subversion command line client's operation. So, 
+ * for users familiar with the Subversion command line client it won't take much effort
+ * and time to match a 'doXXX' method and an appropriate Subversion client's operation (or 
+ * command, in other words).
  * 
+ * Surely, it may seem not quite handy to deal with a number of classes that all need to be 
+ * instantiated, initialized, maybe something else... For example, if a developer is going 
+ * to use all (or several) of the SVN*Client classes and most of them will access the repository 
+ * (in that way when authentication is demanded), it becomes annoying to provide authentication 
+ * info to every one of them. So, that is why the package has got the class called 
+ * SVNClientManager whose get*Client() methods provide all necessary SVN*Client objects to a 
+ * caller. 
+ * 
+ * A developer once creates an instance of SVNClientManager providing (if needed) his 
+ * authentication info/options (which functions (i.e. destination) are similar to SVN 
+ * run-time configuration settings) into an appropriate SVNClientManager.newInstance(..) 
+ * method. Further all SVN*Client objects provided by the instance of SVNClientManager will 
+ * use these authentication info/options.   
+ *  
  * The program illustrates a number of main operations usually carried out upon 
  * working copies and URLs. A brief description of what the program does:
  * 
@@ -143,145 +161,150 @@ import org.tmatesoft.svn.util.PathUtil;
  * 
  * While the program is running you'll see something like this:
  * 
-	Making a new directory at 'svn://localhost/rep/MyRepos'...
-	Committed to revision 312
+	Making a new directory at 'svn://localhost/testRep/MyRepos'...
+	Committed to revision 70
 	
-	Importing a new directory into 'svn://localhost/rep/MyRepos/importDir'...
+	Importing a new directory into 'svn://localhost/testRep/MyRepos/importDir'...
 	Adding         importFile.txt
-	Committed to revision 313
+	Committed to revision 71
 	
-	Checking out a working copy from 'svn://localhost/rep/MyRepos'...
+	Checking out a working copy from 'svn://localhost/testRep/MyRepos'...
 	A         importDir
 	A         importDir/importFile.txt
-	At revision 313
+	At revision 71
 	
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy
-	URL: svn://localhost/rep/MyRepos
-	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 313
+	URL: svn://localhost/testRep/MyRepos
+	Repository UUID: dbe83c44-f5aa-e043-94ec-ecdf6c56480f
+	Revision: 71
 	Node Kind: dir
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 313
-	Last Changed Date: Fri Jul 08 18:35:21 NOVST 2005
+	Last Changed Revision: 71
+	Last Changed Date: Thu Jul 21 23:43:15 NOVST 2005
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy\importDir
-	URL: svn://localhost/rep/MyRepos/importDir
-	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 313
+	URL: svn://localhost/testRep/MyRepos/importDir
+	Repository UUID: dbe83c44-f5aa-e043-94ec-ecdf6c56480f
+	Revision: 71
 	Node Kind: dir
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 313
-	Last Changed Date: Fri Jul 08 18:35:21 NOVST 2005
+	Last Changed Revision: 71
+	Last Changed Date: Thu Jul 21 23:43:15 NOVST 2005
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy\importDir\importFile.txt
-	URL: svn://localhost/rep/MyRepos/importDir/importFile.txt
-	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 313
+	URL: svn://localhost/testRep/MyRepos/importDir/importFile.txt
+	Repository UUID: dbe83c44-f5aa-e043-94ec-ecdf6c56480f
+	Revision: 71
 	Node Kind: file
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 313
-	Last Changed Date: Fri Jul 08 18:35:21 NOVST 2005
-	Properties Last Updated: Fri Jul 08 18:35:24 NOVST 2005
-	Text Last Updated: Fri Jul 08 18:35:22 NOVST 2005
+	Last Changed Revision: 71
+	Last Changed Date: Thu Jul 21 23:43:15 NOVST 2005
+	Properties Last Updated: Thu Jul 21 23:43:16 NOVST 2005
+	Text Last Updated: Thu Jul 21 23:43:16 NOVST 2005
 	Checksum: 75e9e68e21ae4453f318424738aef57e
 	
 	Recursively scheduling a new directory 'N:\MyWorkingCopy\newDir' for addition...
+	A     newDir
+	A     newDir/newFile.txt
 	
 	Status for 'N:\MyWorkingCopy':
-	A          0     ?    ?                               N:\MyWorkingCopy\newDir
 	A          0     ?    ?                               N:\MyWorkingCopy\newDir\newFile.txt
+	A          0     ?    ?                               N:\MyWorkingCopy\newDir
 	
 	Updating 'N:\MyWorkingCopy'...
-	At revision 313
-	Updated to revision 313.
+	At revision 71
+	
 	Committing changes for 'N:\MyWorkingCopy'...
 	Adding         newDir
 	Adding         newDir/newFile.txt
 	Transmitting file data....
-	Committed to revision 314
+	Committed to revision 72
 	
 	Locking (with stealing if the entry is already locked) 'N:\MyWorkingCopy\newDir\newFile.txt'.
+	L     newFile.txt
 	
 	Status for 'N:\MyWorkingCopy':
-	     K     314   314   userName                        N:\MyWorkingCopy\newDir\newFile.txt
+	     K     72    72    userName                        N:\MyWorkingCopy\newDir\newFile.txt
 	
-	Copying 'svn://localhost/rep/MyRepos' to 'svn://localhost/rep/MyReposCopy'...
-	Committed to revision 315
+	Copying 'svn://localhost/testRep/MyRepos' to 'svn://localhost/testRep/MyReposCopy'...
+	Committed to revision 73
 	
-	Switching 'N:\MyWorkingCopy' to 'svn://localhost/rep/MyReposCopy'...
+	Switching 'N:\MyWorkingCopy' to 'svn://localhost/testRep/MyReposCopy'...
 	  B       newDir/newFile.txt
-	At revision 315
+	At revision 73
 	
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy
-	URL: svn://localhost/rep/MyReposCopy
-	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 315
+	URL: svn://localhost/testRep/MyReposCopy
+	Repository UUID: dbe83c44-f5aa-e043-94ec-ecdf6c56480f
+	Revision: 73
 	Node Kind: dir
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 315
-	Last Changed Date: Fri Jul 08 18:35:26 NOVST 2005
+	Last Changed Revision: 73
+	Last Changed Date: Thu Jul 21 23:43:19 NOVST 2005
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy\importDir
-	URL: svn://localhost/rep/MyReposCopy/importDir
-	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 315
+	URL: svn://localhost/testRep/MyReposCopy/importDir
+	Repository UUID: dbe83c44-f5aa-e043-94ec-ecdf6c56480f
+	Revision: 73
 	Node Kind: dir
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 313
-	Last Changed Date: Fri Jul 08 18:35:21 NOVST 2005
+	Last Changed Revision: 71
+	Last Changed Date: Thu Jul 21 23:43:15 NOVST 2005
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy\importDir\importFile.txt
-	URL: svn://localhost/rep/MyReposCopy/importDir/importFile.txt
-	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 315
+	URL: svn://localhost/testRep/MyReposCopy/importDir/importFile.txt
+	Repository UUID: dbe83c44-f5aa-e043-94ec-ecdf6c56480f
+	Revision: 73
 	Node Kind: file
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 313
-	Last Changed Date: Fri Jul 08 18:35:21 NOVST 2005
-	Properties Last Updated: Fri Jul 08 18:35:24 NOVST 2005
-	Text Last Updated: Fri Jul 08 18:35:22 NOVST 2005
+	Last Changed Revision: 71
+	Last Changed Date: Thu Jul 21 23:43:15 NOVST 2005
+	Properties Last Updated: Thu Jul 21 23:43:16 NOVST 2005
+	Text Last Updated: Thu Jul 21 23:43:16 NOVST 2005
 	Checksum: 75e9e68e21ae4453f318424738aef57e
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy\newDir
-	URL: svn://localhost/rep/MyReposCopy/newDir
-	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 315
+	URL: svn://localhost/testRep/MyReposCopy/newDir
+	Repository UUID: dbe83c44-f5aa-e043-94ec-ecdf6c56480f
+	Revision: 73
 	Node Kind: dir
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 314
-	Last Changed Date: Fri Jul 08 18:35:25 NOVST 2005
+	Last Changed Revision: 72
+	Last Changed Date: Thu Jul 21 23:43:18 NOVST 2005
 	-----------------INFO-----------------
 	Local Path: N:\MyWorkingCopy\newDir\newFile.txt
-	URL: svn://localhost/rep/MyReposCopy/newDir/newFile.txt
-	Repository UUID: 466bc291-b22d-3743-ba76-018ba5011628
-	Revision: 315
+	URL: svn://localhost/testRep/MyReposCopy/newDir/newFile.txt
+	Repository UUID: dbe83c44-f5aa-e043-94ec-ecdf6c56480f
+	Revision: 73
 	Node Kind: file
 	Schedule: normal
 	Last Changed Author: userName
-	Last Changed Revision: 314
-	Last Changed Date: Fri Jul 08 18:35:25 NOVST 2005
-	Properties Last Updated: Fri Jul 08 18:35:28 NOVST 2005
-	Text Last Updated: Fri Jul 08 18:35:26 NOVST 2005
+	Last Changed Revision: 72
+	Last Changed Date: Thu Jul 21 23:43:18 NOVST 2005
+	Properties Last Updated: Thu Jul 21 23:43:20 NOVST 2005
+	Text Last Updated: Thu Jul 21 23:43:18 NOVST 2005
 	Checksum: 023b67e9660b2faabaf84b10ba32c6cf
 	
 	Scheduling 'N:\MyWorkingCopy\newDir' for deletion ...
+	D     newDir/newFile.txt
+	D     newDir
 	
 	Status for 'N:\MyWorkingCopy':
-	D          315   314   userName                        N:\MyWorkingCopy\newDir
-	D          315   314   userName                        N:\MyWorkingCopy\newDir\newFile.txt
+	D          73    72    userName                        N:\MyWorkingCopy\newDir\newFile.txt
+	D          73    72    userName                        N:\MyWorkingCopy\newDir
 	
 	Committing changes for 'N:\MyWorkingCopy'...
 	Deleting   newDir
-	Committed to revision 316
+	Committed to revision 74
  * 
  */
 public class WorkingCopy {
@@ -289,6 +312,7 @@ public class WorkingCopy {
     private static SVNClientManager ourClientManager;
     private static ISVNEventHandler myCommitEventHandler;
     private static ISVNEventHandler myUpdateEventHandler;
+    private static ISVNEventHandler myWCEventHandler;
     
     public static void main(String[] args) {
         /*
@@ -298,7 +322,7 @@ public class WorkingCopy {
          * Assuming that 'svn://localhost/rep' is an existing 
          * repository path
          */
-        String repositoryURL = "svn://localhost/rep";
+        String repositoryURL = "svn://localhost/testRep";
         String name = "userName";
         String password = "userPassword";
         String myWorkingCopyPath = "/MyWorkingCopy";
@@ -352,28 +376,49 @@ public class WorkingCopy {
         setupLibrary();
         
         myCommitEventHandler = new CommitEventHandler();
+        
         myUpdateEventHandler = new UpdateEventHandler();
         
+        myWCEventHandler = new WCEventHandler();
+        
         /*
-         * Creates a usre's authentication manager.
-         * User's authentication is generally required in
-         * write-operations when the repository contents are changed.
-         * readonly=true - not to save to a config file any configuration 
-         * changes that can be done during the program run 
+         * Creates default run-time configuration options. Default options created
+         * in this way use the Subversion run-time configuration area (for instance,
+         * on Windows platform it can be found in the
+         * 'Documents and Settings\UserName\%APPDATA%\Subversion directory). 
+         * 
+         * readonly = true - not to save  any configuration changes that can be done 
+         * during the program run to a config file (config settings will only 
+         * be read to initialize; to enable changes the readonly flag should be set
+         * to false).
+         * 
+         * SVNWCUtil is a utility class that creates default options.
          */
         ISVNOptions options = SVNWCUtil.createDefaultOptions(true);
+        
+        /*
+         * Creates an instance of SVNClientManager providing authentication
+         * information (name, password) and run-time configuration options
+         */
         ourClientManager = SVNClientManager.newInstance(options, name, password);
+        
+        /*
+         * Sets a custom event handler for operations handled by an SVNCommitClient 
+         * instance
+         */
         ourClientManager.getCommitClient().setEventHandler(myCommitEventHandler);
+        
+        /*
+         * Sets a custom event handler for operations handled by an SVNUpdateClient 
+         * instance
+         */
         ourClientManager.getUpdateClient().setEventHandler(myUpdateEventHandler);
-        ourClientManager.getWCClient().setEventHandler(myUpdateEventHandler);
-        ourClientManager.getCopyClient().setEventHandler(myCommitEventHandler);
 
         /*
-         * The following 'SVN*Client' objects come from org.tmatesoft.svn.core.io
-         * package and are only a part of that client's high-level API indended for 
-         * managing working copies.    
+         * Sets a custom event handler for operations handled by an SVNWCClient 
+         * instance
          */
-        
+        ourClientManager.getWCClient().setEventHandler(myWCEventHandler);
 
         long committedRevision = -1;
         System.out.println("Making a new directory at '" + url + "'...");
@@ -470,15 +515,15 @@ public class WorkingCopy {
         System.out.println();
 
         boolean isRecursive = true;
-        boolean isRemote = false;
+        boolean isRemote = true;
         boolean isReportAll = false;
         boolean isIncludeIgnored = true;
         boolean isCollectParentExternals = false;
         System.out.println("Status for '" + wcDir.getAbsolutePath() + "':");
         try {
             /*
-             * status will be recursive on wcDir, won't cover the repository 
-             * (only local status), won't cover unmodified entries, will disregard
+             * status will be recursive on wcDir, will also cover the repository, 
+             * won't cover unmodified entries, will disregard
              * svn:ignore property ignores (if any), will ignore externals definitions
              * (anyway this program doesn't deal with externals;))
              */
@@ -503,7 +548,6 @@ public class WorkingCopy {
             error("error while recursively updating the working copy at '"
                     + wcDir.getAbsolutePath() + "'", svne);
         }
-        System.out.println("Updated to revision " + updatedRevision + "." );
         System.out.println();
 
         System.out.println("Committing changes for '" + wcDir.getAbsolutePath() + "'...");
@@ -532,7 +576,7 @@ public class WorkingCopy {
              * locking aNewFile with stealing (if it has been already locked by someone
              * else) and a lock comment
              */
-            lock(aNewFile, true, "locking '/newDir'");
+            lock(aNewFile, true, "locking '/newDir/newFile.txt'");
         } catch (SVNException svne) {
             error("error while locking the working copy file '"
                     + aNewFile.getAbsolutePath() + "'", svne);
@@ -871,7 +915,7 @@ public class WorkingCopy {
          * manner of the native Subversion command line client)
          */
         ourClientManager.getStatusClient().doStatus(wcPath, isRecursive, isRemote, isReportAll,
-                isIncludeIgnored, isCollectParentExternals, new StatusHandler());
+                isIncludeIgnored, isCollectParentExternals, new StatusHandler(isRemote));
     }
 
     /*
