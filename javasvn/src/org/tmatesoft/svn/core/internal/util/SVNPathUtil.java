@@ -48,11 +48,10 @@ public class SVNPathUtil {
         int index = path.length() - 1;
         while(index >= 0) {
             if (path.charAt(index) == '/') {
-                return path.substring(0, index - 1); 
+                return path.substring(0, index); 
             }
             index--;
         }
         return "";
     }
-
 }
