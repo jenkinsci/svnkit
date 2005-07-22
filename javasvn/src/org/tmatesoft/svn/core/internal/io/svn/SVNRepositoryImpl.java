@@ -212,8 +212,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public long getDir(String path, long revision, Map properties,
-            ISVNDirEntryHandler handler) throws SVNException {
+    public long getDir(String path, long revision, Map properties, ISVNDirEntryHandler handler) throws SVNException {
         Long rev = getRevisionObject(revision);
         // convert path to path relative to repos root.
         try {

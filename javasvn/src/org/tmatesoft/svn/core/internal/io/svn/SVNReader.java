@@ -647,8 +647,7 @@ class SVNReader {
         long revision = SVNReader.getLong(items, 4);
         Date date = items[5] != null ? SVNTimeUtil.parseDate(SVNReader.getString(items, 5)) : null;
         String author = SVNReader.getString(items, 6);
-        return new SVNDirEntry(name, kind, size, hasProps, revision, date,
-                author);
+        return new SVNDirEntry(name, kind, size, hasProps, revision, date, author);
     }
 
     private static SVNDirEntry readStatEntry(InputStream is) throws SVNException {

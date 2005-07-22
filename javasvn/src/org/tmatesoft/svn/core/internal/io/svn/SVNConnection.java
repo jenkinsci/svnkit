@@ -71,6 +71,7 @@ class SVNConnection {
     }
 
     private boolean myIsCredentialsReceived = false;
+    private InputStream myLoggingInputStream;
 
     public void authenticate(SVNRepositoryImpl repository) throws SVNException {
         // use provider to get creds.
@@ -186,6 +187,9 @@ class SVNConnection {
     }
 
     public void close() throws SVNException {
+        myInputStream = null;
+        myLoggingInputStream = null;
+        myOutputStream = null;
         myConnector.close();
     }
 
@@ -193,7 +197,7 @@ class SVNConnection {
         try {
             return SVNReader.parse(getInputStream(), template, items);
         } finally {
-            SVNDebugLog.flushStream(getInputStream());
+            SVNDebugLog.flushStream(myLoggingInputStream);
         }
     }
 
@@ -215,7 +219,7 @@ class SVNConnection {
     public OutputStream getOutputStream() throws SVNException {
         if (myOutputStream == null) {
             try {
-                return myOutputStream = SVNDebugLog.createLogStream(myConnector.getOutputStream());
+                myOutputStream = SVNDebugLog.createLogStream(myConnector.getOutputStream());
             } catch (IOException ex) {
                 throw new SVNException(ex);
             }
@@ -226,7 +230,9 @@ class SVNConnection {
     public InputStream getInputStream() throws SVNException {
         if (myInputStream == null) {
             try {
-                myInputStream = SVNDebugLog.createLogStream(new RollbackInputStream(new BufferedInputStream(myConnector.getInputStream())));
+                myInputStream = SVNDebugLog.createLogStream(new BufferedInputStream(myConnector.getInputStream()));
+                myLoggingInputStream = myInputStream;
+                myInputStream = new RollbackInputStream(myInputStream);
             } catch (IOException ex) {
                 throw new SVNException(ex);
             }

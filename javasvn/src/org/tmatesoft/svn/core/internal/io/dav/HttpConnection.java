@@ -268,7 +268,7 @@ class HttpConnection {
                 acknowledgeSSLContext(false);
                 throw new SVNException(e);
             } finally {
-                SVNDebugLog.flushStream(myOutputStream);
+//                SVNDebugLog.flushStream(myOutputStream);
             }
             acknowledgeSSLContext(true);
             if (status != null

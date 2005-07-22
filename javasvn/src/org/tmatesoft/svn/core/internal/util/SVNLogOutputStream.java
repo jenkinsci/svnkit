@@ -18,7 +18,6 @@ import java.io.OutputStream;
 
 import org.tmatesoft.svn.util.ISVNDebugLogger;
 
-
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
@@ -44,16 +43,12 @@ public class SVNLogOutputStream extends FilterOutputStream {
         flushBuffer(true);
     }
 
-    public void write(byte[] b, int off, int len) throws IOException {
-        super.write(b, off, len);
-        log(b, off, len);
-    }
-
-    private void log(byte[] data, int off, int len) {
-        if (myLogger != null && len > 0 && off + len <= data.length && off < data.length) {
-            myBuffer.write(data, off, len);
-            flushBuffer(false);
+    public void write(int b) throws IOException {
+        super.write(b);
+        if (myBuffer != null) {
+            myBuffer.write(b);
         }
+        flushBuffer(false);
     }
     
     public void flushBuffer(boolean force) {
