@@ -36,10 +36,10 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
-import org.tmatesoft.svn.core.io.SVNURL;
 
 
 /**
@@ -48,7 +48,7 @@ import org.tmatesoft.svn.core.io.SVNURL;
  */
 public class DefaultSVNSSLManager implements ISVNSSLManager {
 
-    private String myURL;
+    private SVNURL myURL;
     private File myClientCertFile;
     private String myClientCertPassword;
     private DefaultSVNAuthenticationManager myAuthManager;
@@ -61,18 +61,14 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
     private boolean myIsUseKeyStore;
     private File[] myServerCertFiles;
 
-    public DefaultSVNSSLManager(File authDir, String url, 
+    public DefaultSVNSSLManager(File authDir, SVNURL url, 
             File[] serverCertFiles, boolean useKeyStore, File clientFile, String clientPassword, 
             DefaultSVNAuthenticationManager authManager) {
         myURL = url;
         myAuthDirectory = authDir;
         myClientCertFile = clientFile;
         myClientCertPassword = clientPassword;
-        try {
-            SVNURL location = SVNURL.parseURIEncoded(url);
-            myRealm = "https://" + location.getHost() + ":" + location.getPort();
-        } catch (SVNException e1) {
-        }
+        myRealm = "https://" + url.getHost() + ":" + url.getPort();
         myAuthManager = authManager;
         myIsUseKeyStore = useKeyStore;
         myServerCertFiles = serverCertFiles;
@@ -203,13 +199,10 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
                 hostName = hostName.substring(0, hostName.indexOf(','));
             }
         }
-        try {
-            String realHostName = SVNURL.parseURIEncoded(myURL).getHost();
-            if (!realHostName.equals(hostName)) {
-                mask |= 4;
-            }
-        } catch (SVNException e) {
-        } 
+        String realHostName = myURL.getHost();
+        if (!realHostName.equals(hostName)) {
+            mask |= 4;
+        }
         return mask;
     }
     

@@ -16,8 +16,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
-import org.tmatesoft.svn.core.io.SVNURL;
 
 /**
  * @version 1.0

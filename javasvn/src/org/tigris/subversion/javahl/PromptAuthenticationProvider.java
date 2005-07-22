@@ -7,6 +7,7 @@ import java.io.File;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
 
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
@@ -21,7 +22,7 @@ public class PromptAuthenticationProvider implements ISVNAuthenticationProvider 
         myPrompt = prompt;
     }
 
-    public SVNAuthentication requestClientAuthentication(String kind, String url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+    public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
         if (ISVNAuthenticationManager.SSH.equals(kind) && previousAuth == null) {
             String keyPath = System.getProperty("javasvn.ssh2.key");
             String userName = System.getProperty("javasvn.ssh2.username");
@@ -54,7 +55,7 @@ public class PromptAuthenticationProvider implements ISVNAuthenticationProvider 
         return null;
     }
 
-    public int acceptServerAuthentication(String url, String realm, Object serverAuth,  boolean resultMayBeStored) {
+    public int acceptServerAuthentication(SVNURL url, String realm, Object serverAuth,  boolean resultMayBeStored) {
         if (serverAuth != null && myPrompt instanceof PromptUserPassword2) {
             PromptUserPassword2 sslPrompt = (PromptUserPassword2) myPrompt;
             serverAuth = serverAuth instanceof X509Certificate ? 

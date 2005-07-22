@@ -19,9 +19,9 @@ import java.util.List;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -83,7 +83,6 @@ class SVNConnection {
             return;
         }
         SVNPasswordAuthentication auth = null;
-        String url  = myLocation.toString();
         for (int i = 0; i < mechs.size(); i++) {
             String mech = (String) mechs.get(i);
             if ("EXTERNAL".equals(mech)) {
@@ -109,10 +108,10 @@ class SVNConnection {
                                 + myLocation.getPort() + "> " + realm;
                     }
                     if (auth == null && myAuthManager != null) {
-                        auth = (SVNPasswordAuthentication) myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, url);
+                        auth = (SVNPasswordAuthentication) myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myLocation);
                     } else if (myAuthManager != null) {
                         myAuthManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, failureReason, auth);
-                        auth = (SVNPasswordAuthentication) myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, url);
+                        auth = (SVNPasswordAuthentication) myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myLocation);
                     }
                     if (auth == null || auth.getUserName() == null || auth.getPassword() == null) {
                         failureReason = "no credentials for '" + mech + "'";

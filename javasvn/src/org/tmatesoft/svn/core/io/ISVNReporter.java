@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.core.io;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 
 /**
  * This is a basic interface for implementors to describe a working copy state.

@@ -11,9 +11,9 @@
 
 package org.tmatesoft.svn.core.internal.io.svn;
 
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.SVNURL;
 
 /**
  * @version 1.0

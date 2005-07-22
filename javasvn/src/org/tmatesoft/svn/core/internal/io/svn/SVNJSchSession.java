@@ -20,8 +20,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
-import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 import com.jcraft.jsch.JSch;

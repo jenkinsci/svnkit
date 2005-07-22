@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**

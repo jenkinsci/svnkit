@@ -22,6 +22,7 @@ import java.util.StringTokenizer;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
@@ -31,7 +32,6 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /**
@@ -76,9 +76,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         myProviders[3] = provider; 
     }
 
-    public ISVNProxyManager getProxyManager(String url) throws SVNException {
-        SVNURL location = SVNURL.parseURIEncoded(url);
-        String host = location.getHost();
+    public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
+        String host = url.getHost();
         
         Map properties = getHostProperties(host);
         String proxyHost = (String) properties.get("http-proxy-host");
@@ -98,9 +97,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return new SimpleProxyManager(proxyHost, proxyPort, proxyUser, proxyPassword);
     }
 
-    public ISVNSSLManager getSSLManager(String url) throws SVNException {
-        SVNURL location = SVNURL.parseURIEncoded(url);
-        String host = location.getHost();
+    public ISVNSSLManager getSSLManager(SVNURL url) throws SVNException {
+        String host = url.getHost();
         
         Map properties = getHostProperties(host);
         boolean trustAll = !"no".equalsIgnoreCase((String) properties.get("ssl-trust-default-ca")); // jdk keystore
@@ -133,7 +131,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return globalProps;
     }
 
-    public SVNAuthentication getFirstAuthentication(String kind, String realm, String url) throws SVNException {
+    public SVNAuthentication getFirstAuthentication(String kind, String realm, SVNURL url) throws SVNException {
         myPreviousAuthentication = null;
         myPreviousErrorMessage = null;
         myLastProviderIndex = 0;
@@ -155,7 +153,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         throw new SVNAuthenticationException("svn: Authentication required for '" + realm + "'");
     }
 
-    public SVNAuthentication getNextAuthentication(String kind, String realm, String url) throws SVNException {
+    public SVNAuthentication getNextAuthentication(String kind, String realm, SVNURL url) throws SVNException {
         int index = Math.min(myLastProviderIndex + 1, 3);
         for(int i = index; i < myProviders.length; i++) {
             if (myProviders[i] == null) {
@@ -233,7 +231,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             myPassword = password;
             myIsStore = store;
         }
-        public SVNAuthentication requestClientAuthentication(String kind, String url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
             if (previousAuth == null) {
                 if (ISVNAuthenticationManager.SSH.equals(kind)) {
                     return new SVNSSHAuthentication(myUserName, myPassword, myIsStore);
@@ -243,7 +241,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             }
             return null;
         }
-        public int acceptServerAuthentication(String url, String r, Object serverAuth, boolean resultMayBeStored) {
+        public int acceptServerAuthentication(SVNURL url, String r, Object serverAuth, boolean resultMayBeStored) {
             return ACCEPTED;
         }
     }
@@ -261,7 +259,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 
     private class CacheAuthenticationProvider implements ISVNAuthenticationProvider {        
 
-        public SVNAuthentication requestClientAuthentication(String kind, String url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
             // get next after prev for select kind and realm.
             if (previousAuth != null) {
                 return null;
@@ -277,7 +275,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             getRuntimeAuthStorage().putData(kind, realm, auth);
         }
         
-        public int acceptServerAuthentication(String url, String r, Object serverAuth, boolean resultMayBeStored) {
+        public int acceptServerAuthentication(SVNURL url, String r, Object serverAuth, boolean resultMayBeStored) {
             return ACCEPTED;
         }
     }
@@ -290,7 +288,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             myDirectory = directory;
         }
 
-        public SVNAuthentication requestClientAuthentication(String kind, String url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
             File dir = new File(myDirectory, kind);
             if (!dir.isDirectory()) {
                 return null;
@@ -367,7 +365,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         }
         
 
-        public int acceptServerAuthentication(String url, String r, Object serverAuth, boolean resultMayBeStored) {
+        public int acceptServerAuthentication(SVNURL url, String r, Object serverAuth, boolean resultMayBeStored) {
             return ACCEPTED;
         }
         

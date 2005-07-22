@@ -11,8 +11,8 @@
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNURL;
 
 /**
  * @version 1.0
