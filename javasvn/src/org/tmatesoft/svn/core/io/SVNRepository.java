@@ -1266,11 +1266,4 @@ public abstract class SVNRepository {
         relativeOrRepositoryPath = getRepositoryPath(relativeOrRepositoryPath);
         return SVNPathUtil.append(getRepositoryRoot().getPath(), relativeOrRepositoryPath);
     }
-    
-    public String getRelativePath(String repositoryPath) {
-        if (repositoryPath == null) {
-            return "";
-        }
-        return repositoryPath.substring(getLocation().getPath().length() + 1);
-    }
 }

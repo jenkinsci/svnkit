@@ -186,12 +186,11 @@ class DAVRepository extends SVNRepository {
                 dirRevision = info.revision; 
             }
             if (handler != null) {
-                final String parentPath = path;
+                final String parentPath = SVNEncodingUtil.uriDecode(path);
                 myConnection.doPropfind(path, 1, null, null, new IDAVResponseHandler() {
                     public void handleDAVResponse(DAVResponse child) {
                         String href = child.getHref();
-                        href = SVNEncodingUtil.uriDecode(href);
-                        if (href.equals(SVNEncodingUtil.uriDecode(parentPath))) {
+                        if (href.equals(parentPath)) {
                             return;
                         }
                         // build direntry
@@ -320,7 +319,13 @@ class DAVRepository extends SVNRepository {
         try {
             openConnection();
             if (path.startsWith("/")) {
-                path = getRelativePath(path);
+                // (root + path), relative to location
+                path = SVNPathUtil.append(getRepositoryRoot().getPath(), path);
+                if (path.equals(getLocation().getPath())) {
+                    path = "";
+                } else {
+                    path = path.substring(getLocation().getPath().length() + 1);
+                }
             }
             StringBuffer request = DAVLocationsHandler.generateLocationsRequest(null, path, pegRevision, revisions);
             

@@ -96,7 +96,6 @@ public class DAVUtil {
             throw new SVNException("resource " + path + " is not part of repository");
         }
         String vcc = (String) properties.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-        //vcc = PathUtil.encode(vcc);
         String baselineRelativePath = (String) properties.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
         if (vcc == null) {
             throw new SVNException("important properties are missing for " + path);
