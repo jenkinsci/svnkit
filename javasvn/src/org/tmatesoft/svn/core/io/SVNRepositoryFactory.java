@@ -126,15 +126,15 @@ public abstract class SVNRepositoryFactory {
      * @see						#createRepositoryImpl(SVNURL)
      * @see 					SVNRepository
      */
-    public static SVNRepository create(String url) throws SVNException {
-        SVNURL svnURL = SVNURL.parse(url);
+    public static SVNRepository create(SVNURL url) throws SVNException {
+        String urlString = url.toString();
     	for(Iterator keys = myFactoriesMap.keySet().iterator(); keys.hasNext();) {
     		String key = (String) keys.next();
-    		if (Pattern.matches(key, url)) {
-    			return ((SVNRepositoryFactory) myFactoriesMap.get(key)).createRepositoryImpl(svnURL);
+    		if (Pattern.matches(key, urlString)) {
+    			return ((SVNRepositoryFactory) myFactoriesMap.get(key)).createRepositoryImpl(url);
     		}
     	}
-    	SVNErrorManager.error("svn: Unable to open an ra_local session to URL '" + url + "'\nsvn: No connection protocol implementation for " + svnURL.getProtocol());
+    	SVNErrorManager.error("svn: Unable to open an ra_local session to URL '" + url + "'\nsvn: No connection protocol implementation for " + url.getProtocol());
         return null;
     }
 

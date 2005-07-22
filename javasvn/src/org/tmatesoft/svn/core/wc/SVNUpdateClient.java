@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -97,7 +98,8 @@ public class SVNUpdateClient extends SVNBasicClient {
                     .getEntries().getEntry("", true).getURL());
             String target = "".equals(wcAccess.getTargetName()) ? null
                     : wcAccess.getTargetName();
-            repos.update(url, revNumber, target, recursive, reporter, editor);
+            SVNURL svnURL = SVNURL.parseURIEncoded(url);
+            repos.update(svnURL, revNumber, target, recursive, reporter, editor);
 
             if (editor.getTargetRevision() >= 0 && recursive
                     && !isIgnoreExternals()) {

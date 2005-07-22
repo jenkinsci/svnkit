@@ -128,9 +128,8 @@ class SVNConnection {
                                 Object[] creds = read("[(S?S)]", null);
                                 if (creds != null && creds.length == 2
                                         && creds[0] != null && creds[1] != null) {
-                                    repository.updateCredentials(
-                                            (String) creds[0],
-                                            (String) creds[1]);
+                                    SVNURL rootURL = SVNURL.parseURIEncoded((String) creds[1]); 
+                                    repository.updateCredentials((String) creds[0], rootURL);
                                     if (myRealm == null) {
                                         myRealm = (String) creds[0];
                                     }
@@ -168,8 +167,8 @@ class SVNConnection {
                 Object[] creds = read("[(?S?S)]", null);
                 if (repository != null
                         && repository.getRepositoryRoot() == null) {
-                    repository.updateCredentials((String) creds[0],
-                            (String) creds[1]);
+                    SVNURL rootURL = creds[1] != null ? SVNURL.parseURIEncoded((String) creds[1]) : null; 
+                    repository.updateCredentials((String) creds[0], rootURL);
                 }
                 if (myRealm == null) {
                     myRealm = (String) creds[0];

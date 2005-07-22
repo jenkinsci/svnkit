@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /*
@@ -94,7 +95,7 @@ public class DisplayRepositoryTree {
         }
         SVNRepository repository = null;
         try {
-            repository = SVNRepositoryFactory.create(url);
+            repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
         } catch (SVNException svne) {
             /*
              * Perhaps a malformed URL is the cause of this exception

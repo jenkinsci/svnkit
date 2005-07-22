@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNURL;
 
 /**
  * @version 1.0
@@ -78,10 +79,10 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
         myReporter.deletePath(path);
     }
 
-    public void linkPath(String url, String path,
+    public void linkPath(SVNURL url, String path,
             String lockToken, long revison, boolean startEmtpy)
             throws SVNException {
-        String rootURL = SVNPathUtil.getCommonURLAncestor(url, myRepositoryLocation);
+        String rootURL = SVNPathUtil.getCommonURLAncestor(url.toString(), myRepositoryLocation);
         if (rootURL.length() < myRepositoryLocation.length()) {
             myRepositoryLocation = rootURL;
         }

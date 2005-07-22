@@ -45,6 +45,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNURL;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author Alexander Kitaev
@@ -364,14 +365,14 @@ class DAVRepository extends SVNRepository {
         }
     }
 
-    public void update(String url, long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        url = getCanonicalURL(url);
+    public void update(SVNURL url, long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         if (url == null) {
             throw new SVNException(url + ": not valid URL");
         }
         try {
             openConnection();
-            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), revision, target, url, recursive, true, false, true, reporter);
+            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), revision, target, url.toString(), 
+                    recursive, true, false, true, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
@@ -390,18 +391,17 @@ class DAVRepository extends SVNRepository {
         }
     }
 
-    public void diff(String url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+    public void diff(SVNURL url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         diff(url, revision, revision, target, ignoreAncestry, recursive, reporter, editor);
     }
     
-    public void diff(String url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        url = getCanonicalURL(url);
+    public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         if (url == null) {
             throw new SVNException(url + ": not valid URL");
         }
         try {
             openConnection();
-            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), targetRevision, target, url, recursive, ignoreAncestry, false, true, reporter);
+            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), targetRevision, target, url.toString(), recursive, ignoreAncestry, false, true, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, SVNEncodingUtil.uriEncode(getLocation().getPath()), revision, false, false, null);
@@ -495,13 +495,17 @@ class DAVRepository extends SVNRepository {
         });
     }
 
-    void updateCredentials(String uuid, String rootURL) throws SVNException {
+    void updateCredentials(String uuid, SVNURL rootURL) throws SVNException {
         setRepositoryCredentials(uuid, rootURL);
     }
 
     public SVNLock getLock(String path) throws SVNException {
         try {
             openConnection();
+            SVNDebugLog.log("location: " + getLocation());
+            SVNDebugLog.log("lock path: " + path);
+            SVNDebugLog.log("repository root: " + getRepositoryRoot());
+            
             path = getFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
             return myConnection.doGetLock(path);
@@ -535,6 +539,7 @@ class DAVRepository extends SVNRepository {
     public void removeLock(String path, String id, boolean force) throws SVNException {
         try {
             openConnection();
+            SVNDebugLog.log("repository root: " + getRepositoryRoot());
             path = getFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
             String url = getLocation().getProtocol() + "://" + getLocation().getHost() + ":" + getLocation().getPort();

@@ -32,14 +32,14 @@ public class DefaultSVNDebugLogger extends SVNDebugLoggerAdapter {
     }
 
     public void log(Throwable th) {
-        if (getLogger().isLoggable(Level.SEVERE)) {
-            getLogger().log(Level.SEVERE, th != null ? th.getMessage() : "", th);
+        if (getLogger().isLoggable(Level.FINE)) {
+            getLogger().log(Level.FINE, th != null ? th.getMessage() : "", th);
         }
     }
 
     public void log(String message, byte[] data) {
-        if (getLogger().isLoggable(Level.FINEST)) {
-            getLogger().log(Level.FINEST, message + "\n" + new String(data));
+        if (getLogger().isLoggable(Level.FINER)) {
+            getLogger().log(Level.FINER, message + "\n" + new String(data));
         }
     }
 

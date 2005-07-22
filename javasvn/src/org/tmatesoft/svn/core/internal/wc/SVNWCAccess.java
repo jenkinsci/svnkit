@@ -413,7 +413,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                     path = "/" + path;
                 }
                 try {
-                    url = SVNURL.parse(url).toString();
+                    url = SVNURL.parseURIEncoded(url).toString();
                 } catch (SVNException e) {
                     continue;
                 }

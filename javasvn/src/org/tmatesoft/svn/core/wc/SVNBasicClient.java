@@ -52,8 +52,7 @@ public class SVNBasicClient implements ISVNEventHandler {
 
     protected SVNBasicClient(final ISVNAuthenticationManager authManager, ISVNOptions options) {
         this(new ISVNRepositoryFactory() {
-
-            public SVNRepository createRepository(String url) throws SVNException {
+            public SVNRepository createRepository(SVNURL url) throws SVNException {
                 SVNRepository repository = SVNRepositoryFactory.create(url);
                 repository.setAuthenticationManager(authManager == null ? 
                         SVNWCUtil.createDefaultAuthenticationManager() : authManager);
@@ -119,10 +118,11 @@ public class SVNBasicClient implements ISVNEventHandler {
     }
 
     protected SVNRepository createRepository(String url) throws SVNException {
+        SVNURL svnURL = SVNURL.parseURIEncoded(url);
         if (myRepositoryFactory == null) {
-            return SVNRepositoryFactory.create(url);
+            return SVNRepositoryFactory.create(svnURL);
         }
-        return myRepositoryFactory.createRepository(SVNEncodingUtil.uriDecode(url));
+        return myRepositoryFactory.createRepository(svnURL);
     }
     
     protected ISVNRepositoryFactory getRepositoryFactory() {
@@ -272,7 +272,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         SVNLocationEntry location = (SVNLocationEntry) locations.get(0);
         String path = SVNEncodingUtil.uriEncode(location.getPath());
         String rootPath = SVNEncodingUtil.uriEncode(repos.getRepositoryRoot().getPath());
-        String fullPath = SVNEncodingUtil.uriEncode(SVNURL.parse(url).getPath());
+        String fullPath = SVNEncodingUtil.uriEncode(SVNURL.parseURIEncoded(url).getPath());
         url = url.substring(0, url.length() - fullPath.length());
         url = SVNPathUtil.append(url, rootPath);
         url = SVNPathUtil.append(url, path);

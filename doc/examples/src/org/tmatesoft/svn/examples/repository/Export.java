@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
@@ -135,7 +136,7 @@ public class Export {
 
         SVNRepository repository = null;
         try {
-            repository = SVNRepositoryFactory.create(url);
+            repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
         } catch (SVNException svne) {
             /*
              * Perhaps a malformed URL is the cause of this exception.

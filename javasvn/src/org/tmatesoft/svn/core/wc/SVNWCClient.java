@@ -365,12 +365,12 @@ public class SVNWCClient extends SVNBasicClient {
             SVNRevision pegRevision, SVNRevision revision, boolean recursive)
             throws SVNException {
         final SVNPropertyData[] data = new SVNPropertyData[1];
-        final String canonURL = SVNURL.parse(url).toString();
+        final String canonURL = SVNURL.parseURIEncoded(url).toString();
         doGetProperty(url, propName, pegRevision, revision, recursive, new ISVNPropertyHandler() {
             public void handleProperty(File file, SVNPropertyData property) {
             }
             public void handleProperty(String location, SVNPropertyData property) throws SVNException {
-                location = SVNURL.parse(location).toString();
+                location = SVNURL.parseURIEncoded(location).toString();
                 if (data[0] == null && canonURL.equals(location)) {
                     data[0] = property;
                 }
@@ -994,7 +994,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNLock lock = locks[i];
             locksMap.put(lock.getPath(), lock);
         }
-        String fullPath = SVNURL.parse(url).getPath();
+        String fullPath = SVNURL.parseURIEncoded(url).getPath();
         String rootPath = fullPath.substring(reposRoot.length());
         if (!rootPath.startsWith("/")) {
             rootPath = "/" + rootPath;

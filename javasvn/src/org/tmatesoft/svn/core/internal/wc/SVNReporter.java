@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -86,7 +87,8 @@ public class SVNReporter implements ISVNReporterBaton {
                 String parentURL = parentEntry.getURL();
                 String expectedURL = SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(targetEntry.getName()));
                 if (!expectedURL.equals(url)) {
-                    reporter.linkPath(url, "",
+                    SVNURL svnURL = SVNURL.parseURIEncoded(url);
+                    reporter.linkPath(svnURL, "",
                             targetEntry.getLockToken(), targetEntry
                                     .getRevision(), false);
                 } else if (targetEntry.getRevision() != parentEntry
@@ -171,7 +173,8 @@ public class SVNReporter implements ISVNReporterBaton {
                     if (!url.equals(expectedURL)
                             && !entry.isScheduledForAddition()
                             && !entry.isScheduledForReplacement()) {
-                        reporter.linkPath(url,
+                        SVNURL svnURL = SVNURL.parseURIEncoded(url);
+                        reporter.linkPath(svnURL,
                                 path, entry.getLockToken(),
                                 entry.getRevision(), false);
                     } else {
@@ -181,7 +184,8 @@ public class SVNReporter implements ISVNReporterBaton {
                 } else if (!entry.isScheduledForReplacement()
                         && !url.equals(expectedURL)) {
                     // link path
-                    reporter.linkPath(url,
+                    SVNURL svnURL = SVNURL.parseURIEncoded(url);
+                    reporter.linkPath(svnURL,
                             path, entry.getLockToken(), entry.getRevision(),
                             false);
                 } else if (entry.getRevision() != baseRevision
@@ -206,7 +210,8 @@ public class SVNReporter implements ISVNReporterBaton {
                 String url = childEntry.getURL();
                 if (reportAll) {
                     if (!url.equals(entry.getURL())) {
-                        reporter.linkPath(url,
+                        SVNURL svnURL = SVNURL.parseURIEncoded(url);
+                        reporter.linkPath(svnURL,
                                 path, childEntry.getLockToken(), childEntry
                                         .getRevision(), childEntry
                                         .isIncomplete());
@@ -216,7 +221,8 @@ public class SVNReporter implements ISVNReporterBaton {
                                         .isIncomplete());
                     }
                 } else if (!url.equals(entry.getURL())) {
-                    reporter.linkPath(url,
+                    SVNURL svnURL = SVNURL.parseURIEncoded(url);
+                    reporter.linkPath(svnURL,
                             path, childEntry.getLockToken(), childEntry
                                     .getRevision(), childEntry.isIncomplete());
                 } else if (childEntry.getLockToken() != null

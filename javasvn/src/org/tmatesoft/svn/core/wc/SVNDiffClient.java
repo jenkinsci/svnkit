@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNURL;
 
 /**
  * @version 1.0
@@ -95,7 +96,8 @@ public class SVNDiffClient extends SVNBasicClient {
             }
             long revN = getRevisionNumber(url, rN);
             try {
-                repos.diff(url, revN, target, !useAncestry, recursive,
+                SVNURL svnURL = SVNURL.parseURIEncoded(url);
+                repos.diff(svnURL, revN, target, !useAncestry, recursive,
                         reporter, editor);
             } finally {
                 wcAccess.close(true);
@@ -145,7 +147,8 @@ public class SVNDiffClient extends SVNBasicClient {
             }
             long revM = getRevisionNumber(url, rM);
             try {
-                repos.diff(url, revM, target, !useAncestry, recursive,
+                SVNURL svnURL = SVNURL.parseURIEncoded(url);
+                repos.diff(svnURL, revM, target, !useAncestry, recursive,
                         reporter, editor);
             } finally {
                 wcAccess.close(true);
@@ -284,7 +287,8 @@ public class SVNDiffClient extends SVNBasicClient {
                 }
             };
             repos = createRepository(url1);
-            repos.diff(url2, revM, revN, target, !useAncestry, recursive,
+            SVNURL svnURL = SVNURL.parseURIEncoded(url2);
+            repos.diff(svnURL, revM, revN, target, !useAncestry, recursive,
                     reporter, editor);
         } finally {
             if (tmpFile != null) {
@@ -416,7 +420,8 @@ public class SVNDiffClient extends SVNBasicClient {
                     dryRun, isLeaveConflictsUnresolved());
             SVNMergeEditor mergeEditor = new SVNMergeEditor(wcAccess, repos2,
                     revN, revM, merger);
-            repos1.diff(url2, revM, revN, target, !useAncestry, recursive,
+            SVNURL svnURL = SVNURL.parseURIEncoded(url2);
+            repos1.diff(svnURL, revM, revN, target, !useAncestry, recursive,
                     new ISVNReporterBaton() {
                         public void report(ISVNReporter reporter)
                                 throws SVNException {
@@ -541,8 +546,8 @@ public class SVNDiffClient extends SVNBasicClient {
         }
         targetURL = getURL(targetURL, wcRevNumber, SVNRevision
                 .create(revNumber));
-        targetURL = SVNEncodingUtil.uriDecode(targetURL);
-        repos.diff(targetURL, revNumber, wcRevNumber.getNumber(), target,
+        SVNURL svnURL = SVNURL.parseURIEncoded(target);
+        repos.diff(svnURL, revNumber, wcRevNumber.getNumber(), target,
                 !useAncestry, recursive, reporter, editor);
     }
 

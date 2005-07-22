@@ -13,8 +13,8 @@ package org.tmatesoft.svn.core.io;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -27,18 +27,36 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  */
 public class SVNURL {
     
-    // uri-encoded.
-    public static SVNURL parse(String url) throws SVNException {
-        return new SVNURL(url);
+    public static SVNURL create(String protocol, String userInfo, String host, int port, String path, boolean uriEncoded) throws SVNException {
+        path = path == null ? "/" : path.trim();
+        if (!uriEncoded) {
+            path = SVNEncodingUtil.uriEncode(path);
+        }
+        if (path.length() > 0 && path.charAt(0) != '/') {
+            path = "/" + path;
+        }
+        if (path.length() > 0 && path.charAt(path.length() - 1) == '/') {
+            path = path.substring(0, path.length() - 1);
+        }
+        String url = composeURL(protocol, userInfo, host, port, path);
+        return new SVNURL(url, true);
     }
     
-    private static final Collection VALID_PROTOCOLS = new HashSet();
+    public static SVNURL parseURIDecoded(String url) throws SVNException {
+        return new SVNURL(url, false);
+    }
+
+    public static SVNURL parseURIEncoded(String url) throws SVNException {
+        return new SVNURL(url, true);
+    }
+    
+    private static final Map DEFAULT_PORTS = new HashMap();
     
     static {
-        VALID_PROTOCOLS.add("svn");
-        VALID_PROTOCOLS.add("svn+ssh");
-        VALID_PROTOCOLS.add("http");
-        VALID_PROTOCOLS.add("https");
+        DEFAULT_PORTS.put("svn", new Integer(3690));
+        DEFAULT_PORTS.put("svn+ssh", new Integer(22));
+        DEFAULT_PORTS.put("http", new Integer(80));
+        DEFAULT_PORTS.put("https", new Integer(443));
     }
     
     private String myURL;
@@ -47,22 +65,22 @@ public class SVNURL {
     private String myPath;
     private String myUserName;
     private int myPort;
+    private String myEncodedPath;
+    private boolean myIsDefaultPort;
     
-    private SVNURL(String url) throws SVNException {
+    private SVNURL(String url, boolean uriEncoded) throws SVNException {
         if (url == null) {
             SVNErrorManager.error("svn: invalid URL '" + url + "'");
         }
-        // remove trailing '/'
         if (url.endsWith("/")) {
             url = url.substring(0, url.length() - 1);
         }
-        myURL = url;
         int index = url.indexOf("://");
         if (index <= 0) {
             SVNErrorManager.error("svn: invalid URL '" + url + "'");
         }
         myProtocol = url.substring(0, index);
-        if (!VALID_PROTOCOLS.contains(myProtocol)) {
+        if (!DEFAULT_PORTS.containsKey(myProtocol)) {
             SVNErrorManager.error("svn: invalid URL '" + url + "': protocol '" + myProtocol + "' is not supported");
         }
         String testURL = "http" + url.substring(index);
@@ -74,20 +92,20 @@ public class SVNURL {
             return;
         }
         myHost = httpURL.getHost();
-        myPath = SVNEncodingUtil.uriDecode(httpURL.getPath());
+        if (uriEncoded) {
+            myEncodedPath = httpURL.getPath();
+            myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
+        } else {
+            myPath = httpURL.getPath();
+            myEncodedPath = SVNEncodingUtil.uriEncode(myPath);
+        }
         myUserName = httpURL.getUserInfo();
         myPort = httpURL.getPort();
+        myIsDefaultPort = myPort < 0;
         if (myPort < 0) {
-            if ("svn".equals(myProtocol)) {
-                myPort = 3690;
-            } else if ("svn+ssh".equals(myProtocol)) {
-                myPort = 22;
-            } else if ("http".equals(myProtocol)) {
-                myPort = 80;
-            } else if ("https".equals(myProtocol)) {
-                myPort = 443;
-            }
-        }
+            Integer defaultPort = (Integer) DEFAULT_PORTS.get(myProtocol);
+            myPort = defaultPort.intValue();
+        } 
     }
     
     public String getProtocol() {
@@ -107,11 +125,35 @@ public class SVNURL {
         return myPath;
     }
     
+    public String getURIEncodedPath() {
+        return myEncodedPath;
+    }
+    
     public String getUserInfo() {
         return myUserName;
     }
     
     public String toString() {
+        if (myURL == null) {
+            myURL = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), getURIEncodedPath());
+        }
         return myURL;
     }
-}
+    
+    private static String composeURL(String protocol, String userInfo, String host, int port, String path) {
+        StringBuffer url = new StringBuffer();
+        url.append(protocol);
+        url.append("://");
+        if (userInfo != null) {
+            url.append(userInfo);
+            url.append("@");
+        }
+        url.append(host);
+        if (port >= 0) {
+            url.append(":");
+            url.append(port);
+        }
+        url.append(path);
+        return url.toString();
+    }
+} 

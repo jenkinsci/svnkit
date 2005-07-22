@@ -69,7 +69,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
         myClientCertFile = clientFile;
         myClientCertPassword = clientPassword;
         try {
-            SVNURL location = SVNURL.parse(url);
+            SVNURL location = SVNURL.parseURIEncoded(url);
             myRealm = "https://" + location.getHost() + ":" + location.getPort();
         } catch (SVNException e1) {
         }
@@ -204,7 +204,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
             }
         }
         try {
-            String realHostName = SVNURL.parse(myURL).getHost();
+            String realHostName = SVNURL.parseURIEncoded(myURL).getHost();
             if (!realHostName.equals(hostName)) {
                 mask |= 4;
             }

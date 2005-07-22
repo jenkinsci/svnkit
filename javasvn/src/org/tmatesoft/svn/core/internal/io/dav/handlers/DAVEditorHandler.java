@@ -101,7 +101,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 report.append("</S:missing>\n");
             }
 
-            public void linkPath(String url, String path, String locktoken, long revision, boolean startEmpty) throws SVNException {
+            public void linkPath(SVNURL url, String path, String locktoken, long revision, boolean startEmpty) throws SVNException {
                 report.append("<S:entry rev=\"");
                 report.append(revision);
                 report.append("\" ");
@@ -113,8 +113,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 if (startEmpty) {
                     report.append("start-empty=\"true\" ");
                 }
-                String linkedPath = SVNURL.parse(url).getPath();
-                linkedPath = SVNEncodingUtil.uriEncode(linkedPath);
+                String linkedPath = url.getURIEncodedPath();
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(connection, linkedPath, revision, false, false, null);
 
                 String switchUrl = SVNEncodingUtil.uriDecode(info.baselinePath);

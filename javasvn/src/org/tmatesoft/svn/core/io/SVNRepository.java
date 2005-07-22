@@ -212,14 +212,10 @@ public abstract class SVNRepository {
      * @see 			#getRepositoryUUID()
      * @see				org.tmatesoft.svn.util.DebugLog
      */
-    protected void setRepositoryCredentials(String uuid, String rootURL) {
+    protected void setRepositoryCredentials(String uuid, SVNURL rootURL) {
         if (uuid != null && rootURL != null) {
             myRepositoryUUID = uuid;
-            try {
-                myRepositoryRoot = SVNURL.parse(rootURL);
-            } catch (SVNException e) {
-                //
-            }
+            myRepositoryRoot = rootURL;
         }
     }
     
@@ -727,8 +723,8 @@ public abstract class SVNRepository {
      * @see 					ISVNReporter
      * @see 					ISVNEditor
 	 */
-    public abstract void diff(String url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
-    public abstract void diff(String url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
+    public abstract void diff(SVNURL url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
+    public abstract void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
      * Asks the Repository Access (RA) Layer to update a working copy.
@@ -871,7 +867,7 @@ public abstract class SVNRepository {
      * @see 					ISVNReporter
      * @see 					ISVNEditor
      */
-    public abstract void update(String url, long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
+    public abstract void update(SVNURL url, long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
      * Asks the Repository Access Layer to checkout a working copy. This method is a
@@ -1218,23 +1214,6 @@ public abstract class SVNRepository {
         }
     }
     
-    /**
-     * Return a canonical representation of the given URL string (that is a URL
-     * in the form of <i>protocol://host:port/path/to/repos</i>).
-     * 
-     * @param  url 				a URL string to be represented in the canonical 
-     * 							form.
-     * @return URL 				a URL string in the canonical representation.
-     * 							 
-     * @throws SVNException
-     */
-    protected static String getCanonicalURL(String url) throws SVNException {
-        if (url == null) {
-            return null;
-        }
-        return SVNURL.parse(url).toString();
-    }
-
     // all paths are uri-decoded.
     //
     // get repository path (path starting with /, relative to repository root).

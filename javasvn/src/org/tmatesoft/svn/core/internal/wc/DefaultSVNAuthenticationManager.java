@@ -77,7 +77,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     public ISVNProxyManager getProxyManager(String url) throws SVNException {
-        SVNURL location = SVNURL.parse(url);
+        SVNURL location = SVNURL.parseURIEncoded(url);
         String host = location.getHost();
         
         Map properties = getHostProperties(host);
@@ -99,7 +99,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     public ISVNSSLManager getSSLManager(String url) throws SVNException {
-        SVNURL location = SVNURL.parse(url);
+        SVNURL location = SVNURL.parseURIEncoded(url);
         String host = location.getHost();
         
         Map properties = getHostProperties(host);

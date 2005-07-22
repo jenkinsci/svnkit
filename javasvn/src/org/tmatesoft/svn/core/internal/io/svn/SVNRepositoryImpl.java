@@ -422,16 +422,15 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public void update(String url, long revision, String target,
+    public void update(SVNURL url, long revision, String target,
             boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor)
             throws SVNException {
         target = target == null ? "" : target;
-        url = getCanonicalURL(url);
         if (url == null) {
             throw new SVNException(url + ": not valid URL");
         }
         Object[] buffer = new Object[] { "switch", getRevisionObject(revision),
-                target, Boolean.valueOf(recursive), url };
+                target, Boolean.valueOf(recursive), url.toString() };
         try {
             openConnection();
             write("(w((n)sws))", buffer);
@@ -444,24 +443,23 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public void diff(String url, long revision, String target,
+    public void diff(SVNURL url, long revision, String target,
             boolean ignoreAncestry, boolean recursive,
             ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         diff(url, revision, revision, target, ignoreAncestry, recursive,
                 reporter, editor);
     }
 
-    public void diff(String url, long tRevision, long revision, String target,
+    public void diff(SVNURL url, long tRevision, long revision, String target,
             boolean ignoreAncestry, boolean recursive,
             ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         target = target == null ? "" : target;
-        url = getCanonicalURL(url);
         if (url == null) {
             throw new SVNException(url + ": not valid URL");
         }
         Object[] buffer = new Object[] { "diff", getRevisionObject(tRevision),
                 target, Boolean.valueOf(recursive),
-                Boolean.valueOf(ignoreAncestry), url };
+                Boolean.valueOf(ignoreAncestry), url.toString() };
         try {
             openConnection();
             write("(w((n)swws))", buffer);
@@ -619,7 +617,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    void updateCredentials(String uuid, String rootURL) {
+    void updateCredentials(String uuid, SVNURL rootURL) {
         if (getRepositoryRoot() != null) {
             return;
         }
@@ -697,17 +695,17 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         write("(w(s))", new Object[] { "delete-path", path });
     }
 
-    public void linkPath(String url, String path,
+    public void linkPath(SVNURL url, String path,
             String lockToken, long revison, boolean startEmtpy)
             throws SVNException {
         assertValidRevision(revison);
         if (lockToken == null) {
             write("(w(ssnw))", new Object[] { "link-path", path,
-                    url, getRevisionObject(revison),
+                    url.toString(), getRevisionObject(revison),
                     Boolean.valueOf(startEmtpy) });
         } else {
             write("(w(ssnw(s)))", new Object[] { "link-path", path,
-                    url, getRevisionObject(revison),
+                    url.toString(), getRevisionObject(revison),
                     Boolean.valueOf(startEmtpy), lockToken });
         }
     }
