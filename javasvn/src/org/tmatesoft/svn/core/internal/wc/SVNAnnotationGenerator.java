@@ -35,7 +35,7 @@ import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
 import de.regnis.q.sequence.line.QSequenceLineMedia;
@@ -207,7 +207,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                     result.close();
                 }
             } catch (Throwable e) {
-                DebugLog.error(e);
+                SVNDebugLog.log(e);
             } finally {
                 if (left != null) {
                     try {

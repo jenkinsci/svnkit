@@ -16,7 +16,7 @@ import org.osgi.framework.BundleContext;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The main plugin class to be used in the desktop.
@@ -28,7 +28,7 @@ public class JavaSVNPlugin extends Plugin {
 
     public void start(BundleContext context) throws Exception {
         super.start(context);
-        DebugLog.setLogger(new JavaSVNLogger(getBundle(), isDebugging()));
+        SVNDebugLog.setLogger(new JavaSVNLogger(getBundle(), isDebugging()));
         
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();

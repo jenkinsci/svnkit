@@ -182,6 +182,9 @@ public class SVNUpdateEditor implements ISVNEditor {
 
     public void openDir(String path, long revision) throws SVNException {
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, false);
+        if (myCurrentDirectory.getDirectory() == null) {
+            SVNErrorManager.error("svn: Working copy '" + path + "' is missing or not locked");
+        }
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
         SVNEntry entry = entries.getEntry("", true);
         entry.setRevision(myTargetRevision);

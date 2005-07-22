@@ -156,8 +156,7 @@
         </jar>
         <copy todir="build/lib">
             <fileset dir="javasvn/cli">
-                <include name="svn" />
-                <include name="svn.bat" />
+                <include name="**" />
             </fileset>
         </copy>
         <chmod file="build/lib/svn" perm="ugo+rx" />
@@ -381,15 +380,21 @@
             <pathelement path="contrib/junit/junit.jar" />
             <pathelement path="javasvn-test/bin" />
         </path>
-        <delete dir="${user.home}/.javasvn"/>
+
+        <delete dir="${user.home}/.javasvn" failonerror="false"/>
+        <mkdir dir="${user.home}/.javasvn"/>    
+        <copy file="javasvn/cli/logging.properties.disabled" 
+              overwrite="false"
+              tofile="build/lib/logging.properties"
+              failonerror="false"
+        />
 
         <java classpathref="python.classpath"
               dir="javasvn-test"
               fork="true"
-              classname="org.tmatesoft.svn.core.test.PythonTests"
-        >
-            <jvmarg value="-Djavasvn.log.path=%home%/.javasvn/.python.%g.%u.log" />
-            <arg line="test.properties" />
+              classname="org.tmatesoft.svn.core.test.PythonTests">        
+         <jvmarg value="-Djava.util.logging.config.file=logging.properties" />
+         <arg line="test.properties" />
         </java>
 
         <move file="javasvn-test/python/cmdline/svntest/main.py.bak"

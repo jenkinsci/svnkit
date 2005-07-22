@@ -22,7 +22,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.io.SVNURL;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
@@ -81,7 +81,7 @@ public class SVNJSchSession {
             } 
             return session;
         } catch (JSchException e) {
-            DebugLog.error(e);
+            SVNDebugLog.log(e);
             if (session != null && session.isConnected()) {
                 session.disconnect();
             }

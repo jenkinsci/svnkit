@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.SAXException;
 
 
@@ -49,7 +49,7 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
                 try {
                     handleDiffWindowClosed();
                 } catch (SVNException e) {
-                    DebugLog.error(e);
+                    SVNDebugLog.log(e);
                 }
                 return;
             }

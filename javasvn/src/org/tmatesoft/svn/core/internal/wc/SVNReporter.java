@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -30,9 +30,7 @@ import org.tmatesoft.svn.util.DebugLog;
 public class SVNReporter implements ISVNReporterBaton {
 
     private SVNWCAccess myWCAccess;
-
     private boolean myIsRecursive;
-
     private boolean myIsRestore;
 
     public SVNReporter(SVNWCAccess wcAccess, boolean restoreFiles,
@@ -100,11 +98,11 @@ public class SVNReporter implements ISVNReporterBaton {
             }
             reporter.finishReport();
         } catch (Throwable th) {
-            DebugLog.error(th);
+            SVNDebugLog.log(th);
             try {
                 reporter.abortReport();
             } catch (SVNException e) {
-                DebugLog.error(e);
+                SVNDebugLog.log(e);
             }
             if (th instanceof SVNException) {
                 throw (SVNException) th;

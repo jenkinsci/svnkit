@@ -40,7 +40,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -452,7 +452,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     }
                 } catch (Throwable th) {
                     dispatchEvent(new SVNEvent(th.getMessage()));
-                    DebugLog.error(th);
+                    SVNDebugLog.log(th);
                 } finally {
                     setEventPathPrefix(null);
                 }
@@ -471,7 +471,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 externalAccess.open(true, true);
                 externalAccess.getAnchor().destroy("", true);
             } catch (Throwable th) {
-                DebugLog.error(th);
+                SVNDebugLog.log(th);
             } finally {
                 externalAccess.close(true);
             }

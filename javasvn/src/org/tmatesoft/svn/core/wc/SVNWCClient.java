@@ -45,7 +45,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNURL;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * 
@@ -121,7 +121,7 @@ public class SVNWCClient extends SVNBasicClient {
                             dst.write(r);
                         }
                     } catch (IOException e) {
-                        DebugLog.error(e);
+                        SVNDebugLog.log(e);
                     } finally {
                         SVNFileUtil.closeFile(is);
                         if (delete) {
@@ -282,11 +282,9 @@ public class SVNWCClient extends SVNBasicClient {
             throws SVNException {
         propName = validatePropertyName(propName);
         if (REVISION_PROPS.contains(propName)) {
-            SVNErrorManager.error("svn: Revision property '" + propName
-                    + "' not allowed in this context");
+            SVNErrorManager.error("svn: Revision property '" + propName + "' not allowed in this context");
         } else if (propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            SVNErrorManager.error("svn: '" + propName
-                    + "' is a wcprop , thus not accessible to clients");
+            SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
         }
         propValue = validatePropertyValue(propName, propValue, force);
         SVNWCAccess wcAccess = createWCAccess(path);
@@ -385,8 +383,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNRevision pegRevision, SVNRevision revision, boolean recursive,
             ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            SVNErrorManager.error("svn: '" + propName
-                    + "' is a wcprop , thus not accessible to clients");
+            SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
         }
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.WORKING;
@@ -1438,11 +1435,8 @@ public class SVNWCClient extends SVNBasicClient {
                 for (int i = 0; externalInfos != null
                         && i < externalInfos.length; i++) {
                     String path = externalInfos[i].getPath();
-                    if (path.indexOf(".") >= 0 || path.indexOf("..") >= 0
-                            || path.startsWith("/")) {
-                        SVNErrorManager
-                                .error("svn: Invalid external definition: "
-                                        + value);
+                    if (path.indexOf(".") >= 0 || path.indexOf("..") >= 0 || path.startsWith("/")) {
+                        SVNErrorManager.error("svn: Invalid external definition: " + value);
                     }
 
                 }

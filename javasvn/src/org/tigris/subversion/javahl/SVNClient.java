@@ -48,7 +48,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.Version;
 
 /**
@@ -1109,8 +1109,8 @@ public class SVNClient implements SVNClientInterface {
 
     protected static void throwException(SVNException e) throws ClientException {
         ClientException ec = new ClientException(e.getMessage(), "", 0);
-        DebugLog.error(ec);
-        DebugLog.error(e);
+        SVNDebugLog.log(ec);
+        SVNDebugLog.log(e);
         throw ec;
     }
 

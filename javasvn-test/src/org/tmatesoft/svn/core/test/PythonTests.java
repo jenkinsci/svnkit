@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -268,7 +268,7 @@ public class PythonTests {
 			try {
 				String line;
 				while ((line = myInputStream.readLine()) != null) {
-					DebugLog.logInfo(line);
+					SVNDebugLog.log(line);
 					if (myHelpStream != null) {
 						myHelpStream.println(line);
 						myHelpStream.flush();

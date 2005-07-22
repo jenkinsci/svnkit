@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
@@ -20,9 +22,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.io.SVNURL;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.LoggingInputStream;
-import org.tmatesoft.svn.util.LoggingOutputStream;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -35,8 +35,8 @@ class SVNConnection {
     private SVNURL myLocation;
     private String myRealm;
     private String myRoot;
-    private LoggingOutputStream myOutputStream;
-    private LoggingInputStream myInputStream;
+    private OutputStream myOutputStream;
+    private InputStream myInputStream;
 
     private static final String SUCCESS = "success";
     private static final String FAILURE = "failure";
@@ -142,15 +142,12 @@ class SVNConnection {
                             failureReason = new String((byte[]) items[1]);
                             break;
                         } else if (STEP.equals(items[0])) {
-                            byte[] response = authenticator
-                                    .buildChallengeReponse((byte[]) items[1]);
+                            byte[] response = authenticator.buildChallengeReponse((byte[]) items[1]);
                             try {
                                 getOutputStream().write(response);
                             } catch (IOException e) {
                                 throw new SVNException(e);
-                            } finally {
-                                getOutputStream().log();
-                            }
+                            } 
                         }
                     }
                 }
@@ -196,7 +193,7 @@ class SVNConnection {
         try {
             return SVNReader.parse(getInputStream(), template, items);
         } finally {
-            getInputStream().log();
+            SVNDebugLog.flushStream(getInputStream());
         }
     }
 
@@ -211,15 +208,14 @@ class SVNConnection {
             } catch (SVNException e) {
                 //
             }
-            getOutputStream().log();
+            SVNDebugLog.flushStream(getOutputStream());
         }
     }
 
-    public LoggingOutputStream getOutputStream() throws SVNException {
+    public OutputStream getOutputStream() throws SVNException {
         if (myOutputStream == null) {
             try {
-                return myOutputStream = DebugLog.getLoggingOutputStream("svn",
-                        myConnector.getOutputStream());
+                return myOutputStream = SVNDebugLog.createLogStream(myConnector.getOutputStream());
             } catch (IOException ex) {
                 throw new SVNException(ex);
             }
@@ -227,12 +223,10 @@ class SVNConnection {
         return myOutputStream;
     }
 
-    public LoggingInputStream getInputStream() throws SVNException {
+    public InputStream getInputStream() throws SVNException {
         if (myInputStream == null) {
             try {
-                myInputStream = DebugLog.getLoggingInputStream("svn",
-                        new RollbackInputStream(new BufferedInputStream(
-                                myConnector.getInputStream())));
+                myInputStream = SVNDebugLog.createLogStream(new RollbackInputStream(new BufferedInputStream(myConnector.getInputStream())));
             } catch (IOException ex) {
                 throw new SVNException(ex);
             }

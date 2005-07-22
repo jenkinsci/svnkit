@@ -30,7 +30,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -150,7 +150,7 @@ public class SVNFileUtil {
             execCommand(new String[] { "chmod", executable ? "ugo+x" : "ugo-x",
                     file.getAbsolutePath() });
         } catch (Throwable th) {
-            DebugLog.error(th);
+            SVNDebugLog.log(th);
         }
     }
 
@@ -674,9 +674,9 @@ public class SVNFileUtil {
             }
             return result.toString().trim();
         } catch (IOException e) {
-            DebugLog.error(e);
+            SVNDebugLog.log(e);
         } catch (InterruptedException e) {
-            DebugLog.error(e);
+            SVNDebugLog.log(e);
         } finally {
             closeFile(is);
         }

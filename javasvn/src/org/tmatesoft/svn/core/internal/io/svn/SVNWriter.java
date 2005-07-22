@@ -20,7 +20,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -142,7 +142,7 @@ public class SVNWriter {
                 os.write(' ');
             }
         } catch (IOException e) {
-            DebugLog.error(e);
+            SVNDebugLog.log(e);
             throw new SVNException("error while sending data", e);
         }
     }

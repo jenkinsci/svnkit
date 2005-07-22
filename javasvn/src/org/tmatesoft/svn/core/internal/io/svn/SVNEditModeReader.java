@@ -12,15 +12,15 @@
 package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.LoggingInputStream;
 
 /**
  * @version 1.0
@@ -64,8 +64,7 @@ public class SVNEditModeReader {
         myBuilder = SVNDiffWindowBuilder.newInstance();
     }
 
-    public boolean processCommand(String commandName,
-            LoggingInputStream parameters) throws SVNException {
+    public boolean processCommand(String commandName, InputStream parameters) throws SVNException {
         String pattern = (String) COMMANDS_MAP.get(commandName);
         if (pattern == null) {
             throw new SVNException("unknown command name: " + commandName);
@@ -76,10 +75,8 @@ public class SVNEditModeReader {
                 try {
                     items = SVNReader.parse(parameters, "(SB))", null);
                 } catch (Throwable th) {
-                    DebugLog.error(th);
-                } finally {
-                    parameters.log();
-                }
+                    SVNErrorManager.error("svn: Cannot read edit command: " + th.getMessage());
+                } 
                 byte[] bytes = (byte[]) items[1];
                 myBuilder.accept(bytes, 0);
                 if (myBuilder.getDiffWindow() != null) {

@@ -30,8 +30,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.util.DebugLog;
-import org.tmatesoft.svn.util.LoggingInputStream;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author Alexander Kitaev
@@ -160,7 +159,7 @@ class SVNReader {
      * 
      */
 
-    public static Object[] parse(LoggingInputStream is, String templateStr, Object[] target) throws SVNException {
+    public static Object[] parse(InputStream is, String templateStr, Object[] target) throws SVNException {
         if (!is.markSupported()) {
             throw new SVNException(
                     "SVNReader works only with markable input streams");
@@ -298,11 +297,9 @@ class SVNReader {
                 } else if (ch == '(') {
                     readChar(is, '(');
                 } else if (ch == 'd') {
-                    result = readDirEntry(DebugLog.getLoggingInputStream("svn",
-                            new RollbackInputStream(is)));
+                    result = readDirEntry(new RollbackInputStream(is));
                 } else if (ch == 'f') {
-                    result = readStatEntry(DebugLog.getLoggingInputStream(
-                            "svn", new RollbackInputStream(is)));
+                    result = readStatEntry(new RollbackInputStream(is));
                 } else if (ch == 'e') {
                     if (editorBaton == null) {
                         editorBaton = new SVNEditModeReader();
@@ -318,7 +315,7 @@ class SVNReader {
                         hasMore = editorBaton.processCommand(commandName, is);
                     } catch (Throwable th) {
                         unconditionalThrow = true;
-                        DebugLog.error(th);
+                        SVNDebugLog.log(th);
                         if (th instanceof SVNException) {
                             throw ((SVNException) th);
                         }
@@ -338,8 +335,7 @@ class SVNReader {
                                         + word + "' read.");
                     }
                 } else if (ch == 'l') {
-                    result = readLock(DebugLog.getLoggingInputStream("svn",
-                            new RollbackInputStream(is)));
+                    result = readLock(new RollbackInputStream(is));
                 }
                 if (doRead) {
                     target = reportResult(target, targetIndex, result, multiple);
@@ -641,10 +637,8 @@ class SVNReader {
         return errorMessage;
     }
 
-    private static SVNDirEntry readDirEntry(LoggingInputStream is)
-            throws SVNException {
+    private static SVNDirEntry readDirEntry(InputStream is) throws SVNException {
         Object[] items = SVNReader.parse(is, "(SWNTN(?S)(?S))", null);
-        is.log();
 
         String name = SVNReader.getString(items, 0);
         SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader.getString(items, 1));
@@ -657,10 +651,8 @@ class SVNReader {
                 author);
     }
 
-    private static SVNDirEntry readStatEntry(LoggingInputStream is)
-            throws SVNException {
+    private static SVNDirEntry readStatEntry(InputStream is) throws SVNException {
         Object[] items = SVNReader.parse(is, "(WNTN(?S)(?S))", null);
-        is.log();
 
         SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader.getString(items, 0));
         long size = SVNReader.getLong(items, 1);
@@ -671,9 +663,8 @@ class SVNReader {
         return new SVNDirEntry(null, kind, size, hasProps, revision, date, author);
     }
 
-    private static SVNLock readLock(LoggingInputStream is) throws SVNException {
+    private static SVNLock readLock(InputStream is) throws SVNException {
         Object[] items = SVNReader.parse(is, "(SSS(?S)S(?S))", new Object[6]);
-        is.log();
 
         String path = (String) items[0];
         String id = (String) items[1];

@@ -11,7 +11,7 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -25,7 +25,7 @@ public class SVNErrorManager {
         } else if (!message.startsWith("svn: ")) {
             message = "svn: " + message;
         }
-        DebugLog.log(message);
+        SVNDebugLog.log(message);
         throw new SVNException(message);
     }
 }

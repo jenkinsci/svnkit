@@ -33,7 +33,7 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNURL;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -257,7 +257,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             locations = (List) repos.getLocations("", locations, pegRevNumber,
                     new long[] { revNumber });
         } catch (SVNException e) {
-            DebugLog.error(e);
+            SVNDebugLog.log(e);
             SVNErrorManager
                     .error("svn: Unable to find repository location for '"
                             + url + "' in revision " + revNumber);

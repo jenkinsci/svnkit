@@ -186,7 +186,7 @@ class DAVRepository extends SVNRepository {
                 dirRevision = info.revision; 
             }
             if (handler != null) {
-                final String parentPath = SVNEncodingUtil.uriDecode(path);
+                final String parentPath = path;
                 myConnection.doPropfind(path, 1, null, null, new IDAVResponseHandler() {
                     public void handleDAVResponse(DAVResponse child) {
                         String href = child.getHref();
@@ -194,7 +194,7 @@ class DAVRepository extends SVNRepository {
                             return;
                         }
                         // build direntry
-                        String name = SVNPathUtil.tail(href);
+                        String name = SVNEncodingUtil.uriDecode(SVNPathUtil.tail(href));
                         SVNNodeKind kind = SVNNodeKind.FILE;
                         Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
                         long lastRevision = Long.parseLong(revisionStr.toString());
@@ -356,12 +356,7 @@ class DAVRepository extends SVNRepository {
             	path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
             	myConnection.doReport(path, request, handler);
             } else {
-                // try editor.closeEdit to remove target that is deleted in target revision?
                 editor.closeEdit();
-                /*
-                String revisionStr = revision < 0 ? "HEAD" : Long.toString(revision);
-                throw new SVNException("svn: Location '" + path + "' doesn't exists in repository at revision " + revisionStr);
-                */
             }
 
         } finally {

@@ -46,7 +46,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -610,7 +610,7 @@ public class SVNCopyClient extends SVNBasicClient {
             } catch (SVNException inner) {
                 //
             }
-            DebugLog.error(e);
+            SVNDebugLog.log(e);
             SVNErrorManager.error("svn: " + e.getMessage());
         }
         return result != null ? result : SVNCommitInfo.NULL;

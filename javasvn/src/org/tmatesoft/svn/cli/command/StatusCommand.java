@@ -18,7 +18,7 @@ import org.tmatesoft.svn.cli.SVNCommandLine;
 import org.tmatesoft.svn.cli.SVNCommandStatusHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -60,7 +60,7 @@ public class StatusCommand extends SVNCommand {
               try {
                 stClient.doStatus(file, recursive, showUpdates, reportAll, ignored, handler);
               } catch (SVNException e) {
-                  DebugLog.error(e);
+                  SVNDebugLog.log(e);
                   err.println(e.getMessage());
                   error = true;
               }

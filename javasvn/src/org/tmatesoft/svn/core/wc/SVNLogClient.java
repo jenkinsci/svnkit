@@ -225,8 +225,7 @@ public class SVNLogClient extends SVNBasicClient {
 
         for (Iterator iterator = entries.iterator(); iterator.hasNext();) {
             SVNDirEntry entry = (SVNDirEntry) iterator.next();
-            String childPath = "".equals(path) ? entry.getName() : SVNPathUtil
-                    .append(path, entry.getName());
+            String childPath = SVNPathUtil.append(path, entry.getName());
             entry.setPath(childPath);
             handler.handleDirEntry(entry);
             if (entry.getKind() == SVNNodeKind.DIR && entry.getDate() != null && recursive) {

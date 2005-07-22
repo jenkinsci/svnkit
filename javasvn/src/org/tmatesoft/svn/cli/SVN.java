@@ -16,7 +16,7 @@ package org.tmatesoft.svn.cli;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -39,7 +39,7 @@ public class SVN {
             try {
                 commandLine = new SVNCommandLine(args);
             } catch (SVNException e) {
-                DebugLog.error(e);
+                SVNDebugLog.log(e);
                 System.err.println("error: " + e.getMessage());
                 System.exit(1);
             }
@@ -55,14 +55,14 @@ public class SVN {
                     command.run(System.out, System.err);
                 } catch (SVNException e) {
                     System.err.println(e.getMessage());
-                    DebugLog.error(e);
+                    SVNDebugLog.log(e);
                 }
             } else {
                 System.err.println("error: unknown command name '" + commandName + "'");
                 System.exit(1);
             }
         } catch (Throwable th) {
-            DebugLog.error(th);
+            SVNDebugLog.log(th);
             System.exit(-1);
         }
         System.exit(0);

@@ -40,7 +40,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNURL;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
-import org.tmatesoft.svn.util.DebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -315,7 +315,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                                     os.write(contents);
                                 }
                             } catch (IOException th) {
-                                DebugLog.error(th);
+                                SVNDebugLog.log(th);
                             }
                         }
                         try {
@@ -323,7 +323,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                                 os.close();
                             }
                         } catch (IOException th) {
-                            DebugLog.error(th);
+                            SVNDebugLog.log(th);
                         }
                     }
                 }
