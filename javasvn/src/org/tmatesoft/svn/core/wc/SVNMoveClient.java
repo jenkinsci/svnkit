@@ -279,8 +279,7 @@ public class SVNMoveClient extends SVNBasicClient {
             SVNWCAccess dstAccess = SVNWCAccess.create(dst);
             SVNEntry srcEntry = srcAccess.getTargetEntry();
             SVNEntry dstEntry = dstAccess.getTargetEntry();
-            SVNEntry dstParentEntry = dstAccess.getAnchor().getEntries()
-                    .getEntry("", false);
+            SVNEntry dstParentEntry = dstAccess.getAnchor().getEntries().getEntry("", false);
 
             if (dstEntry != null && dstEntry.isScheduledForDeletion()) {
                 // clear undo.

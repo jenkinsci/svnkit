@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -568,7 +569,8 @@ public class SVNClient implements SVNClientInterface {
                 differ.doDiff(new File(target1).getAbsoluteFile(), target2,
                         peg, rev1, rev2, recurse, !ignoreAncestry, out);
             }else if(isURL(target1)&&!isURL(target2)){
-                differ.doDiff(target1, peg, new File(target2), rev1, rev2, recurse, !ignoreAncestry, out);
+                SVNURL targetURL = SVNURL.parseURIEncoded(target1);
+                differ.doDiff(targetURL, peg, new File(target2), rev1, rev2, recurse, !ignoreAncestry, out);
             }
             SVNFileUtil.closeFile(out);
         } catch (SVNException e) {

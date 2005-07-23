@@ -20,6 +20,7 @@ import java.util.Map;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
@@ -116,7 +117,8 @@ public class DiffCommand extends SVNCommand {
                         if (!getCommandLine().isURL(oP) && getCommandLine().isURL(nP)) {
                             differ.doDiff(new File(oP).getAbsoluteFile(), nP, peg2, rN, rM, recursive, useAncestry, out);
                         } else if (getCommandLine().isURL(oP) && !getCommandLine().isURL(nP)) {
-                            differ.doDiff(oP, peg1, new File(nP).getAbsoluteFile(), rN, rM, recursive, useAncestry, out);
+                            SVNURL svnURL = SVNURL.parseURIEncoded(oP);
+                            differ.doDiff(svnURL, peg1, new File(nP).getAbsoluteFile(), rN, rM, recursive, useAncestry, out);
                         } else if (getCommandLine().isURL(oP) && getCommandLine().isURL(nP)) {
                             differ.doDiff(oP, peg1, nP, peg2, rN, rM, recursive, useAncestry, out);
                         } else {

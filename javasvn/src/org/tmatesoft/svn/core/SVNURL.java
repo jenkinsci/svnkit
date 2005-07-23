@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -69,6 +70,7 @@ public class SVNURL {
     
     private SVNURL(String url, boolean uriEncoded) throws SVNException {
         if (url == null) {
+            SVNDebugLog.log(new Exception());
             SVNErrorManager.error("svn: invalid URL '" + url + "'");
         }
         if (url.endsWith("/")) {

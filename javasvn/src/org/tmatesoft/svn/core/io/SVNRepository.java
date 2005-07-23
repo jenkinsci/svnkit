@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.io;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -112,6 +113,7 @@ public abstract class SVNRepository {
     private int myLockCount;
     private Thread myLocker;
     private ISVNAuthenticationManager myAuthManager;
+    private long myPegRevision;
 
     /**
      * Constructs an <code>SVNRepository</code> instance (representing a
@@ -198,6 +200,14 @@ public abstract class SVNRepository {
 
     public ISVNAuthenticationManager getAuthenticationManager() {
         return myAuthManager;
+    }
+    
+    public void setPegRevision(long revision) {
+        myPegRevision = revision;
+    }
+    
+    public long getPegRevision() {
+        return myPegRevision;
     }
     
     /**
@@ -641,9 +651,19 @@ public abstract class SVNRepository {
     public Collection getLocations(String path, Collection entries, long pegRevision, long[] revisions) throws SVNException {
         final Collection result = entries != null ? entries : new LinkedList();
         getLocations(path, pegRevision, revisions, new ISVNLocationEntryHandler() {
-	        public void handleLocationEntry(SVNLocationEntry locationEntry) {
-	            result.add(locationEntry);
-	        } 
+            public void handleLocationEntry(SVNLocationEntry locationEntry) {
+                result.add(locationEntry);
+            } 
+        });
+        return result;        
+    }
+
+    public Map getLocations(String path, Map entries, long pegRevision, long[] revisions) throws SVNException {
+        final Map result = entries != null ? entries : new HashMap();
+        getLocations(path, pegRevision, revisions, new ISVNLocationEntryHandler() {
+            public void handleLocationEntry(SVNLocationEntry locationEntry) {
+                result.put(new Long(locationEntry.getRevision()), locationEntry);
+            } 
         });
         return result;        
     }

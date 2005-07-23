@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
@@ -123,6 +124,13 @@ public class SVNBasicClient implements ISVNEventHandler {
             return SVNRepositoryFactory.create(svnURL);
         }
         return myRepositoryFactory.createRepository(svnURL);
+    }
+
+    protected SVNRepository createRepository(SVNURL url) throws SVNException {
+        if (myRepositoryFactory == null) {
+            return SVNRepositoryFactory.create(url);
+        }
+        return myRepositoryFactory.createRepository(url);
     }
     
     protected ISVNRepositoryFactory getRepositoryFactory() {
@@ -316,23 +324,17 @@ public class SVNBasicClient implements ISVNEventHandler {
         return dir;
     }
 
-    protected SVNRepository createRepository(File path, String url,
-            SVNRevision pegRevision, SVNRevision revision, long[] actualRevision)
-            throws SVNException {
+    protected SVNRepository createRepository(File path, String url, SVNRevision pegRevision, SVNRevision revision, long[] actualRevision) throws SVNException {
         if (!revision.isValid() && pegRevision.isValid()) {
             revision = pegRevision;
         }
         // defaults to HEAD.
         if (path == null) {
-            revision = !revision.isValid() ? SVNRevision.HEAD : revision; // start
-                                                                            // (?)
-            pegRevision = !pegRevision.isValid() ? SVNRevision.HEAD
-                    : pegRevision; // peg
+            revision = !revision.isValid() ? SVNRevision.HEAD : revision; 
+            pegRevision = !pegRevision.isValid() ? SVNRevision.HEAD : pegRevision;
         } else {
-            revision = !revision.isValid() ? SVNRevision.WORKING : revision; // start
-                                                                                // (?)
-            pegRevision = !pegRevision.isValid() ? SVNRevision.BASE
-                    : pegRevision; // peg
+            revision = !revision.isValid() ? SVNRevision.WORKING : revision;
+            pegRevision = !pegRevision.isValid() ? SVNRevision.BASE : pegRevision;
         }
 
         // get locations of 'url' (or path) in revision 'revision'.
@@ -350,9 +352,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return repos;
     }
 
-    protected RepositoryReference[] getURLRange(File path, String url,
-            SVNRevision revision, SVNRevision start, SVNRevision end)
-            throws SVNException {
+    protected RepositoryReference[] getURLRange(File path, String url, SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
         if (!revision.isValid() || !start.isValid()) {
             SVNErrorManager.error("svn: bad revision for getURL2");
         }
@@ -494,6 +494,151 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         return -1;
     }
+    
+    protected long getRevisionNumber(SVNRevision revision, SVNRepository repository, File path) throws SVNException {
+        if (repository == null && (revision == SVNRevision.HEAD || revision.getDate() != null)) {
+            SVNErrorManager.error("svn: RA access is required to get revision number for '" + revision + "'");
+        }
+        if (revision.getNumber() >= 0) {
+            return revision.getNumber();
+        } else if (revision.getDate() != null) {
+            return repository.getDatedRevision(revision.getDate());
+        } else if (revision == SVNRevision.HEAD) {
+            return repository.getLatestRevision();
+        } else if (!revision.isValid()) {
+            return -1;
+        } else if (revision == SVNRevision.COMMITTED || revision == SVNRevision.WORKING || 
+                revision == SVNRevision.BASE || revision == SVNRevision.PREVIOUS) {
+            if (path == null) {
+                SVNErrorManager.error("svn: Path is required to get revision number for '" + revision + "'");
+            }
+            SVNWCAccess wcAccess = createWCAccess(path);
+            SVNEntry entry = wcAccess.getTargetEntry();
+            if (entry == null) {
+                SVNErrorManager.error("svn: '" + path + "' is not under version control");
+            }
+            if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
+                return entry.getRevision();
+            } else {
+                return revision == SVNRevision.PREVIOUS ? entry.getCommittedRevision() - 1 : entry.getCommittedRevision();
+            }
+        } else {
+            SVNErrorManager.error("svn: Unrecognized revision type requested for '" + path + "'");
+        }
+        return -1;
+    }
+    
+    // SVNRepository will contain actual URL as location and actual revision somewhere (so location is not only url, but url+revision). 
+    protected SVNRepository createRepository(SVNURL url, File path, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
+        if (url == null) {
+            url = getURL(path);
+        }
+        if (url == null) {
+            SVNErrorManager.error("svn: '" + path + "' has no URL");
+        }
+        if (!revision.isValid() && pegRevision.isValid()) {
+            revision = pegRevision;
+        }
+        if (path == null) {
+            if (!revision.isValid()) {
+                revision = SVNRevision.HEAD;
+            } 
+            if (!pegRevision.isValid()) {
+                pegRevision = SVNRevision.HEAD;
+            } 
+        } else {
+            if (!revision.isValid()) {
+                revision = SVNRevision.BASE;
+            } 
+            if (!pegRevision.isValid()) {
+                pegRevision = SVNRevision.WORKING;
+            } 
+        }
+        
+        SVNRepositoryLocation[] locations = getLocations(url, path, pegRevision, revision, SVNRevision.UNDEFINED);
+        url = locations[0].getURL();
+        long actualRevision = locations[0].getRevisionNumber();
+        SVNRepository repository = createRepository(url);
+        actualRevision = getRevisionNumber(SVNRevision.create(actualRevision), repository, path);
+        if (actualRevision < 0) {
+            actualRevision = repository.getLatestRevision();
+        }
+        repository.setPegRevision(actualRevision);
+        return repository;
+    }
+    
+    protected SVNRepositoryLocation[] getLocations(SVNURL url, File path, SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
+        if (!revision.isValid() || !start.isValid()) {
+            SVNErrorManager.error("svn: Bad revision '" + revision + "' or '" + start + "'");
+        }
+        long pegRevisionNumber = -1;
+        long startRevisionNumber;
+        long endRevisionNumber;
+        
+        if (path != null) {
+            SVNWCAccess wcAccess = createWCAccess(path);
+            SVNEntry entry = wcAccess.getTargetEntry();
+            if (entry.getCopyFromURL() != null && revision == SVNRevision.WORKING) {
+                url = entry.getCopyFromSVNURL();
+                pegRevisionNumber = entry.getCopyFromRevision();
+            } else if (entry.getURL() != null){
+                url = entry.getSVNURL();
+            } else {
+                SVNErrorManager.error("svn: '" + path + "' has no URL");
+            }
+        }
+        SVNRepository repository = createRepository(url);
+        if (pegRevisionNumber < 0) {
+            pegRevisionNumber = getRevisionNumber(revision, repository, path);
+        }
+        startRevisionNumber = getRevisionNumber(start, repository, path);
+        if (!end.isValid()) {
+            endRevisionNumber = startRevisionNumber;
+        } else {
+            endRevisionNumber = getRevisionNumber(end, repository, path);
+        }
+        SVNURL rootURL = repository.getRepositoryRoot(true);
+        long[] revisionsRange = startRevisionNumber == endRevisionNumber ? 
+                new long[] {startRevisionNumber} : new long[] {startRevisionNumber, endRevisionNumber};
+                        
+        Map locations = repository.getLocations("", (Map) null, pegRevisionNumber, revisionsRange);
+        String startPath = (String) locations.get(new Long(startRevisionNumber));
+        String endPath = (String) locations.get(new Long(endRevisionNumber));
+        
+        if (startPath == null) {
+            Object source = path != null ? (Object) path : (Object) url;
+            SVNErrorManager.error("svn: Unable to find repository location for '" + source + "' in revision " + startRevisionNumber);
+        }
+        if (endPath == null) {
+            Object source = path != null ? (Object) path : (Object) url;
+            SVNErrorManager.error("The location for '" + source + "' for revision " + endRevisionNumber +" does not exist in the " +
+                                    "repository or refers to an unrelated object");            
+        }
+        
+        SVNRepositoryLocation[] result = new SVNRepositoryLocation[2];
+        SVNURL startURL = SVNURL.parseURIEncoded(SVNPathUtil.append(rootURL.toString(), SVNEncodingUtil.uriEncode(startPath)));
+        result[0] = new SVNRepositoryLocation(startURL, startRevisionNumber);
+        if (end.isValid()) {
+            SVNURL endURL = SVNURL.parseURIEncoded(SVNPathUtil.append(rootURL.toString(), SVNEncodingUtil.uriEncode(endPath)));
+            result[1] = new SVNRepositoryLocation(endURL, endRevisionNumber);
+        }
+        return result;
+    }
+    
+    protected SVNURL getURL(File path) throws SVNException {
+        if (path == null) {
+            return null;
+        }
+        SVNWCAccess wcAccess = createWCAccess(path);
+        SVNEntry entry;
+        if (wcAccess.getTarget() != wcAccess.getAnchor()) {
+            entry = wcAccess.getTarget().getEntries().getEntry("", false);
+        } else {
+            entry = wcAccess.getTargetEntry();
+        }
+        return entry != null ? entry.getSVNURL() : null;        
+    }
+    
 
     protected static class RepositoryReference {
 
@@ -505,6 +650,23 @@ public class SVNBasicClient implements ISVNEventHandler {
         public String URL;
 
         public long Revision;
+    }
+
+    protected static class SVNRepositoryLocation {
+
+        private SVNURL myURL;
+        private long myRevision;
+
+        public SVNRepositoryLocation(SVNURL url, long rev) {
+            myURL = url;
+            myRevision = rev;
+        }
+        public long getRevisionNumber() {
+            return myRevision;
+        }
+        public SVNURL getURL() {
+            return myURL;
+        }
     }
 
 }
