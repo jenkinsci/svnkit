@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
 import de.regnis.q.sequence.line.diff.QDiffManager;
@@ -38,27 +39,16 @@ import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
  */
 public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
-    protected static final byte[] PROPERTIES_SEPARATOR = "___________________________________________________________________"
-            .getBytes();
-
-    protected static final byte[] HEADER_SEPARATOR = "==================================================================="
-            .getBytes();
-
+    protected static final byte[] PROPERTIES_SEPARATOR = "___________________________________________________________________".getBytes();
+    protected static final byte[] HEADER_SEPARATOR = "===================================================================".getBytes();
     protected static final byte[] EOL = SVNTranslator.getEOL("native");
-
     protected static final String WC_REVISION_LABEL = "(working copy)";
-
-    protected static final InputStream EMPTY_FILE_IS = new ByteArrayInputStream(
-            new byte[0]);
+    protected static final InputStream EMPTY_FILE_IS = new ByteArrayInputStream(new byte[0]);
 
     private boolean myIsForcedBinaryDiff;
-
     private String myAnchorPath1;
-
     private String myEncoding;
-
     private boolean myIsDiffDeleted;
-
     private File myBasePath;
 
     public DefaultSVNDiffGenerator() {
@@ -138,6 +128,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.log(bos.toString());
             } catch (IOException e) {
             }
         }
@@ -177,6 +168,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.log(bos.toString());
             } catch (IOException inner) {
             }
             SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
@@ -218,6 +210,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 try {
                     bos.close();
                     bos.writeTo(result);
+                    SVNDebugLog.log(bos.toString());
                 } catch (IOException e) {
                 }
             }
@@ -270,6 +263,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
+                SVNDebugLog.log(bos.toString());
             } catch (IOException inner) {
                 //
             }

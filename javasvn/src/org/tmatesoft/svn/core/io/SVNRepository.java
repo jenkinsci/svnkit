@@ -129,6 +129,7 @@ public abstract class SVNRepository {
      */
     protected SVNRepository(SVNURL location) {
         myLocation = location;
+        myPegRevision = -1;
     }
 	
     /**

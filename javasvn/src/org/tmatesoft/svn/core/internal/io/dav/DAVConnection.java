@@ -32,7 +32,6 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.helpers.DefaultHandler;
 
 
@@ -86,8 +85,6 @@ public class DAVConnection {
                 String uuid = (String) result[0].getPropertyValue(DAVElement.REPOSITORY_UUID);
                 String relativePath = (String) result[0].getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
                 String root = myLocation.getPath();
-                SVNDebugLog.log("location path: " + root);
-                SVNDebugLog.log("relative path: " + relativePath);
                 if (relativePath != null) {
                     if (root.endsWith(relativePath)) {
                         root = root.substring(0, root.length() - relativePath.length() - 1);                        
@@ -102,9 +99,7 @@ public class DAVConnection {
                 } else {
                     url = myLocation.getProtocol() + "://" + myLocation.getHost() + root;
                 }
-                SVNDebugLog.log("composed url: " + url);
                 SVNURL rootURL = SVNURL.parseURIEncoded(url);
-                SVNDebugLog.log("parsed url: " + rootURL);
                 if (uuid == null) {
                     uuid = "";
                 }

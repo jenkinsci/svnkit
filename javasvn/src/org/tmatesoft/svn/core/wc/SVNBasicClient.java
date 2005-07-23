@@ -602,8 +602,8 @@ public class SVNBasicClient implements ISVNEventHandler {
                 new long[] {startRevisionNumber} : new long[] {startRevisionNumber, endRevisionNumber};
                         
         Map locations = repository.getLocations("", (Map) null, pegRevisionNumber, revisionsRange);
-        String startPath = (String) locations.get(new Long(startRevisionNumber));
-        String endPath = (String) locations.get(new Long(endRevisionNumber));
+        SVNLocationEntry startPath = (SVNLocationEntry) locations.get(new Long(startRevisionNumber));
+        SVNLocationEntry endPath = (SVNLocationEntry) locations.get(new Long(endRevisionNumber));
         
         if (startPath == null) {
             Object source = path != null ? (Object) path : (Object) url;
@@ -616,10 +616,10 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         
         SVNRepositoryLocation[] result = new SVNRepositoryLocation[2];
-        SVNURL startURL = SVNURL.parseURIEncoded(SVNPathUtil.append(rootURL.toString(), SVNEncodingUtil.uriEncode(startPath)));
+        SVNURL startURL = SVNURL.parseURIEncoded(SVNPathUtil.append(rootURL.toString(), SVNEncodingUtil.uriEncode(startPath.getPath())));
         result[0] = new SVNRepositoryLocation(startURL, startRevisionNumber);
         if (end.isValid()) {
-            SVNURL endURL = SVNURL.parseURIEncoded(SVNPathUtil.append(rootURL.toString(), SVNEncodingUtil.uriEncode(endPath)));
+            SVNURL endURL = SVNURL.parseURIEncoded(SVNPathUtil.append(rootURL.toString(), SVNEncodingUtil.uriEncode(endPath.getPath())));
             result[1] = new SVNRepositoryLocation(endURL, endRevisionNumber);
         }
         return result;

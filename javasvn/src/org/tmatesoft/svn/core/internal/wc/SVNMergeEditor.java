@@ -61,8 +61,7 @@ public class SVNMergeEditor implements ISVNEditor {
         myRevision2 = revision2;
         myWCAccess = wcAccess;
         myMerger = merger;
-        myTarget = "".equals(myWCAccess.getTargetName()) ? null : myWCAccess
-                .getTargetName();
+        myTarget = "".equals(myWCAccess.getTargetName()) ? null : myWCAccess.getTargetName();
     }
 
     public void targetRevision(long revision) throws SVNException {

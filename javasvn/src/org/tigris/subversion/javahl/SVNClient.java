@@ -498,12 +498,28 @@ public class SVNClient implements SVNClientInterface {
         SVNDiffClient differ = getSVNDiffClient();
         try {
             if(isURL(path1) && isURL(path2)){
-                differ.doMerge(path1, path2, SVNConverterUtil.getSVNRevision(revision1),
+                SVNURL url1 = SVNURL.parseURIEncoded(path1);
+                SVNURL url2 = SVNURL.parseURIEncoded(path2);
+                differ.doMerge(url1, SVNConverterUtil.getSVNRevision(revision1), url2,
                         SVNConverterUtil.getSVNRevision(revision2), new File(localPath).getAbsoluteFile(),
                         recurse, !ignoreAncestry, force, dryRun);
-            }else{
-                differ.doMerge(new File(path1).getAbsoluteFile(), new File(path2).getAbsoluteFile(),
-                        SVNConverterUtil.getSVNRevision(revision1), SVNConverterUtil.getSVNRevision(revision2),
+            } else if (isURL(path1)) {
+                SVNURL url1 = SVNURL.parseURIEncoded(path1);
+                File file2 = new File(path2).getAbsoluteFile();
+                differ.doMerge(url1, SVNConverterUtil.getSVNRevision(revision1), file2,
+                        SVNConverterUtil.getSVNRevision(revision2), new File(localPath).getAbsoluteFile(),
+                        recurse, !ignoreAncestry, force, dryRun);
+            } else if (isURL(path2)) {
+                SVNURL url2 = SVNURL.parseURIEncoded(path2);
+                File file1 = new File(path1).getAbsoluteFile();
+                differ.doMerge(file1, SVNConverterUtil.getSVNRevision(revision1), url2,
+                        SVNConverterUtil.getSVNRevision(revision2), new File(localPath).getAbsoluteFile(),
+                        recurse, !ignoreAncestry, force, dryRun);
+            } else{
+                File file1 = new File(path1).getAbsoluteFile();
+                File file2 = new File(path2).getAbsoluteFile();
+                differ.doMerge(file1, SVNConverterUtil.getSVNRevision(revision1), 
+                        file2, SVNConverterUtil.getSVNRevision(revision2),
                         new File(localPath).getAbsoluteFile(), recurse, !ignoreAncestry, force, dryRun);
             }
         } catch (SVNException e) {
@@ -515,7 +531,9 @@ public class SVNClient implements SVNClientInterface {
         SVNDiffClient differ = getSVNDiffClient();
         try {
             if(isURL(path)){
-                differ.doMerge(path, SVNConverterUtil.getSVNRevision(pegRevision),
+                SVNURL url = SVNURL.parseURIEncoded(path);
+                differ.doMerge(url, 
+                        SVNConverterUtil.getSVNRevision(pegRevision),
                         SVNConverterUtil.getSVNRevision(revision1),
                         SVNConverterUtil.getSVNRevision(revision2),
                         new File(localPath).getAbsoluteFile(), recurse, !ignoreAncestry, force, dryRun);
@@ -552,25 +570,25 @@ public class SVNClient implements SVNClientInterface {
         });
         differ.getDiffGenerator().setDiffDeleted(!noDiffDeleted);
         differ.getDiffGenerator().setForcedBinaryDiff(force);
-        SVNRevision peg1 = SVNRevision.UNDEFINED;
-        SVNRevision peg2 = SVNRevision.UNDEFINED;
-        SVNRevision peg = SVNRevision.UNDEFINED;
         SVNRevision rev1 = SVNConverterUtil.getSVNRevision(revision1);
         SVNRevision rev2 = SVNConverterUtil.getSVNRevision(revision2);
         try {
             OutputStream out = SVNFileUtil.openFileForWriting(new File(outFileName));
             if(!isURL(target1)&&!isURL(target2)){
-                differ.doDiff(new File(target1).getAbsoluteFile(),
-                        new File(target2).getAbsoluteFile(),
-                        rev1, rev2, recurse, !ignoreAncestry, out);
+                differ.doDiff(new File(target1).getAbsoluteFile(), rev1,
+                        new File(target2).getAbsoluteFile(), rev2,
+                        recurse, !ignoreAncestry, out);
             }else if(isURL(target1)&&isURL(target2)){
-                differ.doDiff(target1, peg1, target2, peg2, rev1, rev2, recurse, !ignoreAncestry, out);
+                SVNURL url1 = SVNURL.parseURIEncoded(target1);
+                SVNURL url2 = SVNURL.parseURIEncoded(target2);
+                differ.doDiff(url1, rev1, url2, rev2, recurse, !ignoreAncestry, out);
             }else if(!isURL(target1)&&isURL(target2)){
-                differ.doDiff(new File(target1).getAbsoluteFile(), target2,
-                        peg, rev1, rev2, recurse, !ignoreAncestry, out);
+                SVNURL url2 = SVNURL.parseURIEncoded(target2);
+                differ.doDiff(new File(target1).getAbsoluteFile(), rev1,
+                        url2, rev2, recurse, !ignoreAncestry, out);
             }else if(isURL(target1)&&!isURL(target2)){
-                SVNURL targetURL = SVNURL.parseURIEncoded(target1);
-                differ.doDiff(targetURL, peg, new File(target2), rev1, rev2, recurse, !ignoreAncestry, out);
+                SVNURL url1 = SVNURL.parseURIEncoded(target1);
+                differ.doDiff(url1, rev1, new File(target2).getAbsoluteFile(), rev2, recurse, !ignoreAncestry, out);
             }
             SVNFileUtil.closeFile(out);
         } catch (SVNException e) {
@@ -600,11 +618,12 @@ public class SVNClient implements SVNClientInterface {
         SVNRevision rev2 = SVNConverterUtil.getSVNRevision(endRevision);
         try {
             OutputStream out = SVNFileUtil.openFileForWriting(new File(outFileName));
+            
             if(isURL(target)){
-                differ.doDiff(target, peg, target, peg, rev1, rev2, recurse, !ignoreAncestry, out);
+                SVNURL url = SVNURL.parseURIEncoded(target);
+                differ.doDiff(url, peg, rev1, rev2, recurse, !ignoreAncestry, out);
             }else{
-                differ.doDiff(new File(target).getAbsoluteFile(), new File(target).getAbsoluteFile(),
-                        rev1, rev2, recurse, !ignoreAncestry, out);
+                differ.doDiff(new File(target).getAbsoluteFile(), peg, rev1, rev2, recurse, !ignoreAncestry, out);
             }
             SVNFileUtil.closeFile(out);
         } catch (SVNException e) {
