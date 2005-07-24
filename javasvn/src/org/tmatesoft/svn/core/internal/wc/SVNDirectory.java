@@ -511,8 +511,7 @@ public class SVNDirectory {
         return wasReverted;
     }
 
-    public boolean hasTextModifications(String name, boolean force)
-            throws SVNException {
+    public boolean hasTextModifications(String name, boolean force) throws SVNException {
         SVNFileType fType = SVNFileType.getType(getFile(name));
         if (fType == SVNFileType.DIRECTORY || fType == SVNFileType.NONE) {
             return false;

@@ -458,11 +458,7 @@ public class SVNFileUtil {
     }
 
     public static long roundTimeStamp(long tstamp) {
-        long remainder = tstamp - ((tstamp / 1000) * 1000);
-        if (remainder < 500) {
-            return (tstamp / 1000) * 1000;
-        }
-        return (tstamp / 1000) * 1000 + 1000;
+        return (tstamp / 1000) * 1000;
     }
 
     public static void sleepForTimestamp() {

@@ -88,13 +88,15 @@ public class SVNExportEditor implements ISVNEditor {
         myCurrentDirectory = new File(myRoot, path);
         myCurrentPath = path;
 
-        if (!myIsForce && myCurrentDirectory.isFile()) {
+        SVNFileType dirType = SVNFileType.getType(myCurrentDirectory);
+        if (dirType == SVNFileType.FILE || dirType == SVNFileType.SYMLINK) {
             // export is obstructed.
-            SVNErrorManager.error("svn: Failed to add directory '" + myCurrentDirectory + "': file of the same name already exists; use 'force' to overwrite exsiting file");
-        } else if (myIsForce && myCurrentDirectory.exists()) {
-            SVNFileUtil.deleteAll(myCurrentDirectory);
-        }
-        if (!myCurrentDirectory.exists()) {
+            if (!myIsForce) {
+                SVNErrorManager.error("svn: Failed to add directory '" + myCurrentDirectory + "': file of the same name already exists; use 'force' to overwrite existing file");
+            } else {
+                SVNFileUtil.deleteAll(myCurrentDirectory);
+            }
+        } else if (dirType == SVNFileType.NONE) {
             if (!myCurrentDirectory.mkdirs()) {
                 SVNErrorManager.error("svn: Failed to add directory '" + myCurrentDirectory + "'");
             }

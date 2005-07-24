@@ -497,8 +497,7 @@ public class SVNCommitUtil {
                     textModified = propDiff != null
                             && propDiff.containsKey(SVNProperty.EOL_STYLE);
                     if (!textModified) {
-                        textModified = dir.hasTextModifications(
-                                entry.getName(), eolChanged);
+                        textModified = dir.hasTextModifications(entry.getName(), eolChanged);
                     }
                 } else {
                     textModified = true;
@@ -514,8 +513,7 @@ public class SVNCommitUtil {
                     && propDiff.containsKey(SVNProperty.EOL_STYLE);
             propsModified = propDiff != null && !propDiff.isEmpty();
             if (entry.getKind() == SVNNodeKind.FILE) {
-                textModified = dir.hasTextModifications(entry.getName(),
-                        eolChanged);
+                textModified = dir.hasTextModifications(entry.getName(),  eolChanged);
             }
         }
 

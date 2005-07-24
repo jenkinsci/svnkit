@@ -172,6 +172,7 @@ public class SVNDiffClient extends SVNBasicClient {
         SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
         long revNumber = getRevisionNumber(revision1, repository, null);
         
+        repository.setPegRevision(getRevisionNumber(revision2, repository, path2));
         repository.diff(url1, revNumber, target, !useAncestry, recursive, reporter, editor);
         
         wcAccess.close(false);
@@ -206,6 +207,8 @@ public class SVNDiffClient extends SVNBasicClient {
         SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
         long revNumber = getRevisionNumber(revision1, repository, path1);
         
+        // this should be rev2.
+        repository.setPegRevision(getRevisionNumber(revision2, repository, path2));
         repository.diff(url1, revNumber, target, !useAncestry, recursive, reporter, editor);
         
         wcAccess.close(false);
