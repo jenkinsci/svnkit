@@ -83,8 +83,7 @@ public class SVNDiffEditor implements ISVNEditor {
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
         String name = SVNPathUtil.tail(path);
         SVNEntry entry = dir.getEntries().getEntry(name, true);
-        String displayPath = myDiffGenerator.getDisplayPath(new File(dir
-                .getRoot(), name));
+        String displayPath = dir.getFile(name).getAbsolutePath().replace(File.separatorChar, '/');
         if (entry != null && entry.isFile()) {
             SVNProperties baseProps = dir.getBaseProperties(name, false);
             SVNProperties wcProps = dir.getProperties(name, false);
@@ -158,8 +157,9 @@ public class SVNDiffEditor implements ISVNEditor {
             if (!myIsReverseDiff) {
                 reversePropChanges(base, diff);
             }
-            myDiffGenerator.displayPropDiff(myCurrentDirectory.myPath, base,
-                    diff, myResult);
+            String displayPath = new File(myWCAccess.getAnchor().getRoot(), myCurrentDirectory.myPath).getAbsolutePath();
+            displayPath = displayPath.replace(File.separatorChar, '/');
+            myDiffGenerator.displayPropDiff(displayPath, base, diff, myResult);
         }
         String name = SVNPathUtil.tail(myCurrentDirectory.myPath);
         myCurrentDirectory = myCurrentDirectory.myParent;
@@ -305,9 +305,8 @@ public class SVNDiffEditor implements ISVNEditor {
         if (dir != null) {
             entry = dir.getEntries().getEntry(fileName, true);
         }
-        String displayPath = myDiffGenerator.getDisplayPath(new File(myWCAccess
-                .getAnchor().getRoot(), myCurrentFile.myPath));
-        if (myCurrentFile.myIsAdded) {
+        String displayPath = new File(myWCAccess.getAnchor().getRoot(), myCurrentFile.myPath).getAbsolutePath().replace(File.separatorChar, '/');
+        if (myCurrentFile.myIsAdded) {            
             if (myIsReverseDiff) {
                 // empty->repos
                 String revStr = entry != null ? "(revision "
@@ -399,8 +398,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 SVNProperties baseProps = dir.getBaseProperties("", false);
                 Map propDiff = baseProps
                         .compareTo(dir.getProperties("", false));
-                String displayPath = myDiffGenerator.getDisplayPath(dir
-                        .getRoot());
+                String displayPath = dir.getRoot().getAbsolutePath().replace(File.separatorChar, '/');
                 myDiffGenerator.displayPropDiff(displayPath, baseProps.asMap(),
                         propDiff, result);
             }
@@ -443,7 +441,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 replaced = false;
             }
             SVNProperties props = dir.getProperties(name, false);
-            String fullPath = myDiffGenerator.getDisplayPath(dir.getFile(name));
+            String fullPath = dir.getFile(name).getAbsolutePath().replace(File.separatorChar, '/');
             Map baseProps = dir.getBaseProperties(name, false).asMap();
             Map propDiff = null;
             if (!deleted && dir.hasPropModifications(name)) {

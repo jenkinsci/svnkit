@@ -40,25 +40,19 @@ import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 public class SVNRemoteDiffEditor implements ISVNEditor {
 
     private File myRoot;
-
     private SVNRepository myRepos;
-
     private long myRevision;
-
     private ISVNDiffGenerator myDiffGenerator;
-
     private SVNDirectoryInfo myCurrentDirectory;
-
     private SVNFileInfo myCurrentFile;
-
     private OutputStream myResult;
-
     private String myRevision1;
-
     private String myRevision2;
+    private String myBasePath;
 
-    public SVNRemoteDiffEditor(File tmpRoot, ISVNDiffGenerator diffGenerator,
+    public SVNRemoteDiffEditor(String basePath, File tmpRoot, ISVNDiffGenerator diffGenerator,
             SVNRepository repos, long revision, OutputStream result) {
+        myBasePath = basePath;
         myRoot = tmpRoot;
         myRepos = repos;
         myRevision = revision;
@@ -90,7 +84,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 info.loadFromRepository(tmpFile, myRepos, myRevision);
                 String mimeType = (String) info.myBaseProperties
                         .get(SVNProperty.MIME_TYPE);
-                myDiffGenerator.displayFileDiff(path, tmpFile, null,
+                String displayPath = SVNPathUtil.append(myBasePath, path);
+                myDiffGenerator.displayFileDiff(displayPath, tmpFile, null,
                         myRevision1, myRevision2, mimeType, mimeType, myResult);
             } finally {
                 if (tmpFile != null) {
@@ -128,7 +123,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void closeDir() throws SVNException {
         if (myCurrentDirectory.myPropertyDiff != null) {
-            myDiffGenerator.displayPropDiff(myCurrentDirectory.myPath,
+            String displayPath = SVNPathUtil.append(myBasePath, myCurrentDirectory.myPath);
+            myDiffGenerator.displayPropDiff(displayPath,
                     myCurrentDirectory.myBaseProperties,
                     myCurrentDirectory.myPropertyDiff, myResult);
         }
@@ -213,6 +209,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void closeFile(String commitPath, String textChecksum)
             throws SVNException {
+        String displayPath = SVNPathUtil.append(myBasePath, myCurrentFile.myPath);
         if (myCurrentFile.myFile != null) {
             String mimeType1 = (String) myCurrentFile.myBaseProperties
                     .get(SVNProperty.MIME_TYPE);
@@ -222,12 +219,12 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             if (mimeType2 == null) {
                 mimeType2 = mimeType1;
             }
-            myDiffGenerator.displayFileDiff(myCurrentFile.myPath,
+            myDiffGenerator.displayFileDiff(displayPath,
                     myCurrentFile.myBaseFile, myCurrentFile.myFile,
                     myRevision1, myRevision2, mimeType1, mimeType2, myResult);
         }
         if (myCurrentFile.myPropertyDiff != null) {
-            myDiffGenerator.displayPropDiff(myCurrentFile.myPath,
+            myDiffGenerator.displayPropDiff(displayPath,
                     myCurrentFile.myBaseProperties,
                     myCurrentFile.myPropertyDiff, myResult);
         }

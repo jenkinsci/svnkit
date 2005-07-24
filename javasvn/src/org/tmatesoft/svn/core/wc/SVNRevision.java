@@ -133,7 +133,7 @@ public class SVNRevision {
     }
 
     public boolean isLocal() {
-        return !(!isValid() || this == SVNRevision.HEAD || getNumber() >= 0 || getDate() != null);
+        return isValid() && (this == SVNRevision.BASE || this == SVNRevision.WORKING);
     }
 
     public static SVNRevision parse(String value) {

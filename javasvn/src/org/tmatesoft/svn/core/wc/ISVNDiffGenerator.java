@@ -36,14 +36,9 @@ public interface ISVNDiffGenerator {
 
     public boolean isDiffDeleted();
 
-    public String getDisplayPath(File file);
-
     public File createTempDirectory() throws SVNException;
 
-    public void displayPropDiff(String path, Map baseProps, Map diff,
-            OutputStream result) throws SVNException;
+    public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException;
 
-    public void displayFileDiff(String path, File file1, File file2,
-            String rev1, String rev2, String mimeType1, String mimeType2,
-            OutputStream result) throws SVNException;
+    public void displayFileDiff(String path, File file1, File file2, String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException;
 }

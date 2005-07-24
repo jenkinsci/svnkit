@@ -487,14 +487,10 @@ public class SVNCopyClient extends SVNBasicClient {
 
     }
 
-    private SVNCommitInfo url2urlCopy(String srcURL, long srcRevision,
-            String dstURL, String commitMessage, final boolean move)
-            throws SVNException {
+    private SVNCommitInfo url2urlCopy(String srcURL, long srcRevision, String dstURL, String commitMessage, final boolean move) throws SVNException {
         String commonURL = SVNPathUtil.getCommonURLAncestor(srcURL, dstURL);
         if (commonURL.length() == 0 || commonURL.indexOf("://") < 0) {
-            SVNErrorManager
-                    .error("svn: Source and dest appear not to be in the same repository (src: '"
-                            + srcURL + "'; dst: '" + dstURL + "'");
+            SVNErrorManager.error("svn: Source and dest appear not to be in the same repository (src: '" + srcURL + "'; dst: '" + dstURL + "'");
         }
         boolean resurrect = false;
         if (srcURL.equals(dstURL)) {
@@ -504,8 +500,7 @@ public class SVNCopyClient extends SVNBasicClient {
         String srcRelative = SVNEncodingUtil.uriDecode(srcURL.substring(commonURL.length()));
         String dstRelative = SVNEncodingUtil.uriDecode(dstURL.substring(commonURL.length()));
         if (srcRelative.length() == 0 && move) {
-            SVNErrorManager.error("svn: Cannot move '" + srcURL
-                    + "' into itself");
+            SVNErrorManager.error("svn: Cannot move '" + srcURL  + "' into itself");
         }
         if (srcRelative.startsWith("/")) {
             srcRelative = srcRelative.substring(1);
@@ -520,8 +515,7 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         final SVNNodeKind srcKind = repos.checkPath(srcRelative, srcRevision);
         if (srcKind == SVNNodeKind.NONE) {
-            SVNErrorManager.error("svn: Path '" + srcURL
-                    + "' does not exist in revision " + srcRevision);
+            SVNErrorManager.error("svn: Path '" + srcURL + "' does not exist in revision " + srcRevision);
         }
         SVNNodeKind dstKind = repos.checkPath(dstRelative, lastRevision);
         if (dstKind == SVNNodeKind.FILE) {
@@ -532,8 +526,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     SVNPathUtil.append(dstRelative, SVNEncodingUtil.uriDecode(SVNPathUtil.tail(srcURL)));
             dstKind = repos.checkPath(newDstPath, lastRevision);
             if (dstKind != SVNNodeKind.NONE) {
-                SVNErrorManager.error("svn: Path '" + newDstPath
-                        + "' already exists");
+                SVNErrorManager.error("svn: Path '" + newDstPath + "' already exists");
             }
             dstRelative = newDstPath;
         }
@@ -547,16 +540,12 @@ public class SVNCopyClient extends SVNBasicClient {
                     SVNRevision.create(srcRevision), false, true, false, false,
                     false, false));
         }
-        commitMessage = getCommitHandler().getCommitMessage(
-                commitMessage,
-                (SVNCommitItem[]) commitItems
-                        .toArray(new SVNCommitItem[commitItems.size()]));
+        commitMessage = getCommitHandler().getCommitMessage(commitMessage, (SVNCommitItem[]) commitItems.toArray(new SVNCommitItem[commitItems.size()]));
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
         }
 
-        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null,
-                false, null);
+        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, null);
         final String srcPath = srcRelative;
         final String dstPath = dstRelative;
         final long srcRevNumber = srcRevision;
@@ -597,8 +586,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 return closeDir;
             }
         };
-        Collection paths = move ? Arrays.asList(new String[] { srcRelative,
-                dstRelative }) : Collections.singletonList(dstRelative);
+        Collection paths = move ? Arrays.asList(new String[] { srcRelative, dstRelative }) : Collections.singletonList(dstRelative);
 
         SVNCommitInfo result = null;
         try {

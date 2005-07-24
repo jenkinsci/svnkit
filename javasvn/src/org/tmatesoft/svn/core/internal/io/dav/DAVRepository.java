@@ -505,10 +505,6 @@ class DAVRepository extends SVNRepository {
     public SVNLock getLock(String path) throws SVNException {
         try {
             openConnection();
-            SVNDebugLog.log("location: " + getLocation());
-            SVNDebugLog.log("lock path: " + path);
-            SVNDebugLog.log("repository root: " + getRepositoryRoot());
-            
             path = getFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
             return myConnection.doGetLock(path);
@@ -542,7 +538,6 @@ class DAVRepository extends SVNRepository {
     public void removeLock(String path, String id, boolean force) throws SVNException {
         try {
             openConnection();
-            SVNDebugLog.log("repository root: " + getRepositoryRoot());
             path = getFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
             String url = getLocation().getProtocol() + "://" + getLocation().getHost() + ":" + getLocation().getPort();

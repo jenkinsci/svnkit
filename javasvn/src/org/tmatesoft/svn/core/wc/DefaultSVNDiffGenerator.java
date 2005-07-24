@@ -47,17 +47,21 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
     private boolean myIsForcedBinaryDiff;
     private String myAnchorPath1;
+    private String myAnchorPath2;
+    
     private String myEncoding;
     private boolean myIsDiffDeleted;
     private File myBasePath;
 
     public DefaultSVNDiffGenerator() {
         myIsDiffDeleted = true;
-        init("", "");
+        myAnchorPath1 = "";
+        myAnchorPath2 = "";
     }
 
     public void init(String anchorPath1, String anchorPath2) {
         myAnchorPath1 = anchorPath1.replace(File.separatorChar, '/');
+        myAnchorPath2 = anchorPath2.replace(File.separatorChar, '/');
     }
 
     public void setBasePath(File basePath) {
@@ -72,14 +76,25 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         return myIsDiffDeleted;
     }
 
-    public String getDisplayPath(File file) {
-        String fullPath = file.getAbsolutePath().replace(File.separatorChar, '/');
-        if (fullPath.equals(myAnchorPath1)) {
-            return "";
-        } else if (fullPath.startsWith(myAnchorPath1 + "/")) {
-            fullPath = fullPath.substring(myAnchorPath1.length() + 1);
+    protected String getDisplayPath(String path) {
+        if (myBasePath == null) {
+            return path;
         }
-        return fullPath;
+        if (path == null) {
+            path = "";
+        }
+        if (path.indexOf("://") > 0) {
+            return path;
+        }
+        // treat as file path.
+        String basePath = myBasePath.getAbsolutePath().replace(File.separatorChar, '/');
+        if (path.equals(basePath)) {
+            return ".";
+        }
+        if (path.startsWith(basePath + "/")) {
+            return path.substring(basePath.length() + 1);
+        }
+        return path;
     }
 
     public void setForcedBinaryDiff(boolean forced) {
@@ -90,11 +105,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         return myIsForcedBinaryDiff;
     }
 
-    public void displayPropDiff(String path, Map baseProps, Map diff,
-            OutputStream result) throws SVNException {
-        if (myBasePath != null) {
-            path = getDisplayPath(new File(myBasePath, path));
-        }
+    public void displayPropDiff(String path, Map baseProps, Map diff, OutputStream result) throws SVNException {
+        path = getDisplayPath(path);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
             bos.write(EOL);
@@ -139,11 +151,39 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void displayFileDiff(String path, File file1, File file2,
-            String rev1, String rev2, String mimeType1, String mimeType2,
-            OutputStream result) throws SVNException {
-        if (myBasePath != null) {
-            path = getDisplayPath(new File(myBasePath, path));
+            String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException {
+        path = getDisplayPath(path);
+        int i = 0;
+        for(; i < myAnchorPath1.length() && i < myAnchorPath2.length() &&
+            myAnchorPath1.charAt(i) == myAnchorPath2.charAt(i); i++) {}
+        if (i < myAnchorPath1.length() || i < myAnchorPath2.length()) {
+            if (i == myAnchorPath1.length()) {
+                i = myAnchorPath1.length() - 1;
+            }
+            for(; i > 0 && myAnchorPath1.charAt(i) != '/'; i--) {}
         }
+        String p1 = myAnchorPath1.substring(i) ;
+        String p2 = myAnchorPath2.substring(i);
+        
+        if (p1.length() == 0) {
+            p1 = path;
+        } else if (p1.charAt(0) == '/') {
+            p1 = path + "\t(..." + p1 + ")";
+        } else {
+            p1 = path + "\t(.../" + p1 + ")";
+        }
+        if (p2.length() == 0) {
+            p2 = path;
+        } else if (p2.charAt(0) == '/') {
+            p2 = path + "\t(..." + p2 + ")";
+        } else {
+            p2 = path + "\t(.../" + p2 + ")";
+        }
+        
+        // if anchor1 is the same as anchor2 just use path.        
+        // if anchor1 differs from anchor2 =>
+        // condence anchors (get common root and remainings).
+        
         rev1 = rev1 == null ? WC_REVISION_LABEL : rev1;
         rev2 = rev2 == null ? WC_REVISION_LABEL : rev2;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -173,11 +213,9 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             }
             SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
         }
-        if (!isForcedBinaryDiff()
-                && (SVNProperty.isBinaryMimeType(mimeType1) || SVNProperty.isBinaryMimeType(mimeType2))) {
+        if (!isForcedBinaryDiff() && (SVNProperty.isBinaryMimeType(mimeType1) || SVNProperty.isBinaryMimeType(mimeType2))) {
             try {
-                bos.write("Cannot display: file marked as binary type."
-                        .getBytes(getEncoding()));
+                bos.write("Cannot display: file marked as binary type.".getBytes(getEncoding()));
                 bos.write(EOL);
                 if (SVNProperty.isBinaryMimeType(mimeType1)
                         && !SVNProperty.isBinaryMimeType(mimeType2)) {
@@ -219,12 +257,12 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         // put header fields.
         try {
             bos.write("--- ".getBytes(getEncoding()));
-            bos.write(path.getBytes(getEncoding()));
+            bos.write(p1.getBytes(getEncoding()));
             bos.write("\t".getBytes(getEncoding()));
             bos.write(rev1.getBytes(getEncoding()));
             bos.write(EOL);
             bos.write("+++ ".getBytes(getEncoding()));
-            bos.write(path.getBytes(getEncoding()));
+            bos.write(p2.getBytes(getEncoding()));
             bos.write("\t".getBytes(getEncoding()));
             bos.write(rev2.getBytes(getEncoding()));
             bos.write(EOL);
@@ -239,20 +277,15 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         InputStream is1 = null;
         InputStream is2 = null;
         try {
-            is1 = file1 == null ? EMPTY_FILE_IS : SVNFileUtil
-                    .openFileForReading(file1);
-            is2 = file2 == null ? EMPTY_FILE_IS : SVNFileUtil
-                    .openFileForReading(file2);
+            is1 = file1 == null ? EMPTY_FILE_IS : SVNFileUtil.openFileForReading(file1);
+            is2 = file2 == null ? EMPTY_FILE_IS : SVNFileUtil.openFileForReading(file2);
 
             QDiffUniGenerator.setup();
             Map generatorProperties = new HashMap();
-            generatorProperties.put(QDiffUniGenerator.COMPARE_EOL_PROPERTY,
-                    Boolean.TRUE.toString());
-            QDiffGenerator generator = QDiffManager.getDiffGenerator(
-                    QDiffUniGenerator.TYPE, generatorProperties);
+            generatorProperties.put(QDiffUniGenerator.COMPARE_EOL_PROPERTY, Boolean.TRUE.toString());
+            QDiffGenerator generator = QDiffManager.getDiffGenerator(QDiffUniGenerator.TYPE, generatorProperties);
             Writer writer = new OutputStreamWriter(bos, getEncoding());
-            QDiffManager.generateTextDiff(is1, is2, getEncoding(), writer,
-                    generator);
+            QDiffManager.generateTextDiff(is1, is2, getEncoding(), writer, generator);
             writer.flush();
             writer.close();
         } catch (IOException e) {
@@ -282,11 +315,11 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
 
     public File createTempDirectory() throws SVNException {
-        File dir = SVNFileUtil.createUniqueFile(new File("."), ".diff", ".tmp");
+        File userDir = new File(System.getProperty("user.dir"));
+        File dir = SVNFileUtil.createUniqueFile(userDir, ".diff", ".tmp");
         boolean created = dir.mkdirs();
         if (!created) {
-            SVNErrorManager.error("svn: cannot create temporary directory '"
-                    + dir.getAbsolutePath() + "'");
+            SVNErrorManager.error("svn: cannot create temporary directory '" + dir.getAbsolutePath() + "'");
         }
         return dir;
     }
