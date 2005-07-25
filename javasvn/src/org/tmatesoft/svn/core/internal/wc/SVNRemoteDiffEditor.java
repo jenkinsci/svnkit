@@ -11,14 +11,10 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -28,9 +24,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 
 /**
@@ -49,6 +43,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     private String myRevision1;
     private String myRevision2;
     private String myBasePath;
+    
+    private SVNDeltaProcessor myDeltaProcessor;
 
     public SVNRemoteDiffEditor(String basePath, File tmpRoot, ISVNDiffGenerator diffGenerator,
             SVNRepository repos, long revision, OutputStream result) {
@@ -59,6 +55,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         myDiffGenerator = diffGenerator;
         myResult = result;
         myRevision1 = "(revision " + revision + ")";
+        
+        myDeltaProcessor = new SVNDeltaProcessor();
     }
 
     public void targetRevision(long revision) throws SVNException {
@@ -167,44 +165,18 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         myCurrentFile.myPropertyDiff.put(name, value);
     }
 
-    public void applyTextDelta(String commitPath, String baseChecksum)
-            throws SVNException {
-        myCurrentFile.myDiffWindows = new ArrayList();
-        myCurrentFile.myDataFiles = new ArrayList();
+    public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
     }
 
-    public OutputStream textDeltaChunk(String commitPath,
-            SVNDiffWindow diffWindow) throws SVNException {
-        myCurrentFile.myDiffWindows.add(diffWindow);
-        File chunkFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil
-                .tail(myCurrentFile.myPath), ".chunk");
-        myCurrentFile.myDataFiles.add(chunkFile);
-        return SVNFileUtil.openFileForWriting(chunkFile);
+    public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
+        File chunkFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(myCurrentFile.myPath), ".chunk");
+        return myDeltaProcessor.textDeltaChunk(chunkFile, diffWindow);
     }
 
     public void textDeltaEnd(String commitPath) throws SVNException {
         File baseTmpFile = myCurrentFile.myBaseFile;
         File targetFile = myCurrentFile.myFile;
-        ISVNRAData baseData = new SVNRAFileData(baseTmpFile, true);
-        ISVNRAData target = new SVNRAFileData(targetFile, false);
-        for (int i = 0; i < myCurrentFile.myDiffWindows.size(); i++) {
-            SVNDiffWindow window = (SVNDiffWindow) myCurrentFile.myDiffWindows
-                    .get(i);
-            File dataFile = (File) myCurrentFile.myDataFiles.get(i);
-            InputStream data = SVNFileUtil.openFileForReading(dataFile);
-            try {
-                window.apply(baseData, target, data, target.length());
-            } finally {
-                SVNFileUtil.closeFile(data);
-            }
-            dataFile.delete();
-        }
-        try {
-            target.close();
-            baseData.close();
-        } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot apply delta to '" + targetFile + "'");
-        }
+        myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile);
     }
 
     public void closeFile(String commitPath, String textChecksum)
@@ -291,9 +263,5 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         private Map myBaseProperties;
 
         private Map myPropertyDiff;
-
-        private List myDiffWindows;
-
-        private List myDataFiles;
     }
 }

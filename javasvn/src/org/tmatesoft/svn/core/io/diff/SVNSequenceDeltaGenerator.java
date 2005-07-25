@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 
@@ -102,12 +103,14 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 	    }
     }
 
-    private static boolean canProcess(ISVNRAData workFile, ISVNRAData baseFile) throws IOException {
+    private static boolean canProcess(ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
         InputStream is = workFile.read(0, Math.min(1024, workFile.length()));
         try {
             if (SVNFileUtil.detectMimeType(workFile.read(0, Math.min(workFile.length(), 1024))) != null) {
                 return false;
             }
+        } catch (IOException e) {
+            SVNErrorManager.error(e.getMessage());
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -117,6 +120,8 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
             if (SVNFileUtil.detectMimeType(is) != null) {
                 return false;
             }
+        } catch (IOException e) {
+            SVNErrorManager.error(e.getMessage());            
         } finally {
             SVNFileUtil.closeFile(is);
         }

@@ -11,15 +11,12 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -30,9 +27,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -53,6 +48,7 @@ public class SVNMergeEditor implements ISVNEditor {
     private SVNDirectoryInfo myCurrentDirectory;
     private SVNFileInfo myCurrentFile;
     private SVNMerger myMerger;
+    private SVNDeltaProcessor myDeltaProcessor;
 
     public SVNMergeEditor(SVNWCAccess wcAccess, SVNRepository repos,
             long revision1, long revision2, SVNMerger merger) {
@@ -62,6 +58,7 @@ public class SVNMergeEditor implements ISVNEditor {
         myWCAccess = wcAccess;
         myMerger = merger;
         myTarget = "".equals(myWCAccess.getTargetName()) ? null : myWCAccess.getTargetName();
+        myDeltaProcessor = new SVNDeltaProcessor();
     }
 
     public void targetRevision(long revision) throws SVNException {
@@ -206,12 +203,8 @@ public class SVNMergeEditor implements ISVNEditor {
         myCurrentFile.myPropertyDiff.put(name, value);
     }
 
-    public void applyTextDelta(String commitPath, String baseChecksum)
-            throws SVNException {
-        myCurrentFile.myDiffWindows = new ArrayList();
-        myCurrentFile.myDataFiles = new ArrayList();
-        myCurrentFile.myBaseFile = myMerger.getFile(myCurrentFile.myWCPath,
-                true);
+    public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
+        myCurrentFile.myBaseFile = myMerger.getFile(myCurrentFile.myWCPath, true);
 
         if (myCurrentFile.myIsAdded) {
             SVNFileUtil.createEmptyFile(myCurrentFile.myBaseFile);
@@ -223,39 +216,15 @@ public class SVNMergeEditor implements ISVNEditor {
         SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
     }
 
-    public OutputStream textDeltaChunk(String commitPath,
-            SVNDiffWindow diffWindow) throws SVNException {
-        myCurrentFile.myDiffWindows.add(diffWindow);
-        File chunkFile = SVNFileUtil
-                .createUniqueFile(myCurrentFile.myBaseFile.getParentFile(),
-                        SVNPathUtil.tail(myCurrentFile.myPath), ".chunk");
-        myCurrentFile.myDataFiles.add(chunkFile);
-        return SVNFileUtil.openFileForWriting(chunkFile);
+    public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
+        File chunkFile = SVNFileUtil.createUniqueFile(myCurrentFile.myBaseFile.getParentFile(), SVNPathUtil.tail(myCurrentFile.myPath), ".chunk");
+        return myDeltaProcessor.textDeltaChunk(chunkFile, diffWindow);
     }
 
     public void textDeltaEnd(String commitPath) throws SVNException {
         File baseTmpFile = myCurrentFile.myBaseFile;
         File targetFile = myCurrentFile.myFile;
-        ISVNRAData baseData = new SVNRAFileData(baseTmpFile, true);
-        ISVNRAData target = new SVNRAFileData(targetFile, false);
-        for (int i = 0; i < myCurrentFile.myDiffWindows.size(); i++) {
-            SVNDiffWindow window = (SVNDiffWindow) myCurrentFile.myDiffWindows
-                    .get(i);
-            File dataFile = (File) myCurrentFile.myDataFiles.get(i);
-            InputStream data = SVNFileUtil.openFileForReading(dataFile);
-            try {
-                window.apply(baseData, target, data, target.length());
-            } finally {
-                SVNFileUtil.closeFile(data);
-            }
-            dataFile.delete();
-        }
-        try {
-            target.close();
-            baseData.close();
-        } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot apply delta to '" + targetFile + "'");
-        }
+        myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile);
     }
 
     public void closeFile(String commitPath, String textChecksum)
@@ -422,7 +391,5 @@ public class SVNMergeEditor implements ISVNEditor {
         private Map myBaseProperties;
         private Map myPropertyDiff;
         private Map myEntryProps;
-        private List myDiffWindows;
-        private List myDataFiles;
     }
 }

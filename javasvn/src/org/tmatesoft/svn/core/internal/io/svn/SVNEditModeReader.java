@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 
@@ -81,13 +82,9 @@ public class SVNEditModeReader {
                 myBuilder.accept(bytes, 0);
                 if (myBuilder.getDiffWindow() != null) {
                     myLenght = myBuilder.getDiffWindow().getNewDataLength();
-                    myDiffStream = myEditor.textDeltaChunk(myFilePath,
-                            myBuilder.getDiffWindow());
+                    myDiffStream = myEditor.textDeltaChunk(myFilePath, myBuilder.getDiffWindow());
                     if (myDiffStream == null) {
-                        myDiffStream = new OutputStream() {
-                            public void write(int b) {
-                            }
-                        };
+                        myDiffStream = SVNFileUtil.DUMMY_OUT;
                     }
                     if (myLenght == 0) {
                         closeDiffStream();

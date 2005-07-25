@@ -36,9 +36,6 @@ class XMLInputStream extends InputStream {
     
     public int read(byte[] b, int off, int len) throws IOException {
         int read = mySource.read(b, off, len);
-//        if (read >= 0) {
-//            System.out.println("read: " + new String(b, off, read));
-//        }
         for(int i = 0; i < read; i++) {
             char ch = (char) b[off + i];
             if (ch < 0x20 && ch != '\r' &&

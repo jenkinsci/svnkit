@@ -13,15 +13,11 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -31,9 +27,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
-import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -56,13 +50,12 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     private long myCurrentRevision;
     private String myCurrentAuthor;
     private Date myCurrentDate;
-    private Collection myCurrentDiffWindows;
 
     private File myPreviousFile;
     private File myCurrentFile;
-    private Map myCurrentDiffWindowsMap;
 
     private List myLines;
+    private SVNDeltaProcessor myDeltaProcessor;
 
     public SVNAnnotationGenerator(String path, long startRevision, File tmpDirectory) {
         myTmpDirectory = tmpDirectory;
@@ -72,6 +65,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             myTmpDirectory.mkdirs();
         }
         myLines = new ArrayList();
+        myDeltaProcessor = new SVNDeltaProcessor();
     }
 
     public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException {
@@ -81,7 +75,6 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         if (SVNProperty.isBinaryMimeType(newMimeType)) {
             SVNErrorManager.error("svn: Cannot calculate blame information for binary file '" + myPath + "'");
         }
-        myCurrentDiffWindows = null;
         myCurrentRevision = fileRevision.getRevision();
         Map props = fileRevision.getProperties();
         if (props != null && props.get(SVNRevisionProperty.AUTHOR) != null) {
@@ -107,61 +100,17 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     }
 
     public OutputStream handleDiffWindow(String token, SVNDiffWindow diffWindow) throws SVNException {
-        if (myCurrentDiffWindows == null) {
-            myCurrentDiffWindows = new ArrayList();
-            myCurrentDiffWindowsMap = new HashMap();
-        }
         if (myCurrentFile == null) {
-            // create file for current revision.
             myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
             SVNFileUtil.createEmptyFile(myCurrentFile);
-        }
+        }        
         File tmpFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
-
-        myCurrentDiffWindows.add(diffWindow);
-        myCurrentDiffWindowsMap.put(diffWindow, tmpFile);
-
-        return SVNFileUtil.openFileForWriting(tmpFile);
+        return myDeltaProcessor.textDeltaChunk(tmpFile, diffWindow);
     }
 
     public void handleDiffWindowClosed(String token) throws SVNException {
-        if (myCurrentDiffWindows == null) {
-            // nothing changed, delete current file.
-            if (myCurrentFile != null) {
-                myCurrentFile.delete();
-            }
-            myCurrentDiffWindows = null;
-            myCurrentDiffWindowsMap = null;
+        if (!myDeltaProcessor.textDeltaEnd(myPreviousFile, myCurrentFile)) {
             return;
-        }
-        // apply windows to base file, save to current
-        ISVNRAData tmpFile = new SVNRAFileData(myCurrentFile, false);
-        ISVNRAData baseFile = new SVNRAFileData(myPreviousFile, false);
-
-        try {
-            for (Iterator windows = myCurrentDiffWindows.iterator(); windows.hasNext();) {
-                SVNDiffWindow window = (SVNDiffWindow) windows.next();
-                File chunkFile = (File) myCurrentDiffWindowsMap.get(window);
-                try {
-                    InputStream chunkData = SVNFileUtil.openFileForReading(chunkFile);
-                    window.apply(baseFile, tmpFile, chunkData, tmpFile.length());
-                } finally {
-                    chunkFile.delete();
-                }
-            }
-        } finally {
-            myCurrentDiffWindows = null;
-            myCurrentDiffWindowsMap = null;
-            try {
-                baseFile.close();
-            } catch (IOException e) {
-                //
-            }
-            try {
-                tmpFile.close();
-            } catch (IOException e) {
-                //
-            }
         }
         if (myCurrentRevision >= myStartRevision) {
             // compute lines info.

@@ -81,7 +81,7 @@ class HttpConnection {
         myAuthManager = repos.getAuthenticationManager();
     }
 
-    public void connect() throws SVNException {
+    private void connect() throws SVNException {
         if (mySocket == null || isStale()) {
             close();
             String host = mySVNRepositoryLocation.getHost();
@@ -359,7 +359,7 @@ class HttpConnection {
         InputStream stream = null;
         try {
 			stream = createInputStream(status.getResponseHeader(), getInputStream());
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[32*1024];
             while (true) {
                 int count = stream.read(buffer);
                 if (count <= 0) {
@@ -394,7 +394,7 @@ class HttpConnection {
         InputStream stream = null;
         try {
 			stream = createInputStream(responseHeader, getInputStream());
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[32*1024];
             while (true) {
                 int count = stream.read(buffer);
                 if (count <= 0) {
@@ -520,7 +520,6 @@ class HttpConnection {
                 sb.append(HttpConnection.CRLF);
             }
         }
-
         getOutputStream().write(sb.toString().getBytes());
         getOutputStream().write(HttpConnection.CRLF_BYTES);
         if (requestBody != null) {

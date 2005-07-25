@@ -162,14 +162,12 @@ public class SVNCommitter implements ISVNCommitPathHandler {
 
             File tmpFile = dir.getBaseFile(name, true);
             myTmpFiles.add(tmpFile);
-            SVNTranslator.translate(dir, name, name, SVNFileUtil
-                    .getBasePath(tmpFile), false, false);
+            SVNTranslator.translate(dir, name, name, SVNFileUtil.getBasePath(tmpFile), false, false);
 
             String checksum = null;
             String newChecksum = SVNFileUtil.computeChecksum(tmpFile);
             if (!item.isAdded()) {
-                checksum = SVNFileUtil.computeChecksum(dir.getBaseFile(name,
-                        false));
+                checksum = SVNFileUtil.computeChecksum(dir.getBaseFile(name, false));
                 String realChecksum = entry.getChecksum();
                 if (realChecksum != null && !realChecksum.equals(checksum)) {
                     SVNErrorManager.error("svn: Checksum mismatch for '" + dir.getFile(name) + "'; expected '" + realChecksum + "', actual: '" + checksum + "'");
@@ -184,10 +182,9 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             if (item.isAdded() || binary) {
                 generator = new SVNAllDeltaGenerator();
             } else {
-		            generator = new SVNSequenceDeltaGenerator(new File(System.getProperty("java.io.tmpdir")));
+	            generator = new SVNSequenceDeltaGenerator(tmpFile.getParentFile());
             }
-            SVNRAFileData base = new SVNRAFileData(
-                    dir.getBaseFile(name, false), true);
+            SVNRAFileData base = new SVNRAFileData(dir.getBaseFile(name, false), true);
             SVNRAFileData work = new SVNRAFileData(tmpFile, true);
             try {
                 generator.generateDiffWindow(path, editor, work, base);

@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.io.diff;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,7 +32,6 @@ public class SVNAllDeltaGenerator implements ISVNDeltaGenerator {
         long length = workFile.length();
 		SVNDiffWindow window = SVNDiffWindowBuilder.createReplacementDiffWindow(length);
 		OutputStream os = consumer.textDeltaChunk(commitPath, window);
-        OutputStream fos = null;
         if (length == 0) {
             try {
                 os.close();
@@ -44,32 +42,15 @@ public class SVNAllDeltaGenerator implements ISVNDeltaGenerator {
         }
 		InputStream is = null;
 		try {
-			is = new BufferedInputStream(workFile.read(0, workFile.length()));
+			is = workFile.readAll();
 			SVNFileUtil.copy(is, os);
 		}
 		catch (IOException e) {
 			throw new SVNException(e);
 		}
 		finally {
-            try {
-                os.close();
-            }
-            catch (IOException e) {
-            }
-            try {
-                if (fos != null) {
-                    fos.close();
-                }
-            }
-            catch (IOException e) {
-            }
-			if (is != null) {
-				try {
-					is.close();
-				}
-				catch (IOException e) {
-				}
-			}
+            SVNFileUtil.closeFile(os);
+            SVNFileUtil.closeFile(is);
 		}
 		consumer.textDeltaEnd(commitPath);
 	}

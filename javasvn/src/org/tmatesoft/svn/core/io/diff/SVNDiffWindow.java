@@ -12,7 +12,6 @@
 
 package org.tmatesoft.svn.core.io.diff;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -66,39 +65,20 @@ public class SVNDiffWindow {
     }
 
     public void apply(ISVNRAData source, ISVNRAData target, InputStream newData, long offset) throws SVNException {
-        // use ra files as source and target...
-        if (target == null) {
-            throw new SVNException("target shouldn't be null");
-        }
         InputStream src;
-        try {
-            for(int i = 0; i < myInstructions.length; i++) {
-                myInstructions[i].offset += offset;
-                switch (myInstructions[i].type) {
-                    case SVNDiffInstruction.COPY_FROM_NEW_DATA:
-                        src = newData;
-                        break;
-                    case SVNDiffInstruction.COPY_FROM_TARGET:
-                        src = target.read(myInstructions[i].offset, myInstructions[i].length);
-                        break;
-                    default:
-                        src = source.read(myInstructions[i].offset, myInstructions[i].length);
-                }
-                target.append(src, myInstructions[i].length);
+        for(int i = 0; i < myInstructions.length; i++) {
+            myInstructions[i].offset += offset;
+            switch (myInstructions[i].type) {
+                case SVNDiffInstruction.COPY_FROM_NEW_DATA:
+                    src = newData;
+                    break;
+                case SVNDiffInstruction.COPY_FROM_TARGET:
+                    src = target.read(myInstructions[i].offset, myInstructions[i].length);
+                    break;
+                default:
+                    src = source.read(myInstructions[i].offset, myInstructions[i].length);
             }
-        } catch (IOException e) {
-            throw new SVNException(e);
-        } finally {
-            try {
-                source.close();
-            } catch (IOException e2) {
-                e2.printStackTrace();
-            }
-            try {
-                target.close();
-            } catch (IOException e3) {
-                e3.printStackTrace();
-            }
+            target.append(src, myInstructions[i].length);
         }
     }
 

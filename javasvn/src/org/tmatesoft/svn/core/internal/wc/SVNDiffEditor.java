@@ -11,15 +11,12 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,9 +25,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 
 /**
@@ -40,34 +35,26 @@ import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 public class SVNDiffEditor implements ISVNEditor {
 
     private SVNWCAccess myWCAccess;
-
     private ISVNDiffGenerator myDiffGenerator;
-
     private boolean myUseAncestry;
-
     private boolean myIsReverseDiff;
-
     private boolean myIsCompareToBase;
-
     private OutputStream myResult;
-
     private boolean myIsRootOpen;
-
     private long myTargetRevision;
-
     private SVNDirectoryInfo myCurrentDirectory;
-
     private SVNFileInfo myCurrentFile;
+    private SVNDeltaProcessor myDeltaProcessor;
 
     public SVNDiffEditor(SVNWCAccess wcAccess, ISVNDiffGenerator diffGenerator,
-            boolean useAncestry, boolean reverseDiff, boolean compareToBase,
-            OutputStream result) {
+            boolean useAncestry, boolean reverseDiff, boolean compareToBase, OutputStream result) {
         myWCAccess = wcAccess;
         myDiffGenerator = diffGenerator;
         myUseAncestry = useAncestry;
         myIsReverseDiff = reverseDiff;
         myResult = result;
         myIsCompareToBase = compareToBase;
+        myDeltaProcessor = new SVNDeltaProcessor();
     }
 
     public void targetRevision(long revision) throws SVNException {
@@ -204,8 +191,7 @@ public class SVNDiffEditor implements ISVNEditor {
         }
     }
 
-    public void applyTextDelta(String path, String baseChecksum)
-            throws SVNException {
+    public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
         String fileName = SVNPathUtil.tail(myCurrentFile.myPath);
         if (dir != null) {
@@ -242,51 +228,20 @@ public class SVNDiffEditor implements ISVNEditor {
         // it will be repos file.
         myCurrentFile.myFile = tmpFile;
         SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
-        
-        myCurrentFile.myDiffWindows = new ArrayList();
-        myCurrentFile.myDataFiles = new ArrayList();
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        myCurrentFile.myDiffWindows.add(diffWindow);
         String fileName = SVNPathUtil.tail(myCurrentFile.myPath);
-        File chunkFile = SVNFileUtil.createUniqueFile(myCurrentFile.myFile
-                .getParentFile(), fileName, ".tmp");
-        myCurrentFile.myDataFiles.add(chunkFile);
-        return SVNFileUtil.openFileForWriting(chunkFile);
+        File chunkFile = SVNFileUtil.createUniqueFile(myCurrentFile.myFile.getParentFile(), fileName, ".tmp");
+        return myDeltaProcessor.textDeltaChunk(chunkFile, diffWindow);
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        // combine deltas to tmp file
-        if (myCurrentFile.myDiffWindows == null) {
-            return;
-        }
-        File baseTmpFile = myCurrentFile.myBaseFile;
-        File targetFile = myCurrentFile.myFile;
-        ISVNRAData baseData = new SVNRAFileData(baseTmpFile, true);
-        ISVNRAData target = new SVNRAFileData(targetFile, false);
-        for (int i = 0; i < myCurrentFile.myDiffWindows.size(); i++) {
-            SVNDiffWindow window = (SVNDiffWindow) myCurrentFile.myDiffWindows
-                    .get(i);
-            File dataFile = (File) myCurrentFile.myDataFiles.get(i);
-            InputStream data = SVNFileUtil.openFileForReading(dataFile);
-            try {
-                window.apply(baseData, target, data, target.length());
-            } finally {
-                SVNFileUtil.closeFile(data);
-            }
-            dataFile.delete();
-        }
-        try {
-            target.close();
-            baseData.close();
-        } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot apply delta: '" + e.getMessage() + "'");
-        }
+        myDeltaProcessor.textDeltaEnd(myCurrentFile.myBaseFile, myCurrentFile.myFile);
     }
 
-    public void closeFile(String commitPath, String textChecksum)
-            throws SVNException {
+    public void closeFile(String commitPath, String textChecksum) throws SVNException {
+        myDeltaProcessor.close();
         String reposMimeType = (String) (myCurrentFile.myPropertyDiff != null ? myCurrentFile.myPropertyDiff
                 .get(SVNProperty.MIME_TYPE)
                 : null);
@@ -560,10 +515,6 @@ public class SVNDiffEditor implements ISVNEditor {
         private Map myPropertyDiff;
 
         private boolean myIsScheduledForDeletion;
-
-        private List myDiffWindows;
-
-        private List myDataFiles;
     }
 
     private static void reversePropChanges(Map base, Map diff) {
