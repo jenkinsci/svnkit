@@ -278,7 +278,6 @@ public class DAVConnection {
             headers.put("If", "<" + repositoryPath + "> (<" + myLocks.get(repositoryPath) + ">)");
         }
         DAVStatus status = myHttpConnection.request("PUT", path, headers, data, null, null);
-        System.out.println("data sent");
         return status;
     }
     
