@@ -79,6 +79,10 @@ public class QSequenceDifferenceCoreTest extends TestCase {
 		test2("abccd", "", "-----", "");
 		test2("", "", "", "");
 		test2("Howdy", "Rucola", "-o---", "---o--");
+		test2("*bc", "bc", "-bc", "bc"); // Special case, which results immediately in D = 1
+		test2("b*c", "bc", "b-c", "bc"); // Special case, which results immediately in D = 1
+		test2("bc*", "bc", "bc-", "bc"); // Special case, which results immediately in D = 1
+		test2("abc*defgh*i*", "a+bc+defg+h+i++", "abc-defgh-i-", "a-bc-defg-h-i--");
 	}
 
 	// Utils ==================================================================

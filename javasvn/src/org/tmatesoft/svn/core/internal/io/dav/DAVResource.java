@@ -17,6 +17,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.IMeasurable;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
@@ -131,10 +133,11 @@ class DAVResource {
     
     public InputStream getTextDelta(int i) throws IOException {
         if (myMediator != null) {
-            return myMediator.getTemporaryLocation(new Integer(i));
+            long length = myMediator.getLength(new Integer(i));
+            return new MeasurableStream(myMediator.getTemporaryLocation(new Integer(i)), length);
         }
         File file = (File) myDeltaFiles.get(i);
-        return new BufferedInputStream(new FileInputStream(file));
+        return new MeasurableStream(new BufferedInputStream(new FileInputStream(file)), file.length());
     }
     
     public void dispose() {
@@ -179,6 +182,21 @@ class DAVResource {
         sb.append(myPath);
         sb.append("]");
         return sb.toString();
+    }
+    
+    private static class MeasurableStream extends FilterInputStream implements IMeasurable {
+
+        private long myLength;
+
+        protected MeasurableStream(InputStream in, long length) {
+            super(in);
+            myLength = length;
+        }
+
+        public long getLength() {
+            return myLength;
+        }
+        
     }
 
 }

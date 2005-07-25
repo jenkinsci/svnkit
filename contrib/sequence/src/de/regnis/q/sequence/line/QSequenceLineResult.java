@@ -1,7 +1,7 @@
 package de.regnis.q.sequence.line;
 
-import java.util.*;
 import java.io.*;
+import java.util.*;
 
 /**
  * @author Marc Strapetz

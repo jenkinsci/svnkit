@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.auth.ISVNProxyManager;
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+import org.tmatesoft.svn.core.internal.util.IMeasurable;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -494,6 +495,9 @@ class HttpConnection {
         if (requestBody instanceof ByteArrayInputStream) {
             sb.append("Content-Length: ");
             sb.append(requestBody.available());
+        } else if (requestBody instanceof IMeasurable) { 
+            sb.append("Content-Length: ");
+            sb.append(((IMeasurable) requestBody).getLength());
         } else if (requestBody != null) {
             sb.append("Transfer-Encoding: chunked");
             chunked = true;
@@ -520,7 +524,7 @@ class HttpConnection {
         getOutputStream().write(sb.toString().getBytes());
         getOutputStream().write(HttpConnection.CRLF_BYTES);
         if (requestBody != null) {
-            byte[] buffer = new byte[2048];
+            byte[] buffer = new byte[1024*32];
             while (true) {
                 int read = requestBody.read(buffer);
                 if (chunked) {

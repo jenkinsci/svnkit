@@ -33,6 +33,14 @@ public class SVNSequenceLineRAData implements QSequenceLineRAData {
 		return myData.length();
 	}
 
+	public void get(byte[] bytes, long offset, long length) throws IOException {
+		final InputStream stream = read(offset, length);
+
+		for (int pos = 0; pos < length;) {
+			pos += stream.read(bytes, pos, (int)(length - pos));
+		}
+	}
+
 	public InputStream read(long offset, long length) throws IOException {
 		return myData.read(offset, length);
 	}

@@ -12,5 +12,7 @@ public interface QSequenceLineCache {
 
 	QSequenceLine getLine(int index) throws IOException;
 
+	int getLineHash(int index) throws IOException;
+
 	void close() throws IOException;
 }

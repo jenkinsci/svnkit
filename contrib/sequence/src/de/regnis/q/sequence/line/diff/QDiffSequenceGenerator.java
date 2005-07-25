@@ -48,7 +48,7 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 	}
 
 	public void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
-		QSequenceLineResult result;
+		final QSequenceLineResult result;
 		try {
 			result = QSequenceLineMedia.createBlocks(QSequenceLineRAByteData.create(left), QSequenceLineRAByteData.create(right), isCompareEOLs() ? null : new byte[0]);
 		}
@@ -142,7 +142,7 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 			currentList.add(currentBlock);
 			lastBlock = currentBlock;
 		}
-		if (currentList != null && !combinedBlocks.contains(currentList)) {
+		if (!combinedBlocks.contains(currentList)) {
 			combinedBlocks.add(currentList);
 		}
 		return combinedBlocks;

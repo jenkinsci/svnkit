@@ -23,9 +23,6 @@ class QSequenceMiddleSnakeFinderResult {
 	private int leftTo;
 	private int rightTo;
 
-	private int leftStart;
-	private int rightStart;
-
 	// Accessing ==============================================================
 
 	public int getLeftFrom() {
@@ -45,29 +42,21 @@ class QSequenceMiddleSnakeFinderResult {
 	}
 
 	public void reset() {
-		leftStart = 0;
-		rightStart = 0;
 		leftFrom = 0;
 		rightFrom = 0;
 		leftTo = 0;
 		rightTo = 0;
 	}
 
-	public void setMiddleSnake(QSequenceDeePathExtender extender, int diagonal) {
-		leftFrom = Math.min(extender.getLeft(diagonal), extender.getSnakeStartLeft());
-		rightFrom = Math.min(extender.getRight(diagonal), extender.getSnakeStartRight());
-		leftTo = Math.max(extender.getLeft(diagonal), extender.getSnakeStartLeft());
-		rightTo = Math.max(extender.getRight(diagonal), extender.getSnakeStartRight());
-		leftStart = extender.getStartX();
-		rightStart = extender.getStartY();
-	}
+	public void setMiddleSnake(int leftFrom, int rightFrom, int leftTo, int rightTo) {
+		if (QSequenceAlgorithm.ASSERTIONS) {
+			QSequenceAssert.assertTrue(0 <= leftFrom && leftFrom <= leftTo);
+			QSequenceAssert.assertTrue(0 <= rightFrom && rightFrom <= rightTo);
+		}
 
-	public int getLeftStart() {
-		return leftStart;
+		this.leftFrom = leftFrom;
+		this.rightFrom = rightFrom;
+		this.leftTo = leftTo;
+		this.rightTo = rightTo;
 	}
-
-	public int getRightStart() {
-		return rightStart;
-	}
-
 }

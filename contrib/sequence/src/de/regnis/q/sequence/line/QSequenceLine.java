@@ -39,7 +39,7 @@ public final class QSequenceLine {
 
 	public boolean equals(Object obj) {
 		// Must be because of caching media! Find something better!
-		final byte[] otherBytes = ((QSequenceLine)obj).getBytes();
+		final byte[] otherBytes = ((QSequenceLine)obj).bytes;
 		if (bytes.length != otherBytes.length) {
 			return false;
 		}
@@ -52,7 +52,7 @@ public final class QSequenceLine {
 
 		return true;
 	}
-    
+
 	public int hashCode() {
 		int hashCode = 0;
 		for (int index = 0; index < bytes.length; index++) {

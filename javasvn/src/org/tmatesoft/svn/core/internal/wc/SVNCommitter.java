@@ -184,7 +184,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             if (item.isAdded() || binary) {
                 generator = new SVNAllDeltaGenerator();
             } else {
-                generator = new SVNSequenceDeltaGenerator();
+		            generator = new SVNSequenceDeltaGenerator(new File(System.getProperty("java.io.tmpdir")));
             }
             SVNRAFileData base = new SVNRAFileData(
                     dir.getBaseFile(name, false), true);

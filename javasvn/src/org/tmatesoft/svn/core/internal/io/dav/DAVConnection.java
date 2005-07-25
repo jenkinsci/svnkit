@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVGetLocksHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVOptionsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
+import org.tmatesoft.svn.core.internal.util.IMeasurable;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
@@ -44,7 +45,6 @@ public class DAVConnection {
     private SVNURL myLocation;
     private HttpConnection myHttpConnection;
     private String myActivityCollectionURL;
-    private boolean myIsHTTP10Connection;
     private Map myLocks;
     private boolean myKeepLocks;
     
@@ -215,7 +215,6 @@ public class DAVConnection {
             url = getActivityCollectionURL(locationPath, true) + generateUUID();
             status = myHttpConnection.request("MKACTIVITY", url, 0, null, null, (OutputStream) null, new int[] {201});
         }
-        myIsHTTP10Connection = status !=null && status.isHTTP10();
         return url;
     }
     
@@ -254,7 +253,7 @@ public class DAVConnection {
         
         Map headers = new HashMap();
         headers.put("Content-Type", "application/vnd.svn-svndiff");
-        if (myIsHTTP10Connection) {
+        if (!(data instanceof ByteArrayInputStream || data instanceof IMeasurable)) {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             try {
                 while(true) {
@@ -274,11 +273,13 @@ public class DAVConnection {
                 }
             }
             data = new ByteArrayInputStream(bos.toByteArray());
-        }
+        } 
         if (myLocks != null && myLocks.containsKey(repositoryPath)) {
             headers.put("If", "<" + repositoryPath + "> (<" + myLocks.get(repositoryPath) + ">)");
         }
-        return myHttpConnection.request("PUT", path, headers, data, null, null);
+        DAVStatus status = myHttpConnection.request("PUT", path, headers, data, null, null);
+        System.out.println("data sent");
+        return status;
     }
     
     public DAVStatus doMerge(String activityURL, boolean response, DefaultHandler handler) throws SVNException {

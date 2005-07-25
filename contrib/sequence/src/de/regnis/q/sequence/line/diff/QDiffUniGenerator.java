@@ -80,9 +80,7 @@ public final class QDiffUniGenerator extends QDiffSequenceGenerator implements Q
 				header.append(",");
 				header.append(leftEnd - leftStart + 1);
 			}
-		} else {
-            header.append(" -0,0");
-        }
+		}
 		if (rightStart + 1 > 0 && rightEnd - rightStart + 1 > 0) {
 			header.append(" +");
 			header.append(rightStart + 1);
@@ -90,9 +88,7 @@ public final class QDiffUniGenerator extends QDiffSequenceGenerator implements Q
 				header.append(",");
 				header.append(rightEnd - rightStart + 1);
 			}
-		} else {
-            header.append(" +0,0");
-        }
+		}
 		header.append(" @@");
 		println(header.toString(), output);
         

@@ -9,19 +9,15 @@
  * newer version instead, at your option.
  * ====================================================================
  */
+package org.tmatesoft.svn.core.internal.util;
 
-package de.regnis.q.sequence.line.diff;
-
-import java.util.*;
 
 /**
- * @author TMate Software Ltd.
+ * @version 1.0
+ * @author  TMate Software Ltd.
  */
-public interface QDiffGeneratorFactory {
-	public static final String GUTTER_PROPERTY = "gutter";
-	public static final String EOL_PROPERTY = "eol";
-	public static final String WHITESPACE_PROPERTY = "whitespace";
-	public static final String COMPARE_EOL_PROPERTY = "compareEOL";
+public interface IMeasurable {
+    
+    public long getLength();
 
-	public QDiffGenerator createGenerator(Map properties);
 }

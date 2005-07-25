@@ -44,4 +44,8 @@ class QSequenceDeePathForwardExtender extends QSequenceDeePathExtender {
 	protected final void reset(QSequenceMedia media, QSequenceDeePathExtenderArray xs) {
 		xs.set(1, 0);
 	}
+
+	public int getProgress(int diagonal) {
+		return getLeft(diagonal) + getRight(diagonal);
+	}
 }

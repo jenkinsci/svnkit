@@ -14,8 +14,6 @@ package org.tmatesoft.svn.core.internal.io.dav;
 
 import java.util.Map;
 
-
-
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
