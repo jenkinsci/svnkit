@@ -20,8 +20,10 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
+import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 import com.jcraft.jsch.JSch;
@@ -110,8 +112,12 @@ public class SVNJSchSession {
 
         public Socket createSocket(String host, int port) throws IOException,
                 UnknownHostException {
-            Socket socket = null;
-            socket = new Socket(host, port);
+            Socket socket;
+            try {
+                socket = SVNSocketFactory.createPlainSocket(host, port);
+            } catch (SVNException e) {
+                throw new IOException(e.getMessage());
+            }
             socket.setKeepAlive(true);
             socket.setReuseAddress(true);
             return socket;
