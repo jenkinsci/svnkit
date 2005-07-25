@@ -694,23 +694,21 @@ public class SVNCommitClient extends SVNBasicClient {
     private boolean importFile(File rootFile, File file, SVNFileType fileType,
             String filePath, ISVNEditor editor) throws SVNException {
         if (fileType == null || fileType == SVNFileType.UNKNOWN) {
-            SVNErrorManager.error("svn: unknown or unversionable type for '"
-                    + file + "'");
+            SVNErrorManager.error("svn: unknown or unversionable type for '" + file + "'");
         }
         editor.addFile(filePath, null, -1);
         String mimeType = null;
         Map autoProperties = new HashMap();
         if (fileType != SVNFileType.SYMLINK) {
-            autoProperties = getOptions().applyAutoProperties(file.getName(),
-                    autoProperties);
+            autoProperties = getOptions().applyAutoProperties(file.getName(), autoProperties);
             if (!autoProperties.containsKey(SVNProperty.MIME_TYPE)) {
                 mimeType = SVNFileUtil.detectMimeType(file);
                 if (mimeType != null) {
                     autoProperties.put(SVNProperty.MIME_TYPE, mimeType);
+                    autoProperties.remove(SVNProperty.EOL_STYLE);
                 }
             }
-            if (!autoProperties.containsKey(SVNProperty.EXECUTABLE)
-                    && SVNFileUtil.isExecutable(file)) {
+            if (!autoProperties.containsKey(SVNProperty.EXECUTABLE) && SVNFileUtil.isExecutable(file)) {
                 autoProperties.put(SVNProperty.EXECUTABLE, "");
             }
         } else {

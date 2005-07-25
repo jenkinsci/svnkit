@@ -366,8 +366,7 @@ public class SVNStatusEditor implements ISVNEditor {
     public void textDeltaEnd(String commitPath) throws SVNException {
     }
 
-    public void reportStatus(SVNDirectory dir, String entryName,
-            boolean ignoreRootEntry, boolean recursive) throws SVNException {
+    public void reportStatus(SVNDirectory dir, String entryName, boolean ignoreRootEntry, boolean recursive) throws SVNException {
         SVNEntries entries = dir.getEntries();
 
         boolean anchorOfTarget = myTarget != null
@@ -727,8 +726,7 @@ public class SVNStatusEditor implements ISVNEditor {
 
     private class DirectoryInfo {
 
-        public DirectoryInfo(DirectoryInfo parent, String path, boolean added)
-                throws SVNException {
+        public DirectoryInfo(DirectoryInfo parent, String path, boolean added) throws SVNException {
             Parent = parent;
             if (!"".equals(path)) {
                 Path = path;
@@ -771,8 +769,7 @@ public class SVNStatusEditor implements ISVNEditor {
                     myIsIncludeIgnored = true;
                     myHandler = new ISVNStatusHandler() {
                         public void handleStatus(SVNStatus status) {
-                            ChildrenStatuses.put(status.getFile().getName(),
-                                    status);
+                            ChildrenStatuses.put(status.getFile().getName(), status);
                         }
                     };
                     reportStatus(dir, null, true, false);

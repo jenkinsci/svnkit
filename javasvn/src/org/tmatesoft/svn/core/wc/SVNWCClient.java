@@ -1160,6 +1160,7 @@ public class SVNWCClient extends SVNBasicClient {
                 mimeType = SVNFileUtil.detectMimeType(file);
                 if (mimeType != null) {
                     props.put(SVNProperty.MIME_TYPE, mimeType);
+                    props.remove(SVNProperty.EOL_STYLE);
                 }
             }
             if (!props.containsKey(SVNProperty.EXECUTABLE)) {
@@ -1335,20 +1336,16 @@ public class SVNWCClient extends SVNBasicClient {
                 if (SVNProperty.EXECUTABLE.equals(propName)) {
                     SVNFileUtil.setExecutable(wcFile, propValue != null);
                 }
-                if (!force && SVNProperty.EOL_STYLE.equals(propName)
-                        && propValue != null) {
-                    if (SVNProperty.isBinaryMimeType(props
-                            .getPropertyValue(SVNProperty.MIME_TYPE))) {
+                if (!force && SVNProperty.EOL_STYLE.equals(propName) && propValue != null) {
+                    if (SVNProperty.isBinaryMimeType(props.getPropertyValue(SVNProperty.MIME_TYPE))) {
                         if (!recursive) {
-                            SVNErrorManager.error("svn: File '" + wcFile
-                                    + "' has binary mime type property");
+                            SVNErrorManager.error("svn: File '" + wcFile + "' has binary mime type property");
                         }
                         return;
                     }
                     if (!SVNTranslator.checkNewLines(wcFile)) {
-                        SVNErrorManager.error("svn: File '" + wcFile
-                                + "' has inconsistent newlines");
-                    }
+                        SVNErrorManager.error("svn: File '" + wcFile + "' has inconsistent newlines");
+                    } 
                 }
                 props.setPropertyValue(propName, propValue);
 
@@ -1415,8 +1412,7 @@ public class SVNWCClient extends SVNBasicClient {
         return name;
     }
 
-    private static String validatePropertyValue(String name, String value,
-            boolean force) throws SVNException {
+    private static String validatePropertyValue(String name, String value, boolean force) throws SVNException {
         if (value == null) {
             return value;
         }
