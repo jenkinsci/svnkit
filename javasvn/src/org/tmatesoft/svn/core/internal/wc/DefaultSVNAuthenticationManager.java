@@ -85,11 +85,13 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             return null;
         }
         String proxyExceptions = (String) properties.get("http-proxy-exceptions");
-        for(StringTokenizer exceptions = new StringTokenizer(proxyExceptions, ","); exceptions.hasMoreTokens();) {
-            String exception = exceptions.nextToken().trim();
-            if (DefaultSVNOptions.matches(exception, host)) {
-                return null;
-            }
+        if (proxyExceptions != null) {
+          for(StringTokenizer exceptions = new StringTokenizer(proxyExceptions, ","); exceptions.hasMoreTokens();) {
+              String exception = exceptions.nextToken().trim();
+              if (DefaultSVNOptions.matches(exception, host)) {
+                  return null;
+              }
+          }
         }
         String proxyPort = (String) properties.get("http-proxy-port");
         String proxyUser = (String) properties.get("http-proxy-username");
