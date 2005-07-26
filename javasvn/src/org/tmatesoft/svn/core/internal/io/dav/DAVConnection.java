@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.internal.util.IMeasurable;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.xml.sax.helpers.DefaultHandler;
 
 
@@ -81,6 +82,9 @@ public class DAVConnection {
                     } else {
                         throw new SVNException(status.getErrorText());
                     }
+                }
+                if (result[0] == null) {
+                    SVNErrorManager.error("svn: Cannot get DAV properties for '" + path + "'");
                 }
                 String uuid = (String) result[0].getPropertyValue(DAVElement.REPOSITORY_UUID);
                 String relativePath = (String) result[0].getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
