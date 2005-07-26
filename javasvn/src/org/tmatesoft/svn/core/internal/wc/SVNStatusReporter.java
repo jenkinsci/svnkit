@@ -29,15 +29,10 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
 
     private ISVNReporter myReporter;
-
     private ISVNReporterBaton myBaton;
-
     private String myRepositoryLocation;
-
     private SVNRepository myRepository;
-
     private String myRepositoryRoot;
-
     private Map myLocks;
 
     private SVNStatusEditor myEditor;
@@ -92,12 +87,10 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     public void finishReport() throws SVNException {
         myReporter.finishReport();
         // collect locks
-        String path = myRepositoryLocation.substring(myRepository.getLocation().toString().length());
         SVNLock[] locks = null;
         try {
-            myRepositoryRoot = myRepository.getRepositoryRoot(true).getPath();
-            myRepositoryRoot = SVNEncodingUtil.uriEncode(myRepositoryRoot);
-            locks = myRepository.getLocks(path);
+            myRepositoryRoot = myRepository.getRepositoryRoot(true).getURIEncodedPath();
+            locks = myRepository.getLocks("");
         } catch (SVNException e) {
             //
         }
