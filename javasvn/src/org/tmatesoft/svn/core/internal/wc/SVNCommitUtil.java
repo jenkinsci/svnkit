@@ -339,7 +339,7 @@ public class SVNCommitUtil {
         Map itemsMap = new TreeMap();
         for (int i = 0; i < items.length; i++) {
             SVNCommitItem item = items[i];
-            if (itemsMap.containsKey(item.getURL())) {
+            if (itemsMap.containsKey(item.getURL().toString())) {
                 SVNCommitItem oldItem = (SVNCommitItem) itemsMap.get(item
                         .getURL());
                 SVNErrorManager.error("svn: Cannot commit both '"
