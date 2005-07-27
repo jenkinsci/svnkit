@@ -612,7 +612,7 @@ public class SVNFileUtil {
         if (file == null) {
             return null;
         }
-        if (!file.isFile() || (file.exists() && !file.canRead())) {
+        if (!file.isFile() || !file.canRead()) {
             SVNErrorManager.error("svn: Cannot read from '" + file + "': path refers to directory or read access denied");
         }
         if (!file.exists()) {
@@ -621,8 +621,7 @@ public class SVNFileUtil {
         try {
             return new BufferedInputStream(new FileInputStream(file));
         } catch (FileNotFoundException e) {
-            SVNErrorManager.error("svn: Cannot read from '" + file + "': "
-                    + e.getMessage());
+            SVNErrorManager.error("svn: Cannot read from '" + file + "': " + e.getMessage());
         }
         return null;
     }

@@ -271,7 +271,9 @@ public class SVNConverterUtil {
                 if(sc.isCopied()){
                     stateFlag += CommitItemStateFlags.IsCopy;
                 }
-                items[i] = new CommitItem(sc.getPath(), getNodeKind(sc.getKind()), stateFlag, sc.getURL(), sc.getCopyFromURL(), sc.getRevision().getNumber());
+                items[i] = new CommitItem(sc.getPath(), getNodeKind(sc.getKind()), stateFlag, 
+                        sc.getURL() != null ? sc.getURL().toString() : null, 
+                        sc.getCopyFromURL() != null ? sc.getCopyFromURL().toString() : null, sc.getRevision().getNumber());
             }
         }
         return items;

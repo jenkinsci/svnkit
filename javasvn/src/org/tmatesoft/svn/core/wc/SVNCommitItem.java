@@ -11,6 +11,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 
@@ -21,30 +22,19 @@ import java.io.File;
 public class SVNCommitItem {
 
     private SVNRevision myRevision;
-
     private File myFile;
-
-    private String myURL;
-
-    private String myCopyFromURL;
-
+    private SVNURL myURL;
+    private SVNURL myCopyFromURL;
     private SVNNodeKind myKind;
-
     private boolean myIsAdded;
-
     private boolean myIsDeleted;
-
     private boolean myIsPropertiesModified;
-
     private boolean myIsContentsModified;
-
     private boolean myIsCopied;
-
     private boolean myIsLocked;
-
     private String myPath;
 
-    public SVNCommitItem(File file, String URL, String copyFromURL,
+    public SVNCommitItem(File file, SVNURL URL, SVNURL copyFromURL,
             SVNNodeKind kind, SVNRevision revision, boolean isAdded,
             boolean isDeleted, boolean isPropertiesModified,
             boolean isContentsModified, boolean isCopied, boolean locked) {
@@ -69,11 +59,11 @@ public class SVNCommitItem {
         return myFile;
     }
 
-    public String getURL() {
+    public SVNURL getURL() {
         return myURL;
     }
 
-    public String getCopyFromURL() {
+    public SVNURL getCopyFromURL() {
         return myCopyFromURL;
     }
 

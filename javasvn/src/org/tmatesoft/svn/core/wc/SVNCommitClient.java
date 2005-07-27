@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -167,8 +168,8 @@ public class SVNCommitClient extends SVNBasicClient {
         SVNCommitItem[] commitItems = new SVNCommitItem[paths.size()];
         for (int i = 0; i < commitItems.length; i++) {
             String path = (String) paths.get(i);
-            commitItems[i] = new SVNCommitItem(null, SVNPathUtil.append(rootURL,
-                    path), null, null, null, false, true, false, false, false,
+            commitItems[i] = new SVNCommitItem(null, SVNURL.parseURIEncoded(SVNPathUtil.append(rootURL,
+                    path)), null, null, null, false, true, false, false, false,
                     false);
         }
         commitMessage = getCommitHandler().getCommitMessage(commitMessage,
@@ -263,8 +264,8 @@ public class SVNCommitClient extends SVNBasicClient {
         SVNCommitItem[] commitItems = new SVNCommitItem[paths.size()];
         for (int i = 0; i < commitItems.length; i++) {
             String path = (String) paths.get(i);
-            commitItems[i] = new SVNCommitItem(null, SVNPathUtil.append(rootURL,
-                    path), null, null, null, true, false, false, false, false,
+            commitItems[i] = new SVNCommitItem(null, SVNURL.parseURIEncoded(SVNPathUtil.append(rootURL,
+                    path)), null, null, null, true, false, false, false, false,
                     false);
         }
         commitMessage = getCommitHandler().getCommitMessage(commitMessage,
@@ -356,7 +357,7 @@ public class SVNCommitClient extends SVNBasicClient {
                     .error("svn: '.svn' is a reserved name and cannot be imported");
         }
         SVNCommitItem[] items = new SVNCommitItem[1];
-        items[0] = new SVNCommitItem(path, dstURL, null,
+        items[0] = new SVNCommitItem(path, SVNURL.parseURIEncoded(dstURL), null,
                 srcKind == SVNFileType.DIRECTORY ? SVNNodeKind.DIR
                         : SVNNodeKind.FILE, SVNRevision.UNDEFINED, true, false,
                 false, false, false, false);

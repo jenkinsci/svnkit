@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.ISVNDeltaGenerator;
@@ -40,13 +40,9 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 public class SVNCommitter implements ISVNCommitPathHandler {
 
     private Map myCommitItems;
-
     private Map myModifiedFiles;
-
     private SVNWCAccess myWCAccess;
-
     private Collection myTmpFiles;
-
     private String myRepositoryRoot;
 
     public SVNCommitter(SVNWCAccess wcAccess, Map commitItems,
@@ -241,7 +237,8 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         }
     }
 
-    private String getCopyFromPath(String url) {
+    private String getCopyFromPath(SVNURL url) {
+        /*
         if (url == null) {
             return null;
         }
@@ -249,6 +246,17 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             return url;
         }
         url = url.substring(url.indexOf("://") + 3);
+        */
+        String path = url.getPath();
+        if (myRepositoryRoot.equals(path)) {
+            return "/";
+        }
+        return path.substring(myRepositoryRoot.length());
+        /*
+        if ("".equals(path)) {
+            return 
+        }
+        
         if (url.indexOf("/") < 0) {
             return "/";
         }
@@ -261,6 +269,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             }
         }
         return url;
+        */
     }
 
     public static SVNCommitInfo commit(SVNWCAccess wcAccess,

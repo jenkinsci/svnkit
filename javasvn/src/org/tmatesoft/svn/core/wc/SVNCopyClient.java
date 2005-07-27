@@ -258,7 +258,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNErrorManager.error("svn: File '" + dstURL + "' already exists");
         }
         SVNCommitItem[] items = new SVNCommitItem[] { new SVNCommitItem(null,
-                dstURL, null, SVNNodeKind.NONE, SVNRevision.UNDEFINED, true,
+                SVNURL.parseURIEncoded(dstURL), null, SVNNodeKind.NONE, SVNRevision.UNDEFINED, true,
                 false, false, false, true, false) };
         commitMessage = getCommitHandler().getCommitMessage(commitMessage,
                 items);
@@ -529,11 +529,12 @@ public class SVNCopyClient extends SVNBasicClient {
         }
 
         Collection commitItems = new ArrayList(2);
-        commitItems.add(new SVNCommitItem(null, dstURL, srcURL, srcKind,
+        commitItems.add(new SVNCommitItem(null, SVNURL.parseURIEncoded(dstURL), 
+                SVNURL.parseURIEncoded(srcURL), srcKind,
                 SVNRevision.create(srcRevision), true, false, false, false,
                 true, false));
         if (move) {
-            commitItems.add(new SVNCommitItem(null, srcURL, null, srcKind,
+            commitItems.add(new SVNCommitItem(null, SVNURL.parseURIEncoded(srcURL), null, srcKind,
                     SVNRevision.create(srcRevision), false, true, false, false,
                     false, false));
         }

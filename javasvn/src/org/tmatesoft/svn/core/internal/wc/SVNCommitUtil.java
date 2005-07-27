@@ -23,6 +23,7 @@ import java.util.TreeSet;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -345,7 +346,7 @@ public class SVNCommitUtil {
                         + item.getFile() + "' and '" + oldItem.getFile()
                         + "' as they refer to the same URL");
             }
-            itemsMap.put(item.getURL(), item);
+            itemsMap.put(item.getURL().toString(), item);
         }
 
         Iterator urls = itemsMap.keySet().iterator();
@@ -523,10 +524,10 @@ public class SVNCommitUtil {
 
         if (commitAddition || commitDeletion || textModified || propsModified
                 || commitCopy || commitLock) {
-            SVNCommitItem item = new SVNCommitItem(path, url, cfURL, entry
-                    .getKind(), cfURL != null ? SVNRevision.create(cfRevision)
-                    : SVNRevision.create(entry.getRevision()), commitAddition,
-                    commitDeletion, propsModified, textModified, commitCopy,
+            SVNCommitItem item = new SVNCommitItem(path, 
+                    SVNURL.parseURIEncoded(url), cfURL != null ? SVNURL.parseURIEncoded(cfURL) : null, entry.getKind(), 
+                    cfURL != null ? SVNRevision.create(cfRevision) : SVNRevision.create(entry.getRevision()), 
+                    commitAddition, commitDeletion, propsModified, textModified, commitCopy,
                     commitLock);
             String itemPath = dir.getPath();
             if ("".equals(itemPath)) {
@@ -565,7 +566,7 @@ public class SVNCommitUtil {
                         if (currentType == SVNFileType.NONE
                                 && currentEntry.isScheduledForDeletion()) {
                             SVNCommitItem item = new SVNCommitItem(currentFile,
-                                    currentURL, null, currentEntry.getKind(),
+                                    SVNURL.parseURIEncoded(currentURL), null, currentEntry.getKind(),
                                     SVNRevision.UNDEFINED, false, true, false,
                                     false, false, false);
                             item.setPath(SVNPathUtil.append(dir.getPath(),

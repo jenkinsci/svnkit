@@ -46,12 +46,14 @@ public class CheckoutCommand extends SVNCommand {
         getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, true));
         SVNUpdateClient updater = getClientManager().getUpdateClient();
         if (getCommandLine().getURLCount() == 1) {
-            updater.doCheckout(SVNURL.parseURIEncoded(url), new File(path), SVNRevision.UNDEFINED, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+            SVNRevision pegRevision = getCommandLine().getPegRevision(0);
+            updater.doCheckout(SVNURL.parseURIEncoded(url), new File(path), pegRevision, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
         } else {
             for(int i = 0; i < getCommandLine().getURLCount(); i++) {
                 String curl = getCommandLine().getURL(i);
                 File dstPath = new File(path, SVNEncodingUtil.uriDecode(SVNPathUtil.tail(curl)));
-                updater.doCheckout(SVNURL.parseURIEncoded(url), dstPath, SVNRevision.UNDEFINED, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
+                SVNRevision pegRevision = getCommandLine().getPegRevision(i);
+                updater.doCheckout(SVNURL.parseURIEncoded(url), dstPath, pegRevision, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             }
         }
 	}

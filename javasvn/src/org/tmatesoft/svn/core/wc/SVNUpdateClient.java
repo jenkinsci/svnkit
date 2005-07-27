@@ -116,14 +116,6 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (dstPath == null) {
             dstPath = new File(".", SVNPathUtil.tail(url.getPath()));
         }
-        if (!revision.isValid() && !pegRevision.isValid()) {
-            pegRevision = SVNRevision.HEAD;
-            revision = SVNRevision.HEAD;
-        } else if (!revision.isValid()) {
-            revision = pegRevision;
-        } else if (!pegRevision.isValid()) {
-            pegRevision = revision;
-        }
         SVNRepository repos = createRepository(url, null, pegRevision, revision);
         long revNumber = getRevisionNumber(revision, repos, null);
         SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
@@ -131,29 +123,20 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (targetNodeKind == SVNNodeKind.FILE) {
             SVNErrorManager.error("svn: URL '" + url + "' refers to a file not a directory");
         } else if (targetNodeKind == SVNNodeKind.NONE) {
-            SVNErrorManager.error("svn: URL '" + url + "' doesn't exist");
+            SVNErrorManager.error("svn: URL '" + url + "' doesn't exist at revision " + revNumber);
         }
         setDoNotSleepForTimeStamp(true);
         long result = -1;
         try {
-            if (!dstPath.exists()
-                    || (dstPath.isDirectory() && !SVNWCAccess
-                            .isVersionedDirectory(dstPath))) {
+            if (!dstPath.exists() || (dstPath.isDirectory() && !SVNWCAccess.isVersionedDirectory(dstPath))) {
                 createVersionedDirectory(dstPath, url, uuid, revNumber);
                 result = doUpdate(dstPath, revision, recursive);
-            } else if (dstPath.isDirectory()
-                    && SVNWCAccess.isVersionedDirectory(dstPath)) {
+            } else if (dstPath.isDirectory() && SVNWCAccess.isVersionedDirectory(dstPath)) {
                 SVNWCAccess wcAccess = SVNWCAccess.create(dstPath);
-                if (url
-                        .equals(wcAccess
-                                .getTargetEntryProperty(SVNProperty.URL))) {
+                if (url.toString().equals(wcAccess.getTargetEntryProperty(SVNProperty.URL))) {
                     result = doUpdate(dstPath, revision, recursive);
                 } else {
-                    SVNErrorManager
-                            .error("svn: working copy with different URL '"
-                                    + wcAccess
-                                            .getTargetEntryProperty(SVNProperty.URL)
-                                    + "' already exists at checkout destination");
+                    SVNErrorManager.error("svn: working copy with different URL '" + wcAccess.getTargetEntryProperty(SVNProperty.URL) + "' already exists at checkout destination");
                 }
             } else {
                 SVNErrorManager.error("svn: '" + dstPath + "' already exists and it is a file");
