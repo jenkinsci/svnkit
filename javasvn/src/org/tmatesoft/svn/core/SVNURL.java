@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -139,6 +140,23 @@ public class SVNURL {
             myURL = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), getURIEncodedPath());
         }
         return myURL;
+    }
+    
+    public SVNURL appendPath(String segment, boolean uriEncoded) {
+        if (segment == null) {
+            return this;
+        }
+        if (!uriEncoded) {
+            segment = SVNEncodingUtil.uriEncode(segment);
+        }
+        String newPath = SVNPathUtil.append(getURIEncodedPath(), segment);
+        String url = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), newPath);
+        try {
+            return parseURIEncoded(url);
+        } catch (SVNException e) {
+            //
+        }
+        return null;
     }
     
     private static String composeURL(String protocol, String userInfo, String host, int port, String path) {

@@ -105,7 +105,7 @@ public class SVNConverterUtil {
         if(status == null){
             return null;
         }
-        String url = status.getURL();
+        String url = status.getURL() != null ? status.getURL().toString() : null;
         int nodeKind = getNodeKind(status.getKind());
         if (status.getContentsStatus() == SVNStatusType.STATUS_IGNORED) {
             nodeKind = NodeKind.unknown;
@@ -303,13 +303,13 @@ public class SVNConverterUtil {
         boolean incomplete = false;
 
         long copyRev = info.getCopyFromRevision().getNumber();
-        String copyUrl = info.getCopyFromURL();
+        String copyUrl = info.getCopyFromURL() != null ? info.getCopyFromURL().toString() : null;
 
         return new Info(
                 info.getFile() != null ? info.getFile().getName() : SVNPathUtil.tail(info.getPath()),
-                info.getURL(),
+                info.getURL() != null ? info.getURL().toString() : null,
                 info.getRepositoryUUID(),
-                info.getRepositoryRootURL(),
+                info.getRepositoryRootURL() != null ? info.getRepositoryRootURL().toString() : null,
                 schedule,
                 getNodeKind(info.getKind()),
                 info.getAuthor(),
@@ -334,14 +334,14 @@ public class SVNConverterUtil {
             schedule = ScheduleKind.delete;
         }
         long copyRev = info.getCopyFromRevision().getNumber();
-        String copyUrl = info.getCopyFromURL();
+        String copyUrl = info.getCopyFromURL() != null ? info.getCopyFromURL().toString() : null;
 
         return new Info2(
                 info.getFile() != null ? info.getFile().getAbsolutePath() : info.getPath(),
-                info.getURL(),
+                info.getURL() != null ? info.getURL().toString() : null,
                 info.getRevision().getNumber(),
                 getNodeKind(info.getKind()),
-                info.getRepositoryRootURL(),
+                info.getRepositoryRootURL() != null ? info.getRepositoryRootURL().toString() : null,
                 info.getRepositoryUUID(),
                 info.getCommittedRevision().getNumber(),
                 info.getCommittedDate() != null ? info.getCommittedDate().getTime() : 0,

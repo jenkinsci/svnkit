@@ -18,6 +18,7 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -48,10 +49,10 @@ public class PropgetCommand extends SVNCommand implements ISVNPropertyHandler {
         if (getCommandLine().hasURLs()) {
             String url = getCommandLine().getURL(0);
             if (revProp) {
-                wcClient.doGetRevisionProperty(url, propertyName, revision, this);
+                wcClient.doGetRevisionProperty(SVNURL.parseURIEncoded(url), propertyName, revision, this);
             } else {
                 SVNRevision pegRevision = getCommandLine().getPegRevision(0);
-                wcClient.doGetProperty(url, propertyName, pegRevision, revision, myIsRecursive, this);
+                wcClient.doGetProperty(SVNURL.parseURIEncoded(url), propertyName, pegRevision, revision, myIsRecursive, this);
             }
         } else if (getCommandLine().getPathCount() > 1) {
             String path = getCommandLine().getPathAt(1);
@@ -74,7 +75,7 @@ public class PropgetCommand extends SVNCommand implements ISVNPropertyHandler {
         }
     }
 
-    public void handleProperty(String url, SVNPropertyData property) throws SVNException {
+    public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
         if (!myIsStrict && myIsRecursive) {
             myOut.print(url + " - ");
         }
@@ -83,4 +84,8 @@ public class PropgetCommand extends SVNCommand implements ISVNPropertyHandler {
             myOut.println();
         }
     }
+    
+    public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+    }
+    
 }

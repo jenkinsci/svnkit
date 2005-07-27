@@ -15,6 +15,7 @@ package org.tmatesoft.svn.cli.command;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -47,7 +48,7 @@ public class CatCommand extends SVNCommand {
         for (int index = 0; index < getCommandLine().getURLCount(); index++) {
             final String url = getCommandLine().getURL(index);
             SVNRevision pegRevision = getCommandLine().getPegRevision(index);
-            wcClient.doGetFileContents(url, pegRevision, revision, true, out);
+            wcClient.doGetFileContents(SVNURL.parseURIEncoded(url), pegRevision, revision, true, out);
             out.flush();
         }
     }

@@ -58,22 +58,18 @@ public class SVNEventFactory {
 
     public static SVNEvent createLockEvent(SVNWCAccess source, String path,
             SVNEventAction action, SVNLock lock, String message) {
-        SVNEvent event = new SVNEvent(source, null, SVNPathUtil.tail(path),
-                action, SVNNodeKind.FILE, -1, null, null, null, null, lock, message);
+        SVNEvent event = new SVNEvent(source, null, SVNPathUtil.tail(path), action, SVNNodeKind.FILE, -1, null, null, null, null, lock, message);
         event.setPath(path);
         return event;
     }
 
-    public static SVNEvent createLockEvent(String path, SVNEventAction action,
-            SVNLock lock, String message) {
-        SVNEvent event = new SVNEvent(null, null, SVNPathUtil.tail(path), action,
-                SVNNodeKind.FILE, -1, null, null, null, null, lock, message);
+    public static SVNEvent createLockEvent(String path, SVNEventAction action, SVNLock lock, String message) {
+        SVNEvent event = new SVNEvent(null, null, SVNPathUtil.tail(path), action, SVNNodeKind.FILE, -1, null, null, null, null, lock, message);
         event.setPath(path);
         return event;
     }
 
-    public static SVNEvent createAddedEvent(SVNWCAccess source,
-            SVNDirectory dir, SVNEntry entry) {
+    public static SVNEvent createAddedEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
         String mimeType = null;
         try {
             mimeType = dir.getProperties(entry.getName(), false)

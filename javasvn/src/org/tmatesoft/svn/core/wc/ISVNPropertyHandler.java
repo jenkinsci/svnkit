@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 
 /**
  * @version 1.0
@@ -24,13 +25,16 @@ public interface ISVNPropertyHandler {
         public void handleProperty(File path, SVNPropertyData property) {
         }
 
-        public void handleProperty(String url, SVNPropertyData property) {
+        public void handleProperty(SVNURL url, SVNPropertyData property) {
+        }
+
+        public void handleProperty(long revision, SVNPropertyData property) {
         }
     };
 
-    public void handleProperty(File path, SVNPropertyData property)
-            throws SVNException;
+    public void handleProperty(File path, SVNPropertyData property) throws SVNException;
 
-    public void handleProperty(String url, SVNPropertyData property)
-            throws SVNException;
+    public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException;
+
+    public void handleProperty(long revision, SVNPropertyData property) throws SVNException;
 }

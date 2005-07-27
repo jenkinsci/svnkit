@@ -304,8 +304,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
     }
 
-    protected SVNDirectory createVersionedDirectory(File dstPath, String url,
-            String uuid, long revNumber) throws SVNException {
+    protected SVNDirectory createVersionedDirectory(File dstPath, SVNURL url, String uuid, long revNumber) throws SVNException {
         SVNDirectory.createVersionedDirectory(dstPath);
         // add entry first.
         SVNDirectory dir = new SVNDirectory(null, "", dstPath);
@@ -314,7 +313,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (entry == null) {
             entry = entries.addEntry("");
         }
-        entry.setURL(url);
+        entry.setURL(url.toString());
         entry.setUUID(uuid);
         entry.setKind(SVNNodeKind.DIR);
         entry.setRevision(revNumber);

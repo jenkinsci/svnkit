@@ -28,21 +28,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
  */
 public class SVNWCUtil {
 
-    public static String getURL(File versionedFile) {
-        SVNWCClient wcClient = new SVNWCClient((ISVNAuthenticationManager) null, null);
-        SVNInfo info = null;
-        try {
-            info = wcClient.doInfo(versionedFile, SVNRevision.WORKING);
-        } catch (SVNException e) {
-            //
-        }
-        if (info != null) {
-            return info.getURL();
-        }
-        return null;
-    }
-    
-
     public static File getDefaultConfigurationDirectory() {
         if (SVNFileUtil.isWindows) {
             return new File(System.getProperty("user.home"), "Application Data/Subversion");

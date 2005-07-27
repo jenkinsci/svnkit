@@ -11,6 +11,7 @@ import java.util.Collection;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 public class UnlockCommand extends SVNCommand {
@@ -34,8 +35,12 @@ public class UnlockCommand extends SVNCommand {
             files.add(getCommandLine().getURL(i));
         }
         String[] urls = (String[]) files.toArray(new String[files.size()]);
+        SVNURL[] svnURLs = new SVNURL[urls.length];
+        for (int i = 0; i < urls.length; i++) {
+            svnURLs[i] = SVNURL.parseURIEncoded(urls[i]);
+        }
         if (urls.length > 0) {
-            wcClient.doUnlock(urls, force);
+            wcClient.doUnlock(svnURLs, force);
         }
     }
 

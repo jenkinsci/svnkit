@@ -24,31 +24,18 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 public class SVNEvent {
 
     private String myMimeType;
-
     private String myErrorMessage;
-
     private SVNEventAction myAction;
-
     private SVNNodeKind myNodeKind;
-
     private long myRevision;
-
     private SVNStatusType myContentsStatus;
-
     private SVNStatusType myPropertiesStatus;
-
     private SVNStatusType myLockStatus;
-
     private SVNLock myLock;
-
     private SVNWCAccess mySVNWCAccess;
-
     private String myName;
-
     private String myPath;
-
     private File myRoot;
-
     private File myRootFile;
 
     public SVNEvent(String errorMessage) {

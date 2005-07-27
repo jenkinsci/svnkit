@@ -18,6 +18,7 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -48,10 +49,10 @@ public class ProplistCommand extends SVNCommand implements ISVNPropertyHandler {
         if (getCommandLine().hasURLs()) {
             String url = getCommandLine().getURL(0);
             if (myIsRevProp) {
-                wcClient.doGetRevisionProperty(url, null, revision, this);
+                wcClient.doGetRevisionProperty(SVNURL.parseURIEncoded(url), null, revision, this);
             } else {
                 SVNRevision pegRevision = getCommandLine().getPegRevision(0);
-                wcClient.doGetProperty(url, null, pegRevision, revision, myIsRecursive, this);
+                wcClient.doGetProperty(SVNURL.parseURIEncoded(url), null, pegRevision, revision, myIsRecursive, this);
             }
         } else if (getCommandLine().getPathCount() > 0) {
             String path = getCommandLine().getPathAt(0);
@@ -65,7 +66,7 @@ public class ProplistCommand extends SVNCommand implements ISVNPropertyHandler {
     }
 
     private File myCurrentFile;
-    private String myCurrentURL;
+    private SVNURL myCurrentURL;
 
     public void handleProperty(File path, SVNPropertyData property) throws SVNException {
         if (!path.equals(myCurrentFile)) {
@@ -80,7 +81,7 @@ public class ProplistCommand extends SVNCommand implements ISVNPropertyHandler {
         myOut.println();
     }
 
-    public void handleProperty(String url, SVNPropertyData property) throws SVNException {
+    public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
         if (!myIsRevProp) {
             if (!url.equals(myCurrentURL)) {
                 myOut.println("Properties on '" + url + "':");
@@ -96,5 +97,8 @@ public class ProplistCommand extends SVNCommand implements ISVNPropertyHandler {
             myOut.print(" : " + property.getValue());
         }
         myOut.println();
+    }
+    
+    public void handleProperty(long revision, SVNPropertyData property) throws SVNException {        
     }
 }

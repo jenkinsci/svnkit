@@ -6,6 +6,7 @@ package org.tigris.subversion.javahl;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
@@ -23,8 +24,12 @@ class SVNPropertyRetriever implements ISVNPropertyHandler{
         myData = new PropertyData(myClient, path.getAbsolutePath(), property.getName(), property.getValue(), property.getValue().getBytes());
     }
 
-    public void handleProperty(String url, SVNPropertyData property) throws SVNException {
-        myData = new PropertyData(myClient, url, property.getName(), property.getValue(), property.getValue().getBytes());
+    public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+        myData = new PropertyData(myClient, url.toString(), property.getName(), property.getValue(), property.getValue().getBytes());
+    }
+
+    public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+        myData = new PropertyData(myClient, null, property.getName(), property.getValue(), property.getValue().getBytes());
     }
     
     public PropertyData getPropertyData(){

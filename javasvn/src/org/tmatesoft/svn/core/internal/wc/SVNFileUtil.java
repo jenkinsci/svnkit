@@ -316,7 +316,7 @@ public class SVNFileUtil {
     }
 
     public static String computeChecksum(File file) throws SVNException {
-        if (file == null || !file.exists() || file.isDirectory()) {
+        if (file == null || file.isDirectory() || !file.exists()) {
             return null;
         }
         MessageDigest digest;
@@ -612,9 +612,8 @@ public class SVNFileUtil {
         if (file == null) {
             return null;
         }
-        if (!file.isFile() || !file.canRead()) {
-            SVNErrorManager.error("svn: Cannot read from '" + file
-                    + "': path refers to directory or read access denied");
+        if (!file.isFile() || (file.exists() && !file.canRead())) {
+            SVNErrorManager.error("svn: Cannot read from '" + file + "': path refers to directory or read access denied");
         }
         if (!file.exists()) {
             return DUMMY_IN;

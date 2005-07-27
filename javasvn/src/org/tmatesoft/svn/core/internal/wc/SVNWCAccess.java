@@ -420,29 +420,27 @@ public class SVNWCAccess implements ISVNEventHandler {
                 } catch (SVNException e) {
                     continue;
                 }
-                SVNExternalInfo info = new SVNExternalInfo("", null, path, url, rev);
-                result.add(info);
+                
+                try {
+                    SVNExternalInfo info = new SVNExternalInfo("", null, path, SVNURL.parseURIEncoded(url), rev);
+                    result.add(info);
+                } catch (SVNException e) {
+                }
             }
         }
         return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
     }
 
-    private SVNExternalInfo addExternal(SVNDirectory dir, String path,
-            String url, long revision) {
+    private SVNExternalInfo addExternal(SVNDirectory dir, String path, SVNURL url, long revision) {
         if (myExternals == null) {
             myExternals = new TreeMap();
         }
 
         SVNExternalInfo info = (SVNExternalInfo) myExternals.get(path);
         if (info == null) {
-            // this means adding new external, either during report or during
-            // update,
-            info = new SVNExternalInfo(dir.getPath(), new File(getAnchor()
-                    .getRoot(), path), path, null, -1);
+            info = new SVNExternalInfo(dir.getPath(), new File(getAnchor().getRoot(), path), path, null, -1);
             myExternals.put(path, info);
         }
-        // set it as new, report will also set old values, update will left it
-        // as is.
         info.setNewExternal(url, revision);
         return info;
     }

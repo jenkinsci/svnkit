@@ -16,7 +16,6 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -32,7 +31,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     private ISVNReporterBaton myBaton;
     private String myRepositoryLocation;
     private SVNRepository myRepository;
-    private String myRepositoryRoot;
+    private SVNURL myRepositoryRoot;
     private Map myLocks;
 
     private SVNStatusEditor myEditor;
@@ -46,18 +45,20 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
         myLocks = new HashMap();
     }
 
-    public SVNLock getLock(String url) {
-        if (myRepositoryRoot == null || myLocks.isEmpty()) {
+    public SVNLock getLock(SVNURL url) {
+        // get decoded path
+        if (myRepositoryRoot == null || myLocks.isEmpty() || url == null) {
             return null;
         }
-        url = url.substring(url.indexOf("://") + 3);
-        url = url.substring(url.indexOf("/") + 1);
-        url = url.substring(myRepositoryRoot.length());
-        if (!url.startsWith("/")) {
-            url = "/" + url;
+        String urlString = url.getPath();
+        String root = myRepositoryRoot.getPath();
+        String path;
+        if (urlString.equals(root)) {
+            path = "/";
+        } else {
+            path = urlString.substring(root.length());
         }
-        url = SVNEncodingUtil.uriDecode(url);
-        return (SVNLock) myLocks.get(url);
+        return (SVNLock) myLocks.get(path);
     }
 
     public void report(ISVNReporter reporter) throws SVNException {
@@ -89,7 +90,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
         // collect locks
         SVNLock[] locks = null;
         try {
-            myRepositoryRoot = myRepository.getRepositoryRoot(true).getURIEncodedPath();
+            myRepositoryRoot = myRepository.getRepositoryRoot(true);
             locks = myRepository.getLocks("");
         } catch (SVNException e) {
             //

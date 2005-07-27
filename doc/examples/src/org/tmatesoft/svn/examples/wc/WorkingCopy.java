@@ -18,6 +18,7 @@ import java.io.IOException;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -322,7 +323,11 @@ public class WorkingCopy {
          * Assuming that 'svn://localhost/rep' is an existing 
          * repository path
          */
-        String repositoryURL = "svn://localhost/testRep";
+        SVNURL repositoryURL = null;
+        try {
+            repositoryURL = SVNURL.parseURIEncoded("svn://localhost/testRep");
+        } catch (SVNException e) {
+        }
         String name = "userName";
         String password = "userPassword";
         String myWorkingCopyPath = "/MyWorkingCopy";
@@ -339,7 +344,12 @@ public class WorkingCopy {
             /*
              * Obtains a URL that represents an already existing repository
              */
-            repositoryURL = (args.length >= 1) ? args[0] : repositoryURL;
+            try {
+                repositoryURL = (args.length >= 1) ? SVNURL.parseURIEncoded(args[0]) : repositoryURL;
+            } catch (SVNException e) {
+                System.err.println("'" + args[0] + "' is not valid URL");
+                System.exit(1);
+            }
             /*
              * Obtains a path to be a working copy root directory
              */
@@ -357,17 +367,17 @@ public class WorkingCopy {
         /*
          * That's where a new directory will be created
          */
-        String url = repositoryURL + "/MyRepos";
+        SVNURL url = repositoryURL.appendPath("MyRepos", false);
         /*
          * That's where '/MyRepos' will be copied to (branched)
          */
-        String copyURL = repositoryURL + "/MyReposCopy";
+        SVNURL copyURL = repositoryURL.appendPath("MyReposCopy", false);
         /*
          * That's where a local directory will be imported into.
          * Note that it's not necessary that the '/importDir' directory must already
          * exist - the SVN repository will take care of creating it. 
          */
-        String importToURL = url + importDir;
+        SVNURL importToURL = url.appendPath(importDir, false);
               
         /*
          * Initializes the library (it must be done before ever using the
@@ -718,12 +728,12 @@ public class WorkingCopy {
      * commitMessage - a commit log message since a URL-based directory creation is 
      * immediately committed to a repository.
      */
-    private static SVNCommitInfo makeDirectory(String url, String commitMessage) throws SVNException{
+    private static SVNCommitInfo makeDirectory(SVNURL url, String commitMessage) throws SVNException{
         /*
          * Returns SVNCommitInfo containing information on the commit (revision number, 
          * etc.) 
          */
-        return ourClientManager.getCommitClient().doMkDir(new String[]{url}, commitMessage);
+        return ourClientManager.getCommitClient().doMkDir(new String[]{url.toString()}, commitMessage);
     }
     
     /*
@@ -748,12 +758,12 @@ public class WorkingCopy {
      * will be added with all its child subdirictories, otherwise the operation will cover
      * only the directory itself (only those files which are located in the directory).  
      */
-    private static SVNCommitInfo importDirectory(File localPath, String dstURL, String commitMessage, boolean isRecursive) throws SVNException{
+    private static SVNCommitInfo importDirectory(File localPath, SVNURL dstURL, String commitMessage, boolean isRecursive) throws SVNException{
         /*
          * Returns SVNCommitInfo containing information on the commit (revision number, 
          * etc.) 
          */
-        return ourClientManager.getCommitClient().doImport(localPath, dstURL, commitMessage, isRecursive);
+        return ourClientManager.getCommitClient().doImport(localPath, dstURL.toString(), commitMessage, isRecursive);
         
     }
     /*
@@ -805,7 +815,7 @@ public class WorkingCopy {
      * recursive - if true and url corresponds to a directory then doCheckout(..) recursively 
      * fetches out the entire directory, otherwise - only child entries of the directory;   
      */
-    private static long checkout(String url,
+    private static long checkout(SVNURL url,
             SVNRevision revision, File destPath, boolean isRecursive)
             throws SVNException {
 
@@ -817,8 +827,7 @@ public class WorkingCopy {
         /*
          * returns the number of the revision at which the working copy is 
          */
-        return updateClient.doCheckout(url, destPath, revision, revision,
-                isRecursive);
+        return updateClient.doCheckout(url, destPath, revision, revision, isRecursive);
     }
     
     /*
@@ -864,7 +873,7 @@ public class WorkingCopy {
      * switches the entire directory, otherwise - only child entries of the directory;   
      */
     private static long switchToURL(File wcPath,
-            String url, SVNRevision updateToRevision, boolean isRecursive)
+            SVNURL url, SVNRevision updateToRevision, boolean isRecursive)
             throws SVNException {
         SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
         /*
@@ -1043,15 +1052,15 @@ public class WorkingCopy {
      * commitMessage - a commit log message since URL->URL copying is immediately 
      * committed to a repository.
      */
-    private static SVNCommitInfo copy(String srcURL, SVNRevision srcPegRevision, String dstURL,
+    private static SVNCommitInfo copy(SVNURL srcURL, SVNRevision srcPegRevision, SVNURL dstURL,
             boolean isMove, String commitMessage) throws SVNException {
         /*
          * SVNRevision.HEAD means the latest revision.
          * Returns SVNCommitInfo containing information on the commit (revision number, 
          * etc.) 
          */
-        return ourClientManager.getCopyClient().doCopy(srcURL, srcPegRevision, SVNRevision.HEAD,
-                dstURL, null, isMove, commitMessage);
+        return ourClientManager.getCopyClient().doCopy(srcURL.toString(), srcPegRevision, SVNRevision.HEAD,
+                dstURL.toString(), null, isMove, commitMessage);
     }
     
     /*

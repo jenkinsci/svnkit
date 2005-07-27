@@ -12,6 +12,7 @@ package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.util.Date;
@@ -22,53 +23,32 @@ import java.util.Map;
  * @author TMate Software Ltd.
  */
 public class SVNStatus {
-    private String myURL;
-
+    
+    private SVNURL myURL;
     private File myFile;
-
     private SVNNodeKind myKind;
-
     private SVNRevision myRevision;
-
     private SVNRevision myCommittedRevision;
-
     private Date myCommittedDate;
-
     private String myAuthor;
-
     private SVNStatusType myContentsStatus;
-
     private SVNStatusType myPropertiesStatus;
-
     private SVNStatusType myRemoteContentsStatus;
-
     private SVNStatusType myRemotePropertiesStatus;
-
     private boolean myIsLocked;
-
     private boolean myIsCopied;
-
     private boolean myIsSwitched;
-
     private File myConflictNewFile;
-
     private File myConflictOldFile;
-
     private File myConflictWrkFile;
-
     private File myPropRejectFile;
-
     private String myCopyFromURL;
-
     private SVNRevision myCopyFromRevision;
-
     private SVNLock myRemoteLock;
-
     private SVNLock myLocalLock;
-
     private Map myEntryProperties;
 
-    public SVNStatus(String URL, File file, SVNNodeKind kind,
+    public SVNStatus(SVNURL url, File file, SVNNodeKind kind,
             SVNRevision revision, SVNRevision committedRevision,
             Date committedDate, String author, SVNStatusType contentsStatus,
             SVNStatusType propertiesStatus, SVNStatusType remoteContentsStatus,
@@ -77,7 +57,7 @@ public class SVNStatus {
             File conflictOldFile, File conflictWrkFile, File projRejectFile,
             String copyFromURL, SVNRevision copyFromRevision,
             SVNLock remoteLock, SVNLock localLock, Map entryProperties) {
-        myURL = URL;
+        myURL = url;
         myFile = file;
         myKind = kind == null ? SVNNodeKind.NONE : kind;
         myRevision = revision == null ? SVNRevision.UNDEFINED : revision;
@@ -108,7 +88,7 @@ public class SVNStatus {
         myEntryProperties = entryProperties;
     }
 
-    public String getURL() {
+    public SVNURL getURL() {
         return myURL;
     }
 

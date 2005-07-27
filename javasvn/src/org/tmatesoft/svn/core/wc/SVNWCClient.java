@@ -30,7 +30,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
@@ -131,19 +130,14 @@ public class SVNWCClient extends SVNBasicClient {
                 }
             }
         } else {
-            String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-            if (wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL) != null) {
-                url = wcAccess.getTargetEntryProperty(SVNProperty.COPYFROM_URL);
-            }
-            if (pegRevision == null || !pegRevision.isValid()) {
-                pegRevision = SVNRevision.parse(wcAccess
-                        .getTargetEntryProperty(SVNProperty.REVISION));
-            }
-            long revNumber = getRevisionNumber(path, revision);
-            long pegRevisionNumber = getRevisionNumber(path, pegRevision);
+            SVNEntry entry = wcAccess.getTargetEntry();
+            SVNURL url = entry.getSVNURL();
+            SVNRepository repos = createRepository(url, path, pegRevision, revision);
+            url = repos.getLocation();
+            long revNumber = getRevisionNumber(revision, repos, path);
+            long pegRevisionNumber = repos.getPegRevision();
             if (!expandKeywords) {
-                doGetFileContents(url, SVNRevision.create(pegRevisionNumber),
-                        SVNRevision.create(revNumber), expandKeywords, dst);
+                doGetFileContents(url, SVNRevision.create(pegRevisionNumber), SVNRevision.create(revNumber), expandKeywords, dst);
             } else {
                 File tmpFile = SVNFileUtil.createUniqueFile(new File(path
                         .getParentFile(), ".svn/tmp/text-base"),
@@ -153,9 +147,7 @@ public class SVNWCClient extends SVNBasicClient {
                 InputStream is = null;
                 try {
                     os = SVNFileUtil.openFileForWriting(tmpFile);
-                    doGetFileContents(url, SVNRevision
-                            .create(pegRevisionNumber), SVNRevision
-                            .create(revNumber), false, os);
+                    doGetFileContents(url, SVNRevision.create(pegRevisionNumber), SVNRevision.create(revNumber), false, os);
                     SVNFileUtil.closeFile(os);
                     os = null;
                     // translate
@@ -194,22 +186,15 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    public void doGetFileContents(String url, SVNRevision pegRevision,
-            SVNRevision revision, boolean expandKeywords, OutputStream dst)
-            throws SVNException {
-        url = validateURL(url);
-        revision = revision == null || !revision.isValid() ? SVNRevision.HEAD
-                : revision;
+    public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
+        revision = revision == null || !revision.isValid() ? SVNRevision.HEAD : revision;
         // now get contents from URL.
         Map properties = new HashMap();
-        long[] revs = new long[1];
-        SVNRepository repos = createRepository(null, url, pegRevision,
-                revision, revs);
+        SVNRepository repos = createRepository(url, null, pegRevision, revision);
 
-        SVNNodeKind nodeKind = repos.checkPath("", revs[0]);
+        SVNNodeKind nodeKind = repos.checkPath("", repos.getPegRevision());
         if (nodeKind == SVNNodeKind.DIR) {
-            SVNErrorManager
-                    .error("svn: URL '" + url + " refers to a directory");
+            SVNErrorManager.error("svn: URL '" + url + " refers to a directory");
         }
         if (nodeKind != SVNNodeKind.FILE) {
             return;
@@ -222,7 +207,7 @@ public class SVNWCClient extends SVNBasicClient {
                 "svn-contents", ".tmp2");
         try {
             os = new FileOutputStream(file);
-            revs[0] = repos.getFile("", revs[0], properties, os);
+            repos.getFile("", repos.getPegRevision(), properties, os);
             os.close();
             os = null;
             if (expandKeywords) {
@@ -230,7 +215,7 @@ public class SVNWCClient extends SVNBasicClient {
                 String keywords = (String) properties.get(SVNProperty.KEYWORDS);
                 String eol = (String) properties.get(SVNProperty.EOL_STYLE);
                 byte[] eolBytes = SVNTranslator.getWorkingEOL(eol);
-                Map keywordsMap = SVNTranslator.computeKeywords(keywords, url,
+                Map keywordsMap = SVNTranslator.computeKeywords(keywords, url.toString(),
                         (String) properties.get(SVNProperty.LAST_AUTHOR),
                         (String) properties.get(SVNProperty.COMMITTED_DATE),
                         (String) properties.get(SVNProperty.COMMITTED_REVISION));
@@ -297,8 +282,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    public void doSetRevisionProperty(File path, SVNRevision revision,
-            String propName, String propValue, boolean force,
+    public void doSetRevisionProperty(File path, SVNRevision revision, String propName, String propValue, boolean force,
             ISVNPropertyHandler handler) throws SVNException {
         propName = validatePropertyName(propName);
         if (propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
@@ -308,17 +292,16 @@ public class SVNWCClient extends SVNBasicClient {
         SVNWCAccess wcAccess = createWCAccess(path);
         try {
             wcAccess.open(true, false);
-            String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-            SVNRevision pegRevision = SVNRevision.parse(wcAccess
-                    .getTargetEntryProperty(SVNProperty.REVISION));
-            doSetRevisionProperty(url, pegRevision, revision, propName,
-                    propValue, force, handler);
+            SVNEntry entry = wcAccess.getTargetEntry();
+            SVNURL url = entry.getSVNURL();
+            SVNRevision pegRevision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
+            doSetRevisionProperty(url, pegRevision, revision, propName, propValue, force, handler);
         } finally {
             wcAccess.close(true);
         }
     }
 
-    public void doSetRevisionProperty(String url, SVNRevision pegRevision,
+    public void doSetRevisionProperty(SVNURL url, SVNRevision pegRevision,
             SVNRevision revision, String propName, String propValue,
             boolean force, ISVNPropertyHandler handler) throws SVNException {
         propName = validatePropertyName(propName);
@@ -333,15 +316,11 @@ public class SVNWCClient extends SVNBasicClient {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
-        url = validateURL(url);
-        url = getURL(url, pegRevision, revision);
-        long revNumber = getRevisionNumber(url, revision);
-        //
-        SVNRepository repos = createRepository(url);
+        SVNRepository repos = createRepository(url, null, pegRevision, revision);
+        long revNumber = repos.getPegRevision();
         repos.setRevisionPropertyValue(revNumber, propName, propValue);
         if (handler != null) {
-            handler.handleProperty(revNumber + "", new SVNPropertyData(
-                    propName, propValue));
+            handler.handleProperty(revNumber, new SVNPropertyData(propName, propValue));
         }
     }
 
@@ -355,23 +334,25 @@ public class SVNWCClient extends SVNBasicClient {
                     data[0] = property;
                 }
             }
-            public void handleProperty(String url, SVNPropertyData property) {
+            public void handleProperty(SVNURL url, SVNPropertyData property) {
+            }
+            public void handleProperty(long revision, SVNPropertyData property) {
             }
         });
         return data[0];
     }
 
-    public SVNPropertyData doGetProperty(String url, String propName,
+    public SVNPropertyData doGetProperty(final SVNURL url, String propName,
             SVNRevision pegRevision, SVNRevision revision, boolean recursive)
             throws SVNException {
         final SVNPropertyData[] data = new SVNPropertyData[1];
-        final String canonURL = SVNURL.parseURIEncoded(url).toString();
         doGetProperty(url, propName, pegRevision, revision, recursive, new ISVNPropertyHandler() {
             public void handleProperty(File file, SVNPropertyData property) {
             }
-            public void handleProperty(String location, SVNPropertyData property) throws SVNException {
-                location = SVNURL.parseURIEncoded(location).toString();
-                if (data[0] == null && canonURL.equals(location)) {
+            public void handleProperty(long revision, SVNPropertyData property) {
+            }
+            public void handleProperty(SVNURL location, SVNPropertyData property) throws SVNException {
+                if (data[0] == null && url.toString().equals(location.toString())) {
                     data[0] = property;
                 }
             }
@@ -392,26 +373,22 @@ public class SVNWCClient extends SVNBasicClient {
         try {
             wcAccess.open(false, recursive);
             if (revision != SVNRevision.WORKING && revision != SVNRevision.BASE) {
-                String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+                SVNEntry entry = wcAccess.getTargetEntry();
+                SVNURL url = entry.getSVNURL();
                 if (pegRevision == null || !pegRevision.isValid()) {
-                    pegRevision = SVNRevision.parse(wcAccess
-                            .getTargetEntryProperty(SVNProperty.REVISION));
+                    pegRevision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
                 }
-                revision = SVNRevision
-                        .create(getRevisionNumber(path, revision));
-                doGetProperty(url, propName, pegRevision, revision, recursive,
-                        handler);
-                return;
+                revision = SVNRevision.create(getRevisionNumber(path, revision));
+                doGetProperty(url, propName, pegRevision, revision, recursive, handler);
+            } else {
+                doGetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(), propName, revision, recursive, handler);
             }
-            // local prop.
-            doGetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(),
-                    propName, revision, recursive, handler);
         } finally {
             wcAccess.close(false);
         }
     }
 
-    public void doGetProperty(String url, String propName,
+    public void doGetProperty(SVNURL url, String propName,
             SVNRevision pegRevision, SVNRevision revision, boolean recursive,
             ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
@@ -421,41 +398,35 @@ public class SVNWCClient extends SVNBasicClient {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
-        url = validateURL(url);
-        url = getURL(url, pegRevision, revision);
-
-        SVNRepository repos = createRepository(url);
-        doGetRemoteProperty(url, "", repos, propName, revision, recursive,
-                handler);
+        SVNRepository repos = createRepository(url, null, pegRevision, revision);
+        doGetRemoteProperty(url, "", repos, propName, revision, recursive, handler);
     }
 
     public void doGetRevisionProperty(File path, String propName,
             SVNRevision pegRev, SVNRevision revision,
             ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            SVNErrorManager.error("svn: '" + propName
-                    + "' is a wcprop , thus not accessible to clients");
+            SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
         }
         SVNWCAccess wcAccess = createWCAccess(path);
         try {
-            wcAccess.open(true, false);
-            String url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
+            wcAccess.open(false, false);
+            SVNEntry entry = wcAccess.getTargetEntry();
+            SVNURL url = entry.getSVNURL();
             long revNumber = getRevisionNumber(path, revision);
             if (pegRev == null || !pegRev.isValid()) {
                 pegRev = SVNRevision.parse(wcAccess
                         .getTargetEntryProperty(SVNProperty.REVISION));
             }
             revision = SVNRevision.create(revNumber);
-            url = getURL(url, pegRev, revision);
-            doGetRevisionProperty(url, propName, revision, handler);
+            SVNRepository repos = createRepository(url, path, SVNRevision.UNDEFINED, revision);
+            doGetRevisionProperty(repos.getLocation(), propName, revision, handler);
         } finally {
-            wcAccess.close(true);
+            wcAccess.close(false);
         }
     }
 
-    public void doGetRevisionProperty(String url, String propName,
-            SVNRevision revision, ISVNPropertyHandler handler)
-            throws SVNException {
+    public void doGetRevisionProperty(SVNURL url, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             SVNErrorManager.error("svn: '" + propName
                     + "' is a wcprop , thus not accessible to clients");
@@ -463,14 +434,12 @@ public class SVNWCClient extends SVNBasicClient {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
-        url = validateURL(url);
         SVNRepository repos = createRepository(url);
-        long revNumber = getRevisionNumber(url, revision);
+        long revNumber = getRevisionNumber(revision, repos, null);
         if (propName != null) {
             String value = repos.getRevisionPropertyValue(revNumber, propName);
             if (value != null) {
-                handler.handleProperty(revNumber + "", new SVNPropertyData(
-                        propName, value));
+                handler.handleProperty(revNumber, new SVNPropertyData(propName, value));
             }
         } else {
             Map props = new HashMap();
@@ -478,8 +447,7 @@ public class SVNWCClient extends SVNBasicClient {
             for (Iterator names = props.keySet().iterator(); names.hasNext();) {
                 String name = (String) names.next();
                 String value = (String) props.get(name);
-                handler.handleProperty(revNumber + "", new SVNPropertyData(
-                        name, value));
+                handler.handleProperty(revNumber, new SVNPropertyData(name, value));
             }
         }
     }
@@ -799,23 +767,18 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    public void doLock(String[] urls, boolean stealLock, String lockMessage)
-            throws SVNException {
+    public void doLock(SVNURL[] urls, boolean stealLock, String lockMessage) throws SVNException {
         for (int i = 0; i < urls.length; i++) {
-            String url = validateURL(urls[i]);
+            SVNURL url = urls[i];
             SVNRepository repos = createRepository(url);
             SVNLock lock = null;
             try {
                 lock = repos.setLock("", lockMessage, stealLock, -1);
             } catch (SVNException error) {
-                handleEvent(SVNEventFactory.createLockEvent(url,
-                        SVNEventAction.LOCK_FAILED, lock, null),
-                        ISVNEventHandler.UNKNOWN);
+                handleEvent(SVNEventFactory.createLockEvent(url.toString(), SVNEventAction.LOCK_FAILED, lock, null), ISVNEventHandler.UNKNOWN);
                 continue;
             }
-            handleEvent(SVNEventFactory.createLockEvent(url,
-                    SVNEventAction.LOCKED, lock, null),
-                    ISVNEventHandler.UNKNOWN);
+            handleEvent(SVNEventFactory.createLockEvent(url.toString(), SVNEventAction.LOCKED, lock, null), ISVNEventHandler.UNKNOWN);
         }
     }
 
@@ -894,11 +857,11 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    public void doUnlock(String[] urls, boolean breakLock) throws SVNException {
+    public void doUnlock(SVNURL[] urls, boolean breakLock) throws SVNException {
         Map lockTokens = new HashMap();
         if (!breakLock) {
             for (int i = 0; i < urls.length; i++) {
-                String url = validateURL(urls[i]);
+                SVNURL url = urls[i];
                 // get lock token for url
                 SVNRepository repos = createRepository(url);
                 SVNLock lock = repos.getLock("");
@@ -910,19 +873,19 @@ public class SVNWCClient extends SVNBasicClient {
             }
         }
         for (int i = 0; i < urls.length; i++) {
-            String url = validateURL(urls[i]);
+            SVNURL url = urls[i];
             // get lock token for url
             SVNRepository repos = createRepository(url);
             String id = (String) lockTokens.get(url);
             try {
                 repos.removeLock("", id, breakLock);
             } catch (SVNException e) {
-                handleEvent(SVNEventFactory.createLockEvent(url,
+                handleEvent(SVNEventFactory.createLockEvent(url.toString(),
                         SVNEventAction.UNLOCK_FAILED, null, null),
                         ISVNEventHandler.UNKNOWN);
                 continue;
             }
-            handleEvent(SVNEventFactory.createLockEvent(url,
+            handleEvent(SVNEventFactory.createLockEvent(url.toString(),
                     SVNEventAction.UNLOCKED, null, null),
                     ISVNEventHandler.UNKNOWN);
         }
@@ -936,16 +899,18 @@ public class SVNWCClient extends SVNBasicClient {
         if (!(revision == null || !revision.isValid() || revision == SVNRevision.WORKING)) {
             SVNWCAccess wcAccess = createWCAccess(path);
             SVNRevision wcRevision = null;
-            String url = null;
+            SVNURL url = null;
             try {
                 wcAccess.open(false, false);
-                url = wcAccess.getTargetEntryProperty(SVNProperty.URL);
-                if (url == null) {
-                    SVNErrorManager.error("svn: '" + path.getAbsolutePath()
-                            + "' has no URL");
+                SVNEntry entry = wcAccess.getTargetEntry();
+                if (entry == null) {
+                    SVNErrorManager.error("svn: '" + path + "' is not under version control");
                 }
-                wcRevision = SVNRevision.parse(wcAccess
-                        .getTargetEntryProperty(SVNProperty.REVISION));
+                url = entry.getSVNURL();
+                if (url == null) {
+                    SVNErrorManager.error("svn: '" + path.getAbsolutePath() + "' has no URL");
+                }
+                wcRevision = SVNRevision.create(entry.getRevision());
             } finally {
                 wcAccess.close(false);
             }
@@ -962,23 +927,21 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    public void doInfo(String url, SVNRevision pegRevision,
+    public void doInfo(SVNURL url, SVNRevision pegRevision,
             SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
             throws SVNException {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
-        url = validateURL(url);
-        url = getURL(url, pegRevision, revision);
-        long revNum = getRevisionNumber(url, revision);
 
-        SVNRepository repos = createRepository(url);
+        SVNRepository repos = createRepository(url, null, pegRevision, revision);;
+        long revNum = getRevisionNumber(revision, repos, null);
         SVNDirEntry rootEntry = repos.info("", revNum);
         if (rootEntry == null || rootEntry.getKind() == SVNNodeKind.NONE) {
             SVNErrorManager.error("'" + url + "' non-existent in revision "
                     + revNum);
         }
-        String reposRoot = repos.getRepositoryRoot(true).getPath();
+        SVNURL reposRoot = repos.getRepositoryRoot(true);
         String reposUUID = repos.getRepositoryUUID();
         // 1. get locks for this dir and below.
         SVNLock[] locks;
@@ -994,12 +957,11 @@ public class SVNWCClient extends SVNBasicClient {
             SVNLock lock = locks[i];
             locksMap.put(lock.getPath(), lock);
         }
-        String fullPath = SVNURL.parseURIEncoded(url).getPath();
-        String rootPath = fullPath.substring(reposRoot.length());
+        String fullPath = url.getPath();
+        String rootPath = fullPath.substring(reposRoot.getPath().length());
         if (!rootPath.startsWith("/")) {
             rootPath = "/" + rootPath;
         }
-        reposRoot = SVNPathUtil.append(url.substring(0, url.length() - fullPath.length()), reposRoot);
         collectInfo(repos, rootEntry, SVNRevision.create(revNum), rootPath,
                 reposRoot, reposUUID, url, locksMap, recursive, handler);
     }
@@ -1022,7 +984,7 @@ public class SVNWCClient extends SVNBasicClient {
         return result[0];
     }
 
-    public SVNInfo doInfo(String url, SVNRevision pegRevision,
+    public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision,
             SVNRevision revision) throws SVNException {
         final SVNInfo[] result = new SVNInfo[1];
         doInfo(url, pegRevision, revision, false, new ISVNInfoHandler() {
@@ -1085,7 +1047,7 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     private static void collectInfo(SVNRepository repos, SVNDirEntry entry,
-            SVNRevision rev, String path, String root, String uuid, String url,
+            SVNRevision rev, String path, SVNURL root, String uuid, SVNURL url,
             Map locks, boolean recursive, ISVNInfoHandler handler)
             throws SVNException {
         String displayPath = repos.getFullPath(path);
@@ -1099,7 +1061,7 @@ public class SVNWCClient extends SVNBasicClient {
                     new ArrayList());
             for (Iterator ents = children.iterator(); ents.hasNext();) {
                 SVNDirEntry child = (SVNDirEntry) ents.next();
-                String childURL = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(child.getName()));
+                SVNURL childURL = url.appendPath(child.getName(), false);
                 collectInfo(repos, child, rev, SVNPathUtil.append(path, child
                         .getName()), root, uuid, childURL, locks, recursive,
                         handler);
@@ -1177,10 +1139,10 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private void doGetRemoteProperty(String url, String path,
+    private void doGetRemoteProperty(SVNURL url, String path,
             SVNRepository repos, String propName, SVNRevision rev,
             boolean recursive, ISVNPropertyHandler handler) throws SVNException {
-        long revNumber = getRevisionNumber(url, rev);
+        long revNumber = getRevisionNumber(rev, repos, null);
         SVNNodeKind kind = repos.checkPath(path, revNumber);
         Map props = new HashMap();
         if (kind == SVNNodeKind.DIR) {
@@ -1189,30 +1151,25 @@ public class SVNWCClient extends SVNBasicClient {
             if (propName != null) {
                 String value = (String) props.get(propName);
                 if (value != null) {
-                    handler.handleProperty(url, new SVNPropertyData(propName,
-                            value));
+                    handler.handleProperty(url, new SVNPropertyData(propName, value));
                 }
             } else {
-                for (Iterator names = props.keySet().iterator(); names
-                        .hasNext();) {
+                for (Iterator names = props.keySet().iterator(); names.hasNext();) {
                     String name = (String) names.next();
                     if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)
                             || name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
                         continue;
                     }
                     String value = (String) props.get(name);
-                    handler.handleProperty(url,
-                            new SVNPropertyData(name, value));
+                    handler.handleProperty(url, new SVNPropertyData(name, value));
                 }
             }
             if (recursive) {
                 for (Iterator entries = children.iterator(); entries.hasNext();) {
                     SVNDirEntry child = (SVNDirEntry) entries.next();
-                    String childURL = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(child.getName()));
-                    String childPath = "".equals(path) ? child.getName()
-                            : SVNPathUtil.append(path, child.getName());
-                    doGetRemoteProperty(childURL, childPath, repos, propName,
-                            rev, recursive, handler);
+                    SVNURL childURL = url.appendPath(child.getName(), false);
+                    String childPath = "".equals(path) ? child.getName() : SVNPathUtil.append(path, child.getName());
+                    doGetRemoteProperty(childURL, childPath, repos, propName, rev, recursive, handler);
                 }
             }
         } else if (kind == SVNNodeKind.FILE) {
@@ -1220,8 +1177,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (propName != null) {
                 String value = (String) props.get(propName);
                 if (value != null) {
-                    handler.handleProperty(url, new SVNPropertyData(propName,
-                            value));
+                    handler.handleProperty(url, new SVNPropertyData(propName, value));
                 }
             } else {
                 for (Iterator names = props.keySet().iterator(); names
@@ -1232,8 +1188,7 @@ public class SVNWCClient extends SVNBasicClient {
                         continue;
                     }
                     String value = (String) props.get(name);
-                    handler.handleProperty(url,
-                            new SVNPropertyData(name, value));
+                    handler.handleProperty(url, new SVNPropertyData(name, value));
                 }
             }
         }

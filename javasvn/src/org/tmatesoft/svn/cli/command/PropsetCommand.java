@@ -21,6 +21,7 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -79,12 +80,14 @@ public class PropsetCommand extends SVNCommand {
                 revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
             }
             if (getCommandLine().hasURLs()) {
-                wcClient.doSetRevisionProperty(getCommandLine().getURL(0), getCommandLine().getPegRevision(0),
+                wcClient.doSetRevisionProperty(SVNURL.parseURIEncoded(getCommandLine().getURL(0)), getCommandLine().getPegRevision(0),
                         revision, propertyName, propertyValue, force, new ISVNPropertyHandler() {
                             public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                             }
-                            public void handleProperty(String url, SVNPropertyData property) throws SVNException {
+                            public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
                                 out.println("Property '" + propertyName +"' set on repository revision " + url);
+                            }
+                            public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
                             }
                 });
 
@@ -96,8 +99,10 @@ public class PropsetCommand extends SVNCommand {
                 wcClient.doSetRevisionProperty(tgt, revision, propertyName, propertyValue, force, new ISVNPropertyHandler() {
                             public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                             }
-                            public void handleProperty(String url, SVNPropertyData property) throws SVNException {
+                            public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
                                 out.println("Property '" + propertyName +"' set on repository revision " + url);
+                            }
+                            public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
                             }
                 });
             }
@@ -110,7 +115,9 @@ public class PropsetCommand extends SVNCommand {
                         public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                             out.println("Property '" + propertyName + "' set on '" + SVNFormatUtil.formatPath(path) + "'");
                         }
-                        public void handleProperty(String url, SVNPropertyData property) throws SVNException {
+                        public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+                        }
+                        public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
                         }
 
                     });
@@ -120,7 +127,9 @@ public class PropsetCommand extends SVNCommand {
                         public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                            wasSet[0] = true;
                         }
-                        public void handleProperty(String url, SVNPropertyData property) throws SVNException {
+                        public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+                        }
+                        public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
                         }
                     });
                     if (wasSet[0]) {

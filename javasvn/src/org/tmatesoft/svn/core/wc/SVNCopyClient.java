@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -418,14 +419,10 @@ public class SVNCopyClient extends SVNBasicClient {
             String uuid = wcAccess.getTargetEntryProperty(SVNProperty.UUID);
             sameRepositories = uuid.equals(srcUUID);
             if (srcKind == SVNNodeKind.DIR) {
-                String dstURL = wcAccess.getAnchor().getEntries()
-                        .getPropertyValue("", SVNProperty.URL);
-                dstURL = SVNPathUtil.append(dstURL, SVNEncodingUtil.uriEncode(dstPath
-                        .getName()));
-                SVNDirectory targetDir = createVersionedDirectory(dstPath,
-                        dstURL, uuid, srcRevision);
-                SVNWCAccess wcAccess2 = new SVNWCAccess(targetDir, targetDir,
-                        "");
+                SVNURL dstURL = wcAccess.getAnchor().getEntries().getEntry("", false).getSVNURL();                
+                dstURL = dstURL.appendPath(dstPath.getName(), false);
+                SVNDirectory targetDir = createVersionedDirectory(dstPath, dstURL, uuid, srcRevision);
+                SVNWCAccess wcAccess2 = new SVNWCAccess(targetDir, targetDir, "");
                 wcAccess2.open(true, true);
                 setDoNotSleepForTimeStamp(true);
                 try {

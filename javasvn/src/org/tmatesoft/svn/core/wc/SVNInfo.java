@@ -16,6 +16,7 @@ import java.util.Date;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 
@@ -29,13 +30,13 @@ public class SVNInfo {
 
     private String myPath;
 
-    private String myURL;
+    private SVNURL myURL;
 
     private SVNRevision myRevision;
 
     private SVNNodeKind myKind;
 
-    private String myRepositoryRootURL;
+    private SVNURL myRepositoryRootURL;
 
     private String myRepositoryUUID;
 
@@ -51,7 +52,7 @@ public class SVNInfo {
 
     private String mySchedule;
 
-    private String myCopyFromURL;
+    private SVNURL myCopyFromURL;
 
     private SVNRevision myCopyFromRevision;
 
@@ -79,18 +80,18 @@ public class SVNInfo {
                     entry.getLockOwner(), entry.getLockComment(), SVNTimeUtil
                             .parseDate(entry.getLockCreationDate()), null);
         }
-        return new SVNInfo(file, entry.getURL(), entry.getRevision(), entry
+        return new SVNInfo(file, entry.getSVNURL(), entry.getRevision(), entry
                 .getKind(), entry.getUUID(), entry.getCommittedRevision(),
                 entry.getCommittedDate(), entry.getAuthor(), entry
-                        .getSchedule(), entry.getCopyFromURL(), entry
+                        .getSchedule(), entry.getCopyFromSVNURL(), entry
                         .getCopyFromRevision(), entry.getTextTime(), entry
                         .getPropTime(), entry.getChecksum(), entry
                         .getConflictOld(), entry.getConflictNew(), entry
                         .getConflictWorking(), entry.getPropRejectFile(), lock);
     }
 
-    static SVNInfo createInfo(String path, String reposRootURL, String uuid,
-            String url, SVNRevision revision, SVNDirEntry dirEntry, SVNLock lock) {
+    static SVNInfo createInfo(String path, SVNURL reposRootURL, String uuid,
+            SVNURL url, SVNRevision revision, SVNDirEntry dirEntry, SVNLock lock) {
         if (dirEntry == null) {
             return null;
         }
@@ -99,9 +100,9 @@ public class SVNInfo {
                 dirEntry.getAuthor(), lock);
     }
 
-    protected SVNInfo(File file, String url, long revision, SVNNodeKind kind,
+    protected SVNInfo(File file, SVNURL url, long revision, SVNNodeKind kind,
             String uuid, long committedRevision, String committedDate,
-            String author, String schedule, String copyFromURL,
+            String author, String schedule, SVNURL copyFromURL,
             long copyFromRevision, String textTime, String propTime,
             String checksum, String conflictOld, String conflictNew,
             String conflictWorking, String propRejectFile, SVNLock lock) {
@@ -146,8 +147,8 @@ public class SVNInfo {
         myIsRemote = false;
     }
 
-    protected SVNInfo(String path, String url, SVNRevision revision,
-            SVNNodeKind kind, String uuid, String reposRootURL,
+    protected SVNInfo(String path, SVNURL url, SVNRevision revision,
+            SVNNodeKind kind, String uuid, SVNURL reposRootURL,
             long comittedRevision, Date date, String author, SVNLock lock) {
         myIsRemote = true;
         myURL = url;
@@ -196,7 +197,7 @@ public class SVNInfo {
         return myCopyFromRevision;
     }
 
-    public String getCopyFromURL() {
+    public SVNURL getCopyFromURL() {
         return myCopyFromURL;
     }
 
@@ -228,7 +229,7 @@ public class SVNInfo {
         return myPropTime;
     }
 
-    public String getRepositoryRootURL() {
+    public SVNURL getRepositoryRootURL() {
         return myRepositoryRootURL;
     }
 
@@ -248,7 +249,7 @@ public class SVNInfo {
         return myTextTime;
     }
 
-    public String getURL() {
+    public SVNURL getURL() {
         return myURL;
     }
 

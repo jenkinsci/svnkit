@@ -12,6 +12,8 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNURL;
+
 /**
  * @version 1.0
  * @author TMate Software Ltd.
@@ -19,21 +21,14 @@ import java.io.File;
 public class SVNExternalInfo {
 
     private String myPath;
-
     private File myFile;
-
-    private String myOldExternalURL;
-
+    private SVNURL myOldExternalURL;
     private long myOldExternalRevision;
-
-    private String myNewExternalURL;
-
+    private SVNURL myNewExternalURL;
     private long myNewExternalRevision;
-
     private String myOwnerPath;
 
-    public SVNExternalInfo(String dirPath, File file, String path,
-            String oldURL, long oldRev) {
+    public SVNExternalInfo(String dirPath, File file, String path, SVNURL oldURL, long oldRev) {
         myFile = file;
         myPath = path;
         myOwnerPath = dirPath;
@@ -49,12 +44,12 @@ public class SVNExternalInfo {
         return myOwnerPath;
     }
 
-    public void setNewExternal(String newURL, long newRev) {
+    public void setNewExternal(SVNURL newURL, long newRev) {
         myNewExternalRevision = newRev;
         myNewExternalURL = newURL;
     }
 
-    public void setOldExternal(String oldURL, long oldRev) {
+    public void setOldExternal(SVNURL oldURL, long oldRev) {
         myOldExternalRevision = oldRev;
         myOldExternalURL = oldURL;
     }
@@ -89,11 +84,11 @@ public class SVNExternalInfo {
         return myNewExternalRevision;
     }
 
-    public String getNewURL() {
+    public SVNURL getNewURL() {
         return myNewExternalURL;
     }
 
-    public String getOldURL() {
+    public SVNURL getOldURL() {
         return myOldExternalURL;
     }
 
