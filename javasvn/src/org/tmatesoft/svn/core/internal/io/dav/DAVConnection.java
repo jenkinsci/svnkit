@@ -88,7 +88,7 @@ public class DAVConnection {
                 }
                 String uuid = (String) result[0].getPropertyValue(DAVElement.REPOSITORY_UUID);
                 String relativePath = (String) result[0].getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
-                String root = myLocation.getPath();
+                String root = SVNEncodingUtil.uriDecode(path);
                 if (relativePath != null) {
                     if (root.endsWith(relativePath)) {
                         root = root.substring(0, root.length() - relativePath.length() - 1);                        
