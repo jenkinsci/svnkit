@@ -317,6 +317,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         } catch (IOException e) {
             SVNErrorManager.error("svn: Cannot create file '" + baseTmpFile + "'");
         }
+        myCurrentFile.TextUpdated = true;
     }
 
     public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
@@ -327,7 +328,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     public void textDeltaEnd(String commitPath) throws SVNException {
         File baseTmpFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name, true);
         File targetFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name + ".tmp", true);
-        myCurrentFile.TextUpdated = myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile);
+        myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile);
         if (myCurrentFile.TextUpdated) {
             SVNFileUtil.rename(targetFile, baseTmpFile);
         }
@@ -337,10 +338,10 @@ public class SVNUpdateEditor implements ISVNEditor {
         myDeltaProcessor.close();
         // check checksum.
         String checksum = null;
-        if (textChecksum != null) {
+        if (textChecksum != null && myCurrentFile.TextUpdated) {
             File baseTmpFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name, true);
             checksum = SVNFileUtil.computeChecksum(baseTmpFile);            
-            if (checksum != null && !textChecksum.equals(checksum)) {
+            if (!textChecksum.equals(checksum)) {
                 SVNErrorManager.error("svn: Checksum differs, expected '" + textChecksum + "'; actual: '" + checksum + "'");
             }
             checksum = textChecksum;
