@@ -463,7 +463,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                                 SVNWCAccess externalAccess = createWCAccess(external.getFile());
                                 url = externalAccess.getTargetEntryProperty(SVNProperty.URL);
                             }
-                            if (!external.getNewURL().equals(url)) {
+                            if (!external.getNewURL().toString().equals(url)) {
                                 deleteExternal(external);
                             }
                             // update or checkout.
