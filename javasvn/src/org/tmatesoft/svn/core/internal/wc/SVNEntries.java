@@ -80,7 +80,7 @@ public class SVNEntries {
                     String name = line.substring(0, line.indexOf('='));
                     String value = line.substring(line.indexOf('\"') + 1, 
                             line.lastIndexOf('\"'));
-                    value = SVNTranslator.xmlDecode(value);
+                    value = SVNEncodingUtil.xmlDecode(value);
                     entry.put(SVNProperty.SVN_ENTRY_PREFIX + name, value);
                     if (line.charAt(line.length() - 1) == '>') {
                         String entryName = (String) entry.get(SVNProperty.NAME);
@@ -144,7 +144,7 @@ public class SVNEntries {
                         continue;
                     }
                     if (!"".equals(name)) {
-                        Object expectedValue = null;
+                        Object expectedValue;
                         if (SVNProperty.KIND_DIR.equals(entry
                                 .get(SVNProperty.KIND))) {
                             if (SVNProperty.UUID.equals(propName)
@@ -170,7 +170,7 @@ public class SVNEntries {
                     }
                     propName = propName.substring(SVNProperty.SVN_ENTRY_PREFIX
                             .length());
-                    propValue = SVNTranslator.xmlEncode(propValue);
+                    propValue = SVNEncodingUtil.xmlEncodeAttr(propValue);
                     os.write("\n   ");
                     os.write(propName);
                     os.write("=\"");

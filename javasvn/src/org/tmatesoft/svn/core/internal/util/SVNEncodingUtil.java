@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
+import java.util.HashMap;
 
 
 /**
@@ -37,19 +39,19 @@ public class SVNEncodingUtil {
                 }
                 continue;
             } else {
-                if (sb == null) {                    
+                if (sb == null) {
                     sb = new StringBuffer();
                     sb.append(new String(bytes, 0, i));
                 }
                 sb.append("%");
-                
+
                 sb.append(Character.toUpperCase(Character.forDigit((index & 0xF0) >> 4, 16)));
                 sb.append(Character.toUpperCase(Character.forDigit(index & 0x0F, 16)));
             }
         }
         return sb == null ? src : sb.toString();
     }
-    
+
     public static String uriDecode(String src) {
         // this is string in ASCII-US encoding.
         boolean query = false;
@@ -62,11 +64,11 @@ public class SVNEncodingUtil {
             } else if (ch == '+' && query) {
                 ch = ' ';
             } else if (ch == '%' && i + 2 < src.length() &&
-                    isHexDigit(src.charAt(i + 1)) && 
-                    isHexDigit(src.charAt(i + 2))) {
+                       isHexDigit(src.charAt(i + 1)) &&
+                       isHexDigit(src.charAt(i + 2))) {
                 ch = (byte) (hexValue(src.charAt(i + 1))*0x10 + hexValue(src.charAt(i + 2)));
                 decoded = true;
-                i += 2;    
+                i += 2;
             }
             bos.write(ch);
         }
@@ -80,7 +82,7 @@ public class SVNEncodingUtil {
         }
         return src;
     }
-    
+
     public static String xmlEncodeCDATA(String src) {
         StringBuffer sb = null;
         for(int i = 0; i < src.length(); i++) {
@@ -190,12 +192,52 @@ public class SVNEncodingUtil {
         }
         return true;
     }
-    
+
+    private static final Map XML_UNESCAPE_MAP = new HashMap();
+
+    static {
+        XML_UNESCAPE_MAP.put("&amp;", "&");
+        XML_UNESCAPE_MAP.put("&lt;", "<");
+        XML_UNESCAPE_MAP.put("&gt;", ">");
+        XML_UNESCAPE_MAP.put("&quot;", "\"");
+        XML_UNESCAPE_MAP.put("&apos;", "'");
+        XML_UNESCAPE_MAP.put("&#13;", "\r");
+        XML_UNESCAPE_MAP.put("&#10;", "\n");
+        XML_UNESCAPE_MAP.put("&#9;", "\t");
+    }
+
+    public static String xmlDecode(String value) {
+        StringBuffer result = new StringBuffer(value.length());
+        int l = value.length();
+        for (int i = 0; i < l; i++) {
+            char ch = value.charAt(i);
+            if (ch == '&') {
+                String replacement = null;
+                for (int j = i + 1; j < i + 6 && j < l; j++) {
+                    if (value.charAt(j) == ';' && j - i > 1) {
+                        String escape = value.substring(i, j + 1); // full
+                        replacement = (String) XML_UNESCAPE_MAP.get(escape);
+                        if (replacement != null) {
+                            result.append(replacement);
+                            i = j;
+                        }
+                        break;
+                    }
+                }
+                if (replacement != null) {
+                    continue;
+                }
+            }
+            result.append(ch);
+        }
+        return result.toString();
+    }
+
     private static boolean isHexDigit(char ch) {
         return Character.isDigit(ch) ||
-             (Character.toUpperCase(ch) >= 'A' && Character.toUpperCase(ch) <= 'F');
+               (Character.toUpperCase(ch) >= 'A' && Character.toUpperCase(ch) <= 'F');
     }
-    
+
     private static int hexValue(char ch) {
         if (Character.isDigit(ch)) {
             return ch - '0';
@@ -203,13 +245,13 @@ public class SVNEncodingUtil {
         ch = Character.toUpperCase(ch);
         return (ch - 'A') + 0x0A;
     }
-    
+
     private static StringBuffer createStringBuffer(String src, int length) {
         StringBuffer sb = new StringBuffer(src.length());
         sb.append(src.toCharArray(), 0, length);
         return sb;
     }
-    
+
     private static final byte[] uri_char_validity = new byte[] {
         0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,

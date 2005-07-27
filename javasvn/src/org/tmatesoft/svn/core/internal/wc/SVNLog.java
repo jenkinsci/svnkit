@@ -12,6 +12,7 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.BufferedReader;
@@ -126,7 +127,7 @@ public class SVNLog {
                 } else if (propValue != null) {
                     command.put(propName, propValue);
                     addCommand(SVNLog.MODIFY_ENTRY, command, false);
-                    command.remove(SVNTranslator.xmlEncode(propName));
+                    command.remove(SVNEncodingUtil.xmlEncodeAttr(propName));
                 }
             }
         }
@@ -171,7 +172,7 @@ public class SVNLog {
                     if (value == null) {
                         continue;
                     }
-                    value = SVNTranslator.xmlEncode(value);
+                    value = SVNEncodingUtil.xmlEncodeAttr(value);
                     os.write("\n   ");
                     os.write(attr);
                     os.write("=\"");
@@ -222,7 +223,7 @@ public class SVNLog {
                         if (value.endsWith("\"")) {
                             value = value.substring(0, value.length() - 1);
                         }
-                        value = SVNTranslator.xmlDecode(value);
+                        value = SVNEncodingUtil.xmlDecode(value);
                         attrs.put(attrName, value);
                     }
                 }
