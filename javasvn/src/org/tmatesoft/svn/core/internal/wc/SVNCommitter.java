@@ -238,38 +238,14 @@ public class SVNCommitter implements ISVNCommitPathHandler {
     }
 
     private String getCopyFromPath(SVNURL url) {
-        /*
         if (url == null) {
             return null;
         }
-        if (url.indexOf("://") < 0) {
-            return url;
-        }
-        url = url.substring(url.indexOf("://") + 3);
-        */
         String path = url.getPath();
         if (myRepositoryRoot.equals(path)) {
             return "/";
         }
         return path.substring(myRepositoryRoot.length());
-        /*
-        if ("".equals(path)) {
-            return 
-        }
-        
-        if (url.indexOf("/") < 0) {
-            return "/";
-        }
-        url = url.substring(url.indexOf("/"));
-        url = SVNEncodingUtil.uriDecode(url);
-        if (url.startsWith(myRepositoryRoot)) {
-            url = url.substring(myRepositoryRoot.length());
-            if (!url.startsWith("/")) {
-                url = "/" + url;
-            }
-        }
-        return url;
-        */
     }
 
     public static SVNCommitInfo commit(SVNWCAccess wcAccess,
