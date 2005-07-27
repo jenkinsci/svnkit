@@ -19,6 +19,11 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.ISVNEditor;
+
 
 /**
  * @version 1.0
@@ -44,6 +49,8 @@ public class SVNDiffWindowBuilder {
 	private byte[] myInstructions;
 	private byte[] myHeader;
 	private SVNDiffWindow myDiffWindow;
+    private int myFedDataCount;
+    private OutputStream myNewDataStream;
 	
 	private SVNDiffWindowBuilder() {
 		reset();
@@ -65,6 +72,8 @@ public class SVNDiffWindowBuilder {
 			myHeader[i] = -1;
 		}
 		myDiffWindow = null;
+        myNewDataStream = null;
+        myFedDataCount = 0;
 	}
 	
 	public boolean isBuilt() {
@@ -134,38 +143,44 @@ public class SVNDiffWindowBuilder {
         return offset;
     }
 
-    public void accept(InputStream is) throws IOException {       
+    public void accept(InputStream is, ISVNEditor consumer, String path) throws SVNException {       
         switch (myState) {
             case HEADER:
-                for(int i = 0; i < myHeader.length; i++) {
-                    if (myHeader[i] < 0) {
-                        int r = is.read();
-                        if (r < 0) {
-                            break;
+                try {
+                    for(int i = 0; i < myHeader.length; i++) {
+                        if (myHeader[i] < 0) {
+                            int r = is.read();
+                            if (r < 0) {
+                                break;
+                            }
+                            myHeader[i] = (byte) (r & 0xFF);
                         }
-                        myHeader[i] = (byte) (r & 0xFF);
                     }
+                } catch (IOException e) {
+                    SVNErrorManager.error(e.getMessage());
                 }
                 if (myHeader[myHeader.length - 1] >= 0) {
                     myState = OFFSET;
-                    accept(is);
-                    return;
                 }
                 break;
             case OFFSET:
                 for(int i = 0; i < myOffsets.length; i++) {
                     if (myOffsets[i] < 0) {
                         // returns 0 if nothing was read, due to missing bytes.
-                        readInt(is, myOffsets, i);
+                        // but it may be partially read!
+                        try {
+                            readInt(is, myOffsets, i);
+                        } catch (IOException e) {
+                            SVNErrorManager.error(e.getMessage());
+                        }
                         if (myOffsets[i] < 0) {
+                            // can't read?
                             return;
                         }
                     }
                 }
                 if (myOffsets[myOffsets.length - 1] >= 0) {
                     myState = INSTRUCTIONS;
-                    accept(is);
-                    return;
                 }
                 break;
             case INSTRUCTIONS:
@@ -175,24 +190,56 @@ public class SVNDiffWindowBuilder {
                     }
                     // min of number of available and required.
                     int length =  myOffsets[3];
-                    // read lenght bytes.
-                    length = is.read(myInstructions);
+                    // read length bytes (!!!!)
+                    try {
+                        length = is.read(myInstructions, myInstructions.length - length, length);
+                    } catch (IOException e) {
+                        SVNErrorManager.error(e.getMessage());
+                    }
+                    if (length < 0) {
+                        return;
+                    }
                     myOffsets[3] -= length;
                     if (myOffsets[3] == 0) {
                         myState = DONE;
                         if (myDiffWindow == null) {
                             myDiffWindow = createDiffWindow(myOffsets, myInstructions);
+                            myFedDataCount = 0;
+                            myNewDataStream = consumer.textDeltaChunk(path, myDiffWindow);
+                            if (myNewDataStream == null) {
+                                myNewDataStream = SVNFileUtil.DUMMY_OUT;
+                            }
                         }
                     }
-                    return;
+                    break;
                 }
+                myState = DONE;
                 if (myDiffWindow == null) {
                     myDiffWindow = createDiffWindow(myOffsets, myInstructions);
-                } 
-                myState = DONE;
-            default:
-                // all is read.
+                    myFedDataCount = 0;
+                    myNewDataStream = consumer.textDeltaChunk(path, myDiffWindow);
+                    if (myNewDataStream == null) {
+                        myNewDataStream = SVNFileUtil.DUMMY_OUT;
+                    }
+                }
+                break;
+            case DONE:
+                try {
+                    while(myFedDataCount < myDiffWindow.getNewDataLength()) {
+                        int r = is.read();
+                        if (r < 0) {
+                            return;
+                        }
+                        myNewDataStream.write(r);
+                        myFedDataCount++;
+                    }
+                } catch (IOException e) {
+                    SVNErrorManager.error(e.getMessage());
+                }
+                SVNFileUtil.closeFile(myNewDataStream);
+                reset(1);
         }
+        accept(is, consumer, path);
     }
     
     public static void save(SVNDiffWindow window, OutputStream os) throws IOException {
@@ -294,9 +341,11 @@ public class SVNDiffWindowBuilder {
 
     private static void readInt(InputStream is, int[] target, int index) throws IOException {
         target[index] = 0;
+        is.mark(10);
         while(true) {
             int r = is.read();
             if (r < 0) {
+                is.reset();
                 target[index] = -1;
                 return;
             }
@@ -304,7 +353,6 @@ public class SVNDiffWindowBuilder {
             target[index] = target[index] << 7;
             target[index] = target[index] | (b & 0x7f);
             if ((b & 0x80) != 0) {
-                // high bit
                 continue;
             }
             return;

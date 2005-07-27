@@ -12,7 +12,6 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -28,7 +27,6 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.xml.sax.Attributes;
 
 
@@ -290,12 +288,12 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         }
 	}
 
-    protected OutputStream handleDiffWindow(SVNDiffWindow window) throws SVNException {
-        return myEditor.textDeltaChunk(myPath, window);
+    protected String getCurrentPath() {
+        return myPath;
     }
-
-    protected void handleDiffWindowClosed() throws SVNException {
-        myEditor.textDeltaEnd(myPath);
+    
+    protected ISVNEditor getEditor() {
+        return myEditor;
     }
     
     private static String computeWCPropertyName(DAVElement element) {

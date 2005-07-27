@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -42,6 +41,11 @@ public class SVNFileUtil {
     public final static boolean isWindows;
     public final static OutputStream DUMMY_OUT = new OutputStream() {
         public void write(int b) throws IOException {
+        }
+    };
+    public final static InputStream DUMMY_IN = new InputStream() {
+        public int read() throws IOException {
+            return -1;
         }
     };
     
@@ -613,7 +617,7 @@ public class SVNFileUtil {
                     + "': path refers to directory or read access denied");
         }
         if (!file.exists()) {
-            return new ByteArrayInputStream(new byte[0]);
+            return DUMMY_IN;
         }
         try {
             return new BufferedInputStream(new FileInputStream(file));
