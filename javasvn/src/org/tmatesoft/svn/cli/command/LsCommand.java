@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -42,7 +43,7 @@ public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
         }
         for(int i = 0; i < getCommandLine().getURLCount(); i++) {
             String url = getCommandLine().getURL(i);
-            logClient.doList(url, getCommandLine().getPegRevision(i), revision == null || !revision.isValid() ? SVNRevision.HEAD : revision, recursive, this);
+            logClient.doList(SVNURL.parseURIEncoded(url), getCommandLine().getPegRevision(i), revision == null || !revision.isValid() ? SVNRevision.HEAD : revision, recursive, this);
         }
         for(int i = 0; i < getCommandLine().getPathCount(); i++) {
             File path = new File(getCommandLine().getPathAt(i)).getAbsoluteFile();

@@ -19,6 +19,7 @@ import java.util.Date;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
@@ -44,7 +45,7 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
             String url = getCommandLine().getURL(i);
             SVNRevision pegRevision = getCommandLine().getPegRevision(i);
             try {
-                logClient.doAnnotate(url, pegRevision, SVNRevision.UNDEFINED, endRevision, this);
+                logClient.doAnnotate(SVNURL.parseURIEncoded(url), pegRevision, SVNRevision.UNDEFINED, endRevision, this);
             } catch (SVNException e) {
                 if (e.getMessage() != null && e.getMessage().indexOf("binary") >= 0) {
                     out.println("Skipping binary file: '" + url + "'");

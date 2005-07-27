@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -86,7 +87,7 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
                 targets.add(getCommandLine().getPathAt(i));
             }
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);
-            logClient.doLog(url, paths, startRevision ,endRevision, stopOnCopy, myReportPaths, 0, this);
+            logClient.doLog(SVNURL.parseURIEncoded(url), paths, startRevision ,endRevision, stopOnCopy, myReportPaths, 0, this);
         } else if (getCommandLine().hasPaths()) {
             Collection targets = new ArrayList();
             for(int i = 0; i < getCommandLine().getPathCount(); i++) {

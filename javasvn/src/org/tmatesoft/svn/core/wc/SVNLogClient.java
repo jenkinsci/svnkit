@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -66,33 +67,25 @@ public class SVNLogClient extends SVNBasicClient {
                 handler);
     }
 
-    public void doAnnotate(String url, SVNRevision pegRevision,
-            SVNRevision startRevision, SVNRevision endRevision,
-            ISVNAnnotateHandler handler) throws SVNException {
+    public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler) throws SVNException {
         if (startRevision == null || !startRevision.isValid()) {
             startRevision = SVNRevision.create(1);
         }
-        SVNRepository repos = createRepository(null, url, pegRevision,
-                endRevision, null);
-        long endRev = getRevisionNumber(null, url, repos, endRevision);
-        long startRev = getRevisionNumber(null, url, repos, startRevision);
+        SVNRepository repos = createRepository(url, null, pegRevision, endRevision);
+        long endRev = getRevisionNumber(endRevision, repos, null);
+        long startRev = getRevisionNumber(startRevision, repos, null);
         if (endRev < startRev) {
-            SVNErrorManager
-                    .error("svn: Start revision must precede end revision ("
-                            + startRev + ":" + endRev + ")");
+            SVNErrorManager.error("svn: Start revision must precede end revision (" + startRev + ":" + endRev + ")");
         }
         File tmpFile = new File(System.getProperty("user.home"), ".javasvn");
         if (!tmpFile.exists()) {
             tmpFile.mkdirs();
         }
-        doAnnotate(url, startRev, tmpFile, repos, endRev, handler);
+        doAnnotate(repos.getRepositoryPath(""), startRev, tmpFile, repos, endRev, handler);
     }
 
-    private void doAnnotate(String path, long startRev, File tmpFile,
-            SVNRepository repos, long endRev, ISVNAnnotateHandler handler)
-            throws SVNException {
-        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path,
-                startRev, tmpFile);
+    private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, ISVNAnnotateHandler handler) throws SVNException {
+        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, startRev, tmpFile);
         try {
             repos.getFileRevisions("", startRev, endRev, generator);
             generator.reportAnnotations(handler, null);
@@ -163,8 +156,7 @@ public class SVNLogClient extends SVNBasicClient {
         }
     }
 
-    public void doLog(String url, String[] paths, SVNRevision startRevision,
-            SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths,
+    public void doLog(SVNURL url, String[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, 
             long limit, ISVNLogEntryHandler handler) throws SVNException {
         if (startRevision.isValid() && !endRevision.isValid()) {
             endRevision = startRevision;
@@ -174,12 +166,10 @@ public class SVNLogClient extends SVNBasicClient {
                 endRevision = SVNRevision.create(0);
             }
         }
-        paths = paths == null || paths.length == 0 ? new String[] { "" }
-                : paths;
-        url = validateURL(url);
+        paths = paths == null || paths.length == 0 ? new String[] {""} : paths;
         SVNRepository repos = createRepository(url);
-        long startRev = getRevisionNumber(null, url, repos, startRevision);
-        long endRev = getRevisionNumber(null, url, repos, endRevision);
+        long startRev = getRevisionNumber(startRevision, repos, null);
+        long endRev = getRevisionNumber(endRevision, repos, null);
         repos.log(paths, startRev, endRev, reportPaths, stopOnCopy, limit, handler);
     }
 
@@ -195,15 +185,12 @@ public class SVNLogClient extends SVNBasicClient {
         doList(repos, rev, handler, recursive);
     }
 
-    public void doList(String url, SVNRevision pegRevision,
-            SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler)
-            throws SVNException {
+    public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
-        SVNRepository repos = createRepository(null, url, pegRevision,
-                revision, null);
-        long rev = getRevisionNumber(null, url, repos, revision);
+        SVNRepository repos = createRepository(url, null, pegRevision, revision);
+        long rev = getRevisionNumber(revision, repos, null);
         doList(repos, rev, handler, recursive);
     }
 

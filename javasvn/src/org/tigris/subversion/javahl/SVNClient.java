@@ -126,7 +126,7 @@ public class SVNClient implements SVNClientInterface {
         };
         try {
             if(isURL(url)){
-                client.doList(url, SVNConverterUtil.getSVNRevision(pegRevision),
+                client.doList(SVNURL.parseURIEncoded(url), SVNConverterUtil.getSVNRevision(pegRevision),
                         SVNConverterUtil.getSVNRevision(revision), recurse, handler); 
             } else {
                 client.doList(new File(url).getAbsoluteFile(), SVNConverterUtil.getSVNRevision(pegRevision),
@@ -198,7 +198,7 @@ public class SVNClient implements SVNClientInterface {
         try {
             if(isURL(path)){
                 client.doLog(
-                        path, new String[]{""},
+                        SVNURL.parseURIEncoded(path), new String[]{""},
                         SVNConverterUtil.getSVNRevision(revisionStart),
                         SVNConverterUtil.getSVNRevision(revisionEnd),
                         stopOnCopy, discoverPath, limit, new ISVNLogEntryHandler(){
@@ -875,7 +875,7 @@ public class SVNClient implements SVNClientInterface {
         };
         try {
             if(isURL(path)){
-                client.doAnnotate(path,
+                client.doAnnotate(SVNURL.parseURIEncoded(path),
                         SVNRevision.UNDEFINED,
                         SVNConverterUtil.getSVNRevision(revisionStart),
                         SVNConverterUtil.getSVNRevision(revisionEnd),
@@ -908,7 +908,7 @@ public class SVNClient implements SVNClientInterface {
         };
         try {
             if(isURL(path)){
-                client.doAnnotate(path,
+                client.doAnnotate(SVNURL.parseURIEncoded(path),
                         SVNConverterUtil.getSVNRevision(pegRevision),
                         SVNConverterUtil.getSVNRevision(revisionStart),
                         SVNConverterUtil.getSVNRevision(revisionEnd),
