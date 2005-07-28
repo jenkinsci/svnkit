@@ -25,12 +25,17 @@ public class DAVStatus {
         String message = null;
         String http = null;
         StringBuffer sb = new StringBuffer();
+        if (!str.trim().toUpperCase().startsWith("HTTP")) {
+            DAVStatus result = new DAVStatus(400, "", "HTTP/1.1");
+            result.setErrorText("Bad Request");
+            return result;
+        }
         for(int i = 0; i < str.length(); i++) {
             char ch = str.charAt(i);
             if (Character.isWhitespace(ch)) {
                 if (sb.length() == 0) {
                     continue;
-                }
+                }                
                 if (http == null) {
                     http = sb.toString();
                 } else if (code < 0) {

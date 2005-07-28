@@ -12,6 +12,7 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -51,26 +52,59 @@ class ChunkedInputStream extends InputStream {
     }
 
     private int readChunkLength() throws IOException {
-        int ch = 0;
-        StringBuffer sb = new StringBuffer();
-        while(true) {
-            int r = mySource.read();
-            if (r < 0) {
-                return 0;
+        
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int state = 0; 
+        while (state != -1) {
+            int b = mySource.read();
+            if (b == -1) { 
+                throw new IOException("Chunked stream ended unexpectedly");
             }
-            ch = (char) r;
-            if (ch == '\r') {
-                continue;
+            switch (state) {
+                case 0: 
+                    switch (b) {
+                        case '\r':
+                            state = 1;
+                            break;
+                        case '\"':
+                            state = 2;
+                        default:
+                            baos.write(b);
+                    }
+                    break;
+                case 1:
+                    if (b == '\n') {
+                        state = -1;
+                    } else {
+                        throw new IOException("Protocol violation: Unexpected single newline character in chunk size");
+                    }
+                    break;
+                case 2:
+                    switch (b) {
+                        case '\\':
+                            b = mySource.read();
+                            baos.write(b);
+                            break;
+                        case '\"':
+                            state = 0;
+                        default:
+                            baos.write(b);
+                    }
+                    break;
+                default: throw new IOException("Assertion failed while reading chunk length");
             }
-            if (ch == '\n' || ch == '\r') {
-                if (sb.length() == 0) {
-                    continue;
-                }
-                break;
-            }
-            sb.append((char) ch);
         }
-        return Integer.parseInt(sb.toString(), 16);
-    }
 
+        String dataString = new String(baos.toByteArray());
+        int separator = dataString.indexOf(';');
+        dataString = (separator > 0) ? dataString.substring(0, separator).trim() : dataString.trim();
+
+        int result;
+        try {
+            result = Integer.parseInt(dataString.trim(), 16);
+        } catch (NumberFormatException e) {
+            throw new IOException ("Bad chunk size: " + dataString);
+        }
+        return result;
+    }
 }

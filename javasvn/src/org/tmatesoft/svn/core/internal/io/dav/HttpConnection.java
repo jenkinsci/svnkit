@@ -191,7 +191,7 @@ class HttpConnection {
     public DAVStatus request(String method, String path, Map header, InputStream body, DefaultHandler handler, int[] okCodes) throws SVNException {
         DAVStatus status = sendRequest(method, path, initHeader(0, null, header), body);
         // check okCodes, read to status if not ok.
-        assertOk(path, status, okCodes);
+        assertOk(method, path, status, okCodes);
         if (status != null && status.getResponseCode() == 204) {
             finishResponse(status.getResponseHeader());
         } else if (status != null) {
@@ -241,7 +241,7 @@ class HttpConnection {
 			}
 		}
         DAVStatus status = sendRequest(method, path, header, request != null ? new ByteArrayInputStream(request) : null);
-        assertOk(path, status, okCodes);
+        assertOk(method, path, status, okCodes);
         return status;
     }
 
@@ -268,9 +268,7 @@ class HttpConnection {
                 close();
                 acknowledgeSSLContext(false);
                 throw new SVNException(e);
-            } finally {
-//                SVNDebugLog.flushStream(myOutputStream);
-            }
+            } 
             acknowledgeSSLContext(true);
             if (status != null
                     && (status.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED || status.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN)) {
@@ -283,6 +281,9 @@ class HttpConnection {
                 close();
                 myCredentialsChallenge = DAVUtil.parseAuthParameters((String) readHeader.get("WWW-Authenticate"));
                 if (myCredentialsChallenge == null) {
+                    if (status.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+                        throw new SVNAuthenticationException("Access forbidden");
+                    }
                     throw new SVNAuthenticationException("Authentication challenge is not supported:\n" + readHeader.get("WWW-Authenticate"));
                 }
                 myCredentialsChallenge.put("methodname", method);
@@ -349,12 +350,18 @@ class HttpConnection {
                 SVNErrorManager.error("svn: Cannot connecto to host '" + mySVNRepositoryLocation.getHost() + "'");
             } else {
                 close();
+                if (status != null && status.getResponseCode() >= 300) {
+                    throw new SVNException(status.getMessage());
+                }
                 throw new SVNCancelException("svn: Authentication cancelled");
             }
         }
     }
 
     private void readError(String url, DAVStatus status) throws SVNException {
+        if (status.getErrorText() != null) {
+            return;
+        }
         StringBuffer text = new StringBuffer();
         InputStream stream = null;
         try {
@@ -563,7 +570,7 @@ class HttpConnection {
             while (true) {
                 int read = is.read();
                 if (read < 0) {
-                    return null;
+                    return responseCode;
                 }
                 if (read != '\n' && read != '\r') {
                     line.append((char) read);
@@ -574,7 +581,7 @@ class HttpConnection {
                     is.mark(1);
                     read = is.read();
                     if (read < 0) {
-                        return null;
+                        return responseCode;
                     }
                     if (read != '\n') {
                         is.reset();
@@ -684,15 +691,22 @@ class HttpConnection {
         return ourSAXParserFactory;
     }
 
-    private void assertOk(String url, DAVStatus status, int[] codes) throws SVNException {
+    private void assertOk(String method, String url, DAVStatus status, int[] codes) throws SVNException {
         int code = status.getResponseCode();
+        if (url == null || "".equals(url)) {
+            url = "/";
+        }
         if (codes == null) {
             // check that all are > 200.
             if (code >= 200 && code < 300) {
                 return;
             }
             readError(url, status);
-            throw new SVNException(status.getErrorText());
+            String message = "svn: " + method + " request failed on '" + url + "'";
+            if (status.getErrorText() != null && !"".equals(status.getErrorText())) {
+                message += "\nsvn: " + status.getErrorText();
+            }
+            SVNErrorManager.error(message);
         }
         for (int i = 0; i < codes.length; i++) {
             if (code == codes[i]) {
@@ -700,7 +714,11 @@ class HttpConnection {
             }
         }
         readError(url, status);
-        throw new SVNException(status.getErrorText());
+        String message = "svn: " + method + " request failed on '" + url + "'";
+        if (status.getErrorText() != null && !"".equals(status.getErrorText())) {
+            message += "\nsvn: " + status.getErrorText();
+        }
+        SVNErrorManager.error(message);
     }
 
     private static Map initHeader(int depth, String label, Map map) {
