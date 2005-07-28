@@ -98,6 +98,9 @@ class ChunkedInputStream extends InputStream {
         String dataString = new String(baos.toByteArray());
         int separator = dataString.indexOf(';');
         dataString = (separator > 0) ? dataString.substring(0, separator).trim() : dataString.trim();
+        if (dataString.trim().length() == 0) {
+            return readChunkLength();
+        }
 
         int result;
         try {
