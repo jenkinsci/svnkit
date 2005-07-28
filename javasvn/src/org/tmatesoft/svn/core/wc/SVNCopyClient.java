@@ -50,8 +50,50 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
+ * This class provides methods to perform any kinds of copying and moving that <b>SVN</b>
+ * supports - operating on both Working Copies (WC) and URLs.
+ * 
+ * <p>
+ * Copy operations allow a user to copy versioned files and directories with all their 
+ * previous history in several ways. 
+ * 
+ * <p>
+ * Supported copy operations are:
+ * <ul>
+ * <li> Working Copy to Working Copy (WC-to-WC) copying - this operation copies the source
+ * Working Copy item to the destination one and schedules the source copy for addition with history.
+ * <li> Working Copy to URL (WC-to-URL) copying - this operation commits to the repository (exactly
+ * to that repository location that is specified by URL) a copy of the Working Copy item.
+ * <li> URL to Working Copy (URL-to-WC) copying - this operation will copy the source item from
+ * the repository to the Working Copy item and schedule the source copy for addition with history.
+ * <li> URL to URL (URL-to-URL) copying - this is a fully repository-side operation, it commits 
+ * a copy of the source item to a specified repository location (within the same repository, of
+ * course). 
+ * </ul>
+ * 
+ * <p> 
+ * Besides just copying <b>SVNCopyClient</b> also is able to move a versioned item - that is
+ * first making a copy of the source item and second scheduling the source item for deletion 
+ * when operating on a Working Copy or right committing the deletion of the source item when 
+ * operating immediately on the repository.
+ * 
+ * <p>
+ * Supported move operations are:
+ * <ul>
+ * <li> Working Copy to Working Copy (WC-to-WC) moving - this operation copies the source
+ * Working Copy item to the destination one and schedules the source item for deletion.
+ * <li> URL to URL (URL-to-URL) moving - this is a fully repository-side operation, it commits 
+ * a copy of the source item to a specified repository location (within the same repository, of
+ * course) and deletes the source item. 
+ * </ul>
+ * 
+ * <p>
+ * Overloaded <code>doCopy(..)</code> methods of <b>SVNCopyClient</b> are similar to
+ * 'svn copy' and 'svn move' commands of the <b>SVN</b> command line client. 
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
+ * 
  */
 public class SVNCopyClient extends SVNBasicClient {
 
@@ -65,10 +107,38 @@ public class SVNCopyClient extends SVNBasicClient {
         super(repositoryFactory, options);
     }
 
+    /**
+     * Sets an implementation of <span class="style0">ISVNCommitHandler</span> to 
+     * the commit handler that will be used during commit operations to handle 
+     * commit log messages. The handler will receive a clien's log message and items 
+     * (represented as <span class="style0">SVNCommitItem</span> objects) that will be 
+     * committed. Depending on implementor's aims the initial log message can
+     * be modified (or something else) and returned back. 
+     * 
+     * <p>
+     * If using <span class="style0">SVNCopyClient</span> without specifying any
+     * commit handler then a default one will be used - {@link DefaultSVNCommitHandler}.
+     * 
+     * @param handler				an implementor's handler that will be used to handle 
+     * 								commit log messages
+     * @see	  #getCommitHandler()
+     * @see	  ISVNCommitHandler
+     */
     public void setCommitHandler(ISVNCommitHandler handler) {
         myCommitHandler = handler;
     }
 
+    /**
+     * Returns the specified commit handler (if set) being in use or a default one 
+     * (<span class="style0">DefaultSVNCommitHandler</span>) if no special 
+     * implementations of <span class="style0">ISVNCommitHandler</span> were 
+     * previousely provided.
+     *   
+     * @return	the commit handler being in use or a default one
+     * @see	    #setCommitHander(ISVNCommitHandler)
+     * @see		ISVNCommitHabdler
+     * @see		DefaultSVNCommitHandler 
+     */
     public ISVNCommitHandler getCommitHandler() {
         if (myCommitHandler == null) {
             myCommitHandler = new DefaultSVNCommitHandler();
@@ -78,6 +148,70 @@ public class SVNCopyClient extends SVNBasicClient {
 
     // path, path (this could be anything).
     // dstRevision: WORKING or HEAD only
+    /**
+     * Copies (or moves) a source path/URL into a destination path/URL and in the cases of WC-to-WC or
+     * URL-to-WC copying schedules the source copy for addition with history. 
+     * 
+     * <p>
+     * 'Moving' is first copying
+     * a source to a destination and then scheduling the source for deletion. 
+     * 
+     * <p>
+     * <b>How this method works:</b>
+     * <ul>
+     * <li>If <code>srcRevision</code> = <code>dstRevision</code> = <b>SVNRevision.<i>WORKING</i></b> 
+     * then WC-to-WC copying (moving) with scheduling a copy of <code>srcPath</code> for addition takes place. In this 
+     * case both <code>srcPegRevision</code> and <code>dstPegRevision</code> are ignored.  
+     * <li>If <code>srcRevision</code> = <b>SVNRevision.<i>WORKING</i></b> and <code>dstRevision</code> = <b>SVNRevision.<i>HEAD</i></b> 
+     * then WC-to-URL copying takes place. If <code>srcPath</code> is a directory then the repository location where <code>srcPath</code> 
+     * will be copied to is made up of the value of the 'svn:entries:url' property for <code>srcPath</code> and the name of the entry 
+     * to be copied. For example, 'X:\WC\dir1' from 'svn://host/repos/dir1' will be copied into 'svn://host/repos/dir1/dir1'.  
+     * <code>srcPath</code> must be a directory since a file can not be copied in this way.   
+     * <li>If <code>dstRevision</code> = <b>SVNRevision.<i>WORKING</i></b> and <code>srcRevision</code> is something different from
+     * <b>SVNRevision.<i>WORKING</i></b> then URL-to-WC copying with scheduling a copy of the source URL takes place. The source
+     * URL corresponds to the repository location of <code>srcPath</code> at <code>srcRevision</code>.
+     * <li>If <code>srcRevision</code> is different from <b>SVNRevision.<i>WORKING</i></b> and <code>dstRevision</code> = 
+     * <b>SVNRevision.<i>HEAD</i></b> then URL-to-URL (moving) copying takes place. The source URL (that is the repository location of <code>srcPath</code>
+     * at <code>srcRevision</code>) is copied (or moved) to the destination one (that is the repository location 
+     * of <code>dstPath</code>).
+     * </ul>
+     * 
+     * <p>
+     * <b>Note:</b> if either <code>srcPegRevision</code> or <code>dstPegRevision</code> is 
+     * <span class="javakeyword">null</span> or somehow invalid it's assigned to the value of
+     * 'svn:entry:revision' property of the <code>srcPath</code>/<code>dstPath</code> entry.
+     * 
+     * @param  srcPath				the source WC item's path  					
+     * @param  srcPegRevision		the revision at which the source item is seen in the  
+     * 								repository  
+     * @param  srcRevision			the desired revision of the source item; if this parameter is 
+     * 								<span class="javakeyword">null</span> or somehow invalid then the current
+     * 								item's WORKING revision is used
+     * @param  dstPath				the destination WC item's path; 
+     * @param  dstPegRevision		the revision at which the destination item is seen in the  
+     * 								repository
+     * @param  dstRevision			the desired revision of the destination item; can be only either <b>SVNRevision.<i>WORKING</i></b>
+     * 								or <b>SVNRevision.<i>HEAD</i></b>
+     * @param  force				<span class="javakeyword">true</span> to force the moving operation even if
+     * 								the <code>srcPath</code> has local modifications; this flag is relevant
+     * 								only for WC-to-WC moving 
+     * @param  move					<span class="javakeyword">true</span> to move either <code>srcPath</code> item's repository
+     * 								location to <code>dstPath</code> item's repository location or <code>srcPath</code> itself
+     * 								to <code>dstItem</code>
+     * @param  commitMessage		a string to be a commit log message
+     * @return 						<b>SVNCommitInfo.<i>NULL</i></b> for URL-to-WC copying and WC-to-WC copying/moving; 
+     * 								information on a new revision as the result of the commit for WC-to-URL copying and URL-to-URL copying/moving
+     * @throws SVNException			1) If <code>srcPath</code> doesn't exist at <code>srcRevision</code>;
+     * 								2) for URL-to-URL: source and destination are not located in the same 
+     * 								repository;
+     * 								3) If <code>dstURL</code> is a file that already exists 
+     * 								4) if <code>dstRevision</code> is neither 
+     * 								<b>SVNRevision.<i>HEAD</i></b> nor 
+     * 								<b>SVNRevision.<i>WORKING</i></b> (only these are valid)
+     * 								5) moving (<code>move</code> = <span class="javakeyword">true</span>) 
+     * 								is supported only either for WC-to-WC or URL-to-URL schema
+     * 								     
+     */
     public SVNCommitInfo doCopy(File srcPath, SVNRevision srcPegRevision,
             SVNRevision srcRevision, File dstPath, SVNRevision dstPegRevision,
             SVNRevision dstRevision, boolean force, boolean move,
@@ -131,7 +265,7 @@ public class SVNCopyClient extends SVNBasicClient {
             // url->url
             SVNWCAccess srcAccess = createWCAccess(srcPath);
             SVNWCAccess dstAccess = createWCAccess(srcPath);
-
+    
             String srcURL = srcAccess.getTargetEntryProperty(SVNProperty.URL);
             String dstURL = dstAccess.getTargetEntryProperty(SVNProperty.URL);
             if (srcPegRevision == null || !srcPegRevision.isValid()) {
@@ -153,6 +287,49 @@ public class SVNCopyClient extends SVNBasicClient {
     }
 
     // path, url (url->url or wc->url)
+    /**
+     * Copies (or moves) a source path/URL into a destination URL. 
+     * 
+     * <p>
+     * 'Moving' is first copying a source to a destination and then scheduling 
+     * the source for deletion. 
+     * 
+     * <p>
+     * <b>How this method works:</b>
+     * <ul>
+     * <li>If <code>srcRevision</code> is different from <b>SVNRevision.<i>WORKING</i></b>
+     * then URL-to-URL copying (or moving) takes place.
+     * <li>Otherwise (<code>srcRevision</code> = <b>SVNRevision.<i>WORKING</i></b>) it's
+     * WC-to-URL copying. In this case <code>srcPegRevision</code> is ignored.
+     * </ul>
+     * 
+     * <p>
+     * <b>Note:</b> if <code>srcPegRevision</code>  is <span class="javakeyword">null</span> or 
+     * somehow invalid it's assigned (if needed) to the value of
+     * 'svn:entry:revision' property of the <code>srcPath</code> entry.
+     * 
+     * 
+     * @param  srcPath				the source WC item's path  					
+     * @param  srcPegRevision		the revision at which the source item is seen in the  
+     * 								repository  
+     * @param  srcRevision			the revision of the source item; if this parameter is 
+     * 								<span class="javakeyword">null</span> or somehow invalid then the current
+     * 								item's WORKING revision is used
+     * @param  dstURL				the repository location where the source item will be copied to 
+     * @param  dstPegRevision		the revision at which the destination item (<code>dstURL</code>) is seen in the  
+     * 								repository
+     * @param  move					<span class="javakeyword">true</span> to move <code>srcPath</code> item's repository
+     * 								location to <code>dstURL</code>
+     * @param  commitMessage		a string to be a commit log message
+     * @return 						information on a new revision as the result
+     * 								of the commit
+     * @throws SVNException			1) If <code>srcPath</code> doesn't exist at <code>srcRevision</code>;
+     * 								2) If <code>dstURL</code> is a file that already exists 
+     * 								3) for URL-to-URL: source and destination are not located in the same 
+     * 								repository;
+     * 								4) moving (<code>move</code> = <span class="javakeyword">true</span>) 
+     * 								is supported only either for WC-to-WC or URL-to-URL schema
+     */
     public SVNCommitInfo doCopy(File srcPath, SVNRevision srcPegRevision,
             SVNRevision srcRevision, String dstURL, SVNRevision dstPegRevision,
             boolean move, String commitMessage) throws SVNException {
@@ -183,7 +360,53 @@ public class SVNCopyClient extends SVNBasicClient {
             return wc2urlCopy(srcPath, dstURL, commitMessage);
         }
     }
-
+    
+    /**
+     * Copies (or moves) a source URL into a destination URL/path and in the case of
+     * URL-to-WC copying schedules the source copy for addition with history. 
+     * 
+     * <p>
+     * 'Moving' is first copying a source to a destination and then scheduling 
+     * the source for deletion. 
+     * 
+     * <p>
+     * <b>How this method works:</b>
+     * <ul>
+     * <li>If <code>dstRevision</code> = <b>SVNRevision.<i>WORKING</i></b>
+     * then URL-to-WC copying takes place. In this case <code>dstPegRevision</code> is ignored.
+     * <li>Otherwise (<code>dstRevision</code> = <b>SVNRevision.<i>HEAD</i></b>) it's URL-to-URL 
+     * copying. 
+     * </ul>
+     * 
+     * <p>
+     * <b>Note:</b> if <code>dstPegRevision</code>  is <span class="javakeyword">null</span> or 
+     * somehow invalid it's assigned to the value of
+     * 'svn:entry:revision' property of the <code>srcPath</code> entry.
+     * 
+     * @param  srcURL				the repository location of the source item  					
+     * @param  srcPegRevision		the revision at which the source item is seen in the  
+     * 								repository  
+     * @param  srcRevision			the desired revision of the source item; 
+     * @param  dstPath				the destination WC item's path where the source item will be copied to 
+     * @param  dstPegRevision		the revision at which the destination item is seen in the  
+     * 								repository
+     * @param  dstRevision			the desired revision of the destination item; can be only either 
+     * 								<b>SVNRevision.<i>WORKING</i></b> or <b>SVNRevision.<i>HEAD</i></b>
+     * @param  move					<span class="javakeyword">true</span> to move <code>srcURL</code> to 
+     * 								<code>dstPath</code> item's repository location
+     * @param  commitMessage		a string to be a commit log message
+     * @return 						<b>SVNCommitInfo.<i>NULL</i></b> for URL-to-WC copying; information on a 
+     * 								new revision as the result of the commit for URL-to-URL copying/moving
+     * @throws SVNException			1) If <code>srcURL</code> doesn't exist at <code>srcRevision</code>;
+     * 								2) If <code>dstPath</code> is a file that already exists 
+     * 								3) for URL-to-URL: source and destination are not located in the same 
+     * 								repository;
+     * 								4) if <code>dstRevision</code> is neither 
+     * 								<b>SVNRevision.<i>HEAD</i></b> nor 
+     * 								<b>SVNRevision.<i>WORKING</i></b> (only these are valid)
+     * 								5) moving (<code>move</code> = <span class="javakeyword">true</span>) 
+     * 								is supported only either for WC-to-WC or URL-to-URL schema
+     */
     // url, path (url->url or url->wc)
     // dstRevision: WORKING or HEAD only
     public SVNCommitInfo doCopy(String srcURL, SVNRevision srcPegRevision,
@@ -223,6 +446,34 @@ public class SVNCopyClient extends SVNBasicClient {
     }
 
     // url, url (url->url only)
+    /**
+     * Copies (or moves) a source URL into a destination URL. 
+     * 
+     * <p>
+     * 'Moving' is first copying a source to a destination and then scheduling 
+     * the source for deletion. 
+     * 
+     * @param  srcURL				the repository location of the source item to be copied  					
+     * @param  srcPegRevision		the revision at which the source entry is seen in the  
+     * 								repository; if this parameter is <span class="javakeyword">null</span> 
+     * 								then it's assigned to <b>SVNRevision.<i>UNDEFINED</i></b>  
+     * @param  srcRevision			the desired revision of the source item; if this parameter is 
+     * 								<span class="javakeyword">null</span> then it's assigned to
+     * 								<b>SVNRevision.<i>HEAD</i></b>
+     * @param  dstURL				the repository location of the destination item where the source will be copied to 
+     * @param  dstPegRevision		the revision at which the destination entry (<code>dstURL</code>) is seen in the  
+     * 								repository; if this parameter is <span class="javakeyword">null</span> 
+     * 								then it's assigned to <b>SVNRevision.<i>UNDEFINED</i></b>
+     * @param  move					<span class="javakeyword">true</span> to move <code>srcURL</code> to <code>dstURL</code>
+     * @param  commitMessage		a string to be a commit log message
+     * @return 						information on a new revision as the result
+     * 								of the commit
+     * @throws SVNException			Possible cases are: 
+     * 								1) If <code>srcURL</code> doesn't exist at <code>srcRevision</code>;
+     * 								2) If <code>dstURL</code> is a file that already exists 
+     * 								3) source and destination are not located in the same 
+     * 								repository;
+     */
     public SVNCommitInfo doCopy(String srcURL, SVNRevision srcPegRevision,
             SVNRevision srcRevision, String dstURL, SVNRevision dstPegRevision,
             boolean move, String commitMessage) throws SVNException {

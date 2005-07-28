@@ -58,15 +58,15 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
  * that operate only on a repository.
  * 
  * <p>
- * Here's a list of the <span class="style0">SVNCommitClient</span>'s commit-related methods 
- * matched against corresponing commands of the <span class="style2">SVN</span> command line 
+ * Here's a list of the <b>SVNCommitClient</b>'s commit-related methods 
+ * matched against corresponing commands of the <b>SVN</b> command line 
  * client:
  * 
  * <ul>
- * <li><span class="style3">doCommit(..)</span> -> 'svn commit'
- * <li><span class="style3">doImport(..)</span> -> 'svn import'
- * <li><span class="style3">doCommit(..)</span> -> 'svn delete URL'
- * <li><span class="style3">doMkDir(..)&nbsp;</span> -> 'svn mkdir URL'
+ * <li><b>doCommit(..)</b> -> 'svn commit'
+ * <li><b>doImport(..)</b> -> 'svn import'
+ * <li><b>doCommit(..)</b> -> 'svn delete URL'
+ * <li><b>doMkDir(..)&nbsp;</b> -> 'svn mkdir URL'
  * </ul>
  *   
  * @version 1.0
@@ -116,9 +116,9 @@ public class SVNCommitClient extends SVNBasicClient {
     }
     
     /**
-     * Returns the specified commit handler being in use or a default one 
-     * (<span class="style0">DefaultSVNCommitHandler</span>) if no special 
-     * implementations of <span class="style0">ISVNCommitHandler</span> were 
+     * Returns the specified commit handler (if set) being in use or a default one 
+     * (<b>DefaultSVNCommitHandler</b>) if no special 
+     * implementations of <b>ISVNCommitHandler</b> were 
      * previousely provided.
      *   
      * @return	the commit handler being in use or a default one
@@ -318,7 +318,7 @@ public class SVNCommitClient extends SVNBasicClient {
      * 							where the <code>path</code> will be imported 			
      * @param  commitMessage	a string to be a commit log message
      * @param  recursive		this flag is relevant only when the <code>path</code> is 
-     * 							a directory: if <code>true</code> then the entire directory
+     * 							a directory: if <span class="javakeyword">true</span> then the entire directory
      * 							tree will be imported including all child directories, otherwise 
      * 							only items located in the directory itself
      * @return					information on a new revision as the result

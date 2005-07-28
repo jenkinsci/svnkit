@@ -44,8 +44,20 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
+ * This class provides methods which allow to check out, update, switch and relocate a
+ * Working Copy as well as export an unversioned directory or file from a repository.
+ * 
+ * <p>
+ * Here's a list of the <b>SVNUpdateClient</b>'s methods 
+ * matched against corresponing commands of the <b>SVN</b> command line 
+ * client:
+ * <ul>
+ * <li>
+ * <li>
+ * </ul>
+ *  
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
  */
 public class SVNUpdateClient extends SVNBasicClient {
 
@@ -56,7 +68,25 @@ public class SVNUpdateClient extends SVNBasicClient {
     protected SVNUpdateClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
         super(repositoryFactory, options);
     }
-
+    
+    /**
+     * Brings the Working Copy item up-to-date with repository changes at the specified
+     * revision.
+     * 
+     * <p>
+     * As a revision <b>SVNRevision</b>'s pre-defined constants can be used. For example,
+     * to update the Working Copy to the latest revision of the repository use 
+     * <b>SVNRevision.<i>HEAD</i></b>.
+     * 
+     * @param  file			the Working copy item to be updated
+     * @param  revision		the desired revision against which the item will be updated 
+     * @param  recursive	if <span class="javakeyword">true</span> and <code>file</code> is
+     * 						a directory then the entire tree will be updated, otherwise if 
+     * 						<span class="javakeyword">false</span> - only items located immediately
+     * 						in the directory itself
+     * @return				the revision number to which <code>file</code> was updated to
+     * @throws SVNException 
+     */
     public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {
         long revNumber = getRevisionNumber(file, revision);
         SVNWCAccess wcAccess = createWCAccess(file);
@@ -83,7 +113,26 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
         }
     }
-
+    
+    /**
+     * Updates the Working Copy item to mirror a new URL. 
+     * 
+     * <p>
+     * As a revision <b>SVNRevision</b>'s pre-defined constants can be used. For example,
+     * to update the Working Copy to the latest revision of the repository use 
+     * <b>SVNRevision.<i>HEAD</i></b>.
+     * 
+     * @param  file			the Working copy item to be switched
+     * @param  url			the repository location as a target against which the item will 
+     * 						be switched
+     * @param  revision		the desired revision of the repository target   
+     * @param  recursive	if <span class="javakeyword">true</span> and <code>file</code> is
+     * 						a directory then the entire tree will be updated, otherwise if 
+     * 						<span class="javakeyword">false</span> - only items located immediately
+     * 						in the directory itself
+     * @return				the revision number to which <code>file</code> was updated to
+     * @throws SVNException 
+     */
     public long doSwitch(File file, SVNURL url, SVNRevision revision, boolean recursive) throws SVNException {
         long revNumber = getRevisionNumber(file, revision);
         SVNWCAccess wcAccess = createWCAccess(file);
@@ -111,7 +160,34 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
         }
     }
-
+    
+    /**
+     * Checks out a Working Copy from a repository.
+     * 
+     * <p>
+     * If the destination path (<code>dstPath</code>) is <span class="javakeyword">null</span>
+     * then the last component of <code>url</code> is used for the local directory name.
+     * 
+     * <p>
+     * As a revision <b>SVNRevision</b>'s pre-defined constants can be used. For example,
+     * to check out a Working Copy at the latest revision of the repository use 
+     * <b>SVNRevision.<i>HEAD</i></b>.
+     * 
+     * @param  url			a repository location from where a Working Copy will be checked out		
+     * @param  dstPath		the local path where the Working Copy will be placed
+     * @param  pegRevision	the revision at which <code>url</code> will be firstly seen
+     * 						in the repository to make sure it's the one that is needed
+     * @param  revision		the desired revision of the Working Copy to be checked out
+     * @param  recursive	if <span class="javakeyword">true</span> and <code>url</code> is
+     * 						a directory then the entire tree will be checked out, otherwise if 
+     * 						<span class="javakeyword">false</span> - only items located immediately
+     * 						in the directory itself
+     * @return				the revision number of the Working Copy
+     * @throws SVNException <code>url</code> refers to a file, not a directory; <code>dstPath</code>
+     * 						already exists but it is a file, not a directory; <code>dstPath</code> already
+     * 						exists and is a versioned directory but has a different URL (repository location
+     * 						against which the directory is controlled)  
+     */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
         if (dstPath == null) {
             dstPath = new File(".", SVNPathUtil.tail(url.getPath()));
@@ -149,7 +225,45 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
         return result;
     }
-
+    
+    /**
+     * Exports a clean directory or single file from a repository.
+     * 
+     * <p>
+     * If <code>eolStyle</code> is not <span class="javakeyword">null</span> then it should denote
+     * a specific End-Of-Line marker for the files to be exported. Significant values for 
+     * <code>eolStyle</code> are:
+     * <ul>
+     * <li>"CRLF" (Carriage Return Line Feed) - this causes files to contain '\r\n' line ending sequences 
+     * for EOL markers, regardless of the operating system in use (for instance, this EOL marker is used by 
+     * software on the Windows platform).
+     * <li>"LF" (Line Feed) - this causes files to contain '\n' line ending sequences 
+     * for EOL markers, regardless of the operating system in use (for instance, this EOL marker is used by 
+     * software on the Unix platform). 
+     * <li>"CR" (Carriage Return) - this causes files to contain '\r' line ending sequences 
+     * for EOL markers, regardless of the operating system in use (for instance, this EOL marker was used by 
+     * software on older Macintosh platforms).
+     * <li>"native" - this causes files to contain the EOL markers that are native to the operating system 
+     * on which <b>JavaSVN</b> is run.
+     * </ul>
+     * 
+     * @param  url				a repository location from where the unversioned directory/file  will
+     * 							be exported
+     * @param  dstPath			the local path where the repository items will be exported to 			
+     * @param  pegRevision		the revision at which <code>url</code> will be firstly seen
+     * 							in the repository to make sure it's the one that is needed
+     * @param  revision			the desired revision of the directory/file to be exported
+     * @param  eolStyle			a string that denotes a specific End-Of-Line charecter;  
+     * @param  force			<span class="javakeyword">true</span> to fore the operation even
+     * 							if there are local files with the same names as those in the repository
+     * 							(local ones will be replaced) 
+     * @param  recursive		if <span class="javakeyword">true</span> and <code>url</code> is
+     * 							a directory then the entire tree will be exported, otherwise if 
+     * 							<span class="javakeyword">false</span> - only items located immediately
+     * 							in the directory itself
+     * @return					the revision number of the exported directory/file 
+     * @throws SVNException
+     */
     public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, boolean recursive) throws SVNException {
         SVNRepository repository = createRepository(url, null, pegRevision, revision);
         long exportedRevision = doRemoteExport(repository, repository.getPegRevision(), dstPath, eolStyle, force, recursive);
@@ -157,6 +271,57 @@ public class SVNUpdateClient extends SVNBasicClient {
         return exportedRevision;
     }
 
+    /**
+     * Exports a clean directory or single file from eihter a source Working Copy or
+     * a repository.
+     * 
+     * <p>
+     * How this method works:
+     * <ul>
+     * <li> If <code>revision</code> is different from <b>SVNRevision.<i>BASE</i></b>, 
+     * <b>SVNRevision.<i>WORKING</i></b>, <b>SVNRevision.<i>COMMITTED</i></b>, 
+     * <b>SVNRevision.<i>BASE</i></b> - then the repository origin of <code>srcPath</code>
+     * will be exported (what is done by "remote" {@link #doExport(SVNURL, File, SVNRevision, SVNRevision, String, boolean, boolean)
+     * doExport(..)}).
+     * <li> In other cases a clean unversioned copy of <code>srcPath</code> - whether a directory or a single file -
+     * is exported to <code>dstPath</code>. 
+     * </ul>
+     * 
+     * <p>
+     * If <code>eolStyle</code> is not <span class="javakeyword">null</span> then it should denote
+     * a specific End-Of-Line marker for the files to be exported. Significant values for 
+     * <code>eolStyle</code> are:
+     * <ul>
+     * <li>"CRLF" (Carriage Return Line Feed) - this causes files to contain '\r\n' line ending sequences 
+     * for EOL markers, regardless of the operating system in use (for instance, this EOL marker is used by 
+     * software on the Windows platform).
+     * <li>"LF" (Line Feed) - this causes files to contain '\n' line ending sequences 
+     * for EOL markers, regardless of the operating system in use (for instance, this EOL marker is used by 
+     * software on the Unix platform). 
+     * <li>"CR" (Carriage Return) - this causes files to contain '\r' line ending sequences 
+     * for EOL markers, regardless of the operating system in use (for instance, this EOL marker was used by 
+     * software on older Macintosh platforms).
+     * <li>"native" - this causes files to contain the EOL markers that are native to the operating system 
+     * on which <b>JavaSVN</b> is run.
+     * </ul>
+     * 
+     * @param  srcPath			a repository location from where the unversioned directory/file  will
+     * 							be exported
+     * @param  dstPath			the local path where the repository items will be exported to 			
+     * @param  pegRevision		the revision at which <code>url</code> will be firstly seen
+     * 							in the repository to make sure it's the one that is needed
+     * @param  revision			the desired revision of the directory/file to be exported
+     * @param  eolStyle			a string that denotes a specific End-Of-Line charecter;  
+     * @param  force			<span class="javakeyword">true</span> to fore the operation even
+     * 							if there are local files with the same names as those in the repository
+     * 							(local ones will be replaced) 
+     * @param  recursive		if <span class="javakeyword">true</span> and <code>url</code> is
+     * 							a directory then the entire tree will be exported, otherwise if 
+     * 							<span class="javakeyword">false</span> - only items located immediately
+     * 							in the directory itself
+     * @return					the revision number of the exported directory/file 
+     * @throws SVNException
+     */
     public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle,
             final boolean force, boolean recursive) throws SVNException {
         long exportedRevision = -1;
@@ -368,7 +533,25 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
         return revNumber;
     }
-
+    
+    /**
+     * Substitutes the beginning part of a Working Copy's URL with a new one.
+     * 
+     * <p> 
+     * When a repository root location or a URL schema is changed the old URL of the 
+     * Working Copy which starts with <code>oldURL</code> should be substituted for a
+     * new URL beginning - <code>newURL</code>.
+     * 
+     * @param  dst				a Working Copy item's path 
+     * @param  oldURL			the old beginning part of the repository's URL that should
+     * 							be overwritten  
+     * @param  newURL			a new beginning part for the repository location that
+     * 							will overwrite <code>oldURL</code> 
+     * @param  recursive		if <span class="javakeyword">true</span> and <code>dst</code> is
+     * 							a directory then the entire tree will be relocated, otherwise if 
+     * 							<span class="javakeyword">false</span> - only <code>dst</code> itself
+     * @throws SVNException
+     */
     public void doRelocate(File dst, SVNURL oldURL, SVNURL newURL, boolean recursive) throws SVNException {
         SVNRepository repos = createRepository(newURL);
         repos.testConnection();
