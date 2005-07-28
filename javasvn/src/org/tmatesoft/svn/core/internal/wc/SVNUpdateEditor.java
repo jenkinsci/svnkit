@@ -328,8 +328,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     public void textDeltaEnd(String commitPath) throws SVNException {
         File baseTmpFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name, true);
         File targetFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name + ".tmp", true);
-        myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile);
-        if (myCurrentFile.TextUpdated) {
+        if (myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile)) {
             SVNFileUtil.rename(targetFile, baseTmpFile);
         }
     }

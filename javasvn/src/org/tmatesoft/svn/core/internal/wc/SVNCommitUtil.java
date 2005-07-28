@@ -340,8 +340,7 @@ public class SVNCommitUtil {
         for (int i = 0; i < items.length; i++) {
             SVNCommitItem item = items[i];
             if (itemsMap.containsKey(item.getURL().toString())) {
-                SVNCommitItem oldItem = (SVNCommitItem) itemsMap.get(item
-                        .getURL());
+                SVNCommitItem oldItem = (SVNCommitItem) itemsMap.get(item.getURL().toString());
                 SVNErrorManager.error("svn: Cannot commit both '"
                         + item.getFile() + "' and '" + oldItem.getFile()
                         + "' as they refer to the same URL");

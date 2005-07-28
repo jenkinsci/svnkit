@@ -95,14 +95,13 @@ public class SVNCommitPacket {
             return EMPTY;
         }
         Collection items = new ArrayList();
-        Map lockTokens = myLockTokens == null ? null
-                : new HashMap(myLockTokens);
+        Map lockTokens = myLockTokens == null ? null : new HashMap(myLockTokens);
         for (int i = 0; myCommitItems != null && i < myCommitItems.length; i++) {
             SVNCommitItem commitItem = myCommitItems[i];
             if (!myIsSkipped[i]) {
                 items.add(commitItem);
             } else if (lockTokens != null) {
-                lockTokens.remove(commitItem.getURL());
+                lockTokens.remove(commitItem.getURL().toString());
             }
         }
         SVNCommitItem[] filteredItems = (SVNCommitItem[]) items
