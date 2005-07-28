@@ -42,9 +42,9 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * Main aspects of performing a commit with the help of ISVNEditor:
  * 0)initialize the library (this is done in setupLibrary() method);
  * 
- * 1)create an SVNRepository to the location (represented by an
- * SVNRepositoryLocation) that will be the root for committing - that is all
- * paths that are being committed will be below that root;
+ * 1)create an SVNRepository to the location (represented by a URL string) that will 
+ * be the root for committing - that is all paths that are being committed will be 
+ * below that root;
  * 
  * 2)provide user's authentication (committing generally requires authentication);
  * 
@@ -184,6 +184,12 @@ public class Commit {
 
         SVNRepository repository = null;
         try {
+           /*
+            * Creates an instance of SVNRepository to work with the repository.
+            * All user's requests to the repository are relative to the
+            * repository location used to create this SVNRepository.
+            * SVNURL is a wrapper for URL strings that refer to repository locations.
+            */
             repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
         } catch (SVNException svne) {
             /*

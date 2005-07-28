@@ -102,6 +102,12 @@ public class DisplayFile {
         }
         SVNRepository repository = null;
         try {
+            /*
+             * Creates an instance of SVNRepository to work with the repository.
+             * All user's requests to the repository are relative to the
+             * repository location used to create this SVNRepository.
+             * SVNURL is a wrapper for URL strings that refer to repository locations.
+             */
             repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
         } catch (SVNException svne) {
             /*

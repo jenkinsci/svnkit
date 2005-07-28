@@ -320,8 +320,9 @@ public class WorkingCopy {
          * Default values:
          */
         /*
-         * Assuming that 'svn://localhost/rep' is an existing 
+         * Assuming that 'svn://localhost/testRep' is an existing 
          * repository path
+         * SVNURL is a wrapper for URL strings that refer to repository locations.
          */
         SVNURL repositoryURL = null;
         try {
@@ -558,7 +559,8 @@ public class WorkingCopy {
             error("error while recursively updating the working copy at '"
                     + wcDir.getAbsolutePath() + "'", svne);
         }
-        System.out.println("Updated to revision " + updatedRevision + ".");
+        System.out.println();
+        
         System.out.println("Committing changes for '" + wcDir.getAbsolutePath() + "'...");
         try {
             /*

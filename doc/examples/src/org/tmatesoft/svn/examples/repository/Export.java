@@ -53,8 +53,8 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * 0)first of all the library is initialized (setupLibrary() method) - it must be
  * done prior to using the library;
  * 
- * 1)an SVNRepository is created to the location (represented by an
- * SVNRepositoryLocation) that will be the root of the repository tree to be exported;
+ * 1)an SVNRepository is created to the location (represented by a URL string) that 
+ * will be the root of the repository tree to be exported;
  * 
  * 2)user's authentication is usually non-necessary for reading operations however the
  * repository may have a restriction to accept requests of only authenticated users;
@@ -136,6 +136,12 @@ public class Export {
 
         SVNRepository repository = null;
         try {
+            /*
+             * Creates an instance of SVNRepository to work with the repository.
+             * All user's requests to the repository are relative to the
+             * repository location used to create this SVNRepository.
+             * SVNURL is a wrapper for URL strings that refer to repository locations.
+             */
             repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
         } catch (SVNException svne) {
             /*
@@ -320,7 +326,7 @@ public class Export {
      *      
      * 		reporter.linkPath(newRepositoryLocation, path, lockToken, revision, false);   
      * 	 
-     * 	 newRepositoryLocation is an SVNRepositoryLocation which is the new parent root
+     * 	 newRepositoryLocation is a URL string which is the new parent root
      * 	 (meaning path is relative to this root since this moment). That's the only
      * 	 difference between just an update and a switch.
      * 
