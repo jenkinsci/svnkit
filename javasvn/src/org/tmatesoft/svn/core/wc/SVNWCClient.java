@@ -201,8 +201,15 @@ public class SVNWCClient extends SVNBasicClient {
         }
         OutputStream os = null;
         InputStream is = null;
-        File file = SVNFileUtil.createUniqueFile(new File("."), "svn-contents", ".tmp1");
-        File file2 = SVNFileUtil.createUniqueFile(new File("."), "svn-contents", ".tmp2");
+        File file;
+        File file2;
+        try {
+            file = File.createTempFile("svn-contents", ".tmp");
+            file2 = File.createTempFile("svn-contents", ".tmp");
+        } catch (IOException e) {
+            SVNErrorManager.error("svn: Cannot create temporary files: " + e.getMessage());
+            return;
+        }
         try {
             os = new FileOutputStream(file);
             repos.getFile("", repos.getPegRevision(), properties, os);
