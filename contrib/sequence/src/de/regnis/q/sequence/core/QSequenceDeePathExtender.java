@@ -94,8 +94,7 @@ abstract class QSequenceDeePathExtender {
 		reset(media, xs);
 	}
 
-	public final void print(QSequenceMedia media, int fromDiagonal, int toDiagonal, boolean forward) {
-		System.out.println(forward ? "Forward" : "Backward");
+	public final void print(QSequenceMedia media, int fromDiagonal, int toDiagonal) {
 		final StringBuffer[] lines = new StringBuffer[media.getRightLength() + 1];
 		for (int line = 0; line < lines.length; line++) {
 			lines[line] = new StringBuffer(media.getLeftLength() + 1);
@@ -114,10 +113,6 @@ abstract class QSequenceDeePathExtender {
 			}
 
 			lines[right].setCharAt(left, String.valueOf(Math.abs(diagonal % 9)).charAt(0));
-		}
-
-		for (int line = 0; line < lines.length; line++) {
-			System.out.println(lines[line]);
 		}
 	}
 }

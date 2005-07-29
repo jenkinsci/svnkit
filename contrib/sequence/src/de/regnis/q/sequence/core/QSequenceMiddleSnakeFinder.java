@@ -99,8 +99,7 @@ class QSequenceMiddleSnakeFinder {
 		final int left = backwardDeePathExtender.getLeft(bestBackwardDiagonal);
 		final int right = backwardDeePathExtender.getRight(bestBackwardDiagonal);
 		if (left < 0 || right < 0) {
-			System.out.println(bestBackwardDiagonal);
-			backwardDeePathExtender.print(media, -dee + delta, dee + delta, false);
+			backwardDeePathExtender.print(media, -dee + delta, dee + delta);
 		}
 
 		result.setMiddleSnake(left, right, left, right);
