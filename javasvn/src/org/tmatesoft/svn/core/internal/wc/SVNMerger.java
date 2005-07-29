@@ -87,7 +87,7 @@ public class SVNMerger {
                     try {
                         parentDir.canScheduleForDeletion(name);
                     } catch (SVNException e) {
-                        SVNDebugLog.log(e);
+                        SVNDebugLog.logInfo(e);
                         return SVNStatusType.OBSTRUCTED;
                     }
                 }

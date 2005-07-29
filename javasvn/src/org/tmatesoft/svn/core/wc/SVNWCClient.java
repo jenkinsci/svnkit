@@ -120,7 +120,7 @@ public class SVNWCClient extends SVNBasicClient {
                             dst.write(r);
                         }
                     } catch (IOException e) {
-                        SVNDebugLog.log(e);
+                        SVNDebugLog.logInfo(e);
                     } finally {
                         SVNFileUtil.closeFile(is);
                         if (delete) {
@@ -189,6 +189,8 @@ public class SVNWCClient extends SVNBasicClient {
     public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
         revision = revision == null || !revision.isValid() ? SVNRevision.HEAD : revision;
         // now get contents from URL.
+        System.out.println("peg rev: " + pegRevision);
+        System.out.println("rev: " + revision);
         Map properties = new HashMap();
         SVNRepository repos = createRepository(url, null, pegRevision, revision);
 
@@ -201,12 +203,11 @@ public class SVNWCClient extends SVNBasicClient {
         }
         OutputStream os = null;
         InputStream is = null;
-        File file = SVNFileUtil.createUniqueFile(new File("."), "svn-contents",
-                ".tmp1");
-        File file2 = SVNFileUtil.createUniqueFile(new File("."),
-                "svn-contents", ".tmp2");
+        File file = SVNFileUtil.createUniqueFile(new File("."), "svn-contents", ".tmp1");
+        File file2 = SVNFileUtil.createUniqueFile(new File("."), "svn-contents", ".tmp2");
         try {
             os = new FileOutputStream(file);
+            System.out.println("repos peg revision: " + repos.getPegRevision());
             repos.getFile("", repos.getPegRevision(), properties, os);
             os.close();
             os = null;

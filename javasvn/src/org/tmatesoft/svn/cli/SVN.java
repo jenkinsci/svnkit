@@ -39,7 +39,7 @@ public class SVN {
             try {
                 commandLine = new SVNCommandLine(args);
             } catch (SVNException e) {
-                SVNDebugLog.log(e);
+                SVNDebugLog.logInfo(e);
                 System.err.println("error: " + e.getMessage());
                 System.exit(1);
             }
@@ -55,14 +55,14 @@ public class SVN {
                     command.run(System.out, System.err);
                 } catch (SVNException e) {
                     System.err.println(e.getMessage());
-                    SVNDebugLog.log(e);
+                    SVNDebugLog.logInfo(e);
                 }
             } else {
                 System.err.println("error: unknown command name '" + commandName + "'");
                 System.exit(1);
             }
         } catch (Throwable th) {
-            SVNDebugLog.log(th);
+            SVNDebugLog.logInfo(th);
             System.exit(-1);
         }
         System.exit(0);

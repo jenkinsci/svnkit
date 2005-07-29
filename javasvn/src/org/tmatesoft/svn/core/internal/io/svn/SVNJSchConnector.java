@@ -95,7 +95,7 @@ public class SVNJSchConnector implements ISVNConnector {
                 try {
                     myChannel.connect();
                 } catch (Throwable e) {
-                    SVNDebugLog.log(e);
+                    SVNDebugLog.logInfo(e);
                     retry--;
                     if (retry < 0) {
                         throw new SVNException(e);
@@ -108,7 +108,7 @@ public class SVNJSchConnector implements ISVNConnector {
                 break;
             }
         } catch (Throwable e) {
-            SVNDebugLog.log(e);
+            SVNDebugLog.logInfo(e);
             close();
             if (session.isConnected()) {
                 session.disconnect();

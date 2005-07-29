@@ -268,7 +268,7 @@ public class PythonTests {
 			try {
 				String line;
 				while ((line = myInputStream.readLine()) != null) {
-					SVNDebugLog.log(line);
+					SVNDebugLog.logInfo(line);
 					if (myHelpStream != null) {
 						myHelpStream.println(line);
 						myHelpStream.flush();

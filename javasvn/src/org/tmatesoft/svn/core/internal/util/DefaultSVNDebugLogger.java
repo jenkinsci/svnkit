@@ -27,13 +27,23 @@ public class DefaultSVNDebugLogger extends SVNDebugLoggerAdapter {
 
     private Logger myLogger;
 
-    public void log(String message) {
+    public void logInfo(String message) {
         getLogger().log(Level.FINE, message);
     }
 
-    public void log(Throwable th) {
+    public void logError(String message) {
+        getLogger().log(Level.SEVERE, message);
+    }
+
+    public void logInfo(Throwable th) {
         if (getLogger().isLoggable(Level.FINE)) {
             getLogger().log(Level.FINE, th != null ? th.getMessage() : "", th);
+        }
+    }
+
+    public void logError(Throwable th) {
+        if (getLogger().isLoggable(Level.SEVERE)) {
+            getLogger().log(Level.SEVERE, th != null ? th.getMessage() : "", th);
         }
     }
 

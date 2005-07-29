@@ -55,7 +55,7 @@ public class UpdateCommand extends SVNCommand {
             try {
                 updater.doUpdate(file.getAbsoluteFile(), revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             } catch (Throwable th) {
-                SVNDebugLog.log(th);
+                SVNDebugLog.logInfo(th);
                 println(err, th.getMessage());
                 println(err);
                 error = true;

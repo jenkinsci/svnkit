@@ -21,9 +21,13 @@ import java.io.OutputStream;
  */
 public interface ISVNDebugLogger {
     
-    public void log(String message);
+    public void logInfo(String message);
+
+    public void logError(String message);
     
-    public void log(Throwable th);
+    public void logInfo(Throwable th);
+
+    public void logError(Throwable th);
     
     public void log(String message, byte[] data);
     

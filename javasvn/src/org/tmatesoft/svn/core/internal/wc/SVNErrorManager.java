@@ -25,7 +25,7 @@ public class SVNErrorManager {
         } else if (!message.startsWith("svn: ")) {
             message = "svn: " + message;
         }
-        SVNDebugLog.log(message);
+        SVNDebugLog.logError(message);
         throw new SVNException(message);
     }
 }

@@ -109,7 +109,7 @@ public abstract class SVNCommand {
 
     public static void println(PrintStream out, String line) {
         out.println(line);
-        SVNDebugLog.log(line);
+        SVNDebugLog.logInfo(line);
     }
 
     public static void print(PrintStream out, String line) {

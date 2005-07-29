@@ -657,7 +657,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     }
                 } catch (Throwable th) {
                     dispatchEvent(new SVNEvent(th.getMessage()));
-                    SVNDebugLog.log(th);
+                    SVNDebugLog.logInfo(th);
                 } finally {
                     setEventPathPrefix(null);
                 }
@@ -676,7 +676,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 externalAccess.open(true, true);
                 externalAccess.getAnchor().destroy("", true);
             } catch (Throwable th) {
-                SVNDebugLog.log(th);
+                SVNDebugLog.logInfo(th);
             } finally {
                 externalAccess.close(true);
             }

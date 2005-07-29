@@ -60,7 +60,7 @@ public class StatusCommand extends SVNCommand {
               try {
                 stClient.doStatus(file, recursive, showUpdates, reportAll, ignored, handler);
               } catch (SVNException e) {
-                  SVNDebugLog.log(e);
+                  SVNDebugLog.logInfo(e);
                   err.println(e.getMessage());
                   error = true;
               }

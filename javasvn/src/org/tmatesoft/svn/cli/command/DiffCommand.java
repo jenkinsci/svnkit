@@ -126,7 +126,7 @@ public class DiffCommand extends SVNCommand {
                             differ.doDiff(path1, rN, path2, rM, recursive, useAncestry, out);
                         }
                     } catch (SVNException e) {
-                        SVNDebugLog.log(e);
+                        SVNDebugLog.logInfo(e);
                         error = true;
                         println(err, e.getMessage());
                     }

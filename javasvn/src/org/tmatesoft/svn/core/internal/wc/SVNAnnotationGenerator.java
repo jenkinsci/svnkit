@@ -156,7 +156,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                     result.close();
                 }
             } catch (Throwable e) {
-                SVNDebugLog.log(e);
+                SVNDebugLog.logInfo(e);
             } finally {
                 if (left != null) {
                     try {

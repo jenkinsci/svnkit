@@ -48,7 +48,7 @@ public class SwitchCommand extends SVNCommand {
                 updater.doSwitch(new File(absolutePath).getAbsoluteFile(), switchURL, revision, !getCommandLine().hasArgument(SVNArgument.NON_RECURSIVE));
             }
         } catch (Throwable th) {
-            SVNDebugLog.log(th);
+            SVNDebugLog.logInfo(th);
             println(err, th.getMessage());
             println(err);
             System.exit(1);

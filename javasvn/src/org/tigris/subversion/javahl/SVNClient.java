@@ -1118,12 +1118,13 @@ public class SVNClient implements SVNClientInterface {
 
     protected static void throwException(SVNException e) throws ClientException {
         ClientException ec = new ClientException(e.getMessage(), "", 0);
-        SVNDebugLog.log(ec);
-        SVNDebugLog.log(e);
+        SVNDebugLog.logInfo(ec);
+        SVNDebugLog.logInfo(e);
         throw ec;
     }
 
     protected static boolean isURL(String pathOrUrl){
+        pathOrUrl = pathOrUrl != null ? pathOrUrl.toLowerCase() : null;
         return pathOrUrl != null
                 && (pathOrUrl.startsWith("http://")
                         || pathOrUrl.startsWith("https://")

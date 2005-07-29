@@ -83,7 +83,7 @@ public class SVNJSchSession {
             } 
             return session;
         } catch (JSchException e) {
-            SVNDebugLog.log(e);
+            SVNDebugLog.logInfo(e);
             if (session != null && session.isConnected()) {
                 session.disconnect();
             }

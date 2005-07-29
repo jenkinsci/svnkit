@@ -547,19 +547,18 @@ public class WorkingCopy {
         System.out.println();
 
         System.out.println("Updating '" + wcDir.getAbsolutePath() + "'...");
-        long updatedRevision = -1;
         try {
             /*
              * recursively updates wcDir to the latest revision (SVNRevision.HEAD);
              * it's useful to do in real life as a working copy may contain out
              * of date entries:) 
              */
-            updatedRevision = update(wcDir, SVNRevision.HEAD, true);
+            update(wcDir, SVNRevision.HEAD, true);
         } catch (SVNException svne) {
             error("error while recursively updating the working copy at '"
                     + wcDir.getAbsolutePath() + "'", svne);
         }
-        System.out.println();
+        System.out.println("");
         
         System.out.println("Committing changes for '" + wcDir.getAbsolutePath() + "'...");
         try {
@@ -636,8 +635,7 @@ public class WorkingCopy {
              * recursively switching wcDir to copyURL to the latest revision 
              * (SVNRevision.HEAD)
              */
-            updatedRevision = switchToURL(wcDir, copyURL,
-                    SVNRevision.HEAD, true);
+            switchToURL(wcDir, copyURL, SVNRevision.HEAD, true);
         } catch (SVNException svne) {
             error("error while switching '"
                     + wcDir.getAbsolutePath() + "' to '" + copyURL + "'", svne);

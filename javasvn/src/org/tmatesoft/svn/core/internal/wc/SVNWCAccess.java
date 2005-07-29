@@ -38,17 +38,11 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 public class SVNWCAccess implements ISVNEventHandler {
 
     private SVNDirectory myAnchor;
-
     private SVNDirectory myTarget;
-
     private String myName;
-
     private ISVNOptions myOptions;
-
     private ISVNEventHandler myDispatcher;
-
     private Map myDirectories;
-
     private Map myExternals;
 
     public static SVNWCAccess create(File file) throws SVNException {
@@ -478,12 +472,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
     }
 
-    private interface ISVNDirectoryVisitor {
-        public void visit(String path, SVNDirectory dir) throws SVNException;
-    }
-
-    public SVNDirectory addDirectory(String path, File file)
-            throws SVNException {
+    public SVNDirectory addDirectory(String path, File file) throws SVNException {
         return addDirectory(path, file, false, false);
     }
 
@@ -502,8 +491,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                         continue;
                     }
                     SVNFileType fType = SVNFileType.getType(childDir);
-                    if (fType == SVNFileType.DIRECTORY
-                            && SVNWCAccess.isVersionedDirectory(childDir)) {
+                    if (fType == SVNFileType.DIRECTORY && SVNWCAccess.isVersionedDirectory(childDir)) {
                         // recurse
                         String childPath = SVNPathUtil.append(path, childDir
                                 .getName());
@@ -555,5 +543,9 @@ public class SVNWCAccess implements ISVNEventHandler {
 
     public ISVNEventHandler getEventDispatcher() {
         return myDispatcher;
+    }
+
+    private interface ISVNDirectoryVisitor {
+        public void visit(String path, SVNDirectory dir) throws SVNException;
     }
 }

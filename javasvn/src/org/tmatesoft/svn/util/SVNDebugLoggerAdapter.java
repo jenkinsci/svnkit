@@ -16,10 +16,16 @@ import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
  */
 public class SVNDebugLoggerAdapter implements ISVNDebugLogger {
 
-    public void log(String message) {
+    public void logInfo(String message) {
     }
 
-    public void log(Throwable th) {
+    public void logError(String message) {
+    }
+
+    public void logInfo(Throwable th) {
+    }
+
+    public void logError(Throwable th) {
     }
 
     public void log(String message, byte[] data) {

@@ -847,7 +847,7 @@ public class SVNCopyClient extends SVNBasicClient {
             } catch (SVNException inner) {
                 //
             }
-            SVNDebugLog.log(e);
+            SVNDebugLog.logInfo(e);
             SVNErrorManager.error("svn: " + e.getMessage());
         }
         return result != null ? result : SVNCommitInfo.NULL;

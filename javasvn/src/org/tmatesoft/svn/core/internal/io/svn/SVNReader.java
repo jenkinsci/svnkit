@@ -315,7 +315,7 @@ class SVNReader {
                         hasMore = editorBaton.processCommand(commandName, is);
                     } catch (Throwable th) {
                         unconditionalThrow = true;
-                        SVNDebugLog.log(th);
+                        SVNDebugLog.logInfo(th);
                         if (th instanceof SVNException) {
                             throw ((SVNException) th);
                         }

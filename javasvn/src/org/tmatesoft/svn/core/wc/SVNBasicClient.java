@@ -265,9 +265,8 @@ public class SVNBasicClient implements ISVNEventHandler {
             locations = (List) repos.getLocations("", locations, pegRevNumber,
                     new long[] { revNumber });
         } catch (SVNException e) {
-            SVNDebugLog.log(e);
-            SVNErrorManager
-                    .error("svn: Unable to find repository location for '"
+            SVNDebugLog.logInfo(e);
+            SVNErrorManager.error("svn: Unable to find repository location for '"
                             + url + "' in revision " + revNumber);
             return null;
         }

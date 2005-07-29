@@ -314,7 +314,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                                     os.write(contents);
                                 }
                             } catch (IOException th) {
-                                SVNDebugLog.log(th);
+                                SVNDebugLog.logInfo(th);
                             }
                         }
                         try {
@@ -322,7 +322,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                                 os.close();
                             }
                         } catch (IOException th) {
-                            SVNDebugLog.log(th);
+                            SVNDebugLog.logInfo(th);
                         }
                     }
                 }

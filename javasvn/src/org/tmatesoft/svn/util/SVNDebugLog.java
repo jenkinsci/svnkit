@@ -62,15 +62,27 @@ public class SVNDebugLog {
         }
     }
 
-    public static void log(String message) {
+    public static void logInfo(String message) {
         if (getLogger() != null) {
-            getLogger().log(message);
+            getLogger().logInfo(message);
+        }
+    }
+
+    public static void logError(String message) {
+        if (getLogger() != null) {
+            getLogger().logError(message);
         }
     }
     
-    public static void log(Throwable th) {
+    public static void logInfo(Throwable th) {
         if (getLogger() != null) {
-            getLogger().log(th);
+            getLogger().logInfo(th);
+        }
+    }
+
+    public static void logError(Throwable th) {
+        if (getLogger() != null) {
+            getLogger().logError(th);
         }
     }
 }

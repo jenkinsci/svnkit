@@ -100,11 +100,11 @@ public class SVNReporter implements ISVNReporterBaton {
             }
             reporter.finishReport();
         } catch (Throwable th) {
-            SVNDebugLog.log(th);
+            SVNDebugLog.logInfo(th);
             try {
                 reporter.abortReport();
             } catch (SVNException e) {
-                SVNDebugLog.log(e);
+                SVNDebugLog.logInfo(e);
             }
             if (th instanceof SVNException) {
                 throw (SVNException) th;

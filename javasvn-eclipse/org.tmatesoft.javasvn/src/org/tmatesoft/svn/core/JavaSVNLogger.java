@@ -57,13 +57,25 @@ public class JavaSVNLogger extends SVNDebugLoggerAdapter {
 		return new Status(severity, myPluginID, IStatus.OK, message == null ? "" : message, th);
 	}
 
-    public void log(String message) {
+    public void logInfo(String message) {
         if (isInfoEnabled()) {
             myLog.log(createStatus(IStatus.INFO, message, null));
         }
     }
 
-    public void log(Throwable th) {
+    public void logInfo(Throwable th) {
+        if (isInfoEnabled()) {
+            myLog.log(createStatus(IStatus.INFO, th != null ? th.getMessage() : "", th));
+        }
+    }
+
+    public void logError(String message) {
+        if (isErrorEnabled()) {
+            myLog.log(createStatus(IStatus.ERROR, message, null));
+        }
+    }
+
+    public void logError(Throwable th) {
         if (isErrorEnabled()) {
             myLog.log(createStatus(IStatus.ERROR, th != null ? th.getMessage() : "", th));
         }

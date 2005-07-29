@@ -140,7 +140,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
-                SVNDebugLog.log(bos.toString());
+                SVNDebugLog.logInfo(bos.toString());
             } catch (IOException e) {
             }
         }
@@ -208,7 +208,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
-                SVNDebugLog.log(bos.toString());
+                SVNDebugLog.logInfo(bos.toString());
             } catch (IOException inner) {
             }
             SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
@@ -248,7 +248,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 try {
                     bos.close();
                     bos.writeTo(result);
-                    SVNDebugLog.log(bos.toString());
+                    SVNDebugLog.logInfo(bos.toString());
                 } catch (IOException e) {
                 }
             }
@@ -296,7 +296,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             try {
                 bos.close();
                 bos.writeTo(result);
-                SVNDebugLog.log(bos.toString());
+                SVNDebugLog.logInfo(bos.toString());
             } catch (IOException inner) {
                 //
             }

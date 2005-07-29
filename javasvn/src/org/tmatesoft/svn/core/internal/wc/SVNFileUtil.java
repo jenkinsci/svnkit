@@ -154,7 +154,7 @@ public class SVNFileUtil {
             execCommand(new String[] { "chmod", executable ? "ugo+x" : "ugo-x",
                     file.getAbsolutePath() });
         } catch (Throwable th) {
-            SVNDebugLog.log(th);
+            SVNDebugLog.logInfo(th);
         }
     }
 
@@ -664,9 +664,9 @@ public class SVNFileUtil {
             }
             return result.toString().trim();
         } catch (IOException e) {
-            SVNDebugLog.log(e);
+            SVNDebugLog.logInfo(e);
         } catch (InterruptedException e) {
-            SVNDebugLog.log(e);
+            SVNDebugLog.logInfo(e);
         } finally {
             closeFile(is);
         }

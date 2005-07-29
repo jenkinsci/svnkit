@@ -264,7 +264,7 @@ public class SVNMergeEditor implements ISVNEditor {
                                         myCurrentFile.myPropertyDiff,
                                         myCurrentFile.myEntryProps);
                     } catch (Throwable th) {
-                        SVNDebugLog.log(th);
+                        SVNDebugLog.logInfo(th);
                     }
                 } else {
                     try {
@@ -274,7 +274,7 @@ public class SVNMergeEditor implements ISVNEditor {
                                 myCurrentFile.myBaseProperties,
                                 myCurrentFile.myPropertyDiff);
                     } catch (Throwable th) {
-                        SVNDebugLog.log(th);
+                        SVNDebugLog.logInfo(th);
                     }
                 }
                 if (result != null) {
