@@ -174,7 +174,7 @@ public class DAVConnection {
         return null;
     }
 
-    public void doUnlock(String url, String path, String id, boolean force) throws SVNException {
+    public void doUnlock(String path, String id, boolean force) throws SVNException {
         if (id == null) {
             SVNLock lock = doGetLock(path);
             if (lock != null) {

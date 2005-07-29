@@ -54,7 +54,7 @@ public class SVNWCUtil {
     }
     
     public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password, boolean storeAuth) {
-        return new DefaultSVNAuthenticationManager(getDefaultConfigurationDirectory(), storeAuth, userName, password);
+        return new DefaultSVNAuthenticationManager(configDir, storeAuth, userName, password);
     }
 
     public static ISVNOptions createDefaultOptions(File dir, boolean readonly) {
@@ -155,13 +155,12 @@ public class SVNWCUtil {
                 parent = parent.getParentFile();
             }
             return versionedDir;
-        } else {
-            // if dir is not a root -> just recurse till root, the call get root
-            // again.
-            if (versionedDir.getParentFile() != null) {
-                return getWorkingCopyRoot(versionedDir.getParentFile(), stopOnExtenrals);
-            }
-            return versionedDir;
         }
+        // if dir is not a root -> just recurse till root, the call get root
+        // again.
+        if (versionedDir.getParentFile() != null) {
+            return getWorkingCopyRoot(versionedDir.getParentFile(), stopOnExtenrals);
+        }
+        return versionedDir;
     }
 }

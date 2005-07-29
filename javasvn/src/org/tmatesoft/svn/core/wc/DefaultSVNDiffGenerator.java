@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
+import de.regnis.q.sequence.line.diff.QDiffGeneratorFactory;
 import de.regnis.q.sequence.line.diff.QDiffManager;
 import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
 
@@ -282,7 +283,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
             QDiffUniGenerator.setup();
             Map generatorProperties = new HashMap();
-            generatorProperties.put(QDiffUniGenerator.COMPARE_EOL_PROPERTY, Boolean.TRUE.toString());
+            generatorProperties.put(QDiffGeneratorFactory.COMPARE_EOL_PROPERTY, Boolean.TRUE.toString());
             QDiffGenerator generator = QDiffManager.getDiffGenerator(QDiffUniGenerator.TYPE, generatorProperties);
             Writer writer = new OutputStreamWriter(bos, getEncoding());
             QDiffManager.generateTextDiff(is1, is2, getEncoding(), writer, generator);

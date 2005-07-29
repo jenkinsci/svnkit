@@ -350,15 +350,14 @@ public class SVNCopyClient extends SVNBasicClient {
                     .create(srcRevisionNumber));
             return url2urlCopy(srcURL, srcRevisionNumber, dstURL,
                     commitMessage, move);
-        } else {
-            // wc->url
-            if (move) {
-                SVNErrorManager
-                        .error("svn: Only WC to WC or URL to URL move is supported");
-            }
-            dstURL = getURL(dstURL, dstPegRevision, SVNRevision.HEAD);
-            return wc2urlCopy(srcPath, dstURL, commitMessage);
         }
+        // wc->url
+        if (move) {
+            SVNErrorManager
+                    .error("svn: Only WC to WC or URL to URL move is supported");
+        }
+        dstURL = getURL(dstURL, dstPegRevision, SVNRevision.HEAD);
+        return wc2urlCopy(srcPath, dstURL, commitMessage);
     }
     
     /**

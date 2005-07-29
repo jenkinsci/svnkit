@@ -237,9 +237,8 @@ public class SVNEntries {
             }
             if (propertyValue == null) {
                 return entry.remove(propertyName) != null;
-            } else {
-                return entry.put(propertyName, propertyValue) != null;
             }
+            return entry.put(propertyName, propertyValue) != null;            
         }
         return false;
     }

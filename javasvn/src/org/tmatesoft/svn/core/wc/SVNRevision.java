@@ -10,8 +10,8 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -148,20 +148,18 @@ public class SVNRevision {
             value = value.substring(1);
             value = value.substring(0, value.length() - 1);
             try {
-                Date date = SimpleDateFormat.getDateInstance().parse(value);
+                Date date = DateFormat.getDateInstance().parse(value);
                 return SVNRevision.create(date);
             } catch (ParseException e) {
                 return SVNRevision.UNDEFINED;
             }
-        } else {
-            try {
-                long number = Long.parseLong(value);
-                return SVNRevision.create(number);
-            } catch (NumberFormatException nfe) {
-            }
         }
-        SVNRevision revision = (SVNRevision) ourValidRevisions.get(value
-                .toUpperCase());
+        try {
+            long number = Long.parseLong(value);
+            return SVNRevision.create(number);
+        } catch (NumberFormatException nfe) {
+        }
+        SVNRevision revision = (SVNRevision) ourValidRevisions.get(value.toUpperCase());
         if (revision == null) {
             return UNDEFINED;
         }
@@ -174,7 +172,7 @@ public class SVNRevision {
         } else if (myName != null) {
             return myName;
         } else if (myDate != null) {
-            return SimpleDateFormat.getDateTimeInstance().format(myDate);
+            return DateFormat.getDateTimeInstance().format(myDate);
         }
         return "{invalid revision}";
     }

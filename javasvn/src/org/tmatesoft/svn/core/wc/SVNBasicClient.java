@@ -517,9 +517,8 @@ public class SVNBasicClient implements ISVNEventHandler {
             }
             if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
                 return entry.getRevision();
-            } else {
-                return revision == SVNRevision.PREVIOUS ? entry.getCommittedRevision() - 1 : entry.getCommittedRevision();
             }
+            return revision == SVNRevision.PREVIOUS ? entry.getCommittedRevision() - 1 : entry.getCommittedRevision();            
         } else {
             SVNErrorManager.error("svn: Unrecognized revision type requested for '" + path + "'");
         }

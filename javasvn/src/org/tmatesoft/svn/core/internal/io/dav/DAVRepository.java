@@ -497,7 +497,7 @@ class DAVRepository extends SVNRepository {
         });
     }
 
-    void updateCredentials(String uuid, SVNURL rootURL) throws SVNException {
+    void updateCredentials(String uuid, SVNURL rootURL) {
         setRepositoryCredentials(uuid, rootURL);
     }
 
@@ -539,9 +539,7 @@ class DAVRepository extends SVNRepository {
             openConnection();
             path = getFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
-            String url = getLocation().getProtocol() + "://" + getLocation().getHost() + ":" + getLocation().getPort();
-            url += path;
-            myConnection.doUnlock(url, path, id, force);
+            myConnection.doUnlock(path, id, force);
         } finally {
             closeConnection();
         }

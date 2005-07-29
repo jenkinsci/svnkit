@@ -308,7 +308,7 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorManager.error("svn: '" + dstPath + "' is not under version control");
         }
         if (targetEntry.isFile()) {
-            doMergeFile(url1, path1, revision1, url2, path2, revision2, SVNRevision.UNDEFINED, wcAccess, recusrsive, useAncestry, force, dryRun);
+            doMergeFile(url1, path1, revision1, url2, path2, revision2, SVNRevision.UNDEFINED, wcAccess, force, dryRun);
         } else if (targetEntry.isDirectory()) {
             doMerge(url1, path1, revision1, url2, path2, revision2, SVNRevision.UNDEFINED, wcAccess, recusrsive, useAncestry, force, dryRun);
         }
@@ -329,7 +329,7 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorManager.error("svn: '" + dstPath + "' is not under version control");
         }
         if (targetEntry.isFile()) {
-            doMergeFile(url1, path1, revision1, url2, null, revision2, SVNRevision.UNDEFINED, wcAccess, recusrsive, useAncestry, force, dryRun);
+            doMergeFile(url1, path1, revision1, url2, null, revision2, SVNRevision.UNDEFINED, wcAccess, force, dryRun);
         } else if (targetEntry.isDirectory()) {
             doMerge(url1, path1, revision1, url2, null, revision2, SVNRevision.UNDEFINED, wcAccess, recusrsive, useAncestry, force, dryRun);
         }
@@ -350,7 +350,7 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorManager.error("svn: '" + dstPath + "' is not under version control");
         }
         if (targetEntry.isFile()) {
-            doMergeFile(url1, null, revision1, url2, path2, revision2, SVNRevision.UNDEFINED, wcAccess, recusrsive, useAncestry, force, dryRun);
+            doMergeFile(url1, null, revision1, url2, path2, revision2, SVNRevision.UNDEFINED, wcAccess, force, dryRun);
         } else if (targetEntry.isDirectory()) {
             doMerge(url1, null, revision1, url2, path2, revision2, SVNRevision.UNDEFINED, wcAccess, recusrsive, useAncestry, force, dryRun);
         }
@@ -367,7 +367,7 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorManager.error("svn: '" + dstPath + "' is not under version control");
         }
         if (targetEntry.isFile()) {
-            doMergeFile(url1, null, revision1, url2, null, revision2, SVNRevision.UNDEFINED, wcAccess, recusrsive, useAncestry, force, dryRun);
+            doMergeFile(url1, null, revision1, url2, null, revision2, SVNRevision.UNDEFINED, wcAccess, force, dryRun);
         } else if (targetEntry.isDirectory()) {
             doMerge(url1, null, revision1, url2, null, revision2, SVNRevision.UNDEFINED, wcAccess, recusrsive, useAncestry, force, dryRun);
         }
@@ -385,7 +385,7 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorManager.error("svn: '" + dstPath + "' is not under version control");
         }
         if (targetEntry.isFile()) {
-            doMergeFile(url1, null, revision1, url1, null, revision2, pegRevision, wcAccess, recusrsive, useAncestry, force, dryRun);
+            doMergeFile(url1, null, revision1, url1, null, revision2, pegRevision, wcAccess, force, dryRun);
         } else if (targetEntry.isDirectory()) {
             doMerge(url1, null, revision1, url1, null, revision2, pegRevision, wcAccess, recusrsive, useAncestry, force, dryRun);
         }
@@ -406,7 +406,7 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorManager.error("svn: '" + dstPath + "' is not under version control");
         }
         if (targetEntry.isFile()) {
-            doMergeFile(url1, path1, revision1, url1, path1, revision2, pegRevision, wcAccess, recusrsive, useAncestry, force, dryRun);
+            doMergeFile(url1, path1, revision1, url1, path1, revision2, pegRevision, wcAccess, force, dryRun);
         } else if (targetEntry.isDirectory()) {
             doMerge(url1, path1, revision1, url1, path1, revision2, pegRevision, wcAccess, recusrsive, useAncestry, force, dryRun);
         }
@@ -446,7 +446,7 @@ public class SVNDiffClient extends SVNBasicClient {
     }
     
     private void doMergeFile(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, File path2, SVNRevision revision2, SVNRevision pegRevision,
-            SVNWCAccess wcAccess, boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
+            SVNWCAccess wcAccess, boolean force, boolean dryRun) throws SVNException {
         
         if (pegRevision.isValid()) {
             SVNRepositoryLocation[] locations = getLocations(url2, path2, pegRevision, revision1, revision2);
@@ -478,7 +478,7 @@ public class SVNDiffClient extends SVNBasicClient {
             Map propsDiff = computePropsDiff(props1, props2);
             
             SVNMerger merger = new SVNMerger(wcAccess, url2.toString(), rev2[0], force, dryRun, isLeaveConflictsUnresolved());
-            mergeResult = merger.fileChanged(name, f1, f2, rev1[0], rev2[0], mimeType1, mimeType2, props1, propsDiff);
+            mergeResult = merger.fileChanged(name, f1, f2, rev1[0], rev2[0], mimeType1, mimeType2, propsDiff);
         } finally {
             SVNFileUtil.deleteAll(f1);
             SVNFileUtil.deleteAll(f2);

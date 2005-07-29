@@ -158,13 +158,13 @@ public class SVNDiffEditor implements ISVNEditor {
     public void addFile(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
         String name = SVNPathUtil.tail(path);
-        myCurrentFile = createFileInfo(myCurrentDirectory, path, true);
+        myCurrentFile = createFileInfo(path, true);
         myCurrentDirectory.myComparedEntries.add(name);
     }
 
     public void openFile(String path, long revision) throws SVNException {
         String name = SVNPathUtil.tail(path);
-        myCurrentFile = createFileInfo(myCurrentDirectory, path, false);
+        myCurrentFile = createFileInfo(path, false);
         myCurrentDirectory.myComparedEntries.add(name);
     }
 
@@ -477,8 +477,7 @@ public class SVNDiffEditor implements ISVNEditor {
         return info;
     }
 
-    private SVNFileInfo createFileInfo(SVNDirectoryInfo parent, String path,
-            boolean added) {
+    private SVNFileInfo createFileInfo(String path, boolean added) {
         SVNFileInfo info = new SVNFileInfo();
         info.myPath = path;
         info.myIsAdded = added;

@@ -96,17 +96,15 @@ class QSequenceMiddleSnakeFinder {
 			result.setMiddleSnake(left, right, left, right);
 			return 2 * dee - 1;
 		}
-		else {
-			final int left = backwardDeePathExtender.getLeft(bestBackwardDiagonal);
-			final int right = backwardDeePathExtender.getRight(bestBackwardDiagonal);
-			if (left < 0 || right < 0) {
-				System.out.println(bestBackwardDiagonal);
-				backwardDeePathExtender.print(media, -dee + delta, dee + delta, false);
-			}
-
-			result.setMiddleSnake(left, right, left, right);
-			return 2 * dee;
+		final int left = backwardDeePathExtender.getLeft(bestBackwardDiagonal);
+		final int right = backwardDeePathExtender.getRight(bestBackwardDiagonal);
+		if (left < 0 || right < 0) {
+			System.out.println(bestBackwardDiagonal);
+			backwardDeePathExtender.print(media, -dee + delta, dee + delta, false);
 		}
+
+		result.setMiddleSnake(left, right, left, right);
+		return 2 * dee;
 	}
 
 	private int getBestForwardDiagonal(int dee, int delta) {

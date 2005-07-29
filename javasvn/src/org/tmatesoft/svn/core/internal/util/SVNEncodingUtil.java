@@ -38,16 +38,15 @@ public class SVNEncodingUtil {
                     sb.append((char) bytes[i]);
                 }
                 continue;
-            } else {
-                if (sb == null) {
-                    sb = new StringBuffer();
-                    sb.append(new String(bytes, 0, i));
-                }
-                sb.append("%");
-
-                sb.append(Character.toUpperCase(Character.forDigit((index & 0xF0) >> 4, 16)));
-                sb.append(Character.toUpperCase(Character.forDigit(index & 0x0F, 16)));
             }
+            if (sb == null) {
+                sb = new StringBuffer();
+                sb.append(new String(bytes, 0, i));
+            }
+            sb.append("%");
+
+            sb.append(Character.toUpperCase(Character.forDigit((index & 0xF0) >> 4, 16)));
+            sb.append(Character.toUpperCase(Character.forDigit(index & 0x0F, 16)));
         }
         return sb == null ? src : sb.toString();
     }

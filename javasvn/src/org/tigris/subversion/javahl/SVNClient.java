@@ -55,6 +55,9 @@ import org.tmatesoft.svn.util.Version;
  */
 public class SVNClient implements SVNClientInterface {
 
+    private static int ourLogLevel;
+    private static String ourLogFilePath;
+    
     private String myConfigDir;
     private PromptUserPassword myPrompt;
     private String myUserName;
@@ -353,7 +356,7 @@ public class SVNClient implements SVNClientInterface {
         SVNCopyClient client = getSVNCopyClient();
         try {
             if(isURL(srcPath)){
-                SVNRevision srcRevision = revision == null || revision.getKind() == Revision.Kind.unspecified ?
+                SVNRevision srcRevision = revision == null || revision.getKind() == RevisionKind.unspecified ?
                         SVNRevision.HEAD : SVNConverterUtil.getSVNRevision(revision);
                 if(isURL(destPath)){
                     // url->url copy
@@ -365,7 +368,7 @@ public class SVNClient implements SVNClientInterface {
                             new File(destPath), SVNRevision.UNDEFINED, SVNRevision.WORKING, false, null);
                 }
             }else{
-                SVNRevision srcRevision = revision == null || revision.getKind() == Revision.Kind.unspecified ?
+                SVNRevision srcRevision = revision == null || revision.getKind() == RevisionKind.unspecified ?
                         SVNRevision.WORKING : SVNConverterUtil.getSVNRevision(revision);
                 if(isURL(destPath)){
                     // wc->url copy
@@ -386,7 +389,7 @@ public class SVNClient implements SVNClientInterface {
         SVNCopyClient updater = getSVNCopyClient();
         try {
             if(isURL(srcPath)){
-                SVNRevision srcRevision = revision == null || revision.getKind() == Revision.Kind.unspecified ?
+                SVNRevision srcRevision = revision == null || revision.getKind() == RevisionKind.unspecified ?
                         SVNRevision.HEAD : SVNConverterUtil.getSVNRevision(revision);
                 if(isURL(destPath)){
                     // url->url move.
@@ -1014,7 +1017,8 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public static void enableLogging(int logLevel, String logFilePath) {
-
+        ourLogLevel = logLevel;
+        ourLogFilePath = logFilePath;
     }
 
     public static String version() {

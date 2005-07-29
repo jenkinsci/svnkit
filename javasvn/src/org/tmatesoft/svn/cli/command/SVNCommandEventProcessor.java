@@ -107,14 +107,14 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
             } else {
                 myIsChanged = true;
             }
-            UpdateCommand.println(myPrintStream, "A    " + SVNFormatUtil.formatPath(event.getFile()));
+            SVNCommand.println(myPrintStream, "A    " + SVNFormatUtil.formatPath(event.getFile()));
         } else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
             if (myIsExternal) {
                 myIsExternalChanged = true;
             } else {
                 myIsChanged = true;
             }
-            UpdateCommand.println(myPrintStream, "D    " + SVNFormatUtil.formatPath(event.getFile()));
+            SVNCommand.println(myPrintStream, "D    " + SVNFormatUtil.formatPath(event.getFile()));
         } else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
             StringBuffer sb = new StringBuffer();
             if (event.getNodeKind() != SVNNodeKind.DIR) {
@@ -152,57 +152,57 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
                 sb.append(" ");
             }
             if (sb.toString().trim().length() > 0) {
-                UpdateCommand.println(myPrintStream, sb.toString() + "  " + SVNFormatUtil.formatPath(event.getFile()));
+                SVNCommand.println(myPrintStream, sb.toString() + "  " + SVNFormatUtil.formatPath(event.getFile()));
             }
         } else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {
             if (!myIsExternal) {
                 if (myIsChanged) {
                     if (myIsCheckout) {
-                        UpdateCommand.println(myPrintStream, "Checked out revision " + event.getRevision() + ".");
+                        SVNCommand.println(myPrintStream, "Checked out revision " + event.getRevision() + ".");
                     } else if (myIsExport) {
-                        UpdateCommand.println(myPrintStream, "Export complete.");
+                        SVNCommand.println(myPrintStream, "Export complete.");
                     } else {
-                        UpdateCommand.println(myPrintStream, "Updated to revision " + event.getRevision() + ".");
+                        SVNCommand.println(myPrintStream, "Updated to revision " + event.getRevision() + ".");
                     }
                 } else {
                     if (myIsExport ) {
-                        UpdateCommand.println(myPrintStream, "Export complete.");
+                        SVNCommand.println(myPrintStream, "Export complete.");
                     } else {
-                        UpdateCommand.println(myPrintStream, "At revision " + event.getRevision() + ".");
+                        SVNCommand.println(myPrintStream, "At revision " + event.getRevision() + ".");
                     }
                 }
             } else {
                 if (myIsExternalChanged) {
                     if (myIsCheckout) {
-                        UpdateCommand.println(myPrintStream, "Checked out external at revision " + event.getRevision() + ".");
+                        SVNCommand.println(myPrintStream, "Checked out external at revision " + event.getRevision() + ".");
                     } else if (myIsExport) {
-                        UpdateCommand.println(myPrintStream, "Export complete.");
+                        SVNCommand.println(myPrintStream, "Export complete.");
                     } else {
-                        UpdateCommand.println(myPrintStream, "Updated external to revision " + event.getRevision() + ".");
+                        SVNCommand.println(myPrintStream, "Updated external to revision " + event.getRevision() + ".");
                     }
                 } else {
-                    UpdateCommand.println(myPrintStream, "External at revision " + event.getRevision() + ".");
+                    SVNCommand.println(myPrintStream, "External at revision " + event.getRevision() + ".");
                 }
-                UpdateCommand.println(myPrintStream);
+                SVNCommand.println(myPrintStream);
                 myIsExternalChanged = false;
                 myIsExternal = false;
             }
         } else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
-            UpdateCommand.println(myPrintStream);
+            SVNCommand.println(myPrintStream);
             String path = event.getPath().replace('/', File.separatorChar);
             if (myIsCheckout) {
-                UpdateCommand.println(myPrintStream, "Fetching external item into '" + path + "'");
+                SVNCommand.println(myPrintStream, "Fetching external item into '" + path + "'");
             } else {
-                UpdateCommand.println(myPrintStream, "Updating external item at '" + path + "'");
+                SVNCommand.println(myPrintStream, "Updating external item at '" + path + "'");
             }
             myIsExternal = true;
         } else if (event.getAction() == SVNEventAction.STATUS_EXTERNAL) {
-            UpdateCommand.println(myPrintStream);
+            SVNCommand.println(myPrintStream);
             String path = event.getPath().replace('/', File.separatorChar);
-            UpdateCommand.println(myPrintStream, "Performing status on external item at '" + path + "'");
+            SVNCommand.println(myPrintStream, "Performing status on external item at '" + path + "'");
             myIsExternal = true;
         } else if (event.getAction() == SVNEventAction.RESTORE) {
-            UpdateCommand.println(myPrintStream, "Restored '" + SVNFormatUtil.formatPath(event.getFile()) + "'");
+            SVNCommand.println(myPrintStream, "Restored '" + SVNFormatUtil.formatPath(event.getFile()) + "'");
         } else if (event.getAction() == SVNEventAction.ADD) {
             SVNCommand.println(myPrintStream, "A    " + SVNFormatUtil.formatPath(event.getFile()));
         } else if (event.getAction() == SVNEventAction.DELETE) {

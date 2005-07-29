@@ -245,9 +245,8 @@ public class SVNProperties {
                 if (currentName.equals(name)) {
                     readProperty('V', is, os);
                     return os;
-                } else {
-                    readProperty('V', is, null);
                 }
+                readProperty('V', is, null);                
             }
         } catch (IOException e) {
             SVNErrorManager.error("svn: Cannot read properties file '" + myFile + "'");

@@ -208,24 +208,23 @@ public class SVNLog {
                 if (line.startsWith("<")) {
                     name = line.substring(1);
                     continue;
-                } else {
-                    int index = line.indexOf('=');
-                    if (index > 0) {
-                        String attrName = line.substring(0, index).trim();
-                        String value = line.substring(index + 1).trim();
-                        if (value.endsWith("/>")) {
-                            value = value.substring(0, value.length()
-                                    - "/>".length());
-                        }
-                        if (value.startsWith("\"")) {
-                            value = value.substring(1);
-                        }
-                        if (value.endsWith("\"")) {
-                            value = value.substring(0, value.length() - 1);
-                        }
-                        value = SVNEncodingUtil.xmlDecode(value);
-                        attrs.put(attrName, value);
+                }
+                int index = line.indexOf('=');
+                if (index > 0) {
+                    String attrName = line.substring(0, index).trim();
+                    String value = line.substring(index + 1).trim();
+                    if (value.endsWith("/>")) {
+                        value = value.substring(0, value.length()
+                                - "/>".length());
                     }
+                    if (value.startsWith("\"")) {
+                        value = value.substring(1);
+                    }
+                    if (value.endsWith("\"")) {
+                        value = value.substring(0, value.length() - 1);
+                    }
+                    value = SVNEncodingUtil.xmlDecode(value);
+                    attrs.put(attrName, value);
                 }
                 if (line.endsWith("/>") && name != null) {
                     // run command

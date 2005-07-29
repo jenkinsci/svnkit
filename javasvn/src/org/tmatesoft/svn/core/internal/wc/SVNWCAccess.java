@@ -325,8 +325,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         myDirectories = null;
     }
 
-    public SVNExternalInfo[] addExternals(SVNDirectory directory,
-            String externals) throws SVNException {
+    public SVNExternalInfo[] addExternals(SVNDirectory directory, String externals) {
         if (externals == null) {
             return null;
         }

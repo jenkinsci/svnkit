@@ -105,8 +105,7 @@ public class SVNMergeEditor implements ISVNEditor {
         // merge dir added.
         SVNEventAction action = SVNEventAction.ADD;
         SVNStatusType mergeResult = myMerger.directoryAdded(
-                myCurrentDirectory.myWCPath, myCurrentDirectory.myEntryProps,
-                myRevision2);
+                myCurrentDirectory.myWCPath, myCurrentDirectory.myEntryProps);
         if (mergeResult == SVNStatusType.MISSING
                 || mergeResult == SVNStatusType.OBSTRUCTED) {
             action = SVNEventAction.SKIP;
@@ -155,14 +154,11 @@ public class SVNMergeEditor implements ISVNEditor {
                 myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
                 myCurrentDirectory = myCurrentDirectory.myParent;
                 return;
-            } else {
-                // no need to do this if it is dry run?
-                propStatus = myMerger.directoryPropertiesChanged(
-                        myCurrentDirectory.myWCPath,
-                        myCurrentDirectory.myBaseProperties,
-                        myCurrentDirectory.myPropertyDiff);
-
             }
+            // no need to do this if it is dry run?
+            propStatus = myMerger.directoryPropertiesChanged(
+                    myCurrentDirectory.myWCPath,
+                    myCurrentDirectory.myPropertyDiff);
         }
         if (propStatus != SVNStatusType.UNCHANGED) {
             SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess,
@@ -260,7 +256,6 @@ public class SVNMergeEditor implements ISVNEditor {
                                         myCurrentFile.myFile != null ? myCurrentFile.myBaseFile
                                                 : null, myCurrentFile.myFile,
                                         myRevision2, 0, mimeType1, mimeType2,
-                                        myCurrentFile.myBaseProperties,
                                         myCurrentFile.myPropertyDiff,
                                         myCurrentFile.myEntryProps);
                     } catch (Throwable th) {
@@ -271,7 +266,6 @@ public class SVNMergeEditor implements ISVNEditor {
                         result = myMerger.fileChanged(myCurrentFile.myWCPath,
                                 myCurrentFile.myBaseFile, myCurrentFile.myFile,
                                 myRevision1, myRevision2, mimeType1, mimeType2,
-                                myCurrentFile.myBaseProperties,
                                 myCurrentFile.myPropertyDiff);
                     } catch (Throwable th) {
                         SVNDebugLog.logInfo(th);

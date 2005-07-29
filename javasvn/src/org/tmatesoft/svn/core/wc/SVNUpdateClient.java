@@ -374,15 +374,15 @@ public class SVNUpdateClient extends SVNBasicClient {
                     }
                 } else if (entry.isFile()) {
                     File childTo = new File(to, entry.getName());
-                    copyVersionedFile(childTo, wcAccess.getTarget(), entry.getName(), revision, force, eolStyle);
+                    copyVersionedFile(childTo, wcAccess.getTarget(), entry.getName(), revision, eolStyle);
                 }
             }
         } else if (targetEntry.isFile()) {
-            copyVersionedFile(to, wcAccess.getTarget(), wcAccess.getTargetName(), revision, force, eolStyle);
+            copyVersionedFile(to, wcAccess.getTarget(), wcAccess.getTargetName(), revision, eolStyle);
         }
     }
 
-    private void copyVersionedFile(File dstPath, SVNDirectory dir, String fileName, SVNRevision revision, boolean force, String eol) throws SVNException {
+    private void copyVersionedFile(File dstPath, SVNDirectory dir, String fileName, SVNRevision revision, String eol) throws SVNException {
         SVNEntries entries = dir.getEntries();
         SVNEntry entry = entries.getEntry(fileName, false);
         if (entry == null) {

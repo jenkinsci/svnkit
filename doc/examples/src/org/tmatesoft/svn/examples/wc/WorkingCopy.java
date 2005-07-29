@@ -1095,9 +1095,8 @@ public class WorkingCopy {
 	        String contents = null;
 	        if(i > fileContents.length-1){
 	            continue;
-	        }else{
-	            contents = fileContents[i];
 	        }
+            contents = fileContents[i];
 	        
 	        /*
 	         * writing a text into the file

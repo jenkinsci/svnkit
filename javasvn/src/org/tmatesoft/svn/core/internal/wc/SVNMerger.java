@@ -53,7 +53,7 @@ public class SVNMerger {
         return myIsDryRun;
     }
 
-    public SVNStatusType directoryDeleted(final String path) throws SVNException {
+    public SVNStatusType directoryDeleted(final String path) {
         SVNDirectory parentDir = getParentDirectory(path);
         if (parentDir == null) {
             return SVNStatusType.MISSING;
@@ -108,7 +108,7 @@ public class SVNMerger {
         return SVNStatusType.MISSING;
     }
 
-    public SVNStatusType fileDeleted(String path) throws SVNException {
+    public SVNStatusType fileDeleted(String path) {
         SVNDirectory parentDir = getParentDirectory(path);
         if (parentDir == null) {
             return SVNStatusType.MISSING;
@@ -143,7 +143,7 @@ public class SVNMerger {
         return SVNStatusType.MISSING;
     }
 
-    public SVNStatusType directoryAdded(String path, Map entryProps, long revision) throws SVNException {
+    public SVNStatusType directoryAdded(String path, Map entryProps) throws SVNException {
         SVNDirectory parentDir = getParentDirectory(path);
         if (parentDir == null) {
             if (myIsDryRun && myAddedPath != null
@@ -179,9 +179,8 @@ public class SVNMerger {
                             entryProps);
                 }
                 return SVNStatusType.CHANGED;
-            } else {
-                return SVNStatusType.OBSTRUCTED;
             }
+            return SVNStatusType.OBSTRUCTED;            
         } else if (file.isFile()) {
             if (myIsDryRun) {
                 myAddedPath = null;
@@ -193,7 +192,7 @@ public class SVNMerger {
 
     public SVNStatusType[] fileChanged(String path, File older, File yours,
             long rev1, long rev2, String mimeType1, String mimeType2,
-            Map baseProps, Map propDiff) throws SVNException {
+            Map propDiff) throws SVNException {
         SVNStatusType[] result = new SVNStatusType[] { SVNStatusType.UNKNOWN,
                 SVNStatusType.UNKNOWN };
         String parentPath = SVNPathUtil.removeTail(path);
@@ -214,7 +213,7 @@ public class SVNMerger {
             return result;
         }
         if (propDiff != null && !propDiff.isEmpty()) {
-            result[1] = propertiesChanged(parentPath, name, baseProps, propDiff);
+            result[1] = propertiesChanged(parentPath, name, propDiff);
         } else {
             result[1] = SVNStatusType.UNCHANGED;
         }
@@ -261,7 +260,7 @@ public class SVNMerger {
 
     public SVNStatusType[] fileAdded(String path, File older, File yours,
             long rev1, long rev2, String mimeType1, String mimeType2,
-            Map baseProps, Map propDiff, Map entryProps) throws SVNException {
+            Map propDiff, Map entryProps) throws SVNException {
         SVNStatusType[] result = new SVNStatusType[] { SVNStatusType.UNKNOWN,
                 SVNStatusType.UNKNOWN };
         SVNDirectory parentDir = getParentDirectory(path);
@@ -302,7 +301,7 @@ public class SVNMerger {
                 result[0] = SVNStatusType.OBSTRUCTED;
             } else {
                 return fileChanged(path, older, yours, rev1, rev2, mimeType1,
-                        mimeType2, baseProps, propDiff);
+                        mimeType2, propDiff);
             }
         }
         return result;
@@ -320,9 +319,8 @@ public class SVNMerger {
         return pathInURL;
     }
 
-    public SVNStatusType directoryPropertiesChanged(String path, Map baseProps,
-            Map propDiff) throws SVNException {
-        return propertiesChanged(path, "", baseProps, propDiff);
+    public SVNStatusType directoryPropertiesChanged(String path, Map propDiff) throws SVNException {
+        return propertiesChanged(path, "", propDiff);
     }
 
     public File getFile(String path, boolean base) {
@@ -340,8 +338,7 @@ public class SVNMerger {
         return null;
     }
 
-    private SVNStatusType propertiesChanged(String path, String name,
-            Map baseProps, Map propDiff) throws SVNException {
+    private SVNStatusType propertiesChanged(String path, String name, Map propDiff) throws SVNException {
         if (propDiff == null || propDiff.isEmpty()) {
             return SVNStatusType.UNCHANGED;
         }
