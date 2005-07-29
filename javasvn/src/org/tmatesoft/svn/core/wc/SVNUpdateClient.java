@@ -190,7 +190,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
         if (dstPath == null) {
-            dstPath = new File(".", SVNPathUtil.tail(url.getPath()));
+            SVNErrorManager.error("svn: Destination path should be defined for check out");
         }
         SVNRepository repos = createRepository(url, null, pegRevision, revision);
         long revNumber = getRevisionNumber(revision, repos, null);
