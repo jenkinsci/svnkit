@@ -39,6 +39,7 @@ public class SVNURL {
         if (path.length() > 0 && path.charAt(path.length() - 1) == '/') {
             path = path.substring(0, path.length() - 1);
         }
+        protocol = protocol == null ? "http" : protocol.toLowerCase();
         String url = composeURL(protocol, userInfo, host, port, path);
         return new SVNURL(url, true);
     }
@@ -82,6 +83,7 @@ public class SVNURL {
             SVNErrorManager.error("svn: invalid URL '" + url + "'");
         }
         myProtocol = url.substring(0, index);
+        myProtocol = myProtocol.toLowerCase();
         if (!DEFAULT_PORTS.containsKey(myProtocol)) {
             SVNErrorManager.error("svn: invalid URL '" + url + "': protocol '" + myProtocol + "' is not supported");
         }
