@@ -972,8 +972,64 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     
-    public String doGetWorkingCopyID(File path, String trailURL, boolean lastChanged) {
-        return null;
+    public String doGetWorkingCopyID(final File path, String trailURL) throws SVNException {
+        try {
+            createWCAccess(path);
+        } catch (SVNException e) {
+            SVNFileType pathType = SVNFileType.getType(path);
+            if (pathType == SVNFileType.DIRECTORY) {
+                return "exported";
+            } 
+            SVNErrorManager.error("svn: '" + path + "' is not versioned and not exported");
+        }
+        SVNStatusClient statusClient = new SVNStatusClient((ISVNAuthenticationManager) null, getOptions());
+        statusClient.setIgnoreExternals(true);
+        final long[] maxRevision = new long[1];
+        final long[] minRevision = new long[1];
+        final boolean[] switched = new boolean[2];
+        final String[] wcURL = new String[1];
+        statusClient.doStatus(path, true, false, true, false, false, new ISVNStatusHandler() {
+            public void handleStatus(SVNStatus status) {
+                if (status.getEntryProperties() == null || status.getEntryProperties().isEmpty()) {
+                    return;
+                }
+                if (status.getContentsStatus() != SVNStatusType.STATUS_ADDED) {
+                    SVNRevision revision = status.getRevision();
+                    if (revision != null) {
+                        if (minRevision[0] < 0 || minRevision[0] > revision.getNumber()) {
+                            minRevision[0] = revision.getNumber();
+                        }
+                        maxRevision[0] = Math.max(maxRevision[0], revision.getNumber());
+                    }
+                }
+                switched[0] |= status.isSwitched();
+                switched[1] |= status.getContentsStatus() != SVNStatusType.STATUS_NORMAL;
+                switched[1] |= status.getPropertiesStatus() != SVNStatusType.STATUS_NORMAL &&
+                    status.getPropertiesStatus() != SVNStatusType.STATUS_NONE;
+                if (wcURL[0] == null && status.getFile() != null && status.getFile().equals(path) && status.getURL() != null) {
+                    wcURL[0] = status.getURL().toString();
+                }
+            }
+        });
+        if (!switched[0] && trailURL != null) {
+            if (wcURL[0] == null) {
+                switched[0] = true;
+            } else {
+                switched[0] = !wcURL[0].endsWith(trailURL);
+            }
+        }
+        StringBuffer id = new StringBuffer();
+        id.append(minRevision[0]);
+        if (minRevision[0] != maxRevision[0]) {
+            id.append(":").append(maxRevision[0]);
+        }
+        if (switched[1]) {
+            id.append("M");
+        }
+        if (switched[0]) {
+            id.append("S");
+        }
+        return id.toString();
     } 
 
     public SVNInfo doInfo(File path, SVNRevision revision) throws SVNException {

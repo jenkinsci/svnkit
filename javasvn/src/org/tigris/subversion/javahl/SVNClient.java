@@ -1013,7 +1013,12 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public String getVersionInfo(String path, String trailUrl, boolean lastChanged) throws ClientException {
-        return getSVNWCClient().doGetWorkingCopyID(new File(path).getAbsoluteFile(), trailUrl, lastChanged);
+        try {
+            return getSVNWCClient().doGetWorkingCopyID(new File(path).getAbsoluteFile(), trailUrl);
+        } catch (SVNException e) {
+            throwException(e);
+        }
+        return null;
     }
 
     public static void enableLogging(int logLevel, String logFilePath) {
