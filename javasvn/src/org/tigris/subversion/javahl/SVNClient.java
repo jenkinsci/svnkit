@@ -447,7 +447,7 @@ public class SVNClient implements SVNClientInterface {
     public void doImport(String path, String url, String message, boolean recurse) throws ClientException {
         SVNCommitClient commitClient = getSVNCommitClient();
         try {
-            commitClient.doImport(new File(path), url, message, recurse);
+            commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, recurse);
         } catch (SVNException e) {
             throwException(e);
         }

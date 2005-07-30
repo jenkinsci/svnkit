@@ -325,51 +325,41 @@ public class SVNCommitClient extends SVNBasicClient {
      * 							of the commit
      * @throws SVNException
      */
-    public SVNCommitInfo doImport(File path, String dstURL,
-            String commitMessage, boolean recursive) throws SVNException {
-        dstURL = validateURL(dstURL);
+    public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, boolean recursive) throws SVNException {
         // first find dstURL root.
         SVNRepository repos = null;
-        String rootURL = dstURL;
         SVNFileType srcKind = SVNFileType.getType(path);
         List newPaths = new ArrayList();
+        SVNURL rootURL = dstURL;
         while (true) {
             try {
-                repos = createRepository(rootURL); // may throw an exception.
+                repos = createRepository(rootURL);
             } catch (SVNException e) {
                 SVNErrorManager.error("svn: invalid URL '" + dstURL + "'");
             }
             if (repos == null) {
                 SVNErrorManager.error("svn: invalid URL '" + dstURL + "'");
             } else if (repos.checkPath("", -1) == SVNNodeKind.NONE) {
-                newPaths.add(SVNEncodingUtil.uriDecode(SVNPathUtil.tail(rootURL)));
-                rootURL = SVNPathUtil.removeTail(rootURL);
+                newPaths.add(SVNPathUtil.tail(rootURL.getPath()));
+                rootURL = rootURL.removePathTail();
             } else {
                 break;
             }
         }
-        if (newPaths.isEmpty()
-                && (srcKind == SVNFileType.FILE || srcKind == SVNFileType.SYMLINK)) {
+        if (newPaths.isEmpty() && (srcKind == SVNFileType.FILE || srcKind == SVNFileType.SYMLINK)) {
             SVNErrorManager.error("svn: Path '" + dstURL + "' already exists");
         }
         if (newPaths.contains(".svn")) {
-            SVNErrorManager
-                    .error("svn: '.svn' is a reserved name and cannot be imported");
+            SVNErrorManager.error("svn: '.svn' is a reserved name and cannot be imported");
         }
         SVNCommitItem[] items = new SVNCommitItem[1];
-        items[0] = new SVNCommitItem(path, SVNURL.parseURIEncoded(dstURL), null,
-                srcKind == SVNFileType.DIRECTORY ? SVNNodeKind.DIR
-                        : SVNNodeKind.FILE, SVNRevision.UNDEFINED, true, false,
-                false, false, false, false);
-        commitMessage = getCommitHandler().getCommitMessage(commitMessage,
-                items);
+        items[0] = new SVNCommitItem(path, dstURL, null, srcKind == SVNFileType.DIRECTORY ? SVNNodeKind.DIR : SVNNodeKind.FILE, SVNRevision.UNDEFINED, 
+                        true, false, false, false, false, false);
+        commitMessage = getCommitHandler().getCommitMessage(commitMessage, items);
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
         }
-        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null,
-                false, new SVNImportMediator(
-                        srcKind == SVNFileType.DIRECTORY ? path : path
-                                .getParentFile()));
+        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, new SVNImportMediator(srcKind == SVNFileType.DIRECTORY ? path : path.getParentFile()));
         String filePath = "";
         if (srcKind != SVNFileType.DIRECTORY) {
             filePath = (String) newPaths.remove(0);
@@ -381,16 +371,14 @@ public class SVNCommitClient extends SVNBasicClient {
         commitEditor.openRoot(-1);
         String newDirPath = null;
         for (int i = newPaths.size() - 1; i >= 0; i--) {
-            newDirPath = newDirPath == null ? (String) newPaths.get(i)
-                    : SVNPathUtil.append(newDirPath, (String) newPaths.get(i));
+            newDirPath = newDirPath == null ? (String) newPaths.get(i) : SVNPathUtil.append(newDirPath, (String) newPaths.get(i));
             commitEditor.addDir(newDirPath, null, -1);
         }
         boolean changed;
         if (srcKind == SVNFileType.DIRECTORY) {
             changed = importDir(path, path, newDirPath, recursive, commitEditor);
         } else {
-            changed = importFile(path.getParentFile(), path, srcKind, filePath,
-                    commitEditor);
+            changed = importFile(path.getParentFile(), path, srcKind, filePath, commitEditor);
         }
         if (!changed) {
             try {

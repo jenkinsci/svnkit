@@ -98,11 +98,9 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", false);
             SVNURL url = entry.getSVNURL();
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, recursive, isLeaveConflictsUnresolved());
-            SVNRepository repos = createRepository(url, file, SVNRevision.UNDEFINED, revision);
+            SVNRepository repos = createRepository(url, wcAccess.getAnchor().getRoot(), SVNRevision.UNDEFINED, revision);
             
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
-            SVNDebugLog.logInfo("repos url: " + url);
-            SVNDebugLog.logInfo("update target: " + target);
             long revNumber = getRevisionNumber(revision, repos, file);
             repos.update(revNumber, target, recursive, reporter, editor);
 
@@ -153,7 +151,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (url == null) {
                 SVNErrorManager.error("svn: '" + file + "' has no URL");
             }
-            SVNRepository repository = createRepository(sourceURL, file, SVNRevision.UNDEFINED, revision);
+            SVNRepository repository = createRepository(sourceURL, wcAccess.getAnchor().getRoot(), SVNRevision.UNDEFINED, revision);
             long revNumber = getRevisionNumber(revision, repository, file);
 
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url.toString(), recursive, isLeaveConflictsUnresolved());

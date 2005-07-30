@@ -761,7 +761,7 @@ public class WorkingCopy {
          * Returns SVNCommitInfo containing information on the commit (revision number, 
          * etc.) 
          */
-        return ourClientManager.getCommitClient().doImport(localPath, dstURL.toString(), commitMessage, isRecursive);
+        return ourClientManager.getCommitClient().doImport(localPath, dstURL, commitMessage, isRecursive);
         
     }
     /*
