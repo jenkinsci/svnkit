@@ -18,6 +18,11 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 /*
+ * 
+ * 
+ * 
+ * 
+ * 
  * This class is an implementation of ISVNEventHandler intended to reflect the 
  * status of a commit operation. Think of an SVN*Client's operation (for example, 
  * committing a working copy with invoking SVNCommitClient.doCommit(..)) as of a 
