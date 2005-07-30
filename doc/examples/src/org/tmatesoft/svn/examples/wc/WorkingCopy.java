@@ -480,13 +480,12 @@ public class WorkingCopy {
         wcDir.mkdirs();
 
         System.out.println("Checking out a working copy from '" + url + "'...");
-        long checkoutRevision = -1;
         try {
             /*
              * recursively checking out a working copy from url into wcDir,
              * SVNRevision.HEAD means the latest revision to be checked out 
              */
-            checkoutRevision = checkout(url, SVNRevision.HEAD, wcDir, true);
+            checkout(url, SVNRevision.HEAD, wcDir, true);
         } catch (SVNException svne) {
             error("error while checking out a working copy for the location '"
                             + url + "'", svne);
@@ -614,8 +613,7 @@ public class WorkingCopy {
              * 
              * checkoutRevision is to concretize url
              */
-            committedRevision = copy(url,
-                    SVNRevision.create(checkoutRevision), copyURL, false,
+            committedRevision = copy(url, copyURL, false,
                     "remotely copying '" + url + "' to '" + copyURL + "'")
                     .getNewRevision();
         } catch (SVNException svne) {
@@ -1052,15 +1050,15 @@ public class WorkingCopy {
      * commitMessage - a commit log message since URL->URL copying is immediately 
      * committed to a repository.
      */
-    private static SVNCommitInfo copy(SVNURL srcURL, SVNRevision srcPegRevision, SVNURL dstURL,
+    private static SVNCommitInfo copy(SVNURL srcURL, SVNURL dstURL,
             boolean isMove, String commitMessage) throws SVNException {
         /*
          * SVNRevision.HEAD means the latest revision.
          * Returns SVNCommitInfo containing information on the commit (revision number, 
          * etc.) 
          */
-        return ourClientManager.getCopyClient().doCopy(srcURL.toString(), srcPegRevision, SVNRevision.HEAD,
-                dstURL.toString(), null, isMove, commitMessage);
+        return ourClientManager.getCopyClient().doCopy(srcURL,  SVNRevision.HEAD,
+                dstURL, isMove, commitMessage);
     }
     
     /*

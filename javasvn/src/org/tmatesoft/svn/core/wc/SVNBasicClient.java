@@ -176,8 +176,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return createWCAccess(file, null);
     }
 
-    protected SVNWCAccess createWCAccess(File file, final String pathPrefix)
-            throws SVNException {
+    protected SVNWCAccess createWCAccess(File file, final String pathPrefix) throws SVNException {
         SVNWCAccess wcAccess = SVNWCAccess.create(file);
         if (pathPrefix != null) {
             wcAccess.setEventDispatcher(new ISVNEventHandler() {
@@ -198,8 +197,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return wcAccess;
     }
 
-    protected long getRevisionNumber(File file, SVNRevision revision)
-            throws SVNException {
+    protected long getRevisionNumber(File file, SVNRevision revision) throws SVNException {
         if (revision.getNumber() >= 0) {
             return revision.getNumber();
         }
@@ -230,8 +228,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return -1;
     }
 
-    protected long getRevisionNumber(String url, SVNRevision revision)
-            throws SVNException {
+    protected long getRevisionNumber(String url, SVNRevision revision) throws SVNException {
         if (revision.getNumber() >= 0) {
             return revision.getNumber();
         }
@@ -246,8 +243,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return number;
     }
 
-    public String getURL(String url, SVNRevision peg, SVNRevision rev)
-            throws SVNException {
+    public String getURL(String url, SVNRevision peg, SVNRevision rev) throws SVNException {
         if (rev == null || !rev.isValid()) {
             rev = SVNRevision.HEAD;
         }
@@ -572,7 +568,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         long startRevisionNumber;
         long endRevisionNumber;
         
-        if (path != null) {
+        if (path != null && url == null) {
             SVNWCAccess wcAccess = createWCAccess(path);
             SVNEntry entry = wcAccess.getTargetEntry();
             if (entry.getCopyFromURL() != null && revision == SVNRevision.WORKING) {

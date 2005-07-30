@@ -122,6 +122,10 @@ public class SVNURL {
         return myPort;
     }
     
+    public boolean hasPort() {
+        return !myIsDefaultPort;
+    }
+    
     // uri-decoded
     public String getPath() {
         return myPath;
@@ -159,6 +163,42 @@ public class SVNURL {
         return null;
     }
     
+    public SVNURL removePathTail() {
+        String newPath = SVNPathUtil.removeTail(myPath);
+        String url = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), newPath);
+        try {
+            return parseURIEncoded(url);
+        } catch (SVNException e) {
+            //
+        }
+        return null;
+    }
+    
+    public boolean equals(Object obj) {
+        if (obj == null || obj.getClass() != SVNURL.class) {
+            return false;
+        }
+        SVNURL url = (SVNURL) obj;
+        boolean eq = myProtocol.equals(url.myProtocol) && 
+            myPort == url.myPort &&
+            myHost.equals(url.myHost) &&
+            myPath.equals(url.myPath);
+        if (myUserName == null) {
+            eq &= url.myUserName == null;
+        } else {
+            eq &= myUserName.equals(url.myUserName);
+        }
+        return eq;
+    }
+
+    public int hashCode() {
+        int code = myProtocol.hashCode() + myHost.hashCode()*27 + myPath.hashCode()*31 + myPort*17;
+        if (myUserName != null) {
+            code += 37*myUserName.hashCode();
+        }
+        return code;
+    }
+
     private static String composeURL(String protocol, String userInfo, String host, int port, String path) {
         StringBuffer url = new StringBuffer();
         url.append(protocol);

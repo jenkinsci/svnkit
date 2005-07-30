@@ -45,8 +45,7 @@ public class SVNReporter implements ISVNReporterBaton {
         try {
             SVNEntries targetEntries = myWCAccess.getTarget().getEntries();
             SVNEntries anchorEntries = myWCAccess.getAnchor().getEntries();
-            SVNEntry targetEntry = anchorEntries.getEntry(myWCAccess
-                    .getTargetName(), true);
+            SVNEntry targetEntry = anchorEntries.getEntry(myWCAccess.getTargetName(), true);
 
             if (targetEntry == null
                     || targetEntry.isHidden()
@@ -61,8 +60,7 @@ public class SVNReporter implements ISVNReporterBaton {
                 reporter.finishReport();
                 return;
             }
-            long revision = targetEntry.isFile() ? targetEntry.getRevision()
-                    : targetEntries.getEntry("", true).getRevision();
+            long revision = targetEntry.isFile() ? targetEntry.getRevision() : targetEntries.getEntry("", true).getRevision();
             if (revision < 0) {
                 revision = anchorEntries.getEntry("", true).getRevision();
             }
@@ -91,8 +89,7 @@ public class SVNReporter implements ISVNReporterBaton {
                     reporter.linkPath(svnURL, "",
                             targetEntry.getLockToken(), targetEntry
                                     .getRevision(), false);
-                } else if (targetEntry.getRevision() != parentEntry
-                        .getRevision()
+                } else if (targetEntry.getRevision() != parentEntry.getRevision()
                         || targetEntry.getLockToken() != null) {
                     reporter.setPath("", targetEntry.getLockToken(),
                             targetEntry.getRevision(), false);

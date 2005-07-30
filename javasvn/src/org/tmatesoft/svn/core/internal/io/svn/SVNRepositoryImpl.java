@@ -678,8 +678,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
      * ISVNReporter methods
      */
 
-    public void setPath(String path, String lockToken, long revision,
-            boolean startEmpty) throws SVNException {
+    public void setPath(String path, String lockToken, long revision,  boolean startEmpty) throws SVNException {
         assertValidRevision(revision);
         if (lockToken == null) {
             write("(w(snw))", new Object[] { "set-path", path,

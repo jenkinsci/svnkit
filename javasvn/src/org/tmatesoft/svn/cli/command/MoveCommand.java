@@ -12,15 +12,16 @@
 
 package org.tmatesoft.svn.cli.command;
 
+import java.io.File;
+import java.io.PrintStream;
+
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-
-import java.io.File;
-import java.io.PrintStream;
 
 /**
  * @author TMate Software Ltd.
@@ -45,9 +46,7 @@ public class MoveCommand extends SVNCommand {
         }
         String srcURL = getCommandLine().getURL(0);
         SVNRevision srcRevision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
-        SVNRevision srcPegRevision = getCommandLine().getPegRevision(0);
         String dstURL = getCommandLine().getURL(1);
-        SVNRevision dstPegRevision = getCommandLine().getPegRevision(1);
 
         if (matchTabsInPath(srcURL, err) || matchTabsInPath(dstURL, err)) {
             return;
@@ -56,7 +55,7 @@ public class MoveCommand extends SVNCommand {
         String commitMessage = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
         getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
         SVNCopyClient updater = getClientManager().getCopyClient();
-        SVNCommitInfo result = updater.doCopy(srcURL, srcPegRevision, srcRevision, dstURL, dstPegRevision, true, commitMessage);
+        SVNCommitInfo result = updater.doCopy(SVNURL.parseURIEncoded(srcURL), srcRevision, SVNURL.parseURIDecoded(dstURL), true, commitMessage);
         if (result != SVNCommitInfo.NULL) {
             out.println();
             out.println("Committed revision " + result.getNewRevision() + ".");
@@ -76,6 +75,6 @@ public class MoveCommand extends SVNCommand {
         getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
         SVNCopyClient updater = getClientManager().getCopyClient();
         boolean force = getCommandLine().hasArgument(SVNArgument.FORCE);
-        updater.doCopy(new File(absoluteSrcPath), null, SVNRevision.WORKING, new File(absoluteDstPath), null, SVNRevision.WORKING, force, true, null);
+        updater.doCopy(new File(absoluteSrcPath), SVNRevision.WORKING, new File(absoluteDstPath), force, true);
 	}
 }

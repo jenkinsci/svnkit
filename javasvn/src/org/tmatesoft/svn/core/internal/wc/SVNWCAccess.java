@@ -74,7 +74,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         if (target != null && anchor != null) {
             // both are versioned dirs,
             // check whether target is switched.
-            SVNEntry targetInAnchor = anchor.getEntries().getEntry(name, true);
+            SVNEntry targetInAnchor = anchor.getEntries().getEntry(name, false);
             SVNDirectory anchorCopy = anchor;
             try {
                 if (targetInAnchor == null) {
@@ -84,8 +84,8 @@ public class SVNWCAccess implements ISVNEventHandler {
                         target.setWCAccess(null, "");
                     }
                 } else {
-                    SVNEntry anchorEntry = anchor.getEntries().getEntry("", true);
-                    SVNEntry targetEntry = target.getEntries().getEntry("", true);
+                    SVNEntry anchorEntry = anchor.getEntries().getEntry("", false);
+                    SVNEntry targetEntry = target.getEntries().getEntry("", false);
                     String anchorURL = anchorEntry.getURL();
                     String targetURL = targetEntry.getURL();
                     if (anchorURL != null && targetURL != null) {
@@ -161,7 +161,10 @@ public class SVNWCAccess implements ISVNEventHandler {
 
     public SVNEntry getTargetEntry() throws SVNException {
         if (getAnchor() != getTarget()) {
-            return getTarget().getEntries().getEntry("", false);
+            SVNEntry entry = getTarget().getEntries().getEntry("", false);
+            if (entry != null) {
+                return entry;
+            }
         }
         return getAnchor().getEntries().getEntry(getTargetName(), false);
     }
