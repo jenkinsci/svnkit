@@ -98,7 +98,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", false);
             SVNURL url = entry.getSVNURL();
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, recursive, isLeaveConflictsUnresolved());
-            SVNRepository repos = createRepository(url, wcAccess.getAnchor().getRoot(), SVNRevision.UNDEFINED, revision);
+            SVNRepository repos = createRepository(url);
             
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             long revNumber = getRevisionNumber(revision, repos, file);
@@ -151,7 +151,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (url == null) {
                 SVNErrorManager.error("svn: '" + file + "' has no URL");
             }
-            SVNRepository repository = createRepository(sourceURL, wcAccess.getAnchor().getRoot(), SVNRevision.UNDEFINED, revision);
+            SVNRepository repository = createRepository(sourceURL);
             long revNumber = getRevisionNumber(revision, repository, file);
 
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url.toString(), recursive, isLeaveConflictsUnresolved());
@@ -607,7 +607,6 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (copyFromURL != null && copyFromURL.startsWith(oldURL)) {
                 copyFromURL = copyFromURL.substring(oldURL.length());
                 copyFromURL = SVNPathUtil.append(newURL, copyFromURL);
-                copyFromURL = validateURL(copyFromURL);
                 entry.setCopyFromURL(copyFromURL);
             }
             if (recursive && entry.isDirectory() && !"".equals(entry.getName())) {
@@ -620,7 +619,6 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (url.startsWith(oldURL)) {
                     url = url.substring(oldURL.length());
                     url = SVNPathUtil.append(newURL, url);
-                    url = validateURL(url);
                     entry.setURL(url);
                 }
             }
@@ -704,9 +702,27 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
         if (external.getFile().exists()) {
             external.getFile().getParentFile().mkdirs();
-            File newLocation = SVNFileUtil.createUniqueFile(external.getFile()
-                    .getParentFile(), external.getFile().getName(), ".OLD");
+            File newLocation = SVNFileUtil.createUniqueFile(external.getFile().getParentFile(), external.getFile().getName(), ".OLD");
             SVNFileUtil.rename(external.getFile(), newLocation);
         }
+    }
+
+    private SVNDirectory createVersionedDirectory(File dstPath, SVNURL url, String uuid, long revNumber) throws SVNException {
+        SVNDirectory.createVersionedDirectory(dstPath);
+        // add entry first.
+        SVNDirectory dir = new SVNDirectory(null, "", dstPath);
+        SVNEntries entries = dir.getEntries();
+        SVNEntry entry = entries.getEntry("", true);
+        if (entry == null) {
+            entry = entries.addEntry("");
+        }
+        entry.setURL(url.toString());
+        entry.setUUID(uuid);
+        entry.setKind(SVNNodeKind.DIR);
+        entry.setRevision(revNumber);
+        entry.setIncomplete(true);
+
+        entries.save(true);
+        return dir;
     }
 }

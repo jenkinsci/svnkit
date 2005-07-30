@@ -263,8 +263,16 @@ public class SVNClient implements SVNClientInterface {
         }
         if(areURLs){
             SVNCommitClient client = getSVNCommitClient();
+            SVNURL[] urls = new SVNURL[path.length];
+            for (int i = 0; i < urls.length; i++) {
+                try {
+                    urls[i] = SVNURL.parseURIEncoded(path[i]);
+                } catch (SVNException e) {
+                    throwException(e);
+                }
+            }
             try {
-                client.doDelete(path, message);
+                client.doDelete(urls, message);
             } catch (SVNException e) {
                 throwException(e);
             }
@@ -391,7 +399,11 @@ public class SVNClient implements SVNClientInterface {
     public void mkdir(String[] path, String message) throws ClientException {
         SVNCommitClient client = getSVNCommitClient();
         try {
-            client.doMkDir(path, message);
+            SVNURL[] urls = new SVNURL[path.length];
+            for (int i = 0; i < path.length; i++) {
+                urls[i] = SVNURL.parseURIEncoded(path[i]);
+            }
+            client.doMkDir(urls, message);
         } catch (SVNException e) {
             throwException(e);
         }

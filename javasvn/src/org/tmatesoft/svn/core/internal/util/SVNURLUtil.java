@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
+import java.util.Collection;
+
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -48,4 +50,69 @@ public class SVNURLUtil {
         }
         return null;
     }
+
+    public static SVNURL condenceURLs(SVNURL[] urls, Collection condencedPaths, boolean removeRedundantURLs) {
+        if (urls == null || urls.length == 0) {
+            return null;
+        }
+        if (urls.length == 1) {
+            return urls[0];
+        }
+        SVNURL rootURL = urls[0];
+        for (int i = 0; i < urls.length; i++) {
+            rootURL = getCommonURLAncestor(rootURL, urls[i]);
+        }
+        
+        if (condencedPaths != null && removeRedundantURLs) {
+            for (int i = 0; i < urls.length; i++) {
+                SVNURL url1 = urls[i];
+                if (url1 == null) {
+                    continue;
+                }
+                for (int j = 0; j < urls.length; j++) {
+                    if (i == j) {
+                        continue;
+                    }
+                    SVNURL url2 = urls[j];
+                    if (url2 == null) {
+                        continue;
+                    }
+                    SVNURL common = getCommonURLAncestor(url1, url2);
+                    if (common == null) {
+                        continue;
+                    }
+                    if (common.equals(url1)) {
+                        urls[j] = null;
+                    } else if (common.equals(url2)) {
+                        urls[i] = null;
+                    }
+                }
+            }
+            for (int j = 0; j < urls.length; j++) {
+                SVNURL url = urls[j];
+                if (url != null && url.equals(rootURL)) {
+                    urls[j] = null;
+                }
+            }
+        }
+    
+        if (condencedPaths != null) {
+            for (int i = 0; i < urls.length; i++) {
+                SVNURL url = urls[i];
+                if (url == null) {
+                    continue;
+                }
+                String path = url.toString();
+                if (rootURL != null) {
+                    path = path.substring(rootURL.toString().length());
+                    if (path.startsWith("/")) {
+                        path = path.substring(1);
+                    }
+                }
+                condencedPaths.add(path);
+            }
+        }
+        return rootURL;
+    }
+
 }

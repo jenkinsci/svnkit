@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNAnnotationGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -44,15 +45,13 @@ public class SVNLogClient extends SVNBasicClient {
         super(repositoryFactory, options);
     }
 
-    public void doAnnotate(File path, SVNRevision pegRevision,
-            SVNRevision startRevision, SVNRevision endRevision,
-            ISVNAnnotateHandler handler) throws SVNException {
+    public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler) throws SVNException {
         if (startRevision == null || !startRevision.isValid()) {
             startRevision = SVNRevision.create(1);
         }
-        SVNRepository repos = createRepository(path, null, pegRevision, endRevision, null);
-        long endRev = getRevisionNumber(path, null, repos, endRevision);
-        long startRev = getRevisionNumber(path, null, repos, startRevision);
+        SVNRepository repos = createRepository(null, path, pegRevision, endRevision);
+        long endRev = getRevisionNumber(endRevision, repos, path);
+        long startRev = getRevisionNumber(startRevision, repos, path);
         if (endRev < startRev) {
             SVNErrorManager
                     .error("svn: Start revision must precede end revision ("
@@ -112,13 +111,14 @@ public class SVNLogClient extends SVNBasicClient {
         String[] urls = new String[paths.length];
         for (int i = 0; i < paths.length; i++) {
             File path = paths[i];
-            SVNEntry entry = getEntry(path);
+            SVNWCAccess wcAccess = createWCAccess(path);
+            SVNEntry entry = wcAccess.getTargetEntry();
             if (entry == null) {
                 SVNErrorManager.error("svn: '" + path + "' is not under version control");
                 return;
             }
             if (entry.getURL() == null) {
-                SVNErrorManager.error("svn: '" + path + "' has not URL");
+                SVNErrorManager.error("svn: '" + path + "' has no URL");
             }
             urls[i] = entry.getURL();
         }
@@ -140,19 +140,14 @@ public class SVNLogClient extends SVNBasicClient {
         }
         if (startRevision.isLocal() || endRevision.isLocal()) {
             for (int i = 0; i < paths.length; i++) {
-                long startRev = getRevisionNumber(paths[i], baseURL, repos,
-                        startRevision);
-                long endRev = getRevisionNumber(paths[i], baseURL, repos,
-                        endRevision);
-                repos.log(targetPaths, startRev, endRev, reportPaths,
-                        stopOnCopy, limit, handler);
+                long startRev = getRevisionNumber(startRevision, repos, paths[i]);
+                long endRev = getRevisionNumber(endRevision, repos, paths[i]);
+                repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, handler);
             }
         } else {
-            long startRev = getRevisionNumber(null, baseURL, repos,
-                    startRevision);
-            long endRev = getRevisionNumber(null, baseURL, repos, endRevision);
-            repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy,
-                    limit, handler);
+            long startRev = getRevisionNumber(startRevision, repos, null);
+            long endRev = getRevisionNumber(endRevision, repos, null);
+            repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, handler);
         }
     }
 
@@ -179,9 +174,8 @@ public class SVNLogClient extends SVNBasicClient {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.BASE;
         }
-        SVNRepository repos = createRepository(path, null, pegRevision,
-                revision, null);
-        long rev = getRevisionNumber(path, null, repos, revision);
+        SVNRepository repos = createRepository(null, path, pegRevision, revision);
+        long rev = getRevisionNumber(revision, repos, path);
         doList(repos, rev, handler, recursive);
     }
 

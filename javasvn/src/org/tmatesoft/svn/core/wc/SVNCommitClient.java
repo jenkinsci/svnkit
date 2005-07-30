@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
@@ -145,35 +146,28 @@ public class SVNCommitClient extends SVNBasicClient {
      * 							of the commit
      * @throws SVNException
      */
-    public SVNCommitInfo doDelete(String[] urls, String commitMessage)
+    public SVNCommitInfo doDelete(SVNURL[] urls, String commitMessage)
             throws SVNException {
         if (urls == null || urls.length == 0) {
             return SVNCommitInfo.NULL;
         }
-        for (int i = 0; i < urls.length; i++) {
-            urls[i] = validateURL(urls[i]);
-        }
         List paths = new ArrayList();
-        String rootURL = SVNPathUtil.condenceURLs(urls, paths, true);
-        if (rootURL == null || "".equals(rootURL)) {
-            // something strange, t
-            SVNErrorManager
-                    .error("svn: Cannot deleted passed URLs as part of a single commit, probably they are refer to the different repositories");
+        SVNURL rootURL = SVNURLUtil.condenceURLs(urls, paths, true);
+        if (rootURL == null) {
+            SVNErrorManager.error("svn: Cannot deleted passed URLs as part of a single commit, probably they are refer to the different repositories");
         }
         if (paths.isEmpty()) {
             // there is just root.
-            paths.add(SVNPathUtil.tail(rootURL));
-            rootURL = SVNPathUtil.removeTail(rootURL);
+            paths.add(SVNPathUtil.tail(rootURL.getURIEncodedPath()));
+            rootURL = rootURL.removePathTail();
         }
         SVNCommitItem[] commitItems = new SVNCommitItem[paths.size()];
         for (int i = 0; i < commitItems.length; i++) {
             String path = (String) paths.get(i);
-            commitItems[i] = new SVNCommitItem(null, SVNURL.parseURIEncoded(SVNPathUtil.append(rootURL,
-                    path)), null, null, null, false, true, false, false, false,
-                    false);
+            commitItems[i] = new SVNCommitItem(null, rootURL.appendPath(path, true),
+                    null, null, null, false, true, false, false, false, false);
         }
-        commitMessage = getCommitHandler().getCommitMessage(commitMessage,
-                commitItems);
+        commitMessage = getCommitHandler().getCommitMessage(commitMessage, commitItems);
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
         }
@@ -189,15 +183,13 @@ public class SVNCommitClient extends SVNBasicClient {
             String path = (String) commitPath.next();
             SVNNodeKind kind = repos.checkPath(path, -1);
             if (kind == SVNNodeKind.NONE) {
-                String url = SVNPathUtil.append(rootURL, path);
+                SVNURL url = rootURL.appendPath(path, false);
                 SVNErrorManager.error("svn: URL '" + url + "' does not exist");
             }
         }
-        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null,
-                false, null);
+        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, null);
         ISVNCommitPathHandler deleter = new ISVNCommitPathHandler() {
-            public boolean handleCommitPath(String commitPath,
-                    ISVNEditor commitEditor) throws SVNException {
+            public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
                 commitEditor.deleteEntry(commitPath, -1);
                 return false;
             }
@@ -229,28 +221,24 @@ public class SVNCommitClient extends SVNBasicClient {
      * 							of the commit
      * @throws SVNException
      */
-    public SVNCommitInfo doMkDir(String[] urls, String commitMessage)
-            throws SVNException {
+    public SVNCommitInfo doMkDir(SVNURL[] urls, String commitMessage) throws SVNException {
         if (urls == null || urls.length == 0) {
             return SVNCommitInfo.NULL;
         }
-        for (int i = 0; i < urls.length; i++) {
-            urls[i] = validateURL(urls[i]);
-        }
         List paths = new ArrayList();
-        String rootURL = SVNPathUtil.condenceURLs(urls, paths, false);
-        if (rootURL == null || "".equals(rootURL)) {
-            SVNErrorManager
-                    .error("svn: Cannot create passed URLs as part of a single commit, probably they are refer to the different repositories");
+        SVNURL rootURL = SVNURLUtil.condenceURLs(urls, paths, false);
+        if (rootURL == null) {
+            SVNErrorManager.error("svn: Cannot create passed URLs as part of a single commit, probably they are refer to the different repositories");
         }
         if (paths.isEmpty()) {
-            paths.add(SVNPathUtil.tail(rootURL));
-            rootURL = SVNPathUtil.removeTail(rootURL);
+            paths.add(SVNPathUtil.tail(rootURL.getURIEncodedPath()));
+            rootURL = rootURL.removePathTail();
         }
+        
         if (paths.contains("")) {
             List convertedPaths = new ArrayList();
-            String tail = SVNPathUtil.tail(rootURL);
-            rootURL = SVNPathUtil.removeTail(rootURL);
+            String tail = SVNPathUtil.tail(rootURL.getURIEncodedPath());
+            rootURL = rootURL.removePathTail();
             for (Iterator commitPaths = paths.iterator(); commitPaths.hasNext();) {
                 String path = (String) commitPaths.next();
                 if ("".equals(path)) {
@@ -264,12 +252,10 @@ public class SVNCommitClient extends SVNBasicClient {
         SVNCommitItem[] commitItems = new SVNCommitItem[paths.size()];
         for (int i = 0; i < commitItems.length; i++) {
             String path = (String) paths.get(i);
-            commitItems[i] = new SVNCommitItem(null, SVNURL.parseURIEncoded(SVNPathUtil.append(rootURL,
-                    path)), null, null, null, true, false, false, false, false,
-                    false);
+            commitItems[i] = new SVNCommitItem(null, rootURL.appendPath(path, true),
+                    null, null, null, true, false, false, false, false, false);
         }
-        commitMessage = getCommitHandler().getCommitMessage(commitMessage,
-                commitItems);
+        commitMessage = getCommitHandler().getCommitMessage(commitMessage, commitItems);
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
         }
@@ -281,11 +267,9 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         paths = decodedPaths;
         SVNRepository repos = createRepository(rootURL);
-        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null,
-                false, null);
+        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, null);
         ISVNCommitPathHandler creater = new ISVNCommitPathHandler() {
-            public boolean handleCommitPath(String commitPath,
-                    ISVNEditor commitEditor) throws SVNException {
+            public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
                 commitEditor.addDir(commitPath, null, -1);
                 return true;
             }

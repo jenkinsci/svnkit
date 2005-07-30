@@ -731,7 +731,7 @@ public class WorkingCopy {
          * Returns SVNCommitInfo containing information on the commit (revision number, 
          * etc.) 
          */
-        return ourClientManager.getCommitClient().doMkDir(new String[]{url.toString()}, commitMessage);
+        return ourClientManager.getCommitClient().doMkDir(new SVNURL[]{url}, commitMessage);
     }
     
     /*
