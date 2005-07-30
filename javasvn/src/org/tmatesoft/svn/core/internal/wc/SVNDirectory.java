@@ -128,8 +128,7 @@ public class SVNDirectory {
         }
         boolean deleted = getLockFile().delete();
         if (!deleted) {
-            SVNErrorManager.error("svn: Cannot unlock working copy '"
-                    + getRoot() + "'");
+            SVNErrorManager.error("svn: Cannot unlock working copy '" + getRoot() + "'");
         }
         return deleted;
     }

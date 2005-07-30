@@ -18,7 +18,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -267,11 +266,9 @@ public class SVNWCClient extends SVNBasicClient {
         wcAccess.close(true);
     }
 
-    public void doSetProperty(File path, String propName, String propValue,
-            boolean force, boolean recursive, ISVNPropertyHandler handler)
-            throws SVNException {
+    public void doSetProperty(File path, String propName, String propValue, boolean force, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         propName = validatePropertyName(propName);
-        if (REVISION_PROPS.contains(propName)) {
+        if (SVNRevisionProperty.isRevisionProperty(propName)) {
             SVNErrorManager.error("svn: Revision property '" + propName + "' not allowed in this context");
         } else if (propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
@@ -280,49 +277,28 @@ public class SVNWCClient extends SVNBasicClient {
         SVNWCAccess wcAccess = createWCAccess(path);
         try {
             wcAccess.open(true, recursive);
-            doSetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(),
-                    propName, propValue, force, recursive, handler);
+            doSetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(), propName, propValue, force, recursive, handler);
         } finally {
             wcAccess.close(true);
         }
     }
 
-    public void doSetRevisionProperty(File path, SVNRevision revision, String propName, String propValue, boolean force,
-            ISVNPropertyHandler handler) throws SVNException {
+    public void doSetRevisionProperty(File path, SVNRevision revision, String propName, String propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         propName = validatePropertyName(propName);
-        if (propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            SVNErrorManager.error("svn: '" + propName
-                    + "' is a wcprop , thus not accessible to clients");
-        }
-        SVNWCAccess wcAccess = createWCAccess(path);
-        try {
-            wcAccess.open(true, false);
-            SVNEntry entry = wcAccess.getTargetEntry();
-            SVNURL url = entry.getSVNURL();
-            SVNRevision pegRevision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
-            doSetRevisionProperty(url, pegRevision, revision, propName, propValue, force, handler);
-        } finally {
-            wcAccess.close(true);
-        }
+        SVNURL url = getURL(path);
+        doSetRevisionProperty(url, revision, propName, propValue, force, handler);
     }
 
-    public void doSetRevisionProperty(SVNURL url, SVNRevision pegRevision,
-            SVNRevision revision, String propName, String propValue,
-            boolean force, ISVNPropertyHandler handler) throws SVNException {
+    public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, String propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         propName = validatePropertyName(propName);
-        if (!force && SVNRevisionProperty.AUTHOR.equals(propName) && propValue != null
-                && propValue.indexOf('\n') >= 0) {
+        if (!force && SVNRevisionProperty.AUTHOR.equals(propName) && propValue != null && propValue.indexOf('\n') >= 0) {
             SVNErrorManager.error("svn: Value will not be set unless forced");
         }
         if (propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            SVNErrorManager.error("svn: '" + propName
-                    + "' is a wcprop , thus not accessible to clients");
+            SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
         }
-        if (revision == null || !revision.isValid()) {
-            revision = SVNRevision.HEAD;
-        }
-        SVNRepository repos = createRepository(url, null, pegRevision, revision);
-        long revNumber = repos.getPegRevision();
+        SVNRepository repos = createRepository(url, null, SVNRevision.UNDEFINED, revision);
+        long revNumber = getRevisionNumber(revision, repos, null);
         repos.setRevisionPropertyValue(revNumber, propName, propValue);
         if (handler != null) {
             handler.handleProperty(revNumber, new SVNPropertyData(propName, propValue));
@@ -365,9 +341,7 @@ public class SVNWCClient extends SVNBasicClient {
         return data[0];
     }
 
-    public void doGetProperty(File path, String propName,
-            SVNRevision pegRevision, SVNRevision revision, boolean recursive,
-            ISVNPropertyHandler handler) throws SVNException {
+    public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
         }
@@ -375,30 +349,27 @@ public class SVNWCClient extends SVNBasicClient {
             revision = SVNRevision.WORKING;
         }
         SVNWCAccess wcAccess = createWCAccess(path);
-        try {
-            wcAccess.open(false, recursive);
-            if (revision != SVNRevision.WORKING && revision != SVNRevision.BASE) {
-                SVNEntry entry = wcAccess.getTargetEntry();
-                SVNURL url = entry.getSVNURL();
-                if (pegRevision == null || !pegRevision.isValid()) {
-                    pegRevision = SVNRevision.parse(wcAccess.getTargetEntryProperty(SVNProperty.REVISION));
-                }
-                revision = SVNRevision.create(getRevisionNumber(path, revision));
-                doGetProperty(url, propName, pegRevision, revision, recursive, handler);
-            } else {
-                doGetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(), propName, revision, recursive, handler);
-            }
-        } finally {
-            wcAccess.close(false);
+
+        wcAccess.open(false, recursive);
+        SVNEntry entry = wcAccess.getTargetEntry();
+        if (entry == null) {
+            SVNErrorManager.error("svn: '" + path + "' is not under version control");
         }
+        if (revision != SVNRevision.WORKING && revision != SVNRevision.BASE && revision != SVNRevision.COMMITTED) {
+            SVNURL url = entry.getSVNURL();
+            SVNRepository repository = createRepository(url, path, pegRevision, revision);
+            long revisionNumber = getRevisionNumber(revision, repository, path);
+            revision = SVNRevision.create(revisionNumber);
+            doGetRemoteProperty(url, "", repository, propName, revision, recursive, handler);
+        } else {
+            doGetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(), propName, revision, recursive, handler);
+        }
+        wcAccess.close(false);
     }
 
-    public void doGetProperty(SVNURL url, String propName,
-            SVNRevision pegRevision, SVNRevision revision, boolean recursive,
-            ISVNPropertyHandler handler) throws SVNException {
+    public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            SVNErrorManager.error("svn: '" + propName
-                    + "' is a wcprop , thus not accessible to clients");
+            SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
         }
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.HEAD;
@@ -407,40 +378,32 @@ public class SVNWCClient extends SVNBasicClient {
         doGetRemoteProperty(url, "", repos, propName, revision, recursive, handler);
     }
 
-    public void doGetRevisionProperty(File path, String propName,
-            SVNRevision pegRev, SVNRevision revision,
-            ISVNPropertyHandler handler) throws SVNException {
+    public void doGetRevisionProperty(File path, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
         }
-        SVNWCAccess wcAccess = createWCAccess(path);
-        try {
-            wcAccess.open(false, false);
-            SVNEntry entry = wcAccess.getTargetEntry();
-            SVNURL url = entry.getSVNURL();
-            long revNumber = getRevisionNumber(path, revision);
-            if (pegRev == null || !pegRev.isValid()) {
-                pegRev = SVNRevision.parse(wcAccess
-                        .getTargetEntryProperty(SVNProperty.REVISION));
-            }
-            revision = SVNRevision.create(revNumber);
-            SVNRepository repos = createRepository(url, path, SVNRevision.UNDEFINED, revision);
-            doGetRevisionProperty(repos.getLocation(), propName, revision, handler);
-        } finally {
-            wcAccess.close(false);
+        if (!revision.isValid()) {
+            SVNErrorManager.error("svn: Valid revision have to be specified to fetch revision property");
         }
+        SVNURL url = getURL(path);
+        SVNRepository repository = createRepository(url, path, SVNRevision.UNDEFINED, revision);
+        long revisionNumber = getRevisionNumber(revision, repository, path);
+        doGetRevisionProperty(repository, propName, revisionNumber, handler);
     }
 
     public void doGetRevisionProperty(SVNURL url, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
-            SVNErrorManager.error("svn: '" + propName
-                    + "' is a wcprop , thus not accessible to clients");
+            SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
         }
-        if (revision == null || !revision.isValid()) {
-            revision = SVNRevision.HEAD;
+        if (!revision.isValid()) {
+            SVNErrorManager.error("svn: Valid revision have to be specified to fetch revision property");
         }
         SVNRepository repos = createRepository(url);
         long revNumber = getRevisionNumber(revision, repos, null);
+        doGetRevisionProperty(repos, propName, revNumber, handler);
+    }
+
+    private void doGetRevisionProperty(SVNRepository repos, String propName, long revNumber, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null) {
             String value = repos.getRevisionPropertyValue(revNumber, propName);
             if (value != null) {
@@ -1462,15 +1425,6 @@ public class SVNWCClient extends SVNBasicClient {
         return value;
     }
 
-    private static final Collection REVISION_PROPS = new HashSet();
-    static {
-        REVISION_PROPS.add(SVNRevisionProperty.AUTHOR);
-        REVISION_PROPS.add(SVNRevisionProperty.LOG);
-        REVISION_PROPS.add(SVNRevisionProperty.DATE);
-        REVISION_PROPS.add(SVNRevisionProperty.ORIGINAL_DATE);
-        REVISION_PROPS.add(SVNRevisionProperty.AUTOVERSIONED);
-    }
-
     private static class LockInfo {
 
         public LockInfo(File file, SVNRevision rev) {
@@ -1484,9 +1438,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
 
         private File myFile;
-
         private SVNRevision myRevision;
-
         private String myToken;
     }
 }

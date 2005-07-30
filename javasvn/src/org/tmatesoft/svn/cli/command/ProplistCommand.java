@@ -58,7 +58,7 @@ public class ProplistCommand extends SVNCommand implements ISVNPropertyHandler {
             String path = getCommandLine().getPathAt(0);
             SVNRevision pegRevision = getCommandLine().getPathPegRevision(0);
             if (myIsRevProp) {
-                wcClient.doGetRevisionProperty(new File(path), null, pegRevision, revision, this);
+                wcClient.doGetRevisionProperty(new File(path), null, revision, this);
             } else {
                 wcClient.doGetProperty(new File(path), null, pegRevision, revision, myIsRecursive, this);
             }

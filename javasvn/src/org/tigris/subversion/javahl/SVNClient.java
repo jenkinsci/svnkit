@@ -708,14 +708,13 @@ public class SVNClient implements SVNClientInterface {
         }
         SVNWCClient client = getSVNWCClient();
         SVNRevision svnRevision = SVNConverterUtil.getSVNRevision(rev);
-        SVNRevision svnPegRevision = SVNConverterUtil.getSVNRevision(null);
         SVNPropertyRetriever retriever = new SVNPropertyRetriever(this);
         try {
             if(isURL(path)){
                 client.doGetRevisionProperty(SVNURL.parseURIEncoded(path), name, svnRevision, retriever);
             }else{
                 client.doGetRevisionProperty(new File(path).getAbsoluteFile(), name,
-                        svnPegRevision, svnRevision, retriever);
+                        svnRevision, retriever);
             }
         } catch (SVNException e) {
             throwException(e);
@@ -729,7 +728,6 @@ public class SVNClient implements SVNClientInterface {
         }
         SVNWCClient client = getSVNWCClient();
         SVNRevision svnRevision = SVNConverterUtil.getSVNRevision(rev);
-        SVNRevision svnPegRevision = SVNConverterUtil.getSVNRevision(null);
         final Collection properties = new ArrayList();
         ISVNPropertyHandler propHandler = new ISVNPropertyHandler(){
             public void handleProperty(File fpath, SVNPropertyData property) {
@@ -749,8 +747,7 @@ public class SVNClient implements SVNClientInterface {
             if(isURL(path)){
                 client.doGetRevisionProperty(SVNURL.parseURIEncoded(path), null, svnRevision, propHandler);
             }else{
-                client.doGetRevisionProperty(new File(path).getAbsoluteFile(), null,
-                        svnPegRevision, svnRevision, propHandler);
+                client.doGetRevisionProperty(new File(path).getAbsoluteFile(), null, svnRevision, propHandler);
             }
         } catch (SVNException e) {
             throwException(e);
@@ -764,11 +761,10 @@ public class SVNClient implements SVNClientInterface {
         }
         SVNWCClient client = getSVNWCClient();
         SVNRevision svnRevision = SVNConverterUtil.getSVNRevision(rev);
-        SVNRevision svnPegRevision = SVNConverterUtil.getSVNRevision(null);
         try {
             if(isURL(path)){
                 client.doSetRevisionProperty(SVNURL.parseURIEncoded(path),
-                        svnPegRevision, svnRevision, name, value, force, ISVNPropertyHandler.NULL);
+                        svnRevision, name, value, force, ISVNPropertyHandler.NULL);
             }else{
                 client.doSetRevisionProperty(new File(path).getAbsoluteFile(),
                         svnRevision, name, value, force, ISVNPropertyHandler.NULL);

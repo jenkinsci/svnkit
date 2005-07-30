@@ -80,7 +80,7 @@ public class PropsetCommand extends SVNCommand {
                 revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
             }
             if (getCommandLine().hasURLs()) {
-                wcClient.doSetRevisionProperty(SVNURL.parseURIEncoded(getCommandLine().getURL(0)), getCommandLine().getPegRevision(0),
+                wcClient.doSetRevisionProperty(SVNURL.parseURIEncoded(getCommandLine().getURL(0)),
                         revision, propertyName, propertyValue, force, new ISVNPropertyHandler() {
                             public void handleProperty(File path, SVNPropertyData property) throws SVNException {
                             }

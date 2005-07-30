@@ -12,6 +12,9 @@
 
 package org.tmatesoft.svn.core;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 /**
  * This class is a wrapper for revision properties.
  * 
@@ -24,6 +27,21 @@ package org.tmatesoft.svn.core;
  * @author TMate Software Ltd.
  */
 public class SVNRevisionProperty {
+    
+    private static final Collection REVISION_PROPS = new HashSet();
+
+    static {
+        REVISION_PROPS.add(SVNRevisionProperty.AUTHOR);
+        REVISION_PROPS.add(SVNRevisionProperty.LOG);
+        REVISION_PROPS.add(SVNRevisionProperty.DATE);
+        REVISION_PROPS.add(SVNRevisionProperty.ORIGINAL_DATE);
+        REVISION_PROPS.add(SVNRevisionProperty.AUTOVERSIONED);
+    }
+    
+    public static boolean isRevisionProperty(String name) {
+        return name != null && REVISION_PROPS.contains(name);
+    }
+
     /**
      * svn:author property that's responsible for the username of the revision's author
      */

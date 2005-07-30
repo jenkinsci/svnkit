@@ -49,15 +49,12 @@ public class SVNWCAccess implements ISVNEventHandler {
         file = new File(file.getAbsolutePath());
         File parentFile = file.getParentFile();
         String name = file.getName();
-        if (parentFile != null
-                && (!parentFile.exists() || !parentFile.isDirectory())) {
+        if (parentFile != null && (!parentFile.exists() || !parentFile.isDirectory())) {
             // parent doesn't exist or not a directory
             SVNErrorManager.error("svn: '" + parentFile + "' does not exist");
         }
-        SVNDirectory anchor = parentFile != null ? new SVNDirectory(null, "",
-                parentFile) : null;
-        SVNDirectory target = file.isDirectory() ? new SVNDirectory(null, name,
-                file) : null;
+        SVNDirectory anchor = parentFile != null ? new SVNDirectory(null, "", parentFile) : null;
+        SVNDirectory target = file.isDirectory() ? new SVNDirectory(null, name, file) : null;
 
         if (anchor == null || !anchor.isVersioned()) {
             // parent is not versioned, do not use it.
@@ -87,19 +84,14 @@ public class SVNWCAccess implements ISVNEventHandler {
                         target.setWCAccess(null, "");
                     }
                 } else {
-                    SVNEntry anchorEntry = anchor.getEntries().getEntry("",
-                            true);
-                    SVNEntry targetEntry = target.getEntries().getEntry("",
-                            true);
+                    SVNEntry anchorEntry = anchor.getEntries().getEntry("", true);
+                    SVNEntry targetEntry = target.getEntries().getEntry("", true);
                     String anchorURL = anchorEntry.getURL();
                     String targetURL = targetEntry.getURL();
                     if (anchorURL != null && targetURL != null) {
                         String urlName = SVNEncodingUtil.uriEncode(targetInAnchor.getName());
-                        String expectedURL = SVNPathUtil
-                                .append(anchorURL, urlName);
-                        if (!expectedURL.equals(targetURL)
-                                || !anchorURL.equals(SVNPathUtil.removeTail(targetURL))) {
-                            // switched, do not use anchor.
+                        String expectedURL = SVNPathUtil.append(anchorURL, urlName);
+                        if (!expectedURL.equals(targetURL) || !anchorURL.equals(SVNPathUtil.removeTail(targetURL))) {
                             anchor = null;
                             if (target != null) {
                                 target.setWCAccess(null, "");
@@ -120,11 +112,9 @@ public class SVNWCAccess implements ISVNEventHandler {
             }
         } else if (target == null && anchor == null) {
             // both are not versioned :(
-            SVNErrorManager.error("svn: '" + file
-                    + "' is not under version control");
+            SVNErrorManager.error("svn: '" + file + "' is not under version control");
         }
-        return new SVNWCAccess(anchor != null ? anchor : target,
-                target != null ? target : anchor, anchor != null ? name : "");
+        return new SVNWCAccess(anchor != null ? anchor : target, target != null ? target : anchor, anchor != null ? name : "");
     }
 
     public static boolean isVersionedDirectory(File path) {
@@ -176,8 +166,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         return getAnchor().getEntries().getEntry(getTargetName(), false);
     }
 
-    public String getTargetEntryProperty(String propertyName)
-            throws SVNException {
+    public String getTargetEntryProperty(String propertyName) throws SVNException {
         SVNEntries anchorEntries = getAnchor().getEntries();
         SVNEntries targetEntries = getTarget().getEntries();
         if (!"".equals(myName) && getAnchor() != getTarget()) {
