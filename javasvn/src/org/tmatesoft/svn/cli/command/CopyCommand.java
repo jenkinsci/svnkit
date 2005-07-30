@@ -20,7 +20,6 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -73,7 +72,7 @@ public class CopyCommand extends SVNCommand {
         SVNRevision srcRevision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         String dstURL = getCommandLine().getURL(1);
 
-        if (matchTabsInPath(srcURL, err) || matchTabsInPath(dstURL, err)) {
+        if (matchTabsInURL(srcURL, err) || matchTabsInURL(dstURL, err)) {
             return;
         }
 
@@ -102,7 +101,7 @@ public class CopyCommand extends SVNCommand {
     private void runLocalToRemote(final PrintStream out, PrintStream err) throws SVNException {
         final String dstURL = getCommandLine().getURL(0);
         String srcPath = getCommandLine().getPathAt(0);
-        if (matchTabsInPath(srcPath, err) || matchTabsInPath(SVNEncodingUtil.uriDecode(dstURL), err)) {
+        if (matchTabsInPath(srcPath, err) || matchTabsInURL(dstURL, err)) {
             return;
         }
         String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);

@@ -66,7 +66,7 @@ public class MkDirCommand extends SVNCommand {
     private void createRemoteDirectories(final PrintStream out, PrintStream err) throws SVNException {
         final Collection urls = new ArrayList();
         for (int i = 0; i < getCommandLine().getURLCount(); i++) {
-            if (matchTabsInPath(getCommandLine().getURL(i), err)) {
+            if (matchTabsInURL(getCommandLine().getURL(i), err)) {
                 continue;
             }
             urls.add(getCommandLine().getURL(i));

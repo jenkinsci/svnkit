@@ -48,7 +48,7 @@ public class MoveCommand extends SVNCommand {
         SVNRevision srcRevision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         String dstURL = getCommandLine().getURL(1);
 
-        if (matchTabsInPath(srcURL, err) || matchTabsInPath(dstURL, err)) {
+        if (matchTabsInURL(srcURL, err) || matchTabsInURL(dstURL, err)) {
             return;
         }
 

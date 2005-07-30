@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -123,6 +124,19 @@ public abstract class SVNCommand {
     protected static boolean matchTabsInPath(String path, PrintStream out) {
         if (path != null && path.indexOf('\t') >= 0) {
             out.println("svn: Invalid control character '0x09' in path '" + path + "'");
+            return true;
+        }
+        return false;
+    }
+
+    protected static boolean matchTabsInURL(String url, PrintStream out) {
+        String path = null;
+        try {
+            path = SVNURL.parseURIEncoded(url).getURIEncodedPath();
+        } catch (SVNException e) {
+        }
+        if (path != null && path.indexOf("%09") >= 0) {
+            out.println("svn: Invalid control character '0x09' in path '" + url + "'");
             return true;
         }
         return false;
