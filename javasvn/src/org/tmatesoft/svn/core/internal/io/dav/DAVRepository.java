@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
+import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -523,23 +524,53 @@ class DAVRepository extends SVNRepository {
         }
     }
 
-    public SVNLock setLock(String path, String comment, boolean force, long revision) throws SVNException {
+    public void lock(Map pathsToRevisions, String comment, boolean force, ISVNLockHandler handler) throws SVNException {
         try {
             openConnection();
-            path = getFullPath(path);
-            path = SVNEncodingUtil.uriEncode(path);
-            return myConnection.doLock(path, comment, force, revision);
+            for(Iterator paths = pathsToRevisions.keySet().iterator(); paths.hasNext();) {
+                String path = (String) paths.next();
+                Long revision = (Long) pathsToRevisions.get(path);
+                String repositoryPath = getRepositoryPath(path);
+                path = getFullPath(path);
+                path = SVNEncodingUtil.uriEncode(path);
+                SVNLock lock = null;
+                SVNException error = null;
+                long revisionNumber = revision != null ? revision.longValue() : -1;
+                try {
+                     lock = myConnection.doLock(path, comment, force, revisionNumber);
+                } catch (SVNException e) {
+                    error = e;
+                    throw e;
+                }
+                if (handler != null) {
+                    handler.handleLock(repositoryPath, lock, error);
+                }
+            }
         } finally {
             closeConnection();
         }
     }
 
-    public void removeLock(String path, String id, boolean force) throws SVNException {
+    public void unlock(Map pathToTokens, boolean force, ISVNLockHandler handler) throws SVNException {
         try {
             openConnection();
-            path = getFullPath(path);
-            path = SVNEncodingUtil.uriEncode(path);
-            myConnection.doUnlock(path, id, force);
+            for (Iterator paths = pathToTokens.keySet().iterator(); paths.hasNext();) {
+                String path = (String) paths.next();
+                String id = (String) pathToTokens.get(path);
+                String repositoryPath = getRepositoryPath(path);
+                path = getFullPath(path);
+                path = SVNEncodingUtil.uriEncode(path);
+                SVNException error = null;
+                try {
+                    myConnection.doUnlock(path, id, force);
+                    error = null;
+                } catch (SVNException e) {
+                    error = e;
+                }
+                if (handler != null) {
+                    handler.handleUnlock(repositoryPath, new SVNLock(path, id, null, null, null, null), error);
+                }
+            }
         } finally {
             closeConnection();
         }

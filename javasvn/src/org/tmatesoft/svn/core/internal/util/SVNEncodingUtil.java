@@ -68,7 +68,7 @@ public class SVNEncodingUtil {
         }
         for (int i = 0; i < bytes.length; i++) {
             if (uri_char_validity[bytes[i]] <= 0 && bytes[i] != '%') {
-                SVNErrorManager.error("svn: Path '" + path + "' does not look like URI-encoded path; character '" + ((char) bytes[i]) + " is URI unsafe");
+                SVNErrorManager.error("svn: Path '" + path + "' does not look like URI-encoded path; character '" + ((char) bytes[i]) + "' is URI unsafe");
             }
         }
         return;

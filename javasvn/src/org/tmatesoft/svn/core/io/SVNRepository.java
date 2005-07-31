@@ -1099,7 +1099,7 @@ public abstract class SVNRepository {
      * @see							SVNLock
      * @since 						SVN 1.2
      */
-    public abstract SVNLock setLock(String path, String comment, boolean force, long revision) throws SVNException;
+    public abstract void lock(Map pathsToRevisions, String comment, boolean force, ISVNLockHandler handler) throws SVNException;
     
     /**
 	 * Removes the repository lock for the file located at the <code>path</code>.
@@ -1134,7 +1134,7 @@ public abstract class SVNRepository {
      * @see 				SVNLock
      * @since				SVN 1.2
      */
-    public abstract void removeLock(String path, String id, boolean force) throws SVNException;
+    public abstract void unlock(Map pathToTokens, boolean force, ISVNLockHandler handler) throws SVNException;
     
     /**
      * Locks the current session <code>SVNRepository</code> object. It prevents
