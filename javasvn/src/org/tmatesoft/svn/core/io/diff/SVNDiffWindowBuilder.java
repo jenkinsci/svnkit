@@ -197,7 +197,7 @@ public class SVNDiffWindowBuilder {
                     } catch (IOException e) {
                         SVNErrorManager.error(e.getMessage());
                     }
-                    if (length < 0) {
+                    if (length <= 0) {
                         return false;
                     }
                     myOffsets[3] -= length;
