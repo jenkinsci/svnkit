@@ -89,7 +89,13 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
             byte[] decoded = SVNBase64.base64ToByteArray(toDecode, null);
             myPreviousStream = new SequenceIntputStream(decoded, myPreviousStream);
             try {
-                myDiffBuilder.accept(myPreviousStream, getEditor(), getCurrentPath());
+                while(true) {
+                    boolean needsMore = myDiffBuilder.accept(myPreviousStream, getEditor(), getCurrentPath());
+                    if (needsMore && myPreviousStream.available() > 0) {
+                        continue;
+                    }
+                    break;
+                }
                 // delete saved bytes.
             } catch (SVNException e) {
                 throw new SAXException(e);
