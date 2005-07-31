@@ -53,17 +53,14 @@ public class SVNLogClient extends SVNBasicClient {
         long endRev = getRevisionNumber(endRevision, repos, path);
         long startRev = getRevisionNumber(startRevision, repos, path);
         if (endRev < startRev) {
-            SVNErrorManager
-                    .error("svn: Start revision must precede end revision ("
-                            + startRev + ":" + endRev + ")");
+            SVNErrorManager.error("svn: Start revision must precede end revision (" + startRev + ":" + endRev + ")");
         }
         File tmpFile = new File(path.getParentFile(), ".svn/tmp/text-base");
         if (!tmpFile.exists()) {
             tmpFile = new File(System.getProperty("user.home"), ".javasvn");
             tmpFile.mkdirs();
         }
-        doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev,
-                handler);
+        doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev, handler);
     }
 
     public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler) throws SVNException {

@@ -284,7 +284,8 @@ public class SVNUpdateClient extends SVNBasicClient {
      */
     public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, boolean recursive) throws SVNException {
         SVNRepository repository = createRepository(url, null, pegRevision, revision);
-        long exportedRevision = doRemoteExport(repository, repository.getPegRevision(), dstPath, eolStyle, force, recursive);
+        long revisionNumber = getRevisionNumber(revision, repository, null);
+        long exportedRevision = doRemoteExport(repository, revisionNumber, dstPath, eolStyle, force, recursive);
         dispatchEvent(SVNEventFactory.createUpdateCompletedEvent(null, exportedRevision));
         return exportedRevision;
     }
@@ -345,7 +346,8 @@ public class SVNUpdateClient extends SVNBasicClient {
         long exportedRevision = -1;
         if (revision != SVNRevision.BASE && revision != SVNRevision.WORKING && revision != SVNRevision.COMMITTED && revision != SVNRevision.UNDEFINED) {
             SVNRepository repository = createRepository(null, srcPath, pegRevision, revision);
-            exportedRevision = doRemoteExport(repository, repository.getPegRevision(), dstPath, eolStyle, force, recursive); 
+            long revisionNumber = getRevisionNumber(revision, repository, srcPath);
+            exportedRevision = doRemoteExport(repository, revisionNumber, dstPath, eolStyle, force, recursive); 
         } else {
             if (revision == SVNRevision.UNDEFINED) {
                 revision = SVNRevision.WORKING;
@@ -645,9 +647,12 @@ public class SVNUpdateClient extends SVNBasicClient {
                     } else if (external.getNewURL() == null) {
                         if (SVNWCAccess.isVersionedDirectory(external.getFile())) {
                             SVNWCAccess externalAccess = createWCAccess(external.getFile());
-                            externalAccess.open(true, true);
-                            externalAccess.getAnchor().destroy("", true);
-                            externalAccess.close(true);
+                            try {
+                                externalAccess.open(true, true);
+                                externalAccess.getAnchor().destroy("", true);
+                            } finally {
+                                externalAccess.close(true);
+                            }
                         }
                     } else if (external.isModified()) {
                         deleteExternal(external);

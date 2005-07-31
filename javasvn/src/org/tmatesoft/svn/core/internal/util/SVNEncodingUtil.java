@@ -16,6 +16,9 @@ import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.HashMap;
 
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+
 
 /**
  * @version 1.0
@@ -49,6 +52,26 @@ public class SVNEncodingUtil {
             sb.append(Character.toUpperCase(Character.forDigit(index & 0x0F, 16)));
         }
         return sb == null ? src : sb.toString();
+    }
+    
+    public static void assertURISafe(String path) throws SVNException {
+        path = path == null ? "" : path;
+        byte[] bytes;
+        try {
+            bytes = path.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            SVNErrorManager.error("svn: Path '" + path + "' could not be encoded as UTF-8");
+            return;
+        }
+        if (bytes == null || bytes.length != path.length()) {
+            SVNErrorManager.error("svn: Path '" + path + "' does not look like URI-encoded path");
+        }
+        for (int i = 0; i < bytes.length; i++) {
+            if (uri_char_validity[bytes[i]] <= 0 && bytes[i] != '%') {
+                SVNErrorManager.error("svn: Path '" + path + "' does not look like URI-encoded path; character '" + ((char) bytes[i]) + " is URI unsafe");
+            }
+        }
+        return;
     }
 
     public static String uriDecode(String src) {

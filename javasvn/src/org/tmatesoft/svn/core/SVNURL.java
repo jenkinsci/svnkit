@@ -96,6 +96,7 @@ public class SVNURL {
         myHost = httpURL.getHost();
         if (uriEncoded) {
             myEncodedPath = httpURL.getPath();
+            SVNEncodingUtil.assertURISafe(myEncodedPath);
             myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
         } else {
             myPath = httpURL.getPath();

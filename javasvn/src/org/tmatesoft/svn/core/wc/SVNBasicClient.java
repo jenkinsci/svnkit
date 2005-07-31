@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -235,10 +236,10 @@ public class SVNBasicClient implements ISVNEventHandler {
     
     protected SVNRepository createRepository(SVNURL url, File path, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
         if (url == null) {
-            url = getURL(path);
-        }
-        if (url == null) {
-            SVNErrorManager.error("svn: '" + path + "' has no URL");
+            SVNURL pathURL = getURL(path);
+            if (pathURL == null) {
+                SVNErrorManager.error("svn: '" + path + "' has no URL");
+            }
         }
         if (!revision.isValid() && pegRevision.isValid()) {
             revision = pegRevision;
@@ -278,6 +279,10 @@ public class SVNBasicClient implements ISVNEventHandler {
         long pegRevisionNumber = -1;
         long startRevisionNumber;
         long endRevisionNumber;
+        if (url != null && path != null) {
+            SVNDebugLog.logInfo("possibly, not valid getLocations call:");
+            SVNDebugLog.logInfo(new Exception());
+        }
         
         if (path != null && url == null) {
             SVNWCAccess wcAccess = createWCAccess(path);
@@ -290,6 +295,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             } else {
                 SVNErrorManager.error("svn: '" + path + "' has no URL");
             }
+            SVNDebugLog.logInfo("fetched: " + url);
         }
         SVNRepository repository = createRepository(url);
         if (pegRevisionNumber < 0) {
