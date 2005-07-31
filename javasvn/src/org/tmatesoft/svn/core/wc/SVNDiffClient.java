@@ -440,7 +440,7 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorManager.error("svn: Not all required revisions are specified");
         }
         if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = getLocations(null, path2, pegRevision, revision1, revision2);
+            SVNRepositoryLocation[] locations = getLocations(url2, path2, pegRevision, revision1, revision2);
             url1 = locations[0].getURL();
             url2 = locations[1].getURL();
             revision1 = SVNRevision.create(locations[0].getRevisionNumber());
@@ -470,7 +470,7 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNWCAccess wcAccess, boolean force, boolean dryRun) throws SVNException {
         
         if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = getLocations(null, path2, pegRevision, revision1, revision2);
+            SVNRepositoryLocation[] locations = getLocations(url2, path2, pegRevision, revision1, revision2);
             url1 = locations[0].getURL();
             url2 = locations[1].getURL();
             revision1 = SVNRevision.create(locations[0].getRevisionNumber());
