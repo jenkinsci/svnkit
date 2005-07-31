@@ -24,7 +24,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -43,7 +42,6 @@ public class SVNBasicClient implements ISVNEventHandler {
     private List myPathPrefixesStack;
     private boolean myIsIgnoreExternals;
     private boolean myIsDoNotSleepForTimeStamp;
-    private boolean myIsCommandRunning;
     private boolean myIsLeaveConflictsUnresolved;
 
     protected SVNBasicClient(final ISVNAuthenticationManager authManager, ISVNOptions options) {
@@ -91,26 +89,12 @@ public class SVNBasicClient implements ISVNEventHandler {
         myEventDispatcher = dispatcher;
     }
 
-    public void runCommand(ISVNRunnable command) throws SVNException {
-        try {
-            myIsCommandRunning = true;
-            command.run();
-        } finally {
-            myIsCommandRunning = false;
-            SVNFileUtil.sleepForTimestamp();
-        }
-    }
-
     protected void setDoNotSleepForTimeStamp(boolean doNotSleep) {
         myIsDoNotSleepForTimeStamp = doNotSleep;
     }
 
-    protected boolean isCommandRunning() {
-        return myIsCommandRunning;
-    }
-
     protected boolean isDoNotSleepForTimeStamp() {
-        return isCommandRunning() || myIsDoNotSleepForTimeStamp;
+        return myIsDoNotSleepForTimeStamp;
     }
 
     protected SVNRepository createRepository(String url) throws SVNException {

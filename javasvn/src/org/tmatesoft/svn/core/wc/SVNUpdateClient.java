@@ -236,9 +236,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNErrorManager.error("svn: '" + dstPath + "' already exists and it is a file");
             }
         } finally {
-            if (!isCommandRunning()) {
-                SVNFileUtil.sleepForTimestamp();
-            }
+            SVNFileUtil.sleepForTimestamp();
             setDoNotSleepForTimeStamp(false);
         }
         return result;
