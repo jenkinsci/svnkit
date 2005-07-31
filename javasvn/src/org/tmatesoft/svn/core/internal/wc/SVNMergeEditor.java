@@ -103,7 +103,7 @@ public class SVNMergeEditor implements ISVNEditor {
         myCurrentDirectory.myWCPath = wcPath;
 
         // merge dir added.
-        SVNEventAction action = SVNEventAction.ADD;
+        SVNEventAction action = SVNEventAction.UPDATE_ADD;
         SVNStatusType mergeResult = myMerger.directoryAdded(
                 myCurrentDirectory.myWCPath, myCurrentDirectory.myEntryProps);
         if (mergeResult == SVNStatusType.MISSING
@@ -281,7 +281,7 @@ public class SVNMergeEditor implements ISVNEditor {
                     || contents == SVNStatusType.OBSTRUCTED) {
                 action = SVNEventAction.SKIP;
             } else if (myCurrentFile.myIsAdded) {
-                action = SVNEventAction.ADD;
+                action = SVNEventAction.UPDATE_ADD;
             } else {
                 action = SVNEventAction.UPDATE_UPDATE;
             }
