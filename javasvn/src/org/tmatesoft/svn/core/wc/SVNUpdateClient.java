@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -102,7 +103,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             long revNumber = getRevisionNumber(revision, repos, file);
-            repos.update(revNumber, target, recursive, reporter, editor);
+            repos.update(revNumber, target, recursive, reporter, SVNCancellableEditor.newInstance(editor, this));
 
             if (editor.getTargetRevision() >= 0) {
                 if (recursive && !isIgnoreExternals()) {
@@ -157,7 +158,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url.toString(), recursive, isLeaveConflictsUnresolved());
             
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
-            repository.update(url, revNumber, target, recursive, reporter, editor);
+            repository.update(url, revNumber, target, recursive, reporter, SVNCancellableEditor.newInstance(editor, this));
 
             if (editor.getTargetRevision() >= 0 && recursive && !isIgnoreExternals()) {
                 handleExternals(wcAccess);
@@ -477,7 +478,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     reporter.setPath("", null, revNumber, true);
                     reporter.finishReport();
                 }
-            }, editor);
+            }, SVNCancellableEditor.newInstance(editor, this));
             // nothing may be created.
             SVNFileType fileType = SVNFileType.getType(dstPath);
             if (fileType == SVNFileType.NONE) {

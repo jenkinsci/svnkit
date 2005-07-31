@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
@@ -168,7 +169,7 @@ public class SVNStatusClient extends SVNBasicClient {
             String target = "".equals(wcAccess.getTargetName()) ? null
                             : wcAccess.getTargetName();
 
-            repos.status(-1, target, recursive, statusReporter, statusEditor);
+            repos.status(-1, target, recursive, statusReporter, SVNCancellableEditor.newInstance(statusEditor, this));
         }
         // to report all when there is completely no changes
         statusEditor.closeEdit();

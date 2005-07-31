@@ -29,6 +29,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -167,13 +168,12 @@ public class SVNFileUtil {
         return line != null && line.startsWith("l");
     }
 
-    public static void copy(File src, File dst, boolean safe,
-            boolean copyAdminDirectories) throws SVNException {
+    public static void copy(File src, File dst, boolean safe, boolean copyAdminDirectories) throws SVNException {
         SVNFileType srcType = SVNFileType.getType(src);
         if (srcType == SVNFileType.FILE) {
             copyFile(src, dst, safe);
         } else if (srcType == SVNFileType.DIRECTORY) {
-            copyDirectory(src, dst, copyAdminDirectories);
+            copyDirectory(src, dst, copyAdminDirectories, null);
         } else if (srcType == SVNFileType.SYMLINK) {
             String name = SVNFileUtil.getSymlinkName(src);
             if (name != null) {
@@ -547,8 +547,7 @@ public class SVNFileUtil {
         }
     }
 
-    public static void copyDirectory(File srcDir, File dstDir,
-            boolean copyAdminDir) throws SVNException {
+    public static void copyDirectory(File srcDir, File dstDir, boolean copyAdminDir, ISVNEventHandler cancel) throws SVNException {
         if (!dstDir.exists()) {
             dstDir.mkdirs();
             dstDir.setLastModified(srcDir.lastModified());
@@ -559,6 +558,9 @@ public class SVNFileUtil {
             if (file.getName().equals("..") || file.getName().equals(".")
                     || file.equals(dstDir)) {
                 continue;
+            }
+            if (cancel != null) {
+                cancel.checkCancelled();
             }
             if (!copyAdminDir && file.getName().equals(".svn")) {
                 continue;
@@ -573,7 +575,7 @@ public class SVNFileUtil {
                     setExecutable(dst, executable);
                 }
             } else if (fileType == SVNFileType.DIRECTORY) {
-                copyDirectory(file, dst, copyAdminDir);
+                copyDirectory(file, dst, copyAdminDir, cancel);
                 if (file.isHidden() || ".svn".equals(file.getName())) {
                     setHidden(dst, true);
                 }

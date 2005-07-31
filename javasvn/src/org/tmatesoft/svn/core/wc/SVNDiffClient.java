@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -173,7 +174,7 @@ public class SVNDiffClient extends SVNBasicClient {
         long revNumber = getRevisionNumber(revision1, repository, null);
         
         repository.setPegRevision(getRevisionNumber(revision2, repository, path2));
-        repository.diff(url1, revNumber, target, !useAncestry, recursive, reporter, editor);
+        repository.diff(url1, revNumber, target, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this));
         
         wcAccess.close(false);
     }
@@ -211,7 +212,7 @@ public class SVNDiffClient extends SVNBasicClient {
         
         // this should be rev2.
         repository.setPegRevision(getRevisionNumber(revision2, repository, path2));
-        repository.diff(url1, revNumber, target, !useAncestry, recursive, reporter, editor);
+        repository.diff(url1, revNumber, target, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this));
         
         wcAccess.close(false);
     }
@@ -285,7 +286,7 @@ public class SVNDiffClient extends SVNBasicClient {
                     reporter.finishReport();
                 }
             };
-            repository1.diff(url2, rev2, rev1, target1, !useAncestry, recursive, reporter, editor);
+            repository1.diff(url2, rev2, rev1, target1, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this));
         } finally {
             if (tmpFile != null) {
                 SVNFileUtil.deleteAll(tmpFile);
@@ -462,7 +463,7 @@ public class SVNDiffClient extends SVNBasicClient {
                         reporter.setPath("", null, rev1, false);
                         reporter.finishReport();
                     }
-                }, mergeEditor);
+                }, SVNCancellableEditor.newInstance(mergeEditor, this));
         
     }
     
