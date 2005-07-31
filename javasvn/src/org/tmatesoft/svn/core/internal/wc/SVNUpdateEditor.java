@@ -11,7 +11,6 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -310,12 +309,8 @@ public class SVNUpdateEditor implements ISVNEditor {
         }
         File baseTmpFile = dir.getBaseFile(myCurrentFile.Name, true);
         SVNFileUtil.copyFile(baseFile, baseTmpFile, false);
-        try {
-            if (!baseTmpFile.exists()) {
-                baseTmpFile.createNewFile();
-            }
-        } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot create file '" + baseTmpFile + "'");
+        if (!baseTmpFile.exists()) {
+            SVNFileUtil.createEmptyFile(baseTmpFile);
         }
         myCurrentFile.TextUpdated = true;
     }
@@ -364,8 +359,11 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNProperties props = dir.getProperties(name, false);
         Map locallyModifiedProps = dir.getBaseProperties(name, false).compareTo(props);
         if (modifiedProps != null && !modifiedProps.isEmpty()) {
-            magicPropsChanged = modifiedProps.containsKey(SVNProperty.EXECUTABLE) || modifiedProps.containsKey(SVNProperty.NEEDS_LOCK) || modifiedProps.containsKey(SVNProperty.KEYWORDS)
-                    || modifiedProps.containsKey(SVNProperty.EOL_STYLE) || modifiedProps.containsKey(SVNProperty.SPECIAL);
+            magicPropsChanged = modifiedProps.containsKey(SVNProperty.EXECUTABLE) || 
+            modifiedProps.containsKey(SVNProperty.NEEDS_LOCK) || 
+            modifiedProps.containsKey(SVNProperty.KEYWORDS) || 
+            modifiedProps.containsKey(SVNProperty.EOL_STYLE) || 
+            modifiedProps.containsKey(SVNProperty.SPECIAL);
         }
         SVNStatusType propStatus = dir.mergeProperties(name, modifiedProps, locallyModifiedProps, true, log);
         if (modifiedEntryProps != null) {
@@ -378,7 +376,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         String basePath = ".svn/text-base/" + name + ".svn-base";
         File workingFile = dir.getFile(name);
 
-        if (!textTmpBase.exists() && magicPropsChanged && workingFile.exists()) {
+        if (!myCurrentFile.TextUpdated && magicPropsChanged && workingFile.exists()) {
             // only props were changed, but we have to retranslate file.
             // only if wc file exists (may be locally deleted), otherwise no
             // need to retranslate...
@@ -406,7 +404,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         command.clear();
 
         boolean isLocallyModified = !myCurrentFile.IsAdded && dir.hasTextModifications(name, false);
-        if (textTmpBase.exists()) {
+        if (myCurrentFile.TextUpdated && textTmpBase.exists()) {
             textStatus = SVNStatusType.CHANGED;
             // there is a text replace working copy with.
             if (!isLocallyModified || !workingFile.exists()) {
@@ -449,7 +447,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
             command.clear();
         }
-        if (textTmpBase.exists()) {
+        if (myCurrentFile.TextUpdated && textTmpBase.exists()) {
             command.put(SVNLog.NAME_ATTR, tmpPath);
             command.put(SVNLog.DEST_ATTR, basePath);
             log.addCommand(SVNLog.MOVE, command, false);
@@ -472,7 +470,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
                 command.clear();
             }
-            if (textTmpBase.exists() || magicPropsChanged) {
+            if ((myCurrentFile.TextUpdated && textTmpBase.exists()) || magicPropsChanged) {
                 command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNLog.WC_TIMESTAMP);
                 log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
@@ -624,7 +622,7 @@ public class SVNUpdateEditor implements ISVNEditor {
                 SVNErrorManager.error("svn: Failed to add file '" + path + "': object of the same name already exists and scheduled for addition");
             }
             if (!added && entry == null) {
-                SVNErrorManager.error("svn: Failed to update file '" + path + "': no entry found");
+                SVNErrorManager.error("svn: File '" + info.Name + "' in directory '" + dir.getRoot() + "' is not a versioned resource");
             }
             if (mySwitchURL != null || entry == null) {
                 info.URL = SVNPathUtil.append(parent.URL, SVNEncodingUtil.uriEncode(info.Name));
