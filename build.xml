@@ -334,12 +334,6 @@
     <target name="deploy" depends="clean,deploy-library,deploy-eclipse,deploy-snapshot" />
 
     <target name="test-java" depends="init-environment,compile-tests">
-        <copy file="javasvn-test/test.${os}.properties"
-              tofile="javasvn-test/test.properties"
-              failonerror="false"
-              overwrite="false"
-        />
-
         <path id="test.classpath">
             <pathelement path="contrib/junit/junit.jar" />
             <pathelement path="javasvn/bin" />
@@ -350,10 +344,8 @@
         <java classpathref="test.classpath"
               dir="javasvn-test"
               fork="true"
-              classname="org.tmatesoft.svn.core.test.AllTests"
-        >
-            <arg line="-text test.properties" />
-        </java>
+              classname="org.tmatesoft.svn.core.test.UnitTests"
+        />
     </target>
 
     <target name="test-python" depends="init-environment,compile-tests,build-library,build-cli">
