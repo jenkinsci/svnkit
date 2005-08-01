@@ -576,6 +576,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
             if (kind == SVNNodeKind.DIR && recursive) {
                 // iterate over targets and revert
+                checkCancelled();
                 for (Iterator ents = wcAccess.getTarget().getEntries().entries(
                         true); ents.hasNext();) {
                     SVNEntry childEntry = (SVNEntry) ents.next();
@@ -634,8 +635,8 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private void doResolveAll(SVNWCAccess access, SVNDirectory dir)
-            throws SVNException {
+    private void doResolveAll(SVNWCAccess access, SVNDirectory dir) throws SVNException {
+        checkCancelled();
         SVNEntries entries = dir.getEntries();
         Collection childDirs = new ArrayList();
         for (Iterator ents = entries.entries(false); ents.hasNext();) {
@@ -679,6 +680,7 @@ public class SVNWCClient extends SVNBasicClient {
                 wcAccess.close(false);
             }
         }
+        checkCancelled();
         SVNURL[] urls = (SVNURL[]) entriesMap.keySet().toArray(new SVNURL[entriesMap.size()]);
         Collection urlPaths = new HashSet();
         final SVNURL topURL = SVNURLUtil.condenceURLs(urls, urlPaths, false);
@@ -751,6 +753,7 @@ public class SVNWCClient extends SVNBasicClient {
             path = SVNEncodingUtil.uriDecode(path);
             pathsToRevisions.put(path, null);
         }
+        checkCancelled();
         SVNRepository repository = createRepository(topURL);
         repository.lock(pathsToRevisions, lockMessage, stealLock, new ISVNLockHandler() {
             public void handleLock(String path, SVNLock lock, SVNException error) throws SVNException {
@@ -806,6 +809,7 @@ public class SVNWCClient extends SVNBasicClient {
             encodedPath = SVNEncodingUtil.uriDecode(encodedPath);
             pathsTokensMap.put(encodedPath, lockInfo.myToken);
         }
+        checkCancelled();
         SVNRepository repository = createRepository(topURL);
         final SVNURL rootURL = repository.getRepositoryRoot(true);
         repository.unlock(pathsTokensMap, breakLock, new ISVNLockHandler() {
@@ -855,6 +859,7 @@ public class SVNWCClient extends SVNBasicClient {
             pathsToTokens.put(path, null);
         }
         
+        checkCancelled();
         SVNRepository repository = createRepository(topURL);
         repository.unlock(pathsToTokens, breakLock, new ISVNLockHandler() {
             public void handleLock(String path, SVNLock lock, SVNException error) throws SVNException {
@@ -1036,6 +1041,7 @@ public class SVNWCClient extends SVNBasicClient {
             boolean recursive, ISVNInfoHandler handler) throws SVNException {
         SVNEntries entries = dir.getEntries();
         SVNEntry entry = entries.getEntry(name, false);
+        dir.getWCAccess().checkCancelled();
         try {
             if (entry != null) {
                 if (entry.isFile()) {
@@ -1081,10 +1087,11 @@ public class SVNWCClient extends SVNBasicClient {
 
     }
 
-    private static void collectInfo(SVNRepository repos, SVNDirEntry entry,
+    private void collectInfo(SVNRepository repos, SVNDirEntry entry,
             SVNRevision rev, String path, SVNURL root, String uuid, SVNURL url,
             Map locks, boolean recursive, ISVNInfoHandler handler)
             throws SVNException {
+        checkCancelled();
         String displayPath = repos.getFullPath(path);
         displayPath = displayPath.substring(repos.getLocation().getPath().length());
         if ("".equals(displayPath) || "/".equals(displayPath)) {
@@ -1177,6 +1184,7 @@ public class SVNWCClient extends SVNBasicClient {
     private void doGetRemoteProperty(SVNURL url, String path,
             SVNRepository repos, String propName, SVNRevision rev,
             boolean recursive, ISVNPropertyHandler handler) throws SVNException {
+        checkCancelled();
         long revNumber = getRevisionNumber(rev, repos, null);
         SVNNodeKind kind = repos.checkPath(path, revNumber);
         Map props = new HashMap();
@@ -1200,6 +1208,7 @@ public class SVNWCClient extends SVNBasicClient {
                 }
             }
             if (recursive) {
+                checkCancelled();
                 for (Iterator entries = children.iterator(); entries.hasNext();) {
                     SVNDirEntry child = (SVNDirEntry) entries.next();
                     SVNURL childURL = url.appendPath(child.getName(), false);
@@ -1232,6 +1241,7 @@ public class SVNWCClient extends SVNBasicClient {
     private void doGetLocalProperty(SVNDirectory anchor, String name,
             String propName, SVNRevision rev, boolean recursive,
             ISVNPropertyHandler handler) throws SVNException {
+        checkCancelled();
         SVNEntries entries = anchor.getEntries();
         SVNEntry entry = entries.getEntry(name, true);
         if (entry == null
@@ -1300,6 +1310,7 @@ public class SVNWCClient extends SVNBasicClient {
     private void doSetLocalProperty(SVNDirectory anchor, String name,
             String propName, String propValue, boolean force,
             boolean recursive, ISVNPropertyHandler handler) throws SVNException {
+        checkCancelled();
         SVNEntries entries = anchor.getEntries();
         if (!"".equals(name)) {
             SVNEntry entry = entries.getEntry(name, true);

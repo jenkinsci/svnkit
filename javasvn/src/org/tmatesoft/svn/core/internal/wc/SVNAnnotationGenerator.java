@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
@@ -56,9 +57,11 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
 
     private List myLines;
     private SVNDeltaProcessor myDeltaProcessor;
+    private ISVNEventHandler myCancelBaton;
 
-    public SVNAnnotationGenerator(String path, long startRevision, File tmpDirectory) {
+    public SVNAnnotationGenerator(String path, long startRevision, File tmpDirectory, ISVNEventHandler cancelBaton) {
         myTmpDirectory = tmpDirectory;
+        myCancelBaton = cancelBaton;
         myPath = path;
         myStartRevision = startRevision;
         if (!myTmpDirectory.isDirectory()) {
@@ -69,6 +72,9 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     }
 
     public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException {
+        if (myCancelBaton != null) {
+            myCancelBaton.checkCancelled();
+        }
 
         Map propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);

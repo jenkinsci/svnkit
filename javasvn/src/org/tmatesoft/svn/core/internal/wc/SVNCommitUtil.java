@@ -40,15 +40,11 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  */
 public class SVNCommitUtil {
 
-    public static void driveCommitEditor(ISVNCommitPathHandler handler,
-            Collection paths, ISVNEditor editor, long revision)
-            throws SVNException {
-        if (paths == null || paths.isEmpty() || handler == null
-                || editor == null) {
+    public static void driveCommitEditor(ISVNCommitPathHandler handler, Collection paths, ISVNEditor editor, long revision) throws SVNException {
+        if (paths == null || paths.isEmpty() || handler == null || editor == null) {
             return;
         }
-        String[] pathsArray = (String[]) paths
-                .toArray(new String[paths.size()]);
+        String[] pathsArray = (String[]) paths.toArray(new String[paths.size()]);
         Arrays.sort(pathsArray);
         int index = 0;
         String lastPath = null;
@@ -394,6 +390,9 @@ public class SVNCommitUtil {
             throws SVNException {
         if (commitables.containsKey(path)) {
             return;
+        }
+        if (dir != null && dir.getWCAccess() != null) {
+            dir.getWCAccess().checkCancelled();
         }
         long cfRevision = entry.getCopyFromRevision();
         String cfURL = null;

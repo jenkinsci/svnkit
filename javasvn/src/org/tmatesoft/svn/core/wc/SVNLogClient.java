@@ -81,7 +81,7 @@ public class SVNLogClient extends SVNBasicClient {
     }
 
     private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, ISVNAnnotateHandler handler) throws SVNException {
-        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, startRev, tmpFile);
+        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, startRev, tmpFile, this);
         try {
             repos.getFileRevisions("", startRev, endRev, generator);
             generator.reportAnnotations(handler, null);
@@ -148,8 +148,7 @@ public class SVNLogClient extends SVNBasicClient {
         }
     }
 
-    public void doLog(SVNURL url, String[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, 
-            long limit, ISVNLogEntryHandler handler) throws SVNException {
+    public void doLog(SVNURL url, String[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, ISVNLogEntryHandler handler) throws SVNException {
         if (startRevision.isValid() && !endRevision.isValid()) {
             endRevision = startRevision;
         } else if (!startRevision.isValid()) {
@@ -165,8 +164,7 @@ public class SVNLogClient extends SVNBasicClient {
         repos.log(paths, startRev, endRev, reportPaths, stopOnCopy, limit, handler);
     }
 
-    public void doList(File path, SVNRevision pegRevision,
-            SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler)
+    public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler)
             throws SVNException {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.BASE;

@@ -45,8 +45,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
     private Collection myTmpFiles;
     private String myRepositoryRoot;
 
-    public SVNCommitter(SVNWCAccess wcAccess, Map commitItems,
-            String reposRoot, Collection tmpFiles) {
+    public SVNCommitter(SVNWCAccess wcAccess, Map commitItems, String reposRoot, Collection tmpFiles) {
         myCommitItems = commitItems;
         myWCAccess = wcAccess;
         myModifiedFiles = new TreeMap();
@@ -54,16 +53,14 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         myRepositoryRoot = reposRoot;
     }
 
-    public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor)
-            throws SVNException {
+    public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
+        myWCAccess.checkCancelled();
         SVNCommitItem item = (SVNCommitItem) myCommitItems.get(commitPath);
         if (item.isCopied()) {
             if (item.getCopyFromURL() == null) {
-                SVNErrorManager.error("svn: Commit item '" + item.getFile()
-                        + "' has copy flag but no copyfrom URL");
+                SVNErrorManager.error("svn: Commit item '" + item.getFile() + "' has copy flag but no copyfrom URL");
             } else if (item.getRevision().getNumber() < 0) {
-                SVNErrorManager.error("svn: Commit item '" + item.getFile()
-                        + "' has copy flag but an invalid revision");
+                SVNErrorManager.error("svn: Commit item '" + item.getFile() + "' has copy flag but an invalid revision");
             }
         }
         SVNEvent event = null;
@@ -142,10 +139,10 @@ public class SVNCommitter implements ISVNCommitPathHandler {
     }
 
     public void sendTextDeltas(ISVNEditor editor) throws SVNException {
-        for (Iterator paths = myModifiedFiles.keySet().iterator(); paths
-                .hasNext();) {
+        for (Iterator paths = myModifiedFiles.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             SVNCommitItem item = (SVNCommitItem) myModifiedFiles.get(path);
+            myWCAccess.checkCancelled();
 
             SVNEvent event = SVNEventFactory.createCommitEvent(myWCAccess
                     .getAnchor().getRoot(), item.getFile(),

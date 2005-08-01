@@ -384,8 +384,7 @@ public class SVNDirectory {
         return status;
     }
 
-    public boolean markResolved(String name, boolean text, boolean props)
-            throws SVNException {
+    public boolean markResolved(String name, boolean text, boolean props) throws SVNException {
         if (!text && !props) {
             return false;
         }
@@ -622,6 +621,7 @@ public class SVNDirectory {
     }
 
     public void cleanup() throws SVNException {
+        getWCAccess().checkCancelled();
         SVNEntries svnEntries = getEntries();
         for (Iterator entries = svnEntries.entries(true); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
@@ -656,6 +656,7 @@ public class SVNDirectory {
         if (files == null) {
             return;
         }
+        getWCAccess().checkCancelled();
         if ("".equals(name) && hasPropModifications(name)) {
             SVNErrorManager.error("svn: '"
                     + getPath().replace('/', File.separatorChar)
@@ -744,6 +745,7 @@ public class SVNDirectory {
         while (true) {
             SVNLog log = new SVNLog(this, index);
             index++;
+            getWCAccess().checkCancelled();
             if (log.exists()) {
                 log.run(runner);
                 continue;
@@ -753,8 +755,7 @@ public class SVNDirectory {
         runner.logCompleted(this);
     }
 
-    public SVNDirectory createChildDirectory(String name, String url,
-            long revision) throws SVNException {
+    public SVNDirectory createChildDirectory(String name, String url,  long revision) throws SVNException {
         File dir = new File(myDirectory, name);
         createVersionedDirectory(dir);
 
@@ -831,8 +832,9 @@ public class SVNDirectory {
         }
     }
 
-    public void destroy(String name, boolean deleteWorkingFiles)
-            throws SVNException {
+    public void destroy(String name, boolean deleteWorkingFiles) throws SVNException {
+        getWCAccess().checkCancelled();
+        
         if ("".equals(name)) {
             SVNDirectory parent = null;
             if ("".equals(myPath)) {
@@ -892,6 +894,9 @@ public class SVNDirectory {
             SVNFileUtil.deleteAll(getFile(name), getWCAccess());
             return;
         }
+        
+        getWCAccess().checkCancelled();
+
         boolean added = entry.isScheduledForAddition();
         boolean deleted = false;
         SVNNodeKind kind = entry.getKind();
@@ -1128,6 +1133,7 @@ public class SVNDirectory {
     }
 
     private static void destroyDirectory(SVNDirectory parent, SVNDirectory dir, boolean deleteWorkingFiles) throws SVNException {
+        dir.getWCAccess().checkCancelled();
         SVNEntries entries = dir.getEntries();
         entries.getEntry("", true).setIncomplete(true);
 

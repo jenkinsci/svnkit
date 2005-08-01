@@ -352,6 +352,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 filePath = newDir + "/" + filePath;
             }
         }
+        checkCancelled();
         commitEditor.openRoot(-1);
         String newDirPath = null;
         for (int i = newPaths.size() - 1; i >= 0; i--) {
@@ -629,8 +630,8 @@ public class SVNCommitClient extends SVNBasicClient {
         }
     }
 
-    private boolean importDir(File rootFile, File dir, String importPath,
-            boolean recursive, ISVNEditor editor) throws SVNException {
+    private boolean importDir(File rootFile, File dir, String importPath, boolean recursive, ISVNEditor editor) throws SVNException {
+        checkCancelled();
         File[] children = dir.listFiles();
         boolean changed = false;
         for (int i = 0; children != null && i < children.length; i++) {
