@@ -698,7 +698,11 @@ public class SVNWCClient extends SVNBasicClient {
             SVNURL fullURL = topURL.appendPath(encodedPath, true);
             LockInfo lockInfo = (LockInfo) entriesMap.get(fullURL);
             encodedPath = SVNEncodingUtil.uriDecode(encodedPath);
-            pathsRevisionsMap.put(encodedPath, new Long(lockInfo.myRevision.getNumber()));
+            if (lockInfo.myRevision == SVNRevision.UNDEFINED) {
+                pathsRevisionsMap.put(encodedPath, null);
+            } else {
+                pathsRevisionsMap.put(encodedPath, new Long(lockInfo.myRevision.getNumber()));
+            }
         }
         SVNRepository repository = createRepository(topURL);
         SVNDebugLog.logInfo("top url is: " + topURL);
