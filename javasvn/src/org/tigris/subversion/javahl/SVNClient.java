@@ -385,7 +385,7 @@ public class SVNClient implements SVNClientInterface {
             if(isURL(srcPath) && isURL(destPath)){
                 client.doCopy(SVNURL.parseURIEncoded(srcPath), srcRevision, SVNURL.parseURIEncoded(destPath), true, message);
             } else if (!isURL(srcPath) && !isURL(destPath)) {
-                client.doCopy(new File(srcPath).getAbsoluteFile(), srcRevision, new File(destPath).getAbsoluteFile(), false, true);
+                client.doCopy(new File(srcPath).getAbsoluteFile(), srcRevision, new File(destPath).getAbsoluteFile(), force, true);
             }
         } catch (SVNException e) {
             throwException(e);
