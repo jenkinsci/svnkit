@@ -685,6 +685,7 @@ class HttpConnection {
         if (ourSAXParserFactory == null) {
             ourSAXParserFactory = SAXParserFactory.newInstance();
             ourSAXParserFactory.setFeature("http://xml.org/sax/features/namespaces", true);
+            ourSAXParserFactory.setFeature("http://xml.org/sax/features/validation", false);
             ourSAXParserFactory.setNamespaceAware(true);
             ourSAXParserFactory.setValidating(false);
         }
