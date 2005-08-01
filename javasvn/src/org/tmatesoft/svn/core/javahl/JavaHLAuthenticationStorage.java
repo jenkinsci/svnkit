@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tigris.subversion.javahl;
+package org.tmatesoft.svn.core.javahl;
 
 import java.util.Hashtable;
 import java.util.Map;
@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-class SVNAuthenticationStorage implements ISVNAuthenticationStorage {
+class JavaHLAuthenticationStorage implements ISVNAuthenticationStorage {
 
     private Map myStorage = new Hashtable();
 
