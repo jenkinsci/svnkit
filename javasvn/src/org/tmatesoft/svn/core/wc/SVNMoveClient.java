@@ -448,19 +448,25 @@ public class SVNMoveClient extends SVNBasicClient {
         boolean added = false;
         long cfRevision = -1;
         try {
-            srcAccess.open(true, false);
+            srcAccess.open(false, false);
             SVNEntry srcEntry = srcAccess.getTargetEntry();
             if (srcEntry == null) {
                 SVNErrorManager.error("svn: '" + src + "' is not under version control");
             }
             if (srcEntry.isCopied() && !srcEntry.isScheduledForAddition()) {
-                SVNErrorManager.error("svn: '" + src + "' is part of the copied tree");
+                cfURL = getCopyFromURL(src.getParentFile(), SVNEncodingUtil.uriEncode(src.getName()));
+                cfRevision = getCopyFromRevision(src.getParentFile());
+                if (cfURL == null || cfRevision < 0) {
+                    SVNErrorManager.error("svn: Cannot locate copied directory root for '" + src + "'");
+                }
+                added = false;
+            } else {
+                cfURL = srcEntry.isCopied() ? srcEntry.getCopyFromURL() : srcEntry.getURL();
+                cfRevision = srcEntry.isCopied() ? srcEntry.getCopyFromRevision() : srcEntry.getRevision();
+                added = srcEntry.isScheduledForAddition() && !srcEntry.isCopied();
             }
-            cfURL = srcEntry.isCopied() ? srcEntry.getCopyFromURL() : srcEntry.getURL();
-            cfRevision = srcEntry.isCopied() ? srcEntry.getCopyFromRevision() : srcEntry.getRevision();
-            added = srcEntry.isScheduledForAddition() && !srcEntry.isCopied();
         } finally {
-            srcAccess.close(true);
+            srcAccess.close(false);
         }
         if (!move) {
             myWCClient.doDelete(src, true, false);
@@ -503,5 +509,52 @@ public class SVNMoveClient extends SVNBasicClient {
         } catch (SVNException e) {
             return false;
         }
-     }
+    }
+    
+    private static String getCopyFromURL(File path, String urlTail) throws SVNException {
+        if (path == null) {
+            return null;
+        }
+        SVNWCAccess wcAccess = null;
+        try {
+            wcAccess = SVNWCAccess.create(path);
+        } catch (SVNException e) {
+            return null;
+        }
+        // urlTail is either name of an entry
+        SVNEntry entry = wcAccess.getTargetEntry();
+        if (entry == null) {
+            return null;
+        }
+        String cfURL = entry.getCopyFromURL();
+        if (cfURL != null) {
+            return SVNPathUtil.append(cfURL, urlTail);
+        }
+        urlTail = SVNPathUtil.append(SVNEncodingUtil.uriEncode(path.getName()), urlTail);
+        path = path.getParentFile();
+        return getCopyFromURL(path, urlTail);
+    }
+
+    private static long getCopyFromRevision(File path) throws SVNException {
+        if (path == null) {
+            return -1;
+        }
+        SVNWCAccess wcAccess = null;
+        try {
+            wcAccess = SVNWCAccess.create(path);
+        } catch (SVNException e) {
+            return -1;
+        }
+        // urlTail is either name of an entry
+        SVNEntry entry = wcAccess.getTargetEntry();
+        if (entry == null) {
+            return -1;
+        }
+        long rev = entry.getCopyFromRevision();
+        if (rev >= 0) {
+            return rev;
+        }
+        path = path.getParentFile();
+        return getCopyFromRevision(path);
+    }
 }
