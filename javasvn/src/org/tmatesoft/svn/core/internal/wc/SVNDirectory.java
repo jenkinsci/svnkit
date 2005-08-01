@@ -643,7 +643,7 @@ public class SVNDirectory {
         }
         File tmpDir = getFile(".svn/tmp");
         if (tmpDir.isDirectory()) {
-            SVNFileUtil.deleteAll(tmpDir, false);
+            SVNFileUtil.deleteAll(tmpDir, false, getWCAccess());
         }
     }
 
@@ -889,7 +889,7 @@ public class SVNDirectory {
         SVNEntries entries = getEntries();
         SVNEntry entry = entries.getEntry(name, true);
         if (entry == null) {
-            SVNFileUtil.deleteAll(getFile(name));
+            SVNFileUtil.deleteAll(getFile(name), getWCAccess());
             return;
         }
         boolean added = entry.isScheduledForAddition();
@@ -941,7 +941,7 @@ public class SVNDirectory {
                 entry.getName());
         myWCAccess.handleEvent(event);
         if (added) {
-            SVNFileUtil.deleteAll(getFile(name));
+            SVNFileUtil.deleteAll(getFile(name), getWCAccess());
         } else {
             deleteWorkingFiles(name);
         }
@@ -1027,8 +1027,7 @@ public class SVNDirectory {
         return entry;
     }
 
-    public void updateEntryProperty(String propertyName, String value,
-            boolean recursive) throws SVNException {
+    public void updateEntryProperty(String propertyName, String value, boolean recursive) throws SVNException {
         SVNEntries entries = getEntries();
         for (Iterator ents = entries.entries(false); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
@@ -1038,27 +1037,23 @@ public class SVNDirectory {
             if (entry.isDirectory() && recursive) {
                 SVNDirectory childDir = getChildDirectory(entry.getName());
                 if (childDir != null) {
-                    childDir
-                            .updateEntryProperty(propertyName, value, recursive);
+                    childDir.updateEntryProperty(propertyName, value, recursive);
                 }
             }
             entries.setPropertyValue(entry.getName(), propertyName, value);
             if (SVNProperty.SCHEDULE_DELETE.equals(value)) {
-                SVNEvent event = SVNEventFactory.createDeletedEvent(myWCAccess,
-                        this, entry.getName());
+                SVNEvent event = SVNEventFactory.createDeletedEvent(myWCAccess, this, entry.getName());
                 myWCAccess.handleEvent(event);
             }
         }
         SVNEntry root = entries.getEntry("", true);
-        if (!(SVNProperty.SCHEDULE_DELETE.equals(value) && root
-                .isScheduledForAddition())) {
+        if (!(SVNProperty.SCHEDULE_DELETE.equals(value) && root.isScheduledForAddition())) {
             root.scheduleForDeletion();
         }
         entries.save(false);
     }
 
-    public void updateURL(String rootURL, boolean recursive)
-            throws SVNException {
+    public void updateURL(String rootURL, boolean recursive) throws SVNException {
         SVNEntries entries = getEntries();
         for (Iterator ents = entries.entries(false); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
@@ -1101,10 +1096,10 @@ public class SVNDirectory {
                     if (childEntries.getEntry(allFiles[i].getName(), true) != null) {
                         continue;
                     }
-                    SVNFileUtil.deleteAll(allFiles[i]);
+                    SVNFileUtil.deleteAll(allFiles[i], getWCAccess());
                 }
             } else {
-                SVNFileUtil.deleteAll(file);
+                SVNFileUtil.deleteAll(file, getWCAccess());
             }
         }
     }
@@ -1132,8 +1127,7 @@ public class SVNDirectory {
         baseFile.delete();
     }
 
-    private static void destroyDirectory(SVNDirectory parent, SVNDirectory dir,
-            boolean deleteWorkingFiles) throws SVNException {
+    private static void destroyDirectory(SVNDirectory parent, SVNDirectory dir, boolean deleteWorkingFiles) throws SVNException {
         SVNEntries entries = dir.getEntries();
         entries.getEntry("", true).setIncomplete(true);
 
@@ -1161,7 +1155,7 @@ public class SVNDirectory {
         }
         dir.getEntries().save(true);
 
-        SVNFileUtil.deleteAll(new File(dir.getRoot(), ".svn"));
+        SVNFileUtil.deleteAll(new File(dir.getRoot(), ".svn"), dir.getWCAccess());
         dir.getRoot().delete();
     }
 

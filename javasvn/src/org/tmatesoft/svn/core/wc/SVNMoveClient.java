@@ -222,7 +222,7 @@ public class SVNMoveClient extends SVNBasicClient {
                     dstAccess.getAnchor().getEntries().deleteEntry(
                             dst.getName());
                     dstAccess.getAnchor().getEntries().save(true);
-                    SVNFileUtil.deleteAll(dst);
+                    SVNFileUtil.deleteAll(dst, this);
                     SVNFileUtil.copy(src, dst, false, false);
                     myWCClient.doAdd(dst, false, false, false, true);
                 }
@@ -407,7 +407,7 @@ public class SVNMoveClient extends SVNBasicClient {
                     dstAccess.getAnchor().getEntries().deleteEntry(
                             dst.getName());
                     dstAccess.getAnchor().getEntries().save(true);
-                    SVNFileUtil.deleteAll(dst);
+                    SVNFileUtil.deleteAll(dst, this);
                     SVNFileUtil.copy(src, dst, false, false);
                     myWCClient.doAdd(dst, false, false, false, true);
                 }

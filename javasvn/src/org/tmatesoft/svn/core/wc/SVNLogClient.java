@@ -87,7 +87,7 @@ public class SVNLogClient extends SVNBasicClient {
             generator.reportAnnotations(handler, null);
         } finally {
             generator.dispose();
-            SVNFileUtil.deleteAll(tmpFile, false);
+            SVNFileUtil.deleteAll(tmpFile, false, null);
         }
     }
 

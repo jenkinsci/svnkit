@@ -66,8 +66,7 @@ public class SVNExportEditor implements ISVNEditor {
         addDir("", null, -1);
     }
 
-    public void addDir(String path, String copyFromPath, long copyFromRevision)
-            throws SVNException {
+    public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         myCurrentDirectory = new File(myRoot, path);
         myCurrentPath = path;
 
@@ -77,7 +76,7 @@ public class SVNExportEditor implements ISVNEditor {
             if (!myIsForce) {
                 SVNErrorManager.error("svn: Failed to add directory '" + myCurrentDirectory + "': file of the same name already exists; use 'force' to overwrite existing file");
             } else {
-                SVNFileUtil.deleteAll(myCurrentDirectory);
+                SVNFileUtil.deleteAll(myCurrentDirectory, myEventDispatcher);
             }
         } else if (dirType == SVNFileType.NONE) {
             if (!myCurrentDirectory.mkdirs()) {

@@ -401,19 +401,25 @@ public class SVNFileUtil {
         }
     }
 
-    public static void deleteAll(File dir) {
-        deleteAll(dir, true);
+    public static void deleteAll(File dir, ISVNEventHandler cancelBaton) throws SVNException {
+        deleteAll(dir, true, cancelBaton);
     }
 
-    public static void deleteAll(File dir, boolean deleteDirs) {
+    public static void deleteAll(File dir, boolean deleteDirs, ISVNEventHandler cancelBaton) throws SVNException {
         if (dir == null) {
             return;
         }
         File[] children = dir.listFiles();
         if (children != null) {
+            if (cancelBaton != null) {
+                cancelBaton.checkCancelled();
+            }
             for (int i = 0; i < children.length; i++) {
                 File child = children[i];
-                deleteAll(child, deleteDirs);
+                deleteAll(child, deleteDirs, cancelBaton);
+            }
+            if (cancelBaton != null) {
+                cancelBaton.checkCancelled();
             }
         }
         if (dir.isDirectory() && !deleteDirs) {

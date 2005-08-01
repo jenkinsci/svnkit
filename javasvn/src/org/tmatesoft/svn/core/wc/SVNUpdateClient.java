@@ -533,7 +533,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNFileUtil.closeFile(os);
             }
             if (force && dstPath.exists()) {
-                SVNFileUtil.deleteAll(dstPath);
+                SVNFileUtil.deleteAll(dstPath, this);
             }
             Map keywords = SVNTranslator.computeKeywords((String) properties.get(SVNProperty.KEYWORDS), url,
                             (String) properties.get(SVNProperty.LAST_AUTHOR),
