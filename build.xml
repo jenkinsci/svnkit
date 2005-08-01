@@ -85,6 +85,7 @@
             <pathelement location="contrib/junit/junit.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
+            <pathelement path="contrib/sequence/bin-test" />
             <pathelement path="javasvn/bin" />
         </path>
 
