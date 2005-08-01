@@ -368,10 +368,10 @@ public class SVNStatusEditor implements ISVNEditor {
     }
 
     public void reportStatus(SVNDirectory dir, String entryName, boolean ignoreRootEntry, boolean recursive) throws SVNException {
-        SVNEntries entries = dir.getEntries();
+        myWCAccess.checkCancelled();
 
-        boolean anchorOfTarget = myTarget != null
-                && dir == myWCAccess.getAnchor();
+        SVNEntries entries = dir.getEntries();
+        boolean anchorOfTarget = myTarget != null && dir == myWCAccess.getAnchor();
         if (!anchorOfTarget) {            
             SVNExternalInfo[] externals = SVNWCAccess.parseExternals(dir.getPath(), dir.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS));
             for (int i = 0; i < externals.length; i++) {
@@ -396,8 +396,7 @@ public class SVNStatusEditor implements ISVNEditor {
         for (int i = 0; ioFiles != null && i < ioFiles.length; i++) {
             File ioFile = ioFiles[i];
             String fileName = ioFile.getName();
-            if (".svn".equals(fileName)
-                    || entries.getEntry(fileName, false) != null) {
+            if (".svn".equals(fileName) || entries.getEntry(fileName, false) != null) {
                 continue;
             }
             sendUnversionedStatus(dir, fileName);
@@ -413,8 +412,7 @@ public class SVNStatusEditor implements ISVNEditor {
             File file = dir.getFile(childEntry.getName());
             SVNFileType fType = SVNFileType.getType(file);
             if (fType == SVNFileType.DIRECTORY) {
-                SVNDirectory childDir = dir.getChildDirectory(childEntry
-                        .getName());
+                SVNDirectory childDir = dir.getChildDirectory(childEntry.getName());
                 if (childDir != null && recursive) {
                     reportStatus(childDir, null, false, recursive);
                 } else {

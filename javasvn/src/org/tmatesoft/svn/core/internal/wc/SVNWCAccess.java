@@ -237,8 +237,8 @@ public class SVNWCAccess implements ISVNEventHandler {
             if (recursive) {
                 visitDirectories(myTarget == myAnchor ? "" : myName, myTarget,
                         new ISVNDirectoryVisitor() {
-                            public void visit(String path, SVNDirectory dir)
-                                    throws SVNException {
+                            public void visit(String path, SVNDirectory dir) throws SVNException {
+                                checkCancelled();
                                 if (lock && (!dir.isLocked() || !stealLock)) {
                                     dir.lock();
                                 }
