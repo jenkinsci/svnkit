@@ -5,7 +5,7 @@
         <property environment="env" />
         <property name="eclipse.home" value="${env.ECLIPSE_HOME}" />
         <property name="java.home" value="${env.JAVA_HOME}" />
-        <property file="build.properties"/>
+        <property file="javasvn.build.properties"/>
         
         <condition property="eclipse.present">
                 <available file="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.jar"
@@ -114,7 +114,7 @@
                 <exclude name="org/tmatesoft/svn/cli/**" />
             </fileset>
             <fileset dir="${basedir}" >
-                <include name="build.properties" />
+                <include name="javasvn.build.properties" />
                 <include name="COPYING" />
             </fileset>
         	<fileset dir="contrib/sequence">

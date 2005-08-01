@@ -15,22 +15,16 @@ import java.util.Properties;
  */
 public class Version {
 
-    private static String PROPERTIES_PATH = "build.properties";
+    private static String PROPERTIES_PATH = "javasvn.build.properties";
 
     private static final String VERSION_STRING_PROPERTY = "javasvn.version.string";
-
     private static final String VERSION_MAJOR_PROPERTY = "javasvn.version.major";
-
     private static final String VERSION_MINOR_PROPERTY = "javasvn.version.minor";
-
     private static final String VERSION_MICRO_PROPERTY = "javasvn.version.micro";
 
     private static final String VERSION_STRING_DEFAULT = "JavaSVN (http://tmate.org/svn/)";
-
     private static final String VERSION_MAJOR_DEFAULT = "0";
-
     private static final String VERSION_MINOR_DEFAULT = "0";
-
     private static final String VERSION_MICRO_DEFAULT = "0";
 
     private static Properties ourProperties;
