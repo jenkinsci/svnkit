@@ -35,7 +35,6 @@
 
 <h1>JavaSVN Library</h1>
 <!--Contents-->
-<br>
 <h4>Get Latest Development Version</h4>
 To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/jsvn/">http://72.9.228.230:8080/svn/jsvn/</a>
 <br />To get the latest source code (with the SVN command line client) use the following command:
