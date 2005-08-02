@@ -137,18 +137,15 @@ public class JavaHLObjectFactory {
 
         String conflictOld = "";
         if(status.getConflictOldFile()!=null){
-            conflictOld = status.getConflictOldFile().getAbsolutePath();
-            conflictOld = conflictOld.replace(File.separatorChar, '/');
+            conflictOld = status.getConflictOldFile().getName();
         }
         String conflictNew = "";
         if(status.getConflictNewFile()!=null){
-            conflictNew = status.getConflictNewFile().getAbsolutePath();
-            conflictNew = conflictNew.replace(File.separatorChar, '/');
+            conflictNew = status.getConflictNewFile().getName();
         }
         String conflictWorking = "";
         if(status.getConflictWrkFile()!=null){
-            conflictWorking = status.getConflictWrkFile().getAbsolutePath();
-            conflictWorking = conflictWorking.replace(File.separatorChar, '/');
+            conflictWorking = status.getConflictWrkFile().getName();
         }
         String urlCopiedFrom = status.getCopyFromURL();
         long revisionCopiedFrom = status.getCopyFromRevision().getNumber();
