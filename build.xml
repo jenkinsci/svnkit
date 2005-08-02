@@ -79,7 +79,6 @@
     <target name="compile-tests" depends="compile-library">
         <mkdir dir="contrib/sequence/bin-test" />
         <mkdir dir="javasvn-test/bin" />
-
         <path id="tests.classpath">
             <pathelement location="contrib/jsch/jsch.jar" />
             <pathelement location="contrib/junit/junit.jar" />
@@ -266,11 +265,12 @@
         		 overview="doc/javadoc-files/overview.html"
         >
             <packageset dir="javasvn/src">
-                <include name="**/core/**" />
                 <exclude name="**/util/**" />
             	<exclude name="**/internal/**" />
                	<exclude name="**/core/diff/**" />
                	<exclude name="**/core/progress/**" />
+                <include name="**/core/**" />
+
             </packageset>
             <header>
                 <![CDATA[<a target="_top" href="http://tmate.org/svn/"><span class=style0>JavaSVN</span>&nbsp;Home<a/>]]></header>
