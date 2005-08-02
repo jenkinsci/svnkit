@@ -34,7 +34,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * missing, use the WC root's revision.)  If the target of the operation is 
  * deleted or switched relative to the WC root, follow up the initial 
  * {@link #setPath(String, String, long, boolean) setPath()} call with a
- * {@link #linkPath(SVNRepositoryLocation, String, String, long, boolean) linkPath()}
+ * {@link #linkPath(SVNURL, String, String, long, boolean) linkPath()}
  * or {@link #deletePath(String) deletePath()} call with a path argument of "" to
  * indicate that.  In no other case may there be two report
  * descriptions for the same path.  If the target of the operation is
@@ -65,10 +65,10 @@ public interface ISVNReporter {
 	 * paths. The <code>path</code> is relative to the <code>URL</code> specified for 
 	 * <code>SVNRepository</code>.
 	 * 
-     * @param  path				a path within the working copy 
+     * @param  path				the local item's path 
      * @param  lockToken		if not <code>null</code>, it is the lock token (lock id
      * 							in other words) for the <code>path</code>
-     * @param  revision 		a working copy revision number
+     * @param  revision 		the local item's revision number
      * @param  startEmpty 		<code>true</code> and if the <code>path</code> is a 
      * 							directory - an implementer should assume that the 
      * 							directory has no entries or properties
@@ -81,7 +81,7 @@ public interface ISVNReporter {
 
 	/**
      * 
-     * Describes a working copy <code>path</cdoe> as missing (deleted from the WC).
+     * Describes a working copy <code>path</code> as missing (deleted from the WC).
      * 
      * @param  path 			a path within the working copy
      * @throws SVNException		if a failure in connection occured.
@@ -90,19 +90,18 @@ public interface ISVNReporter {
 
     /**
      * Like {@link #setPath(String, String, long, boolean)}, but differs in 
-     * that the <code>path</code> in the working copy (relative to the root
+     * that the local item's <code>path</code> (relative to the root
      * of the report driver) isn't a reflection of the path in the repository 
-     * (relative to the <code>URL</code> specified for  
-     * {@link SVNRepository}), but is instead a reflection of a different
-     * repository <code>URL</code> at a <code>revision</code>.
+     * (relative to the URL specified for {@link SVNRepository}), but is instead a 
+     * reflection of a different repository URL at a <code>revision</code>.
      * 
      * <p>
      * If <code>startEmpty</code> is set and the <code>path</code> is a directory,
      * the implementor should assume the directory has no entries or properties.
      * 
-     * @param  repository 	a working copy revision number
-     * @param  path 		a path within the working copy
-     * @param  revison 		a working copy revision number
+     * @param  url 		 	a new URL to switch to
+     * @param  path 		the local item's path 
+     * @param  revison 		the local item's revision number 
      * @param  lockToken	if not <code>null</code>, it is the lock token (lock id
      * 						in other words) for the <code>path</code>
      * @param  startEmtpy 	<code>true</code> and if the <code>path</code> is a 

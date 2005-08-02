@@ -212,17 +212,14 @@ public abstract class SVNRepository {
     }
     
     /**
-     * Sets the following parameters to identify the current repository.
-     * Every call to this routine is logged by 
-     * {@link org.tmatesoft.svn.util.DebugLog DebugLog}. 
+     * Stores the identification parameters for the repository.
      * 
      * @param uuid 		the repository's Universal Unique IDentifier 
-     * 					(<code>UUID</code>) used to differentiate between one
+     * 					(UUID) used to differentiate between one
      * 					repository and another. 
-     * @param root 		the repository's root <code>URL</code>.
+     * @param rootURL	the repository's root URL.
      * @see 			#getRepositoryRoot()
      * @see 			#getRepositoryUUID()
-     * @see				org.tmatesoft.svn.util.DebugLog
      */
     protected void setRepositoryCredentials(String uuid, SVNURL rootURL) {
         if (uuid != null && rootURL != null) {
@@ -671,14 +668,15 @@ public abstract class SVNRepository {
 	
     /* edit-mode methods */
 	/**
-	 * Asks the Repository Access (RA) Layer to 'diff' a working copy against
-	 * a <code>url</code>; it's another form of 
+	 * Gets differences between two repository items - one specified as a <code>target</code> 
+	 * and another as <code>url</code>. 
+	 * It's another form of 
 	 * {@link #update(long, String, boolean, ISVNReporterBaton, ISVNEditor) update()}.
 	 * 
 	 * <p>
 	 * <b>
 	 * Please note: this method cannot be used to diff a single
-	 * file, only a working copy directory.  See the {@link #update(String, long, String, boolean, ISVNReporterBaton, ISVNEditor)
+	 * file, only a working copy directory.  See the {@link #update(SVNURL, long, String, boolean, ISVNReporterBaton, ISVNEditor)
 	 * update()} for more details.
 	 * </b>
 	 * 
@@ -729,7 +727,7 @@ public abstract class SVNRepository {
 	 * perform any RA operations using <code>SVNRepository</code> from within
 	 * the editing operations of the diff editor.
 	 * 
-	 * @param  url 				a <code>URL</code> path to the entry to be diffed 
+	 * @param  url 				a URL to the entry to be diffed 
 	 * 							against.
 	 * @param  revision 		a revision number of the entry located at the 
 	 * 							<code>url</code>
@@ -980,7 +978,7 @@ public abstract class SVNRepository {
 	 * {@link ISVNEditor#openRoot(long) ISVNEditor.openRoot(revision)}.
 	 * 
 	 * <p>
-	 * <code>locks</code>, if non-<code>null</code>, is a <code>Map<code> which
+	 * <code>locks</code>, if non-<code>null</code>, is a <code>Map</code> which
  	 * keys are locked paths in a working copy and each value for a key is a lock 
  	 * token (its identifier, in other words).  The server checks that the
  	 * correct token is provided for each committed, locked path. <code>locks</code> 
@@ -1027,8 +1025,8 @@ public abstract class SVNRepository {
      * @return			a <code>SVNLock</code> instance (the lock itself) or 
      * 					<code>null</code> if there's no lock.
      * @throws 			SVNException
-     * @see				#setLock(String, String, boolean, long)
-     * @see				#removeLock(String, String, boolean)
+     * @see				#lock(Map, String, boolean, ISVNLockHandler)
+     * @see				#unlock(Map, boolean, ISVNLockHandler)
      * @see				#getLocks(String)
      * @see				SVNLock
      * @since			SVN 1.2
@@ -1046,8 +1044,8 @@ public abstract class SVNRepository {
      * @return 				an array of <code>SVNLock</code> instances 
      * 						(locks themselves).
      * @throws 				SVNException
-     * @see					#setLock(String, String, boolean, long)
-     * @see					#removeLock(String, String, boolean)
+     * @see					#lock(Map, String, boolean, ISVNLockHandler)
+     * @see					#unlock(Map, boolean, ISVNLockHandler)
      * @see					#getLock(String)
      * @see					SVNLock
      * @since				SVN 1.2
@@ -1055,7 +1053,7 @@ public abstract class SVNRepository {
     public abstract SVNLock[] getLocks(String path) throws SVNException;
     
     /**
-	 * Lock a file at the <code>path</code> in the <code>revision</code>.
+	 * Locks path(s) at definite revision(s).
 	 * 
 	 * <p>
 	 * Note that locking is never anonymous, so any server implementing
@@ -1076,24 +1074,23 @@ public abstract class SVNRepository {
 	 * the path, and unconditionally create a new lock.)
 	 * 
 	 * <p>
-	 * If the <code>revision</code> is less than the last-changed-revision of
-	 * the file to be locked (or if the file <code>path</code> doesn't exist
-	 * in HEAD-revision), this call also fails with throwing a 
+	 * If a revision is less than the last-changed-revision of
+	 * the file to be locked (or if the file path doesn't exist
+	 * in HEAD-revision), this call also fails with throwing an 
 	 * <code>SVNException</code>.
      * 
-     * @param path 					the path of a file in a repository that 
-     * 								will be locked (relative to the repository
-     * 								root directory). 
+     * @param pathsToRevisions		a Map which keys are paths and values are 
+     * 								revision numbers; paths are strings and revision 
+     * 								numbers are Long objects; all paths are assumed to
+     * 								be relative to the repository location for which
+     * 								the current <b>SVNRepository</b> object was instantiated. 
      * @param comment				a comment string for the lock. It's optional.
      * @param force					<code>true</code> if the file is to be locked
      * 								in any way (even if it's already locked by
      * 								someone else).
-     * @param revision				a revision number in which the file is 
-     * 								considered to have the specified <code>path</code>. 
-     * @return						a <code>SVNLock</code> instance if the lock was
-     * 								created.
+     * @param handler
      * @throws 						SVNException
-     * @see							#removeLock(String, String, boolean)
+     * @see							#unlock(Map, boolean, ISVNLockHandler)
      * @see							#getLocks(String)
      * @see							#getLock(String)
      * @see							SVNLock
@@ -1102,8 +1099,9 @@ public abstract class SVNRepository {
     public abstract void lock(Map pathsToRevisions, String comment, boolean force, ISVNLockHandler handler) throws SVNException;
     
     /**
-	 * Removes the repository lock for the file located at the <code>path</code>.
-	 * The lock is identified by its token.
+	 * Removes the repository lock(s) for the file(s) located at the path(s)which 
+	 * are provided as key(s) of <code>pathToTokens</code>. Keys are mapped to values
+	 * of the file lock token(s).
 	 * 
 	 * <p>
 	 * Note that unlocking is never anonymous, so any server
@@ -1111,24 +1109,25 @@ public abstract class SVNRepository {
 	 * the client, if it hasn't done so already.
 	 * 
 	 * <p>
-	 * If the username doesn't match the lock's owner, this method call fails with
-	 * throwing a <code>SVNException</code>.  But if the <code>force</code> flag
-	 * is <code>true</code>, the lock will be "broken" by the current user.
+	 * If the username doesn't match the lock's owner and <code>force</code> is 
+	 * <span class="javakeyword">false</span>, this method call fails with
+	 * throwing an <b>SVNException</b>.  But if the <code>force</code>
+	 * flag is <span class="javakeyword">true</span>, the lock will be "broken" 
+	 * by the current user.
 	 * 
 	 * <p>
-	 * Also if the <code>id</code> is incorrect or missing and <code>force</code>
-	 * is <code>null</code>, the method fails with throwing a 
-	 * <code>SVNException</code>. (However, if <code>force</code> is 
-	 * <code>true</code> the lock will be removed anyway.)
+	 * Also if the lock token is incorrect or <span class="javakeyword">null</span>
+	 * and <code>force</code> is <span class="javakeyword">false</span>, the method 
+	 * fails with throwing a <b>SVNException</b>. However, if <code>force</code> is 
+	 * <span class="javakeyword">true</span> the lock will be removed anyway.
 	 * 
-     * @param path			the path of the file to be unlocked (relative to the 
-     * 						repository root directory).
-     * @param id			a specific token that identifies the lock to be removed.
-     * @param force			<code>true</code> to remove the lock in any case (in 
-     * 						spite of missmatching the lock owner's name or an 
-     * 						incorrect <code>id</code>).
+     * @param pathToTokens	a Map which keys are file paths and values are file lock
+     * 						tokens (both keys and values are strings)
+     * @param force			<span class="javakeyword">true</span> to remove the 
+     * 						lock in any case (in spite of missmatching the lock owner's 
+     * 						name or an incorrect lock token).
      * @throws 				SVNException
-     * @see 				#setLock(String, String, boolean, long)
+     * @see 				#lock(Map, String, boolean, ISVNLockHandler)
      * @see					#getLocks(String)
      * @see					#getLock(String)
      * @see 				SVNLock

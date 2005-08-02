@@ -115,8 +115,8 @@ public abstract class SVNRepositoryFactory {
      * factory (protocol specific extension of this class) that essentially creates the
      * instance; then this routine simply returns it to the caller.
      *  
-     * @param  location			a <code>URL</code> (to connect to a repository) 
-     * 							as an <code>SVNRepositoryLocation</code> object
+     * @param  url				a <code>URL</code> (to connect to a repository) 
+     * 							as an <code>SVNURL</code> object
      * @return					a new instance of <code>SVNRepository</code> to interact
      * 							with the repository
      * @throws SVNException		if there's no implementation for the specified protocol

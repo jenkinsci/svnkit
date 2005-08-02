@@ -33,7 +33,6 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * @version 1.0
  * @author 	TMate Software Ltd.
  * @see 	SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler)
- * @see 	ISVNDiffHandler
  */
 public interface ISVNFileRevisionHandler {
     
