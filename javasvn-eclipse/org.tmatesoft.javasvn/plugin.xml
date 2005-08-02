@@ -8,12 +8,16 @@
    class="org.tmatesoft.svn.core.JavaSVNPlugin">
 
    <runtime>
+      <library name="javasvn-javahl.jar">
+         <export name="*"/>
+      </library>
       <library name="javasvn.jar">
          <export name="*"/>
       </library>
       <library name="javasvnplugin.jar"/>
       <library name="jsch.jar"/>
    </runtime>
+   
    <requires>
       <import plugin="org.eclipse.core.runtime"/>
    </requires>

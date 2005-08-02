@@ -112,6 +112,7 @@
         <jar destfile="build/lib/javasvn.jar">
             <fileset dir="javasvn/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
+                <exclude name="org/tigris/**" />
             </fileset>
             <fileset dir="${basedir}" >
                 <include name="javasvn.build.properties" />
@@ -120,17 +121,22 @@
         	<fileset dir="contrib/sequence">
                 <include name="SEQUENCE-LICENSE" />
         	</fileset>
-        	<fileset dir="contrib/javahl">
-                <include name="JAVAHL-LICENSE" />
-        	</fileset>
             <fileset dir="contrib/sequence/bin" />
+            <fileset dir="javasvn/src">
+                <include name="org/tmatesoft/svn/core/internal/wc/config/**" />
+            </fileset>
+        </jar>
+        <jar destfile="build/lib/javasvn-javahl.jar">
+            <fileset dir="javasvn/bin">
+                <include name="org/tigris/**" />
+            </fileset>
             <fileset dir="contrib/javahl/bin" >
                 <exclude name="org/tigris/subversion/javahl/tests/**" />
                 <exclude name="org/tigris/subversion/javahl/SVNClient.class" />
                 <exclude name="org/tigris/subversion/javahl/SVNClient$*.class" />
             </fileset>
-            <fileset dir="javasvn/src">
-                <include name="org/tmatesoft/svn/core/internal/wc/config/**" />
+            <fileset dir="contrib/javahl">
+                <include name="JAVAHL-LICENSE" />
             </fileset>
         </jar>
         <copy file="contrib/jsch/jsch.jar" todir="build/lib" />
@@ -191,6 +197,7 @@
         <copy todir="build/eclipse/${javasvn.plugin.name}">
             <fileset dir="build/lib">
                 <include name="javasvn.jar" />
+                <include name="javasvn-javahl.jar" />
                 <include name="jsch.jar" />
                 <include name="javasvnsrc.zip" />
             </fileset>
