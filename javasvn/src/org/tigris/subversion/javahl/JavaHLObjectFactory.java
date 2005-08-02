@@ -138,14 +138,17 @@ public class JavaHLObjectFactory {
         String conflictOld = "";
         if(status.getConflictOldFile()!=null){
             conflictOld = status.getConflictOldFile().getAbsolutePath();
+            conflictOld = conflictOld.replace(File.separatorChar, '/');
         }
         String conflictNew = "";
         if(status.getConflictNewFile()!=null){
             conflictNew = status.getConflictNewFile().getAbsolutePath();
+            conflictNew = conflictNew.replace(File.separatorChar, '/');
         }
         String conflictWorking = "";
         if(status.getConflictWrkFile()!=null){
             conflictWorking = status.getConflictWrkFile().getAbsolutePath();
+            conflictWorking = conflictWorking.replace(File.separatorChar, '/');
         }
         String urlCopiedFrom = status.getCopyFromURL();
         long revisionCopiedFrom = status.getCopyFromRevision().getNumber();
@@ -316,8 +319,12 @@ public class JavaHLObjectFactory {
         long copyRev = info.getCopyFromRevision().getNumber();
         String copyUrl = info.getCopyFromURL() != null ? info.getCopyFromURL().toString() : null;
 
+        String path = info.getFile() != null ? info.getFile().getName() : SVNPathUtil.tail(info.getPath());
+        if (path != null) {
+            path = path.replace(File.separatorChar, '/');
+        }
         return new Info(
-                info.getFile() != null ? info.getFile().getName() : SVNPathUtil.tail(info.getPath()),
+                path,
                 info.getURL() != null ? info.getURL().toString() : null,
                 info.getRepositoryUUID(),
                 info.getRepositoryRootURL() != null ? info.getRepositoryRootURL().toString() : null,
@@ -347,8 +354,12 @@ public class JavaHLObjectFactory {
         long copyRev = info.getCopyFromRevision().getNumber();
         String copyUrl = info.getCopyFromURL() != null ? info.getCopyFromURL().toString() : null;
 
+        String path = info.getFile() != null ? info.getFile().getAbsolutePath() : info.getPath();
+        if (path != null) {
+            path = path.replace(File.separatorChar, '/');
+        }
         return new Info2(
-                info.getFile() != null ? info.getFile().getAbsolutePath() : info.getPath(),
+                path,
                 info.getURL() != null ? info.getURL().toString() : null,
                 info.getRevision().getNumber(),
                 getNodeKind(info.getKind()),

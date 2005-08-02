@@ -620,7 +620,6 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNWCClient client = getSVNWCClient();
         SVNRevision svnRevision = JavaHLObjectFactory.getSVNRevision(revision);
         SVNRevision svnPegRevision = JavaHLObjectFactory.getSVNRevision(pegRevision);
-        final Collection properties = new ArrayList();
         JavaHLPropertyHandler propHandler = new JavaHLPropertyHandler(myOwner);
         try {
             if(isURL(path)){
@@ -714,7 +713,6 @@ public class SVNClientImpl implements SVNClientInterface {
         }
         SVNWCClient client = getSVNWCClient();
         SVNRevision svnRevision = JavaHLObjectFactory.getSVNRevision(rev);
-        final Collection properties = new ArrayList();
         JavaHLPropertyHandler propHandler = new JavaHLPropertyHandler(myOwner);
         try {
             if(isURL(path)){
@@ -1020,6 +1018,9 @@ public class SVNClientImpl implements SVNClientInterface {
 
                 public void handleEvent(SVNEvent event, double progress) {
                     String path = event.getFile() == null ? event.getPath() : event.getFile().getAbsolutePath();
+                    if (path != null) {
+                        path = path.replace(File.separatorChar, '/');
+                    }
                     if(myNotify != null){
                         myNotify.onNotify(
                                 path,
@@ -1032,7 +1033,7 @@ public class SVNClientImpl implements SVNClientInterface {
                                 );
                     }
                     if(myNotify2 != null){
-                        NotifyInformation info = createNotifyInformation(event, path);
+                        NotifyInformation info = JavaHLObjectFactory.createNotifyInformation(event, path);
                         myNotify2.onNotify(info);
                     }
                 }
@@ -1098,11 +1099,7 @@ public class SVNClientImpl implements SVNClientInterface {
         return pathOrUrl != null
                 && (pathOrUrl.startsWith("http://")
                         || pathOrUrl.startsWith("https://")
-                        || pathOrUrl.startsWith("svn://") || pathOrUrl
-                        .startsWith("svn+ssh://"));
-    }
-
-    protected static NotifyInformation createNotifyInformation(SVNEvent event, String path) {
-        return JavaHLObjectFactory.createNotifyInformation(event, path);
+                        || pathOrUrl.startsWith("svn://") 
+                        || pathOrUrl.startsWith("svn+ssh://"));
     }
 }
