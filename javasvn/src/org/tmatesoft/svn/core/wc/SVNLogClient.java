@@ -91,9 +91,7 @@ public class SVNLogClient extends SVNBasicClient {
         }
     }
 
-    public void doLog(File[] paths, SVNRevision startRevision,
-            SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths,
-            long limit, ISVNLogEntryHandler handler) throws SVNException {
+    public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, ISVNLogEntryHandler handler) throws SVNException {
         if (paths == null || paths.length == 0) {
             return;
         }
@@ -158,14 +156,19 @@ public class SVNLogClient extends SVNBasicClient {
             }
         }
         paths = paths == null || paths.length == 0 ? new String[] {""} : paths;
-        SVNRepository repos = createRepository(url);
+        long targetRevNumber = startRevision.getNumber();
+        if (endRevision.getNumber() > 0) {
+            targetRevNumber = Math.max(targetRevNumber, startRevision.getNumber());
+        }
+        SVNRepository repos = targetRevNumber > 0 ?
+                createRepository(url, null, SVNRevision.HEAD, SVNRevision.create(targetRevNumber)) :
+                    createRepository(url);
         long startRev = getRevisionNumber(startRevision, repos, null);
         long endRev = getRevisionNumber(endRevision, repos, null);
         repos.log(paths, startRev, endRev, reportPaths, stopOnCopy, limit, handler);
     }
 
-    public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler)
-            throws SVNException {
+    public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.BASE;
         }
@@ -194,8 +197,7 @@ public class SVNLogClient extends SVNBasicClient {
         }
     }
 
-    private static void list(SVNRepository repository, String path, long rev,
-            boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
+    private static void list(SVNRepository repository, String path, long rev, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
         Collection entries = new TreeSet();
         entries = repository.getDir(path, rev, null, entries);
 
