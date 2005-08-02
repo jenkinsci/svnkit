@@ -160,6 +160,9 @@ public class JavaHLObjectFactory {
             lockCreationDate = status.getLocalLock().getCreationDate().getTime();
         }
         Lock reposLock = createLock(status.getRemoteLock());
+        if (path != null) {
+            path = path.replace(File.separatorChar, '/');
+        }
 
         Status st = new Status(path, url, nodeKind, revision, lastChangedRevision, lastChangedDate, lastCommitAuthor, textStatus, propStatus,
                 repositoryTextStatus, repositoryPropStatus, locked, copied, conflictOld, conflictNew, conflictWorking, urlCopiedFrom, revisionCopiedFrom,
