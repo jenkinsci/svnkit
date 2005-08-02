@@ -53,10 +53,13 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * matched against corresponing commands of the <b>SVN</b> command line 
  * client:
  * <ul>
- * <li>
- * <li>
+ * <li><b>doCheckout(..)</b> - 'svn checkout'
+ * <li><b>doUpdate(..)</b> - 'svn update'
+ * <li><b>doSwitch(..)</b> - 'svn switch'
+ * <li><b>doRelocate(..)</b> - 'svn switch --relocate oldURL newURL'
+ * <li><b>doExport(..)</b> - 'svn export'
  * </ul>
- *  
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  */

@@ -83,10 +83,8 @@ public class SVNCommitClient extends SVNBasicClient {
     }
 
     /**
-     * Constructs an <span class="style0">SVNCommitClient</span> provided an 
-     * event handler, initial options and a repository factory. What options, event handler and
-     * repository factory are for, please, see {@link SVNCommitClient#SVNCommitClient()} 
-     * and {@link #SVNCommitClient(ISVNEventHandler)}.  
+     * Constructs an <span class="style0">SVNCommitClient</span> provided initial options 
+     * and a repository factory.  
      * 
      * @param repositoryFactory	
      * @param options
@@ -96,15 +94,15 @@ public class SVNCommitClient extends SVNBasicClient {
     }
     
     /**
-     * Sets an implementation of <span class="style0">ISVNCommitHandler</span> to 
+     * Sets an implementation of <b>ISVNCommitHandler</b> to 
      * the commit handler that will be used during commit operations to handle 
      * commit log messages. The handler will receive a clien's log message and items 
-     * (represented as <span class="style0">SVNCommitItem</span> objects) that will be 
+     * (represented as <b>SVNCommitItem</b> objects) that will be 
      * committed. Depending on implementor's aims the initial log message can
      * be modified (or something else) and returned back. 
      * 
      * <p>
-     * If using <span class="style0">SVNCommitClient</span> without specifying any
+     * If using <b>SVNCommitClient</b> without specifying any
      * commit handler then a default one will be used - {@link DefaultSVNCommitHandler}.
      * 
      * @param handler				an implementor's handler that will be used to handle 
@@ -124,7 +122,7 @@ public class SVNCommitClient extends SVNBasicClient {
      *   
      * @return	the commit handler being in use or a default one
      * @see	    #setCommitHander(ISVNCommitHandler)
-     * @see		ISVNCommitHabdler
+     * @see		ISVNCommitHandler
      * @see		DefaultSVNCommitHandler 
      */
     public ISVNCommitHandler getCommitHandler() {

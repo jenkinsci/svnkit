@@ -135,8 +135,8 @@ public class SVNCopyClient extends SVNBasicClient {
      * previousely provided.
      *   
      * @return  the commit handler being in use or a default one
-     * @see     #setCommitHander(ISVNCommitHandler)
-     * @see     ISVNCommitHabdler
+     * @see     #setCommitHandler(ISVNCommitHandler)
+     * @see     ISVNCommitHandler
      * @see     DefaultSVNCommitHandler 
      */
     public ISVNCommitHandler getCommitHandler() {
