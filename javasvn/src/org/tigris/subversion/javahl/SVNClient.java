@@ -1,7 +1,6 @@
 package org.tigris.subversion.javahl;
 
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 public class SVNClient implements SVNClientInterface {
 
@@ -311,14 +310,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public Info2[] info2(String pathOrUrl, Revision revision, Revision pegRevision, boolean recurse) throws ClientException {
-        SVNDebugLog.logError("info2 called on " + pathOrUrl);
-        Info2[] infos = myDelegate.info2(pathOrUrl, revision, pegRevision, recurse);
-        if (infos != null && infos.length > 0) {
-            SVNDebugLog.logError("info[0].url " + infos[0].getUrl());
-        } else {
-            SVNDebugLog.logError("infos are not valid: " + infos);
-        }
-        return infos;
+        return myDelegate.info2(pathOrUrl, revision, pegRevision, recurse);
     }
 
     public String getVersionInfo(String path, String trailUrl, boolean lastChanged) throws ClientException {
