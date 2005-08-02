@@ -47,10 +47,11 @@ what features are planned, but not yet implemented.
 </p>
 <br>
 <h4>Get JavaSVN Eclipse Plugin from update site</h4>
-To get an Eclipse plugin version use <b>http://tmate.org/svn/</b> as an update site location in Eclipse Update Manager.
+<p>To get an Eclipse plugin version use <b>http://tmate.org/svn/</b> as an update site location in Eclipse Update Manager.
 In Eclipse menu select Help->Software Updates->Find and Install... Then choose 'Search for new features to install' combo 
 box, click 'Next', then click 'New Remote Site...' and type <b>http://tmate.org/svn/</b> in the URL field and your preferred 
 name for the site. After this check the new site (it should appear in the list of update sites) and follow further steps.
+</p>
 <br>
 <table width="100%">
 <tbody>
