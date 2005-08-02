@@ -77,7 +77,7 @@ public class SVNLogClient extends SVNBasicClient {
         if (!tmpFile.exists()) {
             tmpFile.mkdirs();
         }
-        doAnnotate(repos.getRepositoryPath(""), startRev, tmpFile, repos, endRev, handler);
+        doAnnotate(repos.getLocation().toString(), startRev, tmpFile, repos, endRev, handler);
     }
 
     private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, ISVNAnnotateHandler handler) throws SVNException {
