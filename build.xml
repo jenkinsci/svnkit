@@ -112,7 +112,7 @@
         <jar destfile="build/lib/javasvn.jar">
             <fileset dir="javasvn/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
-                <exclude name="org/tigris/**" />
+                <exclude name="org/tigris/subversion/javahl/SVNClient**" />
             </fileset>
             <fileset dir="${basedir}" >
                 <include name="javasvn.build.properties" />
