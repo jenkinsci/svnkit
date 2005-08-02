@@ -87,7 +87,7 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
                 targets.add(getCommandLine().getPathAt(i));
             }
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);
-            logClient.doLog(SVNURL.parseURIEncoded(url), paths, startRevision ,endRevision, stopOnCopy, myReportPaths, 0, this);
+            logClient.doLog(SVNURL.parseURIEncoded(url), paths, SVNRevision.UNDEFINED, startRevision ,endRevision, stopOnCopy, myReportPaths, 0, this);
         } else if (getCommandLine().hasPaths()) {
             Collection targets = new ArrayList();
             for(int i = 0; i < getCommandLine().getPathCount(); i++) {

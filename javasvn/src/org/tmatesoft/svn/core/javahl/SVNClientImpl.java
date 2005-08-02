@@ -224,6 +224,7 @@ public class SVNClientImpl implements SVNClientInterface {
             if(isURL(path)){
                 client.doLog(
                         SVNURL.parseURIEncoded(path), new String[]{""},
+                        SVNRevision.HEAD,
                         JavaHLObjectFactory.getSVNRevision(revisionStart),
                         JavaHLObjectFactory.getSVNRevision(revisionEnd),
                         stopOnCopy, discoverPath, limit, new ISVNLogEntryHandler(){
