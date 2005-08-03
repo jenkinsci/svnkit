@@ -40,6 +40,7 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
    for($i = 0; $i < count($matches[1]); $i++) {
        $build = $matches[1][$i];
        $changelog_url = $repository . $build . "/changelog.txt";
+       $test_url = $repository . $build . "/tests.log";
        $changelog = read_contents($changelog_url);
 
        if (!$changelog) {
@@ -73,6 +74,7 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
        $item_description .= "<tr><td>eclipse update site location:&nbsp;</td><td><b>" . $eclipse_update_url . "</b></td></tr></table></p>";
        $item_description .= "<h5>ChangeLog</h5><pre>" . $changelog_str . "</pre>";
        $item_description .= "<a href=\"" . $changelog_url . "\">full changelog up to this build</a>";
+       $item_description .= "<a href=\"" . $test_url . "\">tests results</a>";
        $item_description .= "<h5>Contact</h5><p>Your questions and feedback are welcome at <a href=\"mailto:support@tmatesoft.com\">support@tmatesoft.com</a></p>";
 
 
@@ -80,6 +82,7 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
        $html_description .= "<tr><td colspan=\"2\">&nbsp;Changelog:</td></tr>";
        $html_description .= "<tr><td colspan=\"2\"><pre>" . $changelog_str . "</pre>";
        $html_description .= "<a href=\"" . $changelog_url . "\">full changelog up to this build</a></td></tr>";
+       $html_description .= "<a href=\"" . $test_url . "\">tests results</a></td></tr>";
        $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Standalone Version&nbsp;</td><td><a href=\"" . $standalone_link . "\">" . $standalone_name . "</a></td></tr>";
        $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Source Code Archive&nbsp;</td><td><a href=\"" . $src_url . "\">" . $src_name . " </a></td></tr>";
        $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Eclipse Update Site Archive&nbsp;</td><td><a href=\"" . $eclipse_url . "\">" . $eclipse_name . "</a></td></tr>";
