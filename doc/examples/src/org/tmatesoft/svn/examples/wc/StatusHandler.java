@@ -109,8 +109,8 @@ public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
              * but is missing or somehow incomplete. The item can be missing if it's 
              * removed using a command incompatible with the native Subversion command
              * line client (for example, just removed from the filesystem). In the case
-             * of a directory, it can be incomplete if the user happened to interrupt a
-             * checkout or update.
+             * the item is a directory, it can be incomplete if the user happened to 
+             * interrupt a checkout or update.
              */
             pathChangeType = "!";
         } else if (contentsStatus == SVNStatusType.STATUS_OBSTRUCTED) {
@@ -127,8 +127,8 @@ public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
             /*
              * The file, directory or symbolic link item was Replaced in the user's 
              * working copy; that is, the item was deleted, and a new item with the same
-             * name was added. While they may have the same name, the repository 
-             * considers them to be distinct objects with distinct histories.
+             * name was added (within a single revision). While they may have the same name, 
+             * the repository considers them to be distinct objects with distinct histories.
              */
             pathChangeType = "R";
         } else if (contentsStatus == SVNStatusType.STATUS_NONE
@@ -260,7 +260,7 @@ public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
                 + (isSwitched ? "S" : " ")
                 + lockLabel
                 + "  "
-                + pathRemoteChangeType//((myIsRemote && pathChangeType.equals("M")) ? "*" : " ")
+                + pathRemoteChangeType
                 + "  "
                 + workingRevision
                 + offsets[0]

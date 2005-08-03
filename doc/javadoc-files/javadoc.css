@@ -1,30 +1,22 @@
-/*
- * JScience - Java(TM) Tools and Libraries for the Advancement of Sciences.
- * Copyright (C) 2005 - JScience (http://jscience.org/)
- * All rights reserved.
- * 
- * Permission to use, copy, modify, and distribute this software is
- * freely granted, provided that this notice is preserved.
- */
 
 /* Define colors, fonts and other style attributes here to override the defaults */
 
 /* Page background color */
 body {
-    background-color: rgb(235,225,253);/*#F3EBC6;*/
-	font-family: Verdana;
-	font-size: 17px;
+    background-color: rgb(234, 234, 234);
+	font-family: trebuchet ms, verdana, tahoma, arial;
+	font-size: 82%;
 	color: #3E3E3E;
 }
 a {
 	font-weight:     bold;
-	color:           rgb(0,0,132); /*rgb(184,111,1);*//*#76A32C;*/
+	color:           rgb(0,0,132); 
 	text-decoration: none;
 }
 .style0 {
 	font-family: Trebuchet MS;/*Verdana;*/
 	font-size:   22px;
-	color:       rgb(183, 91, 0);/*#B60606;*/
+	color:       rgb(51, 102, 153);
 }
 .style1 {
 	font-family: Verdana;
@@ -46,32 +38,32 @@ a {
 	font-family: Courier New;
 	color: rgb(127,0,85); 	
 	font-weight: bold;
+	font-size: 100%;
 }
 /* Headings */
 h1 { font-size: 145% }
 
 a:hover {
-    background: rgb(75%,75%,100%);
 	color: #CF4705;
 	text-decoration: underline;
 }
 
 /* Table colors */
-.TableHeadingColor     { background: rgb(137, 80, 243)/*#F4DEAC*/ } 
-.TableSubHeadingColor  { background: rgb(223, 207, 253)/*#F4DEAC*/ }
-.TableRowColor         { background: rgb(223, 207, 253)/*#F0D898*/ } 
+.TableHeadingColor     { background: rgb(173,184,217) } 
+.TableSubHeadingColor  { background: rgb(173,184,217) }
+.TableRowColor         { background: rgb(220, 220, 220) } 
 
 /* Font used in left-hand frame lists */
-.FrameTitleFont   { font-size: 120%; font-family: Verdana }
-.FrameHeadingFont { font-size: 100%; font-family: Verdana }
-.FrameItemFont    { font-size: 100%; font-family: Verdana }
+.FrameTitleFont   { font-size: 100%; font-family: Helvetica, Arial, sans-serif }
+.FrameHeadingFont { font-size: 100%; font-family: Helvetica, Arial, sans-serif }
+.FrameItemFont    { font-size: 100%; font-family: Helvetica, Arial, sans-serif }
 
 /* Navigation bar fonts and colors */
-.NavBarCell1    { background-color:rgb(223, 207, 253)/*#F4DEAC*/ }
-.NavBarCell1Rev { background-color:rgb(130, 29, 254)/*#B24B0A*/ } 
+.NavBarCell1    { font-size: 90%; background-color: #AFCAAF }
+.NavBarCell1Rev { background-color: #999933 } 
 .NavBarFont1    { font-family:  Verdana; color:#506474;}
 .NavBarFont1Rev { font-family:  Verdana; color:#F3EBC6;}
 
-.NavBarCell2    { font-family:  Verdana; background-color:rgb(235,225,253)/*rgb(223, 207, 253)*//*#F4DEAC;*/}
-.NavBarCell3    { font-family:  Verdana; background-color:rgb(223, 207, 253)/*#F4DEAC;*/}
+.NavBarCell2    { font-family:  Verdana; background-color: rgb(234, 234, 234);}
+.NavBarCell3    { font-family:  Verdana; background-color: rgb(234, 234, 234);}
 
