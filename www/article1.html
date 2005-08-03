@@ -24,9 +24,9 @@
 <span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
 </p>
 <p><div style="border-bottom: 1px solid #ccc;"></div></p>
-<small><a href="index.html" style="border-bottom: 0px;">Home</a> :: <a href="knowledge_base.html" style="border-bottom: 0px;">Knowledge Base</a></small>
+<small><a href="index.html" style="border-bottom: 0px;">Home</a> :: <a href="knowledge_base.html" style="border-bottom: 0px;">Knowledge Base</a> :: How to use ISVNReporter/ISVNEditor in update-related operations</small>
 
-<h1>How to use ISVNReporter/ISVNEditor in update-related operations</h1>
+<!--<h1>How to use ISVNReporter/ISVNEditor in update-related operations</h1>-->
 
 <p>
 <!--This section will introduce some articles on several parts of the <span class="javasvn">JavaSVN</span> API that 
@@ -45,10 +45,10 @@ of the <b>JavaSVN</b> low-level API (<b>org.tmatesoft.svn.core.io</b> package). 
 <p>
 When <code>SVNRepository.update(..)</code> is called <code>ISVNReporterBaton.report(..)</code> 
 is invoked to make reports (with the help of <code>ISVNReporter</code>) of the working files/directories
-state. For example, if the scope is to update existing local copies to some 
+state. For example, if the scope is to update existing local items to some 
 definite revision (that is passed to <code>SVNRepository.update(..)</code>) 
 <code>ISVNReporterBaton.report(..)</code> should describe to the server revisions of all the 
-copies if their revisions differ from the update target revision. 
+items (files, directories) if their revisions differ from the update target revision. 
 Suppose you have got the following tree you have somewhen checked out from a
 repository:
 </p>
@@ -64,13 +64,17 @@ repository:
            
 <p>
 Numbers in brackets correspond to revisions. Well, you see that the root 
-directory has the revision number=4, dirA - 5, dirB - 6 and so on. When you
+directory has the revision number = 4, dirA - 5, dirB - 6 and so on. When you
 call <code>SVNRepository.update(..)</code> to bring the root directory up to date say to revision
 8 you should describe the revisions of all the entries top-down for each 
 directory (starting with the root):
 </p>
 <pre class="javaCode">
-<span class="javaKeyword">public void</span> report(<code>ISVNReporter</code> reporter) <span class="javaKeyword">throws</span> <code>SVNException</code> {
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.io.<code>ISVNReporterBaton</code>;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.io.<code>ISVNReporter</code>;
+
+<span class="javaKeyword">public class</span> MyReporterBaton <span class="javaKeyword">implements</span> <code>ISVNReporterBaton</code> {
+&nbsp;&nbsp;<span class="javaKeyword">public void</span> report(<code>ISVNReporter</code> reporter) <span class="javaKeyword">throws</span> <code>SVNException</code> {
 
 	<span class="javaCommentSingle">//for the root directory</span>
 	reporter.setPath(<span class="javaString">""</span>, <span class="javaKeyword">null</span>, 4, <span class="javaKeyword">false</span>);
@@ -93,14 +97,15 @@ directory (starting with the root):
 	 * entire tree is described.
 	 */</span>
 	reporter.finishReport();
+&nbsp;&nbsp;}
 }
 </pre>
 <p>
 Several significant moments:
 <ul>
 <li> 
-if some file was locked then you should provide the lock-token for
-that entry as the 2nd parameter of <code>ISVNReporter.setPath(..)</code>. For example:
+if some file(s) was(were) locked then you should provide the lock-token for
+that file(s) as the 2nd parameter of <code>ISVNReporter.setPath(..)</code>. For example:
 <pre>
 	/(4)
 	/file.txt(7, locked)
@@ -114,25 +119,27 @@ revision <code>ISVNReporter.setPath(..)</code> is called for such file anyway.
 </li>  
 <li>
 The last parameter of <code>ISVNReporter.setPath(..)</code> - boolean flag startEmpty - must be
-<span class="javaKeyword">true</span> for a checkout. Also it's set to true for those directories that were not 
-updated at a previous time due to errors (if such situation had a place). So, startEmpty = <span class="javaKeyword">true</span> 
+<span class="javaKeyword">true</span> for a checkout. Also it's set to <span class="javaKeyword">true</span> for those directories 
+that were not successfully updated at a previous time due to errors (if such situation had a place). So, startEmpty = <span class="javaKeyword">true</span> 
 means the directory is still empty. In other cases it must be <span class="javaKeyword">false</span>.
 </li>
 <li> 
-If a user's local working copy is updated against a URL different from that
+If a user's local item (file/directory) is updated against a URL different from that
 it was checked out from (being switched in other words), then instead of calling <code>reporter.setPath(..)</code> you should
 call:
 <pre class="javaCode">
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.<code>SVNURL</code>;
+...    
     reporter.linkPath(newRepositoryLocation, path, 
                       lockToken, revision, 
                       <span class="javaKeyword">false</span>);
 </pre>
-newRepositoryLocation is an <code>SVNRepositoryLocation</code> which is the new parent root
+newRepositoryLocation is an <code>SVNURL</code> instance which is the new parent root
 (meaning <span style="font-family: Courier New; font-size: 10pt;">path</span> is relative to this root since this moment). 
 That's the only difference between just an update and a switch.
 </li>
 <li> 
-If an entry was scheduled for deletion or if it's a missing directory (that was
+If an item was scheduled for deletion or if it's a missing directory (that was
 accidentally deleted) then you should call:
 <pre class="javaCode">
 	<span class="javaCommentSingle">//report that the path was deleted</span>
@@ -154,12 +161,12 @@ case of a fault.
 <h4>How to use ISVNEditor</h4>
 <p>
 When <code>ISVNReporterBaton</code> has finished his work and the server knows everything
-of the user's working copy (dirs and files) state it sends to the client commands as
-well as data (file/dir properties and file delta) to bring his copy up to date.
+of the user's local versioned items (dirs and files) state it sends to the client commands as
+well as data (file/dir properties and file delta) to bring client's items up to date.
 These commands are translated into calls to <code>ISVNEditor</code> methods.
 </p>
 <p>
-Suppose there's the following working copy tree which is being updated 
+Suppose there's the following local tree which is being updated 
 recursively (starting with the directory the update was initiated on and 
 moving deep down) to 8th revision:
 <pre>
@@ -172,7 +179,7 @@ Assume that only file1.txt is out of date and must be updated. The server sends
 commands to update the file which are translated into series of calls to 
 <code>ISVNEditor</code> methods. Here is the scheme of this process (an implementor himself
 doesn't make these calls, his aim is only to provide an <code>ISVNEditor</code> 
-implementation; the following is only an illustration describing how the <b>JavaSVN</b>
+implementation to <code>SVNRepository.update(..)</code> method; the following is rather an illustration describing how the <b>JavaSVN</b>
 library invokes <code>ISVNEditor</code> methods):
 <pre class="javaCode">
      <span class="javaCommentSingle">//sets the target revision the copy is being updated to.</span>
@@ -208,8 +215,8 @@ library invokes <code>ISVNEditor</code> methods):
      editor.openFile(<span class="javaString">"/dirA/file1.txt"</span>, revision);
  		
      <span class="javaCommentSingle">//changing properties of "file1.txt"</span>
-     editor.changeFileProperty(propertyName1, propertyValue1);
-     editor.changeFileProperty(propertyName2, propertyValue2);
+     editor.changeFileProperty(<span class="javaKeyword">null</span>, propertyName1, propertyValue1);
+     editor.changeFileProperty(<span class="javaKeyword">null</span>, propertyName2, propertyValue2);
      
      .....................................
 
@@ -225,7 +232,7 @@ library invokes <code>ISVNEditor</code> methods):
       * correctly, if don't - may be the local file is
       * corrupted, that's an error.
       */</span>
-     editor.applyTextDelta(baseChecksum);
+     editor.applyTextDelta(<span class="javaKeyword">null</span>, baseChecksum);
 
      <span class="javaCommentMulti">/* well, if the previous step was ok, the next step is to receive 
       * the delta itself. ISVNEditor.textDeltaChunk(..) receives 
@@ -238,13 +245,13 @@ library invokes <code>ISVNEditor</code> methods):
       * ISVNEditor.textDeltaChunk(..) returns an OutputStream as a storage 
       * where delta is written).
       */</span>
-     OutputStream os = editor.textDeltaChunk(diffWindow);
+     OutputStream os = editor.textDeltaChunk(<span class="javaKeyword">null</span>, diffWindow);
  
      <span class="javaCommentMulti">/* the following is called when all the delta is received.
       * that is where it's applied to a local file; in this illustration
       * "file1.txt" is modified.
       */</span>
-     editor.textDeltaEnd();
+     editor.textDeltaEnd(<span class="javaKeyword">null</span>);
  		
      <span class="javaCommentMulti">/* the final point of the file modification: once again the server 
       * sends a checksum to control if the resultant file ("file1.txt") 
@@ -377,8 +384,6 @@ illustrartion when the local copy already exists):
 <br>
 <br>
 
-<br>
-<br>
 <p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
 <a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
 <br />

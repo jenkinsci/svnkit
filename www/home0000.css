@@ -170,7 +170,7 @@ h4 {
     padding: 0.3em 0.3em 0.3em 2.2em;
     margin-bottom: 1em;
     margin-top: 1em;
-    background: /*#EBF0EB*/ rgb(173,184,217) url(img/bullet00.gif) no-repeat 0.5em 0.7em;
+    background: rgb(173,184,217) url(img/bullet00.gif) no-repeat 0.5em 0.7em;
     background-repeat: no-repeat;
     }
 a.feature {
