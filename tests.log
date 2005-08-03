@@ -1,0 +1,675 @@
+     [java] RUNNING TESTS AGAINST 'svn://localhost'
+
+     [java] PROCESSING autoprop_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+     [java] PASS:  autoprop_tests.py 1: add: config=no,  commandline=none
+     [java] PASS:  autoprop_tests.py 2: add: config=yes, commandline=none
+     [java] PASS:  autoprop_tests.py 3: add: config=no,  commandline=yes
+     [java] PASS:  autoprop_tests.py 4: add: config=yes, commandline=yes
+     [java] PASS:  autoprop_tests.py 5: add: config=no,  commandline=no
+     [java] PASS:  autoprop_tests.py 6: add: config=yes, commandline=no
+     [java] PASS:  autoprop_tests.py 7: import: config=no,  commandline=none
+     [java] PASS:  autoprop_tests.py 8: import: config=yes, commandline=none
+     [java] PASS:  autoprop_tests.py 9: import: config=no,  commandline=yes
+     [java] PASS:  autoprop_tests.py 10: import: config=yes, commandline=yes
+     [java] PASS:  autoprop_tests.py 11: import: config=no,  commandline=no
+     [java] PASS:  autoprop_tests.py 12: import: config=yes, commandline=no
+     [java] PASS:  autoprop_tests.py 13: add directory
+     [java] PASS:  autoprop_tests.py 14: import directory
+     [java] PROCESSING basic_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+     [java] PASS:  basic_tests.py 1: basic checkout of a wc
+     [java] PASS:  basic_tests.py 2: basic status command
+     [java] PASS:  basic_tests.py 3: basic commit command
+     [java] PASS:  basic_tests.py 4: basic update command
+     [java] PASS:  basic_tests.py 5: basic mkdir URL
+     [java] PASS:  basic_tests.py 6: basic corruption detection
+     [java] PASS:  basic_tests.py 7: receiving text merges as part of an update
+     [java] PASS:  basic_tests.py 8: basic conflict creation and resolution
+     [java] PASS:  basic_tests.py 9: basic cleanup command
+     [java] PASS:  basic_tests.py 10: basic revert command
+     [java] PASS:  basic_tests.py 11: basic switch command
+     [java] PASS:  basic_tests.py 12: basic delete command
+     [java] PASS:  basic_tests.py 13: checkout a path no longer in HEAD
+     [java] PASS:  basic_tests.py 14: attempt to change node kind
+     [java] PASS:  basic_tests.py 15: basic import of single new file
+     [java] PASS:  basic_tests.py 16: basic cat of files
+     [java] PASS:  basic_tests.py 17: basic ls
+     [java] FAIL:  basic_tests.py 18: 'svn log file:///nonexistent_path' should fail
+     [java] PASS:  basic_tests.py 19: basic auth caching
+     [java] PASS:  basic_tests.py 20: ignored files in added dirs should not be added
+     [java] PASS:  basic_tests.py 21: make sure URI syntaxes are parsed correctly
+     [java] PASS:  basic_tests.py 22: trying to check out a file should fail
+     [java] PASS:  basic_tests.py 23: basic info command
+     [java] PROCESSING blame_tests.py [1, 2, 3]
+     [java] PASS:  blame_tests.py 1: annotate a file whose name contains a space
+     [java] PASS:  blame_tests.py 2: annotate a binary file
+     [java] PASS:  blame_tests.py 3: annotating a directory not allowed
+     [java] PROCESSING cat_tests.py [1, 2, 3, 4]
+     [java] PASS:  cat_tests.py 1: cat a local directory
+     [java] PASS:  cat_tests.py 2: cat a remote directory
+     [java] PASS:  cat_tests.py 3: cat a file at revision BASE
+     [java] PASS:  cat_tests.py 4: cat a nonexistant file
+     [java] PROCESSING commit_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
+     [java] PASS:  commit_tests.py 1: commit one file
+     [java] PASS:  commit_tests.py 2: commit one newly added file
+     [java] PASS:  commit_tests.py 3: commit one newly added binary file
+     [java] PASS:  commit_tests.py 4: commit multiple targets
+     [java] PASS:  commit_tests.py 5: commit multiple targets, 2nd variation
+     [java] PASS:  commit_tests.py 6: commit wc_dir/A/D -- includes D. (anchor=A, tgt=D)
+     [java] PASS:  commit_tests.py 7: commit wc_dir -- (anchor=wc_dir, tgt={})
+     [java] PASS:  commit_tests.py 8: committing unversioned object produces error
+     [java] PASS:  commit_tests.py 9: replace two nested dirs, verify empty contents
+     [java] PASS:  commit_tests.py 10: hudson prob 1.0:  delete file, commit, update
+     [java] PASS:  commit_tests.py 11: hudson prob 1.1:  delete dir, commit, update
+     [java] PASS:  commit_tests.py 12: hudson prob 1.2:  delete, commit, re-add, commit
+     [java] PASS:  commit_tests.py 13: hudson prob 2.0:  prop commit on old dir fails
+     [java] PASS:  commit_tests.py 14: hudson prob 2.1:  move files, update empty dir
+     [java] PASS:  commit_tests.py 16: commit mixed-rev wc (no erroneous merge error)
+     [java] PASS:  commit_tests.py 17: commit files and dirs with URI-unsafe characters
+     [java] PASS:  commit_tests.py 18: commit deleted yet edited files
+     [java] PASS:  commit_tests.py 19: commit a file inside dir scheduled for addition
+     [java] PASS:  commit_tests.py 20: commit deleted (and missing) file
+     [java] PASS:  commit_tests.py 21: issue 644 attempt to add a file twice
+     [java] PASS:  commit_tests.py 22: commit from a dir with a longer name than the wc
+     [java] PASS:  commit_tests.py 23: try to commit when directory is locked
+     [java] PASS:  commit_tests.py 24: commit the current directory
+     [java] PASS:  commit_tests.py 25: attempted commit from multiple wc fails
+     [java] PASS:  commit_tests.py 26: commit named targets with -N (issues #1195, #1239)
+     [java] PASS:  commit_tests.py 27: commit with conflicts and check txn in repo
+     [java] PASS:  commit_tests.py 28: commit deletion of out-of-date file or dir
+     [java] PASS:  commit_tests.py 29: commit with a log message containing bad data
+     [java] PASS:  commit_tests.py 30: commit with invalid external editor cmd
+     [java] PASS:  commit_tests.py 31: commit with mods in schedule delete
+     [java] PASS:  commit_tests.py 32: tabs in paths
+     [java] PROCESSING copy_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]
+     [java] PASS:  copy_tests.py 1: basic copy and move commands -- on files only
+     [java] PASS:  copy_tests.py 2: test fix for 'svn mv unversioned_file some_dst'
+     [java] PASS:  copy_tests.py 3: receive a copied directory during update
+     [java] PASS:  copy_tests.py 4: resurrect a deleted directory
+     [java] PASS:  copy_tests.py 5: svn cp URL URL cannot overwrite destination
+     [java] PASS:  copy_tests.py 6: svn cp PATH PATH cannot overwrite destination
+     [java] PASS:  copy_tests.py 7: copy and tree and modify before commit
+     [java] PASS:  copy_tests.py 8: copy files with properties
+     [java] PASS:  copy_tests.py 9: copy a tree and delete part of it before commit
+     [java] PASS:  copy_tests.py 10: move and revert a directory
+     [java] PASS:  copy_tests.py 11: executable bit should be preserved when copying
+     [java] PASS:  copy_tests.py 12: working-copy to repository copy
+     [java] PASS:  copy_tests.py 13: repository to working-copy copy
+     [java] PASS:  copy_tests.py 14: copy item to root of repository
+     [java] PASS:  copy_tests.py 15: copy URL URL/subdir
+     [java] PASS:  copy_tests.py 16: copy WC URL/subdir
+     [java] PASS:  copy_tests.py 17: resurrect a deleted file
+     [java] PASS:  copy_tests.py 18: copy file from repos to working copy and run diff
+     [java] PASS:  copy_tests.py 19: repos->WC copy with keyword or eol property set
+     [java] PASS:  copy_tests.py 20: revision-kind keywords with non-URL source
+     [java] PASS:  copy_tests.py 21: copy over a missing file
+     [java] PASS:  copy_tests.py 22: copy a deleted directory back from the repos
+     [java] PASS:  copy_tests.py 23: check for double URI escaping in svn ls -R
+     [java] PASS:  copy_tests.py 24: wc to wc copy with deleted=true items
+     [java] PASS:  copy_tests.py 25: svn cp src-URL non-existent-URL-path
+     [java] PASS:  copy_tests.py 26: svn cp oldrev-of-deleted-URL URL
+     [java] PASS:  copy_tests.py 27: test URL to URL copying edge case
+     [java] PASS:  copy_tests.py 28: copy wc dir to itself
+     [java] PROCESSING diff_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26]
+     [java] PASS:  diff_tests.py 1: update a file
+     [java] PASS:  diff_tests.py 2: add a file
+     [java] PASS:  diff_tests.py 3: add a file in an added directory
+     [java] PASS:  diff_tests.py 4: replace a file with a file
+     [java] PASS:  diff_tests.py 5: multiple revisions diff'd forwards and backwards
+     [java] PASS:  diff_tests.py 6: non-recursive behaviour
+     [java] PASS:  diff_tests.py 7: diff only part of the repository
+     [java] PASS:  diff_tests.py 8: non version controlled files
+     [java] PASS:  diff_tests.py 9: pure repository diff update a file
+     [java] PASS:  diff_tests.py 10: diff when property was changed but text was not
+     [java] PASS:  diff_tests.py 11: don't diff file marked as binary type
+     [java] PASS:  diff_tests.py 12: svn diff errors against a non-existant URL
+     [java] PASS:  diff_tests.py 13: diff against the head of a moved file
+     [java] PASS:  diff_tests.py 14: diff text-bases against repository
+     [java] PASS:  diff_tests.py 15: repos-repos diff on item deleted from HEAD
+     [java] PASS:  diff_tests.py 16: select diff targets
+     [java] PASS:  diff_tests.py 17: diff for branches
+     [java] PASS:  diff_tests.py 18: diff between repos URLs and WC paths
+     [java] PASS:  diff_tests.py 19: diff between two file URLs (issue #1311)
+     [java] PASS:  diff_tests.py 21: check for omitted prefix in path component
+     [java] PASS:  diff_tests.py 22: diff a file that has been renamed
+     [java] PASS:  diff_tests.py 23: diff a file within a renamed directory
+     [java] PASS:  diff_tests.py 24: diff a prop change on a dir named explicitly
+     [java] PASS:  diff_tests.py 25: ensure that diff won't show keywords
+     [java] PASS:  diff_tests.py 26: show diffs for binary files with --force
+     [java] PROCESSING export_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+     [java] PASS:  export_tests.py 1: export an empty directory
+     [java] PASS:  export_tests.py 2: export the greek tree
+     [java] PASS:  export_tests.py 3: export working copy
+     [java] PASS:  export_tests.py 4: export working copy with mods
+     [java] PASS:  export_tests.py 5: export over existing dir
+     [java] PASS:  export_tests.py 6: export with keyword translation
+     [java] PASS:  export_tests.py 7: export with eol translation
+     [java] PASS:  export_tests.py 8: export working copy with keyword translation
+     [java] PASS:  export_tests.py 9: export working copy with property mods
+     [java] PASS:  export_tests.py 10: export working copy at base revision
+     [java] PASS:  export_tests.py 11: export with --native-eol
+     [java] PASS:  export_tests.py 12: export nonexistant file
+     [java] PASS:  export_tests.py 13: export unversioned file
+     [java] PROCESSING externals_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9]
+     [java] PASS:  externals_tests.py 1: test checkouts with externals
+     [java] PASS:  externals_tests.py 2: update to receive a new external module
+     [java] PASS:  externals_tests.py 3: update to lose an external module
+     [java] PASS:  externals_tests.py 4: update change to an unmodified external module
+     [java] PASS:  externals_tests.py 5: update changes to a modified external module
+     [java] PASS:  externals_tests.py 6: update changes under an external module
+     [java] PASS:  externals_tests.py 7: commit and update additional externals
+     [java] PASS:  externals_tests.py 8: error if external target dir involves '.' or '..'
+     [java] PASS:  externals_tests.py 9: test exports with externals
+     [java] PROCESSING history_tests.py [1]
+     [java] PASS:  history_tests.py 1: verify that 'svn cat' traces renames
+     [java] PROCESSING import_tests.py [1, 2, 3]
+     [java] PASS:  import_tests.py 1: import of executable files
+     [java] PASS:  import_tests.py 2: do not import ignored files in imported dirs
+     [java] PASS:  import_tests.py 3: avoid creating empty revisions with import
+     [java] PROCESSING lock_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+     [java] PASS:  lock_tests.py 1: lock a file and verify that it's locked
+     [java] PASS:  lock_tests.py 2: commit a file and keep lock
+     [java] PASS:  lock_tests.py 3: commit a file and release lock
+     [java] PASS:  lock_tests.py 4: commit a locked file with a prop change
+     [java] PASS:  lock_tests.py 5: lock a file and verify lock breaking behavior
+     [java] PASS:  lock_tests.py 6: lock a file and verify lock stealing behavior
+     [java] PASS:  lock_tests.py 7: examine the fields of a lockfile for correctness
+     [java] PASS:  lock_tests.py 8: verify behavior when a lock in a wc is defunct
+     [java] PASS:  lock_tests.py 9: verify svn:needs-lock read-only behavior
+     [java] PASS:  lock_tests.py 10: verify svn:needs-lock behavior with defunct lock
+     [java] PASS:  lock_tests.py 11: verify lock removal on a deleted path
+     [java] PASS:  lock_tests.py 12: lock and unlock some files
+     [java] PASS:  lock_tests.py 13: verify removal of a directory with locks inside
+     [java] PASS:  lock_tests.py 14: verify status of lock in working copy
+     [java] PASS:  lock_tests.py 15: verify status of stolen lock
+     [java] PASS:  lock_tests.py 16: verify status of broken lock
+     [java] PASS:  lock_tests.py 17: lock an out-of-date file and ensure failure
+     [java] PASS:  lock_tests.py 18: update handles svn:needs-lock correctly
+     [java] PASS:  lock_tests.py 19: verify svn:needs-lock behavior with revert
+     [java] PASS:  lock_tests.py 20: examine the fields of a lock from a URL
+     [java] PASS:  lock_tests.py 21: lock/unlock several files in one go
+     [java] FAIL:  lock_tests.py 22: svn:needs-lock and svn:executable, part I
+     [java] FAIL:  lock_tests.py 23: svn:needs-lock and svn:executable, part II
+     [java] PASS:  lock_tests.py 24: lock/unlock switched files
+     [java] PASS:  lock_tests.py 25: lock and unlock a file with an URI-unsafe name
+     [java] PASS:  lock_tests.py 26: commit file with xml-unsafe name and release lock
+     [java] PROCESSING log_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9]
+     [java] PASS:  log_tests.py 1: 'svn log', no args, top of wc
+     [java] FAIL:  log_tests.py 2: 'svn commit -F foo' when foo is a versioned file
+     [java] PASS:  log_tests.py 3: 'svn log' on an empty repository
+     [java] PASS:  log_tests.py 4: 'svn log -rN some_dir_unchanged_in_N'
+     [java] PASS:  log_tests.py 5: 'svn log -v -r 1:0 wc_root'
+     [java] PASS:  log_tests.py 6: 'svn log', with args, top of wc
+     [java] PASS:  log_tests.py 7: 'svn log -r N URL' when URL is not in HEAD 
+     [java] PASS:  log_tests.py 8: 'svn log TGT' with copyfrom history
+     [java] PASS:  log_tests.py 9: mod_dav_svn must escape invalid XML control chars
+     [java] PROCESSING merge_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+     [java] PASS:  merge_tests.py 1: performing a merge, with mixed results
+     [java] PASS:  merge_tests.py 2: merge and add new files/dirs with history
+     [java] PASS:  merge_tests.py 3: merge that deletes items
+     [java] PASS:  merge_tests.py 4: some simple property merges
+     [java] PASS:  merge_tests.py 5: merging a file with no explicit target path
+     [java] PASS:  merge_tests.py 6: merge should not die if a target file is absent
+     [java] PASS:  merge_tests.py 7: merge on deleted directory in target
+     [java] PASS:  merge_tests.py 8: merging similar trees ancestrally unrelated
+     [java] PASS:  merge_tests.py 9: merge operations using PREV revision
+     [java] PASS:  merge_tests.py 10: merge change into unchanged binary file
+     [java] PASS:  merge_tests.py 11: merge one file (issue #1150)
+     [java] PASS:  merge_tests.py 12: diff after merge that creates a new file
+     [java] PASS:  merge_tests.py 13: merge should skip over unversioned obstructions
+     [java] PASS:  merge_tests.py 14: merge into missing must not break working copy
+     [java] PASS:  merge_tests.py 15: merge --dry-run adding a new file with props
+     [java] PASS:  merge_tests.py 16: merge binary files with common ancestry
+     [java] PASS:  merge_tests.py 17: merge with funny characters (issue #1905)
+     [java] PASS:  merge_tests.py 18: merge changes to keyword expansion property
+     [java] PASS:  merge_tests.py 19: merge prop change into deleted target
+     [java] PASS:  merge_tests.py 20: merge a file whose name contains a space
+     [java] PASS:  merge_tests.py 21: merge between branches (Issue #2222)
+     [java] PROCESSING prop_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+     [java] PASS:  prop_tests.py 1: write/read props in wc only (ps, pl, pdel)
+     [java] PASS:  prop_tests.py 2: commit properties
+     [java] PASS:  prop_tests.py 3: receive properties via update
+     [java] PASS:  prop_tests.py 4: receive property changes as part of a downdate
+     [java] PASS:  prop_tests.py 5: commit the removal of props
+     [java] PASS:  prop_tests.py 6: update with conflicting props
+     [java] PASS:  prop_tests.py 7: props work when committing a replacement
+     [java] PASS:  prop_tests.py 8: props work when reverting a replacement
+     [java] PASS:  prop_tests.py 9: try to set inappropriate props
+     [java] PASS:  prop_tests.py 10: file copies inherit (not re-derive) special props
+     [java] PASS:  prop_tests.py 11: set, get, and delete a revprop change
+     [java] PASS:  prop_tests.py 12: some svn: properties should be converted
+     [java] PASS:  prop_tests.py 13: test binary property support
+     [java] PASS:  prop_tests.py 14: recursive property operations in BASE and WC
+     [java] PASS:  prop_tests.py 15: property operations on an URL
+     [java] PROCESSING revert_tests.py [3]
+     [java] PASS:  revert_tests.py 3: revert a replaced file with no properties
+     [java] PROCESSING schedule_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 19, 20, 21, 22, 23, 24]
+     [java] PASS:  schedule_tests.py 1: schedule: add some files
+     [java] PASS:  schedule_tests.py 2: schedule: add some directories
+     [java] PASS:  schedule_tests.py 3: schedule: add some nested files and directories
+     [java] PASS:  schedule_tests.py 4: schedule: add some executable files
+     [java] PASS:  schedule_tests.py 5: schedule: delete some files
+     [java] PASS:  schedule_tests.py 6: schedule: delete some directories
+     [java] PASS:  schedule_tests.py 7: revert: add some files
+     [java] PASS:  schedule_tests.py 8: revert: add some directories
+     [java] PASS:  schedule_tests.py 9: revert: add some nested files and directories
+     [java] PASS:  schedule_tests.py 10: revert: add some executable files
+     [java] PASS:  schedule_tests.py 11: revert: delete some files
+     [java] PASS:  schedule_tests.py 12: revert: delete some directories
+     [java] PASS:  schedule_tests.py 19: unschedule addition on missing items
+     [java] PASS:  schedule_tests.py 20: schedule and commit deletion on missing items
+     [java] PASS:  schedule_tests.py 21: revert inside a newly added dir
+     [java] PASS:  schedule_tests.py 22: status after add of deleted directory
+     [java] PASS:  schedule_tests.py 23: 'svn add' should traverse already-versioned dirs
+     [java] PASS:  schedule_tests.py 24: 'svn mkdir' should clean up after itself on error
+     [java] PROCESSING special_tests.py [1, 2, 3, 4, 5, 6]
+     [java] PASS:  special_tests.py 1: general symlink handling
+     [java] PASS:  special_tests.py 2: replace a normal file with a special file
+     [java] PASS:  special_tests.py 3: import and export a symlink
+     [java] PASS:  special_tests.py 4: 'svn cp dir1 dir2' which contains a symlink
+     [java] PASS:  special_tests.py 5: replace a special file with a non-special file
+     [java] PASS:  special_tests.py 6: remove a symlink
+     [java] PROCESSING stat_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+     [java] PASS:  stat_tests.py 1: status on unversioned file in current directory
+     [java] PASS:  stat_tests.py 2: run 'status -u' when nested additions are pending
+     [java] PASS:  stat_tests.py 3: status -vN shows all items in current directory
+     [java] PASS:  stat_tests.py 4: status with a versioned file missing
+     [java] PASS:  stat_tests.py 5: status on versioned items whose type has changed
+     [java] PASS:  stat_tests.py 6: status on versioned items replaced by symlinks
+     [java] PASS:  stat_tests.py 7: status -u with new files in the repository
+     [java] PASS:  stat_tests.py 8: status for unignored file and directory
+     [java] PASS:  stat_tests.py 9: status on missing and unversioned file
+     [java] PASS:  stat_tests.py 10: status -u indicates out-of-dateness
+     [java] PASS:  stat_tests.py 11: status -u on outdated, added file shows only that
+     [java] PASS:  stat_tests.py 12: status -u on working copy deleted in HEAD
+     [java] PASS:  stat_tests.py 13: timestamp behaviour
+     [java] PASS:  stat_tests.py 14: status on '..' where '..' is not versioned
+     [java] PASS:  stat_tests.py 15: status -u in partially non-recursive wc
+     [java] PASS:  stat_tests.py 16: a missing dir in the anchor
+     [java] PROCESSING switch_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14]
+     [java] PASS:  switch_tests.py 1: test some basic switching operations
+     [java] PASS:  switch_tests.py 2: commits after some basic switching operations
+     [java] PASS:  switch_tests.py 3: update wc that contains switched things
+     [java] PASS:  switch_tests.py 4: reverse update wc that contains switched things
+     [java] PASS:  switch_tests.py 5: update switched wc things to HEAD
+     [java] PASS:  switch_tests.py 6: reverse update switched wc things to an older rev
+     [java] PASS:  switch_tests.py 7: show logs for a switched file
+     [java] PASS:  switch_tests.py 8: relocate with deleted, missing and copied entries
+     [java] PASS:  switch_tests.py 9: switch that deletes a sub-directory
+     [java] PASS:  switch_tests.py 11: non-recursive switch
+     [java] PASS:  switch_tests.py 12: anchor=target that fails due to local mods
+     [java] PASS:  switch_tests.py 13: bad intermediate urls in use
+     [java] PASS:  switch_tests.py 14: obstructed switch
+     [java] PROCESSING trans_tests.py [1, 5, 6, 7, 8, 9, 10, 11]
+     [java] PASS:  trans_tests.py 1: commit new files with keywords active from birth
+     [java] PASS:  trans_tests.py 5: update modified file with eol-style 'native'
+     [java] PASS:  trans_tests.py 6: committing eol-style change forces text send
+     [java] PASS:  trans_tests.py 7: keyword expansion for lone file in directory
+     [java] PASS:  trans_tests.py 8: keyword expanded on cat
+     [java] PASS:  trans_tests.py 9: copy, propset svn:eol-style, commit
+     [java] PASS:  trans_tests.py 10: propset, commit, check out into another wc
+     [java] PASS:  trans_tests.py 11: propset, revert
+     [java] PROCESSING update_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+     [java] PASS:  update_tests.py 1: update a locally-modified binary file
+     [java] PASS:  update_tests.py 2: update to an old revision of a binary files
+     [java] PASS:  update_tests.py 3: update should not munge adds or replaces
+     [java] PASS:  update_tests.py 4: update to revision 0
+     [java] PASS:  update_tests.py 5: overlapping identical changes should not conflict
+     [java] PASS:  update_tests.py 6: delete files and update to resolve text conflicts
+     [java] PASS:  update_tests.py 7: update that deletes modified files
+     [java] PASS:  update_tests.py 8: update after add/rm of deleted state
+     [java] PASS:  update_tests.py 9: update missing items (by name) in working copy
+     [java] PASS:  update_tests.py 10: update that replaces a directory
+     [java] PASS:  update_tests.py 11: update with explicit file target
+     [java] PASS:  update_tests.py 12: receive prop update to file scheduled for deletion
+     [java] PASS:  update_tests.py 13: bail when receive a file or dir named .svn
+     [java] PASS:  update_tests.py 14: update missing dir to rev in which it is absent
+     [java] PASS:  update_tests.py 15: another "hudson" problem: updates that delete
+     [java] PASS:  update_tests.py 16: explicit update of deleted=true targets
+     [java] PASS:  update_tests.py 17: receive new dir with spaces in its name
+     [java] PASS:  update_tests.py 18: non-recursive update
+     [java] PASS:  update_tests.py 19: check out an empty dir
+     [java] PASS:  update_tests.py 20: update target till it's gone, then get it back
+     [java] PASS:  update_tests.py 21: update child before parent of a deleted tree
+     [java] PASS:  update_tests.py 22: update a schedule-add directory
+     [java] PASS:  update_tests.py 23: update target that was added in a future rev
+     [java] PASS:  update_tests.py 24: update a nested wc in a read-only wc
+     [java] PASS:  update_tests.py 25: obstructed update alters WC properties
+     [java] PASS:  update_tests.py 26: update dir with xml-unsafe name
+
+     [java] RUNNING TESTS AGAINST 'http://localhost:8082'
+
+     [java] PROCESSING autoprop_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+     [java] PASS:  autoprop_tests.py 1: add: config=no,  commandline=none
+     [java] PASS:  autoprop_tests.py 2: add: config=yes, commandline=none
+     [java] PASS:  autoprop_tests.py 3: add: config=no,  commandline=yes
+     [java] PASS:  autoprop_tests.py 4: add: config=yes, commandline=yes
+     [java] PASS:  autoprop_tests.py 5: add: config=no,  commandline=no
+     [java] PASS:  autoprop_tests.py 6: add: config=yes, commandline=no
+     [java] PASS:  autoprop_tests.py 7: import: config=no,  commandline=none
+     [java] PASS:  autoprop_tests.py 8: import: config=yes, commandline=none
+     [java] PASS:  autoprop_tests.py 9: import: config=no,  commandline=yes
+     [java] PASS:  autoprop_tests.py 10: import: config=yes, commandline=yes
+     [java] PASS:  autoprop_tests.py 11: import: config=no,  commandline=no
+     [java] PASS:  autoprop_tests.py 12: import: config=yes, commandline=no
+     [java] PASS:  autoprop_tests.py 13: add directory
+     [java] PASS:  autoprop_tests.py 14: import directory
+     [java] PROCESSING basic_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+     [java] PASS:  basic_tests.py 1: basic checkout of a wc
+     [java] PASS:  basic_tests.py 2: basic status command
+     [java] PASS:  basic_tests.py 3: basic commit command
+     [java] PASS:  basic_tests.py 4: basic update command
+     [java] PASS:  basic_tests.py 5: basic mkdir URL
+     [java] PASS:  basic_tests.py 6: basic corruption detection
+     [java] PASS:  basic_tests.py 7: receiving text merges as part of an update
+     [java] PASS:  basic_tests.py 8: basic conflict creation and resolution
+     [java] PASS:  basic_tests.py 9: basic cleanup command
+     [java] PASS:  basic_tests.py 10: basic revert command
+     [java] PASS:  basic_tests.py 11: basic switch command
+     [java] PASS:  basic_tests.py 12: basic delete command
+     [java] PASS:  basic_tests.py 13: checkout a path no longer in HEAD
+     [java] PASS:  basic_tests.py 14: attempt to change node kind
+     [java] PASS:  basic_tests.py 15: basic import of single new file
+     [java] PASS:  basic_tests.py 16: basic cat of files
+     [java] PASS:  basic_tests.py 17: basic ls
+     [java] FAIL:  basic_tests.py 18: 'svn log file:///nonexistent_path' should fail
+     [java] PASS:  basic_tests.py 19: basic auth caching
+     [java] PASS:  basic_tests.py 20: ignored files in added dirs should not be added
+     [java] PASS:  basic_tests.py 21: make sure URI syntaxes are parsed correctly
+     [java] PASS:  basic_tests.py 22: trying to check out a file should fail
+     [java] PASS:  basic_tests.py 23: basic info command
+     [java] PROCESSING blame_tests.py [1, 2, 3]
+     [java] PASS:  blame_tests.py 1: annotate a file whose name contains a space
+     [java] PASS:  blame_tests.py 2: annotate a binary file
+     [java] PASS:  blame_tests.py 3: annotating a directory not allowed
+     [java] PROCESSING cat_tests.py [1, 2, 3, 4]
+     [java] PASS:  cat_tests.py 1: cat a local directory
+     [java] PASS:  cat_tests.py 2: cat a remote directory
+     [java] PASS:  cat_tests.py 3: cat a file at revision BASE
+     [java] PASS:  cat_tests.py 4: cat a nonexistant file
+     [java] PROCESSING commit_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
+     [java] PASS:  commit_tests.py 1: commit one file
+     [java] PASS:  commit_tests.py 2: commit one newly added file
+     [java] PASS:  commit_tests.py 3: commit one newly added binary file
+     [java] PASS:  commit_tests.py 4: commit multiple targets
+     [java] PASS:  commit_tests.py 5: commit multiple targets, 2nd variation
+     [java] PASS:  commit_tests.py 6: commit wc_dir/A/D -- includes D. (anchor=A, tgt=D)
+     [java] PASS:  commit_tests.py 7: commit wc_dir -- (anchor=wc_dir, tgt={})
+     [java] PASS:  commit_tests.py 8: committing unversioned object produces error
+     [java] PASS:  commit_tests.py 9: replace two nested dirs, verify empty contents
+     [java] PASS:  commit_tests.py 10: hudson prob 1.0:  delete file, commit, update
+     [java] PASS:  commit_tests.py 11: hudson prob 1.1:  delete dir, commit, update
+     [java] PASS:  commit_tests.py 12: hudson prob 1.2:  delete, commit, re-add, commit
+     [java] PASS:  commit_tests.py 13: hudson prob 2.0:  prop commit on old dir fails
+     [java] PASS:  commit_tests.py 14: hudson prob 2.1:  move files, update empty dir
+     [java] PASS:  commit_tests.py 16: commit mixed-rev wc (no erroneous merge error)
+     [java] PASS:  commit_tests.py 17: commit files and dirs with URI-unsafe characters
+     [java] PASS:  commit_tests.py 18: commit deleted yet edited files
+     [java] PASS:  commit_tests.py 19: commit a file inside dir scheduled for addition
+     [java] PASS:  commit_tests.py 20: commit deleted (and missing) file
+     [java] PASS:  commit_tests.py 21: issue 644 attempt to add a file twice
+     [java] PASS:  commit_tests.py 22: commit from a dir with a longer name than the wc
+     [java] PASS:  commit_tests.py 23: try to commit when directory is locked
+     [java] PASS:  commit_tests.py 24: commit the current directory
+     [java] PASS:  commit_tests.py 25: attempted commit from multiple wc fails
+     [java] PASS:  commit_tests.py 26: commit named targets with -N (issues #1195, #1239)
+     [java] PASS:  commit_tests.py 27: commit with conflicts and check txn in repo
+     [java] PASS:  commit_tests.py 28: commit deletion of out-of-date file or dir
+     [java] PASS:  commit_tests.py 29: commit with a log message containing bad data
+     [java] PASS:  commit_tests.py 30: commit with invalid external editor cmd
+     [java] PASS:  commit_tests.py 31: commit with mods in schedule delete
+     [java] PASS:  commit_tests.py 32: tabs in paths
+     [java] PROCESSING copy_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]
+     [java] PASS:  copy_tests.py 1: basic copy and move commands -- on files only
+     [java] PASS:  copy_tests.py 2: test fix for 'svn mv unversioned_file some_dst'
+     [java] PASS:  copy_tests.py 3: receive a copied directory during update
+     [java] PASS:  copy_tests.py 4: resurrect a deleted directory
+     [java] PASS:  copy_tests.py 5: svn cp URL URL cannot overwrite destination
+     [java] PASS:  copy_tests.py 6: svn cp PATH PATH cannot overwrite destination
+     [java] PASS:  copy_tests.py 7: copy and tree and modify before commit
+     [java] PASS:  copy_tests.py 8: copy files with properties
+     [java] PASS:  copy_tests.py 9: copy a tree and delete part of it before commit
+     [java] PASS:  copy_tests.py 10: move and revert a directory
+     [java] PASS:  copy_tests.py 11: executable bit should be preserved when copying
+     [java] PASS:  copy_tests.py 12: working-copy to repository copy
+     [java] PASS:  copy_tests.py 13: repository to working-copy copy
+     [java] PASS:  copy_tests.py 14: copy item to root of repository
+     [java] PASS:  copy_tests.py 15: copy URL URL/subdir
+     [java] PASS:  copy_tests.py 16: copy WC URL/subdir
+     [java] PASS:  copy_tests.py 17: resurrect a deleted file
+     [java] PASS:  copy_tests.py 18: copy file from repos to working copy and run diff
+     [java] PASS:  copy_tests.py 19: repos->WC copy with keyword or eol property set
+     [java] PASS:  copy_tests.py 20: revision-kind keywords with non-URL source
+     [java] PASS:  copy_tests.py 21: copy over a missing file
+     [java] PASS:  copy_tests.py 22: copy a deleted directory back from the repos
+     [java] PASS:  copy_tests.py 23: check for double URI escaping in svn ls -R
+     [java] PASS:  copy_tests.py 24: wc to wc copy with deleted=true items
+     [java] PASS:  copy_tests.py 25: svn cp src-URL non-existent-URL-path
+     [java] PASS:  copy_tests.py 26: svn cp oldrev-of-deleted-URL URL
+     [java] PASS:  copy_tests.py 27: test URL to URL copying edge case
+     [java] PASS:  copy_tests.py 28: copy wc dir to itself
+     [java] PROCESSING diff_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26]
+     [java] PASS:  diff_tests.py 1: update a file
+     [java] PASS:  diff_tests.py 2: add a file
+     [java] PASS:  diff_tests.py 3: add a file in an added directory
+     [java] PASS:  diff_tests.py 4: replace a file with a file
+     [java] PASS:  diff_tests.py 5: multiple revisions diff'd forwards and backwards
+     [java] PASS:  diff_tests.py 6: non-recursive behaviour
+     [java] PASS:  diff_tests.py 7: diff only part of the repository
+     [java] PASS:  diff_tests.py 8: non version controlled files
+     [java] PASS:  diff_tests.py 9: pure repository diff update a file
+     [java] PASS:  diff_tests.py 10: diff when property was changed but text was not
+     [java] PASS:  diff_tests.py 11: don't diff file marked as binary type
+     [java] PASS:  diff_tests.py 12: svn diff errors against a non-existant URL
+     [java] PASS:  diff_tests.py 13: diff against the head of a moved file
+     [java] PASS:  diff_tests.py 14: diff text-bases against repository
+     [java] PASS:  diff_tests.py 15: repos-repos diff on item deleted from HEAD
+     [java] PASS:  diff_tests.py 16: select diff targets
+     [java] PASS:  diff_tests.py 17: diff for branches
+     [java] PASS:  diff_tests.py 18: diff between repos URLs and WC paths
+     [java] PASS:  diff_tests.py 19: diff between two file URLs (issue #1311)
+     [java] PASS:  diff_tests.py 21: check for omitted prefix in path component
+     [java] PASS:  diff_tests.py 22: diff a file that has been renamed
+     [java] PASS:  diff_tests.py 23: diff a file within a renamed directory
+     [java] PASS:  diff_tests.py 24: diff a prop change on a dir named explicitly
+     [java] PASS:  diff_tests.py 25: ensure that diff won't show keywords
+     [java] PASS:  diff_tests.py 26: show diffs for binary files with --force
+     [java] PROCESSING export_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+     [java] PASS:  export_tests.py 1: export an empty directory
+     [java] PASS:  export_tests.py 2: export the greek tree
+     [java] PASS:  export_tests.py 3: export working copy
+     [java] PASS:  export_tests.py 4: export working copy with mods
+     [java] PASS:  export_tests.py 5: export over existing dir
+     [java] PASS:  export_tests.py 6: export with keyword translation
+     [java] PASS:  export_tests.py 7: export with eol translation
+     [java] PASS:  export_tests.py 8: export working copy with keyword translation
+     [java] PASS:  export_tests.py 9: export working copy with property mods
+     [java] PASS:  export_tests.py 10: export working copy at base revision
+     [java] PASS:  export_tests.py 11: export with --native-eol
+     [java] PASS:  export_tests.py 12: export nonexistant file
+     [java] PASS:  export_tests.py 13: export unversioned file
+     [java] PROCESSING externals_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9]
+     [java] PASS:  externals_tests.py 1: test checkouts with externals
+     [java] PASS:  externals_tests.py 2: update to receive a new external module
+     [java] PASS:  externals_tests.py 3: update to lose an external module
+     [java] PASS:  externals_tests.py 4: update change to an unmodified external module
+     [java] PASS:  externals_tests.py 5: update changes to a modified external module
+     [java] PASS:  externals_tests.py 6: update changes under an external module
+     [java] PASS:  externals_tests.py 7: commit and update additional externals
+     [java] PASS:  externals_tests.py 8: error if external target dir involves '.' or '..'
+     [java] PASS:  externals_tests.py 9: test exports with externals
+     [java] PROCESSING history_tests.py [1]
+     [java] PASS:  history_tests.py 1: verify that 'svn cat' traces renames
+     [java] PROCESSING import_tests.py [1, 2, 3]
+     [java] PASS:  import_tests.py 1: import of executable files
+     [java] PASS:  import_tests.py 2: do not import ignored files in imported dirs
+     [java] PASS:  import_tests.py 3: avoid creating empty revisions with import
+     [java] PROCESSING lock_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+     [java] PASS:  lock_tests.py 1: lock a file and verify that it's locked
+     [java] PASS:  lock_tests.py 2: commit a file and keep lock
+     [java] PASS:  lock_tests.py 3: commit a file and release lock
+     [java] PASS:  lock_tests.py 4: commit a locked file with a prop change
+     [java] PASS:  lock_tests.py 5: lock a file and verify lock breaking behavior
+     [java] PASS:  lock_tests.py 6: lock a file and verify lock stealing behavior
+     [java] PASS:  lock_tests.py 7: examine the fields of a lockfile for correctness
+     [java] PASS:  lock_tests.py 8: verify behavior when a lock in a wc is defunct
+     [java] PASS:  lock_tests.py 9: verify svn:needs-lock read-only behavior
+     [java] PASS:  lock_tests.py 10: verify svn:needs-lock behavior with defunct lock
+     [java] PASS:  lock_tests.py 11: verify lock removal on a deleted path
+     [java] PASS:  lock_tests.py 12: lock and unlock some files
+     [java] PASS:  lock_tests.py 13: verify removal of a directory with locks inside
+     [java] PASS:  lock_tests.py 14: verify status of lock in working copy
+     [java] PASS:  lock_tests.py 15: verify status of stolen lock
+     [java] PASS:  lock_tests.py 16: verify status of broken lock
+     [java] PASS:  lock_tests.py 17: lock an out-of-date file and ensure failure
+     [java] PASS:  lock_tests.py 18: update handles svn:needs-lock correctly
+     [java] PASS:  lock_tests.py 19: verify svn:needs-lock behavior with revert
+     [java] PASS:  lock_tests.py 20: examine the fields of a lock from a URL
+     [java] PASS:  lock_tests.py 21: lock/unlock several files in one go
+     [java] FAIL:  lock_tests.py 22: svn:needs-lock and svn:executable, part I
+     [java] FAIL:  lock_tests.py 23: svn:needs-lock and svn:executable, part II
+     [java] PASS:  lock_tests.py 24: lock/unlock switched files
+     [java] PASS:  lock_tests.py 25: lock and unlock a file with an URI-unsafe name
+     [java] PASS:  lock_tests.py 26: commit file with xml-unsafe name and release lock
+     [java] PROCESSING log_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9]
+     [java] PASS:  log_tests.py 1: 'svn log', no args, top of wc
+     [java] FAIL:  log_tests.py 2: 'svn commit -F foo' when foo is a versioned file
+     [java] PASS:  log_tests.py 3: 'svn log' on an empty repository
+     [java] PASS:  log_tests.py 4: 'svn log -rN some_dir_unchanged_in_N'
+     [java] PASS:  log_tests.py 5: 'svn log -v -r 1:0 wc_root'
+     [java] PASS:  log_tests.py 6: 'svn log', with args, top of wc
+     [java] PASS:  log_tests.py 7: 'svn log -r N URL' when URL is not in HEAD 
+     [java] PASS:  log_tests.py 8: 'svn log TGT' with copyfrom history
+     [java] PASS:  log_tests.py 9: mod_dav_svn must escape invalid XML control chars
+     [java] PROCESSING merge_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+     [java] PASS:  merge_tests.py 1: performing a merge, with mixed results
+     [java] PASS:  merge_tests.py 2: merge and add new files/dirs with history
+     [java] PASS:  merge_tests.py 3: merge that deletes items
+     [java] PASS:  merge_tests.py 4: some simple property merges
+     [java] PASS:  merge_tests.py 5: merging a file with no explicit target path
+     [java] PASS:  merge_tests.py 6: merge should not die if a target file is absent
+     [java] PASS:  merge_tests.py 7: merge on deleted directory in target
+     [java] PASS:  merge_tests.py 8: merging similar trees ancestrally unrelated
+     [java] PASS:  merge_tests.py 9: merge operations using PREV revision
+     [java] PASS:  merge_tests.py 10: merge change into unchanged binary file
+     [java] PASS:  merge_tests.py 11: merge one file (issue #1150)
+     [java] PASS:  merge_tests.py 12: diff after merge that creates a new file
+     [java] PASS:  merge_tests.py 13: merge should skip over unversioned obstructions
+     [java] PASS:  merge_tests.py 14: merge into missing must not break working copy
+     [java] PASS:  merge_tests.py 15: merge --dry-run adding a new file with props
+     [java] PASS:  merge_tests.py 16: merge binary files with common ancestry
+     [java] PASS:  merge_tests.py 17: merge with funny characters (issue #1905)
+     [java] PASS:  merge_tests.py 18: merge changes to keyword expansion property
+     [java] PASS:  merge_tests.py 19: merge prop change into deleted target
+     [java] PASS:  merge_tests.py 20: merge a file whose name contains a space
+     [java] PASS:  merge_tests.py 21: merge between branches (Issue #2222)
+     [java] PROCESSING prop_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+     [java] PASS:  prop_tests.py 1: write/read props in wc only (ps, pl, pdel)
+     [java] PASS:  prop_tests.py 2: commit properties
+     [java] PASS:  prop_tests.py 3: receive properties via update
+     [java] PASS:  prop_tests.py 4: receive property changes as part of a downdate
+     [java] PASS:  prop_tests.py 5: commit the removal of props
+     [java] PASS:  prop_tests.py 6: update with conflicting props
+     [java] PASS:  prop_tests.py 7: props work when committing a replacement
+     [java] PASS:  prop_tests.py 8: props work when reverting a replacement
+     [java] PASS:  prop_tests.py 9: try to set inappropriate props
+     [java] PASS:  prop_tests.py 10: file copies inherit (not re-derive) special props
+     [java] PASS:  prop_tests.py 11: set, get, and delete a revprop change
+     [java] PASS:  prop_tests.py 12: some svn: properties should be converted
+     [java] PASS:  prop_tests.py 13: test binary property support
+     [java] PASS:  prop_tests.py 14: recursive property operations in BASE and WC
+     [java] PASS:  prop_tests.py 15: property operations on an URL
+     [java] PROCESSING revert_tests.py [3]
+     [java] PASS:  revert_tests.py 3: revert a replaced file with no properties
+     [java] PROCESSING schedule_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 19, 20, 21, 22, 23, 24]
+     [java] PASS:  schedule_tests.py 1: schedule: add some files
+     [java] PASS:  schedule_tests.py 2: schedule: add some directories
+     [java] PASS:  schedule_tests.py 3: schedule: add some nested files and directories
+     [java] PASS:  schedule_tests.py 4: schedule: add some executable files
+     [java] PASS:  schedule_tests.py 5: schedule: delete some files
+     [java] PASS:  schedule_tests.py 6: schedule: delete some directories
+     [java] PASS:  schedule_tests.py 7: revert: add some files
+     [java] PASS:  schedule_tests.py 8: revert: add some directories
+     [java] PASS:  schedule_tests.py 9: revert: add some nested files and directories
+     [java] PASS:  schedule_tests.py 10: revert: add some executable files
+     [java] PASS:  schedule_tests.py 11: revert: delete some files
+     [java] PASS:  schedule_tests.py 12: revert: delete some directories
+     [java] PASS:  schedule_tests.py 19: unschedule addition on missing items
+     [java] PASS:  schedule_tests.py 20: schedule and commit deletion on missing items
+     [java] PASS:  schedule_tests.py 21: revert inside a newly added dir
+     [java] PASS:  schedule_tests.py 22: status after add of deleted directory
+     [java] PASS:  schedule_tests.py 23: 'svn add' should traverse already-versioned dirs
+     [java] PASS:  schedule_tests.py 24: 'svn mkdir' should clean up after itself on error
+     [java] PROCESSING special_tests.py [1, 2, 3, 4, 5, 6]
+     [java] PASS:  special_tests.py 1: general symlink handling
+     [java] PASS:  special_tests.py 2: replace a normal file with a special file
+     [java] PASS:  special_tests.py 3: import and export a symlink
+     [java] PASS:  special_tests.py 4: 'svn cp dir1 dir2' which contains a symlink
+     [java] PASS:  special_tests.py 5: replace a special file with a non-special file
+     [java] PASS:  special_tests.py 6: remove a symlink
+     [java] PROCESSING stat_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+     [java] PASS:  stat_tests.py 1: status on unversioned file in current directory
+     [java] PASS:  stat_tests.py 2: run 'status -u' when nested additions are pending
+     [java] PASS:  stat_tests.py 3: status -vN shows all items in current directory
+     [java] PASS:  stat_tests.py 4: status with a versioned file missing
+     [java] PASS:  stat_tests.py 5: status on versioned items whose type has changed
+     [java] PASS:  stat_tests.py 6: status on versioned items replaced by symlinks
+     [java] PASS:  stat_tests.py 7: status -u with new files in the repository
+     [java] PASS:  stat_tests.py 8: status for unignored file and directory
+     [java] PASS:  stat_tests.py 9: status on missing and unversioned file
+     [java] PASS:  stat_tests.py 10: status -u indicates out-of-dateness
+     [java] PASS:  stat_tests.py 11: status -u on outdated, added file shows only that
+     [java] PASS:  stat_tests.py 12: status -u on working copy deleted in HEAD
+     [java] PASS:  stat_tests.py 13: timestamp behaviour
+     [java] PASS:  stat_tests.py 14: status on '..' where '..' is not versioned
+     [java] PASS:  stat_tests.py 15: status -u in partially non-recursive wc
+     [java] PASS:  stat_tests.py 16: a missing dir in the anchor
+     [java] PROCESSING switch_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14]
+     [java] PASS:  switch_tests.py 1: test some basic switching operations
+     [java] PASS:  switch_tests.py 2: commits after some basic switching operations
+     [java] PASS:  switch_tests.py 3: update wc that contains switched things
+     [java] PASS:  switch_tests.py 4: reverse update wc that contains switched things
+     [java] PASS:  switch_tests.py 5: update switched wc things to HEAD
+     [java] PASS:  switch_tests.py 6: reverse update switched wc things to an older rev
+     [java] PASS:  switch_tests.py 7: show logs for a switched file
+     [java] PASS:  switch_tests.py 8: relocate with deleted, missing and copied entries
+     [java] PASS:  switch_tests.py 9: switch that deletes a sub-directory
+     [java] PASS:  switch_tests.py 11: non-recursive switch
+     [java] PASS:  switch_tests.py 12: anchor=target that fails due to local mods
+     [java] PASS:  switch_tests.py 13: bad intermediate urls in use
+     [java] PASS:  switch_tests.py 14: obstructed switch
+     [java] PROCESSING trans_tests.py [1, 5, 6, 7, 8, 9, 10, 11]
+     [java] PASS:  trans_tests.py 1: commit new files with keywords active from birth
+     [java] PASS:  trans_tests.py 5: update modified file with eol-style 'native'
+     [java] PASS:  trans_tests.py 6: committing eol-style change forces text send
+     [java] PASS:  trans_tests.py 7: keyword expansion for lone file in directory
+     [java] PASS:  trans_tests.py 8: keyword expanded on cat
+     [java] PASS:  trans_tests.py 9: copy, propset svn:eol-style, commit
+     [java] PASS:  trans_tests.py 10: propset, commit, check out into another wc
+     [java] PASS:  trans_tests.py 11: propset, revert
+     [java] PROCESSING update_tests.py [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+     [java] PASS:  update_tests.py 1: update a locally-modified binary file
+     [java] PASS:  update_tests.py 2: update to an old revision of a binary files
+     [java] PASS:  update_tests.py 3: update should not munge adds or replaces
+     [java] PASS:  update_tests.py 4: update to revision 0
+     [java] PASS:  update_tests.py 5: overlapping identical changes should not conflict
+     [java] PASS:  update_tests.py 6: delete files and update to resolve text conflicts
+     [java] PASS:  update_tests.py 7: update that deletes modified files
+     [java] PASS:  update_tests.py 8: update after add/rm of deleted state
+     [java] PASS:  update_tests.py 9: update missing items (by name) in working copy
+     [java] PASS:  update_tests.py 10: update that replaces a directory
+     [java] PASS:  update_tests.py 11: update with explicit file target
+     [java] PASS:  update_tests.py 12: receive prop update to file scheduled for deletion
+     [java] PASS:  update_tests.py 13: bail when receive a file or dir named .svn
+     [java] PASS:  update_tests.py 14: update missing dir to rev in which it is absent
+     [java] PASS:  update_tests.py 15: another "hudson" problem: updates that delete
+     [java] PASS:  update_tests.py 16: explicit update of deleted=true targets
+     [java] PASS:  update_tests.py 17: receive new dir with spaces in its name
+     [java] PASS:  update_tests.py 18: non-recursive update
+     [java] PASS:  update_tests.py 19: check out an empty dir
+     [java] PASS:  update_tests.py 20: update target till it's gone, then get it back
+     [java] PASS:  update_tests.py 21: update child before parent of a deleted tree
+     [java] PASS:  update_tests.py 22: update a schedule-add directory
+     [java] PASS:  update_tests.py 23: update target that was added in a future rev
+     [java] PASS:  update_tests.py 24: update a nested wc in a read-only wc
+     [java] PASS:  update_tests.py 25: obstructed update alters WC properties
+     [java] PASS:  update_tests.py 26: update dir with xml-unsafe name

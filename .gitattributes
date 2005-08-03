@@ -78,6 +78,7 @@ javasvn/src/org/tmatesoft/svn/core/wc/ISVNMergerFactory.java -text
 javasvn/src/org/tmatesoft/svn/util/ISVNDebugLogger.java -text
 javasvn/src/org/tmatesoft/svn/util/SVNDebugLog.java -text
 /plugin.xml -text
+/tests.log -text
 www/.htaccess eol=lf
 www/ant.html -text
 www/article1.html -text
