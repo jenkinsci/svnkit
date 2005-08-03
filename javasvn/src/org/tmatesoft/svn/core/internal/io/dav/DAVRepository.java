@@ -250,7 +250,7 @@ class DAVRepository extends SVNRepository {
         bcPath = SVNEncodingUtil.uriEncode(bcPath);
 		try {
             openConnection();
-            path = getRepositoryPath(path);
+            path = "".equals(path) ? "" : getRepositoryPath(path);
             DAVFileRevisionHandler davHandler = new DAVFileRevisionHandler(handler);
             StringBuffer request = DAVFileRevisionHandler.generateFileRevisionsRequest(null, startRevision, endRevision, path);
 			long revision = -1;
