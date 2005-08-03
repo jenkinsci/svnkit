@@ -215,8 +215,8 @@ library invokes <code>ISVNEditor</code> methods):
      editor.openFile(<span class="javaString">"/dirA/file1.txt"</span>, revision);
  		
      <span class="javaCommentSingle">//changing properties of "file1.txt"</span>
-     editor.changeFileProperty(<span class="javaKeyword">null</span>, propertyName1, propertyValue1);
-     editor.changeFileProperty(<span class="javaKeyword">null</span>, propertyName2, propertyValue2);
+     editor.changeFileProperty(<span class="javaString">"/dirA/file1.txt"</span>, propertyName1, propertyValue1);
+     editor.changeFileProperty(<span class="javaString">"/dirA/file1.txt"</span>, propertyName2, propertyValue2);
      
      .....................................
 
@@ -232,7 +232,7 @@ library invokes <code>ISVNEditor</code> methods):
       * correctly, if don't - may be the local file is
       * corrupted, that's an error.
       */</span>
-     editor.applyTextDelta(<span class="javaKeyword">null</span>, baseChecksum);
+     editor.applyTextDelta(<span class="javaString">"/dirA/file1.txt"</span>, baseChecksum);
 
      <span class="javaCommentMulti">/* well, if the previous step was ok, the next step is to receive 
       * the delta itself. ISVNEditor.textDeltaChunk(..) receives 
@@ -245,13 +245,13 @@ library invokes <code>ISVNEditor</code> methods):
       * ISVNEditor.textDeltaChunk(..) returns an OutputStream as a storage 
       * where delta is written).
       */</span>
-     OutputStream os = editor.textDeltaChunk(<span class="javaKeyword">null</span>, diffWindow);
+     OutputStream os = editor.textDeltaChunk(<span class="javaString">"/dirA/file1.txt"</span>, diffWindow);
  
      <span class="javaCommentMulti">/* the following is called when all the delta is received.
       * that is where it's applied to a local file; in this illustration
       * "file1.txt" is modified.
       */</span>
-     editor.textDeltaEnd(<span class="javaKeyword">null</span>);
+     editor.textDeltaEnd(<span class="javaString">"/dirA/file1.txt"</span>);
  		
      <span class="javaCommentMulti">/* the final point of the file modification: once again the server 
       * sends a checksum to control if the resultant file ("file1.txt") 
@@ -259,7 +259,7 @@ library invokes <code>ISVNEditor</code> methods):
       * comparing the got checksum with the own one evaluated upon the 
       * resultant file contents.
       */</span> 
-     editor.closeFile(textChecksum);
+     editor.closeFile(<span class="javaString">"/dirA/file1.txt"</span>, textChecksum);
 
      <span class="javaCommentSingle">//closes the directory  - "/dirA"</span>
      editor.closeDir();
@@ -326,8 +326,8 @@ illustrartion when the local copy already exists):
       * directory (for compatibility with the native SVN command 
       * line client).
       */</span>
-     editor.changeFileProperty(propertyName1, propertyValue1);
-     editor.changeFileProperty(propertyName2, propertyValue2);
+     editor.changeFileProperty(<span class="javaString">"/dirA/file1.txt"</span>, propertyName1, propertyValue1);
+     editor.changeFileProperty(<span class="javaString">"/dirA/file1.txt"</span>, propertyName2, propertyValue2);
      
      .....................................
 
@@ -336,18 +336,18 @@ illustrartion when the local copy already exists):
       * ISVNEditor.textDeltaChunk(..) is also invoked.
       * baseChecksum is irrelevant for a checkout.
       */</span>
-     editor.applyTextDelta(baseChecksum);
+     editor.applyTextDelta(<span class="javaString">"/dirA/file1.txt"</span>, baseChecksum);
 
      <span class="javaCommentSingle">//writing file contents (delta is contents in this case).</span>
-     OutputStream os1 = editor.textDeltaChunk(diffWindow1);
+     OutputStream os1 = editor.textDeltaChunk(<span class="javaString">"/dirA/file1.txt"</span>, diffWindow1);
 
      <span class="javaCommentSingle">//if "file1.txt" is too big...</span>
-     OutputStream os2 = editor.textDeltaChunk(diffWindow2);
+     OutputStream os2 = editor.textDeltaChunk(<span class="javaString">"/dirA/file1.txt"</span>, diffWindow2);
 
      .....................................
 
      <span class="javaCommentSingle">//all contents are received, "file1.txt" can be created</span>
-     editor.textDeltaEnd();
+     editor.textDeltaEnd(<span class="javaString">"/dirA/file1.txt"</span>);
 
      <span class="javaCommentMulti">/* the final point of the file modification: once again the 
       * server sends a checksum to control if the resultant file 
@@ -359,7 +359,7 @@ illustrartion when the local copy already exists):
       * stored in .svn directory (for compatibility with the 
       * native SVN command line client).
       */</span> 
-     editor.closeFile(textChecksum);
+     editor.closeFile(<span class="javaString">"/dirA/file1.txt"</span>, textChecksum);
 
      <span class="javaCommentMulti">/* again if you want to have a compatibility with the native 
       * SVN command line client each entry (wheteher it's a file 
