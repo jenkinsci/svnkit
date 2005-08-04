@@ -44,7 +44,7 @@ public class PythonTests {
     public static void main(String[] args) {
 		String fileName = args[0];
 		ourPropertiesFile = new File(fileName);
-        ourLoggers = new AbstractPythonTestLogger[0];
+        ourLoggers = new AbstractPythonTestLogger[] {new ConsoleLogger(), new XMLLogger()};
 
 		Properties properties = null;
 		String defaultTestSuite = null;
