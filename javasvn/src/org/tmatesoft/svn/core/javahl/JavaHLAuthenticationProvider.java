@@ -48,10 +48,16 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
         if (myPrompt instanceof PromptUserPassword3) {
             PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
             if(prompt3.prompt(realm, userName, authMayBeStored)){
+                if (ISVNAuthenticationManager.SSH.equals(kind)) {
+                    return new SVNSSHAuthentication(prompt3.getUsername(), prompt3.getPassword(), prompt3.userAllowedSave());
+                } 
                 return new SVNPasswordAuthentication(prompt3.getUsername(), prompt3.getPassword(), prompt3.userAllowedSave());
             }
         }else{
             if(myPrompt.prompt(realm, userName)){
+                if (ISVNAuthenticationManager.SSH.equals(kind)) {
+                    return new SVNSSHAuthentication(userName, myPrompt.getPassword(), true);
+                } 
                 return new SVNPasswordAuthentication(myPrompt.getUsername(), myPrompt.getPassword(), true);
             }
         }
