@@ -19,23 +19,29 @@ import java.util.Properties;
  * @author  TMate Software Ltd.
  */
 public class ConsoleLogger extends AbstractPythonTestLogger {
-
+    private String curSuite;
+    
     public void startTests(Properties configuration) {
     }
 
     public void startServer(String name, String url) {
+        System.out.println("Starting server: "+name+", url: "+url);
     }
 
     public void startSuite(String suiteName) {
+        curSuite = suiteName;
     }
 
     public void handleTest(PythonTestResult test) {
+        String testOut = (test.isPass() ? "PASSED: " : "FAILED: ") + curSuite + "_tests.py " + test.getID() + ": " + test.getName();
+        System.out.println(testOut);
     }
 
     public void endSuite(String suiteName) {
     }
 
     public void endServer(String name, String url) {
+        System.out.println("Stopping server: "+name+", url: "+url);
     }
 
     public void endTests(Properties configuration) {

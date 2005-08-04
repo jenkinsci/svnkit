@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.test;
 
 import java.util.Properties;
+import java.io.IOException;
 
 
 /**
@@ -20,7 +21,7 @@ import java.util.Properties;
  */
 public abstract class AbstractPythonTestLogger {
     
-    public abstract void startTests(Properties configuration);
+    public abstract void startTests(Properties configuration) throws IOException;
 
     public abstract void startServer(String name, String url);
     
@@ -32,5 +33,5 @@ public abstract class AbstractPythonTestLogger {
     
     public abstract void endServer(String name, String url);
     
-    public abstract void endTests(Properties configuration);
+    public abstract void endTests(Properties configuration) throws Throwable;
 }

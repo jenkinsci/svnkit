@@ -57,18 +57,23 @@ public class PythonTests {
 		}
         
         for (int i = 0; i < ourLoggers.length; i++) {
-            ourLoggers[i].startTests(properties);
+            try{
+                ourLoggers[i].startTests(properties);
+            }catch(IOException ioe){
+                ioe.getMessage();
+                ioe.printStackTrace();
+                System.exit(1);
+            }
         }
 
         String pythonTestsRoot = properties.getProperty("python.tests");
 		properties.setProperty("repository.root", new File(pythonTestsRoot).getAbsolutePath());
 		String url = "svn://localhost";
-		//S
 		if (Boolean.TRUE.toString().equals(properties.getProperty("python.svn"))) {
 			try {
 				startSVNServe(properties);
                 for (int i = 0; i < ourLoggers.length; i++) {
-                    ourLoggers[i].startServer("svnserver", url);
+                    ourLoggers[i].startServer("svnserve", url);
                 }
 				runPythonTests(properties, defaultTestSuite, url);
 			} catch (Throwable th) {
@@ -85,10 +90,10 @@ public class PythonTests {
 			url = "http://localhost:" + properties.getProperty("apache.port", "8082");
 			properties.setProperty("apache.conf", "apache/python.template.conf");
 			try {
-                for (int i = 0; i < ourLoggers.length; i++) {
+				startApache(properties);
+			    for (int i = 0; i < ourLoggers.length; i++) {
                     ourLoggers[i].startServer("apache", url);
                 }
-				startApache(properties);
 				runPythonTests(properties, defaultTestSuite, url);
 			} catch (Throwable th) {
 				th.printStackTrace();
@@ -104,7 +109,13 @@ public class PythonTests {
 			}
 		}
         for (int i = 0; i < ourLoggers.length; i++) {
-            ourLoggers[i].endTests(properties);
+            try{
+                ourLoggers[i].endTests(properties);
+            }catch(Throwable e){
+                e.getMessage();
+                e.printStackTrace();
+                System.exit(1);
+            }
         }
 	}
 
@@ -117,11 +128,12 @@ public class PythonTests {
 			final String testFileString = tests.nextToken();
 			List tokens = tokenizeTestFileString(testFileString);
 
-            for (int i = 0; i < ourLoggers.length; i++) {
-                ourLoggers[i].startSuite((String) tokens.get(0));
+            String suiteName = (String) tokens.get(0);
+			for (int i = 0; i < ourLoggers.length; i++) {
+                ourLoggers[i].startSuite(suiteName);
             }
 			
-			final String testFile = tokens.get(0) + "_tests.py";
+			final String testFile = suiteName + "_tests.py";
 			tokens = tokens.subList(1, tokens.size());
 
 			if (tokens.isEmpty()) {
@@ -139,7 +151,7 @@ public class PythonTests {
 				}
 			}
             for (int i = 0; i < ourLoggers.length; i++) {
-                ourLoggers[i].endSuite((String) tokens.get(0));
+                ourLoggers[i].endSuite(suiteName);
             }
 		}
 	}

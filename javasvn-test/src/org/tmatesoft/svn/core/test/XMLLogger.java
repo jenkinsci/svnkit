@@ -12,6 +12,22 @@
 package org.tmatesoft.svn.core.test;
 
 import java.util.Properties;
+import java.io.File;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.LinkedList;
+
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
 
 /**
@@ -19,26 +35,125 @@ import java.util.Properties;
  * @author  TMate Software Ltd.
  */
 public class XMLLogger extends AbstractPythonTestLogger {
+    private String myXMLResultsFile;
+    private PrintWriter myWriter;
+    private LinkedList myResults;
+    private String myXSLStylesheet;
+    private String myHTMLResultsFile;
 
-    public void startTests(Properties configuration) {
+    private Properties myConfiguration;
+    private String curSuite;
+    private int curSuitePassed;
+    private int curSuiteCount;
+
+    private Map mySuitesStat;
+    
+    public void startTests(Properties configuration) throws IOException {
+		myConfiguration = configuration; 
+
+		myXMLResultsFile = myConfiguration.getProperty("tests.xml.results", "results.xml"); 		
+		myHTMLResultsFile = myConfiguration.getProperty("tests.html.results", "results.html");
+		myXSLStylesheet = myConfiguration.getProperty("tests.xsl", "PythonTests.xsl");
+		File resultsFile = new File(myXMLResultsFile);
+		
+		if(!resultsFile.exists()){
+	        resultsFile.createNewFile();
+		}
+
+	    myWriter = new PrintWriter(new FileWriter(resultsFile));
+	    myResults = new LinkedList();
+	    mySuitesStat = new HashMap();
+	    
+	    String resultString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+	    myResults.addFirst(resultString);   
+	    resultString = "<PythonTests>";
+	    myResults.addFirst(resultString);   
     }
 
     public void startServer(String name, String url) {
+	    String resultString = "  <server name=\"" + name + "\" url=\"" + url + "\">";
+	    myResults.addFirst(resultString);   
     }
 
     public void startSuite(String suiteName) {
+	    String resultString = "suite" + suiteName;
+	    myResults.addFirst(resultString);
+	    curSuite = suiteName;
+	    curSuiteCount = 0;
+	    curSuitePassed = 0;
     }
 
     public void handleTest(PythonTestResult test) {
+        String name = test.getName();
+        int id = test.getID();
+        String result = test.isPass() ? "PASSED" : "FAILED";
+
+        String resultString = "      <test name=\""+ name + "\" id=\"" + id + "\" result=\"" + result + "\"></test>";
+	    myResults.addFirst(resultString);
+	    curSuiteCount++;
+	    if(test.isPass()){
+	        curSuitePassed++;
+	    }
+    
     }
 
     public void endSuite(String suiteName) {
+	    String resultString = "    </suite>";
+	    myResults.addFirst(resultString);
+	    SuiteStatistics suiteStat = new SuiteStatistics(curSuiteCount, curSuitePassed);
+	    
+	    mySuitesStat.put(curSuite, suiteStat);
     }
 
     public void endServer(String name, String url) {
+	    String resultString = "  </server>";
+	    myResults.addFirst(resultString);   
     }
 
-    public void endTests(Properties configuration) {
+    public void endTests(Properties configuration) throws Throwable {
+	    String resultString = "</PythonTests>";
+	    myResults.addFirst(resultString);
+	    String line = null;
+	    
+	    while(true){
+		    if(!myResults.isEmpty()){
+		        line = (String)myResults.removeLast();
+		    }else{
+		        break;
+		    }
+
+	        if(line.startsWith("suite")){
+	            String suiteName = line.substring("suite".length());
+	            SuiteStatistics stat = (SuiteStatistics)mySuitesStat.remove(suiteName);
+	            int failed = stat.suitesCount - stat.suitesPassed;
+	            line = "    <suite name=\"" + suiteName + "\" total=\"" + stat.suitesCount + "\" passed=\"" + stat.suitesPassed + "\" failed=\"" + failed + "\">";
+	        }
+	        myWriter.println(line);
+		    myWriter.flush();
+	    }
+	    
+
+	    TransformerFactory tFactory = TransformerFactory.newInstance();
+		try{
+		    Transformer transformer = tFactory.newTransformer(new StreamSource(myXSLStylesheet));
+			transformer.transform(new StreamSource(myXMLResultsFile), new StreamResult(new FileOutputStream(myHTMLResultsFile)));
+		}catch(TransformerConfigurationException tce){
+		    throw new Throwable("Can't create a transformer: "+tce.getMessage());
+		}catch(TransformerException te){
+	        throw new Throwable("Can't transform: "+te.getMessage());
+		}catch(FileNotFoundException fnfe){
+	        throw new Throwable("Can't find input xml file: "+fnfe.getMessage());
+		}
+	    
     }
 
+    private class SuiteStatistics{
+        public int suitesCount;
+        public int suitesPassed;
+
+        public SuiteStatistics(int total, int passed){
+            suitesCount = total;
+            suitesPassed = passed;
+        }
+    }
 }
