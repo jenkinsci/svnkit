@@ -13,12 +13,15 @@
 package org.tmatesoft.svn.core.test;
 
 import java.io.BufferedReader;
+import java.io.PrintWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -28,6 +31,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -38,8 +50,13 @@ public class PythonTests {
 
 	private static File ourPropertiesFile;
     private static Process ourSVNServer;
+    //S
+    private static File resultsFile;
+    private static boolean isCreated;
+    private static PrintWriter myWriter;
+    //\S
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
 		String fileName = args[0];
 		ourPropertiesFile = new File(fileName);
 
@@ -53,10 +70,42 @@ public class PythonTests {
 			System.exit(1);
 		}
 
+		//S
+		resultsFile = new File("results.xml");
+		if(!resultsFile.exists()){
+		    try{
+		        resultsFile.createNewFile();
+		    }catch(IOException ioe){
+		        System.err.println("Can't create an an output file '"+resultsFile.getName()+"' for results");
+		    }
+		}
 
+		try{
+		    myWriter = new PrintWriter(new FileWriter(resultsFile));
+		    isCreated = true;
+		}catch(IOException ioe){
+		    System.err.println("Can't create an an output file '"+resultsFile.getName()+"' for results");
+		}
+
+		if(isCreated){
+	        myWriter.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+	        myWriter.flush();
+	        myWriter.println("<PythonTests>");
+	        myWriter.flush();
+		}
+		//\S
+		
 		String pythonTestsRoot = properties.getProperty("python.tests");
 		properties.setProperty("repository.root", new File(pythonTestsRoot).getAbsolutePath());
 		String url = "svn://localhost";
+		//S
+		if(isCreated){
+	        myWriter.println("<tests url=\""+url+"\">");
+	        myWriter.flush();
+	        myWriter.println("<server name=\"svnserve\" flag=\""+properties.getProperty("python.svn")+"\">");
+	        myWriter.flush();
+		}
+		//\S
 		if (Boolean.TRUE.toString().equals(properties.getProperty("python.svn"))) {
 			try {
 				startSVNServe(properties);
@@ -67,6 +116,15 @@ public class PythonTests {
 				stopSVNServe();
 			}
 		}
+		//S
+		if(isCreated){
+	        myWriter.println("</server>");
+	        myWriter.flush();
+	        myWriter.println("<server name=\"apache\" flag=\""+properties.getProperty("python.http")+"\">");
+	        myWriter.flush();
+		}
+		//\S
+
 		if (Boolean.TRUE.toString().equals(properties.getProperty("python.http"))) {
 			url = "http://localhost:" + properties.getProperty("apache.port", "8082");
 			properties.setProperty("apache.conf", "apache/python.template.conf");
@@ -83,6 +141,29 @@ public class PythonTests {
 				}
 			}
 		}
+		//S
+		if(isCreated){
+	        myWriter.println("</server>");
+	        myWriter.flush();
+	        myWriter.println("</tests>");
+	        myWriter.flush();
+	        myWriter.println("</PythonTests>");
+	        myWriter.flush();
+			TransformerFactory tFactory = TransformerFactory.newInstance();
+			try{
+			    Transformer transformer = tFactory.newTransformer(new StreamSource("PythonTests.xsl"));
+				transformer.transform(new StreamSource("results.xml"), new StreamResult(new FileOutputStream("results.html")));
+			}catch(TransformerConfigurationException tce){
+		        System.err.println("Can't create a transformer:"+tce.getMessage());
+			}catch(TransformerException te){
+		        System.err.println("Can't transform:"+te.getMessage());
+			}catch(FileNotFoundException fnfe){
+		        System.err.println("Can't find input xml file:"+fnfe.getMessage());
+			}
+
+		}
+		
+		//\S
 	}
 
 	private static void runPythonTests(Properties properties, String defaultTestSuite, String url) throws IOException {
@@ -94,6 +175,13 @@ public class PythonTests {
 			final String testFileString = tests.nextToken();
 			List tokens = tokenizeTestFileString(testFileString);
 
+			//S
+			if(isCreated){
+		        myWriter.println("<suite name=\"" + tokens.get(0) + "\">");
+		        myWriter.flush();
+			}
+			//\S
+			
 			final String testFile = tokens.get(0) + "_tests.py";
 			tokens = tokens.subList(1, tokens.size());
 
@@ -102,7 +190,7 @@ public class PythonTests {
 				processTestCase(pythonLauncher, testFile, options, "", url);
 			}
 			else {
-				final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
+			    final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
 				final List testCases = combineTestCases(tokens, availabledTestCases);
 
 				System.out.println("PROCESSING " + testFile + " " + testCases);
@@ -111,6 +199,12 @@ public class PythonTests {
 					processTestCase(pythonLauncher, testFile, options, String.valueOf(testCase), url);
 				}
 			}
+			//S
+			if(isCreated){
+		        myWriter.println("</suite>");
+		        myWriter.flush();
+			}
+			//\S
 		}
 	}
 
@@ -265,7 +359,12 @@ public class PythonTests {
 		}
 
 		public void run() {
-			try {
+			//S
+		    String regexp = "([PASFIL]{4})(.*\\.py)[\u0020]*(\\d+)[:\u0020]+(.+)";
+            Pattern pattern = Pattern.compile(regexp, Pattern.DOTALL);
+		    //\S
+		    
+		    try {
 				String line;
 				while ((line = myInputStream.readLine()) != null) {
 					SVNDebugLog.logInfo(line);
@@ -278,6 +377,21 @@ public class PythonTests {
 
 					if (line != null && (line.startsWith("PASS: ") || line.startsWith("FAIL: "))) {
 						System.out.println(line);
+						if(isCreated){
+							Matcher matcher = pattern.matcher(line);
+		                    if(matcher.find()){
+		                        String name = matcher.group(4);
+		                        name = name.replaceAll("\"", "'");
+		                        String id = matcher.group(3);
+		                        String result = matcher.group(1);
+/*								System.out.println(name);
+								System.out.println(id);
+								System.out.println(result);
+*/
+		                        myWriter.println("<test name=\""+ name + "\" id=\"" + id + "\" result=\"" + result + "\"></test>");
+		                	    myWriter.flush();
+		                    }
+			            }
 					}
 				}
 			}
