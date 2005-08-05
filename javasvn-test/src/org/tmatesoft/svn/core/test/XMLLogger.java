@@ -21,6 +21,11 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import java.util.Calendar;
 
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
@@ -45,6 +50,8 @@ public class XMLLogger extends AbstractPythonTestLogger {
     private String curSuite;
     private int curSuitePassed;
     private int curSuiteCount;
+    private long startTimeMillis;
+    private long endTimeMillis;
 
     private Map mySuitesStat;
     
@@ -52,7 +59,7 @@ public class XMLLogger extends AbstractPythonTestLogger {
 		myConfiguration = configuration; 
 
 		myXMLResultsFile = myConfiguration.getProperty("tests.xml.results", "results.xml"); 		
-		myHTMLResultsFile = myConfiguration.getProperty("tests.html.results", "results.html");
+		myHTMLResultsFile = myConfiguration.getProperty("tests.html.results", "../www/download/results.html");
 		myXSLStylesheet = myConfiguration.getProperty("tests.xsl", "PythonTests.xsl");
 		File resultsFile = new File(myXMLResultsFile);
 		
@@ -66,7 +73,9 @@ public class XMLLogger extends AbstractPythonTestLogger {
 	    
 	    String resultString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 	    myResults.addFirst(resultString);   
-	    resultString = "<PythonTests>";
+	    
+	    startTimeMillis = Calendar.getInstance().getTimeInMillis();
+	    resultString = "PythonTests";
 	    myResults.addFirst(resultString);   
     }
 
@@ -113,16 +122,35 @@ public class XMLLogger extends AbstractPythonTestLogger {
     public void endTests(Properties configuration) throws Throwable {
 	    String resultString = "</PythonTests>";
 	    myResults.addFirst(resultString);
-	    String line = null;
 	    
+	    endTimeMillis = Calendar.getInstance().getTimeInMillis();
+	    
+	    String line = null;
 	    while(true){
 		    if(!myResults.isEmpty()){
 		        line = (String)myResults.removeLast();
 		    }else{
 		        break;
 		    }
-
-	        if(line.startsWith("suite")){
+		    if(line.startsWith("PythonTests")){
+			    DateFormat simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd  'at' HH:mm:ss z"); 
+		        long elapsed = endTimeMillis - startTimeMillis;
+			    int hours = (int)elapsed/3600000;
+			    int minutes = (int)(elapsed - hours*3600000)/60000;
+			    int seconds = (int)(elapsed - hours*3600000 - minutes*60000)/1000;
+			    String elapsedTimeString = null;
+			    if(hours == 0 && minutes == 0){
+			        elapsedTimeString = seconds + " seconds";
+			    }else if(hours == 0){
+			        elapsedTimeString = minutes + " minutes " + seconds + " seconds";
+			    }else{
+			        elapsedTimeString = hours + " hours " + minutes + " minutes " + seconds + " seconds";
+			    }
+			    
+			    line = "<PythonTests start=\"" + simpleDateFormat.format(new Date(startTimeMillis)) + "\" elapsed=\"" + elapsedTimeString + "\">";
+		    }
+		    
+		    if(line.startsWith("suite")){
 	            String suiteName = line.substring("suite".length());
 	            SuiteStatistics stat = (SuiteStatistics)mySuitesStat.remove(suiteName);
 	            int failed = stat.suitesCount - stat.suitesPassed;
