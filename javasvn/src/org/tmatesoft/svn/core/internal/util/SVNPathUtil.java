@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.util;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,6 +25,25 @@ import java.util.StringTokenizer;
  * @author  TMate Software Ltd.
  */
 public class SVNPathUtil {
+    
+    public static final Comparator PATH_COMPARATOR = new Comparator() {
+
+        public int compare(Object o1, Object o2) {
+            if (o1 == o2) {
+                return 0;
+            } else if (o1 == null) {
+                return -1;
+            } else if (o2 == null) {
+                return 1;
+            } else if (o1.getClass() != String.class || o2.getClass() != String.class) {
+                return o1.getClass() == o2.getClass() ? 0 : o1.getClass() == String.class ? 1 : -1;
+            }
+            String p1 = (String) o1;
+            String p2 = (String) o2;
+            return p1.replace('/', '\0').compareTo(p2.replace('/', '\0'));
+        }
+        
+    };
     
     public static String append(String f, String s) {
         f = f == null ? "" : f;
