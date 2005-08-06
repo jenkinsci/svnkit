@@ -348,7 +348,7 @@ public class JavaHLObjectFactory {
         } else if (SVNProperty.SCHEDULE_DELETE.equals(info.getSchedule())) {
             schedule = ScheduleKind.delete;
         }
-        long copyRev = info.getCopyFromRevision().getNumber();
+        long copyRev = info.getCopyFromRevision() != null ? info.getCopyFromRevision().getNumber() : -1;
         String copyUrl = info.getCopyFromURL() != null ? info.getCopyFromURL().toString() : null;
 
         String path = info.getFile() != null ? info.getFile().getAbsolutePath() : info.getPath();
