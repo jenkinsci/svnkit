@@ -301,7 +301,7 @@ public class DAVConnection {
             value = value.trim();
             header.put("X-SVN-Options", value);
         }
-        return myHttpConnection.request("MERGE", myLocation.getPath(), header, request, handler, null);
+        return myHttpConnection.request("MERGE", myLocation.getURIEncodedPath(), header, request, handler, null);
     }
     
     public DAVStatus doCheckout(String activityPath, String repositoryPath, String path) throws SVNException {
