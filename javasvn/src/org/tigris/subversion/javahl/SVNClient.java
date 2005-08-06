@@ -46,7 +46,7 @@ public class SVNClient implements SVNClientInterface {
     }
 
     public void password(String password) {
-        myDelegate.username(password);
+        myDelegate.password(password);
     }
 
     public void setPrompt(PromptUserPassword prompt) {
