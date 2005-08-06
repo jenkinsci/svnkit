@@ -313,7 +313,7 @@ public class JavaHLObjectFactory {
         boolean absent = !deleted && !file.exists();
         boolean incomplete = false;
 
-        long copyRev = info.getCopyFromRevision().getNumber();
+        long copyRev = info.getCommittedRevision() != null ? info.getCopyFromRevision().getNumber(): - 1;
         String copyUrl = info.getCopyFromURL() != null ? info.getCopyFromURL().toString() : null;
 
         String path = info.getFile() != null ? info.getFile().getName() : SVNPathUtil.tail(info.getPath());
@@ -328,8 +328,8 @@ public class JavaHLObjectFactory {
                 schedule,
                 getNodeKind(info.getKind()),
                 info.getAuthor(),
-                info.getRevision().getNumber(),
-                info.getCommittedRevision().getNumber(),
+                info.getRevision() != null ? info.getRevision().getNumber() : -1,
+                info.getCommittedRevision() != null ? info.getCommittedRevision().getNumber() : - 1,
                 info.getCommittedDate(),
                 info.getTextTime(),
                 info.getPropTime(),
@@ -358,11 +358,11 @@ public class JavaHLObjectFactory {
         return new Info2(
                 path,
                 info.getURL() != null ? info.getURL().toString() : null,
-                info.getRevision().getNumber(),
+                info.getRevision() != null ? info.getRevision().getNumber() : -1,
                 getNodeKind(info.getKind()),
                 info.getRepositoryRootURL() != null ? info.getRepositoryRootURL().toString() : null,
                 info.getRepositoryUUID(),
-                info.getCommittedRevision().getNumber(),
+                info.getCommittedRevision() != null ? info.getCommittedRevision().getNumber() : - 1,
                 info.getCommittedDate() != null ? info.getCommittedDate().getTime() : 0,
                 info.getAuthor(),
                 createLock(info.getLock()),
