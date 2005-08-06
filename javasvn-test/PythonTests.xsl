@@ -15,7 +15,7 @@
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development" />   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software" />
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<link rel="stylesheet" type="text/css" media="screen" href="../www/home0000.css"></link>
+<link rel="stylesheet" type="text/css" media="screen" href="../css/home.css"></link>
 </head>
 <body>
 <table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;"  border="0" cellspacing="0" >
@@ -33,11 +33,14 @@
 <div style="padding-bottom: 10px; border-bottom: 1px solid #ccc;">
 <span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&#160;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
 </div>
+<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: Python Tests</small>
 </p>
 
-<h4>Results for Python Tests</h4>
+<xsl:text>Python tests started on&#160;</xsl:text><xsl:value-of select="@start" />
 
-	<xsl:apply-templates select="tests" />
+	<xsl:apply-templates select="server" />
+
+<xsl:text>Total time elapsed:&#160;</xsl:text><xsl:value-of select="@elapsed" />
 	
 <br />
 <table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &#169; 
@@ -57,33 +60,15 @@
 
 
 
-<xsl:template match="tests">
-
-<xsl:text>Repository URL which was used by PythonTests as a test repository location:&#160;</xsl:text>
-<code>
-<xsl:value-of select="@url" />
-</code>
-<br />
-<xsl:text>Here're the results themselves:</xsl:text>
-<br />
-
-	<xsl:apply-templates select="server"/>
-
-</xsl:template>
-
-
-
 
 <xsl:template match="server">
 
 <h4>
 <xsl:value-of select="@name" />
+<xsl:text>[</xsl:text>
+<xsl:value-of select="@url" />
+<xsl:text>]</xsl:text>
 </h4>
-<p>
-<xsl:text>Start Flag:&#160;"</xsl:text>
-<xsl:value-of select="@flag" />
-<xsl:text>"</xsl:text>
-</p>
 <p>
 	<xsl:apply-templates select="suite"/>
 </p>
@@ -93,7 +78,7 @@
 
 
 <xsl:template match="suite">
-<p>
+
 <xsl:text>Suite Name:&#160;</xsl:text>
 <b>	
 	<xsl:value-of select="@name" />
@@ -106,31 +91,36 @@
 </tr>	
 	<xsl:apply-templates select="test"/>
 </table>
-</p>
+<xsl:text>Total:&#160;</xsl:text><xsl:value-of select="@total" />
+<xsl:text>, Passed:&#160;</xsl:text><xsl:value-of select="@passed" />
+<xsl:text>, Failed:&#160;</xsl:text><xsl:value-of select="@failed" />
+<br />
+
+
 </xsl:template>
 
 
 <xsl:template match="test">
 
 <tr bgcolor="white">
-<td>
+<td width="85%">
 
 <xsl:value-of select="@name" />
 </td>
 
-<td>
+<td width="6%">
 <xsl:value-of select="@id" />
 </td>
 
 <xsl:choose>
 
-<xsl:when test="@result='PASS'">
-<td bgcolor="#99FFAD">
+<xsl:when test="@result='PASSED'">
+<td bgcolor="#99FFAD" width="9%">
 <xsl:value-of select="@result" />
 </td>
 </xsl:when>
 <xsl:otherwise>
-<td bgcolor="#FF9980">
+<td bgcolor="#FF9980" width="9%">
 <xsl:value-of select="@result" />
 </td>
 </xsl:otherwise>
