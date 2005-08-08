@@ -117,9 +117,13 @@ public class JavaHLObjectFactory {
             nodeKind = NodeKind.unknown;
         }
         long revision = status.getRevision().getNumber();
-        long lastChangedRevision = 0;
+        long lastChangedRevision = -1;
         if(status.getCommittedRevision() != null){
             lastChangedRevision = status.getCommittedRevision().getNumber();
+        }
+        if (status.getRemoteRevision() != null && 
+                status.getRemoteRevision() != SVNRevision.UNDEFINED) {
+            lastChangedRevision = status.getRemoteRevision().getNumber();
         }
         Date d = status.getCommittedDate();
         long lastChangedDate = -1;

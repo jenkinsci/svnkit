@@ -47,6 +47,7 @@ public class SVNStatus {
     private SVNLock myRemoteLock;
     private SVNLock myLocalLock;
     private Map myEntryProperties;
+    private SVNRevision myRepositoryRevision;
 
     public SVNStatus(SVNURL url, File file, SVNNodeKind kind,
             SVNRevision revision, SVNRevision committedRevision,
@@ -179,28 +180,35 @@ public class SVNStatus {
     public Map getEntryProperties() {
         return myEntryProperties;
     }
+    
+    public SVNRevision getRemoteRevision() {
+        return myRepositoryRevision;
+    }
 
     public void markExternal() {
         myContentsStatus = SVNStatusType.STATUS_EXTERNAL;
     }
 
-    public void setRemoteStatus(SVNStatusType contents, SVNStatusType props,
-            SVNLock lock, SVNNodeKind kind) {
-        if (contents == SVNStatusType.STATUS_ADDED
-                && myRemoteContentsStatus == SVNStatusType.STATUS_DELETED) {
+    public void setRemoteStatus(SVNStatusType contents, SVNStatusType props, SVNLock lock, SVNNodeKind kind) {
+        if (contents == SVNStatusType.STATUS_ADDED && myRemoteContentsStatus == SVNStatusType.STATUS_DELETED) {
             contents = SVNStatusType.STATUS_REPLACED;
         }
-
-        myRemoteContentsStatus = contents != null ? contents
-                : myRemoteContentsStatus;
-        myRemotePropertiesStatus = props != null ? props
-                : myRemotePropertiesStatus;
+        myRemoteContentsStatus = contents != null ? contents : myRemoteContentsStatus;
+        myRemotePropertiesStatus = props != null ? props : myRemotePropertiesStatus;
         if (lock != null) {
             myRemoteLock = lock;
         }
         if (kind != null) {
             myKind = kind;
         }
+    }
+
+    public void setRemoteStatus(SVNURL url, SVNStatusType contents, SVNStatusType props, SVNLock lock, SVNNodeKind kind, SVNRevision revision) {
+        setRemoteStatus(contents, props, lock, kind);
+        if (myURL == null) {
+            myURL = url;
+        }
+        myRepositoryRevision = revision == null ? SVNRevision.UNDEFINED : revision;  
     }
 
     public void setContentsStatus(SVNStatusType statusType) {
