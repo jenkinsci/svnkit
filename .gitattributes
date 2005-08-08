@@ -33,9 +33,9 @@ doc/examples/src/org/tmatesoft/svn/examples/wc/UpdateEventHandler.java -text
 doc/examples/src/org/tmatesoft/svn/examples/wc/WCEventHandler.java -text
 doc/examples/src/org/tmatesoft/svn/examples/wc/WorkingCopy.java -text
 doc/javadoc-files/JavaSVN_API_Packages.jpg -text
+doc/javadoc-files/info.png -text
 doc/javadoc-files/javadoc.css -text
 doc/javadoc-files/overview.html -text
-doc/javadoc-files/subversion.png -text
 javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.properties eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.xml eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn.subclipse.feature/feature.properties eol=lf

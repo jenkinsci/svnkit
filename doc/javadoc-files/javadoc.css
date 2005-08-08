@@ -13,35 +13,55 @@ a {
 	color:           rgb(0,0,132); 
 	text-decoration: none;
 }
-.style0 {
-	font-family: Trebuchet MS;/*Verdana;*/
-	font-size:   22px;
+.javasvn {
+	font-size:   150%;
 	color:       rgb(51, 102, 153);
 }
-.style1 {
-	font-family: Verdana;
-	font-size:   22px;
-	color:       #3E3E3E;
+
+pre{
+	margin: 0px; 
+	padding: 0.5em; 
+	font-size: 100%;	
+	border: 1px solid #ccc;
 }
-.style2{
-	font-family: Verdana;
-	font-size:   17px;
-	color:       rgb(172, 172, 0);
-}
-.style3{
-	font-family: Courier New;
-	font-weight: bold;
-	font-size:   17px;
-	color:       rgb(128, 64, 0);
-}
+
 .javakeyword{
 	font-family: Courier New;
 	color: rgb(127,0,85); 	
 	font-weight: bold;
 	font-size: 100%;
 }
+.javacomment {
+	font-family: Courier New; 
+	font-size: 100%; 
+	font-style: normal;
+	color: rgb(63, 127, 95);
+}
+
+.javacode {
+	font-family: Courier New; 
+	font-size: 100%; 
+	font-style: normal;
+	color: black;
+	background-color: #FFFFFF;
+}
+
+.javastring {
+	font-family: Courier New; 
+	font-size: 100%; 
+	font-style: normal;
+	color: rgb(42, 0, 255);
+}
+
 /* Headings */
-h1 { font-size: 145% }
+h1 { 
+    font-size: 145%; 
+}
+
+h3 { 
+    padding-left: 40px;
+    background: transparent url(info.png) no-repeat left;
+}
 
 a:hover {
 	color: #CF4705;
