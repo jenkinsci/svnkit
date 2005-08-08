@@ -122,9 +122,9 @@ public class JavaHLObjectFactory {
             lastChangedRevision = status.getCommittedRevision().getNumber();
         }
         Date d = status.getCommittedDate();
-        long lastChangedDate = 0;
+        long lastChangedDate = -1;
         if(d != null){
-            lastChangedDate = d.getTime();
+            lastChangedDate = d.getTime() * 1000;
         }
         String lastCommitAuthor = status.getAuthor();
         int textStatus = getStatusValue(status.getContentsStatus());
@@ -157,7 +157,7 @@ public class JavaHLObjectFactory {
             lockToken = status.getLocalLock().getID();
             lockOwner = status.getLocalLock().getOwner();
             lockComment = status.getLocalLock().getComment();
-            lockCreationDate = status.getLocalLock().getCreationDate().getTime();
+            lockCreationDate = status.getLocalLock().getCreationDate().getTime() * 1000;
         }
         Lock reposLock = createLock(status.getRemoteLock());
         if (path != null) {
@@ -293,8 +293,8 @@ public class JavaHLObjectFactory {
             return null;
         }
         return new Lock(svnLock.getOwner(), svnLock.getPath(), svnLock.getID(),
-                svnLock.getComment(), svnLock.getCreationDate() != null ? svnLock.getCreationDate().getTime() : 0,
-                svnLock.getExpirationDate() != null ? svnLock.getExpirationDate().getTime() : 0);
+                svnLock.getComment(), svnLock.getCreationDate() != null ? svnLock.getCreationDate().getTime() * 1000 : 0,
+                svnLock.getExpirationDate() != null ? svnLock.getExpirationDate().getTime() * 1000 : 0);
     }
 
     public static Info createInfo(SVNInfo info) {
@@ -363,13 +363,13 @@ public class JavaHLObjectFactory {
                 info.getRepositoryRootURL() != null ? info.getRepositoryRootURL().toString() : null,
                 info.getRepositoryUUID(),
                 info.getCommittedRevision() != null ? info.getCommittedRevision().getNumber() : - 1,
-                info.getCommittedDate() != null ? info.getCommittedDate().getTime() : 0,
+                info.getCommittedDate() != null ? info.getCommittedDate().getTime() * 1000 : 0,
                 info.getAuthor(),
                 createLock(info.getLock()),
                 !info.isRemote(),
                 schedule, copyUrl, copyRev,
-                info.getTextTime() != null  ? info.getTextTime().getTime() : 0,
-                info.getPropTime() != null ? info.getPropTime().getTime() : 0,
+                info.getTextTime() != null  ? info.getTextTime().getTime() * 1000 : 0,
+                info.getPropTime() != null ? info.getPropTime().getTime() * 1000 : 0,
                 info.getChecksum(),
                 info.getConflictOldFile() != null ? info.getConflictOldFile().getName() : null,
                 info.getConflictNewFile() != null ? info.getConflictNewFile().getName() : null,
