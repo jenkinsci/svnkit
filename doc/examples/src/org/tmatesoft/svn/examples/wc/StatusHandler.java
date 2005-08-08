@@ -141,21 +141,17 @@ public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
         
         /*
          * If SVNStatusClient.doStatus(..) was invoked with remote = true
-         * and the current item was changed in the repository the following 
-         * code finds out the type of the changes made  
+         * the following code finds out whether the current item had been 
+         * changed in the repository   
          */
-        SVNStatusType remoteContentsStatus = status.getRemoteContentsStatus();
-        String pathRemoteChangeType = " ";
+        String remoteChangeType = " ";
 
-        if(remoteContentsStatus!=null){
-            if(remoteContentsStatus == SVNStatusType.STATUS_MODIFIED ||
-               remoteContentsStatus == SVNStatusType.STATUS_DELETED  ||
-               remoteContentsStatus == SVNStatusType.STATUS_REPLACED){
-                /*
-                 * the local item is out of date
-                 */
-                pathRemoteChangeType = "*";
-            }
+        if(status.getRemotePropertiesStatus() != SVNStatusType.STATUS_NONE || 
+           status.getRemoteContentsStatus() != SVNStatusType.STATUS_NONE) {
+            /*
+             * the local item is out of date
+             */
+            remoteChangeType = "*";
         }
         /*
          * Now getting the status of properties of an item. SVNStatusType also contains
@@ -260,7 +256,7 @@ public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
                 + (isSwitched ? "S" : " ")
                 + lockLabel
                 + "  "
-                + pathRemoteChangeType
+                + remoteChangeType
                 + "  "
                 + workingRevision
                 + offsets[0]

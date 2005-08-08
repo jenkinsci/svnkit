@@ -41,7 +41,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
  * Most of the  methods of these 'client' classes are named like 'doSomething(...)' where 
  * 'Something' corresponds to the name of a Subversion command line client's operation. So, 
  * for users familiar with the Subversion command line client it won't take much effort
- * and time to match a 'doXXX' method and an appropriate Subversion client's operation (or 
+ * and time to match a 'do*' method and an appropriate Subversion client's operation (or 
  * command, in other words).
  * 
  * Surely, it may seem not quite handy to deal with a number of classes that all need to be 
