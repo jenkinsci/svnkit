@@ -6,14 +6,14 @@
         <property name="eclipse.home" value="${env.ECLIPSE_HOME}" />
         <property name="java.home" value="${env.JAVA_HOME}" />
         <property file="javasvn.build.properties"/>
-        
-        <condition property="eclipse.present">
-                <available file="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.jar"
+    		
+    	<condition property="eclipse.present">
+        	<available file="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.jar"
                            property="eclipse.runtime.jar"
-                />
+        	/>
         </condition>
 
-        <condition property="os" value="windows">
+    	<condition property="os" value="windows">
             <os family="dos" />
         </condition>
         <condition property="os" value="unix">
@@ -61,7 +61,7 @@
     
 	<target name="compile-eclipse" depends="init-environment,compile-library" if="eclipse.present">
         <mkdir dir="javasvn-eclipse/bin" />
-
+		
         <path id="eclipse.classpath">
             <pathelement path="build/lib/javasvn.jar" />
             <pathelement path="build/lib/jsch.jar" />
@@ -257,23 +257,29 @@
     <target name="build-doc">
         <mkdir dir="build/doc/javadoc" />
     	<copy file="doc/javadoc-files/JavaSVN_API_Packages.jpg" todir="build/doc/javadoc"/>
-       	<copy file="doc/javadoc-files/subversion.png" todir="build/doc/javadoc"/>
+       	<copy file="doc/javadoc-files/info.png" todir="build/doc/javadoc"/>
+
+    	<path id="doc.classpath">
+            <pathelement path="javasvn/bin" />
+            <pathelement path="contrib/sequence/bin" />
+            <pathelement path="contrib/javahl/bin" />
+		</path>
     	<javadoc destdir="build/doc/javadoc" failonerror="false"
                  windowtitle="JavaDoc :: Documentation :: Pure Java Subversion (SVN) Client Library"
                  breakiterator="yes"
         		 stylesheetfile="doc/javadoc-files/javadoc.css" 	 
         		 overview="doc/javadoc-files/overview.html"
-        >
-            <packageset dir="javasvn/src">
+    			 classpathref="doc.classpath"
+    		>
+            
+    		<packageset dir="javasvn/src" defaultexcludes="yes">
                 <exclude name="**/util/**" />
             	<exclude name="**/internal/**" />
-               	<exclude name="**/core/diff/**" />
-               	<exclude name="**/core/progress/**" />
-                <include name="**/core/**" />
-
+            	<include name="**/core/**" />
             </packageset>
-            <header>
-                <![CDATA[<a target="_top" href="http://tmate.org/svn/"><span class=style0>JavaSVN</span>&nbsp;Home<a/>]]></header>
+
+    		<header>
+                <![CDATA[<a target="_top" href="http://tmate.org/svn/"><span class="javasvn">JavaSVN</span>&nbsp;Home<a/>]]></header>
             <bottom>
                 <![CDATA[Copyright &#169; 2004-2005 TMate Software Ltd. All Rights Reserved.]]>
             </bottom>
@@ -319,7 +325,7 @@
             depends="init-environment,build-library,build-src,build-doc,build-eclipse"
             if="eclipse.present"
     >
-        <zip destfile="build/org.tmatesoft.svn_${javasvn.version}.eclipse.zip">
+    	<zip destfile="build/org.tmatesoft.svn_${javasvn.version}.eclipse.zip">
             <zipfileset dir="build/eclipse/site/"/>
         </zip>
     </target>
