@@ -303,6 +303,9 @@ public class SVNPathUtil {
         if (path.length() > 0 && path.charAt(0) == '/') {
             result.append("/");
         }
+        if (path.length() > 1 && path.charAt(1) == '/') {
+            result.append("/");
+        }
         for (Iterator tokens = segments.iterator(); tokens.hasNext();) {
             String token = (String) tokens.next();
             result.append(token);
