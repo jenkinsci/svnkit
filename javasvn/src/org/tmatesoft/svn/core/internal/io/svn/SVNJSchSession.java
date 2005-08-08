@@ -112,6 +112,7 @@ public class SVNJSchSession {
 
         public Socket createSocket(String host, int port) throws IOException,
                 UnknownHostException {
+            SVNDebugLog.logInfo("SSH: creating new TCP/IP socket");
             Socket socket;
             try {
                 socket = SVNSocketFactory.createPlainSocket(host, port);

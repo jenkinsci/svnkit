@@ -10,8 +10,6 @@
  */
 package org.tmatesoft.svn.core.internal.io.svn;
 
-import java.io.FilterInputStream;
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -20,6 +18,7 @@ import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 import com.jcraft.jsch.ChannelExec;
@@ -115,7 +114,7 @@ public class SVNJSchConnector implements ISVNConnector {
             }
             throw new SVNException("Failed to open SSH session: " + e.getMessage());
         }
-
+/*
         myInputStream = new FilterInputStream(myInputStream) {
             public void close() {
             }
@@ -124,9 +123,12 @@ public class SVNJSchConnector implements ISVNConnector {
             public void close() {
             }
         };
+        */
     }
 
     public void close() throws SVNException {
+        SVNFileUtil.closeFile(myOutputStream);
+        SVNFileUtil.closeFile(myInputStream);
         if (myChannel != null) {
             myChannel.disconnect();
         }
