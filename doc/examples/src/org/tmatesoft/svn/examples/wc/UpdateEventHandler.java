@@ -56,9 +56,8 @@ public class UpdateEventHandler implements ISVNEventHandler {
              * been updated).
              */
             /*
-             * Gets the status of a file, directory or symbolic link and/or file
-             * contents. It is SVNStatusType who contains information on the
-             * state of an item.
+             * Gets the status of file/directory item contents. It is 
+             * SVNStatusType who contains information on the state of an item.
              */
             SVNStatusType contentsStatus = event.getContentsStatus();
             if (contentsStatus == SVNStatusType.CHANGED) {
