@@ -33,22 +33,22 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
  * This class provides methods to get information on the status of Working Copy items.
- * The functionality of <span class="style0">SVNStatusClient</span> corresponds to the
- * 'svn status' command of the native <span class="style2">SVN</span> command line client. 
+ * The functionality of <b>SVNStatusClient</b> corresponds to the 'svn status' command 
+ * of the native SVN command line client. 
  * 
  * <p>
- * One of the main advantage of <span class="style0">SVNStatusClient</span> lies in that fact
+ * One of the main advantage of <b>SVNStatusClient</b> lies in that fact
  * that for each processed item the status information is collected and incapsulated into
- * an <span class="style0">SVNStatus</span> object. Further there are two ways how this object
- * can be passed to a developer (depending on the version of the <span class="style3">doStatus(..)</span>
+ * an <b>SVNStatus</b> object. Further there are two ways how this object
+ * can be passed to a developer (depending on the version of the doStatus()
  * method that was invoked):
  * <ol>
- * <li>the <span class="style0">SVNStatus</span> can be passed to a 
- * developer's <i>status handler</i> (that should implement <span class="style0">ISVNStatusHandler</span>)
+ * <li>the <b>SVNStatus</b> can be passed to a 
+ * developer's status handler (that should implement <b>ISVNStatusHandler</b>)
  * in which the developer retrieves status information and decides how to interprete that
  * info;  
- * <li> another way is that an appropriate <span class="style3">doStatus(..)</span> method
- * just returns that <span class="style0">SVNStatus</span> object.
+ * <li> another way is that an appropriate doStatus() method
+ * just returns that <b>SVNStatus</b> object.
  * </ol>
  * 
  * The first variant can be called recursively - obtaining status information for all child entries, the second

@@ -11,8 +11,84 @@
 package org.tmatesoft.svn.core.wc;
 
 /**
+ * <b>SVNStatusType</b> provides information about versioned items' 
+ * status type. This class contains a set of predefined constants each of that 
+ * should be compared with a refrence to an <b>SVNStatusType</b> to find 
+ * out the item's status type. That is done either in event handlers
+ * (implementing <b>ISVNEventHandler</b>) registered for <b>SVN</b>*<b>Client</b>
+ * objects like this:
+ * <pre class="javacode">
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.ISVNEventHandler;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.SVNStatusType;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.SVNEventAction;
+ * ...
+ * 
+ * <span class="javakeyword">public class</span> MyCustomEventHandler <span class="javakeyword">implements</span> ISVNEventHandler {
+ *     <span class="javakeyword">public void</span> handleEvent(SVNEvent event, <span class="javakeyword">double</span> progress){    
+ *         ...
+ *         
+ *         <span class="javakeyword">if</span>(event.getAction() == SVNEventAction.UPDATE_UPDATE){
+ *            <span class="javacomment">//get contents status type</span>
+ *            SVNStatusType contentsStatus = event.getContentsStatus();
+ *            <span class="javacomment">//parse it</span>
+ *            <span class="javakeyword">if</span>(contentsStatus != SVNStatusType.INAPPLICABLE){
+ *                <span class="javakeyword">if</span>(contentsStatus == SVNStatusType.CONFLICTED){
+ *                    ...
+ *                }
+ *            }      
+ *         
+ *            <span class="javacomment">//get properties status type</span>
+ *            SVNStatusType propertiesStatus = event.getPropertiesStatus();
+ *            <span class="javacomment">//parse it</span>
+ *            <span class="javakeyword">if</span>(propertiesStatus != SVNStatusType.INAPPLICABLE){
+ *                <span class="javakeyword">if</span>(contentsStatus == SVNStatusType.CONFLICTED){
+ *                    ...
+ *                }
+ *            }
+ *         }
+ *         ...
+ *     }
+ *     ...
+ * }</pre>
+ * <br>
+ * or in a status handler (implementing <b>ISVNStatusHandler</b>) registered 
+ * for an <b>SVNStatusClient</b> like this:
+ * <pre class="javacode">
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.ISVNStatusHandler;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.SVNStatus;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.SVNStatusType;
+ * ...
+ * 
+ * <span class="javakeyword">public class</span> MyCustomStatusHandler <span class="javakeyword">implements</span> ISVNStatusHandler {
+ *     <span class="javakeyword">public void</span> handleStatus(SVNStatus status){    
+ *         ...
+ *         
+ *         <span class="javacomment">//get contents status type</span>
+ *         SVNStatusType contentsStatus = status.getContentsStatus();
+ *         <span class="javacomment">//parse it</span>
+ *         <span class="javakeyword">if</span>(contentsStatus == SVNStatusType.STATUS_MODIFIED){
+ *             ...
+ *         }<span class="javakeyword">else if</span>(contentsStatus == SVNStatusType.STATUS_CONFLICTED){
+ *             ...
+ *         }      
+ *         ...
+ *         <span class="javacomment">//get properties status type</span>
+ *         SVNStatusType propertiesStatus = status.getPropertiesStatus();
+ *         <span class="javacomment">//parse it</span>
+ *         <span class="javakeyword">if</span>(contentsStatus == SVNStatusType.STATUS_MODIFIED){
+ *             ...
+ *         }<span class="javakeyword">else if</span>(contentsStatus == SVNStatusType.STATUS_CONFLICTED){
+ *             ...
+ *         }
+ *         ...
+ *     }
+ *     ...
+ * }</pre>
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
+ * @see     SVNEvent
+ * @see     SVNStatus
  */
 public class SVNStatusType {
 
@@ -21,48 +97,140 @@ public class SVNStatusType {
     private SVNStatusType(int id) {
         myID = id;
     }
-
+    
+    /**
+     * Returns this object's identifier as an integer nbumber.
+     * Each static field of <b>SVNStatusType</b> class is also an 
+     * <b>SVNStatusType</b> object with its own id. 
+     * 
+     * @return id of this object 
+     */
     public int getID() {
         return myID;
     }
     
     /**
-     * Gives a string representation of this object.
+     * Returns a string representation of this object. As a matter of fact
+     * this is a string representation of this object's id.
      * 
      * @return a string representing this object
      */
     public String toString() {
         return Integer.toString(myID);
     }
-
+    
+    /**
+     * During some operations denotes that status info of item contents or
+     * properties is inapplicable. For example, this takes place during a 
+     * commit operation - if there is any {@link ISVNEventHandler} registered
+     * for an {@link SVNCommitClient} then events that are dispatched to that event 
+     * handler will have contents and properties status types set to <i>INAPPLICABLE</i>:
+     * <pre class="javacode">
+     * <span class="javakeyword">public class</span> MyCommitEventHandler <span class="javakeyword">implements</span> ISVNEventHandler{
+     * ...    
+     *     
+     *     <span class="javakeyword">public void</span> handleEvent(SVNEvent event, <span class="javakeyword">double</span> progress){
+     *         <span class="javacomment">//both are SVNStatusType.INAPPLICABLE</span>
+     *         SVNStatusType contentsStatus = event.getContentsStatus();
+     *         SVNStatusType propsStatus = event.getPropertiesStatus();
+     *     }
+     * ...
+     * }</pre> 
+     *  
+     */
     public static final SVNStatusType INAPPLICABLE = new SVNStatusType(0);
-
+    
+    /**
+     * Denotes that the resultant status of the operation is for some
+     * reason unknown.
+     */
     public static final SVNStatusType UNKNOWN = new SVNStatusType(1);
-
+    
+    /**
+     * During an operation denotes that file item contents or file/directory
+     * item properties are not changed.  For example, in a Working Copy-to-URL copying.
+     */
     public static final SVNStatusType UNCHANGED = new SVNStatusType(2);
-
+    
+    /**
+     * Denotes that the item is versioned but missing (deleted from the 
+     * fylesystem).
+     */
     public static final SVNStatusType MISSING = new SVNStatusType(3);
-
+    
+    /**
+     * Denotes that the item has an unexpected kind or somehow damaged or
+     * can not be managed by an operation.
+     */
     public static final SVNStatusType OBSTRUCTED = new SVNStatusType(4);
-
+    
+    /**
+     * During an operation (like an update) denotes that the item contents
+     * or item properties were changed.
+     */
     public static final SVNStatusType CHANGED = new SVNStatusType(5);
 
+    /**
+     * During an operation (like an update or merge) denotes that the file 
+     * item contents or file/directory item properties were merged 
+     * with changes that came from the repository, so that local modifications 
+     * and arrived ones do not overlap. 
+     */
     public static final SVNStatusType MERGED = new SVNStatusType(6);
 
+    /**
+     * During an operation (like an update) denotes that the file item contents 
+     * or file/directory item properties are in conflict with those changes that
+     * came from the repository. 
+     */
     public static final SVNStatusType CONFLICTED = new SVNStatusType(7);
-
+    
+    /**
+     * Denotes that the conflict state on the item is still unresolved.
+     * For example, it can be set when trying to merge into a file that is
+     * in conflict with the repository.  
+     */
     public static final SVNStatusType CONFLICTED_UNRESOLVED = new SVNStatusType(8);
-
+    
+    /**
+     * During some operations denotes that lock status is inapplicable. 
+     * For example, this takes place during a commit operation - if there 
+     * is any {@link ISVNEventHandler} registered for {@link SVNCommitClient} 
+     * then events that are dispatched to that event handler will have the 
+     * lock status type set to <i>LOCK_INAPPLICABLE</i>:
+     * <pre class="javacode">
+     * <span class="javakeyword">public class</span> MyCommitEventHandler <span class="javakeyword">implements</span> ISVNEventHandler{
+     * ...    
+     *     
+     *     <span class="javakeyword">public void</span> handleEvent(SVNEvent event, <span class="javakeyword">double</span> progress){
+     *         <span class="javacomment">//is SVNStatusType.LOCK_INAPPLICABLE</span>
+     *         SVNStatusType lockStatus = event.getLockStatus();
+     *     }
+     * ...
+     * }</pre> 
+     */
     public static final SVNStatusType LOCK_INAPPLICABLE = new SVNStatusType(0);
-
+    
     public static final SVNStatusType LOCK_UNKNOWN = new SVNStatusType(1);
-
+    
+    /**
+     * During an operation denotes that the lock status wasn't changed. For example, in a 
+     * Working Copy-to-URL copying.
+     */
     public static final SVNStatusType LOCK_UNCHANGED = new SVNStatusType(2);
-
+    
     public static final SVNStatusType LOCK_LOCKED = new SVNStatusType(3);
-
+    
+    /**
+     * During an operation (like an update) denotes that the file item's lock 
+     * was broken in the repositry by some other user.
+     */
     public static final SVNStatusType LOCK_UNLOCKED = new SVNStatusType(4);
-
+    
+    /**
+     * In a status operation denotes that the item which path was included for
+     * processing actually does not exist in the working revision. 
+     */
     public static final SVNStatusType STATUS_NONE = new SVNStatusType(0);
 
     /**
@@ -99,10 +267,9 @@ public class SVNStatusType {
 
     /**
      * In a status operation denotes that the item in the Working Copy being 
-     * currently processed is under version control but is missing (for example, removed
-     * from the filesystem with a non-SVN or non-JavaSVN delete command or any other
-     * SVN non-compatible delete command) or somehow incomplete (for example, the previous
-     * update was interrupted). 
+     * currently processed is under version control but is missing  - for example, 
+     * removed from the filesystem with a non-SVN, non-JavaSVN or 
+     * any other SVN non-compatible delete command).
      */
     public static final SVNStatusType STATUS_MISSING = new SVNStatusType(6);
     
@@ -140,12 +307,22 @@ public class SVNStatusType {
     public static final SVNStatusType STATUS_OBSTRUCTED = new SVNStatusType(10);
 
     /**
-     * In a status operation denotes that the item in the Working Copy being 
-     * currently processed was set to be ignored (svn:ignore ).
+     * In a status operation denotes that the file item in the Working Copy being 
+     * currently processed was set to be ignored (was added to svn:ignore property).
      */
     public static final SVNStatusType STATUS_IGNORED = new SVNStatusType(11);
 
+    /**
+     * In a status operation denotes that the item in the Working Copy being 
+     * currently processed is under version control but is somehow incomplete - 
+     * for example, it may happen when the previous update was interrupted. 
+     */
     public static final SVNStatusType STATUS_INCOMPLETE = new SVNStatusType(12);
 
+    /**
+     * In a status operation denotes that the item in the Working Copy being 
+     * currently processed is not under version control but is related to 
+     * externals definitions. 
+     */
     public static final SVNStatusType STATUS_EXTERNAL = new SVNStatusType(13);
 }

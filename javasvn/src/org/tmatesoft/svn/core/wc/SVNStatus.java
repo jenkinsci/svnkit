@@ -19,8 +19,67 @@ import java.util.Date;
 import java.util.Map;
 
 /**
+ * The <b>SVNStatus</b> class is used to provide detailed status information for
+ * a Working Copy item as a result of a status operation invoked by a 
+ * doStatus() method of <b>SVNStatusClient</b>. <b>SVNStatus</b> objects are
+ * generated for each 'interesting' local item and depending on the doStatus() method 
+ * in use either passed for notification to an <b>ISVNStatusHandler</b> 
+ * implementation or such an object is just returned by the method as a 
+ * status info for a single item. 
+ * 
+ * <p>
+ * Within the status handler implementation a developer decides how to interpret status 
+ * information. For some purposes this way may be more flexible in comparison 
+ * with calling doStatus() that returns an <b>SVNStatus</b> per one local item.
+ * However the latter one may be useful when needing to find out the status of 
+ * the concrete item.  
+ * 
+ * <p>
+ * This is an example:<br />
+ * implementing an <b>ISVNStatusHandler</b>:
+ * <pre class="javacode">
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.ISVNStatusHandler;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.SVNStatus;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.SVNStatusType;
+ * ...
+ * 
+ * <span class="javakeyword">public class</span> MyCustomStatusHandler <span class="javakeyword">implements</span> ISVNStatusHandler {
+ *     <span class="javakeyword">public void</span> handleStatus(SVNStatus status) {
+ *         <span class="javacomment">//parse the item's contents status</span>
+ *         <span class="javakeyword">if</span>(status.getContentsStatus() == SVNStatusType.STATUS_MODIFIED) {
+ *             ...
+ *         } <span class="javakeyword">else if</span>(status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED) {
+ *             ...        
+ *         }
+ *         ...
+ *         <span class="javacomment">//parse properties status</span>
+ *         <span class="javakeyword">if</span>(status.getPropertiesStatus() == SVNStatusType.STATUS_MODIFIED) {
+ *             ...
+ *         }
+ *         ...
+ *     }
+ * }</pre><br />
+ * provide a status handler implementation to an <b>SVNStatusClient</b>'s 
+ * doStatus() method:
+ * <pre class="javacode">
+ * ...
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.SVNStatusClient;
+ * ...
+ * 
+ * SVNStatusClient statusClient;
+ * ...
+ * 
+ * statusClient.doStatus(...., <span class="javakeyword">new</span> MyCustomStatusHandler());
+ * ...</pre>
+ * or process an <b>SVNStatus</b> like this:
+ * <pre class="javacode">
+ * SVNStatus status = statusClient.doStatus(<span class="javakeyword">new</span> File(myPath), <span class="javakeyword">false</span>);</pre>
+ * </p> 
+ *  
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
+ * @see     ISVNStatusHandler
+ * @see     SVNStatusType
  */
 public class SVNStatus {
     
