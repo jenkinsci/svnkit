@@ -64,6 +64,7 @@ javasvn/cli/svn eol=lf
 javasvn/cli/svn.bat eol=crlf
 javasvn/src/org/tigris/subversion/javahl/SVNClient.java -text
 javasvn/src/org/tmatesoft/svn/core/SVNURL.java -text
+javasvn/src/org/tmatesoft/svn/core/auth/package.html -text
 javasvn/src/org/tmatesoft/svn/core/internal/util/DefaultSVNDebugFormatter.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/util/DefaultSVNDebugLogger.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/util/SVNEncodingUtil.java -text
