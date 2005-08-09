@@ -37,17 +37,17 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 public interface ISVNFileRevisionHandler {
     
     /**
-     * Called within the 
-     * {@link SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler)
-     * SVNRepository.getFileRevisions()} method to handle an 
-     * <code>SVNFileRevision</code> passed.
+     * Called within the method
+     * {@link SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler)} 
+     * method to handle an <code>SVNFileRevision</code> passed.
      * 
-     * @param fileRevision 		a <code>SVNFileRevision</code> object representing file
+     * @param  fileRevision 	a <code>SVNFileRevision</code> object representing file
      * 							revision information
+     * @throws SVNException
      * @see 					SVNFileRevision
      */
 	public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException;
-
+	
     public OutputStream handleDiffWindow(String token, SVNDiffWindow diffWindow) throws SVNException;
     
     public void handleDiffWindowClosed(String token) throws SVNException;

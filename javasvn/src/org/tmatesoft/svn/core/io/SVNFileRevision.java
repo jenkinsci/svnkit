@@ -35,7 +35,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
  * @see		ISVNFileRevisionHandler
  * @see		SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler)
  * @see		SVNRepository#getFileRevisions(String, Collection, long, long)
- * @see		SVNRevisionProperty
+ * @see     org.tmatesoft.svn.core.SVNRevisionProperty
  */
 public class SVNFileRevision implements Comparable {
     

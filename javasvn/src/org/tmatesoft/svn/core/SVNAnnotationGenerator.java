@@ -70,7 +70,11 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myLines = new ArrayList();
         myDeltaProcessor = new SVNDeltaProcessor();
     }
-
+    
+    /**
+     * @param  fileRevision
+     * @throws SVNException
+     */
     public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException {
         if (myCancelBaton != null) {
             myCancelBaton.checkCancelled();

@@ -34,7 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
- * The abstract class <code>SVNRepository</code> declares all the basic
+ * The abstract class <b>SVNRepository</b> declares all the basic
  * interface methods as well as implements commonly used ones to work with
  * a Subversion repository. It is the skeleton of the low-level mechanism of 
  * accessing a repository. In the model of the Subversion distributed system of
@@ -51,42 +51,49 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * <p>
  * It is important to say that before using the library it must be configured 
  * according to implimentations to be used. That is if a repository is assumed
- * to be accessed via the <i>WebDAV</i> protocol(<code>http://</code> or 
- * <code>https://</code>) or a custom <i>SVN</i> one 
+ * to be accessed via the <i>WebDAV</i> protocol (<code>http://</code> or 
+ * <code>https://</code>) or a custom SVN one 
  * (<code>svn://</code> or <code>svn+ssh://</code>) a user must initialize the library
  * in this way:
- * <blockquote><pre>
+ * <pre class="javacode">
+ * <span class="javacomment">//import neccessary files</span>
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.SVNURL;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.io.SVNRepository;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+ * <span class="javakeyword">import</span> import org.tmatesoft.svn.core.wc.SVNWCUtil;
+ * <span class="javakeyword">import</span> import org.tmatesoft.svn.core.SVNException;
+ * ...
  * 
- * <i>//import neccessary files</i>
- * import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
- * import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
- * import org.tmatesoft.svn.core.internal.ws.fs.FSEntryFactory;
- * <i>//Set up connection protocols support:</i>
- * <i>//for DAV (over http and https)</i>
+ * <span class="javacomment">//Set up connection protocols support:</span>
+ * <span class="javacomment">//for DAV (over http and https)</span>
  * DAVRepositoryFactory.setup();
- * <i>//for SVN (over svn and svn+ssh)</i>
- * SVNRepositoryFactoryImpl.setup();
- * 
- * </pre></blockquote>
+ * <span class="javacomment">//for SVN (over svn and svn+ssh)</span>
+ * SVNRepositoryFactoryImpl.setup();</pre>
  * And only after these steps the client can create <i>WebDAV</i> or <i>SVN</i> 
  * implementations of the <code>SVNRepository</code> abstract class to access 
  * the repository.
  * 
  * <p>
  * This is a general way how a user creates an <code>SVNRepository</code> for his work:
- * <blockquote><pre>
- * 		
- * String URL="http://svn.collab.net/svn/trunk/";
- * try { 
- * 		SVNRepositoryLocation location = SVNRepositoryLocation.parseURL(URL);
- * 		SVNRepository repository       = SVNRepositoryFactory.create(location);
- *
- * 		<i>//work with the repository</i>
- * } catch (SVNException e){
- * 		e.printStackTrace();
+ * <pre class="javacode">
+ * String url=<span class="javastring">"http://svn.collab.net/svn/trunk/"</span>;
+ * String name=<span class="javastring">"my name"</span>;
+ * String password=<span class="javastring">"my password"</span>;
+ * repository = <span class="javakeyword">null</span>;
+ * <span class="javakeyword">try</span> { 
+ *     repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
+ *     ISVNAuthenticationManager authManager = 
+ *                  SVNWCUtil.createDefaultAuthenticationManager(name, password);
+ *     repository.setAuthenticationManager(authManager);
+ *     ...
+ * } <span class="javakeyword">catch</span> (SVNException e){
+ *     e.printStackTrace();
+ *     System.exit(1);
  * }
- * 
- * </pre></blockquote>
+ * <span class="javacomment">//work with the repository</span>
+ * ... </pre>
  *
  * <p>
  * <b>NOTE:</b> unfortunately, at present the <i>JavaSVN</i> library doesn't 
@@ -420,7 +427,7 @@ public abstract class SVNRepository {
 	 * 
 	 * <p>
 	 * In a series of calls to {@link ISVNFileRevisionHandler#handleFileRevision(SVNFileRevision)
-	 * handler.handleFileRevision()}, the file contents for the first interesting 
+	 * handler.handleFileRevision(..)}, the file contents for the first interesting 
 	 * revision will be provided as a text delta against the empty file.  In the 
 	 * following calls, the delta will be against the fulltext contents for the 
 	 * previous call.
@@ -539,7 +546,7 @@ public abstract class SVNRepository {
      * <code>Collection</code>.
      *   
      * @param  path 		a file path in the repository
-     * @param  revisions 	a caller's {@link Collection} reference to get  file 
+     * @param  revisions 	a caller's Collection reference to get  file 
      * 						revisions (keeps references to {@link SVNFileRevision} 
      * 						instances). This parameter can be set to <code>null</code>.  
      * @param  sRevision 	the revision to start from

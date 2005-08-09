@@ -107,7 +107,7 @@ public abstract class SVNRepositoryFactory {
      * 
      * <p>
      * The protocol is a part of the <code>URL</code> (used to connect to the 
-     * repository) incapsulated in the <code>location<code> parameter.
+     * repository) incapsulated in the <code>location</code> parameter.
      * 
      * <p>
      * In fact, this method doesn't create an <code>SVNRepository</code> instance but
@@ -115,7 +115,7 @@ public abstract class SVNRepositoryFactory {
      * factory (protocol specific extension of this class) that essentially creates the
      * instance; then this routine simply returns it to the caller.
      *  
-     * @param  url				a <code>URL</code> (to connect to a repository) 
+     * @param  url				a url (to connect to a repository) 
      * 							as an <code>SVNURL</code> object
      * @return					a new instance of <code>SVNRepository</code> to interact
      * 							with the repository
