@@ -1,7 +1,7 @@
 <?
 include($_SERVER["DOCUMENT_ROOT"] . "/svn/feed/feedcreator.class.php");
 include($_SERVER["DOCUMENT_ROOT"] . "/svn/feed/rss_util.php");
-include($_SERVER["DOCUMENT_ROOT"] . "/stats/counter.php");
+//include($_SERVER["DOCUMENT_ROOT"] . "/stats/counter.php");
 
 $cacheFile = $_SERVER["DOCUMENT_ROOT"] . "/svn/feed/rss20.cache";
 
