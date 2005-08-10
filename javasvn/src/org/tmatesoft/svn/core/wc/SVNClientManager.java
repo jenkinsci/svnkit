@@ -96,6 +96,9 @@ public class SVNClientManager implements ISVNRepositoryFactory {
         if (myStatusClient != null) {
             myStatusClient.setEventHandler(handler);
         }
+        if (myUpdateClient != null) {
+            myUpdateClient.setEventHandler(handler);
+        }
         if (myWCClient != null) {
             myWCClient.setEventHandler(handler);
         }        
