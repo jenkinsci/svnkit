@@ -40,6 +40,10 @@ final class QSequenceLineFileSystemCache implements QSequenceLineCache {
 
 	public void addLine(QSequenceLine line) throws IOException {
 		segments.setFromLengthHash(lineCount, line.getFrom(), line.getLength(), new String(line.getBytes()).hashCode());
+		if (lineCount >= Integer.MAX_VALUE) {
+			throw new IOException("Too many lines."); 
+		}
+
 		lineCount++;
 	}
 

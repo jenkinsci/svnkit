@@ -41,7 +41,7 @@ public final class QSequenceLineRAByteData implements QSequenceLineRAData {
 	}
 
 	public void get(byte[] bytes, long offset, long length) {
-		System.arraycopy(bytes, 0, this.bytes, (int)offset, (int)length);
+		System.arraycopy(this.bytes, (int)offset, bytes, 0, (int)length);
 	}
 
 	public InputStream read(long offset, long length) {
