@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * This class provides methods to perform operations that relate to commiting changes
@@ -690,6 +691,15 @@ public class SVNCommitClient extends SVNBasicClient {
                 .hasNext();) {
             String name = (String) names.next();
             String value = (String) autoProperties.get(name);
+            if (SVNProperty.EOL_STYLE.equals(name) && value != null) {
+                if (SVNProperty.isBinaryMimeType((String) autoProperties.get(SVNProperty.MIME_TYPE))) {
+                    SVNDebugLog.logInfo("svn: File '" + file + "' has binary mime-type, svn:eol-style property is not applicable");
+                    continue;
+                }else if (!SVNTranslator.checkNewLines(file)) {
+                    SVNDebugLog.logInfo("svn: File '" + file + "' has inconsistent newlines");
+                    continue;
+                } 
+            }
             editor.changeFileProperty(filePath, name, value);
         }
         // send "adding"

@@ -1180,7 +1180,10 @@ public class SVNWCClient extends SVNBasicClient {
             for (Iterator names = props.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
                 String propValue = (String) props.get(propName);
-                properties.setPropertyValue(propName, propValue);
+                try {
+                    doSetLocalProperty(dir, name, propName, propValue, false, false, null);
+                } catch (SVNException e) {
+                }
             }
         }
     }
