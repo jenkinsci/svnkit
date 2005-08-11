@@ -107,6 +107,7 @@ public class SVNStatus {
     private SVNLock myLocalLock;
     private Map myEntryProperties;
     private SVNRevision myRepositoryRevision;
+    private SVNURL myRepositoryURL;
 
     public SVNStatus(SVNURL url, File file, SVNNodeKind kind,
             SVNRevision revision, SVNRevision committedRevision,
@@ -150,6 +151,10 @@ public class SVNStatus {
 
     public SVNURL getURL() {
         return myURL;
+    }
+    
+    public SVNURL getRemoteURL() {
+        return myRepositoryURL;
     }
 
     public File getFile() {
@@ -264,9 +269,7 @@ public class SVNStatus {
 
     public void setRemoteStatus(SVNURL url, SVNStatusType contents, SVNStatusType props, SVNLock lock, SVNNodeKind kind, SVNRevision revision) {
         setRemoteStatus(contents, props, lock, kind);
-        if (myURL == null) {
-            myURL = url;
-        }
+        myRepositoryURL = url;
         myRepositoryRevision = revision == null ? SVNRevision.UNDEFINED : revision;  
     }
 

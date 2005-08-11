@@ -112,6 +112,9 @@ public class JavaHLObjectFactory {
         if (url == null && status.getEntryProperties() != null) {
             url = (String) status.getEntryProperties().get(SVNProperty.URL);
         }
+        if (url == null && status.getRemoteURL() != null) {
+            url = status.getRemoteURL().toString();
+        }
         int nodeKind = getNodeKind(status.getKind());
         if (status.getContentsStatus() == SVNStatusType.STATUS_IGNORED) {
             nodeKind = NodeKind.unknown;

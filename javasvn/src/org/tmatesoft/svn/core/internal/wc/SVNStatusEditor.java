@@ -154,7 +154,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 && !name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             myCurrentDirectory.IsPropertiesChanged = true;
         }
-        if (SVNProperty.COMMITTED_REVISION.equals(name)) {
+        if (SVNProperty.COMMITTED_REVISION.equals(name) && value != null) {
             myCurrentDirectory.RemoteRevision = SVNRevision.parse(value);
         }
     }
@@ -291,7 +291,7 @@ public class SVNStatusEditor implements ISVNEditor {
     public void changeFileProperty(String commitPath, String name, String value)
             throws SVNException {
         myCurrentFile.IsPropertiesChanged = true;
-        if (SVNProperty.COMMITTED_REVISION.equals(name)) {
+        if (SVNProperty.COMMITTED_REVISION.equals(name) && value != null) {
             myCurrentFile.RemoteRevision = SVNRevision.parse(value);
         }
     }
