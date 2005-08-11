@@ -405,6 +405,16 @@ public class SVNFileUtil {
         deleteAll(dir, true, cancelBaton);
     }
 
+    public static void deleteAll(File dir, boolean deleteDirs) {
+      try {
+        deleteAll(dir, deleteDirs, null);
+      }
+      catch (SVNException e) {
+        // should never happen as cancell handler is null.
+      }
+
+    }
+
     public static void deleteAll(File dir, boolean deleteDirs, ISVNEventHandler cancelBaton) throws SVNException {
         if (dir == null) {
             return;
