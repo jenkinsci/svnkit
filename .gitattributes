@@ -53,8 +53,6 @@ javasvn-eclipse/site.xml eol=lf
 javasvn-test/PythonTests.xsl -text
 javasvn-test/apache/python.template.conf eol=lf
 javasvn-test/apache/users eol=lf
-javasvn-test/lib/xalan.jar -text
-javasvn-test/lib/xercesImpl.jar -text
 javasvn-test/logging.properties -text
 javasvn-test/results.xml -text
 javasvn-test/test.mac.properties eol=lf
