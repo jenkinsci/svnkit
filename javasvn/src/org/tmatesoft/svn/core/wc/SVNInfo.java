@@ -22,7 +22,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 
 /**
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
+ * 
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public class SVNInfo {
 

@@ -11,8 +11,21 @@
 package org.tmatesoft.svn.core.wc;
 
 /**
+ * The <b>ISVNInfoHandler</b> interface should be implemented in order to
+ * be further provided to some of <b>SVNStatusClient</b>'s doStatus() methods
+ * to handle status information of Working Copy items. 
+ * 
+ * <p>
+ * When running a status operation using a status handler an 
+ * <b>SVNStatusClient</b>'s doStatus() method generates an <b>SVNStatus</b>
+ * object per each interesting WC entry and dispatches that object to the
+ * status handler where it's up to a developer to retrieve status detailes   
+ * from the <b>SVNStatus</b> object and interprete them in a desired way.
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
+ * 
  */
 public interface ISVNInfoHandler {
 

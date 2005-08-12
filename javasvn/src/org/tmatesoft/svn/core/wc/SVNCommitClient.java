@@ -64,15 +64,28 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * matched against corresponing commands of the <b>SVN</b> command line 
  * client:
  * 
- * <ul>
- * <li><b>doCommit(..)</b> -> 'svn commit'
- * <li><b>doImport(..)</b> -> 'svn import'
- * <li><b>doCommit(..)</b> -> 'svn delete URL'
- * <li><b>doMkDir(..)&nbsp;</b> -> 'svn mkdir URL'
- * </ul>
+ * <table cellpadding="3" cellspacing="1" border="0" width="40%" bgcolor="#999933">
+ * <tr bgcolor="#ADB8D9" align="left">
+ * <td><b>JavaSVN</b></td>
+ * <td><b>Subversion</b></td>
+ * </tr>   
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doCommit()</td><td>'svn commit'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doImport()</td><td>'svn import'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doDelete()</td><td>'svn delete URL'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doMkDir()</td><td>'svn mkdir URL'</td>
+ * </tr>
+ * </table>
  *   
  * @version 1.0
  * @author  TMate Software Ltd.
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  * 
  */
 public class SVNCommitClient extends SVNBasicClient {

@@ -20,6 +20,8 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
+ * 
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public class SVNClientManager implements ISVNRepositoryFactory {
     

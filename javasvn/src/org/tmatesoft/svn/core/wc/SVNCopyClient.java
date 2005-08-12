@@ -92,6 +92,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * 
  * @version 1.0
  * @author  TMate Software Ltd.
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  * 
  */
 public class SVNCopyClient extends SVNBasicClient {

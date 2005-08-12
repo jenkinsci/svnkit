@@ -228,8 +228,8 @@ public class SVNStatusType {
     public static final SVNStatusType LOCK_UNLOCKED = new SVNStatusType(4);
     
     /**
-     * In a status operation denotes that the item which path was included for
-     * processing actually does not exist in the working revision. 
+     * In a status operation denotes that no status type information is 
+     * available. 
      */
     public static final SVNStatusType STATUS_NONE = new SVNStatusType(0);
 

@@ -50,18 +50,34 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * 
  * <p>
  * Here's a list of the <b>SVNUpdateClient</b>'s methods 
- * matched against corresponing commands of the <b>SVN</b> command line 
+ * matched against corresponing commands of the SVN command line 
  * client:
- * <ul>
- * <li><b>doCheckout(..)</b> - 'svn checkout'
- * <li><b>doUpdate(..)</b> - 'svn update'
- * <li><b>doSwitch(..)</b> - 'svn switch'
- * <li><b>doRelocate(..)</b> - 'svn switch --relocate oldURL newURL'
- * <li><b>doExport(..)</b> - 'svn export'
- * </ul>
+ * 
+ * <table cellpadding="3" cellspacing="1" border="0" width="40%" bgcolor="#999933">
+ * <tr bgcolor="#ADB8D9" align="left">
+ * <td><b>JavaSVN</b></td>
+ * <td><b>Subversion</b></td>
+ * </tr>   
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doCheckout()</td><td>'svn checkout'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doUpdate()</td><td>'svn update'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doSwitch()</td><td>'svn switch'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doRelocate()</td><td>'svn switch --relocate oldURL newURL'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doExport()</td><td>'svn export'</td>
+ * </tr>
+ * </table>
  * 
  * @version 1.0
  * @author  TMate Software Ltd.
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public class SVNUpdateClient extends SVNBasicClient {
 
@@ -78,9 +94,9 @@ public class SVNUpdateClient extends SVNBasicClient {
      * revision.
      * 
      * <p>
-     * As a revision <b>SVNRevision</b>'s pre-defined constants can be used. For example,
+     * As a revision <b>SVNRevision</b>'s pre-defined constant fields can be used. For example,
      * to update the Working Copy to the latest revision of the repository use 
-     * <b>SVNRevision.<i>HEAD</i></b>.
+     * {@link SVNRevision#HEAD HEAD}.
      * 
      * @param  file			the Working copy item to be updated
      * @param  revision		the desired revision against which the item will be updated 
@@ -127,9 +143,9 @@ public class SVNUpdateClient extends SVNBasicClient {
      * Updates the Working Copy item to mirror a new URL. 
      * 
      * <p>
-     * As a revision <b>SVNRevision</b>'s pre-defined constants can be used. For example,
+     * As a revision <b>SVNRevision</b>'s pre-defined constant fields can be used. For example,
      * to update the Working Copy to the latest revision of the repository use 
-     * <b>SVNRevision.<i>HEAD</i></b>.
+     * {@link SVNRevision#HEAD HEAD}.
      * 
      * @param  file			the Working copy item to be switched
      * @param  url			the repository location as a target against which the item will 
@@ -184,9 +200,9 @@ public class SVNUpdateClient extends SVNBasicClient {
      * then the last component of <code>url</code> is used for the local directory name.
      * 
      * <p>
-     * As a revision <b>SVNRevision</b>'s pre-defined constants can be used. For example,
+     * As a revision <b>SVNRevision</b>'s pre-defined constant fields can be used. For example,
      * to check out a Working Copy at the latest revision of the repository use 
-     * <b>SVNRevision.<i>HEAD</i></b>.
+     * {@link SVNRevision#HEAD HEAD}.
      * 
      * @param  url			a repository location from where a Working Copy will be checked out		
      * @param  dstPath		the local path where the Working Copy will be placed
@@ -264,7 +280,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * for EOL markers, regardless of the operating system in use (for instance, this EOL marker was used by 
      * software on older Macintosh platforms).
      * <li>"native" - this causes files to contain the EOL markers that are native to the operating system 
-     * on which <b>JavaSVN</b> is run.
+     * on which JavaSVN is run.
      * </ul>
      * 
      * @param  url				a repository location from where the unversioned directory/file  will
@@ -299,12 +315,12 @@ public class SVNUpdateClient extends SVNBasicClient {
      * <p>
      * How this method works:
      * <ul>
-     * <li> If <code>revision</code> is different from <b>SVNRevision.<i>BASE</i></b>, 
-     * <b>SVNRevision.<i>WORKING</i></b>, <b>SVNRevision.<i>COMMITTED</i></b>, 
-     * <b>SVNRevision.<i>BASE</i></b> - then the repository origin of <code>srcPath</code>
+     * <li> If <code>revision</code> is different from {@link SVNRevision#BASE BASE}, 
+     * {@link SVNRevision#WORKING WORKING}, {@link SVNRevision#COMMITTED COMMITTED}, 
+     * {@link SVNRevision#UNDEFINED UNDEFINED} - then the repository origin of <code>srcPath</code>
      * will be exported (what is done by "remote" {@link #doExport(SVNURL, File, SVNRevision, SVNRevision, String, boolean, boolean)
-     * doExport(..)}).
-     * <li> In other cases a clean unversioned copy of <code>srcPath</code> - whether a directory or a single file -
+     * doExport()}).
+     * <li> In other cases a clean unversioned copy of <code>srcPath</code> - either a directory or a single file -
      * is exported to <code>dstPath</code>. 
      * </ul>
      * 
@@ -323,7 +339,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * for EOL markers, regardless of the operating system in use (for instance, this EOL marker was used by 
      * software on older Macintosh platforms).
      * <li>"native" - this causes files to contain the EOL markers that are native to the operating system 
-     * on which <b>JavaSVN</b> is run.
+     * on which JavaSVN is run.
      * </ul>
      * 
      * @param  srcPath			a repository location from where the unversioned directory/file  will

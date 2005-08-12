@@ -50,9 +50,11 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
+ * <b>SVNWCClient</b> combines a number of version control operations mostly
+ * intended for local work with versioned Working Copies.
  * 
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
  */
 public class SVNWCClient extends SVNBasicClient {
 
