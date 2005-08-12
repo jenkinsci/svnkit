@@ -73,12 +73,13 @@ public class DAVLogHandler extends BasicDAVHandler {
 	private SVNLogEntryPathEx myPath;
 
 	private int myCount;
+    private long myLimit;
 
-
-	public DAVLogHandler(ISVNLogEntryHandler handler) {
+	public DAVLogHandler(ISVNLogEntryHandler handler, long limit) {
 		myLogEntryHandler = handler;
 		myRevision = -1;
 		myCount = 0;
+        myLimit = limit;
 		init();
 	}
 	
@@ -110,13 +111,15 @@ public class DAVLogHandler extends BasicDAVHandler {
 	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
 		if (element == LOG_ITEM) {
 			myCount++;
-			if (myLogEntryHandler != null) {
-				if (myPaths == null) {
-					myPaths = new HashMap();
-				}
-				SVNLogEntry logEntry = new SVNLogEntry(myPaths, myRevision, myAuthor, myDate, myComment);
-				myLogEntryHandler.handleLogEntry(logEntry);
-			}
+            if (myLimit > 0 && myCount <= myLimit) {
+    			if (myLogEntryHandler != null) {
+    				if (myPaths == null) {
+    					myPaths = new HashMap();
+    				}
+    				SVNLogEntry logEntry = new SVNLogEntry(myPaths, myRevision, myAuthor, myDate, myComment);
+    				myLogEntryHandler.handleLogEntry(logEntry);
+    			}
+            }
 			myPaths = null;
 			myRevision = -1;
 			myAuthor = null;

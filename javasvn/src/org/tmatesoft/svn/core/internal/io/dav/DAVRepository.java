@@ -289,7 +289,7 @@ class DAVRepository extends SVNRepository {
 	        StringBuffer request = DAVLogHandler.generateLogRequest(null, startRevision, endRevision,
 	        		changedPath, strictNode, limit, fullPaths);
 	        
-            davHandler = new DAVLogHandler(handler); 
+            davHandler = new DAVLogHandler(handler, limit); 
 			long revision = Math.max(startRevision, endRevision);
             path = SVNEncodingUtil.uriEncode(path);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, false, null);

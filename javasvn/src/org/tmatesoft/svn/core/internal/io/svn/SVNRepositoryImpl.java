@@ -382,7 +382,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                     read(")N(?S)(?S)(?S))", buffer);
                     count++;
-                    if (handler != null) {
+                    if (handler != null && (limit == 0 || limit <= count)) {
                         long revision = SVNReader.getLong(buffer, 0);
                         String author = SVNReader.getString(buffer, 1);
                         Date date = SVNReader.getDate(buffer, 2);
