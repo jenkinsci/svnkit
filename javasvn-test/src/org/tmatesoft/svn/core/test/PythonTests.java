@@ -81,7 +81,7 @@ public class PythonTests {
 			} finally {
 				stopSVNServe();
                 for (int i = 0; i < ourLoggers.length; i++) {
-                    ourLoggers[i].endServer("svnserver", url);
+                    ourLoggers[i].endServer("svnserve", url);
                 }
 			}
 		}
@@ -98,12 +98,12 @@ public class PythonTests {
 			} catch (Throwable th) {
 				th.printStackTrace();
 			} finally {
-                for (int i = 0; i < ourLoggers.length; i++) {
-                    ourLoggers[i].endServer("apache", url);
-                }
 				try {
 					stopApache(properties);
-				} catch (Throwable th) {
+                    for (int i = 0; i < ourLoggers.length; i++) {
+                        ourLoggers[i].endServer("apache", url);
+                    }
+                } catch (Throwable th) {
 					th.printStackTrace();
 				}
 			}

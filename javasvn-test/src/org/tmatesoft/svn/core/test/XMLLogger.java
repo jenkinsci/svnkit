@@ -47,12 +47,14 @@ public class XMLLogger extends AbstractPythonTestLogger {
 
     private Properties myConfiguration;
     private String curSuite;
+    private String curServer;
     private int curSuitePassed;
     private int curSuiteCount;
     private long startTimeMillis;
     private long endTimeMillis;
-
+    private Map myServersToURLs;
     private Map mySuitesStat;
+    private Map myServers;
     
     public void startTests(Properties configuration) throws IOException {
 		myConfiguration = configuration; 
@@ -68,8 +70,9 @@ public class XMLLogger extends AbstractPythonTestLogger {
 
 	    myWriter = new PrintWriter(new FileWriter(resultsFile));
 	    myResults = new LinkedList();
-	    mySuitesStat = new HashMap();
-	    
+	    myServers = new HashMap();
+        myServersToURLs = new HashMap();
+        
 	    String resultString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 	    myResults.addFirst(resultString);   
 	    
@@ -79,15 +82,20 @@ public class XMLLogger extends AbstractPythonTestLogger {
     }
 
     public void startServer(String name, String url) {
-	    String resultString = "  <server name=\"" + name + "\" url=\"" + url + "\">";
-	    myResults.addFirst(resultString);   
+	    myServersToURLs.put(name, url);
+        curServer = name;
+        //String resultString = "  <server name=\"" + name + "\" url=\"" + url + "\">";
+	    String resultString = "server" + name;
+        myResults.addFirst(resultString);   
+        mySuitesStat = new HashMap();
+    
     }
 
     public void startSuite(String suiteName) {
-	    String resultString = "suite" + suiteName;
+        String resultString = "suite" + curServer + suiteName;
 	    myResults.addFirst(resultString);
 	    curSuite = suiteName;
-	    curSuiteCount = 0;
+        curSuiteCount = 0;
 	    curSuitePassed = 0;
     }
 
@@ -109,13 +117,13 @@ public class XMLLogger extends AbstractPythonTestLogger {
 	    String resultString = "    </suite>";
 	    myResults.addFirst(resultString);
 	    SuiteStatistics suiteStat = new SuiteStatistics(curSuiteCount, curSuitePassed);
-	    
 	    mySuitesStat.put(curSuite, suiteStat);
     }
 
     public void endServer(String name, String url) {
 	    String resultString = "  </server>";
 	    myResults.addFirst(resultString);   
+	    myServers.put(name, mySuitesStat);
     }
 
     public void endTests(Properties configuration) throws Throwable {
@@ -124,6 +132,7 @@ public class XMLLogger extends AbstractPythonTestLogger {
 	    
 	    endTimeMillis = Calendar.getInstance().getTimeInMillis();
 	    
+        String currentServer = null;
 	    String line = null;
 	    while(true){
 		    if(!myResults.isEmpty()){
@@ -149,9 +158,18 @@ public class XMLLogger extends AbstractPythonTestLogger {
 			    line = "<PythonTests start=\"" + simpleDateFormat.format(new Date(startTimeMillis)) + "\" elapsed=\"" + elapsedTimeString + "\">";
 		    }
 		    
-		    if(line.startsWith("suite")){
-	            String suiteName = line.substring("suite".length());
-	            SuiteStatistics stat = (SuiteStatistics)mySuitesStat.remove(suiteName);
+            if(line.startsWith("server")){
+                
+                currentServer = line.substring("server".length());
+                line = "  <server name=\"" + currentServer + "\" url=\"" + myServersToURLs.get(currentServer) + "\">";
+            }
+		  
+            if(line.startsWith("suite")){
+                String suiteName = line.substring(("suite"+currentServer).length());
+                 
+                Map statistics = (Map)myServers.get(currentServer);
+
+                SuiteStatistics stat = (SuiteStatistics)statistics.remove(suiteName);
 	            int failed = stat.suitesCount - stat.suitesPassed;
 	            line = "    <suite name=\"" + suiteName + "\" total=\"" + stat.suitesCount + "\" passed=\"" + stat.suitesPassed + "\" failed=\"" + failed + "\">";
 	        }
