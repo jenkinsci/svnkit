@@ -56,6 +56,7 @@ javasvn-test/apache/users eol=lf
 javasvn-test/lib/xalan.jar -text
 javasvn-test/lib/xercesImpl.jar -text
 javasvn-test/logging.properties -text
+javasvn-test/results.xml -text
 javasvn-test/test.mac.properties eol=lf
 javasvn-test/test.unix.properties eol=lf
 javasvn-test/test.windows.properties eol=crlf
