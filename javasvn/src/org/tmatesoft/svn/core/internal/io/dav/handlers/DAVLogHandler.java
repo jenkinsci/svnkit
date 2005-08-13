@@ -111,7 +111,7 @@ public class DAVLogHandler extends BasicDAVHandler {
 	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
 		if (element == LOG_ITEM) {
 			myCount++;
-            if (myLimit > 0 && myCount <= myLimit) {
+            if (myLimit <= 0 || myCount <= myLimit) {
     			if (myLogEntryHandler != null) {
     				if (myPaths == null) {
     					myPaths = new HashMap();
