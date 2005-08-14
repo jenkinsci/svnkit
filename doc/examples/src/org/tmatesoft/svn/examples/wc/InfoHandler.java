@@ -38,11 +38,15 @@ public class InfoHandler implements ISVNInfoHandler {
             System.out.println("Repository Root URL: "
                     + info.getRepositoryRootURL());
         }
-        System.out.println("Repository UUID: " + info.getRepositoryUUID());
+        if(info.getRepositoryUUID() != null){
+            System.out.println("Repository UUID: " + info.getRepositoryUUID());
+        }
         System.out.println("Revision: " + info.getRevision().getNumber());
         System.out.println("Node Kind: " + info.getKind().toString());
-        System.out.println("Schedule: "
-                + (info.getSchedule() != null ? info.getSchedule() : "normal"));
+        if(!info.isRemote()){
+            System.out.println("Schedule: "
+                    + (info.getSchedule() != null ? info.getSchedule() : "normal"));
+        }
         System.out.println("Last Changed Author: " + info.getAuthor());
         System.out.println("Last Changed Revision: "
                 + info.getCommittedRevision().getNumber());

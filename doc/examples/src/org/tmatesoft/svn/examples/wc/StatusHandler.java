@@ -181,7 +181,7 @@ public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
          */
         boolean isLocked = status.isLocked();
         /*
-         * Whether the item is switshed to a different URL (branch).
+         * Whether the item is switched to a different URL (branch).
          */
         boolean isSwitched = status.isSwitched();
         /*
