@@ -15,8 +15,6 @@ import java.util.Properties;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.FileWriter;
-import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.HashMap;
@@ -26,14 +24,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Calendar;
 
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-
-
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
@@ -42,8 +32,6 @@ public class XMLLogger extends AbstractPythonTestLogger {
     private String myXMLResultsFile;
     private PrintWriter myWriter;
     private LinkedList myResults;
-    private String myXSLStylesheet;
-    private String myHTMLResultsFile;
 
     private Properties myConfiguration;
     private String curSuite;
@@ -58,10 +46,7 @@ public class XMLLogger extends AbstractPythonTestLogger {
     
     public void startTests(Properties configuration) throws IOException {
 		myConfiguration = configuration; 
-
 		myXMLResultsFile = myConfiguration.getProperty("tests.xml.results", "results.xml"); 		
-		myHTMLResultsFile = myConfiguration.getProperty("tests.html.results", "../www/download/results.html");
-		myXSLStylesheet = myConfiguration.getProperty("tests.xsl", "PythonTests.xsl");
 		File resultsFile = new File(myXMLResultsFile);
 		
 		if(!resultsFile.exists()){
@@ -176,19 +161,6 @@ public class XMLLogger extends AbstractPythonTestLogger {
 	        myWriter.println(line);
 		    myWriter.flush();
 	    }
-	    
-
-	    TransformerFactory tFactory = TransformerFactory.newInstance();
-		try{
-		    Transformer transformer = tFactory.newTransformer(new StreamSource(myXSLStylesheet));
-			transformer.transform(new StreamSource(myXMLResultsFile), new StreamResult(new FileOutputStream(myHTMLResultsFile)));
-		}catch(TransformerConfigurationException tce){
-		    throw new Throwable("Can't create a transformer: "+tce.getMessage());
-		}catch(TransformerException te){
-	        throw new Throwable("Can't transform: "+te.getMessage());
-		}catch(FileNotFoundException fnfe){
-	        throw new Throwable("Can't find input xml file: "+fnfe.getMessage());
-		}
 	    
     }
 
