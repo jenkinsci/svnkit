@@ -41,6 +41,8 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
        $build = $matches[1][$i];
        $changelog_url = $repository . $build . "/changelog.txt";
        $test_url = $repository . $build . "/tests.log";
+       $test_results_xml_url = $repository . $build . "/results.xml";
+           
        $changelog = read_contents($changelog_url);
 
        if (!$changelog) {
@@ -78,17 +80,17 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
        $item_description .= "<h5>Contact</h5><p>Your questions and feedback are welcome at <a href=\"mailto:support@tmatesoft.com\">support@tmatesoft.com</a></p>";
 
 
-       $html_description  = "<tr bgcolor=#cccccc><td colspan=\"2\">&nbsp;" . $date_string . ", build <b>" . $build . "</b></td></tr>";
+       $html_description  = "<tr><td colspan=\"2\">&nbsp;" . $date_string . ", build <b>" . $build . "</b></td></tr>";
        $html_description .= "<tr><td colspan=\"2\">&nbsp;Changelog:</td></tr>";
        $html_description .= "<tr><td colspan=\"2\"><pre>" . $changelog_str . "</pre>";
-       $html_description .= "<a href=\"" . $changelog_url . "\">full changelog up to this build</a></td></tr>";
-       $html_description .= "<a href=\"" . $test_url . "\">tests results</a></td></tr>";
-       $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Standalone Version&nbsp;</td><td><a href=\"" . $standalone_link . "\">" . $standalone_name . "</a></td></tr>";
-       $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Source Code Archive&nbsp;</td><td><a href=\"" . $src_url . "\">" . $src_name . " </a></td></tr>";
-       $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Eclipse Update Site Archive&nbsp;</td><td><a href=\"" . $eclipse_url . "\">" . $eclipse_name . "</a></td></tr>";
-       $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Eclipse Update Site Location&nbsp;</td><td>&nbsp;&nbsp;<b>" . $eclipse_update_url . "</b></td></tr>";
-       $html_description .= "<tr bgcolor=#cccccc><td>&nbsp;Source Code&nbsp;</td><td><a href=\"" . $svn_url . "\">@svn repository</a></td></tr>";
-       $html_description .= "<tr colspan=2><td></td></tr>";
+       $html_description .= "<a href=\"" . $changelog_url . "\">full changelog up to this build</a>&nbsp;&nbsp;<a href=\"" . $test_url . "\">tests results</a></td></tr>";
+       
+       $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Python Tests Results&nbsp;</td><td><a href=\"/svn/download/test-results.php?fileurl=" . $test_results_xml_url . "&build=" . $build . "\">" . $build. "-tests" . "</a></td></tr>";
+       $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Standalone Version&nbsp;</td><td><a href=\"" . $standalone_link . "\">" . $standalone_name . "</a></td></tr>";
+       $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Source Code Archive&nbsp;</td><td><a href=\"" . $src_url . "\">" . $src_name . " </a></td></tr>";
+       $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Eclipse Update Site Archive&nbsp;</td><td><a href=\"" . $eclipse_url . "\">" . $eclipse_name . "</a></td></tr>";
+       $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Eclipse Update Site Location&nbsp;</td><td><b>" . $eclipse_update_url . "</b></td></tr>";
+       $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Source Code&nbsp;</td><td><a href=\"" . $svn_url . "\">@svn repository</a></td></tr>";
 
        $item = array();
        $item["title"]  = "Build '" . $build . "' published";

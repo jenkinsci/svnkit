@@ -90,6 +90,7 @@ www/download/.htaccess -text
 www/download/index.php -text
 www/download/rss.php -text
 www/download/rss2.php -text
+www/download/test-results.php -text
 www/feed/feedcreator.class.php eol=lf
 www/feed/lgpl.txt eol=lf
 www/feed/rss.php eol=lf

@@ -33,35 +33,32 @@ To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/js
 <br />To get the latest source code (with the SVN command line client) use the following command:
 <pre>$ svn co http://72.9.228.230:8080/svn/jsvn/trunk/</pre>
 <br>
-<!--<p>
-Check the <a href="status.html">JavaSVN status</a> page to see
-what features are planned, but not yet implemented.
-</p>
-<br>-->
 
 <h4>Get JavaSVN Eclipse Plugin from update site</h4>
 <p>To get an Eclipse plugin version use <b>http://tmate.org/svn/</b> as an update site location in Eclipse Update Manager.
 In Eclipse menu select Help->Software Updates->Find and Install... Then choose 'Search for new features to install' combo 
 box, click 'Next', then click 'New Remote Site...' and type <b>http://tmate.org/svn/</b> in the URL field and your preferred 
 name for the update site in the name field. After this check the new site (it should appear in the list of update sites) and 
-follow further steps prompted by Eclipse.
+follow further steps prompted by Eclipse.</p>
 <br>
 <h4>Latest Stable Version</h4>
 
 <table width="100%">
-<tbody>
 
 <?
 include("../feed/rss_util.php");
 publish_html("http://tmate.org/svn/");
 ?>
+
+</table>
+
 <table cellpadding="0" border="0" cellspacing="0" width="100%">
 <tr>
 <td align="right" width="100%"><a style="text-decoration: none; border: 0px;" href="rss.xml"><span style="font-family:Arial;font-size:9px;background: #ff6000;color: #fff;padding: 0 4px">rss&nbsp;1.0</span>
 <a style="text-decoration: none; border: 0px;" href="rss2.xml"><span style="font-family:Arial;font-size:9px;background: #ff6000;color: #fff;padding: 0 4px">rss&nbsp;2.0</span></td>
 </tr>
 </table>
-</p>
+
 
 <table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
 2004-2005, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
