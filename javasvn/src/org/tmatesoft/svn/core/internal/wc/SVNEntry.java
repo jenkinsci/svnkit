@@ -235,7 +235,7 @@ public class SVNEntry implements Comparable {
         }
         return SVNNodeKind.UNKNOWN;
     }
-
+    
     public String getTextTime() {
         return myEntries.getPropertyValue(myName, SVNProperty.TEXT_TIME);
     }

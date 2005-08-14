@@ -35,8 +35,8 @@ import java.util.Map;
  * the concrete item.  
  * 
  * <p>
- * This is an example:<br />
- * implementing an <b>ISVNStatusHandler</b>:
+ * The following are the two ways how to process <b>SVNStatus</b> objects:<br />
+ * 1. Implementing an <b>ISVNStatusHandler</b>:
  * <pre class="javacode">
  * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.ISVNStatusHandler;
  * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.SVNStatus;
@@ -59,7 +59,7 @@ import java.util.Map;
  *         ...
  *     }
  * }</pre><br />
- * provide a status handler implementation to an <b>SVNStatusClient</b>'s 
+ * ...and providing a status handler implementation to an <b>SVNStatusClient</b>'s 
  * doStatus() method:
  * <pre class="javacode">
  * ...
@@ -71,9 +71,12 @@ import java.util.Map;
  * 
  * statusClient.doStatus(...., <span class="javakeyword">new</span> MyCustomStatusHandler());
  * ...</pre><br />
- * or process an <b>SVNStatus</b> like this:
+ * 2. Or process an <b>SVNStatus</b> like this:
  * <pre class="javacode">
- * SVNStatus status = statusClient.doStatus(<span class="javakeyword">new</span> File(myPath), <span class="javakeyword">false</span>);</pre>
+ * ...
+ * SVNStatus status = statusClient.doStatus(<span class="javakeyword">new</span> File(myPath), <span class="javakeyword">false</span>);
+ * <span class="javacomment">//parsing status info here</span>
+ * ...</pre>
  * </p> 
  * <p>
  * <b>SVNStatus</b>'s methods which names start with <code>getRemote</code> are relevant
@@ -145,7 +148,7 @@ public class SVNStatus {
      * @param copyFromRevision         item's ancestor revision from which the item was copied
      * @param remoteLock               item's lock in the repository
      * @param localLock                item's local lock
-     * @param entryProperties          item's SVN specific '<entry' properties
+     * @param entryProperties          item's SVN specific '&lt;entry' properties
      */
     public SVNStatus(SVNURL url, File file, SVNNodeKind kind,
             SVNRevision revision, SVNRevision committedRevision,
@@ -200,7 +203,7 @@ public class SVNStatus {
     /**
      * Gets the item's latest repository location. 
      * For example, the item could have been moved in the repository,
-     * but {@link SVNStatus#getURL() getURL(()} returns the item's 
+     * but {@link SVNStatus#getURL() getURL()} returns the item's 
      * URL as it's defined in a URL entry property. Applicable
      * for a remote status invocation.
      * 
@@ -376,7 +379,7 @@ public class SVNStatus {
     }
     
     /**
-     * Gets the temporary '.mine' file with all current local changes to the 
+     * Gets the temporary <i>'.mine'</i> file with all current local changes to the 
      * original file. That is if the file item is in conflict with changes that 
      * came during an update this temporary file is created to get the snapshot
      * of the user's file with only the user's local modifications and nothing 
