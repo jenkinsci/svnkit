@@ -108,6 +108,10 @@ public class SVNFileUtil {
     }
 
     public static void rename(File src, File dst) throws SVNException {
+        boolean renamed = src.renameTo(dst);
+        if (renamed) {
+            return;
+        }
         if (!src.exists() && !isSymlink(src)) {
             SVNErrorManager.error("svn: Cannot rename file '"
                     + src.getAbsolutePath() + "' : file doesn't exist");
@@ -116,7 +120,6 @@ public class SVNFileUtil {
             SVNErrorManager.error("svn: Cannot overwrite file '"
                     + dst.getAbsolutePath() + "' : it is a directory");
         }
-        boolean renamed = src.renameTo(dst);
         if (!renamed) {
             if (dst.exists()) {
                 boolean deleted = dst.delete();
@@ -140,6 +143,9 @@ public class SVNFileUtil {
         }
         if (readonly) {
             return file.setReadOnly();
+        }
+        if (file.canWrite()) {
+            return true;
         }
         File tmpFile = createUniqueFile(file.getParentFile(), file.getName(), ".tmp");
         copyFile(file, tmpFile, false);
@@ -327,13 +333,14 @@ public class SVNFileUtil {
             return null;
         }
         InputStream is = openFileForReading(file);
+        byte[] buffer = new byte[1024*16];
         try {
             while (true) {
-                int b = is.read();
-                if (b < 0) {
+                int l = is.read(buffer);
+                if (l <= 0) {
                     break;
                 }
-                digest.update((byte) (b & 0xFF));
+                digest.update(buffer, 0, l);
             }
         } catch (IOException e) {
             SVNErrorManager.error("svn: I/O error while computing checksum for '" + file + "'");
@@ -612,11 +619,14 @@ public class SVNFileUtil {
         if (file == null) {
             return null;
         }
+        /*
         if (file.exists() && (!file.isFile() || !file.canWrite())) {
             SVNErrorManager.error("svn: Cannot write to '" + file
                     + "': path refers to directory or write access denied");
+        }*/
+        if (!file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
         }
-        file.getParentFile().mkdirs();
         try {
             return new BufferedOutputStream(new FileOutputStream(file, append));
         } catch (FileNotFoundException e) {

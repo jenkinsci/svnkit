@@ -92,8 +92,7 @@ public class SVNRAFileData implements ISVNRAData {
             if (!myRawFile.exists()) {
                 myRawFile.getParentFile().mkdirs();
                 myRawFile.createNewFile();
-            }
-            if (!myIsReadonly) {
+            } else if (!myIsReadonly) {
                 try {
                     SVNFileUtil.setReadonly(myRawFile, false);
                 } catch (SVNException e) {

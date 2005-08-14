@@ -418,5 +418,98 @@
             </fileset>
         </copy>
     </target>
+    
+    <target name="benchmark" depends="clean"> 
+        <!-- build library with native SVNClient -->
+        <mkdir dir="javasvn/bin" />
+        <mkdir dir="contrib/javahl/bin" />
+        <mkdir dir="contrib/sequence/bin" />
+
+        <path id="library.classpath">
+            <pathelement location="contrib/jsch/jsch.jar" />
+            <pathelement path="contrib/javahl/bin" />
+            <pathelement path="contrib/sequence/bin" />
+        </path>
+
+        <javac debug="true" destdir="contrib/javahl/bin" srcdir="contrib/javahl/src">
+            <exclude name="org/tigris/subversion/javahl/tests/**" />
+        </javac>
+        <javac debug="true" destdir="contrib/sequence/bin" srcdir="contrib/sequence/src" />
+        <javac debug="true"
+               destdir="javasvn/bin"
+               srcdir="javasvn/src"
+               classpathref="library.classpath"
+        >
+            <exclude name="org/tigris/subversion/javahl/SVNClient.java" />
+        </javac>
+        <!-- now we have native SVNClient and JavaSVN's SVNClientImpl -->
+        <mkdir dir="contrib/sequence/bin-test" />
+        <mkdir dir="javasvn-test/bin" />
+        <path id="tests.classpath">
+            <pathelement location="contrib/jsch/jsch.jar" />
+            <pathelement location="contrib/junit/junit.jar" />
+            <pathelement path="contrib/javahl/bin" />
+            <pathelement path="contrib/sequence/bin" />
+            <pathelement path="contrib/sequence/bin-test" />
+            <pathelement path="javasvn/bin" />
+        </path>
+
+        <path id="sequence.tests.classpath">
+            <pathelement location="contrib/junit/junit.jar" />
+            <pathelement path="contrib/sequence/bin" />
+        </path>
+
+        <javac debug="true"
+               destdir="contrib/sequence/bin-test"
+               srcdir="contrib/sequence/src-test"
+               classpathref="sequence.tests.classpath"
+        />
+        <javac debug="true"
+               destdir="javasvn-test/bin"
+               srcdir="javasvn-test/src"
+               classpathref="tests.classpath"
+        />
+
+        <mkdir dir="build/lib" />
+        <jar destfile="build/lib/javasvn.jar">
+            <fileset dir="javasvn/bin">
+                <exclude name="org/tmatesoft/svn/cli/**" />
+                <exclude name="org/tigris/subversion/javahl/SVNClient**" />
+            </fileset>
+            <fileset dir="${basedir}" >
+                <include name="javasvn.build.properties" />
+                <include name="COPYING" />
+            </fileset>
+            <fileset dir="contrib/sequence">
+                <include name="SEQUENCE-LICENSE" />
+            </fileset>
+            <fileset dir="contrib/sequence/bin" />
+            <fileset dir="javasvn/src">
+                <include name="org/tmatesoft/svn/core/internal/wc/config/**" />
+            </fileset>
+        </jar>
+        <jar destfile="build/lib/javasvn-javahl.jar">
+            <fileset dir="contrib/javahl/bin" >
+                <exclude name="org/tigris/subversion/javahl/tests/**" />
+            </fileset>
+            <fileset dir="contrib/javahl">
+                <include name="JAVAHL-LICENSE" />
+            </fileset>
+        </jar>
+        
+        <!-- run benchmark -->
+        <path id="benchmark.classpath">
+            <pathelement path="build/lib/javasvn.jar" />
+            <pathelement path="build/lib/javasvn-javahl.jar" />
+            <pathelement path="javasvn-test/bin" />
+        </path>
+        
+        <java classpathref="benchmark.classpath"
+              fork="true"
+              classname="org.tmatesoft.svn.core.test.Benchmark">        
+        </java>
+
+        <antcall target="clean"></antcall>
+    </target>
 
 </project>

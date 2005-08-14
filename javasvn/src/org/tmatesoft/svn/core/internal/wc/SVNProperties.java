@@ -329,9 +329,14 @@ public class SVNProperties {
     public void copyTo(SVNProperties destination) throws SVNException {
         if (!getFile().exists()) {
             // just create empty dst.
-            destination.setPropertyValue("tmp", "empty");
-            destination.setPropertyValue("tmp", null);
-            // this will leave "end\n";
+            OutputStream os = null;
+            try {
+                os = SVNFileUtil.openFileForWriting(destination.getFile());
+                os.write("END\n".getBytes());
+            } catch (IOException e) {
+            } finally {
+                SVNFileUtil.closeFile(os);
+            }
         } else {
             SVNFileUtil.copyFile(getFile(), destination.getFile(), true);
         }
