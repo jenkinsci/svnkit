@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?> 
+<?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-  <xsl:output method="html" indent="yes" version="4.0" encoding="UTF-8" doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN" />
+  <xsl:output method="html" indent="yes" standalone="no" omit-xml-declaration="yes" version="4.0" encoding="UTF-8" doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN" />
 
 <xsl:template match="/">
 
@@ -10,12 +10,12 @@
 
 
 <xsl:template match="PythonTests">
-<html xmlns="http://www.w3.org/1999/xhtml" >
-<head><title>JavaSVN</title>
+<html>
+<head><title></title>
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development" />   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software" />
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<link rel="stylesheet" type="text/css" media="screen" href="../css/home.css"></link>
+<link rel="stylesheet" type="text/css" media="screen" href="/svn/css/home.css"></link>
 </head>
 <body>
 <table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;"  border="0" cellspacing="0" >
@@ -31,17 +31,17 @@
 
 <p>
 <div style="padding-bottom: 10px; border-bottom: 1px solid #ccc;">
-<span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&#160;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
+<span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a></span><span style="font-size: 140%; font-weight: bold;"> The only pure Java Subversion client library in the world!</span>
 </div>
-<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: Python Tests</small>
+<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.php" style="border-bottom: 0px;">Get Library</a> :: Python Tests</small>
 </p>
-
-<xsl:text>Python tests started on&#160;</xsl:text><xsl:value-of select="@start" />
+<p>
+<xsl:text>Python tests started on </xsl:text><xsl:value-of select="@start" />
 
 	<xsl:apply-templates select="server" />
 
-<xsl:text>Total time elapsed:&#160;</xsl:text><xsl:value-of select="@elapsed" />
-	
+<xsl:text>Total time elapsed: </xsl:text><xsl:value-of select="@elapsed" />
+</p>	
 <br />
 <table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &#169; 
 &#50;&#48;&#48;&#52;-&#50;&#48;&#48;&#53;, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
@@ -60,7 +60,6 @@
 
 
 
-
 <xsl:template match="server">
 
 <h4>
@@ -75,25 +74,22 @@
 
 </xsl:template>
 
-
-
 <xsl:template match="suite">
 
-<xsl:text>Suite Name:&#160;</xsl:text>
-<b>	
+<b style="text-transform: capitalize;">	
 	<xsl:value-of select="@name" />
 </b>	
 <table cellpadding="3" cellspacing="1" border="0" width="100%" bgcolor="#999933">
 <tr bgcolor="#E1E1E1" align="left">
-<td>Test Name</td>
+<td>Test</td>
 <td>Id</td>
 <td>Result</td>
 </tr>	
 	<xsl:apply-templates select="test"/>
 </table>
-<xsl:text>Total:&#160;</xsl:text><xsl:value-of select="@total" />
-<xsl:text>, Passed:&#160;</xsl:text><xsl:value-of select="@passed" />
-<xsl:text>, Failed:&#160;</xsl:text><xsl:value-of select="@failed" />
+<xsl:text>Total: </xsl:text><xsl:value-of select="@total" />
+<xsl:text>, Passed: </xsl:text><xsl:value-of select="@passed" />
+<xsl:text>, Failed: </xsl:text><xsl:value-of select="@failed" />
 <br />
 
 
