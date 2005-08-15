@@ -219,6 +219,9 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
                         String name = token.substring(0, i).trim();
                         String pValue = i == token.length() - 1 ? "" : token.substring(i + 1).trim();
                         if (!"".equals(name.trim())) {
+                            if (pValue.startsWith("\"") && pValue.endsWith("\"") && pValue.length() > 1) {
+                                pValue = pValue.substring(1, pValue.length() - 1);
+                            }
                             target.put(name, pValue);
                         }
                     }
