@@ -686,6 +686,7 @@ class HttpConnection {
             ourSAXParserFactory = SAXParserFactory.newInstance();
             ourSAXParserFactory.setFeature("http://xml.org/sax/features/namespaces", true);
             ourSAXParserFactory.setFeature("http://xml.org/sax/features/validation", false);
+            ourSAXParserFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
             ourSAXParserFactory.setNamespaceAware(true);
             ourSAXParserFactory.setValidating(false);
         }
