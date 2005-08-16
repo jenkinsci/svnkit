@@ -419,7 +419,7 @@
         </copy>
     </target>
     
-    <target name="benchmark" depends="clean"> 
+    <target name="benchmark"> 
         <!-- build library with native SVNClient -->
         <mkdir dir="javasvn/bin" />
         <mkdir dir="contrib/javahl/bin" />
@@ -431,11 +431,11 @@
             <pathelement path="contrib/sequence/bin" />
         </path>
 
-        <javac debug="true" destdir="contrib/javahl/bin" srcdir="contrib/javahl/src">
+        <javac debug="true" optimize="true" destdir="contrib/javahl/bin" srcdir="contrib/javahl/src">
             <exclude name="org/tigris/subversion/javahl/tests/**" />
         </javac>
-        <javac debug="true" destdir="contrib/sequence/bin" srcdir="contrib/sequence/src" />
-        <javac debug="true"
+        <javac debug="true" optimize="true" destdir="contrib/sequence/bin" srcdir="contrib/sequence/src" />
+        <javac debug="true" optimize="true" 
                destdir="javasvn/bin"
                srcdir="javasvn/src"
                classpathref="library.classpath"
@@ -459,19 +459,19 @@
             <pathelement path="contrib/sequence/bin" />
         </path>
 
-        <javac debug="true"
+        <javac debug="true" optimize="true" 
                destdir="contrib/sequence/bin-test"
                srcdir="contrib/sequence/src-test"
                classpathref="sequence.tests.classpath"
         />
-        <javac debug="true"
+        <javac debug="true" optimize="true" 
                destdir="javasvn-test/bin"
                srcdir="javasvn-test/src"
                classpathref="tests.classpath"
         />
 
         <mkdir dir="build/lib" />
-        <jar destfile="build/lib/javasvn.jar">
+        <jar destfile="build/lib/javasvn.jar" compress="false">
             <fileset dir="javasvn/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
                 <exclude name="org/tigris/subversion/javahl/SVNClient**" />
@@ -488,7 +488,7 @@
                 <include name="org/tmatesoft/svn/core/internal/wc/config/**" />
             </fileset>
         </jar>
-        <jar destfile="build/lib/javasvn-javahl.jar">
+        <jar destfile="build/lib/javasvn-javahl.jar"  >
             <fileset dir="contrib/javahl/bin" >
                 <exclude name="org/tigris/subversion/javahl/tests/**" />
             </fileset>
@@ -509,7 +509,6 @@
               classname="org.tmatesoft.svn.core.test.Benchmark">        
         </java>
 
-        <antcall target="clean"></antcall>
     </target>
 
 </project>

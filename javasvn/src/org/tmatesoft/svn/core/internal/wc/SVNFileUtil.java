@@ -190,6 +190,7 @@ public class SVNFileUtil {
 
     public static void copyFile(File src, File dst, boolean safe)
             throws SVNException {
+        safe = false;
         if (src == null || dst == null) {
             return;
         }

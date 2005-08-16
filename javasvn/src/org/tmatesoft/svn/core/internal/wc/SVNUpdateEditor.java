@@ -332,7 +332,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         myDeltaProcessor.close();
         // check checksum.
         String checksum = null;
-        if (textChecksum != null && myCurrentFile.TextUpdated) {
+        if (textChecksum != null && myCurrentFile.TextUpdated) {            
             File baseTmpFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name, true);
             checksum = SVNFileUtil.computeChecksum(baseTmpFile);            
             if (!textChecksum.equals(checksum)) {
