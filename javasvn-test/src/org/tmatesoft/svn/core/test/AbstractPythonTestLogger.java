@@ -33,5 +33,5 @@ public abstract class AbstractPythonTestLogger {
     
     public abstract void endServer(String name, String url);
     
-    public abstract void endTests(Properties configuration) throws Throwable;
+    public abstract void endTests(Properties configuration);
 }

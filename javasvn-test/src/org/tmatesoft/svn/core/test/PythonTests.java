@@ -109,13 +109,7 @@ public class PythonTests {
 			}
 		}
         for (int i = 0; i < ourLoggers.length; i++) {
-            try{
-                ourLoggers[i].endTests(properties);
-            }catch(Throwable e){
-                e.getMessage();
-                e.printStackTrace();
-                System.exit(1);
-            }
+            ourLoggers[i].endTests(properties);
         }
 	}
 

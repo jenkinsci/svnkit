@@ -111,7 +111,7 @@ public class XMLLogger extends AbstractPythonTestLogger {
 	    myServers.put(name, mySuitesStat);
     }
 
-    public void endTests(Properties configuration) throws Throwable {
+    public void endTests(Properties configuration) {
 	    String resultString = "</PythonTests>";
 	    myResults.addFirst(resultString);
 	    
