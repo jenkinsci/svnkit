@@ -22,7 +22,17 @@ class. And * for each of these classes is the name of that functional behaviour 
 class is intended for - such as <b>SVNUpdateClient</b> or <b>SVNCommitClient</b>. To 
 have even more flexibility there's a kind of manager class - <b>SVNClientManager</b> 
 - which aggregates all of these 'client' classes making developer's work easier and 
-more comfortable.
+more comfortable. At last the high-level API is even a bit more than just an implementation 
+of the SVN client's operations:
+<ul>
+<li> the package gives a developer an ability to implement several types of operation 
+handlers that can be passed to some of <b>SVN</b>*<b>Client</b>'s methods , thus the developer
+can 'take part' in operation processing;
+<li> some of <b>SVN</b>*<b>Client</b> classes have methods for which the SVN client
+has no analogues 
+(such as <A HREF="../../../../../org/tmatesoft/svn/core/wc/SVNWCClient.html#doGetFileContents(java.io.File, org.tmatesoft.svn.core.wc.SVNRevision, org.tmatesoft.svn.core.wc.SVNRevision, boolean, java.io.OutputStream)">
+doGetFileContents()</A>).
+</ul>
 </p>
 <p>
 While the package <b>org.tmatesoft.svn.core.io</b> represents a low-level API and therefore

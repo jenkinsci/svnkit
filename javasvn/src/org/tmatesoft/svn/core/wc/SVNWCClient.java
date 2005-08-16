@@ -50,11 +50,82 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
- * <b>SVNWCClient</b> combines a number of version control operations mostly
- * intended for local work with versioned Working Copies.
+ * The <b>SVNWCClient</b> class combines a number of version control 
+ * operations intended for local work with Working Copy items.
+ * 
+ * <p>
+ * Here's a list of the <b>SVNWCClient</b>'s methods 
+ * matched against corresponing commands of the SVN command line 
+ * client:
+ * 
+ * <table cellpadding="3" cellspacing="1" border="0" width="70%" bgcolor="#999933">
+ * <tr bgcolor="#ADB8D9" align="left">
+ * <td><b>JavaSVN</b></td>
+ * <td><b>Subversion</b></td>
+ * </tr>   
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doAdd()</td><td>'svn add'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doDelete()</td><td>'svn delete'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doCleanup()</td><td>'svn cleanup'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doInfo()</td><td>'svn info'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doLock()</td><td>'svn lock'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doUnlock()</td><td>'svn unlock'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>
+ * doSetProperty()
+ * </td>
+ * <td>
+ * 'svn propset PROPNAME PROPVAL PATH'<br />
+ * 'svn propdel PROPNAME PATH'<br />
+ * 'svn propedit PROPNAME PATH'
+ * </td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doSetRevisionProperty()</td>
+ * <td>
+ * 'svn propset PROPNAME --revprop -r REV PROPVAL [URL]'<br />
+ * 'svn propdel PROPNAME --revprop -r REV [URL]'<br />
+ * 'svn propedit PROPNAME --revprop -r REV [URL]'
+ * </td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>
+ * doGetProperty()
+ * </td>
+ * <td>
+ * 'svn propget PROPNAME PATH'<br />
+ * 'svn proplist PATH'
+ * </td>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doGetRevisionProperty()</td>
+ * <td>
+ * 'svn propget PROPNAME --revprop -r REV [URL]'<br />
+ * 'svn proplist --revprop -r REV [URL]'
+ * </td>
+ * </tr>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doResolve()</td><td>'svn resolved'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doRevert()</td><td>'svn revert'</td>
+ * </tr>
+ * </table>
  * 
  * @version 1.0
  * @author  TMate Software Ltd.
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public class SVNWCClient extends SVNBasicClient {
 
@@ -244,7 +315,21 @@ public class SVNWCClient extends SVNBasicClient {
             }
         }
     }
-
+    
+    /**
+     * Recursively cleans up the working copy, removing locks and resuming 
+     * unfinished operations. 
+     * 
+     * <p>
+     * If you ever get a “working copy locked” error, use this method 
+     * to remove stale locks and get your working copy into a usable 
+     * state again.
+     * 
+     * @param  path             a WC path to start a cleanup from 
+     * @throws SVNException     if <code>path</code> does not exist or
+     *                          if <code>path</code>'s parent directory
+     *                          is not under version control
+     */
     public void doCleanup(File path) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (fType == SVNFileType.NONE) {
@@ -261,7 +346,33 @@ public class SVNWCClient extends SVNBasicClient {
         wcAccess.getAnchor().cleanup();
         wcAccess.close(true);
     }
-
+    
+    /**
+     * Sets, edits or deletes a property on a file or directory item(s).
+     * 
+     * <p> 
+     * To set or edit a property simply provide a <code>propName</code> 
+     * and a <code>propValue</code>. To delete a property set 
+     * <code>propValue</code> to <span class="javakeyword">null</span> 
+     * and the property <code>propName</code> will be deleted.
+     * 
+     * @param  path             a WC item which properties are to be 
+     *                          modified
+     * @param  propName         a property name
+     * @param  propValue        a property value
+     * @param  force            <span class="javakeyword">true</span> to
+     *                          force the operation
+     * @param  recursive        <span class="javakeyword">true</span> to
+     *                          descend recursively
+     * @param  handler          a caller's properties handler
+     * @throws SVNException     if <code>propName</code> is a revision 
+     *                          property or if <code>propName</code> starts
+     *                          with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
+     *                          svn:wc:} prefix
+     * @see                     #doSetRevisionProperty(File, SVNRevision, String, String, boolean, ISVNPropertyHandler)
+     * @see                     #doGetProperty(File, String, SVNRevision, SVNRevision, boolean)
+     * @see                     #doGetRevisionProperty(File, String, SVNRevision, ISVNPropertyHandler)
+     */
     public void doSetProperty(File path, String propName, String propValue, boolean force, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         propName = validatePropertyName(propName);
         if (SVNRevisionProperty.isRevisionProperty(propName)) {
@@ -278,13 +389,69 @@ public class SVNWCClient extends SVNBasicClient {
             wcAccess.close(true);
         }
     }
-
+    
+    /**
+     * Sets, edits or deletes an unversioned revision property.
+     * This method uses a Working Copy item to obtain the URL of 
+     * the repository which revision properties are to be changed.
+     * 
+     * <p> 
+     * To set or edit a property simply provide a <code>propName</code> 
+     * and a <code>propValue</code>. To delete a revision property set 
+     * <code>propValue</code> to <span class="javakeyword">null</span> 
+     * and the property <code>propName</code> will be deleted.
+     * 
+     * @param  path            a Working Copy item           
+     * @param  revision        a revision which properties are to be
+     *                         modified
+     * @param  propName        a property name
+     * @param  propValue       a property value
+     * @param  force           <span class="javakeyword">true</span> to
+     *                         force the operation
+     * @param  handler         a caller's properties handler
+     * @throws SVNException    if the operation can not be performed 
+     *                         without forcing or if <code>propName</code> starts
+     *                         with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
+     *                         svn:wc:} prefix
+     * @see                    #doSetRevisionProperty(SVNURL, SVNRevision, String, String, boolean, ISVNPropertyHandler)
+     * @see                    #doSetProperty(File, String, String, boolean, boolean, ISVNPropertyHandler)
+     * @see                    #doGetProperty(File, String, SVNRevision, SVNRevision, boolean)
+     * @see                    #doGetRevisionProperty(File, String, SVNRevision, ISVNPropertyHandler)                         
+     */
     public void doSetRevisionProperty(File path, SVNRevision revision, String propName, String propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         propName = validatePropertyName(propName);
         SVNURL url = getURL(path);
         doSetRevisionProperty(url, revision, propName, propValue, force, handler);
     }
-
+    
+    /**
+     * Sets, edits or deletes an unversioned revision property.
+     * This method uses a URL pointing to a repository which revision 
+     * properties are to be changed.
+     * 
+     * <p> 
+     * To set or edit a property simply provide a <code>propName</code> 
+     * and a <code>propValue</code>. To delete a revision property set 
+     * <code>propValue</code> to <span class="javakeyword">null</span> 
+     * and the property <code>propName</code> will be deleted.
+     * 
+     * @param  url             a URL pointing to a repository location
+     * @param  revision        a revision which properties are to be
+     *                         modified
+     * @param  propName        a property name
+     * @param  propValue       a property value
+     * @param  force           <span class="javakeyword">true</span> to
+     *                         force the operation
+     * @param  handler         a caller's properties handler
+     * @throws SVNException    if the operation can not be performed 
+     *                         without forcing or if <code>propName</code> starts
+     *                         with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
+     *                         svn:wc:} prefix
+     * @see                    #doSetRevisionProperty(File, SVNRevision, String, String, boolean, ISVNPropertyHandler)
+     * @see                    #doSetProperty(File, String, String, boolean, boolean, ISVNPropertyHandler)
+     * @see                    #doGetProperty(File, String, SVNRevision, SVNRevision, boolean)
+     * @see                    #doGetRevisionProperty(File, String, SVNRevision, ISVNPropertyHandler)                         
+     */
     public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, String propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         propName = validatePropertyName(propName);
         if (!force && SVNRevisionProperty.AUTHOR.equals(propName) && propValue != null && propValue.indexOf('\n') >= 0) {
@@ -300,7 +467,35 @@ public class SVNWCClient extends SVNBasicClient {
             handler.handleProperty(revNumber, new SVNPropertyData(propName, propValue));
         }
     }
-
+    
+    /**
+     * Gets a versioned item's property. It's possible to get a 
+     * property of either a Working Copy item or a remote one
+     * (located in a repository). If <vode>revision</code> is one
+     * of:
+     * <ul>
+     * <li>{@link SVNRevision#BASE BASE}
+     * <li>{@link SVNRevision#WORKING WORKING}
+     * <li>{@link SVNRevision#COMMITTED COMMITTED}
+     * </ul>
+     * then the result is a WC item's property. Otherwise the 
+     * property is taken from a repository. 
+     *   
+     * 
+     * @param  path           a WC item's path
+     * @param  propName       the item's property name; if it's 
+     *                        <span class="javakeyword">null</span> then
+     *                        all the item's properties will be retrieved
+     *                        but only the first of them returned 
+     *                        
+     * @param  pegRevision
+     * @param  revision       a desired item's revision; 
+     *                         
+     * @param  recursive      <span class="javakeyword">true</span> to
+     *                        descend recursively
+     * @return                the item's property
+     * @throws SVNException
+     */
     public SVNPropertyData doGetProperty(final File path, String propName,
             SVNRevision pegRevision, SVNRevision revision, boolean recursive)
             throws SVNException {

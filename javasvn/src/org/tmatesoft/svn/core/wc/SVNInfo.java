@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNEntry;
  * single item info operation).
  * 
  * <p>
- * The following are the two ways how to process <b>SVNInfo</b> objects:<br />
+ * There are two approaches how to process <b>SVNInfo</b> objects:<br />
  * 1. Implementing an <b>ISVNInfoHandler</b>:
  * <pre class="javacode">
  * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.ISVNInfoHandler;

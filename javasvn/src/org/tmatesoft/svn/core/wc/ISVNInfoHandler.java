@@ -22,6 +22,9 @@ package org.tmatesoft.svn.core.wc;
  * object per each interesting item and dispatches that object to the
  * info handler where it's up to a developer to retrieve detailes   
  * from the <b>SVNInfo</b> object and interprete them in a desired way.
+ * <p>
+ * All calls to a <b>handleInfo()</b> method are synchronous - that is the
+ * caller is blocked till the method finishes.
  * 
  * @version 1.0
  * @author  TMate Software Ltd.

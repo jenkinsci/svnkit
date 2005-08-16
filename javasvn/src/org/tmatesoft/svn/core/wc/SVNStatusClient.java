@@ -71,7 +71,8 @@ public class SVNStatusClient extends SVNBasicClient {
     }
     
     /**
-     * Collects status information on Working Copy items. 
+     * Collects status information on Working Copy items and passes
+     * it to a <code>handler</code>. 
      * 
      * @param  path				local item's path
      * @param  recursive		relevant only if <code>path</code> denotes a directory:
@@ -101,7 +102,8 @@ public class SVNStatusClient extends SVNBasicClient {
     }
     
     /**
-     * Collects status information on Working Copy items. 
+     * Collects status information on Working Copy items and passes
+     * it to a <code>handler</code> . 
      *
      *  
      * @param  path							local item's path

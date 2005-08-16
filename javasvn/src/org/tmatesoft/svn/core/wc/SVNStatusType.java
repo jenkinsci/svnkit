@@ -100,7 +100,7 @@ public class SVNStatusType {
     
     /**
      * Returns this object's identifier as an integer nbumber.
-     * Each static field of <b>SVNStatusType</b> class is also an 
+     * Each constant field of the <b>SVNStatusType</b> class is also an 
      * <b>SVNStatusType</b> object with its own id. 
      * 
      * @return id of this object 

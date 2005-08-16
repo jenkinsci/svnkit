@@ -35,7 +35,8 @@ import java.util.Map;
  * the concrete item.  
  * 
  * <p>
- * The following are the two ways how to process <b>SVNStatus</b> objects:<br />
+ * 
+ * There are two approaches how to process <b>SVNStatus</b> objects:<br />
  * 1. Implementing an <b>ISVNStatusHandler</b>:
  * <pre class="javacode">
  * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.ISVNStatusHandler;

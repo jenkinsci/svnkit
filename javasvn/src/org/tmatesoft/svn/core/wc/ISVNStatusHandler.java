@@ -21,6 +21,10 @@ package org.tmatesoft.svn.core.wc;
  * object per each interesting WC entry and dispatches that object to the
  * status handler where it's up to a developer to retrieve status detailes   
  * from the <b>SVNStatus</b> object and interprete them in a desired way.
+ * 
+ * <p>
+ * All calls to a <b>handleStatus()</b> method are synchronous - that is the
+ * caller is blocked till the method finishes.
  *  
  * @version 1.0
  * @author  TMate Software Ltd.
