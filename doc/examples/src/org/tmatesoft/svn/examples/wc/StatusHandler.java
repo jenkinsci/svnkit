@@ -280,7 +280,7 @@ public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
         /*
          * Print out the revision against which the status was performed.
          * This event is dispatched when the SVNStatusClient.doStatus() was 
-         * invoked with the flag remote set to true - this is for a local status
+         * invoked with the flag remote set to true - that is for a local status
          * it won't be dispatched.
          */
         if(action == SVNEventAction.STATUS_COMPLETED){
