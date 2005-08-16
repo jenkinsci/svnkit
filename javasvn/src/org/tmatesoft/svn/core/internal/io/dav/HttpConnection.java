@@ -680,13 +680,27 @@ class HttpConnection {
         return result.toString();
     }
 
-    private static synchronized SAXParserFactory getSAXParserFactory() throws FactoryConfigurationError, ParserConfigurationException,
-            SAXNotRecognizedException, SAXNotSupportedException {
+    private static synchronized SAXParserFactory getSAXParserFactory() throws FactoryConfigurationError {
         if (ourSAXParserFactory == null) {
             ourSAXParserFactory = SAXParserFactory.newInstance();
-            ourSAXParserFactory.setFeature("http://xml.org/sax/features/namespaces", true);
-            ourSAXParserFactory.setFeature("http://xml.org/sax/features/validation", false);
-            ourSAXParserFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            try {
+                ourSAXParserFactory.setFeature("http://xml.org/sax/features/namespaces", true);
+            } catch (SAXNotRecognizedException e) {
+            } catch (SAXNotSupportedException e) {
+            } catch (ParserConfigurationException e) {
+            }
+            try {
+                ourSAXParserFactory.setFeature("http://xml.org/sax/features/validation", false);
+            } catch (SAXNotRecognizedException e) {
+            } catch (SAXNotSupportedException e) {
+            } catch (ParserConfigurationException e) {
+            }
+            try {
+                ourSAXParserFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            } catch (SAXNotRecognizedException e) {
+            } catch (SAXNotSupportedException e) {
+            } catch (ParserConfigurationException e) {
+            }
             ourSAXParserFactory.setNamespaceAware(true);
             ourSAXParserFactory.setValidating(false);
         }
