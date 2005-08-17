@@ -58,11 +58,11 @@ public class SVNWCUtil {
     }
 
     public static ISVNOptions createDefaultOptions(File dir, boolean readonly) {
-        return new DefaultSVNOptions(dir, !readonly);
+        return new DefaultSVNOptions(dir, readonly);
     }
 
     public static ISVNOptions createDefaultOptions(boolean readonly) {
-        return new DefaultSVNOptions(null, !readonly);
+        return new DefaultSVNOptions(null, readonly);
     }
 
     public static boolean isVersionedDirectory(File dir) {
