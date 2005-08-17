@@ -102,7 +102,6 @@ public class SVNCommitUtil {
     }
 
     public static SVNWCAccess createCommitWCAccess(File[] paths, boolean recursive, boolean force, Collection relativePaths, SVNStatusClient statusClient) throws SVNException {
-        /* TODO this code is very ineffective, replace with better one
         File wcRoot = null;
         for (int i = 0; i < paths.length; i++) {
             File path = paths[i];
@@ -111,7 +110,7 @@ public class SVNCommitUtil {
                 SVNErrorManager.error("svn: commit targets should belong to the same working copy");
             }
             wcRoot = newWCRoot;
-        }*/
+        }
         String[] validatedPaths = new String[paths.length];
         for (int i = 0; i < paths.length; i++) {
             File file = paths[i];
