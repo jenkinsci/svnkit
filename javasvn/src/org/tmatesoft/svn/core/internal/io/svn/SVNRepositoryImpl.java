@@ -648,8 +648,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     private void openConnection() throws SVNException {
         lock();
-        ISVNConnector connector = SVNRepositoryFactoryImpl
-                .getConnectorFactory().createConnector(this);
+        if (isSessionMode() && myConnection != null) {
+            return;
+        }
+        ISVNConnector connector = SVNRepositoryFactoryImpl.getConnectorFactory().createConnector(this);
         myConnection = new SVNConnection(connector, getLocation(), getAuthenticationManager());
         try {
             myConnection.open(this);
@@ -670,6 +672,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     private void closeConnection() {
+        if (isSessionMode()) {
+            unlock();
+            return;
+        }
         if (myConnection != null) {
             try {
                 myConnection.close();
@@ -765,5 +771,14 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     public void closeSession() throws SVNException {
+        if (myConnection != null) {
+            try {
+                myConnection.close();
+            } catch (SVNException e) {
+                //
+            } finally {
+                myConnection = null;
+            }
+        }
     }
 }

@@ -303,6 +303,9 @@ class DAVRepository extends SVNRepository {
     
     private void openConnection() throws SVNException {
         lock();
+        if (isSessionMode() && myConnection != null) {
+            return;
+        }
         if (myConnection == null) {
             myConnection = new DAVConnection(getLocation());
         }
@@ -310,6 +313,10 @@ class DAVRepository extends SVNRepository {
     }
 
     private void closeConnection() {
+        if (isSessionMode()) {
+            unlock();
+            return;
+        }
         if (myConnection != null) {
             myConnection.close();
         }
@@ -622,6 +629,10 @@ class DAVRepository extends SVNRepository {
     }
 
     public void closeSession() throws SVNException {
+        if (myConnection != null) {
+            myConnection.close();
+            myConnection = null;
+        }
     }
 }
 
