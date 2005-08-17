@@ -30,7 +30,7 @@ public class DAVRepositoryFactory extends SVNRepositoryFactory {
         }
     }
 
-    public SVNRepository createRepositoryImpl(SVNURL location) {
-        return new DAVRepository(location);
+    public SVNRepository createRepositoryImpl(SVNURL location, boolean session) {
+        return new DAVRepository(location, session);
     }
 }

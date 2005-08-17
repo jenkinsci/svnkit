@@ -121,6 +121,7 @@ public abstract class SVNRepository {
     private Thread myLocker;
     private ISVNAuthenticationManager myAuthManager;
     private long myPegRevision;
+    private boolean myIsSessionMode;
 
     /**
      * Constructs an <code>SVNRepository</code> instance (representing a
@@ -134,9 +135,10 @@ public abstract class SVNRepository {
      * 						tree node - not necessarily the repository root
      * 						directory which it was installed to).
      */
-    protected SVNRepository(SVNURL location) {
+    protected SVNRepository(SVNURL location, boolean sessionMode) {
         myLocation = location;
         myPegRevision = -1;
+        myIsSessionMode = sessionMode;
     }
 	
     /**
@@ -1141,6 +1143,12 @@ public abstract class SVNRepository {
      * @since				SVN 1.2
      */
     public abstract void unlock(Map pathToTokens, boolean force, ISVNLockHandler handler) throws SVNException;
+    
+    public abstract void closeSession() throws SVNException;
+    
+    protected boolean isSessionMode() {
+        return myIsSessionMode;
+    }
     
     /**
      * Locks the current session <code>SVNRepository</code> object. It prevents

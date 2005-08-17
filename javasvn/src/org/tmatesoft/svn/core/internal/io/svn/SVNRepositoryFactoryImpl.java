@@ -38,8 +38,8 @@ public final class SVNRepositoryFactoryImpl extends SVNRepositoryFactory {
         }
     }
 
-    public SVNRepository createRepositoryImpl(SVNURL location) {
-        return new SVNRepositoryImpl(location);
+    public SVNRepository createRepositoryImpl(SVNURL location, boolean session) {
+        return new SVNRepositoryImpl(location, session);
     }
 
     static ISVNConnectorFactory getConnectorFactory() {

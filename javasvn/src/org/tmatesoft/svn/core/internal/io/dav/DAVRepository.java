@@ -54,8 +54,8 @@ class DAVRepository extends SVNRepository {
 
     private DAVConnection myConnection;
     
-    protected DAVRepository(SVNURL location) {
-        super(location);
+    protected DAVRepository(SVNURL location, boolean session) {
+        super(location, session);
     }
     
     public void testConnection() throws SVNException {
@@ -619,6 +619,9 @@ class DAVRepository extends SVNRepository {
             closeConnection();
         }
         return result[0];
+    }
+
+    public void closeSession() throws SVNException {
     }
 }
 

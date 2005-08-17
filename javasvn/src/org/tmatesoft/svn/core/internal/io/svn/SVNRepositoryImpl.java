@@ -54,8 +54,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     private String myRealm;
     private String myExternalUserName;
 
-    protected SVNRepositoryImpl(SVNURL location) {
-        super(location);
+    protected SVNRepositoryImpl(SVNURL location, boolean session) {
+        super(location, session);
     }
 
     public void testConnection() throws SVNException {
@@ -762,5 +762,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     public String getExternalUserName() {
         return myExternalUserName;
+    }
+
+    public void closeSession() throws SVNException {
     }
 }
