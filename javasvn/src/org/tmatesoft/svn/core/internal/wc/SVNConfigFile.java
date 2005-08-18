@@ -178,7 +178,7 @@ public class SVNConfigFile {
         if (myLines == null) {
             return;
         }
-        if (!myFile.canWrite() || myFile.isDirectory()) {
+        if (myFile.isDirectory()) {
             return;
         }
         if (myFile.getParentFile() != null) {
