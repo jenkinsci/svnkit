@@ -13,10 +13,12 @@ package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -28,6 +30,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -118,8 +121,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     public String getRevisionPropertyValue(long revision, String propertyName)
             throws SVNException {
         assertValidRevision(revision);
-        Object[] buffer = new Object[] { "rev-prop",
-                getRevisionObject(revision), propertyName };
+        Object[] buffer = new Object[] { "rev-prop", getRevisionObject(revision), propertyName };
         try {
             openConnection();
             write("(w(ns))", buffer);
@@ -238,6 +240,48 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             closeConnection();
         }
         return revision;
+    }
+
+    public Collection getDir(String path, long revision) throws SVNException {
+        Long rev = getRevisionObject(revision);
+        final List dirEntries = new ArrayList();
+        ISVNDirEntryHandler handler = new ISVNDirEntryHandler() {
+            public void handleDirEntry(SVNDirEntry dirEntry) {
+                dirEntries.add(dirEntry);
+            }            
+        };
+        // convert path to path relative to repos root.
+        try {
+            openConnection();
+            path = getRepositoryPath(path);
+            Object[] buffer = new Object[] { "get-dir", path, rev, Boolean.FALSE, Boolean.TRUE };
+            write("(w(s(n)ww))", buffer);
+            authenticate();
+            buffer = read("[(N(*P)", buffer);
+            revision = buffer[0] != null ? SVNReader.getLong(buffer, 0) : revision;
+            if (handler != null) {
+                buffer[0] = handler;
+                read("(*D)))", buffer);
+            }
+            Map messages = new HashMap();
+            for(int i = 0; i < dirEntries.size(); i++) {
+                SVNDirEntry entry = (SVNDirEntry) dirEntries.get(i);
+                Long key = getRevisionObject(entry.getRevision());
+                if (messages.containsKey(key)) {
+                    entry.setCommitMessage((String) messages.get(key));
+                    continue;
+                }
+                buffer = new Object[] { "rev-prop", key, SVNRevisionProperty.LOG};
+                write("(w(ns))", buffer);
+                authenticate();
+                buffer = read("[((?S))]", buffer);
+                messages.put(key, buffer[0]);
+                entry.setCommitMessage((String) buffer[0]);
+            }
+        } finally {
+            closeConnection();
+        }
+        return dirEntries;
     }
 
     public int getFileRevisions(String path, long sRevision, long eRevision,

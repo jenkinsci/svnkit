@@ -609,6 +609,11 @@ public abstract class SVNRepository {
     }
 
     /**
+     * @return Collection of SVNDirEntry objects with commit messages.
+     */
+    public abstract Collection getDir(String path, long revision) throws SVNException;
+
+    /**
      * The same as {@link SVNRepository#log(String[], long, long, boolean, boolean, ISVNLogEntryHandler)},
      * but as a result it returns a <code>Collection</code> of retrieved log entries.
      * 
