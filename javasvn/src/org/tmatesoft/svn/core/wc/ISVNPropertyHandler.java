@@ -39,9 +39,17 @@ import org.tmatesoft.svn.core.SVNURL;
  * 
  * @version 1.0
  * @author  TMate Software Ltd.
+ * @see     SVNPropertyData
+ * @see     SVNWCClient
  */
 public interface ISVNPropertyHandler {
-
+    /**
+     * This is just a default implementation which does nothing.
+     * Provided to property managing methods of {@link SVNWCClient} when
+     * there's no need to take any processing on properties.  For example, when only
+     * needing to set a property without any additional handling that
+     * property - use this default handler.
+     */
     public static ISVNPropertyHandler NULL = new ISVNPropertyHandler() {
         public void handleProperty(File path, SVNPropertyData property) {
         }
@@ -52,10 +60,36 @@ public interface ISVNPropertyHandler {
         public void handleProperty(long revision, SVNPropertyData property) {
         }
     };
-
+    
+    /**
+     * Handles local item's properties (located in a Working Copy).
+     * Not called for revision properties.
+     * 
+     * @param  path           an item's path
+     * @param  property       an item's versioned property
+     * @throws SVNException
+     */
     public void handleProperty(File path, SVNPropertyData property) throws SVNException;
-
+    
+    /**
+     * Handles remote item's properies (located in a repository).  
+     * Not called for revision properties.
+     * 
+     * @param  url               an item's repository location
+     * @param  property          an item's versioned property 
+     * @throws SVNException
+     */
     public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException;
-
+    
+    /**
+     * Handles a revision property. <b>SVNWCClient</b>'s methods operating on
+     * revision properties call this method to handle properties.
+     * 
+     * @param  revision        a repository revision which <code>property</code>
+     *                         is to be handled
+     * @param  property        a revision (unversioned) property
+     * @throws SVNException
+     * @see                    SVNWCClient
+     */
     public void handleProperty(long revision, SVNPropertyData property) throws SVNException;
 }

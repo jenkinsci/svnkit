@@ -11,24 +11,52 @@
 package org.tmatesoft.svn.core.wc;
 
 /**
+ * <b>SVNPropertyData</b> is a wrapper for both versioned and unversioned
+ * properties. This class represents the pair: property name - property value.
+ * Property managing methods of the <b>SVNWCClient</b> class use 
+ * <b>SVNPropertyData</b> to wrap properties and dispatch them to 
+ * <b>handleProperty()</b> methods of <b>ISVNPropertyHandler</b> for processing
+ * or simply return that 'properties object' as a target.
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
+ * @see     ISVNPropertyHandler
+ * @see     SVNWCClient
  */
 public class SVNPropertyData {
 
     private String myValue;
 
     private String myName;
-
+    
+    /**
+     * Constructs an <b>SVNPropertyData</b> given a property name and its
+     * value. 
+     * 
+     * @param name  a property name
+     * @param data  a property value
+     */
     public SVNPropertyData(String name, String data) {
         myName = name;
         myValue = data;
     }
-
+    
+    /**
+     * Gets the name of the property represented by this 
+     * <b>SVNPropertyData</b> object. 
+     * 
+     * @return  a property name
+     */
     public String getName() {
         return myName;
     }
-
+    
+    /**
+     * Gets the value of the property represented by this 
+     * <b>SVNPropertyData</b> object.
+     *  
+     * @return  a property value
+     */
     public String getValue() {
         return myValue;
     }

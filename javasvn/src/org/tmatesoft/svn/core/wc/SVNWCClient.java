@@ -136,7 +136,30 @@ public class SVNWCClient extends SVNBasicClient {
     protected SVNWCClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
         super(repositoryFactory, options);
     }
-
+    
+    /**
+     * Gets contents of a file. 
+     * If <vode>revision</code> is one of:
+     * <ul>
+     * <li>{@link SVNRevision#BASE BASE}
+     * <li>{@link SVNRevision#WORKING WORKING}
+     * <li>{@link SVNRevision#COMMITTED COMMITTED}
+     * </ul>
+     * then the file contents are taken from the Working Copy file item. 
+     * Otherwise the file item's contents are taken from the repository
+     * at a particular revision. 
+     *  
+     * @param  path               a Working Copy file item
+     * @param  pegRevision        a revision in which the file item is first looked up
+     * @param  revision           a target revision
+     * @param  expandKeywords     if <span class="javakeyword">true</span> then
+     *                            all keywords presenting in the file and listed in 
+     *                            the file's {@link org.tmatesoft.svn.core.SVNProperty#KEYWORDS svn:keywords}
+     *                            property (if set) will be substituted, otherwise not 
+     * @param  dst                the destination where the file contents will be written to
+     * @throws SVNException       if <code>path</code> refers to a directory, 
+     *                            does not exist or is not under version control
+     */
     public void doGetFileContents(File path, SVNRevision pegRevision,
             SVNRevision revision, boolean expandKeywords, OutputStream dst)
             throws SVNException {
@@ -250,7 +273,24 @@ public class SVNWCClient extends SVNBasicClient {
             }
         }
     }
-
+    
+    /**
+     * Gets contents of a file of a particular revision from a repository. 
+     * 
+     * @param  url                a file item's repository location 
+     * @param  pegRevision        a revision in which the file item is first looked up
+     * @param  revision           a target revision
+     * @param  expandKeywords     if <span class="javakeyword">true</span> then
+     *                            all keywords presenting in the file and listed in 
+     *                            the file's {@link org.tmatesoft.svn.core.SVNProperty#KEYWORDS svn:keywords}
+     *                            property (if set) will be substituted, otherwise not 
+     * @param  dst                the destination where the file contents will be written to
+     * @throws SVNException       if <code>url</code> refers to a directory or 
+     *                            of it's impossible to create temporary files
+     *                            ({@link java.io.File#createTempFile(java.lang.String, java.lang.String) createTempFile()}
+     *                            fails) 
+     *                            
+     */
     public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
         revision = revision == null || !revision.isValid() ? SVNRevision.HEAD : revision;
         // now get contents from URL.
@@ -361,10 +401,10 @@ public class SVNWCClient extends SVNBasicClient {
      * @param  propName         a property name
      * @param  propValue        a property value
      * @param  force            <span class="javakeyword">true</span> to
-     *                          force the operation
+     *                          force the operation to run
      * @param  recursive        <span class="javakeyword">true</span> to
      *                          descend recursively
-     * @param  handler          a caller's properties handler
+     * @param  handler          a caller's property handler
      * @throws SVNException     if <code>propName</code> is a revision 
      *                          property or if <code>propName</code> starts
      *                          with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
@@ -407,8 +447,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @param  propName        a property name
      * @param  propValue       a property value
      * @param  force           <span class="javakeyword">true</span> to
-     *                         force the operation
-     * @param  handler         a caller's properties handler
+     *                         force the operation to run
+     * @param  handler         a caller's property handler
      * @throws SVNException    if the operation can not be performed 
      *                         without forcing or if <code>propName</code> starts
      *                         with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
@@ -441,8 +481,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @param  propName        a property name
      * @param  propValue       a property value
      * @param  force           <span class="javakeyword">true</span> to
-     *                         force the operation
-     * @param  handler         a caller's properties handler
+     *                         force the operation to run
+     * @param  handler         a caller's property handler
      * @throws SVNException    if the operation can not be performed 
      *                         without forcing or if <code>propName</code> starts
      *                         with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
@@ -469,32 +509,33 @@ public class SVNWCClient extends SVNBasicClient {
     }
     
     /**
-     * Gets a versioned item's property. It's possible to get a 
-     * property of either a Working Copy item or a remote one
-     * (located in a repository). If <vode>revision</code> is one
-     * of:
+     * Gets an item's versioned property. It's possible to get either a local 
+     * property (from a Working Copy) or a remote one (located in a repository). 
+     * If <vode>revision</code> is one of:
      * <ul>
      * <li>{@link SVNRevision#BASE BASE}
      * <li>{@link SVNRevision#WORKING WORKING}
      * <li>{@link SVNRevision#COMMITTED COMMITTED}
      * </ul>
      * then the result is a WC item's property. Otherwise the 
-     * property is taken from a repository. 
-     *   
+     * property is taken from a repository (using the item's URL). 
      * 
      * @param  path           a WC item's path
-     * @param  propName       the item's property name; if it's 
+     * @param  propName       an item's property name; if it's 
      *                        <span class="javakeyword">null</span> then
      *                        all the item's properties will be retrieved
      *                        but only the first of them returned 
      *                        
-     * @param  pegRevision
+     * @param  pegRevision    a revision in which the item is first looked up
      * @param  revision       a desired item's revision; 
      *                         
      * @param  recursive      <span class="javakeyword">true</span> to
      *                        descend recursively
      * @return                the item's property
-     * @throws SVNException
+     * @throws SVNException   if <code>propName</code> starts
+     *                        with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
+     *                        svn:wc:} prefix or <code>path</code> is not under
+     *                        version control
      */
     public SVNPropertyData doGetProperty(final File path, String propName,
             SVNRevision pegRevision, SVNRevision revision, boolean recursive)
@@ -513,7 +554,25 @@ public class SVNWCClient extends SVNBasicClient {
         });
         return data[0];
     }
-
+    
+    /**
+     * Gets an item's versioned property from a repository.  
+     * This method is useful when having no Working Copy at all.
+     * 
+     * @param  url             an item's repository location
+     * @param  propName        an item's property name; if it's 
+     *                         <span class="javakeyword">null</span> then
+     *                         all the item's properties will be retrieved
+     *                         but only the first of them returned
+     * @param  pegRevision     a revision in which the item is first looked up
+     * @param  revision        a desired item's revision
+     * @param  recursive       <span class="javakeyword">true</span> to
+     *                         descend recursively
+     * @return                 the item's property
+     * @throws SVNException    if <code>propName</code> starts
+     *                         with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
+     *                         svn:wc:} prefix
+     */
     public SVNPropertyData doGetProperty(final SVNURL url, String propName,
             SVNRevision pegRevision, SVNRevision revision, boolean recursive)
             throws SVNException {
@@ -531,7 +590,37 @@ public class SVNWCClient extends SVNBasicClient {
         });
         return data[0];
     }
-
+    
+    /**
+     * Gets an item's versioned property and passes it to a provided property
+     * handler. It's possible to get either a local property (from a Working 
+     * Copy) or a remote one (located in a repository). 
+     * If <vode>revision</code> is one of:
+     * <ul>
+     * <li>{@link SVNRevision#BASE BASE}
+     * <li>{@link SVNRevision#WORKING WORKING}
+     * <li>{@link SVNRevision#COMMITTED COMMITTED}
+     * </ul>
+     * then the result is a WC item's property. Otherwise the 
+     * property is taken from a repository (using the item's URL). 
+     * 
+     * @param  path           a WC item's path
+     * @param  propName       an item's property name; if it's 
+     *                        <span class="javakeyword">null</span> then
+     *                        all the item's properties will be retrieved
+     *                        and passed to <code>handler</code> for
+     *                        processing 
+     * @param  pegRevision    a revision in which the item is first looked up
+     * @param  revision       a desired item's revision; 
+     *                         
+     * @param  recursive      <span class="javakeyword">true</span> to
+     *                        descend recursively
+     * @param  handler        a caller's property handler
+     * @throws SVNException   if <code>propName</code> starts
+     *                        with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
+     *                        svn:wc:} prefix or <code>path</code> is not under
+     *                        version control
+     */
     public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
@@ -557,7 +646,27 @@ public class SVNWCClient extends SVNBasicClient {
         }
         wcAccess.close(false);
     }
-
+    
+    /**
+     * Gets an item's versioned property from a repository and passes it to 
+     * a provided property handler. This method is useful when having no 
+     * Working Copy at all.
+     * 
+     * @param  url             an item's repository location
+     * @param  propName        an item's property name; if it's 
+     *                         <span class="javakeyword">null</span> then
+     *                         all the item's properties will be retrieved
+     *                         and passed to <code>handler</code> for
+     *                         processing
+     * @param  pegRevision     a revision in which the item is first looked up
+     * @param  revision        a desired item's revision
+     * @param  recursive       <span class="javakeyword">true</span> to
+     *                         descend recursively
+     * @param  handler         a caller's property handler
+     * @throws SVNException    if <code>propName</code> starts
+     *                         with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
+     *                         svn:wc:} prefix
+     */
     public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
@@ -568,7 +677,25 @@ public class SVNWCClient extends SVNBasicClient {
         SVNRepository repos = createRepository(url, null, pegRevision, revision);
         doGetRemoteProperty(url, "", repos, propName, revision, recursive, handler);
     }
-
+    
+    /**
+     * Gets an unversioned revision property from a repository (getting
+     * a repository URL from a Working Copy) and passes it to a provided 
+     * property handler. 
+     *  
+     * @param  path             a local Working Copy item which repository
+     *                          location is used to connect to a repository 
+     * @param  propName         a revision property name; if this parameter 
+     *                          is <span class="javakeyword">null</span> then
+     *                          all the revision properties will be retrieved
+     *                          and passed to <code>handler</code> for
+     *                          processing
+     * @param  revision         a revision which property is to be retrieved  
+     * @param  handler          a caller's property handler
+     * @throws SVNException     if <code>revision</code> is invalid or <code>propName</code> starts
+     *                          with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
+     *                          svn:wc:} prefix
+     */
     public void doGetRevisionProperty(File path, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
@@ -580,7 +707,24 @@ public class SVNWCClient extends SVNBasicClient {
         long revisionNumber = getRevisionNumber(revision, repository, path);
         doGetRevisionProperty(repository, propName, revisionNumber, handler);
     }
-
+    
+    /**
+     * Gets an unversioned revision property from a repository and passes 
+     * it to a provided property handler. 
+     * 
+     * @param  url              a URL pointing to a repository location
+     *                          which revision property is to be got
+     * @param  propName         a revision property name; if this parameter 
+     *                          is <span class="javakeyword">null</span> then
+     *                          all the revision properties will be retrieved
+     *                          and passed to <code>handler</code> for
+     *                          processing
+     * @param  revision         a revision which property is to be retrieved  
+     * @param  handler          a caller's property handler
+     * @throws SVNException     if <code>revision</code> is invalid or <code>propName</code> starts
+     *                          with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
+     *                          svn:wc:} prefix
+     */
     public void doGetRevisionProperty(SVNURL url, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
         if (propName != null && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
             SVNErrorManager.error("svn: '" + propName + "' is a wcprop , thus not accessible to clients");
@@ -609,7 +753,19 @@ public class SVNWCClient extends SVNBasicClient {
             }
         }
     }
-
+    
+    /**
+     * Schedules a Working Copy item for deletion.
+     * 
+     * @param  path           a WC item to be deleted 
+     * @param  force          <span class="javakeyword">true</span> to
+     *                        force the operation to run
+     * @param  dryRun         <span class="javakeyword">true</span> only to
+     *                        try the delete operation without actual deleting
+     * @throws SVNException   if <code>path</code> is not under version control
+     *                        or if can not delete without forcing
+     *                         
+     */
     public void doDelete(File path, boolean force, boolean dryRun)
             throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(path);
@@ -627,7 +783,30 @@ public class SVNWCClient extends SVNBasicClient {
             wcAccess.close(true);
         }
     }
-
+    
+    /**
+     * Schedules an unversioned item for addition to a repository thus 
+     * putting it under version control.
+     * 
+     * @param  path                        a path to be put under version 
+     *                                     control (will be added to a repository
+     *                                     in next commit)
+     * @param  force                       <span class="javakeyword">true</span> to
+     *                                     force the operation to run
+     * @param  mkdir                       <span class="javakeyword">true</span> to 
+     *                                     create a new directory and schedule it for
+     *                                     addition
+     * @param  climbUnversionedParents     if <span class="javakeyword">true</span> and
+     *                                     <code>path</code> is located in an unversioned
+     *                                     parent directory then the parent will be automatically
+     *                                     scheduled for addition, too 
+     * @param  recursive                   <span class="javakeyword">true</span> to
+     *                                     descend recursively (relevant for directories)
+     * @throws SVNException                if <code>path</code> doesn't belong
+     *                                     to a Working Copy or doesn't exist (and
+     *                                     <code>mkdir</code> is <span class="javakeyword">false</span>) or
+     *                                     is the root directory of the Working Copy
+     */
     public void doAdd(File path, boolean force, boolean mkdir,
             boolean climbUnversionedParents, boolean recursive)
             throws SVNException {
@@ -674,7 +853,18 @@ public class SVNWCClient extends SVNBasicClient {
             wcAccess.close(true);
         }
     }
-
+    
+    /**
+     * Reverts all local changes made to a Working Copy item(s) thus
+     * bringing it to a 'pristine' state.
+     * 
+     * @param  path            a WC path to perform a revert on
+     * @param  recursive       <span class="javakeyword">true</span> to
+     *                         descend recursively (relevant for directories)
+     * @throws SVNException    if <code>path</code> is not under version control
+     *                         or when trying to revert an addition of a directory
+     *                         from within the directory itself
+     */
     public void doRevert(File path, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(path);
 

@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <b>SVNRevision</b> represents an object wrapper for an abstract representation 
+ * <b>SVNRevision</b> is a revision wrapper used for an abstract representation 
  * of revision information.
  * 
  * <p>
