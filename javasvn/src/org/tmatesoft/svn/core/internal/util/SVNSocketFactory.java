@@ -50,7 +50,8 @@ public class SVNSocketFactory {
         int attempts = 3;
         while (true) {
             try {
-                return new Socket(createAddres(host), port);
+                InetAddress address = createAddres(host);
+                return new Socket(address, port);
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {
                     attempts--;
@@ -61,7 +62,11 @@ public class SVNSocketFactory {
                 }
                 SVNErrorManager.error("svn: Connection failed: '" + timeOut.getMessage() + "'");
             } catch (IOException e) {
-                SVNErrorManager.error("svn: " + e.getMessage());
+                String message = e.getMessage();
+                if (e instanceof UnknownHostException) {
+                    message = "svn: Unknown host '" + host + "'";
+                }
+                SVNErrorManager.error(message);
             }
         }
     }
@@ -82,7 +87,11 @@ public class SVNSocketFactory {
                 }
                 SVNErrorManager.error("svn: Connection failed: '" + timeOut.getMessage() + "'");
             } catch (IOException e) {
-                SVNErrorManager.error("svn: " + e.getMessage());
+                String message = e.getMessage();
+                if (e instanceof UnknownHostException) {
+                    message = "svn: Unknown host '" + host + "'";
+                }
+                SVNErrorManager.error(message);
             }
         }
     }
@@ -103,7 +112,11 @@ public class SVNSocketFactory {
                 }
                 SVNErrorManager.error("svn: Connection failed: '" + timeOut.getMessage() + "'");
             } catch (IOException e) {
-                SVNErrorManager.error("svn: " + e.getMessage());
+                String message = e.getMessage();
+                if (e instanceof UnknownHostException) {
+                    message = "svn: Unknown host '" + host + "'";
+                }
+                SVNErrorManager.error(message);
             }
         }
     }
