@@ -127,6 +127,10 @@ class DAVRepository extends SVNRepository {
             path = SVNEncodingUtil.uriEncode(path);
             DAVResponse source = DAVUtil.getBaselineProperties(myConnection, path, revision, null);
             properties = DAVUtil.filterProperties(source, properties);
+            if (revision >= 0) {
+                String commitMessage = (String) properties.get(SVNRevisionProperty.LOG);
+                myConnection.cache(SVNRevisionProperty.LOG + "!" + revision, commitMessage);
+            }
         } finally {
             closeConnection();
         }
