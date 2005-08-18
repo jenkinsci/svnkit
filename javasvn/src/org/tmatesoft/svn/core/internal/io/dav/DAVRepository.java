@@ -187,14 +187,13 @@ class DAVRepository extends SVNRepository {
                 dirRevision = info.revision; 
             }
             if (handler != null) {
-                final String parentPath = path;
+                final int parentPathSegments = SVNPathUtil.getSegmentsCount(path);
                 myConnection.doPropfind(path, 1, null, null, new IDAVResponseHandler() {
                     public void handleDAVResponse(DAVResponse child) {
                         String href = child.getHref();
-                        if (href.equals(parentPath)) {
+                        if (parentPathSegments == SVNPathUtil.getSegmentsCount(href)) {
                             return;
                         }
-                        // build direntry
                         String name = SVNEncodingUtil.uriDecode(SVNPathUtil.tail(href));
                         SVNNodeKind kind = SVNNodeKind.FILE;
                         Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
