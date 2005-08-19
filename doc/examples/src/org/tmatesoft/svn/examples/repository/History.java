@@ -29,9 +29,9 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 /*
  * The following example program demonstrates how you can use SVNRepository to
  * obtain a history for a range of revisions including (for each revision): all
- * changed paths, log message, the author of the commit, the timestamp it was
- * made. It is similar to the "svn log" command supported by the Subversion
- * client library.
+ * changed paths, log message, the author of the commit, the timestamp when the 
+ * commit was made. It is similar to the "svn log" command supported by the 
+ * Subversion client library.
  * 
  * As an example here's a part of one of the program layouts (for the default
  * values):
@@ -56,6 +56,9 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * M /branches/0.9.0/doc/examples/src/org/tmatesoft/svn/examples/repository/Commit.java
  * M /branches/0.9.0/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java
  * A /branches/0.9.0/doc/examples/src/org/tmatesoft/svn/examples/repository/Export.java
+ * 
+ * ...
+ * 
  */
 public class History {
     /*
