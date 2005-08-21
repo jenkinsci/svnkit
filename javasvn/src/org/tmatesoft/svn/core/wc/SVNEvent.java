@@ -117,9 +117,10 @@ public class SVNEvent {
     
     /**
      * Constructs an <b>SVNEvent</b> object given
-     * an error message for a filed operation. Used by JavaSVN 
-     * internals to construct and initialize an <b>SVNEvent</b>
-     * object.
+     * an error message for a filed operation. 
+     * <p>
+     * Used by JavaSVN internals to construct and initialize an 
+     * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
      * 
      * @param errorMessage the message describing the operation fault
      */
@@ -134,7 +135,7 @@ public class SVNEvent {
      * 
      * <p>
      * Used by JavaSVN internals to construct and initialize an 
-     * <b>SVNEvent</b> object. It's not intended for users (from the API point of view).
+     * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
      * 
      * @param source     a JavaSVN internal for managing Working Copy entries,
      *                   administrative area, etc.
@@ -179,7 +180,7 @@ public class SVNEvent {
      * 
      * <p>
      * Used by JavaSVN internals to construct and initialize an 
-     * <b>SVNEvent</b> object. It's not intended for users (from the API point of view).
+     * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
      * 
      * @param rootFile   the item's root directory
      * @param file       the item's path itself
@@ -216,7 +217,7 @@ public class SVNEvent {
     
     /**
      * Gets a JavaSVN internal that manages Working Copy entries, administrative 
-     * area. It's not intended for users (from the API point of view). 
+     * area. It's not intended for users (from an API point of view). 
      * 
      * @return an internal for WC managing 
      */

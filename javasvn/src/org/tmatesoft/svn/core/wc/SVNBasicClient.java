@@ -31,6 +31,18 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
+ * The <b>SVNBasicClient</b> is the base class of all 
+ * <b>SVN</b>*<b>Client</b> classes that provides a common interface
+ * and realization.
+ * 
+ * <p>
+ * All of <b>SVN</b>*<b>Client</b> classes use inherited methods of
+ * <b>SVNBasicClient</b> to access Working Copies metadata, to create 
+ * a driver object to access a repository if it's necessary, etc. In addition
+ * <b>SVNBasicClient</b> provides some interface methods  - such as those
+ * that allow you to set your {@link ISVNEventHandler event handler}, 
+ * obtain run-time configuration options, and others. 
+ * 
  * @version 1.0
  * @author TMate Software Ltd.
  */
@@ -64,27 +76,108 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         myPathPrefixesStack = new LinkedList();
     }
-
+    
+    /**
+     * Gets a run-time configuration area driver used by this object.
+     * 
+     * @return the run-time options driver being in use
+     */
     public ISVNOptions getOptions() {
         return myOptions;
     }
-
+    
+    /**
+     * Sets externals definitions to be ignored or not during
+     * operations.
+     * 
+     * <p>
+     * For example, if external definitions are set to be ignored
+     * then a checkout operation won't fetch them into a Working Copy.
+     * 
+     * @param ignore  <span class="javakeyword">true</span> to ignore
+     *                externals definitions, <span class="javakeyword">false</span> - 
+     *                not to
+     * @see           #isIgnoreExternals()
+     */
     public void setIgnoreExternals(boolean ignore) {
         myIsIgnoreExternals = ignore;
     }
-
+    
+    /**
+     * Determines if externals definitions are ignored.
+     * 
+     * @return <span class="javakeyword">true</span> if ignored,
+     *         otherwise <span class="javakeyword">false</span>
+     * @see    #setIgnoreExternals(boolean)
+     */
     public boolean isIgnoreExternals() {
         return myIsIgnoreExternals;
     }
-    
+    /**
+     * Sets (or unsets) all conflicted working files to be untouched
+     * by update and merge operations.
+     * 
+     * <p>
+     * By default when a file receives changes from the repository 
+     * that are in conflict with local edits, an update operation places
+     * two sections for each conflicting snatch into the working file 
+     * one of which is a user's local edit and the second is the one just 
+     * received from the repository. Like this:
+     * <pre class="javacode">
+     * <<<<<<< .mine
+     * user's text
+     * =======
+     * received text
+     * >>>>>>> .r2</pre><br /> 
+     * Also the operation creates three temporary files that appear in the 
+     * same directory as the working file. Now if you call this method with 
+     * <code>leave</code> set to <span class="javakeyword">true</span>,
+     * an update will still create temporary files but won't place those two
+     * sections into your working file. And this behaviour also concerns
+     * merge operations. In addition if there is any registered event
+     * handler for an <b>SVNDiffClient</b> or <b>SVNUpdateClient</b> 
+     * instance then the handler will be dispatched an event with 
+     * the status type set to {@link SVNStatusType#CONFLICTED_UNRESOLVED}. 
+     * 
+     * <p>
+     * The default value is <span class="javakeyword">false</span> until
+     * a caller explicitly changes it calling this method. 
+     * 
+     * @param leave  <span class="javakeyword">true</span> to prevent 
+     *               conflicted files from merging (all merging operations 
+     *               will be skipped), otherwise <span class="javakeyword">false</span>
+     * @see          #isLeaveConflictsUnresolved()              
+     * @see          SVNUpdateClient
+     * @see          SVNDiffClient
+     * @see          ISVNEventHandler
+     */
     public void setLeaveConflictsUnresolved(boolean leave) {
         myIsLeaveConflictsUnresolved = leave;
     }
     
+    /**
+     * Determines if conflicted files should be left unresolved
+     * preventing from merging their contents during update and merge 
+     * operations.
+     *  
+     * @return  <span class="javakeyword">true</span> if conflicted files
+     *          are set to be prevented from merging, <span class="javakeyword">false</span>
+     *          if there's no such restriction
+     * @see     #setLeaveConflictsUnresolved(boolean) 
+     */
     public boolean isLeaveConflictsUnresolved() {
         return myIsLeaveConflictsUnresolved;
     }
-
+    
+    /**
+     * Sets an event handler for this object. This event handler
+     * will be dispatched {@link SVNEvent} objects to provide 
+     * detailed information about actions and progress state 
+     * of version control operations performed by <b>do</b>*<b>()</b>
+     * methods of <b>SVN</b>*<b>Client</b> classes.
+     * 
+     * @param dispatcher an event handler
+     */
     public void setEventHandler(ISVNEventHandler dispatcher) {
         myEventDispatcher = dispatcher;
     }
@@ -175,11 +268,23 @@ public class SVNBasicClient implements ISVNEventHandler {
         wcAccess.setOptions(myOptions);
         return wcAccess;
     }
-
+    
+    /**
+     * Dispatches events to the registered event handler (if any). 
+     * 
+     * @param event       the current event
+     * @param progress    progress state (from 0 to 1)
+     */
     public void handleEvent(SVNEvent event, double progress) {
         dispatchEvent(event, progress);
     }
-
+    
+    /**
+     * Redirects this call to the registered event handler (if any).
+     * 
+     * @throws SVNCancelException  if the current operation
+     *                             was cancelled
+     */
     public void checkCancelled() throws SVNCancelException {
         if (myEventDispatcher != null) {
             myEventDispatcher.checkCancelled();

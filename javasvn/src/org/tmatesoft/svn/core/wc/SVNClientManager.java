@@ -18,6 +18,72 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 
 /**
+ * The <b>SVNClientManager</b> class is used to manage <b>SVN</b>*<b>Client</b> 
+ * objects as well as for providing them to a user what makes the user's work
+ * easier and his code - pretty clear and flexible.
+ * 
+ * <p> 
+ * When you don't have special needs to create, keep and manage 
+ * separate <b>SVN</b>*<b>Client</b> objects by yourself, you should
+ * use <b>SVNClientManager</b> that takes care of all that work for you.
+ * These are some of advantages of using <b>SVNClientManager</b>:
+ * <ol>
+ * <li>To instantiate an <b>SVN</b>*<b>Client</b> object you need
+ * to provide a run-time configuration driver - {@link ISVNOptions} - 
+ * as well as an authentication and network layers driver - 
+ * {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager}. When
+ * using an <b>SVNClientManager</b> you have multiple choices to provide
+ * and use those drivers:
+ * <pre class="javacode">
+ *     <span class="javacomment">//1.default options and authentication drivers to use</span>
+ *     SVNClientManager clientManager = SVNClientManager.newInstance();
+ *     
+ *     ...
+ *     
+ *     <span class="javacomment">//2.provided options and default authentication drivers to use</span>
+ *     ISVNOptions myOptions;
+ *     ...
+ *     SVNClientManager clientManager = SVNClientManager.newInstance(myOptions);
+ *     
+ *     ...
+ *     
+ *     <span class="javacomment">//3.provided options and authentication drivers to use</span>
+ *     ISVNOptions myOptions;
+ *     ISVNAuthenticationManager myAuthManager;
+ *     ...
+ *     SVNClientManager clientManager = SVNClientManager.newInstance(myOptions, myAuthManager);
+ *     
+ *     ...
+ *     
+ *     <span class="javacomment">//4.provided options driver and user's credentials to make</span> 
+ *     <span class="javacomment">//a default authentication driver use them</span> 
+ *     ISVNOptions myOptions;
+ *     ...
+ *     SVNClientManager clientManager = SVNClientManager.newInstance(myOptions, <span class="javastring">"name"</span>, <span class="javastring">"passw"</span>);
+ *     </pre><br />
+ * Having instantiated an <b>SVNClientManager</b> in one of these ways, all 
+ * the <b>SVN</b>*<b>Client</b> objects it will provide you will share those
+ * drivers, so you don't need to code much to provide the same drivers to each
+ * <b>SVN</b>*<b>Client</b> instance by yourself.
+ * <li>Actually every <b>SVN</b>*<b>Client</b> object is instantiated only at
+ * the moment of the first call to an appropriate <b>SVNClientManager</b>'s 
+ * <code>get</code> method:
+ * <pre class="javacode">
+ *     SVNClientManager clientManager;
+ *     ...
+ *     <span class="javacomment">//an update client will be created only at that moment when you</span> 
+ *     <span class="javacomment">//first call this method for getting your update client, but if you</span>
+ *     <span class="javacomment">//have already called it once before, then the method will return</span>
+ *     <span class="javacomment">//that update client object instantiated in previous... so, it's</span>
+ *     <span class="javacomment">//quite cheap, you see..</span> 
+ *     SVNUpdateClient updateClient = clientManager.getUpdateClient();</pre><br />
+ * <li>You can provide a single event handler that will be used by all 
+ * <b>SVN</b>*<b>Client</b> objects provided by <b>SVNClientManager</b>.
+ * <li>
+ * </ol>
+ * 
+ * 
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  * 

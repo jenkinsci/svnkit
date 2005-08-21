@@ -145,6 +145,8 @@ public class SVNRevision {
     /**
      * Checks if the revision information represented by this object
      * is valid.
+     * <p>
+     * {@link #UNDEFINED} is not a valid revision. 
      * 
      * @return  <span class="javakeyword">true</span> if valid, otherwise
      *          <span class="javakeyword">false</span>

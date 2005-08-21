@@ -14,21 +14,54 @@ package org.tmatesoft.svn.core.wc;
 import java.util.Date;
 
 /**
+ * The <b>ISVNAnnotateHandler</b> interface should be implemented to be further
+ * provided to <b>SVNLogClient</b>'s <b>doAnnotate()</b> methods for processing
+ * annotation information per each text line.  
+ * 
+ * <p>
+ * Here's an example code snippet:
+ * <pre class="javacode">
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.SVNLogClient;
+ * ...
+ * 
+ *     SVNLogClient logClient;
+ *     ...
+ *     
+ *     logClient.doAnnotate(<span class="javakeyword">new</span> File(<span class="javastring">"path/to/WC/file"</span>), SVNRevision.HEAD, SVNRevision.create(0), 
+ *                          SVNRevision.HEAD, <span class="javakeyword">new</span> ISVNAnnotateHandler(){
+ *                              <span class="javakeyword">public void</span> handleLine(Date date, <span class="javakeyword">long</span> revision, 
+ *                                                            String author, String line){
+ *                                  <span class="javacomment">//implement this method as you wish, for example:</span>
+ *                                  System.out.println(revision + 
+ *                                                     <span class="javastring">"  "</span> + 
+ *                                                     author + 
+ *                                                     <span class="javastring">"  "</span> + 
+ *                                                     date + 
+ *                                                     <span class="javastring">"  "</span> + 
+ *                                                     line);
+ *                              }
+ *                          });
+ *     ...</pre><br />
+ * 
  * 
  * @version 1.0
  * @author 	TMate Software Ltd.
+ * @see     SVNLogClient
  */
 public interface ISVNAnnotateHandler {
 	/**
-	 * Handles each line that is to be annotated (that is to be provided in-line
-	 * information about who added this line to a file and what revision it
-	 * was done at).
+	 * Handles per line annotation information - that is information about 
+     * who last committed (changed) this line, the revision and timestamp when it was last 
+     * committed. 
 	 * 
-	 * @param date		the time moment when changes including this line were commited
+	 * @param date		the time moment when changes to <code>line</code> were commited
 	 * 					to the repository		
 	 * @param revision	the revision the changes were commited to
-	 * @param author	the person who did the changes
-	 * @param line		a single file line that is a part of those changes 
+	 * @param author	the person who did those changes
+	 * @param line		a text line of the target file (on which 
+     *                  {@link SVNLogClient#doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler) doAnnotate()}
+     *                  was invoked)  
 	 */
 	public void handleLine(Date date, long revision, String author, String line);
 

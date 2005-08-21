@@ -397,7 +397,7 @@ public class SVNInfo {
     /**
      * Gets the value of the item's
      * {@link org.tmatesoft.svn.core.SVNProperty#PROP_TIME} property.
-     * It could be the last time when properties were committed, updated, etc.
+     * It corresponds to the last time when properties were committed.
      * 
      * @return the value of the item's prop-time property  
      */
@@ -451,7 +451,7 @@ public class SVNInfo {
     
     /**
      * Gets the value of the item's {@link org.tmatesoft.svn.core.SVNProperty#TEXT_TIME}
-     * property. It could be the last commit (update, checkout, etc.) time. 
+     * property. It corresponds to the last commit time. 
      * 
      * @return the value of the item's text-time property
      */
