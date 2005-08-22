@@ -41,11 +41,11 @@ public class SVNJSchConnector implements ISVNConnector {
         ISVNAuthenticationManager authManager = repository
                 .getAuthenticationManager();
 
-        String realm = repository.getLocation().getProtocol() + "://"
-                + repository.getLocation().getHost() + ":"
-                + repository.getLocation().getPort();
-        SVNSSHAuthentication authentication = 
-            (SVNSSHAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
+        String realm = repository.getLocation().getProtocol() + "://" + repository.getLocation().getHost();
+        if (repository.getLocation().hasPort()) {
+            realm += ":" + repository.getLocation().getPort();
+        }
+        SVNSSHAuthentication authentication = (SVNSSHAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
         SVNAuthenticationException lastException = null;
         Session session = null;
 

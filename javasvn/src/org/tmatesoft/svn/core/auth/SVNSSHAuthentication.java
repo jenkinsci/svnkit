@@ -22,16 +22,19 @@ public class SVNSSHAuthentication extends SVNAuthentication {
     private String myPassword;
     private String myPassphrase;
     private File myPrivateKey;
+    private int myPortNumber;
 
-    public SVNSSHAuthentication(String userName, String password, boolean storageAllowed) {
+    public SVNSSHAuthentication(String userName, String password, int portNumber, boolean storageAllowed) {
         super(userName, storageAllowed);
         myPassword = password;
+        myPortNumber = portNumber;
     }
 
-    public SVNSSHAuthentication(String userName, File keyFile, String passphrase, boolean storageAllowed) {
+    public SVNSSHAuthentication(String userName, File keyFile, String passphrase, int portNumber, boolean storageAllowed) {
         super(userName, storageAllowed);
         myPrivateKey = keyFile;
         myPassphrase = passphrase;
+        myPortNumber = portNumber;
     }
 
     public String getPassword() {
@@ -44,6 +47,10 @@ public class SVNSSHAuthentication extends SVNAuthentication {
     
     public File getPrivateKeyFile() {
         return myPrivateKey;
+    }
+    
+    public int getPortNumber() {
+        return myPortNumber;
     }
 
 }

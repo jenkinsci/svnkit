@@ -43,13 +43,14 @@ public class SVNJSchSession {
     private static Map ourSessionsPool = new Hashtable();
 
     static Session getSession(SVNURL location, SVNSSHAuthentication credentials) throws SVNAuthenticationException {
-        if ("".equals(credentials.getUserName())
-                || credentials.getUserName() == null) {
-            throw new SVNAuthenticationException(
-                    "User name is required to establish svn+shh connection");
+        if ("".equals(credentials.getUserName()) || credentials.getUserName() == null) {
+            throw new SVNAuthenticationException("User name is required to establish svn+shh connection");
         }
-        String key = credentials.getUserName() + ":" + location.getHost() + ":"
-                + location.getPort();
+        int port = location.hasPort() ? location.getPort() : credentials.getPortNumber();
+        if (port < 0) {
+            port = 22;
+        }
+        String key = credentials.getUserName() + ":" + location.getHost() + ":" + port;
         Session session = (Session) ourSessionsPool.get(key);
         if (session != null && !session.isConnected()) {
             ourSessionsPool.remove(key);
@@ -69,11 +70,9 @@ public class SVNJSchSession {
                         jsch.addIdentity(privateKey);
                     }
                 }
-                session = jsch.getSession(credentials.getUserName(), location
-                        .getHost(), location.getPort());
+                session = jsch.getSession(credentials.getUserName(), location.getHost(), port);
 
-                UserInfo userInfo = new EmptyUserInfo(
-                        credentials.getPassword(), passphrase);
+                UserInfo userInfo = new EmptyUserInfo(credentials.getPassword(), passphrase);
                 session.setUserInfo(userInfo);
                 session.setSocketFactory(new SimpleSocketFactory());
                 session.setTimeout(TIMEOUT);

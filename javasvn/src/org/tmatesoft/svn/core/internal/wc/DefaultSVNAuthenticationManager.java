@@ -49,6 +49,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private SVNConfigFile myServersFile;
     private ISVNAuthenticationStorage myRuntimeAuthStorage;
     private int myLastProviderIndex;
+    private SVNConfigFile myConfigFile;
 
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password) {
         password = password == null ? "" : password;
@@ -60,9 +61,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         }   
         
         myProviders = new ISVNAuthenticationProvider[4];
-        SVNSSHAuthentication defaultSSHAuthentication = getDefaultSSHAuthentication();
-
-        myProviders[0] = new DumbAuthenticationProvider(userName, password, defaultSSHAuthentication, myIsStoreAuth);
+        myProviders[0] = new DumbAuthenticationProvider(userName, password, myIsStoreAuth);
         myProviders[1] = new CacheAuthenticationProvider();
         myProviders[2] = new PersistentAuthenticationProvider(new File(myConfigDirectory, "auth"));
     }
@@ -190,6 +189,14 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return myServersFile;
     }
 
+    protected SVNConfigFile getConfigFile() {
+        if (myConfigFile == null) {
+            SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
+            myConfigFile = new SVNConfigFile(new File(myConfigDirectory, "config"));
+        }
+        return myConfigFile;
+    }
+
     public void setRuntimeStorage(ISVNAuthenticationStorage storage) {
         myRuntimeAuthStorage = storage;
     }
@@ -218,8 +225,25 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return myProviders[3];
     }
     
+    protected int getDefaultSSHPortNumber() {
+        Map tunnels = getConfigFile().getProperties("tunnels");
+        if (tunnels == null || !tunnels.containsKey("ssh")) {
+            return -1;
+        }
+        String sshProgram = (String) tunnels.get("ssh");
+        if (sshProgram == null) {
+            return -1;
+        }
+        String port = getOptionValue(sshProgram, sshProgram.toLowerCase().trim().startsWith("plink") ? "-p" : "-P");
+        port = port == null ? System.getProperty("javasvn.ssh2.port") : port;
+        if (port != null) {
+            return Integer.parseInt(port);
+        }
+        return -1;
+    }
+    
     protected SVNSSHAuthentication getDefaultSSHAuthentication() {
-        Map tunnels = getServersFile().getProperties("tunnels");
+        Map tunnels = getConfigFile().getProperties("tunnels");
         if (tunnels == null || !tunnels.containsKey("ssh")) {
             return null;
         }
@@ -228,22 +252,27 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         String userName = getOptionValue(sshProgram, "-l");
         String password = getOptionValue(sshProgram, "-pw");
         String keyFile = getOptionValue(sshProgram, "-i");
+        String port = getOptionValue(sshProgram, sshProgram != null && sshProgram.toLowerCase().trim().startsWith("plink") ? "-P" : "-p");
         String passphrase = null; 
-        if (password == null && keyFile == null) {
-            // fallback to system properties.
-            userName = System.getProperty("javasvn.ssh2.username");
-            keyFile = System.getProperty("javasvn.ssh2.key");
-            passphrase = System.getProperty("javasvn.ssh2.passphrase");
-            password = System.getProperty("javasvn.ssh2.password");
-        }
+        // fallback to system properties.
+        userName = userName == null ? System.getProperty("javasvn.ssh2.username") : userName;
+        keyFile = keyFile == null ? System.getProperty("javasvn.ssh2.key") : keyFile;
+        passphrase = passphrase == null ? System.getProperty("javasvn.ssh2.passphrase") : passphrase;
+        password = password == null ? System.getProperty("javasvn.ssh2.password") : password;
+        port = port == null ? System.getProperty("javasvn.ssh2.port") : port;
+
         if (userName == null) {
             userName = System.getProperty("user.name");
         }
+        int portNumber = -1;
+        if (port != null) {
+            portNumber = Integer.parseInt(port);
+        }
         
         if (userName != null && password != null) {
-            return new SVNSSHAuthentication(userName, password, isAuthStorageEnabled());
+            return new SVNSSHAuthentication(userName, password, portNumber, isAuthStorageEnabled());
         } else if (userName != null && keyFile != null) {
-            return new SVNSSHAuthentication(userName, new File(keyFile), passphrase, isAuthStorageEnabled());
+            return new SVNSSHAuthentication(userName, new File(keyFile), passphrase, portNumber, isAuthStorageEnabled());
         }
         return null;
     }
@@ -256,32 +285,33 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             String option = options.nextToken().trim();
             if (optionName.equals(option) && options.hasMoreTokens()) {
                 return options.nextToken();
+            } else if (option.startsWith(optionName)) {
+                return option.substring(optionName.length());
             }
         }
         return null;
     }
     
     
-    private static class DumbAuthenticationProvider implements ISVNAuthenticationProvider {
+    private class DumbAuthenticationProvider implements ISVNAuthenticationProvider {
         
         private String myUserName;
         private String myPassword;
         private boolean myIsStore;
-        private SVNSSHAuthentication mySSHAuth;
         
-        public DumbAuthenticationProvider(String userName, String password, SVNSSHAuthentication sshAuth, boolean store) {
+        public DumbAuthenticationProvider(String userName, String password, boolean store) {
             myUserName = userName;
             myPassword = password;
-            mySSHAuth = sshAuth;
             myIsStore = store;
         }
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
             if (previousAuth == null) {
                 if (ISVNAuthenticationManager.SSH.equals(kind)) {
+                    SVNSSHAuthentication sshAuth = getDefaultSSHAuthentication();
                     if (myUserName == null || "".equals(myUserName.trim())) {
-                        return mySSHAuth;
+                        return sshAuth;
                     }
-                    return new SVNSSHAuthentication(myUserName, myPassword, myIsStore);
+                    return new SVNSSHAuthentication(myUserName, myPassword, sshAuth != null ? sshAuth.getPortNumber() : -1, myIsStore);
                 } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                     if (myUserName == null || "".equals(myUserName.trim())) {
                         return null;
@@ -330,7 +360,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         }
     }
     
-    private static class PersistentAuthenticationProvider implements ISVNAuthenticationProvider {
+    private class PersistentAuthenticationProvider implements ISVNAuthenticationProvider {
         
         private File myDirectory;
 
@@ -365,10 +395,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                         return new SVNPasswordAuthentication(userName, password, authMayBeStored);
                     } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
+                        // get port from config file or system property?
+                        int portNumber = getDefaultSSHPortNumber();
                         if (path != null) {
-                            return new SVNSSHAuthentication(userName, new File(path), passphrase, authMayBeStored);
+                            return new SVNSSHAuthentication(userName, new File(path), passphrase, portNumber, authMayBeStored);
                         } else if (password != null) {
-                            return new SVNSSHAuthentication(userName, password, authMayBeStored);
+                            return new SVNSSHAuthentication(userName, password, portNumber, authMayBeStored);
                         }                    
                     }
                 } catch (SVNException e) {
