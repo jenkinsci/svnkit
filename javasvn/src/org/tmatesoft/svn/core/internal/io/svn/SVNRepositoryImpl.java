@@ -596,9 +596,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             authenticate();
             read("[((*L))]", buffer);
             Collection lockObjects = (Collection) buffer[0];
-            return lockObjects == null ? new SVNLock[0]
-                    : (SVNLock[]) lockObjects.toArray(new SVNLock[lockObjects
-                            .size()]);
+            return lockObjects == null ? new SVNLock[0] : (SVNLock[]) lockObjects.toArray(new SVNLock[lockObjects.size()]);
         } finally {
             closeConnection();
         }
@@ -643,6 +641,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     authenticate();
                     read("[((?L))]", buffer);
                     SVNLock lock = (SVNLock) buffer[0];
+                    if (lock == null) {
+                        lock = new SVNLock(path, "", null, null, null, null);
+                        handler.handleUnlock(path, lock, null);
+                        continue;
+                    }
                     id = lock.getID();
                 }
                 Object[] buffer = new Object[] { "unlock", path, id, Boolean.valueOf(force) };
