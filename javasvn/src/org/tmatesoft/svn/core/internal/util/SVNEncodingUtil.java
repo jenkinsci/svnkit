@@ -54,6 +54,40 @@ public class SVNEncodingUtil {
         return sb == null ? src : sb.toString();
     }
     
+    public static String autoURIEncode(String src) {
+        StringBuffer sb = null;
+        byte[] bytes;
+        try {
+            bytes = src.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            bytes = src.getBytes();
+        }
+        for (int i = 0; i < bytes.length; i++) {
+            int index = bytes[i] & 0xFF;
+            if (uri_char_validity[index] > 0) {
+                if (sb != null) {
+                    sb.append((char) bytes[i]);
+                }
+                continue;
+            } else if (index == '%' && i + 2 < bytes.length && isHexDigit((char) bytes[i + 1]) && isHexDigit((char) bytes[i + 2])) {
+                if (sb != null) {
+                    sb.append((char) bytes[i]);
+                }
+                // digits will be processed fine.
+                continue;
+            }
+            if (sb == null) {
+                sb = new StringBuffer();
+                sb.append(new String(bytes, 0, i));
+            }
+            sb.append("%");
+
+            sb.append(Character.toUpperCase(Character.forDigit((index & 0xF0) >> 4, 16)));
+            sb.append(Character.toUpperCase(Character.forDigit(index & 0x0F, 16)));
+        }
+        return sb == null ? src : sb.toString();
+    }
+    
     public static void assertURISafe(String path) throws SVNException {
         path = path == null ? "" : path;
         byte[] bytes;
@@ -91,6 +125,8 @@ public class SVNEncodingUtil {
                 ch = (byte) (hexValue(src.charAt(i + 1))*0x10 + hexValue(src.charAt(i + 2)));
                 decoded = true;
                 i += 2;
+            } else {
+                // if character is not URI-safe try to encode it.
             }
             bos.write(ch);
         }
@@ -297,5 +333,5 @@ public class SVNEncodingUtil {
         0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,
-      };
+    };
 }

@@ -31,6 +31,8 @@ public class SVNURL {
         path = path == null ? "/" : path.trim();
         if (!uriEncoded) {
             path = SVNEncodingUtil.uriEncode(path);
+        } else {
+            path = SVNEncodingUtil.autoURIEncode(path);
         }
         if (path.length() > 0 && path.charAt(0) != '/') {
             path = "/" + path;
@@ -95,7 +97,8 @@ public class SVNURL {
         }
         myHost = httpURL.getHost();
         if (uriEncoded) {
-            myEncodedPath = httpURL.getPath();
+            // autoencode it.
+            myEncodedPath = SVNEncodingUtil.autoURIEncode(httpURL.getPath());
             SVNEncodingUtil.assertURISafe(myEncodedPath);
             myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
         } else {
@@ -153,6 +156,8 @@ public class SVNURL {
         }
         if (!uriEncoded) {
             segment = SVNEncodingUtil.uriEncode(segment);
+        } else {
+            segment = SVNEncodingUtil.autoURIEncode(segment);
         }
         String newPath = SVNPathUtil.append(getURIEncodedPath(), segment);
         String url = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), newPath);
