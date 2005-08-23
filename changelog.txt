@@ -1,3 +1,7 @@
+= version 0.9.2
+
++ RC2: bugfixes related to configuration handling and svn+ssh authentication
+
 = version 0.9.1
 
 + RC1: All features planned for 1.0 version are completed.
