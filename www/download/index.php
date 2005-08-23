@@ -36,10 +36,14 @@ To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/js
 
 <h4>Get JavaSVN Eclipse Plugin from update site</h4>
 <p>To get an Eclipse plugin version use <b>http://tmate.org/svn/</b> as an update site location in Eclipse Update Manager.
-In Eclipse menu select Help->Software Updates->Find and Install... Then choose 'Search for new features to install' combo 
-box, click 'Next', then click 'New Remote Site...' and type <b>http://tmate.org/svn/</b> in the URL field and your preferred 
-name for the update site in the name field. After this check the new site (it should appear in the list of update sites) and 
-follow further steps prompted by Eclipse.</p>
+<ul>
+<li>In Eclipse menu select <b>Help->Software Updates->Find and Install...</b>
+<li>Then choose <b>'Search for new features to install'</b> combobox
+<li>Click <b>'Next'</b>, then click <b>'New Remote Site...'</b>
+<li>Type <b>http://tmate.org/svn/</b> in the URL field and your preferred name for the update site in the name field. 
+<li>Check the new site (it should appear in the list of update sites) and follow further steps prompted by Eclipse.
+</ul>
+</p>
 <br>
 <h4>Latest Stable Version</h4>
 
