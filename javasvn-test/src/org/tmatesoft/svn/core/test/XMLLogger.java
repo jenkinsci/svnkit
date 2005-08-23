@@ -46,7 +46,7 @@ public class XMLLogger extends AbstractPythonTestLogger {
     
     public void startTests(Properties configuration) throws IOException {
 		myConfiguration = configuration; 
-		myXMLResultsFile = myConfiguration.getProperty("tests.xml.results", "results.xml"); 		
+		myXMLResultsFile = myConfiguration.getProperty("tests.xml.results", "python-tests-log.xml"); 		
 		File resultsFile = new File(myXMLResultsFile);
 		
 		if(!resultsFile.exists()){
@@ -69,7 +69,6 @@ public class XMLLogger extends AbstractPythonTestLogger {
     public void startServer(String name, String url) {
 	    myServersToURLs.put(name, url);
         curServer = name;
-        //String resultString = "  <server name=\"" + name + "\" url=\"" + url + "\">";
 	    String resultString = "server" + name;
         myResults.addFirst(resultString);   
         mySuitesStat = new HashMap();
