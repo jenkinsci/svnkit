@@ -68,7 +68,7 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
        $changelog_str = trim($m[1]);
        $date_string = date("j M Y, H:i", filemtime($standalone_file));
        
-       $item_description  = "<b>" . $date_string . "</b>, build: " . $build . "<p><table style=\"font-size: 100%;\">";
+       $item_description  = "<b>" . $date_string . "</b>, version: " . $build . "<p><table style=\"font-size: 100%;\">";
        $item_description .= "<tr><td>standalone version:&nbsp;</td><td><a href=\"" . $standalone_link . "\">" . $standalone_name . "</a></td></tr>";
        $item_description .= "<tr><td>source code archive:&nbsp;</td><td><a href=\"" . $src_url . "\">" . $src_name . "</a></td></tr>";
        $item_description .= "<tr><td>source code:&nbsp;</td><td><a href=\"" . $svn_url . "\">@svn repository</a></td></tr>";
@@ -80,12 +80,14 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
        $item_description .= "<h5>Contact</h5><p>Your questions and feedback are welcome at <a href=\"mailto:support@tmatesoft.com\">support@tmatesoft.com</a></p>";
 
 
-       $html_description  = "<tr><td colspan=\"2\">&nbsp;" . $date_string . ", build <b>" . $build . "</b></td></tr>";
+       $html_description  = "<tr><td colspan=\"2\">&nbsp;" . $date_string . ", version <b>" . $build . "</b></td></tr>";
        $html_description .= "<tr><td colspan=\"2\">&nbsp;Changelog:</td></tr>";
        $html_description .= "<tr><td colspan=\"2\"><pre>" . $changelog_str . "</pre>";
-       $html_description .= "<a href=\"" . $changelog_url . "\">full changelog up to this build</a>&nbsp;&nbsp;<a href=\"" . $test_url . "\">tests results</a></td></tr>";
+       $python_tests_url  = "/svn/download/test-results.php?fileurl=" . $test_results_xml_url . "&build=" . $build;
+
+       $html_description .= "<a href=\"" . $changelog_url . "\">full changelog up to this build</a>&nbsp;&nbsp;<a href=\"" . $python_tests_url . "\">tests results</a></td></tr>";
        
-       $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Python Tests Results&nbsp;</td><td><a href=\"/svn/download/test-results.php?fileurl=" . $test_results_xml_url . "&build=" . $build . "\">" . $build. "-tests" . "</a></td></tr>";
+//       $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Python Tests Results&nbsp;</td><td><a href=\"/svn/download/test-results.php?fileurl=" . $test_results_xml_url . "&build=" . $build . "\">" . $build. "-tests" . "</a></td></tr>";
        $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Standalone Version&nbsp;</td><td><a href=\"" . $standalone_link . "\">" . $standalone_name . "</a></td></tr>";
        $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Source Code Archive&nbsp;</td><td><a href=\"" . $src_url . "\">" . $src_name . " </a></td></tr>";
        $html_description .= "<tr bgcolor=\"#EAEAEA\"><td>&nbsp;Eclipse Update Site Archive&nbsp;</td><td><a href=\"" . $eclipse_url . "\">" . $eclipse_name . "</a></td></tr>";
