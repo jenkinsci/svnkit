@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
-<head><title>How&nbsp;to&nbsp;build&nbsp;JavaSVN&nbsp;Subclipse&nbsp;Extension&nbsp;plugin&nbsp;from&nbsp;sources</title>
+<head><title>Configuration&nbsp;settings</title>
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
@@ -23,80 +23,42 @@
 <span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
 </p>
 <p><div style="border-bottom: 1px solid #ccc;"></div></p>
-<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: How to build JavaSVN Subclipse Extension plugin from sources</small>
+<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: Configuration Settings</small>
 
-
-<!--<h1>How to build JavaSVN Subclipse Extension plugin from sources</h1>-->
-<p>Get JavaSVN source code with the svn command line client</p>
-<pre style="padding: 0.5em; background-color:#eee;">
-$ svn co http://72.9.228.230/svn/jsvn/trunk javasvn
-</pre>
-<p>or  (to check out specific version):</p>
-<pre style="padding: 0.5em; background-color:#eee;">
-$ svn co http://72.9.228.230/svn/jsvn/tags/TAG_NAME javasvn
-</pre>
-<p>Go to checked out directory</p>
-<pre style="padding: 0.5em; background-color:#eee;">
-$ cd javasvn
-</pre>
-<p>Set ECLIPSE_HOME environment variable (should point to <b>Eclipse 3.1M6</b> (or newer) home directory)</p>
-<pre style="padding: 0.5em; background-color:#eee;">
-$ set ECLIPSE_HOME=/home/user/java/eclipse31M6
-</pre>
-<p>Use ANT to build javasvn.jar</p>
-<pre style="padding: 0.5em; background-color:#eee;">
-$ ant deploy
-</pre>
-<p><code>build/eclipse</code> directory will contain Eclipse javasvn plugin, feature and update site files.</p>
-<p>To make Eclipse use the plugin you've just built, copy all files
-from <code>JAVASVN/build/eclipse/plugins</code> and <code>JAVASVN/build/eclipse/features</code> to corresponding Eclipse directories and restart Eclipse:
-<pre style="padding: 0.5em; background-color:#eee;">
-$ eclipse -clean
-</pre>
-<p>Or use "Local Update Site" at <code>JAVASVN/build/eclipse/site</code> directory to install JavaSVN Subclipse Extension</p>
-<br/>
-
-<!--For Subclipse (and svnant) Users-->
-<h4>How to make Subclipse (0.9.30) use JavaSVN library</h4>
-<p>Though JavaSVN is not yet fully integrated into Subclipse as an extension, you may already try it with Subclipse. Perform the following 
-easy steps to make Subclipse and JavaSVN work together.</p>
-<br/>
-<b>With Eclipse Update Manager</b> (tested with Eclipse 3.1M6, WinXP):
-<ul>
-<li>Add <b>http://tmate.org/svn/</b> as an update site to Eclipse Update Manager.<br/>
-Use <span style="color:#669999;">Help | Software Updates | Find and Install</span> in main menu.</li>
-<li>Install "JavaSVN  Subclipse Extension" feature.</li>
-</ul>
 <h4>HTTP proxy setup</h4>
-<p>Define your proxy port and host in Eclipse <b>Install/Update</b> preferences page.</p>
-<p>Additional proxy settings may be defined in <code>ECLIPSE_HOME/configuration/config.ini</code> file:
-<code><br/>
-http.proxyUser&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code>user name if proxy needs authentication<br/>
-<code>http.proxyPassword&nbsp;&nbsp;</code>password if proxy needs authentication<br/>
-<code>http.nonProxyHosts&nbsp;&nbsp;</code>, or | delimited host names that should bypass proxy</code>
+<p>By default JavaSVN uses proxy settings from the <i>servers</i> configuration file
+that is located in the default SVN run-time configuration area.
 </p>
 <h4>SVN+SSH authentication with private key</h4>
+<p>By default JavaSVN tries to obtain all necessary information
+from the <i>[tunnels]</i> section of the <i>config</i> file that is
+located in the default SVN run-time configuration area. However if
+that information is not complete or not found at all, JavaSVN tries
+then to use predefined system properties listed beneath.
 <p>JavaSVN uses pure java <a id=normal href="http://www.jcraft.com">JSCH library</a> to establish SSH 
 connection. This library supports only SSH version 2, with password or private key authentication. Using 
 password authentication is not a problem with Subclipse, but currently it doesn't provide a way to define 
 private key and passphrase for private key authentication. You may use the following properties to let JavaSVN
 know about your private key and passphrase (you need to provide these properties when starting Eclipse): </p>
-<pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; background-color: #eee;">
+<pre class="javaCode">
 $ eclipse -vmargs \ 
 -Djavasvn.ssh2.key=/path/to/private/key/file \
 -Djavasvn.ssh2.username=userName \ 
--Djavasvn.ssh2.passphrase=optionalPassphrase
+-Djavasvn.ssh2.passphrase=optionalPassphrase \
+-Djavasvn.ssh2.password=userpassword
+-Djavasvn.ssh2.port=optionalPort
 </pre>
 <p><b>Note:</b> User name for ssh connection will be taken from SVN Repository properties that may be altered in Subclipse
 SVN Repositories view.</p>
-<br/>
 <p>To avoid special batch script creation to launch Eclipse you may define ssh related properties in
 Eclipse config.ini file <code>ECLIPSE_HOME/configuration/config.ini</code> (tip provided by Andrew Berman):
-<pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; background-color: #eee;">
+<pre class="javaCode">
   ...
   javasvn.ssh2.key=path/to/private/key/file
   javasvn.ssh2.passphrase=passphrase
   javasvn.ssh2.username=username
+  javasvn.ssh2.password=userpassword 
+  javasvn.ssh2.port=port
 </pre>
 </p>
 <p>
@@ -105,7 +67,7 @@ too simple to add arguments that make JSCH look for private
 key file at launch. Instead of command line arguments you can 
 modify Eclipse.app/Contents/Info.plist last array of keys 
 adding something like that (tip provided by Valentin Alekseev):
-<pre style="color: darkblue; margin: 4px; padding: 0.5em; font-size: 100%; background-color: #eee;">
+<pre style="color: rgb(0,0,128);" class="javaCode">
 &lt;array&gt;
   ...
    &lt;string&gt;-Djavasvn.ssh2.key=/path/to/key/file&lt;/string&gt;

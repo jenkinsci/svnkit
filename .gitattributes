@@ -102,7 +102,10 @@ www/img/leftbg.gif -text
 www/img/rightbg.gif -text
 www/index.html -text
 www/kb/ant.html -text
-www/kb/article1.html -text
+www/kb/article-reporter-and-editor.html -text
+www/kb/build-standalone.html -text
+www/kb/build-subclipse.html -text
+www/kb/config-settings.html -text
 www/kb/examples/display_example.php -text
 www/kb/examples/geshi/contrib/cssgen.php -text
 www/kb/examples/geshi/geshi.php -text
@@ -113,8 +116,6 @@ www/kb/examples/index.php -text
 www/kb/index.html -text
 www/kb/logging.html -text
 www/kb/mailinglist.html -text
-www/kb/plugin.html -text
-www/kb/standalone.html -text
 www/kb/svnant.html -text
 www/licensing/index.html -text
 www/plugin.xml eol=lf

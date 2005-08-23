@@ -32,8 +32,6 @@
 To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/jsvn/">http://72.9.228.230:8080/svn/jsvn/</a>
 <br />To get the latest source code (with the SVN command line client) use the following command:
 <pre>$ svn co http://72.9.228.230:8080/svn/jsvn/trunk/</pre>
-<br>
-
 <h4>Get JavaSVN Eclipse Plugin from update site</h4>
 <p>To get an Eclipse plugin version use <b>http://tmate.org/svn/</b> as an update site location in Eclipse Update Manager.
 <ul>
@@ -44,7 +42,6 @@ To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/js
 <li>Check the new site (it should appear in the list of update sites) and follow further steps prompted by Eclipse.
 </ul>
 </p>
-<br>
 <h4>Latest Stable Version</h4>
 
 <table width="100%">

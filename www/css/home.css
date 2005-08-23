@@ -21,10 +21,10 @@ html body {
 }
 
 pre {
-	margin: 4px; 
+	margin-top: 10px; 
 	padding: 0.5em; 
 	font-size: 100%;	
-	background-color: rgb(240,240,240);
+	background-color: #F0F1FF;
 	border: 1px solid #ccc;
 
 }
@@ -90,8 +90,8 @@ code {
 	background-color: #AAC0AC;
 }
 #footer {
-	color: rgb(51, 102, 153);/* #669999;*/
-	border-top: 1px solid rgb(51, 102, 153); /*#669999*//*#ccc*/
+	color: rgb(51, 102, 153);
+	border-top: 1px solid rgb(51, 102, 153);
 	font-family:Verdana, Arial, Helvetica, sans-serif;
 	font-size: 80%;
 }
