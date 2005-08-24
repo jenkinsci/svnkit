@@ -22,45 +22,49 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
- * <code>SVNRepositoryFactory</code> is an abstract class that is responsible
- * for creating an appropriate <code>SVNRepository</code>-extansion that 
+ * <b>SVNRepositoryFactory</b> is an abstract class that is responsible
+ * for creating an appropriate <b>SVNRepository</b>-extansion that 
  * will be used to interact with a Subversion repository.
  * 
  * <p>
  * Depending on what protocol a user exactly would like to use
- * to access the repository he should first of all register an 
+ * to access the repository he should first of all set up an 
  * appropriate extension of this factory. So, if the user is going to
  * work with the repository via the custom <i>svn</i>-protocol (or 
  * <i>svn+ssh</i>) he initially calls:
- * <blockquote><pre>
- * 		import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
- * 		
- * 		<i>//do it once in your application prior to using the library</i>
- * 		<i>//via the SVN-protocol (over svn and svn+ssh)</i>
- * 		SVNRepositoryFactoryImpl.setup();
- * </pre></blockquote>
- * That <code>setup()</code> method registers a 
- * <code>SVNRepositoryFactoryImpl</code> instance in the factory (calling
- * {@link #registerRepositoryFactory(String, SVNRepositoryFactory)}). From 
- * this point the <code>SVNRepositoryFactory</code> knows how to create
- * <code>SVNRepository</code> instancies specific for the <i>svn</i>-protocol.
- * And further the user can create an <code>SVNRepository</code> instance:
- * <blockquote><pre>
- * 		<i>//the user gets an <code>SVNRepository</code> not caring</i>
- * 		<i>//how it's implemented for the svn-protocol</i>
- * 		SVNRepository repository = SVNRepositoryFactory.create(location);
- * </pre></blockquote>
+ * <pre class="javacode">
+ * ...
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+ * ...		
+ *     <span class="javacomment">//do it once in your application prior to using the library</span>
+ *     <span class="javacomment">//via the SVN-protocol (over svn and svn+ssh)</span>
+ *     SVNRepositoryFactoryImpl.setup();
+ * ...</pre><br />
+ * That <b>setup()</b> method registers an 
+ * <b>SVNRepositoryFactoryImpl</b> instance in the factory (calling
+ * {@link #registerRepositoryFactory(String, SVNRepositoryFactory) registerRepositoryFactory}). From 
+ * this point the <b>SVNRepositoryFactory</b> knows how to create
+ * <b>SVNRepository</b> instances specific for the <i>svn</i>-protocol.
+ * And further the user can create an <b>SVNRepository</b> instance:
+ * <pre class="javacode">
+ *     ...
+ *     <span class="javacomment">//the user gets an SVNRepository not caring</span>
+ *     <span class="javacomment">//how it's implemented for the svn-protocol</span>
+ *     SVNRepository repository = SVNRepositoryFactory.create(location);
+ *     ...</pre><br />
  * All that was previously said about the <i>svn</i>-protocol is similar for
  * the <i>WebDAV</i>-protocol:
- * <blockquote><pre>
- * 		import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
- * 		<i>//do it once in your application prior to using the library</i>
- * 		<i>//via the DAV-protocol (over http and https)</i>
- * 		DAVRepositoryFactory.setup();
- * </pre></blockquote>
+ * <pre class="javacode">
+ * ...
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+ * ...
  * 
+ *     <span class="javacomment">//do it once in your application prior to using the library</span>
+ *     <span class="javacomment">//via the DAV-protocol (over http and https)</span>
+ *     DAVRepositoryFactory.setup();
+ * ...</pre>
  * <p>
- * <b>NOTE:</b> unfortunately, at present the <i>JavaSVN</i> library doesn't 
+ * <b>NOTE:</b> unfortunately, at present the JavaSVN library doesn't 
  * provide an implementation for accessing a Subversion repository via the
  * <i>file:///</i> protocol (on a local machine), but in future it will be
  * certainly realized.
@@ -68,8 +72,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @version 1.0
  * @author 	TMate Software Ltd.
  * @see		SVNRepository
- * @see		org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl
- * @see		org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory
  */
 public abstract class SVNRepositoryFactory {
     
@@ -106,8 +108,8 @@ public abstract class SVNRepositoryFactory {
      * used to access a repository.
      * 
      * <p>
-     * The protocol is a part of the <code>URL</code> (used to connect to the 
-     * repository) incapsulated in the <code>location</code> parameter.
+     * The protocol is defined as the beginning part of the URL schema (used to connect to the 
+     * repository) incapsulated in the <code>url</code> parameter.
      * 
      * <p>
      * In fact, this method doesn't create an <code>SVNRepository</code> instance but
