@@ -24,7 +24,7 @@ package org.tmatesoft.svn.core;
  * 	   available via the method <code>getMesage()</code>.
  * <li>an array of <code>SVNError</code> instances representing a detailed information
  * 	   about occured errors.
- * 
+ * </ul>
  * <p>
  * <code>SVNException</code> is also used as a base class for extending - to provide
  * specific cases dependent information of errors (like 
