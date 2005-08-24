@@ -20,7 +20,7 @@ or URLs). This functionality is logicaly allotted to separate classes, so that, 
 example, all update related operations (update, switch, etc.) are handled by the same 
 class. And * for each of these classes is the name of that functional behaviour the 
 class is intended for - such as <b>SVNUpdateClient</b> or <b>SVNCommitClient</b>. To 
-have even more flexibility there's a kind of manager class - <b>SVNClientManager</b> 
+have even more flexibility there's a kind of a manager class - <b>SVNClientManager</b> 
 - which aggregates all of these 'client' classes making developer's work easier and 
 more comfortable. At last the high-level API is even a bit more than just an implementation 
 of the SVN client's operations:
@@ -37,11 +37,11 @@ doGetFileContents()</A>).
 <p>
 While the package <b>org.tmatesoft.svn.core.io</b> represents a low-level API and therefore
 'knows' nothing of the SVN native 'Working Copy' format and structure, 
-<b>org.tmatesoft.svn.core.wc</b> is contrarily a kind of Java implementation of the SVN
+<b>org.tmatesoft.svn.core.wc</b> is contrarily a kind of a Java implementation of the SVN
 client's commands which can be used in a standalone Java application that needs to work with 
 Working Copies. However if a developer has no need or even don't want to have Working 
 Copies but something else (for instance, in case of an own client side version control system
-specific to developer's needs) the developer should refer to <b>org.tmatesoft.svn.core.io</b> 
+specific to developer's needs) the developer should refer to <B><A HREF="../io/package-summary.html">org.tmatesoft.svn.core.io</A></B> 
 rather than to <b>org.tmatesoft.svn.core.wc</b>.
 </p>
 

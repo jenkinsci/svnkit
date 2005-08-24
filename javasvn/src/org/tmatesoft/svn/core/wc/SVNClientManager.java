@@ -28,8 +28,8 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
  * use <b>SVNClientManager</b> that takes care of all that work for you.
  * These are some of advantages of using <b>SVNClientManager</b>:
  * <ol>
- * <li>To instantiate an <b>SVN</b>*<b>Client</b> object you need
- * to provide a run-time configuration driver - {@link ISVNOptions} - 
+ * <li>If you instantiate an <b>SVN</b>*<b>Client</b> object by yourself 
+ * you need to provide a run-time configuration driver - {@link ISVNOptions} - 
  * as well as an authentication and network layers driver - 
  * {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager}. When
  * using an <b>SVNClientManager</b> you have multiple choices to provide
@@ -59,12 +59,18 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
  *     <span class="javacomment">//a default authentication driver use them</span> 
  *     ISVNOptions myOptions;
  *     ...
- *     SVNClientManager clientManager = SVNClientManager.newInstance(myOptions, <span class="javastring">"name"</span>, <span class="javastring">"passw"</span>);
+ *     SVNClientManager 
+ *         clientManager = SVNClientManager.newInstance(myOptions, <span class="javastring">"name"</span>, <span class="javastring">"passw"</span>);
  *     </pre><br />
  * Having instantiated an <b>SVNClientManager</b> in one of these ways, all 
  * the <b>SVN</b>*<b>Client</b> objects it will provide you will share those
  * drivers, so you don't need to code much to provide the same drivers to each
  * <b>SVN</b>*<b>Client</b> instance by yourself.
+ * <li>With <b>SVNClientManager</b> you don't need to create and keep your
+ * <b>SVN</b>*<b>Client</b> objects by youself - <b>SVNClientManager</b> will
+ * do all the work for you, so this will certainly bring down your efforts
+ * on coding and your code will be clearer and more flexible. All you need is
+ * to create an <b>SVNClientManager</b> instance.
  * <li>Actually every <b>SVN</b>*<b>Client</b> object is instantiated only at
  * the moment of the first call to an appropriate <b>SVNClientManager</b>'s 
  * <code>get</code> method:
@@ -78,15 +84,25 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
  *     <span class="javacomment">//quite cheap, you see..</span> 
  *     SVNUpdateClient updateClient = clientManager.getUpdateClient();</pre><br />
  * <li>You can provide a single event handler that will be used by all 
- * <b>SVN</b>*<b>Client</b> objects provided by <b>SVNClientManager</b>.
+ * <b>SVN</b>*<b>Client</b> objects provided by <b>SVNClientManager</b>:
+ * <pre class="javacode">
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.ISVNEventHandler;
+ *     
+ *     ...
+ *     
+ *     ISVNEventHandler commonEventHandler;
+ *     SVNClientManager clientManager = SVNClientManager.newInstance();
+ *     ...
+ *     <span class="javacomment">//will be used by all SVN*Client</span> objects
+ *     <span class="javacomment">//obtained from your client manager</span>
+ *     clientManager.setEventHandler(commonEventHandler);
+ * </pre>
  * <li>
  * </ol>
  * 
- * 
- * 
  * @version 1.0
  * @author  TMate Software Ltd.
- * 
+ * @see     ISVNEventHandler
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public class SVNClientManager implements ISVNRepositoryFactory {
@@ -116,34 +132,112 @@ public class SVNClientManager implements ISVNRepositoryFactory {
         }
     }
     
+    /**
+     * Creates a new instance of this class using default {@link ISVNOptions}
+     * and {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager} drivers. 
+     * That means this <b>SVNClientManager</b> will use the SVN's default run-time 
+     * configuration area.  
+     * 
+     * @return a new <b>SVNClientManager</b> instance
+     */
     public static SVNClientManager newInstance() {
         return new SVNClientManager(null, null);
     }
 
+    /**
+     * Creates a new instance of this class using the provided {@link ISVNOptions}
+     * and default {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager} drivers. 
+     * That means this <b>SVNClientManager</b> will use the caller's configuration options
+     * (which correspond to options found in the default SVN's <i>config</i>
+     * file) and the default SVN's <i>servers</i> configuration and auth storage.  
+     * 
+     * @return a new <b>SVNClientManager</b> instance
+     */
     public static SVNClientManager newInstance(ISVNOptions options) {
         return new SVNClientManager(options, null);
     }
-    
+
+    /**
+     * Creates a new instance of this class using the provided {@link ISVNOptions}
+     * and {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager} drivers. 
+     * That means this <b>SVNClientManager</b> will use the caller's configuration options
+     * (which correspond to options found in the default SVN's <i>config</i>
+     * file) as well as authentication credentials and servers options (similar to
+     * options found in the default SVN's <i>servers</i>).   
+     * 
+     * @return a new <b>SVNClientManager</b> instance
+     */
     public static SVNClientManager newInstance(ISVNOptions options, ISVNAuthenticationManager authManager) {
         return new SVNClientManager(options, authManager);
     }
 
+    /**
+     * Creates a new instance of this class using the provided {@link ISVNOptions}
+     * driver and user's credentials make a default implementation of
+     * {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager} use them. 
+     * That means this <b>SVNClientManager</b> will use the caller's configuration options
+     * (which correspond to options found in the default SVN's <i>config</i>
+     * file), the default SVN's <i>servers</i> configuration and the caller's
+     * credentials.
+     * 
+     * @return a new <b>SVNClientManager</b> instance
+     */
     public static SVNClientManager newInstance(ISVNOptions options, String userName, String password) {
         boolean storeAuth = options == null ? true : options.isAuthStorageEnabled();
         ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(null, userName, password, storeAuth);
         return new SVNClientManager(options, authManager);
     }
-
+    
+    /**
+     * Creates a low-level SVN protocol driver to directly work with
+     * a repository. 
+     * 
+     * <p>
+     * The driver created will be set the same {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager} 
+     * that this <b>SVNClientManager</b> keeps.
+     * 
+     * <p>
+     * Used by <b>SVN</b>*<b>Client</b> objects (managed by this 
+     * <b>SVNClientManager</b>) to access a repository when needed.
+     * 
+     * @param  url           a repository location to establish a 
+     *                       connection with (will be the root directory
+     *                       for the working session)
+     * @return               a low-level API driver for direct interacting
+     *                       with a repository
+     * @throws SVNException
+     */
     public SVNRepository createRepository(SVNURL url) throws SVNException {
         SVNRepository repository = SVNRepositoryFactory.create(url);
         repository.setAuthenticationManager(myAuthenticationManager);
         return repository;
     }
-
+    
+    /**
+     * Returns the run-time configuration options driver
+     * which kept by this object.
+     * 
+     * @return  a run-time options driver
+     */
     public ISVNOptions getOptions() {
         return myOptions;
     }
     
+    /**
+     * Sets an event handler to all <b>SVN</b>*<b>Client</b> objects 
+     * created and kept by this <b>SVNClientManager</b>.
+     *   
+     * <p>
+     * The provided event handler will be set only to only those objects
+     * that have been already created (<b>SVN</b>*<b>Client</b> objects are
+     * instantiated by an <b>SVNClientManager</b> at the moment of the 
+     * first call to a <code>get*Client()</code> method). So, the handler
+     * won't be set for those ones that have never been requested. However
+     * as they are first requested (and thus created) the handler will be 
+     * set to them, too, since <b>SVNClientManager</b> is still keeping the handler.
+     * 
+     * @param handler an event handler
+     */
     public void setEventHandler(ISVNEventHandler handler) {
         myEventHandler = handler;
         if (myCommitClient != null) {
@@ -171,7 +265,19 @@ public class SVNClientManager implements ISVNRepositoryFactory {
             myWCClient.setEventHandler(handler);
         }        
     }
-
+    
+    /**
+     * Returns an instance of the {@link SVNCommitClient} class. 
+     * 
+     * <p>
+     * If it's the first time this method is being called the object is
+     * created, initialized and then returned. Further calls to this
+     * method will get the same object instantiated at that moment of 
+     * the first call. <b>SVNClientManager</b> does not reinstantiate
+     * its <b>SVN</b>*<b>Client</b> objects. 
+     * 
+     * @return an <b>SVNCommitClient</b> instance
+     */
     public SVNCommitClient getCommitClient() {
         if (myCommitClient == null) {
             myCommitClient = new SVNCommitClient(this, myOptions);
@@ -180,6 +286,18 @@ public class SVNClientManager implements ISVNRepositoryFactory {
         return myCommitClient;
     }
 
+    /**
+     * Returns an instance of the {@link SVNCopyClient} class. 
+     * 
+     * <p>
+     * If it's the first time this method is being called the object is
+     * created, initialized and then returned. Further calls to this
+     * method will get the same object instantiated at that moment of 
+     * the first call. <b>SVNClientManager</b> does not reinstantiate
+     * its <b>SVN</b>*<b>Client</b> objects. 
+     * 
+     * @return an <b>SVNCopyClient</b> instance
+     */
     public SVNCopyClient getCopyClient() {
         if (myCopyClient == null) {
             myCopyClient = new SVNCopyClient(this, myOptions);
@@ -188,6 +306,18 @@ public class SVNClientManager implements ISVNRepositoryFactory {
         return myCopyClient;
     }
 
+    /**
+     * Returns an instance of the {@link SVNDiffClient} class. 
+     * 
+     * <p>
+     * If it's the first time this method is being called the object is
+     * created, initialized and then returned. Further calls to this
+     * method will get the same object instantiated at that moment of 
+     * the first call. <b>SVNClientManager</b> does not reinstantiate
+     * its <b>SVN</b>*<b>Client</b> objects. 
+     * 
+     * @return an <b>SVNDiffClient</b> instance
+     */
     public SVNDiffClient getDiffClient() {
         if (myDiffClient == null) {
             myDiffClient = new SVNDiffClient(this, myOptions);
@@ -196,6 +326,18 @@ public class SVNClientManager implements ISVNRepositoryFactory {
         return myDiffClient;
     }
 
+    /**
+     * Returns an instance of the {@link SVNLogClient} class. 
+     * 
+     * <p>
+     * If it's the first time this method is being called the object is
+     * created, initialized and then returned. Further calls to this
+     * method will get the same object instantiated at that moment of 
+     * the first call. <b>SVNClientManager</b> does not reinstantiate
+     * its <b>SVN</b>*<b>Client</b> objects. 
+     * 
+     * @return an <b>SVNLogClient</b> instance
+     */
     public SVNLogClient getLogClient() {
         if (myLogClient == null) {
             myLogClient = new SVNLogClient(this, myOptions);
@@ -204,6 +346,18 @@ public class SVNClientManager implements ISVNRepositoryFactory {
         return myLogClient;
     }
 
+    /**
+     * Returns an instance of the {@link SVNMoveClient} class. 
+     * 
+     * <p>
+     * If it's the first time this method is being called the object is
+     * created, initialized and then returned. Further calls to this
+     * method will get the same object instantiated at that moment of 
+     * the first call. <b>SVNClientManager</b> does not reinstantiate
+     * its <b>SVN</b>*<b>Client</b> objects. 
+     * 
+     * @return an <b>SVNMoveClient</b> instance
+     */
     public SVNMoveClient getMoveClient() {
         if (myMoveClient == null) {
             myMoveClient = new SVNMoveClient(this, myOptions);
@@ -212,6 +366,18 @@ public class SVNClientManager implements ISVNRepositoryFactory {
         return myMoveClient;
     }
 
+    /**
+     * Returns an instance of the {@link SVNStatusClient} class. 
+     * 
+     * <p>
+     * If it's the first time this method is being called the object is
+     * created, initialized and then returned. Further calls to this
+     * method will get the same object instantiated at that moment of 
+     * the first call. <b>SVNClientManager</b> does not reinstantiate
+     * its <b>SVN</b>*<b>Client</b> objects. 
+     * 
+     * @return an <b>SVNStatusClient</b> instance
+     */
     public SVNStatusClient getStatusClient() {
         if (myStatusClient == null) {
             myStatusClient = new SVNStatusClient(this, myOptions);
@@ -220,6 +386,18 @@ public class SVNClientManager implements ISVNRepositoryFactory {
         return myStatusClient;
     }
 
+    /**
+     * Returns an instance of the {@link SVNUpdateClient} class. 
+     * 
+     * <p>
+     * If it's the first time this method is being called the object is
+     * created, initialized and then returned. Further calls to this
+     * method will get the same object instantiated at that moment of 
+     * the first call. <b>SVNClientManager</b> does not reinstantiate
+     * its <b>SVN</b>*<b>Client</b> objects. 
+     * 
+     * @return an <b>SVNUpdateClient</b> instance
+     */
     public SVNUpdateClient getUpdateClient() {
         if (myUpdateClient == null) {
             myUpdateClient = new SVNUpdateClient(this, myOptions);
@@ -228,6 +406,18 @@ public class SVNClientManager implements ISVNRepositoryFactory {
         return myUpdateClient;
     }
 
+    /**
+     * Returns an instance of the {@link SVNWCClient} class. 
+     * 
+     * <p>
+     * If it's the first time this method is being called the object is
+     * created, initialized and then returned. Further calls to this
+     * method will get the same object instantiated at that moment of 
+     * the first call. <b>SVNClientManager</b> does not reinstantiate
+     * its <b>SVN</b>*<b>Client</b> objects. 
+     * 
+     * @return an <b>SVNWCClient</b> instance
+     */
     public SVNWCClient getWCClient() {
         if (myWCClient == null) {
             myWCClient = new SVNWCClient(this, myOptions);

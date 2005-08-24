@@ -584,29 +584,29 @@ public class SVNCommitClient extends SVNBasicClient {
     /**
      * Collects commit items (containing detailed information on each Working Copy item
      * that was changed and need to be committed to the repository) into a single 
-     * <span class="style0">SVNCommitPacket</span> which further can be passed to
-     * {@link #doCommit(SVNCommitPacket, boolean, String) doCommit(..)}.
+     * <b>SVNCommitPacket</b> which further can be passed to
+     * {@link #doCommit(SVNCommitPacket, boolean, String) doCommit()}.
      * 
      * @param  paths			an array of local items which should be traversed
      * 							to collect information on every changed item (one 
-     * 							<span class="style0">SVNCommitItem</span> per each
+     * 							<b>SVNCommitItem</b> per each
      * 							modified local item)
-     * @param  keepLocks		if <code>true</code> and there are local items that 
+     * @param  keepLocks		if <span class="javakeyword">true</span> and there are local items that 
      * 							were locked then these items will be left locked after
      * 							traversing all of them, otherwise the items will be unlocked
-     * @param  force			relevant only if <code>recursive</code> is <code>false</code> - 
+     * @param  force			relevant only if <code>recursive</code> is <span class="javakeyword">false</span> - 
      * 							forces collecting commit items for a non-recursive commit  
-     * @param  recursive		relevant only for directory items: if <code>true</code> then 
+     * @param  recursive		relevant only for directory items: if <span class="javakeyword">true</span> then 
      * 							the entire directory tree will be traversed including all child 
      * 							directories, otherwise only items located in the directory itself
      * 							will be processed
-     * @return					an <span class="style0">SVNCommitPacket</span> containing
+     * @return					an <b>SVNCommitPacket</b> containing
      * 							all Working Copy items having local modifications and represented as 
-     * 							<span class="style0">SVNCommitItem</span> objects; if no modified
+     * 							<b>SVNCommitItem</b> objects; if no modified
      * 							items were found then 
-     * 							<span class="style0">SVNCommitPacket</span>.<span class="style0"><i>EMPTY</i></span> is returned
+     * 							{@link SVNCommitPacket#EMPTY} is returned
      * @throws SVNException
-     * @see	   SVNCommitItem
+     * @see	                    SVNCommitItem
      */
     public SVNCommitPacket doCollectCommitItems(File[] paths,
             boolean keepLocks, boolean force, boolean recursive)

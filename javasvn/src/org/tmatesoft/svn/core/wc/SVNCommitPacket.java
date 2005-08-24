@@ -19,8 +19,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
+ * The <b>SVNCommitPacket</b> is a storage for <b>SVNCommitItem</b>
+ * objects which represent information on versioned items intended
+ * for being committed to a repository.
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
+ * @see     SVNCommitItem
+ * @see     SVNCommitClient#doCollectCommitItems(File[], boolean, boolean, boolean) doCollectCommitItems
  */
 public class SVNCommitPacket {
 
@@ -41,7 +47,12 @@ public class SVNCommitPacket {
         myLockTokens = lockTokens;
         myIsSkipped = new boolean[items == null ? 0 : items.length];
     }
-
+    
+    /**
+     * 
+     * 
+     * @return
+     */
     public SVNCommitItem[] getCommitItems() {
         return myCommitItems;
     }

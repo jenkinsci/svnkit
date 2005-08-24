@@ -134,7 +134,8 @@ public class SVNBasicClient implements ISVNEventHandler {
      * <code>leave</code> set to <span class="javakeyword">true</span>,
      * an update will still create temporary files but won't place those two
      * sections into your working file. And this behaviour also concerns
-     * merge operations. In addition if there is any registered event
+     * merge operations: any merging to a conflicted file will be prevented. 
+     * In addition if there is any registered event
      * handler for an <b>SVNDiffClient</b> or <b>SVNUpdateClient</b> 
      * instance then the handler will be dispatched an event with 
      * the status type set to {@link SVNStatusType#CONFLICTED_UNRESOLVED}. 

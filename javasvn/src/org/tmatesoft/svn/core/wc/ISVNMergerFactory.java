@@ -13,11 +13,41 @@ package org.tmatesoft.svn.core.wc;
 
 
 /**
+ * The <b>ISVNMergerFactory</b> interface should be implemented in
+ * order to be used as a factory of merger drivers intended for 
+ * merging operations.
+ * 
+ * <p>
+ * To get a default merger factory implementation call the 
+ * {@link ISVNOptions#getMergerFactory()} method of a default run-time
+ * configuration driver. How to obtain a default run-time configuration
+ * driver read more on {@link ISVNOptions} and {@link SVNWCUtil}.
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
+ * @see     ISVNMerger
  */
 public interface ISVNMergerFactory {
-    
+    /**
+     * Creates a new merger driver.
+     * 
+     * <p>
+     * If a merger driver can not cleanly apply delta to a file (in case of a conflict state) 
+     * then for each conflicting contents fragment the driver puts local data between the 
+     * specified <code>conflictStart</code> and <code>conflictSeparator</code> bytes, and the newcomer
+     * data between the specified <code>conflictSeparator</code> and <code>conflictEnd</code> ones. The 
+     * specified <code>eol</code> bytes are put at the end of each line. And all these
+     * bytes are then written to the file in the place of a conflict.
+     * 
+     * @param  conflictStart      bytes that come in the very beginning of a conflict
+     * @param  conflictSeparator  bytes that are used to separate two conflicting fragments - 
+     *                            local data and the newcomer one  
+     * @param  conflictEnd        bytes that come in the very end of a conflict  
+     * @param  eol                end-of-line bytes to use as the line ending markers;
+     *                            if <span class="javakeyword">null</span> then the native
+     *                            eol style is used 
+     * @return                    a merger driver
+     */
     public ISVNMerger createMerger(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd, byte[] eol);
     
 }

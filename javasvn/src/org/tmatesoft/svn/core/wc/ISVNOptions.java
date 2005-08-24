@@ -23,7 +23,7 @@ import java.util.Map;
  * located in the default Subversion configuration area - on <i>Windows</i> platforms
  * it's usually located in the <i>'Documents and Settings\UserName\Subversion'</i> 
  * (or simply <i>'%APPDATA%\Subversion'</i>) directory, on <i>Unix</i>-like platforms - in 
- * <i>'etc/subversion'</i>. <b>ISVNOptions</b> is not intended for managing those
+ * <i>'~/.subversion'</i>. <b>ISVNOptions</b> is not intended for managing those
  * options that can be met in the <i>servers</i> file (located in the same directory
  * as <i>config</i>) - options for network layers are managed by interfaces and classes
  * of the <B><A HREF="../auth/package-summary.html">org.tmatesoft.svn.core.auth</A></B> package. 
@@ -44,8 +44,8 @@ import java.util.Map;
  * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.SVNClientManager;
  * ...
  *     <span class="javacomment">//here the only one boolean parameter - <i>readonly</i> - enables</span>
- *     <span class="javacomment">//or disables writing to the config file: if true (like it this snippet) -</span>
- *     <<span class="javacomment">>//JavaSVN can only read options from the config file but not write</span>
+ *     <span class="javacomment">//or disables writing to the config file: if true (like in this snippet) -</span>
+ *     <span class="javacomment">//JavaSVN can only read options from the config file but not write</span>
  *     ISVNOptions options = SVNWCUtil.createDefaultOptions(<span class="javakeyword">true</span>);
  *     SVNClientManager clientManager = SVNClientManager.newInstance(options, <span class="javastring">"name"</span>, <span class="javastring">"password"</span>);
  *     ...</pre>
@@ -66,6 +66,7 @@ import java.util.Map;
  * 
  * @version 1.0
  * @author  TMate Software Ltd.
+ * @see     SVNWCUtil
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  * 
  */
@@ -328,7 +329,7 @@ public interface ISVNOptions {
     
     /**
      * Returns a factory object which is responsible for creating 
-     * merge drivers. 
+     * merger drivers. 
      * 
      * @return a factory that produces merger drivers
      *         for merge operations
@@ -338,7 +339,7 @@ public interface ISVNOptions {
     
     /**
      * Sets a factory object which is responsible for creating 
-     * merge drivers.
+     * merger drivers.
      *  
      * @param merger  a factory that produces merger drivers
      *                for merge operations
