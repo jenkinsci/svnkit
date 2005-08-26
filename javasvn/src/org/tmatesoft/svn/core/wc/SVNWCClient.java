@@ -371,7 +371,7 @@ public class SVNWCClient extends SVNBasicClient {
      * unfinished operations. 
      * 
      * <p>
-     * If you ever get a “working copy locked” error, use this method 
+     * If you ever get a "working copy locked" error, use this method 
      * to remove stale locks and get your working copy into a usable 
      * state again.
      * 
