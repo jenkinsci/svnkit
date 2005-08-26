@@ -141,10 +141,8 @@ public class SVNStatusClient extends SVNBasicClient {
         wcAccess.open(false, recursive);
         Map parentExternals = new HashMap();
         if (collectParentExternals) {
-            parentExternals = collectParentExternals(path,
-                                                     wcAccess.getAnchor() != wcAccess.getTarget());
-            SVNExternalInfo thisExternal = (SVNExternalInfo) parentExternals
-                    .remove("");
+            parentExternals = collectParentExternals(path, wcAccess.getAnchor() != wcAccess.getTarget());
+            SVNExternalInfo thisExternal = (SVNExternalInfo) parentExternals.remove("");
             if (thisExternal != null) {
                 // report this as external first.
                 handler.handleStatus(new SVNStatus(null, path, SVNNodeKind.DIR,
@@ -156,48 +154,37 @@ public class SVNStatusClient extends SVNBasicClient {
                                                    null, null));
             }
         }
-        SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(),
-                                                           wcAccess, handler, parentExternals, includeIgnored, reportAll,
-                                                           recursive);
+        SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(), wcAccess, handler, parentExternals, includeIgnored, reportAll, recursive);
         if (remote) {
-            String url = wcAccess.getAnchor().getEntries().getEntry("", true)
-                    .getURL();
+            String url = wcAccess.getAnchor().getEntries().getEntry("", true).getURL();
             SVNRepository repos = createRepository(url);
             SVNRepository locksRepos = createRepository(url);
 
             SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
-            SVNStatusReporter statusReporter = new SVNStatusReporter(
-                    locksRepos, reporter, statusEditor);
-            String target = "".equals(wcAccess.getTargetName()) ? null
-                            : wcAccess.getTargetName();
+            SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, statusEditor);
+            String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
 
             repos.status(-1, target, recursive, statusReporter, SVNCancellableEditor.newInstance(statusEditor, this));
         }
         // to report all when there is completely no changes
         statusEditor.closeEdit();
         if (remote && statusEditor.getTargetRevision() >= 0) {
-            SVNEvent event = SVNEventFactory.createStatusCompletedEvent(
-                    wcAccess, statusEditor.getTargetRevision());
+            SVNEvent event = SVNEventFactory.createStatusCompletedEvent(wcAccess, statusEditor.getTargetRevision());
             handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         wcAccess.close(false);
         if (!isIgnoreExternals() && recursive) {
             Map externals = statusEditor.getCollectedExternals();
-            for (Iterator paths = externals.keySet().iterator(); paths
-                    .hasNext();) {
+            for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
                 String externalPath = (String) paths.next();
-                File externalFile = new File(wcAccess.getAnchor().getRoot(),
-                                             externalPath);
-                if (!externalFile.exists() || !externalFile.isDirectory()
-                    || !SVNWCUtil.isWorkingCopyRoot(externalFile, true)) {
+                File externalFile = new File(wcAccess.getAnchor().getRoot(),externalPath);
+                if (!externalFile.exists() || !externalFile.isDirectory() || !SVNWCUtil.isWorkingCopyRoot(externalFile, true)) {
                     continue;
                 }
-                handleEvent(SVNEventFactory.createStatusExternalEvent(wcAccess,
-                                                                      externalPath), ISVNEventHandler.UNKNOWN);
+                handleEvent(SVNEventFactory.createStatusExternalEvent(wcAccess, externalPath), ISVNEventHandler.UNKNOWN);
                 setEventPathPrefix(externalPath);
                 try {
-                    doStatus(externalFile, recursive, remote, reportAll,
-                             includeIgnored, false, handler);
+                    doStatus(externalFile, recursive, remote, reportAll, includeIgnored, false, handler);
                 } catch (SVNException e) {
                     // fire error event.
                 } finally {

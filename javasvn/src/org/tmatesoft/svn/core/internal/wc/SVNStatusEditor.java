@@ -160,19 +160,15 @@ public class SVNStatusEditor implements ISVNEditor {
     }
 
     public void closeDir() throws SVNException {
-        if (myCurrentDirectory.IsAdded || myCurrentDirectory.IsContentsChanged
-                || myCurrentDirectory.IsPropertiesChanged) {
+        if (myCurrentDirectory.IsAdded || myCurrentDirectory.IsContentsChanged || myCurrentDirectory.IsPropertiesChanged) {
             SVNStatusType reposContentsStatus;
             SVNStatusType reposPropStatus;
             if (myCurrentDirectory.IsAdded) {
                 reposContentsStatus = SVNStatusType.STATUS_ADDED;
-                reposPropStatus = myCurrentDirectory.IsPropertiesChanged ? SVNStatusType.STATUS_MODIFIED
-                        : SVNStatusType.STATUS_NONE;
+                reposPropStatus = myCurrentDirectory.IsPropertiesChanged ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
             } else {
-                reposContentsStatus = myCurrentDirectory.IsContentsChanged ? SVNStatusType.STATUS_MODIFIED
-                        : SVNStatusType.STATUS_NONE;
-                reposPropStatus = myCurrentDirectory.IsPropertiesChanged ? SVNStatusType.STATUS_MODIFIED
-                        : SVNStatusType.STATUS_NONE;
+                reposContentsStatus = myCurrentDirectory.IsContentsChanged ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
+                reposPropStatus = myCurrentDirectory.IsPropertiesChanged ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
             }
             if (myCurrentDirectory.Parent != null) {
                 myCurrentDirectory.Parent.tweakStatus(myCurrentDirectory.Path,
@@ -182,11 +178,8 @@ public class SVNStatusEditor implements ISVNEditor {
         }
         if (myCurrentDirectory.Parent != null && myIsRecursive) {
             boolean deleted = false;
-            SVNStatus dirStatus = (SVNStatus) myCurrentDirectory.Parent.ChildrenStatuses
-                    .get(myCurrentDirectory.Name);
-            if (dirStatus != null
-                    && (dirStatus.getRemoteContentsStatus() == SVNStatusType.STATUS_DELETED || dirStatus
-                            .getRemoteContentsStatus() == SVNStatusType.STATUS_REPLACED)) {
+            SVNStatus dirStatus = (SVNStatus) myCurrentDirectory.Parent.ChildrenStatuses.get(myCurrentDirectory.Name);
+            if (dirStatus != null && (dirStatus.getRemoteContentsStatus() == SVNStatusType.STATUS_DELETED || dirStatus.getRemoteContentsStatus() == SVNStatusType.STATUS_REPLACED)) {
                 deleted = true;
             }
             handleDirStatuses(myCurrentDirectory, deleted);
@@ -195,17 +188,14 @@ public class SVNStatusEditor implements ISVNEditor {
                     myHandler.handleStatus(dirStatus);
                 }
             }
-            myCurrentDirectory.Parent.ChildrenStatuses
-                    .remove(myCurrentDirectory.Name);
+            myCurrentDirectory.Parent.ChildrenStatuses.remove(myCurrentDirectory.Name);
             myCurrentDirectory = myCurrentDirectory.Parent;
         } else if (myCurrentDirectory.Parent == null) {
             if (myTarget != null) {
-                SVNStatus targetStatus = (SVNStatus) myCurrentDirectory.ChildrenStatuses
-                        .get(myTarget);
+                SVNStatus targetStatus = (SVNStatus) myCurrentDirectory.ChildrenStatuses.get(myTarget);
                 if (targetStatus != null) {
-                    if (myIsRecursive && targetStatus.getURL() != null
-                            && targetStatus.getKind() == SVNNodeKind.DIR) {
-                        reportStatus(myWCAccess.getTarget(), null, true, true);
+                    if (targetStatus.getURL() != null && targetStatus.getKind() == SVNNodeKind.DIR) {
+                        reportStatus(myWCAccess.getTarget(), null, true, myIsRecursive);
                     }
                     if (isSendableStatus(targetStatus)) {
                         myHandler.handleStatus(targetStatus);
@@ -240,8 +230,7 @@ public class SVNStatusEditor implements ISVNEditor {
         }
         SVNDirectory dir = myWCAccess.getDirectory(dirInfo.Path);
         File dirFile = new File(myWCAccess.getAnchor().getRoot(), dirInfo.Path);
-        for (Iterator names = dirInfo.ChildrenStatuses.keySet().iterator(); names
-                .hasNext();) {
+        for (Iterator names = dirInfo.ChildrenStatuses.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
             SVNStatus status = (SVNStatus) dirInfo.ChildrenStatuses.get(name);
             File childFile = new File(dirFile, name);
@@ -253,10 +242,8 @@ public class SVNStatusEditor implements ISVNEditor {
                         && !currentEntry.isScheduledForDeletion()) {
                     status.setContentsStatus(SVNStatusType.STATUS_MISSING);
                 }
-            } else if (myIsRecursive && status.getURL() != null
-                    && status.getKind() == SVNNodeKind.DIR) {
-                String path = "".equals(dirInfo.Path) ? name : SVNPathUtil.append(
-                        dirInfo.Path, name);
+            } else if (myIsRecursive && status.getURL() != null && status.getKind() == SVNNodeKind.DIR) {
+                String path = "".equals(dirInfo.Path) ? name : SVNPathUtil.append(dirInfo.Path, name);
                 SVNDirectory childDir = myWCAccess.getDirectory(path);
                 if (childDir != null) {
                     reportStatus(childDir, null, true, myIsRecursive);
@@ -334,20 +321,14 @@ public class SVNStatusEditor implements ISVNEditor {
                 SVNEntry entry = entries.getEntry(myTarget, true);
                 entries.close();
                 if (entry != null) {
-                    reportStatus(myWCAccess.getTarget(), null, false,
-                            myIsRecursive);
+                    reportStatus(myWCAccess.getTarget(), null, false, myIsRecursive);
                 } else {
-                    // disable exclude ignore for explicit unversioned dir
-                    // target
                     myIsIncludeIgnored = true;
-                    reportStatus(myWCAccess.getAnchor(), myTarget, false,
-                            myIsRecursive);
+                    reportStatus(myWCAccess.getAnchor(), myTarget, false, myIsRecursive);
                 }
             } else {
-                // disable exclude ignore for explicit file target
                 myIsIncludeIgnored = true;
-                reportStatus(myWCAccess.getAnchor(), myTarget, false,
-                        myIsRecursive);
+                reportStatus(myWCAccess.getAnchor(), myTarget, false, myIsRecursive);
             }
         } else {
             reportStatus(myWCAccess.getAnchor(), null, false, myIsRecursive);
