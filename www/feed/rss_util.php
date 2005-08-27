@@ -41,7 +41,7 @@ if (preg_match_all("/<li><a href=\"(.*)\/\">(.*\..*\..*)(<\/a>)<\/li>/", $conten
        $build = $matches[1][$i];
        $changelog_url = $repository . $build . "/changelog.txt";
        $test_url = $repository . $build . "/tests.log";
-       $test_results_xml_url = $repository . $build . "/results.xml";
+       $test_results_xml_url = $repository . $build . "/javasvn-test/python-tests-log.xml";
            
        $changelog = read_contents($changelog_url);
 

@@ -40,46 +40,98 @@ Logging is turned off by default. To enable JavaSVN logging please do the follow
 </p>
 <ul>
 <li>Copy <code>ECLIPSE_HOME/plugins/org.tmatesoft.javasvn_version/.options</code> file to <code>ECLIPSE_HOME</code> directory</li>
-<li>Start Eclipse with -debug command line argument:<br/><code>$eclipse -debug</code></li>
+<li>Start Eclipse with -debug command line argument:<br/><pre>$eclipse -debug</pre></li>
 <li>In Eclipse, open standard 'Error Log' view - it will contain detailed log of JavaSVN
 operations that you may export to a file.</li>
 </ul>
 <p><b>Note:</b> OS X users may find it useful to read this <a href="http://www.luisdelarosa.com/blog/2004/10/how_to_run_ecli.html">article</a>. It describes how to start Eclipse in "-debug" mode.</p>
 
 <h4>JavaSVN is used as library in standalone application</h4>
-<p>By default JavaSVN uses standard JDK logging API. You may find JavaSVN
-log file at USER_HOME/.javasvn/.javasvn.0.0.log
+<p>By default JavaSVN operations logging is switched off. To enable it,
+you should replace the contents of the <code>JAVA_HOME/jre/lib/logging.properties</code> file
+with the contents of the <code>logging.properties.disabled</code> file
+that you can find in your "standalone" archive or in the <code>javasvn/cli/</code> directory
+in case you've checked out the JavaSVN sources. Or when launching the Java VM
+you can use the following system property:
+<pre>
+$java -Djava.util.logging.config.file=path/to/logging.properties.disabled
+</pre>
 </p>
-<p style="margin-bottom: .5em;">Following system properties may be used to control JavaSVN logging output:</p>
-<code>javasvn.log.console=true|false&nbsp;[false]</code> - log to System.out
-<br/><code>javasvn.log.file=true|false&nbsp;&nbsp;&nbsp;&nbsp;[true]&nbsp;</code> - log to file
-<br/><code>javasvn.log.path=path/to/log/file &nbsp;&nbsp;&nbsp;&nbsp;</code> - use specified log file instead of default one
-<br/><code>javasvn.log.svn=true|false&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[false]</code> - log svn protocol messages
-<br/><code>javasvn.log.http=true|false&nbsp;&nbsp;&nbsp;&nbsp;[false]</code> - log DAV protocol requests
-<br/>
+
+<p>
+The <code>logging.properties.disabled</code> 
+file contains a system property <code>javasvn.level</code> used to control the log level. Up to your needs
+you can specify the following values for that property:
+<ul>
+<li><code>FINE</code>(default) - the level for not detailed logging
+<li><code>FINER</code> - the level for more detailed logging
+<li><code>FINEST</code> - the level for full logging
+</ul>
+</p>
+
+<p>
+You may find a JavaSVN log file at <code>USER_HOME/.javasvn/.javasvn.0.0.log</code>.
+</p>
 
 <h4>Setting up your own logger</h4>
 <p>When you're using JavaSVN in your application it is not always an option to let
 JavaSVN use JDK logging API. Instead you may like to have a fine-grained control over
 the way JavaSVN logs its operations. The solution is to provide JavaSVN with custom logger
-class that should extend <code>DebugLoggerAdapter</code> class. The code below demonstrates
+class that should extend <code>SVNDebugLoggerAdapter</code> class. The code below demonstrates
 how it could be done.
 </p> 
 <pre class="javaCode">
 ....
 <span class="javaKeyword">import</span> org.tmatesoft.svn.util.<code>DebugLog</code>;
-<span class="javaKeyword">import</span> org.tmatesoft.svn.util.<code>DebugLoggerAdapter</code>;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.util.<code>SVNDebugLoggerAdapter</code>;
 ....
     <span class="javaKeyword">public static void</span> initJavaSVNLogger() {
         DebugLog.setLogger(<span class="javaKeyword">new</span> CustomJavaSVNLogger());
     }
 
     <span class="javaKeyword">private static class</span> CustomJavaSVNLogger 
-                                   <span class="javaKeyword">extends</span> <code>DebugLoggerAdapter</code> {
+                                   <span class="javaKeyword">extends</span> <code>SVNDebugLoggerAdapter</code> {
     	<span class="javaCommentMulti">/* Override superclass methods to redirect logging
     	 * as you wish. Superclass implementaion is empty, i.e.
     	 * all log messages are swallowed.
     	 */</span>
+         
+         
+         <span class="javaKeyword">public void</span> log(String message, <span class="javaKeyword">byte</span>[] data) {
+             <span class="javaCommentMulti">/*
+              * Used to log all data received or transmitted 
+              * over network
+              */</span>
+             ...
+         }
+         
+         <span class="javaKeyword">public void</span> logInfo(String message) {
+             <span class="javaCommentMulti">/*
+              * Used to log information messages
+              */</span>
+             ...
+         }
+
+         <span class="javaKeyword">public void</span> logError(String message) {
+             <span class="javaCommentMulti">/*
+              * Used to log error messages
+              */</span>
+             ... 
+         }
+
+         <span class="javaKeyword">public void</span> logInfo(Throwable th) {
+             <span class="javaCommentMulti">/*
+              * Used to log information on exceptions
+              */</span>
+             ...
+         }
+
+         <span class="javaKeyword">public void</span> logError(Throwable th) {
+             <span class="javaCommentMulti">/*
+              * Used to log exceptions
+              */</span>
+             ...
+         }
     }
 ....
 </pre>

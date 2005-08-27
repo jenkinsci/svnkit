@@ -1367,7 +1367,7 @@ $language_data = array (
 	'URLS' => array(
 		1 => '',
 		2 => '',
-		3 => 'http://www.google.com/search?q=allinurl%3A{FNAME}+java.sun.com&bntl=1',
+		3 => 'http://java.sun.com/j2se/1.4.2/docs/api/',
 		4 => ''
 		),
 	'OOLANG' => true,

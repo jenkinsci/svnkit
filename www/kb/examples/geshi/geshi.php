@@ -1901,7 +1901,7 @@ class GeSHi
                             array('{FNAME}', '.'),
                             array(@htmlspecialchars($keyword, ENT_COMPAT, $this->encoding), '<DOT>'),
                             $this->language_data['URLS'][$group]
-                        ) . '">';
+                        ) . '<DOT>html">';
 				}
 				return '';
 			} else {

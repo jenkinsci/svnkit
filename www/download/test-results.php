@@ -30,7 +30,7 @@ if(titlepos == false){
     return;
 }
 
-$result = substr($result, 0, $titlepos + strlen("<title>")) . $build . "-tests" . substr($result, $titlepos + strlen("<title>"));
+$result = substr($result, 0, $titlepos + strlen("<title>")) . "JavaSVN :: Test Results :: ". $build . substr($result, $titlepos + strlen("<title>"));
 
 // Print out your transformed document
 echo $result;

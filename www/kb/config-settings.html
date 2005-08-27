@@ -23,7 +23,7 @@
 <span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
 </p>
 <p><div style="border-bottom: 1px solid #ccc;"></div></p>
-<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: Configuration Settings</small>
+<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: Configuring JavaSVN</small>
 
 <h4>HTTP proxy setup</h4>
 <p>By default JavaSVN uses proxy settings from the <i>servers</i> configuration file
@@ -73,6 +73,47 @@ adding something like that (tip provided by Valentin Alekseev):
    &lt;string&gt;-Djavasvn.ssh2.key=/path/to/key/file&lt;/string&gt;
 &lt;/array&gt;
 </pre>
+</p>
+<h4>SSL Connections</h4>
+<p>
+JavaSVN uses SSL support included into JDK. Some JDK versions don't 
+support SSL server certificates longer than 1024 bytes or don't support 
+certain Cypher Suites. If you're experiencing problems accessing a Subversion 
+repository over SSL connection (via https protocol) consider using the 
+latest JDK version and upgrading the JDK JCE package (Cryptotgraphic Extension) 
+to an "unlimited strenght" one. Read this <a href=" http://java.sun.com/products/jce/javase.html">article</a> 
+for more details on how to install JCE.
+</p>
+<h4>Trusting SSL Certificates</h4>
+<p>
+If JavaSVN is used as a standalone library and no custom authentication 
+provider is registered, JavaSVN: 
+<ul>
+<li>by default trusts all SSL servers, though it doesn't cache server certificates;
+<li>or uses a default JDK certificates storage to get SSL certificates of
+the trusted servers;
+<li>and additionally it uses authority certificate files listed in the Subversion <i>servers</i>
+configuration file in these options:
+<pre>
+### 'ssl-authority-files' is a semicolon-delimited list of files,
+### each pointing to a PEM-encoded Certificate Authority (CA) 
+### SSL certificate.
+ssl-authority-files = /path/to/CAcert.pem;/path/to/CAcert2.pem
+
+### 'ssl-trust-default-ca'       Trust the system 'default' CAs
+ssl-trust-default-ca = yes
+</pre>
+</ul>
+</p>
+<h4>Client SSL authentication</h4>
+<p>
+In the Subversion <i>servers</i> configuration file you can specify your
+SSL authentication certificate files for a specific group:
+<pre>
+ssl-client-cert-file      PKCS#12 format client certificate file
+ssl-client-cert-password  Client Key password, if needed.
+</pre>
+Read more information on this options in the <a href="http://svnbook.red-bean.com/en/1.1/svn-book.html#svn-ch-7-sect-1.3">Subversion book</a>.
 </p>
 <br>
 <br>
