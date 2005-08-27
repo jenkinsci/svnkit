@@ -35,8 +35,15 @@ import de.regnis.q.sequence.line.diff.QDiffManager;
 import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
 
 /**
+ * <b>DefaultSVNDiffGenerator</b> is a default implementation of 
+ * <b>ISVNDiffGenerator</b>.
+ * <p>
+ * By default, if there's no any specified implementation of the diff generator's
+ * interface, JavaSVN uses this default implementation. To set a custom
+ * diff driver use {@link SVNDiffClient#setDiffGenerator(ISVNDiffGenerator) setDiffGenerator()}.
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
  */
 public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
@@ -53,7 +60,11 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     private String myEncoding;
     private boolean myIsDiffDeleted;
     private File myBasePath;
-
+    
+    /**
+     * Constructs a <b>DefaultSVNDiffGenerator</b>.
+     *
+     */
     public DefaultSVNDiffGenerator() {
         myIsDiffDeleted = true;
         myAnchorPath1 = "";

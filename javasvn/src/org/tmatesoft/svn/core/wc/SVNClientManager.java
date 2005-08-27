@@ -93,7 +93,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
  *     ISVNEventHandler commonEventHandler;
  *     SVNClientManager clientManager = SVNClientManager.newInstance();
  *     ...
- *     <span class="javacomment">//will be used by all SVN*Client</span> objects
+ *     <span class="javacomment">//will be used by all SVN*Client objects</span>
  *     <span class="javacomment">//obtained from your client manager</span>
  *     clientManager.setEventHandler(commonEventHandler);
  * </pre>

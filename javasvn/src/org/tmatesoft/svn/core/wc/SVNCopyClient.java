@@ -49,7 +49,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
- * This class provides methods to perform any kinds of copying and moving that <b>SVN</b>
+ * The <b>SVNCopyClient</b> provides methods to perform any kinds of copying and moving that SVN
  * supports - operating on both Working Copies (WC) and URLs.
  * 
  * <p>
@@ -87,8 +87,8 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * </ul>
  * 
  * <p>
- * Overloaded <code>doCopy(..)</code> methods of <b>SVNCopyClient</b> are similar to
- * 'svn copy' and 'svn move' commands of the <b>SVN</b> command line client. 
+ * Overloaded <b>doCopy()</b> methods of <b>SVNCopyClient</b> are similar to
+ * <code>'svn copy'</code> and <code>'svn move'</code> commands of the SVN command line client. 
  * 
  * @version 1.0
  * @author  TMate Software Ltd.
@@ -98,7 +98,29 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 public class SVNCopyClient extends SVNBasicClient {
 
     private ISVNCommitHandler myCommitHandler;
-
+    /**
+     * Constructs and initializes an <b>SVNCopyClient</b> object
+     * with the specified run-time configuration and authentication 
+     * drivers.
+     * 
+     * <p>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNCopyClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the 
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).  
+     * 
+     * <p>
+     * If <code>authManager</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNCopyClient</b> will be using a default authentication
+     * and network layers driver (see {@link SVNWCUtil#createDefaultAuthenticationManager()})
+     * which uses server-side settings and auth storage from the 
+     * default SVN's run-time configuration area (or system properties
+     * if that area is not found).
+     * 
+     * @param authManager an authentication and network layers driver
+     * @param options     a run-time configuration options driver     
+     */
     public SVNCopyClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
     }
@@ -109,21 +131,21 @@ public class SVNCopyClient extends SVNBasicClient {
     
 
     /**
-     * Sets an implementation of <span class="style0">ISVNCommitHandler</span> to 
+     * Sets an implementation of <b>ISVNCommitHandler</b> to 
      * the commit handler that will be used during commit operations to handle 
      * commit log messages. The handler will receive a clien's log message and items 
-     * (represented as <span class="style0">SVNCommitItem</span> objects) that will be 
+     * (represented as <b>SVNCommitItem</b> objects) that will be 
      * committed. Depending on implementor's aims the initial log message can
      * be modified (or something else) and returned back. 
      * 
      * <p>
-     * If using <span class="style0">SVNCopyClient</span> without specifying any
+     * If using <b>SVNCopyClient</b> without specifying any
      * commit handler then a default one will be used - {@link DefaultSVNCommitHandler}.
      * 
      * @param handler               an implementor's handler that will be used to handle 
      *                              commit log messages
      * @see   #getCommitHandler()
-     * @see   ISVNCommitHandler
+     * @see   SVNCommitItem
      */
     public void setCommitHandler(ISVNCommitHandler handler) {
         myCommitHandler = handler;
@@ -131,13 +153,12 @@ public class SVNCopyClient extends SVNBasicClient {
 
     /**
      * Returns the specified commit handler (if set) being in use or a default one 
-     * (<span class="style0">DefaultSVNCommitHandler</span>) if no special 
-     * implementations of <span class="style0">ISVNCommitHandler</span> were 
+     * (<b>DefaultSVNCommitHandler</b>) if no special 
+     * implementations of <b>ISVNCommitHandler</b> were 
      * previousely provided.
      *   
      * @return  the commit handler being in use or a default one
      * @see     #setCommitHandler(ISVNCommitHandler)
-     * @see     ISVNCommitHandler
      * @see     DefaultSVNCommitHandler 
      */
     public ISVNCommitHandler getCommitHandler() {
@@ -146,7 +167,18 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         return myCommitHandler;
     }
-
+    
+    /**
+     * Copies/moves 
+     * 
+     * @param  srcURL
+     * @param  srcRevision
+     * @param  dstURL
+     * @param  isMove
+     * @param  commitMessage
+     * @return
+     * @throws SVNException
+     */
     public SVNCommitInfo doCopy(SVNURL srcURL, SVNRevision srcRevision, SVNURL dstURL, boolean isMove, String commitMessage) throws SVNException {
         SVNURL topURL = SVNURLUtil.getCommonURLAncestor(srcURL, dstURL);
         if (topURL == null) {

@@ -47,7 +47,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * developer's status handler (that should implement <b>ISVNStatusHandler</b>)
  * in which the developer retrieves status information and decides how to interprete that
  * info;  
- * <li> another way is that an appropriate doStatus() method
+ * <li> another way is that an appropriate <b>doStatus()</b> method
  * just returns that <b>SVNStatus</b> object.
  * </ol>
  * 
@@ -61,7 +61,30 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public class SVNStatusClient extends SVNBasicClient {
- 
+
+    /**
+     * Constructs and initializes an <b>SVNStatusClient</b> object
+     * with the specified run-time configuration and authentication 
+     * drivers.
+     * 
+     * <p>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNStatusClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the 
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).  
+     * 
+     * <p>
+     * If <code>authManager</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNStatusClient</b> will be using a default authentication
+     * and network layers driver (see {@link SVNWCUtil#createDefaultAuthenticationManager()})
+     * which uses server-side settings and auth storage from the 
+     * default SVN's run-time configuration area (or system properties
+     * if that area is not found).
+     * 
+     * @param authManager an authentication and network layers driver
+     * @param options     a run-time configuration options driver     
+     */
     public SVNStatusClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
     }

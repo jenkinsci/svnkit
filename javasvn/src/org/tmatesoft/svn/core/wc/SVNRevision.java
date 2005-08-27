@@ -241,7 +241,7 @@ public class SVNRevision {
     
     /**
      * Determines if the revision represented by this abstract object is
-     * one of {@link #BASE} or {@link #WORKING}.
+     * Working Copy specific - that is one of {@link #BASE} or {@link #WORKING}.
      * 
      * @return  <span class="javakeyword">true</span> if this object represents 
      *          a kind of a local revision, otherwise <span class="javakeyword">false</span> 

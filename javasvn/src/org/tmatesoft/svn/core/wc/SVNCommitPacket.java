@@ -23,13 +23,19 @@ import java.util.HashMap;
  * objects which represent information on versioned items intended
  * for being committed to a repository.
  * 
+ * <p>
+ * Used by <b>SVNCommitClient</b> in {@link SVNCommitClient#doCollectCommitItems(File[], boolean, boolean, boolean) doCollectCommitItems()}
+ * to collect and hold information on paths that have local changes.
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  * @see     SVNCommitItem
- * @see     SVNCommitClient#doCollectCommitItems(File[], boolean, boolean, boolean) doCollectCommitItems
  */
 public class SVNCommitPacket {
-
+    /**
+     * This constant denotes an empty commit items storage (contains no
+     * {@link SVNCommitItem} objects).
+     */
     public static final SVNCommitPacket EMPTY = new SVNCommitPacket(null,
             new SVNCommitItem[0], null);
 
@@ -49,21 +55,45 @@ public class SVNCommitPacket {
     }
     
     /**
+     * Gets an array of <b>SVNCommitItem</b> objects stored in this
+     * object.
      * 
-     * 
-     * @return
+     * @return an array of <b>SVNCommitItem</b> objects containing
+     *         info of versioned items to be committed
      */
     public SVNCommitItem[] getCommitItems() {
         return myCommitItems;
     }
-
+    
+    /**
+     * Sets or unsets a versioned item to be skipped - 
+     * whether or not it should be committed. 
+     * 
+     * 
+     * @param item      an item that should be marked skipped
+     * @param skipped   if <span class="javakeyword">true</span> the item is
+     *                  set to be skipped (a commit operation should skip 
+     *                  the item), otherwise - unskipped if it was
+     *                  previously marked skipped
+     * @see             #isCommitItemSkipped(SVNCommitItem)
+     *                  
+     */
     public void setCommitItemSkipped(SVNCommitItem item, boolean skipped) {
         int index = getItemIndex(item);
         if (index >= 0 && index < myIsSkipped.length) {
             myIsSkipped[index] = skipped;
         }
     }
-
+    
+    /**
+     * Determines if an item intended for a commit is set to 
+     * be skipped - that is not to be committed.
+     * 
+     * @param  item  an item to check
+     * @return       <span class="javakeyword">true</span> if the item
+     *               is set to be skipped, otherwise <span class="javakeyword">false</span>
+     * @see          #setCommitItemSkipped(SVNCommitItem, boolean)   
+     */
     public boolean isCommitItemSkipped(SVNCommitItem item) {
         int index = getItemIndex(item);
         if (index >= 0 && index < myIsSkipped.length) {
@@ -71,18 +101,35 @@ public class SVNCommitPacket {
         }
         return true;
     }
-
+    
+    /**
+     * Determines if this object is disposed.
+     * 
+     * @return <span class="javakeyword">true</span> if disposed
+     *         otherwise <span class="javakeyword">false</span>
+     */
     public boolean isDisposed() {
         return myWCAccess == null;
     }
-
+    
+    /**
+     * Disposes the current object.
+     * 
+     * @throws SVNException
+     */
     public void dispose() throws SVNException {
         if (myWCAccess != null) {
             myWCAccess.close(true);
             myWCAccess = null;
         }
     }
-
+    
+    /**
+     * Returns the item's array index. 
+     * 
+     * @param  item an item which index is to be got
+     * @return      the item's index
+     */
     private int getItemIndex(SVNCommitItem item) {
         for (int i = 0; myCommitItems != null && i < myCommitItems.length; i++) {
             SVNCommitItem commitItem = myCommitItems[i];
@@ -119,7 +166,12 @@ public class SVNCommitPacket {
                 .toArray(new SVNCommitItem[items.size()]);
         return new SVNCommitPacket(myWCAccess, filteredItems, lockTokens);
     }
-
+    
+    /**
+     * Gives a string representation of this object.
+     * 
+     * @return a string representing this object.
+     */
     public String toString() {
         if (EMPTY == this) {
             return "[EMPTY]";

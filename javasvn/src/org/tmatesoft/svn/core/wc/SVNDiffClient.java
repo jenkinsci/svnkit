@@ -38,13 +38,57 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
+ * The <b>SVNDiffClient</b> class provides methods allowing to get differences
+ * between versioned items ('diff' operation) as well as ones intended for 
+ * merging file contents.
+ * 
+ * <p>
+ * Here's a list of the <b>SVNDiffClient</b>'s methods 
+ * matched against corresponing commands of the SVN command line 
+ * client:
+ * 
+ * <table cellpadding="3" cellspacing="1" border="0" width="40%" bgcolor="#999933">
+ * <tr bgcolor="#ADB8D9" align="left">
+ * <td><b>JavaSVN</b></td>
+ * <td><b>Subversion</b></td>
+ * </tr>   
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doDiff()</td><td>'svn diff'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doMerge()</td><td>'svn merge'</td>
+ * </tr>
+ * </table>
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
  */
 public class SVNDiffClient extends SVNBasicClient {
 
     private ISVNDiffGenerator myDiffGenerator;
-
+    /**
+     * Constructs and initializes an <b>SVNDiffClient</b> object
+     * with the specified run-time configuration and authentication 
+     * drivers.
+     * 
+     * <p>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNDiffClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the 
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).  
+     * 
+     * <p>
+     * If <code>authManager</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNDiffClient</b> will be using a default authentication
+     * and network layers driver (see {@link SVNWCUtil#createDefaultAuthenticationManager()})
+     * which uses server-side settings and auth storage from the 
+     * default SVN's run-time configuration area (or system properties
+     * if that area is not found).
+     * 
+     * @param authManager an authentication and network layers driver
+     * @param options     a run-time configuration options driver     
+     */
     public SVNDiffClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
     }
@@ -52,18 +96,69 @@ public class SVNDiffClient extends SVNBasicClient {
     protected SVNDiffClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
         super(repositoryFactory, options);
     }
-
+    
+    /**
+     * Sets the specified diff driver for this object to use for
+     * generating and writing file differences to an otput stream.
+     * 
+     * <p>
+     * If no specific diff driver was set in this way, a default one
+     * will be used (see {@link DefaultSVNDiffGenerator}). 
+     * 
+     * @param diffGenerator a diff driver
+     * @see   #getDiffGenerator()
+     */
     public void setDiffGenerator(ISVNDiffGenerator diffGenerator) {
         myDiffGenerator = diffGenerator;
     }
-
+    
+    /**
+     * Returns the diff driver being in use.
+     *  
+     * <p>
+     * If no specific diff driver was previously provided, a default one
+     * will be returned (see {@link DefaultSVNDiffGenerator}). 
+     * 
+     * @return the diff driver being in use
+     * @see    #setDiffGenerator(ISVNDiffGenerator)
+     */
     public ISVNDiffGenerator getDiffGenerator() {
         if (myDiffGenerator == null) {
             myDiffGenerator = new DefaultSVNDiffGenerator();
         }
         return myDiffGenerator;
     }
-
+    
+    /**
+     * Generates the differences for the specified URL taken from the two 
+     * specified revisions and writes the result to the provided output
+     * stream.
+     * 
+     * <p>
+     * Corresponds to the SVN command line client's 
+     * <code>'svn diff -r N:M URL'</code> command.
+     * 
+     * @param  url            a repository location
+     * @param  pegRevision    a revision in which <code>url</code> is first looked up
+     * @param  rN             an old revision                          
+     * @param  rM             a new revision
+     * @param  recursive      <span class="javakeyword">true</span> to descend 
+     *                        recursively
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  result         the target {@link java.io.OutputStream} where
+     *                        the differences will be written to
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>at least one of <code>rN</code>, <code>rM</code> and
+     *                        <code>pegRevision</code> is invalid
+     *                        <li>at least one of <code>rN</code> and <code>rM</code> is
+     *                        a local revision (see {@link SVNRevision#isLocal()})
+     *                        <li><code>url</code> was not found in <code>rN</code>
+     *                        <li><code>url</code> was not found in <code>rM</code>
+     *                        </ul>
+     */
     public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
@@ -77,6 +172,44 @@ public class SVNDiffClient extends SVNBasicClient {
         doDiffURLURL(url, null, rN, url, null, rM, pegRevision, recursive, useAncestry, result);
     }
     
+    /**
+     * Generates the differences for the specified path taken from the two 
+     * specified revisions and writes the result to the provided output
+     * stream.
+     * 
+     * <p>
+     * If <code>rM</code> is a local revision (see {@link SVNRevision#isLocal()}),
+     * then the Working Copy <code>path</code> is compared with the corresponding 
+     * repository file at revision <code>rN</code> (that is similar to the SVN command 
+     * line client's <code>'svn diff -r N path'</code> command). 
+     * 
+     * <p>
+     * Otherwise if both <code>rN</code> and <code>rM</code> are non-local, then 
+     * the repository location of <code>path</code> is compared for these 
+     * revisions (<code>'svn diff -r N:M URL'</code>).
+     * 
+     * @param  path           a Working Copy file path
+     * @param  pegRevision    a revision in which the repository location of <code>path</code> 
+     *                        is first looked up
+     * @param  rN             an old revision                          
+     * @param  rM             a new revision (or a local one)
+     * @param  recursive      <span class="javakeyword">true</span> to descend 
+     *                        recursively
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  result         the target {@link java.io.OutputStream} where
+     *                        the differences will be written to
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>at least one of <code>rN</code>, <code>rM</code> and
+     *                        <code>pegRevision</code> is invalid
+     *                        <li>both <code>rN</code> and <code>rM</code> are 
+     *                        local revisions
+     *                        <li><code>path</code> was not found in <code>rN</code>
+     *                        <li><code>path</code> was not found in <code>rM</code>
+     *                        </ul>
+     */
     public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
@@ -93,7 +226,35 @@ public class SVNDiffClient extends SVNBasicClient {
             doDiffURLWC(path, rN, pegRevision, path, rM, false, recursive, useAncestry, result);
         }
     }
-
+    
+    /**
+     * Generates the differences for the specified URLs taken from the two 
+     * specified revisions and writes the result to the provided output
+     * stream.
+     * 
+     * <p>
+     * Corresponds to the SVN command line client's 
+     * <code>'svn diff -r N:M URL1 URL2'</code> command.
+     * 
+     * @param  url1           the first URL to be compared
+     * @param  rN             a revision of <code>url1</code>
+     * @param  url2           the second URL to be compared
+     * @param  rM             a revision of <code>url2</code>
+     * @param  recursive      <span class="javakeyword">true</span> to descend 
+     *                        recursively
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  result         the target {@link java.io.OutputStream} where
+     *                        the differences will be written to
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>at least one of <code>rN</code> and <code>rM</code> is
+     *                        invalid
+     *                        <li><code>url1</code> was not found in <code>rN</code>
+     *                        <li><code>url2</code> was not found in <code>rM</code>
+     *                        </ul>
+     */
     public void doDiff(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
@@ -102,6 +263,45 @@ public class SVNDiffClient extends SVNBasicClient {
         getDiffGenerator().init(url1.toString(), url2.toString());
         doDiffURLURL(url1, null, rN, url2, null, rM, SVNRevision.UNDEFINED, recursive, useAncestry, result);
     }
+    
+    /**
+     * Generates the differences comparing the specified URL in a certain 
+     * revision against either the specified Working Copy path or its repository 
+     * location URL in the specified revision, and writes the result to the provided output
+     * stream.
+     * 
+     * <p>
+     * If <code>rN</code> is not a local revision (see {@link SVNRevision#isLocal()}),
+     * then its repository location URL as it is in the revision represented by 
+     * <code>rN</code> is taken for comparison with <code>url2</code>.
+     * 
+     * <p>
+     * Corresponds to the SVN command line client's 
+     * <code>'svn diff -r N:M PATH URL'</code> command.
+     * 
+     * @param  path1          a WC path  
+     * @param  rN             a revision of <code>path1</code>
+     * @param  url2           a repository location URL that is to be compared 
+     *                        against <code>path1</code> (or its repository location)
+     * @param  rM             a revision of <code>url2</code> 
+     * @param  recursive      <span class="javakeyword">true</span> to descend 
+     *                        recursively
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  result         the target {@link java.io.OutputStream} where
+     *                        the differences will be written to
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>at least one of <code>rN</code> and <code>rM</code> is
+     *                        invalid
+     *                        <li><code>path1</code> is not under version control
+     *                        <li><code>path1</code> has no URL
+     *                        <li><code>url2</code> was not found in <code>rM</code>
+     *                        <li>the repository location of <code>path1</code> was 
+     *                        not found in <code>rN</code>
+     *                        </ul>
+     */
     public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
@@ -114,6 +314,44 @@ public class SVNDiffClient extends SVNBasicClient {
             doDiffURLURL(null, path1, rN, url2, null, rM, SVNRevision.UNDEFINED, recursive, useAncestry, result);
         }
     }
+    
+    /**
+     * Generates the differences comparing either the specified Working Copy path or 
+     * its repository location URL in the specified revision against the specified URL 
+     * in a certain revision, and writes the result to the provided output stream.
+     * 
+     * <p>
+     * If <code>rM</code> is not a local revision (see {@link SVNRevision#isLocal()}),
+     * then its repository location URL as it is in the revision represented by 
+     * <code>rM</code> is taken for comparison with <code>url1</code>.
+     * 
+     * <p>
+     * Corresponds to the SVN command line client's 
+     * <code>'svn diff -r N:M URL PATH'</code> command.
+     * 
+     * @param  url1           a repository location URL 
+     * @param  rN             a revision of <code>url1</code>
+     * @param  path2          a WC path that is to be compared 
+     *                        against <code>url1</code>
+     * @param  rM             a revision of <code>path2</code>
+     * @param  recursive      <span class="javakeyword">true</span> to descend 
+     *                        recursively
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  result         the target {@link java.io.OutputStream} where
+     *                        the differences will be written to
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>at least one of <code>rN</code> and <code>rM</code> is
+     *                        invalid
+     *                        <li><code>path2</code> is not under version control
+     *                        <li><code>path2</code> has no URL
+     *                        <li><code>url1</code> was not found in <code>rN</code>
+     *                        <li>the repository location of <code>path2</code> was 
+     *                        not found in <code>rM</code>
+     *                        </ul>
+     */
     public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
@@ -126,6 +364,62 @@ public class SVNDiffClient extends SVNBasicClient {
             doDiffURLURL(url1, null, rN, null, path2, rM, SVNRevision.UNDEFINED, recursive, useAncestry, result);
         }
     }
+    
+    /**
+     * Generates the differences comparing either the specified Working Copy paths or 
+     * their repository location URLs (any combinations are possible) in the specified 
+     * revisions and writes the result to the provided output stream.
+     * 
+     * <p>
+     * If both <code>rN</code> and <code>rM</code> are local revisions (see {@link SVNRevision#isLocal()}),
+     * then a Working Copy <code>path2</code> is compared against a Working Copy <code>path1</code>.
+     * 
+     * <p>
+     * If <code>rN</code> is a local revision but <code>rM</code> is not, then
+     * the repository location URL of <code>path2</code> as it is in the revision 
+     * represented by <code>rM</code> is compared against the Working Copy <code>path1</code>.
+     *
+     * <p>
+     * If <code>rM</code> is a local revision but <code>rN</code> is not, then
+     * the Working Copy <code>path2</code> is compared against the repository location 
+     * URL of <code>path1</code> as it is in the revision represented by <code>rN</code>.
+     * 
+     * <p>
+     * If both <code>rN</code> and <code>rM</code> are non-local revisions, then the
+     * repository location URL of <code>path2</code> in revision <code>rM</code> is 
+     * compared against the repository location URL of <code>path1</code> in revision 
+     * <code>rN</code>.
+     * 
+     * @param  path1          a WC path
+     * @param  rN             a revision of <code>path1</code>
+     * @param  path2          a WC path that is to be compared 
+     *                        against <code>path1</code>
+     * @param  rM             a revision of <code>path2</code>
+     * @param  recursive      <span class="javakeyword">true</span> to descend 
+     *                        recursively
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  result         the target {@link java.io.OutputStream} where
+     *                        the differences will be written to
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>at least one of <code>rN</code> and <code>rM</code> is
+     *                        invalid
+     *                        <li><code>path1</code> is not under version control
+     *                        <li><code>path1</code> has no URL
+     *                        <li><code>path2</code> is not under version control
+     *                        <li><code>path2</code> has no URL
+     *                        <li>the repository location of <code>path1</code> was 
+     *                        not found in <code>rN</code>
+     *                        <li>the repository location of <code>path2</code> was 
+     *                        not found in <code>rM</code>
+     *                        <li>both <code>rN</code> and <code>rM</code> are local,
+     *                        but either <code>path1</code> does not equal <code>path2</code>,
+     *                        or <code>rN</code> is not {@link SVNRevision#BASE}, or
+     *                        <code>rM</code> is not {@link SVNRevision#WORKING} 
+     *                        </ul>
+     */
     public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
@@ -294,6 +588,51 @@ public class SVNDiffClient extends SVNBasicClient {
         }
     }
     
+    /**
+     * Applies the differences between two sources (using Working Copy paths to 
+     * get corresponding URLs of the sources) to a Working Copy path.
+     *
+     * <p>
+     * Corresponds to the SVN command line client's 
+     * <code>'svn merge sourceWCPATH1@rev1 sourceWCPATH2@rev2 WCPATH'</code> command.
+     * 
+     * <p>
+     * If you need only to try merging your file(s) without actual merging, you
+     * should set <code>dryRun</code> to <span class="javakeyword">true</span>.
+     * Your event handler will be dispatched status type information on the target 
+     * path(s). If a path can be successfully merged, the status type will be
+     * {@link SVNStatusType#MERGED} for that path.  
+     * 
+     * @param  path1          the first source path
+     * @param  revision1      a revision of <code>path1</code>
+     * @param  path2          the second source path which URL is to be compared
+     *                        against the URL of <code>path1</code>
+     * @param  revision2      a revision of <code>path2</code>
+     * @param  dstPath        the target path to which the result should
+     *                        be applied 
+     * @param  recusrsive     <span class="javakeyword">true</span> to descend 
+     *                        recursively
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  force          <span class="javakeyword">true</span> to
+     *                        force the operation to run
+     * @param  dryRun         if <span class="javakeyword">true</span> then
+     *                        only tries the operation to run (to find out
+     *                        if a file can be merged successfully)
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>at least one of <code>revision1</code> and <code>revision2</code> is
+     *                        invalid
+     *                        <li><code>path1</code> has no URL
+     *                        <li><code>path2</code> has no URL
+     *                        <li>the repository location of <code>path1</code> was 
+     *                        not found in <code>revision1</code>
+     *                        <li>the repository location of <code>path2</code> was 
+     *                        not found in <code>revision2</code>
+     *                        <li><code>dstPath</code> is not under version control
+     *                        </ul>
+     */
     public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
         SVNURL url1 = getURL(path1);
@@ -322,6 +661,47 @@ public class SVNDiffClient extends SVNBasicClient {
         }
     }
     
+    /**
+     * Applies the differences between two sources (a source URL against the 
+     * repository location URL of a source Working Copy path) to a Working Copy 
+     * path.
+     * 
+     * <p>
+     * If you need only to try merging your file(s) without actual merging, you
+     * should set <code>dryRun</code> to <span class="javakeyword">true</span>.
+     * Your event handler will be dispatched status type information on the target 
+     * path(s). If a path can be successfully merged, the status type will be
+     * {@link SVNStatusType#MERGED} for that path.  
+     * 
+     * @param  path1          the first source - a WC path 
+     * @param  revision1      a revision of <code>path1</code>
+     * @param  url2           the second source - a URL that is to be compared 
+     *                        against the URL of <code>path1</code>
+     * @param  revision2      a revision of <code>url2</code>
+     * @param  dstPath        the target path to which the result should
+     *                        be applied
+     * @param  recusrsive     <span class="javakeyword">true</span> to descend 
+     *                        recursively
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  force          <span class="javakeyword">true</span> to
+     *                        force the operation to run
+     * @param  dryRun         if <span class="javakeyword">true</span> then
+     *                        only tries the operation to run (to find out
+     *                        if a file can be merged successfully)
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>at least one of <code>revision1</code> and <code>revision2</code> is
+     *                        invalid
+     *                        <li><code>path1</code> has no URL
+     *                        <li>the repository location of <code>path1</code> was 
+     *                        not found in <code>revision1</code>
+     *                        <li><code>url2</code> was not found in 
+     *                        <code>revision2</code>
+     *                        <li><code>dstPath</code> is not under version control
+     *                        </ul>
+     */
     public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
         SVNURL url1 = getURL(path1);
@@ -345,7 +725,47 @@ public class SVNDiffClient extends SVNBasicClient {
             wcAccess.close(!dryRun);
         }
     }
-
+    
+    /**
+     * Applies the differences between two sources (the repository location URL of 
+     * a source Working Copy against a source URL) to a Working Copy path.
+     * 
+     * <p>
+     * If you need only to try merging your file(s) without actual merging, you
+     * should set <code>dryRun</code> to <span class="javakeyword">true</span>.
+     * Your event handler will be dispatched status type information on the target 
+     * path(s). If a path can be successfully merged, the status type will be
+     * {@link SVNStatusType#MERGED} for that path.  
+     * 
+     * @param  url1           the first source - a URL
+     * @param  revision1      a revision of <code>url1</code>
+     * @param  path2          the second source - a WC path that is to be compared 
+     *                        against <code>url1</code>
+     * @param  revision2      a revision of <code>path2</code>
+     * @param  dstPath        the target path to which the result should
+     *                        be applied
+     * @param  recusrsive     <span class="javakeyword">true</span> to descend 
+     *                        recursively
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  force          <span class="javakeyword">true</span> to
+     *                        force the operation to run
+     * @param  dryRun         if <span class="javakeyword">true</span> then
+     *                        only tries the operation to run (to find out
+     *                        if a file can be merged successfully)
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>at least one of <code>revision1</code> and <code>revision2</code> is
+     *                        invalid
+     *                        <li><code>path2</code> has no URL
+     *                        <li><code>url1</code> was not found in 
+     *                        <code>revision1</code>
+     *                        <li>the repository location of <code>path2</code> was 
+     *                        not found in <code>revision2</code>
+     *                        <li><code>dstPath</code> is not under version control
+     *                        </ul>
+     */
     public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
         SVNURL url2 = getURL(path2);
@@ -369,7 +789,50 @@ public class SVNDiffClient extends SVNBasicClient {
             wcAccess.close(!dryRun);
         }
     }
-
+    
+    /**
+     * Applies the differences between two sources (one source URL against another 
+     * source URL) to a Working Copy path.
+     *
+     * <p>
+     * Corresponds to the SVN command line client's 
+     * <code>'svn merge sourceURL1@rev1 sourceURL2@rev2 WCPATH'</code> command.
+     * 
+     * <p>
+     * If you need only to try merging your file(s) without actual merging, you
+     * should set <code>dryRun</code> to <span class="javakeyword">true</span>.
+     * Your event handler will be dispatched status type information on the target 
+     * path(s). If a path can be successfully merged, the status type will be
+     * {@link SVNStatusType#MERGED} for that path.  
+     * 
+     * @param  url1           the first source URL
+     * @param  revision1      a revision of <code>url1</code>
+     * @param  url2           the second source URL that is to be compared against 
+     *                        <code>url1</code>
+     * @param  revision2      a revision of <code>url2</code>
+     * @param  dstPath        the target path to which the result should
+     *                        be applied
+     * @param  recusrsive     <span class="javakeyword">true</span> to descend 
+     *                        recursively
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  force          <span class="javakeyword">true</span> to
+     *                        force the operation to run
+     * @param  dryRun         if <span class="javakeyword">true</span> then
+     *                        only tries the operation to run (to find out
+     *                        if a file can be merged successfully)
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>at least one of <code>revision1</code> and <code>revision2</code> is
+     *                        invalid
+     *                        <li><code>url1</code> was not found in 
+     *                        <code>revision1</code>
+     *                        <li><code>url2</code> was not found in 
+     *                        <code>revision2</code>
+     *                        <li><code>dstPath</code> is not under version control
+     *                        </ul>
+     */
     public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(dstPath);
@@ -391,6 +854,50 @@ public class SVNDiffClient extends SVNBasicClient {
          
     }
     
+    /**
+     * Applies the differences between two sources (a source URL in a particular
+     * revision against the same source URL in another particular revision) to a 
+     * Working Copy path.
+     * 
+     * <p>
+     * Corresponds to the SVN command line client's 
+     * <code>'svn merge -r rev1:rev2 URL@pegRev WCPATH'</code> command.
+     * 
+     * <p>
+     * If you need only to try merging your file(s) without actual merging, you
+     * should set <code>dryRun</code> to <span class="javakeyword">true</span>.
+     * Your event handler will be dispatched status type information on the target 
+     * path(s). If a path can be successfully merged, the status type will be
+     * {@link SVNStatusType#MERGED} for that path.  
+     * 
+     * @param  url1           a source URL
+     * @param  pegRevision    a revision in which code>url1</code> 
+     *                        is first looked up
+     * @param  revision1      a left-hand revision of <code>url1</code> 
+     * @param  revision2      a right-hand revision of <code>url1</code>
+     * @param  dstPath        the target path to which the result should
+     *                        be applied
+     * @param  recusrsive     <span class="javakeyword">true</span> to descend 
+     *                        recursively
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  force          <span class="javakeyword">true</span> to
+     *                        force the operation to run
+     * @param  dryRun         if <span class="javakeyword">true</span> then
+     *                        only tries the operation to run (to find out
+     *                        if a file can be merged successfully)
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>at least one of <code>revision1</code>, <code>revision2</code> and
+     *                        <code>pegRevision</code> is invalid
+     *                        <li><code>url1</code> was not found in 
+     *                        <code>revision1</code>
+     *                        <li><code>url1</code> was not found in 
+     *                        <code>revision2</code>
+     *                        <li><code>dstPath</code> is not under version control
+     *                        </ul>
+     */
     public void doMerge(SVNURL url1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(dstPath);
@@ -410,7 +917,53 @@ public class SVNDiffClient extends SVNBasicClient {
             wcAccess.close(!dryRun);
         }
     }
-
+    
+    /**
+     * Applies the differences between two sources (the repository location of
+     * a source Working Copy path in a particular revision against the repository
+     * location of the same path in another particular revision) to a 
+     * Working Copy path.
+     * 
+     * <p>
+     * Corresponds to the SVN command line client's 
+     * <code>'svn merge -r rev1:rev2 sourceWCPATH@pegRev WCPATH'</code> command.
+     * 
+     * <p>
+     * If you need only to try merging your file(s) without actual merging, you
+     * should set <code>dryRun</code> to <span class="javakeyword">true</span>.
+     * Your event handler will be dispatched status type information on the target 
+     * path(s). If a path can be successfully merged, the status type will be
+     * {@link SVNStatusType#MERGED} for that path.  
+     * 
+     * @param  path1          a source WC path
+     * @param  pegRevision    a revision in which the repository location of 
+     *                        <code>path1</code> is first looked up
+     * @param  revision1      a left-hand revision of <code>path1</code> 
+     * @param  revision2      a right-hand revision of <code>path1</code>
+     * @param  dstPath        the target path to which the result should
+     *                        be applied
+     * @param  recusrsive     <span class="javakeyword">true</span> to descend 
+     *                        recursively
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  force          <span class="javakeyword">true</span> to
+     *                        force the operation to run
+     * @param  dryRun         if <span class="javakeyword">true</span> then
+     *                        only tries the operation to run (to find out
+     *                        if a file can be merged successfully)
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>at least one of <code>revision1</code>, <code>revision2</code> and
+     *                        <code>pegRevision</code> is invalid
+     *                        <li><code>path1</code> has no URL
+     *                        <li>the repository location of <code>path1</code> was not found in 
+     *                        <code>revision1</code>
+     *                        <li>the repository location of <code>path1</code> was not found in 
+     *                        <code>revision2</code>
+     *                        <li><code>dstPath</code> is not under version control
+     *                        </ul>
+     */
     public void doMerge(File path1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
         SVNURL url1 = getURL(path1);

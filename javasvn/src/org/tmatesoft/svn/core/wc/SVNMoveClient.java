@@ -32,7 +32,29 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 public class SVNMoveClient extends SVNBasicClient {
 
     private SVNWCClient myWCClient;
-
+    /**
+     * Constructs and initializes an <b>SVNMoveClient</b> object
+     * with the specified run-time configuration and authentication 
+     * drivers.
+     * 
+     * <p>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNMoveClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the 
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).  
+     * 
+     * <p>
+     * If <code>authManager</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNMoveClient</b> will be using a default authentication
+     * and network layers driver (see {@link SVNWCUtil#createDefaultAuthenticationManager()})
+     * which uses server-side settings and auth storage from the 
+     * default SVN's run-time configuration area (or system properties
+     * if that area is not found).
+     * 
+     * @param authManager an authentication and network layers driver
+     * @param options     a run-time configuration options driver     
+     */
     public SVNMoveClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
         myWCClient = new SVNWCClient(authManager, options);
