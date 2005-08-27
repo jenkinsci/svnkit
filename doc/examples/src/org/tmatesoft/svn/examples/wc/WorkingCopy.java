@@ -395,8 +395,8 @@ public class WorkingCopy {
         /*
          * Creates default run-time configuration options. Default options created
          * in this way use the Subversion run-time configuration area (for instance,
-         * on Windows platform it can be found in the
-         * 'Documents and Settings\UserName\%APPDATA%\Subversion directory). 
+         * on a Windows platform it can be found in the
+         * '%APPDATA%\Subversion' directory). 
          * 
          * readonly = true - not to save  any configuration changes that can be done 
          * during the program run to a config file (config settings will only 

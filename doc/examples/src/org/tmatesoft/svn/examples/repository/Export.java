@@ -576,7 +576,7 @@ public class Export {
      * 		SVNCommitInfo commitInfo = editor.closeEdit();
      * 
      * ExportEditor is a simple ISVNEditor implementation that stores exported 
-     * directories and files to a client's fylesystem (not creating .svn directories
+     * directories and files to a client's filesystem (not creating .svn directories
      * for them). ExportEditor implements the following methods of the ISVNEditor
      * interface: addDir, addFile, textDeltaChunk, textDeltaEnd, closeFile, 
      * changeFileProperty. The rest ISVNEditor methods are empty - not used in this
