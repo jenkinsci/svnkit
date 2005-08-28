@@ -232,6 +232,31 @@ a.item:hover {
 /*    margin-left: 1em;
     margin-right: 1em;*/
 }
+
+a.headitem {
+    font-weight: bold;
+    text-decoration: none;
+    border: 0px; 
+    margin: 0px; 
+    color: #336699;
+}
+
+a.headitem:visited {
+    font-weight: bold;
+    color: #336699;
+    text-decoration: none;
+    border: 0px; 
+    margin: 0px; 
+}
+
+a.headitem:hover {
+    font-weight: bold;
+    color: rgb(173,184,217);
+    text-decoration: none;
+    border: 0px; 
+}
+
+
 a.contents{
 	font-family: Trebuchet MS; 
 	font-size: 18px;    

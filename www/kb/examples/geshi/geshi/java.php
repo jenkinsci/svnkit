@@ -1317,8 +1317,83 @@ $language_data = array (
 			),
 		4 => array(
 			'static', 'void', 'double', 'int', 'real', 'boolean', 'byte', 'short', 'long', 'single'
-			)
-		),
+			),
+        5 => array(
+                'SVNDiffClient',
+                'ISVNMergerFactory',
+                'SVNCommitItem',
+                'ISVNRepositoryFactory',
+                'SVNEventAction',
+                'SVNEvent',
+                'ISVNMerger',
+                'SVNInfo',
+                'ISVNAnnotateHandler',
+                'SVNCommitClient',
+                'SVNBasicClient',
+                'SVNWCClient',
+                'ISVNEventHandler',
+                'SVNStatusType',
+                'ISVNCommitHandler',
+                'SVNMoveClient',
+                'SVNLogClient',
+                'SVNCommitPacket',
+                'SVNWCUtil',
+                'SVNClientManager',
+                'SVNUpdateClient',
+                'SVNCopyClient',
+                'DefaultSVNDiffGenerator',
+                'SVNStatusClient',
+                'ISVNOptions',
+                'DefaultSVNCommitHandler',
+                'SVNRevision',
+                'ISVNDiffGenerator',
+                'ISVNInfoHandler',
+                'SVNStatus',
+                'ISVNPropertyHandler',
+                'SVNPropertyData',
+                'ISVNStatusHandler'
+                ),
+        6 => array(
+                'SVNFileRevision',
+                'ISVNFileRevisionHandler',
+                'ISVNLockHandler',
+                'SVNRepository',
+                'SVNRepositoryFactory',
+                'ISVNEditor',
+                'ISVNReporter',
+                'ISVNReporterBaton',
+                'ISVNWorkspaceMediator',
+                'SVNLocationEntry',
+                'ISVNLocationEntryHandler'
+                ),
+        7 => array(
+                'SVNAuthentication',
+                'SVNPasswordAuthentication',
+                'ISVNProxyManager',
+                'ISVNSSLManager',
+                'ISVNAuthenticationStorage',
+                'ISVNAuthenticationManager',
+                'ISVNAuthenticationProvider',
+                'SVNSSHAuthentication'
+                ),
+        8 => array(
+                'ISVNLogEntryHandler',
+                'SVNLogEntryPath',
+                'SVNLock',
+                'SVNNodeKind',
+                'SVNException',
+                'SVNAuthenticationException',
+                'SVNLogEntry',
+                'SVNCommitInfo',
+                'SVNCancelException',
+                'ISVNDirEntryHandler',
+                'SVNProperty',
+                'SVNRevisionProperty',
+                'SVNAnnotationGenerator',
+                'SVNDirEntry',
+                'SVNURL'
+                )
+        ),
 	'SYMBOLS' => array(
 		'(', ')', '[', ']', '{', '}', '*', '&', '%', '!', ';', '<', '>', '?'
 		),
@@ -1327,15 +1402,23 @@ $language_data = array (
 		1 => false,
 		2 => false,
 		3 => true,
-		4 => true
+		4 => true,
+        5 => true,
+        6 => true,
+        7 => true,
+        8 => true
 		),
 	'STYLES' => array(
 		'KEYWORDS' => array(
 			1 => 'color: #b1b100;',
 			2 => 'color: #000000; font-weight: bold;',
 			3 => 'color: #aaaadd; font-weight: bold;',
-			4 => 'color: #993333;'
-			),
+			4 => 'color: #993333;',
+            5 => 'color: #336699; font-weight: bold;',
+            6 => 'color: #336699; font-weight: bold;',
+            7 => 'color: #336699; font-weight: bold;',
+            8 => 'color: #336699; font-weight: bold;'
+            ),
 		'COMMENTS' => array(
 			1=> 'color: #808080; font-style: italic;',
 			'MULTI' => 'color: #808080; font-style: italic;'
@@ -1368,8 +1451,12 @@ $language_data = array (
 		1 => '',
 		2 => '',
 		3 => 'http://java.sun.com/j2se/1.4.2/docs/api/',
-		4 => ''
-		),
+		4 => '',
+        5 => 'http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/{FNAME}.html',
+        6 => 'http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/{FNAME}.html',
+        7 => 'http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/{FNAME}.html',
+        8 => 'http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/{FNAME}.html',
+        ),
 	'OOLANG' => true,
 	'OBJECT_SPLITTERS' => array(
 		1 => '.',
