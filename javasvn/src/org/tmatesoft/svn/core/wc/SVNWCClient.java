@@ -864,13 +864,17 @@ public class SVNWCClient extends SVNBasicClient {
      * Schedules an unversioned item for addition to a repository thus 
      * putting it under version control.
      * 
+     * <p>
+     * To create and add to version control a new directory, set <code>mkdir</code>
+     * to <span class="javakeyword">true</span>. 
+     * 
      * @param  path                        a path to be put under version 
      *                                     control (will be added to a repository
      *                                     in next commit)
      * @param  force                       <span class="javakeyword">true</span> to
      *                                     force the operation to run
-     * @param  mkdir                       <span class="javakeyword">true</span> to 
-     *                                     create a new directory and schedule it for
+     * @param  mkdir                       if <span class="javakeyword">true</span> - 
+     *                                     creates a new directory and schedules it for
      *                                     addition
      * @param  climbUnversionedParents     if <span class="javakeyword">true</span> and
      *                                     <code>path</code> is located in an unversioned

@@ -32,15 +32,16 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
- * This class provides methods to get information on the status of Working Copy items.
- * The functionality of <b>SVNStatusClient</b> corresponds to the 'svn status' command 
+ * The <b>SVNStatusClient</b> class provides methods for obtaining information on the 
+ * status of Working Copy items.
+ * The functionality of <b>SVNStatusClient</b> corresponds to the <code>'svn status'</code> command 
  * of the native SVN command line client. 
  * 
  * <p>
- * One of the main advantage of <b>SVNStatusClient</b> lies in that fact
- * that for each processed item the status information is collected and incapsulated into
+ * One of the main advantages of <b>SVNStatusClient</b> lies in that fact
+ * that for each processed item the status information is collected and put into
  * an <b>SVNStatus</b> object. Further there are two ways how this object
- * can be passed to a developer (depending on the version of the doStatus()
+ * can be passed to a developer (depending on the version of the <b>doStatus()</b>
  * method that was invoked):
  * <ol>
  * <li>the <b>SVNStatus</b> can be passed to a 
@@ -50,9 +51,10 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * <li> another way is that an appropriate <b>doStatus()</b> method
  * just returns that <b>SVNStatus</b> object.
  * </ol>
- * 
- * The first variant can be called recursively - obtaining status information for all child entries, the second
- * variant just the reverse is called non-recursively and the developer should code that for himself. 
+ * Those methods that match the first variant can be called recursively - obtaining 
+ * status information for all child entries, the second variant just the reverse  - 
+ * methods are called non-recursively and allow to get status info on a single 
+ * item. 
  * 
  * @version 1.0
  * @author  TMate Software Ltd.
@@ -99,23 +101,23 @@ public class SVNStatusClient extends SVNBasicClient {
      * 
      * @param  path				local item's path
      * @param  recursive		relevant only if <code>path</code> denotes a directory:
-     * 							<code>true</code> to obtain status info recursively for all
-     * 							child entries, <code>false</code> only for items located immediately
+     * 							<span class="javakeyword">true</span> to obtain status info recursively for all
+     * 							child entries, <span class="javakeyword">false</span> only for items located immediately
      * 							in the directory itself  
-     * @param  remote			<code>true</code> to check up the status of the item in the repository,
+     * @param  remote			<span class="javakeyword">true</span> to check up the status of the item in the repository,
      * 							that will tell if the local item is out-of-date (like <i>'-u'</i> option in the
-     * 							<span class="style2">SVN</span> client's <i>'svn status'</i> command), otherwise 
-     * 							<code>false</code>
-     * @param  reportAll		<code>true</code> to collect status information on those items that are in a 
-     * 							<i>'normal'</i> state (unchanged), otherwise <code>false</code>
-     * @param  includeIgnored	<code>true</code> to force <span class="style3">doStatus(..)</span> collect information
-     * 							on items that were set to be ignored (like <i>'--no-ignore'</i> option in the <span class="style2">SVN</span> 
+     * 							SVN client's <code>'svn status'</code> command), otherwise 
+     * 							<span class="javakeyword">false</span>
+     * @param  reportAll		<span class="javakeyword">true</span> to collect status information on those items that are in a 
+     * 							<i>'normal'</i> state (unchanged), otherwise <span class="javakeyword">false</span>
+     * @param  includeIgnored	<span class="javakeyword">true</span> to force the operation to collect information
+     * 							on items that were set to be ignored (like <i>'--no-ignore'</i> option in the SVN 
      * 							client's <i>'svn status'</i> command to disregard default and <i>'svn:ignore'</i> property
-     * 							ignores), otherwise <code>false</code>  
-     * @param  handler			an implementation of <span class="style0">ISVNStatusHandler</span> that will be involved
+     * 							ignores), otherwise <span class="javakeyword">false</span>  
+     * @param  handler			a caller's status handler that will be involved
      * 							in processing status information
      * @throws SVNException
-     * @see	   ISVNStatusHandler
+     * @see	                    ISVNStatusHandler
      */
     public void doStatus(File path, boolean recursive, boolean remote,
                          boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler)
@@ -131,23 +133,23 @@ public class SVNStatusClient extends SVNBasicClient {
      *  
      * @param  path							local item's path
      * @param  recursive					relevant only if <code>path</code> denotes a directory:
-     * 										<code>true</code> to obtain status info recursively for all
-     * 										child entries, <code>false</code> only for items located 
+     * 										<span class="javakeyword">true</span> to obtain status info recursively for all
+     * 										child entries, <span class="javakeyword">false</span> only for items located 
      * 										immediately in the directory itself
-     * @param  remote						<code>true</code> to check up the status of the item in the repository,
+     * @param  remote						<span class="javakeyword">true</span> to check up the status of the item in the repository,
      * 										that will tell if the local item is out-of-date (like <i>'-u'</i> option in the
-     * 										<span class="style2">SVN</span> client's <i>'svn status'</i> command), 
-     * 										otherwise <code>false</code>
-     * @param  reportAll					<code>true</code> to collect status information on those items that are in a 
-     * 										<i>'normal'</i> state (unchanged), otherwise <code>false</code>
-     * @param  includeIgnored				<code>true</code> to force <span class="style3">doStatus(..)</span> collect information
-     * 										on items that were set to be ignored (like <i>'--no-ignore'</i> option in the <span class="style2">SVN</span> 
-     * 										client's <i>'svn status'</i> command to disregard default and <i>'svn:ignore'</i> property
-     * 										ignores), otherwise <code>false</code>
-     * @param  collectParentExternals		<code>false</code> to make <span class="style3">doStatus(..)</span> ignore information
-     * 										on externals definitions (like <i>'--ignore-externals'</i> option in the <span class="style2">SVN</span>
-     * 										client's <i>'svn status'</i> command), otherwise <code>true</code>
-     * @param  handler						an implementation of <span class="style0">ISVNStatusHandler</span> that will be involved
+     * 										SVN client's <code>'svn status'</code> command), 
+     * 										otherwise <span class="javakeyword">false</span>
+     * @param  reportAll					<span class="javakeyword">true</span> to collect status information on all items including those ones that are in a 
+     * 										<i>'normal'</i> state (unchanged), otherwise <span class="javakeyword">false</span>
+     * @param  includeIgnored				<span class="javakeyword">true</span> to force the operation to collect information
+     * 										on items that were set to be ignored (like <i>'--no-ignore'</i> option in the SVN 
+     * 										client's <code>'svn status'</code> command to disregard default and <i>'svn:ignore'</i> property
+     * 										ignores), otherwise <span class="javakeyword">false</span>
+     * @param  collectParentExternals		<span class="javakeyword">false</span> to make the operation ignore information
+     * 										on externals definitions (like <i>'--ignore-externals'</i> option in the SVN
+     * 										client's <code>'svn status'</code> command), otherwise <span class="javakeyword">true</span>
+     * @param  handler						a caller's status handler that will be involved
      * 										in processing status information
      * @return								the revision number the status information was collected
      * 										against
@@ -222,11 +224,11 @@ public class SVNStatusClient extends SVNBasicClient {
      * Collects status information on a single Working Copy item. 
      * 
      * @param  path				local item's path
-     * @param  remote			<code>true</code> to check up the status of the item in the repository,
+     * @param  remote			<span class="javakeyword">true</span> to check up the status of the item in the repository,
      * 							that will tell if the local item is out-of-date (like <i>'-u'</i> option in the
-     * 							<span class="style2">SVN</span> client's <i>'svn status'</i> command), 
-     * 							otherwise <code>false</code>
-     * @return					an <span class="style0">SVNStatus</span> object representing status information 
+     * 							SVN client's <code>'svn status'</code> command), 
+     * 							otherwise <span class="javakeyword">false</span>
+     * @return					an <b>SVNStatus</b> object representing status information 
      * 							for the item
      * @throws SVNException
      */
@@ -238,14 +240,14 @@ public class SVNStatusClient extends SVNBasicClient {
      * Collects status information on a single Working Copy item. 
      *  
      * @param  path						local item's path
-     * @param  remote					<code>true</code> to check up the status of the item in the repository,
+     * @param  remote					<span class="javakeyword">true</span> to check up the status of the item in the repository,
      * 									that will tell if the local item is out-of-date (like <i>'-u'</i> option in the
-     * 									<span class="style2">SVN</span> client's <i>'svn status'</i> command), 
-     * 									otherwise <code>false</code>
-     * @param  collectParentExternals	<code>false</code> to make <span class="style3">doStatus(..)</span> ignore information
-     * 									on externals definitions (like <i>'--ignore-externals'</i> option in the <span class="style2">SVN</span>
-     * 									client's <i>'svn status'</i> command), otherwise <code>true</code>
-     * @return							an <span class="style0">SVNStatus</span> object representing status information 
+     * 									SVN client's <code>'svn status'</code> command), 
+     * 									otherwise <span class="javakeyword">false</span>
+     * @param  collectParentExternals	<span class="javakeyword">false</span> to make the operation ignore information
+     * 									on externals definitions (like <i>'--ignore-externals'</i> option in the SVN
+     * 									client's <code>'svn status'</code> command), otherwise <span class="javakeyword">false</span>
+     * @return							an <b>SVNStatus</b> object representing status information 
      * 									for the item
      * @throws SVNException
      */
