@@ -826,8 +826,7 @@ public class SVNDirectory {
             if ("".equals(myPath)) {
                 SVNWCAccess parentWCAccess = null;
                 try {
-                    parentWCAccess = SVNWCAccess.create(getRoot()
-                            .getParentFile());
+                    parentWCAccess = SVNWCAccess.create(getRoot().getParentFile());
                     parentWCAccess.open(true, false);
                     parent = parentWCAccess.getAnchor();
                     destroyDirectory(parent, this, deleteWorkingFiles);
@@ -873,11 +872,13 @@ public class SVNDirectory {
         getEntries().save(false);
     }
 
-    public void scheduleForDeletion(String name) throws SVNException {
+    public void scheduleForDeletion(String name, boolean deleteFiles) throws SVNException {
         SVNEntries entries = getEntries();
         SVNEntry entry = entries.getEntry(name, true);
         if (entry == null) {
-            SVNFileUtil.deleteAll(getFile(name), getWCAccess());
+            if (deleteFiles) {
+                SVNFileUtil.deleteAll(getFile(name), getWCAccess());
+            }
             return;
         }
         
@@ -901,12 +902,11 @@ public class SVNDirectory {
                 String parentPath = SVNPathUtil.removeTail(myPath);
                 parent = myWCAccess.getDirectory(parentPath);
             }
-            deleted = parent != null ? parent.getEntries().getEntry(
-                    nameInParent, true).isDeleted() : false;
+            deleted = parent != null ? parent.getEntries().getEntry(nameInParent, true).isDeleted() : false;
             if (added && !deleted) {
                 // destroy whole child dir.
                 if (child != null) {
-                    child.destroy("", true);
+                    child.destroy("", deleteFiles);
                 } else {
                     // no child, remove entry in parent
                     parent.getEntries().deleteEntry(nameInParent);
@@ -914,8 +914,7 @@ public class SVNDirectory {
                 }
             } else if (child != null) {
                 // recursively mark for deletion (but not "").
-                child.updateEntryProperty(SVNProperty.SCHEDULE,
-                        SVNProperty.SCHEDULE_DELETE, true);
+                child.updateEntryProperty(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_DELETE, true);
             }
             if (parent != null) {
                 parent.getEntries().save(false);
@@ -928,13 +927,14 @@ public class SVNDirectory {
             // schedule entry in parent.
             entry.scheduleForDeletion();
         }
-        SVNEvent event = SVNEventFactory.createDeletedEvent(myWCAccess, this,
-                entry.getName());
+        SVNEvent event = SVNEventFactory.createDeletedEvent(myWCAccess, this, entry.getName());
         myWCAccess.handleEvent(event);
-        if (added) {
-            SVNFileUtil.deleteAll(getFile(name), getWCAccess());
-        } else {
-            deleteWorkingFiles(name);
+        if (deleteFiles) {
+            if (added) {
+                SVNFileUtil.deleteAll(getFile(name), getWCAccess());
+            } else {
+                deleteWorkingFiles(name);
+            }
         }
         entries.save(true);
     }
@@ -1071,8 +1071,7 @@ public class SVNDirectory {
             SVNDirectory childDir = getChildDirectory(file.getName());
             if (childDir != null) {
                 SVNEntries childEntries = childDir.getEntries();
-                for (Iterator childEnts = childEntries.entries(true); childEnts
-                        .hasNext();) {
+                for (Iterator childEnts = childEntries.entries(true); childEnts.hasNext();) {
                     SVNEntry childEntry = (SVNEntry) childEnts.next();
                     if ("".equals(childEntry.getName())) {
                         continue;

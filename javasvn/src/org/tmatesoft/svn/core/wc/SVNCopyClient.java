@@ -579,7 +579,7 @@ public class SVNCopyClient extends SVNBasicClient {
             }
 
             if (isMove) {
-                srcAccess.getAnchor().scheduleForDeletion(srcPath.getName());
+                srcAccess.getAnchor().scheduleForDeletion(srcPath.getName(), true);
             }
         } finally {
             dstAccess.close(true);

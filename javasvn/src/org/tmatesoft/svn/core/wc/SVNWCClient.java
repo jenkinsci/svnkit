@@ -842,18 +842,19 @@ public class SVNWCClient extends SVNBasicClient {
      *                        </ul>
      *                         
      */
-    public void doDelete(File path, boolean force, boolean dryRun)
-            throws SVNException {
+    public void doDelete(File path, boolean force, boolean dryRun) throws SVNException {
+        doDelete(path, force, true, dryRun);
+    }
+    
+    public void doDelete(File path, boolean force, boolean deleteFiles, boolean dryRun) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(path);
         try {
             wcAccess.open(true, true, true);
             if (!force) {
-                wcAccess.getAnchor().canScheduleForDeletion(
-                        wcAccess.getTargetName());
+                wcAccess.getAnchor().canScheduleForDeletion(wcAccess.getTargetName());
             }
             if (!dryRun) {
-                wcAccess.getAnchor().scheduleForDeletion(
-                        wcAccess.getTargetName());
+                wcAccess.getAnchor().scheduleForDeletion(wcAccess.getTargetName(), deleteFiles);
             }
         } finally {
             wcAccess.close(true);

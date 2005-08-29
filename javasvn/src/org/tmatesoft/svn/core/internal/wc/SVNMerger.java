@@ -93,7 +93,7 @@ public class SVNMerger {
                 }
                 if (!myIsDryRun) {
                     try {
-                        parentDir.scheduleForDeletion(name);
+                        parentDir.scheduleForDeletion(name, true);
                     } catch (SVNException e) {
                         return SVNStatusType.OBSTRUCTED;
                     }
@@ -130,7 +130,7 @@ public class SVNMerger {
                 }
                 if (!myIsDryRun) {
                     try {
-                        parentDir.scheduleForDeletion(name);
+                        parentDir.scheduleForDeletion(name, true);
                     } catch (SVNException e) {
                         return SVNStatusType.OBSTRUCTED;
                     }
