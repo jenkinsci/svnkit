@@ -95,11 +95,19 @@ code {
 	font-family:Verdana, Arial, Helvetica, sans-serif;
 	font-size: 80%;
 }
+
 h1 {
-	font-size: 140%;
-	margin: 0px;
-	padding-top: 1.5em;
-	text-align: left;
+    line-height: 1.4em;
+    font-size: 100%;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #333;
+    margin: 0px;
+    padding: 0.3em 0.3em 0.3em 2.2em;
+    margin-bottom: 1em;
+    margin-top: 1em;
+    background: rgb(173,184,217) url(../img/bullet00.gif) no-repeat 0.5em 0.7em;
+    background-repeat: no-repeat;
 }
 
 h2 {
@@ -156,17 +164,12 @@ a.nol:hover {
 }
 
 h4 {
-    line-height: 1.4em;
-    font-size: 100%;
-    font-weight: bold;
-    letter-spacing: 1px;
-    color: #333;
-    margin: 0px;
-    padding: 0.3em 0.3em 0.3em 2.2em;
-    margin-bottom: 1em;
-    margin-top: 1em;
-    background: rgb(173,184,217) url(../img/bullet00.gif) no-repeat 0.5em 0.7em;
-    background-repeat: no-repeat;
+	font-size: 100%;
+	font-weight:bold;
+	padding: 0px;
+	padding:0.1em;
+	margin-top: 10px;
+	border-bottom: 1px solid rgb(173,184,217);
 }
 
 a.feature {

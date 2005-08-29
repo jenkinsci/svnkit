@@ -22,17 +22,77 @@
 <p>
 <span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
 </p>
-
 <p><div style="border-bottom: 1px solid #ccc;"></div></p>
-<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: Get Library</small>
+<!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: Get Library</small>-->
 
-<!--<h1>JavaSVN Library</h1>-->
-<!--Contents-->
-<h4>Get Latest Development Version</h4>
+
+<table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
+<tr style="height: 10px;">
+
+<td width="60%" valign="top" align="center">
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+Get Library
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../kb/index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+
+<!--
+<table border=0 cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr>
+<td>
+<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img src="../img/javasvn_logo.png" border=0 align=bottom></a>
+</td>
+
+<td align="right">
+<span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
+
+<table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
+<tr style="height: 10px;">
+
+<td width="40%" valign="top" align="center">
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<span style="color: rgb(173,184,217);">Get Library</span>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../kb/index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+-->
+
+<h1>Get Latest Development Version</h1>
 To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/jsvn/">http://72.9.228.230:8080/svn/jsvn/</a>
 <br />To get the latest source code (with the SVN command line client) use the following command:
 <pre>$ svn co http://72.9.228.230:8080/svn/jsvn/trunk/</pre>
-<h4>Get JavaSVN Eclipse Plugin from update site</h4>
+<h1>Get JavaSVN Eclipse Plugin from update site</h1>
 <p>To get an Eclipse plugin version use <b>http://tmate.org/svn/</b> as an update site location in Eclipse Update Manager.
 <ul>
 <li>In Eclipse menu select <b>Help->Software Updates->Find and Install...</b>
@@ -42,7 +102,7 @@ To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/js
 <li>Check the new site (it should appear in the list of update sites) and follow further steps prompted by Eclipse.
 </ul>
 </p>
-<h4>Latest Stable Version</h4>
+<h1>Latest Stable Version</h1>
 
 <table width="100%">
 

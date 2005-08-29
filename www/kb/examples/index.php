@@ -30,7 +30,7 @@ function publish_examples($url){
 	fwrite($fhandle, "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>Library Usage Examples</title><link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"/svn/css/home.css\" /><meta name=\"KEYWORDS\" content=\"Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development\"><meta name=\"DESCRIPTION\" content=\"Pure Java Subversion Library. Open Source, provided by TMate Software\">".
 				"</head>".
 				"<body  style=\"width: 400px; padding-left: 5px; text-align: left; background: #fff;\"><table align=\"left\" valign=\"top\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"400\" style=\"height: 100%; font-size: 100%; font-weight: normal;\"><tr valign=\"top\" ><td colspan=\"1\" rowspan=\"1\"><small><a style=\"border-bottom: 0px;\" href=\"".$url."\" target=_top>Home</a>&nbsp;::&nbsp;<a style=\"border-bottom: 0px;\" href=\"/svn/kb/index.html\" target=_top>Knowledge&nbsp;Base</a></small>".
-				"<h1>Library Usage Examples</h1><br><p>The following examples may help you to become more familiar with the JavaSVN API:</p>");
+				"<h1>Library Usage Examples</h1><p>The following examples may help you to become more familiar with the JavaSVN API:</p>");
 
 	for($k = 0; $k < count($examplesPath); $k++) {
 		$matches = array();
