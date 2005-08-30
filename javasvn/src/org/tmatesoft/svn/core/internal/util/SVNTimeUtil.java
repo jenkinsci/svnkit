@@ -56,8 +56,15 @@ public class SVNTimeUtil {
 
             int hour = Integer.parseInt(str.substring(11, 13));
             int min = Integer.parseInt(str.substring(14, 16));
-            int sec = Integer.parseInt(str.substring(17, 19));
-            int ms = Integer.parseInt(str.substring(20, 23));
+            int sec;
+            int ms;
+            if (str.charAt(18) == '.') {
+                sec = Integer.parseInt(str.substring(17, 18));
+                ms = Integer.parseInt(str.substring(19, 22));
+            } else {
+                sec = Integer.parseInt(str.substring(17, 19));
+                ms = Integer.parseInt(str.substring(20, 23));
+            }
 
             CALENDAR.clear();
             CALENDAR.set(year, month - 1, date, hour, min, sec);
