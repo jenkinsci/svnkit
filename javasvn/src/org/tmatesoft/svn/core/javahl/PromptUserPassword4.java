@@ -19,6 +19,8 @@ import org.tigris.subversion.javahl.PromptUserPassword3;
  * @author  TMate Software Ltd.
  */
 public interface PromptUserPassword4 extends PromptUserPassword3 {
+
+    public boolean promptSSH(String realm, String username, int sshPort, boolean maySave);
     
     public String getSSHPrivateKeyPath();
     

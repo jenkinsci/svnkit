@@ -29,14 +29,15 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
         if (ISVNAuthenticationManager.SSH.equals(kind) && myPrompt instanceof PromptUserPassword4) {
             PromptUserPassword4 prompt4 = (PromptUserPassword4) myPrompt;
             String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : System.getProperty("user.name");
-            if (prompt4.prompt(realm, userName, authMayBeStored)) {
+            int port = url.getPort();
+            if (prompt4.promptSSH(realm, userName, port, authMayBeStored)) {
                 String password = prompt4.getPassword();
                 String keyPath = prompt4.getSSHPrivateKeyPath();
                 String passphrase = prompt4.getSSHPrivateKeyPassphrase();
                 if ("".equals(passphrase)) {
                     passphrase = null;
                 }
-                int port = prompt4.getSSHPort() >= 0 ? prompt4.getSSHPort() : url.getPort();
+                port = prompt4.getSSHPort() >= 0 ? prompt4.getSSHPort() : url.getPort();
                 if (port < 0) {
                     port = 22;
                 }
