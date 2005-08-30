@@ -26,6 +26,30 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
     }
 
     public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+        if (ISVNAuthenticationManager.SSH.equals(kind) && myPrompt instanceof PromptUserPassword4) {
+            PromptUserPassword4 prompt4 = (PromptUserPassword4) myPrompt;
+            String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : System.getProperty("user.name");
+            if (prompt4.prompt(realm, userName, authMayBeStored)) {
+                String password = prompt4.getPassword();
+                String keyPath = prompt4.getSSHPrivateKeyPath();
+                String passphrase = prompt4.getSSHPrivateKeyPassphrase();
+                if ("".equals(passphrase)) {
+                    passphrase = null;
+                }
+                int port = prompt4.getSSHPort() >= 0 ? prompt4.getSSHPort() : url.getPort();
+                if (port < 0) {
+                    port = 22;
+                }
+                boolean save = prompt4.userAllowedSave();
+                if (keyPath != null && !"".equals(keyPath)) {
+                    return new SVNSSHAuthentication(userName, new File(keyPath), passphrase, port, save);
+                } else if (password != null && !"".equals(password)){
+                    return new SVNSSHAuthentication(userName, password, port, save);
+                }
+            }
+            return null;
+                        
+        }
         if (ISVNAuthenticationManager.SSH.equals(kind) && previousAuth == null) {
             // use configuration file here? but it was already used once...
             String keyPath = System.getProperty("javasvn.ssh2.key");

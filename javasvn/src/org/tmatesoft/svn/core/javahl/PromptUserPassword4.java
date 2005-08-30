@@ -24,4 +24,6 @@ public interface PromptUserPassword4 extends PromptUserPassword3 {
     
     public String getSSHPrivateKeyPassphrase();
 
+    public int getSSHPort();
+
 }
