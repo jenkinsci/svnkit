@@ -35,6 +35,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private static final String MISCELLANY_GROUP = "miscellany";
     private static final String AUTH_GROUP = "auth";
     private static final String AUTOPROPS_GROUP = "auto-props";
+    private static final String JAVASVN_GROUP = "javasvn";
     
     private static final String USE_COMMIT_TIMES = "use-commit-times";
     private static final String GLOBAL_IGNORES = "global-ignores";
@@ -240,6 +241,20 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     
     public void setMergerFactory(ISVNMergerFactory mergerFactory) {
         myMergerFactory = mergerFactory;
+    }
+
+    public String getPropertyValue(String propertyName) {
+        if (propertyName == null) {
+            return null;
+        }
+        return getConfigFile().getPropertyValue(JAVASVN_GROUP, propertyName);
+    }
+
+    public void setPropertyValue(String propertyName, String propertyValue) {
+        if (propertyName == null || "".equals(propertyName.trim())) {
+            return;
+        }
+        getConfigFile().setPropertyValue(JAVASVN_GROUP, propertyName, propertyValue, !myIsReadonly);
     }
 
     private SVNConfigFile getConfigFile() {

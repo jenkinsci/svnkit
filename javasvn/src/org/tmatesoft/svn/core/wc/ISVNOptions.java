@@ -346,4 +346,8 @@ public interface ISVNOptions {
      * @see           #getMergerFactory()
      */
     public void setMergerFactory(ISVNMergerFactory merger);
+    
+    public String getPropertyValue(String propertyName);
+    
+    public void setPropertyValue(String propertyName, String propertyValue);
 }
