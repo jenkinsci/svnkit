@@ -392,11 +392,18 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     String password = props.getPropertyValue("password");
                     String path = props.getPropertyValue("key");
                     String passphrase = props.getPropertyValue("passphrase");
+                    String port = props.getPropertyValue("port");
+                    port = port == null ? ("" + getDefaultSSHPortNumber()) : port;
                     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                         return new SVNPasswordAuthentication(userName, password, authMayBeStored);
                     } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
                         // get port from config file or system property?
-                        int portNumber = getDefaultSSHPortNumber();
+                        int portNumber;
+                        try {
+                            portNumber = Integer.parseInt(port);
+                        } catch (NumberFormatException nfe) {
+                            portNumber = getDefaultSSHPortNumber();
+                        }
                         if (path != null) {
                             return new SVNSSHAuthentication(userName, new File(path), passphrase, portNumber, authMayBeStored);
                         } else if (password != null) {
@@ -434,6 +441,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
                     SVNSSHAuthentication sshAuth = (SVNSSHAuthentication) auth;
                     props.setPropertyValue("password", sshAuth.getPassword());
+                    int port = sshAuth.getPortNumber();
+                    if (sshAuth.getPortNumber() < 0) {
+                        port = getDefaultSSHPortNumber() ;
+                    }
+                    props.setPropertyValue("port", Integer.toString(port));
                     if (sshAuth.getPrivateKeyFile() != null) { 
                         String path = SVNPathUtil.validateFilePath(sshAuth.getPrivateKeyFile().getAbsolutePath());
                         props.setPropertyValue("passphrase", sshAuth.getPassphrase());
