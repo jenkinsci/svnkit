@@ -44,15 +44,17 @@ import org.xml.sax.helpers.DefaultHandler;
 public class DAVConnection {
     
     private SVNURL myLocation;
-    private HttpConnection myHttpConnection;
+    private IHTTPConnection myHttpConnection;
     private String myActivityCollectionURL;
     private Map myLocks;
     private boolean myKeepLocks;
     private Map myCache;
+    private IHTTPConnectionFactory myConnectionFactory;
     
-    public DAVConnection(SVNURL location) {
+    public DAVConnection(IHTTPConnectionFactory connectionFactory, SVNURL location) {
         myLocation = location;
         myCache = new HashMap();
+        myConnectionFactory = connectionFactory;
     }
     
     public SVNURL getLocation() {
@@ -73,7 +75,7 @@ public class DAVConnection {
     
     public void open(DAVRepository repository) throws SVNException {
         if (myHttpConnection == null) {
-        	myHttpConnection = new HttpConnection(myLocation, repository);
+        	myHttpConnection = myConnectionFactory.createHTTPConnection(myLocation, repository);
             if (repository.getRepositoryUUID() == null) {
                 String path = myLocation.getPath();
                 path = SVNEncodingUtil.uriEncode(path);

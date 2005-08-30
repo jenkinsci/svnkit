@@ -24,13 +24,24 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 public class DAVRepositoryFactory extends SVNRepositoryFactory {
     
     public static void setup() {
+        setup(IHTTPConnectionFactory.DEFAULT);
+    }
+
+    public static void setup(IHTTPConnectionFactory connectionFactory) {
         if (!SVNRepositoryFactory.hasRepositoryFactory("^https?://.*$")) {
-            DAVRepositoryFactory factory = new DAVRepositoryFactory();
+            connectionFactory = connectionFactory == null ? IHTTPConnectionFactory.DEFAULT : connectionFactory;
+            DAVRepositoryFactory factory = new DAVRepositoryFactory(connectionFactory);
             SVNRepositoryFactory.registerRepositoryFactory("^https?://.*$", factory);
         }
     }
 
+    private IHTTPConnectionFactory myConnectionFactory;
+    
+    private DAVRepositoryFactory(IHTTPConnectionFactory connectionFactory) {
+        myConnectionFactory = connectionFactory;
+    }
+
     public SVNRepository createRepositoryImpl(SVNURL location, boolean session) {
-        return new DAVRepository(location, session);
+        return new DAVRepository(myConnectionFactory, location, session);
     }
 }

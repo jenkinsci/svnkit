@@ -56,9 +56,11 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 class DAVRepository extends SVNRepository {
 
     private DAVConnection myConnection;
+    private IHTTPConnectionFactory myConnectionFactory;
     
-    protected DAVRepository(SVNURL location, boolean session) {
+    protected DAVRepository(IHTTPConnectionFactory connectionFactory, SVNURL location, boolean session) {
         super(location, session);
+        myConnectionFactory = connectionFactory;
     }
     
     public void testConnection() throws SVNException {
@@ -378,7 +380,7 @@ class DAVRepository extends SVNRepository {
             return;
         }
         if (myConnection == null) {
-            myConnection = new DAVConnection(getLocation());
+            myConnection = new DAVConnection(myConnectionFactory, getLocation());
         }
         myConnection.open(this);
     }

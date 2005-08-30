@@ -60,7 +60,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * @author TMate Software Ltd.
  *
  */
-class HttpConnection {
+class DefaultHTTPConnection implements IHTTPConnection {
 
     private OutputStream myOutputStream;
     private InputStream myInputStream;
@@ -76,7 +76,7 @@ class HttpConnection {
     private SVNAuthentication myLastValidAuth;
     private ISVNProxyManager myProxyAuth;
 
-    public HttpConnection(SVNURL location, SVNRepository repos) {
+    public DefaultHTTPConnection(SVNURL location, SVNRepository repos) {
         mySVNRepositoryLocation = location;
         myAuthManager = repos.getAuthenticationManager();
     }
@@ -479,24 +479,24 @@ class HttpConnection {
         DAVUtil.getCanonicalPath(path, sb);
         sb.append(' ');
         sb.append("HTTP/1.1");
-        sb.append(HttpConnection.CRLF);
+        sb.append(DefaultHTTPConnection.CRLF);
         sb.append("Host: ");
         sb.append(mySVNRepositoryLocation.getHost());
         sb.append(":");
         sb.append(mySVNRepositoryLocation.getPort());
-        sb.append(HttpConnection.CRLF);
+        sb.append(DefaultHTTPConnection.CRLF);
         sb.append("User-Agent: ");
         sb.append(Version.getVersionString());
-        sb.append(HttpConnection.CRLF);
+        sb.append(DefaultHTTPConnection.CRLF);
         sb.append("Keep-Alive:");
-        sb.append(HttpConnection.CRLF);
+        sb.append(DefaultHTTPConnection.CRLF);
         sb.append("Connection: TE, Keep-Alive");
-        sb.append(HttpConnection.CRLF);
+        sb.append(DefaultHTTPConnection.CRLF);
         sb.append("TE: trailers");
-        sb.append(HttpConnection.CRLF);
+        sb.append(DefaultHTTPConnection.CRLF);
         if (isProxied && !isSecured() && myProxyAuth != null) {
             sb.append("Proxy-Authorization: " + getProxyAuthString(myProxyAuth.getProxyUserName(), myProxyAuth.getProxyPassword()));
-            sb.append(HttpConnection.CRLF);
+            sb.append(DefaultHTTPConnection.CRLF);
         }
         boolean chunked = false;
         if (requestBody instanceof ByteArrayInputStream) {
@@ -511,24 +511,24 @@ class HttpConnection {
         } else {
             sb.append("Content-Lenght: 0");
         }
-        sb.append(HttpConnection.CRLF);
+        sb.append(DefaultHTTPConnection.CRLF);
         sb.append("Accept-Encoding: gzip");
-        sb.append(HttpConnection.CRLF);
+        sb.append(DefaultHTTPConnection.CRLF);
         if (header != null) {
             if (!header.containsKey("Content-Type")) {
                 sb.append("Content-Type: text/xml; charset=\"utf-8\"");
-                sb.append(HttpConnection.CRLF);
+                sb.append(DefaultHTTPConnection.CRLF);
             }
             for (Iterator keys = header.keySet().iterator(); keys.hasNext();) {
                 Object key = keys.next();
                 sb.append(key.toString());
                 sb.append(": ");
                 sb.append(header.get(key).toString());
-                sb.append(HttpConnection.CRLF);
+                sb.append(DefaultHTTPConnection.CRLF);
             }
         }
         getOutputStream().write(sb.toString().getBytes());
-        getOutputStream().write(HttpConnection.CRLF_BYTES);
+        getOutputStream().write(DefaultHTTPConnection.CRLF_BYTES);
         if (requestBody != null) {
             byte[] buffer = new byte[1024*32];
             while (true) {
@@ -536,13 +536,13 @@ class HttpConnection {
                 if (chunked) {
                     if (read > 0) {
                         getOutputStream().write(Integer.toHexString(read).getBytes());
-                        getOutputStream().write(HttpConnection.CRLF_BYTES);
+                        getOutputStream().write(DefaultHTTPConnection.CRLF_BYTES);
                         getOutputStream().write(buffer, 0, read);
-                        getOutputStream().write(HttpConnection.CRLF_BYTES);
+                        getOutputStream().write(DefaultHTTPConnection.CRLF_BYTES);
                     } else {
                         getOutputStream().write('0');
-                        getOutputStream().write(HttpConnection.CRLF_BYTES);
-                        getOutputStream().write(HttpConnection.CRLF_BYTES);
+                        getOutputStream().write(DefaultHTTPConnection.CRLF_BYTES);
+                        getOutputStream().write(DefaultHTTPConnection.CRLF_BYTES);
                         break;
                     }
                 } else {
