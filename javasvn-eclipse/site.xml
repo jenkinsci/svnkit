@@ -11,22 +11,9 @@
        <category name="JavaSVN Library"/>
 	</feature>
 
-	<feature id="org.tmatesoft.javasvn.subclipse"
-	         patch="false"
-	         url="features/org.tmatesoft.javasvn.subclipse_%javasvn.version%.jar"
-	         version="%javasvn.version%">
-       <category name="JavaSVN Subclipse Extension"/>
-	</feature>
-
 	<category-def name="JavaSVN Library" label="JavaSVN Library">
 		<description>
 			JavaSVN Library Plugin
-		</description>
-	</category-def>
-
-	<category-def name="JavaSVN Subclipse Extension" label="JavaSVN Subclipse Extension">
-		<description>
-			JavaSVN Subclipse Extension
 		</description>
 	</category-def>
 </site>

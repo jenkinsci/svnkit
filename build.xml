@@ -180,15 +180,10 @@
 
     <target name="build-eclipse" depends="build-library,build-src,compile-eclipse" if="eclipse.present">
         <property name="javasvn.plugin.name" value="plugins/org.tmatesoft.javasvn_${javasvn.version}" />
-        <property name="subclipse.plugin.name" value="plugins/org.tigris.subversion.subclipse.core_${subclipse.plugin.version}" />
-
         <property name="javasvn.feature.name" value="features/org.tmatesoft.javasvn_${javasvn.version}" />
-        <property name="subclipse.feature.name" value="features/org.tmatesoft.javasvn.subclipse_${javasvn.version}" />
 
         <mkdir dir="build/eclipse/${javasvn.plugin.name}" />
-        <mkdir dir="build/eclipse/${subclipse.plugin.name}" />
         <mkdir dir="build/eclipse/${javasvn.feature.name}" />
-        <mkdir dir="build/eclipse/${subclipse.feature.name}" />
         <mkdir dir="build/eclipse/site/plugins" />
         <mkdir dir="build/eclipse/site/features" />
         
@@ -221,37 +216,20 @@
             </fileset>
         </jar>
         
-        <!-- build subclipse plugin -->
-        <copy todir="build/eclipse/${subclipse.plugin.name}">
-            <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn.subclipse">
-                <exclude name="**/.svn"/>
-            </fileset>
-        </copy>
-        
         <!-- build features -->
         <copy todir="build/eclipse/${javasvn.feature.name}">
             <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn.feature">
                 <exclude name="**/.svn"/>
             </fileset>
         </copy>
-        <copy todir="build/eclipse/${subclipse.feature.name}">
-            <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn.subclipse.feature">
-                <exclude name="**/.svn"/>
-            </fileset>
-        </copy>
-
         <copy file="javasvn-eclipse/site.xml" todir="build/eclipse/site"/>
 
         <!-- update versions -->
         <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml" token="%javasvn.version%" value="${javasvn.version}"/>
-        <replace dir="build/eclipse" includes="**/plugin.xml,**/feature.xml" token="%subclipse.version%" value="${subclipse.version}"/>
-        <replace dir="build/eclipse" includes="**/plugin.xml,**/feature.xml" token="%subclipse.plugin.version%" value="${subclipse.plugin.version}"/>
         
         <!-- build jars for update site -->
         <zip destfile="build/eclipse/site/${javasvn.plugin.name}.jar" basedir="build/eclipse/${javasvn.plugin.name}"/>
-        <zip destfile="build/eclipse/site/${subclipse.plugin.name}.jar" basedir="build/eclipse/${subclipse.plugin.name}"/>
         <zip destfile="build/eclipse/site/${javasvn.feature.name}.jar" basedir="build/eclipse/${javasvn.feature.name}"/>
-        <zip destfile="build/eclipse/site/${subclipse.feature.name}.jar" basedir="build/eclipse/${subclipse.feature.name}"/>
     </target>
 
     <target name="build-doc">
@@ -285,13 +263,6 @@
             </bottom>
         	<link href="http://java.sun.com/j2se/1.4.2/docs/api/"/>
         </javadoc>
-        <copy todir="build/doc" failonerror="false">
-            <fileset dir="www">
-                <include name="usage.html" />
-                <include name="build.html" />
-                <include name="subclipse.html" />
-            </fileset>
-        </copy>
     </target>
 
     <target name="clean">
