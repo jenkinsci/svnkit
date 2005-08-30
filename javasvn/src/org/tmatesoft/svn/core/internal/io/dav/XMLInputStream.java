@@ -19,7 +19,7 @@ import java.io.InputStream;
 /**
  * @author Alexander Kitaev
  */
-class XMLInputStream extends InputStream {
+public class XMLInputStream extends InputStream {
     
 	private InputStream mySource;
 	private boolean myIsEscaping;

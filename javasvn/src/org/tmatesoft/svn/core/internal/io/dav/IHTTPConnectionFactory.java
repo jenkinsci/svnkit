@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.io.dav;
 
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.io.dav.commons.CommonsHTTPConnection;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 
@@ -21,9 +22,18 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  */
 public interface IHTTPConnectionFactory {
     
+    public String HTTP_CLIENT_CLASS_NAME = "org.apache.commons.httpclient.HttpClient";
+    
     public IHTTPConnectionFactory DEFAULT = new IHTTPConnectionFactory() {
 
         public IHTTPConnection createHTTPConnection(SVNURL location, SVNRepository repository) {
+            try {
+                Class httpClientClass = getClass().getClassLoader().loadClass(HTTP_CLIENT_CLASS_NAME);
+                if (httpClientClass != null) {
+                    return new CommonsHTTPConnection(location, repository);
+                }
+            } catch (ClassNotFoundException e) {
+            }
             return new DefaultHTTPConnection(location, repository);
         }
         

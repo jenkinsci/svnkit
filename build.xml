@@ -33,6 +33,9 @@
             <pathelement location="contrib/jsch/jsch.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
+            <fileset dir="contrib/httpclient">
+                <include name="*.jar"/>
+            </fileset>
         </path>
 
         <javac debug="true" destdir="contrib/javahl/bin" srcdir="contrib/javahl/src">
