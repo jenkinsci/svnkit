@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /**
  * @version 1.0
@@ -266,14 +267,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     }
 
     private static File getDefaultConfigDir() {
-        String userHome = System.getProperty("user.home");
-        File file = new File(userHome);
-        if (SVNFileUtil.isWindows) {
-            file = new File(file, "Application Data/Subversion");
-        } else {
-            file = new File(file, ".subversion");
-        }
-        return file;
+        return SVNWCUtil.getDefaultConfigurationDirectory();
     }
 
     private static boolean getBooleanValue(String value, boolean defaultValue) {

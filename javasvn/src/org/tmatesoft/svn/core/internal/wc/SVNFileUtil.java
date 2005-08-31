@@ -23,6 +23,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -53,6 +55,7 @@ public class SVNFileUtil {
 
     private static String ourGroupID;
     private static String ourUserID;
+    private static File ourAppDataPath;
     private static final String BINARY_MIME_TYPE = "application/octet-stream";
 
     static {
@@ -675,20 +678,32 @@ public class SVNFileUtil {
             //
         }
     }
-
+    
     private static String execCommand(String[] commandLine) {
+        return execCommand(commandLine, false);
+    }
+
+    private static String execCommand(String[] commandLine, boolean waitAfterRead) {
         InputStream is = null;
         StringBuffer result = new StringBuffer();
         try {
             Process process = Runtime.getRuntime().exec(commandLine);
             is = process.getInputStream();
-            int rc = process.waitFor();
-            if (rc != 0) {
-                return null;
+            if (!waitAfterRead) {
+                int rc = process.waitFor();
+                if (rc != 0) {
+                    return null;
+                }
             }
-            int r;
+            int r;            
             while ((r = is.read()) >= 0) {
                 result.append((char) (r & 0xFF));
+            }
+            if (waitAfterRead) {
+                int rc = process.waitFor();
+                if (rc != 0) {
+                    return null;
+                }
             }
             return result.toString().trim();
         } catch (IOException e) {
@@ -745,5 +760,43 @@ public class SVNFileUtil {
                 //
             }
         }
+    }
+    
+    public static File getApplicationDataPath() {
+        if (ourAppDataPath != null) {
+            return ourAppDataPath;
+        }
+        Method getEnvMethod = null;
+        try {
+            getEnvMethod = System.class.getMethod("getenv", new Class[] {String.class});
+        } catch (SecurityException e) {
+        } catch (NoSuchMethodException e) {
+        }
+        if (getEnvMethod != null) {
+            try {
+                String path = (String) getEnvMethod.invoke(null, new Object[] {"APPDATA"});
+                if (path != null) {
+                    ourAppDataPath = new File(path);
+                    return new File(path);
+                }
+            } catch (IllegalArgumentException e) {
+            } catch (IllegalAccessException e) {
+            } catch (InvocationTargetException e) {
+            }
+        }
+        if (ourAppDataPath == null) {
+            String[] cmd = new String[] {"cmd.exe", "/D", "/C", "set", "APPDATA"};
+            String result = execCommand(cmd, true);
+            if (result != null && result.startsWith("APPDATA=")) {
+                result = result.substring("APPDATA=".length());
+                if (result.indexOf("\r") >= 0) {
+                    result = result.substring(0, result.indexOf("\r"));
+                }
+                ourAppDataPath = new File(result.trim());
+            } else {
+                ourAppDataPath = new File(new File(System.getProperty("user.home")), "Application Data");
+            }
+        }
+        return ourAppDataPath;
     }
 }

@@ -50,7 +50,7 @@ public class SVNWCUtil {
      */
     public static File getDefaultConfigurationDirectory() {
         if (SVNFileUtil.isWindows) {
-            return new File(System.getProperty("user.home"), "Application Data/Subversion");
+            return new File(SVNFileUtil.getApplicationDataPath(), "Subversion");
         }
         return new File(System.getProperty("user.home"), ".subversion");
     }
