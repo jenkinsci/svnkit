@@ -9,35 +9,36 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-
 package org.tmatesoft.svn.core.internal.io.dav;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 
 
 /**
- * @author Alexander Kitaev
+ * @version 1.0
+ * @author  TMate Software Ltd.
  */
-public class XMLInputStream extends InputStream {
+public class XMLReader extends Reader {
     
-	private InputStream mySource;
-	private boolean myIsEscaping;
+    public static final char COLON_REPLACEMENT = '\u0387'; // greek middle dot.
+    
+    private Reader mySource;
+    private boolean myIsEscaping;
     private int myColonCount;
     private boolean myIsClosed;
 
-    public XMLInputStream(InputStream source) {
-    	mySource = source;
+    public XMLReader(InputStream is) throws UnsupportedEncodingException {
+        mySource = new InputStreamReader(is, "UTF-8");
     }
-    
-    public boolean isClosed() { 
-        return myIsClosed;
-    }
-    
-    public int read(byte[] b, int off, int len) throws IOException {
+
+    public int read(char[] b, int off, int len) throws IOException {
         int read = mySource.read(b, off, len);
         for(int i = 0; i < read; i++) {
-            char ch = (char) b[off + i];
+            char ch = b[off + i];
             if (ch < 0x20 && ch != '\r' &&
                     ch != '\n' && ch != '\t') {
                 b[off + i] = ' ';
@@ -47,7 +48,7 @@ public class XMLInputStream extends InputStream {
                 if (ch == ':') {
                     myColonCount++;
                     if (myColonCount > 1) {
-                        b[off + i] = '_'; 
+                        b[off + i] = COLON_REPLACEMENT; 
                     }
                 } else if (Character.isWhitespace(ch) || ch == '>') {
                     myIsEscaping = false;
@@ -60,25 +61,12 @@ public class XMLInputStream extends InputStream {
         myIsClosed = read <= 0;
         return read;
     }
-
-    public int read() throws IOException {
-        int read = mySource.read();        
-        if (myIsEscaping) {
-            if (read == ':') {
-                myColonCount++;
-                if (myColonCount > 1) {
-                    read = '_'; 
-                }
-            } else if (Character.isWhitespace((char) read) || read == '>') {
-                myIsEscaping = false;
-            }
-        } else if (!myIsEscaping && read == '<') {
-            myIsEscaping = true;
-            myColonCount = 0;
-        } 
-        return read;
+    
+    public boolean isClosed() {
+        return myIsClosed;
     }
-    
-    
+
+    public void close() throws IOException {
+    }
 
 }

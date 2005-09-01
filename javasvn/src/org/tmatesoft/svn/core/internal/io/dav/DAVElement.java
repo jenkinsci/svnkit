@@ -33,6 +33,7 @@ public class DAVElement {
             properties = new HashMap();
             ourProperties.put(namespace, properties);
         }
+        name = name.replace(XMLReader.COLON_REPLACEMENT, ':');
         DAVElement property = (DAVElement) properties.get(name);
         if (property == null) {
             property = new DAVElement(namespace, name);

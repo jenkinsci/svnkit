@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.Version;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
@@ -423,8 +424,6 @@ class DefaultHTTPConnection implements IHTTPConnection {
         InputStream is = null;
         try {
 			is = createInputStream(responseHeader, getInputStream());
-            XMLInputStream xmlIs = new XMLInputStream(is);
-
             if (handler == null) {
                 while (true) {
                     int r = is.read();
@@ -436,8 +435,9 @@ class DefaultHTTPConnection implements IHTTPConnection {
                 if (mySAXParser == null) {
                     mySAXParser = getSAXParserFactory().newSAXParser();
                 }
-                while (!xmlIs.isClosed()) {
-                    mySAXParser.parse(xmlIs, handler);
+                XMLReader reader = new XMLReader(is);
+                while (!reader.isClosed()) {
+                    mySAXParser.parse(new InputSource(reader), handler);
                 }
             }
         } catch (SAXException e) {

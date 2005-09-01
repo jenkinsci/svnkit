@@ -55,11 +55,12 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.io.dav.DAVStatus;
 import org.tmatesoft.svn.core.internal.io.dav.IHTTPConnection;
-import org.tmatesoft.svn.core.internal.io.dav.XMLInputStream;
+import org.tmatesoft.svn.core.internal.io.dav.XMLReader;
 import org.tmatesoft.svn.core.internal.util.IMeasurable;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
@@ -316,8 +317,6 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
         InputStream is = null;
         try {
             is = SVNDebugLog.createLogStream(method.getResponseBodyAsStream());
-            XMLInputStream xmlIs = new XMLInputStream(is);
-
             if (handler == null) {
                 while (true) {
                     int r = is.read();
@@ -329,8 +328,9 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
                 if (mySAXParser == null) {
                     mySAXParser = getSAXParserFactory().newSAXParser();
                 }
-                while (!xmlIs.isClosed()) {
-                    mySAXParser.parse(xmlIs, handler);
+                XMLReader reader = new XMLReader(is);
+                while (!reader.isClosed()) {
+                    mySAXParser.parse(new InputSource(reader), handler);
                 }
             }
         } catch (SAXException e) {
