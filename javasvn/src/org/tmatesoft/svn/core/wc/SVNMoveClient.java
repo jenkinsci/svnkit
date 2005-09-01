@@ -590,7 +590,7 @@ public class SVNMoveClient extends SVNBasicClient {
      * 
      * <p>
      * In that case when you have your files copied/moved in the filesystem, you
-     * can not perform standard copying/moving - since the target already exists and
+     * can not perform standard (version control) copying/moving - since the target already exists and
      * the source may be already deleted. Use this method to overcome that restriction.  
      * 
      * @param  src           a source file path (was copied/moved to <code>dst</code>)
@@ -600,7 +600,7 @@ public class SVNMoveClient extends SVNBasicClient {
      *                       otherwise completes copying <code>src</code> to <code>dst</code>
      * @throws SVNException  if one of the following is true:
      *                       <ul>
-     *                       <li><code>move = </code><span>true</span> and <code>src</code>
+     *                       <li><code>move = </code><span class="javakeyword">true</span> and <code>src</code>
      *                       still exists
      *                       <li><code>dst</code> does not exist
      *                       <li><code>dst</code> is a directory 

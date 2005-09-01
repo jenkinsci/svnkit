@@ -840,12 +840,36 @@ public class SVNWCClient extends SVNBasicClient {
      *                        <li><code>path</code> is not under version control
      *                        <li>can not delete <code>path</code> without forcing
      *                        </ul>
-     *                         
+     * @see                   #doDelete(File, boolean, boolean, boolean)
      */
     public void doDelete(File path, boolean force, boolean dryRun) throws SVNException {
         doDelete(path, force, true, dryRun);
     }
     
+    /**
+     * Schedules a Working Copy item for deletion. This method allows to
+     * choose - whether file item(s) are to be deleted from the filesystem or 
+     * not. Another version of the {@link #doDelete(File, boolean, boolean) doDelete()}
+     * method is similar to the corresponding SVN client's command - <code>'svn delete'</code> 
+     * as it always deletes files from the filesystem.
+     * 
+     * 
+     * @param  path           a WC item to be deleted 
+     * @param  force          <span class="javakeyword">true</span> to
+     *                        force the operation to run
+     * @param  deleteFiles    if <span class="javakeyword">true</span> then
+     *                        files will be scheduled for deletion as well as
+     *                        deleted from the filesystem, otherwise files will
+     *                        be only scheduled for addition and still be present
+     *                        in the filesystem
+     * @param  dryRun         <span class="javakeyword">true</span> only to
+     *                        try the delete operation without actual deleting
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li><code>path</code> is not under version control
+     *                        <li>can not delete <code>path</code> without forcing
+     *                        </ul>
+     */
     public void doDelete(File path, boolean force, boolean deleteFiles, boolean dryRun) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(path);
         try {
