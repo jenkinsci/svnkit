@@ -32,6 +32,14 @@ if(titlepos == false){
 
 $result = substr($result, 0, $titlepos + strlen("<title>")) . "JavaSVN :: Test Results :: ". $build . substr($result, $titlepos + strlen("<title>"));
 
+$headerpos = strpos($result, "<h1>Python tests");
+if(titlepos == false){
+    echo $home;
+    return;
+}
+
+$result = substr($result, 0, $headerpos + strlen("<h1>Python tests")) . " (for ". $build ." build)". substr($result, $headerpos + strlen("<h1>Python tests"));
+
 // Print out your transformed document
 echo $result;
 

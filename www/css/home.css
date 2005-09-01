@@ -166,9 +166,8 @@ a.nol:hover {
 h4 {
 	font-size: 100%;
 	font-weight:bold;
-	padding: 0px;
 	padding:0.1em;
-	margin-top: 10px;
+	margin-top: 30px;
 	border-bottom: 1px solid rgb(173,184,217);
 }
 
