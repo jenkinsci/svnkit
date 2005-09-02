@@ -11,6 +11,13 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.commons;
 
+import java.io.IOException;
+import java.util.zip.GZIPInputStream;
+
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpConnection;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.HttpState;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 
 public class CommonsHTTPMethod extends EntityEnclosingMethod {
@@ -25,6 +32,18 @@ public class CommonsHTTPMethod extends EntityEnclosingMethod {
     public String getName() {
         return myName;
     }
-    
-    
+
+    public int execute(HttpState state, HttpConnection conn) throws HttpException, IOException {
+        addRequestHeader("Accept-Encoding", "gzip");
+        return super.execute(state, conn);
+    }
+
+    protected void readResponseBody(HttpState state, HttpConnection conn) throws IOException, HttpException {
+        super.readResponseBody(state, conn);
+        Header contentEncodingHeader = getResponseHeader("Content-Encoding");
+        
+        if (contentEncodingHeader != null && "gzip".equalsIgnoreCase(contentEncodingHeader.getValue())) {
+            setResponseStream(new GZIPInputStream(getResponseStream()));
+        }
+    }
 }

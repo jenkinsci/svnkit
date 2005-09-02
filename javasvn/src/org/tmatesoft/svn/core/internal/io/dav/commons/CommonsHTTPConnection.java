@@ -46,6 +46,7 @@ import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.tmatesoft.svn.core.SVNException;
@@ -61,6 +62,7 @@ import org.tmatesoft.svn.core.internal.util.IMeasurable;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.Version;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
@@ -209,6 +211,13 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
             myClient.getParams().setAuthenticationPreemptive(true);
             myClient.getParams().setContentCharset("UTF-8");
             myClient.getParams().setParameter(CredentialsProvider.PROVIDER, this);
+            String agent = (String) myClient.getParams().getParameter(HttpMethodParams.USER_AGENT);
+            if (agent != null) {
+                agent = Version.getVersionString() + " with " + agent;
+            } else {
+                agent = Version.getVersionString();
+            }
+            myClient.getParams().setParameter(HttpMethodParams.USER_AGENT, agent);
             // proxy.
             myClient.getHttpConnectionManager().getParams().setStaleCheckingEnabled(true);
             if (proxyManager != null && proxyManager.getProxyUserName() != null && proxyManager.getProxyPassword() != null) {

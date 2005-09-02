@@ -25,7 +25,7 @@ JAVASVN_VM_OPTIONS=-Djava.util.logging.config.file=$JAVASVN_HOME/logging.propert
 #
 # uncomment the line below to make JavaSVN use jakarta httpclient instead of built in http implementation.
 #
-#JAVASVN_VM_OPTIONS=$JAVASVN_VM_OPTIONS -Djavasvn.httpclient=jakarta
+#JAVASVN_VM_OPTIONS="$JAVASVN_VM_OPTIONS -Djavasvn.httpclient=jakarta"
 #
 
 JAVASVN_MAINCLASS=org.tmatesoft.svn.cli.SVN
