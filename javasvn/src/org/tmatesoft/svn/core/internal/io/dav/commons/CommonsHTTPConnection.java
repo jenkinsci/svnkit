@@ -31,6 +31,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.Credentials;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
@@ -98,7 +99,22 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
         if (httpMethod != null && httpMethod.getStatusCode() != 204) {
             readResponse(handler, httpMethod);
         }
-        return new DAVStatus(httpMethod.getStatusCode(), httpMethod.getStatusText(), null);
+        return createDAVStatus(httpMethod);
+    }
+
+    private static DAVStatus createDAVStatus(HttpMethod httpMethod) {
+        DAVStatus status = new DAVStatus(httpMethod.getStatusCode(), httpMethod.getStatusText(), null);
+        Header[] headers = httpMethod.getResponseHeaders();
+        Map headersMap = new HashMap();
+        for (int i = 0; headers != null && i < headers.length; i++) {
+            String name = headers[i].getName();
+            String value = headers[i].getValue();
+            if (name != null) {
+                headersMap.put(name, value);
+            }
+        }
+        status.setResponseHeader(headersMap);
+        return status;
     }
 
     public DAVStatus request(String method, String path, int depth, String label, StringBuffer requestBody, OutputStream result, int[] okCodes) throws SVNException {
@@ -107,7 +123,7 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
         if (httpMethod != null && httpMethod.getStatusCode() != 204) {
             readResponse(result, httpMethod);
         }
-        return new DAVStatus(httpMethod.getStatusCode(), httpMethod.getStatusText(), null);
+        return createDAVStatus(httpMethod);
     }
 
     public DAVStatus request(String method, String path, Map header, InputStream body, DefaultHandler handler, int[] okCodes) throws SVNException {
@@ -116,7 +132,7 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
         if (httpMethod != null && httpMethod.getStatusCode() != 204) {
             readResponse(handler, httpMethod);
         }
-        return new DAVStatus(httpMethod.getStatusCode(), httpMethod.getStatusText(), null);
+        return createDAVStatus(httpMethod);
     }
 
     public DAVStatus request(String method, String path, Map header, StringBuffer reqBody, DefaultHandler handler, int[] okCodes) throws SVNException {
@@ -125,7 +141,7 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
         if (httpMethod != null && httpMethod.getStatusCode() != 204) {
             readResponse(handler, httpMethod);
         }
-        return new DAVStatus(httpMethod.getStatusCode(), httpMethod.getStatusText(), null);
+        return createDAVStatus(httpMethod);
     }
 
     public void close() {
@@ -245,7 +261,7 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
     }
     
     private static DAVStatus readError(HttpMethod method, String url) throws SVNException {
-        DAVStatus status = new DAVStatus(method.getStatusCode(), method.getStatusText(), null);
+        DAVStatus status = createDAVStatus(method);
         status.setErrorText("svn: Request '" + method.getName() + "' failed on '" + url + "': " + method.getStatusText());
         if (method.getStatusCode() == 404) {
             status.setErrorText("svn: '" + url + "' path not found");

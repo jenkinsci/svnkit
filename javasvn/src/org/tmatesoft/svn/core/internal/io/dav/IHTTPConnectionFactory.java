@@ -23,13 +23,15 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 public interface IHTTPConnectionFactory {
     
     public String HTTP_CLIENT_CLASS_NAME = "org.apache.commons.httpclient.HttpClient";
+    public String HTTP_CLIENT_PROPERTY = "javasvn.httpclient";
+    public String HTTP_CLIENT_JAKARTA = "jakarta";
     
     public IHTTPConnectionFactory DEFAULT = new IHTTPConnectionFactory() {
 
         public IHTTPConnection createHTTPConnection(SVNURL location, SVNRepository repository) {
             try {
                 Class httpClientClass = getClass().getClassLoader().loadClass(HTTP_CLIENT_CLASS_NAME);
-                if (httpClientClass != null) {
+                if (httpClientClass != null && HTTP_CLIENT_JAKARTA.equalsIgnoreCase(System.getProperty(HTTP_CLIENT_PROPERTY))) {
                     return new CommonsHTTPConnection(location, repository);
                 }
             } catch (ClassNotFoundException e) {

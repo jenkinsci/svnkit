@@ -142,6 +142,11 @@
             </fileset>
         </jar>
         <copy file="contrib/jsch/jsch.jar" todir="build/lib" />
+        <copy todir="build/lib" >
+            <fileset dir="contrib/httpclient">
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
         <!-- copy licences and changelog -->
         <copy todir="build/lib" flatten="true">
             <fileset dir=".">
@@ -150,6 +155,7 @@
                 <include name="contrib/javahl/JAVAHL-LICENSE" />
                 <include name="contrib/sequence/SEQUENCE-LICENSE" />
                 <include name="contrib/jsch/JSCH-LICENSE" />
+                <include name="contrib/httpclient/HTTPCLIENT-LICENSE" />
             </fileset>
         </copy>
     </target>
@@ -193,9 +199,8 @@
         <!-- build javasvn plugin -->
         <copy todir="build/eclipse/${javasvn.plugin.name}">
             <fileset dir="build/lib">
-                <include name="javasvn.jar" />
-                <include name="javasvn-javahl.jar" />
-                <include name="jsch.jar" />
+                <include name="*.jar" />
+                <exclude name="javasvn-cli.jar" />
                 <include name="javasvnsrc.zip" />
             </fileset>
         </copy>
@@ -206,6 +211,7 @@
                 <include name="JSCH-LICENSE" />
                 <include name="SEQUENCE-LICENSE" />
                 <include name="JAVAHL-LICENSE" />
+                <include name="HTTPCLIENT-LICENSE" />
             </fileset>
             <fileset dir="javasvn-eclipse/org.tmatesoft.javasvn">
                 <include name="plugin.xml" />
@@ -297,8 +303,7 @@
 
     <target name="deploy-eclipse"
             depends="init-environment,build-library,build-src,build-doc,build-eclipse"
-            if="eclipse.present"
-    >
+            if="eclipse.present">
     	<zip destfile="build/org.tmatesoft.svn_${javasvn.version}.eclipse.zip">
             <zipfileset dir="build/eclipse/site/"/>
         </zip>
