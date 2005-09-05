@@ -271,7 +271,7 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
     
     private static DAVStatus readError(HttpMethod method, String url) throws SVNException {
         DAVStatus status = createDAVStatus(method);
-        status.setErrorText("svn: Request '" + method.getName() + "' failed on '" + url + "': " + method.getStatusCode() + "  " + method.getStatusText() + ".");
+        status.setErrorText("svn: Request '" + method.getName() + "' failed on '" + url + "': " + method.getStatusCode() + " " + method.getStatusText() + ".");
         if (method.getStatusCode() == 404) {
             status.setErrorText("svn: '" + url + "' path not found");
         } else {
