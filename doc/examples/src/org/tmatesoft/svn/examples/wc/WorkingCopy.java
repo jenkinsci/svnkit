@@ -215,8 +215,8 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 	A     newDir/newFile.txt
 	
 	Status for 'N:\MyWorkingCopy':
-	A          0     ?    ?                               N:\MyWorkingCopy\newDir\newFile.txt
-	A          0     ?    ?                               N:\MyWorkingCopy\newDir
+	A          0     ?    ?                 N:\MyWorkingCopy\newDir\newFile.txt
+	A          0     ?    ?                 N:\MyWorkingCopy\newDir
 	
 	Updating 'N:\MyWorkingCopy'...
 	At revision 71
@@ -231,7 +231,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 	L     newFile.txt
 	
 	Status for 'N:\MyWorkingCopy':
-	     K     72    72    userName                        N:\MyWorkingCopy\newDir\newFile.txt
+	     K     72    72    userName         N:\MyWorkingCopy\newDir\newFile.txt
 	
 	Copying 'svn://localhost/testRep/MyRepos' to 'svn://localhost/testRep/MyReposCopy'...
 	Committed to revision 73
@@ -302,8 +302,8 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 	D     newDir
 	
 	Status for 'N:\MyWorkingCopy':
-	D          73    72    userName                        N:\MyWorkingCopy\newDir\newFile.txt
-	D          73    72    userName                        N:\MyWorkingCopy\newDir
+	D          73    72    userName         N:\MyWorkingCopy\newDir\newFile.txt
+	D          73    72    userName         N:\MyWorkingCopy\newDir
 	
 	Committing changes for 'N:\MyWorkingCopy'...
 	Deleting   newDir
