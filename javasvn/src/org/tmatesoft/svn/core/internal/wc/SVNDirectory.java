@@ -73,8 +73,16 @@ public class SVNDirectory {
     }
 
     public boolean isVersioned() {
-        return getAdminDirectory().isDirectory()
-                && new File(getAdminDirectory(), "entries").canRead();
+        if (getAdminDirectory().isDirectory() && new File(getAdminDirectory(), "entries").canRead()) {
+            try {
+                if (getEntries().getEntry("", false) != null) {
+                    return true;
+                }
+            } catch (SVNException e) {
+                //
+            }
+        }
+        return false;
     }
 
     public boolean isLocked() {

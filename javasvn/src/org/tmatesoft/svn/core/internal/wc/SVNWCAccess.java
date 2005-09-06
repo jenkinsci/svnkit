@@ -85,8 +85,8 @@ public class SVNWCAccess implements ISVNEventHandler {
                 } else {
                     SVNEntry anchorEntry = anchor.getEntries().getEntry("", false);
                     SVNEntry targetEntry = target.getEntries().getEntry("", false);
-                    String anchorURL = anchorEntry.getURL();
-                    String targetURL = targetEntry.getURL();
+                    String anchorURL = anchorEntry != null ? anchorEntry.getURL() : null;
+                    String targetURL = targetEntry != null ? targetEntry.getURL() : null;
                     if (anchorURL != null && targetURL != null) {
                         String urlName = SVNEncodingUtil.uriEncode(targetInAnchor.getName());
                         String expectedURL = SVNPathUtil.append(anchorURL, urlName);
