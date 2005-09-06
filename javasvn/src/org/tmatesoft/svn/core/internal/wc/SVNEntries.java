@@ -84,6 +84,9 @@ public class SVNEntries {
                     entry.put(SVNProperty.SVN_ENTRY_PREFIX + name, value);
                     if (line.charAt(line.length() - 1) == '>') {
                         String entryName = (String) entry.get(SVNProperty.NAME);
+                        if (entryName == null) {
+                            entryName = "";
+                        }
                         myData.put(entryName, entry);
                         myEntries.add(new SVNEntry(this, entryName));
                         if (!"".equals(entryName)) {
