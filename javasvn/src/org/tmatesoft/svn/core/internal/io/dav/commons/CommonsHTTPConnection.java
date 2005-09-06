@@ -154,6 +154,9 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
     }
 
     private HttpMethod sendRequest(String method, String path, Map header, InputStream requestBody) throws SVNException {
+        if (path == null || "".equals(path.trim())) {
+            path = "/";
+        }
         EntityEnclosingMethod httpMethod = new CommonsHTTPMethod(method, path);
         if (header != null) {
             for (Iterator keys = header.keySet().iterator(); keys.hasNext();) {
@@ -208,7 +211,6 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
             }
             myClient.setHostConfiguration(hostConfiguration);
             // params.
-            myClient.getParams().setAuthenticationPreemptive(true);
             myClient.getParams().setContentCharset("UTF-8");
             myClient.getParams().setParameter(CredentialsProvider.PROVIDER, this);
             String agent = (String) myClient.getParams().getParameter(HttpMethodParams.USER_AGENT);

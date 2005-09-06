@@ -464,6 +464,9 @@ class DefaultHTTPConnection implements IHTTPConnection {
     private static final byte[] CRLF_BYTES = { '\r', '\n' };
 
     private void sendHeader(String method, String path, Map header, InputStream requestBody) throws IOException {
+        if (path == null || "".equals(path.trim())) {
+            path = "/";
+        }
         StringBuffer sb = new StringBuffer();
         sb.append(method);
         sb.append(' ');
