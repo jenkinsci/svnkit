@@ -765,6 +765,7 @@ public class SVNCommitClient extends SVNBasicClient {
             SVNErrorManager.error("svn: IO error while importing file '" + file
                     + "': " + e.getMessage());
         } finally {
+            SVNFileUtil.closeFile(is);
             try {
                 os.close();
             } catch (IOException e) {
