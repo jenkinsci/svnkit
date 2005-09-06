@@ -212,6 +212,7 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
             myClient.setHostConfiguration(hostConfiguration);
             // params.
             myClient.getParams().setContentCharset("UTF-8");
+            myClient.getParams().setAuthenticationPreemptive(true);
             myClient.getParams().setParameter(CredentialsProvider.PROVIDER, this);
             String agent = (String) myClient.getParams().getParameter(HttpMethodParams.USER_AGENT);
             if (agent != null) {
