@@ -34,9 +34,8 @@ public class SVNLogRunner {
 
     private boolean myIsEntriesChanged;
 
-    public void runCommand(SVNDirectory dir, String name, Map attributes)
-            throws SVNException {
-        String fileName = (String) attributes.remove(SVNLog.NAME_ATTR);
+    public void runCommand(SVNDirectory dir, String name, Map attributes) throws SVNException {
+        String fileName = (String) attributes.get(SVNLog.NAME_ATTR);
         if (SVNLog.DELETE_ENTRY.equals(name)) {
             // check if it is not disjoint entry not to delete another wc?
             dir.destroy(fileName, true);
@@ -49,6 +48,9 @@ public class SVNLogRunner {
             }
             for (Iterator atts = attributes.keySet().iterator(); atts.hasNext();) {
                 String attName = (String) atts.next();
+                if ("".equals(attName) || SVNLog.NAME_ATTR.equals(attName)) {
+                    continue;
+                }
                 String value = (String) attributes.get(attName);
                 attName = SVNProperty.SVN_ENTRY_PREFIX + attName;
 
@@ -415,11 +417,18 @@ public class SVNLogRunner {
     private void setEntriesChanged(boolean modified) {
         myIsEntriesChanged |= modified;
     }
+    
+    public void logFailed(SVNDirectory dir) throws SVNException {
+        if (myIsEntriesChanged) {
+            dir.getEntries().save(true);
+        } else {
+            dir.getEntries().close();
+        }
+    }
 
     public void logCompleted(SVNDirectory dir) throws SVNException {
         boolean killMe = dir.getFile(".svn/KILLME").isFile();
-        long dirRevision = killMe ? dir.getEntries().getEntry("", true)
-                .getRevision() : -1;
+        long dirRevision = killMe ? dir.getEntries().getEntry("", true).getRevision() : -1;
         if (myIsEntriesChanged) {
             dir.getEntries().save(false);
         } else {

@@ -239,15 +239,26 @@ public class SVNLog {
         } finally {
             SVNFileUtil.closeFile(reader);
         }
-
-        for (Iterator cmds = commands.iterator(); cmds.hasNext();) {
-            Map command = (Map) cmds.next();
-            String name = (String) command.remove("");
-            if (runner != null) {
-                runner.runCommand(myDirectory, name, command);
+        try {
+            for (Iterator cmds = commands.iterator(); cmds.hasNext();) {
+                Map command = (Map) cmds.next();
+                String name = (String) command.get("");
+                if (runner != null) {
+                    runner.runCommand(myDirectory, name, command);
+                }
+                cmds.remove();
             }
+        } catch (SVNException e) {
+            // save failed command and unexecuted commands back to the log file.
+            myCache = null;
+            for (Iterator cmds = commands.iterator(); cmds.hasNext();) {
+                Map command = (Map) cmds.next();
+                String name = (String) command.remove("");
+                addCommand(name, command, false);
+            }
+            save();
+            throw e;
         }
-        delete();
     }
 
     public String toString() {

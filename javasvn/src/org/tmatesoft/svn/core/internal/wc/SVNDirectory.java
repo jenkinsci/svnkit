@@ -741,17 +741,47 @@ public class SVNDirectory {
     public void runLogs() throws SVNException {
         SVNLogRunner runner = new SVNLogRunner();
         int index = 0;
-        while (true) {
-            SVNLog log = new SVNLog(this, index);
-            index++;
-            getWCAccess().checkCancelled();
-            if (log.exists()) {
-                log.run(runner);
-                continue;
+        Collection processedLogs = new ArrayList();
+        // find first, not yet executed log file.
+        try {
+            while (true) {
+                SVNLog log = new SVNLog(this, index);
+                getWCAccess().checkCancelled();
+                if (log.exists()) {
+                    log.run(runner);
+                    processedLogs.add(log);
+                    index++;
+                    continue;
+                }
+                break;
             }
-            break;
+        } catch (SVNException e) {
+            // to save modifications made to .svn/entries
+            runner.logFailed(this);
+            deleteLogs(processedLogs);
+            int newIndex = 0;
+            while (true && index != 0) {
+                File logFile = getFile(".svn/log." + index);
+                if (logFile.exists()) {
+                    File newFile = getFile(newIndex == 0 ? ".svn/log" : ".svn/log." + newIndex);
+                    SVNFileUtil.rename(logFile, newFile);
+                    newIndex++;
+                    index++;
+                    continue;
+                }
+                break;
+            }
+            throw e;
         }
         runner.logCompleted(this);
+        deleteLogs(processedLogs);
+    }
+    
+    private static void deleteLogs(Collection logsList) {
+        for (Iterator logs = logsList.iterator(); logs.hasNext();) {
+            SVNLog log = (SVNLog) logs.next();
+            log.delete();
+        }
     }
 
     public SVNDirectory createChildDirectory(String name, String url,  long revision) throws SVNException {
