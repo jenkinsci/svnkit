@@ -476,6 +476,9 @@ class DefaultHTTPConnection implements IHTTPConnection {
             sb.append(":");
             sb.append(mySVNRepositoryLocation.getPort());
         }
+        if (path == null) {
+            path = "/";
+        }
         if (path.length() == 0 || path.charAt(0) != '/') {
             path = "/" + path;
         }
