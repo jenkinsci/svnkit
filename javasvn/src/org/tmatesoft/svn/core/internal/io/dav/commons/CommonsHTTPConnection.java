@@ -424,6 +424,7 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
             if (myLastAuth == null) {
                 myLastAuth = myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myLocation);
             } else {
+                myAuthManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, null, myLastAuth);
                 myLastAuth = myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myLocation);
             }
         } catch (SVNException e) {
