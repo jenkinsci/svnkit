@@ -154,9 +154,6 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
     }
 
     private HttpMethod sendRequest(String method, String path, Map header, InputStream requestBody) throws SVNException {
-        if (path == null || "".equals(path.trim())) {
-            path = "/";
-        }
         EntityEnclosingMethod httpMethod = new CommonsHTTPMethod(method, path);
         if (header != null) {
             for (Iterator keys = header.keySet().iterator(); keys.hasNext();) {

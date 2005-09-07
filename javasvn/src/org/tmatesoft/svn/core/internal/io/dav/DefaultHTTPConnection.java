@@ -464,9 +464,6 @@ class DefaultHTTPConnection implements IHTTPConnection {
     private static final byte[] CRLF_BYTES = { '\r', '\n' };
 
     private void sendHeader(String method, String path, Map header, InputStream requestBody) throws IOException {
-        if (path == null || "".equals(path.trim())) {
-            path = "/";
-        }
         StringBuffer sb = new StringBuffer();
         sb.append(method);
         sb.append(' ');
@@ -478,6 +475,9 @@ class DefaultHTTPConnection implements IHTTPConnection {
             sb.append(mySVNRepositoryLocation.getHost());
             sb.append(":");
             sb.append(mySVNRepositoryLocation.getPort());
+        }
+        if (path.length() == 0 || path.charAt(0) != '/') {
+            path = "/" + path;
         }
         DAVUtil.getCanonicalPath(path, sb);
         sb.append(' ');
