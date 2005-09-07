@@ -137,7 +137,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             if (myProviders[i] == null) {
                 continue;
             }
-            SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, null, realm, null, null, myIsStoreAuth);
+            SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, url, realm, null, null, myIsStoreAuth);
             if (auth != null) {
                 myPreviousAuthentication = auth;
                 myLastProviderIndex = i;
@@ -156,7 +156,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             if (myProviders[i] == null) {
                 continue;
             }
-            SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, null, realm, myPreviousErrorMessage, myPreviousAuthentication, myIsStoreAuth);
+            SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, url, realm, myPreviousErrorMessage, myPreviousAuthentication, myIsStoreAuth);
             if (auth != null) {
                 myPreviousAuthentication = auth;
                 myLastProviderIndex = i;
