@@ -461,10 +461,10 @@ public class SVNClientImpl implements SVNClientInterface {
         try {
             if(isURL(srcPath)){
                 return updater.doExport(SVNURL.parseURIEncoded(srcPath), new File(destPath).getAbsoluteFile(),
-                        JavaHLObjectFactory.getSVNRevision(revision), JavaHLObjectFactory.getSVNRevision(pegRevision), nativeEOL, force, recurse);
+                        JavaHLObjectFactory.getSVNRevision(pegRevision), JavaHLObjectFactory.getSVNRevision(revision), nativeEOL, force, recurse);
             }
             return updater.doExport(new File(srcPath).getAbsoluteFile(), new File(destPath).getAbsoluteFile(),
-                    JavaHLObjectFactory.getSVNRevision(revision), JavaHLObjectFactory.getSVNRevision(pegRevision), nativeEOL, force, recurse);
+                    JavaHLObjectFactory.getSVNRevision(pegRevision), JavaHLObjectFactory.getSVNRevision(revision), nativeEOL, force, recurse);
         } catch (SVNException e) {
             throwException(e);
         }
