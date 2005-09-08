@@ -316,11 +316,11 @@ public class JavaHLObjectFactory {
         }
         File file = info.getFile();
 
-        boolean deleted = !file.exists() && schedule == ScheduleKind.delete;
-        boolean absent = !deleted && !file.exists();
+        boolean deleted = file != null && !file.exists() && schedule == ScheduleKind.delete;
+        boolean absent = file != null && !deleted && !file.exists();
         boolean incomplete = false;
 
-        long copyRev = info.getCommittedRevision() != null ? info.getCopyFromRevision().getNumber(): - 1;
+        long copyRev = info.getCopyFromRevision() != null ? info.getCopyFromRevision().getNumber(): - 1;
         String copyUrl = info.getCopyFromURL() != null ? info.getCopyFromURL().toString() : null;
 
         String path = info.getFile() != null ? info.getFile().getName() : SVNPathUtil.tail(info.getPath());
