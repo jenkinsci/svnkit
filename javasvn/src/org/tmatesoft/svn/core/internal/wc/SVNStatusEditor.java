@@ -130,8 +130,8 @@ public class SVNStatusEditor implements ISVNEditor {
                     SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE,
                     null, SVNRevision.UNDEFINED);
         }
-        if (myTarget == null && myCurrentDirectory.Parent != null) {
-            myCurrentDirectory.Parent.tweakStatus(path, kind,
+        if (myTarget == null && myCurrentDirectory.Parent != null) {            
+            myCurrentDirectory.Parent.tweakStatus(SVNPathUtil.removeTail(path), SVNNodeKind.DIR,
                     myCurrentDirectory.Name, SVNStatusType.STATUS_MODIFIED,
                     SVNStatusType.STATUS_NONE, null, SVNRevision.UNDEFINED);
         }
