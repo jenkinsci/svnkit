@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
-<head><title>Configuration&nbsp;settings</title>
+<head><title>Obtaining debug logs of JavaSVN operations</title>
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
@@ -23,7 +23,7 @@
 <span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
 </p>
 <p><div style="border-bottom: 1px solid rgb(51, 102, 153);"></div></p>
-<!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: Configuring JavaSVN</small>-->
+<!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: How to obtain debug logs of JavaSVN operations</small>-->
 
 <table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
 <tr style="height: 10px;">
@@ -87,103 +87,54 @@
 </table>
 -->
 
-<h1>Configuring JavaSVN</h1>
-<p>
-This section contains information on configuring the JavaSVN library - in order
-that one can adjust the library up to his individual wishes. Here you will find
-information on what configuration files JavaSVN uses during rungtime, what 
-system properties are used in that case when config files are not available, and
-so on.
+<h1>Logging JavaSVN operations</h1>
+<p>If you experience problems that you think are JavaSVN related, it is always a 
+good idea to post a bug report into JavaSVN <a href="http://tmate.org/tracker/">Issue Tracker</a>. To provide
+more information with the bug report, please consider attaching JavaSVN log file to it. 
+Below you will find detailed instructions on how to get JavaSVN log files.
 </p>
-<h4>HTTP proxy setup</h4>
-<p>By default JavaSVN uses proxy settings from the <i>servers</i> configuration file
-that is located in the default SVN run-time configuration area.
-</p>
-<h4>SVN+SSH authentication with private key</h4>
-<p>By default JavaSVN tries to obtain all necessary information
-from the <i>[tunnels]</i> section of the <i>config</i> file that is
-located in the default SVN run-time configuration area. However if
-that information is not complete or not found at all, JavaSVN tries
-then to use predefined system properties listed beneath.
-<p>JavaSVN uses pure java <a id=normal href="http://www.jcraft.com">JSCH library</a> to establish SSH 
-connection. This library supports only SSH version 2, with password or private key authentication. Using 
-password authentication is not a problem with Subclipse, but currently it doesn't provide a way to define 
-private key and passphrase for private key authentication. You may use the following properties to let JavaSVN
-know about your private key and passphrase (you need to provide these properties when starting Eclipse): </p>
-<pre class="javaCode">
-$ eclipse -vmargs \ 
--Djavasvn.ssh2.key=/path/to/private/key/file \
--Djavasvn.ssh2.username=userName \ 
--Djavasvn.ssh2.passphrase=optionalPassphrase \
--Djavasvn.ssh2.password=userpassword
--Djavasvn.ssh2.port=optionalPort
-</pre>
-<p><b>Note:</b> User name for ssh connection will be taken from SVN Repository properties that may be altered in Subclipse
-SVN Repositories view.</p>
-<p>To avoid special batch script creation to launch Eclipse you may define ssh related properties in
-Eclipse config.ini file <code>ECLIPSE_HOME/configuration/config.ini</code> (tip provided by Andrew Berman):
-<pre class="javaCode">
-  ...
-  javasvn.ssh2.key=path/to/private/key/file
-  javasvn.ssh2.passphrase=passphrase
-  javasvn.ssh2.username=username
-  javasvn.ssh2.password=userpassword 
-  javasvn.ssh2.port=port
-</pre>
-</p>
-<p>
-In case you work with Mac OS X version of Eclipse it is not 
-too simple to add arguments that make JSCH look for private 
-key file at launch. Instead of command line arguments you can 
-modify Eclipse.app/Contents/Info.plist last array of keys 
-adding something like that (tip provided by Valentin Alekseev):
-<pre style="color: rgb(0,0,128);" class="javaCode">
-&lt;array&gt;
-  ...
-   &lt;string&gt;-Djavasvn.ssh2.key=/path/to/key/file&lt;/string&gt;
-&lt;/array&gt;
-</pre>
-</p>
-<h4>SSL Connections</h4>
-<p>
-JavaSVN uses SSL support included into JDK. Some JDK versions don't 
-support SSL server certificates longer than 1024 bytes or don't support 
-certain Cypher Suites. If you're experiencing problems accessing a Subversion 
-repository over SSL connection (via https protocol) consider using the 
-latest JDK version and upgrading the JDK JCE package (Cryptotgraphic Extension) 
-to an "unlimited strenght" one. Read this <a href=" http://java.sun.com/products/jce/javase.html">article</a> 
-for more details on how to install JCE.
-</p>
-<h4>Trusting SSL Certificates</h4>
-<p>
-If JavaSVN is used as a standalone library and no custom authentication 
-provider is registered, JavaSVN: 
-<ul>
-<li>by default trusts all SSL servers, though it doesn't cache server certificates;
-<li>or uses a default JDK certificates storage to get SSL certificates of
-the trusted servers;
-<li>and additionally it uses authority certificate files listed in the Subversion <i>servers</i>
-configuration file in these options:
-<pre>
-### 'ssl-authority-files' is a semicolon-delimited list of files,
-### each pointing to a PEM-encoded Certificate Authority (CA) 
-### SSL certificate.
-ssl-authority-files = /path/to/CAcert.pem;/path/to/CAcert2.pem
 
-### 'ssl-trust-default-ca'       Trust the system 'default' CAs
-ssl-trust-default-ca = yes
+<h4>JavaSVN is used as an Eclipse plugin (works for a Subclipse Extension as well)</h4>
+<p>When used within Eclipse JavaSVN logs its operation using Eclipse built-in logging facilities.
+Logging is turned off by default. To enable JavaSVN logging please do the following:
+</p>
+<ul>
+<li>Copy <code>ECLIPSE_HOME/plugins/org.tmatesoft.javasvn_version/.options</code> file to <code>ECLIPSE_HOME</code> directory</li>
+<li>Start Eclipse with -debug command line argument:<br/><pre>$eclipse -debug</pre></li>
+<li>In Eclipse, open standard 'Error Log' view - it will contain detailed log of JavaSVN
+operations that you may export to a file.</li>
+</ul>
+<p><b>Note:</b> OS X users may find it useful to read this <a href="http://www.luisdelarosa.com/blog/2004/10/how_to_run_ecli.html">article</a>. It describes how to start Eclipse in "-debug" mode.</p>
+
+<h4>JavaSVN is used as a library in a standalone application</h4>
+<p>By default JavaSVN operations logging is switched off. To enable it,
+you should replace the contents of the <code>JAVA_HOME/jre/lib/logging.properties</code> file
+with the contents of the <code>logging.properties.disabled</code> file
+that you can find in your "standalone" archive or in the <code>javasvn/cli/</code> directory
+in case you've checked out the JavaSVN sources. Or when launching the Java VM
+you can use the following system property:
+<pre>
+$java -Djava.util.logging.config.file=path/to/logging.properties.disabled
 </pre>
+</p>
+
+<p>
+The <code>logging.properties.disabled</code> 
+file contains a system property <code>javasvn.level</code> used to control the log level. Up to your needs
+you can specify the following values for that property:
+<ul>
+<li><code>FINE</code>(default) - the level for not detailed logging
+<li><code>FINER</code> - the level for more detailed logging
+<li><code>FINEST</code> - the level for full logging
 </ul>
 </p>
-<h4>Client SSL authentication</h4>
+
 <p>
-In the Subversion <i>servers</i> configuration file you can specify your
-SSL authentication certificate files for a specific group:
-<pre>
-ssl-client-cert-file      PKCS#12 format client certificate file
-ssl-client-cert-password  Client Key password, if needed.
-</pre>
-Read more information on this options in the <a href="http://svnbook.red-bean.com/en/1.1/svn-book.html#svn-ch-7-sect-1.3">Subversion book</a>.
+You may find a JavaSVN log file at <code>USER_HOME/.javasvn/.javasvn.0.0.log</code>.
+</p>
+
+<p>
+Read this <a href="dev-guide-setting-custom-logger.html">article</a> to get to know how to customize logging JavaSVN operations.
 </p>
 <br>
 <br>
@@ -192,7 +143,6 @@ Read more information on this options in the <a href="http://svnbook.red-bean.co
 <br />
 <table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
 2004-2005, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
-
 </td>
 </tr>
 </table>

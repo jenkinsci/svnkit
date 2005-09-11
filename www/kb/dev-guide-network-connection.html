@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head><title>Customizing network connections</title>
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+</head>
+<body>
+<table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;"  border="0" cellspacing="0" >
+<tr align="center" valign="top" >
+<td colspan="1" rowspan="1">
+
+<div class="leftedge" >
+<div class="rightedge">
+
+<table  cellpadding="0" align="center" width="870" style="height: 1000px" border="0"  cellspacing="0">
+<tr align="center" valign="top">
+<td align="left" valign="top" style="padding: 20px 20px 20px 20px;">
+
+<p>
+<span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
+</p>
+<p><div style="border-bottom: 1px solid rgb(51, 102, 153);"></div></p>
+<!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: Configuring JavaSVN</small>-->
+
+<table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
+<tr style="height: 10px;">
+
+<td width="60%" valign="top" align="center">
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+
+<!--
+<table border=0 cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr>
+<td>
+<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img src="../img/javasvn_logo.png" border=0 align=bottom></a>
+</td>
+
+<td align="right">
+<span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
+
+<table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
+<tr style="height: 10px;">
+
+<td width="40%" valign="top" align="center">
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+-->
+
+<h1>Customizing network connections</h1>
+<p>
+For accessing a repository via the <code>http://</code> (<code>https://</code>) protocol JavaSVN uses the
+<code>IHTTPConnection</code> interface. And <code>IHTTPConnection</code> objects are
+provided by <code>IHTTPConnectionFactory</code>. Both these interfaces can be found
+in the <b>org.tmatesoft.svn.core.internal.io.dav</b> package. 
+</p>
+<h4>Using your custom implementations</h4>
+<p>
+To make JavaSVN use your implementations of <code>IHTTPConnection</code> and 
+<code>IHTTPConnectionFactory</code> provide your factory implementation to
+<code>DAVRepositoryFactory</code> when setting up the library for using
+via the <code>http://</code> protocol:
+<pre class="javaCode">
+...
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.internal.io.dav;
+...
+    IHTTPConnectionFactory factory = <span class="javaKeyword">new</span> YourCustomHTTPConnectionFactory();
+    DAVRepositoryFactory.setup(factory);
+</pre>
+</p>
+<h4>JavaSVN default implementations</h4>
+<p>
+When you call <code>DAVRepositoryFactory.setup()</code>, JavaSVN takes into use a default
+implementation of <code>IHTTPConnectionFactory</code> - <code>IHTTPConnectionFactory.DEFAULT</code>.
+Depending on use conditions this implementation can produce two kinds of <code>IHTTPConnection</code>
+implementations:
+<ul>
+<li>One that uses the jakarta Commons-HttpClient library - <code>CommonsHTTPConnection</code> 
+(<b>org.tmatesoft.svn.core.internal.io.dav.commons</b>).
+<li>Another one - <code>DefaultHTTPConnection</code> (<b>org.tmatesoft.svn.core.internal.io.dav</b>) -  a JavaSVN default HTTP connection
+implementation.
+</ul>
+</p>
+<h4>Differences between DefaultHTTPConnection and CommonsHTTPConnection</h4>
+<code>CommonsHTTPConnection</code> uses the <a href="http://jakarta.apache.org/commons/httpclient/">Commons-HttpClient</a> (apache's jakarta project)
+library which is a thorough realization of the HTTP protocol that implements all specifications
+and features of the protocol. Meanwhile using <code>DefaultHTTPConnection</code> you may
+probably experience problems with some servers. Thus, of the two implementations <code>CommonsHTTPConnection</code> is
+the one that is more stable and safe in usage with the <code>http://</code> protocol.
+<h4>Switching between JavaSVN implementations of IHTTPConnection</h4>
+<code>CommonsHTTPConnection</code> is optional and not used by default. Instead <code>IHTTPConnectionFactory.DEFAULT</code> 
+provides <code>DefaultHTTPConnection</code> instances. To switch to using <code>CommonsHTTPConnection</code> you should:
+<ol>
+<li>place the commons-httpclient and commons-codec jar archive files onto your classpath (these archives are distributed along with the 
+JavaSVN builds, also they can be found in the <code>'contrib/httpclient'</code> directory of the
+JavaSVN project),
+<li>set the system property <code>"javasvn.httpclient"</code> to <code>"jakarta"</code> (see
+the IHTTPConnectionFactory source code for details).
+</ol>
+<br />
+<br />
+<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<br />
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
+2004-2005, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
+
+</td>
+</tr>
+</table>
+</div>
+</div>
+</td>
+</tr>
+</table>
+</body>
+</html>

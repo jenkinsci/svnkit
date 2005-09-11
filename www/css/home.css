@@ -24,7 +24,7 @@ pre {
 	margin-top: 10px; 
 	padding: 0.5em; 
 	font-size: 100%;	
-	background-color: #F0F1FF;
+	background-color: #F5F5FF;
 	border: 1px solid #ccc;
 
 }
@@ -125,6 +125,7 @@ h3 {
 	font-size: 120%;
 /*	border-bottom: 1px solid #ccc;*/
 }
+
 p {
 	margin: 0.6em 0em 0em 0em;
 	padding: 0px;

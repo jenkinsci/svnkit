@@ -87,7 +87,7 @@ Knowledge Base
 </table>
 -->
 
-<h1>Using Library</h1>
+<h1>Developer's Documentation</h1>
 
 <table BORDER=0 CELLSPACING=5 CELLPADDING=2 WIDTH="100%" >
 <tr>
@@ -134,24 +134,140 @@ click on file links.
 </td>
 </tr>
 
+</table>
+
+<h1>Developers Guide</h1>
+<table BORDER=0 CELLSPACING=5 CELLPADDING=2 WIDTH="100%" >
+
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="article-reporter-and-editor.html" >How to use ISVNReporter/ISVNEditor in update-related operations</a>
+<a href="dev-guide-update-operation.html" >Subversion operations: update</a>&nbsp;&nbsp;Last Updated: 2005.09.11
 <br>
-This article gives a brief overview on using <b>ISVNReporter/ISVNEditor</b> (from package 
-<b>org.tmatesoft.svn.core.io</b>) in update, checkout operations. 
+This article gives information on using <b>ISVNReporter/ISVNEditor</b> (from the  
+<b>org.tmatesoft.svn.core.io</b> package) in update-related operations (update, checkout, etc.). 
 </td>
 </tr>
 
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="logging.html" >How to obtain debug logs of JavaSVN operations</a>&nbsp;&nbsp;Last Updated: 2005.08.25
+<a href="dev-guide-commit-operation.html" >Subversion operations: commit</a>&nbsp;&nbsp;Last Updated: 2005.09.11
 <br>
-JavaSVN writes log information for all input and output data interactions with a repository
-server as well as for bug and error situations that happen during the run. This article describes
-how you can get this log file with detailed information on the library run-time history.   
+This article gives information on using <b>ISVNEditor</b> (from the  
+<b>org.tmatesoft.svn.core.io</b> package) in commit operations. 
+</td>
+</tr>
+
+<tr>
+<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
+<td align=LEFT valign=TOP>
+<a href="dev-guide-multithreaded-environment.html" >Using JavaSVN in multithreaded environment</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<br>
+Some notes on how JavaSVN objects must be used in multithreaded programs.
+</td>
+</tr>
+
+<tr>
+<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
+<td align=LEFT valign=TOP>
+<a href="dev-guide-network-connection.html" >Customizing network connections</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<br>
+This article describes how to customize JavaSVN http-connections, what default client-side 
+implementations of the HTTP protocol are used and what is needed to switch between them.
+</td>
+</tr>
+
+<tr>
+<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
+<td align=LEFT valign=TOP>
+<a href="dev-guide-authentication.html" >Authentication</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<br>
+Read about how JavaSVN authenticates a client to a server, how to use default SVN
+credentials storage and settings, and how to make JavaSVN use your authentication driver.
+</td>
+</tr>
+
+<tr>
+<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
+<td align=LEFT valign=TOP>
+<a href="dev-guide-setting-custom-logger.html" >Setting a custom logger (for debug logging)</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<br>
+Read brief instructions on how to customize logging JavaSVN operations.
+</td>
+</tr>
+
+<tr>
+<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
+<td align=LEFT valign=TOP>
+<a href="dev-guide-svnclient.html">Using JavaSVN via SVNClientInterface (JavaHL) API</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<br>
+Some notes on how you can use JavaSVN via the JavaHL API.
+</td>
+</tr>
+
+</table>
+
+<h1>Users Guide</h1>
+
+<table BORDER=0 CELLSPACING=5 CELLPADDING=2 WIDTH="100%" >
+
+<tr>
+<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
+<td align=LEFT valign=TOP>
+<a href="user-guide-debug-logs.html">Obtaining debug logs of JavaSVN operations</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<br>
+This article gives information on how to put into usage default logging of JavaSVN operations.
+</td>
+</tr>
+
+<tr>
+<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
+<td align=LEFT valign=TOP>
+<a href="user-guide-svnant.html" >Using JavaSVN with SvnAnt</a>
+<br>
+Here you will find brief instructions of how to make SvnAnt use JavaSVN.  
+</td>
+</tr>
+
+<tr>
+<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
+<td align=LEFT valign=TOP>
+<a href="user-guide-ant.html" >Using JavaSVN with Ant</a>
+<br>
+This article describes how you can use JavaSVN in Ant tasks.
+</td>
+</tr>
+
+<tr>
+<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
+<td align=LEFT valign=TOP>
+<a href="user-guide-config-settings.html" >Supported system properties and configuration options</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<br>
+This article describes what configuration settings JavaSVN uses during
+run-time which include proxy, ssh, ssl and other ones. The article explains what is 
+used by default and what system properties are involved if a default
+configuration is not available for some reason.
+</td>
+</tr>
+
+<tr>
+<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
+<td align=LEFT valign=TOP>
+<a href="user-guide-javahl-replacement.html">Replacement for JavaHL API</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<br>
+Some notes on how you can replace the JavaHL SVNClient class with the SVNClient
+one that uses only JavaSVN API.
+</td>
+</tr>
+
+<tr>
+<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
+<td align=LEFT valign=TOP>
+<a href="user-guide-command-line-client.html" >JavaSVN command line client</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<br>
+Read information on the JavaSVN command line client which is an alternate for
+the native SVN one (supports most of the SVN's main commands).
 </td>
 </tr>
 
@@ -183,41 +299,7 @@ plugin use JavaSVN.
 
 </table>
 
-<h1>Configuring</h1>
-<table BORDER=0 CELLSPACING=5 CELLPADDING=2 WIDTH="100%" >
-<tr>
-<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
-<td align=LEFT valign=TOP>
-<a href="config-settings.html" >Configuring JavaSVN</a>&nbsp;&nbsp;Last Updated: 2005.08.25
-<br>
-This article describes what configuration settings JavaSVN uses during
-run-time which include proxy, ssh, ssl and other settings. The article explains what is 
-used by default and what system properties are involved if a default
-configuration is not available for some reason.
-</td>
-</tr>
-
-<tr>
-<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
-<td align=LEFT valign=TOP>
-<a href="svnant.html" >Using JavaSVN with SvnAnt</a>
-<br>
-Here you will find brief instructions of how to make SvnAnt use JavaSVN.  
-</td>
-</tr>
-
-<tr>
-<td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
-<td align=LEFT valign=TOP>
-<a href="ant.html" >Using JavaSVN with Ant</a>
-<br>
-This article describes how you can use JavaSVN in Ant tasks.
-</td>
-</tr>
-
-</table>
-
-<h1>Sources of future information</h1>
+<h1>Additional information</h1>
 
 <table BORDER=0 CELLSPACING=5 CELLPADDING=2 WIDTH="100%" >
 
@@ -239,7 +321,7 @@ of new JavaSVN versions, you should join our mailing list.
 <a href="http://tmate.org/tracker/">Issue tracker</a>
 <br>
 Use this link to view JavaSVN issues or submit a new one. Please read 
-<a href="logging.html">documentation chapter</a> on how to get JavaSVN log before submitting 
+<a href="user-guide-debug-logs.html">documentation chapter</a> on how to get JavaSVN logs before submitting 
 a bug report.
 </td>
 </tr>
