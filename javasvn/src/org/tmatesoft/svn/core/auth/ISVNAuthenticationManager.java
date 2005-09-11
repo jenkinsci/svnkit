@@ -35,6 +35,8 @@ public interface ISVNAuthenticationManager {
     
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, String errorMessage, SVNAuthentication authentication);
     
-    public void setRuntimeStorage(ISVNAuthenticationStorage storage); 
+    public void setRuntimeStorage(ISVNAuthenticationStorage storage);
+    
+    public boolean isAuthenticationForced();
 
 }

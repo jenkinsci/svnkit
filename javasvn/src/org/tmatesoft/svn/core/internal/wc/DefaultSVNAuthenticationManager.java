@@ -503,4 +503,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         public void acknowledgeProxyContext(boolean accepted, String errorMessage) {
         }
     }
+
+    public boolean isAuthenticationForced() {
+        return false;
+    }
 }

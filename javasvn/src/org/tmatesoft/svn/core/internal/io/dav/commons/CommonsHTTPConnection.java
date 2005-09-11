@@ -77,8 +77,8 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvider {
     
-    private ISVNAuthenticationManager myAuthManager;
     private SVNURL myLocation;
+    private SVNRepository myRepository;
     private SVNAuthentication myLastAuth;
     
     private SAXParser mySAXParser;    
@@ -88,7 +88,7 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
 
     public CommonsHTTPConnection(SVNURL location, SVNRepository repository) {
         myLocation = location;
-        myAuthManager = repository.getAuthenticationManager();
+        myRepository = repository;
     }
 
     public SVNAuthentication getLastValidCredentials() {
@@ -187,6 +187,7 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
         if (myClient == null) {
             myClient = new HttpClient();
             // host
+            final ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
             HostConfiguration hostConfiguration = new HostConfiguration();
             if (!"https".equalsIgnoreCase(myLocation.getProtocol())) {
                 hostConfiguration.setHost(myLocation.getHost(), myLocation.getPort(), myLocation.getProtocol());
@@ -200,7 +201,7 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
                     }
                     public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
                         try {
-                            return SVNSocketFactory.createSSLSocket(myAuthManager != null ? myAuthManager.getSSLManager(myLocation) : null, host, port);
+                            return SVNSocketFactory.createSSLSocket(authManager != null ? authManager.getSSLManager(myLocation) : null, host, port);
                         } catch (SVNException e) {
                             throw new IOException(e.getMessage());
                         }
@@ -208,7 +209,7 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
                 }, 443);
                 hostConfiguration.setHost(myLocation.getHost(), myLocation.getPort(), protocol);
             }
-            ISVNProxyManager proxyManager = myAuthManager != null ? myAuthManager.getProxyManager(myLocation) : null;
+            ISVNProxyManager proxyManager = authManager != null ? authManager.getProxyManager(myLocation) : null;
             if (proxyManager != null && proxyManager.getProxyHost() != null) {
                 hostConfiguration.setProxy(proxyManager.getProxyHost(), proxyManager.getProxyPort());
             }
@@ -217,6 +218,13 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
             myClient.getParams().setContentCharset("UTF-8");
             myClient.getParams().setAuthenticationPreemptive(true);
             myClient.getParams().setParameter(CredentialsProvider.PROVIDER, this);
+            if (authManager != null && authManager.isAuthenticationForced()) {
+                try {
+                    Credentials credentials = getCredentials(null, myLocation.getHost(), myLocation.getPort(), false);
+                    myClient.getState().setCredentials(AuthScope.ANY, credentials);
+                } catch (CredentialsNotAvailableException e) {
+                }
+            }
             String agent = (String) myClient.getParams().getParameter(HttpMethodParams.USER_AGENT);
             if (agent != null) {
                 agent = Version.getVersionString() + " with " + agent;
@@ -413,19 +421,20 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
         if (proxy) {
             return null;
         }
-        if (myAuthManager == null) {
+        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
+        if (authManager == null) {
             return null;
         }
         String realm = "<" + myLocation.getProtocol() + "://" + host + ":" + port + ">";
-        if (scheme.getRealm() != null) {
+        if (scheme != null && scheme.getRealm() != null) {
             realm += " " + scheme.getRealm();
         }
         try {
             if (myLastAuth == null) {
-                myLastAuth = myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myLocation);
+                myLastAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myLocation);
             } else {
-                myAuthManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, null, myLastAuth);
-                myLastAuth = myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myLocation);
+                authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, null, myLastAuth);
+                myLastAuth = authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myLocation);
             }
         } catch (SVNException e) {
             return null;

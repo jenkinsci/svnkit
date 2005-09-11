@@ -83,6 +83,7 @@ class SVNConnection {
             return;
         }
         SVNPasswordAuthentication auth = null;
+        boolean preemptive = myAuthManager != null && myAuthManager.isAuthenticationForced();
         for (int i = 0; i < mechs.size(); i++) {
             String mech = (String) mechs.get(i);
             if ("EXTERNAL".equals(mech)) {
@@ -92,13 +93,14 @@ class SVNConnection {
                 if (failureReason == null) {
                     return;
                 }
-            } else if ("ANONYMOUS".equals(mech)) {
+            } else if ("ANONYMOUS".equals(mech) && !(preemptive && mechs.contains("CRAM-MD5"))) {
                 write("(w())", new Object[] { mech });
                 failureReason = readAuthResponse(repository);
                 if (failureReason == null) {
                     return;
                 }
             } else if ("CRAM-MD5".equals(mech)) {
+                preemptive = false;
                 while (true) {
                     CramMD5 authenticator = new CramMD5();
                     String realm = getRealm();

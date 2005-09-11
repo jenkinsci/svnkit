@@ -35,7 +35,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -73,13 +72,13 @@ class DefaultHTTPConnection implements IHTTPConnection {
     private static SAXParserFactory ourSAXParserFactory;
 
     private Map myCredentialsChallenge;
-    private ISVNAuthenticationManager myAuthManager;
     private SVNAuthentication myLastValidAuth;
     private ISVNProxyManager myProxyAuth;
+    private SVNRepository myRepository;
 
     public DefaultHTTPConnection(SVNURL location, SVNRepository repos) {
         mySVNRepositoryLocation = location;
-        myAuthManager = repos.getAuthenticationManager();
+        myRepository = repos;
     }
 
     private void connect() throws SVNException {
@@ -87,9 +86,9 @@ class DefaultHTTPConnection implements IHTTPConnection {
             close();
             String host = mySVNRepositoryLocation.getHost();
             int port = mySVNRepositoryLocation.getPort();
-            myProxyAuth = myAuthManager != null ? myAuthManager.getProxyManager(mySVNRepositoryLocation) : null;
-            ISVNSSLManager sslManager = myAuthManager != null && isSecured() ? 
-                    myAuthManager.getSSLManager(mySVNRepositoryLocation) : null;
+            ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
+            myProxyAuth = authManager != null ? authManager.getProxyManager(mySVNRepositoryLocation) : null;
+            ISVNSSLManager sslManager = authManager != null && isSecured() ? authManager.getSSLManager(mySVNRepositoryLocation) : null;
             if (myProxyAuth != null && myProxyAuth.getProxyHost() != null) {
                 mySocket = SVNSocketFactory.createPlainSocket(myProxyAuth.getProxyHost(), myProxyAuth.getProxyPort());
                 if (isSecured()) {
@@ -254,6 +253,19 @@ class DefaultHTTPConnection implements IHTTPConnection {
         }
         String realm = null;
         SVNAuthentication auth = myLastValidAuth;
+        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
+        if (auth == null && authManager != null && authManager.isAuthenticationForced()) {
+            try {
+                auth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, null, myRepository.getLocation());
+            } catch (SVNException e) {
+            }
+            if (auth != null) {
+                myCredentialsChallenge = new HashMap();
+                myCredentialsChallenge.put("", "Basic");
+                myCredentialsChallenge.put("methodname", method);
+                myCredentialsChallenge.put("uri", path);
+            }
+        }                
         while (true) {
             DAVStatus status;
             try {
@@ -292,14 +304,14 @@ class DefaultHTTPConnection implements IHTTPConnection {
                 realm = (String) myCredentialsChallenge.get("realm");
                 realm = realm == null ? "" : " " + realm;
                 realm = "<" + mySVNRepositoryLocation.getProtocol() + "://" + mySVNRepositoryLocation.getHost() + ":" + mySVNRepositoryLocation.getPort() + ">" + realm;
-                if (myAuthManager == null) {
+                if (authManager == null) {
                     throw new SVNAuthenticationException("No credentials defined");
                 }
                 if (auth == null) {
-                    auth = myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, mySVNRepositoryLocation);
+                    auth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, mySVNRepositoryLocation);
                 } else {
-                    myAuthManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
-                    auth = myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, mySVNRepositoryLocation);
+                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
+                    auth = authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, mySVNRepositoryLocation);
                 }
                 // reset stream!
                 if (requestBody instanceof ByteArrayInputStream) {
@@ -340,8 +352,8 @@ class DefaultHTTPConnection implements IHTTPConnection {
                 }
                 throw new SVNException("HTTP 301 MOVED PERMANENTLY: " + newLocation);
             } else if (status != null) {
-                if (auth != null && myAuthManager != null && realm != null) {
-                    myAuthManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
+                if (auth != null && authManager != null && realm != null) {
+                    authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
                 }
                 myLastValidAuth = auth;
                 status.setResponseHeader(readHeader);
@@ -351,10 +363,7 @@ class DefaultHTTPConnection implements IHTTPConnection {
                 SVNErrorManager.error("svn: Cannot connecto to host '" + mySVNRepositoryLocation.getHost() + "'");
             } else {
                 close();
-                if (status != null && status.getResponseCode() >= 300) {
-                    throw new SVNException(status.getMessage());
-                }
-                throw new SVNCancelException("svn: Authentication cancelled");
+                // try to reconnect.
             }
         }
     }
@@ -762,8 +771,9 @@ class DefaultHTTPConnection implements IHTTPConnection {
         if (mySVNRepositoryLocation == null || !"https".equalsIgnoreCase(mySVNRepositoryLocation.getProtocol())) {
             return;
         }
-        if (myAuthManager != null) {
-            ISVNSSLManager sslManager = myAuthManager.getSSLManager(mySVNRepositoryLocation);
+        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
+        if (authManager != null) {
+            ISVNSSLManager sslManager = authManager.getSSLManager(mySVNRepositoryLocation);
             if (sslManager != null) {
                 sslManager.acknowledgeSSLContext(accepted, null);
             }
