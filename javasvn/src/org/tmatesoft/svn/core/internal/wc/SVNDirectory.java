@@ -912,7 +912,7 @@ public class SVNDirectory {
 
     public void scheduleForDeletion(String name, boolean deleteFiles) throws SVNException {
         SVNEntries entries = getEntries();
-        SVNEntry entry = entries.getEntry(name, true);
+        SVNEntry entry = entries.getEntry(name, false);
         if (entry == null) {
             if (deleteFiles) {
                 SVNFileUtil.deleteAll(getFile(name), getWCAccess());

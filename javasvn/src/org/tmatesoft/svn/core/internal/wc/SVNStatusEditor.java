@@ -318,7 +318,7 @@ public class SVNStatusEditor implements ISVNEditor {
             File file = myWCAccess.getAnchor().getFile(myTarget);
             if (file.isDirectory()) {
                 SVNEntries entries = myWCAccess.getAnchor().getEntries();
-                SVNEntry entry = entries.getEntry(myTarget, true);
+                SVNEntry entry = entries.getEntry(myTarget, false);
                 entries.close();
                 if (entry != null) {
                     reportStatus(myWCAccess.getTarget(), null, false, myIsRecursive);
@@ -366,7 +366,7 @@ public class SVNStatusEditor implements ISVNEditor {
             }
         }
         if (entryName != null) {
-            SVNEntry entry = entries.getEntry(entryName, true);
+            SVNEntry entry = entries.getEntry(entryName, false);
             if (entry != null) {
                 sendVersionedStatus(dir, entryName);
             } else if (dir.getFile(entryName).exists()) {
@@ -414,7 +414,7 @@ public class SVNStatusEditor implements ISVNEditor {
         File file;
         SVNEntry parentEntry;
         SVNDirectory parentDir = null;
-        SVNEntry entry = dir.getEntries().getEntry(name, true);
+        SVNEntry entry = dir.getEntries().getEntry(name, false);
 
         if (entry.isDirectory()) {
             if (!"".equals(name)) {
@@ -451,11 +451,11 @@ public class SVNStatusEditor implements ISVNEditor {
         SVNEntry entryInParent = entry;
         if (dir == parentDir) {
             file = dir.getFile(name);
-            entry = dir.getEntries().getEntry(name, true);
-            parentEntry = dir.getEntries().getEntry("", true);
+            entry = dir.getEntries().getEntry(name, false);
+            parentEntry = dir.getEntries().getEntry("", false);
         } else {
             file = dir.getRoot();
-            entry = dir.getEntries().getEntry("", true);
+            entry = dir.getEntries().getEntry("", false);
             if (entry == null) {
                 // probably missing dir.
                 entry = entryInParent;
