@@ -73,20 +73,35 @@ class DAVRepository extends SVNRepository {
         }
     }
     
-    public long getLatestRevision() throws SVNException {
-        DAVBaselineInfo info = null;
+    public long getLatestRevision() throws SVNException {        
         try {
             openConnection();
             String path = getLocation().getPath();
             path = SVNEncodingUtil.uriEncode(path);
-            info = DAVUtil.getBaselineInfo(myConnection, path, -1, false, true, info);
+            if (getRepositoryRoot() != null && getRepositoryRoot().getPath().equals(getLocation().getPath())) {
+                final long[] revision = new long[] {-1};
+                myConnection.doPropfind(path, 0, null, new DAVElement[] {DAVElement.VERSION_NAME}, new IDAVResponseHandler() {
+                    public void handleDAVResponse(DAVResponse response) {
+                        String value = (String) response.getPropertyValue(DAVElement.VERSION_NAME);
+                        if (value != null) {
+                            try {
+                                revision[0] = Long.parseLong(value);
+                            } catch (NumberFormatException nfe) {}
+                        }
+                    }
+                });
+                if (revision[0] >= 0) {
+                    return revision[0];
+                }
+            } 
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, -1, false, true, null);
+            if (info == null) {
+                SVNErrorManager.error("svn: Cannot get baseline information for '" + getLocation() + "'");
+            }
+            return info.revision;
         } finally {
             closeConnection();
         }
-        if (info == null) {
-            SVNErrorManager.error("svn: Cannot get baseline information for '" + getLocation() + "'");
-        }
-        return info.revision;
     }
 
     public long getDatedRevision(Date date) throws SVNException {
@@ -292,6 +307,7 @@ class DAVRepository extends SVNRepository {
                     Date date = dateStr != null ? SVNTimeUtil.parseDate(dateStr) : null;
                     if ("".equals(name)) {
                         parent[0] = new SVNDirEntry(name, kind, size, false, lastRevision, date, author);
+                        parentVCC[0] = (String) child.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
                     } else {
                         entries.add(new SVNDirEntry(name, kind, size, false, lastRevision, date, author));
                         vccs.add(child.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION));
@@ -305,6 +321,22 @@ class DAVRepository extends SVNRepository {
                 String vcc = parentVCC[0];
                 int index = 0;
                 while(true) {
+                    String label = Long.toString(entry.getRevision());
+                    final String key = SVNRevisionProperty.LOG + "!" + label;
+                    if (entry.getDate() != null && getOptions().hasData(this, key)) {
+                        String message = (String) getOptions().getData(this, key);
+                        entry.setCommitMessage(message);
+                    } else if (entry.getDate() != null) {
+                        final SVNDirEntry currentEntry = entry;
+                        myConnection.doPropfind(vcc, 0, label, logProperty, new IDAVResponseHandler() {
+                            public void handleDAVResponse(DAVResponse response) {
+                                Map props = DAVUtil.filterProperties(response, null);
+                                String message = (String) props.get(SVNRevisionProperty.LOG);
+                                getOptions().putData(DAVRepository.this, key, message);
+                                currentEntry.setCommitMessage(message);
+                            }                            
+                        });
+                    }
                     if (ents.hasNext()) {
                         entry = (SVNDirEntry) ents.next();
                         vcc = (String) vccs.get(index);
@@ -312,25 +344,6 @@ class DAVRepository extends SVNRepository {
                     } else {
                         break;
                     }
-                    String label = Long.toString(entry.getRevision());
-                    final String key = SVNRevisionProperty.LOG + "!" + label;
-                    if (entry.getDate() != null && getOptions().hasData(this, key)) {
-                        String message = (String) getOptions().getData(this, key);
-                        entry.setCommitMessage(message);
-                        continue;
-                    }
-                    if (entry.getDate() == null) {
-                        continue;
-                    }
-                    final SVNDirEntry currentEntry = entry;
-                    myConnection.doPropfind(vcc, 0, label, logProperty, new IDAVResponseHandler() {
-                        public void handleDAVResponse(DAVResponse response) {
-                            Map props = DAVUtil.filterProperties(response, null);
-                            String message = (String) props.get(SVNRevisionProperty.LOG);
-                            getOptions().putData(DAVRepository.this, key, message);
-                            currentEntry.setCommitMessage(message);
-                        }
-                    });
                 }
             }
         } finally {
