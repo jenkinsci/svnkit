@@ -59,7 +59,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     protected SVNBasicClient(final ISVNAuthenticationManager authManager, ISVNOptions options) {
         this(new ISVNRepositoryFactory() {
             public SVNRepository createRepository(SVNURL url) throws SVNException {
-                SVNRepository repository = SVNRepositoryFactory.create(url, false);
+                SVNRepository repository = SVNRepositoryFactory.create(url, null);
                 repository.setAuthenticationManager(authManager == null ? 
                         SVNWCUtil.createDefaultAuthenticationManager() : authManager);
                 return repository;
@@ -198,7 +198,7 @@ public class SVNBasicClient implements ISVNEventHandler {
 
     protected SVNRepository createRepository(SVNURL url) throws SVNException {
         if (myRepositoryFactory == null) {
-            return SVNRepositoryFactory.create(url, false);
+            return SVNRepositoryFactory.create(url, null);
         }
         return myRepositoryFactory.createRepository(url);
     }

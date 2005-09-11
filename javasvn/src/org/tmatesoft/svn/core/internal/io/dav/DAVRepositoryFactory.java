@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.core.internal.io.dav;
 
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.io.ISVNRepositoryOptions;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 
@@ -41,7 +42,7 @@ public class DAVRepositoryFactory extends SVNRepositoryFactory {
         myConnectionFactory = connectionFactory;
     }
 
-    public SVNRepository createRepositoryImpl(SVNURL location, boolean session) {
-        return new DAVRepository(myConnectionFactory, location, session);
+    public SVNRepository createRepositoryImpl(SVNURL location, ISVNRepositoryOptions options) {
+        return new DAVRepository(myConnectionFactory, location, options);
     }
 }

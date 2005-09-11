@@ -121,7 +121,7 @@ public abstract class SVNRepository {
     private Thread myLocker;
     private ISVNAuthenticationManager myAuthManager;
     private long myPegRevision;
-    private boolean myIsSessionMode;
+    private ISVNRepositoryOptions myOptions;
 
     /**
      * Constructs an <code>SVNRepository</code> instance (representing a
@@ -135,10 +135,10 @@ public abstract class SVNRepository {
      * 						tree node - not necessarily the repository root
      * 						directory which it was installed to).
      */
-    protected SVNRepository(SVNURL location, boolean sessionMode) {
+    protected SVNRepository(SVNURL location, ISVNRepositoryOptions options) {
         myLocation = location;
         myPegRevision = -1;
-        myIsSessionMode = sessionMode;
+        myOptions = options;
     }
 	
     /**
@@ -611,7 +611,7 @@ public abstract class SVNRepository {
     /**
      * @return Collection of SVNDirEntry objects with commit messages.
      */
-    public abstract Collection getDir(String path, long revision) throws SVNException;
+    public abstract SVNDirEntry getDir(String path, long revision, boolean includeCommitMessages, Collection entries) throws SVNException;
 
     /**
      * The same as {@link SVNRepository#log(String[], long, long, boolean, boolean, ISVNLogEntryHandler)},
@@ -1151,8 +1151,11 @@ public abstract class SVNRepository {
     
     public abstract void closeSession() throws SVNException;
     
-    protected boolean isSessionMode() {
-        return myIsSessionMode;
+    protected ISVNRepositoryOptions getOptions() {
+        if (myOptions == null) {
+            return ISVNRepositoryOptions.DEFAULT;
+        }
+        return myOptions;
     }
     
     /**

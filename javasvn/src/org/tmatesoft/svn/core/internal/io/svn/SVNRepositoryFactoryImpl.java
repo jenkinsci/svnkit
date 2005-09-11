@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.io.svn;
 
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.io.ISVNRepositoryOptions;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 
@@ -38,8 +39,8 @@ public final class SVNRepositoryFactoryImpl extends SVNRepositoryFactory {
         }
     }
 
-    public SVNRepository createRepositoryImpl(SVNURL location, boolean session) {
-        return new SVNRepositoryImpl(location, session);
+    public SVNRepository createRepositoryImpl(SVNURL location, ISVNRepositoryOptions options) {
+        return new SVNRepositoryImpl(location, options);
     }
 
     static ISVNConnectorFactory getConnectorFactory() {

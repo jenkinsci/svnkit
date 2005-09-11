@@ -13,12 +13,10 @@ package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -39,6 +37,7 @@ import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.io.ISVNRepositoryOptions;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -57,8 +56,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     private String myRealm;
     private String myExternalUserName;
 
-    protected SVNRepositoryImpl(SVNURL location, boolean session) {
-        super(location, session);
+    protected SVNRepositoryImpl(SVNURL location, ISVNRepositoryOptions options) {
+        super(location, options);
     }
 
     public void testConnection() throws SVNException {
@@ -242,19 +241,29 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return revision;
     }
 
-    public Collection getDir(String path, long revision) throws SVNException {
+    public SVNDirEntry getDir(String path, long revision, boolean includeComment, final Collection entries) throws SVNException {
         Long rev = getRevisionObject(revision);
-        final List dirEntries = new ArrayList();
         ISVNDirEntryHandler handler = new ISVNDirEntryHandler() {
             public void handleDirEntry(SVNDirEntry dirEntry) {
-                dirEntries.add(dirEntry);
+                entries.add(dirEntry);
             }            
         };
         // convert path to path relative to repos root.
+        SVNDirEntry parentEntry = null;
         try {
             openConnection();
             path = getRepositoryPath(path);
-            Object[] buffer = new Object[] { "get-dir", path, rev, Boolean.FALSE, Boolean.TRUE };
+            // get parent
+            Object[] buffer = new Object[] { "stat", path, getRevisionObject(revision) };
+            write("(w(s(n)))", buffer);
+            authenticate();
+            read("[((?F))]", buffer);
+            parentEntry = (SVNDirEntry) buffer[0];
+            parentEntry.setPath(path);
+            parentEntry.setName("");
+
+            // get entries.
+            buffer = new Object[] { "get-dir", path, rev, Boolean.FALSE, Boolean.TRUE };
             write("(w(s(n)ww))", buffer);
             authenticate();
             buffer = read("[(N(*P)", buffer);
@@ -263,25 +272,28 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 buffer[0] = handler;
                 read("(*D)))", buffer);
             }
-            Map messages = new HashMap();
-            for(int i = 0; i < dirEntries.size(); i++) {
-                SVNDirEntry entry = (SVNDirEntry) dirEntries.get(i);
-                Long key = getRevisionObject(entry.getRevision());
-                if (messages.containsKey(key)) {
-                    entry.setCommitMessage((String) messages.get(key));
-                    continue;
+            // get comments.
+            if (includeComment) {
+                Map messages = new HashMap();
+                for(Iterator ents = entries.iterator(); ents.hasNext();) {
+                    SVNDirEntry entry = (SVNDirEntry) ents.next();
+                    Long key = getRevisionObject(entry.getRevision());
+                    if (messages.containsKey(key)) {
+                        entry.setCommitMessage((String) messages.get(key));
+                        continue;
+                    }
+                    buffer = new Object[] { "rev-prop", key, SVNRevisionProperty.LOG};
+                    write("(w(ns))", buffer);
+                    authenticate();
+                    buffer = read("[((?S))]", buffer);
+                    messages.put(key, buffer[0]);
+                    entry.setCommitMessage((String) buffer[0]);
                 }
-                buffer = new Object[] { "rev-prop", key, SVNRevisionProperty.LOG};
-                write("(w(ns))", buffer);
-                authenticate();
-                buffer = read("[((?S))]", buffer);
-                messages.put(key, buffer[0]);
-                entry.setCommitMessage((String) buffer[0]);
             }
         } finally {
             closeConnection();
         }
-        return dirEntries;
+        return parentEntry;
     }
 
     public int getFileRevisions(String path, long sRevision, long eRevision,
@@ -695,7 +707,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     private void openConnection() throws SVNException {
         lock();
-        if (isSessionMode() && myConnection != null) {
+        if (getOptions().keepConnection() && myConnection != null) {
             return;
         }
         ISVNConnector connector = SVNRepositoryFactoryImpl.getConnectorFactory().createConnector(this);
@@ -719,7 +731,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     private void closeConnection() {
-        if (isSessionMode()) {
+        if (getOptions().keepConnection()) {
             unlock();
             return;
         }

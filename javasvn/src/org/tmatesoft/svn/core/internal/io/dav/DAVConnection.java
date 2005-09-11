@@ -48,31 +48,17 @@ public class DAVConnection {
     private String myActivityCollectionURL;
     private Map myLocks;
     private boolean myKeepLocks;
-    private Map myCache;
     private IHTTPConnectionFactory myConnectionFactory;
     
     public DAVConnection(IHTTPConnectionFactory connectionFactory, SVNURL location) {
         myLocation = location;
-        myCache = new HashMap();
         myConnectionFactory = connectionFactory;
     }
     
     public SVNURL getLocation() {
         return myLocation;
     }
-    
-    public void cache(Object key, Object value) {
-        myCache.put(key, value);
-    }
-    
-    public Object getCachedValue(Object key) {
-        return myCache.get(key);
-    }
 
-    public boolean hasCachedValue(String key) {
-        return myCache.containsKey(key);
-    }
-    
     public void open(DAVRepository repository) throws SVNException {
         if (myHttpConnection == null) {
         	myHttpConnection = myConnectionFactory.createHTTPConnection(myLocation, repository);

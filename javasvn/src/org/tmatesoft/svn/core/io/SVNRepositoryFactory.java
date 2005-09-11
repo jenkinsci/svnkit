@@ -130,21 +130,21 @@ public abstract class SVNRepositoryFactory {
      * @see 					SVNRepository
      */
     public static SVNRepository create(SVNURL url) throws SVNException {
-        return create(url, false);
+        return create(url, null);
         
     }
-    public static SVNRepository create(SVNURL url, boolean sessionMode) throws SVNException {
+    public static SVNRepository create(SVNURL url, ISVNRepositoryOptions options) throws SVNException {
         String urlString = url.toString();
     	for(Iterator keys = myFactoriesMap.keySet().iterator(); keys.hasNext();) {
     		String key = (String) keys.next();
     		if (Pattern.matches(key, urlString)) {
-    			return ((SVNRepositoryFactory) myFactoriesMap.get(key)).createRepositoryImpl(url, sessionMode);
+    			return ((SVNRepositoryFactory) myFactoriesMap.get(key)).createRepositoryImpl(url, options);
     		}
     	}
     	SVNErrorManager.error("svn: Unable to open an ra_local session to URL '" + url + "'\nsvn: No connection protocol implementation for " + url.getProtocol());
         return null;
     }
 
-    protected abstract SVNRepository createRepositoryImpl(SVNURL url, boolean sessionMode);
+    protected abstract SVNRepository createRepositoryImpl(SVNURL url, ISVNRepositoryOptions options);
 
 }

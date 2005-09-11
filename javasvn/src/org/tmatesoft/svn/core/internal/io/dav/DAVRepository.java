@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
@@ -47,6 +48,7 @@ import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.io.ISVNRepositoryOptions;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -58,8 +60,8 @@ class DAVRepository extends SVNRepository {
     private DAVConnection myConnection;
     private IHTTPConnectionFactory myConnectionFactory;
     
-    protected DAVRepository(IHTTPConnectionFactory connectionFactory, SVNURL location, boolean session) {
-        super(location, session);
+    protected DAVRepository(IHTTPConnectionFactory connectionFactory, SVNURL location, ISVNRepositoryOptions options) {
+        super(location, options);
         myConnectionFactory = connectionFactory;
     }
     
@@ -131,7 +133,7 @@ class DAVRepository extends SVNRepository {
             properties = DAVUtil.filterProperties(source, properties);
             if (revision >= 0) {
                 String commitMessage = (String) properties.get(SVNRevisionProperty.LOG);
-                myConnection.cache(SVNRevisionProperty.LOG + "!" + revision, commitMessage);
+                getOptions().putData(DAVRepository.this, SVNRevisionProperty.LOG + "!" + revision, commitMessage);
             }
         } finally {
             closeConnection();
@@ -253,8 +255,9 @@ class DAVRepository extends SVNRepository {
         return dirRevision;
     }
 
-    public Collection getDir(String path, long revision) throws SVNException {
-        final List dirEntries = new ArrayList();
+    public SVNDirEntry getDir(String path, long revision, boolean includeComments, final Collection entries) throws SVNException {
+        final SVNDirEntry[] parent = new SVNDirEntry[1];
+        final String[] parentVCC = new String[1];
         try {
             openConnection();
             path = getFullPath(path);
@@ -272,10 +275,10 @@ class DAVRepository extends SVNRepository {
             myConnection.doPropfind(path, 1, null, dirProperties, new IDAVResponseHandler() {
                 public void handleDAVResponse(DAVResponse child) {
                     String href = child.getHref();
-                    if (parentPathSegments == SVNPathUtil.getSegmentsCount(href)) {
-                        return;
+                    String name = "";
+                    if (parentPathSegments != SVNPathUtil.getSegmentsCount(href)) {
+                        name = SVNEncodingUtil.uriDecode(SVNPathUtil.tail(href));
                     }
-                    String name = SVNEncodingUtil.uriDecode(SVNPathUtil.tail(href));
                     SVNNodeKind kind = SVNNodeKind.FILE;
                     Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
                     long lastRevision = Long.parseLong(revisionStr.toString());
@@ -287,35 +290,53 @@ class DAVRepository extends SVNRepository {
                     String author = (String) child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
                     String dateStr = (String) child.getPropertyValue(DAVElement.CREATION_DATE);
                     Date date = dateStr != null ? SVNTimeUtil.parseDate(dateStr) : null;
-                    dirEntries.add(new SVNDirEntry(name, kind, size, false, lastRevision, date, author));
-                    vccs.add(child.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION));
+                    if ("".equals(name)) {
+                        parent[0] = new SVNDirEntry(name, kind, size, false, lastRevision, date, author);
+                    } else {
+                        entries.add(new SVNDirEntry(name, kind, size, false, lastRevision, date, author));
+                        vccs.add(child.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION));
+                    }
                 }
             });
-            DAVElement[] logProperty = new DAVElement[] {DAVElement.getElement(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, "log")};
-            for(int i = 0; i < dirEntries.size(); i++) {
-                final SVNDirEntry entry = (SVNDirEntry) dirEntries.get(i);
-                String vcc = (String) vccs.get(i);
-                String label = Long.toString(entry.getRevision());
-                final String key = SVNRevisionProperty.LOG + "!" + label;
-                if (myConnection.hasCachedValue(key)) {
-                    String message = (String) myConnection.getCachedValue(key);
-                    entry.setCommitMessage(message);
-                    continue;
-                }
-                
-                myConnection.doPropfind(vcc, 0, label, logProperty, new IDAVResponseHandler() {
-                    public void handleDAVResponse(DAVResponse response) {
-                        Map props = DAVUtil.filterProperties(response, null);
-                        String message = (String) props.get(SVNRevisionProperty.LOG);
-                        myConnection.cache(key, message);
-                        entry.setCommitMessage(message);
+            if (includeComments) {
+                DAVElement[] logProperty = new DAVElement[] {DAVElement.getElement(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, "log")};
+                Iterator ents = entries.iterator();
+                SVNDirEntry entry = parent[0];
+                String vcc = parentVCC[0];
+                int index = 0;
+                while(true) {
+                    if (ents.hasNext()) {
+                        entry = (SVNDirEntry) ents.next();
+                        vcc = (String) vccs.get(index);
+                        index++;
+                    } else {
+                        break;
                     }
-                });
+                    String label = Long.toString(entry.getRevision());
+                    final String key = SVNRevisionProperty.LOG + "!" + label;
+                    if (entry.getDate() != null && getOptions().hasData(this, key)) {
+                        String message = (String) getOptions().getData(this, key);
+                        entry.setCommitMessage(message);
+                        continue;
+                    }
+                    if (entry.getDate() == null) {
+                        continue;
+                    }
+                    final SVNDirEntry currentEntry = entry;
+                    myConnection.doPropfind(vcc, 0, label, logProperty, new IDAVResponseHandler() {
+                        public void handleDAVResponse(DAVResponse response) {
+                            Map props = DAVUtil.filterProperties(response, null);
+                            String message = (String) props.get(SVNRevisionProperty.LOG);
+                            getOptions().putData(DAVRepository.this, key, message);
+                            currentEntry.setCommitMessage(message);
+                        }
+                    });
+                }
             }
         } finally {
             closeConnection();
         }
-        return dirEntries;
+        return parent[0];
     }
 
     public int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException {
@@ -340,11 +361,20 @@ class DAVRepository extends SVNRepository {
     }
     
     public long log(String[] targetPaths, long startRevision, long endRevision,
-            boolean changedPath, boolean strictNode, long limit, ISVNLogEntryHandler handler) throws SVNException {
+            boolean changedPath, boolean strictNode, long limit, final ISVNLogEntryHandler handler) throws SVNException {
         if (targetPaths == null || targetPaths.length == 0) {
             return 0;
         }
         DAVLogHandler davHandler = null;
+        ISVNLogEntryHandler cachingHandler = new ISVNLogEntryHandler() {
+                public void handleLogEntry(SVNLogEntry logEntry) {
+                    if (logEntry.getDate() != null) {
+                        String key = SVNRevisionProperty.LOG + "!" + logEntry.getRevision();
+                        getOptions().putData(DAVRepository.this, key, logEntry.getMessage());
+                    }
+                    handler.handleLogEntry(logEntry);
+                }
+            };
 		try {
 			openConnection();
 			String[] fullPaths = new String[targetPaths.length];
@@ -362,7 +392,7 @@ class DAVRepository extends SVNRepository {
 	        StringBuffer request = DAVLogHandler.generateLogRequest(null, startRevision, endRevision,
 	        		changedPath, strictNode, limit, fullPaths);
 	        
-            davHandler = new DAVLogHandler(handler, limit); 
+            davHandler = new DAVLogHandler(cachingHandler, limit); 
 			long revision = Math.max(startRevision, endRevision);
             path = SVNEncodingUtil.uriEncode(path);
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, false, null);
@@ -376,7 +406,7 @@ class DAVRepository extends SVNRepository {
     
     private void openConnection() throws SVNException {
         lock();
-        if (isSessionMode() && myConnection != null) {
+        if (getOptions().keepConnection() && myConnection != null) {
             return;
         }
         if (myConnection == null) {
@@ -386,7 +416,7 @@ class DAVRepository extends SVNRepository {
     }
 
     private void closeConnection() {
-        if (isSessionMode()) {
+        if (getOptions().keepConnection()) {
             unlock();
             return;
         }

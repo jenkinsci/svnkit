@@ -51,7 +51,10 @@ public class SVNSocketFactory {
         while (true) {
             try {
                 InetAddress address = createAddres(host);
-                return new Socket(address, port);
+                Socket socket = new Socket(address, port);
+                socket.setTcpNoDelay(true);
+                socket.setKeepAlive(true);
+                return socket;
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {
                     attempts--;
@@ -76,7 +79,10 @@ public class SVNSocketFactory {
         manager = manager == null ? DEFAULT_SSL_MANAGER : manager;
         while (true) {
             try {
-                return manager.getSSLContext().getSocketFactory().createSocket(createAddres(host), port);
+                Socket sslSocket = manager.getSSLContext().getSocketFactory().createSocket(createAddres(host), port);
+                sslSocket.setTcpNoDelay(true);
+                sslSocket.setKeepAlive(true);
+                return sslSocket;
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {
                     attempts--;
@@ -101,7 +107,10 @@ public class SVNSocketFactory {
         manager = manager == null ? DEFAULT_SSL_MANAGER : manager;
         while (true) {
             try {
-                return manager.getSSLContext().getSocketFactory().createSocket(socket, host, port, true);
+                Socket sslSocket = manager.getSSLContext().getSocketFactory().createSocket(socket, host, port, true);
+                sslSocket.setTcpNoDelay(true);
+                sslSocket.setKeepAlive(true);
+                return sslSocket;
             } catch (ConnectException timeOut) {
                 if (timeOut.getMessage().indexOf("time") >= 0) {
                     attempts--;
