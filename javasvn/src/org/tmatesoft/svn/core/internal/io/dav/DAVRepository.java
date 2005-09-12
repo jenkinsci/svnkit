@@ -380,7 +380,7 @@ class DAVRepository extends SVNRepository {
         }
         DAVLogHandler davHandler = null;
         ISVNLogEntryHandler cachingHandler = new ISVNLogEntryHandler() {
-                public void handleLogEntry(SVNLogEntry logEntry) {
+                public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
                     if (logEntry.getDate() != null) {
                         String key = SVNRevisionProperty.LOG + "!" + logEntry.getRevision();
                         getOptions().putData(DAVRepository.this, key, logEntry.getMessage());

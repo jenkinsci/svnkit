@@ -11,13 +11,21 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -398,7 +406,18 @@ public class SVNBasicClient implements ISVNEventHandler {
         long[] revisionsRange = startRevisionNumber == endRevisionNumber ? 
                 new long[] {startRevisionNumber} : new long[] {startRevisionNumber, endRevisionNumber};
                         
-        Map locations = repository.getLocations("", (Map) null, pegRevisionNumber, revisionsRange);
+        Map locations = null;
+        try {
+            locations = repository.getLocations("", (Map) null, pegRevisionNumber, revisionsRange);
+        } catch (SVNException e) {
+            if (e.getMessage().indexOf("The requested report is unknown") >= 0 ||
+                    e.getMessage().indexOf("Unknown command 'get-locations'") >= 0) {
+                locations = getLocations10(repository, pegRevisionNumber, startRevisionNumber, endRevisionNumber);
+            } else {
+                throw e;
+            }
+        }
+        // try to get locations with 'log' method.
         SVNLocationEntry startPath = (SVNLocationEntry) locations.get(new Long(startRevisionNumber));
         SVNLocationEntry endPath = (SVNLocationEntry) locations.get(new Long(endRevisionNumber));
         
@@ -422,6 +441,72 @@ public class SVNBasicClient implements ISVNEventHandler {
         return result;
     }
     
+    private Map getLocations10(SVNRepository repos, final long pegRevision, final long startRevision, final long endRevision) throws SVNException {
+        final String path = repos.getRepositoryPath("");
+        final SVNNodeKind kind = repos.checkPath("", pegRevision);
+        if (kind == SVNNodeKind.NONE) {
+            SVNErrorManager.error("svn: path '" + path + "' doesn't exist at revision " + pegRevision);
+        }
+        long logStart = pegRevision;
+        logStart = Math.max(startRevision, logStart);
+        logStart = Math.max(endRevision, logStart);
+        long logEnd = pegRevision;
+        logStart = Math.min(startRevision, logStart);
+        logStart = Math.min(endRevision, logStart);
+        
+        LocationsLogEntryHandler handler = new LocationsLogEntryHandler(path, startRevision, endRevision, pegRevision, kind, getEventDispatcher());
+        repos.log(new String[] {""}, logStart, logEnd, true, false, handler);
+        
+        String pegPath = handler.myPegPath == null ? handler.myCurrentPath : handler.myPegPath;
+        String startPath = handler.myStartPath == null ? handler.myCurrentPath : handler.myStartPath;
+        String endPath = handler.myEndPath == null ? handler.myCurrentPath : handler.myEndPath;
+        
+        if (pegPath == null) {
+            SVNErrorManager.error("svn: '" + path + "' in revision " + logStart + " is an unrelated object");
+        }
+        Map result = new HashMap();
+        result.put(new Long(startRevision), new SVNLocationEntry(-1, startPath));
+        result.put(new Long(endRevision), new SVNLocationEntry(-1, endPath));
+        return result;
+    }
+    
+    private static String getPreviousLogPath(String path, SVNLogEntry logEntry, SVNNodeKind kind) throws SVNException {
+        String prevPath = null;
+        SVNLogEntryPath logPath = (SVNLogEntryPath) logEntry.getChangedPaths().get(path);
+        if (logPath != null) {
+            if (logPath.getType() != 'A' && logPath.getType() != 'R') {
+                return logPath.getPath();
+            }
+            if (logPath.getCopyPath() != null) {
+                return logPath.getCopyPath();
+            } 
+            return null;
+        } else if (!logEntry.getChangedPaths().isEmpty()){
+            TreeMap sortedMap = new TreeMap(SVNPathUtil.PATH_COMPARATOR);
+            sortedMap.putAll(logEntry.getChangedPaths());
+            List pathsList = new ArrayList(sortedMap.keySet());
+            Collections.reverse(pathsList);
+            for(Iterator paths = pathsList.iterator(); paths.hasNext();) {
+                String p = (String) paths.next();
+                if (path.startsWith(p + "/")) {
+                    SVNLogEntryPath lPath = (SVNLogEntryPath) sortedMap.get(p);
+                    if (lPath.getCopyPath() != null) {
+                        prevPath = SVNPathUtil.append(lPath.getCopyPath(), path.substring(p.length()));
+                        break;
+                    }
+                }
+            }
+        }
+        if (prevPath == null) {
+            if (kind == SVNNodeKind.DIR) {
+                prevPath = path;
+            } else {
+                SVNErrorManager.error("svn: Missing changed-path information for '" + path + "' in revision " + logEntry.getRevision());
+            }            
+        }
+        return prevPath;
+    }
+    
     protected SVNURL getURL(File path) throws SVNException {
         if (path == null) {
             return null;
@@ -436,6 +521,53 @@ public class SVNBasicClient implements ISVNEventHandler {
         return entry != null ? entry.getSVNURL() : null;        
     }
     
+
+    private static final class LocationsLogEntryHandler implements ISVNLogEntryHandler {
+
+        
+        private String myCurrentPath = null;
+        private String myStartPath = null;
+        private String myEndPath = null;
+        private String myPegPath = null;
+
+        private long myStartRevision;
+        private long myEndRevision;
+        private long myPegRevision;
+        private SVNNodeKind myKind;
+        private ISVNEventHandler myEventHandler;
+
+        private LocationsLogEntryHandler(String path, long startRevision, long endRevision, long pegRevision, SVNNodeKind kind,
+                ISVNEventHandler eventHandler) {
+            myCurrentPath = path;
+            myStartRevision = startRevision;
+            myEndRevision = endRevision;
+            myPegRevision = pegRevision;
+            myEventHandler = eventHandler;
+            myKind = kind;
+        }
+
+        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+            if (myEventHandler != null) {
+                myEventHandler.checkCancelled();
+            }
+            if (logEntry.getChangedPaths() == null) {
+                return;
+            }
+            if (myCurrentPath == null) {
+                return;
+            }
+            if (myStartPath == null && logEntry.getRevision() <= myStartRevision) { 
+                myStartPath = myCurrentPath;                    
+            }
+            if (myEndPath == null && logEntry.getRevision() <= myEndRevision) { 
+                myEndPath = myCurrentPath;                    
+            }
+            if (myPegPath == null && logEntry.getRevision() <= myPegRevision) { 
+                myPegPath = myCurrentPath;                    
+            }
+            myCurrentPath = getPreviousLogPath(myCurrentPath, logEntry, myKind);
+        }
+    }
 
     protected static class RepositoryReference {
 

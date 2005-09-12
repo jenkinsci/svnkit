@@ -33,7 +33,8 @@ public interface ISVNLogEntryHandler {
      * Handles the log entry (<code>SVNLogEntry</code> object) passed.
      * 
      * @param logEntry 		a <code>SVNLogEntry</code> instance to be handled.
+     * @throws SVNException 
      */
-    public void handleLogEntry(SVNLogEntry logEntry);
+    public void handleLogEntry(SVNLogEntry logEntry) throws SVNException;
 
 }

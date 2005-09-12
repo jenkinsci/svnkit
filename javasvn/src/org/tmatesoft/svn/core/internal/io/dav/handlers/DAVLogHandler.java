@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
@@ -108,7 +109,7 @@ public class DAVLogHandler extends BasicDAVHandler {
 		
 	}
 	
-	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
+	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
 		if (element == LOG_ITEM) {
 			myCount++;
             if (myLimit <= 0 || myCount <= myLimit) {
