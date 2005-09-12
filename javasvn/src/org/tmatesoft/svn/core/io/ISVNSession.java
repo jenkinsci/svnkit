@@ -16,26 +16,26 @@ package org.tmatesoft.svn.core.io;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public interface ISVNRepositoryOptions {
+public interface ISVNSession {
     
     public boolean keepConnection();
     
-    public void putData(SVNRepository repository, String key, Object value);
+    public void saveCommitMessage(SVNRepository repository, long revision, String message);
 
-    public Object getData(SVNRepository repository, String key);
+    public String getCommitMessage(SVNRepository repository, long revision);
     
-    public boolean hasData(SVNRepository repository, String key);
+    public boolean hasCommitMessage(SVNRepository repository, long revision);
     
-    public ISVNRepositoryOptions DEFAULT = new ISVNRepositoryOptions() {
+    public ISVNSession DEFAULT = new ISVNSession() {
         public boolean keepConnection() {
             return false;
         }
-        public void putData(SVNRepository repository, String key, Object value) {
+        public void saveCommitMessage(SVNRepository repository, long revision, String message) {
         }
-        public Object getData(SVNRepository repository, String key) {
+        public String getCommitMessage(SVNRepository repository, long revision) {
             return null;
         }
-        public boolean hasData(SVNRepository repository, String key) {
+        public boolean hasCommitMessage(SVNRepository repository, long revision) {
             return false;
         }
     };

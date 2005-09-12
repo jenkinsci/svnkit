@@ -121,7 +121,7 @@ public abstract class SVNRepository {
     private Thread myLocker;
     private ISVNAuthenticationManager myAuthManager;
     private long myPegRevision;
-    private ISVNRepositoryOptions myOptions;
+    private ISVNSession myOptions;
 
     /**
      * Constructs an <code>SVNRepository</code> instance (representing a
@@ -135,7 +135,7 @@ public abstract class SVNRepository {
      * 						tree node - not necessarily the repository root
      * 						directory which it was installed to).
      */
-    protected SVNRepository(SVNURL location, ISVNRepositoryOptions options) {
+    protected SVNRepository(SVNURL location, ISVNSession options) {
         myLocation = location;
         myPegRevision = -1;
         myOptions = options;
@@ -1151,9 +1151,9 @@ public abstract class SVNRepository {
     
     public abstract void closeSession() throws SVNException;
     
-    protected ISVNRepositoryOptions getOptions() {
+    protected ISVNSession getOptions() {
         if (myOptions == null) {
-            return ISVNRepositoryOptions.DEFAULT;
+            return ISVNSession.DEFAULT;
         }
         return myOptions;
     }

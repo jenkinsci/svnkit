@@ -48,7 +48,7 @@ import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
-import org.tmatesoft.svn.core.io.ISVNRepositoryOptions;
+import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -60,7 +60,7 @@ class DAVRepository extends SVNRepository {
     private DAVConnection myConnection;
     private IHTTPConnectionFactory myConnectionFactory;
     
-    protected DAVRepository(IHTTPConnectionFactory connectionFactory, SVNURL location, ISVNRepositoryOptions options) {
+    protected DAVRepository(IHTTPConnectionFactory connectionFactory, SVNURL location, ISVNSession options) {
         super(location, options);
         myConnectionFactory = connectionFactory;
     }
@@ -148,7 +148,7 @@ class DAVRepository extends SVNRepository {
             properties = DAVUtil.filterProperties(source, properties);
             if (revision >= 0) {
                 String commitMessage = (String) properties.get(SVNRevisionProperty.LOG);
-                getOptions().putData(DAVRepository.this, SVNRevisionProperty.LOG + "!" + revision, commitMessage);
+                getOptions().saveCommitMessage(DAVRepository.this, revision, commitMessage);
             }
         } finally {
             closeConnection();
@@ -322,9 +322,8 @@ class DAVRepository extends SVNRepository {
                 int index = 0;
                 while(true) {
                     String label = Long.toString(entry.getRevision());
-                    final String key = SVNRevisionProperty.LOG + "!" + label;
-                    if (entry.getDate() != null && getOptions().hasData(this, key)) {
-                        String message = (String) getOptions().getData(this, key);
+                    if (entry.getDate() != null && getOptions().hasCommitMessage(this, entry.getRevision())) {
+                        String message = getOptions().getCommitMessage(this, entry.getRevision());
                         entry.setCommitMessage(message);
                     } else if (entry.getDate() != null) {
                         final SVNDirEntry currentEntry = entry;
@@ -332,7 +331,7 @@ class DAVRepository extends SVNRepository {
                             public void handleDAVResponse(DAVResponse response) {
                                 Map props = DAVUtil.filterProperties(response, null);
                                 String message = (String) props.get(SVNRevisionProperty.LOG);
-                                getOptions().putData(DAVRepository.this, key, message);
+                                getOptions().saveCommitMessage(DAVRepository.this, currentEntry.getRevision(), message);
                                 currentEntry.setCommitMessage(message);
                             }                            
                         });
@@ -382,8 +381,7 @@ class DAVRepository extends SVNRepository {
         ISVNLogEntryHandler cachingHandler = new ISVNLogEntryHandler() {
                 public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
                     if (logEntry.getDate() != null) {
-                        String key = SVNRevisionProperty.LOG + "!" + logEntry.getRevision();
-                        getOptions().putData(DAVRepository.this, key, logEntry.getMessage());
+                        getOptions().saveCommitMessage(DAVRepository.this, logEntry.getRevision(), logEntry.getMessage());
                     }
                     handler.handleLogEntry(logEntry);
                 }

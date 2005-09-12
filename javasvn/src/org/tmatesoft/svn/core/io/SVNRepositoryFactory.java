@@ -133,7 +133,7 @@ public abstract class SVNRepositoryFactory {
         return create(url, null);
         
     }
-    public static SVNRepository create(SVNURL url, ISVNRepositoryOptions options) throws SVNException {
+    public static SVNRepository create(SVNURL url, ISVNSession options) throws SVNException {
         String urlString = url.toString();
     	for(Iterator keys = myFactoriesMap.keySet().iterator(); keys.hasNext();) {
     		String key = (String) keys.next();
@@ -145,6 +145,6 @@ public abstract class SVNRepositoryFactory {
         return null;
     }
 
-    protected abstract SVNRepository createRepositoryImpl(SVNURL url, ISVNRepositoryOptions options);
+    protected abstract SVNRepository createRepositoryImpl(SVNURL url, ISVNSession session);
 
 }

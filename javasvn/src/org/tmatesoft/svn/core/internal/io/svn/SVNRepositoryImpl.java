@@ -37,7 +37,7 @@ import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
-import org.tmatesoft.svn.core.io.ISVNRepositoryOptions;
+import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -56,7 +56,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     private String myRealm;
     private String myExternalUserName;
 
-    protected SVNRepositoryImpl(SVNURL location, ISVNRepositoryOptions options) {
+    protected SVNRepositoryImpl(SVNURL location, ISVNSession options) {
         super(location, options);
     }
 
