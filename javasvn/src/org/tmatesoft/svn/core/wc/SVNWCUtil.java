@@ -37,6 +37,8 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNWCUtil {
     
+    private static final String ECLIPSE_AUTH_MANAGER_CLASSNAME = "org.tmatesoft.svn.core.internal.wc.EclipseSVNAuthenticationManager";
+
     /**
      * Gets the location of the default SVN's run-time configuration area
      * on the current machine. The result path depends on the platform
@@ -145,11 +147,11 @@ public class SVNWCUtil {
         if (isEclipse()) {
             // use reflection to allow compilation when there is no Eclipse.
             try {
-                Class managerClass = SVNWCUtil.class.getClassLoader().loadClass("org.tmatesoft.svn.core.internal.wc.EclipseSVNAuthenticationManager");
+                Class managerClass = SVNWCUtil.class.getClassLoader().loadClass(ECLIPSE_AUTH_MANAGER_CLASSNAME);
                 if (managerClass != null) {
                     Constructor method = managerClass.getConstructor(new Class[] {File.class, Boolean.TYPE, String.class, String.class});
                     if (method != null) {
-                        return (ISVNAuthenticationManager) method.newInstance(new Object[] {configDir, new Boolean(storeAuth), userName, password});
+                        return (ISVNAuthenticationManager) method.newInstance(new Object[] {configDir, storeAuth ? Boolean.TRUE : Boolean.FALSE, userName, password});
                     }
                 }
             } catch (Throwable e) {
