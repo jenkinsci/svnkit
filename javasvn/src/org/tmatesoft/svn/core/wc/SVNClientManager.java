@@ -108,7 +108,6 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 public class SVNClientManager implements ISVNRepositoryFactory {
     
     private ISVNOptions myOptions;
-    private ISVNAuthenticationManager myAuthenticationManager;
     
     private SVNCommitClient myCommitClient;
     private SVNCopyClient myCopyClient;
@@ -120,16 +119,18 @@ public class SVNClientManager implements ISVNRepositoryFactory {
     private SVNWCClient myWCClient;
     
     private ISVNEventHandler myEventHandler;
+    private ISVNRepositoryFactory myRepositoryFactory;
 
-    private SVNClientManager(ISVNOptions options, ISVNAuthenticationManager authManager) {
+    private SVNClientManager(ISVNOptions options, ISVNRepositoryFactory factory) {
         myOptions = options;
         if (myOptions == null) {
             myOptions = SVNWCUtil.createDefaultOptions(true);
         }
-        myAuthenticationManager = authManager;
-        if (myAuthenticationManager == null) {
-            myAuthenticationManager = SVNWCUtil.createDefaultAuthenticationManager();
-        }
+        myRepositoryFactory = factory;
+    }
+
+    private SVNClientManager(ISVNOptions options, final ISVNAuthenticationManager authManager) {
+        this(options, new DefaultSVNRepositoryFactory(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager));
     }
     
     /**
@@ -141,7 +142,7 @@ public class SVNClientManager implements ISVNRepositoryFactory {
      * @return a new <b>SVNClientManager</b> instance
      */
     public static SVNClientManager newInstance() {
-        return new SVNClientManager(null, null);
+        return new SVNClientManager(null, (ISVNAuthenticationManager) null);
     }
 
     /**
@@ -154,7 +155,7 @@ public class SVNClientManager implements ISVNRepositoryFactory {
      * @return a new <b>SVNClientManager</b> instance
      */
     public static SVNClientManager newInstance(ISVNOptions options) {
-        return new SVNClientManager(options, null);
+        return new SVNClientManager(options, (ISVNAuthenticationManager) null);
     }
 
     /**
@@ -169,6 +170,10 @@ public class SVNClientManager implements ISVNRepositoryFactory {
      */
     public static SVNClientManager newInstance(ISVNOptions options, ISVNAuthenticationManager authManager) {
         return new SVNClientManager(options, authManager);
+    }
+
+    public static SVNClientManager newInstance(ISVNOptions options, ISVNRepositoryFactory repositoryFactory) {
+        return new SVNClientManager(options, repositoryFactory);
     }
 
     /**
@@ -207,9 +212,12 @@ public class SVNClientManager implements ISVNRepositoryFactory {
      *                       with a repository
      * @throws SVNException
      */
-    public SVNRepository createRepository(SVNURL url) throws SVNException {
+    public SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {
+        if (myRepositoryFactory != null) {
+            return myRepositoryFactory.createRepository(url, mayReuse);
+        }
         SVNRepository repository = SVNRepositoryFactory.create(url);
-        repository.setAuthenticationManager(myAuthenticationManager);
+        repository.setAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
         return repository;
     }
     

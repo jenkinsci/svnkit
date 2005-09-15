@@ -33,5 +33,5 @@ public interface ISVNRepositoryFactory {
      *                        with a repository
      * @throws SVNException
      */
-    public SVNRepository createRepository(SVNURL url) throws SVNException;
+    public SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException;
 }

@@ -141,7 +141,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", false);
             SVNURL url = entry.getSVNURL();
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, null, recursive, isLeaveConflictsUnresolved());
-            SVNRepository repos = createRepository(url);
+            SVNRepository repos = createRepository(url, true);
             
             String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
             long revNumber = getRevisionNumber(revision, repos, file);
@@ -194,7 +194,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (url == null) {
                 SVNErrorManager.error("svn: '" + file + "' has no URL");
             }
-            SVNRepository repository = createRepository(sourceURL);
+            SVNRepository repository = createRepository(sourceURL, true);
             long revNumber = getRevisionNumber(revision, repository, file);
 
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url.toString(), recursive, isLeaveConflictsUnresolved());
@@ -614,7 +614,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @throws SVNException
      */
     public void doRelocate(File dst, SVNURL oldURL, SVNURL newURL, boolean recursive) throws SVNException {
-        SVNRepository repos = createRepository(newURL);
+        SVNRepository repos = createRepository(newURL, true);
         repos.testConnection();
 
         String uuid = repos.getRepositoryUUID();

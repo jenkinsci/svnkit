@@ -19,6 +19,7 @@ import java.util.Stack;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
@@ -181,9 +182,9 @@ public class SVNStatusClient extends SVNBasicClient {
         }
         SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(), wcAccess, handler, parentExternals, includeIgnored, reportAll, recursive);
         if (remote) {
-            String url = wcAccess.getAnchor().getEntries().getEntry("", true).getURL();
-            SVNRepository repos = createRepository(url);
-            SVNRepository locksRepos = createRepository(url);
+            SVNURL url = wcAccess.getAnchor().getEntries().getEntry("", true).getSVNURL();
+            SVNRepository repos = createRepository(url, true);
+            SVNRepository locksRepos = createRepository(url, false);
 
             SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
             SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, statusEditor);

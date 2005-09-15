@@ -44,6 +44,7 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -1052,7 +1053,7 @@ public class SVNClientImpl implements SVNClientInterface {
     protected SVNClientManager getClientManager() {
         if (myClientManager == null) {
             updateClientManager();
-            myClientManager = SVNClientManager.newInstance(myOptions, myAuthenticationManager);
+            myClientManager = SVNClientManager.newInstance(myOptions, new DefaultSVNRepositoryFactory(myAuthenticationManager));
             myClientManager.setEventHandler(getEventListener());
         }
         return myClientManager;

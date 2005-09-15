@@ -460,7 +460,7 @@ public class SVNDiffClient extends SVNBasicClient {
             String anchorPath2 = SVNPathUtil.append(anchorURL.toString(), target == null ? "" : target);
             getDiffGenerator().init(url1.toString(), anchorPath2);
         }
-        SVNRepository repository = createRepository(anchorURL);
+        SVNRepository repository = createRepository(anchorURL, true);
         SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(),
                 useAncestry, reverse /* reverse */,
                 revision2 == SVNRevision.BASE /* compare to base */, result);
@@ -498,7 +498,7 @@ public class SVNDiffClient extends SVNBasicClient {
         } else {
             url1 = getURL(path1);
         }
-        SVNRepository repository = createRepository(anchorURL);
+        SVNRepository repository = createRepository(anchorURL, true);
         SVNDiffEditor editor = new SVNDiffEditor(wcAccess, getDiffGenerator(),
                 useAncestry, reverse /* reverse */, revision2 == SVNRevision.BASE /* compare to base */, result);
         SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
@@ -547,8 +547,8 @@ public class SVNDiffClient extends SVNBasicClient {
             url1 = url1 == null ? getURL(path1) : url1;
             url2 = url2 == null ? getURL(path2) : url2;
         }
-        SVNRepository repository1 = createRepository(url1);
-        SVNRepository repository2 = createRepository(url2);
+        SVNRepository repository1 = createRepository(url1, true);
+        SVNRepository repository2 = createRepository(url2, false);
         
         final long rev1 = getRevisionNumber(revision1, repository1, path1);
         long rev2 = getRevisionNumber(revision2, repository2, path2);
@@ -567,9 +567,9 @@ public class SVNDiffClient extends SVNBasicClient {
                 basePath = basePath.getParentFile();
             }
             url1 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url1.toString()));
-            repository1 = createRepository(url1);
+            repository1 = createRepository(url1, true);
         }
-        repository2 = createRepository(url1); 
+        repository2 = createRepository(url1, false); 
         File tmpFile = getDiffGenerator().createTempDirectory();
         try {
             String baseDisplayPath = basePath != null ? basePath.getAbsolutePath().replace(File.separatorChar, '/') : "";
@@ -1002,10 +1002,10 @@ public class SVNDiffClient extends SVNBasicClient {
             path1 = null;
             path2 = null;
         }
-        SVNRepository repository1 = createRepository(url1);
+        SVNRepository repository1 = createRepository(url1, true);
         final long rev1 = getRevisionNumber(revision1, repository1, path1);
         long rev2 = getRevisionNumber(revision2, repository1, path2);
-        SVNRepository repository2 = createRepository(url1);
+        SVNRepository repository2 = createRepository(url1, false);
         
         SVNMerger merger = new SVNMerger(wcAccess, url2.toString(), rev2, force, dryRun, isLeaveConflictsUnresolved());
         SVNMergeEditor mergeEditor = new SVNMergeEditor(wcAccess, repository2, rev1, rev2, merger);
@@ -1070,7 +1070,7 @@ public class SVNDiffClient extends SVNBasicClient {
         File result = SVNFileUtil.createUniqueFile(tmpDir, name, ".tmp");
         SVNFileUtil.createEmptyFile(result);
         
-        SVNRepository repository = createRepository(url);
+        SVNRepository repository = createRepository(url, true);
         long revisionNumber = getRevisionNumber(revision, repository, path);
         OutputStream os = null;
         try {

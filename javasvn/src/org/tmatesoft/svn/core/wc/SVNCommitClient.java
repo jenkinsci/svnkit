@@ -209,7 +209,7 @@ public class SVNCommitClient extends SVNBasicClient {
             decodedPaths.add(SVNEncodingUtil.uriDecode(path));
         }
         paths = decodedPaths;
-        SVNRepository repos = createRepository(rootURL);
+        SVNRepository repos = createRepository(rootURL, true);
         for (Iterator commitPath = paths.iterator(); commitPath.hasNext();) {
             String path = (String) commitPath.next();
             SVNNodeKind kind = repos.checkPath(path, -1);
@@ -296,7 +296,7 @@ public class SVNCommitClient extends SVNBasicClient {
             decodedPaths.add(SVNEncodingUtil.uriDecode(path));
         }
         paths = decodedPaths;
-        SVNRepository repos = createRepository(rootURL);
+        SVNRepository repos = createRepository(rootURL, true);
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, null);
         ISVNCommitPathHandler creater = new ISVNCommitPathHandler() {
             public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
@@ -352,7 +352,7 @@ public class SVNCommitClient extends SVNBasicClient {
         SVNURL rootURL = dstURL;
         while (true) {
             try {
-                repos = createRepository(rootURL);
+                repos = createRepository(rootURL, true);
             } catch (SVNException e) {
                 SVNErrorManager.error("svn: invalid URL '" + dstURL + "'");
             }
@@ -504,7 +504,7 @@ public class SVNCommitClient extends SVNBasicClient {
             Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket
                     .getLockTokens(), baseURL);
 
-            SVNRepository repository = createRepository(baseURL);
+            SVNRepository repository = createRepository(SVNURL.parseURIEncoded(baseURL), true);
             SVNCommitMediator mediator = new SVNCommitMediator(commitPacket
                     .getWCAccess(), commitables);
             tmpFiles = mediator.getTmpFiles();

@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The abstract class <b>SVNRepository</b> declares all the basic
@@ -152,6 +153,28 @@ public abstract class SVNRepository {
 	 */    
     public SVNURL getLocation() {
         return myLocation;
+    }
+    
+    public void setLocation(SVNURL url, boolean forceReconnect) throws SVNException {
+        lock();
+        try {
+            if (forceReconnect || myRepositoryRoot == null) {
+                closeSession();
+                myRepositoryRoot = null;
+                myRepositoryUUID = null;
+                myPegRevision = -1;
+                SVNDebugLog.logInfo("session closed (1)");
+            } else if (!(url.toString().startsWith(myRepositoryRoot.toString() + "/") || myRepositoryRoot.equals(url))) {
+                closeSession();
+                myRepositoryRoot = null;
+                myRepositoryUUID = null;
+                myPegRevision = -1;
+                SVNDebugLog.logInfo("session closed (2)");
+            }
+            myLocation = url;
+        } finally {
+            unlock();
+        }
     }
 
     /**

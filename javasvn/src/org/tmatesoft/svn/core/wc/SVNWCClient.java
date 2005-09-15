@@ -805,7 +805,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (!revision.isValid()) {
             SVNErrorManager.error("svn: Valid revision have to be specified to fetch revision property");
         }
-        SVNRepository repos = createRepository(url);
+        SVNRepository repos = createRepository(url, true);
         long revNumber = getRevisionNumber(revision, repos, null);
         doGetRevisionProperty(repos, propName, revNumber, handler);
     }
@@ -1228,7 +1228,7 @@ public class SVNWCClient extends SVNBasicClient {
                 pathsRevisionsMap.put(encodedPath, new Long(lockInfo.myRevision.getNumber()));
             }
         }
-        SVNRepository repository = createRepository(topURL);
+        SVNRepository repository = createRepository(topURL, true);
         SVNDebugLog.logInfo("top url is: " + topURL);
         final SVNURL rootURL = repository.getRepositoryRoot(true);
         SVNDebugLog.logInfo("root url is: " + rootURL);
@@ -1293,7 +1293,7 @@ public class SVNWCClient extends SVNBasicClient {
             pathsToRevisions.put(path, null);
         }
         checkCancelled();
-        SVNRepository repository = createRepository(topURL);
+        SVNRepository repository = createRepository(topURL, true);
         repository.lock(pathsToRevisions, lockMessage, stealLock, new ISVNLockHandler() {
             public void handleLock(String path, SVNLock lock, SVNException error) throws SVNException {
                 if (error != null) {
@@ -1367,7 +1367,7 @@ public class SVNWCClient extends SVNBasicClient {
             pathsTokensMap.put(encodedPath, lockInfo.myToken);
         }
         checkCancelled();
-        SVNRepository repository = createRepository(topURL);
+        SVNRepository repository = createRepository(topURL, true);
         final SVNURL rootURL = repository.getRepositoryRoot(true);
         repository.unlock(pathsTokensMap, breakLock, new ISVNLockHandler() {
             public void handleLock(String path, SVNLock lock, SVNException error) throws SVNException {
@@ -1427,7 +1427,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         
         checkCancelled();
-        SVNRepository repository = createRepository(topURL);
+        SVNRepository repository = createRepository(topURL, true);
         repository.unlock(pathsToTokens, breakLock, new ISVNLockHandler() {
             public void handleLock(String path, SVNLock lock, SVNException error) throws SVNException {
             }
