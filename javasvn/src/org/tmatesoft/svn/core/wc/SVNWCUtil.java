@@ -343,7 +343,6 @@ public class SVNWCUtil {
         try {
             platform = SVNWCUtil.class.getClassLoader().loadClass("org.eclipse.core.runtime.Platform");
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         }
         return platform != null;
     }
