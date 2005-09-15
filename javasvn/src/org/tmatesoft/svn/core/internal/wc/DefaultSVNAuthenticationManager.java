@@ -61,9 +61,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         }   
         
         myProviders = new ISVNAuthenticationProvider[4];
-        myProviders[0] = new DumbAuthenticationProvider(userName, password, myIsStoreAuth);
-        myProviders[1] = new CacheAuthenticationProvider();
-        myProviders[2] = new PersistentAuthenticationProvider(new File(myConfigDirectory, "auth"));
+        myProviders[0] = createDefaultAuthenticationProvider(userName, password, myIsStoreAuth);
+        myProviders[1] = createRuntimeAuthenticationProvider();
+        myProviders[2] = createCacheAuthenticationProvider(new File(myConfigDirectory, "auth"));
     }
 
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
@@ -175,8 +175,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             myPreviousAuthentication = authentication;
             return;
         }
-        if (myIsStoreAuth && authentication.isStorageAllowed() && myProviders[2] != null) {
-            ((PersistentAuthenticationProvider) myProviders[2]).saveAuthentication(authentication, kind, realm);
+        if (myIsStoreAuth && authentication.isStorageAllowed() && myProviders[2] instanceof IPersistentAuthenticationProvider) {
+            ((IPersistentAuthenticationProvider) myProviders[2]).saveAuthentication(authentication, kind, realm);
         }
         ((CacheAuthenticationProvider) myProviders[1]).saveAuthentication(authentication, realm);
     }
@@ -277,6 +277,16 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return null;
     }
     
+    protected ISVNAuthenticationProvider createDefaultAuthenticationProvider(String userName, String password, boolean allowSave) {
+        return new DumbAuthenticationProvider(userName, password, allowSave);
+    }
+    protected ISVNAuthenticationProvider createRuntimeAuthenticationProvider() {
+        return new CacheAuthenticationProvider();
+    }
+    protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir) {
+        return new PersistentAuthenticationProvider(authDir);
+    }
+    
     private static String getOptionValue(String commandLine, String optionName) {
         if (commandLine == null || optionName == null) {
             return null;
@@ -359,8 +369,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             return ACCEPTED;
         }
     }
-    
-    private class PersistentAuthenticationProvider implements ISVNAuthenticationProvider {
+
+    public interface IPersistentAuthenticationProvider {
+        public void saveAuthentication(SVNAuthentication auth, String kind, String realm);        
+    }
+
+    private class PersistentAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
         
         private File myDirectory;
 

@@ -5,12 +5,11 @@
         <property environment="env" />
         <property name="eclipse.home" value="${env.ECLIPSE_HOME}" />
         <property name="java.home" value="${env.JAVA_HOME}" />
+    	<property name="eclipse.runtime" value="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.jar"/>    	
         <property file="javasvn.build.properties"/>
     		
     	<condition property="eclipse.present">
-        	<available file="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.jar"
-                           property="eclipse.runtime.jar"
-        	/>
+        	<available file="${eclipse.runtime}" property="eclipse.runtime.jar"/>
         </condition>
 
     	<condition property="os" value="windows">
@@ -46,9 +45,30 @@
         <javac debug="true"
                destdir="javasvn/bin"
                srcdir="javasvn/src"
-               classpathref="library.classpath"
-        />
+               classpathref="library.classpath">
+            <exclude name="org/tmatesoft/svn/core/internal/wc/EclipseSVNAuthenticationManager.java" />
+        </javac>
+        	
     </target>
+
+	<target name="compile-library-eclipse" depends="init-environment" if="eclipse.present"> 
+        <path id="library-eclipse.classpath">
+            <pathelement location="contrib/jsch/jsch.jar" />
+            <pathelement path="contrib/javahl/bin" />
+            <pathelement path="contrib/sequence/bin" />
+            <pathelement path="${eclipse.runtime}" />
+            <fileset dir="contrib/httpclient">
+                <include name="*.jar"/>
+            </fileset>
+        </path>
+		<echo message="${eclipse.runtime}"></echo>
+        <javac debug="true"
+               destdir="javasvn/bin"
+               srcdir="javasvn/src"
+               classpathref="library-eclipse.classpath">
+            <include name="org/tmatesoft/svn/core/internal/wc/EclipseSVNAuthenticationManager.java" />
+        </javac>
+	</target>
 
 	<target name="compile-examples">
 		<mkdir dir="doc/examples/bin" />
@@ -62,13 +82,13 @@
 		/>
 	</target>
     
-	<target name="compile-eclipse" depends="init-environment,compile-library" if="eclipse.present">
+	<target name="compile-eclipse" depends="init-environment,compile-library,compile-library-eclipse" if="eclipse.present">
         <mkdir dir="javasvn-eclipse/bin" />
 		
         <path id="eclipse.classpath">
             <pathelement path="build/lib/javasvn.jar" />
             <pathelement path="build/lib/jsch.jar" />
-            <pathelement path="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.jar" />
+            <pathelement path="${eclipse.runtime}" />
             <pathelement path="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0.jar" />
         </path>
 
@@ -79,7 +99,7 @@
         />
     </target>
 
-    <target name="compile-tests" depends="compile-library">
+    <target name="compile-tests" depends="compile-library, compile-library-eclipse">
         <mkdir dir="contrib/sequence/bin-test" />
         <mkdir dir="javasvn-test/bin" />
         <path id="tests.classpath">
@@ -108,7 +128,7 @@
         />
     </target>
 
-    <target name="build-library" depends="compile-library">
+    <target name="build-library" depends="compile-library, compile-library-eclipse">
         <mkdir dir="build/lib" />
 
         <jar destfile="build/lib/javasvn.jar">

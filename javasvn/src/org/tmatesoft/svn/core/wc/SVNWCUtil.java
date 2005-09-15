@@ -11,6 +11,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -21,6 +22,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNWCUtil</b> is a utility class providing some common methods 
@@ -139,6 +141,21 @@ public class SVNWCUtil {
      *                    and servers configuration driver interface
      */
     public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password, boolean storeAuth) {
+        // check whether we are running inside Eclipse.
+        if (isEclipse()) {
+            // use reflection to allow compilation when there is no Eclipse.
+            try {
+                Class managerClass = SVNWCUtil.class.getClassLoader().loadClass("org.tmatesoft.svn.core.internal.wc.EclipseSVNAuthenticationManager");
+                if (managerClass != null) {
+                    Constructor method = managerClass.getConstructor(new Class[] {File.class, Boolean.TYPE, String.class, String.class});
+                    if (method != null) {
+                        return (ISVNAuthenticationManager) method.newInstance(new Object[] {configDir, new Boolean(storeAuth), userName, password});
+                    }
+                }
+            } catch (Throwable e) {
+                SVNDebugLog.logInfo(e);
+            } 
+        }
         return new DefaultSVNAuthenticationManager(configDir, storeAuth, userName, password);
     }
     
@@ -317,5 +334,15 @@ public class SVNWCUtil {
             return getWorkingCopyRoot(versionedDir.getParentFile(), stopOnExtenrals);
         }
         return versionedDir;
+    }
+    
+    private static boolean isEclipse() {
+        Class platform = null;
+        try {
+            platform = SVNWCUtil.class.getClassLoader().loadClass("org.eclipse.core.runtime.Platform");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return platform != null;
     }
 }
