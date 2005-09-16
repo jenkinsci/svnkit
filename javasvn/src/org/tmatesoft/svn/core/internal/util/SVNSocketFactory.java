@@ -12,9 +12,11 @@
 package org.tmatesoft.svn.core.internal.util;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -28,6 +30,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
@@ -45,7 +48,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * 
  */
 public class SVNSocketFactory {
-
+    
     public static Socket createPlainSocket(String host, int port) throws SVNException {
         int attempts = 3;
         while (true) {
@@ -181,4 +184,35 @@ public class SVNSocketFactory {
         public void acknowledgeSSLContext(boolean accepted, String errorMessage) {
         }
     };
+
+    public static boolean isSocketStale(Socket socket, SVNURL url) throws SVNException {
+        boolean isStale = true;
+        if (socket != null) {
+            isStale = false;
+            try {
+                if (socket.getInputStream().available() == 0) {
+                    int timeout = socket.getSoTimeout();
+                    try {
+                        socket.setSoTimeout(1);
+                        socket.getInputStream().mark(1);
+                        int byteRead = socket.getInputStream().read();
+                        if (byteRead == -1) {
+                            isStale = true;
+                        } else {
+                            socket.getInputStream().reset();
+                        }
+                    } finally {
+                        socket.setSoTimeout(timeout);
+                    }
+                }
+            } catch (InterruptedIOException e) {
+                if (!SocketTimeoutException.class.isInstance(e)) {
+                    SVNErrorManager.error("svn: Connection timeout while connecting to '" + url.toString() + "'");
+                }
+            } catch (IOException e) {
+                isStale = true;
+            }
+        }
+        return isStale;
+    }
 }

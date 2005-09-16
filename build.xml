@@ -61,7 +61,6 @@
                 <include name="*.jar"/>
             </fileset>
         </path>
-		<echo message="${eclipse.runtime}"></echo>
         <javac debug="true"
                destdir="javasvn/bin"
                srcdir="javasvn/src"

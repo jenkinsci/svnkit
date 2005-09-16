@@ -31,29 +31,32 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 class SVNConnection {
 
     private final ISVNConnector myConnector;
-    private ISVNAuthenticationManager myAuthManager;
-    private SVNURL myLocation;
     private String myRealm;
     private String myRoot;
     private OutputStream myOutputStream;
     private InputStream myInputStream;
+    private SVNRepositoryImpl myRepository;
 
     private static final String SUCCESS = "success";
     private static final String FAILURE = "failure";
     private static final String STEP = "step";
     private static final String EDIT_PIPELINE = "edit-pipeline";
 
-    public SVNConnection(ISVNConnector connector,
-            SVNURL location, ISVNAuthenticationManager manager) {
+    public SVNConnection(ISVNConnector connector, SVNRepositoryImpl repository) {
         myConnector = connector;
-        myAuthManager = manager;
-        myLocation = location;
+        myRepository = repository;
     }
 
     public void open(SVNRepositoryImpl repository) throws SVNException {
-        myIsCredentialsReceived = false;
-        myConnector.open(repository);
-        handshake(repository);
+        myIsReopening = true;
+        try {
+            myIsCredentialsReceived = false;
+            myConnector.open(repository);
+            myRepository = repository;
+            handshake(repository);
+        } finally {
+            myIsReopening = false;
+        }
     }
 
     public String getRealm() {
@@ -82,8 +85,11 @@ class SVNConnection {
         if (mechs == null || mechs.size() == 0) {
             return;
         }
+        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
+        SVNURL location = myRepository.getLocation();
+        
         SVNPasswordAuthentication auth = null;
-        boolean preemptive = myAuthManager != null && myAuthManager.isAuthenticationForced();
+        boolean preemptive = authManager != null && authManager.isAuthenticationForced();
         for (int i = 0; i < mechs.size(); i++) {
             String mech = (String) mechs.get(i);
             if ("EXTERNAL".equals(mech)) {
@@ -104,16 +110,16 @@ class SVNConnection {
                 while (true) {
                     CramMD5 authenticator = new CramMD5();
                     String realm = getRealm();
-                    if (myLocation != null) {
-                        realm = "<" + myLocation.getProtocol() + "://"
-                                + myLocation.getHost() + ":"
-                                + myLocation.getPort() + "> " + realm;
+                    if (location != null) {
+                        realm = "<" + location.getProtocol() + "://"
+                                + location.getHost() + ":"
+                                + location.getPort() + "> " + realm;
                     }
-                    if (auth == null && myAuthManager != null) {
-                        auth = (SVNPasswordAuthentication) myAuthManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myLocation);
-                    } else if (myAuthManager != null) {
-                        myAuthManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, failureReason, auth);
-                        auth = (SVNPasswordAuthentication) myAuthManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myLocation);
+                    if (auth == null && authManager != null) {
+                        auth = (SVNPasswordAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
+                    } else if (authManager != null) {
+                        authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, failureReason, auth);
+                        auth = (SVNPasswordAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
                     }
                     if (auth == null || auth.getUserName() == null || auth.getPassword() == null) {
                         failureReason = "no credentials for '" + mech + "'";
@@ -137,7 +143,7 @@ class SVNConnection {
                                 }
                                 myIsCredentialsReceived = true;
                             }
-                            myAuthManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
+                            authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
                             return;
                         } else if (FAILURE.equals(items[0])) {
                             failureReason = new String((byte[]) items[1]);
@@ -160,8 +166,7 @@ class SVNConnection {
         throw new SVNAuthenticationException(failureReason);
     }
 
-    private String readAuthResponse(SVNRepositoryImpl repository)
-            throws SVNException {
+    private String readAuthResponse(SVNRepositoryImpl repository) throws SVNException {
         Object[] items = read("(W(?S))", null);
         if (SUCCESS.equals(items[0])) {
             if (!myIsCredentialsReceived) {
@@ -195,14 +200,18 @@ class SVNConnection {
 
     public Object[] read(String template, Object[] items) throws SVNException {
         try {
+            checkConnection();
             return SVNReader.parse(getInputStream(), template, items);
         } finally {
             SVNDebugLog.flushStream(myLoggingInputStream);
         }
     }
-
+    
+    private boolean myIsReopening = false;
+    
     public void write(String template, Object[] items) throws SVNException {
         try {
+//            checkConnection();
             SVNWriter.write(getOutputStream(), template, items);
         } finally {
             try {
@@ -213,6 +222,19 @@ class SVNConnection {
                 //
             }
             SVNDebugLog.flushStream(getOutputStream());
+        }
+    }
+
+    private void checkConnection() throws SVNException {
+        if (!myIsReopening && !myConnector.isConnected(myRepository)) {
+            SVNDebugLog.logInfo(new Exception());
+            myIsReopening = true;
+            try {
+                close();
+                open(myRepository);
+            } finally {
+                myIsReopening = false;
+            }
         }
     }
 

@@ -32,7 +32,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The abstract class <b>SVNRepository</b> declares all the basic
@@ -163,13 +162,19 @@ public abstract class SVNRepository {
                 myRepositoryRoot = null;
                 myRepositoryUUID = null;
                 myPegRevision = -1;
-                SVNDebugLog.logInfo("session closed (1)");
-            } else if (!(url.toString().startsWith(myRepositoryRoot.toString() + "/") || myRepositoryRoot.equals(url))) {
+            } else if (url.toString().startsWith(myRepositoryRoot.toString() + "/") || myRepositoryRoot.equals(url)) {
+                // just do nothing
+            } else if (url.getProtocol().equals(myRepositoryRoot.getProtocol()) && 
+                    url.getHost().equals(myRepositoryRoot.getHost()) &&
+                    url.getPort() == myRepositoryRoot.getPort()) {
+                myRepositoryRoot = null;
+                myRepositoryUUID = null;
+                myPegRevision = -1;
+            } else {
                 closeSession();
                 myRepositoryRoot = null;
                 myRepositoryUUID = null;
                 myPegRevision = -1;
-                SVNDebugLog.logInfo("session closed (2)");
             }
             myLocation = url;
         } finally {

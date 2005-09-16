@@ -21,10 +21,13 @@ import org.tmatesoft.svn.core.SVNException;
  * @author TMate Software Ltd.
  */
 public interface ISVNConnector {
+    
     public void open(SVNRepositoryImpl repository) throws SVNException;
+    
+    public boolean isConnected(SVNRepositoryImpl repos) throws SVNException;
 
     public void close() throws SVNException;
-
+    
     public OutputStream getOutputStream() throws IOException;
 
     public InputStream getInputStream() throws IOException;

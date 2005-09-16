@@ -76,7 +76,7 @@ public class DefaultSVNRepositoryFactory implements ISVNRepositoryFactory, ISVNS
         return repos;
     }
 
-    public boolean keepConnection() {
+    public boolean keepConnection(SVNRepository repository) {
         return myIsKeepConnections;
     }
 

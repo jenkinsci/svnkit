@@ -417,17 +417,17 @@ class DAVRepository extends SVNRepository {
     
     private void openConnection() throws SVNException {
         lock();
-        if (getOptions().keepConnection() && myConnection != null) {
+        if (getOptions().keepConnection(this) && myConnection != null) {
             return;
         }
         if (myConnection == null) {
-            myConnection = new DAVConnection(myConnectionFactory, getLocation());
+            myConnection = new DAVConnection(myConnectionFactory, this);
         }
         myConnection.open(this);
     }
 
     private void closeConnection() {
-        if (getOptions().keepConnection()) {
+        if (getOptions().keepConnection(this)) {
             unlock();
             return;
         }

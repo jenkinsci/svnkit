@@ -25,7 +25,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -84,7 +83,6 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
         }
 
         public void saveAuthentication(SVNAuthentication auth, String kind, String realm) {
-            SVNDebugLog.logInfo("saving password");
             if (auth.getUserName() == null || "".equals(auth.getUserName())) {
                 return;
             }

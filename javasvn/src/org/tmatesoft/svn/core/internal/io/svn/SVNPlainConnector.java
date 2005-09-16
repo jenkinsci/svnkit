@@ -26,9 +26,7 @@ import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 public class SVNPlainConnector implements ISVNConnector {
 
     private Socket mySocket;
-
     private OutputStream myOutputStream;
-
     private InputStream myInputStream;
 
     public void open(SVNRepositoryImpl repository) throws SVNException {
@@ -47,15 +45,20 @@ public class SVNPlainConnector implements ISVNConnector {
                 throw new SVNException(ex);
             } finally {
                 mySocket = null;
+                myInputStream = null;
+                myOutputStream = null;
             }
         }
+    }
+    
+    public boolean isConnected(SVNRepositoryImpl repos) throws SVNException {
+        return mySocket != null && mySocket.isConnected();
     }
 
     public InputStream getInputStream() throws IOException {
         if (myInputStream == null) {
             myInputStream = mySocket.getInputStream();
         }
-
         return myInputStream;
     }
 
@@ -63,7 +66,6 @@ public class SVNPlainConnector implements ISVNConnector {
         if (myOutputStream == null) {
             myOutputStream = mySocket.getOutputStream();
         }
-
         return myOutputStream;
     }
 }

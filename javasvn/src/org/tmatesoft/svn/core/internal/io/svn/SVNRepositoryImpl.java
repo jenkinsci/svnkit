@@ -707,11 +707,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     private void openConnection() throws SVNException {
         lock();
-        if (getOptions().keepConnection() && myConnection != null) {
+        if (getOptions().keepConnection(this) && myConnection != null) {
             return;
         }
         ISVNConnector connector = SVNRepositoryFactoryImpl.getConnectorFactory().createConnector(this);
-        myConnection = new SVNConnection(connector, getLocation(), getAuthenticationManager());
+        myConnection = new SVNConnection(connector, this);
         try {
             myConnection.open(this);
             authenticate();
@@ -731,7 +731,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     private void closeConnection() {
-        if (getOptions().keepConnection()) {
+        if (getOptions().keepConnection(this)) {
             unlock();
             return;
         }

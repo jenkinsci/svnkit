@@ -18,7 +18,7 @@ package org.tmatesoft.svn.core.io;
  */
 public interface ISVNSession {
     
-    public boolean keepConnection();
+    public boolean keepConnection(SVNRepository repository);
     
     public void saveCommitMessage(SVNRepository repository, long revision, String message);
 
@@ -27,7 +27,7 @@ public interface ISVNSession {
     public boolean hasCommitMessage(SVNRepository repository, long revision);
     
     public ISVNSession DEFAULT = new ISVNSession() {
-        public boolean keepConnection() {
+        public boolean keepConnection(SVNRepository repository) {
             return false;
         }
         public void saveCommitMessage(SVNRepository repository, long revision, String message) {

@@ -38,8 +38,7 @@ public class SVNJSchConnector implements ISVNConnector {
     private OutputStream myOutputStream;
 
     public void open(SVNRepositoryImpl repository) throws SVNException {
-        ISVNAuthenticationManager authManager = repository
-                .getAuthenticationManager();
+        ISVNAuthenticationManager authManager = repository.getAuthenticationManager();
 
         String realm = repository.getLocation().getProtocol() + "://" + repository.getLocation().getHost();
         if (repository.getLocation().hasPort()) {
@@ -114,16 +113,6 @@ public class SVNJSchConnector implements ISVNConnector {
             }
             throw new SVNException("Failed to open SSH session: " + e.getMessage());
         }
-/*
-        myInputStream = new FilterInputStream(myInputStream) {
-            public void close() {
-            }
-        };
-        myOutputStream = new FilterOutputStream(myOutputStream) {
-            public void close() {
-            }
-        };
-        */
     }
 
     public void close() throws SVNException {
@@ -143,5 +132,9 @@ public class SVNJSchConnector implements ISVNConnector {
 
     public OutputStream getOutputStream() throws IOException {
         return myOutputStream;
+    }
+
+    public boolean isConnected(SVNRepositoryImpl repos) throws SVNException {
+        return true;
     }
 }

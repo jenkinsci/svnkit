@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.xml.sax.helpers.DefaultHandler;
 
 
@@ -43,27 +44,31 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class DAVConnection {
     
-    private SVNURL myLocation;
     private IHTTPConnection myHttpConnection;
     private String myActivityCollectionURL;
     private Map myLocks;
     private boolean myKeepLocks;
     private IHTTPConnectionFactory myConnectionFactory;
+    private SVNRepository myRepository;
     
-    public DAVConnection(IHTTPConnectionFactory connectionFactory, SVNURL location) {
-        myLocation = location;
+    public DAVConnection(IHTTPConnectionFactory connectionFactory, SVNRepository repository) {
+        myRepository = repository;
         myConnectionFactory = connectionFactory;
     }
     
     public SVNURL getLocation() {
-        return myLocation;
+        return myRepository.getLocation();
+    }
+    
+    public void updateLocation() {
+        myActivityCollectionURL = null;
     }
 
     public void open(DAVRepository repository) throws SVNException {
         if (myHttpConnection == null) {
-        	myHttpConnection = myConnectionFactory.createHTTPConnection(myLocation, repository);
+        	myHttpConnection = myConnectionFactory.createHTTPConnection(repository);
             if (repository.getRepositoryUUID() == null) {
-                String path = myLocation.getPath();
+                String path = getLocation().getPath();
                 path = SVNEncodingUtil.uriEncode(path);
                 final DAVResponse[] result = new DAVResponse[1];
                 StringBuffer body = DAVPropertiesHandler.generatePropertiesRequest(null, DAVElement.STARTING_PROPERTIES);
@@ -100,10 +105,10 @@ public class DAVConnection {
                 	root = path;
                 }
                 String url;
-                if (myLocation.toString().lastIndexOf(':') != myLocation.toString().indexOf("://")) {
-                    url = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + root;
+                if (getLocation().toString().lastIndexOf(':') != getLocation().toString().indexOf("://")) {
+                    url = getLocation().getProtocol() + "://" + getLocation().getHost() + ":" + getLocation().getPort() + root;
                 } else {
-                    url = myLocation.getProtocol() + "://" + myLocation.getHost() + root;
+                    url = getLocation().getProtocol() + "://" + getLocation().getHost() + root;
                 }
                 SVNURL rootURL = SVNURL.parseURIEncoded(url);
                 if (uuid == null) {
@@ -288,7 +293,7 @@ public class DAVConnection {
     }
     
     public DAVStatus doMerge(String activityURL, boolean response, DefaultHandler handler) throws SVNException {
-        String locationPath = SVNEncodingUtil.uriEncode(myLocation.getPath());
+        String locationPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
         StringBuffer request = DAVMergeHandler.generateMergeRequest(null, locationPath, activityURL, myLocks);
         Map header = null;
         if (!response || (myLocks != null && !myKeepLocks)) {
@@ -303,7 +308,7 @@ public class DAVConnection {
             value = value.trim();
             header.put("X-SVN-Options", value);
         }
-        return myHttpConnection.request("MERGE", myLocation.getURIEncodedPath(), header, request, handler, null);
+        return myHttpConnection.request("MERGE", getLocation().getURIEncodedPath(), header, request, handler, null);
     }
     
     public DAVStatus doCheckout(String activityPath, String repositoryPath, String path) throws SVNException {
