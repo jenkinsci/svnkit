@@ -70,7 +70,6 @@ class DefaultHTTPConnection implements IHTTPConnection {
 
     private Map myCredentialsChallenge;
     private SVNAuthentication myLastValidAuth;
-    private ISVNProxyManager myProxyAuth;
     private SVNRepository myRepository;
 
     public DefaultHTTPConnection(SVNRepository repos) {
@@ -84,14 +83,14 @@ class DefaultHTTPConnection implements IHTTPConnection {
             String host = location.getHost();
             int port = location.getPort();
             ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
-            myProxyAuth = authManager != null ? authManager.getProxyManager(location) : null;
+            ISVNProxyManager proxyAuth = authManager != null ? authManager.getProxyManager(location) : null;
             ISVNSSLManager sslManager = authManager != null && isSecured() ? authManager.getSSLManager(location) : null;
-            if (myProxyAuth != null && myProxyAuth.getProxyHost() != null) {
-                mySocket = SVNSocketFactory.createPlainSocket(myProxyAuth.getProxyHost(), myProxyAuth.getProxyPort());
+            if (proxyAuth != null && proxyAuth.getProxyHost() != null) {
+                mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort());
                 if (isSecured()) {
                     Map props = new HashMap();
-                    if (myProxyAuth.getProxyUserName() != null && myProxyAuth.getProxyPassword() != null) {
-                        props.put("Proxy-Authorization", getProxyAuthString(myProxyAuth.getProxyUserName(), myProxyAuth.getProxyPassword()));
+                    if (proxyAuth.getProxyUserName() != null && proxyAuth.getProxyPassword() != null) {
+                        props.put("Proxy-Authorization", getProxyAuthString(proxyAuth.getProxyUserName(), proxyAuth.getProxyPassword()));
                     }
                     DAVStatus status = null;
                     try {
@@ -439,14 +438,15 @@ class DefaultHTTPConnection implements IHTTPConnection {
     private static final char[] CRLF = { '\r', '\n' };
     private static final byte[] CRLF_BYTES = { '\r', '\n' };
 
-    private void sendHeader(String method, String path, Map header, InputStream requestBody) throws IOException {
+    private void sendHeader(String method, String path, Map header, InputStream requestBody) throws IOException, SVNException {
         StringBuffer sb = new StringBuffer();
         sb.append(method);
         sb.append(' ');
         
         SVNURL location = myRepository.getLocation();
-        
-        boolean isProxied = myProxyAuth != null; 
+        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
+        ISVNProxyManager proxyAuth = authManager != null ? authManager.getProxyManager(location) : null;
+        boolean isProxied = proxyAuth != null; 
         if (isProxied && !isSecured()) {
             // prepend path with host name.
             sb.append("http://");
@@ -478,8 +478,8 @@ class DefaultHTTPConnection implements IHTTPConnection {
         sb.append(DefaultHTTPConnection.CRLF);
         sb.append("TE: trailers");
         sb.append(DefaultHTTPConnection.CRLF);
-        if (isProxied && !isSecured() && myProxyAuth != null) {
-            sb.append("Proxy-Authorization: " + getProxyAuthString(myProxyAuth.getProxyUserName(), myProxyAuth.getProxyPassword()));
+        if (isProxied && !isSecured() && proxyAuth != null) {
+            sb.append("Proxy-Authorization: " + getProxyAuthString(proxyAuth.getProxyUserName(), proxyAuth.getProxyPassword()));
             sb.append(DefaultHTTPConnection.CRLF);
         }
         boolean chunked = false;
