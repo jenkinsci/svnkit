@@ -18,6 +18,7 @@ import org.tigris.subversion.javahl.CommitMessage;
 import org.tigris.subversion.javahl.DirEntry;
 import org.tigris.subversion.javahl.Info;
 import org.tigris.subversion.javahl.Info2;
+import org.tigris.subversion.javahl.JavaHLObjectFactory;
 import org.tigris.subversion.javahl.LogMessage;
 import org.tigris.subversion.javahl.Notify;
 import org.tigris.subversion.javahl.Notify2;
@@ -28,7 +29,6 @@ import org.tigris.subversion.javahl.Revision;
 import org.tigris.subversion.javahl.SVNClient;
 import org.tigris.subversion.javahl.SVNClientInterface;
 import org.tigris.subversion.javahl.SVNClientLogLevel;
-import org.tigris.subversion.javahl.JavaHLObjectFactory;
 import org.tigris.subversion.javahl.Status;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
@@ -878,6 +878,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public void dispose() {
         SVNJSchSession.shutdown();
+        new DefaultSVNRepositoryFactory(null).shutdownConnections(true);
     }
 
     public void setConfigDirectory(String configDir) throws ClientException {

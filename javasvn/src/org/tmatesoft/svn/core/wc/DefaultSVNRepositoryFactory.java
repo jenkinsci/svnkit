@@ -11,8 +11,10 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -35,6 +37,7 @@ public class DefaultSVNRepositoryFactory implements ISVNRepositoryFactory, ISVNS
     private ISVNAuthenticationManager myAuthManager;
     private boolean myIsKeepConnections;
     private int myPoolMode;
+    
     private Map myPool;
     private static Map ourPool;
 
@@ -50,34 +53,56 @@ public class DefaultSVNRepositoryFactory implements ISVNRepositoryFactory, ISVNS
 
     public synchronized SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {
         SVNRepository repos = null;
-        if (!mayReuse || myPoolMode == NO_POOL) {            
+        Map pool = getPool();
+        if (!mayReuse || pool == null) {            
             repos = SVNRepositoryFactory.create(url, this);
             repos.setAuthenticationManager(myAuthManager);
             return repos;
         }
+        
+        repos = retriveRepository(pool);
+        if (repos != null) {
+            repos.setLocation(url, false);
+        } else {
+            repos = SVNRepositoryFactory.create(url, this);
+            saveRepository(pool, repos);
+        }         
+        repos.setAuthenticationManager(myAuthManager);
+        
+        return repos;
+    }
+
+    public boolean keepConnection(SVNRepository repository) {
+        return myIsKeepConnections;
+    }
+    
+    public synchronized void shutdownConnections(boolean shutdownAll) {
         Map pool = null;
         if (myPoolMode == INSTANCE_POOL) {
             pool = myPool;
         } else if (myPoolMode == RUNTIME_POOL){
             pool = ourPool;
         }
-        if (pool == null) {
-            pool = new WeakHashMap();
+        if (pool != null) {
+            clearPool(pool, shutdownAll);
         }
-        if (pool.containsKey(Thread.currentThread())) {
-            repos = (SVNRepository) pool.get(Thread.currentThread());
-            repos.setLocation(url, false);
-        } 
-        if (repos == null) {
-            repos = SVNRepositoryFactory.create(url, this);
-            pool.put(Thread.currentThread(), repos);
-        } 
-        repos.setAuthenticationManager(myAuthManager);
-        return repos;
     }
-
-    public boolean keepConnection(SVNRepository repository) {
-        return myIsKeepConnections;
+    
+    private Map getPool() {
+        switch (myPoolMode) {
+            case INSTANCE_POOL:
+                if (myPool == null) {
+                    myPool = new HashMap();
+                }
+                return myPool;
+            case RUNTIME_POOL:
+                if (ourPool == null) {
+                    ourPool = new HashMap();
+                }
+                return ourPool;
+            default:
+        }
+        return null;
     }
 
     // no caching in this class
@@ -90,5 +115,35 @@ public class DefaultSVNRepositoryFactory implements ISVNRepositoryFactory, ISVNS
 
     public boolean hasCommitMessage(SVNRepository repository, long revision) {
         return false;
+    }
+    
+    private static void clearPool(Map pool, boolean force) {
+        for (Iterator references = pool.keySet().iterator(); references.hasNext();) {
+            WeakReference reference = (WeakReference) references.next();
+            if (force || reference.get() == null) {
+                SVNRepository repository = (SVNRepository) pool.get(reference);
+                try {
+                    repository.closeSession();
+                } catch (SVNException e) {
+                }
+                references.remove();
+            }
+        }
+    }
+    
+    private static SVNRepository retriveRepository(Map pool) {
+        clearPool(pool, false);
+        for (Iterator references = pool.keySet().iterator(); references.hasNext();) {
+            WeakReference reference = (WeakReference) references.next();
+            if (reference.get() == Thread.currentThread()) {
+                return (SVNRepository) pool.get(reference);
+            } 
+        }
+        return null;
+    }
+
+    private static void saveRepository(Map pool, SVNRepository repository) {
+        clearPool(pool, false);
+        pool.put(new WeakReference(Thread.currentThread()), repository);
     }
 }

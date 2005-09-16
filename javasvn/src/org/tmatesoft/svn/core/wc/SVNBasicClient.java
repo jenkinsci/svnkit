@@ -68,11 +68,12 @@ public class SVNBasicClient implements ISVNEventHandler {
         this(new ISVNRepositoryFactory() {
             public SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {
                 SVNRepository repository = SVNRepositoryFactory.create(url, null);
-                repository.setAuthenticationManager(authManager == null ? 
-                        SVNWCUtil.createDefaultAuthenticationManager() : authManager);
+                repository.setAuthenticationManager(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager);
                 return repository;
             }
-            
+
+            public void shutdownConnections(boolean shutdownAll) {
+            }            
         }, options);
     }
 

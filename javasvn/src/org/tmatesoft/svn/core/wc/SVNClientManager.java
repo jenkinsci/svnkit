@@ -220,6 +220,13 @@ public class SVNClientManager implements ISVNRepositoryFactory {
         repository.setAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
         return repository;
     }
+
+    public void shutdownConnections(boolean shutdownAll) {
+        if (myRepositoryFactory != null) {
+            myRepositoryFactory.shutdownConnections(shutdownAll);
+            
+        }
+    }
     
     /**
      * Returns the run-time configuration options driver
