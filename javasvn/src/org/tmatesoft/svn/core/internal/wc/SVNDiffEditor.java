@@ -261,7 +261,7 @@ public class SVNDiffEditor implements ISVNEditor {
             entry = dir.getEntries().getEntry(fileName, true);
         }
         String displayPath = new File(myWCAccess.getAnchor().getRoot(), myCurrentFile.myPath).getAbsolutePath().replace(File.separatorChar, '/');
-        if (myCurrentFile.myIsAdded) {            
+        if (myCurrentFile.myIsAdded) {
             if (myIsReverseDiff) {
                 // empty->repos
                 String revStr = entry != null ? "(revision "
@@ -455,11 +455,11 @@ public class SVNDiffEditor implements ISVNEditor {
                     myDiffGenerator.displayFileDiff(fullPath, dir.getBaseFile(
                             name, false), tmpFile, rev1, null, mimeType1,
                             mimeType2, result);
-                    if (propDiff != null && propDiff.size() > 0) {
-                        myDiffGenerator.displayPropDiff(fullPath, baseProps,
-                                propDiff, result);
-                    }
                 }
+	            if (propDiff != null && propDiff.size() > 0) {
+	                myDiffGenerator.displayPropDiff(fullPath, baseProps,
+	                        propDiff, result);
+	            }
             } finally {
                 if (tmpFile != null) {
                     tmpFile.delete();
