@@ -60,12 +60,12 @@ public class DefaultSVNRepositoryFactory implements ISVNRepositoryFactory, ISVNS
             return repos;
         }
         
-        repos = retriveRepository(pool);
+        repos = retriveRepository(pool, url.getProtocol());
         if (repos != null) {
             repos.setLocation(url, false);
         } else {
             repos = SVNRepositoryFactory.create(url, this);
-            saveRepository(pool, repos);
+            saveRepository(pool, repos, url.getProtocol());
         }         
         repos.setAuthenticationManager(myAuthManager);
         
@@ -121,29 +121,47 @@ public class DefaultSVNRepositoryFactory implements ISVNRepositoryFactory, ISVNS
         for (Iterator references = pool.keySet().iterator(); references.hasNext();) {
             WeakReference reference = (WeakReference) references.next();
             if (force || reference.get() == null) {
-                SVNRepository repository = (SVNRepository) pool.get(reference);
-                try {
-                    repository.closeSession();
-                } catch (SVNException e) {
+                Map repositoriesMap = (Map) pool.get(reference);
+                for (Iterator repos = repositoriesMap.values().iterator(); repos.hasNext();) {
+                    SVNRepository repo = (SVNRepository) repos.next();
+                    try {
+                        repo.closeSession();
+                    } catch (SVNException e) {
+                    }
+                    repos.remove();
                 }
                 references.remove();
             }
         }
     }
     
-    private static SVNRepository retriveRepository(Map pool) {
+    private static SVNRepository retriveRepository(Map pool, String protocol) {
         clearPool(pool, false);
         for (Iterator references = pool.keySet().iterator(); references.hasNext();) {
             WeakReference reference = (WeakReference) references.next();
             if (reference.get() == Thread.currentThread()) {
-                return (SVNRepository) pool.get(reference);
+                Map repositoriesMap = (Map) pool.get(reference);
+                if (repositoriesMap.containsKey(protocol)) {
+                    return (SVNRepository) repositoriesMap.get(protocol);
+                }
+                return null;
             } 
         }
         return null;
     }
 
-    private static void saveRepository(Map pool, SVNRepository repository) {
+    private static void saveRepository(Map pool, SVNRepository repository, String protocol) {
         clearPool(pool, false);
-        pool.put(new WeakReference(Thread.currentThread()), repository);
+        for (Iterator references = pool.keySet().iterator(); references.hasNext();) {
+            WeakReference reference = (WeakReference) references.next();
+            if (reference.get() == Thread.currentThread()) {
+                Map repositoriesMap = (Map) pool.get(reference);
+                repositoriesMap.put(protocol, repository);
+                return;
+            } 
+        }
+        Map map = new HashMap();
+        map.put(protocol, repository);
+        pool.put(new WeakReference(Thread.currentThread()), map);
     }
 }

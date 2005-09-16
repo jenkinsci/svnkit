@@ -67,6 +67,15 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             closeConnection();
         }
     }
+    
+    public void setLocation(SVNURL url, boolean forceReconnect) throws SVNException {
+        if (!url.equals(myConnection)) {
+            super.setLocation(url, true);
+        } else {
+            super.setLocation(url, forceReconnect);
+        }
+        myRealm = null;
+    }
 
     public long getLatestRevision() throws SVNException {
         Object[] buffer = new Object[] { "get-latest-rev" };
