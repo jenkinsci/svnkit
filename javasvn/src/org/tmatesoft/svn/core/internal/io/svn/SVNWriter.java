@@ -31,8 +31,7 @@ public class SVNWriter {
     private SVNWriter() {
     }
 
-    public static void write(OutputStream os, String templateStr, Object[] src)
-            throws SVNException {
+    public static void write(OutputStream os, String templateStr, Object[] src) throws SVNException {
         StringBuffer template = new StringBuffer(templateStr.length());
         for (int i = 0; i < templateStr.length(); i++) {
             char ch = templateStr.charAt(i);
