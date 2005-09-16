@@ -229,11 +229,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
             buffer[1] = properties;
             buffer = read("[(N(*P)", buffer);
-            revision = buffer[0] != null ? SVNReader.getLong(buffer, 0)
-                    : revision;
+            revision = buffer[0] != null ? SVNReader.getLong(buffer, 0) : revision;
             if (handler != null) {
                 buffer[0] = handler;
                 read("(*D)))", buffer);
+            } else {
+                read("()))", null);
             }
         } finally {
             closeConnection();
@@ -271,6 +272,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             if (handler != null) {
                 buffer[0] = handler;
                 read("(*D)))", buffer);
+            } else {
+                read("()))", null);
             }
             // get comments.
             if (includeComment) {
