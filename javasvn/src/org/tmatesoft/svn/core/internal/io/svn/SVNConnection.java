@@ -152,6 +152,7 @@ class SVNConnection {
                             byte[] response = authenticator.buildChallengeReponse((byte[]) items[1]);
                             try {
                                 getOutputStream().write(response);
+                                getOutputStream().flush();
                             } catch (IOException e) {
                                 throw new SVNException(e);
                             } 

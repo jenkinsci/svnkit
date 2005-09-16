@@ -143,6 +143,6 @@ public class SVNWriter {
         } catch (IOException e) {
             SVNDebugLog.logInfo(e);
             throw new SVNException("error while sending data", e);
-        }
+        } 
     }
 }
