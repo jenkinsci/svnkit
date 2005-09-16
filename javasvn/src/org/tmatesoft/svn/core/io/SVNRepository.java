@@ -161,7 +161,6 @@ public abstract class SVNRepository {
                 closeSession();
                 myRepositoryRoot = null;
                 myRepositoryUUID = null;
-                myPegRevision = -1;
             } else if (url.toString().startsWith(myRepositoryRoot.toString() + "/") || myRepositoryRoot.equals(url)) {
                 // just do nothing
             } else if (url.getProtocol().equals(myRepositoryRoot.getProtocol()) && 
@@ -169,13 +168,12 @@ public abstract class SVNRepository {
                     url.getPort() == myRepositoryRoot.getPort()) {
                 myRepositoryRoot = null;
                 myRepositoryUUID = null;
-                myPegRevision = -1;
             } else {
                 closeSession();
                 myRepositoryRoot = null;
                 myRepositoryUUID = null;
-                myPegRevision = -1;
             }
+            myPegRevision = -1;
             myLocation = url;
         } finally {
             unlock();
@@ -245,7 +243,9 @@ public abstract class SVNRepository {
     }
     
     public long getPegRevision() {
-        return myPegRevision;
+        long pegRev = myPegRevision;
+        myPegRevision = -1;
+        return pegRev;
     }
     
     /**
