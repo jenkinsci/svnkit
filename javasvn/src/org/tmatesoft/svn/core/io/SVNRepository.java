@@ -155,6 +155,13 @@ public abstract class SVNRepository {
     public void setLocation(SVNURL url, boolean forceReconnect) throws SVNException {
         lock();
         try {
+            if (url == null) {
+                return;
+            } else if (!url.getProtocol().equals(myLocation.getProtocol())) {
+                SVNErrorManager.error("svn: SVNRepository.setLocation could not change connection protocol '" + myLocation.getProtocol() + "' to '" + url.getProtocol() + "';\n" +
+                        "svn: Create another SVNRepository instance instead");
+            }
+            
             if (forceReconnect || myRepositoryRoot == null) {
                 closeSession();
                 myRepositoryRoot = null;
