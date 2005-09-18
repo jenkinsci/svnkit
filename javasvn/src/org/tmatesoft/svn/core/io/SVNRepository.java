@@ -772,8 +772,12 @@ public abstract class SVNRepository {
      * @see 					ISVNReporter
      * @see 					ISVNEditor
 	 */
-    public abstract void diff(SVNURL url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     public abstract void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
+    
+    /**
+     * @deprecated use diff with 'targetRevision' parameter instead
+     */
+    public abstract void diff(SVNURL url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
      * Asks the Repository Access (RA) Layer to update a working copy.

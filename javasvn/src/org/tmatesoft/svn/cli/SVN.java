@@ -56,6 +56,10 @@ public class SVN {
                 } catch (SVNException e) {
                     System.err.println(e.getMessage());
                     SVNDebugLog.logInfo(e);
+                } finally {
+                    if (command.getClientManager() != null) {
+                        command.getClientManager().shutdownConnections(true);
+                    }
                 }
             } else {
                 System.err.println("error: unknown command name '" + commandName + "'");
@@ -64,7 +68,7 @@ public class SVN {
         } catch (Throwable th) {
             SVNDebugLog.logInfo(th);
             System.exit(-1);
-        }
+        }   
         System.exit(0);
     }
  }

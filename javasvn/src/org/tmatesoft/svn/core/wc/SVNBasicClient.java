@@ -65,16 +65,8 @@ public class SVNBasicClient implements ISVNEventHandler {
     private boolean myIsLeaveConflictsUnresolved;
 
     protected SVNBasicClient(final ISVNAuthenticationManager authManager, ISVNOptions options) {
-        this(new ISVNRepositoryFactory() {
-            public SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {
-                SVNRepository repository = SVNRepositoryFactory.create(url, null);
-                repository.setAuthenticationManager(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager);
-                return repository;
-            }
-
-            public void shutdownConnections(boolean shutdownAll) {
-            }            
-        }, options);
+        this(new DefaultSVNRepositoryFactory(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager, 
+                true, DefaultSVNRepositoryFactory.RUNTIME_POOL), options);
     }
 
     protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
