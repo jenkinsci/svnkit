@@ -38,80 +38,88 @@ public class SVNJSchConnector implements ISVNConnector {
     private OutputStream myOutputStream;
 
     public void open(SVNRepositoryImpl repository) throws SVNException {
-        ISVNAuthenticationManager authManager = repository.getAuthenticationManager();
-
-        String realm = repository.getLocation().getProtocol() + "://" + repository.getLocation().getHost();
-        if (repository.getLocation().hasPort()) {
-            realm += ":" + repository.getLocation().getPort();
-        }
-        SVNSSHAuthentication authentication = (SVNSSHAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
-        SVNAuthenticationException lastException = null;
-        Session session = null;
-
-        while (authentication != null) {
-            try {
-                session = SVNJSchSession.getSession(repository.getLocation(), authentication);
-                if (session != null && !session.isConnected()) {
-                    session = null;
-                    continue;
-                }
-                lastException = null;
-                authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
-                repository.setExternalUserName(authentication.getUserName());
-                break;
-            } catch (SVNAuthenticationException e) {
-                if (session != null && session.isConnected()) {
-                    session.disconnect();
-                    session = null;
-                }
-                lastException = e;
-                if (e.getMessage() != null  && e.getMessage().toLowerCase().indexOf("auth") >= 0) {
-                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getMessage(), authentication);
-                    authentication = (SVNSSHAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
-                } else {
-                    throw e;
-                }
+        int sessionRetry = 1;
+        while (true) {
+            ISVNAuthenticationManager authManager = repository.getAuthenticationManager();
+    
+            String realm = repository.getLocation().getProtocol() + "://" + repository.getLocation().getHost();
+            if (repository.getLocation().hasPort()) {
+                realm += ":" + repository.getLocation().getPort();
             }
-        }
-        if (lastException != null || session == null) {
-            if (lastException != null) {
-                throw lastException;
-            }
-            throw new SVNAuthenticationException(
-                    "Can't establish SSH connection without credentials");
-        }
-        try {
-            int retry = 1;
-            while (true) {
-                myChannel = (ChannelExec) session.openChannel(CHANNEL_TYPE);
-                String command = SVNSERVE_COMMAND;
-                myChannel.setCommand(command);
-
-                myOutputStream = myChannel.getOutputStream();
-                myInputStream = myChannel.getInputStream();
-
+            SVNSSHAuthentication authentication = (SVNSSHAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
+            SVNAuthenticationException lastException = null;
+            Session session = null;
+    
+            while (authentication != null) {
                 try {
-                    myChannel.connect();
-                } catch (Throwable e) {
-                    SVNDebugLog.logInfo(e);
-                    retry--;
-                    if (retry < 0) {
-                        throw new SVNException(e);
+                    session = SVNJSchSession.getSession(repository.getLocation(), authentication);
+                    if (session != null && !session.isConnected()) {
+                        session = null;
+                        continue;
                     }
-                    if (session.isConnected()) {
+                    lastException = null;
+                    authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
+                    repository.setExternalUserName(authentication.getUserName());
+                    break;
+                } catch (SVNAuthenticationException e) {
+                    if (session != null && session.isConnected()) {
                         session.disconnect();
+                        session = null;
                     }
+                    lastException = e;
+                    if (e.getMessage() != null  && e.getMessage().toLowerCase().indexOf("auth") >= 0) {
+                        authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getMessage(), authentication);
+                        authentication = (SVNSSHAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+            if (lastException != null || session == null) {
+                if (lastException != null) {
+                    throw lastException;
+                }
+                throw new SVNAuthenticationException(
+                        "Can't establish SSH connection without credentials");
+            }
+            try {
+                int retry = 1;
+                while (true) {
+                    myChannel = (ChannelExec) session.openChannel(CHANNEL_TYPE);
+                    String command = SVNSERVE_COMMAND;
+                    myChannel.setCommand(command);
+    
+                    myOutputStream = myChannel.getOutputStream();
+                    myInputStream = myChannel.getInputStream();
+    
+                    try {
+                        myChannel.connect();
+                    } catch (Throwable e) {
+                        SVNDebugLog.logInfo(e);
+                        retry--;
+                        if (retry < 0) {
+                            throw new SVNException(e);
+                        }
+                        if (session.isConnected()) {
+                            session.disconnect();
+                        }
+                        continue;
+                    }
+                    break;
+                }
+            } catch (Throwable e) {
+                SVNDebugLog.logInfo(e);
+                close();
+                if (session.isConnected()) {
+                    session.disconnect();
+                }
+                if (sessionRetry > 0) {
+                    sessionRetry--;
                     continue;
                 }
-                break;
+                throw new SVNException("Failed to open SSH session: " + e.getMessage());
             }
-        } catch (Throwable e) {
-            SVNDebugLog.logInfo(e);
-            close();
-            if (session.isConnected()) {
-                session.disconnect();
-            }
-            throw new SVNException("Failed to open SSH session: " + e.getMessage());
+            break;
         }
     }
 
