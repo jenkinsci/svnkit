@@ -1252,6 +1252,9 @@ public class SVNWCClient extends SVNBasicClient {
                         if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
                             SVNFileUtil.setReadonly(wcAccess.getAnchor().getFile(entry.getName()), false);
                         }
+                        if (wcAccess.getAnchor().getProperties(entry.getName(), false).getPropertyValue(SVNProperty.EXECUTABLE) != null) {
+                            SVNFileUtil.setExecutable(wcAccess.getAnchor().getFile(entry.getName()), true);
+                        }
                         wcAccess.getAnchor().getEntries().save(true);
                         wcAccess.getAnchor().getEntries().close();
                         handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCKED, lock, null),
