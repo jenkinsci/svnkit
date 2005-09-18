@@ -324,8 +324,12 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
         return -1;
     }
-    
+
     protected SVNRepository createRepository(SVNURL url, File path, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
+        return createRepository(url, path, pegRevision, revision, null);
+    }
+    
+    protected SVNRepository createRepository(SVNURL url, File path, SVNRevision pegRevision, SVNRevision revision, long[] pegRev) throws SVNException {
         if (url == null) {
             SVNURL pathURL = getURL(path);
             if (pathURL == null) {
@@ -364,7 +368,9 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (actualRevision < 0) {
             actualRevision = repository.getLatestRevision();
         }
-        repository.setPegRevision(actualRevision);
+        if (pegRev != null && pegRev.length > 0) {
+            pegRev[0] = actualRevision;
+        }
         return repository;
     }
     

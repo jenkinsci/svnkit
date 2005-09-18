@@ -120,7 +120,6 @@ public abstract class SVNRepository {
     private int myLockCount;
     private Thread myLocker;
     private ISVNAuthenticationManager myAuthManager;
-    private long myPegRevision;
     private ISVNSession myOptions;
 
     /**
@@ -137,7 +136,6 @@ public abstract class SVNRepository {
      */
     protected SVNRepository(SVNURL location, ISVNSession options) {
         myLocation = location;
-        myPegRevision = -1;
         myOptions = options;
     }
 	
@@ -173,7 +171,6 @@ public abstract class SVNRepository {
                 myRepositoryRoot = null;
                 myRepositoryUUID = null;
             }
-            myPegRevision = -1;
             myLocation = url;
         } finally {
             unlock();
@@ -236,16 +233,6 @@ public abstract class SVNRepository {
 
     public ISVNAuthenticationManager getAuthenticationManager() {
         return myAuthManager;
-    }
-    
-    public void setPegRevision(long revision) {
-        myPegRevision = revision;
-    }
-    
-    public long getPegRevision() {
-        long pegRev = myPegRevision;
-        myPegRevision = -1;
-        return pegRev;
     }
     
     /**

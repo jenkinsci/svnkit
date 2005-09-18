@@ -402,12 +402,12 @@ public class SVNLogClient extends SVNBasicClient {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
-        SVNRepository repos = createRepository(url, null, pegRevision, revision);
-        long rev = repos.getPegRevision();
-        if (rev < 0) {
-            rev = getRevisionNumber(revision, repos, null);
+        long[] pegRev = new long[] {-1};
+        SVNRepository repos = createRepository(url, null, pegRevision, revision, pegRev);
+        if (pegRev[0] < 0) {
+            pegRev[0] = getRevisionNumber(revision, repos, null);
         }
-        doList(repos, rev, handler, recursive);
+        doList(repos, pegRev[0], handler, recursive);
     }
 
     private void doList(SVNRepository repos, long rev, ISVNDirEntryHandler handler, boolean recursive) throws SVNException {

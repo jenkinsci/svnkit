@@ -513,7 +513,7 @@ class DAVRepository extends SVNRepository {
     }
 
     public void diff(SVNURL url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        diff(url, revision, getPegRevision(), target, ignoreAncestry, recursive, reporter, editor);
+        diff(url, revision, revision, target, ignoreAncestry, recursive, reporter, editor);
     }
     
     public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
