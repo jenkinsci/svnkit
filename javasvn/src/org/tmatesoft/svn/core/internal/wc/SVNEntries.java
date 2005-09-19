@@ -130,7 +130,7 @@ public class SVNEntries {
         File tmpFile = new File(myFile.getParentFile(), "tmp/entries");
         Map rootEntry = (Map) myData.get("");
         try {
-            os = new OutputStreamWriter(new FileOutputStream(tmpFile), "UTF-8");
+            os = new OutputStreamWriter(SVNFileUtil.openFileForWriting(tmpFile), "UTF-8");
             os.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
             os.write("<wc-entries\n");
             os.write("   xmlns=\"svn:\">\n");
@@ -191,14 +191,9 @@ public class SVNEntries {
             tmpFile.delete();
             SVNErrorManager.error("svn: Cannot save entries file '" + myFile + "'");
         } finally {
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (IOException e) {
-                    //
-                }
-            }
+            SVNFileUtil.closeFile(os);
         }
+        
         SVNFileUtil.rename(tmpFile, myFile);
         SVNFileUtil.setReadonly(myFile, true);
         if (close) {
