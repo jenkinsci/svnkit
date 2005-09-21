@@ -111,38 +111,47 @@ public class SVNFileUtil {
     }
 
     public static void rename(File src, File dst) throws SVNException {
-        boolean renamed = src.renameTo(dst);
-        if (renamed) {
-            return;
-        }
         if (!src.exists() && !isSymlink(src)) {
-            SVNErrorManager.error("svn: Cannot rename file '"
-                    + src.getAbsolutePath() + "' : file doesn't exist");
+            SVNErrorManager.error("svn: Cannot rename file '" + src.getAbsolutePath() + "' : file does not exist");
         }
         if (dst.isDirectory()) {
-            SVNErrorManager.error("svn: Cannot overwrite file '"
-                    + dst.getAbsolutePath() + "' : it is a directory");
+            SVNErrorManager.error("svn: Cannot overwrite file '" + dst.getAbsolutePath() + "' : it is a directory");
+        }
+        boolean renamed = false;
+        if (!isWindows) {
+            renamed = src.renameTo(dst);
+        } else {
+            boolean wasRO = dst.exists() && !dst.canWrite();
+            setReadonly(src, false);
+            setReadonly(dst, false);
+            // use special loop on windows.
+            int retries = 100;
+            long delay = 1;
+            while(retries > 0) {
+                if (src.renameTo(dst)) {
+                    if (wasRO) {
+                        dst.setReadOnly();
+                    }
+                    return;
+                }
+                try {
+                    Thread.sleep(delay*100);
+                } catch (InterruptedException e) {
+                }
+                if (delay < 128) {
+                    delay = delay * 2;
+                }
+                retries--;            
+            }
         }
         if (!renamed) {
-            if (dst.exists()) {
-                boolean deleted = dst.delete();
-                if (!deleted && dst.exists()) {
-                    SVNErrorManager.error("svn: Cannot overwrite file '"
-                            + dst.getAbsolutePath() + "'");
-                }
-            }
-            if (!src.renameTo(dst)) {
-                SVNErrorManager.error("svn: Cannot rename file '"
-                        + src.getAbsolutePath() + "'");
-            }
+            SVNErrorManager.error("svn: Cannot rename file '" + src.getAbsolutePath() + "'");
         }
     }
 
-    public static boolean setReadonly(File file, boolean readonly)
-            throws SVNException {
+    public static boolean setReadonly(File file, boolean readonly) throws SVNException {
         if (!file.exists()) {
-            SVNErrorManager.error("svn: Cannot change file RO state '"
-                    + file.getAbsolutePath() + "' : file doesn't exist");
+            SVNErrorManager.error("svn: Cannot change file RO state '" + file.getAbsolutePath() + "' : file doesn't exist");
         }
         if (readonly) {
             return file.setReadOnly();
@@ -150,9 +159,20 @@ public class SVNFileUtil {
         if (file.canWrite()) {
             return true;
         }
-        File tmpFile = createUniqueFile(file.getParentFile(), file.getName(), ".tmp");
-        copyFile(file, tmpFile, false);
-        rename(tmpFile, file);
+        try {
+            if (isWindows) {
+                Process p = Runtime.getRuntime().exec("attrib -R \"" + file.getAbsolutePath() + "\"");
+                if (p != null) {
+                    p.waitFor();
+                }
+            } else {
+                // may be only set those attribtues that corresponds caller's u/gid.
+                execCommand(new String[] { "chmod", "ugo+w", file.getAbsolutePath() });
+            }
+        } catch (Throwable th) {
+            SVNDebugLog.logInfo(th);
+            return false;
+        }
         return true;
     }
 
@@ -161,8 +181,7 @@ public class SVNFileUtil {
             return;
         }
         try {
-            execCommand(new String[] { "chmod", executable ? "ugo+x" : "ugo-x",
-                    file.getAbsolutePath() });
+            execCommand(new String[] { "chmod", executable ? "ugo+x" : "ugo-x", file.getAbsolutePath() });
         } catch (Throwable th) {
             SVNDebugLog.logInfo(th);
         }
@@ -422,7 +441,6 @@ public class SVNFileUtil {
       catch (SVNException e) {
         // should never happen as cancell handler is null.
       }
-
     }
 
     public static void deleteAll(File dir, boolean deleteDirs, ISVNEventHandler cancelBaton) throws SVNException {
@@ -445,13 +463,38 @@ public class SVNFileUtil {
         if (dir.isDirectory() && !deleteDirs) {
             return;
         }
-        dir.delete();
+        deleteFile(dir);
+    }
+    
+    public static void deleteFile(File file) {
+        if (!isWindows || file.isDirectory() || !file.exists()) {
+            file.delete();
+            return;
+        }
+        // use special loop on windows.
+        int retries = 100;
+        long delay = 1;
+        while(retries > 0) {
+            if (file.delete()) {
+                return;
+            }
+            if (!file.exists()) {
+                return;
+            }
+            try {
+                Thread.sleep(delay*100);
+            } catch (InterruptedException e) {
+            }
+            if (delay < 128) {
+                delay = delay * 2;
+            }
+            retries--;            
+        }
     }
 
     private static String readSingleLine(File file) throws IOException {
         if (!file.isFile() || !file.canRead()) {
-            throw new IOException("can't open file '" + file.getAbsolutePath()
-                    + "'");
+            throw new IOException("can't open file '" + file.getAbsolutePath() + "'");
         }
         BufferedReader reader = null;
         String line = null;
