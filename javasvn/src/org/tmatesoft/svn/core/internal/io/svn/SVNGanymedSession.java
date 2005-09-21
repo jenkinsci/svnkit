@@ -19,6 +19,7 @@ import java.io.StringWriter;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNException;
@@ -134,6 +135,19 @@ public class SVNGanymedSession {
                 }
             }
             ourConnectionsPool.clear();
+        }
+    }
+
+    public static void closeConnection(Connection connection) {
+        if (connection != null) {
+            connection.close();
+            for (Iterator connections = ourConnectionsPool.entrySet().iterator(); connections.hasNext();) {
+                Entry current = (Entry) connections.next();
+                if (current.getValue() == connection) {
+                    connections.remove();
+                    return;
+                }
+            }
         }
     }
 }

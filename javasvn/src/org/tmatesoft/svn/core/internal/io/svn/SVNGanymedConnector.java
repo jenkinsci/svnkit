@@ -45,39 +45,51 @@ public class SVNGanymedConnector implements ISVNConnector {
         if (repository.getLocation().hasPort()) {
             realm += ":" + repository.getLocation().getPort();
         }        
-        SVNSSHAuthentication authentication = (SVNSSHAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
-        Connection connection = null;
 
-        while (authentication != null) {
-            try {
-                connection = SVNGanymedSession.getConnection(repository.getLocation(), authentication);
-                if (connection == null) {
-                    SVNErrorManager.error("svn: Connection to '" + realm + "'failed");
+        int reconnect = 1;
+        while(true) {
+            SVNSSHAuthentication authentication = (SVNSSHAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
+            Connection connection = null;
+            
+            while (authentication != null) {
+                try {
+                    connection = SVNGanymedSession.getConnection(repository.getLocation(), authentication);
+                    if (connection == null) {
+                        SVNErrorManager.error("svn: Connection to '" + realm + "'failed");
+                    }
+                    authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
+                    repository.setExternalUserName(authentication.getUserName());
+                    break;
+                } catch (SVNAuthenticationException e) {
+                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getMessage(), authentication);
+                    authentication = (SVNSSHAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
+                    connection = null;
                 }
-                authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
-                repository.setExternalUserName(authentication.getUserName());
-                break;
-            } catch (SVNAuthenticationException e) {
-                authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getMessage(), authentication);
-                authentication = (SVNSSHAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
-                connection = null;
             }
-        }
-        if (authentication == null) {
-            throw new SVNAuthenticationException("svn: Authenticantion cancelled");
-        } else if (connection == null) {
-            SVNErrorManager.error("svn: Connection to '" + realm + "' failed");
-        }
-        try {
-            mySession = connection.openSession();
-            mySession.execCommand(SVNSERVE_COMMAND);
-
-            myOutputStream = mySession.getStdin();
-            myInputStream = new StreamGobbler(mySession.getStdout());
-        } catch (IOException e) {
-            SVNDebugLog.logInfo(e);
-            close();
-            SVNErrorManager.error("svn: Connection to '" + realm + "' failed\nsvn: Could not open SSH session: " + e.getMessage());
+            if (authentication == null) {
+                throw new SVNAuthenticationException("svn: Authenticantion cancelled");
+            } else if (connection == null) {
+                SVNErrorManager.error("svn: Connection to '" + realm + "' failed");
+            }
+            try {
+                mySession = connection.openSession();
+                mySession.execCommand(SVNSERVE_COMMAND);
+    
+                myOutputStream = mySession.getStdin();
+                myInputStream = new StreamGobbler(mySession.getStdout());
+                return;
+            } catch (IOException e) {
+                reconnect--;
+                if (reconnect >= 0) {
+                    // try again, but close session first.
+                    SVNGanymedSession.closeConnection(connection);
+                    connection = null;
+                    continue;
+                }
+                SVNDebugLog.logInfo(e);
+                close();
+                SVNErrorManager.error("svn: Connection to '" + realm + "' failed\nsvn: Could not open SSH session: " + e.getMessage());
+            }
         }
     }
 
