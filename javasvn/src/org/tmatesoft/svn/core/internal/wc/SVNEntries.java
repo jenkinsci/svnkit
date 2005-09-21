@@ -12,7 +12,6 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;

@@ -12,10 +12,8 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -31,6 +29,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.IMeasurable;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 
 /**
@@ -137,7 +136,11 @@ class DAVResource {
             return new MeasurableStream(myMediator.getTemporaryLocation(new Integer(i)), length);
         }
         File file = (File) myDeltaFiles.get(i);
-        return new MeasurableStream(new BufferedInputStream(new FileInputStream(file)), file.length());
+        try {
+            return new MeasurableStream(SVNFileUtil.openFileForReading(file), file.length());
+        } catch (SVNException e) {
+            throw new IOException(e.getMessage());
+        }
     }
     
     public void dispose() {
