@@ -73,7 +73,7 @@ public class DefaultSVNRepositoryFactory implements ISVNRepositoryFactory, ISVNS
     }
 
     public boolean keepConnection(SVNRepository repository) {
-        return myIsKeepConnections;
+        return myIsKeepConnections && !"svn+ssh".equals(repository.getLocation().getProtocol());
     }
     
     public synchronized void shutdownConnections(boolean shutdownAll) {

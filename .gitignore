@@ -10,5 +10,6 @@ javasvn-test/test.properties
 /javasvn.iws
 javasvn/bin
 javasvn/src/org/tmatesoft/svn/examples
+javasvn/src/org/tmatesoft/svn/util/SVNTest.java
 /lib
 www/download/results.html
