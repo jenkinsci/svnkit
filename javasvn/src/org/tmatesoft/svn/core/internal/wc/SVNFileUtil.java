@@ -128,12 +128,14 @@ public class SVNFileUtil {
             int retries = 100;
             long delay = 1;
             while(retries > 0) {
+                dst.delete();
                 if (src.renameTo(dst)) {
                     if (wasRO) {
                         dst.setReadOnly();
                     }
                     return;
                 }
+                SVNDebugLog.logInfo("file: retrying to rename file " + src + " to " + dst);
                 try {
                     Thread.sleep(delay*100);
                 } catch (InterruptedException e) {
@@ -149,9 +151,9 @@ public class SVNFileUtil {
         }
     }
 
-    public static boolean setReadonly(File file, boolean readonly) throws SVNException {
+    public static boolean setReadonly(File file, boolean readonly) {
         if (!file.exists()) {
-            SVNErrorManager.error("svn: Cannot change file RO state '" + file.getAbsolutePath() + "' : file doesn't exist");
+            return false;
         }
         if (readonly) {
             return file.setReadOnly();
@@ -160,14 +162,19 @@ public class SVNFileUtil {
             return true;
         }
         try {
-            if (isWindows) {
-                Process p = Runtime.getRuntime().exec("attrib -R \"" + file.getAbsolutePath() + "\"");
-                if (p != null) {
-                    p.waitFor();
-                }
+            if (file.length() < 1024*100) {
+                // faster way for small files.
+                File tmp = createUniqueFile(file.getParentFile(), file.getName(), ".ro");
+                copyFile(file, tmp, false);
+                copyFile(tmp, file, false);
+                deleteFile(tmp);
             } else {
-                // may be only set those attribtues that corresponds caller's u/gid.
-                execCommand(new String[] { "chmod", "ugo+w", file.getAbsolutePath() });
+                if (isWindows) {
+                    Process p = Runtime.getRuntime().exec("attrib -R \"" + file.getAbsolutePath() + "\"");
+                    p.waitFor();
+                } else {
+                    execCommand(new String[] { "chmod", "ugo+w", file.getAbsolutePath() });
+                }
             }
         } catch (Throwable th) {
             SVNDebugLog.logInfo(th);
@@ -238,8 +245,7 @@ public class SVNFileUtil {
             dstChannel = new FileOutputStream(tmpDst).getChannel();
             long count = srcChannel.size();
             while (count > 0) {
-                count -= dstChannel.transferFrom(srcChannel, 0, srcChannel
-                        .size());
+                count -= dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
             }
         } catch (IOException e) {
             SVNErrorManager.error("svn: Cannot copy file '" + src + "' to '" + dst + "'");
@@ -481,6 +487,7 @@ public class SVNFileUtil {
             if (!file.exists()) {
                 return;
             }
+            setReadonly(file, false);
             try {
                 Thread.sleep(delay*100);
             } catch (InterruptedException e) {

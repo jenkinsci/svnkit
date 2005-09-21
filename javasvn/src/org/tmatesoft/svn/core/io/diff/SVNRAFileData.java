@@ -93,11 +93,7 @@ public class SVNRAFileData implements ISVNRAData {
                 myRawFile.getParentFile().mkdirs();
                 myRawFile.createNewFile();
             } else if (!myIsReadonly) {
-                try {
-                    SVNFileUtil.setReadonly(myRawFile, false);
-                } catch (SVNException e) {
-                    //
-                }
+                SVNFileUtil.setReadonly(myRawFile, false);
             }
             myFile = new RandomAccessFile(myRawFile, myIsReadonly ? "r" : "rw");
         }
