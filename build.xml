@@ -30,6 +30,7 @@
 
         <path id="library.classpath">
             <pathelement location="contrib/jsch/jsch.jar" />
+            <pathelement location="contrib/ganymed/ganymed.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
             <fileset dir="contrib/httpclient">
@@ -54,6 +55,7 @@
 	<target name="compile-library-eclipse" depends="init-environment" if="eclipse.present"> 
         <path id="library-eclipse.classpath">
             <pathelement location="contrib/jsch/jsch.jar" />
+            <pathelement location="contrib/ganymed/ganymed.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
             <pathelement path="${eclipse.runtime}" />
@@ -87,6 +89,7 @@
         <path id="eclipse.classpath">
             <pathelement path="build/lib/javasvn.jar" />
             <pathelement path="build/lib/jsch.jar" />
+            <pathelement path="build/lib/ganymed.jar" />
             <pathelement path="${eclipse.runtime}" />
             <pathelement path="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0.jar" />
         </path>
@@ -103,6 +106,7 @@
         <mkdir dir="javasvn-test/bin" />
         <path id="tests.classpath">
             <pathelement location="contrib/jsch/jsch.jar" />
+            <pathelement location="contrib/jsch/ganymed.jar" />
             <pathelement location="contrib/junit/junit.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
@@ -161,6 +165,7 @@
             </fileset>
         </jar>
         <copy file="contrib/jsch/jsch.jar" todir="build/lib" />
+        <copy file="contrib/ganymed/ganymed.jar" todir="build/lib" />
         <copy todir="build/lib" >
             <fileset dir="contrib/httpclient">
                 <include name="*.jar"/>
@@ -174,6 +179,7 @@
                 <include name="contrib/javahl/JAVAHL-LICENSE" />
                 <include name="contrib/sequence/SEQUENCE-LICENSE" />
                 <include name="contrib/jsch/JSCH-LICENSE" />
+                <include name="contrib/ganymed/GANYMED-LICENSE" />
                 <include name="contrib/httpclient/HTTPCLIENT-LICENSE" />
             </fileset>
         </copy>
@@ -228,6 +234,7 @@
                 <include name="changelog.txt" />
                 <include name="COPYING" />
                 <include name="JSCH-LICENSE" />
+                <include name="GANYMED-LICENSE" />
                 <include name="SEQUENCE-LICENSE" />
                 <include name="JAVAHL-LICENSE" />
                 <include name="HTTPCLIENT-LICENSE" />
@@ -425,6 +432,7 @@
 
         <path id="library.classpath">
             <pathelement location="contrib/jsch/jsch.jar" />
+            <pathelement location="contrib/ganymed/ganymed.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
         </path>
@@ -445,6 +453,7 @@
         <mkdir dir="javasvn-test/bin" />
         <path id="tests.classpath">
             <pathelement location="contrib/jsch/jsch.jar" />
+            <pathelement location="contrib/ganymed/ganymed.jar" />
             <pathelement location="contrib/junit/junit.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />

@@ -2,6 +2,9 @@
 /.options eol=lf
 /COPYING eol=lf
 /changelog.txt eol=lf
+contrib/ganymed/GANYMED-LICENSE -text
+contrib/ganymed/ganymed.jar -text
+contrib/ganymed/ganymedsrc.zip -text
 contrib/httpclient/HTTPCLIENT-LICENSE eol=lf
 contrib/httpclient/commons-codec-1.3.jar -text
 contrib/httpclient/commons-httpclient-3.0-rc3.jar -text

@@ -14,5 +14,6 @@
 	<classpathentry kind="lib" path="contrib/httpclient/commons-codec-1.3.jar"/>
 	<classpathentry sourcepath="contrib/httpclient/commons-httpclient-3.0-rc3.src.zip" kind="lib" path="contrib/httpclient/commons-httpclient-3.0-rc3.jar"/>
 	<classpathentry kind="lib" path="contrib/httpclient/commons-logging.jar"/>
+	<classpathentry sourcepath="contrib/ganymed/ganymedsrc.zip" kind="lib" path="contrib/ganymed/ganymed.jar"/>
 	<classpathentry kind="output" path="javasvn/bin"/>
 </classpath>
