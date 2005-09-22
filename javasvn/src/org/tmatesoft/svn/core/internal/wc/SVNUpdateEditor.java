@@ -156,6 +156,8 @@ public class SVNUpdateEditor implements ISVNEditor {
         if (dir == null) {
             SVNErrorManager.error("svn: Failed to add directory '" + path + "': directory is missing or not locked");
         } else {
+            dir.getEntries().getEntry("", false).setIncomplete(true);
+            dir.getEntries().save(true);
             dir.lock();
         }
         myWCAccess.handleEvent(SVNEventFactory.createUpdateAddEvent(myWCAccess, parentDir, SVNNodeKind.DIR, entry));
