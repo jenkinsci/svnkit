@@ -14,69 +14,39 @@
 <div class="leftedge" >
 <div class="rightedge">
 
-<table  cellpadding="0" align="center" width="870" style="height: 1000px" border="0"  cellspacing="0">
+<table  cellpadding="0" align="center" width="870" style="height: 900px" border="0"  cellspacing="0">
 <tr align="center" valign="top">
-<td align="left" valign="top" style="padding: 20px 20px 20px 20px;">
+<td align="left" valign="top" style="padding: 3px 20px 20px 20px;">
 
-<p>
-<span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
-</p>
-<p><div style="border-bottom: 1px solid rgb(51, 102, 153);"></div></p>
-<!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: Configuring JavaSVN</small>-->
-
-<table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
-<tr style="height: 10px;">
-
-<td width="60%" valign="top" align="center">
-</td>
-
-<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
-<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
-</td>
-
-<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
-<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
-</td>
-
-<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
-<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
-</td>
-
-<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial;">
-<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
-</td>
-</tr>
-</table>
-
-<!--
-<table border=0 cellpadding="0" cellspacing="0" style="width: 100%;">
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
 <tr>
-<td>
-<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img src="../img/javasvn_logo.png" border=0 align=bottom></a>
+<td rowspan="2" colspan="1" width="50%">
+<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img width="415" height="97" src="../img/javasvn_logo.png" border="0"></a>
 </td>
-
-<td align="right">
-<span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
-
-<table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
+<td rowspan="1" colspan="1" width="50%" style="font-style: italic; font-size: 17px; padding-left: 15px" align="left" valign="center">
+The only pure Java Subversion library in the world!
+</td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" align="left" valign="bottom" style="padding-right: 0px; padding-bottom: 12px; padding-left: 5px">
+<!--<span style="font-size: 140%; font-weight: bold;">Pure Java Subversion client library</span>-->
+<!--<hr color="#336699" style="padding-top: 20px" size="5"/>-->
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
 <tr style="height: 10px;">
 
-<td width="40%" valign="top" align="center">
-</td>
-
-<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
 <a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
 </td>
 
-<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
 <a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
 </td>
 
-<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<td valign="top" align="center" style="font: normal bold 17px/17px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
 <a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
 </td>
 
-<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial;">
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial;">
 <a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
 </td>
 </tr>
@@ -84,7 +54,6 @@
 </td>
 </tr>
 </table>
--->
 
 <h1>Using JavaSVN in Multithreaded Environment</h1>
 <!--<p>
@@ -127,11 +96,19 @@ When using JavaSVN in multithreaded applications one can have questions like the
 <b>Q: Can I use one SVNRepository object in multiple threads? Is SVNRepository thread-safe?</b>
 </p>
 <p>
-<b>A:</b> No, you'd better not use one <code>SVNRepository</code> object in multiple threads. It's not thread
-safe. So, for every thread you have to instantiate a separate <code>SVNRepository</code> driver, since the repository 
+<b>A:</b> No, you'd better not use one <code>SVNRepository</code> object in multiple threads. It may appear not thread
+safe. So, for every thread you have to instantiate a separate <code>SVNRepository</code> driver.
+</p>
+<p>
+Another thing you should be aware about <code>SVNRepository</code> is that you can not call its methods
+from within those handlers that are provided to its methods (like those <code>ISVNDirEntryHandler</code>, 
+<code>ISVNReposrterBaton</code>, etc.), since the repository 
 access methods of <code>SVNRepository</code> are not reenterable, i.e. if 
-an operation has been started (calling a method of an <code>SVNRepository</code> object), it must be already 
-finished  before invoking the next operation.
+an operation has been started, it must be already finished  before invoking the next operation.
+</p>
+<p>
+The same is for committing (<code>getCommitEditor()</code>): you must not make calls to your <code>SVNRepository</code> until you
+finish editing with calling an editor's <code>closeEdit()</code> method.
 </p>
 <br />
 <p>
