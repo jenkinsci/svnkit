@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -546,7 +547,11 @@ public class SVNUpdateEditor implements ISVNEditor {
         for (Iterator children = childDirectories.keySet().iterator(); children.hasNext();) {
             SVNDirectory child = (SVNDirectory) children.next();
             String childURL = (String) childDirectories.get(child);
-            bumpDirectory(child, childURL);
+            if (child != null) {
+                bumpDirectory(child, childURL);
+            } else {
+                SVNDebugLog.logInfo("svn: Directory object is null in bump directories method");
+            }
         }
     }
 
