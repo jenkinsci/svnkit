@@ -77,6 +77,10 @@ public class SVNEntries {
                     continue;
                 }
                 if (entry != null) {
+                    if (line.indexOf('=') <= 0 || line.indexOf('\"') <= 0 || 
+                            line.indexOf('\"') == line.lastIndexOf('\"')) {
+                        continue;
+                    }
                     String name = line.substring(0, line.indexOf('='));
                     String value = line.substring(line.indexOf('\"') + 1, 
                             line.lastIndexOf('\"'));
