@@ -483,6 +483,9 @@ public class SVNCommitClient extends SVNBasicClient {
     public SVNCommitInfo doCommit(SVNCommitPacket commitPacket, boolean keepLocks, String commitMessage) throws SVNException {
         SVNCommitInfo[] info = doCommit(new SVNCommitPacket[] {commitPacket}, keepLocks, commitMessage);
         if (info != null && info.length > 0) {
+            if (info[0].getError() != null) {
+                throw info[0].getError();
+            }
             return info[0];
         } 
         return SVNCommitInfo.NULL;
