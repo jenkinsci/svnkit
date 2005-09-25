@@ -75,11 +75,17 @@ public final class QDiffUniGenerator extends QDiffSequenceGenerator implements Q
 
 		if (leftStart + 1 >= 0 && (leftEnd - leftStart + 1) >= 0) {
 			header.append(" -");
-			header.append(leftStart + 1);
-			if (leftEnd - leftStart + 1 > 1) {
-				header.append(",");
-				header.append(leftEnd - leftStart + 1);
-			}
+
+            if (leftStart == 0 && leftEnd < 0) {
+                header.append("0,0");
+            } else {
+                header.append(leftStart + 1);
+                if (leftEnd - leftStart + 1 > 1) {
+                    header.append(",");
+                    header.append(leftEnd - leftStart + 1);
+                }
+            }
+
 		}
 		if (rightStart + 1 > 0 && rightEnd - rightStart + 1 > 0) {
 			header.append(" +");
@@ -88,10 +94,12 @@ public final class QDiffUniGenerator extends QDiffSequenceGenerator implements Q
 				header.append(",");
 				header.append(rightEnd - rightStart + 1);
 			}
-		}
+		} else {
+            header.append(" +0,0");
+        }
 		header.append(" @@");
 		println(header.toString(), output);
-        
+
 		// print gutter context lines before blocks.
 		for (int i = leftStart; i < sourceStartLine; i++) {
 			print(" " + printLine(sourceLines.getLine(i), encoding), output);
