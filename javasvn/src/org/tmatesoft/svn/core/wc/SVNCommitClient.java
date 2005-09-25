@@ -582,6 +582,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 }
             } catch (SVNException e) {
                 infos.add(new SVNCommitInfo(-1, null, null, e));
+                dispatchEvent(new SVNEvent(e.getMessage()), ISVNEventHandler.UNKNOWN);
                 continue;
             } finally {
                 if (info == null && commitEditor != null) {
