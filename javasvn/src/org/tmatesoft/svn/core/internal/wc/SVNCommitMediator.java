@@ -32,20 +32,14 @@ import org.tmatesoft.svn.core.wc.SVNCommitItem;
 public class SVNCommitMediator implements ISVNWorkspaceMediator {
 
     private Collection myTmpFiles;
-
     private Map myTmpFilesMap;
-
     private Map myWCPropsMap;
-
-    private SVNWCAccess myWCAccess;
-
     private Map myCommitItems;
 
-    public SVNCommitMediator(SVNWCAccess wcAccess, Map commitItems) {
+    public SVNCommitMediator(Map commitItems) {
         myTmpFiles = new ArrayList();
         myTmpFilesMap = new HashMap();
         myWCPropsMap = new HashMap();
-        myWCAccess = wcAccess;
         myCommitItems = commitItems;
     }
 
@@ -65,11 +59,12 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         }
         SVNDirectory dir;
         String target;
+        SVNWCAccess wcAccess = item.getWCAccess();
         if (item.getKind() == SVNNodeKind.DIR) {
-            dir = myWCAccess.getDirectory(item.getPath());
+            dir = wcAccess.getDirectory(item.getPath());
             target = "";
         } else {
-            dir = myWCAccess.getDirectory(SVNPathUtil.removeTail(item.getPath()));
+            dir = wcAccess.getDirectory(SVNPathUtil.removeTail(item.getPath()));
             target = SVNPathUtil.tail(item.getPath());
         }
         SVNProperties wcProps = dir.getWCProperties(target);
@@ -94,11 +89,12 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         SVNCommitItem item = (SVNCommitItem) myCommitItems.get(path);
         SVNDirectory dir;
         String target;
+        SVNWCAccess wcAccess = item.getWCAccess();
         if (item.getKind() == SVNNodeKind.DIR) {
-            dir = myWCAccess.getDirectory(item.getPath());
+            dir = wcAccess.getDirectory(item.getPath());
             target = "";
         } else {
-            dir = myWCAccess.getDirectory(SVNPathUtil.removeTail(item.getPath()));
+            dir = wcAccess.getDirectory(SVNPathUtil.removeTail(item.getPath()));
             target = SVNPathUtil.tail(item.getPath());
         }
         File tmpFile = dir.getFile(".svn/tmp/text-base");

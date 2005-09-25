@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core;
 
 import java.util.Date;
 
-import org.tmatesoft.svn.core.io.ISVNEditor;
 
 /**
  * <code>SVNCommitInfo</code> represents a class that incapsulates the necessary 
@@ -34,11 +33,12 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
  */
 public class SVNCommitInfo {
 
-    public static final SVNCommitInfo NULL = new SVNCommitInfo(-1, null, null);
+    public static final SVNCommitInfo NULL = new SVNCommitInfo(-1, null, null, null);
     
     private long myNewRevision;
     private Date myDate;
     private String myAuthor;
+    private SVNException myError;
 
     /**
      * 
@@ -49,9 +49,14 @@ public class SVNCommitInfo {
      * @param date 			time moment the commit was done.
      */
     public SVNCommitInfo(long revision, String author, Date date) {
+        this(revision, author, date, null);        
+    }
+    
+    public SVNCommitInfo(long revision, String author, Date date, SVNException error) {
         myNewRevision = revision;
         myAuthor = author;
         myDate = date;
+        myError = error;
     }
 
     /**
@@ -79,5 +84,9 @@ public class SVNCommitInfo {
      */
     public Date getDate() {
         return myDate;
+    }
+    
+    public SVNException getError() {
+        return myError;
     }
 }

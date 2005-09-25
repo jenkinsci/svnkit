@@ -11,8 +11,10 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -57,21 +59,19 @@ public class SVNCommitUtil {
         }
         for (; index < pathsArray.length; index++) {
             String commitPath = pathsArray[index];
-            String commonAncestor = lastPath == null || "".equals(lastPath) ? "" 
-                    : SVNPathUtil.getCommonPathAncestor(commitPath, lastPath);
+            String commonAncestor = lastPath == null || "".equals(lastPath) ? 
+                    "" : SVNPathUtil.getCommonPathAncestor(commitPath, lastPath);
             if (lastPath != null) {
                 while (!lastPath.equals(commonAncestor)) {
                     editor.closeDir();
                     if (lastPath.lastIndexOf('/') >= 0) {
-                        lastPath = lastPath.substring(0, lastPath
-                                .lastIndexOf('/'));
+                        lastPath = lastPath.substring(0, lastPath.lastIndexOf('/'));
                     } else {
                         lastPath = "";
                     }
                 }
             }
-            String relativeCommitPath = commitPath.substring(commonAncestor
-                    .length());
+            String relativeCommitPath = commitPath.substring(commonAncestor.length());
             if (relativeCommitPath.startsWith("/")) {
                 relativeCommitPath = relativeCommitPath.substring(1);
             }
@@ -79,8 +79,7 @@ public class SVNCommitUtil {
             for (StringTokenizer tokens = new StringTokenizer(
                     relativeCommitPath, "/"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
-                commonAncestor = "".equals(commonAncestor) ? token
-                        : commonAncestor + "/" + token;
+                commonAncestor = "".equals(commonAncestor) ? token : commonAncestor + "/" + token;
                 if (!commonAncestor.equals(commitPath)) {
                     editor.openDir(commonAncestor, revision);
                 } else {
@@ -96,8 +95,7 @@ public class SVNCommitUtil {
         }
         while (lastPath != null && !"".equals(lastPath)) {
             editor.closeDir();
-            lastPath = lastPath.lastIndexOf('/') >= 0 ? lastPath.substring(0,
-                    lastPath.lastIndexOf('/')) : "";
+            lastPath = lastPath.lastIndexOf('/') >= 0 ? lastPath.substring(0, lastPath.lastIndexOf('/')) : "";
         }
     }
 
@@ -207,6 +205,38 @@ public class SVNCommitUtil {
         }
 
         return baseAccess;
+    }
+
+    public static SVNWCAccess[] createCommitWCAccess2(File[] paths, boolean recursive, boolean force, Map relativePathsMap, SVNStatusClient statusClient) throws SVNException {
+        Map rootsMap = new HashMap(); // wc root file -> paths to be committed (paths).
+        for (int i = 0; i < paths.length; i++) {
+            File path = paths[i];
+            File wcRoot = SVNWCUtil.getWorkingCopyRoot(path, true);
+            if (!rootsMap.containsKey(wcRoot)) {
+                rootsMap.put(wcRoot, new ArrayList());
+            }
+            Collection wcPaths = (Collection) rootsMap.get(wcRoot);
+            wcPaths.add(path);
+        }
+        Collection result = new ArrayList();
+        try {
+            for (Iterator roots = rootsMap.keySet().iterator(); roots.hasNext();) {
+                File root = (File) roots.next();
+                Collection filesList = (Collection) rootsMap.get(root);
+                File[] filesArray = (File[]) filesList.toArray(new File[filesList.size()]);
+                Collection relativePaths = new TreeSet();
+                SVNWCAccess wcAccess = createCommitWCAccess(filesArray, recursive, force, relativePaths, statusClient);
+                relativePathsMap.put(wcAccess, relativePaths);
+                result.add(wcAccess);
+            }
+        } catch (SVNException e) {
+            for (Iterator wcAccesses = result.iterator(); wcAccesses.hasNext();) {
+                SVNWCAccess wcAccess = (SVNWCAccess) wcAccesses.next();
+                wcAccess.close(true);
+            }
+            throw e;
+        }
+        return (SVNWCAccess[]) result.toArray(new SVNWCAccess[result.size()]);
     }
 
     public static SVNCommitItem[] harvestCommitables(SVNWCAccess baseAccess,

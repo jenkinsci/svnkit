@@ -36,22 +36,26 @@ public class SVNCommitPacket {
      * This constant denotes an empty commit items storage (contains no
      * {@link SVNCommitItem} objects).
      */
-    public static final SVNCommitPacket EMPTY = new SVNCommitPacket(null,
-            new SVNCommitItem[0], null);
-
-    private SVNWCAccess myWCAccess;
+    public static final SVNCommitPacket EMPTY = new SVNCommitPacket(null, new SVNCommitItem[0], null);
 
     private SVNCommitItem[] myCommitItems;
-
     private Map myLockTokens;
-
     private boolean[] myIsSkipped;
+    private boolean myIsDisposed;
 
     SVNCommitPacket(SVNWCAccess wcAccess, SVNCommitItem[] items, Map lockTokens) {
-        myWCAccess = wcAccess;
         myCommitItems = items;
         myLockTokens = lockTokens;
         myIsSkipped = new boolean[items == null ? 0 : items.length];
+        myIsDisposed = false;
+
+        if (wcAccess != null) {
+            for (int i = 0; i < items.length; i++) {
+                if (items[i].getWCAccess() == null) {
+                    items[i].setWCAccess(wcAccess);
+                }
+            }
+        }
     }
     
     /**
@@ -109,7 +113,7 @@ public class SVNCommitPacket {
      *         otherwise <span class="javakeyword">false</span>
      */
     public boolean isDisposed() {
-        return myWCAccess == null;
+        return myIsDisposed;
     }
     
     /**
@@ -118,9 +122,14 @@ public class SVNCommitPacket {
      * @throws SVNException
      */
     public void dispose() throws SVNException {
-        if (myWCAccess != null) {
-            myWCAccess.close(true);
-            myWCAccess = null;
+        try {
+            for (int i = 0; i < myCommitItems.length; i++) {
+                if (myCommitItems[i] != null && myCommitItems[i].getWCAccess() != null) {
+                    myCommitItems[i].getWCAccess().close(true);
+                }
+            }
+        } finally { 
+            myIsDisposed = true;
         }
     }
     
@@ -144,10 +153,6 @@ public class SVNCommitPacket {
         return myLockTokens;
     }
 
-    SVNWCAccess getWCAccess() {
-        return myWCAccess;
-    }
-
     SVNCommitPacket removeSkippedItems() {
         if (this == EMPTY) {
             return EMPTY;
@@ -162,9 +167,8 @@ public class SVNCommitPacket {
                 lockTokens.remove(commitItem.getURL().toString());
             }
         }
-        SVNCommitItem[] filteredItems = (SVNCommitItem[]) items
-                .toArray(new SVNCommitItem[items.size()]);
-        return new SVNCommitPacket(myWCAccess, filteredItems, lockTokens);
+        SVNCommitItem[] filteredItems = (SVNCommitItem[]) items.toArray(new SVNCommitItem[items.size()]);
+        return new SVNCommitPacket(null, filteredItems, lockTokens);
     }
     
     /**
@@ -178,7 +182,6 @@ public class SVNCommitPacket {
         }
         StringBuffer result = new StringBuffer();
         result.append("SVNCommitPacket: ");
-        result.append(myWCAccess.getAnchor().getRoot());
         for (int i = 0; i < myCommitItems.length; i++) {
             SVNCommitItem commitItem = myCommitItems[i];
             result.append("\n");

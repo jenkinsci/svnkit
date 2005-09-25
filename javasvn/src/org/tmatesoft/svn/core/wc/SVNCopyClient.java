@@ -335,16 +335,19 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNCommitUtil.harvestCommitables(commitables, wcAccess.getTarget(), srcPath, null, entry, dstURL.toString(), entry.getURL(), 
                     true, false, false, null, true);
             items = (SVNCommitItem[]) commitables.values().toArray(new SVNCommitItem[commitables.values().size()]);
+            for (int i = 0; i < items.length; i++) {
+                items[i].setWCAccess(wcAccess);
+            }
             
             commitables = new TreeMap();
             dstURL = SVNURL.parseURIEncoded(SVNCommitUtil.translateCommitables(items, commitables));
 
             repository = createRepository(dstURL, true);
-            SVNCommitMediator mediator = new SVNCommitMediator(wcAccess, commitables);
+            SVNCommitMediator mediator = new SVNCommitMediator(commitables);
             tmpFiles = mediator.getTmpFiles();
 
             commitEditor = repository.getCommitEditor(commitMessage, null, false, mediator);
-            info = SVNCommitter.commit(wcAccess, tmpFiles, commitables, repository.getRepositoryRoot(true).getPath(), commitEditor);
+            info = SVNCommitter.commit(tmpFiles, commitables, repository.getRepositoryRoot(true).getPath(), commitEditor);
             commitEditor = null;
         } finally {
             if (tmpFiles != null) {

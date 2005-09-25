@@ -12,6 +12,7 @@ package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 
 import java.io.File;
 
@@ -52,6 +53,7 @@ public class SVNCommitItem {
     private boolean myIsCopied;
     private boolean myIsLocked;
     private String myPath;
+    private SVNWCAccess myWCAccess;
     
     /**
      * Constructs and initializes an <b>SVNCommitItem</b> object.
@@ -229,5 +231,13 @@ public class SVNCommitItem {
      */
     public void setPath(String path) {
         myPath = path;
+    }
+    
+    public SVNWCAccess getWCAccess() {
+        return myWCAccess;
+    }
+
+    void setWCAccess(SVNWCAccess wcAccess) {
+        myWCAccess = wcAccess;
     }
 }
