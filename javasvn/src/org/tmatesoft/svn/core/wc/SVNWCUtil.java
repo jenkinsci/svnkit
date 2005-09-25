@@ -12,6 +12,7 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -339,11 +340,15 @@ public class SVNWCUtil {
     }
     
     private static boolean isEclipse() {
-        Class platform = null;
         try {
-            platform = SVNWCUtil.class.getClassLoader().loadClass("org.eclipse.core.runtime.Platform");
-        } catch (ClassNotFoundException e) {
+            Class platform = SVNWCUtil.class.getClassLoader().loadClass("org.eclipse.core.runtime.Platform");
+            Method isRunning = platform.getMethod("isRunning", new Class[0]);
+            Object result = isRunning.invoke(null, new Object[0]);
+            if (result != null && Boolean.TRUE.equals(result)) {
+                return true;
+            }
+        } catch (Throwable th) {
         }
-        return platform != null;
+        return false;
     }
 }
