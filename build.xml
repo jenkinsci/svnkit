@@ -106,7 +106,7 @@
         <mkdir dir="javasvn-test/bin" />
         <path id="tests.classpath">
             <pathelement location="contrib/jsch/jsch.jar" />
-            <pathelement location="contrib/jsch/ganymed.jar" />
+            <pathelement location="contrib/ganymed/ganymed.jar" />
             <pathelement location="contrib/junit/junit.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
