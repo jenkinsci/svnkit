@@ -44,11 +44,9 @@ public class SVNAllDeltaGenerator implements ISVNDeltaGenerator {
         byte[] newDataBuffer = new byte[maxWindowLenght];
 		try {
 			is = workFile.readAll();
-            long totalLength = 0;
             for (int i = 0; i < windows.length; i++) {
                 SVNDiffWindow window = windows[i];
                 OutputStream os = consumer.textDeltaChunk(commitPath, window);
-                totalLength += window.getNewDataLength();
                 is.read(newDataBuffer, 0, (int) window.getNewDataLength());
                 os.write(newDataBuffer, 0, (int) window.getNewDataLength());
                 SVNFileUtil.closeFile(os);
