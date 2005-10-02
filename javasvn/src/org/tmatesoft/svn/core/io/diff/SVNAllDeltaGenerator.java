@@ -41,12 +41,13 @@ public class SVNAllDeltaGenerator implements ISVNDeltaGenerator {
         int maxWindowLenght = 1024*100; // 100K
         SVNDiffWindow[] windows = SVNDiffWindowBuilder.createReplacementDiffWindows(length, 1024*100);
 		InputStream is = null;
+        OutputStream os = null;
         byte[] newDataBuffer = new byte[maxWindowLenght];
 		try {
 			is = workFile.readAll();
             for (int i = 0; i < windows.length; i++) {
                 SVNDiffWindow window = windows[i];
-                OutputStream os = consumer.textDeltaChunk(commitPath, window);
+                os = consumer.textDeltaChunk(commitPath, window);
                 is.read(newDataBuffer, 0, (int) window.getNewDataLength());
                 os.write(newDataBuffer, 0, (int) window.getNewDataLength());
                 SVNFileUtil.closeFile(os);
@@ -55,6 +56,7 @@ public class SVNAllDeltaGenerator implements ISVNDeltaGenerator {
             SVNErrorManager.error(e.getMessage());
 		}
 		finally {
+            SVNFileUtil.closeFile(os);
             SVNFileUtil.closeFile(is);
 		}
 		consumer.textDeltaEnd(commitPath);

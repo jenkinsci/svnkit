@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -847,25 +848,25 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         File importedFile = tmpFile != null ? tmpFile : file;
         String checksum = SVNFileUtil.computeChecksum(importedFile);
-        OutputStream os = editor.textDeltaChunk(filePath, SVNDiffWindowBuilder
-                .createReplacementDiffWindow(importedFile.length()));
-        InputStream is = SVNFileUtil.openFileForReading(importedFile);
-        int r;
+        SVNDiffWindow[] windows = SVNDiffWindowBuilder.createReplacementDiffWindows(importedFile.length(), 100*1024);
+        byte[] newData = new byte[100*1024];
+        InputStream is = null;
+        OutputStream os = null;
         try {
-            while ((r = is.read()) >= 0) {
-                os.write(r);
+            is = SVNFileUtil.openFileForReading(importedFile);
+            for (int i = 0; i < windows.length; i++) {
+                SVNDiffWindow window = windows[i];
+                os = editor.textDeltaChunk(filePath, window);
+                is.read(newData, 0, (int) window.getNewDataLength());
+                os.write(newData, 0, (int) window.getNewDataLength());
+                SVNFileUtil.closeFile(os);
             }
         } catch (IOException e) {
             SVNErrorManager.error("svn: IO error while importing file '" + file
                     + "': " + e.getMessage());
         } finally {
             SVNFileUtil.closeFile(is);
-            try {
-                os.close();
-            } catch (IOException e) {
-                SVNErrorManager.error("svn: IO error while importing file '"
-                        + file + "': " + e.getMessage());
-            }
+            SVNFileUtil.closeFile(os);
             if (tmpFile != null) {
                 tmpFile.delete();
             }
