@@ -31,29 +31,32 @@ public class SVNAllDeltaGenerator implements ISVNDeltaGenerator {
 
 	public void generateDiffWindow(String commitPath, ISVNEditor consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
         long length = workFile.length();
-		SVNDiffWindow window = SVNDiffWindowBuilder.createReplacementDiffWindow(length);
-		OutputStream os = consumer.textDeltaChunk(commitPath, window);
         if (length == 0) {
+            SVNDiffWindow window = SVNDiffWindowBuilder.createReplacementDiffWindow(length);
+            OutputStream os = consumer.textDeltaChunk(commitPath, window);
             SVNFileUtil.closeFile(os);
             consumer.textDeltaEnd(commitPath);
             return;
         }
+        int maxWindowLenght = 1024*100; // 100K
+        SVNDiffWindow[] windows = SVNDiffWindowBuilder.createReplacementDiffWindows(length, 1024*100);
 		InputStream is = null;
-        byte[] buffer = new byte[32*1024];
+        byte[] newDataBuffer = new byte[maxWindowLenght];
 		try {
 			is = workFile.readAll();
-            while(true) {
-                int read = is.read(buffer);
-                if (read <= 0) {
-                    break;
-                }
-                os.write(buffer, 0, read);
+            long totalLength = 0;
+            for (int i = 0; i < windows.length; i++) {
+                SVNDiffWindow window = windows[i];
+                OutputStream os = consumer.textDeltaChunk(commitPath, window);
+                totalLength += window.getNewDataLength();
+                is.read(newDataBuffer, 0, (int) window.getNewDataLength());
+                os.write(newDataBuffer, 0, (int) window.getNewDataLength());
+                SVNFileUtil.closeFile(os);
             }
 		} catch (IOException e) {
             SVNErrorManager.error(e.getMessage());
 		}
 		finally {
-            SVNFileUtil.closeFile(os);
             SVNFileUtil.closeFile(is);
 		}
 		consumer.textDeltaEnd(commitPath);

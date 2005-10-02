@@ -247,8 +247,10 @@ public class SVNDiffWindowBuilder {
         return true;
     }
     
-    public static void save(SVNDiffWindow window, OutputStream os) throws IOException {
-        os.write(HEADER_BYTES);
+    public static void save(SVNDiffWindow window, boolean saveHeader, OutputStream os) throws IOException {
+        if (saveHeader) {
+            os.write(HEADER_BYTES);
+        } 
         if (window.getInstructionsCount() == 0) {
             return;
         }
@@ -298,9 +300,28 @@ public class SVNDiffWindowBuilder {
         if (dataLength > 0) {
             instructionsList.add(new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_NEW_DATA, dataLength, offset));
         }
-//        SVNDiffInstruction[] instructions = {new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_NEW_DATA, dataLength, 0)};
         SVNDiffInstruction[] instructions = (SVNDiffInstruction[]) instructionsList.toArray(new SVNDiffInstruction[instructionsList.size()]);
         return new SVNDiffWindow(0, 0, totalLength, instructions, totalLength);
+    }
+
+    public static SVNDiffWindow[] createReplacementDiffWindows(long dataLength, int maxWindowLength) {
+        if (dataLength == 0) {
+            return new SVNDiffWindow[] {new SVNDiffWindow(0, 0, dataLength, new SVNDiffInstruction[0], dataLength)};
+        }
+        int instructionsCount = (int) ((dataLength / (maxWindowLength)) + 1);
+        Collection windows = new ArrayList(instructionsCount);
+        while(dataLength > maxWindowLength) {
+            SVNDiffInstruction instruction = new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_NEW_DATA, maxWindowLength, 0); 
+            SVNDiffWindow window = new SVNDiffWindow(0, 0, maxWindowLength, new SVNDiffInstruction[] { instruction}, maxWindowLength);
+            windows.add(window);
+            dataLength -= maxWindowLength; 
+        }
+        if (dataLength > 0) {
+            SVNDiffInstruction instruction = new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_NEW_DATA, dataLength, 0);
+            SVNDiffWindow window = new SVNDiffWindow(0, 0, dataLength, new SVNDiffInstruction[] {instruction}, dataLength);
+            windows.add(window);
+        }
+        return (SVNDiffWindow[]) windows.toArray(new SVNDiffWindow[windows.size()]);
     }
     
     private static void writeInt(OutputStream os, long i) throws IOException {

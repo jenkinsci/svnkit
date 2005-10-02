@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.io.svn;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
 
@@ -22,7 +21,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 
@@ -32,22 +30,14 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
  */
 class SVNCommitEditor implements ISVNEditor {
 
-    private ISVNWorkspaceMediator myMediator;
-
     private SVNConnection myConnection;
-
     private SVNRepositoryImpl myRepository;
-
     private String myCurrentPath;
-
     private Runnable myCloseCallback;
 
-    public SVNCommitEditor(SVNRepositoryImpl location,
-            SVNConnection connection, ISVNWorkspaceMediator mediator,
-            Runnable closeCallback) {
+    public SVNCommitEditor(SVNRepositoryImpl location, SVNConnection connection, Runnable closeCallback) {
         myRepository = location;
         myConnection = connection;
-        myMediator = mediator;
         myCloseCallback = closeCallback;
     }
 
@@ -130,48 +120,38 @@ class SVNCommitEditor implements ISVNEditor {
                 baseChecksum });
     }
 
-    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow)
-            throws SVNException {
+    private int myDiffWindowCount = 0;
+    
+    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         myConnection.write("(w(s", new Object[] { "textdelta-chunk", path });
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        
         try {
-            SVNDiffWindowBuilder.save(diffWindow, bos);
-            myConnection.write("b))", new Object[] { bos.toByteArray() });
-            return myMediator.createTemporaryLocation(path, path);
+            SVNDiffWindowBuilder.save(diffWindow, myDiffWindowCount == 0, bos);
+            byte[] header = bos.toByteArray();
+            myDiffWindowCount++;
+            myConnection.write("b))", new Object[] { header });
+            myConnection.write("(w(s", new Object[] { "textdelta-chunk", path });
+            String length = diffWindow.getNewDataLength() + ":";
+            myConnection.getOutputStream().write(length.getBytes("UTF-8"));
+            return new ChunkOutputStream();
         } catch (IOException e) {
             throw new SVNException(e);
         }
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        InputStream is;
-        try {
-            long length = myMediator.getLength(path);
-            if (myMediator.getLength(path) > 0) {
-                is = myMediator.getTemporaryLocation(path);
-                // create
-                SVNDataSource source = new SVNDataSource(is, length);
-                myConnection.write("(w(si))", new Object[] { "textdelta-chunk",
-                        path, source });
-                is.close();
-            }
-        } catch (IOException e) {
-            throw new SVNException();
-        } finally {
-            myMediator.deleteTemporaryLocation(path);
-        }
+        myDiffWindowCount = 0;
         myConnection.write("(w(s))", new Object[] { "textdelta-end", path });
     }
 
-    public void changeFileProperty(String path, String name, String value)
-            throws SVNException {
-        myConnection.write("(w(ss(s)))", new Object[] { "change-file-prop",
-                path, name, value });
+    public void changeFileProperty(String path, String name, String value) throws SVNException {
+        myConnection.write("(w(ss(s)))", new Object[] { "change-file-prop", path, name, value });
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
-        myConnection.write("(w(s(s)))", new Object[] { "close-file", path,
-                textChecksum });
+        myDiffWindowCount = 0;
+        myConnection.write("(w(s(s)))", new Object[] { "close-file", path, textChecksum });
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
@@ -199,5 +179,33 @@ class SVNCommitEditor implements ISVNEditor {
 
     private static Long getRevisionObject(long rev) {
         return rev >= 0 ? new Long(rev) : null;
+    }
+
+    private final class ChunkOutputStream extends OutputStream {
+
+        public void write(byte[] b, int off, int len) throws IOException {
+            try {
+                myConnection.getOutputStream().write(b, off, len);
+            } catch (SVNException e) {
+                throw new IOException(e.getMessage());
+            }
+        }
+
+        public void write(int b) throws IOException {
+            try {
+                myConnection.getOutputStream().write(b);
+            } catch (SVNException e) {
+                throw new IOException(e.getMessage());
+            }
+        }
+
+        public void close() throws IOException {
+            try {
+                myConnection.getOutputStream().write(' ');
+                myConnection.write("))", null);
+            } catch (SVNException e) {
+                throw new IOException(e.getMessage());
+            }
+        }
     }
 }

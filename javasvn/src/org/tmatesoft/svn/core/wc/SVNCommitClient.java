@@ -584,6 +584,7 @@ public class SVNCommitClient extends SVNBasicClient {
                     SVNFileUtil.sleepForTimestamp();
                 }
             } catch (SVNException e) {
+                e.printStackTrace();
                 infos.add(new SVNCommitInfo(-1, null, null, e));
                 dispatchEvent(new SVNEvent(e.getMessage()), ISVNEventHandler.UNKNOWN);
                 continue;

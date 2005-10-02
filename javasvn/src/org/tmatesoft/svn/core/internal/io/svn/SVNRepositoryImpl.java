@@ -585,7 +585,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             }
             authenticate();
             read("[()]", null);
-            return new SVNCommitEditor(this, myConnection, mediator,
+            return new SVNCommitEditor(this, myConnection,
                     new Runnable() {
                         public void run() {
                             closeConnection();
