@@ -265,6 +265,10 @@ class DAVCommitEditor implements ISVNEditor {
                     public void close() throws IOException {
                         // do not close this stream, will close on txtdelta-end
                     }
+                    public void write(byte[] b, int off, int len) throws IOException {
+                        super.out.write(b, off, len);
+                    }
+                    
                 };
             }
             SVNDiffWindowBuilder.save(diffWindow, firstWindow, myCurrentDelta);

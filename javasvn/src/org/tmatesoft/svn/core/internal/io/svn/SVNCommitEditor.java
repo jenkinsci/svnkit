@@ -114,10 +114,9 @@ class SVNCommitEditor implements ISVNEditor {
                 computeParentPath(path), path, getRevisionObject(revision) });
     }
 
-    public void applyTextDelta(String path, String baseChecksum)
-            throws SVNException {
-        myConnection.write("(w(s(s)))", new Object[] { "apply-textdelta", path,
-                baseChecksum });
+    public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+        myDiffWindowCount = 0;
+        myConnection.write("(w(s(s)))", new Object[] { "apply-textdelta", path, baseChecksum });
     }
 
     private int myDiffWindowCount = 0;
@@ -182,7 +181,9 @@ class SVNCommitEditor implements ISVNEditor {
     }
 
     private final class ChunkOutputStream extends OutputStream {
-
+        
+        private boolean myIsClosed = false;
+        
         public void write(byte[] b, int off, int len) throws IOException {
             try {
                 myConnection.getOutputStream().write(b, off, len);
@@ -200,11 +201,16 @@ class SVNCommitEditor implements ISVNEditor {
         }
 
         public void close() throws IOException {
+            if (myIsClosed) {
+                return;
+            }
             try {
                 myConnection.getOutputStream().write(' ');
                 myConnection.write("))", null);
             } catch (SVNException e) {
                 throw new IOException(e.getMessage());
+            } finally {
+                myIsClosed = true;
             }
         }
     }

@@ -769,8 +769,7 @@ public class SVNCommitClient extends SVNBasicClient {
             if (getOptions().isIgnored(file.getName())) {
                 continue;
             }
-            String path = importPath == null ? file.getName() : SVNPathUtil
-                    .append(importPath, file.getName());
+            String path = importPath == null ? file.getName() : SVNPathUtil.append(importPath, file.getName());
             SVNFileType fileType = SVNFileType.getType(file);
             if (fileType == SVNFileType.DIRECTORY && recursive) {
                 editor.addDir(path, null, -1);
@@ -789,8 +788,7 @@ public class SVNCommitClient extends SVNBasicClient {
         return changed;
     }
 
-    private boolean importFile(File rootFile, File file, SVNFileType fileType,
-            String filePath, ISVNEditor editor) throws SVNException {
+    private boolean importFile(File rootFile, File file, SVNFileType fileType, String filePath, ISVNEditor editor) throws SVNException {
         if (fileType == null || fileType == SVNFileType.UNKNOWN) {
             SVNErrorManager.error("svn: unknown or unversionable type for '" + file + "'");
         }
@@ -812,8 +810,7 @@ public class SVNCommitClient extends SVNBasicClient {
         } else {
             autoProperties.put(SVNProperty.SPECIAL, "*");
         }
-        for (Iterator names = autoProperties.keySet().iterator(); names
-                .hasNext();) {
+        for (Iterator names = autoProperties.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
             String value = (String) autoProperties.get(name);
             if (SVNProperty.EOL_STYLE.equals(name) && value != null) {
@@ -828,8 +825,7 @@ public class SVNCommitClient extends SVNBasicClient {
             editor.changeFileProperty(filePath, name, value);
         }
         // send "adding"
-        SVNEvent addedEvent = SVNEventFactory.createCommitEvent(rootFile, file,
-                SVNEventAction.COMMIT_ADDED, SVNNodeKind.FILE, mimeType);
+        SVNEvent addedEvent = SVNEventFactory.createCommitEvent(rootFile, file, SVNEventAction.COMMIT_ADDED, SVNNodeKind.FILE, mimeType);
         handleEvent(addedEvent, ISVNEventHandler.UNKNOWN);
         editor.applyTextDelta(filePath, null);
         // translate and send file.
@@ -839,12 +835,9 @@ public class SVNCommitClient extends SVNBasicClient {
         File tmpFile = null;
         if (eolStyle != null || keywords != null || special) {
             byte[] eolBytes = SVNTranslator.getBaseEOL(eolStyle);
-            Map keywordsMap = keywords != null ? SVNTranslator.computeKeywords(
-                    keywords, null, null, null, null) : null;
-            tmpFile = SVNFileUtil.createUniqueFile(file.getParentFile(), file
-                    .getName(), ".tmp");
-            SVNTranslator.translate(file, tmpFile, eolBytes, keywordsMap,
-                    special, false);
+            Map keywordsMap = keywords != null ? SVNTranslator.computeKeywords(keywords, null, null, null, null) : null;
+            tmpFile = SVNFileUtil.createUniqueFile(file.getParentFile(), file.getName(), ".tmp");
+            SVNTranslator.translate(file, tmpFile, eolBytes, keywordsMap, special, false);
         }
         File importedFile = tmpFile != null ? tmpFile : file;
         String checksum = SVNFileUtil.computeChecksum(importedFile);
@@ -862,8 +855,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 SVNFileUtil.closeFile(os);
             }
         } catch (IOException e) {
-            SVNErrorManager.error("svn: IO error while importing file '" + file
-                    + "': " + e.getMessage());
+            SVNErrorManager.error("svn: IO error while importing file '" + file + "': " + e.getMessage());
         } finally {
             SVNFileUtil.closeFile(is);
             SVNFileUtil.closeFile(os);
