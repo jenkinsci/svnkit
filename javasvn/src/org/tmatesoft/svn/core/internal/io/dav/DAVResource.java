@@ -142,6 +142,14 @@ class DAVResource {
             throw new IOException(e.getMessage());
         }
     }
+
+    public long getTextDeltaLength(int i) throws IOException {
+        if (myMediator != null) {
+            return myMediator.getLength(new Integer(i));
+        }
+        File file = (File) myDeltaFiles.get(i);
+        return file.length();
+    }
     
     public void dispose() {
         if (myDeltaFiles != null) {

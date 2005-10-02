@@ -26,8 +26,11 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVProppatchHandler;
+import org.tmatesoft.svn.core.internal.util.IMeasurable;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -250,7 +253,7 @@ class DAVCommitEditor implements ISVNEditor {
         DAVResource currentFile = (DAVResource) myFilesMap.get(path);
         try {
             OutputStream os = currentFile.addTextDelta();
-            SVNDiffWindowBuilder.save(diffWindow, true, os);
+            SVNDiffWindowBuilder.save(diffWindow, currentFile.getDeltaCount() == 1, os);
             return os;
         } catch (IOException e) {
             throw new SVNException();
@@ -278,18 +281,19 @@ class DAVCommitEditor implements ISVNEditor {
                     throw new SVNException(e);
                 }
             }
-            for(int i = 0; i < currentFile.getDeltaCount(); i++) {
-                try {
-                    InputStream data = currentFile.getTextDelta(i);
-                    DAVStatus status = myConnection.doPutDiff(currentFile.getURL(), currentFile.getWorkingURL(), data);
-                    data.close();
-                    if (!(status.getResponseCode() ==201 || status.getResponseCode() == 204)) {
-                        throw new SVNException("PUT failed: " + status);
-                    }
-                } catch (IOException e) {
-                    throw new SVNException(e);
-                } 
-            } 
+            // combine all streams into one.
+            InputStream combinedData = null;
+            try {
+                combinedData = new ChunkInputStream(currentFile);
+                DAVStatus status = myConnection.doPutDiff(currentFile.getURL(), currentFile.getWorkingURL(), combinedData);
+                if (!(status.getResponseCode() == 201 || status.getResponseCode() == 204)) {
+                    throw new SVNException("PUT failed: " + status);
+                }
+            } catch (IOException e1) {
+                SVNErrorManager.error(e1.getMessage());
+            } finally {
+                SVNFileUtil.closeFile(combinedData);
+            }
             // do proppatch if there were property changes.
             if (currentFile.getProperties() != null) {
                 StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, currentFile.getProperties());
@@ -391,5 +395,47 @@ class DAVCommitEditor implements ISVNEditor {
             return;
         }
         throw new SVNException(resource.getURL() + " checkout failed: " + status.toString());
+    }
+    
+    private class ChunkInputStream extends InputStream implements IMeasurable {
+        
+        private DAVResource myResource;
+        private long myLength;
+        private int myDeltaIndex;
+        private InputStream myStream;
+
+        public ChunkInputStream(DAVResource resource) throws IOException {
+            myResource = resource;
+            myLength = 0;
+            myDeltaIndex = 0;
+            for (int i = 0; i < resource.getDeltaCount(); i++) {
+                myLength += resource.getTextDeltaLength(i);
+            }
+        }
+
+        public int read() throws IOException {
+            if (myDeltaIndex >= myResource.getDeltaCount()) {
+                return -1;
+            }
+            if (myStream == null) {
+                myStream = myResource.getTextDelta(myDeltaIndex);
+            }
+            int r = myStream.read();
+            if (r < 0) {
+                SVNFileUtil.closeFile(myStream);
+                myStream = null;
+                myDeltaIndex++;
+                return read();
+            }
+            return r;
+        }
+
+        public void close() throws IOException {
+            SVNFileUtil.closeFile(myStream);
+        }
+
+        public long getLength() {
+            return myLength;
+        }
     }
 }
