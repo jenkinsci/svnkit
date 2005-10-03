@@ -6,6 +6,8 @@
         <property name="eclipse.home" value="${env.ECLIPSE_HOME}" />
         <property name="java.home" value="${env.JAVA_HOME}" />
     	<property name="eclipse.runtime" value="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.jar"/>    	
+    	<property name="eclipse.osgi_31" value="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0.jar"/>    	
+    	<property name="eclipse.osgi_32" value="${eclipse.home}/plugins/org.eclipse.osgi_3.2.0.jar"/>    	
         <property file="javasvn.build.properties"/>
     		
     	<condition property="eclipse.present">
@@ -59,6 +61,8 @@
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
             <pathelement path="${eclipse.runtime}" />
+            <pathelement path="${eclipse.osgi_31}" />
+            <pathelement path="${eclipse.osgi_32}" />
             <fileset dir="contrib/httpclient">
                 <include name="*.jar"/>
             </fileset>
@@ -91,7 +95,8 @@
             <pathelement path="build/lib/jsch.jar" />
             <pathelement path="build/lib/ganymed.jar" />
             <pathelement path="${eclipse.runtime}" />
-            <pathelement path="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0.jar" />
+            <pathelement path="${eclipse.osgi_31}" />
+            <pathelement path="${eclipse.osgi_32}" />
         </path>
 
         <javac debug="true"
