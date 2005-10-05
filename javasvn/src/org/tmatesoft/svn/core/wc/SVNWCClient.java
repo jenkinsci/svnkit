@@ -216,16 +216,14 @@ public class SVNWCClient extends SVNBasicClient {
                         + "' is not under version control or doesn't exist");
             }
             try {
-
                 if (revision == SVNRevision.BASE) {
                     if (expandKeywords) {
                         delete = true;
                         file = wcAccess.getAnchor().getBaseFile(name, true).getParentFile();
                         file = SVNFileUtil.createUniqueFile(file, name, ".tmp");
                         SVNTranslator.translate(wcAccess.getAnchor(), name,
-                                SVNFileUtil.getBasePath(wcAccess.getAnchor()
-                                        .getBaseFile(name, false)), SVNFileUtil
-                                        .getBasePath(file), true, false);
+                                SVNFileUtil.getBasePath(wcAccess.getAnchor().getBaseFile(name, false)), 
+                                SVNFileUtil.getBasePath(file), true, false);
                     }
                 } else {
                     if (!expandKeywords) {
@@ -263,7 +261,8 @@ public class SVNWCClient extends SVNBasicClient {
             if (!expandKeywords) {
                 repos.getFile("", revNumber, null, dst);
             } else {
-                File tmpFile = SVNFileUtil.createUniqueFile(new File(path.getParentFile(), ".svn/tmp/text-base"), path.getName(), ".tmp");
+                String adminDir = SVNFileUtil.getAdminDirectoryName();
+                File tmpFile = SVNFileUtil.createUniqueFile(new File(path.getParentFile(), adminDir + "/tmp/text-base"), path.getName(), ".tmp");
                 File tmpFile2 = null;
                 OutputStream os = null;
                 InputStream is = null;
@@ -274,7 +273,7 @@ public class SVNWCClient extends SVNBasicClient {
                     SVNFileUtil.closeFile(os);
                     os = null;
                     // translate
-                    tmpFile2 = SVNFileUtil.createUniqueFile(new File(path.getParentFile(), ".svn/tmp/text-base"), path.getName(), ".tmp");
+                    tmpFile2 = SVNFileUtil.createUniqueFile(new File(path.getParentFile(), adminDir + "/tmp/text-base"), path.getName(), ".tmp");
                     boolean special = wcAccess.getAnchor().getProperties(path.getName(), false).getPropertyValue(SVNProperty.SPECIAL) != null;
                     if (special) {
                         tmpFile2 = tmpFile;
@@ -1809,7 +1808,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (getOptions().isIgnored(childFile.getName())) {
                 continue;
             }
-            if (".svn".equals(childFile.getName())) {
+            if (SVNFileUtil.getAdminDirectoryName().equals(childFile.getName())) {
                 continue;
             }
             SVNFileType fileType = SVNFileType.getType(childFile);

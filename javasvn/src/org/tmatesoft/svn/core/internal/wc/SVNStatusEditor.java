@@ -382,7 +382,8 @@ public class SVNStatusEditor implements ISVNEditor {
         for (int i = 0; ioFiles != null && i < ioFiles.length; i++) {
             File ioFile = ioFiles[i];
             String fileName = ioFile.getName();
-            if (".svn".equals(fileName) || entries.getEntry(fileName, false) != null) {
+            String adminDir = SVNFileUtil.getAdminDirectoryName();
+            if (adminDir.equals(fileName) || entries.getEntry(fileName, false) != null) {
                 continue;
             }
             sendUnversionedStatus(dir, fileName);
@@ -603,7 +604,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 textStatus = SVNStatusType.STATUS_OBSTRUCTED;
             }
             if (isDir && pathKind == SVNFileType.DIRECTORY) {
-                isLocked = entryDir.getFile(".svn/lock").exists();
+                isLocked = entryDir.getAdminFile("lock").exists();
             }
         }
         if (!myIsReportAll) {

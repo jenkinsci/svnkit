@@ -375,7 +375,7 @@ public class SVNCommitClient extends SVNBasicClient {
         if (newPaths.isEmpty() && (srcKind == SVNFileType.FILE || srcKind == SVNFileType.SYMLINK)) {
             SVNErrorManager.error("svn: Path '" + dstURL + "' already exists");
         }
-        if (newPaths.contains(".svn")) {
+        if (newPaths.contains(SVNFileUtil.getAdminDirectoryName())) {
             SVNErrorManager.error("svn: '.svn' is a reserved name and cannot be imported");
         }
         SVNCommitItem[] items = new SVNCommitItem[1];
@@ -777,7 +777,7 @@ public class SVNCommitClient extends SVNBasicClient {
         boolean changed = false;
         for (int i = 0; children != null && i < children.length; i++) {
             File file = children[i];
-            if (".svn".equals(file.getName())) {
+            if (SVNFileUtil.getAdminDirectoryName().equals(file.getName())) {
                 SVNEvent skippedEvent = SVNEventFactory.createSkipEvent(
                         rootFile, file, SVNEventAction.SKIP, SVNNodeKind.NONE);
                 handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);

@@ -137,7 +137,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         File file = parentDir.getFile(name);
         if (file.exists()) {
             SVNErrorManager.error("svn: Failed to add directory '" + path + "': object of the same name already exists");
-        } else if (".svn".equals(name)) {
+        } else if (SVNFileUtil.getAdminDirectoryName().equals(name)) {
             SVNErrorManager.error("svn: Failed to add directory '" + path + "': object of the same name as the administrative directory");
         }
         SVNEntry entry = parentDir.getEntries().getEntry(name, true);
@@ -375,8 +375,10 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         // merge contents.
         File textTmpBase = dir.getBaseFile(name, true);
-        String tmpPath = ".svn/tmp/text-base/" + name + ".svn-base";
-        String basePath = ".svn/text-base/" + name + ".svn-base";
+        String adminDir = SVNFileUtil.getAdminDirectoryName();
+
+        String tmpPath = adminDir + "/tmp/text-base/" + name + ".svn-base";
+        String basePath = adminDir + "/text-base/" + name + ".svn-base";
         File workingFile = dir.getFile(name);
 
         if (!myCurrentFile.TextUpdated && magicPropsChanged && workingFile.exists()) {

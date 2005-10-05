@@ -438,7 +438,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                 File[] dirs = file.listFiles();
                 for (int i = 0; i < dirs.length; i++) {
                     File childDir = dirs[i];
-                    if (".svn".equals(childDir)) {
+                    if (SVNFileUtil.getAdminDirectoryName().equals(childDir)) {
                         continue;
                     }
                     SVNFileType fType = SVNFileType.getType(childDir);

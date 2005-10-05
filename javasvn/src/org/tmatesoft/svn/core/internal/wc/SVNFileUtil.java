@@ -20,14 +20,15 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -56,6 +57,7 @@ public class SVNFileUtil {
     private static String ourGroupID;
     private static String ourUserID;
     private static File ourAppDataPath;
+    private static String ourAdminDirectoryName;
     private static final String BINARY_MIME_TYPE = "application/octet-stream";
 
     static {
@@ -68,7 +70,7 @@ public class SVNFileUtil {
         File base = file.getParentFile();
         while (base != null) {
             if (base.isDirectory()) {
-                File adminDir = new File(base, ".svn");
+                File adminDir = new File(base, getAdminDirectoryName());
                 if (adminDir.exists() && adminDir.isDirectory()) {
                     break;
                 }
@@ -638,7 +640,7 @@ public class SVNFileUtil {
             if (cancel != null) {
                 cancel.checkCancelled();
             }
-            if (!copyAdminDir && file.getName().equals(".svn")) {
+            if (!copyAdminDir && file.getName().equals(getAdminDirectoryName())) {
                 continue;
             }
             SVNFileType fileType = SVNFileType.getType(file);
@@ -652,7 +654,7 @@ public class SVNFileUtil {
                 }
             } else if (fileType == SVNFileType.DIRECTORY) {
                 copyDirectory(file, dst, copyAdminDir, cancel);
-                if (file.isHidden() || ".svn".equals(file.getName())) {
+                if (file.isHidden() || getAdminDirectoryName().equals(file.getName())) {
                     setHidden(dst, true);
                 }
             } else if (fileType == SVNFileType.SYMLINK) {
@@ -812,41 +814,82 @@ public class SVNFileUtil {
         }
     }
     
+    public static String getAdminDirectoryName() {
+        if (ourAdminDirectoryName == null) {
+            String defaultAdminDir = ".svn";
+            if (getEnvironmentVariable("SVN_ASP_DOT_NET_HACK") != null){
+                defaultAdminDir = "_svn";
+            }
+            ourAdminDirectoryName = System.getProperty("javasvn.admindir", defaultAdminDir);
+            if (ourAdminDirectoryName == null || "".equals(ourAdminDirectoryName.trim())) {
+                ourAdminDirectoryName = defaultAdminDir;
+            }
+        }
+        return ourAdminDirectoryName;
+    }
+    
+    public static void setAdminDirectoryName(String name) {
+        ourAdminDirectoryName = name;
+    }
+    
     public static File getApplicationDataPath() {
         if (ourAppDataPath != null) {
             return ourAppDataPath;
         }
-        Method getEnvMethod = null;
-        try {
-            getEnvMethod = System.class.getMethod("getenv", new Class[] {String.class});
-        } catch (SecurityException e) {
-        } catch (NoSuchMethodException e) {
-        }
-        if (getEnvMethod != null) {
-            try {
-                String path = (String) getEnvMethod.invoke(null, new Object[] {"APPDATA"});
-                if (path != null) {
-                    ourAppDataPath = new File(path);
-                    return new File(path);
-                }
-            } catch (IllegalArgumentException e) {
-            } catch (IllegalAccessException e) {
-            } catch (InvocationTargetException e) {
-            }
-        }
-        if (ourAppDataPath == null) {
-            String[] cmd = new String[] {"cmd.exe", "/D", "/C", "set", "APPDATA"};
-            String result = execCommand(cmd, true);
-            if (result != null && result.startsWith("APPDATA=")) {
-                result = result.substring("APPDATA=".length());
-                if (result.indexOf("\r") >= 0) {
-                    result = result.substring(0, result.indexOf("\r"));
-                }
-                ourAppDataPath = new File(result.trim());
-            } else {
-                ourAppDataPath = new File(new File(System.getProperty("user.home")), "Application Data");
-            }
+        String envAppData = getEnvironmentVariable("APPDATA");
+        if (envAppData == null) {
+            ourAppDataPath = new File(new File(System.getProperty("user.home")), "Application Data");
+        } else {
+            ourAppDataPath = new File(envAppData);
         }
         return ourAppDataPath;
+    }
+    
+    public static String getEnvironmentVariable(String name) {
+        try {
+            // pre-Java 1.5 this throws an Error.  On Java 1.5 it
+            // returns the environment variable
+            Method getenv = System.class.getMethod("getenv", new Class[] {String.class});
+            if (getenv != null) {
+                Object value = getenv.invoke(null, new Object[] {name});
+                if (value instanceof String) {
+                    return (String) value;
+                }
+            }            
+        } catch(Throwable e) {
+            try {
+                // This means we are on 1.4.  Get all variables into
+                // a Properties object and get the variable from that
+                return getEnvironment().getProperty(name);
+            } catch (Throwable e1) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    public static Properties getEnvironment() throws Throwable {
+        Process p = null;
+        Properties envVars = new Properties();
+        Runtime r = Runtime.getRuntime();
+        if (isWindows) {
+            if (System.getProperty("os.name").toLowerCase().indexOf("windows 9") >= 0) 
+                p = r.exec( "command.com /c set" );
+            else
+                p = r.exec( "cmd.exe /c set" );
+        } else {
+            p = r.exec( "env" );
+        }
+        if (p != null) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line;
+            while( (line = br.readLine()) != null ) {
+                int idx = line.indexOf( '=' );
+                String key = line.substring( 0, idx );
+                String value = line.substring( idx+1 );
+                envVars.setProperty( key, value );
+            }
+        }
+        return envVars;
     }
 }

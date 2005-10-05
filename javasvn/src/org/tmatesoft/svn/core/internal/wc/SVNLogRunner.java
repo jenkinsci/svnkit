@@ -56,11 +56,10 @@ public class SVNLogRunner {
 
                 if (SVNLog.WC_TIMESTAMP.equals(value)) {
                     if (SVNProperty.PROP_TIME.equals(attName)) {
-                        String path = "".equals(fileName) ? ".svn/dir-props"
-                                : ".svn/props/" + fileName + ".svn-work";
-                        File file = new File(dir.getRoot(), path);
-                        value = SVNTimeUtil.formatDate(new Date(file
-                                .lastModified()));
+                        String path = "".equals(fileName) ? "dir-props"
+                                : "props/" + fileName + ".svn-work";
+                        File file = dir.getAdminFile(path);
+                        value = SVNTimeUtil.formatDate(new Date(file.lastModified()));
                     } else if (SVNProperty.TEXT_TIME.equals(attName)) {
                         String path = "".equals(fileName) ? "" : fileName;
                         File file = new File(dir.getRoot(), path);
@@ -98,8 +97,7 @@ public class SVNLogRunner {
             SVNFileUtil.setReadonly(file, true);
         } else if (SVNLog.MOVE.equals(name)) {
             File src = new File(dir.getRoot(), fileName);
-            File dst = new File(dir.getRoot(), (String) attributes
-                    .get(SVNLog.DEST_ATTR));
+            File dst = new File(dir.getRoot(), (String) attributes.get(SVNLog.DEST_ATTR));
             if (!src.exists() && dst.exists()) {
                 return;
             }
@@ -205,7 +203,7 @@ public class SVNLogRunner {
                 if ("".equals(fileName)) {
                     entry.setRevision(revisionNumber);
                     entry.setKind(SVNNodeKind.DIR);
-                    File killMe = dir.getFile(".svn/KILLME");
+                    File killMe = dir.getAdminFile("KILLME");
                     if (killMe.getParentFile().isDirectory()) {
                         try {
                             killMe.createNewFile();
@@ -316,9 +314,8 @@ public class SVNLogRunner {
                             .getPropertyValue(SVNProperty.SPECIAL) != null;
                     if (SVNFileUtil.isWindows || !special) {
                         if (fileType == SVNFileType.FILE) {
-                            SVNTranslator.translate(dir, fileName, SVNFileUtil
-                                    .getBasePath(tmpFile), SVNFileUtil
-                                    .getBasePath(tmpFile2), true, false);
+                            SVNTranslator.translate(dir, fileName, 
+                                    SVNFileUtil.getBasePath(tmpFile), SVNFileUtil.getBasePath(tmpFile2), true, false);
                         } else {
                             SVNTranslator.translate(dir, fileName, fileName,
                                     SVNFileUtil.getBasePath(tmpFile2), true,
@@ -427,7 +424,7 @@ public class SVNLogRunner {
     }
 
     public void logCompleted(SVNDirectory dir) throws SVNException {
-        boolean killMe = dir.getFile(".svn/KILLME").isFile();
+        boolean killMe = dir.getAdminFile("KILLME").isFile();
         long dirRevision = killMe ? dir.getEntries().getEntry("", true).getRevision() : -1;
         if (myIsEntriesChanged) {
             dir.getEntries().save(false);

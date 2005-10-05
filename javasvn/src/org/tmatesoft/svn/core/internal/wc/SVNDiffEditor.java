@@ -213,8 +213,8 @@ public class SVNDiffEditor implements ISVNEditor {
             while (info != null) {
                 SVNDirectory parentDir = myWCAccess.getDirectory(info.myPath);
                 if (parentDir != null) {
-                    tmpFile = SVNFileUtil.createUniqueFile(parentDir.getFile(".svn/tmp/text-base"), fileName, ".tmp");
-                    myCurrentFile.myBaseFile = parentDir.getFile(".svn/empty-file");
+                    tmpFile = SVNFileUtil.createUniqueFile(parentDir.getAdminFile("tmp/text-base"), fileName, ".tmp");
+                    myCurrentFile.myBaseFile = parentDir.getAdminFile("empty-file");
                     if (myCurrentFile.myBaseFile.exists()) {
                         break;
                     }
@@ -280,14 +280,13 @@ public class SVNDiffEditor implements ISVNEditor {
             if (myCurrentFile.myFile != null) {
                 String wcMimeType = dir.getProperties(fileName, false).getPropertyValue(SVNProperty.MIME_TYPE);
                 if (!myIsCompareToBase && myCurrentFile.myIsScheduledForDeletion) {
-                    myCurrentFile.myBaseFile = dir.getFile(".svn/empty-file");
+                    myCurrentFile.myBaseFile = dir.getAdminFile("empty-file");
                 } else if (!myIsCompareToBase) {
                     File wcTmpFile = SVNFileUtil.createUniqueFile(
                             myCurrentFile.myFile.getParentFile(), fileName,
                             ".tmp");
                     String path = SVNFileUtil.getBasePath(wcTmpFile);
-                    SVNTranslator.translate(dir, fileName, fileName, path,
-                            true, false);
+                    SVNTranslator.translate(dir, fileName, fileName, path, true, false);
                     myCurrentFile.myBaseFile = wcTmpFile;
                 }
                 String revStr = "(revision " + myTargetRevision + ")";
@@ -303,8 +302,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 if (myCurrentFile.myBaseFile != null
                         && !myCurrentFile.myIsScheduledForDeletion
                         && !myIsCompareToBase
-                        && !fileName.equals(SVNFileUtil
-                                .getBasePath(myCurrentFile.myBaseFile))) {
+                        && !fileName.equals(SVNFileUtil.getBasePath(myCurrentFile.myBaseFile))) {
                     myCurrentFile.myBaseFile.delete();
                 }
                 myCurrentFile.myFile.delete();
@@ -407,8 +405,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 // display text diff for deleted file.
                 String mimeType1 = (String) baseProps
                         .get(SVNProperty.MIME_TYPE);
-                String rev1 = "(revision " + Long.toString(entry.getRevision())
-                        + ")";
+                String rev1 = "(revision " + Long.toString(entry.getRevision()) + ")";
                 myDiffGenerator.displayFileDiff(fullPath, dir.getBaseFile(name,
                         false), null, rev1, null, mimeType1, null, result);
                 if (deleted) {
@@ -420,8 +417,7 @@ public class SVNDiffEditor implements ISVNEditor {
             try {
                 if (added || replaced) {
                     tmpFile = dir.getBaseFile(name, true);
-                    SVNTranslator.translate(dir, name, name, SVNFileUtil
-                            .getBasePath(tmpFile), false, false);
+                    SVNTranslator.translate(dir, name, name, SVNFileUtil.getBasePath(tmpFile), false, false);
                     // display text diff for added file.
 
                     String mimeType1 = null;
@@ -443,8 +439,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 boolean isTextModified = dir.hasTextModifications(name, false);
                 if (isTextModified) {
                     tmpFile = dir.getBaseFile(name, true);
-                    SVNTranslator.translate(dir, name, name, SVNFileUtil
-                            .getBasePath(tmpFile), false, false);
+                    SVNTranslator.translate(dir, name, name, SVNFileUtil.getBasePath(tmpFile), false, false);
 
                     String mimeType1 = (String) baseProps
                             .get(SVNProperty.MIME_TYPE);

@@ -71,6 +71,7 @@ import java.util.Map;
  * 
  */
 public interface ISVNOptions {
+    
     /**
      * Determines if the commit-times option is enabled.  
      * 

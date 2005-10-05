@@ -122,7 +122,8 @@ public class SVNLogClient extends SVNBasicClient {
         if (endRev < startRev) {
             SVNErrorManager.error("svn: Start revision must precede end revision (" + startRev + ":" + endRev + ")");
         }
-        File tmpFile = new File(path.getParentFile(), ".svn/tmp/text-base");
+        File tmpFile = new File(path.getParentFile(), SVNFileUtil.getAdminDirectoryName());
+        tmpFile = new File(tmpFile, "tmp/text-base");
         if (!tmpFile.exists()) {
             tmpFile = new File(System.getProperty("user.home"), ".javasvn");
             tmpFile.mkdirs();

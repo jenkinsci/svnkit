@@ -333,7 +333,7 @@ public class SVNMerger {
         String name = SVNPathUtil.tail(path);
         if (dir != null) {
             String extension = base ? ".tmp-base" : ".tmp-work";
-            return SVNFileUtil.createUniqueFile(dir.getFile(".svn/tmp/text-base"), name , extension);
+            return SVNFileUtil.createUniqueFile(dir.getAdminFile("tmp/text-base"), name , extension);
         }
         return null;
     }
@@ -493,8 +493,7 @@ public class SVNMerger {
         command.clear();
 
         // 3. text files.
-        String basePath = SVNFileUtil.getBasePath(parentDir.getBaseFile(name,
-                false));
+        String basePath = SVNFileUtil.getBasePath(parentDir.getBaseFile(name, false));
         command.put(SVNLog.NAME_ATTR, filePath);
         command.put(SVNLog.DEST_ATTR, basePath);
         log.addCommand(SVNLog.MOVE, command, false);

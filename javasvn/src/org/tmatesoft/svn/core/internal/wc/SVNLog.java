@@ -92,8 +92,8 @@ public class SVNLog {
 
     public SVNLog(SVNDirectory directory, int id) {
         String name = id == 0 ? "log" : "log." + id;
-        myFile = new File(directory.getRoot(), ".svn/" + name);
-        myTmpFile = new File(directory.getRoot(), ".svn/tmp/" + name);
+        myFile = directory.getAdminFile(name);
+        myTmpFile = directory.getAdminFile("tmp/" + name);
         myDirectory = directory;
     }
 
