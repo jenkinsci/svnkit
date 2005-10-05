@@ -102,6 +102,8 @@ public class JavaHLObjectFactory {
         ACTION_CONVERSION_MAP.put(SVNEventAction.UPDATE_DELETE, new Integer(NotifyAction.update_delete));
         ACTION_CONVERSION_MAP.put(SVNEventAction.UPDATE_EXTERNAL, new Integer(NotifyAction.update_external));
         ACTION_CONVERSION_MAP.put(SVNEventAction.UPDATE_UPDATE, new Integer(NotifyAction.update_update));
+        // undocumented thing.
+        ACTION_CONVERSION_MAP.put(SVNEventAction.COMMIT_COMPLETED, new Integer(32));
     }
 
     public static Status createStatus(String path, SVNStatus status) {

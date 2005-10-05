@@ -257,6 +257,9 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNDebugLog.logInfo(e);
             SVNErrorManager.error("svn: " + e.getMessage());
         }
+        if (result != null && result.getNewRevision() >= 0) { 
+            dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, result.getNewRevision()), ISVNEventHandler.UNKNOWN);
+        }
         return result != null ? result : SVNCommitInfo.NULL;
     }
     
@@ -362,6 +365,9 @@ public class SVNCopyClient extends SVNBasicClient {
             if (wcAccess != null) {
                 wcAccess.close(false);
             }
+        }
+        if (info != null && info.getNewRevision() >= 0) { 
+            dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, info.getNewRevision()), ISVNEventHandler.UNKNOWN);
         }
         return info != null ? info : SVNCommitInfo.NULL;
     }

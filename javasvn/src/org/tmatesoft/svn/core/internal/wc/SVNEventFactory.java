@@ -112,6 +112,12 @@ public class SVNEventFactory {
                 revision, null, null, null, null, null, null);
     }
 
+    public static SVNEvent createCommitCompletedEvent(SVNWCAccess source, long revision) {
+        return new SVNEvent(source, source != null ? source.getTarget() : null,
+                "", SVNEventAction.COMMIT_COMPLETED, SVNNodeKind.NONE,
+                revision, null, null, null, null, null, null);
+    }
+
     public static SVNEvent createStatusCompletedEvent(SVNWCAccess source,
             long revision) {
         return new SVNEvent(source, source != null ? source.getTarget() : null,

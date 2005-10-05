@@ -212,8 +212,14 @@ public class SVNEventAction {
      * In a commit operation denotes the final stage of the operation - 
      * sending all file data and finalizing the commit.
      */
-    public static final SVNEventAction COMMIT_DELTA_SENT = new SVNEventAction(
-            19);
+    public static final SVNEventAction COMMIT_DELTA_SENT = new SVNEventAction(19);
+
+    /**
+     * In a commit operation denotes that the operation itself is completed
+     * (for instance, in a console client can be used to print out the
+     * commited revsion).
+     */
+    public static final SVNEventAction COMMIT_COMPLETED = new SVNEventAction(32);
 
     public static final SVNEventAction ANNOTATE = new SVNEventAction(20);
     
