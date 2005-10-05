@@ -309,7 +309,7 @@ public class SVNTranslator {
                     " \t\n\b\r\f"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
                 if ("LastChangedDate".equals(token) || "Date".equals(token)) {
-                    date = expand && date == null ? SVNFormatUtil.formatDate(jDate).getBytes("UTF-8") : date;
+                    date = expand && date == null ? SVNFormatUtil.formatDate(jDate, true).getBytes("UTF-8") : date;
                     map.put("LastChangedDate", date);
                     map.put("Date", date);
                 } else if ("LastChangedRevision".equals(token)
@@ -333,7 +333,7 @@ public class SVNTranslator {
                 } else if ("Id".equals(token)) {
                     if (expand && id == null) {
                         rev = rev == null ? r.getBytes("UTF-8") : rev;
-                        date = date == null ? SVNFormatUtil.formatDate(jDate).getBytes("UTF-8") : date;
+                        date = date == null ? SVNFormatUtil.formatDate(jDate, false).getBytes("UTF-8") : date;
                         name = name == null ? SVNEncodingUtil.uriDecode(SVNPathUtil.tail(u))
                                 .getBytes("UTF-8") : name;
                         author = author == null ? (a == null ? new byte[0] : a
