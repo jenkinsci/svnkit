@@ -83,7 +83,6 @@ javasvn/src/org/tmatesoft/svn/core/wc/ISVNMergerFactory.java -text
 javasvn/src/org/tmatesoft/svn/core/wc/package.html -text
 javasvn/src/org/tmatesoft/svn/util/ISVNDebugLogger.java -text
 javasvn/src/org/tmatesoft/svn/util/SVNDebugLog.java -text
-/plugin.xml -text
 www/css/home.css -text
 www/download/.htaccess -text
 www/download/PythonTests.xsl -text
