@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -387,8 +388,11 @@ public class JavaHLObjectFactory {
                 );
     }
     
-    public static PropertyData createPropertyData(SVNClient client, String path, String name, String value, byte[] data) {
-        return new PropertyData(client, path, name, value, data);
+    public static PropertyData createPropertyData(Object client, String path, String name, String value, byte[] data) {
+        if (client instanceof SVNClientImpl){
+            return new JavaHLPropertyData((SVNClientImpl) client, null, path, name, value, data);
+        }
+        return new PropertyData((SVNClient) client, path, name, value, data);
     }
 
     public static NotifyInformation createNotifyInformation(SVNEvent event, String path) {

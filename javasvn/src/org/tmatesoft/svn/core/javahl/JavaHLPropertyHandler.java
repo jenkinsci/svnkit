@@ -7,9 +7,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.tigris.subversion.javahl.PropertyData;
-import org.tigris.subversion.javahl.SVNClient;
 import org.tigris.subversion.javahl.JavaHLObjectFactory;
+import org.tigris.subversion.javahl.PropertyData;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
@@ -19,10 +18,10 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
 class JavaHLPropertyHandler implements ISVNPropertyHandler{
     
     private PropertyData myData = null;
-    private SVNClient myOwner;
+    private Object myOwner;
     private Collection myAllData;
     
-    public JavaHLPropertyHandler(SVNClient owner){
+    public JavaHLPropertyHandler(Object owner){
         myOwner = owner;
         myAllData = new ArrayList();
     }

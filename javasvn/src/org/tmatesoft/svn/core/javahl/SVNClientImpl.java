@@ -86,7 +86,7 @@ public class SVNClientImpl implements SVNClientInterface {
     private ISVNOptions myOptions;
     private boolean myCancelOperation = false;
     private SVNClientManager myClientManager;
-    private SVNClient myOwner;
+    private SVNClientInterface myOwner;
     
     private ISVNAuthenticationManager myAuthenticationManager;
     private static final ISVNAuthenticationStorage ourAuthStorage = new JavaHLAuthenticationStorage();
@@ -107,7 +107,7 @@ public class SVNClientImpl implements SVNClientInterface {
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
         myConfigDir = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
-        myOwner = owner;
+        myOwner = owner == null ? (SVNClientInterface) this : (SVNClientInterface) owner;
     }
 
     public String getLastPath() {
