@@ -1524,8 +1524,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                     #doInfo(SVNURL, SVNRevision, SVNRevision)
      * @see                     #doInfo(File, SVNRevision, boolean, ISVNInfoHandler)
      */
-    public void doInfo(SVNURL url, SVNRevision pegRevision,
-            SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
+    public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
             throws SVNException {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.HEAD;
@@ -1533,10 +1532,34 @@ public class SVNWCClient extends SVNBasicClient {
 
         SVNRepository repos = createRepository(url, null, pegRevision, revision);;
         long revNum = getRevisionNumber(revision, repos, null);
-        SVNDirEntry rootEntry = repos.info("", revNum);
+        SVNDirEntry rootEntry = null;
+        try {
+            rootEntry = repos.info("", revNum);
+        } catch (SVNException e) {
+            if (e.getMessage().indexOf("Unknown command 'stat'") >= 0) {
+                // for svnserve older then 1.2.0
+                if (repos.getLocation().equals(repos.getRepositoryRoot(true))) {
+                    rootEntry = new SVNDirEntry("", SVNNodeKind.DIR, -1, false, -1, null, null);
+                } else {
+                    String name = SVNPathUtil.tail(url.getPath());
+                    SVNURL location = repos.getLocation();
+                    repos.setLocation(location.removePathTail(), false);
+                    Collection dirEntries = repos.getDir("", revNum, null, (Collection) null);
+                    for (Iterator ents = dirEntries.iterator(); ents.hasNext();) {
+                        SVNDirEntry dirEntry = (SVNDirEntry) ents.next();
+                        if (name.equals(dirEntry.getName())) {
+                            rootEntry = dirEntry;
+                            break;
+                        }
+                    }
+                    repos.setLocation(location, false);
+                }
+            } else {
+                throw e;
+            }
+        }
         if (rootEntry == null || rootEntry.getKind() == SVNNodeKind.NONE) {
-            SVNErrorManager.error("'" + url + "' non-existent in revision "
-                    + revNum);
+            SVNErrorManager.error("'" + url + "' non-existent in revision " + revNum);
         }
         SVNURL reposRoot = repos.getRepositoryRoot(true);
         String reposUUID = repos.getRepositoryUUID();
@@ -1559,8 +1582,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (!rootPath.startsWith("/")) {
             rootPath = "/" + rootPath;
         }
-        collectInfo(repos, rootEntry, SVNRevision.create(revNum), rootPath,
-                reposRoot, reposUUID, url, locksMap, recursive, handler);
+        collectInfo(repos, rootEntry, SVNRevision.create(revNum), rootPath, reposRoot, reposUUID, url, locksMap, recursive, handler);
     }
     
     /**

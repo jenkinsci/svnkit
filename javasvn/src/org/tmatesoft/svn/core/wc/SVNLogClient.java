@@ -413,10 +413,25 @@ public class SVNLogClient extends SVNBasicClient {
 
     private void doList(SVNRepository repos, long rev, ISVNDirEntryHandler handler, boolean recursive) throws SVNException {
         if (repos.checkPath("", rev) == SVNNodeKind.FILE) {
-            SVNDirEntry entry = repos.info("", rev);
             String name = SVNPathUtil.tail(repos.getLocation().getPath());
-            entry.setPath(name);
-            handler.handleDirEntry(entry);
+            SVNURL fileULR = repos.getLocation();
+            repos.setLocation(repos.getLocation().removePathTail(), false);
+            Collection dirEntries = repos.getDir("", rev, null, (Collection) null);
+
+            SVNDirEntry fileEntry = null;
+            for (Iterator ents = dirEntries.iterator(); ents.hasNext();) {
+                SVNDirEntry dirEntry = (SVNDirEntry) ents.next();
+                if (name.equals(dirEntry.getName())) {
+                    fileEntry = dirEntry;
+                    break;
+                }
+            }
+            if (fileEntry != null) {
+                fileEntry.setPath(name);
+                handler.handleDirEntry(fileEntry);
+            } else {
+                SVNErrorManager.error("svn: URL '" + fileULR + "' non-existent in that revision");
+            }
         } else {
             list(repos, "", rev, recursive, handler);
         }
