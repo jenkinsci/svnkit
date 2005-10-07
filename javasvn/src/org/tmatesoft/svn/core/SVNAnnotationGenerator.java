@@ -123,6 +123,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             return;
         }
         if (myCurrentRevision >= myStartRevision) {
+            System.out.println("processing revision: " + myCurrentRevision);
             // compute lines info.
             RandomAccessFile left = null;
             RandomAccessFile right = null;
@@ -133,7 +134,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                 ArrayList newLines = new ArrayList();
                 int lastStart = 0;
 
-                final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right), new byte[0]);
+                final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right), null);
                 try {
                     List blocksList = result.getBlocks();
                     for(int i = 0; i < blocksList.size(); i++) {
