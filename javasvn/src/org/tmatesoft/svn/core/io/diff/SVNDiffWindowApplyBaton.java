@@ -39,7 +39,7 @@ public class SVNDiffWindowApplyBaton {
     
     public static SVNDiffWindowApplyBaton create(File source, File target, MessageDigest digest) throws SVNException {
         SVNDiffWindowApplyBaton baton = new SVNDiffWindowApplyBaton();
-        baton.mySourceStream = SVNFileUtil.openFileForReading(source);
+        baton.mySourceStream = source.exists() ? SVNFileUtil.openFileForReading(source) : SVNFileUtil.DUMMY_IN;
         baton.myTargetStream = SVNFileUtil.openFileForWriting(target, true);
         baton.mySourceBuffer = new byte[0];
         baton.mySourceViewLength = 0;
