@@ -237,7 +237,7 @@ public class SVNDiffEditor implements ISVNEditor {
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        myDeltaProcessor.textDeltaEnd(myCurrentFile.myBaseFile, myCurrentFile.myFile);
+        myDeltaProcessor.textDeltaEnd(myCurrentFile.myBaseFile, myCurrentFile.myFile, false);
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {

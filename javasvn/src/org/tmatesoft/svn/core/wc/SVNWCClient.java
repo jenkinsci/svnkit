@@ -373,8 +373,7 @@ public class SVNWCClient extends SVNBasicClient {
                 dst.write(r);
             }
         } catch (IOException e) {
-            //
-            e.printStackTrace();
+            SVNErrorManager.error(e.getMessage());
         } finally {
             SVNFileUtil.closeFile(os);
             SVNFileUtil.closeFile(is);

@@ -176,7 +176,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     public void textDeltaEnd(String commitPath) throws SVNException {
         File baseTmpFile = myCurrentFile.myBaseFile;
         File targetFile = myCurrentFile.myFile;
-        myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile);
+        myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile, false);
     }
 
     public void closeFile(String commitPath, String textChecksum)

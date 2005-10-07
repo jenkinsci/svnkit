@@ -12,9 +12,11 @@
 
 package org.tmatesoft.svn.core.io.diff;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 
 
@@ -27,8 +29,9 @@ public class SVNDiffWindow {
     private final long mySourceViewOffset;
     private final long mySourceViewLength;
     private final long myTargetViewLength;
-    private final SVNDiffInstruction[] myInstructions;
+    private SVNDiffInstruction[] myInstructions;
     private final long myNewDataLength;
+    private long myInstructionsLength;
 
     public SVNDiffWindow(long sourceViewOffset, long sourceViewLength, long targetViewLength, 
             SVNDiffInstruction[] instructions, long newDataLength) {
@@ -37,6 +40,19 @@ public class SVNDiffWindow {
         myTargetViewLength = targetViewLength;
         myInstructions = instructions;
         myNewDataLength = newDataLength;
+    }
+
+    public SVNDiffWindow(long sourceViewOffset, long sourceViewLength, long targetViewLength, long instructionsLength, 
+            long newDataLength) {
+        mySourceViewOffset = sourceViewOffset;
+        mySourceViewLength = sourceViewLength;
+        myTargetViewLength = targetViewLength;
+        myInstructionsLength = instructionsLength;
+        myNewDataLength = newDataLength;
+    }
+    
+    public long getInstructionsLength() {
+        return myInstructionsLength;
     }
     
     public long getSourceViewOffset() {
@@ -63,22 +79,90 @@ public class SVNDiffWindow {
     public long getNewDataLength() {
         return myNewDataLength;
     }
-
-    public void apply(ISVNRAData source, ISVNRAData target, InputStream newData, long offset) throws SVNException {
-        InputStream src;
-        for(int i = 0; i < myInstructions.length; i++) {
-            myInstructions[i].offset += offset;
-            switch (myInstructions[i].type) {
-                case SVNDiffInstruction.COPY_FROM_NEW_DATA:
-                    src = newData;
-                    break;
-                case SVNDiffInstruction.COPY_FROM_TARGET:
-                    src = target.read(myInstructions[i].offset, myInstructions[i].length);
-                    break;
-                default:
-                    src = source.read(myInstructions[i].offset, myInstructions[i].length);
+    
+    public void apply(SVNDiffWindowApplyBaton applyBaton, InputStream newData) throws SVNException {
+        // here we have streams and buffer from the previous calls (or nulls).
+        
+        // 1. buffer for target.
+        if (applyBaton.myTargetViewSize < getTargetViewLength()) {
+            applyBaton.myTargetBuffer = new byte[(int) getTargetViewLength()];
+        }
+        applyBaton.myTargetViewSize = getTargetViewLength();
+        
+        // 2. buffer for source.
+        int length = 0;
+        if (getSourceViewOffset() != applyBaton.mySourceViewOffset || getSourceViewLength() > applyBaton.mySourceViewLength) {
+            byte[] oldSourceBuffer = applyBaton.mySourceBuffer;
+            // create new buffer
+            applyBaton.mySourceBuffer = new byte[(int) getSourceViewLength()];
+            // copy from the old buffer.
+            if (applyBaton.mySourceViewOffset + applyBaton.mySourceViewLength > getSourceViewOffset()) {
+                // copy overlapping part to the new buffer
+                int start = (int) (getSourceViewOffset() - applyBaton.mySourceViewOffset);
+                System.arraycopy(oldSourceBuffer, start, applyBaton.mySourceBuffer, 0, (int) (applyBaton.mySourceViewLength - start));
+                length = (int) (applyBaton.mySourceViewLength - start);
             }
-            target.append(src, myInstructions[i].length);
+            
+        }
+        if (length < getSourceViewLength()) {
+            // fill what remains.
+            try {
+                applyBaton.mySourceStream.read(applyBaton.mySourceBuffer, length, applyBaton.mySourceBuffer.length - length);
+            } catch (IOException e) {
+                SVNErrorManager.error(e.getMessage());
+            }
+        }
+        // update offsets in baton.
+        applyBaton.mySourceViewLength = getSourceViewLength();
+        applyBaton.mySourceViewOffset = getSourceViewOffset();
+        
+        // apply instructions. 
+        if (myInstructions == null) {
+            byte[] instrBytes = new byte[(int) getInstructionsLength()];
+            try {
+                newData.read(instrBytes);
+            } catch (IOException e) {
+                SVNErrorManager.error(e.getMessage());
+            }
+            myInstructions = SVNDiffWindowBuilder.createInstructions(instrBytes);
+        }
+        int tpos = 0;
+        try {
+            for(int i = 0; i < myInstructions.length; i++) {
+                int iLength = myInstructions[i].length < getTargetViewLength() - tpos ? (int) myInstructions[i].length : (int) getTargetViewLength() - tpos; 
+                switch (myInstructions[i].type) {
+                    case SVNDiffInstruction.COPY_FROM_NEW_DATA:
+                        newData.read(applyBaton.myTargetBuffer, tpos, iLength);
+                        break;
+                    case SVNDiffInstruction.COPY_FROM_TARGET:
+                        int start = (int) myInstructions[i].offset;
+                        int end = (int) myInstructions[i].offset + iLength;
+                        int tIndex = tpos;
+                        for(int j = start; j < end; j++) {
+                            applyBaton.myTargetBuffer[tIndex] = applyBaton.myTargetBuffer[j];
+                            tIndex++;
+                        }
+                        break;
+                    case SVNDiffInstruction.COPY_FROM_SOURCE:
+                        System.arraycopy(applyBaton.mySourceBuffer, (int) myInstructions[i].offset, 
+                                applyBaton.myTargetBuffer, tpos, iLength);
+                        break;
+                    default:
+                }
+                tpos += myInstructions[i].length;
+                if (tpos >= getTargetViewLength()) {
+                    break;
+                }
+            }
+            myInstructions = null;
+            // save tbuffer.
+            if (applyBaton.myDigest != null) {
+                applyBaton.myDigest.update(applyBaton.myTargetBuffer, 0, (int) getTargetViewLength());
+            }
+            applyBaton.myTargetStream.write(applyBaton.myTargetBuffer, 0, (int) getTargetViewLength());
+        } catch (IOException e) {
+            SVNErrorManager.error(e.getMessage());
+            
         }
     }
 

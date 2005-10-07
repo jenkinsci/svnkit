@@ -79,9 +79,9 @@ public class SVNSequenceDeltaGeneratorTest extends TestCase {
             testData = new RAData("");
 
             for (int index = 0; index < consumer.getWindows().size(); index++) {
-                final SVNDiffWindow window = (SVNDiffWindow) consumer.getWindows().get(index);
-                final ByteArrayOutputStream stream = (ByteArrayOutputStream) consumer.getStreams().get(index);
-                window.apply(new RAData(baseFile), testData, new ByteArrayInputStream(stream.toByteArray()), 0);
+//                final SVNDiffWindow window = (SVNDiffWindow) consumer.getWindows().get(index);
+//                final ByteArrayOutputStream stream = (ByteArrayOutputStream) consumer.getStreams().get(index);
+//                window.apply(new RAData(baseFile), testData, new ByteArrayInputStream(stream.toByteArray()), 0);
             }
         } finally {
             final boolean deleted = directory.delete();

@@ -348,7 +348,7 @@ public class SVNProperties {
 
     /** @noinspection ResultOfMethodCallIgnored */
     private static void copyProperties(InputStream is, OutputStream os,
-            String name, InputStream value, int length) {
+            String name, InputStream value, int length) throws SVNException {
         // read names, till name is met, then insert value or skip this
         // property.
         try {
@@ -377,7 +377,7 @@ public class SVNProperties {
             }
             os.write(new byte[] { 'E', 'N', 'D', '\n' });
         } catch (IOException e) {
-            e.printStackTrace();
+            SVNErrorManager.error(e.getMessage());
         }
     }
 

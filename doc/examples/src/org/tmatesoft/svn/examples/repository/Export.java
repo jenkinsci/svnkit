@@ -36,9 +36,8 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindowApplyBaton;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /*
@@ -658,8 +657,7 @@ public class Export {
             }
             myDiffWindows.add(diffWindow);
             try {
-                return myMediator.createTemporaryLocation(myCurrentPath,
-                        diffWindow);
+                return myMediator.createTemporaryLocation(myCurrentPath, diffWindow);
             } catch (IOException ioe) {
                 throw new SVNException(ioe);
             }
@@ -669,27 +667,22 @@ public class Export {
          * All delta is transmitted. Now it's time to apply it.
          */
         public void textDeltaEnd(String path) throws SVNException {
-            File newFile = new File(myRootDirectory, myCurrentPath);
+            File sourceFile = new File(myRootDirectory, myCurrentPath);
             try {
-                newFile.createNewFile();
+                sourceFile.createNewFile();
             } catch (IOException ioe) {
-                newFile.delete();
+                sourceFile.delete();
                 throw new SVNException(ioe);
             }
-            /*
-             * The file should be preliminary wrapped in an ISVNRAData since
-             * the SVNDiffWindow doesn't work directly with the file itself
-             * but by means of the ISVNRAData interface.  
-             */
-            ISVNRAData target = new SVNRAFileData(newFile, false);
+            File targetFile = new File(myRootDirectory, myCurrentPath + ".tmp");
 
             /*
              * if myDiffWindows is null - the file is empty.
              */
             if (myDiffWindows != null) {
+                SVNDiffWindowApplyBaton applyBaton = SVNDiffWindowApplyBaton.create(sourceFile, targetFile, null);
                 try {
-                    for (Iterator windows = myDiffWindows.iterator(); windows
-                            .hasNext();) {
+                    for (Iterator windows = myDiffWindows.iterator(); windows.hasNext();) {
                         /*
                          * obtains a next SVNDiffWindow. 
                          */
@@ -720,7 +713,7 @@ public class Export {
                              * times it should be repeated. These bytes are written to
                              * the current end of the file.  
                              */
-                            window.apply(target, target, newData, target.length());
+                            window.apply(applyBaton, newData);
                         } catch (IOException ioe) {
                             throw new SVNException(
                                     "error while fetching a temporary delta storage.");
@@ -739,11 +732,10 @@ public class Export {
                         }
                     }
                 } finally {
-                    try {
-                        target.close();
-                    } catch (IOException ioe) {
-                        //
-                    }
+                    if (targetFile.exists()) {
+                        sourceFile.delete();
+                        targetFile.renameTo(sourceFile);
+                    }                    
                     myDiffWindows.clear();
                     myDiffWindows = null;
                 }
@@ -752,8 +744,7 @@ public class Export {
         /*
          * Saves a file property.
          */
-        public void changeFileProperty(String path, String name, String value)
-                throws SVNException {
+        public void changeFileProperty(String path, String name, String value) throws SVNException {
             myFileProperties.put(name, value);
         }
         /*

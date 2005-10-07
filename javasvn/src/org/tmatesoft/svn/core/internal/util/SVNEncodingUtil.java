@@ -136,7 +136,6 @@ public class SVNEncodingUtil {
         try {
             return new String(bos.toByteArray(), "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
         }
         return src;
     }

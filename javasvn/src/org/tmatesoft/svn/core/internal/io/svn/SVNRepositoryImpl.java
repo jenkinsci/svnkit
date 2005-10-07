@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
@@ -374,10 +375,16 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         builder.reset(1);
                         OutputStream os = handler.handleDiffWindow(
                                 name == null ? path : name, window);
+                        if (os != null) {
+                            try {
+                                os.write(builder.getInstructionsData());
+                            } catch (IOException e) {
+                                SVNErrorManager.error(e.getMessage());
+                            }
+                        }
                         long length = window.getNewDataLength();
                         while (length > 0) {
-                            byte[] contents = (byte[]) myConnection.read("B",
-                                    null)[0];
+                            byte[] contents = (byte[]) myConnection.read("B", null)[0];
                             length -= contents.length;
                             try {
                                 if (os != null) {

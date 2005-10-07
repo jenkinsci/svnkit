@@ -40,7 +40,6 @@ public class CramMD5 {
         try {
             digest = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
             return null;
         }
         for (int i = 0; i < secret.length; i++) {

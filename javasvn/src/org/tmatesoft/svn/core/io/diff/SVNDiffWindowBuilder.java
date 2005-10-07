@@ -84,6 +84,10 @@ public class SVNDiffWindowBuilder {
 	public SVNDiffWindow getDiffWindow() {
 		return myDiffWindow;
 	}
+    
+    public byte[] getInstructionsData() {
+        return myInstructions;
+    }
 	
     public int accept(byte[] bytes, int offset) {       
         switch (myState) {
@@ -187,7 +191,7 @@ public class SVNDiffWindowBuilder {
             case INSTRUCTIONS:
                 if (myOffsets[3] > 0) {
                     if (myInstructions == null) {
-                        myInstructions = new byte[myOffsets[3]];                        
+                        myInstructions = new byte[myOffsets[3]];
                     }
                     // min of number of available and required.
                     int length =  myOffsets[3];
@@ -209,6 +213,11 @@ public class SVNDiffWindowBuilder {
                             myNewDataStream = consumer.textDeltaChunk(path, myDiffWindow);
                             if (myNewDataStream == null) {
                                 myNewDataStream = SVNFileUtil.DUMMY_OUT;
+                            }
+                            try {
+                                myNewDataStream.write(myInstructions);
+                            } catch (IOException e) {
+                                SVNErrorManager.error(e.getMessage());
                             }
                         }
                     }
@@ -387,12 +396,12 @@ public class SVNDiffWindowBuilder {
 
 	private static SVNDiffWindow createDiffWindow(int[] offsets, byte[] instructions) {
 		SVNDiffWindow window = new SVNDiffWindow(offsets[0], offsets[1], offsets[2], 
-				createInstructions(instructions),
+				instructions.length,
 				offsets[4]);
 		return window;
 	}
 
-	private static SVNDiffInstruction[] createInstructions(byte[] bytes) {
+	public static SVNDiffInstruction[] createInstructions(byte[] bytes) {
         Collection instructions = new ArrayList();
         int[] instr = new int[2];
         for(int i = 0; i < bytes.length;) {            

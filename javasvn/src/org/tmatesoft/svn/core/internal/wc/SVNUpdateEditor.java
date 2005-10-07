@@ -326,7 +326,8 @@ public class SVNUpdateEditor implements ISVNEditor {
     public void textDeltaEnd(String commitPath) throws SVNException {
         File baseTmpFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name, true);
         File targetFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name + ".tmp", true);
-        if (myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile)) {
+        if (myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile, true)) {
+            myCurrentFile.Checksum = myDeltaProcessor.getChecksum();
             SVNFileUtil.rename(targetFile, baseTmpFile);
         }
     }
@@ -337,7 +338,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         String checksum = null;
         if (textChecksum != null && myCurrentFile.TextUpdated) {            
             File baseTmpFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name, true);
-            checksum = SVNFileUtil.computeChecksum(baseTmpFile);            
+            checksum = myCurrentFile.Checksum != null ? myCurrentFile.Checksum : SVNFileUtil.computeChecksum(baseTmpFile);            
             if (!textChecksum.equals(checksum)) {
                 SVNErrorManager.error("svn: Checksum differs, expected '" + textChecksum + "'; actual: '" + checksum + "'");
             }
@@ -730,6 +731,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         public String Name;
         public String CommitTime;
         public boolean TextUpdated;
+        public String Checksum;
 
         public SVNFileInfo(SVNDirectoryInfo parent, String path) {
             super(path);

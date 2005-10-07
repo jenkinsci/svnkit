@@ -108,6 +108,7 @@ public class SVNExportEditor implements ISVNEditor {
         }
         myCurrentFile = file;
         myFileProperties = new HashMap();
+        myChecksum = null;
     }
 
     public void changeFileProperty(String commitPath, String name, String value)
@@ -123,6 +124,8 @@ public class SVNExportEditor implements ISVNEditor {
         File tmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory,  myCurrentFile.getName(), ".tmp");
         return myDeltaProcessor.textDeltaChunk(tmpFile, diffWindow);
     }
+    
+    private String myChecksum;
 
     public void textDeltaEnd(String commitPath) throws SVNException {
         // apply all deltas
@@ -130,7 +133,8 @@ public class SVNExportEditor implements ISVNEditor {
         SVNFileUtil.createEmptyFile(myCurrentTmpFile);
         File fakeBase = SVNFileUtil.createUniqueFile(myCurrentDirectory, myCurrentFile.getName(), ".tmp");
         try {
-            myDeltaProcessor.textDeltaEnd(fakeBase, myCurrentTmpFile);
+            myDeltaProcessor.textDeltaEnd(fakeBase, myCurrentTmpFile, true);
+            myChecksum = myDeltaProcessor.getChecksum();
         } finally {
             fakeBase.delete();
         }
@@ -144,11 +148,11 @@ public class SVNExportEditor implements ISVNEditor {
         if (myIsForce) {
             myCurrentFile.delete();
         }
+        String realChecksum = myChecksum != null ? myChecksum : SVNFileUtil.computeChecksum(myCurrentTmpFile);
+        myChecksum = null;
         if (textChecksum != null
-                && !textChecksum.equals(SVNFileUtil.computeChecksum(myCurrentTmpFile))) {
-            String checksum = SVNFileUtil.computeChecksum(myCurrentTmpFile);
-            SVNErrorManager.error("svn: Checksum differs, expected '"
-                    + textChecksum + "'; actual: '" + checksum + "'");
+                && !textChecksum.equals(realChecksum)) {
+            SVNErrorManager.error("svn: Checksum differs, expected '" + textChecksum + "'; actual: '" + realChecksum + "'");
         }
         // retranslate.
         try {

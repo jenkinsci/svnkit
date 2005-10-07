@@ -16,14 +16,15 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.diff.ISVNRAData;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindowApplyBaton;
 
 
 /**
@@ -35,6 +36,7 @@ public class SVNDeltaProcessor {
     private File myChunkFile;
     private ChunkOutputStream myChunkStream;
     private Collection myWindows;
+    private String myChecksum;
 
     public OutputStream textDeltaChunk(File chunkFile, SVNDiffWindow window) throws SVNException {
         if (myChunkStream != null) {
@@ -49,7 +51,11 @@ public class SVNDeltaProcessor {
         return myChunkStream;
     }
     
-    public boolean textDeltaEnd(File baseFile, File targetFile) throws SVNException {
+    public String getChecksum() {
+        return myChecksum;
+    }
+    
+    public boolean textDeltaEnd(File baseFile, File targetFile, boolean computeChecksum) throws SVNException {
         if (myChunkStream != null) {
             try {
                 myChunkStream.reallyClose();
@@ -68,26 +74,21 @@ public class SVNDeltaProcessor {
                 close();
                 return false;
             }
-            ISVNRAData baseData = new SVNRAFileData(baseFile, false);
-            ISVNRAData target = new SVNRAFileData(targetFile, false);
             InputStream data = SVNFileUtil.openFileForReading(myChunkFile);
-            long length = 0;
+            MessageDigest digest = null;
+            try {
+                digest = computeChecksum ? MessageDigest.getInstance("MD5") : null;
+            } catch (NoSuchAlgorithmException e) {
+            }
+            SVNDiffWindowApplyBaton baton = SVNDiffWindowApplyBaton.create(baseFile, targetFile, digest);
             try {
                 for (Iterator windows = myWindows.iterator(); windows.hasNext();) {
                     SVNDiffWindow window = (SVNDiffWindow) windows.next();
-                    window.apply(baseData, target, data, length);
-                    length += window.getTargetViewLength();
+                    window.apply(baton, data);
                 }
             } finally {
                 SVNFileUtil.closeFile(data);
-                try {
-                    baseData.close();
-                } catch (IOException e) {
-                }
-                try {
-                    target.close();
-                } catch (IOException e) {
-                }
+                myChecksum = baton.close();
             }
         } finally {
             close();
@@ -109,6 +110,11 @@ public class SVNDeltaProcessor {
             super(out);
         }
         public void close() {
+        }
+        
+        public void write(byte[] b, int off, int len) throws IOException {
+            out.write(b, off, len);
+            out.flush();
         }
         public void reallyClose() throws IOException {
             super.close();

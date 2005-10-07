@@ -119,7 +119,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     }
 
     public void handleDiffWindowClosed(String token) throws SVNException {
-        if (!myDeltaProcessor.textDeltaEnd(myPreviousFile, myCurrentFile)) {
+        if (!myDeltaProcessor.textDeltaEnd(myPreviousFile, myCurrentFile, false)) {
             return;
         }
         if (myCurrentRevision >= myStartRevision) {
