@@ -38,10 +38,10 @@ public class SVNDiffWindowBuilder {
 		return new SVNDiffWindowBuilder();
 	}
 	
-	private static final int HEADER = 0;
-	private static final int OFFSET = 1;
-	private static final int INSTRUCTIONS = 2;
-	private static final int DONE = 3;
+	public static final int HEADER = 0;
+	public static final int OFFSET = 1;
+	public static final int INSTRUCTIONS = 2;
+	public static final int DONE = 3;
     
     private static final byte[] HEADER_BYTES = {'S', 'V', 'N', 0};
 	
@@ -247,7 +247,7 @@ public class SVNDiffWindowBuilder {
                     SVNErrorManager.error(e.getMessage());
                 }
                 SVNFileUtil.closeFile(myNewDataStream);
-                reset(1);
+                reset(SVNDiffWindowBuilder.OFFSET);
                 break;
             default:
                 SVNDebugLog.logInfo("invalid diff window builder state: " + myState);

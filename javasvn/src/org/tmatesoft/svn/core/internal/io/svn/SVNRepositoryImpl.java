@@ -372,9 +372,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     builder.accept(line, 0);
                     SVNDiffWindow window = builder.getDiffWindow();
                     if (window != null) {
-                        builder.reset(1);
-                        OutputStream os = handler.handleDiffWindow(
-                                name == null ? path : name, window);
+                        OutputStream os = handler.handleDiffWindow(name == null ? path : name, window);
                         if (os != null) {
                             try {
                                 os.write(builder.getInstructionsData());
@@ -382,6 +380,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                                 SVNErrorManager.error(e.getMessage());
                             }
                         }
+                        builder.reset(SVNDiffWindowBuilder.OFFSET);
                         long length = window.getNewDataLength();
                         while (length > 0) {
                             byte[] contents = (byte[]) myConnection.read("B", null)[0];

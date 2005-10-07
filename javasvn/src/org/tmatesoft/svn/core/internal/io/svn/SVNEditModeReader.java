@@ -165,7 +165,7 @@ public class SVNEditModeReader {
         } catch (IOException e) {
             throw new SVNException(e);
         }
-        myBuilder.reset(1);
+        myBuilder.reset(SVNDiffWindowBuilder.OFFSET);
         myDiffStream = null;
         myLenght = -1;
     }
