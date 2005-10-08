@@ -123,7 +123,6 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             return;
         }
         if (myCurrentRevision >= myStartRevision) {
-            System.out.println("processing revision: " + myCurrentRevision);
             // compute lines info.
             RandomAccessFile left = null;
             RandomAccessFile right = null;
