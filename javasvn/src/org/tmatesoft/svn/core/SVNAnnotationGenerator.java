@@ -24,12 +24,14 @@ import java.util.Map;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
@@ -76,16 +78,17 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      * @throws SVNException
      */
     public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException {
-        if (myCancelBaton != null) {
-            myCancelBaton.checkCancelled();
-        }
-
         Map propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);
         if (SVNProperty.isBinaryMimeType(newMimeType)) {
             SVNErrorManager.error("svn: Cannot calculate blame information for binary file '" + myPath + "'");
         }
         myCurrentRevision = fileRevision.getRevision();
+        if (myCancelBaton != null) {
+            SVNEvent event = SVNEventFactory.createAnnotateEvent(myPath, myCurrentRevision);
+            myCancelBaton.handleEvent(event, ISVNEventHandler.UNKNOWN);
+            myCancelBaton.checkCancelled();
+        }
         Map props = fileRevision.getProperties();
         if (props != null && props.get(SVNRevisionProperty.AUTHOR) != null) {
             myCurrentAuthor = props.get(SVNRevisionProperty.AUTHOR).toString();

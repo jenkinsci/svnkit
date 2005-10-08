@@ -68,6 +68,13 @@ public class SVNEventFactory {
         event.setPath(path);
         return event;
     }
+    
+    public static SVNEvent createAnnotateEvent(String path, long revision) {
+        SVNEvent event = new SVNEvent(null, null, SVNPathUtil.tail(path), 
+                SVNEventAction.ANNOTATE, SVNNodeKind.NONE, revision, null, null, null, null, null, null);
+        event.setPath(path);
+        return event;
+    }
 
     public static SVNEvent createAddedEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
         String mimeType = null;
