@@ -366,10 +366,12 @@ public class SVNLogRunner {
             entry.unschedule();
             entry.setCopied(false);
             entry.setDeleted(false);
-            entry.setTextTime(textTime == 0 ? null : SVNTimeUtil
-                    .formatDate(new Date(textTime)));
-            entry.setPropTime(propTime == 0 ? null : SVNTimeUtil
-                    .formatDate(new Date(propTime)));
+            if (textTime != 0) {
+                entry.setTextTime(SVNTimeUtil.formatDate(new Date(textTime)));
+            }
+            if (propTime != 0) {
+                entry.setPropTime(SVNTimeUtil.formatDate(new Date(propTime)));
+            }
             entry.setConflictNew(null);
             entry.setConflictOld(null);
             entry.setConflictWorking(null);
