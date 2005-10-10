@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.auth;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +35,19 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     private int myProxyPort;
     private String myProxyUserName;
     private String myProxyPassword;
+
+    public BasicAuthenticationManager(String userName, String password) {
+        setAuthentications(new SVNAuthentication[] {
+                new SVNPasswordAuthentication(userName, password, false),
+                new SVNSSHAuthentication(userName, password, -1, false),
+        });        
+    }
+
+    public BasicAuthenticationManager(String userName, File keyFile, String passphrase, int portNumber) {
+        setAuthentications(new SVNAuthentication[] {
+                new SVNSSHAuthentication(userName, keyFile, passphrase, portNumber, false),
+        });        
+    }
 
     public BasicAuthenticationManager(SVNAuthentication[] authentications) {
         setAuthentications(authentications);
