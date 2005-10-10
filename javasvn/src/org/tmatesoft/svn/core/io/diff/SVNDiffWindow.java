@@ -101,12 +101,15 @@ public class SVNDiffWindow {
                 int start = (int) (getSourceViewOffset() - applyBaton.mySourceViewOffset);
                 System.arraycopy(oldSourceBuffer, start, applyBaton.mySourceBuffer, 0, (int) (applyBaton.mySourceViewLength - start));
                 length = (int) (applyBaton.mySourceViewLength - start);
-            }
-            
+            }            
         }
         if (length < getSourceViewLength()) {
             // fill what remains.
             try {
+                long toSkip = getSourceViewOffset() - (applyBaton.mySourceViewOffset + applyBaton.mySourceViewLength);
+                if (toSkip > 0) {
+                    applyBaton.mySourceStream.skip(toSkip);
+                }
                 applyBaton.mySourceStream.read(applyBaton.mySourceBuffer, length, applyBaton.mySourceBuffer.length - length);
             } catch (IOException e) {
                 SVNErrorManager.error(e.getMessage());
