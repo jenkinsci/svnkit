@@ -131,7 +131,8 @@ public class SVNCommitUtil {
                 relativePaths.add(target);
                 if (targetType == SVNFileType.DIRECTORY) {
                     // lock recursively if forced and copied...
-                    if (recursive || (force && isCopied(baseDir))) {
+                    if (recursive || (force && isRecursiveCommitForced(baseDir))) {
+                        // dir is copied, include children
                         dirsToLockRecursively.add(target);
                     } else {
                         dirsToLock.add(target);
@@ -151,7 +152,7 @@ public class SVNCommitUtil {
                 if (!"".equals(target)) {
                     SVNFileType targetType = SVNFileType.getType(targetFile);
                     if (targetType == SVNFileType.DIRECTORY) {
-                        if (recursive || (force && isCopied(targetFile))) {
+                        if (recursive || (force && isRecursiveCommitForced(targetFile))) {
                             dirsToLockRecursively.add(targetPath);
                         } else {
                             dirsToLock.add(targetPath);
@@ -670,8 +671,12 @@ public class SVNCommitUtil {
         return wcAccess.getTargetName();
     }
     
-    private static boolean isCopied(File file) throws SVNException {
-        SVNWCAccess wcAccess = SVNWCAccess.create(file);
-        return wcAccess.getTargetEntry() != null && wcAccess.getTargetEntry().isCopied();
+    private static boolean isRecursiveCommitForced(File directory) throws SVNException {
+        SVNWCAccess wcAccess = SVNWCAccess.create(directory);
+        SVNEntry targetEntry = wcAccess.getTargetEntry();
+        if (targetEntry != null) {
+            return targetEntry.isCopied() || targetEntry.isScheduledForDeletion() || targetEntry.isScheduledForReplacement();
+        }
+        return false;
     }
 }
