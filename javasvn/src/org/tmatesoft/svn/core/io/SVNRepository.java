@@ -171,6 +171,7 @@ public abstract class SVNRepository {
             } else if (url.getProtocol().equals(myRepositoryRoot.getProtocol()) && 
                     url.getHost().equals(myRepositoryRoot.getHost()) &&
                     url.getPort() == myRepositoryRoot.getPort()) {
+                closeSession();
                 myRepositoryRoot = null;
                 myRepositoryUUID = null;
             } else {
