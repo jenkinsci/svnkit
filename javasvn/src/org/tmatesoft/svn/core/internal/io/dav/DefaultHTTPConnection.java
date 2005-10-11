@@ -278,9 +278,9 @@ class DefaultHTTPConnection implements IHTTPConnection {
                 } else {
                     authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
                     auth = authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
-                    if (auth == null) {
-                        throw new SVNAuthenticationException("svn: Authentication cancelled");
-                    }
+                }
+                if (auth == null) {
+                    throw new SVNAuthenticationException("svn: Authentication is cancelled");
                 }
                 // reset stream!
                 if (requestBody instanceof ByteArrayInputStream) {
