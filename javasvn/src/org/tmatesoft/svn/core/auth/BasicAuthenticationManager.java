@@ -87,10 +87,10 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     } 
 
     public SVNAuthentication getNextAuthentication(String kind, String realm, SVNURL url) throws SVNException {
-        if (ISVNAuthenticationManager.SSH.equals(kind) && mySSHAuthentications.size() > mySSHIndex) {
+        if (ISVNAuthenticationManager.SSH.equals(kind) && mySSHIndex + 1 < mySSHAuthentications.size()) {
             mySSHIndex++; 
             return (SVNAuthentication) mySSHAuthentications.get(mySSHIndex);
-        } else if (ISVNAuthenticationManager.PASSWORD.equals(kind) && myPasswordAuthentications.size() > myPasswordIndex) {
+        } else if (ISVNAuthenticationManager.PASSWORD.equals(kind) && myPasswordIndex + 1 < myPasswordAuthentications.size()) {
             myPasswordIndex++; 
             return (SVNAuthentication) myPasswordAuthentications.get(myPasswordIndex);
         }
