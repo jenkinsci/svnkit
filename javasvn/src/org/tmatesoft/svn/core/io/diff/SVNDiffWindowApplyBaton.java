@@ -19,24 +19,23 @@ import java.security.MessageDigest;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
-
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class SVNDiffWindowApplyBaton {
-    
+
     InputStream mySourceStream;
     OutputStream myTargetStream;
-    
+
     long mySourceViewOffset;
     long mySourceViewLength;
     long myTargetViewSize;
-    
+
     byte[] mySourceBuffer;
     byte[] myTargetBuffer;
     MessageDigest myDigest;
-    
+
     public static SVNDiffWindowApplyBaton create(File source, File target, MessageDigest digest) throws SVNException {
         SVNDiffWindowApplyBaton baton = new SVNDiffWindowApplyBaton();
         baton.mySourceStream = source.exists() ? SVNFileUtil.openFileForReading(source) : SVNFileUtil.DUMMY_IN;
@@ -47,7 +46,18 @@ public class SVNDiffWindowApplyBaton {
         baton.myDigest = digest;
         return baton;
     }
-    
+
+    public static SVNDiffWindowApplyBaton create(InputStream source, OutputStream target, MessageDigest digest) {
+        SVNDiffWindowApplyBaton baton = new SVNDiffWindowApplyBaton();
+        baton.mySourceStream = source;
+        baton.myTargetStream = target;
+        baton.mySourceBuffer = new byte[0];
+        baton.mySourceViewLength = 0;
+        baton.mySourceViewOffset = 0;
+        baton.myDigest = digest;
+        return baton;
+    }
+
     private SVNDiffWindowApplyBaton() {
     }
 

@@ -84,7 +84,7 @@ public class SVNDiffWindow {
         // here we have streams and buffer from the previous calls (or nulls).
         
         // 1. buffer for target.
-        if (applyBaton.myTargetViewSize < getTargetViewLength()) {
+        if (applyBaton.myTargetBuffer == null || applyBaton.myTargetViewSize < getTargetViewLength()) {
             applyBaton.myTargetBuffer = new byte[(int) getTargetViewLength()];
         }
         applyBaton.myTargetViewSize = getTargetViewLength();

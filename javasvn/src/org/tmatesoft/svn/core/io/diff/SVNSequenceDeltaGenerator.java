@@ -38,13 +38,24 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 
 	private static final SVNAllDeltaGenerator ALL_DELTA_GENERATOR = new SVNAllDeltaGenerator();
 
+	public static final int MEMORY_THRESHOLD;
+
+	static {
+		if (System.getProperty("javasvn.sequence.memorythreshold") != null) {
+			MEMORY_THRESHOLD = Math.max(Integer.parseInt(System.getProperty("javasvn.sequence.memorythreshold")), QSequenceLineMedia.FILE_SEGMENT_SIZE);
+		}
+		else {
+			MEMORY_THRESHOLD = QSequenceLineMedia.MEMORY_THRESHOLD;
+		}
+	}
+
 	private final int memoryThreshold;
 	private final int fileSegmentSize;
 	private final double searchDepthExponent;
 	private final File tempDirectory;
 
 	public SVNSequenceDeltaGenerator(File tempDirectory) {
-		this(tempDirectory, QSequenceLineMedia.MEMORY_THRESHOLD, QSequenceLineMedia.FILE_SEGMENT_SIZE, 0.5);
+		this(tempDirectory, MEMORY_THRESHOLD, QSequenceLineMedia.FILE_SEGMENT_SIZE, 0.5);
 	}
 
 	SVNSequenceDeltaGenerator(File tempDirectory, int memoryThreshold, int fileSegmentSize, double searchDepthExponent) {
