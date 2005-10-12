@@ -41,8 +41,8 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNFileUtil {
 
-
     public final static boolean isWindows;
+    
     public final static OutputStream DUMMY_OUT = new OutputStream() {
         public void write(int b) throws IOException {
         }
@@ -127,9 +127,7 @@ public class SVNFileUtil {
             setReadonly(src, false);
             setReadonly(dst, false);
             // use special loop on windows.
-            int retries = 100;
-            long delay = 1;
-            while(retries > 0) {
+            for(int i =0; i < 10; i++) {
                 dst.delete();
                 if (src.renameTo(dst)) {
                     if (wasRO) {
@@ -139,13 +137,9 @@ public class SVNFileUtil {
                 }
                 SVNDebugLog.logInfo("file: retrying to rename file " + src + " to " + dst);
                 try {
-                    Thread.sleep(delay*100);
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                 }
-                if (delay < 128) {
-                    delay = delay * 2;
-                }
-                retries--;            
             }
         }
         if (!renamed) {
