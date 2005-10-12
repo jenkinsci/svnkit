@@ -19,14 +19,19 @@ are permitted provided that the following conditions are met:
       and/or other materials provided with the distribution.
       
     * Redistributions in any form must be accompanied by information on how to 
-      obtain complete source code for the DB software and any accompanying 
-      software that uses the DB software. The source code must either be 
-      included in the distribution or be available for no more than the cost of 
-      distribution plus a nominal fee, and must be freely redistributable under 
-      reasonable conditions. For an executable file, complete source code means 
-      the source code for all modules it contains. It does not include source 
-      code for modules or files that typically accompany the major components of
-      the operating system on which the executable file runs.
+      obtain complete source code for the software that uses JavaSVN and any 
+      accompanying software that uses the software that uses JavaSVN. The source 
+      code must either be included in the distribution or be available for no 
+      more than the cost of distribution plus a nominal fee, and must be freely 
+      redistributable under reasonable conditions. For an executable file, complete 
+      source code means the source code for all modules it contains. It does not 
+      include source code for modules or files that typically accompany the major 
+      components of the operating system on which the executable file runs.
+      
+    * Redistribution in any form without redistributing source code for software 
+      that uses JavaSVN is possible only when such redistribution is explictly permitted 
+      by TMate Software. Please, contact TMate Software at support@tmatesoft.com to 
+      get such permission.
 
 THIS SOFTWARE IS PROVIDED BY TMATE SOFTWARE ``AS IS'' AND ANY EXPRESS OR IMPLIED
 WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
