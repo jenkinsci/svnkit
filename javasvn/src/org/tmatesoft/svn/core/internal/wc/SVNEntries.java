@@ -243,7 +243,8 @@ public class SVNEntries {
             if (propertyValue == null) {
                 return entry.remove(propertyName) != null;
             }
-            return entry.put(propertyName, propertyValue) != null;            
+            Object oldValue = entry.put(propertyName, propertyValue);
+            return !propertyValue.equals(oldValue);            
         }
         return false;
     }
