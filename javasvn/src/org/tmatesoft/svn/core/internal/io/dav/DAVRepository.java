@@ -450,6 +450,7 @@ class DAVRepository extends SVNRepository {
         }
         if (myConnection != null) {
             myConnection.close();
+            myConnection = null;
         }
         unlock();
     }
