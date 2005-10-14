@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="lib" path="contrib/jsch/jsch.jar"/>
 	<classpathentry kind="lib" path="contrib/junit/junit.jar"/>
 	<classpathentry output="javasvn/bin" kind="src" path="javasvn/src"/>
 	<classpathentry output="doc/examples/bin" kind="src" path="doc/examples/src"/>

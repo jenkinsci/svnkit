@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core;
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
+import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -36,7 +36,7 @@ public class JavaSVNPlugin extends Plugin {
     
     
 	public void stop(BundleContext context) throws Exception {
-		SVNJSchSession.shutdown();
+		SVNGanymedSession.shutdown();
 		super.stop(context);
 	}
 }

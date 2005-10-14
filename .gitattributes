@@ -11,8 +11,6 @@ contrib/httpclient/commons-httpclient-3.0-rc3.jar -text
 contrib/httpclient/commons-httpclient-3.0-rc3.src.zip -text
 contrib/httpclient/commons-logging.jar -text
 contrib/javahl/JAVAHL-LICENSE eol=lf
-contrib/jsch/JSCH-LICENSE eol=lf
-contrib/jsch/jsch.jar -text
 contrib/junit/junit.jar -text
 contrib/sequence/SEQUENCE-LICENSE eol=lf
 contrib/sequence/src-test/de/regnis/q/sequence/line/QSequenceLineMediaTest.java -text

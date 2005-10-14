@@ -41,7 +41,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.svn.SVNJSchSession;
+import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -916,7 +916,7 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void dispose() {
-        SVNJSchSession.shutdown();
+        SVNGanymedSession.shutdown();
         new DefaultSVNRepositoryFactory(null).shutdownConnections(true);
     }
 
