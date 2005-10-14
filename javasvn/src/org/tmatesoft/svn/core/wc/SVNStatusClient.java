@@ -159,7 +159,7 @@ public class SVNStatusClient extends SVNBasicClient {
      */
     public long doStatus(File path, boolean recursive, boolean remote,
                          boolean reportAll, boolean includeIgnored,
-                         boolean collectParentExternals, ISVNStatusHandler handler)
+                         boolean collectParentExternals, final ISVNStatusHandler handler)
             throws SVNException {
         if (handler == null) {
             return -1;
@@ -181,17 +181,31 @@ public class SVNStatusClient extends SVNBasicClient {
                                                    null, null));
             }
         }
-        SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(), wcAccess, handler, parentExternals, includeIgnored, reportAll, recursive);
+        final boolean[] deletedInRepos = new boolean[] {false};
+        ISVNStatusHandler realHandler = new ISVNStatusHandler() {
+            public void handleStatus(SVNStatus status) {
+                if (deletedInRepos[0]) {
+                    status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);
+                }
+                handler.handleStatus(status);
+            }
+        };
+        SVNStatusEditor statusEditor = new SVNStatusEditor(getOptions(), wcAccess, realHandler, parentExternals, includeIgnored, reportAll, recursive);
         if (remote) {
             SVNURL url = wcAccess.getAnchor().getEntries().getEntry("", true).getSVNURL();
             SVNRepository repos = createRepository(url, true);
-            SVNRepository locksRepos = createRepository(url, false);
-
-            SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
-            SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, statusEditor);
-            String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
-
-            repos.status(-1, target, recursive, statusReporter, SVNCancellableEditor.newInstance(statusEditor, this));
+            SVNNodeKind kind = repos.checkPath("", -1);
+            if (kind == SVNNodeKind.NONE) {
+                deletedInRepos[0] = true;
+            } else {
+                SVNRepository locksRepos = createRepository(url, false);
+    
+                SVNReporter reporter = new SVNReporter(wcAccess, false, recursive);
+                SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, statusEditor);
+                String target = "".equals(wcAccess.getTargetName()) ? null : wcAccess.getTargetName();
+    
+                repos.status(-1, target, recursive, statusReporter, SVNCancellableEditor.newInstance(statusEditor, this));
+            }
         }
         // to report all when there is completely no changes
         statusEditor.closeEdit();
