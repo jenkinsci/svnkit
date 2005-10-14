@@ -224,7 +224,7 @@ public class SVNRevision {
      */
     public static SVNRevision create(long revisionNumber) {
         if (revisionNumber < 0) {
-            return SVNRevision.HEAD;
+            return SVNRevision.UNDEFINED;
         }
         return new SVNRevision(revisionNumber);
     }

@@ -222,14 +222,14 @@ public class SVNWCAccess implements ISVNEventHandler {
         try {
             if (lock) {
                 if (!(stealLock && myAnchor.isLocked())) {
-                    myAnchor.lock();
+                    myAnchor.innerLock();
                 }
             }
             myDirectories.put("", myAnchor);
             if (myTarget != myAnchor) {
                 if (lock) {
                     if (!(stealLock && myTarget.isLocked())) {
-                        myTarget.lock();
+                        myTarget.innerLock();
                     }
                 }
                 myDirectories.put(myName, myTarget);
@@ -240,7 +240,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                             public void visit(String path, SVNDirectory dir) throws SVNException {
                                 checkCancelled();
                                 if (lock && (!dir.isLocked() || !stealLock)) {
-                                    dir.lock();
+                                    dir.innerLock();
                                 }
                                 myDirectories.put(path, dir);
                             }

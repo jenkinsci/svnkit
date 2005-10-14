@@ -64,58 +64,69 @@ public class DAVConnection {
         myActivityCollectionURL = null;
     }
 
-    public void open(DAVRepository repository) throws SVNException {
+    public void open(DAVRepository repository) {
         if (myHttpConnection == null) {
         	myHttpConnection = myConnectionFactory.createHTTPConnection(repository);
-            if (repository.getRepositoryUUID() == null) {
-                String path = getLocation().getPath();
-                path = SVNEncodingUtil.uriEncode(path);
-                final DAVResponse[] result = new DAVResponse[1];
-                StringBuffer body = DAVPropertiesHandler.generatePropertiesRequest(null, DAVElement.STARTING_PROPERTIES);
-                IDAVResponseHandler handler = new IDAVResponseHandler() {
-                    public void handleDAVResponse(DAVResponse response) {
-                        result[0] = response;
-                    }
-                };
-                while(true) {
-                    DAVStatus status = myHttpConnection.request("PROPFIND", path, 0, null, body, new DAVPropertiesHandler(handler), new int[] {200, 207, 404});
-                    if (status.getResponseCode() == 404) {
-                        if ("".equals(path) || "/".equals(path)) {
-                            throw new SVNException(status.getErrorText());
-                        }
-                        path = SVNPathUtil.removeTail(path);
-                    } else if (status.getResponseCode() == 200 || status.getResponseCode() == 207) {
-                        break;
-                    } else {
-                        throw new SVNException(status.getErrorText());
-                    }
+        }
+    }
+    
+    public String getVCCPath(DAVRepository repository, String path) throws SVNException {
+        DAVResponse responce = findStartingProperties(repository, path);
+        String vcc = null;
+        if (responce != null) {
+            vcc = (String) responce.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+        }
+        if (vcc == null) {
+            SVNErrorManager.error("svn: The VCC property was not found on the resource");
+        }
+        return vcc;
+    }
+    
+    private DAVResponse findStartingProperties(DAVRepository repository, String fullPath) throws SVNException {
+        DAVResponse props = null;
+        while(true) {
+            props = getStartingProperties(fullPath);
+            if (props != null) {
+                if (props.getPropertyValue(DAVElement.REPOSITORY_UUID) != null) {
+                    repository.setRepositoryUUID((String) props.getPropertyValue(DAVElement.REPOSITORY_UUID));
                 }
-                if (result[0] == null) {
-                    SVNErrorManager.error("svn: Cannot get DAV properties for '" + path + "'");
-                }
-                String uuid = (String) result[0].getPropertyValue(DAVElement.REPOSITORY_UUID);
-                String relativePath = (String) result[0].getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
-                String root = SVNEncodingUtil.uriDecode(path);
-                if (relativePath != null) {
-                    if (root.endsWith(relativePath)) {
-                        root = root.substring(0, root.length() - relativePath.length() - 1);                        
-                    }
-                    root = SVNEncodingUtil.uriEncode(root);
-                } else {
-                	root = path;
-                }
-                String url;
-                if (getLocation().toString().lastIndexOf(':') != getLocation().toString().indexOf("://")) {
-                    url = getLocation().getProtocol() + "://" + getLocation().getHost() + ":" + getLocation().getPort() + root;
-                } else {
-                    url = getLocation().getProtocol() + "://" + getLocation().getHost() + root;
-                }
-                SVNURL rootURL = SVNURL.parseURIEncoded(url);
-                if (uuid == null) {
-                    uuid = "";
-                }
-                repository.updateCredentials(uuid, rootURL);
+                break;
             }
+            int length = fullPath.length();
+            fullPath = SVNPathUtil.removeTail(fullPath);
+            if (length == fullPath.length()) {
+                SVNErrorManager.error("svn: The path was not part of repository");
+            }
+        }
+        return props;
+    }
+
+    private DAVResponse getStartingProperties(String fullPath) throws SVNException {
+        final DAVResponse[] result = new DAVResponse[1];
+        doPropfind(fullPath, 0, null, DAVElement.STARTING_PROPERTIES, new IDAVResponseHandler() {
+            public void handleDAVResponse(DAVResponse response) {
+                result[0] = response;
+            }
+        }, new int[] {200, 207, 404});
+        return result[0];
+    }
+    
+    public void fetchRepositoryRoot(DAVRepository repository) throws SVNException {
+        if (!repository.hasRepositoryRoot()) {
+            String rootPath = repository.getLocation().getURIEncodedPath();
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(this, rootPath, -1, false, false, null);
+            // remove relative part from the path
+            rootPath = rootPath.substring(0, rootPath.length() - info.baselinePath.length());
+            SVNURL location = repository.getLocation();
+            SVNURL url = SVNURL.create(location.getProtocol(), location.getUserInfo(), 
+                    location.getHost(), location.getPort(), rootPath, true);
+            repository.setRepositoryRoot(url);
+        }
+    }
+
+    public void fetchRepositoryUUID(DAVRepository repository) throws SVNException {
+        if (!repository.hasRepositoryUUID()) {
+            findStartingProperties(repository, repository.getLocation().getURIEncodedPath());
         }
     }    
 

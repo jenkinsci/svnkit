@@ -49,10 +49,14 @@ public class SVNDirectory {
     private SVNWCAccess myWCAccess;
     private String myPath;
     private File myAdminRoot;
+    private File myLockFile;
+    private File myEntriesFile;
 
     public SVNDirectory(SVNWCAccess wcAccess, String path, File dir) {
         myDirectory = dir;
         myAdminRoot = new File(dir, SVNFileUtil.getAdminDirectoryName());
+        myLockFile = new File(myAdminRoot, "lock");
+        myEntriesFile = new File(myAdminRoot, "entries");
         myPath = path;
         myWCAccess = wcAccess;
     }
@@ -70,12 +74,11 @@ public class SVNDirectory {
     }
 
     public SVNDirectory getChildDirectory(String name) {
-        return myWCAccess.getDirectory("".equals(myPath) ? name : SVNPathUtil
-                .append(myPath, name));
+        return myWCAccess.getDirectory("".equals(myPath) ? name : SVNPathUtil.append(myPath, name));
     }
 
     public boolean isVersioned() {
-        if (getAdminDirectory().isDirectory() && new File(getAdminDirectory(), "entries").canRead()) {
+        if (getAdminDirectory().isDirectory() && myEntriesFile.canRead()) {
             try {
                 if (getEntries().getEntry("", false) != null) {
                     return true;
@@ -95,24 +98,24 @@ public class SVNDirectory {
         if (!isVersioned()) {
             return false;
         }
+        return innerLock();
+    }
+
+    boolean innerLock() throws SVNException {
         if (getLockFile().isFile()) {
-            SVNErrorManager.error("svn: Working copy '" + getRoot()
-                    + "' locked; try performing 'cleanup'");
+            SVNErrorManager.error("svn: Working copy '" + getRoot() + "' locked; try performing 'cleanup'");
         }
         boolean created = false;
         try {
             created = getLockFile().createNewFile();
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot lock working copy '" + getRoot()
-                    + "': " + e.getMessage());
+            SVNErrorManager.error("svn: Cannot lock working copy '" + getRoot() + "': " + e.getMessage());
         }
         if (!created) {
             if (getLockFile().isFile()) {
-                SVNErrorManager.error("svn: Working copy '" + getRoot()
-                        + "' locked; try performing 'cleanup'");
+                SVNErrorManager.error("svn: Working copy '" + getRoot() + "' locked; try performing 'cleanup'");
             } else {
-                SVNErrorManager.error("svn: Cannot lock working copy '"
-                        + getRoot() + "'");
+                SVNErrorManager.error("svn: Cannot lock working copy '" + getRoot() + "'");
             }
         }
         return created;
@@ -144,7 +147,7 @@ public class SVNDirectory {
 
     public SVNEntries getEntries() throws SVNException {
         if (myEntries == null) {
-            myEntries = new SVNEntries(new File(getAdminDirectory(), "entries"));
+            myEntries = new SVNEntries(myEntriesFile);
         }
         myEntries.open();
         return myEntries;
@@ -715,7 +718,7 @@ public class SVNDirectory {
     }
 
     private File getLockFile() {
-        return new File(getAdminDirectory(), "lock");
+        return myLockFile;
     }
 
     public File getAdminDirectory() {

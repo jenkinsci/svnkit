@@ -394,7 +394,11 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (pegRevisionNumber < 0) {
             pegRevisionNumber = getRevisionNumber(revision, repository, path);
         }
-        startRevisionNumber = getRevisionNumber(start, repository, path);
+        if (revision == start && revision == SVNRevision.HEAD) {
+            startRevisionNumber = pegRevisionNumber;
+        } else {
+            startRevisionNumber = getRevisionNumber(start, repository, path);
+        }
         if (!end.isValid()) {
             endRevisionNumber = startRevisionNumber;
         } else {

@@ -113,8 +113,8 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  */
 public abstract class SVNRepository {
         
-    private String myRepositoryUUID;
-    private SVNURL myRepositoryRoot;
+    protected String myRepositoryUUID;
+    protected SVNURL myRepositoryRoot;
     private SVNURL myLocation;
     
     private int myLockCount;
@@ -1313,7 +1313,6 @@ public abstract class SVNRepository {
         if (relativeOrRepositoryPath.length() > 0 && relativeOrRepositoryPath.charAt(0) == '/') {
             return SVNPathUtil.append(getRepositoryRoot().getPath(), relativeOrRepositoryPath);
         }
-        relativeOrRepositoryPath = getRepositoryPath(relativeOrRepositoryPath);
-        return SVNPathUtil.append(getRepositoryRoot().getPath(), relativeOrRepositoryPath);
+        return SVNPathUtil.append(getLocation().getPath(), relativeOrRepositoryPath);
     }
 }

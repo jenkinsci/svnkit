@@ -531,9 +531,9 @@ public class SVNFileUtil {
 
     public static void sleepForTimestamp() {
         long time = System.currentTimeMillis();
-        time = 1010 - (time - (time / 1000) * 1000);
+        time = 1100 - (time - (time / 1000) * 1000);
         try {
-            Thread.sleep(time);
+            Thread.sleep(time);            
         } catch (InterruptedException e) {
             //
         }

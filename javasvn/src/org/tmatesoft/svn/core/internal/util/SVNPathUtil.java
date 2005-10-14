@@ -48,25 +48,33 @@ public class SVNPathUtil {
     public static String append(String f, String s) {
         f = f == null ? "" : f;
         s = s == null ? "" : s;
-        StringBuffer result = new StringBuffer(f.length() + s.length());
-        for(int i = 0; i < f.length(); i++) {
+//        StringBuffer result = new StringBuffer(f.length() + s.length());
+        int l1 = f.length();
+        int l2 = s.length();
+        char[] r = new char[l1 + l2 + 2];
+        int index = 0;
+        for(int i = 0; i < l1; i++) {
             char ch = f.charAt(i);
-            if (i + 1 == f.length() && ch == '/') {
+            if (i + 1 == l1 && ch == '/') {
                 break;
             }
-            result.append(ch);
+            r[index++] = ch;
+//            result.append(ch);
         }
-        for(int i = 0; i < s.length(); i++) {
+        for(int i = 0; i < l2; i++) {
             char ch = s.charAt(i);
-            if (i == 0 && ch != '/' && result.length() > 0) {
-                result.append('/');
+            if (i == 0 && ch != '/' && index > 0) {
+                r[index++] = '/';
+//                result.append('/');
             }
-            if (i + 1 == s.length() && ch == '/') {
+            if (i + 1 == l2 && ch == '/') {
                 break;
             }
-            result.append(ch);
+            r[index++] = ch;
+//            result.append(ch);
         }
-        return result.toString();
+        return new String(r, 0, index);
+//        return result.toString();
     }
     
     public static String removeTail(String path) {

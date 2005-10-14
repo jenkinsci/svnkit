@@ -133,9 +133,6 @@ public class SVNUpdateClient extends SVNBasicClient {
     public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(file);
         final SVNReporter reporter = new SVNReporter(wcAccess, true, recursive);
-        if (!revision.isValid()) {
-            revision = SVNRevision.HEAD;
-        }
         try {
             wcAccess.open(true, recursive);
             SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", false);

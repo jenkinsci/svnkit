@@ -36,9 +36,6 @@ public class UpdateCommand extends SVNCommand {
             path = getCommandLine().getPathAt(i);
 
             SVNRevision revision = parseRevision(getCommandLine());
-            if (!revision.isValid()) {
-                revision = SVNRevision.HEAD;
-            }
             getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
             SVNUpdateClient updater = getClientManager().getUpdateClient();
             

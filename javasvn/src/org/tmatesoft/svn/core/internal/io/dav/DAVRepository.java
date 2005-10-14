@@ -73,27 +73,44 @@ class DAVRepository extends SVNRepository {
         }
     }
     
+    public boolean hasRepositoryUUID() {
+        return myRepositoryUUID != null;
+    }
+    
+    public void setRepositoryUUID(String uuid) {
+        myRepositoryUUID = uuid;
+    }
+
+    public boolean hasRepositoryRoot() {
+        return myRepositoryRoot != null;
+    }
+
+    public void setRepositoryRoot(SVNURL root) {
+        myRepositoryRoot = root;
+    }
+    
+    public SVNURL getRepositoryRoot(boolean forceConnection) throws SVNException {
+        if (myConnection != null) {
+            myConnection.fetchRepositoryRoot(this);
+        }
+        return super.getRepositoryRoot(forceConnection);
+    }
+
+    public String getRepositoryUUID() {
+        if (myConnection != null) {
+            try {
+                myConnection.fetchRepositoryUUID(this);
+            } catch (SVNException e) {
+            }
+        }
+        return super.getRepositoryUUID();
+    }
+
     public long getLatestRevision() throws SVNException {        
         try {
             openConnection();
             String path = getLocation().getPath();
             path = SVNEncodingUtil.uriEncode(path);
-            if (getRepositoryRoot() != null && getRepositoryRoot().getPath().equals(getLocation().getPath())) {
-                final long[] revision = new long[] {-1};
-                myConnection.doPropfind(path, 0, null, new DAVElement[] {DAVElement.VERSION_NAME}, new IDAVResponseHandler() {
-                    public void handleDAVResponse(DAVResponse response) {
-                        String value = (String) response.getPropertyValue(DAVElement.VERSION_NAME);
-                        if (value != null) {
-                            try {
-                                revision[0] = Long.parseLong(value);
-                            } catch (NumberFormatException nfe) {}
-                        }
-                    }
-                });
-                if (revision[0] >= 0) {
-                    return revision[0];
-                }
-            } 
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, -1, false, true, null);
             if (info == null) {
                 SVNErrorManager.error("svn: Cannot get baseline information for '" + getLocation() + "'");
@@ -415,9 +432,9 @@ class DAVRepository extends SVNRepository {
         return davHandler.getEntriesCount();
     }
     
-    private void openConnection() throws SVNException {
+    private void openConnection() {
         lock();
-        if (getOptions().keepConnection(this) && myConnection != null) {
+        if (myConnection != null && getOptions().keepConnection(this)) {
             return;
         }
         if (myConnection == null) {
@@ -471,16 +488,13 @@ class DAVRepository extends SVNRepository {
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
-            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, bcPath, revision, false, false, null);
-            String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
-            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, true);
-            if (response != null) {
-            	path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-            	myConnection.doReport(path, request, handler);
-            } else {
+            try {
+                bcPath = myConnection.getVCCPath(this, bcPath);
+            } catch (SVNException e) {
                 editor.closeEdit();
+                throw e;
             }
-
+        	myConnection.doReport(bcPath, request, handler);
         } finally {
             closeConnection();
         }
@@ -497,16 +511,8 @@ class DAVRepository extends SVNRepository {
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
 
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
-            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, bcPath, revision, false, false, null);
-            String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
-            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
-            if (response != null) {
-                path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-                myConnection.doReport(path, request, handler);
-            } else {
-                String revisionStr = revision < 0 ? "HEAD" : Long.toString(revision);
-                throw new SVNException("svn: Location '" + path + "' doesn't exists in repository at revision " + revisionStr);
-            }
+            bcPath = myConnection.getVCCPath(this, bcPath);
+            myConnection.doReport(bcPath, request, handler);
         } finally {
             closeConnection();
         }
@@ -527,12 +533,8 @@ class DAVRepository extends SVNRepository {
             openConnection();
             StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), targetRevision, target, url.toString(), recursive, ignoreAncestry, false, true, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
-
-            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, SVNEncodingUtil.uriEncode(getLocation().getPath()), revision, false, false, null);
-            String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
-            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
-            path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-            
+            String path = SVNEncodingUtil.uriEncode(getLocation().getPath());
+            path = myConnection.getVCCPath(this, path);
             myConnection.doReport(path, request, handler);
         } finally {
             closeConnection();
@@ -544,14 +546,10 @@ class DAVRepository extends SVNRepository {
             openConnection();
             StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, getLocation().toString(), revision, target, null, recursive, false, false, false, reporter);
             DAVEditorHandler handler = new DAVEditorHandler(editor, false);
-
-            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, SVNEncodingUtil.uriEncode(getLocation().getPath()), revision, false, false, null);
-            String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
-        	DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, true);
-        	if (response != null) {
-        		path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-        		myConnection.doReport(path, request, handler);
-        	}
+            String path = SVNEncodingUtil.uriEncode(getLocation().getPath());
+            path = myConnection.getVCCPath(this, path);
+            myConnection.doReport(path, request, handler);
+            
         } finally {
             closeConnection();
         }
@@ -567,8 +565,7 @@ class DAVRepository extends SVNRepository {
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, SVNEncodingUtil.uriEncode(getLocation().getPath()), revision, false, false, null);
             String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
 
-            DAVResponse response = DAVUtil.getResourceProperties(myConnection, path, null, DAVElement.STARTING_PROPERTIES, false);
-            path = (String) response.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+            path = myConnection.getVCCPath(this, path);
             
             // 2. get href from specific vcc with using "label"
             final String[] blPath = new String[1];
@@ -617,10 +614,6 @@ class DAVRepository extends SVNRepository {
                 closeConnection();
             }
         });
-    }
-
-    void updateCredentials(String uuid, SVNURL rootURL) {
-        setRepositoryCredentials(uuid, rootURL);
     }
 
     public SVNLock getLock(String path) throws SVNException {
