@@ -89,11 +89,20 @@ class DAVRepository extends SVNRepository {
         myRepositoryRoot = root;
     }
     
-    public SVNURL getRepositoryRoot(boolean forceConnection) throws SVNException {
-        if (myConnection != null) {
-            myConnection.fetchRepositoryRoot(this);
+    public SVNURL getRepositoryRoot(boolean forceConnection) throws SVNException { 
+        if (myRepositoryRoot == null) {
+            if (myConnection != null) {
+                myConnection.fetchRepositoryRoot(this);
+            } else if (forceConnection) {
+                openConnection();
+                try {
+                    myConnection.fetchRepositoryRoot(this);
+                } finally {
+                    closeConnection();
+                }
+            }
         }
-        return super.getRepositoryRoot(forceConnection);
+        return myRepositoryRoot;
     }
 
     public String getRepositoryUUID() {
