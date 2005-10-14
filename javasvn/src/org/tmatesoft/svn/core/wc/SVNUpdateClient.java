@@ -529,7 +529,8 @@ public class SVNUpdateClient extends SVNBasicClient {
                     for (int i = 0; i < infos.length; i++) {
                         File targetDir = new File(rootFile, infos[i].getPath());
                         SVNURL srcURL = infos[i].getOldURL();
-                        SVNRevision srcRevision = SVNRevision.create(infos[i].getOldRevision());
+                        long externalRevNumber = infos[i].getOldRevision();
+                        SVNRevision srcRevision = externalRevNumber >=0 ? SVNRevision.create(externalRevNumber) : SVNRevision.HEAD;
                         String relativePath =  targetDir.equals(dstPath) ? "" : targetDir.getAbsolutePath().substring(dstPath.getAbsolutePath().length() + 1);
                         relativePath = relativePath.replace(File.separatorChar, '/');
                         dispatchEvent(SVNEventFactory.createUpdateExternalEvent(null, relativePath));
@@ -673,6 +674,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (external.getOldURL() == null) {
                     external.getFile().mkdirs();
                     dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
+                    SVNDebugLog.logInfo("doing checkout on rev: " + revision);
                     doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                 } else if (external.getNewURL() == null) {
                     if (SVNWCAccess.isVersionedDirectory(external.getFile())) {
@@ -688,10 +690,12 @@ public class SVNUpdateClient extends SVNBasicClient {
                     deleteExternal(external);
                     external.getFile().mkdirs();
                     dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
+                    SVNDebugLog.logInfo("doing checkout on rev: " + revision);
                     doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                 } else {
                     if (!external.getFile().isDirectory()) {
                         external.getFile().mkdirs();
+                        SVNDebugLog.logInfo("doing checkout on rev: " + revision);
                         doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                     } else {
                         String url = null;
@@ -704,6 +708,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                             deleteExternal(external);
                             external.getFile().mkdirs();
                             dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
+                            SVNDebugLog.logInfo("doing checkout on rev: " + revision);
                             doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                         } else {
                             dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
