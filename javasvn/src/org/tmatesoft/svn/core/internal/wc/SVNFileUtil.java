@@ -533,7 +533,6 @@ public class SVNFileUtil {
         long time = System.currentTimeMillis();
         time = 1100 - (time - (time / 1000) * 1000);
         try {
-            System.out.println("sleep: " + time);
             Thread.sleep(time);            
         } catch (InterruptedException e) {
             //
