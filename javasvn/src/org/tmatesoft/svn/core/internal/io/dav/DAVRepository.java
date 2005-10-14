@@ -127,8 +127,8 @@ class DAVRepository extends SVNRepository {
 		StringBuffer request = DAVDateRevisionHandler.generateDateRevisionRequest(null, date);
     	try {
     		openConnection();
-            String path = getLocation().getPath();
-            path = SVNEncodingUtil.uriEncode(path);
+            String path = getLocation().getURIEncodedPath();
+            path = myConnection.getVCCPath(this, path);
 			myConnection.doReport(path, request, handler);
     	} finally {
     		closeConnection();
