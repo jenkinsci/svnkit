@@ -29,6 +29,9 @@ public class FSMergerBySequenceTest extends TestCase {
         test("abc", "axxxbc", "abyyyc", "axxxbyyyc", FSMergerBySequence.MERGED);
         test("abcde", "xaxbcxxxdex", "abyycdyyyye", "xaxbyycxxxdyyyyex", FSMergerBySequence.MERGED);
         test("The base line.", "The changed base-line.", "The base line with changes.", "The changed base-line with changes.", FSMergerBySequence.MERGED);
+        test("abcd", "abxcd", "abcxd", "abxcxd", FSMergerBySequence.MERGED);
+        test("abcd", "axbcd", "abxcyd", "axbxcyd", FSMergerBySequence.MERGED);
+	      test("abcde", "abxcdez", "abcxdyez", "abxcxdyez", FSMergerBySequence.MERGED);
 
         // Unreal conflicts
         test("abc", "abx", "abx", "abx", FSMergerBySequence.NOT_MODIFIED);
@@ -85,8 +88,7 @@ public class FSMergerBySequenceTest extends TestCase {
     private void testDirect(String baseFile, String localFile, String latestFile, String resultFile, String resultEol, int expectedStatus) throws IOException {
         final FSMergerBySequence merger = new FSMergerBySequence(">".getBytes(), "=".getBytes(), "<".getBytes(), resultEol.getBytes());
         final ByteArrayOutputStream result = new ByteArrayOutputStream();
-        final int status = merger
-                .merge(new QSequenceLineRAByteData(baseFile.getBytes()), new QSequenceLineRAByteData(localFile.getBytes()), new QSequenceLineRAByteData(latestFile.getBytes()), result);
+        final int status = merger.merge(new QSequenceLineRAByteData(baseFile.getBytes()), new QSequenceLineRAByteData(localFile.getBytes()), new QSequenceLineRAByteData(latestFile.getBytes()), result);
 
         assertEquals(resultFile, result.toString());
         assertEquals(expectedStatus, status);

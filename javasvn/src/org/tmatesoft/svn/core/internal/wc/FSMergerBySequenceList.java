@@ -20,40 +20,38 @@ import de.regnis.q.sequence.QSequenceDifferenceBlock;
  */
 final class FSMergerBySequenceList {
 
-    // Fields =================================================================
+	// Fields =================================================================
 
-    private final List myBlocks;
+	private final List myBlocks;
 
-    private int myPosition;
+	private int myPosition;
 
-    // Setup ==================================================================
+	// Setup ==================================================================
 
-    public FSMergerBySequenceList(List blocks) {
-        this.myBlocks = blocks;
-        this.myPosition = 0;
-    }
+	public FSMergerBySequenceList(List blocks) {
+		this.myBlocks = blocks;
+		this.myPosition = 0;
+	}
 
-    // Accessing ==============================================================
+	// Accessing ==============================================================
 
-    public boolean hasCurrent() {
-        return myPosition < myBlocks.size();
-    }
+	public boolean hasCurrent() {
+		return myPosition < myBlocks.size();
+	}
 
-    public QSequenceDifferenceBlock current() {
-        return (QSequenceDifferenceBlock) myBlocks.get(myPosition);
-    }
+	public QSequenceDifferenceBlock current() {
+		return (QSequenceDifferenceBlock)myBlocks.get(myPosition);
+	}
 
-    public boolean hasNext() {
-        return myPosition + 1 < myBlocks.size();
-    }
+	public boolean hasNext() {
+		return myPosition + 1 < myBlocks.size();
+	}
 
-    public QSequenceDifferenceBlock peekNext() {
-        return myPosition + 1 < myBlocks.size() ? (QSequenceDifferenceBlock) myBlocks
-                .get(myPosition + 1)
-                : null;
-    }
+	public QSequenceDifferenceBlock peekNext() {
+		return myPosition + 1 < myBlocks.size() ? (QSequenceDifferenceBlock)myBlocks.get(myPosition + 1) : null;
+	}
 
-    public void forward() {
-        myPosition++;
-    }
+	public void forward() {
+		myPosition++;
+	}
 }

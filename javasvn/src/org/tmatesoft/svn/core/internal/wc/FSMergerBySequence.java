@@ -23,281 +23,243 @@ import de.regnis.q.sequence.line.QSequenceLineRAData;
 import de.regnis.q.sequence.line.QSequenceLineResult;
 
 /**
- * @version 1.0
  * @author TMate Software Ltd.
+ * @version 1.0
  */
 class FSMergerBySequence {
-    
-    public static final int NOT_MODIFIED = 0;
-    public static final int MERGED = 4;
-    public static final int CONFLICTED = 2;
 
-    // Fields =================================================================
+	public static final int NOT_MODIFIED = 0;
+	public static final int MERGED = 4;
+	public static final int CONFLICTED = 2;
 
-    private final byte[] myConflictStart;
-    private final byte[] myConflictSeparator;
-    private final byte[] myConflictEnd;
-    private final byte[] myEOLBytes;
+	// Fields =================================================================
 
-    private static final byte[] DEFAULT_EOL = System.getProperty("line.separator").getBytes();
+	private final byte[] myConflictStart;
+	private final byte[] myConflictSeparator;
+	private final byte[] myConflictEnd;
+	private final byte[] myEOLBytes;
 
-    // Setup ==================================================================
+	private static final byte[] DEFAULT_EOL = System.getProperty("line.separator").getBytes();
 
-    public FSMergerBySequence(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd, byte[] eolBytesArray) {
-        myConflictStart = conflictStart;
-        myConflictSeparator = conflictSeparator;
-        myConflictEnd = conflictEnd;
-        myEOLBytes = eolBytesArray;
-    }
+	// Setup ==================================================================
 
-    // Accessing ==============================================================
+	public FSMergerBySequence(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd, byte[] eolBytesArray) {
+		myConflictStart = conflictStart;
+		myConflictSeparator = conflictSeparator;
+		myConflictEnd = conflictEnd;
+		myEOLBytes = eolBytesArray;
+	}
 
-    public int merge(QSequenceLineRAData baseData,
-            QSequenceLineRAData localData, QSequenceLineRAData latestData,
-            OutputStream result) throws IOException {
-        final QSequenceLineResult localResult;
-        final QSequenceLineResult latestResult;
-        try {
-            localResult = QSequenceLineMedia.createBlocks(baseData, localData,
-                    myEOLBytes);
-            latestResult = QSequenceLineMedia.createBlocks(baseData,
-                    latestData, myEOLBytes);
-        } catch (QSequenceException ex) {
-            throw new IOException(ex.getMessage());
-        }
+	// Accessing ==============================================================
 
-        try {
-            final QSequenceLineCache baseLines = localResult.getLeftCache();
-            final QSequenceLineCache localLines = localResult.getRightCache();
-            final QSequenceLineCache latestLines = latestResult.getRightCache();
-            final FSMergerBySequenceList local = new FSMergerBySequenceList(
-                    localResult.getBlocks());
-            final FSMergerBySequenceList latest = new FSMergerBySequenceList(
-                    latestResult.getBlocks());
+	public int merge(QSequenceLineRAData baseData,
+	                 QSequenceLineRAData localData, QSequenceLineRAData latestData,
+	                 OutputStream result) throws IOException {
+		final QSequenceLineResult localResult;
+		final QSequenceLineResult latestResult;
+		try {
+			localResult = QSequenceLineMedia.createBlocks(baseData, localData, myEOLBytes);
+			latestResult = QSequenceLineMedia.createBlocks(baseData, latestData, myEOLBytes);
+		}
+		catch (QSequenceException ex) {
+			throw new IOException(ex.getMessage());
+		}
 
-            int baseLineIndex = -1;
-            boolean conflict = false;
-            boolean merged = false;
+		try {
+			final QSequenceLineCache baseLines = localResult.getLeftCache();
+			final QSequenceLineCache localLines = localResult.getRightCache();
+			final QSequenceLineCache latestLines = latestResult.getRightCache();
+			final FSMergerBySequenceList local = new FSMergerBySequenceList(localResult.getBlocks());
+			final FSMergerBySequenceList latest = new FSMergerBySequenceList(latestResult.getBlocks());
 
-            while (local.hasCurrent() || latest.hasCurrent()) {
-                if (local.hasCurrent()
-                        && latest.hasCurrent()
-                        && isEqualChange(local.current(), latest.current(),
-                                localLines, latestLines)) {
-                    baseLineIndex = appendLines(result, local.current(),
-                            localLines, baseLineIndex);
-                    local.forward();
-                    latest.forward();
-                    continue;
-                }
+			int baseLineIndex = -1;
+			boolean conflict = false;
+			boolean merged = false;
 
-                if (local.hasCurrent() && latest.hasCurrent()) {
-                    final QSequenceDifferenceBlock localStartBlock = local
-                            .current();
-                    final QSequenceDifferenceBlock latestStartBlock = latest
-                            .current();
-                    if (checkConflict(local, latest, localLines, latestLines)) {
-                        baseLineIndex = createConflict(result, localStartBlock,
-                                local.current(), latestStartBlock, latest
-                                        .current(), baseLines, localLines,
-                                latestLines, baseLineIndex);
-                        local.forward();
-                        latest.forward();
-                        conflict = true;
-                        continue;
-                    }
-                }
+			while (local.hasCurrent() || latest.hasCurrent()) {
+				if (local.hasCurrent() && latest.hasCurrent() && isEqualChange(local.current(), latest.current(), localLines, latestLines)) {
+					baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex);
+					local.forward();
+					latest.forward();
+					continue;
+				}
 
-                if (local.hasCurrent()
-                        && isBefore(local.current(),
-                                latest.hasCurrent() ? latest.current() : null)) {
-                    baseLineIndex = appendLines(result, local.current(),
-                            localLines, baseLineIndex);
-                    local.forward();
-                    merged = true;
-                    continue;
-                }
+				if (local.hasCurrent() && latest.hasCurrent()) {
+					final QSequenceDifferenceBlock localStartBlock = local.current();
+					final QSequenceDifferenceBlock latestStartBlock = latest.current();
+					if (checkConflict(local, latest, localLines, latestLines)) {
+						baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest								.current(), baseLines, localLines, latestLines, baseLineIndex);
+						local.forward();
+						latest.forward();
+						conflict = true;
+						continue;
+					}
+				}
 
-                if (latest.hasCurrent()) {
-                    baseLineIndex = appendLines(result, latest.current(),
-                            latestLines, baseLineIndex);
-                    latest.forward();
-                    merged = true;
-                    continue;
-                }
-            }
+				if (local.hasCurrent() && isBefore(local.current(), latest.hasCurrent() ? latest.current() : null)) {
+					baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex);
+					local.forward();
+					merged = true;
+					continue;
+				}
 
-            for (baseLineIndex++; baseLineIndex < baseLines.getLineCount(); baseLineIndex++) {
-                writeLine(result, baseLines.getLine(baseLineIndex));
-            }
+				if (latest.hasCurrent()) {
+					baseLineIndex = appendLines(result, latest.current(), latestLines, baseLineIndex);
+					latest.forward();
+					merged = true;
+					continue;
+				}
+			}
 
-            if (conflict) {
-                return CONFLICTED;
-            } else if (merged) {
-                return MERGED;
-            } else {
-                return NOT_MODIFIED;
-            }
-        } finally {
-            latestResult.close();
-            localResult.close();
-        }
-    }
+			for (baseLineIndex++; baseLineIndex < baseLines.getLineCount(); baseLineIndex++) {
+				writeLine(result, baseLines.getLine(baseLineIndex));
+			}
 
-    // Utils ==================================================================
+			if (conflict) {
+				return CONFLICTED;
+			}
+			else if (merged) {
+				return MERGED;
+			}
+			else {
+				return NOT_MODIFIED;
+			}
+		}
+		finally {
+			latestResult.close();
+			localResult.close();
+		}
+	}
 
-    private boolean isBefore(QSequenceDifferenceBlock block1,
-            QSequenceDifferenceBlock block2) {
-        return block1 != null
-                && (block2 == null || block1.getLeftTo() < block2.getLeftFrom());
-    }
+	// Utils ==================================================================
 
-    private boolean intersect(QSequenceDifferenceBlock block1,
-            QSequenceDifferenceBlock block2) {
-        return block1.getLeftFrom() <= block2.getLeftTo() + 1
-                && block2.getLeftFrom() <= block1.getLeftTo() + 1;
-    }
+	private boolean isBefore(QSequenceDifferenceBlock block1,
+	                         QSequenceDifferenceBlock block2) {
+		return block1 != null && (block2 == null || block1.getLeftTo() < block2.getLeftFrom());
+	}
 
-    private int appendLines(OutputStream result,
-            QSequenceDifferenceBlock block, QSequenceLineCache changedLines,
-            int baseLineIndex) throws IOException {
-        for (int equalLineIndex = block.getRightFrom()
-                - (block.getLeftFrom() - 1 - baseLineIndex); equalLineIndex < block
-                .getRightFrom(); equalLineIndex++) {
-            writeLine(result, changedLines.getLine(equalLineIndex));
-        }
+	private boolean intersect(QSequenceDifferenceBlock block1,
+	                          QSequenceDifferenceBlock block2) {
+		return block1.getLeftFrom() <= block2.getLeftTo() + 1 && block2.getLeftFrom() <= block1.getLeftTo() + 1;
+	}
 
-        for (int changedLineIndex = block.getRightFrom(); changedLineIndex <= block
-                .getRightTo(); changedLineIndex++) {
-            writeLine(result, changedLines.getLine(changedLineIndex));
-        }
+	private int appendLines(OutputStream result,
+	                        QSequenceDifferenceBlock block, QSequenceLineCache changedLines,
+	                        int baseLineIndex) throws IOException {
+		for (int equalLineIndex = block.getRightFrom() - (block.getLeftFrom() - 1 - baseLineIndex); equalLineIndex < block				.getRightFrom(); equalLineIndex++) {
+			writeLine(result, changedLines.getLine(equalLineIndex));
+		}
 
-        return block.getLeftTo();
-    }
+		for (int changedLineIndex = block.getRightFrom(); changedLineIndex <= block.getRightTo(); changedLineIndex++) {
+			writeLine(result, changedLines.getLine(changedLineIndex));
+		}
 
-    private boolean isEqualChange(QSequenceDifferenceBlock localBlock,
-            QSequenceDifferenceBlock latestBlock,
-            QSequenceLineCache localLines, QSequenceLineCache latestLines)
-            throws IOException {
-        if (localBlock.getLeftTo() - localBlock.getLeftFrom() != latestBlock
-                .getLeftTo()
-                - latestBlock.getLeftFrom()) {
-            return false;
-        }
+		return block.getLeftTo();
+	}
 
-        if (localBlock.getRightTo() - localBlock.getRightFrom() != latestBlock
-                .getRightTo()
-                - latestBlock.getRightFrom()) {
-            return false;
-        }
+	private boolean isEqualChange(QSequenceDifferenceBlock localBlock,
+	                              QSequenceDifferenceBlock latestBlock,
+	                              QSequenceLineCache localLines, QSequenceLineCache latestLines)
+			throws IOException {
+		if (localBlock.getLeftFrom() != latestBlock.getLeftFrom() || localBlock.getLeftTo() != latestBlock.getLeftTo()) {
+			return false;
+		}
 
-        for (int index = 0; index < localBlock.getRightTo()
-                - localBlock.getRightFrom() + 1; index++) {
-            final QSequenceLine localLine = localLines.getLine(localBlock
-                    .getRightFrom()
-                    + index);
-            final QSequenceLine latestLine = latestLines.getLine(latestBlock
-                    .getRightFrom()
-                    + index);
-            if (!localLine.equals(latestLine)) {
-                return false;
-            }
-        }
+		if (localBlock.getRightTo() - localBlock.getRightFrom() != latestBlock.getRightTo() - latestBlock.getRightFrom()) {
+			return false;
+		}
 
-        return true;
-    }
+		for (int index = 0; index < localBlock.getRightTo() - localBlock.getRightFrom() + 1; index++) {
+			final QSequenceLine localLine = localLines.getLine(localBlock.getRightFrom() + index);
+			final QSequenceLine latestLine = latestLines.getLine(latestBlock.getRightFrom() + index);
+			if (!localLine.equals(latestLine)) {
+				return false;
+			}
+		}
 
-    private boolean checkConflict(FSMergerBySequenceList localChanges,
-            FSMergerBySequenceList latestChanges,
-            QSequenceLineCache localLines, QSequenceLineCache latestLines)
-            throws IOException {
-        boolean conflict = false;
-        while (intersect(localChanges.current(), latestChanges.current())
-                && !isEqualChange(localChanges.current(), latestChanges
-                        .current(), localLines, latestLines)) {
-            conflict = true;
+		return true;
+	}
 
-            if (localChanges.current().getLeftTo() <= latestChanges.current()
-                    .getLeftTo()) {
-                if (localChanges.hasNext()
-                        && intersect(localChanges.peekNext(), latestChanges
-                                .current())) {
-                    localChanges.forward();
-                } else {
-                    break;
-                }
-            } else {
-                if (latestChanges.hasNext()
-                        && intersect(localChanges.current(), latestChanges
-                                .peekNext())) {
-                    latestChanges.forward();
-                } else {
-                    break;
-                }
-            }
-        }
-        return conflict;
-    }
+	private boolean checkConflict(FSMergerBySequenceList localChanges,
+	                              FSMergerBySequenceList latestChanges,
+	                              QSequenceLineCache localLines, QSequenceLineCache latestLines)
+			throws IOException {
+		boolean conflict = false;
+		while (intersect(localChanges.current(), latestChanges.current()) && !isEqualChange(localChanges.current(), latestChanges.current(), localLines, latestLines)) {
+			conflict = true;
 
-    private int createConflict(OutputStream result,
-            QSequenceDifferenceBlock localStart,
-            QSequenceDifferenceBlock localEnd,
-            QSequenceDifferenceBlock latestStart,
-            QSequenceDifferenceBlock latestEnd, QSequenceLineCache baseLines,
-            QSequenceLineCache localLines, QSequenceLineCache latestLines,
-            int baseLineIndex) throws IOException {
-        final int minBaseFrom = Math.min(localStart.getLeftFrom(), latestStart
-                .getLeftFrom());
-        final int maxBaseTo = Math.max(localEnd.getLeftTo(), latestEnd
-                .getLeftTo());
+			if (localChanges.current().getLeftTo() <= latestChanges.current().getLeftTo()) {
+				if (localChanges.hasNext() && intersect(localChanges.peekNext(), latestChanges.current())) {
+					localChanges.forward();
+				}
+				else {
+					break;
+				}
+			}
+			else {
+				if (latestChanges.hasNext() && intersect(localChanges.current(), latestChanges.peekNext())) {
+					latestChanges.forward();
+				}
+				else {
+					break;
+				}
+			}
+		}
+		return conflict;
+	}
 
-        for (baseLineIndex++; baseLineIndex < minBaseFrom; baseLineIndex++) {
-            writeLine(result, baseLines.getLine(baseLineIndex));
-        }
+	private int createConflict(OutputStream result,
+	                           QSequenceDifferenceBlock localStart,
+	                           QSequenceDifferenceBlock localEnd,
+	                           QSequenceDifferenceBlock latestStart,
+	                           QSequenceDifferenceBlock latestEnd, QSequenceLineCache baseLines,
+	                           QSequenceLineCache localLines, QSequenceLineCache latestLines,
+	                           int baseLineIndex) throws IOException {
+		final int minBaseFrom = Math.min(localStart.getLeftFrom(), latestStart.getLeftFrom());
+		final int maxBaseTo = Math.max(localEnd.getLeftTo(), latestEnd.getLeftTo());
 
-        final int localFrom = Math.max(0, localStart.getRightFrom()
-                - (localStart.getLeftFrom() - minBaseFrom));
-        final int localTo = Math.min(localLines.getLineCount() - 1, localEnd
-                .getRightTo()
-                + (maxBaseTo - localEnd.getLeftTo()));
-        final int latestFrom = Math.max(0, latestStart.getRightFrom()
-                - (latestStart.getLeftFrom() - minBaseFrom));
-        final int latestTo = Math.min(latestLines.getLineCount() - 1, latestEnd
-                .getRightTo()
-                + (maxBaseTo - latestEnd.getLeftTo()));
+		for (baseLineIndex++; baseLineIndex < minBaseFrom; baseLineIndex++) {
+			writeLine(result, baseLines.getLine(baseLineIndex));
+		}
 
-        writeBytesAndEol(result, myConflictStart);
-        for (int index = localFrom; index <= localTo; index++) {
-            writeLine(result, localLines.getLine(index));
-        }
-        writeBytesAndEol(result, myConflictSeparator);
-        for (int index = latestFrom; index <= latestTo; index++) {
-            writeLine(result, latestLines.getLine(index));
-        }
-        writeBytesAndEol(result, myConflictEnd);
+		final int localFrom = Math.max(0, localStart.getRightFrom() - (localStart.getLeftFrom() - minBaseFrom));
+		final int localTo = Math.min(localLines.getLineCount() - 1, localEnd.getRightTo() + (maxBaseTo - localEnd.getLeftTo()));
+		final int latestFrom = Math.max(0, latestStart.getRightFrom() - (latestStart.getLeftFrom() - minBaseFrom));
+		final int latestTo = Math.min(latestLines.getLineCount() - 1, latestEnd.getRightTo() + (maxBaseTo - latestEnd.getLeftTo()));
 
-        return maxBaseTo;
-    }
+		writeBytesAndEol(result, myConflictStart);
+		for (int index = localFrom; index <= localTo; index++) {
+			writeLine(result, localLines.getLine(index));
+		}
+		writeBytesAndEol(result, myConflictSeparator);
+		for (int index = latestFrom; index <= latestTo; index++) {
+			writeLine(result, latestLines.getLine(index));
+		}
+		writeBytesAndEol(result, myConflictEnd);
 
-    private void writeLine(OutputStream os, QSequenceLine line)
-            throws IOException {
-        final byte[] bytes = line.getBytes();
-        if (bytes.length == 0) {
-            return;
-        }
+		return maxBaseTo;
+	}
 
-        os.write(bytes);
-    }
+	private void writeLine(OutputStream os, QSequenceLine line)
+			throws IOException {
+		final byte[] bytes = line.getBytes();
+		if (bytes.length == 0) {
+			return;
+		}
 
-    private void writeBytesAndEol(OutputStream os, final byte[] bytes)
-            throws IOException {
-        if (bytes.length > 0) {
-            os.write(bytes);
-            if (myEOLBytes != null) {
-                os.write(myEOLBytes);
-            } else {
-                os.write(DEFAULT_EOL);
-            }
-        }
-    }
+		os.write(bytes);
+	}
+
+	private void writeBytesAndEol(OutputStream os, final byte[] bytes)
+			throws IOException {
+		if (bytes.length > 0) {
+			os.write(bytes);
+			if (myEOLBytes != null) {
+				os.write(myEOLBytes);
+			}
+			else {
+				os.write(DEFAULT_EOL);
+			}
+		}
+	}
 }
