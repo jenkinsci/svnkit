@@ -594,9 +594,7 @@ public class SVNCommitClient extends SVNBasicClient {
                     dir.commit(target, info, wcPropChanges, removeLock, recurse);
                     processedItems.add(path);
                 } 
-                if (!isDoNotSleepForTimeStamp()) {
-                    needsSleepForTimeStamp = true;
-                }
+                needsSleepForTimeStamp = true;
                 // commit completed, include revision number.
                 dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, info.getNewRevision()), ISVNEventHandler.UNKNOWN);
             } catch (SVNException e) {
@@ -624,7 +622,7 @@ public class SVNCommitClient extends SVNBasicClient {
             infos.add(info != null ? info : SVNCommitInfo.NULL);
         }
         if (needsSleepForTimeStamp) {
-            SVNFileUtil.sleepForTimestamp();
+            sleepForTimeStamp();
         }
         return (SVNCommitInfo[]) infos.toArray(new SVNCommitInfo[infos.size()]);
     }

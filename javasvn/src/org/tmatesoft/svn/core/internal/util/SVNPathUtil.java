@@ -48,7 +48,6 @@ public class SVNPathUtil {
     public static String append(String f, String s) {
         f = f == null ? "" : f;
         s = s == null ? "" : s;
-//        StringBuffer result = new StringBuffer(f.length() + s.length());
         int l1 = f.length();
         int l2 = s.length();
         char[] r = new char[l1 + l2 + 2];
@@ -59,22 +58,18 @@ public class SVNPathUtil {
                 break;
             }
             r[index++] = ch;
-//            result.append(ch);
         }
         for(int i = 0; i < l2; i++) {
             char ch = s.charAt(i);
             if (i == 0 && ch != '/' && index > 0) {
                 r[index++] = '/';
-//                result.append('/');
             }
             if (i + 1 == l2 && ch == '/') {
                 break;
             }
             r[index++] = ch;
-//            result.append(ch);
         }
         return new String(r, 0, index);
-//        return result.toString();
     }
     
     public static String removeTail(String path) {

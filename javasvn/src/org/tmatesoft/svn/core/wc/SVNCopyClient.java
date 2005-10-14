@@ -438,10 +438,14 @@ public class SVNCopyClient extends SVNBasicClient {
         if (srcKind == SVNNodeKind.DIR) {
             // do checkout.
             SVNUpdateClient updateClient = new SVNUpdateClient(getRepositoryFactory(), getOptions());
-            updateClient.setDoNotSleepForTimeStamp(true);
             updateClient.setEventHandler(getEventDispatcher());
-            
-            revision = updateClient.doCheckout(srcURL, dstPath, srcRevision, srcRevision, true);
+
+            updateClient.setEventPathPrefix("");
+            try {
+                revision = updateClient.doCheckout(srcURL, dstPath, srcRevision, srcRevision, true);
+            } finally {
+                updateClient.setEventPathPrefix(null);
+            }
             // update copyfrom (if it is the same repository).
             if (sameRepositories) {
                 try {
