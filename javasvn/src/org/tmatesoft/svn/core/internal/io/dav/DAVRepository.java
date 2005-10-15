@@ -68,6 +68,10 @@ class DAVRepository extends SVNRepository {
     public void testConnection() throws SVNException {
         try {
             openConnection();
+            if (myConnection != null) {
+                myConnection.fetchRepositoryUUID(this);
+                myConnection.fetchRepositoryRoot(this);
+            }
         } finally {
             closeConnection();
         }
