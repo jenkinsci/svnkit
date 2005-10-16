@@ -57,7 +57,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNBasicClient implements ISVNEventHandler {
 
-    private ISVNRepositoryFactory myRepositoryFactory;
+    private ISVNRepositoryPool myRepositoryPool;
     private ISVNOptions myOptions;
     private ISVNEventHandler myEventDispatcher;
     private List myPathPrefixesStack;
@@ -65,12 +65,12 @@ public class SVNBasicClient implements ISVNEventHandler {
     private boolean myIsLeaveConflictsUnresolved;
 
     protected SVNBasicClient(final ISVNAuthenticationManager authManager, ISVNOptions options) {
-        this(new DefaultSVNRepositoryFactory(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager, 
-                true, DefaultSVNRepositoryFactory.RUNTIME_POOL), options);
+        this(new DefaultSVNRepositoryPool(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager, 
+                true, DefaultSVNRepositoryPool.RUNTIME_POOL), options);
     }
 
-    protected SVNBasicClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
-        myRepositoryFactory = repositoryFactory;
+    protected SVNBasicClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+        myRepositoryPool = repositoryPool;
         myOptions = options;
         if (myOptions == null) {
             myOptions = SVNWCUtil.createDefaultOptions(true);
@@ -191,14 +191,14 @@ public class SVNBasicClient implements ISVNEventHandler {
     }
 
     protected SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {
-        if (myRepositoryFactory == null) {
+        if (myRepositoryPool == null) {
             return SVNRepositoryFactory.create(url, null);
         }
-        return myRepositoryFactory.createRepository(url, mayReuse);
+        return myRepositoryPool.createRepository(url, mayReuse);
     }
     
-    protected ISVNRepositoryFactory getRepositoryFactory() {
-        return myRepositoryFactory;
+    protected ISVNRepositoryPool getRepositoryPool() {
+        return myRepositoryPool;
     }
 
     protected void dispatchEvent(SVNEvent event) {

@@ -45,7 +45,7 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryFactory;
+import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -917,7 +917,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public void dispose() {
         SVNGanymedSession.shutdown();
-        new DefaultSVNRepositoryFactory(null).shutdownConnections(true);
+        new DefaultSVNRepositoryPool(null).shutdownConnections(true);
     }
 
     public void setConfigDirectory(String configDir) throws ClientException {
@@ -1093,7 +1093,7 @@ public class SVNClientImpl implements SVNClientInterface {
     protected SVNClientManager getClientManager() {
         if (myClientManager == null) {
             updateClientManager();
-            myClientManager = SVNClientManager.newInstance(myOptions, new DefaultSVNRepositoryFactory(myAuthenticationManager));
+            myClientManager = SVNClientManager.newInstance(myOptions, new DefaultSVNRepositoryPool(myAuthenticationManager));
             myClientManager.setEventHandler(getEventListener());
         }
         return myClientManager;

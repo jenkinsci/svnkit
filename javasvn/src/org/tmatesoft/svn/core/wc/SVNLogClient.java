@@ -89,8 +89,8 @@ public class SVNLogClient extends SVNBasicClient {
         super(authManager, options);
     }
 
-    protected SVNLogClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
-        super(repositoryFactory, options);
+    protected SVNLogClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+        super(repositoryPool, options);
     }
     
     /**

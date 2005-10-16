@@ -93,8 +93,8 @@ public class SVNStatusClient extends SVNBasicClient {
         super(authManager, options);
     }
 
-    protected SVNStatusClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
-        super(repositoryFactory, options);
+    protected SVNStatusClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+        super(repositoryPool, options);
     }
     
     /**

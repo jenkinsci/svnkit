@@ -120,8 +120,8 @@ public class SVNCommitClient extends SVNBasicClient {
         super(authManager, options);
     }
 
-    protected SVNCommitClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
-        super(repositoryFactory, options);
+    protected SVNCommitClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+        super(repositoryPool, options);
     }
     
     /**
@@ -658,7 +658,7 @@ public class SVNCommitClient extends SVNBasicClient {
             return SVNCommitPacket.EMPTY;
         }
         Set targets = new TreeSet();
-        SVNStatusClient statusClient = new SVNStatusClient(getRepositoryFactory(), getOptions());
+        SVNStatusClient statusClient = new SVNStatusClient(getRepositoryPool(), getOptions());
         SVNWCAccess wcAccess = SVNCommitUtil.createCommitWCAccess(paths, recursive, force, targets, statusClient);
         try {
             Map lockTokens = new HashMap();
@@ -691,7 +691,7 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         Collection packets = new ArrayList();
         Map targets = new HashMap();
-        SVNStatusClient statusClient = new SVNStatusClient(getRepositoryFactory(), getOptions());
+        SVNStatusClient statusClient = new SVNStatusClient(getRepositoryPool(), getOptions());
         SVNWCAccess[] wcAccesses = SVNCommitUtil.createCommitWCAccess2(paths, recursive, force, targets, statusClient);
 
         for (int i = 0; i < wcAccesses.length; i++) {

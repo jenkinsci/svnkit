@@ -28,7 +28,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class DefaultSVNRepositoryFactory implements ISVNRepositoryFactory, ISVNSession {
+public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession {
     
     public static final int RUNTIME_POOL = 1;
     public static final int INSTANCE_POOL = 2;
@@ -41,11 +41,11 @@ public class DefaultSVNRepositoryFactory implements ISVNRepositoryFactory, ISVNS
     private Map myPool;
     private static Map ourPool;
 
-    public DefaultSVNRepositoryFactory(ISVNAuthenticationManager authManager) {
+    public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager) {
         this(authManager, true, RUNTIME_POOL);
     }
 
-    public DefaultSVNRepositoryFactory(ISVNAuthenticationManager authManager, boolean keepConnections, int poolMode) {
+    public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, boolean keepConnections, int poolMode) {
         myAuthManager = authManager;
         myIsKeepConnections = keepConnections;
         myPoolMode = poolMode;

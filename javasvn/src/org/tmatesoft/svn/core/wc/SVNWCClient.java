@@ -157,8 +157,8 @@ public class SVNWCClient extends SVNBasicClient {
         super(authManager, options);
     }
 
-    protected SVNWCClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
-        super(repositoryFactory, options);
+    protected SVNWCClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+        super(repositoryPool, options);
     }
     
     /**

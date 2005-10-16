@@ -124,8 +124,8 @@ public class SVNCopyClient extends SVNBasicClient {
         super(authManager, options);
     }
 
-    protected SVNCopyClient(ISVNRepositoryFactory repositoryFactory, ISVNOptions options) {
-        super(repositoryFactory, options);
+    protected SVNCopyClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
+        super(repositoryPool, options);
     }
     
 
@@ -437,7 +437,7 @@ public class SVNCopyClient extends SVNBasicClient {
         long revision = -1;
         if (srcKind == SVNNodeKind.DIR) {
             // do checkout.
-            SVNUpdateClient updateClient = new SVNUpdateClient(getRepositoryFactory(), getOptions());
+            SVNUpdateClient updateClient = new SVNUpdateClient(getRepositoryPool(), getOptions());
             updateClient.setEventHandler(getEventDispatcher());
 
             updateClient.setEventPathPrefix("");

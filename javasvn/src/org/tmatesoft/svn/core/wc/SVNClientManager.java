@@ -105,7 +105,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
  * @see     ISVNEventHandler
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
-public class SVNClientManager implements ISVNRepositoryFactory {
+public class SVNClientManager implements ISVNRepositoryPool {
     
     private ISVNOptions myOptions;
     
@@ -119,18 +119,18 @@ public class SVNClientManager implements ISVNRepositoryFactory {
     private SVNWCClient myWCClient;
     
     private ISVNEventHandler myEventHandler;
-    private ISVNRepositoryFactory myRepositoryFactory;
+    private ISVNRepositoryPool myRepositoryPool;
 
-    private SVNClientManager(ISVNOptions options, ISVNRepositoryFactory factory) {
+    private SVNClientManager(ISVNOptions options, ISVNRepositoryPool repositoryPool) {
         myOptions = options;
         if (myOptions == null) {
             myOptions = SVNWCUtil.createDefaultOptions(true);
         }
-        myRepositoryFactory = factory;
+        myRepositoryPool = repositoryPool;
     }
 
     private SVNClientManager(ISVNOptions options, final ISVNAuthenticationManager authManager) {
-        this(options, new DefaultSVNRepositoryFactory(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager));
+        this(options, new DefaultSVNRepositoryPool(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager));
     }
     
     /**
@@ -172,8 +172,8 @@ public class SVNClientManager implements ISVNRepositoryFactory {
         return new SVNClientManager(options, authManager);
     }
 
-    public static SVNClientManager newInstance(ISVNOptions options, ISVNRepositoryFactory repositoryFactory) {
-        return new SVNClientManager(options, repositoryFactory);
+    public static SVNClientManager newInstance(ISVNOptions options, ISVNRepositoryPool repositoryPool) {
+        return new SVNClientManager(options, repositoryPool);
     }
 
     /**
@@ -213,8 +213,8 @@ public class SVNClientManager implements ISVNRepositoryFactory {
      * @throws SVNException
      */
     public SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {
-        if (myRepositoryFactory != null) {
-            return myRepositoryFactory.createRepository(url, mayReuse);
+        if (myRepositoryPool != null) {
+            return myRepositoryPool.createRepository(url, mayReuse);
         }
         SVNRepository repository = SVNRepositoryFactory.create(url);
         repository.setAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
@@ -222,8 +222,8 @@ public class SVNClientManager implements ISVNRepositoryFactory {
     }
 
     public void shutdownConnections(boolean shutdownAll) {
-        if (myRepositoryFactory != null) {
-            myRepositoryFactory.shutdownConnections(shutdownAll);
+        if (myRepositoryPool != null) {
+            myRepositoryPool.shutdownConnections(shutdownAll);
             
         }
     }

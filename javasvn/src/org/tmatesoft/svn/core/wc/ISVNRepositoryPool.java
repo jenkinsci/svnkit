@@ -15,14 +15,14 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
- * The <b>ISVNRepositoryFactory</b> interface is used by 
+ * The <b>ISVNRepositoryPool</b> interface is used by 
  * <b>SVN</b>*<b>Client</b> objects to create a low-level SVN protocol
  * driver that allows them to directly work with a repository.
  * 
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public interface ISVNRepositoryFactory {
+public interface ISVNRepositoryPool {
     /**
      * Creates a low-level SVN protocol driver to access a repository.
      * 
