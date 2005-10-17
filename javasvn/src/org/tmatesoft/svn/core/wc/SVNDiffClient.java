@@ -583,7 +583,7 @@ public class SVNDiffClient extends SVNBasicClient {
             repository1.diff(url2, rev2, rev1, target1, !useAncestry, recursive, reporter, SVNCancellableEditor.newInstance(editor, this));
         } finally {
             if (tmpFile != null) {
-                SVNFileUtil.deleteAll(tmpFile, null);
+                SVNFileUtil.deleteAll(tmpFile, true, null);
             }
         }
     }
