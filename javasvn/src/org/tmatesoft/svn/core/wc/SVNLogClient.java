@@ -11,6 +11,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.TreeSet;
@@ -124,9 +125,8 @@ public class SVNLogClient extends SVNBasicClient {
         }
         File tmpFile = new File(path.getParentFile(), SVNFileUtil.getAdminDirectoryName());
         tmpFile = new File(tmpFile, "tmp/text-base");
-        if (!tmpFile.exists()) {
-            tmpFile = new File(System.getProperty("user.home"), ".javasvn");
-            tmpFile.mkdirs();
+        if (!tmpFile.isDirectory()) {
+            tmpFile = createTempAnnotateDirectory();
         }
         doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev, handler);
     }
@@ -160,13 +160,10 @@ public class SVNLogClient extends SVNBasicClient {
         if (endRev < startRev) {
             SVNErrorManager.error("svn: Start revision must precede end revision (" + startRev + ":" + endRev + ")");
         }
-        File tmpFile = new File(System.getProperty("user.home"), ".javasvn");
-        if (!tmpFile.exists()) {
-            tmpFile.mkdirs();
-        }
+        File tmpFile = createTempAnnotateDirectory();
         doAnnotate(repos.getLocation().toString(), startRev, tmpFile, repos, endRev, handler);
     }
-
+    
     private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, ISVNAnnotateHandler handler) throws SVNException {
         SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, startRev, tmpFile, this);
         try {
@@ -174,7 +171,7 @@ public class SVNLogClient extends SVNBasicClient {
             generator.reportAnnotations(handler, null);
         } finally {
             generator.dispose();
-            SVNFileUtil.deleteAll(tmpFile, false, null);
+            SVNFileUtil.deleteAll(tmpFile, true, null);
         }
     }
     
@@ -451,4 +448,23 @@ public class SVNLogClient extends SVNBasicClient {
             }
         }
     }
+
+    private static File createTempAnnotateDirectory() throws SVNException {
+        File homeDir = new File(System.getProperty("java.io.tmpdir"), "javasvn.tmp");
+        if (!homeDir.exists()) {
+            homeDir.mkdirs();
+        }
+        File tmpFile = null;
+        try {
+            tmpFile = File.createTempFile(".annotate.", ".tmp", homeDir);
+        } catch (IOException e) {
+            SVNErrorManager.error("svn: Cannot create temp directory at '" + homeDir + "', " + e.getMessage());
+        }
+        if (tmpFile.exists()) {
+            tmpFile.delete();
+        }
+        tmpFile.mkdirs();
+        return tmpFile;
+    }
+
 }
