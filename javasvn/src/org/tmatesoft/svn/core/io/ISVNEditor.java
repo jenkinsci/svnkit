@@ -19,7 +19,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
- * The <code>ISVNEditor</code> interface provides methods that should be used
+ * The <b>ISVNEditor</b> interface provides methods that should be used
  * to follow  repository server's instructions on how the client's command (update,
  * switch, checkout, status, diff, commit) should be handled depending on possible 
  * changes that have been applied to the client's working copy and/or its origin in 
@@ -45,6 +45,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * @version 1.0
  * @author  TMate Software Ltd.
  * @see		SVNRepository
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public interface ISVNEditor {
     /**

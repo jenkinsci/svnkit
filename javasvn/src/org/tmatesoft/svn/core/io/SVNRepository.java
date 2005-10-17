@@ -34,27 +34,23 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
- * The abstract class <b>SVNRepository</b> declares all the basic
- * interface methods as well as implements commonly used ones to work with
- * a Subversion repository. It is the skeleton of the low-level mechanism of 
- * accessing a repository. In the model of the Subversion distributed system of
- * versioning and sharing data this mechanism corresponds to the Repository 
- * Access (RA) Layer.
+ * The abstract class <b>SVNRepository</b> provides an interface for protocol
+ * specific drivers used for direct working with a Subversion repository. 
+ * <b>SVNRepository</b> joins all low-level API methods needed for repository
+ * access operations.
  * 
  * <p>
- * Actually, the high-level library API rests upon this basis: for example, 
- * manipulations with a working copy (which need an access to a repository), say,
- * commiting it, uses an appropriate implementation (depending on the protocol 
- * that is chosen to access the repository) of <code>SVNRepository</code> as an
- * engine that carries out the commit itself.
+ * In particular this low-level protocol driver is used by the high-level API 
+ * (represented by the <B><A HREF="../wc/package-summary.html">org.tmatesoft.svn.core.wc</A></B> package) 
+ * when an access to a repository is needed. 
  * 
  * <p>
  * It is important to say that before using the library it must be configured 
  * according to implimentations to be used. That is if a repository is assumed
  * to be accessed via the <i>WebDAV</i> protocol (<code>http://</code> or 
- * <code>https://</code>) or a custom SVN one 
+ * <code>https://</code>) or a custom <i>svn</i> one 
  * (<code>svn://</code> or <code>svn+ssh://</code>) a user must initialize the library
- * in this way:
+ * in a proper way:
  * <pre class="javacode">
  * <span class="javacomment">//import neccessary files</span>
  * <span class="javakeyword">import</span> org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -76,7 +72,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * the repository.
  * 
  * <p>
- * This is a general way how a user creates an <code>SVNRepository</code> for his work:
+ * This is a general way how a user creates an <b>SVNRepository</b> driver object:
  * <pre class="javacode">
  * String url=<span class="javastring">"http://svn.collab.net/svn/trunk/"</span>;
  * String name=<span class="javastring">"my name"</span>;
@@ -94,22 +90,32 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * }
  * <span class="javacomment">//work with the repository</span>
  * ... </pre>
- *
  * <p>
- * <b>NOTE:</b> unfortunately, at present the <i>JavaSVN</i> library doesn't 
+ * <b>SVNRepository</b> objects are not thread-safe, we're strongly recommend
+ * you not to use one <b>SVNRepository</b> object from within multiple threads.  
+ * 
+ * <p>
+ * Also methods of <b>SVNRepository</b> objects are not reenterable - that is, 
+ * you can not call methods of <b>SVNRepository</b> neither from within those 
+ * handlers that are passed to some of the methods, nor during committing with
+ * the help of a commit editor (until the editor's {@link ISVNEditor#closeEdit() closeEdit()} 
+ * method is called). 
+ * 
+ * <p>
+ * To authenticate a user over network <b>SVNRepository</b> drivers use
+ * <b>ISVNAuthenticationManager</b> auth drivers.
+ * 
+ * <p>
+ * <b>NOTE:</b> unfortunately, at present the JavaSVN library doesn't 
  * provide an implementation for accessing a Subversion repository via the
  * <i>file:///</i> protocol (on a local machine), but in future it will be
  * certainly realized.
  * 
- * <p>
- * For users familiar with the native Subversion source code it may be useful to
- * know that the <code>SVNRepository</code> interface is more or less similar to
- * the <code><b>include/svn_ra.h</b></code> declaration file.
- * 
- * @version 	1.0
- * @author 		TMate Software Ltd.
- * @see			SVNRepositoryFactory
- * @see 		org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory
+ * @version     1.0
+ * @author      TMate Software Ltd.
+ * @see         SVNRepositoryFactory
+ * @see         org.tmatesoft.svn.core.auth.ISVNAuthenticationManager
+ * @see         <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public abstract class SVNRepository {
         
@@ -122,36 +128,58 @@ public abstract class SVNRepository {
     private ISVNAuthenticationManager myAuthManager;
     private ISVNSession myOptions;
 
-    /**
-     * Constructs an <code>SVNRepository</code> instance (representing a
-     * Repository Access Layer session to work with a repository)
-     * given the Subversion repository location as an
-     * <code>SVNRepositoryLocation</code> object.
-     *
-     * @param location 		an <code>SVNRepositoryLocation</code> object that
-     * 						incapsulates the repository location (that is
-     * 						a <code>URL</code> pointing to a repository
-     * 						tree node - not necessarily the repository root
-     * 						directory which it was installed to).
-     */
     protected SVNRepository(SVNURL location, ISVNSession options) {
         myLocation = location;
         myOptions = options;
     }
 	
     /**
-	 * Gets the Subversion repository location as an 
-	 * <code>SVNRepositoryLocation</code> object (which incapsulates
-	 * the <code>URL</code> that is used to establish a connection
-	 * to the repository).
-	 *  
-	 * @return 		repository location as a 
-	 * 				<code>SVNRepositoryLocation</code> instance
+	 * Returns the repository location for which this object is 
+     * created. 
+     *   
+	 * @return 	a repository location set for this driver
+     * @see     #setLocation(SVNURL, boolean) 
+	 * 			
 	 */    
     public SVNURL getLocation() {
         return myLocation;
     }
     
+    /**
+     * Sets a new repository location for this object. The ability to reset
+     * an old repository location to a new one (to switch the working location)
+     * lets a developer to use the same <b>SVNRepository</b> object instead of
+     * creating a new object per each repository location. This advantage gives
+     * memory & coding efforts economy. 
+     * 
+     * <p>
+     * But you can not specify a new repository location url with a protocol
+     * different from the one used for the previous (essentially, the current) 
+     * repository location, since <b>SVNRepository</b> objects are protocol dependent.    
+     * 
+     * <p>
+     * If a new <code>url</code> is located within the same repository, this object
+     * just switches to that <code>url</code> not closing the current session (i.e. 
+     * not calling {@link #closeSession()}).
+     * 
+     * <p>
+     * If either a new <code>url</code> refers to the same host (including a port
+     * number), or refers to an absolutely different host, or this object has got
+     * no repository root location cached (hasn't ever accessed a repository yet),
+     * or <code>forceReconnect</code> is <span class="javakeyword">true</span>, then
+     * the current session is closed, cached repository credentials (UUID and repository 
+     * root directory location ) are reset and this object is switched to a new 
+     * repository location.
+     * 
+     * @param  url             a new repository location url
+     * @param  forceReconnect  if <span class="javakeyword">true</span> then
+     *                         forces to close the current session, resets the
+     *                         cached repository credentials and switches this object to 
+     *                         a new location (doesn't matter whether it's on the same 
+     *                         host or not)
+     * @throws SVNException    if the old url and a new one has got different
+     *                         protocols
+     */
     public void setLocation(SVNURL url, boolean forceReconnect) throws SVNException {
         lock();
         try {
@@ -186,17 +214,15 @@ public abstract class SVNRepository {
     }
 
     /**
-     * Gets a repository's Universal Unique IDentifier (<code>UUID</code>).
+     * Gets a cached repository's Universal Unique IDentifier (UUID). 
+     * According to uniqueness for different repositories UUID values 
+     * (36 character strings) are different. UUID is got and cached at 
+     * the time of the first successful repository access. Before that
+     * it's <span class="javakeyword">null</span>.
+     *   
      * 
-     * <p>
-     * A Subversion client uses this identifier to differentiate
-     * between one repository and another.
      * 
-     * <p>
-     * <b>NOTE:</b> the <code>UUID</code> has the same lifetime as the current 
-     * session (represented by this <code>SVNRepository</code> object).
-     * 
-     * @return 	the <code>UUID</code> string of a repository 
+     * @return 	the UUID of a repository 
      */
     public String getRepositoryUUID() {
         return myRepositoryUUID;

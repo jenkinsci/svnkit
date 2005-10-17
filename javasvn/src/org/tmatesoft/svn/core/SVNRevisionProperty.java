@@ -16,15 +16,15 @@ import java.util.Collection;
 import java.util.HashSet;
 
 /**
- * This class is a wrapper for revision properties.
+ * The <b>SVNRevisionProperty</b> class represents revision properties - those
+ * unversioned properties supported by Subversion.
  * 
  * <p>
- * Each revision can have some own system properties. Such properties are
- * unversioned, so there is always a risk to loose information when 
- * modifying revision property values. 
+ * Revision properties are unversioned, so there is always a risk to 
+ * lose information when modifying revision property values. 
  * 
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
  */
 public class SVNRevisionProperty {
     
@@ -38,21 +38,33 @@ public class SVNRevisionProperty {
         REVISION_PROPS.add(SVNRevisionProperty.AUTOVERSIONED);
     }
     
+    /**
+     * Says if the given revision property name is really a valid
+     * revision property name.  
+     *  
+     * @param   name a property name
+     * @return  <span class="javakeyword">true</span> if it's a 
+     *          revision property name, <span class="javakeyword">false</span>
+     *          otherwise
+     */
     public static boolean isRevisionProperty(String name) {
         return name != null && REVISION_PROPS.contains(name);
     }
 
     /**
-     * svn:author property that's responsible for the username of the revision's author
+     * An <span class="javastring">"svn:author"</span> revision 
+     * property (that holds the name of the revision's author)
      */
     public static final String AUTHOR = "svn:author";
     /**
-     * svn:log property -  a property to store the log message attached to the revision
-     * during commit operation
+     * An <span class="javastring">"svn:log"</span> revision property -  
+     * the one that stores a log message attached to a revision
+     * during a commit operation
      */
     public static final String LOG = "svn:log";
     /**
-     * svn:date property that is a datestamp representing the time that the
+     * An <span class="javastring">"svn:date"</span> revision property 
+     * that is a date & time stamp representing the time when the
      * revision was created
      */
     public static final String DATE = "svn:date";

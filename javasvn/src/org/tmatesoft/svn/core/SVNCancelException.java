@@ -13,10 +13,8 @@
 package org.tmatesoft.svn.core;
 
 /**
- * An exception class that is used to signal about a denial of
- * the Repository Access Layer to send a user's request to a repository
- * server (over an <code>http(s)</code> connection) because of missing user's 
- * credentials.
+ * The <b>SVNCancelException</b> is used to signal about an operation 
+ * cancel event.
  * 
  * @version 1.0
  * @author 	TMate Software Ltd.
@@ -24,7 +22,13 @@ package org.tmatesoft.svn.core;
  *
  */
 public class SVNCancelException extends SVNException {
-
+    /**
+     * Constructs an <b>SVNCancelException</b> given the
+     * error message.
+     * 
+     * @param message  an error message describing why the operation 
+     *                 was cancelled
+     */
     public SVNCancelException(String message) {
         super(message);
     }

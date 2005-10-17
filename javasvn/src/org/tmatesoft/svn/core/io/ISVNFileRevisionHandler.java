@@ -20,36 +20,56 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 
 /**
- * <code>ISVNFileRevisionHandler</code> is an interface of a handler that processes
- * file revisions (provided as <code>SVNFileRevision</code> objects).
+ * The <b>ISVNFileRevisionHandler</b> interface should be implemented for handling
+ * information about file revisions  - that is file path, properties, revision properties
+ * against a particular revision.
  * 
  * <p>
- * The <code>ISVNFileRevisionHandler</code> public interface is used within the 
- * {@link SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler)}
- * method (that is a user should provide an <code>ISVNFileRevisionHandler</code> 
- * instance when going to call 
- * {@link SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler)}).
+ * This interface is provided to a   
+ * {@link SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler) getFileRevisions()}
+ * method of <b>SVNRepository</b> when getting file revisions (in particular, when annotating).
  * 
  * @version 1.0
  * @author 	TMate Software Ltd.
- * @see 	SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler)
+ * @see 	SVNRepository
+ * @see     org.tmatesoft.svn.core.SVNAnnotationGenerator
  */
 public interface ISVNFileRevisionHandler {
     
     /**
-     * Called within the method
-     * {@link SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler)} 
-     * method to handle an <code>SVNFileRevision</code> passed.
-     * 
-     * @param  fileRevision 	a <code>SVNFileRevision</code> object representing file
+     * Handles a file revision info.
+     *  
+     * @param  fileRevision 	a <b>SVNFileRevision</b> object representing file
      * 							revision information
      * @throws SVNException
      * @see 					SVNFileRevision
      */
 	public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException;
 	
+    /**
+     * Handles a next diff window for a file (represented by a token) and
+     * returns an output stream to write instructions and new text data for
+     * the window. 
+     * 
+     * @param  token            a file path or name (or anything an implementor would
+     *                          like to use for his own implementation)
+     * @param  diffWindow       a diff window representing a delta chunk 
+     * @return                  an output stream where instructions and new text data
+     *                          for <code>diffWindow</code> will be written
+     * @throws SVNException
+	 */
     public OutputStream handleDiffWindow(String token, SVNDiffWindow diffWindow) throws SVNException;
     
+    /**
+     * Finilazes collecting deltas (diff windows) for a file. This method is
+     * called just when all the diff windows for a file were handled. It may be here
+     * where the collected deltas are applied.
+     *  
+     * @param  token          defines a path or a name (or anything an implementor would
+     *                        like to use for his own implementation) of the file
+     *                        for which finalizing steps should be performed
+     * @throws SVNException
+     */
     public void handleDiffWindowClosed(String token) throws SVNException;
 
 }

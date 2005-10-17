@@ -14,8 +14,8 @@ package org.tmatesoft.svn.core;
 
 /**
  * An exception class that is used to signal about the fact that errors
- * occured exactly during an authentication try. Provides the same kind of information
- * as its base class does.
+ * occured exactly during an authentication try. Provides the same kind 
+ * of information as its base class does.
  *   
  * @version	1.0
  * @author 	TMate Software Ltd.

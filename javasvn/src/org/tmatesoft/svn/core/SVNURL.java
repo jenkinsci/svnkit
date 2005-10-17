@@ -22,11 +22,42 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 
 /**
+ * The <b>SVNURL</b> class is used for representing urls. Those JavaSVN
+ * API methods, that need repository locations to carry out an operation, 
+ * receive a repository location url represented by <b>SVNURL</b>. This
+ * class does all the basic work for a caller: parses an original url 
+ * string (splitting it to components), encodes/decodes a path component
+ * to/from the UTF-8 charset, checks for validity (such as protocol support
+ *  - if JavaSVN does not support a particular protocol, <b>SVNURL</b> 
+ * throws a corresponding exception). 
+ * 
+ * <p>
+ * To create a new <b>SVNURL</b> representation, pass an original url
+ * string (like <span class="javastring">"http://userInfo@host:port/path"</span>)
+ * to a corresponding <i>parse</i> method of this class. 
+ *  
  * @version 1.0
  * @author  TMate Software Ltd.
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public class SVNURL {
-    
+    /**
+     * Creates a new <b>SVNURL</b> representation from the given url 
+     * components.
+     * 
+     * @param protocol       a protocol component
+     * @param userInfo       a user info component
+     * @param host           a host component
+     * @param port           a port number
+     * @param path           a path component
+     * @param uriEncoded     <span class="javakeyword">true</span> if 
+     *                       <code>path</code> is UTF-8 encoded,
+     *                       <span class="javakeyword">false</span> 
+     *                       otherwise 
+     * @return               a new <b>SVNURL</b> representation
+     * @throws SVNException  if the resultant url (composed of the given 
+     *                       components) is malformed
+     */
     public static SVNURL create(String protocol, String userInfo, String host, int port, String path, boolean uriEncoded) throws SVNException {
         path = path == null ? "/" : path.trim();
         if (!uriEncoded) {
@@ -44,11 +75,27 @@ public class SVNURL {
         String url = composeURL(protocol, userInfo, host, port, path);
         return new SVNURL(url, true);
     }
-    
+
+    /**
+     * Parses the given decoded (not UTF-8 encoded) url string and creates 
+     * a new <b>SVNURL</b> representation for this url.
+     * 
+     * @param  url           an input url string (like <span class="javastring">'http://myhost/mypath'</span>)
+     * @return               a new <b>SVNURL</b> representation of <code>url</code>
+     * @throws SVNException  if <code>url</code> is malformed
+     */
     public static SVNURL parseURIDecoded(String url) throws SVNException {
         return new SVNURL(url, false);
     }
-
+    
+    /**
+     * Parses the given UTF-8 encoded url string and creates a new 
+     * <b>SVNURL</b> representation for this url. 
+     * 
+     * @param  url           an input url string (like <span class="javastring">'http://myhost/my%20path'</span>)
+     * @return               a new <b>SVNURL</b> representation of <code>url</code>
+     * @throws SVNException  if <code>url</code> is malformed
+     */
     public static SVNURL parseURIEncoded(String url) throws SVNException {
         return new SVNURL(url, true);
     }
@@ -114,35 +161,81 @@ public class SVNURL {
         } 
     }
     
+    /**
+     * Returns the protocol component of the url represented by this
+     * object.
+     *  
+     * @return  a protocol name (like <code>http</code>)
+     */
     public String getProtocol() {
         return myProtocol;
     }
     
+    /**
+     * Returns the host component of the url represented by this object. 
+     * 
+     * @return  a host name
+     */
     public String getHost() {
         return myHost;
     }
     
+    /**
+     * Returns the port number specified (or default) for the host.
+     *  
+     * @return  a port number
+     */
     public int getPort() {
         return myPort;
     }
     
+    /**
+     * Says if the url is provided with a non-default port number or not.
+     * 
+     * @return  <span class="javakeyword">true</span> if the url
+     *          comes with a non-default port number, 
+     *          <span class="javakeyword">false</span> otherwise  
+     * @see     #getPort()
+     */
     public boolean hasPort() {
         return !myIsDefaultPort;
     }
     
-    // uri-decoded
+    /**
+     * Returns the path component of the url represented by this object 
+     * as a uri-decoded string 
+     * 
+     * @return  a uri-decoded path
+     */
     public String getPath() {
         return myPath;
     }
     
+    /**
+     * Returns the path component of the url represented by this object 
+     * as a uri-encoded string
+     * 
+     * @return  a uri-encoded path
+     */
     public String getURIEncodedPath() {
         return myEncodedPath;
     }
     
+    /**
+     * Returns the user info component of the url represented by this 
+     * object.
+     *  
+     * @return a user info part of the url (if it was provided)
+     */
     public String getUserInfo() {
         return myUserName;
     }
     
+    /**
+     * Returns a string representation of this object.
+     * 
+     * @return a url string
+     */
     public String toString() {
         if (myURL == null) {
             myURL = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), getURIEncodedPath());
@@ -150,6 +243,17 @@ public class SVNURL {
         return myURL;
     }
     
+    /**
+     * Constructs a new <b>SVNURL</b> representation appending a new path
+     * segment to the path component of this representation.  
+     * 
+     * @param  segment      a new path segment
+     * @param  uriEncoded   <span class="javakeyword">true</span> if 
+     *                      <code>segment</code> is UTF-8 encoded,
+     *                      <span class="javakeyword">false</span> 
+     *                      otherwise 
+     * @return              a new <b>SVNURL</b> representation
+     */
     public SVNURL appendPath(String segment, boolean uriEncoded) {
         if (segment == null) {
             return this;
@@ -169,6 +273,12 @@ public class SVNURL {
         return null;
     }
     
+    /**
+     * Constructs a new <b>SVNURL</b> representation removing a tail path
+     * segment from the path component of this representation.  
+     * 
+     * @return  a new <b>SVNURL</b> representation
+     */
     public SVNURL removePathTail() {
         String newPath = SVNPathUtil.removeTail(myPath);
         String url = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), newPath);
@@ -179,7 +289,14 @@ public class SVNURL {
         }
         return null;
     }
-    
+    /**
+     * Compares this object with another one.
+     * 
+     * @param   obj  an object to compare with
+     * @return  <span class="javakeyword">true</span> if <code>obj</code>
+     *          is an instance of <b>SVNURL</b> and has got the same
+     *          url components as this object has
+     */
     public boolean equals(Object obj) {
         if (obj == null || obj.getClass() != SVNURL.class) {
             return false;
@@ -196,7 +313,12 @@ public class SVNURL {
         }
         return eq;
     }
-
+    
+    /**
+     * Calculates and returns a hash code for this object.
+     * 
+     * @return a hash code value
+     */
     public int hashCode() {
         int code = myProtocol.hashCode() + myHost.hashCode()*27 + myPath.hashCode()*31 + myPort*17;
         if (myUserName != null) {

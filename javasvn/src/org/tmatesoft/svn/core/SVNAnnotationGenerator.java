@@ -41,6 +41,40 @@ import de.regnis.q.sequence.line.QSequenceLineResult;
 
 
 /**
+ * The <b>SVNAnnotationGenerator</b> class is used to annotate files - that is
+ * to place author and revision information in-line for the specified
+ * file.
+ * 
+ * <p>
+ * Since <b>SVNAnnotationGenerator</b> implements <b>ISVNFileRevisionHandler</b>,
+ * it can be passed to a {@link org.tmatesoft.svn.core.io.SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler) getFileRevisions()} 
+ * method of <b>SVNRepository</b>. After that you handle the resultant annotated 
+ * file line-by-line providing an <b>ISVNAnnotateHandler</b> implementation to the {@link #reportAnnotations(ISVNAnnotateHandler, String) reportAnnotations()}
+ * method:
+ * <pre class="javacode">
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.SVNAnnotationGenerator;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.io.SVNRepository;
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.wc.SVNAnnotateHandler;
+ * ...
+ * 
+ *     File tmpFile;
+ *     SVNRepository repos;
+ *     ISVNAnnotateHandler annotateHandler;
+ *     ISVNEventHandler cancelHandler;
+ *     long startRev = 0;
+ *     long endRev = 150;
+ *     ...
+ *     
+ *     SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, startRev, tmpFile, cancelHandler);
+ *     <span class="javakeyword">try</span> {
+ *         repos.getFileRevisions(<span class="javastring">""</span>, startRev, endRev, generator);
+ *         generator.reportAnnotations(annotateHandler, <span class="javakeyword">null</span>);
+ *     } <span class="javakeyword">finally</span> {
+ *         generator.dispose();
+ *     }
+ * ...</pre>
+ *   
  * @version 1.0
  * @author  TMate Software Ltd.
  */
@@ -60,7 +94,19 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     private List myLines;
     private SVNDeltaProcessor myDeltaProcessor;
     private ISVNEventHandler myCancelBaton;
-
+    
+    /**
+     * Constructs an annotation generator object. A user may want to have
+     * a chance to interrupt an operation - so, <code>cancelBaton</code>'s
+     * {@link org.tmatesoft.svn.core.wc.ISVNEventHandler#checkCancelled()} method
+     * is used for this purpose. 
+     * 
+     * @param path           a file path (relative to a repository location)
+     * @param startRevision  a revision to start from
+     * @param tmpDirectory   a revision to stop at
+     * @param cancelBaton    a baton which is used to check if an operation 
+     *                       is cancelled
+     */
     public SVNAnnotationGenerator(String path, long startRevision, File tmpDirectory, ISVNEventHandler cancelBaton) {
         myTmpDirectory = tmpDirectory;
         myCancelBaton = cancelBaton;
@@ -73,10 +119,6 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myDeltaProcessor = new SVNDeltaProcessor();
     }
     
-    /**
-     * @param  fileRevision
-     * @throws SVNException
-     */
     public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException {
         Map propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);
@@ -191,7 +233,15 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
 
         SVNFileUtil.rename(myCurrentFile, myPreviousFile);
     }
-
+    
+    /**
+     * Dispatches file lines along with author & revision info to the provided
+     * annotation handler.  
+     * 
+     * @param handler        an annotation handler that processes file lines with
+     *                       author & revision info
+     * @param inputEncoding  a desired character set (encoding) of text lines
+     */
     public void reportAnnotations(ISVNAnnotateHandler handler, String inputEncoding) {
         if (myLines == null || handler == null) {
             return;
@@ -215,7 +265,12 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             handler.handleLine(info.date, info.revision, info.author, lineAsString);
         }
     }
-
+    
+    /**
+     * Finalizes an annotation operation releasing resources involved
+     * by this generator. Should be called after {@link #reportAnnotations(ISVNAnnotateHandler, String) reportAnnotations()}. 
+     *
+     */
     public void dispose() {
         myLines = null;
         if (myCurrentFile != null) {

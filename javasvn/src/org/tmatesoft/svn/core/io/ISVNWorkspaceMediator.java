@@ -19,22 +19,23 @@ import java.io.OutputStream;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
- * <code>ISVNWorkspaceMediator</code> is a custom interface for managing a workspace.
- * A workspace is a notion that represents a user's disk area where his working copies
- * are checked out to and stored. This mediator helps to manage administrative 
- * directories (also as known as <i>.svn</i> folders) as well as working copy 
- * properties. 
+ * <code>ISVNWorkspaceMediator</code> is an interface mainly used for temporary 
+ * data storage (such as new text data and instructions data for deltas) as well
+ * as for accessing some kind of WC properties.
  * 
  * @version	1.0
  * @author 	TMate Software Ltd.
  * @see		SVNRepository#getCommitEditor(String, Map, boolean, ISVNWorkspaceMediator)
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
+ * 
  */
 public interface ISVNWorkspaceMediator {
 
     /**
-     * Gets a working copy property. The working copy is located in a workspace. 
+     * Retrieves an item's WC property from a <code>".svn/wcprops"</code> administrative 
+     * subdirectory. 
      * 
-     * @param  path 		a working copy path within a workspace
+     * @param  path 		a WC item's path
      * @param  name 		a propery name
      * @return 				the value for the property
      * @throws SVNException
@@ -43,10 +44,10 @@ public interface ISVNWorkspaceMediator {
     public String getWorkspaceProperty(String path, String name) throws SVNException;
     
     /**
-     * Immediately sets a new value for a working copy property. The working copy is 
-     * located in a workspace.
+     * Sets a new value for an item's WC property in a <code>".svn/wcprops"</code> 
+     * administrative subdirectory.
      * 
-     * @param  path 			a working copy path within a workspace
+     * @param  path 			a WC item's path
      * @param  name 			a propery name
      * @param  value			a value for the property
      * @throws SVNException
@@ -55,32 +56,42 @@ public interface ISVNWorkspaceMediator {
     public void setWorkspaceProperty(String path, String name, String value) throws SVNException ;
     
     /**
-     * Creates a temporary file in a <code>path</code>/.svn/tmp folder and specifies
-     * an <code>id</code> for it.
+     * Creates a temporary data storage for writing and maps the given 
+     * <code>id</code> object to this storage, so that later the storage will be 
+     * available for reading through a call to {@link #getTemporaryLocation(Object)},
+     * which receives the <code>id</code>. 
      * 
-     * @param  path  		a path containing an <i>.svn</i> folder	
-     * @param  id			an id for the created temporary file 
-     * @return				an <code>OutputStream</code> to write into the file
-     * @throws IOException
+     * <p>
+     * This is used for constructing diff windows and mapping them to temporary 
+     * storages that contain instructions and new text data for the windows. 
+     * 
+     * @param  path  		an item's relative path 	
+     * @param  id			an id for the created temporary  
+     * @return				an output stream to write data to the allocated 
+     *                      storage
+     * @throws IOException  if an output stream can not be created
      * @see					#getTemporaryLocation(Object)
      */
     public OutputStream createTemporaryLocation(String path, Object id) throws IOException;
     
     /**
-     * Gets an <code>InputStream</code> for a temporary file identified by its
-     * <code>id</code>.
+     * Retrieves an input stream to read data from the temporary storage mapped
+     * against the <code>id</code> object.
      * 
-     * @param id			the id of a temporary file
-     * @return				an <code>InputStream</code> to read file contents from 
-     * @throws IOException
+     * @param id			an id as a key to the temporary storage
+     * @return				an input stream to read data from the temporary 
+     *                      storage 
+     * @throws IOException  if an input stream can not be created
+     * @see                 #createTemporaryLocation(String, Object)
      */
     public InputStream getTemporaryLocation(Object id) throws IOException;
     
     /**
-     * Gets the length of a temporary file identified by its <code>id</code>.
+     * Gets the size of a temporary data storage mapped against the given
+     * <code>id</code>.
      * 
-     * @param id			the id of a temporary file
-     * @return				a temporary file length in bytes
+     * @param id			an id as a key to a data storage
+     * @return				the data storage size in bytes
      * @throws IOException
      * @see					#createTemporaryLocation(String, Object)
      * @see					#getTemporaryLocation(Object)
@@ -88,9 +99,12 @@ public interface ISVNWorkspaceMediator {
     public long getLength(Object id) throws IOException;
     
     /**
-     * Removes a temporary file identified by its <code>id</code>.
+     * Disposes a temporary data storage mapped against the given 
+     * <code>id</code>.
      * 
-     * @param id	the id of a temporary file
+     * @param id	an id as a key to a temporary data storage
+     * @see                 #createTemporaryLocation(String, Object)
+     * @see                 #getTemporaryLocation(Object)
      */
     public void deleteTemporaryLocation(Object id);
 }

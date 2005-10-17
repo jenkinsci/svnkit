@@ -22,9 +22,9 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
- * <b>SVNRepositoryFactory</b> is an abstract class that is responsible
- * for creating an appropriate <b>SVNRepository</b>-extansion that 
- * will be used to interact with a Subversion repository.
+ * <b>SVNRepositoryFactory</b> is an abstract factory that is responsible
+ * for creating an appropriate <b>SVNRepository</b> driver specific for the 
+ * protocol (svn, http) to use.
  * 
  * <p>
  * Depending on what protocol a user exactly would like to use
@@ -35,9 +35,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * <pre class="javacode">
  * ...
  * <span class="javakeyword">import</span> org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
- * ...		
+ * ...      
  *     <span class="javacomment">//do it once in your application prior to using the library</span>
- *     <span class="javacomment">//via the SVN-protocol (over svn and svn+ssh)</span>
+ *     <span class="javacomment">//enables working with a repository via the svn-protocol (over svn and svn+ssh)</span>
  *     SVNRepositoryFactoryImpl.setup();
  * ...</pre><br />
  * That <b>setup()</b> method registers an 
@@ -60,7 +60,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * ...
  * 
  *     <span class="javacomment">//do it once in your application prior to using the library</span>
- *     <span class="javacomment">//via the DAV-protocol (over http and https)</span>
+ *     <span class="javacomment">//enables working with a repository via the DAV-protocol (over http and https)</span>
  *     DAVRepositoryFactory.setup();
  * ...</pre>
  * <p>
@@ -70,24 +70,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * certainly realized.
  * 
  * @version 1.0
- * @author 	TMate Software Ltd.
- * @see		SVNRepository
+ * @author  TMate Software Ltd.
+ * @see     SVNRepository
  */
 public abstract class SVNRepositoryFactory {
     
     private static final Map myFactoriesMap = new HashMap();
     
-    /**
-     * Registers a protocol dependent factory (extending this factory class) that
-     * will be further used to create protocol dependent instances of 
-     * <code>SVNRepository</code>.
-     * 
-     * @param protocol	a string describing the protocol to be used
-     * @param factory	a factory to be registered for creating instances of 
-     * 					<code>SVNRepository</code> specialized for the 
-     * 					specified <code>protocol</code>
-     * @see 			SVNRepository
-     */
     protected static void registerRepositoryFactory(String protocol, SVNRepositoryFactory factory) {
         if (protocol != null && factory != null) {
             if (!myFactoriesMap.containsKey(protocol)) {
@@ -104,35 +93,76 @@ public abstract class SVNRepositoryFactory {
     }
     
     /**
-     * Creates an <code>SVNRepository</code> according to the protocol that is to be 
+     * Creates an <b>SVNRepository</b> driver according to the protocol that is to be 
      * used to access a repository.
      * 
      * <p>
-     * The protocol is defined as the beginning part of the URL schema (used to connect to the 
-     * repository) incapsulated in the <code>url</code> parameter.
+     * The protocol is defined as the beginning part of the URL schema. Currently
+     * JavaSVN supports only <i>svn://</i> (<i>svn+ssh://</i>) and <i>http://</i> (<i>https://</i>)
+     * schemas.
      * 
      * <p>
-     * In fact, this method doesn't create an <code>SVNRepository</code> instance but
-     * calls the {@link #createRepositoryImpl(SVNURL)} of the registered
-     * factory (protocol specific extension of this class) that essentially creates the
-     * instance; then this routine simply returns it to the caller.
-     *  
-     * @param  url				a url (to connect to a repository) 
-     * 							as an <code>SVNURL</code> object
-     * @return					a new instance of <code>SVNRepository</code> to interact
-     * 							with the repository
-     * @throws SVNException		if there's no implementation for the specified protocol
-     * 							(the user may have forgotten to register a specific 
-     * 							factory that creates <code>SVNRepository</code>
-     * 							instances for that protocol or the <i>JavaSVN</i> 
-     * 							library does not support that protocol at all)
-     * @see						#createRepositoryImpl(SVNURL)
-     * @see 					SVNRepository
+     * The created <b>SVNRepository</b> driver can later be <i>"reused"</i> for another
+     * location - that is you can switch it to another repository url not to
+     * create yet one more <b>SVNRepository</b> object. Use the {@link SVNRepository#setLocation(SVNURL, boolean) SVNRepository.setLocation()} 
+     * method for this purpose.
+     * 
+     * <p>
+     * An <b>SVNRepository</b> driver created by this method uses a default
+     * session options driver ({@link ISVNSession#DEFAULT}) which does not 
+     * allow to keep a single socket connection opened and commit log messages
+     * caching.     
+     * 
+     * @param  url              a repository location URL  
+     * @return                  a protocol specific <b>SVNRepository</b> driver
+     * @throws SVNException     if there's no implementation for the specified protocol
+     *                          (the user may have forgotten to register a specific 
+     *                          factory that creates <b>SVNRepository</b>
+     *                          instances for that protocol or the JavaSVN 
+     *                          library does not support that protocol at all)
+     * @see                     #create(SVNURL, ISVNSession)
+     * @see                     SVNRepository
+     * 
      */
     public static SVNRepository create(SVNURL url) throws SVNException {
         return create(url, null);
         
     }
+    
+    /**
+     * Creates an <b>SVNRepository</b> driver according to the protocol that is to be 
+     * used to access a repository.
+     * 
+     * <p>
+     * The protocol is defined as the beginning part of the URL schema. Currently
+     * JavaSVN supports only <i>svn://</i> (<i>svn+ssh://</i>) and <i>http://</i> (<i>https://</i>)
+     * schemas.
+     * 
+     * <p>
+     * The created <b>SVNRepository</b> driver can later be <i>"reused"</i> for another
+     * location - that is you can switch it to another repository url not to
+     * create yet one more <b>SVNRepository</b> object. Use the {@link SVNRepository#setLocation(SVNURL, boolean) SVNRepository.setLocation()} 
+     * method for this purpose.
+     * 
+     * <p>
+     * This method allows to customize a session options driver for an <b>SVNRepository</b> driver.
+     * A session options driver must implement the <b>ISVNSession</b> interface. It manages socket
+     * connections - says whether an <b>SVNRepository</b> driver may use a single socket connection
+     * during the runtime, or it should open a new connection per each repository access operation.
+     * And also a session options driver may cache and provide commit log messages during the
+     * runtime. 
+     * 
+     * @param  url              a repository location URL  
+     * @param  options          a session options driver
+     * @return                  a protocol specific <b>SVNRepository</b> driver
+     * @throws SVNException     if there's no implementation for the specified protocol
+     *                          (the user may have forgotten to register a specific 
+     *                          factory that creates <b>SVNRepository</b>
+     *                          instances for that protocol or the JavaSVN 
+     *                          library does not support that protocol at all)
+     * @see                     #create(SVNURL)
+     * @see                     SVNRepository
+     */
     public static SVNRepository create(SVNURL url, ISVNSession options) throws SVNException {
         String urlString = url.toString();
     	for(Iterator keys = myFactoriesMap.keySet().iterator(); keys.hasNext();) {

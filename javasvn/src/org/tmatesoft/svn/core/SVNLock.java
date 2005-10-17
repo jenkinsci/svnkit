@@ -13,26 +13,15 @@ package org.tmatesoft.svn.core;
 
 import java.util.Date;
 
-import org.tmatesoft.svn.core.io.SVNRepository;
-
-
 /**
- * The public class <code>SVNLock</code> incapsulates information about a 
- * file lock in a repository. A Subversion repository user can lock any 
- * versioned file in a repository, thus preventing someone else from 
- * modifying the same file. Of course, the user must be authenticated in
- * the repository because locking can not be anonymous. In this way, the
- * locked file can only be checked out by other users, but can not be 
- * changed (no one else can commit his changes) until the lock author
- * unlocks it or the lock expires itself (in a definite period  - if an 
- * expiration date is set). Also the locked file can be forcedly relocked
- * by another user (it means the previous user lock is removed and the file
- * is locked by a next user).
+ * The <b>SVNLock</b> class represents a file lock. It holds 
+ * information on a lock path, token, owner, comment, creation  
+ * and expiration dates.
  * 
  * @version 	1.0 
  * @author 		TMate Software Ltd.
  * @since 		SVN 1.2
- * @see 		SVNRepository
+ * @see         <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public class SVNLock {
     
@@ -47,21 +36,17 @@ public class SVNLock {
     
     /**
      * <p>
-     * Constructs a <code>SVNLock</code> object.
+     * Constructs an <b>SVNLock</b> object.
      * 
      * 
-     * @param path 			the file path, relative to the repository root 
-     * 						directory.
-     * @param id 			a string token identifying the lock.
-     * @param owner 		the person whom this lock belongs to. 
-     * @param comment 		optional: either it is a string describing
-     * 						the lock or it is <code>null</code>.
-     * @param created 		a <code>Date</code> instance that corresponds
-     * 						to the moment in time when the lock was created.
-     * @param expires 		optional: a <code>Date</code> instance that represents
-     * 						the moment when the lock expires (i.e. the file is 
-     * 						unlocked). If the lock is not to expire then this 
-     * 						parameter is <code>null</code>.
+     * @param path 			a file path, relative to the repository root 
+     * 						directory
+     * @param id 			a string token identifying the lock
+     * @param owner 		the owner of the lock 
+     * @param comment 		a comment message for the lock (optional) 
+     * @param created 		a datestamp when the lock was created
+     * @param expires 		a datestamp when the lock expires, i.e. the file is 
+     * 						unlocked (optional)
      */
     public SVNLock(String path, String id, String owner, String comment, Date created, Date expires) {
         myPath = path;
@@ -74,11 +59,9 @@ public class SVNLock {
     
     
     /**
-     * <p>
-     * Gets the lock comment. NOTE: it can be <code>null</code> if
-     * no comment was provided for the lock.
+     * Gets the lock comment.
      * 
-     * @return 		a comment string or <code>null</code>.
+     * @return  a lock comment message 
      */
     public String getComment() {
         return myComment;
@@ -86,11 +69,10 @@ public class SVNLock {
     
     
     /**
-     * <p>
-     * Gets the creation date of the lock.
+     * Gets the creation datestamp of this lock.
      * 
-     * @return 		a <code>Date</code> instance that is the time moment when the
-     * 				lock was created.
+     * @return 		a datestamp representing the moment in 
+     *              time when this lock was created
      */
     public Date getCreationDate() {
         return myCreationDate;
@@ -98,13 +80,10 @@ public class SVNLock {
     
     
     /**
-     * <p>
-     * Gets the expiration date of the lock (when the lock just expires itself).
-     * NOTE: it can be <code>null</code> if no expiration date was specified for
-     * the lock.
+     * Gets the expiration datestamp of this lock.
      * 
-     * @return 		a <code>Date</code> instance that is the time moment when the
-     * 				lock expires.
+     * @return 		a datestamp representing the moment in time 
+     *              when the this lock expires
      */
     public Date getExpirationDate() {
         return myExpirationDate;
@@ -112,42 +91,35 @@ public class SVNLock {
     
     
     /**
-     * <p>
-     * Gets the lock id that is a token identifying this lock. 
+     * Gets the lock token. 
      * 
-     * @return 		 the string that is the lock id token.
+     * @return  a unique string identifying this lock
      */
     public String getID() {
         return myID;
     }
     /**
-     * <p>
-     * Gets the lock owner. No file in a repository can be locked anonymously,
-     * so every lock has such attribute as its owner.
+     * Gets the lock owner.
      * 
-     * @return		the name of the user who possesses this lock. 
+     * @return	the owner of this lock 
      */
     public String getOwner() {
         return myOwner;
     }
     /**
-     * <p>
-     * Gets the path of the file which was locked. The path is relative to the
-     * repository root directory.
+     * Gets the path of the file for which this lock was created. 
+     * The path is relative to the repository root directory.
      * 
-     * @return		the string that is the path of the file in the repository that
-     * 				was locked.
+     * @return	the path of the locked file
      */
     public String getPath() {
         return myPath;
     }
+    
     /**
-     * <p>
-     * Gets a string representation of this <code>SVNLock</code> object.
-     * The string, that is returned, includes complete information about 
-     * the file lock.  
-     * 
-     * @return		a string representation of this <code>SVNLock</code> object.
+     * Returns a string representation of this object.
+     *  
+     * @return	a string representation of this lock object
      */
     public String toString() {
         StringBuffer result = new StringBuffer();

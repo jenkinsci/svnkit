@@ -15,33 +15,17 @@ package org.tmatesoft.svn.core;
 import java.util.Date;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
- * The class <code>SVNLogEntry</code> incapsulates log information provided for every
- * commit operation. This information includes:
- * <ul>
- * <li>revision number the repository was committed to;
- * <li>person who made the commit;
- * <li>date (generally moment in time) when the commit was performed;
- * <li>client's log message that accompanied the commit;
- * <li>map collection that contains all the paths of the entries which were
- * changed at the commit. Map keys are the paths themselves and values are
- * <code>SVNLogEntryPath</code> instances. 
- * </ul>
- * 
- * <p>
- * Instances of <code>SVNLogEntry</code> are passed to
- * <code>ISVNLogEntryHandler</code> during the progress of the 
- * {@link SVNRepository#log(String[], long, long, boolean, boolean, ISVNLogEntryHandler)
- * log} operation. {@link ISVNLogEntryHandler#handleLogEntry(SVNLogEntry)
- * ISVNLogEntryHandlerhandleLogEntry(SVNLogEntry)} then performs handling
- * the passed log entry.
+ * The <b>SVNLogEntry</b> class encapsulates such per revision information as: 
+ * a revision number, the datestamp when the revision was committed, the author 
+ * of the revision, a commit log message and all paths changed in that revision. 
  * 
  * @version 1.0
  * @author 	TMate Software Ltd.
  * @see 	SVNLogEntryPath
- * @see 	SVNRepository
+ * @see     ISVNLogEntryHandler
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public class SVNLogEntry {
     
@@ -52,19 +36,16 @@ public class SVNLogEntry {
     private Map myChangedPaths;
     
     /**
-     * <p>
-     * Constructs an <code>SVNLogEntry</code> object. 
+     * Constructs an <b>SVNLogEntry</b> object. 
      * 
-     * @param changedPaths 	a map collection which keys should be
-     * 						all the paths of the entries that were changed in the
-     * 						<code>revision</code>. And values are 
-     * 						<code>SVNLogEntryPath</code> instances.
-     * @param revision 		a revision revision number
-     * @param author 		the person who committed the repository to 
-     * 						<code>revision</code>
-     * @param date 			the moment in time when changes were committed to the 
-     * 						repository
-     * @param message 		an obligatory log message provided for committing.
+     * @param changedPaths 	a map collection which keys are
+     * 						all the paths that were changed in   
+     *                      <code>revision</code>, and values are 
+     * 						<b>SVNLogEntryPath</b> representation objects
+     * @param revision 		a revision number
+     * @param author 		the author of <code>revision</code>
+     * @param date 			the datestamp when the revision was committed
+     * @param message 		an commit log message for <code>revision</code>
      * @see 				SVNLogEntryPath
      */
     public SVNLogEntry(Map changedPaths, long revision, String author, Date date, String message) {
@@ -76,43 +57,38 @@ public class SVNLogEntry {
     }
     
     /**
-     * Gets a map collection containing all the paths of the entries that
-     * were changed in the revision.
+     * Gets a map containing all the paths that were changed in the 
+     * revision that this object represents.
      * 
-     * <p>
-     * <b>NOTE:</b> if the <code>changedPath</code> flag is <code>false</code> in 
-     * {@link SVNRepository#log(String[], long, long, boolean, boolean, ISVNLogEntryHandler)
-     * SVNRepository.log()} a call to {@link #getChangedPaths()}
-     * will return <code>null</code>. 
+     * @return 		a map which keys are all the paths 
+     * 				that were changed and values are 
+     * 				<b>SVNLogEntryPath</b> objects
      * 
-     * @return 		a <code>Map</code> instance which keys are all the paths 
-     * 				of the entries that were changed and values are 
-     * 				<code>SVNLogEntryPath</code> instances
      */
     public Map getChangedPaths() {
         return myChangedPaths;
     }
     
     /**
-     * Gets the commit author name.
+     * Returns the author of the revision that this object represents.
      * 
-     * @return the name of the person who did the commit
+     * @return the author of the revision
      */
     public String getAuthor() {
         return myAuthor;
     }
     
     /**
-     * Gets the moment in time when the commit was performed.
+     * Gets the datestamp when the revision was committed.
      * 
-     * @return 		the time moment of the commit
+     * @return 	the moment in time when the revision was committed
      */
     public Date getDate() {
         return myDate;
     }
     
     /**
-     * Gets the log message attached to the commit.
+     * Gets the log message attached to the revision.
      * 
      * @return 		the commit log message
      */
@@ -121,9 +97,9 @@ public class SVNLogEntry {
     }
     
     /**
-     * Gets the revision number of the repository after the commit.
+     * Gets the number of the revision that this object represents.
      * 
-     * @return 		the revision number the repository was commited to
+     * @return 	a revision number 
      */
     public long getRevision() {
         return myRevision;

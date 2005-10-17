@@ -14,16 +14,14 @@ package org.tmatesoft.svn.core;
 
 
 /**
- * The final class <code>SVNNodeKind</code> incapsulates the kind of a versioned node
- * stored in the Subversion repository. This can be:
+ * The <b>SVNNodeKind</b> class is used to describe the kind of a 
+ * directory entry (node, in other words). This can be:
  * <ul>
  * <li>a directory - the node is a directory
  * <li>a file      - the node is a file
- * <li>none        - the node is absent (does not exist)
+ * <li>none        - the node is missing (does not exist)
  * <li>unknown     - the node kind can not be recognized
  * </ul>
- * <code>SVNNodeKind</code> items are used to describe directory
- * entry type.
  *  
  * @version 1.0
  * @author 	TMate Software Ltd.
@@ -31,7 +29,7 @@ package org.tmatesoft.svn.core;
  */
 public final class SVNNodeKind implements Comparable {
     /**
-     * Defines the none node kind 
+     * This node kind is used to say that a node is missing  
      */
     public static final SVNNodeKind NONE = new SVNNodeKind(2);
     /**
@@ -43,7 +41,8 @@ public final class SVNNodeKind implements Comparable {
      */
     public static final SVNNodeKind DIR = new SVNNodeKind(0);
     /**
-     * Defines the unknown node kind
+     * This node kind is used to say that the kind of a node is
+     * actually unknown
      */
     public static final SVNNodeKind UNKNOWN = new SVNNodeKind(3);
 
@@ -55,12 +54,11 @@ public final class SVNNodeKind implements Comparable {
     
     /**
      * Parses the passed string and finds out the node kind. For instance,
-     * parseKind("dir") will return <code>SVNNodeKind.DIR</code>.
+     * <code>parseKind(<span class="javastring">"dir"</span>)</code> will return 
+     * {@link #DIR}.
      * 
      * @param kind 		a node kind as a string
-     * @return 			node kind as <code>SVNNodeKind</code>. If the exact node kind is 
-     * 					not known <code>SVNNodeKind.UNKNOWN</code> is returned or if
-     * 					the node is currently missing - <code>SVNNodeKind.NONE</code>.
+     * @return 			an <b>SVNNodeKind</b> representation
      */
     public static SVNNodeKind parseKind(String kind) {
         if ("file".equals(kind)) {
@@ -73,9 +71,9 @@ public final class SVNNodeKind implements Comparable {
         return UNKNOWN;
     }
     /**
-     * Represents the current <code>SVNNodeKind</code> object as a string.
+     * Represents the current <b>SVNNodeKind</b> object as a string.
      * 
-     * @return string representation of this object.
+     * @return a string representation of this object.
      */
     public String toString() {
         if (this == NONE) {
@@ -87,7 +85,25 @@ public final class SVNNodeKind implements Comparable {
         }
         return "unknown";
     }
-
+    
+    /**
+     * Compares this object with another one.
+     * Each <b>SVNNodeKind</b> constant has got its own unique id.
+     * 
+     * @param   o an object to compare with
+     * @return    <ul>
+     *            <li>-1 - if <code>o</code> is either <span class="javakeyword">null</span>,
+     *            or is not an instance of <b>SVNNodeKind</b>, or the id of
+     *            this object is smaller than the id of <code>o</code>;
+     *            </li>
+     *            <li>1 - if the id of this object is bigger than the id of 
+     *            <code>o</code>;
+     *            </li>
+     *            <li>0 - if and only if <code>o</code> is the same constant 
+     *            value as this one (has the same id)
+     *            </li>
+     *            </ul>
+     */
     public int compareTo(Object o) {
         if (o == null || o.getClass() != SVNNodeKind.class) {
             return -1;

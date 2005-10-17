@@ -25,6 +25,9 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 
 
 /**
+ * The <b>DefaultSVNRepositoryPool</b> class is a default implementation of 
+ * the <b>ISVNRepositoryPool</b> interface. 
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  */

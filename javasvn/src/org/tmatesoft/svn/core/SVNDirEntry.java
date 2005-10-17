@@ -17,21 +17,15 @@ import java.util.Date;
 
 
 /**
- * <code>SVNDirEntry</code> represents a directory entry informational wrapper.
+ * The <b>SVNDirEntry</b> class is a representation of a versioned 
+ * directory entry.
  * 
  * <p>
- * Every directory or file added, updated, deleted (and so on) needs to be versioned.
- * This class provides such an informational wrapper for every entry ever handled by the
- * repository. All the versioned repository contents are considered as directory entries,
- * since all the files and directories are located inside the Subversion repository root 
- * directory.
- * 
- * <p>
- * <code>SVNDirEntry</code> is responsible for keeping an entry name, 
- * entry kind (is it a file or directory or maybe unknown type), entry size (in bytes);
- * it knows if the entry has any properties, it remembers the date when the entry was created and 
- * its first revision when it appeared in the repository as well as the last person who updated
- * the item. All this information is binded together in one class.
+ * <b>SVNDirEntry</b> keeps an entry name, entry kind (is it a file or directory), 
+ * file size (in case an entry is a file), the last changed revision, the date when 
+ * the entry was last changed, the name of the author who last changed the entry, the
+ * commit log message for the last changed revision. <b>SVNDirEntry</b> also knows 
+ * if the entry has any properties. 
  * 
  * @version 1.0
  * @author 	TMate Software Ltd.
@@ -50,17 +44,16 @@ public class SVNDirEntry implements Comparable {
     private String myCommitMessage;
 
     /**
-     * Constructs an instance of <code>SVNDirEntry</code> given a directory entry's 
-     * name, kind, size, flag saying if it has properties, revision when it was last
-     * modified, creation date, and the name of a person who last modified it.
+     * Constructs an instance of <b>SVNDirEntry</b>.
      * 
-     * @param name 			the entry name
+     * @param name 			an entry name
      * @param kind 			the node kind for the entry
      * @param size 			the entry size in bytes
-     * @param hasProperties if the entry has properties
-     * @param firstRevision the first revision of the entry
-     * @param createdDate 	the date the entry was created at
-     * @param lastAuthor 	the person who was the recent to update the entry
+     * @param hasProperties <span class="javakeyword">true</span> if the 
+     *                      entry has properties, otherwise <span class="javakeyword">false</span>
+     * @param firstRevision the last changed revision of the entry
+     * @param createdDate 	the date the entry was last changed
+     * @param lastAuthor 	the person who last changed the entry
      */
     public SVNDirEntry(String name, SVNNodeKind kind, long size,
                        boolean hasProperties, long firstRevision, Date createdDate,
@@ -73,11 +66,23 @@ public class SVNDirEntry implements Comparable {
         myCreatedDate = createdDate;
         myLastAuthor = lastAuthor;
     }
-
+    
+    /**
+     * Sets the entry's path. 
+     * 
+     * @param path a path relative to a repository location
+     */
     public void setPath(String path) {
         myPath = path;
     }
-
+    
+    /**
+     * Returns the entry's path.
+     * 
+     * @return a path relative to a repository location or 
+     *         <span class="javakeyword">null</span> if no path is
+     *         specified
+     */
     public String getPath() {
         return myPath;
     }
@@ -92,7 +97,7 @@ public class SVNDirEntry implements Comparable {
     }
     
     /**
-     * Retrieves the entry syze in bytes.
+     * Returns the file size in bytes (if this entry is a file).
      * 
      * @return 	the size of this entry in bytes
      */
@@ -103,14 +108,15 @@ public class SVNDirEntry implements Comparable {
     /**
      * Tells if the entry has any properties.
      * 
-     * @return 	<code>true</code> if has, <code>false</code> - otherwise
+     * @return 	<span class="javakeyword">true</span> if has, 
+     *          <span class="javakeyword">false</span> otherwise
      */
     public boolean hasProperties() {
         return myHasProperties;
     }
     
     /**
-     * Retrieves the entry node kind - whether it's a directory or file, for instance.
+     * Returns the entry node kind.
      * 
      * @return  the node kind of this entry 
      * @see 	SVNNodeKind
@@ -120,17 +126,16 @@ public class SVNDirEntry implements Comparable {
     }
     
     /**
-     * Returns the date the entry was created at.
+     * Returns the date the entry was last changed.
      * 
-     * @return 	the creation date
+     * @return 	the datestamp when the entry was last changed
      */
     public Date getDate() {
         return myCreatedDate;
     }
     
     /**
-     * Gets the revision
-     * at which the entry was last modified in the repository.
+     * Gets the last changed revision of this entry.
      * 
      * @return 	the revision of this entry when it was last changed 
      */
@@ -139,8 +144,7 @@ public class SVNDirEntry implements Comparable {
     }
     
     /**
-     * Retrieves the name of the person who was the last to update
-     * this entry in the repository.
+     * Retrieves the name of the author who last changed this entry.
      * 
      * @return 	the last author's name.
      */
@@ -149,29 +153,36 @@ public class SVNDirEntry implements Comparable {
     }
     
     /**
-     * Sets a <code>name</code> for the entry. 
+     * Sets the entry's name. 
      * 
-     * @param name 	a directory entry name. 
+     * @param name 	a directory entry name 
      */
     public void setName(String name) {
         myName = name;
     }
     
+    /**
+     * Returns the commit log message for the revision of this entry.
+     * 
+     * @return a commit log message
+     */
     public String getCommitMessage() {
         return myCommitMessage;
     }
     
+    /**
+     * Sets the commit log message of the revision of this entry.
+     * 
+     * @param message a commit log message
+     */
     public void setCommitMessage(String message) {
         myCommitMessage = message;
     }
     
     /**
-     * Represents the current <code>SVNDirEntry</code> object as a string
-     * like this way: "name=MyFile.txt, kind=<file>, size=1024, 
-     * hasProperties=true, creation-rev=1, lastAuthor=Eric, 
-     * creation-date=2004.07.10 AD at 15:08:56 PDT".
+     * Retirns a string representation of this object. 
      * 
-     * @return 	a string representation of this directory entry.
+     * @return 	a string representation of this directory entry
      */
     public String toString() {
         StringBuffer result = new StringBuffer();
@@ -195,7 +206,24 @@ public class SVNDirEntry implements Comparable {
         }
         return result.toString();
     }
-
+    
+    /**
+     * Compares this object with another one.
+     * 
+     * @param   o an object to compare with
+     * @return    <ul>
+     *            <li>-1 - if <code>o</code> is either <span class="javakeyword">null</span>,
+     *            or is not an instance of <b>SVNDirEntry</b>, or this entry's name is lexicographically 
+     *            less than the name of <code>o</code>; 
+     *            </li>
+     *            <li>1 - if this entry's name is lexicographically greater than the name of  
+     *            <code>o</code>;
+     *            </li>
+     *            <li>0 - if and only if <code>o</code> has got the same name 
+     *            as this one has
+     *            </li>
+     *            </ul>
+     */
     public int compareTo(Object o) {
         if (o == null || o.getClass() != SVNDirEntry.class) {
             return -1;

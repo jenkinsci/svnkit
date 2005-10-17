@@ -14,27 +14,11 @@ package org.tmatesoft.svn.core;
 
 
 /**
- * A basic exeption class that provides information on errors/specific situations
- * occured during the work of the <i>JavaSVN</i> library.
- * 
- * <p>
- * Each SQLException provides several kinds of information: 
- * <ul>
- * <li>a string describing the error. This is used as the Java Exception message, 
- * 	   available via the method <code>getMesage()</code>.
- * <li>an array of <code>SVNError</code> instances representing a detailed information
- * 	   about occured errors.
- * </ul>
- * <p>
- * <code>SVNException</code> is also used as a base class for extending - to provide
- * specific cases dependent information of errors (like 
- * <code>SVNAuthenticationException</code>).
+ * A main exception class that is used in the JavaSVN library. All other
+ * JavaSVN exception classes extend this one. 
  *  
  * @version	1.0
  * @author 	TMate Software Ltd.
- * @see     SVNAuthenticationException
- * @see     SVNCancelException
- * 
  */
 public class SVNException extends Exception {
 
@@ -46,19 +30,20 @@ public class SVNException extends Exception {
     }
     
     /**
-     * Constructs an <code>SVNException</code> provided an error description message.
+     * Constructs an <b>SVNException</b> provided an error 
+     * description message.
      * 
-     * @param message	a description of why the exception has occured
+     * @param message	an informational message
      */
     public SVNException(String message) {
         super(message);
     }
     
     /**
-     * Constructs an <code>SVNException</code> provided an error description message
-     * and an original <code>Throwable</code> - as a real cause of the exception.
+     * Constructs an <b>SVNException</b> provided an error description 
+     * message and an original exception - the cause of this exception.
      * 
-     * @param message	a description of why the exception has occured
+     * @param message	an informational message
      * @param cause		an initial cause of this exception 
      */
     public SVNException(String message, Throwable cause) {
@@ -75,6 +60,12 @@ public class SVNException extends Exception {
         super(cause);
     }
     
+    /**
+     * Returns the informational message describing the cause
+     * of this exception.
+     * 
+     * @return an informational message
+     */
     public String getMessage() {
         StringBuffer message = new StringBuffer();
         if (super.getMessage() != null && !"".equals(super.getMessage().trim())) {

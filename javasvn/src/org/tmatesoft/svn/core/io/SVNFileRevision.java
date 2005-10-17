@@ -14,28 +14,23 @@ package org.tmatesoft.svn.core.io;
 
 import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 
 /**
- * This is a class that represents information on what path a file is located at a 
- * definite revision and what its revision properties and file properties delta
- * for that revision are.
+ * The <b>SVNFileRevision</b> class represents information on what path a file 
+ * is located at (in a repository) in a particular revision, contains file properties 
+ * and revision properties for that revision.
  * 
  * <p>
- * A file properties delta is provided against a previous revision of this file 
- * (in comparison with its current one that can be obtained via the
- * <code>getRevision()</code> method). So, if there's no any delya between these 
- * adjacent revisions - then the <code>getPropertiesDelta()</code> an empty 
- * <code>Map</code> collection, otherwise it will contain the delta for all changed
- * file properties.
+ * When getting a range of file revisions (in particular, annotating), 
+ * calling an <b>SVNRepository</b>'s 
+ * {@link SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler) getFileRevision()}
+ * <b>SVNFileRevision</b> objects are passed to an <b>ISVNFileRevisionHandler</b>'s {@link ISVNFileRevisionHandler#handleFileRevision(SVNFileRevision) handleFileRevision()}
+ * method.  
  * 
- *  
  * @version	1.0
  * @author 	TMate Software Ltd.
+ * @see     SVNRepository
  * @see		ISVNFileRevisionHandler
- * @see		SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler)
- * @see		SVNRepository#getFileRevisions(String, Collection, long, long)
- * @see     org.tmatesoft.svn.core.SVNRevisionProperty
  */
 public class SVNFileRevision implements Comparable {
     
@@ -43,17 +38,14 @@ public class SVNFileRevision implements Comparable {
     private long myRevision;
     
     /**
-     * Constructs an instance of <code>SVNFileRevision</code> given a file path,
-     * revision, revision properties and possible file properties delta.
-     * 
+     * Constructs an instance of <b>SVNFileRevision</b>.
+     *  
      * @param path				a file path relative to a repository location
-     * 							(a <code>URL</code> used to create an 
-     * 							<code>SVNRepository</code> to access the repository)
+     * 							(a URL used to create an 
+     * 							<b>SVNRepository</b> to access a repository)
      * @param revision			a revision of the file
-     * @param properties		file revision properties
-     * @param propertiesDelta	file properties delta for the <code>revision</code>
-     * 							and the one just before the <code>revision</code>
-     * @see						SVNRevisionProperty
+     * @param properties		revision properties
+     * @param propertiesDelta	file properties for the <code>revision</code>
      */
     public SVNFileRevision(String path, long revision, Map properties, Map propertiesDelta) {
         myPath = path;
@@ -63,19 +55,22 @@ public class SVNFileRevision implements Comparable {
     }
     
     /**
-     * Gets the file path (relative to a repository location - the <code>URL</code>
-     * used to create an <code>SVNRepository</code> to access the repository).
+     * Gets the file path (relative to a repository location - that URL
+     * used to create an <b>SVNRepository</b> to access a repository).
      *  
      * @return	the path of the file
+     * @see     SVNRepository
      */
     public String getPath() {
         return myPath;
     }
     
     /**
-     * Gets revision properties of the file.
+     * Returns revision properties. Use {@link org.tmatesoft.svn.core.SVNRevisionProperty}
+     * constants (they are revision property names) to retrieve values of the
+     * corresponding properties.
      * 
-     * @return	a <code>Map</code> which keys are revision property names and values
+     * @return	a map which keys are revision property names and values
      * 			are their values (both are strings)
      */
     public Map getProperties() {
@@ -83,27 +78,43 @@ public class SVNFileRevision implements Comparable {
     }
     
     /**
-     * Gets a file properties delta between the current file revision and the privious
-     * one. If there's no such - an empty <code>Map</code>.
+     * Returns file properties for this file (for this revision).
+     * Properties delta for a revision is the same as full properties for
+     * that revision. 
      * 
-     * @return		a <code>Map</code>  where each key is a versioned
-     * 				file property name and the value for the key is a delta between the 
-     * 				current revision property value and the property value of the previous
-     * 				revision 
+     * @return a map where keys are file property names and values are the
+     *         property values 
      */
     public Map getPropertiesDelta() {
         return myPropertiesDelta;
     }
     
     /**
-     * Gets the file revision.
+     * Gets the revision of the file.
      *  
      * @return	the revision number of the file
      */
     public long getRevision() {
         return myRevision;
     }
-
+    
+    /**
+     * Compares this object with another one. 
+     * 
+     * @param  o  an object to compare with
+     * @return    <ul>
+     *            <li>1 - if <code>o</code> is either <span class="javakeyword">null</span>,
+     *            or is not an instance of <b>SVNFileRevision</b>, or the revision value of
+     *            this object is bigger than the one of <code>o</code>;
+     *            </li>
+     *            <li>-1 -  if the revision value of this object is smaller than the one of 
+     *            <code>o</code>;
+     *            </li>
+     *            <li>0 - if and only if the revision values of this object and <code>o</code> 
+     *            are the same (equal)
+     *            </li>
+     *            </ul>
+     */
     public int compareTo(Object o) {
         if (o == null || o.getClass() != SVNFileRevision.class) {
             return 1;

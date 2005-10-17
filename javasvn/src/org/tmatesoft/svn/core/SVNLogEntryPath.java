@@ -13,13 +13,15 @@
 package org.tmatesoft.svn.core;
 
 /**
- * <code>SVNLogEntryPath</code> provides information about a changed path, a type of the 
- * change ('M' - Modified, 'A' - Added, 'D'- Deleted) and if this path is actually a copy of 
- * another one in a repository - also its parent's path and revision.
+ * The <b>SVNLogEntryPath</b> class encapsulates information about a single 
+ * item changed in a revision. This information includes an item's path, a 
+ * type of the changes made to the item, and if the item is a copy of another
+ * one - information about the item's ancestor. 
  * 
  * <p>
- * <code>SVNLogEntryPath</code> inctances are contained by an <code>SVNLogEntry</code>
- * as all the paths that were changed in its revision.
+ * <b>SVNLogEntryPath</b> objects are held by an <b>SVNLogEntry</b> object - 
+ * they are representations of all the changed paths in the revision represented
+ * by that <b>SVNLogEntry</b> object.
  * 
  * @version 1.0
  * @author 	TMate Software Ltd.
@@ -33,17 +35,17 @@ public class SVNLogEntryPath {
     private long myCopyRevision;
     
     /**
-     * Constructs an <code>SVNLogEntryPath</code> given a path that was changed in the 
-     * revision, a type of the path change (that is a char label describing the 
-     * character of the change as follow:'M' - Modified, 'A' - Added, 'D'- Deleted) and 
-     * if the path is actually a branch of another path in the repository then also its
-     * parent's path and revision.
+     * Constructs an <b>SVNLogEntryPath</b> object. 
      *  
-     * @param path				a path that was changed in the revision
-     * @param type				a type of the path change
-     * @param copyPath			the parent's path if the <code>path</code> is its branch or
-     * 							<code>null</code> if not
-     * @param copyRevision		the parent's revision if the <code>path</code> is its branch
+     * @param path				a path that was changed in a revision
+     * @param type				a type of the path change; it can be one of the following: 
+     *                          <span class="javastring">'M'</span> - Modified, <span class="javastring">'A'</span> - Added, 
+     *                          <span class="javastring">'D'</span> - Deleted, <span class="javastring">'R'</span> - Replaced 
+     * @param copyPath			the path of the ancestor of the item represented 
+     *                          by <code>path</code> (in that case if <code>path</code> 
+     *                          was copied), or <span class="javakeyword">null</span> if
+     *                          <code>path</code>
+     * @param copyRevision		the ancestor's revision if the <code>path</code> is a branch,
      * 							or -1 if not
      */
     public SVNLogEntryPath(String path, char type, String copyPath,
@@ -55,27 +57,31 @@ public class SVNLogEntryPath {
     }
     
     /**
-     * Gets the path of the parent (if the current changed path is its branch).
+     * Returns the path of the ancestor of the item represented 
+     * by this object.
      * 
-     * @return	the origin path that the current changed path was branched off
-     * 			or <code>null</code> if it's not a branch
+     * @return	the origin path from where the item, represented by this
+     *          object, was copied, or <span class="javakeyword">null</span> 
+     *          if it wasn't copied
      */
     public String getCopyPath() {
         return myCopyPath;
     }
     
     /**
-     * Gets the revision of the parent (if the current changed path is its branch).
+     * Returns the revision of the ancestor of the item represented by this 
+     * object.
      * 
-     * @return	the revision of the origin path that the current changed path was 
-     * 			branched off or -1 if it's not a branch
+     * @return	the revision of the origin path from where the item, 
+     *          represented by this object, was copied, or -1 if the item
+     *          was not copied
      */
     public long getCopyRevision() {
         return myCopyRevision;
     }
     
     /**
-     * Returns the current changed path.
+     * Returns the path of the item represented by this object.
      * 
      * @return  the changed path represented by this object
      */
@@ -83,20 +89,26 @@ public class SVNLogEntryPath {
         return myPath;
     }
     /**
-     * Gets the type of the change applied to the path (as follow:'M' - Modified, 
-     * 'A' - Added, 'D'- Deleted).
+     * Gets the type of the change applied to the item represented by this
+     * object. This type can be one of the following: 
+     * <span class="javastring">'M'</span> - Modified, 
+     * <span class="javastring">'A'</span> - Added, 
+     * <span class="javastring">'D'</span> - Deleted,
+     * <span class="javastring">'R'</span> - Replaced (what means that the 
+     * object is first deleted, then another object of the same name is 
+     * added, all within a single revision).
      * 
-     * @return the path change type as a char label
+     * @return a type of the change as a char label
      */
     public char getType() {
         return myType;
     }
     
     /**
-     * Sets this object to represent the given <code>path</code> as changed in the 
-     * revision.
+     * Sets the path of the item represented by this object.
      * 
-     * @param path  	the changed path in the repository in a definite revision
+     * @param path a path of an item that was changed (regarding a definite
+     *             revision)
      */
     protected void setPath(String path) {
     	myPath = path;

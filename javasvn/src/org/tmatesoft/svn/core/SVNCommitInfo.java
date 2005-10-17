@@ -16,20 +16,18 @@ import java.util.Date;
 
 
 /**
- * <code>SVNCommitInfo</code> represents a class that incapsulates the necessary 
- * information related with every committing to the repository. Commit information
- * includes:
+ * The <b>SVNCommitInfo</b> class represents information about a committed 
+ * revision. Commit information includes:
  * <ol>
- * <li>a new repository revision number the repository assigns after successfull 
- * committing;
- * <li>the date this commit was done at (including a timestamp, not just a day);
- * <li>its author's name.
+ * <li>a revision number;
+ * <li>a datestamp when the revision was committed;
+ * <li>the name of the revision author.
  * </ol>
- * The class provides necessary public methods to obtain that information. 
+ * In addition, this class provides anexception that, if a commit has failed,
+ * has got a description of a failure reason.
  * 
  * @version 1.0
  * @author 	TMate Software Ltd.
- * @see 	ISVNEditor
  */
 public class SVNCommitInfo {
 
@@ -42,16 +40,25 @@ public class SVNCommitInfo {
 
     /**
      * 
-     * Constructs an <code>SVNCommitInfo</code> object.
+     * Constructs an <b>SVNCommitInfo</b> object.
      * 
-     * @param revision 		new revision number the repository was committed to.
-     * @param author 		the author who performed the commit.
-     * @param date 			time moment the commit was done.
+     * @param revision 		a revision number 
+     * @param author 		the name of the author who committed the revision
+     * @param date 			the datestamp when the revision was committed
      */
     public SVNCommitInfo(long revision, String author, Date date) {
         this(revision, author, date, null);        
     }
-    
+
+    /**
+     * Constructs an <b>SVNCommitInfo</b> object.
+     * 
+     * @param revision      a revision number 
+     * @param author        the name of the author who committed the revision
+     * @param date          the datestamp when the revision was committed
+     * @param error         if a commit failed - this is an exception containing
+     *                      an error description 
+     */
     public SVNCommitInfo(long revision, String author, Date date, SVNException error) {
         myNewRevision = revision;
         myAuthor = author;
@@ -62,30 +69,36 @@ public class SVNCommitInfo {
     /**
      * Gets the revision number the repository was committed to.
      * 
-     * @return 	a new assigned revision number after the commit
+     * @return 	a revision number
      */
     public long getNewRevision() {
         return myNewRevision;
     }
 
     /**
-     * Gets the author who did the commit.
+     * Gets the name of the revision author
      * 
-     * @return 	the commit author's name.
+     * @return 	a revision author's name
      */
     public String getAuthor() {
         return myAuthor;
     }
     
     /**
-     * Gets the moment in time when the commit was done.
+     * Gets the datestamp when the revision was committed.
      *
-     * @return 	the time moment when the commit was performed
+     * @return 	a revision datestamp
      */
     public Date getDate() {
         return myDate;
     }
     
+    /**
+     * Gets an exception that occurred (if occurred) while committing 
+     * a new revision.
+     * 
+     * @return an exception with description of an error
+     */
     public SVNException getError() {
         return myError;
     }
