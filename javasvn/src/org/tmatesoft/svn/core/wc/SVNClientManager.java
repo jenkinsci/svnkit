@@ -152,7 +152,8 @@ public class SVNClientManager implements ISVNRepositoryPool {
      * (which correspond to options found in the default SVN's <i>config</i>
      * file) and the default SVN's <i>servers</i> configuration and auth storage.  
      * 
-     * @return a new <b>SVNClientManager</b> instance
+     * @param  options  a config driver
+     * @return          a new <b>SVNClientManager</b> instance
      */
     public static SVNClientManager newInstance(ISVNOptions options) {
         return new SVNClientManager(options, (ISVNAuthenticationManager) null);
@@ -165,27 +166,40 @@ public class SVNClientManager implements ISVNRepositoryPool {
      * (which correspond to options found in the default SVN's <i>config</i>
      * file) as well as authentication credentials and servers options (similar to
      * options found in the default SVN's <i>servers</i>).   
-     * 
-     * @return a new <b>SVNClientManager</b> instance
+     *
+     * @param  options     a config driver
+     * @param  authManager an authentication driver
+     * @return             a new <b>SVNClientManager</b> instance
      */
     public static SVNClientManager newInstance(ISVNOptions options, ISVNAuthenticationManager authManager) {
         return new SVNClientManager(options, authManager);
     }
-
+    
+    /**
+     * Creates a new instance of this class using the provided
+     * config driver and creator of of <b>SVNRepository</b> objects. 
+     * 
+     * @param  options         a config driver
+     * @param  repositoryPool  a creator of <b>SVNRepository</b> objects
+     * @return                 a new <b>SVNClientManager</b> instance
+     */
     public static SVNClientManager newInstance(ISVNOptions options, ISVNRepositoryPool repositoryPool) {
         return new SVNClientManager(options, repositoryPool);
     }
 
     /**
      * Creates a new instance of this class using the provided {@link ISVNOptions}
-     * driver and user's credentials make a default implementation of
+     * driver and user's credentials to make a default implementation of
      * {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager} use them. 
      * That means this <b>SVNClientManager</b> will use the caller's configuration options
      * (which correspond to options found in the default SVN's <i>config</i>
      * file), the default SVN's <i>servers</i> configuration and the caller's
      * credentials.
      * 
-     * @return a new <b>SVNClientManager</b> instance
+     * @param  options     a config driver
+     * @param  userName    a user account name
+     * @param  password    a user password 
+     * @return             a new <b>SVNClientManager</b> instance
      */
     public static SVNClientManager newInstance(ISVNOptions options, String userName, String password) {
         boolean storeAuth = options == null ? true : options.isAuthStorageEnabled();

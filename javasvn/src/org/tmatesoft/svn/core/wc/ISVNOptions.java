@@ -348,7 +348,23 @@ public interface ISVNOptions {
      */
     public void setMergerFactory(ISVNMergerFactory merger);
     
+    /**
+     * Returns the value of a property from the <i>[javasvn]</i> section
+     * of the <i>config</i> file. Currently not used.
+     * 
+     * @param   propertyName a JavaSVN specific config property name
+     * @return               the value of the property
+     */
     public String getPropertyValue(String propertyName);
     
+    /**
+     * Sets the value of a property from the <i>[javasvn]</i> section
+     * of the <i>config</i> file. Currently not used.
+     * 
+     * @param   propertyName   a JavaSVN specific config property name
+     * @param   propertyValue  a new value for the property; if 
+     *                         <span class="javakeyword">null</span> the 
+     *                         property is removed
+     */
     public void setPropertyValue(String propertyName, String propertyValue);
 }

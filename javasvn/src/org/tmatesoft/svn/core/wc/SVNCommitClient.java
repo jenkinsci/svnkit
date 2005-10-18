@@ -501,6 +501,30 @@ public class SVNCommitClient extends SVNBasicClient {
         return SVNCommitInfo.NULL;
     }
     
+    /**
+     * Committs local changes, made to the Working Copy items, to the repository. 
+     * 
+     * <p>
+     * <code>commitPackets</code> is an array of packets that contain commit items (<b>SVNCommitItem</b>) 
+     * which represent local Working Copy items that were changed and are to be committed. 
+     * Commit items are gathered in a single <b>SVNCommitPacket</b>
+     * by invoking {@link #doCollectCommitItems(File[], boolean, boolean, boolean) doCollectCommitItems()}. 
+     * 
+     * <p>
+     * This allows to commit separate trees of Working Copies "belonging" to different
+     * repositories. One packet per one repository. If repositories are different (it means more than
+     * one commit will be done), <code>commitMessage</code> may be replaced by a commit handler
+     * to be a specific one for each commit.
+     * 
+     * @param  commitPackets    logically grouped items to be committed
+     * @param  keepLocks        if <span class="javakeyword">true</span> and there are local items that 
+     *                          were locked then the commit will left them locked,
+     *                          otherwise the items will be unlocked after the commit
+     *                          succeeds
+     * @param  commitMessage    a string to be a commit log message
+     * @return                  committed information
+     * @throws SVNException
+     */
     public SVNCommitInfo[] doCommit(SVNCommitPacket[] commitPackets, boolean keepLocks, String commitMessage) throws SVNException {
         if (commitPackets == null || commitPackets.length == 0) {
             return new SVNCommitInfo[0];
@@ -684,7 +708,35 @@ public class SVNCommitClient extends SVNBasicClient {
             throw new SVNException("svn: Commit failed (details follow):", e);
         }
     }
-
+    
+    /**
+     * Collects commit items (containing detailed information on each Working Copy item
+     * that was changed and need to be committed to the repository) into different 
+     * <b>SVNCommitPacket</b>s. This allows to prepare commit packets for different
+     * Working Copies located "belonging" different repositories. Separate packets will
+     * be committed separately. If the repository is the same for all the paths, then all 
+     * collected commit packets can be combined into a single one and committed in a single 
+     * transaction. 
+     * 
+     * @param  paths            an array of local items which should be traversed
+     *                          to collect information on every changed item (one 
+     *                          <b>SVNCommitItem</b> per each
+     *                          modified local item)
+     * @param  keepLocks        if <span class="javakeyword">true</span> and there are local items that 
+     *                          were locked then these items will be left locked after
+     *                          traversing all of them, otherwise the items will be unlocked
+     * @param  force            forces collecting commit items for a non-recursive commit  
+     * @param  recursive        relevant only for directory items: if <span class="javakeyword">true</span> then 
+     *                          the entire directory tree will be traversed including all child 
+     *                          directories, otherwise only items located in the directory itself
+     *                          will be processed
+     * @param combinePackets    if <span class="javakeyword">true</span> then collected commit
+     *                          packets will be joined into a single one, so that to be committed
+     *                          in a single transaction
+     * @return                  an array of commit packets
+     * @throws SVNException
+     * @see                     SVNCommitItem
+     */
     public SVNCommitPacket[] doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, boolean recursive, boolean combinePackets) throws SVNException {
         if (paths == null || paths.length == 0) {
             return new SVNCommitPacket[0];

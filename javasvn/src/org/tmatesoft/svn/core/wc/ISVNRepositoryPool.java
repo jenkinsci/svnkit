@@ -45,7 +45,7 @@ public interface ISVNRepositoryPool {
     public SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException;
     
     /**
-     * Forces cached <b>SVNRepository</b> drivers to close their socket 
+     * Forces cached <b>SVNRepository</b> driver objects to close their socket 
      * connections. 
      * 
      * <p>
@@ -59,7 +59,7 @@ public interface ISVNRepositoryPool {
      *                    if <span class="javakeyword">false</span> - connections
      *                    of only some part of <b>SVNRepository</b> objects (for example,
      *                    those, that are not needed anymore)
-     *                    
+     * @see               DefaultSVNRepositoryPool
      */
     public void shutdownConnections(boolean shutdownAll);
 }

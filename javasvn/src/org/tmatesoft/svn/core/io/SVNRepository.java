@@ -26,7 +26,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -217,10 +216,8 @@ public abstract class SVNRepository {
      * Gets a cached repository's Universal Unique IDentifier (UUID). 
      * According to uniqueness for different repositories UUID values 
      * (36 character strings) are different. UUID is got and cached at 
-     * the time of the first successful repository access. Before that
-     * it's <span class="javakeyword">null</span>.
-     *   
-     * 
+     * the time of the first successful repository access operation. 
+     * Before that it's <span class="javakeyword">null</span>.
      * 
      * @return 	the UUID of a repository 
      */
@@ -229,21 +226,18 @@ public abstract class SVNRepository {
     }
 
     /**
-     * Retrieves the repository's root <code>URL</code>.
-     * 
+     * Gets a cached repository's root directory location. The root directory
+     * is evaluated and cached at the time of the first successful repository
+     * access operation. Before that it's <span class="javakeyword">null</span>.
+     * If this driver object is switched to a different repository location during
+     * runtime (probably to an absolutely different repository, see {@link #setLocation(SVNURL, boolean) setLocation()}), 
+     * the root directory location may be changed. 
      * <p>
-     * This value will not include a trailing '/'.  The returned <code>URL</code>
-     * is guaranteed to be a prefix of the <code>URL</code> used to create the 
-     * current session (that is the <code>URL</code> passed to create 
-     * which for its turn was used to create the 
-     * current session object <code>SVNRepository</code> for working with the
-     * repository).
+     * This method does not force this <b>SVNRepository</b> driver to
+     * test a connection.
      * 
-     * <p>
-     * <b>NOTE:</b> the <code>URL</code> has the same lifetime as the current
-     * session.
-     * 
-     * @return 	the repository root <code>URL</code>
+     * @return 	the repository root directory location url
+     * @see     #getRepositoryRoot(boolean)
      */
     public SVNURL getRepositoryRoot() {
         try {
@@ -253,29 +247,63 @@ public abstract class SVNRepository {
         }
         return null;
     }
-
+    
+    /**
+     * Gets a cached repository's root directory location. The root directory
+     * is evaluated and cached at the time of the first successful repository
+     * access operation. Before that it's <span class="javakeyword">null</span>.
+     * If this driver object is switched to a different repository location during
+     * runtime (probably to an absolutely different repository, see {@link #setLocation(SVNURL, boolean) setLocation()}), 
+     * the root directory location may be changed. 
+     * 
+     * @param   forceConnection   if <span class="javakeyword">true</span> then forces
+     *                            this driver to test a connection - try to access a 
+     *                            repository 
+     * @return                    the repository root directory location url
+     * @throws  SVNException
+     * @see                       #testConnection()
+     */
     public SVNURL getRepositoryRoot(boolean forceConnection) throws SVNException {
         if (forceConnection && myRepositoryRoot == null) {
             testConnection();
         }
         return myRepositoryRoot;
     }
-
+    
+    /**
+     * Sets an authentication driver for this object. The auth driver
+     * may be implemented to retrieve cached credentials, to prompt
+     * a user for credentials or something else (actually, this is up
+     * to an implementor). Also there's a default implementation - see
+     * the {@link org.tmatesoft.svn.core.wc.SVNWCUtil} class for more
+     * details.  
+     * 
+     * @param authManager an authentication driver to provide user 
+     *                    credentials 
+     * @see               #getAuthenticationManager()
+     */
     public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
         myAuthManager = authManager;
     }
-
+    
+    /**
+     * Returns the authentication driver registered for this 
+     * object.
+     * 
+     * @return an authentication driver that is used by this object 
+     *         to authenticate a user over network
+     */
     public ISVNAuthenticationManager getAuthenticationManager() {
         return myAuthManager;
     }
     
     /**
-     * Stores the identification parameters for the repository.
+     * Caches identification parameters (UUID, rood directory location) 
+     * of the repository with which this driver is working.
      * 
      * @param uuid 		the repository's Universal Unique IDentifier 
-     * 					(UUID) used to differentiate between one
-     * 					repository and another. 
-     * @param rootURL	the repository's root URL.
+     * 					(UUID) 
+     * @param rootURL	the repository's root directory location
      * @see 			#getRepositoryRoot()
      * @see 			#getRepositoryUUID()
      */
@@ -288,155 +316,163 @@ public abstract class SVNRepository {
     
     /* init */
     /**
-     * Establishes a socket connection to a repository.
+     * Tries to access a repository. Used to check if there're no problems 
+     * with accessing a repository and to cache a repository UUID and root
+     * dir location.  
      * 
-     * @throws SVNException if a connection establishment attempt fails, - 
-     * 						it could be a failure in creating a socket (maybe
-     * 						an invalid Subversion repository server's host/port).
-     * 						Also if the user authentication failed (see
-     * 						{@link SVNAuthenticationException}).
+     * @throws SVNException if a failure occured while connecting to a repository 
+     *                      or the user's authentication failed (see 
+     *                      {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      */
     public abstract void testConnection() throws SVNException; 
     
     /* simple methods */
     
     /**
-     * Returns the latest revision number (that is the latest state of the entire
-     * repository filesystem tree represented as a unique natural number). As
-     * this revision number corresponds to the latest revision it's greater than 
-     * all the previous ones.
+     * Returns the number of the latest revision of the repository this 
+     * driver is working with.
      *  
      * @return 					the latest revision number
-     * @throws 	SVNException	if a failure in connection occured or the user's
-     * 							authentication failed (see 
-     * 							{@link SVNAuthenticationException}).
+     * @throws 	SVNException	if a failure occured while connecting to a repository 
+     *                          or the user's authentication failed (see 
+     *                          {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      */
     public abstract long getLatestRevision() throws SVNException;
     
     /**
      * Returns the recent repository revision number for the particular moment 
-     * in time the user is interested in. 
+     * in time - the closest one before or at the specified datestamp. 
      * 
      * <p>
-     * <b>Note</b> that if you specify a single date
-     * without specifying a time of the day (e.g. 2002-11-27) Subversion assumes
-     * the timestamp to be 00:00:00 and won't return any revisions for the day you
-     * have specified but for the day just before it. 
+     * Example: if you specify a single date without specifying a time of the day 
+     * (e.g. 2002-11-27) the timestamp is assumed to 00:00:00 and the method won't 
+     * return any revisions for the day you have specified but for the day just 
+     * before it. 
      * 
-     * @param  date			a <code>Date</code> instance for defining the needed
+     * @param  date			a datestamp for defining the needed
      * 						moment in time
-     * @return 				the recent revision for the date
-     * @throws SVNException if a failure in connection occured or the date format
-     * 						can't be processed. Also if the user authentication failed
-     * 						(see {@link SVNAuthenticationException}). 
+     * @return 				the revision of the repository
+     *                      for that time
+     * @throws SVNException if a failure occured while connecting to a repository 
+     *                      or the user's authentication failed (see 
+     *                      {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      */
     public abstract long getDatedRevision(Date date) throws SVNException;
     
     /**
-     * Returns unversioned <code>properties</code> associated with the given 
-     * <code>revision</code> as a map collection (map keys are property names, map 
-     * values are property values).
-     * 
-     * @param  revision 	the number of the revision which properties will be
-     * 						retrieved 
-     * @param  properties 	a <code>Map</code> instance to receive the revision 
-     * 						properties
-     * @return 				a hash map containing unversioned revision properties
-     * @throws SVNException if the <code>revision</code> number is invalid (&lt0) or
-     * 						if there's no such <code>revision</code> at all.
-     * 						Also if a failure in connection occured or the user 
-     * 						authentication failed (see 
-     * 						{@link SVNAuthenticationException}).
+     * Returns unversioned revision properties for a particular revision.
+     * Property names (keys) are mapped to their values. You may use  
+     * <b>SVNRevisionProperty</b> constants to retrieve property values
+     * from the map.
+     *  
+     * @param  revision 	a revision number 
+     * @param  properties   if not <span class="javakeyword">null</span> then 	
+     *                      properties will be placed in this map, otherwise 
+     *                      a new map will be created  
+     * @return 				a map containing unversioned revision properties
+     * @throws SVNException in the following cases:
+     *                      <ul>
+     *                      <li><code>revision</code> number is invalid 
+     * 						<li>there's no such <code>revision</code> at all
+     * 						<li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
+     * @see                 org.tmatesoft.svn.core.SVNRevisionProperty
      */
     public abstract Map getRevisionProperties(long revision, Map properties) throws SVNException;
     
     /**
-     * Sets the revision property with the specified name 
-     * (<code>propertyName</code>) to the value of <code>propertyValue</code>.
+     * Sets a revision property with the specified name to a new value. 
      * 
      * <p>
-     * <b>NOTE:</b> revision properties are out of versioning. So, the old values
-     * will be forgotten.
+     * <b>NOTE:</b> revision properties are not versioned. So, the old values
+     * may be lost forever.
      * 
-     * @param  revision			the number of the revision which properties are to
+     * @param  revision			the number of the revision which property is to
      * 							be changed
      * @param  propertyName		a revision property name
      * @param  propertyValue 	the value of the revision property  
-     * @throws SVNException		if the repository is configured not to allow clients
-     * 							to modify revision properties (it's done by default
-     * 							when a repository is created) or an appropriate 
-     * 							provided hook program (if any) failed;
-     * 							if <code>revision</code> is invalid (&lt0) or doesn't 
-     * 							exist at all; if a failure in connection occured or the
-     * 							user's authentification failed
-     * 							(see {@link SVNAuthenticationException}).
-     * 
-     * @see    SVNRevisionProperty
+     * @throws SVNException		in the following cases:
+     *                          <ul>
+     *                          <li>the repository is configured not to allow clients
+     * 							to modify revision properties (e.g. a pre-revprop-change-hook
+     *                          program is not found or failed)
+     * 							<li><code>revision</code> is invalid or doesn't 
+     * 							exist at all 
+     *                          <li>a failure occured while connecting to a repository 
+     *                          <li>the user authentication failed 
+     *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                          </ul>
+     * @see                     org.tmatesoft.svn.core.SVNRevisionProperty
      */
     public abstract void setRevisionPropertyValue(long revision, String propertyName, String propertyValue) throws SVNException;
     
     /**
-     * Gets the value of an unversioned
-     * property <code>propertyName</code> attached to the revision identified by
-     * <code>revision</code>.
+     * Gets the value of an unversioned property. 
      * 
-     * @param 	revision 		the revision number
+     * 
+     * @param 	revision 		a revision number
      * @param 	propertyName 	a property name
-     * @return 					a revision property value or <code>null</code> if 
-     * 							there's no such value
-     * @throws 	SVNException	if the <code>revision</code> number is invalid (&lt0) or
+     * @return 					a revision property value or <span class="javakeyword">null</span> 
+     *                          if there's no such revision property 
+     * @throws 	SVNException	in the following cases:
+     *                          <ul>
+     *                          <li><code>revision</code> number is invalid or
      * 							if there's no such <code>revision</code> at all.
-     * 							Also if a failure in connection occured or the user's 
-     * 							authentication failed (see 
-     * 							{@link SVNAuthenticationException}).
+     *                          <li>a failure occured while connecting to a repository 
+     *                          <li>the user authentication failed 
+     *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                          </ul>
      */
     public abstract String getRevisionPropertyValue(long revision, String propertyName) throws SVNException;
     
     /* simple callback methods */
     /**
-	 * Returns the kind of a node defined by <code>path</code> at a <code>revision</code>.  
-	 * If the <code>path</code> does not exist under the <code>revision</code>, 
-	 * <code>SVNNodeKind.NONE</code> will be returned.
-	 * The <code>path</code> is relative to this session's parent <code>URL</code>.
+	 * Returns the kind of an item located at the specified path in
+     * a particular revision. If the <code>path</code> does not exist 
+     * under the specified <code>revision</code>, {@link org.tmatesoft.svn.core.SVNNodeKind#NONE SVNNodeKind.NONE} 
+     * will be returned.
+	 * The <code>path</code> is relative to the repository location to which
+     * this driver object is set.
      * 
-     * @param  path				the path of a node in a repsitory which is to be inspected 
-     * @param  revision			a revision number which the <code>path</code> is under
+     * @param  path				a path of a node in a repsitory which is to be inspected 
+     * @param  revision			a revision number
      * @return 					the node kind for the given <code>path</code> at the given 
      * 							<code>revision</code>
-     * @throws SVNException  	if a failure in connection occured or the user's 
-     * 							authentication failed (see 
-     * 							{@link SVNAuthenticationException}).
+     * @throws SVNException  	if a failure occured while connecting to a repository 
+     *                          or the user's authentication failed (see 
+     *                          {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      */
     public abstract SVNNodeKind checkPath(String path, long revision) throws SVNException;
     
     /**
-	 * Fetches the contents and properties of the file located at the <code>path</code>
-	 * under the specified <code>revision</code>.
-	 * The <code>path</code> is relative to the <code>URL</code> of the current session.
+	 * Fetches the contents and properties of a file located at the specified path
+	 * in a particular revision.
+     * <p>
+     * The <code>path</code> is relative to the repository location to which
+     * this driver object is set.
 	 * 
 	 * <p>
-	 * If the output stream - <code>contents</code> - is not <code>null</code>, then
-	 * the contents of the file will be flown into this stream.
+	 * If <code>properties</code> is not <span class="javakeyword">null</span> it will 
+     * receive the properties of the file.  This includes all properties: not just ones 
+     * controlled by a user and stored in the repository filesystem, but also non-tweakable 
+     * ones (e.g. 'wcprops', 'entryprops', etc.). Property names (keys) are mapped to property
+     * values. 
 	 * 
-	 * <p>
-	 * If <code>properties</code> is not <code>null</code> it will receive the 
-	 * properties of the file.  This means all properties: not just ones controlled by
-	 * the user and stored in the repository filesystems, but non-tweakable ones
-	 * generated by the SCM system itself (e.g. 'wcprops', 'entryprops',
-	 * etc.)  The keys are strings, values are 
-	 * {@link SVNFileRevision SVNFileRevision instances}.
-	 * 
-     * @param path 				the file pathway in the repository
-     * @param revision 			the file revision number
-     * @param properties 		a map collection to receive the file properties
-     * @param contents 			<code>OutputStream</code> to write the file contents to
-     * @return 					the size of the file in bytes
-     * @throws SVNException		if the <code>revision</code> number is invalid (&lt0) or
-     * 							if there's no such <code>revision</code> at all. If 
-     * 							there's	no such <code>path</code> in that 
-     * 							<code>revision</code>. Also if a failure in connection 
-     * 							occured or the user's authentication failed (see 
-     * 							{@link SVNAuthenticationException}).
+     * @param path 				a file path
+     * @param revision 			a revision number
+     * @param properties 		if not <span class="javakeyword">null</span> then    
+     *                          properties will be fetched into this map
+     * @param contents 			an output stream to write the file contents to
+     * @return 					the revision the file has been taken at
+     * @throws SVNException		in the following cases:
+     *                          <ul>
+     * 							<li>there's	no such <code>path</code> in <code>revision</code>
+     *                          <li>a failure occured while connecting to a repository 
+     *                          <li>the user authentication failed 
+     *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                          </ul>
      */
     public abstract long getFile(String path, long revision, Map properties, OutputStream contents) throws SVNException; 
 
@@ -562,6 +598,7 @@ public abstract class SVNRepository {
             ISVNLogEntryHandler handler) throws SVNException {
         return log(targetPaths, startRevision, endRevision,changedPath,strictNode, 0, handler);
     }
+    
     public abstract long log(String[] targetPaths, long startRevision, long endRevision, boolean changedPath, boolean strictNode, long limit,
             ISVNLogEntryHandler handler) throws SVNException;
     
@@ -1020,15 +1057,15 @@ public abstract class SVNRepository {
     }
     
     /**
-     * Ask the Repository Access Layer to inform about an entry located at a 
+     * Gives information about an entry located at a 
      * <code>path</code> under a specified <code>revision</code>. If the 
      * <code>revision</code> is invalid (&lt0) it is assigned to the HEAD-revision 
      * (the latest revision of the repository).
      * 
      * @param  path			an entry path (relative to a repository location path)
      * @param  revision		a revision of the entry 
-     * @return				an <code>SVNDirEntry</code> containing information about
-     * 						the entry or <code>null</code> if there's no an entry with
+     * @return				an <b>SVNDirEntry</b> containing information about
+     * 						the entry or <span class="javakeyword">null</span> if there's no entry with
      * 						such <code>path</code> at the <code>revision</code>
      * @throws SVNException if the <code>revision</code> doesn't exist at all
      */
@@ -1089,8 +1126,8 @@ public abstract class SVNRepository {
      * @param path		a file path in the repository (relative to the repository
      *  				root directory) for which the lock is returned (if it
      * 					exists). 
-     * @return			a <code>SVNLock</code> instance (the lock itself) or 
-     * 					<code>null</code> if there's no lock.
+     * @return			an <b>SVNLock</b> instance (representing the lock) or 
+     * 					<span class="javakeyword">null</span> if there's no lock
      * @throws 			SVNException
      * @see				#lock(Map, String, boolean, ISVNLockHandler)
      * @see				#unlock(Map, boolean, ISVNLockHandler)
@@ -1107,9 +1144,8 @@ public abstract class SVNRepository {
      * 
      * @param path 			a path in the repository for (or just beyond) which
      * 						all locks are retrieved (the path is relative to the 
-     * 						repository root directory).
-     * @return 				an array of <code>SVNLock</code> instances 
-     * 						(locks themselves).
+     * 						repository root directory)
+     * @return 				an array of <b>SVNLock</b> objects (representing locks)
      * @throws 				SVNException
      * @see					#lock(Map, String, boolean, ISVNLockHandler)
      * @see					#unlock(Map, boolean, ISVNLockHandler)
@@ -1129,13 +1165,13 @@ public abstract class SVNRepository {
 	 * 
 	 * <p>
 	 * The <code>comment</code> is optional: it's either a string
-	 * which describes the lock, or it is <code>null</code>.
+	 * which describes the lock, or it is <span class="javakeyword">null</span>.
 	 * 
 	 * <p>
 	 * If any path is already locked by a different user and the
-	 * <code>force</code> flag is <code>false</code>, then this call fails
-	 * with throwing a <code>SVNException</code>. But if <code>force</code> is
-	 * <code>true</code>, then the existing lock(s) will be "stolen" anyway,
+	 * <code>force</code> flag is <span class="javakeyword">false</span>, then this call fails
+	 * with throwing a <b>SVNException</b>. But if <code>force</code> is
+	 * <span class="javakeyword">true</span>, then the existing lock(s) will be "stolen" anyway,
 	 * even if the user name (who is trying to lock) does not match the current
 	 * lock's owner. (That's just the way how user can delete any lock on
 	 * the path, and unconditionally create a new lock.)
@@ -1144,17 +1180,16 @@ public abstract class SVNRepository {
 	 * If a revision is less than the last-changed-revision of
 	 * the file to be locked (or if the file path doesn't exist
 	 * in HEAD-revision), this call also fails with throwing an 
-	 * <code>SVNException</code>.
+	 * <b>SVNException</b>.
      * 
-     * @param pathsToRevisions		a Map which keys are paths and values are 
+     * @param pathsToRevisions		a map which keys are paths and values are 
      * 								revision numbers; paths are strings and revision 
      * 								numbers are Long objects; all paths are assumed to
      * 								be relative to the repository location for which
      * 								the current <b>SVNRepository</b> object was instantiated. 
      * @param comment				a comment string for the lock. It's optional.
-     * @param force					<code>true</code> if the file is to be locked
-     * 								in any way (even if it's already locked by
-     * 								someone else).
+     * @param force					<span class="javakeyword">true</span> if the file is to be 
+     *                              locked in any way (even if it's already locked by someone else)
      * @param handler
      * @throws 						SVNException
      * @see							#unlock(Map, boolean, ISVNLockHandler)
@@ -1166,7 +1201,7 @@ public abstract class SVNRepository {
     public abstract void lock(Map pathsToRevisions, String comment, boolean force, ISVNLockHandler handler) throws SVNException;
     
     /**
-	 * Removes the repository lock(s) for the file(s) located at the path(s)which 
+	 * Removes the repository lock(s) for the file(s) located at the path(s) which 
 	 * are provided as key(s) of <code>pathToTokens</code>. Keys are mapped to values
 	 * of the file lock token(s).
 	 * 
@@ -1188,7 +1223,7 @@ public abstract class SVNRepository {
 	 * fails with throwing a <b>SVNException</b>. However, if <code>force</code> is 
 	 * <span class="javakeyword">true</span> the lock will be removed anyway.
 	 * 
-     * @param pathToTokens	a Map which keys are file paths and values are file lock
+     * @param pathToTokens	a map which keys are file paths and values are file lock
      * 						tokens (both keys and values are strings)
      * @param force			<span class="javakeyword">true</span> to remove the 
      * 						lock in any case (in spite of missmatching the lock owner's 
@@ -1202,6 +1237,14 @@ public abstract class SVNRepository {
      */
     public abstract void unlock(Map pathToTokens, boolean force, ISVNLockHandler handler) throws SVNException;
     
+    /**
+     * Closes the current session closing a socket connection used by
+     * this object.    
+     * If this driver object keeps a single connection for 
+     * all the data i/o, this method helps to reset the connection.
+     * 
+     * @throws SVNException  if some i/o error has occurred
+     */
     public abstract void closeSession() throws SVNException;
     
     protected ISVNSession getOptions() {
@@ -1211,17 +1254,6 @@ public abstract class SVNRepository {
         return myOptions;
     }
     
-    /**
-     * Locks the current session <code>SVNRepository</code> object. It prevents
-     * from using non-reenterable methods of this object (for example, while having
-     * not finished updating the working copy yet, the client can not call the 
-     * <code>status</code> method from within a reporter baton). If the client
-     * tries to lock the object that has been already locked, this method throws
-     * a non catchable <code>Error</code> exception that immediately terminates
-     * the application. 
-     * 
-     * @see 	#unlock()
-     */
     protected synchronized void lock() {
         try {
             synchronized(this) {
@@ -1239,18 +1271,6 @@ public abstract class SVNRepository {
     	}
     }
     
-    /**
-     * Unlocks the current <code>SVNRepository</code> object making it free
-     * for using. 
-     * 
-     * <p>
-     * <b>NOTE:</b> while a current Repository Access operation is not completed,
-     * this <code>SVNRepository</code> object must remain locked to be guaranteed 
-     * that no other Repository Access operation will be started while a current one
-     * finishes.
-     *   
-     * @see 	#lock()
-     */
     protected synchronized void unlock() {
         synchronized(this) {
             if (--myLockCount <= 0) {
@@ -1261,62 +1281,38 @@ public abstract class SVNRepository {
         }
     }
     
-    /**
-     * Checks if the <code>revision</code> number is invalid (that is &lt 0); 
-     * 
-     * @param revision 		the revision number to be checked for invalidity.
-     * @return 				<code>true</code> if <code>revision</code> is invalid,
-     * 						<code>false</code> otherwise.
-     */
     protected static boolean isInvalidRevision(long revision) {
         return revision < 0;
     }    
     
-    /**
-     * Says if the <code>revision</code> number is valid (i.e. &gt or == 0); 
-     * 
-     * @param revision 	the revision number to be checked for validity
-     * @return 			<code>true</code> if valid, <code>false</code> otherwise
-     * 
-     */
     protected static boolean isValidRevision(long revision) {
         return revision >= 0;
     }
     
-    /**
-     * Checks the passed revision number for validity and if valid returns
-     * it in the <code>Long</code> representation.
-     *  
-     * @param revision 		a revision number
-     * @return 				a <code>Long</code> representation of the revision 
-     * 						number or <code>null</code> if the passed revision
-     * 						number is invalid. 
-     * @see 				#isInvalidRevision(long)
-     */
     protected static Long getRevisionObject(long revision) {
         return isValidRevision(revision) ? new Long(revision) : null;
     }
     
-    /**
-     * This assertion method checks if the revision number can be assumed as valid.
-     * Note that only numbers &gt or = 0 can be applied for revisioning! 
-     * 
-     * @param  revision 		the revision number to be checked for validity.  
-     * @throws SVNException		
-     * @see 					#isValidRevision(long)
-     */
     protected static void assertValidRevision(long revision) throws SVNException {
         if (!isValidRevision(revision)) {
             SVNErrorManager.error("svn: Invalid revision number '" + revision + "'");
         }
     }
-    
+
     // all paths are uri-decoded.
     //
     // get repository path (path starting with /, relative to repository root).
     // get full path (path starting with /, relative to host).
     // get relative path (repository path, now relative to repository location, not starting with '/').
-    
+
+    /**
+     * Returns a path relative to the repository root directory given
+     * a path relative to the location to which this driver object is set.
+     * 
+     * @param  relativePath a path relative to the location to which
+     *                      this <b>SVNRepository</b> is set
+     * @return              a path relative to the repository root
+     */
     public String getRepositoryPath(String relativePath) {
         if (relativePath == null) {
             return "/";
@@ -1332,6 +1328,15 @@ public abstract class SVNRepository {
         return repositoryPath;
     }
     
+    /**
+     * Resolves a path, relative either to the location to which this 
+     * driver object is set or to the repository root directory, to a
+     * path, relative to the host.
+     * 
+     * @param  relativeOrRepositoryPath a relative path within the
+     *                                  repository 
+     * @return                          a path relative to the host
+     */
     public String getFullPath(String relativeOrRepositoryPath) {
         if (relativeOrRepositoryPath == null) {
             return getFullPath("/");
