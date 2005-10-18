@@ -238,8 +238,9 @@ Let's imagine we've got the following tree of versioned files and directories:
   /dirA(root)/
              /dirB(added)/
                          /file1.txt(added)
-             /dirC/
-                  /file2.txt(modified)
+             /dirC(normal)/
+                          /dirG(normal)/
+                                       /file2.txt(modified)
              /dirD(modified properties)/
              /file3.txt(deleted)
 
@@ -247,7 +248,7 @@ Let's imagine we've got the following tree of versioned files and directories:
 Suppose we are to commit <code>'/dirA'</code> recursively. On the above layout 
 of the versioned tree you can see that <code>'dirA/dirB'</code> with its child entry
 <code>'dirA/dirB/file1.txt'</code> are scheduled for addition, 
-<code>'dirA/dirC/file2.txt'</code> has got local edits, <code>'dirD'</code> has got changes 
+<code>'dirA/dirC/dirG/file2.txt'</code> has got local edits, <code>'dirD'</code> has got changes 
 in properties and at last <code>'dirA/file3.txt'</code>
 is scheduled for deletion (of course, deleted files may have been already removed from
 the filesystem, although with JavaSVN you are able only to schedule a file for deletion
@@ -309,11 +310,19 @@ that will be sent to the server. So, at first open the root (i.e. <code>'dirA'</
      
      <span class="javaCommentMulti">/*
       * Get an Output Stream and write your delta into it.
-      * Don't forget to close your stream when having finished
-      * writing the delta.
       */</span>
      OutputStream os = editor.textDeltaChunk(<span class="javaString">"dirB/file1.txt"</span>, diffWindow);
      ...
+
+     <span class="javaCommentMulti">/*
+      * When the delta data is written to the Output
+      * Stream do not forget to close the stream.
+      */</span>
+      <span class="javaKeyword">try</span>{
+          os.close;
+      }<span class="javaKeyword">catch</span>(IOException ioe){
+          ...
+      }
 
     <span class="javaCommentMulti">/*
      * Finally closes the delta when all the bytes are already written.
@@ -340,9 +349,11 @@ class (from <b>org.tmatesoft.svn.core.internal.wc</b>) for computing an MD5 chec
 file.
 </p>
 <p>
-5. Modifying <code>"dirC/file2.txt"</code>:
+5. Modifying <code>"dirC/dirG/file2.txt"</code>:
 <pre class="javaCode">
     editor.openDir(<span class="javaString">"dirC"</span>, -1);
+
+    editor.openDir(<span class="javaString">"dirC/dirG"</span>, -1);
 
     <span class="javaCommentMulti">/*
      * Provide the working copy revision of your file
@@ -353,18 +364,44 @@ file.
     <span class="javaKeyword">long</span> wcRev;
     ...
     
-    editor.openFile(<span class="javaString">"dirC/file2.txt"</span>, wcRev);
+    editor.openFile(<span class="javaString">"dirC/dirG/file2.txt"</span>, wcRev);
 
     <span class="javaCommentMulti">/*
-     * Compute the MD5 checksum for the base file
+     * Compute the MD5 checksum for the base file:
+     * you may use computeChecksum() methods of the
+     * org.tmatesoft.svn.core.internal.wc.SVNFileUtil class
      */</span>
     String baseChecksum;
     ...
     
-    editor.applyTextDelta(<span class="javaString">"dirC/file2.txt"</span>, baseChecksum);
+    editor.applyTextDelta(<span class="javaString">"dirC/dirG/file2.txt"</span>, baseChecksum);
 
     <span class="javaKeyword">long</span> deltaLength;
+    <span class="javaCommentMulti">/*
+     * write delta
+     */</span>
+    
     ...
+
+    String changedChecksum;
+
+    <span class="javaCommentMulti">/*
+     * After we've got the delta written,
+     * close 'dirC/dirG/file2.txt' providing a checksum
+     * for the changed file.
+     */</span>
+    editor.closeFile(<span class="javaString">"dirC/dirG/file2.txt"</span>, changedChecksum);
+
+    <span class="javaCommentMulti">/*
+     * Closes 'dirG'.
+     */</span>
+    editor.closeDir();
+
+    <span class="javaCommentMulti">/*
+     * Closes 'dirC'.
+     */</span>
+    editor.closeDir();
+    
 </pre>
 All the rest is just similar to the previous examlpe for adding a file except one thing - 
 compounding delta applying instructions. <code>SVNAllDeltaGenerator</code> is used for newly added files 
@@ -372,26 +409,26 @@ as well as for binary ones (this class uses <code>SVNDiffWindowBuilder</code>). 
 text files already being under version control. 
 <pre class="javaCode">
 ...
-<span class="javaKeyword">import</span> org.tmatesoft.svn.core.io.auth.SVNRAFileData;
-<span class="javaKeyword">import</span> org.tmatesoft.svn.core.io.auth.SVNSequenceDeltaGenerator;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.io.diff.SVNRAFileData;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.io.diff.SVNSequenceDeltaGenerator;
 ...    
    
     SVNSequenceDeltaGenerator deltaGenerator;
     ...
     
     <span class="javaCommentMulti">/*
-     * Base and Working 'dirC/file2.txt' files
+     * Base and Working 'dirC/dirG/file2.txt' files
      */</span>
-    File base = <span class="javaKeyword">new</span> File(<span class="javaString">"path/to/base"</span>);
+    File base = <span class="javaKeyword">new</span> File(<span class="javaString">"path/to/file2.txt.base"</span>);
     
-    File working = <span class="javaKeyword">new</span> File(<span class="javaString">"path/to/working"</span>);
+    File working = <span class="javaKeyword">new</span> File(<span class="javaString">"path/to/file2.txt.working"</span>);
 
     SVNRAFileData baseFile = <span class="javaKeyword">new</span> SVNRAFileData(base, <span class="javaKeyword">true</span>);
     
     SVNRAFileData workingFile = <span class="javaKeyword">new</span> SVNRAFileData(working, <span class="javaKeyword">true</span>);
     
     SVNDiffWindow diffWindow = deltaGenerator.generateDiffWindow(
-                   <span class="javaString">"dirC/file2.txt"</span>, editor, workingFile, baseFile);
+                   <span class="javaString">"dirC/dirG/file2.txt"</span>, editor, workingFile, baseFile);
 </pre>
 </p>
 <p>
