@@ -115,8 +115,11 @@ public class SVNStatus {
     private SVNLock myRemoteLock;
     private SVNLock myLocalLock;
     private Map myEntryProperties;
-    private SVNRevision myRepositoryRevision;
-    private SVNURL myRepositoryURL;
+    private SVNRevision myRemoteRevision;
+    private SVNURL myRemoteURL;
+    private SVNNodeKind myRemoteKind;
+    private String myRemoteAuthor;
+    private Date myRemoteDate;
 
     /**
      * Constructs an <b>SVNStatus</b> object filling it with status information
@@ -211,7 +214,7 @@ public class SVNStatus {
      * @return  the item's URL as it's real repository location 
      */
     public SVNURL getRemoteURL() {
-        return myRepositoryURL;
+        return myRemoteURL;
     }
 
     /**
@@ -465,7 +468,19 @@ public class SVNStatus {
      *         unavailable
      */
     public SVNRevision getRemoteRevision() {
-        return myRepositoryRevision;
+        return myRemoteRevision;
+    }
+    
+    public SVNNodeKind getRemoteKind() {
+        return myRemoteKind;
+    }
+
+    public Date getRemoteDate() {
+        return myRemoteDate;
+    }
+    
+    public String getRemoteAuthor() {
+        return myRemoteAuthor;
     }
     
     /**
@@ -497,6 +512,7 @@ public class SVNStatus {
         }
         if (kind != null) {
             myKind = kind;
+            myRemoteKind = kind;
         }
     }
     
@@ -511,10 +527,14 @@ public class SVNStatus {
      * @param kind     item's node kind
      * @param revision item's latest revision when it was last committed
      */
-    public void setRemoteStatus(SVNURL url, SVNStatusType contents, SVNStatusType props, SVNLock lock, SVNNodeKind kind, SVNRevision revision) {
+    public void setRemoteStatus(SVNURL url, SVNStatusType contents, SVNStatusType props, SVNLock lock, SVNNodeKind kind, SVNRevision revision,
+            Date date, String author) {
         setRemoteStatus(contents, props, lock, kind);
-        myRepositoryURL = url;
-        myRepositoryRevision = revision == null ? SVNRevision.UNDEFINED : revision;  
+        myRemoteURL = url;
+        myRemoteRevision = revision == null ? SVNRevision.UNDEFINED : revision;
+        myRemoteDate = date;
+        myRemoteAuthor = author;
+        myRemoteKind = kind;
     }
     
     /**

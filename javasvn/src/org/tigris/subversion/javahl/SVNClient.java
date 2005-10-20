@@ -1,5 +1,7 @@
 package org.tigris.subversion.javahl;
 
+import java.io.OutputStream;
+
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 
 public class SVNClient implements SVNClientInterface {
@@ -263,6 +265,10 @@ public class SVNClient implements SVNClientInterface {
 
     public byte[] fileContent(String path, Revision revision, Revision pegRevision) throws ClientException {
         return myDelegate.fileContent(path, revision, pegRevision);
+    }
+
+    public void streamFileContent(String path, Revision revision, Revision pegRevision, int bufferSize, OutputStream stream) throws ClientException {
+        myDelegate.streamFileContent(path, revision, pegRevision, bufferSize, stream);
     }
 
     public void relocate(String from, String to, String path, boolean recurse) throws ClientException {

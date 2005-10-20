@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -128,12 +129,12 @@ public class SVNStatusEditor implements ISVNEditor {
         if (dir.getEntries().getEntry(name, false) != null) {
             myCurrentDirectory.tweakStatus(path, kind, originalName,
                     SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE,
-                    null, SVNRevision.UNDEFINED);
+                    null, SVNRevision.UNDEFINED, null, null);
         }
         if (myTarget == null && myCurrentDirectory.Parent != null) {            
             myCurrentDirectory.Parent.tweakStatus(myCurrentDirectory.Path, SVNNodeKind.DIR,
                     myCurrentDirectory.Name, SVNStatusType.STATUS_MODIFIED,
-                    SVNStatusType.STATUS_NONE, null, SVNRevision.UNDEFINED);
+                    SVNStatusType.STATUS_NONE, null, SVNRevision.UNDEFINED, null, null);
         }
 
     }
@@ -156,6 +157,10 @@ public class SVNStatusEditor implements ISVNEditor {
         }
         if (SVNProperty.COMMITTED_REVISION.equals(name) && value != null) {
             myCurrentDirectory.RemoteRevision = SVNRevision.parse(value);
+        } else if (SVNProperty.COMMITTED_DATE.equals(name) && value != null) {
+            myCurrentDirectory.RemoteDate = SVNTimeUtil.parseDate(value);
+        } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
+            myCurrentDirectory.RemoteAuthor = value;
         }
     }
 
@@ -173,7 +178,7 @@ public class SVNStatusEditor implements ISVNEditor {
             if (myCurrentDirectory.Parent != null) {
                 myCurrentDirectory.Parent.tweakStatus(myCurrentDirectory.Path,
                         SVNNodeKind.DIR, myCurrentDirectory.Name,
-                        reposContentsStatus, reposPropStatus, null, myCurrentDirectory.RemoteRevision);
+                        reposContentsStatus, reposPropStatus, null, myCurrentDirectory.RemoteRevision, myCurrentDirectory.RemoteDate, myCurrentDirectory.RemoteAuthor);
             }
         }
         if (myCurrentDirectory.Parent != null && myIsRecursive) {
@@ -280,6 +285,10 @@ public class SVNStatusEditor implements ISVNEditor {
         myCurrentFile.IsPropertiesChanged = true;
         if (SVNProperty.COMMITTED_REVISION.equals(name) && value != null) {
             myCurrentFile.RemoteRevision = SVNRevision.parse(value);
+        } else if (SVNProperty.COMMITTED_DATE.equals(name) && value != null) {
+            myCurrentFile.RemoteDate = SVNTimeUtil.parseDate(value);
+        } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
+            myCurrentFile.RemoteAuthor = value;
         }
     }
 
@@ -307,7 +316,8 @@ public class SVNStatusEditor implements ISVNEditor {
                     : SVNStatusType.STATUS_NONE;
         }
         myCurrentDirectory.tweakStatus(myCurrentFile.Path, SVNNodeKind.FILE,
-                myCurrentFile.Name, reposContentStatus, reposPropStatus, lock, myCurrentFile.RemoteRevision);
+                myCurrentFile.Name, reposContentStatus, reposPropStatus, lock, myCurrentFile.RemoteRevision,
+                myCurrentFile.RemoteDate, myCurrentFile.RemoteAuthor);
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
@@ -784,7 +794,7 @@ public class SVNStatusEditor implements ISVNEditor {
             return null;
         }
 
-        public void tweakStatus(String path, SVNNodeKind kind, String name, SVNStatusType contents, SVNStatusType props, SVNLock lock, SVNRevision remoteRevision) throws SVNException {
+        public void tweakStatus(String path, SVNNodeKind kind, String name, SVNStatusType contents, SVNStatusType props, SVNLock lock, SVNRevision remoteRevision, Date remoteDate, String remoteAuthor) throws SVNException {
             SVNStatus existingStatus = (SVNStatus) ChildrenStatuses.get(name);
             if (existingStatus == null) {
                 if (contents != SVNStatusType.STATUS_ADDED) {
@@ -831,14 +841,14 @@ public class SVNStatusEditor implements ISVNEditor {
                     myIsReportAll = oldReportAll;
                 }
                 // get revision in case of remote status.
-                existingStatus.setRemoteStatus(url, contents, props, lock, kind, remoteRevision);
+                existingStatus.setRemoteStatus(url, contents, props, lock, kind, remoteRevision, remoteDate, remoteAuthor);
                 ChildrenStatuses.put(name, existingStatus);
             } else {
                 SVNURL url = null;
                 if (myAnchorStatus != null) {
                     url = myAnchorStatus.getURL().appendPath(path, false);
                 }
-                existingStatus.setRemoteStatus(url, contents, props, null, kind, remoteRevision);
+                existingStatus.setRemoteStatus(url, contents, props, null, kind, remoteRevision, remoteDate, remoteAuthor);
             }
         }
 
@@ -846,6 +856,8 @@ public class SVNStatusEditor implements ISVNEditor {
         public String Name;
         public DirectoryInfo Parent;
         public SVNRevision RemoteRevision;
+        public Date RemoteDate;
+        public String RemoteAuthor;
         public boolean IsAdded;
         public boolean IsPropertiesChanged;
         public boolean IsContentsChanged;
@@ -869,5 +881,7 @@ public class SVNStatusEditor implements ISVNEditor {
         public boolean IsContentsChanged;
         public boolean IsPropertiesChanged;
         public SVNRevision RemoteRevision;
+        public Date RemoteDate;
+        public String RemoteAuthor;
     }
 }
