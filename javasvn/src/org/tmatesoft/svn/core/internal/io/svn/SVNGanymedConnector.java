@@ -37,6 +37,7 @@ public class SVNGanymedConnector implements ISVNConnector {
     private Session mySession;
     private InputStream myInputStream;
     private OutputStream myOutputStream;
+    private Connection myConnection;
 
     public void open(SVNRepositoryImpl repository) throws SVNException {
         ISVNAuthenticationManager authManager = repository.getAuthenticationManager();
@@ -76,7 +77,12 @@ public class SVNGanymedConnector implements ISVNConnector {
                 mySession.execCommand(SVNSERVE_COMMAND);
     
                 myOutputStream = mySession.getStdin();
-                myInputStream = new StreamGobbler(mySession.getStdout());
+                myInputStream = mySession.getStdout();
+                if (!SVNGanymedSession.isUsePersistentConnection()) {
+                    myConnection = connection;
+                } else {
+                    myInputStream = new StreamGobbler(myInputStream);
+                }
                 return;
             } catch (IOException e) {
                 reconnect--;
@@ -98,6 +104,10 @@ public class SVNGanymedConnector implements ISVNConnector {
         SVNFileUtil.closeFile(myInputStream);
         if (mySession != null) {
             mySession.close();
+        }
+        if (!SVNGanymedSession.isUsePersistentConnection() && myConnection != null) {
+            SVNGanymedSession.closeConnection(myConnection);
+            myConnection = null;
         }
         mySession = null;
         myOutputStream = null;
