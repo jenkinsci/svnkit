@@ -125,5 +125,6 @@ www/kb/user-guide-config-settings.html -text
 www/kb/user-guide-debug-logs.html -text
 www/kb/user-guide-javahl-replacement.html -text
 www/kb/user-guide-svnant.html -text
+www/license.html -text
 www/licensing/index.html -text
 www/plugin.xml eol=lf
