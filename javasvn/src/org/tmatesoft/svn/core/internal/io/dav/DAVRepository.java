@@ -710,7 +710,7 @@ class DAVRepository extends SVNRepository {
             openConnection();
             path = getFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
-            if (revision < 0) {
+            if (revision >= 0) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
                 path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             }
