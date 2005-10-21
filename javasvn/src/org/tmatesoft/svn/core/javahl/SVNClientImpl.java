@@ -1160,4 +1160,14 @@ public class SVNClientImpl implements SVNClientInterface {
                         || pathOrUrl.startsWith("svn://") 
                         || pathOrUrl.startsWith("svn+ssh://"));
     }
+
+    public String getAdminDirectoryName() {
+        return SVNFileUtil.getAdminDirectoryName();
+    }
+
+    public boolean isAdminDirectory(String name) {
+        return name != null && (SVNFileUtil.isWindows) ?
+                name.equalsIgnoreCase(SVNFileUtil.getAdminDirectoryName()) :
+                name.equals(SVNFileUtil.getAdminDirectoryName());
+    }
 }

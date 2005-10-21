@@ -323,6 +323,14 @@ public class SVNClient implements SVNClientInterface {
         return myDelegate.getVersionInfo(path, trailUrl, lastChanged);
     }
 
+    public String getAdminDirectoryName() {
+        return myDelegate.getAdminDirectoryName();
+    }
+
+    public boolean isAdminDirectory(String name) {
+        return myDelegate.isAdminDirectory(name);
+    }
+
     public static String version() {
         return SVNClientImpl.version();
     }
