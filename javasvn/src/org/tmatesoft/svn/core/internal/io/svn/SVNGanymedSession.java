@@ -38,6 +38,12 @@ import ch.ethz.ssh2.crypto.PEMDecoder;
 public class SVNGanymedSession {
 
     private static Map ourConnectionsPool = new Hashtable();
+    private static boolean ourIsUsePersistentConnection;
+    
+    static {
+        String persistent = System.getProperty("javasvn.ssh2.persistent", Boolean.TRUE.toString());
+        ourIsUsePersistentConnection = Boolean.TRUE.toString().equals(persistent);
+    }
 
     static Connection getConnection(SVNURL location, SVNSSHAuthentication credentials) throws SVNException {
         if ("".equals(credentials.getUserName()) || credentials.getUserName() == null) {
@@ -49,7 +55,7 @@ public class SVNGanymedSession {
         }
         String key = credentials.getUserName() + ":" + location.getHost() + ":" + port;
         String hostID = location.getHost() + ":" + port;
-        Connection connection = (Connection) ourConnectionsPool.get(key);
+        Connection connection = isUsePersistentConnection() ? (Connection) ourConnectionsPool.get(key) : null;
         
         if (connection == null) {
             File privateKey = credentials.getPrivateKeyFile();
@@ -80,14 +86,18 @@ public class SVNGanymedSession {
                     authenticated = connection.authenticateWithPassword(userName, password);
                 }
                 if (authenticated) {
-                    ourConnectionsPool.put(key, connection);
+                    if (isUsePersistentConnection()) {
+                        ourConnectionsPool.put(key, connection);
+                    }
                 } else {
                     throw new SVNAuthenticationException("svn: Authentication failed");
                 }
             } catch (IOException e) {
                 if (connection != null) {
                     connection.close();
-                    ourConnectionsPool.remove(key);
+                    if (isUsePersistentConnection()) {
+                        ourConnectionsPool.remove(key);
+                    }
                 }
                 SVNErrorManager.error("svn: Connection to '" + hostID + "' failed: '" + e.getMessage() + "'");
             } 
@@ -138,9 +148,12 @@ public class SVNGanymedSession {
         }
     }
 
-    public static void closeConnection(Connection connection) {
+    static void closeConnection(Connection connection) {
         if (connection != null) {
             connection.close();
+            if (!isUsePersistentConnection()) {
+                return;
+            }
             for (Iterator connections = ourConnectionsPool.entrySet().iterator(); connections.hasNext();) {
                 Entry current = (Entry) connections.next();
                 if (current.getValue() == connection) {
@@ -149,5 +162,13 @@ public class SVNGanymedSession {
                 }
             }
         }
+    }
+    
+    public static boolean isUsePersistentConnection() {
+        return ourIsUsePersistentConnection;
+    }
+    
+    public static void setUsePersistentConnection(boolean usePersistent) {
+        ourIsUsePersistentConnection = usePersistent;
     }
 }

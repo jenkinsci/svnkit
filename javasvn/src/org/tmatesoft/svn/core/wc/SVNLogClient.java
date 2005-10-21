@@ -164,7 +164,7 @@ public class SVNLogClient extends SVNBasicClient {
     }
     
     private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, ISVNAnnotateHandler handler) throws SVNException {
-        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, startRev, tmpFile, this);
+        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, this);
         try {
             repos.getFileRevisions("", startRev, endRev, generator);
             generator.reportAnnotations(handler, null);

@@ -197,7 +197,7 @@ public class SVNCommitClient extends SVNBasicClient {
         for (int i = 0; i < commitItems.length; i++) {
             String path = (String) paths.get(i);
             commitItems[i] = new SVNCommitItem(null, rootURL.appendPath(path, true),
-                    null, null, null, false, true, false, false, false, false);
+                    null, SVNNodeKind.NONE, SVNRevision.UNDEFINED, false, true, false, false, false, false);
         }
         commitMessage = getCommitHandler().getCommitMessage(commitMessage, commitItems);
         if (commitMessage == null) {
@@ -287,7 +287,7 @@ public class SVNCommitClient extends SVNBasicClient {
         for (int i = 0; i < commitItems.length; i++) {
             String path = (String) paths.get(i);
             commitItems[i] = new SVNCommitItem(null, rootURL.appendPath(path, true),
-                    null, null, null, true, false, false, false, false, false);
+                    null, SVNNodeKind.DIR, SVNRevision.UNDEFINED, true, false, false, false, false, false);
         }
         commitMessage = getCommitHandler().getCommitMessage(commitMessage, commitItems);
         if (commitMessage == null) {

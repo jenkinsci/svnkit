@@ -81,7 +81,6 @@ import de.regnis.q.sequence.line.QSequenceLineResult;
 public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
 
     private File myTmpDirectory;
-    private long myStartRevision;
     private String myPath;
 
     private long myCurrentRevision;
@@ -107,11 +106,10 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      * @param cancelBaton    a baton which is used to check if an operation 
      *                       is cancelled
      */
-    public SVNAnnotationGenerator(String path, long startRevision, File tmpDirectory, ISVNEventHandler cancelBaton) {
+    public SVNAnnotationGenerator(String path, File tmpDirectory, ISVNEventHandler cancelBaton) {
         myTmpDirectory = tmpDirectory;
         myCancelBaton = cancelBaton;
         myPath = path;
-        myStartRevision = startRevision;
         if (!myTmpDirectory.isDirectory()) {
             myTmpDirectory.mkdirs();
         }
@@ -167,70 +165,65 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         if (!myDeltaProcessor.textDeltaEnd(myPreviousFile, myCurrentFile, false)) {
             return;
         }
-        if (myCurrentRevision >= myStartRevision) {
-            // compute lines info.
-            RandomAccessFile left = null;
-            RandomAccessFile right = null;
+        RandomAccessFile left = null;
+        RandomAccessFile right = null;
+        try {
+            left = new RandomAccessFile(myPreviousFile, "r");
+            right = new RandomAccessFile(myCurrentFile, "r");
+
+            ArrayList newLines = new ArrayList();
+            int lastStart = 0;
+
+            final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right), null);
             try {
-                left = new RandomAccessFile(myPreviousFile, "r");
-                right = new RandomAccessFile(myCurrentFile, "r");
-
-                ArrayList newLines = new ArrayList();
-                int lastStart = 0;
-
-                final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right), null);
-                try {
-                    List blocksList = result.getBlocks();
-                    for(int i = 0; i < blocksList.size(); i++) {
-                        QSequenceDifferenceBlock block = (QSequenceDifferenceBlock) blocksList.get(i);
-                        int start = block.getLeftFrom();
-                        for(int j = lastStart; j < Math.min(myLines.size(), start); j++) {
-                            newLines.add(myLines.get(j));
-                            lastStart = j + 1;
-                        }
-                        // skip it.
-                        if (block.getLeftSize() > 0) {
-                            lastStart += block.getLeftSize();
-                        }
-                        // copy all from right.
-                        for (int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
-                            LineInfo line = new LineInfo();
-                            line.revision = myCurrentRevision;
-                            line.author = myCurrentAuthor;
-                            line.line = result.getRightCache().getLine(j).getBytes();
-                            line.date = myCurrentDate;
-                            newLines.add(line);
-                        }
-                    }
-                    for(int j = lastStart; j < myLines.size(); j++) {
+                List blocksList = result.getBlocks();
+                for(int i = 0; i < blocksList.size(); i++) {
+                    QSequenceDifferenceBlock block = (QSequenceDifferenceBlock) blocksList.get(i);
+                    int start = block.getLeftFrom();
+                    for(int j = lastStart; j < Math.min(myLines.size(), start); j++) {
                         newLines.add(myLines.get(j));
+                        lastStart = j + 1;
                     }
-                    myLines = newLines;
-                }
-                finally {
-                    result.close();
-                }
-            } catch (Throwable e) {
-                SVNDebugLog.logInfo(e);
-            } finally {
-                if (left != null) {
-                    try {
-                        left.close();
-                    } catch (IOException e) {
-                        //
+                    // skip it.
+                    if (block.getLeftSize() > 0) {
+                        lastStart += block.getLeftSize();
+                    }
+                    // copy all from right.
+                    for (int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
+                        LineInfo line = new LineInfo();
+                        line.revision = myCurrentRevision;
+                        line.author = myCurrentAuthor;
+                        line.line = result.getRightCache().getLine(j).getBytes();
+                        line.date = myCurrentDate;
+                        newLines.add(line);
                     }
                 }
-                if (right != null) {
-                    try {
-                        right.close();
-                    } catch (IOException e) {
-                        //
-                    }
+                for(int j = lastStart; j < myLines.size(); j++) {
+                    newLines.add(myLines.get(j));
+                }
+                myLines = newLines;
+            }
+            finally {
+                result.close();
+            }
+        } catch (Throwable e) {
+            SVNDebugLog.logInfo(e);
+        } finally {
+            if (left != null) {
+                try {
+                    left.close();
+                } catch (IOException e) {
+                    //
                 }
             }
-
+            if (right != null) {
+                try {
+                    right.close();
+                } catch (IOException e) {
+                    //
+                }
+            }
         }
-
         SVNFileUtil.rename(myCurrentFile, myPreviousFile);
     }
     

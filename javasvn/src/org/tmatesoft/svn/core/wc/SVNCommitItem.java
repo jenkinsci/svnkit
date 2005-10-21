@@ -88,7 +88,7 @@ public class SVNCommitItem {
             SVNNodeKind kind, SVNRevision revision, boolean isAdded,
             boolean isDeleted, boolean isPropertiesModified,
             boolean isContentsModified, boolean isCopied, boolean locked) {
-        myRevision = revision;
+        myRevision = revision == null ? SVNRevision.UNDEFINED : revision;
         myFile = file;
         myURL = URL;
         myCopyFromURL = copyFromURL;
