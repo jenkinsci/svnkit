@@ -20,7 +20,6 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
@@ -133,9 +132,11 @@ public abstract class SVNRepository {
     }
 	
     /**
-	 * Returns the repository location for which this object is 
-     * created. 
-     *   
+	 * Returns the repository location to which this object is set. 
+     * It may be the location that was used to create this object
+     * (see {@link SVNRepositoryFactory#create(SVNURL)}), or the recent 
+     * one the object was set to.
+     * 
 	 * @return 	a repository location set for this driver
      * @see     #setLocation(SVNURL, boolean) 
 	 * 			
@@ -436,7 +437,8 @@ public abstract class SVNRepository {
 	 * The <code>path</code> is relative to the repository location to which
      * this driver object is set.
      * 
-     * @param  path				a path of a node in a repsitory which is to be inspected 
+     * @param  path				a path relative to the repository location
+     *                          to which this object is set 
      * @param  revision			a revision number
      * @return 					the node kind for the given <code>path</code> at the given 
      * 							<code>revision</code>
@@ -460,7 +462,8 @@ public abstract class SVNRepository {
      * ones (e.g. 'wcprops', 'entryprops', etc.). Property names (keys) are mapped to property
      * values. 
 	 * 
-     * @param path 				a file path
+     * @param path 				a file path relative to the repository location
+     *                          to which this object is set
      * @param revision 			a revision number
      * @param properties 		if not <span class="javakeyword">null</span> then    
      *                          properties will be fetched into this map
@@ -477,61 +480,71 @@ public abstract class SVNRepository {
     public abstract long getFile(String path, long revision, Map properties, OutputStream contents) throws SVNException; 
 
     /**
-     * Gets and handles all directory entries under a <code>path</code> at a specified 
-     * <code>revision</code>. A found directory entry is passed to a 
-     * <code>handler</code> for further processing. 
-     *  
-     * @param  path 		a directory path relative to a repository location  
-     * @param  revision 	an interested revision 
-     * @param  properties 	a <code>Map</code> to contain all the directory
-     * 						properties (not just ones controlled by the user and 
-     * 						stored in the repository fylesystem, but non-tweakable ones).
-     * 						Keys are property names and associated values are property 
-     * 						values. <code>properties</code> can be <code>null</code> 
-     * 						when not interested in directory properties.
-     * @param  handler 		a handler to process a next found directory entry
-     * @return 				the revision of the directory
-     * @throws SVNException	If there's no such <code>path</code> in that <code>revision</code>.
-     * 						Also if a failure in connection occured or the user's 
-     * 						authentication failed (see 
-     * 						{@link SVNAuthenticationException}).
+     * Lists contents of a repository directory. Information of each directory 
+     * entry is represented by a single <b>SVNDirEntry</b> object that is passed
+     * to an implementor's dir entry handler. 
+     *
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the provided <code>handler</code>.
+     * 
+     * @param  path 		a directory path relative to the repository location
+     *                      to which this object is set  
+     * @param  revision 	a revision number 
+     * @param  properties 	if not <span class="javakeyword">null</span> then all
+     *                      directory properties (including non-tweakable ones)
+     *                      will be put into this map
+     * @param  handler 		a handler to process directory entries
+     * @return 				the revision of the directory listed
+     * @throws SVNException	in the following cases:
+     *                      <ul>
+     *                      <li><code>path</code> not found in the specified <code>revision</code>
+     * 						<li><code>path</code> is not a directory
+     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
      * @see 				#getDir(String, long, Map, Collection)
-     * @see 				SVNDirEntry
+     * @see                 #getDir(String, long, boolean, Collection)
+     * @see                 org.tmatesoft.svn.core.SVNDirEntry
      */
     public abstract long getDir(String path, long revision, Map properties, ISVNDirEntryHandler handler) throws SVNException; 
 
     /**
-     * Retrieves all the matched revisions for the specified (by the 
-     * <code>path</code> argument) file and passes them to a <code>handler</code>
-     * for further processing. 
+     * Retrieves interesting file revisions for the specified file. 
 	 * 
 	 * <p>
-	 * Only those revisions will be handled where the file was changed at.
+	 * A file revision is represented by an <b>SVNFileRevision</b> object. Each
+     * file revision is handled by the file revision handler provided. Only those 
+     * revisions will be retrieved in which the file was changed.
 	 * The iteration will begin at the first such revision starting from the 
 	 * <code>startRevision</code> and so on - up to the <code>endRevision</code>.
-	 * Note that if the method succeeds, <code>ISVNFileRevisionHandler</code> will have
+	 * If the method succeeds, the provided <code>handler</code> will have
 	 * been invoked at least once.
 	 * 
 	 * <p>
 	 * In a series of calls to {@link ISVNFileRevisionHandler#handleFileRevision(SVNFileRevision)
-	 * handler.handleFileRevision(..)}, the file contents for the first interesting 
+	 * handler.handleFileRevision()}, the file contents for the first interesting 
 	 * revision will be provided as a text delta against the empty file.  In the 
 	 * following calls, the delta will be against the fulltext contents for the 
 	 * previous call.
 	 * 
 	 * <p>
-	 * <b>NOTE:</b> This functionality is not available in pre-1.1 servers.
+     * <b>NOTES:</b> 
+     * <ul>
+     * <li>you may not invoke methods of this <b>SVNRepository</b>
+     *     object from within the provided <code>handler</code>
+     * <li>this functionality is not available in pre-1.1 servers
+     * </ul>
 	 * 
-	 * @param  path 			a file path relative to a repository location
-	 * @param  startRevision 	the revision to start from 
-	 * @param  endRevision   	the revision to stop at
+	 * @param  path 			a file path relative to the repository location
+     *                          to which this object is set
+	 * @param  startRevision 	a revision to start from 
+	 * @param  endRevision   	a revision to stop at
 	 * @param  handler 			a handler that processes file revisions passed  
-	 * @return 					the actual number of file revisions existing in
-	 * 							[<code>startRevision</code>,<code>endRevision</code>]
-	 * 							range 
-	 * @throws SVNException		if a failure in connection occured or the user's
-     * 							authentication failed (see 
-     * 							{@link SVNAuthenticationException}).
+	 * @return 					the number of retrieved file revisions  
+	 * @throws SVNException		if a failure occured while connecting to a repository 
+     *                          or the user's authentication failed (see 
+     *                          {@link org.tmatesoft.svn.core.SVNAuthenticationException})
 	 * @see 					#getFileRevisions(String, Collection, long, long)
 	 * @see 					SVNFileRevision
 	 * @since					SVN 1.1
@@ -539,7 +552,14 @@ public abstract class SVNRepository {
     public abstract int getFileRevisions(String path, long startRevision, long endRevision, ISVNFileRevisionHandler handler) throws SVNException;
     
     /**
-	 * Invokes <code>ISVNLogEntryHandler</code> on each log entry from
+	 * Traverses revisions history. In other words, collects per revision
+     * information that includes the revision number, author, datestamp, 
+     * log message and maybe a list of changed paths (optional). For each
+     * revision this information is represented by an <b>SVNLogEntry</b> 
+     * object. Such objects are passed to the provided <code>handler</code>. 
+     * 
+     * <p>
+     * This method invokes <code>handler</code> on each log entry from
 	 * <code>startRevision</code> to <code>endRevision</code>.
 	 * <code>startRevision</code> may be greater or less than
 	 * <code>endRevision</code>; this just controls whether the log messages are
@@ -550,98 +570,195 @@ public abstract class SVNRepository {
 	 * defaults to the youngest.
 	 * 
 	 * <p>
-	 * If <code>targetPaths</code>  has one or more elements, then
+	 * If <code>targetPaths</code> has one or more elements, then
 	 * only those revisions are processed in which at least one of <code>targetPaths</code> was
-	 * changed (i.e., if a file text or properties changed; if a dir properties
+	 * changed (i.e., if a file text or properties changed; if dir properties
 	 * changed or an entry was added or deleted). Each path is relative 
-	 * to the session's common parent.
+	 * to the repository location that this object is set to.
 	 * 
 	 * <p>
-	 * If <code>changedPath</code> is set, then each call to
-	 * {@link ISVNLogEntryHandler#handleLogEntry(SVNLogEntry) 
-	 * ISVNLogEntryHandler.handleLogEntry(SVNLogEntry)} passes a 
-	 * <code>SVNLogEntry</code> with the set hash map of changed paths;
-	 * the hash's keys are all the paths committed in that revision, and its
-	 * values are <code>SVNLogEntryPath</code> instances.
-	 * Otherwise, <code>SVNLogEntry</code> will not contain that hash map
-	 * for the changed paths.
+	 * If <code>changedPath</code> is <span class="javakeyword">true</span>, then each 
+     * <b>SVNLogEntry</b> passed to the handler will contain info about all 
+     * paths changed in that revision it represents. To get them call 
+     * {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()} that returns a map,
+     * which keys are the changed paths and the values are <b>SVNLogEntryPath</b> objects.
+     * If <code>changedPath</code> is <span class="javakeyword">false</span>, changed paths
+     * info will not be provided. 
 	 * 
 	 * <p>
-	 * If <code>strictNode</code> is set, copy history will not be traversed
-	 * (if any exists) when harvesting the revision logs for each path.
+	 * If <code>strictNode</code> is <span class="javakeyword">true</span>, copy history will 
+     * not be traversed (if any exists) when harvesting the revision logs for each path.
 	 * 
 	 * <p>
-	 * If <code>startRevision</code> or <code>endRevision</code> is a non-existent
-	 * revision, <code>SVNException</code> will be thrown, without ever invoking
-	 * <code>ISVNLogEntryHandler</code>.
-	 * 
-	 * <p>
-	 * The caller may not invoke any Repository Access operations using the current 
-	 * <code>SVNRepository</code> from within <code>ISVNLogEntryHandler</code>.
+	 * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the provided <code>handler</code>.
 	 * 
      * @param  targetPaths 		paths that mean only those revisions at which they were 
-     * 							changed. If such a behaviour is not needed simply
-     * 							provide <code>String[] {""}</code>.
-     * @param  startRevision 	the start revision to get the log entry of.
-     * @param  endRevision 		the end revision to get the log entry of.
-     * @param  changedPath 		<code>true</code> if log entries are to have a map of 
-     * 							the changed paths set; <code>false</code> - otherwise.
-     * @param  strictNode 		<code>true</code> if a copy history (if any) is not 
-     * 							to be traversed.
-     * @param  handler 			<code>ISVNLogEntryHandler</code> to handle log entries.
-     * @return 					the number of log entries handled.
-     * @throws SVNException
-     * @see 					ISVNLogEntryHandler
-     * @see 					SVNLogEntry
+     * 							changed
+     * @param  startRevision 	a revision to start from
+     * @param  endRevision 		a revision to end at 
+     * @param  changedPath 		if <span class="javakeyword">true</span> then
+     *                          revision information will also include all changed paths per 
+     *                          revision, otherwise not
+     * @param  strictNode 		if <span class="javakeyword">true</span> then copy history (if any) is not 
+     * 							to be traversed
+     * @param  handler 			a caller's handler that will be dispatched log entry objects
+     * @return 					the number of revisions traversed
+     * @throws SVNException     if a failure occured while connecting to a repository 
+     *                          or the user's authentication failed (see 
+     *                          {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     * @see                     #log(String[], Collection, long, long, boolean, boolean)
+     * @see                     #log(String[], long, long, boolean, boolean, long, ISVNLogEntryHandler)
+     * @see 					org.tmatesoft.svn.core.ISVNLogEntryHandler
+     * @see 					org.tmatesoft.svn.core.SVNLogEntry
+     * @see                     org.tmatesoft.svn.core.SVNLogEntryPath
      */
     public long log(String[] targetPaths, long startRevision, long endRevision, boolean changedPath, boolean strictNode,
             ISVNLogEntryHandler handler) throws SVNException {
         return log(targetPaths, startRevision, endRevision,changedPath,strictNode, 0, handler);
     }
-    
+
+    /**
+     * Traverses revisions history. In other words, collects per revision
+     * information that includes the revision number, author, datestamp, 
+     * log message and maybe a list of changed paths (optional). For each
+     * revision this information is represented by an <b>SVNLogEntry</b> 
+     * object. Such objects are passed to the provided <code>handler</code>. 
+     * 
+     * <p>
+     * This method invokes <code>handler</code> on each log entry from
+     * <code>startRevision</code> to <code>endRevision</code>.
+     * <code>startRevision</code> may be greater or less than
+     * <code>endRevision</code>; this just controls whether the log messages are
+     * processed in descending or ascending revision number order.
+     * 
+     * <p>
+     * If <code>startRevision</code> or <code>endRevision</code> is invalid, it
+     * defaults to the youngest.
+     * 
+     * <p>
+     * If <code>targetPaths</code> has one or more elements, then
+     * only those revisions are processed in which at least one of <code>targetPaths</code> was
+     * changed (i.e., if a file text or properties changed; if dir properties
+     * changed or an entry was added or deleted). Each path is relative 
+     * to the repository location that this object is set to.
+     * 
+     * <p>
+     * If <code>changedPath</code> is <span class="javakeyword">true</span>, then each 
+     * <b>SVNLogEntry</b> passed to the handler will contain info about all 
+     * paths changed in that revision it represents. To get them call 
+     * {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()} that returns a map,
+     * which keys are the changed paths and the values are <b>SVNLogEntryPath</b> objects.
+     * If <code>changedPath</code> is <span class="javakeyword">false</span>, changed paths
+     * info will not be provided. 
+     * 
+     * <p>
+     * If <code>strictNode</code> is <span class="javakeyword">true</span>, copy history will 
+     * not be traversed (if any exists) when harvesting the revision logs for each path.
+     * 
+     * <p>
+     * If <code>limit</code> is > 0 then only the first <code>limit</code> log entries
+     * will be handled. Otherwise this number is ignored.
+     * 
+     * <p>
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the provided <code>handler</code>.
+     * 
+     * @param  targetPaths      paths that mean only those revisions at which they were 
+     *                          changed
+     * @param  startRevision    a revision to start from
+     * @param  endRevision      a revision to end at 
+     * @param  changedPath      if <span class="javakeyword">true</span> then
+     *                          revision information will also include all changed paths per 
+     *                          revision, otherwise not
+     * @param  strictNode       if <span class="javakeyword">true</span> then copy history (if any) is not 
+     *                          to be traversed
+     * @param  limit            the maximum number of log entries to process
+     * @param  handler          a caller's handler that will be dispatched log entry objects
+     * @return                  the number of revisions traversed
+     * @throws SVNException     if a failure occured while connecting to a repository 
+     *                          or the user's authentication failed (see 
+     *                          {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     * @see                     #log(String[], Collection, long, long, boolean, boolean)
+     * @see                     #log(String[], long, long, boolean, boolean, long, ISVNLogEntryHandler)
+     * @see                     org.tmatesoft.svn.core.ISVNLogEntryHandler
+     * @see                     org.tmatesoft.svn.core.SVNLogEntry
+     * @see                     org.tmatesoft.svn.core.SVNLogEntryPath
+     */
     public abstract long log(String[] targetPaths, long startRevision, long endRevision, boolean changedPath, boolean strictNode, long limit,
             ISVNLogEntryHandler handler) throws SVNException;
     
     /**
-	 * Gets locations of the file identified by <code>path</code> (which 
-	 * it has in <code>pegRevision</code>) at the interested repository <code>revisions</code>.
-	 * <code>path</code> is relative to the URL for which the current session
-	 * (<code>SVNRepository</code>) was created.
-	 * 
-	 * <p>
-	 * <b>NOTE:</b> This functionality is not available in pre-1.1 servers.
+	 * Gets entry locations in time. The location of an entry in a repository
+     * may change from revision to revision. This method allows to trace entry locations 
+     * in different revisions. 
      * 
-     * @param  path			the file pathway in the repository
-     * @param  pegRevision 	that is the revision in which the file has the given
-     *  					<code>path</code> 
-     * @param  revisions 	an array of interested revision numbers. If the file 
-     * 						doesn't exist in a location revision, that revision will
-     * 						be ignored. 
-     * @param  handler 		a location entry handler that will handle all found file
+     * <p>
+     * For each interesting revision (taken from <code>revisions</code>) an entry location
+     * is represented by an <b>SVNLocationEntry</b> object which is passed to the provided
+     * <code>handler</code>. Each <b>SVNLocationEntry</b> object represents a repository path 
+     * in a definite revision.
+	 * 
+     * <p>
+     * <b>NOTES:</b> 
+     * <ul>
+     * <li>you may not invoke methods of this <b>SVNRepository</b>
+     *     object from within the provided <code>handler</code>
+     * <li>this functionality is not available in pre-1.1 servers
+     * </ul>
+     * 
+     * @param  path			a path relative to the repository location
+     *                      to which this object is set
+     * @param  pegRevision 	a revision in which <code>path</code> is first 
+     *                      looked up 
+     * @param  revisions 	an array of numbers of interesting revisions in which
+     *                      locations are looked up. If <code>path</code> 
+     * 						doesn't exist in an interesting revision, that revision 
+     *                      will be ignored. 
+     * @param  handler 		a location entry handler that will handle all found entry
      * 						locations
-     * @return 				the number of the file locations existing in a 
-     * 						<code>revisions</code>
-     * @throws SVNException
+     * @return 				the number of the entry locations found 
+     * @throws SVNException in the following cases:
+     *                      <ul>
+     *                      <li><code>path</code> not found in the specified <code>pegRevision</code>
+     *                      <li><code>pegRevision</code> is not valid
+     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
+     * @see                 #getLocations(String, Collection, long, long[])
+     * @see                 #getLocations(String, Map, long, long[])                      
      * @see 				ISVNLocationEntryHandler
      * @see 				SVNLocationEntry
+     * @since               SVN 1.1
      */
     public abstract int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException;
     
     /**
-     * The same as 
-     * {@link #getFileRevisions(String, long, long, ISVNFileRevisionHandler)} except
-     * for it just collects all the file revisions found and returns them in a 
-     * <code>Collection</code>.
+     * Retrieves and returns interesting file revisions for the specified file. 
+     * 
+     * <p>
+     * A file revision is represented by an <b>SVNFileRevision</b> object. 
+     * Only those revisions will be retrieved in which the file was changed.
+     * The iteration will begin at the first such revision starting from the 
+     * <code>startRevision</code> and so on - up to the <code>endRevision</code>.
+     * 
+     * <p>
+     * <b>NOTE:</b> this functionality is not available in pre-1.1 servers
      *   
-     * @param  path 		a file path in the repository
-     * @param  revisions 	a caller's Collection reference to get  file 
-     * 						revisions (keeps references to {@link SVNFileRevision} 
-     * 						instances). This parameter can be set to <code>null</code>.  
-     * @param  sRevision 	the revision to start from
-     * @param  eRevision 	the revision to stop at
-     * @return 				a <code>Collection</code> instance that keeps 
-     * 						{@link SVNFileRevision} instances 
-     * @throws SVNException 
+     * @param  path         a file path relative to the repository location
+     *                      to which this object is set
+     * @param  revisions 	if not <span class="javakeyword">null</span> this collection
+     *                      will receive all the fetched file revisions   
+     * @param  sRevision 	a revision to start from
+     * @param  eRevision 	a revision to stop at
+     * @return 				a collection that keeps	file revisions - {@link SVNFileRevision} instances 
+     * @throws SVNException if a failure occured while connecting to a repository 
+     *                      or the user's authentication failed (see 
+     *                      {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     * @see                 #getFileRevisions(String, long, long, ISVNFileRevisionHandler)
+     * @see                 SVNFileRevision
+     * @since               SVN 1.1
      */
     public Collection getFileRevisions(String path, Collection revisions, long sRevision, long eRevision) throws SVNException {
         final Collection result = revisions != null ? revisions : new LinkedList();
@@ -665,22 +782,30 @@ public abstract class SVNRepository {
     }
     
     /**
-     * The same as {@link #getDir(String, long, Map, ISVNDirEntryHandler)} except for
-     * it just collects all the directory entries found and returns them in a 
-     * <code>Collection</code>.  
+     * Returns contents of a directory. Information of each directory 
+     * entry is represented by a single <b>SVNDirEntry</b> object.
      * 
-     * @param  path			a relative path to the repository root 
-     * @param  revision 	an interested revision 
-     * @param  properties 	a <code>Map</code> to contain all the directory properties 
-     * 						(not just ones controlled by the user and stored in the 
-     * 						repository fylesystem, but non-tweakable ones, too). Keys
-     * 						are property names and associated values are property 
-     * 						values. <code>properties</code> can be <code>null</code>
-     * 						when not interested in directory properties.
-     * @param  dirEntries 	a <code>Collection</code> to get directory entries. Can be
-     * 						<code>null</code>.
-     * @return 				a <code>Collection</code> containing the directory entries
-     * @throws SVNException
+     * @param  path         a directory path relative to the repository location
+     *                      to which this object is set  
+     * @param  revision     a revision number 
+     * @param  properties   if not <span class="javakeyword">null</span> then all
+     *                      directory properties (including non-tweakable ones)
+     *                      will be put into this map (where keys are property names
+     *                      and mappings are property values)
+     * @param  dirEntries 	if not <span class="javakeyword">null</span> then this
+     *                      collection receives fetched dir entries (<b>SVNDirEntry</b> objects)
+     * @return 				a collection containing fetched directory entries (<b>SVNDirEntry</b> objects)
+     * @throws SVNException in the following cases:
+     *                      <ul>
+     *                      <li><code>path</code> not found in the specified <code>revision</code>
+     *                      <li><code>path</code> is not a directory
+     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
+     * @see                 #getDir(String, long, Map, ISVNDirEntryHandler)
+     * @see                 #getDir(String, long, boolean, Collection)
+     * @see                 org.tmatesoft.svn.core.SVNDirEntry
      */
     public Collection getDir(String path, long revision, Map properties, Collection dirEntries) throws SVNException {
         final Collection result = dirEntries != null ? dirEntries : new LinkedList();
@@ -693,30 +818,91 @@ public abstract class SVNRepository {
         getDir(path, revision, properties, handler);
         return result;
     }
-
+    
     /**
-     * @return Collection of SVNDirEntry objects with commit messages.
+     * Fetches the contents of a directory into the provided 
+     * collection object and returns the directory entry itself. Information 
+     * of each directory entry is represented by an <b>SVNDirEntry</b> object.
+     * 
+     * @param  path                    a directory path relative to the repository location
+     *                                 to which this object is set  
+     * @param  revision                a revision number 
+     * @param  includeCommitMessages   if <span class="javakeyword">true</span> then
+     *                                 dir entries (<b>SVNDirEntry</b> objects) will be supplied 
+     *                                 with commit log messages, otherwise not
+     * @param  entries                 a collection that receives fetched dir entries                 
+     * @return                         the parent directory entry which contents
+     *                                 are fetched into <code>entries</code>
+     * @throws SVNException            in the following cases:
+     *                                 <ul>
+     *                                 <li><code>path</code> not found in the specified <code>revision</code>
+     *                                 <li><code>path</code> is not a directory
+     *                                 <li>a failure occured while connecting to a repository 
+     *                                 <li>the user authentication failed 
+     *                                 (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                                 </ul>
+     * @see                            #getDir(String, long, Map, ISVNDirEntryHandler)
+     * @see                            #getDir(String, long, Map, Collection)
+     * @see                            org.tmatesoft.svn.core.SVNDirEntry
      */
     public abstract SVNDirEntry getDir(String path, long revision, boolean includeCommitMessages, Collection entries) throws SVNException;
 
     /**
-     * The same as {@link SVNRepository#log(String[], long, long, boolean, boolean, ISVNLogEntryHandler)},
-     * but as a result it returns a <code>Collection</code> of retrieved log entries.
+     * Traverses revisions history and returns a collection of log entries. In 
+     * other words, collects per revision information that includes the revision number, 
+     * author, datestamp, log message and maybe a list of changed paths (optional). For each
+     * revision this information is represented by an <b>SVNLogEntry</b>. 
+     * object. 
      * 
-     * @param  targetPaths 		paths that mean only those revisions at which they were 
-     * 							changed.
-     * @param  entries 			<code>Collection</code> instance to receive log entries
-     * @param  startRevision 	the start revision to get the log entry of.
-     * @param  endRevision 		the end revision to get the log entry of.
-     * @param  changedPath 		<code>true</code> if log entries are to have the changed
-     * 							paths <code>Map</code> set; <code>false</code> - 
-     * 							otherwise.
-     * @param  strictNode 		<code>true</code> if a copy history (if any) is not to
-     * 							be traversed.
-     * @return 					a <code>Collection</code> containing log entries.
-     * @throws SVNException
-     * @see 					ISVNLogEntryHandler
-     * @see 					SVNLogEntry
+     * <p>
+     * <code>startRevision</code> may be greater or less than
+     * <code>endRevision</code>; this just controls whether the log messages are
+     * processed in descending or ascending revision number order.
+     * 
+     * <p>
+     * If <code>startRevision</code> or <code>endRevision</code> is invalid, it
+     * defaults to the youngest.
+     * 
+     * <p>
+     * If <code>targetPaths</code> has one or more elements, then
+     * only those revisions are processed in which at least one of <code>targetPaths</code> was
+     * changed (i.e., if a file text or properties changed; if dir properties
+     * changed or an entry was added or deleted). Each path is relative 
+     * to the repository location that this object is set to.
+     * 
+     * <p>
+     * If <code>changedPath</code> is <span class="javakeyword">true</span>, then each 
+     * <b>SVNLogEntry</b> object is supplied with info about all 
+     * paths changed in that revision it represents. To get them call 
+     * {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()} that returns a map,
+     * which keys are the changed paths and the mappings are <b>SVNLogEntryPath</b> objects.
+     * If <code>changedPath</code> is <span class="javakeyword">false</span>, changed paths
+     * info will not be provided. 
+     * 
+     * <p>
+     * If <code>strictNode</code> is <span class="javakeyword">true</span>, copy history will 
+     * not be traversed (if any exists) when harvesting the revision logs for each path.
+     * 
+     * @param  targetPaths      paths that mean only those revisions at which they were 
+     *                          changed
+     * @param  entries 			if not <span class="javakeyword">null</span> then this collection
+     *                          will receive log entries
+     * @param  startRevision    a revision to start from
+     * @param  endRevision      a revision to end at 
+     * @param  changedPath      if <span class="javakeyword">true</span> then
+     *                          revision information will also include all changed paths per 
+     *                          revision, otherwise not
+     * @param  strictNode       if <span class="javakeyword">true</span> then copy history (if any) is not 
+     *                          to be traversed
+     * @return 					a collection with log entries
+     * @throws SVNException     if a failure occured while connecting to a repository 
+     *                          or the user's authentication failed (see 
+     *                          {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     * @see                     #log(String[], long, long, boolean, boolean, ISVNLogEntryHandler)
+     * @see                     #log(String[], long, long, boolean, boolean, long, ISVNLogEntryHandler)
+     * @see                     org.tmatesoft.svn.core.ISVNLogEntryHandler
+     * @see                     org.tmatesoft.svn.core.SVNLogEntry
+     * @see                     org.tmatesoft.svn.core.SVNLogEntryPath
      */
     public Collection log(String[] targetPaths, Collection entries, long startRevision, long endRevision, boolean changedPath, boolean strictNode) throws SVNException {
         final Collection result = entries != null ? entries : new LinkedList();
@@ -729,22 +915,42 @@ public abstract class SVNRepository {
     }
     
     /**
-     * The same as {@link #getLocations(String, long, long[], ISVNLocationEntryHandler)},
-     * but it returns a <code>Collection</code> containing {@link SVNLocationEntry 
-     * location entries}.
+     * Gets entry locations in time. The location of an entry in a repository
+     * may change from revision to revision. This method allows to trace entry locations 
+     * in different revisions. 
      * 
-     * @param  path 		a file path relative to a repository location
-     * @param  entries 		a <code>Collection</code> to receive entries. Can be
-     * 						<code>null</code>
-     * @param  pegRevision  that is the revision in which the file has the given
-     *  					<code>path</code>
-     * @param  revisions 	an array of interested revision numbers. If the file 
-     * 						doesn't exist in a location revision, that revision will 
-     * 						be ignored.
-     * @return 				a <code>Collection</code> containing retrieved entries.
-     * @throws SVNException 
+     * <p>
+     * For each interesting revision (taken from <code>revisions</code>) an entry location
+     * is represented by an <b>SVNLocationEntry</b> object. Each <b>SVNLocationEntry</b> 
+     * object represents a repository path in a definite revision.
+     * 
+     * <p>
+     * <b>NOTE:</b> this functionality is not available in pre-1.1 servers
+     * 
+     * @param  path         a path relative to the repository location
+     *                      to which this object is set
+     * @param  entries 		if not <span class="javakeyword">null</span> then this 
+     *                      collection object receives entry locations
+     * @param  pegRevision  a revision in which <code>path</code> is first 
+     *                      looked up 
+     * @param  revisions    an array of numbers of interesting revisions in which
+     *                      locations are looked up. If <code>path</code> 
+     *                      doesn't exist in an interesting revision, that revision 
+     *                      will be ignored. 
+     * @return 				a collection with retrieved entry locations
+     * @throws SVNException in the following cases:
+     *                      <ul>
+     *                      <li><code>path</code> not found in the specified <code>pegRevision</code>
+     *                      <li><code>pegRevision</code> is not valid
+     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
+     * @see                 #getLocations(String, long, long[], ISVNLocationEntryHandler)
+     * @see                 #getLocations(String, Map, long, long[])
      * @see 				SVNLocationEntry
      * @see 				ISVNLocationEntryHandler
+     * @since               SVN 1.1
      */
     public Collection getLocations(String path, Collection entries, long pegRevision, long[] revisions) throws SVNException {
         final Collection result = entries != null ? entries : new LinkedList();
@@ -756,6 +962,46 @@ public abstract class SVNRepository {
         return result;        
     }
 
+    /**
+     * Gets entry locations in time. The location of an entry in a repository
+     * may change from revision to revision. This method allows to trace entry locations 
+     * in different revisions. 
+     * 
+     * <p>
+     * For each interesting revision (taken from <code>revisions</code>) an entry location
+     * is represented by an <b>SVNLocationEntry</b> object. Each <b>SVNLocationEntry</b> 
+     * object represents a repository path in a definite revision.
+     * 
+     * <p>
+     * <b>NOTE:</b> this functionality is not available in pre-1.1 servers
+     * 
+     * @param  path         a path relative to the repository location
+     *                      to which this object is set
+     * @param  entries      if not <span class="javakeyword">null</span> then this 
+     *                      map object receives entry locations (which keys are revision
+     *                      numbers as Longs and mappings are entry locations objects)
+     * @param  pegRevision  a revision in which <code>path</code> is first 
+     *                      looked up 
+     * @param  revisions    an array of numbers of interesting revisions in which
+     *                      locations are looked up. If <code>path</code> 
+     *                      doesn't exist in an interesting revision, that revision 
+     *                      will be ignored. 
+     * @return              a map (which keys are revision numbers as Longs and mappings 
+     *                      are entry locations objects) with collected entry locations            
+     * @throws SVNException in the following cases:
+     *                      <ul>
+     *                      <li><code>path</code> not found in the specified <code>pegRevision</code>
+     *                      <li><code>pegRevision</code> is not valid
+     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
+     * @see                 #getLocations(String, long, long[], ISVNLocationEntryHandler)
+     * @see                 #getLocations(String, Collection, long, long[])
+     * @see                 SVNLocationEntry
+     * @see                 ISVNLocationEntryHandler
+     * @since               SVN 1.1
+     */
     public Map getLocations(String path, Map entries, long pegRevision, long[] revisions) throws SVNException {
         final Map result = entries != null ? entries : new HashMap();
         getLocations(path, pegRevision, revisions, new ISVNLocationEntryHandler() {
@@ -768,77 +1014,72 @@ public abstract class SVNRepository {
 	
     /* edit-mode methods */
 	/**
-	 * Gets differences between two repository items - one specified as a <code>target</code> 
-	 * and another as <code>url</code>. 
-	 * It's another form of 
-	 * {@link #update(long, String, boolean, ISVNReporterBaton, ISVNEditor) update()}.
+	 * Calculates the differences between two items. 
+	 *
+     * <p>
+     * <code>target</code> is the name (one-level path component) of an entry that will restrict
+     * the scope of the diff operation to this entry. In other words <code>target</code> is a child entry of the 
+     * directory represented by the repository location to which this object is set. For
+     * example, if we have something like <code>"/dirA/dirB"</code> in a repository, then
+     * this object's repository location may be set to <code>"svn://host:port/path/to/repos/dirA"</code>,
+     * and <code>target</code> may be <code>"dirB"</code>.
+     * 
+     * <p>
+     * If <code>target</code> is <span class="javakeyword">null</span> or empty (<code>""</code>)
+	 * then the scope of the diff operation is the repository location to which
+     * this object is set.
+     * 
+     * <p>
+     * The <code>reporter</code> is used to describe the state of the target item(s) (i.e. 
+     * items' revision numbers). All the paths described by the <code>reporter</code>
+     * should be relative to the repository location to which this object is set. 
+     * 
+     * <p>
+     * After that the <code>editor</code> is used to carry out all the work on 
+     * evaluating differences against <code>url</code>. This <code>editor</code> contains 
+     * knowledge of where the change will begin (when {@link ISVNEditor#openRoot(long) ISVNEditor.openRoot()} 
+     * is called).
 	 * 
 	 * <p>
-	 * <b>
-	 * Please note: this method cannot be used to diff a single
-	 * file, only a working copy directory.  See the {@link #update(SVNURL, long, String, boolean, ISVNReporterBaton, ISVNEditor)
-	 * update()} for more details.
-	 * </b>
+	 * If <code>ignoreAncestry</code> is <span class="javakeyword">false</span> then
+     * the ancestry of the paths being diffed is taken into consideration - they
+     * are treated as related. In this case, for example, if calculating differences between 
+     * two files with identical contents but different ancestry, 
+     * the entire contents of the target file is considered as having been removed and 
+     * added again. 
+     * 
+     * <p>
+     * If <code>ignoreAncestry</code> is <span class="javakeyword">true</span>
+     * then the two paths are merely compared ignoring the ancestry.
 	 * 
-	 * <p>
-	 * The client initially provides a diff editor (<code>ISVNEditor</code>) to the RA
-	 * layer; this editor contains knowledge of where the common diff
-	 * root is in the working copy (when {@link ISVNEditor#openRoot(long)
-	 * ISVNEditor.openRoot(long)} is called). 
+     * <p>
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the provided <code>reporter</code> and <code>editor</code>.
 	 * 
-	 * <p>
-	 * The {@link ISVNReporterBaton reporter-baton} is used to 
-	 * describe client's working-copy revision numbers by calling the methods of
-	 * {@link ISVNReporter}; the RA layer assumes that all
-	 * paths are relative to the <code>URL</code> used to open the current repository session.	 * </p>
-	 * 
-	 * <p>
-	 * When finished, the client calls {@link ISVNReporter#finishReport() 
-	 * ISVNReporter.finishReport()}. The RA layer then does a complete drive of the
-	 * diff editor, ending with {@link ISVNEditor#closeEdit() ISVNEditor.closeEdit()},
-	 * to transmit the diff.
-	 * 
-	 * <p>
-	 * <code>target</code> is an optional single path component that will restrict
-	 * the scope of the diff to an entry in the directory represented by
-	 * the current session's <code>URL</code>, or empty if the entire directory is 
-	 * meant to be one of the diff paths.
-	 * 
-	 * <p>
-	 * The working copy will be diffed against <code>url</code> as it exists
-	 * in <code>revision</code>, or as it is in head if <code>revision</code> is
-	 * invalid.
-	 * 
-	 * <p>
-	 * Use <code>ignoreAncestry</code> to control whether or not items being
-	 * diffed will be checked for relatedness first.  Unrelated items
-	 * are typically transmitted to the editor as a deletion of one thing
-	 * and the addition of another, but if this flag is <code>true</code>,
-	 * unrelated items will be diffed as if they were related.
-	 * 
-	 * <p>
-	 * If <code>recursive</code> is true and the target is a directory, diff
-	 * recursively; otherwise, diff just target and its immediate entries,
-	 * but not its child directories (if any).
-	 * 
-	 * <p>
-	 * The caller may not perform any RA operations using the current
-	 * <code>SVNRepository</code> object before finishing the report, and may not
-	 * perform any RA operations using <code>SVNRepository</code> from within
-	 * the editing operations of the diff editor.
-	 * 
-	 * @param  url 				a URL to the entry to be diffed 
-	 * 							against.
-	 * @param  revision 		a revision number of the entry located at the 
-	 * 							<code>url</code>
-	 * @param  target 			relative to the current repository location path of the
-	 * 							entry to be diffed against <code>url</code>.
-	 * @param  ignoreAncestry 	set <code>true</code> to control relatedness.
-	 * @param  recursive 		<code>true</code> to diff recursively, 
-	 * 							<code>false</code> - otherwise.
-     * @param  reporter 		a client's reporter-baton
-     * @param  editor 			a client's update editor
-     * @throws SVNException
+	 * @param  url 				a repository location of the entry against which 
+     *                          differences are calculated 
+	 * @param  targetRevision   a revision number of the entry located at the 
+     *                          specified <code>url</code>; defaults to the
+     *                          latest revision (HEAD) if this arg is invalid
+     * @param  revision 		a revision number of the entry located at the 
+     *                          specified <code>url</code>; defaults to the
+     *                          latest revision (HEAD) if this arg is invalid
+	 * @param  target 			a target entry name (optional)
+	 * @param  ignoreAncestry 	if <span class="javakeyword">true</span> then
+     *                          the ancestry of the two entries to be diffed is 
+     *                          ignored, otherwise not 
+     * @param  recursive        if <span class="javakeyword">true</span> and the diff scope
+     *                          is a directory, descends recursively, otherwise not 
+     * @param  reporter 		a caller's reporter
+     * @param  editor 			a caller's editor
+     * @throws SVNException     in the following cases:
+     *                          <ul>
+     *                          <li><code>url</code> not found neither in the specified 
+     *                          <code>revision</code> nor in the HEAD revision
+     *                          <li>a failure occured while connecting to a repository 
+     *                          <li>the user authentication failed 
+     *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                          </ul>
      * @see 					ISVNReporterBaton
      * @see 					ISVNReporter
      * @see 					ISVNEditor
@@ -846,179 +1087,254 @@ public abstract class SVNRepository {
     public abstract void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
-     * @deprecated use diff with 'targetRevision' parameter instead
+     * Calculates the differences between two items. 
+     *
+     * <p>
+     * <code>target</code> is the name (one-level path component) of an entry that will restrict
+     * the scope of the diff operation to this entry. In other words <code>target</code> is a child entry of the 
+     * directory represented by the repository location to which this object is set. For
+     * example, if we have something like <code>"/dirA/dirB"</code> in a repository, then
+     * this object's repository location may be set to <code>"svn://host:port/path/to/repos/dirA"</code>,
+     * and <code>target</code> may be <code>"dirB"</code>.
+     * 
+     * <p>
+     * If <code>target</code> is <span class="javakeyword">null</span> or empty (<code>""</code>)
+     * then the scope of the diff operation is the repository location to which
+     * this object is set.
+     * 
+     * <p>
+     * The <code>reporter</code> is used to describe the state of the target item(s) (i.e. 
+     * items' revision numbers). All the paths described by the <code>reporter</code>
+     * should be relative to the repository location to which this object is set. 
+     * 
+     * <p>
+     * After that the <code>editor</code> is used to carry out all the work on 
+     * evaluating differences against <code>url</code>. This <code>editor</code> contains 
+     * knowledge of where the change will begin (when {@link ISVNEditor#openRoot(long) ISVNEditor.openRoot()} 
+     * is called).
+     * 
+     * <p>
+     * If <code>ignoreAncestry</code> is <span class="javakeyword">false</span> then
+     * the ancestry of the paths being diffed is taken into consideration - they
+     * are treated as related. In this case, for example, if calculating differences between 
+     * two files with identical contents but different ancestry, 
+     * the entire contents of the target file is considered as having been removed and 
+     * added again. 
+     * 
+     * <p>
+     * If <code>ignoreAncestry</code> is <span class="javakeyword">true</span>
+     * then the two paths are merely compared ignoring the ancestry.
+     * 
+     * <p>
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the provided <code>reporter</code> and <code>editor</code>.
+     * 
+     * @param  url              a repository location of the entry against which 
+     *                          differences are calculated 
+     * @param  revision         a revision number of the entry located at the 
+     *                          specified <code>url</code>; defaults to the
+     *                          latest revision (HEAD) if this arg is invalid
+     * @param  target           a target entry name (optional)
+     * @param  ignoreAncestry   if <span class="javakeyword">true</span> then
+     *                          the ancestry of the two entries to be diffed is 
+     *                          ignored, otherwise not 
+     * @param  recursive        if <span class="javakeyword">true</span> and the diff scope
+     *                          is a directory, descends recursively, otherwise not 
+     * @param  reporter         a caller's reporter
+     * @param  editor           a caller's editor
+     * @throws SVNException     in the following cases:
+     *                          <ul>
+     *                          <li><code>url</code> not found neither in the specified 
+     *                          <code>revision</code> nor in the HEAD revision
+     *                          <li>a failure occured while connecting to a repository 
+     *                          <li>the user authentication failed 
+     *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                          </ul>
+     * @deprecated              use {@link #diff(SVNURL, long, long, String, boolean, boolean, ISVNReporterBaton, ISVNEditor)} instead 
+     * @see                     ISVNReporterBaton
+     * @see                     ISVNReporter
+     * @see                     ISVNEditor
      */
     public abstract void diff(SVNURL url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
-     * Asks the Repository Access (RA) Layer to update a working copy.
-	 * The client initially provides an update editor ({@link ISVNEditor});
-	 * this editor contains knowledge of where the change will
-	 * begin in the working copy (when {@link ISVNEditor#openRoot(long)
-	 * ISVNEditor.openRoot(long)} is called).
+     * Updates a path receiving changes from a repository.
+     *
+     * <p>
+     * <code>target</code> is the name (one-level path component) of an entry that will 
+     * restrict the scope of the update to this entry. In other words <code>target</code> is a child entry of the 
+     * directory represented by the repository location to which this object is set. For
+     * example, if we have something like <code>"/dirA/dirB"</code> in a repository, then
+     * this object's repository location may be set to <code>"svn://host:port/path/to/repos/dirA"</code>,
+     * and <code>target</code> may be <code>"dirB"</code>.
+     * 
+     * <p>
+     * If <code>target</code> is <span class="javakeyword">null</span> or empty (<code>""</code>)
+     * then the scope of the update operation is the repository location to which
+     * this object is set.
+     * 
+     * <p>
+     * The <code>reporter</code> is used to describe the state of the local item(s) (i.e. 
+     * items' revision numbers, deleted, switched items). All the paths described by the 
+     * <code>reporter</code> should be relative to the repository location to which this 
+     * object is set. 
+     * 
+     * <p>
+     * After that the <code>editor</code> is used to carry out all the work on 
+     * updating. This <code>editor</code> contains 
+     * knowledge of where the change will begin (when {@link ISVNEditor#openRoot(long) ISVNEditor.openRoot()} 
+     * is called).
 	 * 
-	 * <p>
-	 * The {@link ISVNReporterBaton reporter-baton} is used to 
-	 * describe client's working-copy revision numbers by calling the methods of
-	 * {@link ISVNReporter}; the RA layer assumes that all
-	 * paths are relative to the URL used to open the current repository session.
+     * <p>
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the provided <code>reporter</code> and <code>editor</code>.
 	 * 
-	 * <p>
-	 * When finished, the client calls {@link ISVNReporter#finishReport() ISVNReporter.finishReport()} 
-	 * from within the <code>reporter</code>.  The RA layer then does a complete drive
-	 * of the <code>editor</code>, ending with {@link ISVNEditor#closeEdit() ISVNEditor.closeEdit()},
-	 * to update the working copy. 
-	 * 
-	 * <p>
-	 * <code>target</code> is an optional single path component to restrict
-	 * the scope of the update to just that entry in the directory represented by
-	 * the current session' URL.
-	 * If the <code>target</code> is <code>null</code>, the entire directory is 
-	 * updated.
-	 * 
-	 * <p>
-	 * If <code>recursive</code> is true and the <code>target</code> is a directory,
-	 * update recursively; otherwise, update just the <code>target</code> and its
-	 * immediate entries, but not its child directories (if any).
-	 * 
-	 * 
-	 * <p>
-	 * The working copy will be updated to <code>revision</code>, or the
-	 * "latest" revision if this parameter is invalid.
-	 * 
-	 * <p>
-	 * The caller may not perform any RA operations using the current
-	 * <code>SVNRepository</code>
-	 * before finishing the report, and may not perform any RA operations
-	 * using <code>SVNRepository</code> from within the editing operations
-	 * of update <code>ISVNEditor</code>.
-	 * 
-     * @param  revision 		a desired update revision
-     * @param  target 			a path to restrict the update scope 
-     * @param  recursive 		<code>true</code> to update the working copy recursively
-     * @param  reporter 		a client's reporter-baton
-     * @param  editor 			a client's update editor
-     * @throws SVNException
+     * @param  revision 		a desired revision to make update to; defaults to
+     *                          the latest revision (HEAD)
+     * @param  target 			an entry name (optional)  
+     * @param  recursive        if <span class="javakeyword">true</span> and the update scope
+     *                          is a directory, descends recursively, otherwise not 
+     * @param  reporter         a caller's reporter
+     * @param  editor           a caller's editor
+     * @throws SVNException     in the following cases:
+     *                          <ul>
+     *                          <li>a failure occured while connecting to a repository 
+     *                          <li>the user authentication failed 
+     *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                          </ul>
+     * @see                     #update(SVNURL, long, String, boolean, ISVNReporterBaton, ISVNEditor)
      * @see 					ISVNReporterBaton
      * @see 					ISVNReporter
      * @see 					ISVNEditor
+     * @see                     <a href="http://tmate.org/svn/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
      */
     public abstract void update(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
-	 * Ask the Repository Access (RA) Layer to describe the status of a working copy 
-	 * with respect to  <code>revision</code> of the repository (or HEAD - the latest
-	 * revision, if <code>revision</code> is invalid).
-	 * 
-	 * <p>
-	 * The client initially provides an editor {@link ISVNEditor}  to the RA
-	 * layer; this editor contains knowledge of where the change will
-	 * begin in the working copy (when {@link ISVNEditor#openRoot(long)
-	 * ISVNEditor.openRoot(long)} is called).
-	 * 
-	 * <p>
-	 * The {@link ISVNReporterBaton reporter} is used to 
-	 * describe client's working-copy revision numbers by calling the methods of
-	 * {@link ISVNReporter}; the RA layer assumes that all
-	 * paths are relative to the URL used to open the current repository session.
-	 * 
-	 * <p>
-	 * When finished, the client calls {@link ISVNReporter#finishReport()} 
-	 * from within the <code>reporter</code>. The RA
-	 * layer then does a complete drive of the status <code>editor</code>, ending with
-	 * {@link ISVNEditor#closeEdit()}, to report, essentially, what would be modified in
-	 * the working copy were the client to call {@link #update(long, String, boolean, ISVNReporterBaton, ISVNEditor)
-	 * update()}.
-	 * 
-	 * <p>
-	 * <code>target</code> is an optional single path component to restrict
-	 * the scope of the status report to an entry in the directory represented by
-	 * the current session's URL, or empty if the entire
-	 * directory is meant to be examined.
-	 * 
-	 * <p>
-	 * If <code>recursive</code> is true and the target is a directory, get status
-	 * recursively; otherwise, get status for just the target and its
-	 * immediate entries, but not its child directories (if any).
-	 * 
-	 * <p>
-	 * The caller may not perform any RA operations using the current
-	 * <code>SVNRepository</code>
-	 * before finishing the report, and may not perform any RA operations
-	 * using <code>SVNRepository</code> from within the editing operations
-	 * of status <code>ISVNEditor</code>.
+     * Gets status of a path.
+     *
+     * <p>
+     * <code>target</code> is the name (one-level path component) of an entry that will 
+     * restrict the scope of the status to this entry. In other words <code>target</code> is a child entry of the 
+     * directory represented by the repository location to which this object is set. For
+     * example, if we have something like <code>"/dirA/dirB"</code> in a repository, then
+     * this object's repository location may be set to <code>"svn://host:port/path/to/repos/dirA"</code>,
+     * and <code>target</code> may be <code>"dirB"</code>.
      * 
-     * @param  revision 		a revision number for which the working copy status 
-     * 							will be described
-     * @param  target 			that is the path (relative to the current session
-     * 							URL) to an entry to be examined. It can be
-     * 							<code>null</code> to check out the entire session root
-     * 							directory.
-     * @param  recursive 		<code>true</code> to get status for the working copy 
-     * 							recursively or not
+     * <p>
+     * If <code>target</code> is <span class="javakeyword">null</span> or empty (<code>""</code>)
+     * then the scope of the update operation is the repository location to which
+     * this object is set.
+     * 
+     * <p>
+     * The <code>reporter</code> is used to describe the state of the local item(s) (i.e. 
+     * items' revision numbers, deleted, switched items). All the paths described by the 
+     * <code>reporter</code> should be relative to the repository location to which this 
+     * object is set. 
+     * 
+     * <p>
+     * After that the <code>editor</code> is used to carry out all the work on 
+     * performing status. This <code>editor</code> contains 
+     * knowledge of where the change will begin (when {@link ISVNEditor#openRoot(long) ISVNEditor.openRoot()} 
+     * is called).
+     * 
+     * <p>
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the provided <code>reporter</code> and <code>editor</code>.
+     * 
+     * @param  revision         a desired revision to get status against; defaults to
+     *                          the latest revision (HEAD)
+     * @param  target           an entry name (optional)  
+     * @param  recursive        if <span class="javakeyword">true</span> and the status scope
+     *                          is a directory, descends recursively, otherwise not 
      * @param  reporter 		a client's reporter-baton
      * @param  editor 			a client's status editor
-     * @throws SVNException
+     * @throws SVNException     in the following cases:
+     *                          <ul>
+     *                          <li>a failure occured while connecting to a repository 
+     *                          <li>the user authentication failed 
+     *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                          </ul>
      * @see 					ISVNReporterBaton
      * @see 					ISVNEditor
      */
     public abstract void status(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
-     * Asks the Repository Access Layer to switch a workin copy to a new URL. 
+     * Updates a path switching it to a new repository location.  
      * 
      * <p>
-     * The same as {@link #update(long, String, boolean, ISVNReporterBaton, ISVNEditor)}
-     * except for this version updates the current directory (or a <code>target</code>
-     * if it's not <code>null</code>) comparing it with the provided <code>url</code>
-     * and resetting its origin URL to that one.
+     * Updates a path as it's described for the {@link #update(long, String, boolean, ISVNReporterBaton, ISVNEditor) update()}
+     * method using the provided <code>reporter</code> and <code>editor</code>, and switching
+     * it to a new repository location. 
      * 
-     * <p> 
-     * This is another form of an update. Namely, it updates the client's working copy 
-     * to mirror a new URL (switching a working copy to a new branch). As for 
-     * the rest, see the description for
-     * {@link #update(long, String, boolean, ISVNReporterBaton, ISVNEditor)}
+     * <p>
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the provided <code>reporter</code> and <code>editor</code>.
      * 
      * @param  url 				a new location in the repository to switch to
-     * @param  revision 		a desired update revision
-     * @param  target 			a path to restrict the update scope
-     * @param  recursive 		<code>true</code> to update the working copy 
-     * 							recursively
-     * @param  reporter 		a client's reporter-baton
-     * @param  editor 			a client's editor
-     * @throws SVNException
+     * @param  revision         a desired revision to make update to; defaults
+     *                          to the latest revision (HEAD)
+     * @param  target           an entry name (optional)  
+     * @param  recursive        if <span class="javakeyword">true</span> and the switch scope
+     *                          is a directory, descends recursively, otherwise not 
+     * @param  reporter         a caller's reporter
+     * @param  editor           a caller's editor
+     * @throws SVNException     in the following cases:
+     *                          <ul>
+     *                          <li>a failure occured while connecting to a repository 
+     *                          <li>the user authentication failed 
+     *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                          </ul>
+     * @see                     #update(long, String, boolean, ISVNReporterBaton, ISVNEditor)
      * @see 					ISVNReporterBaton
      * @see 					ISVNReporter
      * @see 					ISVNEditor
+     * @see                     <a href="http://tmate.org/svn/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
      */
     public abstract void update(SVNURL url, long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
-     * Asks the Repository Access Layer to checkout a working copy. This method is a
-     * kind of an update operation.   
+     * Checks out a directory from a repository .
+     *
+     * <p>
+     * <code>target</code> is the name (one-level path component) of an entry that will 
+     * restrict the scope of the checkout to this entry. In other words <code>target</code> is a child entry of the 
+     * directory represented by the repository location to which this object is set. For
+     * example, if we have something like <code>"/dirA/dirB"</code> in a repository, then
+     * this object's repository location may be set to <code>"svn://host:port/path/to/repos/dirA"</code>,
+     * and <code>target</code> may be <code>"dirB"</code>.
      * 
      * <p>
-     * To checkout a working copy the current session should have been set to a
-     * directory, not a file - i.e. that URL that was used to create 
-     * that in its turn was used to create the current
-     * <code>SVNRepository</code> object, that URL should point to a 
-     * directory; otherwise a SVNException will be thrown. 
+     * If <code>target</code> is <span class="javakeyword">null</span> or empty (<code>""</code>)
+     * then the scope of the checkout operation is the repository location to which
+     * this object is set.
      * 
      * <p>
-     * For more details see description of {@link #update(long, String, boolean, ISVNReporterBaton, ISVNEditor)
-     * update()}.
+     * The provided <code>editor</code> is used to carry out all the work on 
+     * building a local tree of dirs and files being checked out. 
      * 
-     * @param  revision		a revision of the scope that is to be checked out
-     * @param  target 		that is a path (relative to the current repository
-     * 						location URL) to restrict the checkout scope to. It can be 
-     * 						<code>null</code> to check out the entire session root 
-     * 						directory.
-     * @param  recursive 	<code>true</code> if the working copy is to be checked out 
-     * 						recursively; <code>false</code> - to check out just the 
-     * 						entries under the repository location path.
-     * @param  editor 		a client's checkout editor
-     * @throws SVNException	
+     * <p>
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the provided <code>editor</code>.
+     * 
+     * @param  revision     a desired revision of a dir to check out; defaults
+     *                      to the latest revision (HEAD)
+     * @param  target       an entry name (optional)  
+     * @param  recursive    if <span class="javakeyword">true</span> and the checkout 
+     *                      scope is a directory, descends recursively, otherwise not 
+     * @param  editor 		a caller's checkout editor
+     * @throws SVNException	in the following cases:
+     *                      <ul>
+     *                      <li>the checkout scope is not a directory (only dirs can
+     *                      be checked out)
+     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
+     * @see                 #update(long, String, boolean, ISVNReporterBaton, ISVNEditor)
      * @see    				ISVNEditor
+     * 
      */
     public void checkout(long revision, String target, boolean recursive, ISVNEditor editor) throws SVNException {
         final long lastRev = revision >= 0 ? revision : getLatestRevision();
@@ -1037,103 +1353,141 @@ public abstract class SVNRepository {
     
     /* write methods */
     /**
-	 * The same as {@link #getCommitEditor(String, Map, boolean, ISVNWorkspaceMediator)}
-	 * except for it's used when there're no any locks on the working copy files. 
-	 * Also this version is used when working with Subversion servers that do not 
-	 * support file locking (earlier than SVN 1.2).   
+     * Gets an editor for committing changes to a repository. Having got the editor
+     * traverse a local tree of dirs and/or files to be committed, handling them    
+     * with corresponding methods of the editor. 
+     * 
+     * <p>
+     * <code>mediator</code> is used for temporary delta data storage allocations. 
+     * 
+     * <p>
+     * The root path of the commit is the current repository location to which
+     * this object is set.
+     * 
+     * <p>
+     * After the commit has succeeded {@link ISVNEditor#closeEdit() 
+     * ISVNEditor.closeEdit()} returns an <b>SVNCommitInfo</b> object
+     * that contains a new revision number, the commit date, commit author.
+     * 
+     * <p>
+     * This method should be rather used with pre-1.2 repositories.
+     * 
+     * <p>
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the returned commit editor.
 	 * 
-     * @param  logMessage		a message to be set as the value of the "svn:log"
-	 * 							revision property
-     * @param  mediator			a temp files and working copy properties manager
-     * 							for the needs of a commit
-     * @return					an editor to describe a server changes done in the 
-     * 							working copy against its BASE-revision
-	 * @throws SVNException
+     * @param  logMessage       a commit log message
+     * @param  mediator         temp delta storage provider; used also to cache
+     *                          wcprops while committing  
+     * @return                  an editor to commit a local tree of dirs and/or files 
+     * @throws SVNException     in the following cases:
+     *                          <ul>
+     *                          <li>the repository location this object is set to is not a 
+     *                          directory
+     *                          <li>a failure occured while connecting to a repository 
+     *                          <li>the user authentication failed 
+     *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                          </ul>
 	 * @see 					ISVNEditor
 	 * @see 					ISVNWorkspaceMediator
+     * @see                     <a href="http://tmate.org/svn/kb/dev-guide-commit-operation.html">Using ISVNEditor in commit operations</a>
      */
     public ISVNEditor getCommitEditor(String logMessage, final ISVNWorkspaceMediator mediator) throws SVNException {
         return getCommitEditor(logMessage, null, false, mediator);
     }
     
     /**
-     * Gives information about an entry located at a 
-     * <code>path</code> under a specified <code>revision</code>. If the 
-     * <code>revision</code> is invalid (&lt0) it is assigned to the HEAD-revision 
-     * (the latest revision of the repository).
+     * Gives information about an entry located at the specified path in a particular 
+     * revision. 
      * 
-     * @param  path			an entry path (relative to a repository location path)
-     * @param  revision		a revision of the entry 
+     * @param  path			a path relative to the repository location
+     *                      to which this object is set
+     * @param  revision		a revision of the entry; defaults to the latest 
+     *                      revision (HEAD)  
      * @return				an <b>SVNDirEntry</b> containing information about
-     * 						the entry or <span class="javakeyword">null</span> if there's no entry with
-     * 						such <code>path</code> at the <code>revision</code>
-     * @throws SVNException if the <code>revision</code> doesn't exist at all
+     * 						the entry or <span class="javakeyword">null</span> if 
+     *                      there's no entry with at the specified <code>path</code> 
+     *                      under the specified <code>revision</code>
+     * @throws SVNException in the following cases:
+     *                      <ul>
+     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
      */
     public abstract SVNDirEntry info(String path, long revision) throws SVNException;
     
     /**
-	 * Gets an editor for committing changes to a repository using 
-	 * <code>logMessage</code> as a log message for this commit (it 
-	 * will be  the value for the <i>"svn:log"</i> property of a new revision). 
-	 * 
+	 * Gets an editor for committing changes to a repository. Having got the editor
+     * traverse a local tree of dirs and/or files to be committed, handling them    
+     * with corresponding methods of the editor. 
+     * 
 	 * <p>
-	 * The revisions being committed against are passed to 
-	 * the editor methods, starting with a revision argument to 
-	 * {@link ISVNEditor#openRoot(long) ISVNEditor.openRoot(revision)}.
-	 * 
-	 * <p>
-	 * <code>locks</code>, if non-<code>null</code>, is a <code>Map</code> which
- 	 * keys are locked paths in a working copy and each value for a key is a lock 
- 	 * token (its identifier, in other words).  The server checks that the
- 	 * correct token is provided for each committed, locked path. <code>locks</code> 
- 	 * must live during the whole commit operation.
+	 * <code>locks</code> is a map used to provide lock tokens on the locked paths. 
+     * Keys are locked paths in a local tree, and each value for a key is a lock 
+ 	 * token. <code>locks</code> must live during the whole commit operation.
  	 * 
  	 * <p>
- 	 * If <code>keepLocks</code> is <code>true</code>, then locks on
- 	 * committed objects won't be released.  Otherwise, if <code>false</code>, 
- 	 * they will be automatically released.
+ 	 * If <code>keepLocks</code> is <span class="javakeyword">true</span>, then the locked 
+     * paths won't be unlocked after a successful commit. Otherwise, if 
+     * <span class="javakeyword">false</span>, locks will be automatically released.
 	 * 
-	 * <p>
-	 * The path root of the commit is in the current repository location URL.
+     * <p>
+	 * <code>mediator</code> is used for temporary delta data storage allocations. 
+     * 
+     * <p>
+	 * The root path of the commit is the current repository location to which
+     * this object is set.
 	 * 
 	 * <p>
 	 * After the commit has succeeded {@link ISVNEditor#closeEdit() 
-	 * ISVNEditor.closeEdit()} returns an instance of <code>SVNCommitInfo</code>
+	 * ISVNEditor.closeEdit()} returns an <b>SVNCommitInfo</b> object
 	 * that contains a new revision number, the commit date, commit author.
 	 * 
-	 * <p>
-	 * The caller may not perform any Repository Access operations using the current
-	 * <code>SVNRepository</code> before finishing the edit.     
+     * <p>
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the returned commit editor.
      * 
-     * @param  logMessage		a message to be set as the value of the "svn:log"
-	 * 							revision property
-     * @param  locks			a <code>Map</code> containing locked paths (keys)
-     * 							and lock tokens (values)
-     * @param  keepLocks		<code>true</code> to keep existing locks; 
-     * 							<code>false</code> to release all of them
-     * @param  mediator			a temp files and working copy properties manager
-     * 							for the needs of a commit
-     * @return					an editor to describe a server changes done in the 
-     * 							working copy against its BASE-revision
-     * @throws SVNException
+     * @param  logMessage		a commit log message
+     * @param  locks			a map containing locked paths mapped to lock 
+     *                          tokens
+     * @param  keepLocks		<span class="javakeyword">true</span> to keep 
+     *                          existing locks;	<span class="javakeyword">false</span> 
+     *                          to release locks after the commit
+     * @param  mediator			temp delta storage provider; used also to cache
+     *                          wcprops while committing  
+     * @return					an editor to commit a local tree of dirs and/or files 
+     * @throws SVNException     in the following cases:
+     *                          <ul>
+     *                          <li>the repository location this object is set to is not a 
+     *                          directory
+     *                          <li>a failure occured while connecting to a repository 
+     *                          <li>the user authentication failed 
+     *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                          </ul>
+     * @see                     #getCommitEditor(String, ISVNWorkspaceMediator)
+     * @see                     <a href="http://tmate.org/svn/kb/dev-guide-commit-operation.html">Using ISVNEditor in commit operations</a>
      */    
     public abstract ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, final ISVNWorkspaceMediator mediator) throws SVNException;
     
     /**
-     * Gets the lock for the repository file located at the <code>path</code>.
-     * If there's no lock on it the method is to return <code>null</code>.
+     * Gets the lock for the file located at the specified path.
+     * If the file has no lock the method returns <span class="javakeyword">null</span>.
      * 
-     * @param path		a file path in the repository (relative to the repository
-     *  				root directory) for which the lock is returned (if it
-     * 					exists). 
-     * @return			an <b>SVNLock</b> instance (representing the lock) or 
-     * 					<span class="javakeyword">null</span> if there's no lock
-     * @throws 			SVNException
-     * @see				#lock(Map, String, boolean, ISVNLockHandler)
-     * @see				#unlock(Map, boolean, ISVNLockHandler)
-     * @see				#getLocks(String)
-     * @see				SVNLock
-     * @since			SVN 1.2
+     * @param  path		     a file path  
+     * @return			     an <b>SVNLock</b> instance (representing the lock) or 
+     * 					     <span class="javakeyword">null</span> if there's no lock
+     * @throws SVNException  in the following cases:
+     *                       <ul>
+     *                       <li>a failure occured while connecting to a repository 
+     *                       <li>the user authentication failed 
+     *                       (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                       </ul>
+     * @see				     #lock(Map, String, boolean, ISVNLockHandler)
+     * @see				     #unlock(Map, boolean, ISVNLockHandler)
+     * @see				     #getLocks(String)
+     * @see				     org.tmatesoft.svn.core.SVNLock
+     * @since			     SVN 1.2
      */
     public abstract SVNLock getLock(String path) throws SVNException;
 
@@ -1142,15 +1496,18 @@ public abstract class SVNRepository {
 	 * entry (located at the <code>path</code>) is a directory then the method 
 	 * returns locks of all locked files (if any) in it.
      * 
-     * @param path 			a path in the repository for (or just beyond) which
-     * 						all locks are retrieved (the path is relative to the 
-     * 						repository root directory)
+     * @param  path 		a path under which locks are to be retrieved
      * @return 				an array of <b>SVNLock</b> objects (representing locks)
-     * @throws 				SVNException
+     * @throws SVNException in the following cases:
+     *                      <ul>
+     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
      * @see					#lock(Map, String, boolean, ISVNLockHandler)
      * @see					#unlock(Map, boolean, ISVNLockHandler)
      * @see					#getLock(String)
-     * @see					SVNLock
+     * @see                 org.tmatesoft.svn.core.SVNLock
      * @since				SVN 1.2
      */
     public abstract SVNLock[] getLocks(String path) throws SVNException;
@@ -1163,54 +1520,65 @@ public abstract class SVNRepository {
 	 * this function will have to "pull" a username from the client, if
 	 * it hasn't done so already.
 	 * 
-	 * <p>
-	 * The <code>comment</code> is optional: it's either a string
-	 * which describes the lock, or it is <span class="javakeyword">null</span>.
-	 * 
-	 * <p>
+     * <p>
+	 * Each path to be locked is handled with the provided <code>handler</code>.
+     * If a path was successfully locked, the <code>handler</code>'s 
+     * {@link ISVNLockHandler#handleLock(String, SVNLock, SVNException) handleLock()}
+     * is called that receives the path and either a lock object (representing the lock
+     * that was set on the path) or an error exception, if locking failed for that path.
+     * 
+     * <p>
 	 * If any path is already locked by a different user and the
 	 * <code>force</code> flag is <span class="javakeyword">false</span>, then this call fails
-	 * with throwing a <b>SVNException</b>. But if <code>force</code> is
+	 * with throwing an <b>SVNException</b>. But if <code>force</code> is
 	 * <span class="javakeyword">true</span>, then the existing lock(s) will be "stolen" anyway,
-	 * even if the user name (who is trying to lock) does not match the current
-	 * lock's owner. (That's just the way how user can delete any lock on
-	 * the path, and unconditionally create a new lock.)
+	 * even if the user name does not match the current lock's owner.
 	 * 
-	 * <p>
-	 * If a revision is less than the last-changed-revision of
-	 * the file to be locked (or if the file path doesn't exist
-	 * in HEAD-revision), this call also fails with throwing an 
-	 * <b>SVNException</b>.
-     * 
-     * @param pathsToRevisions		a map which keys are paths and values are 
-     * 								revision numbers; paths are strings and revision 
+     * @param  pathsToRevisions		a map which keys are paths and values are 
+     * 								revision numbers (as Longs); paths are strings and revision 
      * 								numbers are Long objects; all paths are assumed to
      * 								be relative to the repository location for which
      * 								the current <b>SVNRepository</b> object was instantiated. 
-     * @param comment				a comment string for the lock. It's optional.
-     * @param force					<span class="javakeyword">true</span> if the file is to be 
+     * @param  comment				a comment string for the lock (optional)
+     * @param  force				<span class="javakeyword">true</span> if the file is to be 
      *                              locked in any way (even if it's already locked by someone else)
-     * @param handler
-     * @throws 						SVNException
+     * @param  handler              if not <span class="javakeyword">null</span>, the lock
+     *                              handler is invoked on each path to be locked  
+     * @throws SVNException         in the following cases:
+     *                              <ul>
+     *                              <li><code>force</code> is <span class="javakeyword">false</span>
+     *                              and a path is already locked by someone else
+     *                              <li>a revision of a path is less than its last changed revision
+     *                              <li>a path does not exist in the latest revision 
+     *                              <li>a failure occured while connecting to a repository 
+     *                              <li>the user authentication failed 
+     *                              (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                              </ul>
      * @see							#unlock(Map, boolean, ISVNLockHandler)
      * @see							#getLocks(String)
      * @see							#getLock(String)
-     * @see							SVNLock
+     * @see                         org.tmatesoft.svn.core.SVNLock
      * @since 						SVN 1.2
      */
     public abstract void lock(Map pathsToRevisions, String comment, boolean force, ISVNLockHandler handler) throws SVNException;
     
     /**
-	 * Removes the repository lock(s) for the file(s) located at the path(s) which 
-	 * are provided as key(s) of <code>pathToTokens</code>. Keys are mapped to values
-	 * of the file lock token(s).
+	 * Removes lock(s) from the file(s). 
 	 * 
 	 * <p>
 	 * Note that unlocking is never anonymous, so any server
 	 * implementing this function will have to "pull" a username from
 	 * the client, if it hasn't done so already.
 	 * 
-	 * <p>
+     * <p>
+     * Each path to be unlocked is handled with the provided <code>handler</code>.
+     * If a path was successfully unlocked, the <code>handler</code>'s 
+     * {@link ISVNLockHandler#handleUnlock(String, SVNLock, SVNException) handleUnlock()}
+     * is called that receives the path and either a lock object (representing the lock
+     * that was removed from the path) or an error exception, if unlocking failed for 
+     * that path.
+     * 
+     * <p>
 	 * If the username doesn't match the lock's owner and <code>force</code> is 
 	 * <span class="javakeyword">false</span>, this method call fails with
 	 * throwing an <b>SVNException</b>.  But if the <code>force</code>
@@ -1223,16 +1591,26 @@ public abstract class SVNRepository {
 	 * fails with throwing a <b>SVNException</b>. However, if <code>force</code> is 
 	 * <span class="javakeyword">true</span> the lock will be removed anyway.
 	 * 
-     * @param pathToTokens	a map which keys are file paths and values are file lock
+     * @param  pathToTokens	a map which keys are file paths and values are file lock
      * 						tokens (both keys and values are strings)
-     * @param force			<span class="javakeyword">true</span> to remove the 
-     * 						lock in any case (in spite of missmatching the lock owner's 
-     * 						name or an incorrect lock token).
-     * @throws 				SVNException
+     * @param  force		<span class="javakeyword">true</span> to remove the 
+     * 						lock in any case - i.e. to "break" the lock
+     * @param  handler      if not <span class="javakeyword">null</span>, the lock
+     *                      handler is invoked on each path to be unlocked
+     * @throws SVNException in the following cases:
+     *                      <ul>
+     *                      <li><code>force</code> is <span class="javakeyword">false</span>
+     *                      and the name of the user who tries to unlock a path does not match
+     *                      the lock owner
+     *                      <li>a lock token is incorrect for a path
+     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
      * @see 				#lock(Map, String, boolean, ISVNLockHandler)
      * @see					#getLocks(String)
      * @see					#getLock(String)
-     * @see 				SVNLock
+     * @see                 org.tmatesoft.svn.core.SVNLock
      * @since				SVN 1.2
      */
     public abstract void unlock(Map pathToTokens, boolean force, ISVNLockHandler handler) throws SVNException;

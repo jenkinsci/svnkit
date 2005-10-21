@@ -72,6 +72,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @version 1.0
  * @author  TMate Software Ltd.
  * @see     SVNRepository
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public abstract class SVNRepositoryFactory {
     

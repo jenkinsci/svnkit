@@ -19,145 +19,131 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
- * The <b>ISVNEditor</b> interface provides methods that should be used
- * to follow  repository server's instructions on how the client's command (update,
- * switch, checkout, status, diff, commit) should be handled depending on possible 
- * changes that have been applied to the client's working copy and/or its origin in 
- * the repository . 
+ * The <b>ISVNEditor</b> interface is used by <b>SVNRepository</b> to 
+ * update versioned files/dirs, check out files/dirs from a repository, 
+ * commit changes to a repository, take status of files/dirs,
+ * get differences between files.
  * 
  * <p>
- * <b>In update-like operations:</b>
- * <p>
- * When having the working copy revisions described to the server (by making reports
- * with the help of <code>ISVNReporter</code> from within 
- * {@link ISVNReporterBaton#report(ISVNReporter) ISVNReporterBaton.report()}) the
- * server now knows of the working copy state (revisions of all its entries) and 
- * starts performing the client's requested operation. This means the server sends
- * commands to the client's Repository Access Layer which parses them and translates
- * to appropriate calls of <code>ISVNEditor</code>'s methods.
+ * When used for updating (checking out, getting differences or status), an 
+ * implementor should provide its own appropriate implementation of the 
+ * <b>ISVNEditor</b> interface along with a reporter baton (<b>ISVNReposrterBaton</b>)
+ * to a corresponding method of an <b>SVNRepository</b> driver. Reporter baton
+ * will be used to describe the state of local dirs/files - their current revisions,
+ * whether a file/dir is deleted or switched. An editor is invoked after the reporter 
+ * baton finishes its work. It is used to "edit" the state of files/dirs, where
+ * "edit" may mean anything: applying changes in updating, switching, checking out (what 
+ * really changes the state), or handling changes in getting status or differences (what is 
+ * only used to inform about, show, separately store changes, and so on). The concrete behaviour
+ * of the editor is implemented by the provider of that editor.      
  * 
  * <p>
- * <b>In a commit:</b>
- * <p>
- * A commit editor is used to describe a repository server all changes done against
- * the BASE-revision of the working copy.
+ * The other kind of using <b>ISVNEditor</b> is committing changes to a repository.
+ * Here an editor is given to a caller, and the caller himself describes the changes
+ * of local files/dirs. All that collected info is then committed in a single transaction
+ * when a caller invokes the {@link #closeEdit()} method of the editor.
  * 
+ * For more information on using editors, please, read these on-line articles: 
+ * <ul> 
+ * <li><a href="http://tmate.org/svn/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
+ * <li><a href="http://tmate.org/svn/kb/dev-guide-commit-operation.html">Using ISVNEditor in commit operations</a>
+ * </ul>
+ *  
  * @version 1.0
  * @author  TMate Software Ltd.
- * @see		SVNRepository
+ * @see		ISVNReporterBaton
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public interface ISVNEditor {
     /**
-     * Specifies the target revision number a working copy (WC) to be updated to
-     * (or the revision number the WC would have if it is updated).
-     * 
-     * <p>
-     * This routine is not needed for a commit editor as the WC will be driven 
-     * to a new revision at the end of the commit (after {@link #closeEdit() 
-     * closeEdit()} returns).
-     * 
-     * @param  revision			the revision number the WC is to have 
-     * 							(may be potentially) as a result of the client's
-     * 							command
+     * Sets the target revision the operation is running for. For example, 
+     * the target revision to which an update is running.
+     *  
+     * @param  revision			a revision number
      * @throws SVNException
      */
     public void targetRevision(long revision) throws SVNException;
     
     /**
-     * Starts processing from the parent directory the command was run for.
-     * The <code>revision</code> is a revision number for this directory. All
+     * Opens the root directory on which the operation was invoked. All
      * property changes as well as entries adding/deletion will be applied to this
      * root directory.
+     * When coming back up to this root (after traversing the entire tree) you
+     * should close the root by calling {@link #closeDir()}.
      * 
-     * @param  revision			a revision number for the command parent directory 			
+     * @param  revision			the revision number of the root directory 			
      * @throws SVNException
      */
     public void openRoot(long revision) throws SVNException;
     
     /**
-     * Performs actions on deleting (marked as deleted) an entry at a <code>path</code>
-     * at a <code>revision</code>. 
-     * 
+     * Deletes an entry. 
      * <p>
-     * If the command is <i>commit</i> this method describes a repository
-     * server that the entry at the <code>path</code> and at the <code>revision</code>
-     * was deleted by the client. If it's a kind of an <i><code>update</code></i>
-     * the routine performs the fact of deletion of this entry in the repository itself. 
-     * 
-     * @param  path			a relative pathway within a working copy directory where the 
-     * 						command was	initiated by the client		
+     * In a commit - deletes an entry from a repository. In an update - 
+     * deletes an entry locally (since it has been deleted in the repository). 
+     * In a status - informs that an entry has been deleted. 
+     *  
+     * @param  path			an entry path relative to the root		
+     *                      directory opened by {@link #openRoot(long) openRoot()} 
      * @param  revision		the revision number of <code>path</code>
      * @throws SVNException 
      */
     public void deleteEntry(String path, long revision) throws SVNException;
     
     /**
-     * Marks the direcory at a <code>path</code> as absent (being still versioned but
-     * currently missing in a working copy).
+     * Says that a directory item is missing. Although it may be still
+     * under version control, but it's currently absent. 
      * 
-     * @param  path				a relative path within a working copy
+     * @param  path			 a dir path relative to the root       
+     *                       directory opened by {@link #openRoot(long) openRoot()}
      * @throws SVNException
      */
     public void absentDir(String path) throws SVNException;
     
     /**
-     * Marks the file at a <code>path</code> as absent (being still versioned but
-     * currently missing in a working copy).
+     * Says that a file item is missing. Although it may be still
+     * under version control, but it's currently absent. 
      * 
-     * @param  path				a relative path within a working copy
+     * @param  path				a file path relative to the root       
+     *                          directory opened by {@link #openRoot(long) openRoot()}
      * @throws SVNException
      */
     public void absentFile(String path) throws SVNException;
     
     /**
-     * "Adds" a directory to a working copy.
+     * Adds a directory.
      * 
      * <p>
-     * Performs adding a directory to a working copy (WC) (in <i>update</i>-like 
-     * commands) or describes adding a directory to a repository during a <i>commit</i>;
-     * in a <code>status</code> command (only when the WC is being compared with the 
-     * repository) it says of the fact of adding a directory to the repository origin
-     * of the WC and how it was exactly added (just added/replaced/branched).
-     * 
-     * <p>
-     * If the current running command this editor is used for is a <i>commit</i> and 
-     * the directory is branched off from another directory in the repository then 
-     * <code>copyFromPath</code> and <code>copyFromRevision</code> are the path 
-     * (relative to the repository root) and the revision respectively for the 
-     * original directory being copied.
+     * In a commit - adds a new directory to a repository. In an update - locally adds
+     * a directory that was added in the repository. In a status - informs about a new
+     * directory scheduled for addition.
      *   
-     * @param  path					a directory path within a working copy relative
-     * 								to the currently "opened" directory  
-     * @param  copyFromPath			a path where the directory is to be copied from
-     * 								(when branching); relative to the repository root
-     * @param  copyFromRevision		the revision of the original directory located at
-     * 								the <code>copyFromPath</code> (when branching)
+     * <p>
+     * If <code>copyFromPath</code> is not <span class="javakeyword">null</span> then it says
+     * that <code>path</code> is copied from <code>copyFromPath</code> located in 
+     * <code>copyFromRevision</code>.
+     *    
+     * @param  path					a directory path relative to the root       
+     *                              directory opened by {@link #openRoot(long) openRoot()}  
+     * @param  copyFromPath			an ancestor of the added directory
+     * @param  copyFromRevision		the revision of the ancestor
      * @throws SVNException
      */
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException;
     
     /**
-     * Performs going downwards to an inner directory entry of a working copy for
-     * further modifications of its properties and/or entries.
+     * Opens a directory. All property changes as well as entries 
+     * adding/deletion can be applied to this directory. 
      * 
-     * <p>
-     * If the current running command this editor is used for is a <i>commit</i> then
-     * the <code>revision</code> is used for describing the directory's revision to
-     * a repository server.
-     * <p>
-     * If the <code>path</code> is <code>""</code> then the 
-     * {@link #openRoot(long) openRoot()} is actually called.
-     * 
-     * @param path			a path within a working copy relative to the currently
-     * 						"opened" directory 
-     * @param revision		the revision of the directory being opened
+     * @param path			a directory path relative to the root       
+     *                      directory opened by {@link #openRoot(long) openRoot()} 
+     * @param revision		the revision of the directory
      * @throws SVNException
      */
 	public void openDir(String path, long revision) throws SVNException;
     
 	/**
-     * Changes the value of a property of the currently "opened" directory.
+     * Changes the value of a property of the currently "opened"/"added" directory.
      * 
      * @param  name				the name of a property to be changed
      * @param  value			new property value
@@ -167,110 +153,110 @@ public interface ISVNEditor {
     public void changeDirProperty(String name, String value) throws SVNException;
 
     /**
-     * Performs going upwards from the currently "opened" directory fixing all
-     * changes of its properties and/or entries.
+     * Closes the currently opened directory fixing all changes of its 
+     * properties and/or entries. Closing a directory picks up an editor
+     * to a parent directory.
      * 
      * @throws SVNException
      */
     public void closeDir() throws SVNException;
     
     /**
-     * "Adds" a file to a working copy.
+     * Adds a file.
      * 
      * <p>
-     * Performs adding a file into the currently "opened" directory for a working copy 
-     * (WC) (in <i>update</i>-like commands) or describes adding a file to a repository 
-     * during a <i>commit</i>; in a <code>status</code> command (only when the WC is 
-     * being compared with the repository) it says of the fact of adding a file to the
-     * repository origin of the WC and how it was exactly added (just added/replaced/
-     * branched).
-     * 
+     * In a commit - adds a new file to a repository. In an update - locally adds
+     * a file that was added in the repository. In a status - informs about a new
+     * file scheduled for addition.
+     *   
      * <p>
-     * If the current running command this editor is used for is a <i>commit</i> and 
-     * the file is branched off from another file in the repository then 
-     * <code>copyFromPath</code> and <code>copyFromRevision</code> are the path 
-     * (relative to the repository root) and the revision respectively for the 
-     * original file being copied.
+     * If <code>copyFromPath</code> is not <span class="javakeyword">null</span> then it says
+     * that <code>path</code> is copied from <code>copyFromPath</code> located in 
+     * <code>copyFromRevision</code>.
      * 
-     * @param  path					a file path relative to the currently "opened"
-     * 								directory				
-     * @param  copyFromPath			a path where the file is to be copied from
-     * 								(when branching); relative to the repository root
-     * @param  copyFromRevision		the revision of the original file located at
-     * 								the <code>copyFromPath</code> (when branching)
+     * @param  path					a file path relative to the root       
+     *                              directory opened by {@link #openRoot(long) openRoot()}				
+     * @param  copyFromPath         an ancestor of the added file
+     * @param  copyFromRevision     the revision of the ancestor
      * @throws SVNException
      */
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException;
     
     /**
-     * "Opens" a file in the currently "opened" directory - that is all property 
-     * changes and/or any text delta (if the file has been changed in a repository)
-     * will be applied to this file until it's closed.
+     * Opens a file. After it's opened, apply delta to its contents or change the 
+     * file properties. 
+     *  
+     * @param path          a file path relative to the root       
+     *                      directory opened by {@link #openRoot(long) openRoot()} 
+     * @param revision      the revision of the file
      * 
-     * <p>
-     * In a <i>commit</i> command as well as in a <i>status</i> one the 
-     * <code>revision</code> is used to describe the revision of the file.
-     * 
-     * @param  path				a file path relative to the currently "opened" 
-     * 							directory		
-     * @param  revision			a file revision number
      * @throws SVNException
      */
     public void openFile(String path, long revision) throws SVNException;
     
     /**
-     * Applies a text delta (if any) to the currently "opened" file which contents 
-     * differ from its origin in the repository. To be sure that the delta will
-     * be applied correctly the server must make certain of the working copy file
-     * contents are the same which the delta was evaluated upon. So, the server
-     * transmits a checksum which the client side will compare with its own one 
-     * evaluated upon the file contents. If both match each other - the delta
-     * is applied, else - possibly file contents were corrupted, an exception is
-     * thrown. 
-     * 
-     * 
+     * Starts applying text delta(s) to an opened file. 
      *  
-     * @param  baseChecksum		a server's checksum for the file to be modified
-     * @throws SVNException		server's and client's checksums differ
+     * @param  path             a file path relative to the root       
+     *                          directory opened by {@link #openRoot(long) openRoot()}                  
+     * @param  baseChecksum		an MD5 checksum for the base file contents (before the
+     *                          file is changed) 
+     * @throws SVNException		if the calculated base file checksum didn't match the expected 
+     *                          <code>baseChecksum</code> 
      */
     public void applyTextDelta(String path, String baseChecksum) throws SVNException;
     
+    /**
+     * Collects a next delta chunk. Returns an ouput stream to write diff window
+     * instructions and new text data. If there are more than one windows for the file,
+     * this method is called several times.
+     * 
+     * @param  path           a file path relative to the root       
+     *                        directory opened by {@link #openRoot(long) openRoot()}
+     * @param  diffWindow     a next diff window
+     * @return                an output stream where instructions and new text data
+     *                        will be written to
+     * @throws SVNException
+     */
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException;
-
+    
+    /**
+     * Finalizes collecting text delta(s) and applies them to file contents.  
+     * 
+     * @param  path           a file path relative to the root       
+     *                        directory opened by {@link #openRoot(long) openRoot()}
+     * @throws SVNException
+     */
     public void textDeltaEnd(String path) throws SVNException;
 
     /**
-     * Changes the value of a property of the currently "opened" file.
+     * Changes the value of a property of an opened file.
      * 
-     * @param  path				file's path
-     * @param  name				a file property name
-     * @param  value			a new value for the property
+     * @param  path			  a file path relative to the root       
+     *                        directory opened by {@link #openRoot(long) openRoot()}
+     * @param  name			  a file property name
+     * @param  value		  a new value for the property
      * @throws SVNException
      */
     public void changeFileProperty(String path, String name, String value) throws SVNException;
     
     /**
-     * "Closes" the currently opened file fixing all changes in its properties
-     * and/or contents. If this file was applied any delta the server is to check
-     * if it was modified properly. It sends a checksum evaluated upon post-diffed
-     * file contents to the client's side where this checksum is compared with the
-     * one evaluated upon the working copy file contents. If they match each other
-     * then the file state is ok, otherwise its contents could have been possibly
-     * corrupted, an exception is thrown.
+     * Closes the opened file fixing all properties and/or contents changes. 
      * 
-     * @param  textChecksum		a server's checksum for the modified file 
-     * @throws SVNException		if server's and client's checksums differ
+     * @param  path          a file path relative to the root       
+     *                       directory opened by {@link #openRoot(long) openRoot()}  
+     * @param  textChecksum	 an MD5 checksum for the modified file 
+     * @throws SVNException	 if the calculated upon the actual changed contents 
+     *                       checksum does not match the expected <code>textChecksum</code>
      */
     public void closeFile(String path, String textChecksum) throws SVNException;
     
     /**
-     * Closes this editor completing the whole operation the editor
-     * was used for (that is updating, committing, checking out, getting status or
-     * diff). As a result it returns the last commit information. 
+     * Closes this editor finalizing the whole operation the editor
+     * was used for. In a commit - sends collected data to commit a transaction. 
      * 
-     * @return 					information of when a working copy was last commited
+     * @return              a committed revision information  					
      * @throws SVNException
-     * @see 					SVNCommitInfo
      */
     public SVNCommitInfo closeEdit() throws SVNException;
     
@@ -278,9 +264,9 @@ public interface ISVNEditor {
      * Aborts the current running editor due to errors occured.
      * 
      * <p>
-     * If an error occurs during the work of this editor, this routine should cause 
-     * the filesystem transaction to be aborted & cleaned up.
-     * 
+     * If an exception is thrown from an editor's method, call this method
+     * to abort the editor.
+     *  
      * @throws SVNException
      */
     public void abortEdit() throws SVNException;

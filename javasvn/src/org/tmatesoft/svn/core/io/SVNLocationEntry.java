@@ -13,16 +13,13 @@
 package org.tmatesoft.svn.core.io;
 
 /**
- * A location entry represents the combination of the two following related matters:
- * <ol>
- * <li>the pathway of a versioned file stored in the repository
- * <li>the revision number of the repository at which the file is located in that pathway
- * </ol>
- * This entity is realized in the public <code>SVNLocationEntry</code> class.
+ * The <b>SVNLocationEntry</b> represents a mapping of a path to its 
+ * revision. That is, the repository path of an item in a particular
+ * revision.  
  * 
  * @version 1.0
- * @author TMate Software Ltd.
- * @see ISVNLocationEntryHandler
+ * @author  TMate Software Ltd.
+ * @see     ISVNLocationEntryHandler
  */
 public class SVNLocationEntry {
     
@@ -30,10 +27,11 @@ public class SVNLocationEntry {
     private String myPath;
     
     /**
-     * Constructs an <code>SVNLocationEntry</code> object.
+     * Constructs an <b>SVNLocationEntry</b> object.
      * 
-     * @param revision the revision number
-     * @param path the file pathway in the reposytory
+     * @param revision  a revision number
+     * @param path      an item's path in the reposytory in 
+     *                  the <code>revision</code>
      */
     public SVNLocationEntry(long revision, String path) {
         myRevision = revision;
@@ -41,18 +39,18 @@ public class SVNLocationEntry {
     }
     
     /**
-     * Get the file path (relative to the <code>URL</code> used to create 
-     * an {@link SVNRepository}).
+     * Gets the path.
      * 
-     * @return a file pathway in the repository.
+     * @return a path 
      */
     public String getPath() {
         return myPath;
     }
+    
     /**
      * Get the revision number.
      * 
-     * @return revision number.
+     * @return a revision number.
      */
     public long getRevision() {
         return myRevision;

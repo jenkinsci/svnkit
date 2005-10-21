@@ -76,13 +76,13 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     }
 
     public void linkPath(SVNURL url, String path,
-            String lockToken, long revison, boolean startEmtpy)
+            String lockToken, long revison, boolean startEmpty)
             throws SVNException {
         String rootURL = SVNPathUtil.getCommonURLAncestor(url.toString(), myRepositoryLocation);
         if (rootURL.length() < myRepositoryLocation.length()) {
             myRepositoryLocation = rootURL;
         }
-        myReporter.linkPath(url, path, lockToken, revison, startEmtpy);
+        myReporter.linkPath(url, path, lockToken, revison, startEmpty);
     }
 
     public void finishReport() throws SVNException {

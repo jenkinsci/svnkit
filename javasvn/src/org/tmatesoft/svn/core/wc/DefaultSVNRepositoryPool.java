@@ -120,6 +120,13 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      * creates a new one for that protocol, caches it in the pool and returns
      * back. 
      * 
+     * <p>
+     * <b>NOTE:</b> be careful when simultaneously using several <b>SVNRepository</b>
+     * drivers for the same protocol - since there can be only one driver object in
+     * the pool per a protocol, creating two objects for the same protocol
+     * with <code>mayReuse</code> set to <span class="javakeyword">true</span>, 
+     * actually returns the same single object stored in the thread pool. 
+     * 
      * @param url             a repository location for which a driver
      *                        is to be created
      * @param mayReuse        if <span class="javakeyword">true</span> then

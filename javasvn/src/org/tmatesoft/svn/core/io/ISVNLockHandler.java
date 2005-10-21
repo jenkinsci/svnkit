@@ -16,12 +16,40 @@ import org.tmatesoft.svn.core.SVNLock;
 
 
 /**
+ * The <b>ISVNLockHandler</b> interface is used to provide some extra 
+ * processing of locked/unlocked paths. 
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
+ * @see     SVNRepository#lock(Map, String, boolean, ISVNLockHandler)
+ * @see     SVNRepository#unlock(Map, boolean, ISVNLockHandler)
  */
 public interface ISVNLockHandler {
-    
+    /**
+     * Handles the path locked.
+     * 
+     * @param  path           a file path relative to the repository
+     *                        root directory         
+     * @param  lock           the lock set on this <code>path</code>
+     * @param  error          if not <span class="javakeyword">null</code> then
+     *                        it's an exception occurred while trying to lock, in 
+     *                        this case <code>lock</code> may be <span class="javakeyword">null</code> 
+     *                        the <code>path</code>
+     * @throws SVNException
+     */
     public void handleLock(String path, SVNLock lock, SVNException error) throws SVNException;
-
+    
+    /**
+     * Handles the path unlocked.
+     * 
+     * @param  path           a file path relative to the repository
+     *                        root directory         
+     * @param  lock           the lock released from this <code>path</code>
+     * @param  error          if not <span class="javakeyword">null</code> then
+     *                        it's an exception occurred while trying to unlock
+     *                        the <code>path</code>, in this case <code>lock</code> 
+     *                        may be <span class="javakeyword">null</code>
+     * @throws SVNException
+     */
     public void handleUnlock(String path, SVNLock lock, SVNException error) throws SVNException;
 }
