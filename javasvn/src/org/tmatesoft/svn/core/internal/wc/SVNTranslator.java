@@ -82,8 +82,7 @@ public class SVNTranslator {
         }
     }
 
-    public static void translate(File src, File dst, byte[] eol, Map keywords,
-            boolean special, boolean expand) throws SVNException {
+    public static void translate(File src, File dst, byte[] eol, Map keywords, boolean special, boolean expand) throws SVNException {
         if (src == null || dst == null) {
             SVNErrorManager.error("svn: Invalid agruments in SVNFileUtil.translate method");
             return;
@@ -105,6 +104,11 @@ public class SVNTranslator {
             }
             return;
 
+        }        
+        if (eol == null && (keywords == null || keywords.isEmpty())) {
+            // no expansion, fast copy.
+            SVNFileUtil.copyFile(src, dst, false);
+            return;
         }
         OutputStream os = SVNFileUtil.openFileForWriting(dst);
         InputStream is = SVNFileUtil.openFileForReading(src);
@@ -154,8 +158,7 @@ public class SVNTranslator {
         return true;
     }
 
-    private static void copy(InputStream src, OutputStream dst, byte[] eol,
-            Map keywords) throws IOException {
+    private static void copy(InputStream src, OutputStream dst, byte[] eol, Map keywords) throws IOException {
         if (keywords != null && keywords.isEmpty()) {
             keywords = null;
         }
