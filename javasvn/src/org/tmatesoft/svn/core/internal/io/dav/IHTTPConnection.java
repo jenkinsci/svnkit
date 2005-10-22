@@ -32,4 +32,6 @@ public interface IHTTPConnection {
     public DAVStatus request(String method, String path, Map header, InputStream body, DefaultHandler handler, int[] okCodes) throws SVNException;
 
     public DAVStatus request(String method, String path, Map header, StringBuffer reqBody, DefaultHandler handler, int[] okCodes) throws SVNException;
+
+    public void clearAuthenticationCache();
 }

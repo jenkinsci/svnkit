@@ -777,4 +777,8 @@ class DefaultHTTPConnection implements IHTTPConnection {
     public SVNAuthentication getLastValidCredentials() {
         return myLastValidAuth;
     }
+
+    public void clearAuthenticationCache() {
+        myLastValidAuth = null;
+    }
 }

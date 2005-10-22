@@ -78,11 +78,10 @@ public class SVNGanymedConnector implements ISVNConnector {
     
                 myOutputStream = mySession.getStdin();
                 myInputStream = mySession.getStdout();
+                new StreamGobbler(mySession.getStderr());
                 if (!SVNGanymedSession.isUsePersistentConnection()) {
                     myConnection = connection;
-                } else {
-                    myInputStream = new StreamGobbler(myInputStream);
-                }
+                } 
                 return;
             } catch (IOException e) {
                 reconnect--;

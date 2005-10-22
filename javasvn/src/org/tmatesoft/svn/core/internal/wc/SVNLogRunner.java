@@ -143,14 +143,12 @@ public class SVNLogRunner {
             SVNProperties props = dir.getProperties(dstName, false);
             boolean executable = SVNFileUtil.isWindows ? false : props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
 
-            SVNTranslator
-                    .translate(dir, dstName, fileName, dstName, true, true);
+            SVNTranslator.translate(dir, dstName, fileName, dstName, true, true);
             if (executable) {
                 SVNFileUtil.setExecutable(dst, true);
             }
             SVNEntry entry = dir.getEntries().getEntry(dstName, true);
-            if (entry.getLockToken() == null
-                    && props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
+            if (entry.getLockToken() == null && props.getPropertyValue(SVNProperty.NEEDS_LOCK) != null) {
                 SVNFileUtil.setReadonly(dst, true);
             }
         } else if (SVNLog.COPY_AND_DETRANSLATE.equals(name)) {

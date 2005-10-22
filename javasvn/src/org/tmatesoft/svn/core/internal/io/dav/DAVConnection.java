@@ -388,4 +388,10 @@ public class DAVConnection {
         myLocks = locks;
         myKeepLocks = keepLocks;
     }
+
+    public void clearAuthenticationCache() {
+        if (myHttpConnection != null) {
+            myHttpConnection.clearAuthenticationCache();
+        }
+    }
 }
