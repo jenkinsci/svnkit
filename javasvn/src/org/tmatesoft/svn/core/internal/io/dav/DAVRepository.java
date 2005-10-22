@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVDateRevisionHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVEditorHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVFileRevisionHandler;
@@ -117,6 +118,13 @@ class DAVRepository extends SVNRepository {
             }
         }
         return super.getRepositoryUUID();
+    }
+    
+    public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
+        if (authManager != getAuthenticationManager() && myConnection != null) {
+            myConnection.clearAuthenticationCache();
+        }
+        super.setAuthenticationManager(authManager);
     }
 
     public long getLatestRevision() throws SVNException {        

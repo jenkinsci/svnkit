@@ -442,4 +442,8 @@ public class CommonsHTTPConnection implements IHTTPConnection, CredentialsProvid
         return new UsernamePasswordCredentials(myLastAuth.getUserName() + ":" + ((SVNPasswordAuthentication) myLastAuth).getPassword());
     }
 
+    public void clearAuthenticationCache() {
+        myLastAuth = null;
+    }
+
 }
