@@ -14,10 +14,13 @@ package org.tmatesoft.svn.cli;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -38,6 +41,8 @@ public abstract class SVNCommand {
     private String myPassword;
 
     private static Map ourCommands;
+    private static Set ourPegCommands;
+    
     private boolean myIsStoreCreds;
     private SVNClientManager myClientManager;
 
@@ -98,6 +103,26 @@ public abstract class SVNCommand {
             //
         }
         return null;
+    }
+
+    public static boolean hasPegRevision(String commandName) {
+        if (commandName == null) {
+            return false;
+        }
+        String fullName = commandName;
+        for (Iterator keys = ourCommands.keySet().iterator(); keys.hasNext();) {
+            String[] names = (String[]) keys.next();
+            for (int i = 0; i < names.length; i++) {
+                if (commandName.equals(names[i])) {
+                    fullName = names[0];
+                    break;
+                }
+            }
+            if (fullName != null) {
+                break;
+            }
+        }
+        return ourPegCommands.contains(fullName);
     }
 
     protected static SVNRevision parseRevision(SVNCommandLine commandLine) {
@@ -171,11 +196,13 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "merge" }, "org.tmatesoft.svn.cli.command.MergeCommand");
         ourCommands.put(new String[] { "export" }, "org.tmatesoft.svn.cli.command.ExportCommand");
         ourCommands.put(new String[] { "cleanup" }, "org.tmatesoft.svn.cli.command.CleanupCommand");
-
         ourCommands.put(new String[] { "lock" }, "org.tmatesoft.svn.cli.command.LockCommand");
         ourCommands.put(new String[] { "unlock" }, "org.tmatesoft.svn.cli.command.UnlockCommand");
-
         ourCommands.put(new String[] { "annotate", "blame", "praise", "ann" }, "org.tmatesoft.svn.cli.command.AnnotateCommand");
+        
+        ourPegCommands = new HashSet();
+        ourPegCommands.addAll(Arrays.asList(
+                new String[] {"cat", "annotate", "checkout", "diff", "export", "info", "ls", "merge", "propget", "proplist"}));
     }
 
     protected static int getLinesCount(String str) {

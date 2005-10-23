@@ -40,7 +40,7 @@ public class SVN {
                 commandLine = new SVNCommandLine(args);
             } catch (SVNException e) {
                 SVNDebugLog.logInfo(e);
-                System.err.println("error: " + e.getMessage());
+                System.err.println(e.getMessage());
                 System.exit(1);
             }
             String commandName = commandLine.getCommandName();
