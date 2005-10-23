@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
@@ -1272,5 +1273,23 @@ public class SVNDirectory {
                 }
             }
         }
+    }
+    
+    public boolean isIgnored(String fileName) throws SVNException {
+        String ignoredProperty = getProperties("", false).getPropertyValue(SVNProperty.IGNORE);
+        if (ignoredProperty == null) {
+            return false;
+        }
+        for (StringTokenizer tokens = new StringTokenizer(ignoredProperty, "\r\n"); tokens.hasMoreTokens();) {
+            String token = tokens.nextToken();
+            if (token.trim().length() == 0) {
+                continue;
+            }
+            if (DefaultSVNOptions.matches(token, fileName)) {
+                return true;
+            }
+        }
+        return false;
+
     }
 }

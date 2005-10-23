@@ -18,7 +18,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
@@ -657,27 +656,11 @@ public class SVNStatusEditor implements ISVNEditor {
                 remoteLock, localLock, allEntryProperties);
     }
 
-    private boolean isIgnored(SVNDirectory dir, String name)
-            throws SVNException {
+    private boolean isIgnored(SVNDirectory dir, String name) throws SVNException {
         if (myOptions.isIgnored(name)) {
             return true;
         }
-        String ignoredProperty = dir.getProperties("", false).getPropertyValue(
-                SVNProperty.IGNORE);
-        if (ignoredProperty == null) {
-            return false;
-        }
-        for (StringTokenizer tokens = new StringTokenizer(ignoredProperty,
-                "\r\n"); tokens.hasMoreTokens();) {
-            String token = tokens.nextToken();
-            if (token.trim().length() == 0) {
-                continue;
-            }
-            if (DefaultSVNOptions.matches(token, name)) {
-                return true;
-            }
-        }
-        return false;
+        return dir != null && dir.isIgnored(name);
     }
 
     private SVNLock getRepositoryLock(SVNURL url) {

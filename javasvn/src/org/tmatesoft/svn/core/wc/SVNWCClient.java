@@ -1826,7 +1826,7 @@ public class SVNWCClient extends SVNBasicClient {
         File[] children = file.listFiles();
         for (int i = 0; children != null && i < children.length; i++) {
             File childFile = children[i];
-            if (getOptions().isIgnored(childFile.getName())) {
+            if (getOptions().isIgnored(childFile.getName()) ||  childDir.isIgnored(childFile.getName())) {
                 continue;
             }
             if (SVNFileUtil.getAdminDirectoryName().equals(childFile.getName())) {
