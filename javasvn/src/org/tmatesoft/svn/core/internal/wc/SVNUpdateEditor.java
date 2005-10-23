@@ -311,24 +311,17 @@ public class SVNUpdateEditor implements ISVNEditor {
             }
         }
         File baseTmpFile = dir.getBaseFile(myCurrentFile.Name, true);
-        SVNFileUtil.copyFile(baseFile, baseTmpFile, false);
-        if (!baseTmpFile.exists()) {
-            SVNFileUtil.createEmptyFile(baseTmpFile);
-        }
         myCurrentFile.TextUpdated = true;
+        myDeltaProcessor.applyTextDelta(baseFile, baseTmpFile, true);
     }
 
     public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
-        File file = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name + ".txtdelta", true);
-        return myDeltaProcessor.textDeltaChunk(file, diffWindow);
+        return myDeltaProcessor.textDeltaChunk(diffWindow);
     }
 
     public void textDeltaEnd(String commitPath) throws SVNException {
-        File baseTmpFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name, true);
-        File targetFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name + ".tmp", true);
-        if (myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile, true)) {
+        if (myDeltaProcessor.textDeltaEnd()) {
             myCurrentFile.Checksum = myDeltaProcessor.getChecksum();
-            SVNFileUtil.rename(targetFile, baseTmpFile);
         }
     }
 

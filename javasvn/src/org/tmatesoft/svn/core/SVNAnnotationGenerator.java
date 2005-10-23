@@ -139,31 +139,26 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         } else {
             myCurrentDate = null;
         }
-        if (myCurrentFile != null) {
-            myCurrentFile.delete();
-        }
-        myCurrentFile = null;
-
         if (myPreviousFile == null) {
             // create previous file.
             myPreviousFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
             SVNFileUtil.createEmptyFile(myPreviousFile);
         }
+        if (myCurrentFile != null) {
+            myCurrentFile.delete();
+        } else {
+            myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");;
+        }
+        myDeltaProcessor.applyTextDelta(myPreviousFile, myCurrentFile, false);
     }
 
     public OutputStream handleDiffWindow(String token, SVNDiffWindow diffWindow) throws SVNException {
-        if (myCurrentFile == null) {
-            myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
-            SVNFileUtil.createEmptyFile(myCurrentFile);
-        }        
-        File tmpFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
-        return myDeltaProcessor.textDeltaChunk(tmpFile, diffWindow);
+        return myDeltaProcessor.textDeltaChunk(diffWindow);
     }
 
     public void handleDiffWindowClosed(String token) throws SVNException {
-        if (!myDeltaProcessor.textDeltaEnd(myPreviousFile, myCurrentFile, false)) {
-            return;
-        }
+        myDeltaProcessor.textDeltaEnd();
+        
         RandomAccessFile left = null;
         RandomAccessFile right = null;
         try {
@@ -223,7 +218,9 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                 }
             }
         }
+        System.out.println("renaming " + myCurrentFile + " to " + myPreviousFile);
         SVNFileUtil.rename(myCurrentFile, myPreviousFile);
+        System.out.println("renamed");
     }
     
     /**

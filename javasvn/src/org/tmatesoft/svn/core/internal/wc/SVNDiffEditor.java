@@ -222,22 +222,17 @@ public class SVNDiffEditor implements ISVNEditor {
                 info = info.myParent;
             }
         }
-        if (tmpFile != null) {
-            tmpFile.deleteOnExit();
-        }
         // it will be repos file.
         myCurrentFile.myFile = tmpFile;
-        SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
+        myDeltaProcessor.applyTextDelta(myCurrentFile.myBaseFile, myCurrentFile.myFile, false);
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        String fileName = SVNPathUtil.tail(myCurrentFile.myPath);
-        File chunkFile = SVNFileUtil.createUniqueFile(myCurrentFile.myFile.getParentFile(), fileName, ".tmp");
-        return myDeltaProcessor.textDeltaChunk(chunkFile, diffWindow);
+        return myDeltaProcessor.textDeltaChunk(diffWindow);
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        myDeltaProcessor.textDeltaEnd(myCurrentFile.myBaseFile, myCurrentFile.myFile, false);
+        myDeltaProcessor.textDeltaEnd();
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {
@@ -317,6 +312,9 @@ public class SVNDiffEditor implements ISVNEditor {
                 myDiffGenerator.displayPropDiff(displayPath, base, diff,
                         myResult);
             }
+        }
+        if (myCurrentFile.myFile != null) {
+            myCurrentFile.myFile.delete();
         }
     }
 

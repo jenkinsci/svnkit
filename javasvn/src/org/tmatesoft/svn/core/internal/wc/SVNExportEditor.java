@@ -118,26 +118,19 @@ public class SVNExportEditor implements ISVNEditor {
 
     public void applyTextDelta(String commitPath, String baseChecksum)
             throws SVNException {
+        myCurrentTmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory, myCurrentFile.getName(), ".tmp");
+        myDeltaProcessor.applyTextDelta(null, myCurrentTmpFile, true);
     }
 
     public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
-        File tmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory,  myCurrentFile.getName(), ".tmp");
-        return myDeltaProcessor.textDeltaChunk(tmpFile, diffWindow);
+        return myDeltaProcessor.textDeltaChunk(diffWindow);
     }
     
     private String myChecksum;
 
     public void textDeltaEnd(String commitPath) throws SVNException {
-        // apply all deltas
-        myCurrentTmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory, myCurrentFile.getName(), ".tmp");
-        SVNFileUtil.createEmptyFile(myCurrentTmpFile);
-        File fakeBase = SVNFileUtil.createUniqueFile(myCurrentDirectory, myCurrentFile.getName(), ".tmp");
-        try {
-            myDeltaProcessor.textDeltaEnd(fakeBase, myCurrentTmpFile, true);
-            myChecksum = myDeltaProcessor.getChecksum();
-        } finally {
-            fakeBase.delete();
-        }
+        myDeltaProcessor.textDeltaEnd();
+        myChecksum = myDeltaProcessor.getChecksum();
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {

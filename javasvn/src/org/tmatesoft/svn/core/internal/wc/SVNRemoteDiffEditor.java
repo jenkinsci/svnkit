@@ -166,21 +166,20 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
+        myDeltaProcessor.applyTextDelta(myCurrentFile.myBaseFile, myCurrentFile.myFile, false);
     }
 
     public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
-        File chunkFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(myCurrentFile.myPath), ".chunk");
-        return myDeltaProcessor.textDeltaChunk(chunkFile, diffWindow);
+        return myDeltaProcessor.textDeltaChunk(diffWindow);
     }
 
     public void textDeltaEnd(String commitPath) throws SVNException {
-        File baseTmpFile = myCurrentFile.myBaseFile;
-        File targetFile = myCurrentFile.myFile;
-        myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile, false);
+        myDeltaProcessor.textDeltaEnd();
     }
 
     public void closeFile(String commitPath, String textChecksum)
             throws SVNException {
+        myDeltaProcessor.close();
         String displayPath = SVNPathUtil.append(myBasePath, myCurrentFile.myPath);
         if (myCurrentFile.myFile != null) {
             String mimeType1 = (String) myCurrentFile.myBaseProperties
