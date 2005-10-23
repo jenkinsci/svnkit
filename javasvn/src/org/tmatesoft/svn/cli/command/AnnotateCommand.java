@@ -65,7 +65,7 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
                 logClient.doAnnotate(path, pegRevision, SVNRevision.UNDEFINED, endRevision, this);
             } catch (SVNException e) {
                 if (e.getMessage() != null && e.getMessage().indexOf("binary") >= 0) {
-                    out.println("Skipping binary file: '" + SVNFormatUtil.formatPath(path) + "'");
+                    err.println("Skipping binary file: '" + SVNFormatUtil.formatPath(path) + "'");
                 } else {
                     throw e;
                 }
