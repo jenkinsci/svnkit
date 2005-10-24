@@ -147,7 +147,7 @@ public class SVNMergeEditor implements ISVNEditor {
         if (myCurrentDirectory.myPropertyDiff != null) {
             SVNDirectory dir = myWCAccess
                     .getDirectory(myCurrentDirectory.myWCPath);
-            if (dir == null) {
+            if (dir == null && !myMerger.isDryRun()) {
                 SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess,
                         myCurrentDirectory.myWCPath, SVNEventAction.SKIP, null,
                         null, SVNNodeKind.DIR);
@@ -155,12 +155,13 @@ public class SVNMergeEditor implements ISVNEditor {
                 myCurrentDirectory = myCurrentDirectory.myParent;
                 return;
             }
-            // no need to do this if it is dry run?
-            propStatus = myMerger.directoryPropertiesChanged(
-                    myCurrentDirectory.myWCPath,
-                    myCurrentDirectory.myPropertyDiff);
+            if (!myMerger.isDryRun() || dir != null) {
+                propStatus = myMerger.directoryPropertiesChanged(
+                        myCurrentDirectory.myWCPath,
+                        myCurrentDirectory.myPropertyDiff);
+            }
         }
-        if (propStatus != SVNStatusType.UNCHANGED) {
+        if (!myCurrentDirectory.myIsAdded && propStatus != SVNStatusType.UNCHANGED) {
             SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess,
                     myCurrentDirectory.myWCPath, SVNEventAction.UPDATE_UPDATE,
                     null, propStatus, SVNNodeKind.DIR);
