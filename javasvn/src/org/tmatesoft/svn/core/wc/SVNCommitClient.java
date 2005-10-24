@@ -352,6 +352,10 @@ public class SVNCommitClient extends SVNBasicClient {
      *                          </ul>
      */
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, boolean recursive) throws SVNException {
+        return doImport(path, dstURL, commitMessage, true, recursive);
+    }
+    
+    public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, boolean useGlobalIgnores, boolean recursive) throws SVNException {
         // first find dstURL root.
         SVNRepository repos = null;
         SVNFileType srcKind = SVNFileType.getType(path);
@@ -403,7 +407,7 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         boolean changed;
         if (srcKind == SVNFileType.DIRECTORY) {
-            changed = importDir(path, path, newDirPath, recursive, commitEditor);
+            changed = importDir(path, path, newDirPath, recursive, useGlobalIgnores, commitEditor);
         } else {
             changed = importFile(path.getParentFile(), path, srcKind, filePath, commitEditor);
         }
@@ -821,7 +825,7 @@ public class SVNCommitClient extends SVNBasicClient {
         return packetsArray;        
     }
 
-    private boolean importDir(File rootFile, File dir, String importPath, boolean recursive, ISVNEditor editor) throws SVNException {
+    private boolean importDir(File rootFile, File dir, String importPath, boolean useGlobalIgnores, boolean recursive, ISVNEditor editor) throws SVNException {
         checkCancelled();
         File[] children = dir.listFiles();
         boolean changed = false;
@@ -833,7 +837,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
                 continue;
             }
-            if (getOptions().isIgnored(file.getName())) {
+            if (!useGlobalIgnores && getOptions().isIgnored(file.getName())) {
                 continue;
             }
             String path = importPath == null ? file.getName() : SVNPathUtil.append(importPath, file.getName());
@@ -845,7 +849,7 @@ public class SVNCommitClient extends SVNBasicClient {
                         file, SVNEventAction.COMMIT_ADDED, SVNNodeKind.DIR,
                         null);
                 handleEvent(event, ISVNEventHandler.UNKNOWN);
-                importDir(rootFile, file, path, recursive, editor);
+                importDir(rootFile, file, path, useGlobalIgnores, recursive, editor);
                 editor.closeDir();
             } else {
                 changed |= importFile(rootFile, file, fileType, path, editor);

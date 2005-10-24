@@ -48,7 +48,8 @@ public class ImportCommand extends SVNCommand {
             commitClient.getOptions().setUseAutoProperties(true);
         }
 
-        SVNCommitInfo info = commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, recursive);
+        boolean noIgnore = getCommandLine().hasArgument(SVNArgument.NO_IGNORE);
+        SVNCommitInfo info = commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, !noIgnore, recursive);
         if (info != SVNCommitInfo.NULL) {
             out.println();
             out.println("Imported revision " + info.getNewRevision() + ".");
