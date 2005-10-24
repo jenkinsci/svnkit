@@ -18,10 +18,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 
 /**
@@ -47,41 +44,6 @@ public class CommitCommand extends SVNCommand {
             out.println();
             out.println("Committed revision " + result.getNewRevision() + ".");
         }
-    }
-
-    private String getCommitMessage() throws SVNException {
-        String fileName = (String) getCommandLine().getArgumentValue(SVNArgument.FILE);
-        if (fileName != null) {
-            FileInputStream is = null;
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            try {
-                is = new FileInputStream(fileName);
-                while (true) {
-                    int r = is.read();
-                    if (r < 0) {
-                        break;
-                    }
-                    if (r == 0) {
-                        // invalid
-                        throw new SVNException("error: commit message contains a zero byte");
-                    }
-                    bos.write(r);
-                }
-            } catch (IOException e) {
-                throw new SVNException(e);
-            } finally {
-                try {
-                    if (is != null) {
-                        is.close();
-                    }
-                    bos.close();
-                } catch (IOException e) {
-                    throw new SVNException(e);
-                }
-            }
-            return new String(bos.toByteArray());
-        }
-        return (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
     }
 
     private void checkEditorCommand() throws SVNException {

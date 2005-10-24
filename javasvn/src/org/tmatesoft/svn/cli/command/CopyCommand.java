@@ -83,7 +83,7 @@ public class CopyCommand extends SVNCommand {
             return;
         }
 
-        String commitMessage = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
+        String commitMessage = getCommitMessage();
         getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
         SVNCopyClient updater = getClientManager().getCopyClient();
         SVNCommitInfo result = updater.doCopy(SVNURL.parseURIEncoded(srcURL), srcRevision, SVNURL.parseURIEncoded(dstURL), false, commitMessage);
@@ -111,7 +111,7 @@ public class CopyCommand extends SVNCommand {
         if (matchTabsInPath(srcPath, err) || matchTabsInURL(dstURL, err)) {
             return;
         }
-        String message = (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
+        String message = getCommitMessage();
         SVNRevision revision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.WORKING;

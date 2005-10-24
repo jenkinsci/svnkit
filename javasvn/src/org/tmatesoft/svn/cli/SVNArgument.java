@@ -56,6 +56,7 @@ public abstract class SVNArgument {
     public static final SVNArgument DRY_RUN = createUnaryArgument(new String[] { "--dry-run" });
     public static final SVNArgument INCREMENTAL = createUnaryArgument(new String[] { "--incremental" });
     public static final SVNArgument XML = createUnaryArgument(new String[] { "--xml" });
+    public static final SVNArgument LIMIT = createStringArgument(new String[] { "--limit" });
 
     public static SVNArgument findArgument(String name) {
         for (Iterator arguments = ourArguments.iterator(); arguments.hasNext();) {
@@ -105,6 +106,7 @@ public abstract class SVNArgument {
         ourArguments.add(SVNArgument.REV_PROP);
         ourArguments.add(SVNArgument.INCREMENTAL);
         ourArguments.add(SVNArgument.XML);
+        ourArguments.add(SVNArgument.LIMIT);
         ourArguments.add(SVNArgument.STOP_ON_COPY);
     }
 
