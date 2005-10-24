@@ -573,10 +573,12 @@ public class SVNUpdateClient extends SVNBasicClient {
                             (String) properties.get(SVNProperty.LAST_AUTHOR),
                             (String) properties.get(SVNProperty.COMMITTED_DATE),
                             (String) properties.get(SVNProperty.COMMITTED_REVISION));
-            if (eolStyle == null) {
-                eolStyle = (String) properties.get(SVNProperty.EOL_STYLE);
+            byte[] eols = null;
+            if (SVNProperty.EOL_STYLE_NATIVE.equals(properties.get(SVNProperty.EOL_STYLE))) {
+                eols = SVNTranslator.getWorkingEOL(eolStyle != null ? eolStyle : (String) properties.get(SVNProperty.EOL_STYLE));
+            } else if (properties.containsKey(SVNProperty.EOL_STYLE)) {
+                eols = SVNTranslator.getWorkingEOL((String) properties.get(SVNProperty.EOL_STYLE));
             }
-            byte[] eols = SVNTranslator.getWorkingEOL(eolStyle);
             SVNTranslator.translate(tmpFile, dstPath, eols, keywords, properties.get(SVNProperty.SPECIAL) != null, true);
             tmpFile.delete();
             if (properties.get(SVNProperty.EXECUTABLE) != null) {
