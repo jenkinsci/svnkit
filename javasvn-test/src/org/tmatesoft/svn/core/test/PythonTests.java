@@ -130,19 +130,13 @@ public class PythonTests {
 			final String testFile = suiteName + "_tests.py";
 			tokens = tokens.subList(1, tokens.size());
 
-			if (tokens.isEmpty()) {
-				System.out.println("PROCESSING ALL " + testFile);
-				processTestCase(pythonLauncher, testFile, options, "", url);
-			}
-			else {
-			    final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
-				final List testCases = combineTestCases(tokens, availabledTestCases);
+		    final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
+			final List testCases = !tokens.isEmpty() ? combineTestCases(tokens, availabledTestCases) : availabledTestCases;
 
-				System.out.println("PROCESSING " + testFile + " " + testCases);
-				for (Iterator it = testCases.iterator(); it.hasNext();) {
-					final Integer testCase = (Integer)it.next();
-					processTestCase(pythonLauncher, testFile, options, String.valueOf(testCase), url);
-				}
+			System.out.println("PROCESSING " + testFile + " " + testCases);
+			for (Iterator it = testCases.iterator(); it.hasNext();) {
+				final Integer testCase = (Integer)it.next();
+				processTestCase(pythonLauncher, testFile, options, String.valueOf(testCase), url);
 			}
             for (int i = 0; i < ourLoggers.length; i++) {
                 ourLoggers[i].endSuite(suiteName);
@@ -209,7 +203,9 @@ public class PythonTests {
                         end = i;
                     }
                     for(int i = start; i <= end; i++) {
-                        combinedTestCases.add(new Integer(i));
+                        if (availableTestCases.contains(new Integer(i))) {
+                            combinedTestCases.add(new Integer(i));
+                        }
                     }
                 } catch (NumberFormatException nfe) {
                 }
@@ -226,7 +222,7 @@ public class PythonTests {
 
 			if (testCase.intValue() < 0) {
 				combinedTestCases.remove(new Integer(-testCase.intValue()));
-			} else {
+			} else if (availableTestCases.contains(testCase)) {
                 combinedTestCases.add(testCase);
 			}
 		}
@@ -271,7 +267,7 @@ public class PythonTests {
 			}
 
 			if (tokenizer.hasMoreTokens()) {
-				final String hint = tokenizer.nextToken();
+				final String hint = tokenizer.nextToken().trim();
 				if (hint.equalsIgnoreCase("SKIP") || hint.equalsIgnoreCase("XFAIL")) {
 					continue;
 				}
@@ -285,7 +281,6 @@ public class PythonTests {
 				ex.printStackTrace(System.err);
 			}
 		}
-
 		return tests;
 	}
 
