@@ -93,6 +93,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     private List myLines;
     private SVNDeltaProcessor myDeltaProcessor;
     private ISVNEventHandler myCancelBaton;
+    private long myStartRevision;
     
     /**
      * Constructs an annotation generator object. A user may want to have
@@ -105,7 +106,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      * @param cancelBaton    a baton which is used to check if an operation 
      *                       is cancelled
      */
-    public SVNAnnotationGenerator(String path, File tmpDirectory, ISVNEventHandler cancelBaton) {
+    public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, ISVNEventHandler cancelBaton) {
         myTmpDirectory = tmpDirectory;
         myCancelBaton = cancelBaton;
         myPath = path;
@@ -114,6 +115,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         }
         myLines = new ArrayList();
         myDeltaProcessor = new SVNDeltaProcessor();
+        myStartRevision = startRevision;
     }
     
     public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException {
@@ -123,18 +125,19 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             SVNErrorManager.error("svn: Cannot calculate blame information for binary file '" + myPath + "'");
         }
         myCurrentRevision = fileRevision.getRevision();
+        boolean known = fileRevision.getRevision() >= myStartRevision;
         if (myCancelBaton != null) {
             SVNEvent event = SVNEventFactory.createAnnotateEvent(myPath, myCurrentRevision);
             myCancelBaton.handleEvent(event, ISVNEventHandler.UNKNOWN);
             myCancelBaton.checkCancelled();
         }
         Map props = fileRevision.getProperties();
-        if (props != null && props.get(SVNRevisionProperty.AUTHOR) != null) {
+        if (known && props != null && props.get(SVNRevisionProperty.AUTHOR) != null) {
             myCurrentAuthor = props.get(SVNRevisionProperty.AUTHOR).toString();
         } else {
             myCurrentAuthor = null;
         }
-        if (props != null && props.get(SVNRevisionProperty.DATE) != null) {
+        if (known && props != null && props.get(SVNRevisionProperty.DATE) != null) {
             myCurrentDate = SVNTimeUtil.parseDate(fileRevision.getProperties().get(SVNRevisionProperty.DATE).toString());
         } else {
             myCurrentDate = null;
@@ -185,7 +188,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                     // copy all from right.
                     for (int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
                         LineInfo line = new LineInfo();
-                        line.revision = myCurrentRevision;
+                        line.revision = myCurrentDate != null ? myCurrentRevision : -1;
                         line.author = myCurrentAuthor;
                         line.line = result.getRightCache().getLine(j).getBytes();
                         line.date = myCurrentDate;
@@ -218,9 +221,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                 }
             }
         }
-        System.out.println("renaming " + myCurrentFile + " to " + myPreviousFile);
         SVNFileUtil.rename(myCurrentFile, myPreviousFile);
-        System.out.println("renamed");
     }
     
     /**

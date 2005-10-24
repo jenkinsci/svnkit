@@ -37,7 +37,15 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
         SVNLogClient logClient = getClientManager().getLogClient();
         myIsVerbose = getCommandLine().hasArgument(SVNArgument.VERBOSE);
         myPrintStream = out;
-        SVNRevision endRevision = parseRevision(getCommandLine());
+        SVNRevision startRevision = SVNRevision.UNDEFINED;
+        SVNRevision endRevision = SVNRevision.UNDEFINED;
+        String revStr = (String) getCommandLine().getArgumentValue(SVNArgument.REVISION);
+        if (revStr != null && revStr.indexOf(':') > 0) {
+            startRevision = SVNRevision.parse(revStr.substring(0, revStr.indexOf(':')));
+            endRevision = SVNRevision.parse(revStr.substring(revStr.indexOf(':') + 1));
+        } else if (revStr != null) {
+            endRevision = SVNRevision.parse(revStr);
+        }
         if (endRevision == null || !endRevision.isValid()) {
             endRevision = SVNRevision.HEAD;
         }
@@ -45,7 +53,7 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
             String url = getCommandLine().getURL(i);
             SVNRevision pegRevision = getCommandLine().getPegRevision(i);
             try {
-                logClient.doAnnotate(SVNURL.parseURIEncoded(url), pegRevision, SVNRevision.UNDEFINED, endRevision, this);
+                logClient.doAnnotate(SVNURL.parseURIEncoded(url), pegRevision, startRevision, endRevision, this);
             } catch (SVNException e) {
                 if (e.getMessage() != null && e.getMessage().indexOf("binary") >= 0) {
                     out.println("Skipping binary file: '" + url + "'");
@@ -62,7 +70,7 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
             File path = new File(getCommandLine().getPathAt(i)).getAbsoluteFile();
             SVNRevision pegRevision = getCommandLine().getPathPegRevision(i);
             try {
-                logClient.doAnnotate(path, pegRevision, SVNRevision.UNDEFINED, endRevision, this);
+                logClient.doAnnotate(path, pegRevision, startRevision, endRevision, this);
             } catch (SVNException e) {
                 if (e.getMessage() != null && e.getMessage().indexOf("binary") >= 0) {
                     err.println("Skipping binary file: '" + SVNFormatUtil.formatPath(path) + "'");
@@ -72,10 +80,15 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
             }
         }
     }
+
     public void handleLine(Date date, long revision, String author, String line) {
         StringBuffer result = new StringBuffer();
         if (myIsVerbose) {
-            result.append(Long.toString(revision));
+            if (revision >= 0) {
+                result.append(Long.toString(revision));
+            } else {
+                result.append("     -");
+            }
             result.append(' ');
             result.append(author != null ? SVNFormatUtil.formatString(author, 10, false) : "         -");
             result.append(' ');
@@ -92,7 +105,5 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
         }
         result.append(line);
         myPrintStream.println(result.toString());
-
-
     }
 }
