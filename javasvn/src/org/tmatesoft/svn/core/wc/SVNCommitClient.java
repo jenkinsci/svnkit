@@ -354,7 +354,37 @@ public class SVNCommitClient extends SVNBasicClient {
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, boolean recursive) throws SVNException {
         return doImport(path, dstURL, commitMessage, true, recursive);
     }
-    
+
+    /**
+     * Committs an addition of a local unversioned file or directory into 
+     * the repository. If the destination URL (<code>dstURL</code>) contains any
+     * non-existent parent directories they will be automatically created by the
+     * server. 
+     * 
+     * @param  path             a local unversioned file or directory to be imported
+     *                          into the repository
+     * @param  dstURL           a URL-string that represents a repository location
+     *                          where the <code>path</code> will be imported            
+     * @param  commitMessage    a string to be a commit log message
+     * @param  useGlobalIgnores if <span class="javakeyword">true</span> 
+     *                          then those paths that match global ignore patterns controlled 
+     *                          by a config options driver (see {@link ISVNOptions#isIgnored(String) isIgnored()}) 
+     *                          will not be imported, otherwise global ignore patterns are not  
+     *                          used
+     * @param  recursive        this flag is relevant only when the <code>path</code> is 
+     *                          a directory: if <span class="javakeyword">true</span> then the entire directory
+     *                          tree will be imported including all child directories, otherwise 
+     *                          only items located in the directory itself
+     * @return                  information on a new revision as the result
+     *                          of the commit
+     * @throws SVNException     if one of the following is true:
+     *                          <ul>
+     *                          <li><code>dstURL</code> is invalid
+     *                          <li>the path denoted by <code>dstURL</code> already
+     *                          exists
+     *                          <li><code>path</code> contains a reserved name - <i>'.svn'</i>
+     *                          </ul>
+     */
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, boolean useGlobalIgnores, boolean recursive) throws SVNException {
         // first find dstURL root.
         SVNRepository repos = null;

@@ -1449,7 +1449,7 @@ public class SVNWCClient extends SVNBasicClient {
      * info handler. 
      * 
      * <p>
-     * If <code>revision</code> is valid and not {@link SVNRevision#WORKING WORKING} 
+     * If <code>revision</code> is valid and not local,  
      * then information will be collected on remote items (that is taken from
      * a repository). Otherwise information is gathered on local items not
      * accessing a repository.
@@ -1474,6 +1474,34 @@ public class SVNWCClient extends SVNBasicClient {
         doInfo(path, SVNRevision.UNDEFINED, revision, recursive, handler);
     }
     
+    /**
+     * Collects information about Working Copy item(s) and passes it to an 
+     * info handler. 
+     * 
+     * <p>
+     * If <code>revision</code> & <code>pegRevision</code> are valid and not 
+     * local, then information will be collected 
+     * on remote items (that is taken from a repository). Otherwise information 
+     * is gathered on local items not accessing a repository.
+     * 
+     * @param  path            a WC item on which info should be obtained
+     * @param  pegRevision     a revision in which <code>path</code> is first 
+     *                         looked up
+     * @param  revision        a target revision 
+     * @param  recursive       <span class="javakeyword">true</span> to
+     *                         descend recursively (relevant for directories)
+     * @param  handler         a caller's info handler
+     * @throws SVNException    if one of the following is true:
+     *                         <ul>
+     *                         <li><code>path</code> is not under version control
+     *                         <li>can not obtain a URL corresponding to <code>path</code> to 
+     *                         get its information from the repository - there's no such entry
+     *                         <li>if a remote info: <code>path</code> is an item that does not exist in
+     *                         the specified <code>revision</code>
+     *                         </ul>
+     * @see                    #doInfo(File, SVNRevision)
+     * @see                    #doInfo(File, SVNRevision, boolean, ISVNInfoHandler)
+     */
     public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
         if (handler == null) {
             return;

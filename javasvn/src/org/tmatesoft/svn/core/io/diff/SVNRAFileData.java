@@ -22,15 +22,26 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 /**
+ * The <b>SVNRAFileData</b> class represents a random access data storage 
+ * wrapper for files.
+ * 
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
  */
 public class SVNRAFileData implements ISVNRAData {
 
     private RandomAccessFile myFile;
     private File myRawFile;
     private boolean myIsReadonly;
-
+    
+    /**
+     * Creates a new <b>SVNRAFileData</b> representation.
+     * 
+     * @param file     a file resource
+     * @param readonly if <span class="javakeyword">true</span> then 
+     *                 read-only file access is allowed, if <span class="javakeyword">false</span> - 
+     *                 full access is allowed
+     */
     public SVNRAFileData(File file, boolean readonly) {
         myRawFile = file;
         myIsReadonly = readonly;

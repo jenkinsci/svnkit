@@ -19,9 +19,9 @@ import java.io.OutputStream;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
- * The <code>ISVNWorkspaceMediator</code> interface is used for temporary 
+ * The <b>ISVNWorkspaceMediator</b> interface is used for temporary 
  * data storage (mainly instructions and new text data for deltas) as well
- * as for accessing some kind of WC properties.
+ * as for caching and getting some kind of wcprops.
  * 
  * @version	1.0
  * @author 	TMate Software Ltd.

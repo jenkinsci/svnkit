@@ -22,13 +22,43 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 
 
 /**
+ * The <b>SVNAllDeltaGenerator</b> class is a delta generator that 
+ * produces only full contents delta. This kind of delta is not a result of
+ * comparing two sources, but one that contains instructions to copy 
+ * bytes only from new data, where new data is the full contents of a file.
+ * 
+ * <p>
+ * Used to generate diff windows for binary files (that are not generally
+ * compared with base revision files), and for new text files, which contents
+ * are represented as a delta versus empty contents.
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  */
 public class SVNAllDeltaGenerator implements ISVNDeltaGenerator {
 
-	// Accessing ==============================================================
-
+    // Accessing ==============================================================
+    /**
+     * Generates a diff window (windows) containing instructions to apply
+     * delta which is essentially the full contents of the target file. 
+     * 
+     * <p>
+     * If the length of the working file represented by <code>workFile</code>
+     * is more than 100K, then this method devides the full contents into 
+     * a number of copy-from-new-data deltas, where for each delta you have
+     * a 100K chunk of file contents.    
+     * 
+     * @param  commitPath     a file path  
+     * @param  consumer       an editor that receives the generated
+     *                        dif window(s)
+     * @param  workFile       a working version of the file (target file)
+     * @param  baseFile       a base file does not take part in
+     *                        generating diff windows
+     * @throws SVNException   if an i/o error occurred
+     * @see                   ISVNDeltaGenerator#generateDiffWindow(String, ISVNEditor, ISVNRAData, ISVNRAData)
+     * @see                   SVNDiffWindowBuilder#createReplacementDiffWindow(long)
+     * @see                   SVNDiffWindowBuilder#createReplacementDiffWindows(long, int)
+     */
 	public void generateDiffWindow(String commitPath, ISVNEditor consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
         long length = workFile.length();
         if (length == 0) {

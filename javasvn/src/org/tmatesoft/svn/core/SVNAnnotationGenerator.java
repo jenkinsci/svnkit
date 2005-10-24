@@ -103,6 +103,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      * 
      * @param path           a file path (relative to a repository location)
      * @param tmpDirectory   a revision to stop at
+     * @param startRevision  a start revision to begin annotation with
      * @param cancelBaton    a baton which is used to check if an operation 
      *                       is cancelled
      */

@@ -31,13 +31,30 @@ import de.regnis.q.sequence.line.QSequenceLineMedia;
 import de.regnis.q.sequence.line.QSequenceLineResult;
 
 /**
- * @author TMate Software Ltd.
+ * The <b>SVNSequenceDeltaGenerator</b> class is a delta generator that 
+ * produces defferences delta for two text files, and full text delta if a 
+ * target file is binary.
+ * 
+ * @author  TMate Software Ltd.
  * @version 1.0
  */
 public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 
 	private static final SVNAllDeltaGenerator ALL_DELTA_GENERATOR = new SVNAllDeltaGenerator();
-
+	
+    /**
+     * Memory threshold. 
+     * 
+     * <p>
+     * When comparing one file against another (working vs. base), 
+     * if each file has got a length less than this memory threshold, the files will 
+     * be compared in the memory. Otherwise if at least one of the files has a length 
+     * greater than the memory threshold, the files will be compared in the filesystem.
+     * 
+     * <p>
+     * This threshold may be defined via setting the <span class="javakeyword">"javasvn.sequence.memorythreshold"</span> 
+     * system property (before the first <b>SVNSequenceDeltaGenerator</b> instance is created).    
+	 */
 	public static final int MEMORY_THRESHOLD;
 
 	static {
@@ -53,7 +70,13 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 	private final int fileSegmentSize;
 	private final double searchDepthExponent;
 	private final File tempDirectory;
-
+	
+    /**
+     * Creates a sequence delta generator given a temporary directory where 
+     * all necessary temporary files will be created.
+     * 
+     * @param tempDirectory a temporary directory
+	 */
 	public SVNSequenceDeltaGenerator(File tempDirectory) {
 		this(tempDirectory, MEMORY_THRESHOLD, QSequenceLineMedia.FILE_SEGMENT_SIZE, 0.5);
 	}
@@ -64,7 +87,32 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 		this.tempDirectory = tempDirectory;
 		this.fileSegmentSize = fileSegmentSize;
 	}
-
+	
+    /**
+     * Generates a diff window comparing the two given files.
+     * 
+     * <p>
+     * If any of <code>workFile</code> & <code>baseFile</code> is binary, then 
+     * actually uses an <b>SVNAllDeltaGenerator</b> to generate a replacement 
+     * diff window.
+     * 
+     * <p>
+     * <code>consumer</code> receives the generated diff window and provides an 
+     * output stream to write new data bytes:
+     * <pre class="javacode">
+     *     OutputStream os = consumer.textDeltaChunk(commitPath, window);</pre>
+     * When the bytes are written, the generator calls:
+     * <pre class="javacode">
+     *     consumer.textDeltaEnd(commitPath);</pre>
+     *  
+     * @param  commitPath      a file path  
+     * @param  consumer        an editor that receives the generated
+     *                         dif window(s)
+     * @param  workFile        a working version of the file (target file)
+     * @param  baseFile        a base (prestine) version of the file
+     * @throws SVNException    if an i/o error occurred
+     * @see                    SVNAllDeltaGenerator
+	 */
 	public void generateDiffWindow(String commitPath, ISVNEditor consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
 		try {
 			if (!canProcess(workFile, baseFile)) {

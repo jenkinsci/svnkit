@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * between those local paths and what is actually in the repository.
  * 
  * <p>
- * <code>ISVNReporter</code> objects are used by <code>ISVNReporterBaton</code>
+ * <b>ISVNReporter</b> objects are used by <b>ISVNReporterBaton</b>
  * implementations, provided by callers of the <b>SVNRepository</b>'s update, 
  * switch, status, diff operations.
  * 

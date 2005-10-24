@@ -20,8 +20,15 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 /**
+ * The <b>SVNDiffWindowApplyBaton</b> class is used to provide the source 
+ * and target streams during applying diff windows. Also an instance of 
+ * <b>SVNDiffWindowApplyBaton</b> may be supplied with an MD5 digest object
+ * for on-the-fly updating it with the bytes of the target view. So that when
+ * a diff window's instructions are applied, the digest will be the checksum
+ * for the full text written to the target stream. 
+ *  
  * @version 1.0
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
  */
 public class SVNDiffWindowApplyBaton {
 
@@ -35,7 +42,19 @@ public class SVNDiffWindowApplyBaton {
     byte[] mySourceBuffer;
     byte[] myTargetBuffer;
     MessageDigest myDigest;
-
+    
+    /**
+     * Creates a diff window apply baton whith source and target streams 
+     * represented by files. 
+     * 
+     * @param  source           a source file (from where the source views would
+     *                          be taken) 
+     * @param  target           a target file where the full text is written
+     * @param  digest           an MD5 checksum for the full text that would be
+     *                          updated after each instruction applying 
+     * @return                  a new <b>SVNDiffWindowApplyBaton</b> object
+     * @throws SVNException
+     */
     public static SVNDiffWindowApplyBaton create(File source, File target, MessageDigest digest) throws SVNException {
         SVNDiffWindowApplyBaton baton = new SVNDiffWindowApplyBaton();
         baton.mySourceStream = source.exists() ? SVNFileUtil.openFileForReading(source) : SVNFileUtil.DUMMY_IN;
@@ -47,6 +66,16 @@ public class SVNDiffWindowApplyBaton {
         return baton;
     }
 
+    /**
+     * Creates a diff window apply baton whith initial source and target streams. 
+     * 
+     * @param  source           a source input stream (from where the source 
+     *                          views would be taken) 
+     * @param  target           a target output stream where the full text is written
+     * @param  digest           an MD5 checksum for the full text that would be
+     *                          updated after each instruction applying 
+     * @return                  a new <b>SVNDiffWindowApplyBaton</b> object
+     */
     public static SVNDiffWindowApplyBaton create(InputStream source, OutputStream target, MessageDigest digest) {
         SVNDiffWindowApplyBaton baton = new SVNDiffWindowApplyBaton();
         baton.mySourceStream = source;
@@ -60,7 +89,13 @@ public class SVNDiffWindowApplyBaton {
 
     private SVNDiffWindowApplyBaton() {
     }
-
+    
+    /**
+     * Closes the source and target streams, finalizes 
+     * the checksum computation and returns it in a hex representation.
+     * 
+     * @return an MD5 checksum in a hex representation.
+     */
     public String close() {
         SVNFileUtil.closeFile(mySourceStream);
         SVNFileUtil.closeFile(myTargetStream);
