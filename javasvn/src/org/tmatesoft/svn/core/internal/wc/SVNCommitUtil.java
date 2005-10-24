@@ -457,8 +457,7 @@ public class SVNCommitUtil {
             url = entry.getURL();
         }
         boolean commitDeletion = !addsOnly
-                && (entry.isScheduledForDeletion() || entry
-                        .isScheduledForReplacement());
+                && ((entry.isDeleted() && entry.getSchedule() == null) || entry.isScheduledForDeletion() || entry.isScheduledForReplacement());
         boolean commitAddition = false;
         boolean commitCopy = false;
         if (entry.isScheduledForAddition() || entry.isScheduledForReplacement()) {
@@ -471,7 +470,7 @@ public class SVNCommitUtil {
                 addsOnly = true;
             }
         }
-        if ((entry.isCopied() || copyMode) && entry.getSchedule() == null) {
+        if ((entry.isCopied() || copyMode) && !entry.isDeleted() && entry.getSchedule() == null) {
             long parentRevision = entry.getRevision() - 1;
             if (!SVNWCUtil.isWorkingCopyRoot(path, true)) {
                 if (parentEntry != null) {
@@ -558,7 +557,7 @@ public class SVNCommitUtil {
         }
         if (entries != null && recursive && (commitAddition || !commitDeletion)) {
             // recurse.
-            for (Iterator ents = entries.entries(false); ents.hasNext();) {
+            for (Iterator ents = entries.entries(copyMode); ents.hasNext();) {
                 SVNEntry currentEntry = (SVNEntry) ents.next();
                 if ("".equals(currentEntry.getName())) {
                     continue;
