@@ -17,6 +17,7 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -33,6 +34,9 @@ public class MkDirCommand extends SVNCommand {
 
     public final void run(final PrintStream out, PrintStream err) throws SVNException {
         if (!getCommandLine().hasURLs()) {
+            if (getCommandLine().getArgumentValue(SVNArgument.MESSAGE) != null) {
+                SVNErrorManager.error("svn: Local, non-commit operations do not take a log message.");
+            }
             createLocalDirectories(out, err);
         } else {
             createRemoteDirectories(out, err);

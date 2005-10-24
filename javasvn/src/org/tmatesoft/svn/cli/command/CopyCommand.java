@@ -20,6 +20,7 @@ import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -34,6 +35,9 @@ public class CopyCommand extends SVNCommand {
                 final String path = getCommandLine().getPathAt(0);
                 final String url = getCommandLine().getURL(0);
                 if (getCommandLine().isPathURLBefore(url, path)) {
+                    if (getCommandLine().getArgumentValue(SVNArgument.MESSAGE) != null) {
+                        SVNErrorManager.error("svn: Local, non-commit operations do not take a log message.");
+                    }
                     runRemoteToLocal(out, err);
                 } else {
                     runLocalToRemote(out, err);
@@ -42,6 +46,9 @@ public class CopyCommand extends SVNCommand {
                 runRemote(out, err);
             }
         } else {
+            if (getCommandLine().getArgumentValue(SVNArgument.MESSAGE) != null) {
+                SVNErrorManager.error("svn: Local, non-commit operations do not take a log message.");
+            }
             runLocally(out, err);
         }
     }
