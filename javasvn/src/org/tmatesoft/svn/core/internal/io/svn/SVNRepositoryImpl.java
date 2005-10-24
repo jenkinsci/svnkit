@@ -673,7 +673,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     SVNLock lock = (SVNLock) buffer[0];
                     if (lock == null) {
                         lock = new SVNLock(path, "", null, null, null, null);
-                        handler.handleUnlock(path, lock, null);
+                        handler.handleUnlock(path, lock, new SVNException("svn: No lock on path '" + path + "'"));
                         continue;
                     }
                     id = lock.getID();
@@ -688,7 +688,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     error = e;
                 }
                 if (handler != null) {
-                    SVNLock lock = error != null ? new SVNLock(path, id, null, null, null, null) : null;
+                    SVNLock lock = new SVNLock(path, id, null, null, null, null);
                     handler.handleUnlock(path, lock, error);
                 }
             }

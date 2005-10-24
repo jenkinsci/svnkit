@@ -1191,10 +1191,10 @@ public class SVNWCClient extends SVNBasicClient {
                 wcAccess.open(false, false);
                 SVNEntry entry = wcAccess.getTargetEntry();
                 if (entry == null || entry.isHidden()) {
-                    SVNErrorManager.error("svn: '" + entry.getName() + "' is not under version control");
+                    SVNErrorManager.error("svn: '" + wcAccess.getTargetName() + "' is not under version control");
                 }
                 if (entry.getURL() == null) {
-                    SVNErrorManager.error("svn: '" + entry.getName() + "' has no URL");
+                    SVNErrorManager.error("svn: '" + wcAccess.getTargetName() + "' has no URL");
                 }
                 SVNRevision revision = stealLock ? SVNRevision.UNDEFINED : SVNRevision.create(entry.getRevision());
                 entriesMap.put(entry.getSVNURL(), new LockInfo(paths[i], revision));
@@ -1378,9 +1378,9 @@ public class SVNWCClient extends SVNBasicClient {
                 LockInfo lockInfo = (LockInfo) entriesMap.get(fullURL);
                 SVNWCAccess wcAccess = createWCAccess(lockInfo.myFile);
                 if (error != null) {
-                    handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCK_FAILED, null, "unlock failed"), 
-                            ISVNEventHandler.UNKNOWN);
-                } else {
+                    handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCK_FAILED, null, error.getMessage()), ISVNEventHandler.UNKNOWN);
+                }
+                if (lock != null) {
                     try {
                         wcAccess.open(true, false);
                         SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(
@@ -1470,12 +1470,18 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                    #doInfo(File, SVNRevision)
      * @see                    #doInfo(SVNURL, SVNRevision, SVNRevision, boolean, ISVNInfoHandler)
      */
-    public void doInfo(File path, SVNRevision revision, boolean recursive,
-            ISVNInfoHandler handler) throws SVNException {
+    public void doInfo(File path, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
+        doInfo(path, SVNRevision.UNDEFINED, revision, recursive, handler);
+    }
+    
+    public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
         if (handler == null) {
             return;
         }
-        if (!(revision == null || !revision.isValid() || revision == SVNRevision.WORKING)) {
+        boolean local = (revision == null || !revision.isValid() || revision.isLocal()) &&
+            (pegRevision == null || !pegRevision.isValid() || pegRevision.isLocal());
+        
+        if (!local) {
             SVNWCAccess wcAccess = createWCAccess(path);
             SVNRevision wcRevision = null;
             SVNURL url = null;
@@ -1493,7 +1499,8 @@ public class SVNWCClient extends SVNBasicClient {
             } finally {
                 wcAccess.close(false);
             }
-            doInfo(url, wcRevision, revision, recursive, handler);
+            SVNDebugLog.logInfo("fetching remote info for: " + path);
+            doInfo(url, pegRevision == null || !pegRevision.isValid() || pegRevision.isLocal() ? wcRevision : pegRevision, revision, recursive, handler);
             return;
         }
         SVNWCAccess wcAccess = createWCAccess(path);
