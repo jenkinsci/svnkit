@@ -37,7 +37,15 @@ public class CatCommand extends SVNCommand {
         for (int index = 0; index < getCommandLine().getPathCount(); index++) {
             final String absolutePath = getCommandLine().getPathAt(index);
             SVNRevision pegRevision = getCommandLine().getPathPegRevision(index);
-            wcClient.doGetFileContents(new File(absolutePath), pegRevision, revision, true, out);
+            try {
+                wcClient.doGetFileContents(new File(absolutePath), pegRevision, revision, true, out);
+            } catch (SVNException e) {
+                String message = e.getMessage();
+                if (message.startsWith("svn:")) {
+                    message = "svn: warning:" + message.substring("svn:".length());
+                }
+                err.println(message);                
+            }
             out.flush();
         }
 
@@ -48,7 +56,15 @@ public class CatCommand extends SVNCommand {
         for (int index = 0; index < getCommandLine().getURLCount(); index++) {
             final String url = getCommandLine().getURL(index);
             SVNRevision pegRevision = getCommandLine().getPegRevision(index);
-            wcClient.doGetFileContents(SVNURL.parseURIEncoded(url), pegRevision, revision, true, out);
+            try {
+                wcClient.doGetFileContents(SVNURL.parseURIEncoded(url), pegRevision, revision, true, out);
+            } catch (SVNException e) {
+                String message = e.getMessage();
+                if (message.startsWith("svn:")) {
+                    message = "svn: warning:" + message.substring("svn:".length());
+                }
+                err.println(message);                
+            }
             out.flush();
         }
     }
