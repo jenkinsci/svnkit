@@ -651,23 +651,24 @@ public class SVNFileUtil {
         }
     }
 
-    public static OutputStream openFileForWriting(File file)
-            throws SVNException {
+    public static OutputStream openFileForWriting(File file) throws SVNException {
         return openFileForWriting(file, false);
     }
 
-    public static OutputStream openFileForWriting(File file, boolean append)
-            throws SVNException {
+    public static OutputStream openFileForWriting(File file, boolean append) throws SVNException {
         if (file == null) {
             return null;
         }
-        /*
-        if (file.exists() && (!file.isFile() || !file.canWrite())) {
-            SVNErrorManager.error("svn: Cannot write to '" + file
-                    + "': path refers to directory or write access denied");
-        }*/
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
+        }
+        if (file.isFile() && !file.canWrite()) {
+            // force writable.
+            if (append) {
+                setReadonly(file, false);
+            } else {
+                deleteFile(file);
+            }
         }
         try {
             return new BufferedOutputStream(new FileOutputStream(file, append));

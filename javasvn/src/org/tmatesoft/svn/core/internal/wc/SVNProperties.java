@@ -51,11 +51,11 @@ public class SVNProperties {
 
     public Collection properties(Collection target) throws SVNException {
         target = target == null ? new TreeSet() : target;
-        if (!myFile.exists()) {
+        if (isEmpty()) {
             return target;
         }
         ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
-        InputStream is = SVNFileUtil.openFileForReading(myFile);
+        InputStream is = SVNFileUtil.openFileForReading(getFile());
         try {
             while (readProperty('K', is, nameOS)) {
                 target.add(new String(nameOS.toByteArray(), "UTF-8"));
@@ -63,7 +63,7 @@ public class SVNProperties {
                 readProperty('V', is, null);
             }
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot read properties file '" + myFile + "'");
+            SVNErrorManager.error("svn: Cannot read properties file '" + getFile() + "'");
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -72,14 +72,11 @@ public class SVNProperties {
 
     public Map asMap() throws SVNException {
         Map result = new HashMap();
-        if (!getFile().exists()) {
-            return result;
-        }
-        if (!myFile.exists()) {
+        if (isEmpty()) {
             return result;
         }
         ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
-        InputStream is = SVNFileUtil.openFileForReading(myFile);
+        InputStream is = SVNFileUtil.openFileForReading(getFile());
         try {
             while (readProperty('K', is, nameOS)) {
                 String name = new String(nameOS.toByteArray(), "UTF-8");
@@ -90,7 +87,7 @@ public class SVNProperties {
                 nameOS.reset();
             }
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot read properties file '" + myFile + "'");
+            SVNErrorManager.error("svn: Cannot read properties file '" + getFile() + "'");
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -127,8 +124,7 @@ public class SVNProperties {
         for (Iterator props = tmp.iterator(); props.hasNext();) {
             String added = (String) props.next();
             try {
-                tmpFile = SVNFileUtil.createUniqueFile(myFile.getParentFile(),
-                        myFile.getName(), ".tmp");
+                tmpFile = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp");
 
                 os = SVNFileUtil.openFileForWriting(tmpFile);
                 properties.getPropertyValue(added, os);
@@ -156,10 +152,8 @@ public class SVNProperties {
             String changed = (String) props.next();
 
             try {
-                tmpFile1 = SVNFileUtil.createUniqueFile(myFile.getParentFile(),
-                        myFile.getName(), ".tmp1");
-                tmpFile2 = SVNFileUtil.createUniqueFile(myFile.getParentFile(),
-                        myFile.getName(), ".tmp2");
+                tmpFile1 = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp1");
+                tmpFile2 = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp2");
 
                 os = new FileOutputStream(tmpFile1);
                 getPropertyValue(changed, os);
@@ -233,11 +227,11 @@ public class SVNProperties {
     }
 
     public OutputStream getPropertyValue(String name, OutputStream os) throws SVNException {
-        if (!myFile.exists()) {
+        if (isEmpty()) {
             return null;
         }
         ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
-        InputStream is = SVNFileUtil.openFileForReading(myFile);
+        InputStream is = SVNFileUtil.openFileForReading(getFile());
         try {
             while (readProperty('K', is, nameOS)) {
                 String currentName = new String(nameOS.toByteArray(), "UTF-8");
@@ -249,7 +243,7 @@ public class SVNProperties {
                 readProperty('V', is, null);                
             }
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot read properties file '" + myFile + "'");
+            SVNErrorManager.error("svn: Cannot read properties file '" + getFile() + "'");
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -277,10 +271,9 @@ public class SVNProperties {
         OutputStream dst = null;
         File tmpFile = null;
         try {
-            tmpFile = SVNFileUtil.createUniqueFile(myFile.getParentFile(),
-                    myFile.getName(), ".tmp");
-            if (myFile.exists()) {
-                src = SVNFileUtil.openFileForReading(myFile);
+            tmpFile = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp");
+            if (!isEmpty()) {
+                src = SVNFileUtil.openFileForReading(getFile());
             }
             dst = SVNFileUtil.openFileForWriting(tmpFile);
             copyProperties(src, dst, name, is, length);
@@ -289,8 +282,8 @@ public class SVNProperties {
             SVNFileUtil.closeFile(dst);
         }
         if (tmpFile != null) {
-            SVNFileUtil.rename(tmpFile, myFile);
-            SVNFileUtil.setReadonly(myFile, true);
+            SVNFileUtil.rename(tmpFile, getFile());
+            SVNFileUtil.setReadonly(getFile(), true);
         }
     }
 
@@ -327,7 +320,7 @@ public class SVNProperties {
     }
 
     public void copyTo(SVNProperties destination) throws SVNException {
-        if (!getFile().exists()) {
+        if (isEmpty()) {
             // just create empty dst.
             OutputStream os = null;
             try {
@@ -343,7 +336,7 @@ public class SVNProperties {
     }
 
     public void delete() {
-        myFile.delete();
+        SVNFileUtil.deleteFile(getFile());
     }
 
     /** @noinspection ResultOfMethodCallIgnored */
@@ -454,6 +447,6 @@ public class SVNProperties {
     }
 
     public boolean isEmpty() {
-        return getFile().length() <= 4;
+        return !getFile().exists() || getFile().length() <= 4;
     }
 }

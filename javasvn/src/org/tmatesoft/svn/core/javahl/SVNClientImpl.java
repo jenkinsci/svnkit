@@ -353,8 +353,14 @@ public class SVNClientImpl implements SVNClientInterface {
             return new long[]{};
         }
         long[] updated = new long[path.length];
-        for (int i = 0; i < updated.length; i++) {
-            updated[i] = update(path[i], revision, recurse);
+        getSVNUpdateClient().setEventPathPrefix("");
+        try {
+            for (int i = 0; i < updated.length; i++) {
+                updated[i] = update(path[i], revision, recurse);
+            }
+        } finally {
+            getSVNUpdateClient().setEventPathPrefix(null);
+            SVNFileUtil.sleepForTimestamp();
         }
         return updated;
     }

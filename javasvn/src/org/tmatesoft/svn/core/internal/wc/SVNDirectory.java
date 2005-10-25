@@ -206,7 +206,6 @@ public class SVNDirectory {
             if (locallyChanged.containsKey(propName)) {
                 String workingValue = (String) locallyChanged.get(propName);
                 String conflict = null;
-                // if (workingValue != null) {
                 if (workingValue == null && propValue != null) {
                     conflict = MessageFormat
                             .format(
@@ -230,7 +229,6 @@ public class SVNDirectory {
                     continue;
                 }
                 result = SVNStatusType.MERGED;
-                // }
             }
             workingTmp.setPropertyValue(propName, propValue);
         }
