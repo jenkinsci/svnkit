@@ -276,12 +276,11 @@ public class SVNLogRunner {
 
             SVNFileType tmpPropsType = SVNFileType.getType(tmpProps.getFile());
             if (tmpPropsType == SVNFileType.FILE) {
-                boolean equals = SVNFileUtil.compareFiles(wcProps.getFile(),
-                        tmpProps.getFile(), null);
-                propTime = equals ? wcProps.getFile().lastModified() : tmpProps
-                        .getFile().lastModified();
+                Map propDiff = wcProps.compareTo(tmpProps);
+                boolean equals = propDiff == null || propDiff.isEmpty();
+                propTime = equals ? wcProps.getFile().lastModified() : tmpProps.getFile().lastModified();
                 if (!"".equals(fileName)) {
-                    Map propDiff = baseProps.compareTo(tmpProps);
+                    propDiff = baseProps.compareTo(tmpProps);
                     setReadWrite = propDiff != null
                             && propDiff.containsKey(SVNProperty.NEEDS_LOCK)
                             && propDiff.get(SVNProperty.NEEDS_LOCK) == null;
