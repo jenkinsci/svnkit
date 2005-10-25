@@ -272,7 +272,7 @@ public class SVNProperties {
         File tmpFile = null;
         try {
             tmpFile = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp");
-            if (isEmpty()) {
+            if (!isEmpty()) {
                 src = SVNFileUtil.openFileForReading(getFile());
             }
             dst = SVNFileUtil.openFileForWriting(tmpFile);
