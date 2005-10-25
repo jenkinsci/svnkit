@@ -147,11 +147,11 @@ public abstract class SVNCommand {
         if (commandName == null) {
             return false;
         }
-        String fullName = commandName;
+        String fullName = null;
         for (Iterator keys = ourCommands.keySet().iterator(); keys.hasNext();) {
             String[] names = (String[]) keys.next();
             for (int i = 0; i < names.length; i++) {
-                if (commandName.equals(names[i])) {
+                if (commandName.equalsIgnoreCase(names[i])) {
                     fullName = names[0];
                     break;
                 }
@@ -160,7 +160,7 @@ public abstract class SVNCommand {
                 break;
             }
         }
-        return ourPegCommands.contains(fullName);
+        return fullName != null && ourPegCommands.contains(fullName);
     }
 
     protected static SVNRevision parseRevision(SVNCommandLine commandLine) {
