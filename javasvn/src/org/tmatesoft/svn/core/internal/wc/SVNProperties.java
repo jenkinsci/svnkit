@@ -270,20 +270,26 @@ public class SVNProperties {
         InputStream src = null;
         OutputStream dst = null;
         File tmpFile = null;
+        boolean empty = false;
         try {
             tmpFile = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp");
             if (!isEmpty()) {
                 src = SVNFileUtil.openFileForReading(getFile());
             }
             dst = SVNFileUtil.openFileForWriting(tmpFile);
-            copyProperties(src, dst, name, is, length);
+            empty = copyProperties(src, dst, name, is, length);
         } finally {
             SVNFileUtil.closeFile(src);
             SVNFileUtil.closeFile(dst);
         }
         if (tmpFile != null) {
-            SVNFileUtil.rename(tmpFile, getFile());
-            SVNFileUtil.setReadonly(getFile(), true);
+            if (!empty) {
+                SVNFileUtil.rename(tmpFile, getFile());
+                SVNFileUtil.setReadonly(getFile(), true);
+            } else {
+                SVNFileUtil.deleteFile(tmpFile);
+                SVNFileUtil.deleteFile(getFile());
+            }
         }
     }
 
@@ -321,15 +327,7 @@ public class SVNProperties {
 
     public void copyTo(SVNProperties destination) throws SVNException {
         if (isEmpty()) {
-            // just create empty dst.
-            OutputStream os = null;
-            try {
-                os = SVNFileUtil.openFileForWriting(destination.getFile());
-                os.write("END\n".getBytes());
-            } catch (IOException e) {
-            } finally {
-                SVNFileUtil.closeFile(os);
-            }
+            SVNFileUtil.deleteFile(destination.getFile());
         } else {
             SVNFileUtil.copyFile(getFile(), destination.getFile(), true);
         }
@@ -340,10 +338,11 @@ public class SVNProperties {
     }
 
     /** @noinspection ResultOfMethodCallIgnored */
-    private static void copyProperties(InputStream is, OutputStream os,
+    private static boolean copyProperties(InputStream is, OutputStream os,
             String name, InputStream value, int length) throws SVNException {
         // read names, till name is met, then insert value or skip this
         // property.
+        boolean written = false;
         try {
             if (is != null) {
                 int l = 0;
@@ -361,17 +360,23 @@ public class SVNProperties {
                     l = readLength(is, 'V');
                     writeProperty(os, 'V', is, l);
                     is.read();
+                    written = true;
                 }
             }
             if (value != null && length >= 0) {
                 byte[] nameBytes = name.getBytes("UTF-8");
                 writeProperty(os, 'K', nameBytes);
                 writeProperty(os, 'V', value, length);
+                written = true;
             }
-            os.write(new byte[] { 'E', 'N', 'D', '\n' });
+            // TODO
+            if (written) {
+                os.write(new byte[] { 'E', 'N', 'D', '\n' });
+            }
         } catch (IOException e) {
             SVNErrorManager.error(e.getMessage());
         }
+        return written;
     }
 
     private static boolean readProperty(char type, InputStream is, OutputStream os) throws IOException {
