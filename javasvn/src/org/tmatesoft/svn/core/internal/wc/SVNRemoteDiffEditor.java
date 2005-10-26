@@ -143,18 +143,9 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void openFile(String path, long revision) throws SVNException {
         myCurrentFile = new SVNFileInfo(path);
-        myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(myRoot,
-                SVNPathUtil.tail(path), ".tmp");
-
-        myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos,
-                myRevision);
-        myCurrentFile.myFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil
-                .tail(path), ".tmp");
-        SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
     }
 
-    public void changeFileProperty(String commitPath, String name, String value)
-            throws SVNException {
+    public void changeFileProperty(String commitPath, String name, String value) throws SVNException {
         if (name == null || name.startsWith(SVNProperty.SVN_WC_PREFIX)
                 || name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
             return;
@@ -166,6 +157,11 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
+        myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(commitPath), ".tmp");
+        myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos, myRevision);
+        myCurrentFile.myFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(commitPath), ".tmp");
+        SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
+
         myDeltaProcessor.applyTextDelta(myCurrentFile.myBaseFile, myCurrentFile.myFile, false);
     }
 
@@ -177,16 +173,12 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         myDeltaProcessor.textDeltaEnd();
     }
 
-    public void closeFile(String commitPath, String textChecksum)
-            throws SVNException {
+    public void closeFile(String commitPath, String textChecksum) throws SVNException {
         myDeltaProcessor.close();
         String displayPath = SVNPathUtil.append(myBasePath, myCurrentFile.myPath);
         if (myCurrentFile.myFile != null) {
-            String mimeType1 = (String) myCurrentFile.myBaseProperties
-                    .get(SVNProperty.MIME_TYPE);
-            String mimeType2 = myCurrentFile.myPropertyDiff != null ? (String) myCurrentFile.myPropertyDiff
-                    .get(SVNProperty.MIME_TYPE)
-                    : null;
+            String mimeType1 = (String) myCurrentFile.myBaseProperties.get(SVNProperty.MIME_TYPE);
+            String mimeType2 = myCurrentFile.myPropertyDiff != null ? (String) myCurrentFile.myPropertyDiff.get(SVNProperty.MIME_TYPE) : null;
             if (mimeType2 == null) {
                 mimeType2 = mimeType1;
             }

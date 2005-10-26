@@ -210,18 +210,14 @@ public class SVNMergeEditor implements ISVNEditor {
                     myRevision1);
         }
         myCurrentFile.myFile = myMerger.getFile(myCurrentFile.myWCPath, false);
-//        SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
         myDeltaProcessor.applyTextDelta(myCurrentFile.myBaseFile, myCurrentFile.myFile, false);
     }
 
     public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
-//        File chunkFile = SVNFileUtil.createUniqueFile(myCurrentFile.myBaseFile.getParentFile(), SVNPathUtil.tail(myCurrentFile.myPath), ".chunk");
         return myDeltaProcessor.textDeltaChunk(diffWindow);
     }
 
     public void textDeltaEnd(String commitPath) throws SVNException {
-//        File baseTmpFile = myCurrentFile.myBaseFile;
-//        File targetFile = myCurrentFile.myFile;
         myDeltaProcessor.textDeltaEnd();
     }
 
