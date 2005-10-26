@@ -1,11 +1,20 @@
 package de.regnis.q.sequence.line;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
-import de.regnis.q.sequence.*;
-import de.regnis.q.sequence.core.*;
-import de.regnis.q.sequence.media.*;
+import de.regnis.q.sequence.QSequenceDifference;
+import de.regnis.q.sequence.QSequenceDifferenceBlockShifter;
+import de.regnis.q.sequence.core.QSequenceAssert;
+import de.regnis.q.sequence.core.QSequenceDummyCanceller;
+import de.regnis.q.sequence.core.QSequenceException;
+import de.regnis.q.sequence.media.QSequenceCachableMedia;
+import de.regnis.q.sequence.media.QSequenceCachingMedia;
+import de.regnis.q.sequence.media.QSequenceDiscardingMedia;
+import de.regnis.q.sequence.media.QSequenceDiscardingMediaNoConfusionDectector;
+import de.regnis.q.sequence.media.QSequenceMediaComparer;
+import de.regnis.q.sequence.media.QSequenceMediaDummyIndexTransformer;
 
 /**
  * @author Marc Strapetz
@@ -20,7 +29,7 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 	public static final double SEARCH_DEPTH_EXPONENT;
 
 	static {
-        MEMORY_THRESHOLD = parseMemoryTreshold(System.getProperty("q.sequence.memory-threshold", "1M"));
+		MEMORY_THRESHOLD = parseMemoryTreshold(System.getProperty("q.sequence.memory-threshold", "1M"));
 	}
 
 	static {
@@ -45,18 +54,14 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 			}
 		}
 
-		final File tempDirectory = File.createTempFile("q.sequence.line.", ".temp");
-		tempDirectory.delete();
-		return QSequenceLineFileSystemCache.create(data, tempDirectory, customEolBytes, MEMORY_THRESHOLD, FILE_SEGMENT_SIZE);
+		return QSequenceLineFileSystemCache.create(data, new QSequenceLineSystemTempDirectoryFactory(), customEolBytes, MEMORY_THRESHOLD, FILE_SEGMENT_SIZE);
 	}
 
 	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData, byte[] customEolBytes) throws IOException, QSequenceException {
-		final File tempDirectory = File.createTempFile("q.sequence.line.", ".temp");
-		tempDirectory.delete();
-		return createBlocks(leftData, rightData, customEolBytes, MEMORY_THRESHOLD, FILE_SEGMENT_SIZE, SEARCH_DEPTH_EXPONENT, tempDirectory);
+		return createBlocks(leftData, rightData, customEolBytes, MEMORY_THRESHOLD, FILE_SEGMENT_SIZE, SEARCH_DEPTH_EXPONENT, new QSequenceLineSystemTempDirectoryFactory());
 	}
 
-	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData, byte[] customEolBytes, int memoryThreshold, int fileSegmentSize, double searchDepthExponent, File tempDirectory) throws IOException, QSequenceException {
+	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData, byte[] customEolBytes, int memoryThreshold, int fileSegmentSize, double searchDepthExponent, QSequenceLineTempDirectoryFactory tempDirectoryFactory) throws IOException, QSequenceException {
 		if (leftData.length() <= memoryThreshold && rightData.length() <= memoryThreshold) {
 			final InputStream leftStream = leftData.read(0, leftData.length());
 			final InputStream rightStream = rightData.read(0, rightData.length());
@@ -69,7 +74,7 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 			}
 		}
 
-		return createBlocksInFilesystem(leftData, rightData, tempDirectory, customEolBytes, searchDepthExponent, memoryThreshold, fileSegmentSize);
+		return createBlocksInFilesystem(leftData, rightData, tempDirectoryFactory, customEolBytes, searchDepthExponent, memoryThreshold, fileSegmentSize);
 	}
 
 	static QSequenceLineResult createBlocksInMemory(InputStream leftStream, InputStream rightStream, byte[] customEolBytes, double searchDepthExponent) throws IOException, QSequenceException {
@@ -83,9 +88,9 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 		return new QSequenceLineResult(blocks, leftCache, rightCache);
 	}
 
-	static QSequenceLineResult createBlocksInFilesystem(QSequenceLineRAData leftData, QSequenceLineRAData rightData, File tempDirectory, byte[] customEolBytes, double searchDepthExponent, int memoryThreshold, int fileSegmentSize) throws IOException, QSequenceException {
-		final QSequenceLineFileSystemCache leftCache = QSequenceLineFileSystemCache.create(leftData, tempDirectory, customEolBytes, memoryThreshold, fileSegmentSize);
-		final QSequenceLineFileSystemCache rightCache = QSequenceLineFileSystemCache.create(rightData, tempDirectory, customEolBytes, memoryThreshold, fileSegmentSize);
+	static QSequenceLineResult createBlocksInFilesystem(QSequenceLineRAData leftData, QSequenceLineRAData rightData, QSequenceLineTempDirectoryFactory tempDirectoryFactory, byte[] customEolBytes, double searchDepthExponent, int memoryThreshold, int fileSegmentSize) throws IOException, QSequenceException {
+		final QSequenceLineFileSystemCache leftCache = QSequenceLineFileSystemCache.create(leftData, tempDirectoryFactory, customEolBytes, memoryThreshold, fileSegmentSize);
+		final QSequenceLineFileSystemCache rightCache = QSequenceLineFileSystemCache.create(rightData, tempDirectoryFactory, customEolBytes, memoryThreshold, fileSegmentSize);
 		final QSequenceLineMedia lineMedia = new QSequenceLineMedia(leftCache, rightCache);
 		final List blocks = new QSequenceDifference(lineMedia, new QSequenceMediaDummyIndexTransformer(lineMedia), getSearchDepth(lineMedia, searchDepthExponent)).getBlocks();
 		new QSequenceDifferenceBlockShifter(lineMedia, lineMedia).shiftBlocks(blocks);
@@ -176,36 +181,39 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 
 		return Math.max(256, (int)Math.pow(lineMedia.getLeftLength() + lineMedia.getRightLength(), searchDepthExponent));
 	}
-    
-    private static int parseMemoryTreshold(String value) {
-        if (value == null) {
-            value = "1M";
-        }
-        value = value.toLowerCase();
-        int factor = 1;
-        if (value.endsWith("m")) {
-            value = value.substring(0, value.length() - 1);
-            factor = 1048576;
-        } else if (value.endsWith("mb")) {
-            value = value.substring(0, value.length() - 2);
-            factor = 1048576;
-        } else if (value.endsWith("k")) {
-            value = value.substring(0, value.length() - 1);
-            factor = 1024;
-        } else if (value.endsWith("kb")) {
-            value = value.substring(0, value.length() - 2);
-            factor = 1024;
-        }
-        try {
-            int amount = Integer.parseInt(value);
-            amount = factor*amount;
-            if (amount < FILE_SEGMENT_SIZE) {
-                amount = FILE_SEGMENT_SIZE;
-            }
-            return amount;
-        } catch (NumberFormatException e) {
-            return parseMemoryTreshold(null);
-        }
-        
-    }
+
+	private static int parseMemoryTreshold(String value) {
+		if (value == null) {
+			value = "1M";
+		}
+		value = value.toLowerCase();
+		int factor = 1;
+		if (value.endsWith("m")) {
+			value = value.substring(0, value.length() - 1);
+			factor = 1048576;
+		}
+		else if (value.endsWith("mb")) {
+			value = value.substring(0, value.length() - 2);
+			factor = 1048576;
+		}
+		else if (value.endsWith("k")) {
+			value = value.substring(0, value.length() - 1);
+			factor = 1024;
+		}
+		else if (value.endsWith("kb")) {
+			value = value.substring(0, value.length() - 2);
+			factor = 1024;
+		}
+		try {
+			int amount = Integer.parseInt(value);
+			amount = factor * amount;
+			if (amount < FILE_SEGMENT_SIZE) {
+				amount = FILE_SEGMENT_SIZE;
+			}
+			return amount;
+		}
+		catch (NumberFormatException e) {
+			return parseMemoryTreshold(null);
+		}
+	}
 }

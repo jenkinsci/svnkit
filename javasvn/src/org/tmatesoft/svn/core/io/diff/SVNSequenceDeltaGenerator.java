@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
 import de.regnis.q.sequence.core.QSequenceException;
 import de.regnis.q.sequence.line.QSequenceLineCache;
+import de.regnis.q.sequence.line.QSequenceLineFixedTempDirectoryFactory;
 import de.regnis.q.sequence.line.QSequenceLineMedia;
 import de.regnis.q.sequence.line.QSequenceLineResult;
 
@@ -41,7 +42,7 @@ import de.regnis.q.sequence.line.QSequenceLineResult;
 public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 
 	private static final SVNAllDeltaGenerator ALL_DELTA_GENERATOR = new SVNAllDeltaGenerator();
-	
+
     /**
      * Memory threshold. 
      * 
@@ -59,7 +60,7 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 	private final int fileSegmentSize;
 	private final double searchDepthExponent;
 	private final File tempDirectory;
-	
+
     /**
      * Creates a sequence delta generator given a temporary directory where 
      * all necessary temporary files will be created.
@@ -67,7 +68,7 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
      * @param tempDirectory a temporary directory
 	 */
 	public SVNSequenceDeltaGenerator(File tempDirectory) {
-        this(tempDirectory, QSequenceLineMedia.MEMORY_THRESHOLD, QSequenceLineMedia.FILE_SEGMENT_SIZE, QSequenceLineMedia.SEARCH_DEPTH_EXPONENT);   
+        this(tempDirectory, QSequenceLineMedia.MEMORY_THRESHOLD, QSequenceLineMedia.FILE_SEGMENT_SIZE, QSequenceLineMedia.SEARCH_DEPTH_EXPONENT);
 	}
 
 	SVNSequenceDeltaGenerator(File tempDirectory, int memoryThreshold, int fileSegmentSize, double searchDepthExponent) {
@@ -76,7 +77,7 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 		this.tempDirectory = tempDirectory;
 		this.fileSegmentSize = fileSegmentSize;
 	}
-	
+
     /**
      * Generates a diff window comparing the two given files.
      * 
@@ -116,10 +117,10 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 		}
 	}
 
-	private static void doGenerateDiffWindow(String commitPath, ISVNRAData workFile, ISVNRAData baseFile, ISVNEditor consumer, int memoryTreshold, int fileSegmentSize, double searchDepthExponent, File tempDirectory) throws IOException, SVNException {
+	private static void doGenerateDiffWindow(String commitPath, ISVNRAData workFile, ISVNRAData baseFile, ISVNEditor consumer, int memoryTreshold, int fileSegmentSize, double searchDepthExponent, final File tempDirectory) throws IOException, SVNException {
 		final QSequenceLineResult result;
 		try {
-			result = QSequenceLineMedia.createBlocks(new SVNSequenceLineRAData(baseFile), new SVNSequenceLineRAData(workFile), null, memoryTreshold, fileSegmentSize, searchDepthExponent, tempDirectory);
+			result = QSequenceLineMedia.createBlocks(new SVNSequenceLineRAData(baseFile), new SVNSequenceLineRAData(workFile), null, memoryTreshold, fileSegmentSize, searchDepthExponent, new QSequenceLineFixedTempDirectoryFactory(tempDirectory));
 		}
 		catch (QSequenceException ex) {
 			throw new SVNException(ex);

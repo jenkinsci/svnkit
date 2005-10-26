@@ -1,12 +1,22 @@
 package de.regnis.q.sequence.line;
 
-import java.io.*;
-import java.util.*;
-import junit.framework.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.List;
+import java.util.Random;
 
-import de.regnis.q.sequence.*;
-import de.regnis.q.sequence.core.*;
-import de.regnis.q.sequence.media.*;
+import junit.framework.TestCase;
+import de.regnis.q.sequence.QSequenceDifference;
+import de.regnis.q.sequence.QSequenceDifferenceAssemblyTest;
+import de.regnis.q.sequence.QSequenceDifferenceBlock;
+import de.regnis.q.sequence.QSequenceDifferenceBlockShifter;
+import de.regnis.q.sequence.core.QSequenceDummyCanceller;
+import de.regnis.q.sequence.core.QSequenceException;
+import de.regnis.q.sequence.media.QSequenceCachingMedia;
+import de.regnis.q.sequence.media.QSequenceMediaDummyIndexTransformer;
 
 /**
  * @author Marc Strapetz
@@ -57,15 +67,12 @@ public class QSequenceLineMediaTest extends TestCase {
 	}
 
 	private void test(final File leftFile, final File rightFile) throws IOException, QSequenceException {
-		final File tempDirectory = File.createTempFile(getClass().getName(), "directory");
-		tempDirectory.delete();
-
 		final QSequenceLineResult memoryResult = createBlocksInMemory(leftFile, rightFile);
-		final QSequenceLineResult raFileResult1 = createRAFileBlocks(leftFile, rightFile, 16, 16, tempDirectory);
-		final QSequenceLineResult raFileResult2 = createRAFileBlocks(leftFile, rightFile, 256, 16, tempDirectory);
-		final QSequenceLineResult raFileResult3 = createRAFileBlocks(leftFile, rightFile, 256, 64, tempDirectory);
-		final QSequenceLineResult raFileResult4 = createRAFileBlocks(leftFile, rightFile, 256, 256, tempDirectory);
-		final QSequenceLineResult raFileResult5 = createRAFileBlocks(leftFile, rightFile, Integer.MAX_VALUE, 48, tempDirectory);
+		final QSequenceLineResult raFileResult1 = createRAFileBlocks(leftFile, rightFile, 16, 16);
+		final QSequenceLineResult raFileResult2 = createRAFileBlocks(leftFile, rightFile, 256, 16);
+		final QSequenceLineResult raFileResult3 = createRAFileBlocks(leftFile, rightFile, 256, 64);
+		final QSequenceLineResult raFileResult4 = createRAFileBlocks(leftFile, rightFile, 256, 256);
+		final QSequenceLineResult raFileResult5 = createRAFileBlocks(leftFile, rightFile, Integer.MAX_VALUE, 48);
 		try {
 			compareBlocks(memoryResult.getBlocks(), raFileResult1.getBlocks());
 			compareBlocks(memoryResult.getBlocks(), raFileResult2.getBlocks());
@@ -80,7 +87,6 @@ public class QSequenceLineMediaTest extends TestCase {
 			raFileResult3.close();
 			raFileResult4.close();
 			raFileResult5.close();
-			tempDirectory.delete();
 		}
 	}
 
@@ -96,11 +102,11 @@ public class QSequenceLineMediaTest extends TestCase {
 		return new QSequenceLineResult(blocks, leftCache, rightCache);
 	}
 
-	private QSequenceLineResult createRAFileBlocks(File leftFile, File rightFile, int maximumMemorySize, int fileSegmentSize, File directory) throws IOException, QSequenceException {
+	private QSequenceLineResult createRAFileBlocks(File leftFile, File rightFile, int maximumMemorySize, int fileSegmentSize) throws IOException, QSequenceException {
 		final RandomAccessFile leftRAFile = new RandomAccessFile(leftFile, "r");
 		final RandomAccessFile rightRAFile = new RandomAccessFile(rightFile, "r");
 		try {
-			return QSequenceLineMedia.createBlocksInFilesystem(new QSequenceLineRAFileData(leftRAFile), new QSequenceLineRAFileData(rightRAFile), directory, null, 1.0, maximumMemorySize, fileSegmentSize);
+			return QSequenceLineMedia.createBlocksInFilesystem(new QSequenceLineRAFileData(leftRAFile), new QSequenceLineRAFileData(rightRAFile), new QSequenceLineSystemTempDirectoryFactory(), null, 1.0, maximumMemorySize, fileSegmentSize);
 		}
 		finally {
 			leftRAFile.close();
