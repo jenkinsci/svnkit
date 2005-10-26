@@ -34,6 +34,10 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                 String password = prompt4.getPassword();
                 String keyPath = prompt4.getSSHPrivateKeyPath();
                 String passphrase = prompt4.getSSHPrivateKeyPassphrase();
+                userName = prompt4.getUsername();
+                if (userName == null || "".equals(userName)) {
+                    userName = System.getProperty("user.name", "user");
+                }
                 if ("".equals(passphrase)) {
                     passphrase = null;
                 }
