@@ -17,7 +17,7 @@ package org.tmatesoft.svn.core.io;
  * {@link SVNRepository#getLocations(String, long, long[], ISVNLocationEntryHandler) 
  * SVNRepository.getLocations(String, long, long[], ISVNLocationEntryHandler)}. The
  * mentioned  method retrieves file locations for interested revisions and uses an
- * implementation of <code>ISVNLocationEntry</code> to handle them. 
+ * implementation of <code>ISVNLocationEntryHandler</code> to handle them. 
  * 
  * @version 1.0
  * @author 	TMate Software Ltd.

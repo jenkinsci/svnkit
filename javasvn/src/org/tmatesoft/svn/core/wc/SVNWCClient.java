@@ -1449,7 +1449,7 @@ public class SVNWCClient extends SVNBasicClient {
      * info handler. 
      * 
      * <p>
-     * If <code>revision</code> is valid and not {@link SVNRevision#WORKING WORKING} 
+     * If <code>revision</code> is valid and not local,  
      * then information will be collected on remote items (that is taken from
      * a repository). Otherwise information is gathered on local items not
      * accessing a repository.

@@ -15,23 +15,28 @@ package org.tmatesoft.svn.core.io;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
- * This interface is provided when manipulating with a working copy (updating it,
- * getting its status, checking it out from a repository). Used to make reports
- * by calling appropriate methods of {@link ISVNReporter} to describe a working copy
- * entries (their revision numbers, locations, etc.)
+ * The <b>ISVNReporterBaton</b> interface should be implemented by callers
+ * of update, checkout, etc. operations of <b>SVNRepository</b> drivers in order
+ * to describe the state of local items.
+ * 
+ * <p>
+ * For more information on using reporters, please, read these on-line article: 
+ * <a href="http://tmate.org/svn/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
  * 
  * @version 1.0
  * @author 	TMate Software Ltd.
  * @see 	ISVNReporter
  * @see 	SVNRepository
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public interface ISVNReporterBaton {
     /**
-     * Used by an implementor to make reports about a working copy. 
+     * Makes a report describing the state of local items in order
+     * to get the differences between the local items and what actually
+     * is in a repository. 
      * 
-     * @param  reporter 		a reporter to describe a working copy
+     * @param  reporter 		a reporter passed to make reports
      * @throws SVNException
-     * @see						ISVNReporter 
      */
     public void report(ISVNReporter reporter) throws SVNException;
 

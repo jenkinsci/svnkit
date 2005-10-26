@@ -800,17 +800,17 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     public void linkPath(SVNURL url, String path,
-            String lockToken, long revison, boolean startEmtpy)
+            String lockToken, long revison, boolean startEmpty)
             throws SVNException {
         assertValidRevision(revison);
         if (lockToken == null) {
             write("(w(ssnw))", new Object[] { "link-path", path,
                     url.toString(), getRevisionObject(revison),
-                    Boolean.valueOf(startEmtpy) });
+                    Boolean.valueOf(startEmpty) });
         } else {
             write("(w(ssnw(s)))", new Object[] { "link-path", path,
                     url.toString(), getRevisionObject(revison),
-                    Boolean.valueOf(startEmtpy), lockToken });
+                    Boolean.valueOf(startEmpty), lockToken });
         }
     }
 

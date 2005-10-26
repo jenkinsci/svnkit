@@ -47,7 +47,7 @@ import de.regnis.q.sequence.line.QSequenceLineResult;
  * 
  * <p>
  * Since <b>SVNAnnotationGenerator</b> implements <b>ISVNFileRevisionHandler</b>,
- * it can be passed to a {@link org.tmatesoft.svn.core.io.SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler) getFileRevisions()} 
+ * it is merely passed to a {@link org.tmatesoft.svn.core.io.SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler) getFileRevisions()} 
  * method of <b>SVNRepository</b>. After that you handle the resultant annotated 
  * file line-by-line providing an <b>ISVNAnnotateHandler</b> implementation to the {@link #reportAnnotations(ISVNAnnotateHandler, String) reportAnnotations()}
  * method:
@@ -62,11 +62,11 @@ import de.regnis.q.sequence.line.QSequenceLineResult;
  *     SVNRepository repos;
  *     ISVNAnnotateHandler annotateHandler;
  *     ISVNEventHandler cancelHandler;
- *     long startRev = 0;
- *     long endRev = 150;
+ *     <span class="javakeyword">long</span> startRev = 0;
+ *     <span class="javakeyword">long</span> endRev = 150;
  *     ...
  *     
- *     SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, startRev, tmpFile, cancelHandler);
+ *     SVNAnnotationGenerator generator = <span class="javakeyword">new</span> SVNAnnotationGenerator(path, tmpFile, cancelHandler);
  *     <span class="javakeyword">try</span> {
  *         repos.getFileRevisions(<span class="javastring">""</span>, startRev, endRev, generator);
  *         generator.reportAnnotations(annotateHandler, <span class="javakeyword">null</span>);
@@ -101,7 +101,6 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      * is used for this purpose. 
      * 
      * @param path           a file path (relative to a repository location)
-     * @param startRevision  a revision to start from
      * @param tmpDirectory   a revision to stop at
      * @param cancelBaton    a baton which is used to check if an operation 
      *                       is cancelled

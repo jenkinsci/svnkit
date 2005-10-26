@@ -16,13 +16,14 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
 /**
- * This is a basic interface for implementors to describe a working copy state.
+ * The <b>ISVNReporter</b> interface provides methods to describe
+ * the state of local paths in order to get the differences in revisions
+ * between those local paths and what is actually in the repository.
  * 
  * <p>
- * <code>ISVNReporter</code> implementations are handled by 
- * <code>ISVNReporterBaton</code> to describe a subset
- * (or possibly all) of the working copy (WC) to the Repository Access Layer for the
- * purposes of an update, switch, status, or diff operation.
+ * <b>ISVNReporter</b> objects are used by <b>ISVNReporterBaton</b>
+ * implementations, provided by callers of the <b>SVNRepository</b>'s update, 
+ * switch, status, diff operations.
  * 
  * <p>
  * Paths for report calls are relative to the target of the operation (that is the 
@@ -30,101 +31,100 @@ import org.tmatesoft.svn.core.SVNURL;
  * order: parents before children, all children of a parent before any
  * siblings of the parent.  The first report call must be a 
  * {@link #setPath(String, String, long, boolean) setPath()} with a path argument of
- * "" and a valid revision.  (If the target of the operation is locally deleted or 
- * missing, use the WC root's revision.)  If the target of the operation is 
- * deleted or switched relative to the WC root, follow up the initial 
+ * <span class="javastring">""</span> and a valid revision. If the target of the operation 
+ * is locally deleted or missing, use the root path's revision. If the target of the operation is 
+ * deleted or switched relative to the root path, follow up the initial 
  * {@link #setPath(String, String, long, boolean) setPath()} call with a
  * {@link #linkPath(SVNURL, String, String, long, boolean) linkPath()}
- * or {@link #deletePath(String) deletePath()} call with a path argument of "" to
- * indicate that.  In no other case may there be two report
+ * or {@link #deletePath(String) deletePath()} call with a path argument of 
+ * <span class="javastring">""</span> to
+ * indicate that. In no other case may there be two report
  * descriptions for the same path.  If the target of the operation is
  * a locally added file or directory (which previously did not exist),
  * it may be reported as having revision 0 or as having the parent
  * directory's revision.
  *
- * <p>
- * <b>NOTE:</b> the WC root is the root directory of the entire working copy that was
- * checked out from the repository.
- *  
+ * For more information on using reporters, please, read these on-line article: 
+ * <a href="http://tmate.org/svn/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
+ * 
  * @version 1.0
  * @author 	TMate Software Ltd.
  * @see 	ISVNReporterBaton
  * @see 	SVNRepository
+ * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
 public interface ISVNReporter {
 
 	/**
-	 *<p>
-	 * Describes a working copy <code>path</code> as being at a particular
-	 * <code>revision</code>.  
-	 *
-	 * If <code>startEmpty</code> is set and the <code>path</code> is a directory,
-	 * the implementor should assume the directory has no entries or properties.
-	 *
-	 * This will "override" any previous <code>setPath()</code> calls made on parent
-	 * paths. The <code>path</code> is relative to the <code>URL</code> specified for 
-	 * <code>SVNRepository</code>.
+	 * <p>
+	 * Describes a local path as being at a particular revision.  
 	 * 
-     * @param  path				the local item's path 
-     * @param  lockToken		if not <code>null</code>, it is the lock token (lock id
-     * 							in other words) for the <code>path</code>
+     * <p>
+	 * If <code>startEmpty</code> is <span class="javakeyword">true</span> and the 
+     * <code>path</code> is a directory, an implementor should assume the 
+     * directory has no entries or properties (used in checkouts and aborted updates).
+	 * 
+     * <p>
+	 * A next call to this method will "override" any previous <code>setPath()</code> calls made on parent
+	 * paths. The <code>path</code> is relative to the repository location specified for an 
+	 * <b>SVNRepository</b> driver.
+	 * 
+     * @param  path				a local item's path 
+     * @param  lockToken		if not <span class="javakeyword">null</span>, it is a lock token 
+     *                          for the <code>path</code>
      * @param  revision 		the local item's revision number
-     * @param  startEmpty 		<code>true</code> and if the <code>path</code> is a 
-     * 							directory - an implementer should assume that the 
-     * 							directory has no entries or properties
-     * @throws SVNException		if the <code>revision</code> is invalid (<0) or there's
-     * 							no such revision at all; also if a connection failure
-     *  						occured
+     * @param  startEmpty 		if <span class="javakeyword">true</span> and if the <code>path</code> is a 
+     * 							directory, then means there're no entries yet
+     * @throws SVNException		
      * 
      */
 	public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException;
 
 	/**
      * 
-     * Describes a working copy <code>path</code> as missing (deleted from the WC).
+     * Describes a working copy <code>path</code> as deleted or missing.
      * 
-     * @param  path 			a path within the working copy
-     * @throws SVNException		if a failure in connection occured.
+     * @param  path 			a path relative to the root of the report
+     * @throws SVNException		
      */
     public void deletePath(String path) throws SVNException;
 
     /**
-     * Like {@link #setPath(String, String, long, boolean)}, but differs in 
+     * <p>
+     * Describes a local path as being at a particular revision
+     * to switch the path to a different repository location.  
+     * 
+     * Like {@link #setPath(String, String, long, boolean) setPath()}, but differs in 
      * that the local item's <code>path</code> (relative to the root
-     * of the report driver) isn't a reflection of the path in the repository 
-     * (relative to the URL specified for {@link SVNRepository}), but is instead a 
-     * reflection of a different repository URL at a <code>revision</code>.
+     * of the report driver) isn't a reflection of the path in the repository, 
+     * but is instead a reflection of a different repository path at a 
+     * <code>revision</code>.
      * 
      * <p>
      * If <code>startEmpty</code> is set and the <code>path</code> is a directory,
      * the implementor should assume the directory has no entries or properties.
      * 
-     * @param  url 		 	a new URL to switch to
+     * @param  url 		 	a new repository location to switch to
      * @param  path 		the local item's path 
+     * @param  lockToken    if not <span class="javakeyword">null</span>, it is a lock token 
+     *                      for the <code>path</code>
      * @param  revison 		the local item's revision number 
-     * @param  lockToken	if not <code>null</code>, it is the lock token (lock id
-     * 						in other words) for the <code>path</code>
-     * @param  startEmtpy 	<code>true</code> and if the <code>path</code> is a 
-     * 						directory - an implementer should assume that the 
-     * 						directory has no entries or properties
-     * @throws SVNException if the <code>revision</code> is invalid (<0) or there's
-     * 						no such revision at all; also if a connection failure
-     *  					occured
+     * @param  startEmpty   if <span class="javakeyword">true</span> and if the <code>path</code> is a 
+     *                      directory, then means there're no entries yet
+     * @throws SVNException 
      */
 
-    public void linkPath(SVNURL url, String path, String lockToken, long revison, boolean startEmtpy) throws SVNException;
+    public void linkPath(SVNURL url, String path, String lockToken, long revison, boolean startEmpty) throws SVNException;
     
     /**
-     * Finishes describing a working copy.
+     * Finalizes the report. Must be called when having traversed a local 
+     * tree of paths.
      * 
      * <p>
-     * Called when the state report is finished; any directories
-     * or files not explicitly set (see {@link #setPath(String, String, long, boolean)})
-     * are assumed to be at the baseline revision originally passed into 
-     * SVNRepository.update() (switch(), status(), diff()).
+     * Any directories or files not explicitly set (described) 
+     * are assumed to be at the baseline revision. 
      * 
-     * @throws SVNException 	if a failure in connection occured
-     * @see	   SVNRepository
+     * @throws SVNException 	
      */
     public void finishReport() throws SVNException;
     
@@ -132,10 +132,10 @@ public interface ISVNReporter {
      * Aborts the current running report due to errors occured.
      * 
      * <p>
-     * If an error occurs during a report, this routine should cause the
-     * filesystem transaction to be aborted & cleaned up.
+     * If an error occurs during a report, call this method
+     * to abort the reporter correctly. 
      * 
-     * @throws SVNException		if a failure in connection occured
+     * @throws SVNException		
      */
     public void abortReport() throws SVNException;
 }

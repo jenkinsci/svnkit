@@ -34,13 +34,31 @@ public interface ISVNRepositoryPool {
     /**
      * Creates a low-level SVN protocol driver to access a repository.
      * 
+     * <p>
+     * If <code>mayReuse</code> is <span class="javakeyword">true</span>
+     * and the pool feature for caching <b>SVNRepository</b> objects is suported
+     * by the concrete implementation of this interface, then this method first 
+     * tries to find an existing <b>SVNRepository</b> object 
+     * in the pool of the current thread. If such an object is found that was
+     * created for the same protocol as <code>url</code> has, then resets this 
+     * object to a new <code>url</code> and returns it back. Otherwise creates
+     * a new one, stores it in the thread's pool and returns back.
+     * 
+     * <p>
+     * If <code>mayReuse</code> is <span class="javakeyword">false</span>, then
+     * creates a new object, that won't be reusable.
+     * 
      * @param  url            a repository location to establish a 
      *                        connection with (will be the root directory
      *                        for the working session)
+     * @param  mayReuse       If <span class="javakeyword">true</span> then
+     *                        retrieves/creates a reusable object, otherwise
+     *                        creates a new unreusable one               
      * @return                a low-level API driver for direct interacting
      *                        with a repository
      * @throws SVNException   if <code>url</code> is malformed or there's
      *                        no appropriate implementation for a protocol
+     * @see                   DefaultSVNRepositoryPool#createRepository(SVNURL, boolean)
      */
     public SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException;
     
