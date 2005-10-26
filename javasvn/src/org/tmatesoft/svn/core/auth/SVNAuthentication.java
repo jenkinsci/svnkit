@@ -12,23 +12,56 @@
 package org.tmatesoft.svn.core.auth;
 
 /**
+ * The <b>SVNAuthentication</b> is the base class that represents user 
+ * credentials. <b>SVNAuthentication</b> provides only a username. Other 
+ * kinds of user credentials extend this base class and add their own specific 
+ * information.
+ * 
+ * <p>
+ * User credentials used by <b>SVNRepository</b> drivers to authenticate 
+ * a user to a repository server, are provided to those drivers by 
+ * <b>ISVNAuthenticationManager</b> implementations.
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
+ * @see     SVNPasswordAuthentication
+ * @see     SVNSSHAuthentication
+ * @see     ISVNAuthenticationManager
+ * @see     org.tmatesoft.svn.core.io.SVNRepository
  */
 public class SVNAuthentication {
     
     private String myUserName;
     private boolean myIsStorageAllowed;
     
+    /**
+     * Creates a username user credential object given a username. 
+     * 
+     * @param userName          a repository account username 
+     * @param storageAllowed    if <span class="javakeyword">true</span> then
+     *                          this credential is allowed to be stored in the 
+     *                          global auth cache, otherwise not
+     */
     public SVNAuthentication(String userName, boolean storageAllowed) {
         myUserName = userName;
         myIsStorageAllowed = storageAllowed;
     }
-
+    
+    /**
+     * Reurns the username. 
+     * 
+     * @return a repository account username
+     */
     public String getUserName() {
         return myUserName;
     }
     
+    /**
+     * Says if this credential may be cached in the global auth cache.
+     *  
+     * @return <span class="javakeyword">true</span> if this credential
+     *         may be stored, <span class="javakeyword">false</span> if may not
+     */
     public boolean isStorageAllowed() {
         return myIsStorageAllowed;
     }

@@ -14,7 +14,7 @@ import java.util.Map;
 
 /**
  * The <b>ISVNOptions</b> interface should be implemented to manage
- * a global run-time configuration area. 
+ * global run-time configuration options. 
  * 
  * <p>
  * Like the Subversion client library JavaSVN uses configuration options
@@ -63,6 +63,9 @@ import java.util.Map;
  *     ...</pre><br />
  * In this case in the specified directory JavaSVN will create necessary configuration files (in particular <i>config</i> and <i>servers</i>) which
  * are absolutely identical to those <u>default</u> ones (without any user's edits) located in the SVN config area.
+ * 
+ * <p>
+ * Read also this <a href="http://svnbook.red-bean.com/nightly/en/svn-book.html#svn.advanced">Subversion book chapter</a> on runtime configuration area.
  * 
  * @version 1.0
  * @author  TMate Software Ltd.

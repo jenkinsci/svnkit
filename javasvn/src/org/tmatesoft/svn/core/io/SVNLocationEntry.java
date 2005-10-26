@@ -48,7 +48,7 @@ public class SVNLocationEntry {
     }
     
     /**
-     * Get the revision number.
+     * Gets the revision number.
      * 
      * @return a revision number.
      */

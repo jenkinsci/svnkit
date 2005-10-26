@@ -21,8 +21,23 @@ import org.tmatesoft.svn.core.SVNURL;
 
 
 /**
+ * The <b>BasicAuthenticationManager</b> is a simple implementation of
+ * <b>ISVNAuthenticationManager</b> for storing and providing credentials without
+ * using auth providers. A basic manager simply keeps the user credentials provided. 
+ * Also this manager may store a single proxy server options context (for HHTP requests 
+ * to go through a particular proxy server).
+ * 
+ * <p>
+ * This manager does not use authentication providers (<b>ISVNAuthenticationProvider</b>) but only 
+ * those credentials that was supplied to its constructor. Also this manager never 
+ * caches credentials.
+ * 
+ * <p>
+ * This manager is not used in JavaSVN internals.
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
+ * @see     ISVNAuthenticationProvider
  */
 public class BasicAuthenticationManager implements ISVNAuthenticationManager, ISVNProxyManager {
     
@@ -35,24 +50,50 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     private int myProxyPort;
     private String myProxyUserName;
     private String myProxyPassword;
-
+    
+    /**
+     * Creates an auth manager given a user credential - a username 
+     * and password. 
+     * 
+     * @param userName  a username
+     * @param password  a password
+     */
     public BasicAuthenticationManager(String userName, String password) {
         setAuthentications(new SVNAuthentication[] {
                 new SVNPasswordAuthentication(userName, password, false),
                 new SVNSSHAuthentication(userName, password, -1, false),
         });        
     }
-
+    
+    /**
+     * Creates an auth manager given a user credential - a username and 
+     * an ssh private key.  
+     * 
+     * @param userName    a username
+     * @param keyFile     a private key file
+     * @param passphrase  a password to the private key
+     * @param portNumber  a port number over which an ssh tunnel is established
+     */
     public BasicAuthenticationManager(String userName, File keyFile, String passphrase, int portNumber) {
         setAuthentications(new SVNAuthentication[] {
                 new SVNSSHAuthentication(userName, keyFile, passphrase, portNumber, false),
         });        
     }
-
+    
+    /**
+     * Creates an auth manager given user credentials.
+     * 
+     * @param authentications user credentials
+     */
     public BasicAuthenticationManager(SVNAuthentication[] authentications) {
         setAuthentications(authentications);
     }
     
+    /**
+     * Sets the given user credentials to this manager.
+     * 
+     * @param authentications user credentials
+     */
     public void setAuthentications(SVNAuthentication[] authentications) {
         myPasswordAuthentications = new ArrayList();
         mySSHAuthentications = new ArrayList();
@@ -68,6 +109,14 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         }
     }
     
+    /**
+     * Sets a proxy server context to this manager.
+     * 
+     * @param proxyHost        a proxy server hostname
+     * @param proxyPort        a proxy server port
+     * @param proxyUserName    a username to supply to a proxy machine
+     * @param proxyPassword    a password to supply to a proxy machine
+     */
     public void setProxy(String proxyHost, int proxyPort, String proxyUserName, String proxyPassword) {
         myProxyHost = proxyHost;
         myProxyPort = proxyPort >= 0 ? proxyPort : 80;
@@ -96,21 +145,55 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         }
         throw new SVNAuthenticationException("svn: Authentication failed for '" + realm + "'");
     }
-
+    
+    /**
+     * Does nothing.
+     *  
+     * @param provider
+     */
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {        
     }
-
+    
+    /**
+     * Returns itself as a proxy manager.
+     * 
+     * @param  url            a repository location that will be accessed 
+     *                        over the proxy server for which a manager is needed
+     * @return                a proxy manager
+     * @throws SVNException   
+     */
     public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
         return this;
     }
-
+    
+    /**
+     * Returns <span class="javakeyword">null</span>.
+     * 
+     * @param  url
+     * @return <span class="javakeyword">null</span>
+     * @throws SVNException
+     */
     public ISVNSSLManager getSSLManager(SVNURL url) throws SVNException {
         return null;
     }
-
+    
+    /**
+     * Does nothing.
+     * 
+     * @param accepted
+     * @param kind
+     * @param realm
+     * @param errorMessage
+     * @param authentication
+     */
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, String errorMessage, SVNAuthentication authentication) {
     }
-
+    
+    /**
+     * Does nothing.
+     * 
+     * @param storage
+     */
     public void setRuntimeStorage(ISVNAuthenticationStorage storage) {
     }
 
@@ -133,7 +216,13 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     public String getProxyPassword() {
         return myProxyPassword;
     }
-
+    
+    /**
+     * Does nothing.
+     * 
+     * @param accepted
+     * @param errorMessage
+     */
     public void acknowledgeProxyContext(boolean accepted, String errorMessage) {
     }
 
