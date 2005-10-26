@@ -157,10 +157,12 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
-        myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(commitPath), ".tmp");
-        myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos, myRevision);
-        myCurrentFile.myFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(commitPath), ".tmp");
-        SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
+        if (myCurrentFile.myBaseFile == null) {
+            myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(commitPath), ".tmp");
+            myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos, myRevision);
+            myCurrentFile.myFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(commitPath), ".tmp");
+            SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
+        }
 
         myDeltaProcessor.applyTextDelta(myCurrentFile.myBaseFile, myCurrentFile.myFile, false);
     }
