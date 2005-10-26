@@ -20,7 +20,7 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 	public static final double SEARCH_DEPTH_EXPONENT;
 
 	static {
-        MEMORY_THRESHOLD = parseMemoryTreshold(System.getProperty("q.sequence.memory-threshold"));
+        MEMORY_THRESHOLD = parseMemoryTreshold(System.getProperty("q.sequence.memory-threshold", "1M"));
 	}
 
 	static {
@@ -28,7 +28,7 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 			SEARCH_DEPTH_EXPONENT = Math.max(0.1, Math.min(1.0, Double.parseDouble(System.getProperty("q.sequence.search-depth-exponent"))));
 		}
 		else {
-			SEARCH_DEPTH_EXPONENT = 1.0;
+			SEARCH_DEPTH_EXPONENT = .5;
 		}
 	}
 
@@ -198,10 +198,11 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
         }
         try {
             int amount = Integer.parseInt(value);
-            if (amount < SEGMENT_ENTRY_SIZE) {
-                amount = SEGMENT_ENTRY_SIZE;
+            amount = factor*amount;
+            if (amount < FILE_SEGMENT_SIZE) {
+                amount = FILE_SEGMENT_SIZE;
             }
-            return factor*amount;
+            return amount;
         } catch (NumberFormatException e) {
             return parseMemoryTreshold(null);
         }
