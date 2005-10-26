@@ -15,8 +15,22 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 	// Constants ==============================================================
 
 	public static final int FILE_SEGMENT_SIZE = 16384;
-	public static final int MEMORY_THRESHOLD = 1048576;
 	public static final int SEGMENT_ENTRY_SIZE = 16;
+	public static final int MEMORY_THRESHOLD;
+	public static final double SEARCH_DEPTH_EXPONENT;
+
+	static {
+        MEMORY_THRESHOLD = parseMemoryTreshold(System.getProperty("q.sequence.memory-threshold"));
+	}
+
+	static {
+		if (System.getProperty("q.sequence.search-depth-exponent") != null) {
+			SEARCH_DEPTH_EXPONENT = Math.max(0.1, Math.min(1.0, Double.parseDouble(System.getProperty("q.sequence.search-depth-exponent"))));
+		}
+		else {
+			SEARCH_DEPTH_EXPONENT = .5;
+		}
+	}
 
 	// Static =================================================================
 
@@ -39,7 +53,7 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData, byte[] customEolBytes) throws IOException, QSequenceException {
 		final File tempDirectory = File.createTempFile("q.sequence.line.", ".temp");
 		tempDirectory.delete();
-		return createBlocks(leftData, rightData, customEolBytes, MEMORY_THRESHOLD, FILE_SEGMENT_SIZE, 1.0, tempDirectory);
+		return createBlocks(leftData, rightData, customEolBytes, MEMORY_THRESHOLD, FILE_SEGMENT_SIZE, SEARCH_DEPTH_EXPONENT, tempDirectory);
 	}
 
 	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData, byte[] customEolBytes, int memoryThreshold, int fileSegmentSize, double searchDepthExponent, File tempDirectory) throws IOException, QSequenceException {
@@ -162,4 +176,36 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 
 		return Math.max(256, (int)Math.pow(lineMedia.getLeftLength() + lineMedia.getRightLength(), searchDepthExponent));
 	}
+    
+    private static int parseMemoryTreshold(String value) {
+        if (value == null) {
+            value = "1M";
+        }
+        value = value.toLowerCase();
+        int factor = 1;
+        if (value.endsWith("m")) {
+            value = value.substring(0, value.length() - 1);
+            factor = 1048576;
+        } else if (value.endsWith("mb")) {
+            value = value.substring(0, value.length() - 2);
+            factor = 1048576;
+        } else if (value.endsWith("k")) {
+            value = value.substring(0, value.length() - 1);
+            factor = 1024;
+        } else if (value.endsWith("kb")) {
+            value = value.substring(0, value.length() - 2);
+            factor = 1024;
+        }
+        try {
+            int amount = Integer.parseInt(value);
+            amount = factor*amount;
+            if (amount < FILE_SEGMENT_SIZE) {
+                amount = FILE_SEGMENT_SIZE;
+            }
+            return amount;
+        } catch (NumberFormatException e) {
+            return parseMemoryTreshold(null);
+        }
+        
+    }
 }
