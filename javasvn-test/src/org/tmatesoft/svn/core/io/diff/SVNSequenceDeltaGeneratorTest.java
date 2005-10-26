@@ -57,7 +57,7 @@ public class SVNSequenceDeltaGeneratorTest extends TestCase {
 	}
 
 	private void test(String workFile, String workEol, String baseFile, String baseEol) throws IOException, SVNException {
-		test(workFile, workEol, baseFile, baseEol, SVNSequenceDeltaGenerator.MEMORY_THRESHOLD, 0.5);
+		test(workFile, workEol, baseFile, baseEol, QSequenceLineMedia.MEMORY_THRESHOLD, 0.5);
 		test(workFile, workEol, baseFile, baseEol, QSequenceLineMedia.SEGMENT_ENTRY_SIZE, 0.5);
 		test(workFile, workEol, baseFile, baseEol, QSequenceLineMedia.SEGMENT_ENTRY_SIZE, 0.1);
 	}
