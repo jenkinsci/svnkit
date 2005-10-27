@@ -14,7 +14,7 @@
 <div class="leftedge" >
 <div class="rightedge">
 
-<table  cellpadding="0" align="center" width="870" border="0"  cellspacing="0">
+<table  cellpadding="0" align="center" width="870" style="height: 1000px" border="0"  cellspacing="0">
 <tr align="center" valign="top">
 <td align="left" valign="top" style="padding: 3px 20px 20px 20px;">
 
@@ -61,18 +61,6 @@ good idea to post a bug report into JavaSVN <a href="http://tmate.org/tracker/">
 more information with the bug report, please consider attaching JavaSVN log file to it. 
 Below you will find detailed instructions on how to get JavaSVN log files.
 </p>
-
-<h4>JavaSVN is used as an Eclipse plugin (works for a Subclipse Extension as well)</h4>
-<p>When used within Eclipse JavaSVN logs its operation using Eclipse built-in logging facilities.
-Logging is turned off by default. To enable JavaSVN logging please do the following:
-</p>
-<ul>
-<li>Copy <code>ECLIPSE_HOME/plugins/org.tmatesoft.javasvn_version/.options</code> file to <code>ECLIPSE_HOME</code> directory</li>
-<li>Start Eclipse with -debug command line argument:<br/><pre>$eclipse -debug</pre></li>
-<li>In Eclipse, open standard 'Error Log' view - it will contain detailed log of JavaSVN
-operations that you may export to a file.</li>
-</ul>
-<p><b>Note:</b> OS X users may find it useful to read this <a href="http://www.luisdelarosa.com/blog/2004/10/how_to_run_ecli.html">article</a>. It describes how to start Eclipse in "-debug" mode.</p>
 
 <h4>JavaSVN is used as a library in a standalone application</h4>
 <p>By default JavaSVN operations logging is switched off. To enable it,

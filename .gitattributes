@@ -101,7 +101,6 @@ www/img/leftbg.gif -text
 www/img/rightbg.gif -text
 www/index.html -text
 www/kb/build-standalone.html -text
-www/kb/build-subclipse.html -text
 www/kb/dev-guide-authentication.html -text
 www/kb/dev-guide-commit-operation.html -text
 www/kb/dev-guide-general-options.html -text
