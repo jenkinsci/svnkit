@@ -251,7 +251,7 @@ public class SVNProperties {
     }
 
     public void setPropertyValue(String name, String value) throws SVNException {
-
+        System.out.println("setting prop value: " + name + " = " + value);
         byte[] bytes = null;
         if (value != null) {
             try {
@@ -261,8 +261,7 @@ public class SVNProperties {
             }
         }
         int length = bytes != null && bytes.length >= 0 ? bytes.length : -1;
-        setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes)
-                : null, length);
+        setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes) : null, length);
     }
 
     public void setPropertyValue(String name, InputStream is, int length)
@@ -277,7 +276,7 @@ public class SVNProperties {
                 src = SVNFileUtil.openFileForReading(getFile());
             }
             dst = SVNFileUtil.openFileForWriting(tmpFile);
-            empty = copyProperties(src, dst, name, is, length);
+            empty = !copyProperties(src, dst, name, is, length);
         } finally {
             SVNFileUtil.closeFile(src);
             SVNFileUtil.closeFile(dst);
