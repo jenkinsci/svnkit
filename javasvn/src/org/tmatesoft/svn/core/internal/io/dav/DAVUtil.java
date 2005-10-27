@@ -16,9 +16,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
  * @version 1.0
@@ -84,7 +87,9 @@ public class DAVUtil {
                 properties = getResourceProperties(connection, path, null, DAVElement.STARTING_PROPERTIES, false);
                 break;
             } catch (SVNException e) {
-                //
+                if (e instanceof SVNAuthenticationException || e instanceof SVNCancelException) {
+                    throw e;
+                }
             }
             loppedPath = SVNPathUtil.append(SVNPathUtil.tail(path), loppedPath);
             path = SVNPathUtil.removeTail(path);
@@ -93,12 +98,12 @@ public class DAVUtil {
             }
         }
         if (properties == null) {
-            throw new SVNException("resource " + path + " is not part of repository");
+            SVNErrorManager.error("svn: resource '" + path + "' is not part of repository");
         }
         String vcc = (String) properties.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
         String baselineRelativePath = (String) properties.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);
         if (vcc == null) {
-            throw new SVNException("important properties are missing for " + path);
+            SVNErrorManager.error("svn: important properties are missing for " + path);
         }
         if (baselineRelativePath == null) {
             baselineRelativePath = "";
