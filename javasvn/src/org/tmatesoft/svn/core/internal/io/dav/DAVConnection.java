@@ -84,6 +84,7 @@ public class DAVConnection {
     
     private DAVResponse findStartingProperties(DAVRepository repository, String fullPath) throws SVNException {
         DAVResponse props = null;
+        String originalPath = fullPath;
         while(true) {
             props = getStartingProperties(fullPath);
             if (props != null) {
@@ -95,7 +96,7 @@ public class DAVConnection {
             int length = fullPath.length();
             fullPath = SVNPathUtil.removeTail(fullPath);
             if (length == fullPath.length()) {
-                SVNErrorManager.error("svn: The path was not part of repository");
+                SVNErrorManager.error("svn: The path '" + originalPath + "' is not part of repository");
             }
         }
         return props;
