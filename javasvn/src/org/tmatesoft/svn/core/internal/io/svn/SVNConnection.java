@@ -109,7 +109,7 @@ class SVNConnection {
                     auth = (SVNPasswordAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
                 }
                 if (auth == null || auth.getUserName() == null || auth.getPassword() == null) {
-                    failureReason = "no credentials for 'CRAM-MD5'";
+                    failureReason = "authentication is required for '" + realm + "'";
                     break;
                 }
                 write("(w())", new Object[] { "CRAM-MD5" });
