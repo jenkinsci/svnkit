@@ -59,7 +59,7 @@ The only pure Java Subversion library in the world!
 <p>
 This section contains information on configuring the JavaSVN library - in order
 that one can adjust the library up to his individual wishes. Here you will find
-information on what configuration files JavaSVN uses during rungtime, what 
+information on what configuration files JavaSVN uses during runtime, what 
 system properties are used in that case when config files are not available, and
 so on.
 </p>
@@ -73,11 +73,9 @@ from the <i>[tunnels]</i> section of the <i>config</i> file that is
 located in the default SVN run-time configuration area. However if
 that information is not complete or not found at all, JavaSVN tries
 then to use predefined system properties listed beneath.
-<p>JavaSVN uses pure java <a id=normal href="http://www.jcraft.com">JSCH library</a> to establish SSH 
-connection. This library supports only SSH version 2, with password or private key authentication. Using 
-password authentication is not a problem with Subclipse, but currently it doesn't provide a way to define 
-a private key and passphrase for private key authentication. You may use the following system properties 
-to let JavaSVN know about your private key and passphrase:
+<p>JavaSVN uses a pure java <a id=normal href="http://www.ganymed.ethz.ch/ssh2/">Ganymed library</a> to establish SSH 
+connections. This library supports only SSH version 2, with password or private key authentication. You may use the 
+following system properties to let JavaSVN know about your private key and passphrase:
 <pre class="javaCode">
 javasvn.ssh2.key = /path/to/private/key/file 
 javasvn.ssh2.username = userName  
@@ -95,8 +93,7 @@ $ eclipse -vmargs \
 -Djavasvn.ssh2.password=userpassword \
 -Djavasvn.ssh2.port=optionalPort
 </pre>
-<p><b>Note:</b> a user name for an ssh connection will be taken from SVN Repository properties that may be altered in Subclipse
-SVN Repositories view.</p>
+<p><b>Note:</b> a user name for an ssh connection will be taken from SVN Repository properties.</p>
 <p>To avoid special batch script creation to launch Eclipse you may define ssh related properties in
 Eclipse config.ini file - <code>ECLIPSE_HOME/configuration/config.ini</code> (tip provided by Andrew Berman):
 <pre class="javaCode">
@@ -106,19 +103,6 @@ Eclipse config.ini file - <code>ECLIPSE_HOME/configuration/config.ini</code> (ti
   javasvn.ssh2.username=username
   javasvn.ssh2.password=userpassword 
   javasvn.ssh2.port=port
-</pre>
-</p>
-<p>
-In case you work with Mac OS X version of Eclipse it is not 
-too simple to add arguments that make JSCH look for private 
-key file at launch. Instead of command line arguments you can 
-modify Eclipse.app/Contents/Info.plist last array of keys 
-adding something like that (tip provided by Valentin Alekseev):
-<pre style="color: rgb(0,0,128);" class="javaCode">
-&lt;array&gt;
-  ...
-   &lt;string&gt;-Djavasvn.ssh2.key=/path/to/key/file&lt;/string&gt;
-&lt;/array&gt;
 </pre>
 </p>
 <h4>SSL Connections</h4>
