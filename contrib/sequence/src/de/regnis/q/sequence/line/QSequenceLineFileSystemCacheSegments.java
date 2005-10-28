@@ -1,9 +1,13 @@
 package de.regnis.q.sequence.line;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
-import de.regnis.q.sequence.core.*;
+import de.regnis.q.sequence.core.QSequenceAssert;
 
 /**
  * @author Marc Strapetz
@@ -12,7 +16,7 @@ class QSequenceLineFileSystemCacheSegments {
 
 	// Fields =================================================================
 
-	private final File tempDirectory;
+	private final QSequenceLineTempDirectoryFactory tempDirectoryFactory;
 	private final int maximumEntriesPerSegment;
 	private final int maximumSegmentsInMemory;
 	private final List segments;
@@ -23,11 +27,11 @@ class QSequenceLineFileSystemCacheSegments {
 
 	// Setup ==================================================================
 
-	public QSequenceLineFileSystemCacheSegments(File tempDirectory, int maximumBytesInMemory, int segmentBytesSize) {
+	public QSequenceLineFileSystemCacheSegments(QSequenceLineTempDirectoryFactory tempDirectoryFactory, int maximumBytesInMemory, int segmentBytesSize) {
 		QSequenceAssert.assertTrue(segmentBytesSize >= QSequenceLineMedia.SEGMENT_ENTRY_SIZE);
 		QSequenceAssert.assertTrue(maximumBytesInMemory >= segmentBytesSize);
 
-		this.tempDirectory = tempDirectory;
+		this.tempDirectoryFactory = tempDirectoryFactory;
 		this.maximumEntriesPerSegment = segmentBytesSize / QSequenceLineMedia.SEGMENT_ENTRY_SIZE;
 		this.maximumSegmentsInMemory = maximumBytesInMemory / (maximumEntriesPerSegment * QSequenceLineMedia.SEGMENT_ENTRY_SIZE);
 		this.segments = new ArrayList();
@@ -72,6 +76,7 @@ class QSequenceLineFileSystemCacheSegments {
 
 		file.close();
 		filePath.delete();
+		tempDirectoryFactory.close();
 	}
 
 	// Utils ==================================================================
@@ -104,6 +109,7 @@ class QSequenceLineFileSystemCacheSegments {
 
 	private RandomAccessFile getFile() throws IOException {
 		if (file == null) {
+			final File tempDirectory = tempDirectoryFactory.getTempDirectory();
 			if (!tempDirectory.isDirectory()) {
 				tempDirectory.mkdirs();
 			}

@@ -1,6 +1,7 @@
 package de.regnis.q.sequence.line;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * @author Marc Strapetz
@@ -9,8 +10,8 @@ final class QSequenceLineFileSystemCache implements QSequenceLineCache {
 
 	// Static =================================================================
 
-	public static QSequenceLineFileSystemCache create(QSequenceLineRAData data, File tempDirectory, byte[] customEolBytes, int maximumBytesInMemory, int maximumSegmentSize) throws IOException {
-		final QSequenceLineFileSystemCache cache = new QSequenceLineFileSystemCache(data, tempDirectory, maximumBytesInMemory, maximumSegmentSize);
+	public static QSequenceLineFileSystemCache create(QSequenceLineRAData data, QSequenceLineTempDirectoryFactory tempDirectoryFactory, byte[] customEolBytes, int maximumBytesInMemory, int maximumSegmentSize) throws IOException {
+		final QSequenceLineFileSystemCache cache = new QSequenceLineFileSystemCache(data, tempDirectoryFactory, maximumBytesInMemory, maximumSegmentSize);
 		final QSequenceLineReader reader = new QSequenceLineReader(customEolBytes);
 		final InputStream stream = data.read(0, data.length());
 		reader.read(stream, cache);
@@ -27,9 +28,9 @@ final class QSequenceLineFileSystemCache implements QSequenceLineCache {
 
 	// Setup ==================================================================
 
-	private QSequenceLineFileSystemCache(QSequenceLineRAData data, File tempDirectory, int maximumBytesInMemory, int maximumSegmentSize) {
+	private QSequenceLineFileSystemCache(QSequenceLineRAData data, QSequenceLineTempDirectoryFactory tempDirectoryFactory, int maximumBytesInMemory, int maximumSegmentSize) {
 		this.data = data;
-		this.segments = new QSequenceLineFileSystemCacheSegments(tempDirectory, maximumBytesInMemory, maximumSegmentSize);
+		this.segments = new QSequenceLineFileSystemCacheSegments(tempDirectoryFactory, maximumBytesInMemory, maximumSegmentSize);
 	}
 
 	// Implemented ============================================================
