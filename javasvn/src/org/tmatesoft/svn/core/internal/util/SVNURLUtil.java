@@ -33,7 +33,7 @@ public class SVNURLUtil {
             return null;
         }
         if (url1.getUserInfo() != null) {
-            if (url1.getUserInfo().equals(url2.getUserInfo())) {
+            if (!url1.getUserInfo().equals(url2.getUserInfo())) {
                 return null;
             }
         } else {
