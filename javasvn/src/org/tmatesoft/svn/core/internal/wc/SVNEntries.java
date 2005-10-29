@@ -112,6 +112,9 @@ public class SVNEntries {
                                 if (entry.get(SVNProperty.UUID) == null) {
                                     entry.put(SVNProperty.UUID, rootEntry.get(SVNProperty.UUID));
                                 }
+                                if (entry.get(SVNProperty.REPOS) == null && rootEntry.get(SVNProperty.REPOS) != null) {
+                                    entry.put(SVNProperty.REPOS, rootEntry.get(SVNProperty.REPOS));
+                                }
                             }
                         }
                         entry = null;
@@ -155,20 +158,19 @@ public class SVNEntries {
                     }
                     if (!"".equals(name)) {
                         Object expectedValue;
-                        if (SVNProperty.KIND_DIR.equals(entry
-                                .get(SVNProperty.KIND))) {
+                        if (SVNProperty.KIND_DIR.equals(entry.get(SVNProperty.KIND))) {
                             if (SVNProperty.UUID.equals(propName)
                                     || SVNProperty.REVISION.equals(propName)
-                                    || SVNProperty.URL.equals(propName)) {
+                                    || SVNProperty.URL.equals(propName) 
+                                    || SVNProperty.REPOS.equals(propName)) {
                                 continue;
                             }
                         } else {
                             if (SVNProperty.URL.equals(propName)) {
-                                expectedValue = SVNPathUtil.append(
-                                        (String) rootEntry.get(propName),
-                                        SVNEncodingUtil.uriEncode(name));
-                            } else if (SVNProperty.UUID.equals(propName)
-                                    || SVNProperty.REVISION.equals(propName)) {
+                                expectedValue = SVNPathUtil.append((String) rootEntry.get(propName), SVNEncodingUtil.uriEncode(name));
+                            } else if (SVNProperty.UUID.equals(propName) || SVNProperty.REVISION.equals(propName)) {
+                                expectedValue = rootEntry.get(propName);
+                            } else if (SVNProperty.REPOS.equals(propName)) {
                                 expectedValue = rootEntry.get(propName);
                             } else {
                                 expectedValue = null;
@@ -178,8 +180,7 @@ public class SVNEntries {
                             }
                         }
                     }
-                    propName = propName.substring(SVNProperty.SVN_ENTRY_PREFIX
-                            .length());
+                    propName = propName.substring(SVNProperty.SVN_ENTRY_PREFIX.length());
                     propValue = SVNEncodingUtil.xmlEncodeAttr(propValue);
                     os.write("\n   ");
                     os.write(propName);
@@ -191,7 +192,8 @@ public class SVNEntries {
             }
             os.write("</wc-entries>\n");
         } catch (IOException e) {
-            tmpFile.delete();
+            SVNFileUtil.closeFile(os);
+            SVNFileUtil.deleteFile(tmpFile);
             SVNErrorManager.error("svn: Cannot save entries file '" + myFile + "'");
         } finally {
             SVNFileUtil.closeFile(os);

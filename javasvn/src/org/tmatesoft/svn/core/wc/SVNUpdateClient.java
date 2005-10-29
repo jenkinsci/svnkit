@@ -243,6 +243,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         long revNumber = getRevisionNumber(revision, repos, null);
         SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
         String uuid = repos.getRepositoryUUID();
+        SVNURL repositoryRoot = repos.getRepositoryRoot();
         if (targetNodeKind == SVNNodeKind.FILE) {
             SVNErrorManager.error("svn: URL '" + url + "' refers to a file not a directory");
         } else if (targetNodeKind == SVNNodeKind.NONE) {
@@ -259,7 +260,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 //
             }
             if (!dstPath.exists() || wcAccess == null || entry == null) {
-                createVersionedDirectory(dstPath, url, uuid, revNumber);
+                createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber);
                 result = doUpdate(dstPath, revision, recursive);
             } else if (dstPath.isDirectory() && entry != null) {
                 if (url.equals(entry.getSVNURL())) {
@@ -743,7 +744,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 
-    private SVNDirectory createVersionedDirectory(File dstPath, SVNURL url, String uuid, long revNumber) throws SVNException {
+    private SVNDirectory createVersionedDirectory(File dstPath, SVNURL url, SVNURL rootURL, String uuid, long revNumber) throws SVNException {
         SVNDirectory.createVersionedDirectory(dstPath);
         // add entry first.
         SVNDirectory dir = new SVNDirectory(null, "", dstPath);
@@ -754,6 +755,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
         entry.setURL(url.toString());
         entry.setUUID(uuid);
+        entry.setRepositoryRootURL(rootURL);
         entry.setKind(SVNNodeKind.DIR);
         entry.setRevision(revNumber);
         entry.setIncomplete(true);

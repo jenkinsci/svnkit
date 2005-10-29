@@ -125,8 +125,8 @@ public class SVNInfo {
                     entry.getLockOwner(), entry.getLockComment(), SVNTimeUtil
                             .parseDate(entry.getLockCreationDate()), null);
         }
-        return new SVNInfo(file, entry.getSVNURL(), entry.getRevision(), entry
-                .getKind(), entry.getUUID(), entry.getCommittedRevision(),
+        return new SVNInfo(file, entry.getSVNURL(), entry.getRepositoryRootURL(), 
+                entry.getRevision(), entry.getKind(), entry.getUUID(), entry.getCommittedRevision(),
                 entry.getCommittedDate(), entry.getAuthor(), entry
                         .getSchedule(), entry.getCopyFromSVNURL(), entry
                         .getCopyFromRevision(), entry.getTextTime(), entry
@@ -145,7 +145,7 @@ public class SVNInfo {
                 dirEntry.getAuthor(), lock);
     }
 
-    protected SVNInfo(File file, SVNURL url, long revision, SVNNodeKind kind,
+    protected SVNInfo(File file, SVNURL url, SVNURL rootURL, long revision, SVNNodeKind kind,
             String uuid, long committedRevision, String committedDate,
             String author, String schedule, SVNURL copyFromURL,
             long copyFromRevision, String textTime, String propTime,
@@ -156,6 +156,7 @@ public class SVNInfo {
         myRevision = SVNRevision.create(revision);
         myKind = kind;
         myRepositoryUUID = uuid;
+        myRepositoryRootURL = rootURL;
 
         myCommittedRevision = SVNRevision.create(committedRevision);
         myCommittedDate = committedDate != null ? SVNTimeUtil

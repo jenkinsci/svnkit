@@ -109,6 +109,10 @@ public class SVNProperty {
      */
     public static final String UUID = SVN_ENTRY_PREFIX + "uuid";
     /**
+     * An <span class="javastring">"svn:entry:repos"</span> SVN untweakable metaproperty.
+     */
+    public static final String REPOS = SVN_ENTRY_PREFIX + "repos";
+    /**
      * An <span class="javastring">"svn:entry:prop-time"</span> SVN untweakable metaproperty.
      */
     public static final String PROP_TIME = SVN_ENTRY_PREFIX + "prop-time";

@@ -37,6 +37,7 @@ public class SVNUpdateEditor implements ISVNEditor {
     private String mySwitchURL;
     private String myTarget;
     private String myTargetURL;
+    private String myRootURL;
     private boolean myIsRecursive;
     private SVNWCAccess myWCAccess;
     private SVNDirectoryInfo myCurrentDirectory;
@@ -59,6 +60,7 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry("", true);
         myTargetURL = entry.getURL();
+        myRootURL = entry.getRepositoryRoot();
         if (myTarget != null) {
             myTargetURL = SVNPathUtil.append(myTargetURL, SVNEncodingUtil.uriEncode(myTarget));
         }
@@ -499,7 +501,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         if (myTarget != null) {
             if (dir.getChildDirectory(myTarget) == null) {
                 SVNEntry entry = dir.getEntries().getEntry(myTarget, true);
-                boolean save = bumpEntry(dir.getEntries(), entry, mySwitchURL, myTargetRevision, false);
+                boolean save = bumpEntry(dir.getEntries(), entry, mySwitchURL, myRootURL, myTargetRevision, false);
                 if (save) {
                     dir.getEntries().save(true);
                 } else {
@@ -509,12 +511,12 @@ public class SVNUpdateEditor implements ISVNEditor {
             }
             dir = dir.getChildDirectory(myTarget);
         }
-        bumpDirectory(dir, mySwitchURL);
+        bumpDirectory(dir, mySwitchURL, myRootURL);
     }
 
-    private void bumpDirectory(SVNDirectory dir, String url) throws SVNException {
+    private void bumpDirectory(SVNDirectory dir, String url, String rootURL) throws SVNException {
         SVNEntries entries = dir.getEntries();
-        boolean save = bumpEntry(entries, entries.getEntry("", true), url, myTargetRevision, false);
+        boolean save = bumpEntry(entries, entries.getEntry("", true), url, rootURL, myTargetRevision, false);
         Map childDirectories = new HashMap();
         for (Iterator ents = entries.entries(true); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
@@ -523,7 +525,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             }
             String childURL = url != null ? SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(entry.getName())) : null;
             if (entry.getKind() == SVNNodeKind.FILE) {
-                save |= bumpEntry(entries, entry, childURL, myTargetRevision, true);
+                save |= bumpEntry(entries, entry, childURL, rootURL, myTargetRevision, true);
             } else if (myIsRecursive && entry.getKind() == SVNNodeKind.DIR) {
                 SVNDirectory childDirectory = dir.getChildDirectory(entry.getName());
                 if (!entry.isScheduledForAddition() && (childDirectory == null || !childDirectory.isVersioned())) {
@@ -543,14 +545,14 @@ public class SVNUpdateEditor implements ISVNEditor {
             SVNDirectory child = (SVNDirectory) children.next();
             String childURL = (String) childDirectories.get(child);
             if (child != null) {
-                bumpDirectory(child, childURL);
+                bumpDirectory(child, childURL, rootURL);
             } else {
                 SVNDebugLog.logInfo("svn: Directory object is null in bump directories method");
             }
         }
     }
 
-    private static boolean bumpEntry(SVNEntries entries, SVNEntry entry, String url, long revision, boolean delete) {
+    private static boolean bumpEntry(SVNEntries entries, SVNEntry entry, String url, String rootURL, long revision, boolean delete) {
         if (entry == null) {
             return false;
         }
@@ -558,6 +560,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         if (url != null) {
             save = entry.setURL(url);
         }
+        save |= entry.setRepositoryRoot(rootURL);
         if (revision >= 0 && !entry.isScheduledForAddition() && !entry.isScheduledForReplacement()) {
             save |= entry.setRevision(revision);
         }
