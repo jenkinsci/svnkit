@@ -71,6 +71,8 @@ class DefaultHTTPConnection implements IHTTPConnection {
     private Map myCredentialsChallenge;
     private SVNAuthentication myLastValidAuth;
     private SVNRepository myRepository;
+    
+    private static final DefaultHandler DEFAULT_SAX_HANDLER = new DefaultHandler();
 
     public DefaultHTTPConnection(SVNRepository repos) {
         myRepository = repos;
@@ -435,6 +437,18 @@ class DefaultHTTPConnection implements IHTTPConnection {
         } finally {
             finishResponse(responseHeader);
             SVNDebugLog.flushStream(is);
+            // to avoid memory leaks when connection is cached.
+            org.xml.sax.XMLReader xmlReader = null;
+            try {
+                xmlReader = mySAXParser.getXMLReader(); 
+            } catch (SAXException e) {
+            }
+            if (xmlReader != null) {
+                xmlReader.setContentHandler(DEFAULT_SAX_HANDLER);
+                xmlReader.setDTDHandler(DEFAULT_SAX_HANDLER);
+                xmlReader.setErrorHandler(DEFAULT_SAX_HANDLER);
+                xmlReader.setEntityResolver(DEFAULT_SAX_HANDLER);
+            }
         }
     }
 

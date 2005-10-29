@@ -1051,9 +1051,15 @@ public class SVNDiffClient extends SVNBasicClient {
             props1 = filterProperties(props1, true, false, false);
             props2 = filterProperties(props2, true, false, false);
             Map propsDiff = computePropsDiff(props1, props2);
-            
+            // remove non wc props from props1.
+            for (Iterator names = props1.keySet().iterator(); names.hasNext();) {
+                String propertyName = (String) names.next();
+                if (propertyName.startsWith(SVNProperty.SVN_ENTRY_PREFIX) || propertyName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+                    names.remove();
+                }
+            }
             SVNMerger merger = new SVNMerger(wcAccess, url2.toString(), rev2[0], force, dryRun, isLeaveConflictsUnresolved());
-            mergeResult = merger.fileChanged(name, f1, f2, rev1[0], rev2[0], mimeType1, mimeType2, propsDiff);
+            mergeResult = merger.fileChanged(name, f1, f2, rev1[0], rev2[0], mimeType1, mimeType2, props1, propsDiff);
         } finally {
             SVNFileUtil.deleteAll(f1, null);
             SVNFileUtil.deleteAll(f2, null);

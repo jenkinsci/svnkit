@@ -251,7 +251,6 @@ public class SVNProperties {
     }
 
     public void setPropertyValue(String name, String value) throws SVNException {
-        System.out.println("setting prop value: " + name + " = " + value);
         byte[] bytes = null;
         if (value != null) {
             try {
@@ -341,7 +340,7 @@ public class SVNProperties {
             String name, InputStream value, int length) throws SVNException {
         // read names, till name is met, then insert value or skip this
         // property.
-        boolean written = false;
+        int propCount = 0;
         try {
             if (is != null) {
                 int l = 0;
@@ -359,23 +358,23 @@ public class SVNProperties {
                     l = readLength(is, 'V');
                     writeProperty(os, 'V', is, l);
                     is.read();
-                    written = true;
+                    propCount++;
                 }
             }
             if (value != null && length >= 0) {
                 byte[] nameBytes = name.getBytes("UTF-8");
                 writeProperty(os, 'K', nameBytes);
                 writeProperty(os, 'V', value, length);
-                written = true;
+                propCount++;
             }
             // TODO
-            if (written) {
+            if (propCount > 0) {
                 os.write(new byte[] { 'E', 'N', 'D', '\n' });
             }
         } catch (IOException e) {
             SVNErrorManager.error(e.getMessage());
         }
-        return written;
+        return propCount > 0;
     }
 
     private static boolean readProperty(char type, InputStream is, OutputStream os) throws IOException {

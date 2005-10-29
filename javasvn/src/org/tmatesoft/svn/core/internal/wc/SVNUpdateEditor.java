@@ -243,12 +243,11 @@ public class SVNUpdateEditor implements ISVNEditor {
             SVNLog log = myCurrentDirectory.getLog(true);
 
             if (modifiedProps != null && !modifiedProps.isEmpty()) {
-                SVNProperties props = dir.getProperties("", false);
-                Map locallyModified = dir.getBaseProperties("", false).compareTo(props);
                 myWCAccess.addExternals(dir, (String) modifiedProps.get(SVNProperty.EXTERNALS));
 
-                propStatus = dir.mergeProperties("", modifiedProps, locallyModified, true, log);
-                if (locallyModified == null || locallyModified.isEmpty()) {
+                Map oldBaseProps = dir.getBaseProperties("", false).asMap();
+                propStatus = dir.mergeProperties("", oldBaseProps, modifiedProps, true, log);
+                if (myCurrentDirectory.IsAdded && !dir.hasPropModifications("")) {
                     Map command = new HashMap();
                     command.put(SVNLog.NAME_ATTR, "");
                     command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNLog.WC_TIMESTAMP);
@@ -353,8 +352,6 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNStatusType lockStatus = SVNStatusType.LOCK_UNCHANGED;
 
         boolean magicPropsChanged = false;
-        SVNProperties props = dir.getProperties(name, false);
-        Map locallyModifiedProps = dir.getBaseProperties(name, false).compareTo(props);
         if (modifiedProps != null && !modifiedProps.isEmpty()) {
             magicPropsChanged = modifiedProps.containsKey(SVNProperty.EXECUTABLE) || 
             modifiedProps.containsKey(SVNProperty.NEEDS_LOCK) || 
@@ -362,7 +359,9 @@ public class SVNUpdateEditor implements ISVNEditor {
             modifiedProps.containsKey(SVNProperty.EOL_STYLE) || 
             modifiedProps.containsKey(SVNProperty.SPECIAL);
         }
-        SVNStatusType propStatus = dir.mergeProperties(name, modifiedProps, locallyModifiedProps, true, log);
+        Map oldBaseProps = dir.getBaseProperties(name, false).asMap();
+        boolean isLocalPropsModified = !myCurrentFile.IsAdded && dir.hasPropModifications(name);
+        SVNStatusType propStatus = dir.mergeProperties(name, oldBaseProps, modifiedProps, true, log);
         if (modifiedEntryProps != null) {
             lockStatus = log.logChangedEntryProperties(name, modifiedEntryProps);
         }
@@ -440,7 +439,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             log.addCommand(SVNLog.MAYBE_READONLY, command, false);
             command.clear();
         }
-        if (locallyModifiedProps == null || locallyModifiedProps.isEmpty()) {
+        if (!isLocalPropsModified) {
             command.put(SVNLog.NAME_ATTR, name);
             command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_TIME), SVNLog.WC_TIMESTAMP);
             log.addCommand(SVNLog.MODIFY_ENTRY, command, false);

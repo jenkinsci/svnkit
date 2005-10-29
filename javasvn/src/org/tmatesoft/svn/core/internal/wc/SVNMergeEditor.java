@@ -145,8 +145,7 @@ public class SVNMergeEditor implements ISVNEditor {
     public void closeDir() throws SVNException {
         SVNStatusType propStatus = SVNStatusType.UNCHANGED;
         if (myCurrentDirectory.myPropertyDiff != null) {
-            SVNDirectory dir = myWCAccess
-                    .getDirectory(myCurrentDirectory.myWCPath);
+            SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myWCPath);
             if (dir == null && !myMerger.isDryRun()) {
                 SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess,
                         myCurrentDirectory.myWCPath, SVNEventAction.SKIP, null,
@@ -158,6 +157,7 @@ public class SVNMergeEditor implements ISVNEditor {
             if (!myMerger.isDryRun() || dir != null) {
                 propStatus = myMerger.directoryPropertiesChanged(
                         myCurrentDirectory.myWCPath,
+                        myCurrentDirectory.myBaseProperties,
                         myCurrentDirectory.myPropertyDiff);
             }
         }
@@ -255,6 +255,7 @@ public class SVNMergeEditor implements ISVNEditor {
                                         myCurrentFile.myFile != null ? myCurrentFile.myBaseFile
                                                 : null, myCurrentFile.myFile,
                                         myRevision2, 0, mimeType1, mimeType2,
+                                        myCurrentFile.myBaseProperties,
                                         myCurrentFile.myPropertyDiff,
                                         myCurrentFile.myEntryProps);
                     } catch (Throwable th) {
@@ -265,6 +266,7 @@ public class SVNMergeEditor implements ISVNEditor {
                         result = myMerger.fileChanged(myCurrentFile.myWCPath,
                                 myCurrentFile.myBaseFile, myCurrentFile.myFile,
                                 myRevision1, myRevision2, mimeType1, mimeType2,
+                                myCurrentFile.myBaseProperties,
                                 myCurrentFile.myPropertyDiff);
                     } catch (Throwable th) {
                         SVNDebugLog.logInfo(th);

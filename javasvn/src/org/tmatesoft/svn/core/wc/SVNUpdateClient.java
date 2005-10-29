@@ -676,7 +676,6 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (external.getOldURL() == null) {
                     external.getFile().mkdirs();
                     dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
-                    SVNDebugLog.logInfo("doing checkout on rev: " + revision);
                     doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                 } else if (external.getNewURL() == null) {
                     if (SVNWCAccess.isVersionedDirectory(external.getFile())) {
@@ -692,12 +691,10 @@ public class SVNUpdateClient extends SVNBasicClient {
                     deleteExternal(external);
                     external.getFile().mkdirs();
                     dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
-                    SVNDebugLog.logInfo("doing checkout on rev: " + revision);
                     doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                 } else {
                     if (!external.getFile().isDirectory()) {
                         external.getFile().mkdirs();
-                        SVNDebugLog.logInfo("doing checkout on rev: " + revision);
                         doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                     } else {
                         String url = null;
@@ -710,7 +707,6 @@ public class SVNUpdateClient extends SVNBasicClient {
                             deleteExternal(external);
                             external.getFile().mkdirs();
                             dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));
-                            SVNDebugLog.logInfo("doing checkout on rev: " + revision);
                             doCheckout(external.getNewURL(), external.getFile(), revision, revision, true);
                         } else {
                             dispatchEvent(SVNEventFactory.createUpdateExternalEvent(wcAccess, ""));

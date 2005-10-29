@@ -174,65 +174,71 @@ public class SVNDirectory {
         return new SVNProperties(propertiesFile, getAdminDirectory().getName() + "/" + path);
     }
 
-    public SVNStatusType mergeProperties(String name, Map changedProperties,
-            Map locallyChanged, boolean updateBaseProps, SVNLog log)
-            throws SVNException {
-        changedProperties = changedProperties == null ? Collections.EMPTY_MAP
-                : changedProperties;
-        locallyChanged = locallyChanged == null ? Collections.EMPTY_MAP
-                : locallyChanged;
-
+    public SVNStatusType mergeProperties(String name, Map serverBaseProps, Map propDiff, boolean baseMerge, SVNLog log) throws SVNException {
+        serverBaseProps = serverBaseProps == null ? Collections.EMPTY_MAP : serverBaseProps;
+        propDiff = propDiff == null ? Collections.EMPTY_MAP : propDiff;
+        
         SVNProperties working = getProperties(name, false);
+        Map workingProps = working.asMap();
         SVNProperties workingTmp = getProperties(name, true);
         SVNProperties base = getBaseProperties(name, false);
         SVNProperties baseTmp = getBaseProperties(name, true);
 
         working.copyTo(workingTmp);
-        if (updateBaseProps) {
+        if (baseMerge) {
             base.copyTo(baseTmp);
         }
 
         Collection conflicts = new ArrayList();
-        SVNStatusType result = changedProperties.isEmpty() ? SVNStatusType.UNCHANGED
-                : SVNStatusType.CHANGED;
-        for (Iterator propNames = changedProperties.keySet().iterator(); propNames
-                .hasNext();) {
-            String propName = (String) propNames.next();
-            String propValue = (String) changedProperties.get(propName);
-            if (updateBaseProps) {
-                baseTmp.setPropertyValue(propName, propValue);
+        SVNStatusType result = propDiff.isEmpty() ? SVNStatusType.UNCHANGED : SVNStatusType.CHANGED;
+        
+        for (Iterator propEntries = propDiff.entrySet().iterator(); propEntries.hasNext();) {
+            Map.Entry incomingEntry = (Map.Entry) propEntries.next();
+            String propName = (String) incomingEntry.getKey();
+            String toValue = (String) incomingEntry.getValue();
+            String fromValue = (String) serverBaseProps.get(propName);
+            String workingValue = (String) workingProps.get(propName);
+            if (baseMerge) {
+                baseTmp.setPropertyValue(propName, toValue);
             }
-
-            if (locallyChanged.containsKey(propName)) {
-                String workingValue = (String) locallyChanged.get(propName);
-                String conflict = null;
-                if (workingValue == null && propValue != null) {
-                    conflict = MessageFormat
-                            .format(
-                                    "Property ''{0}'' locally deleted, but update sets it to ''{1}''\n",
-                                    new Object[] { propName, propValue });
-                } else if (workingValue != null && propValue == null) {
-                    conflict = MessageFormat
-                            .format(
-                                    "Property ''{0}'' locally changed to ''{1}'', but update deletes it\n",
-                                    new Object[] { propName, workingValue });
-                } else if (workingValue != null
-                        && !workingValue.equals(propValue)) {
-                    conflict = MessageFormat
-                            .format(
-                                    "Property ''{0}'' locally changed to ''{1}'', but update sets it to ''{2}''\n",
-                                    new Object[] { propName, workingValue,
-                                            propValue });
+            if (fromValue == null) {
+                if (workingValue != null) {
+                    if (workingValue.equals(toValue)) {
+                        result = result != SVNStatusType.CONFLICTED ? SVNStatusType.MERGED : result;
+                    } else {
+                        conflicts.add(MessageFormat.format("Trying to add new property ''{0}'' with value ''{1}'',\n" +
+                                "but property already exists with value ''{2}''.", new Object[] { propName, toValue, workingValue }));
+                        result = SVNStatusType.CONFLICTED;                            
+                    }
+                } else {
+                    workingTmp.setPropertyValue(propName, toValue);
                 }
-                if (conflict != null) {
-                    conflicts.add(conflict);
-                    continue;
+            } else {
+                if (workingValue == null) {
+                    if (toValue != null) {
+                        result = SVNStatusType.CONFLICTED;
+                        conflicts.add(MessageFormat.format("Trying to change property ''{0}'' from ''{1}'' to ''{2}'',\n" +
+                                "but the property does not exist.", new Object[] { propName, fromValue, toValue }));
+                    } else {
+                        result = result != SVNStatusType.CONFLICTED ? SVNStatusType.MERGED : result;
+                    }
+                } else {
+                    if (workingValue.equals(fromValue)) {
+                        workingTmp.setPropertyValue(propName, toValue);
+                    } else if (toValue == null && !workingValue.equals(fromValue)) {
+                        result = SVNStatusType.CONFLICTED;
+                        conflicts.add(MessageFormat.format("Trying to delete property ''{0}'' but value has been modified from ''{1}'' to ''{2}''.",
+                                 new Object[] { propName, fromValue, workingValue }));
+                    } else if (workingValue.equals(toValue)) {
+                        result = result != SVNStatusType.CONFLICTED ? SVNStatusType.MERGED : result;
+                    } else {
+                        result = SVNStatusType.CONFLICTED;
+                        conflicts.add(MessageFormat.format("Trying to change property ''{0}'' from ''{1}'' to ''{2}'',\n" +
+                                "but property already exists with value ''{3}''.", new Object[] { propName, fromValue, toValue, workingValue }));
+                    }
                 }
-                result = SVNStatusType.MERGED;
             }
-            workingTmp.setPropertyValue(propName, propValue);
         }
-        // now log all.
         Map command = new HashMap();
         if (log != null) {
             command.put(SVNLog.NAME_ATTR, workingTmp.getPath());
@@ -241,8 +247,7 @@ public class SVNDirectory {
             command.clear();
             command.put(SVNLog.NAME_ATTR, working.getPath());
             log.addCommand(SVNLog.READONLY, command, false);
-
-            if (updateBaseProps) {
+            if (baseMerge) {
                 command.put(SVNLog.NAME_ATTR, baseTmp.getPath());
                 command.put(SVNLog.DEST_ATTR, base.getPath());
                 log.addCommand(SVNLog.MOVE, command, false);
@@ -301,7 +306,6 @@ public class SVNDirectory {
             workingTmp.delete();
             baseTmp.delete();
         }
-
         return result;
     }
 

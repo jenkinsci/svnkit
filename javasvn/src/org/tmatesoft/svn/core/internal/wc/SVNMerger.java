@@ -192,7 +192,7 @@ public class SVNMerger {
 
     public SVNStatusType[] fileChanged(String path, File older, File yours,
             long rev1, long rev2, String mimeType1, String mimeType2,
-            Map propDiff) throws SVNException {
+            Map baseProps, Map propDiff) throws SVNException {
         SVNStatusType[] result = new SVNStatusType[] { SVNStatusType.UNKNOWN,
                 SVNStatusType.UNKNOWN };
         String parentPath = SVNPathUtil.removeTail(path);
@@ -213,7 +213,7 @@ public class SVNMerger {
             return result;
         }
         if (propDiff != null && !propDiff.isEmpty()) {
-            result[1] = propertiesChanged(parentPath, name, propDiff);
+            result[1] = propertiesChanged(parentPath, name, baseProps, propDiff);
         } else {
             result[1] = SVNStatusType.UNCHANGED;
         }
@@ -260,7 +260,7 @@ public class SVNMerger {
 
     public SVNStatusType[] fileAdded(String path, File older, File yours,
             long rev1, long rev2, String mimeType1, String mimeType2,
-            Map propDiff, Map entryProps) throws SVNException {
+            Map baseProps, Map propDiff, Map entryProps) throws SVNException {
         SVNStatusType[] result = new SVNStatusType[] { SVNStatusType.UNKNOWN,
                 SVNStatusType.UNKNOWN };
         SVNDirectory parentDir = getParentDirectory(path);
@@ -301,7 +301,7 @@ public class SVNMerger {
                 result[0] = SVNStatusType.OBSTRUCTED;
             } else {
                 return fileChanged(path, older, yours, rev1, rev2, mimeType1,
-                        mimeType2, propDiff);
+                        mimeType2, baseProps, propDiff);
             }
         }
         return result;
@@ -319,8 +319,8 @@ public class SVNMerger {
         return pathInURL;
     }
 
-    public SVNStatusType directoryPropertiesChanged(String path, Map propDiff) throws SVNException {
-        return propertiesChanged(path, "", propDiff);
+    public SVNStatusType directoryPropertiesChanged(String path, Map baseProps, Map propDiff) throws SVNException {
+        return propertiesChanged(path, "", baseProps, propDiff);
     }
 
     public File getFile(String path, boolean base) {
@@ -338,7 +338,7 @@ public class SVNMerger {
         return null;
     }
 
-    private SVNStatusType propertiesChanged(String path, String name, Map propDiff) throws SVNException {
+    private SVNStatusType propertiesChanged(String path, String name, Map baseProps, Map propDiff) throws SVNException {
         if (propDiff == null || propDiff.isEmpty()) {
             return SVNStatusType.UNCHANGED;
         }
@@ -351,24 +351,10 @@ public class SVNMerger {
         if (!myIsDryRun) {
             log = dir.getLog(0);
         }
-        // 1. convert props to diff (need we?), just use remote diff
-        // ->
-        // 2. get local mods.
-        SVNProperties localBaseProps = dir.getBaseProperties(name, false);
-        SVNProperties localWCProps = dir.getProperties(name, false);
-
-        // will contain all deleted and added, but not unchanged.
-        Map localDiff = localBaseProps.compareTo(localWCProps);
-        // 3. merge
-        result = dir.mergeProperties(name, propDiff, localDiff, false, log);
+        result = dir.mergeProperties(name, baseProps, propDiff, false, log);
         if (log != null) {
             log.save();
             dir.runLogs();
-        }
-        // to make python tests pass.
-        if (result == SVNStatusType.MERGED
-                || result == SVNStatusType.CONFLICTED) {
-            result = SVNStatusType.CHANGED;
         }
         return result;
     }

@@ -16,8 +16,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNAuthenticationException;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -82,14 +80,11 @@ public class DAVUtil {
     public static DAVResponse getBaselineProperties(DAVConnection connection, String path, long revision, DAVElement[] elements) throws SVNException {
         DAVResponse properties = null;
         String loppedPath = "";
+        String originalPath = path;
         while(true) {
-            try {
-                properties = getResourceProperties(connection, path, null, DAVElement.STARTING_PROPERTIES, false);
+            properties = getResourceProperties(connection, path, null, DAVElement.STARTING_PROPERTIES, true);
+            if (properties != null) {
                 break;
-            } catch (SVNException e) {
-                if (e instanceof SVNAuthenticationException || e instanceof SVNCancelException) {
-                    throw e;
-                }
             }
             loppedPath = SVNPathUtil.append(SVNPathUtil.tail(path), loppedPath);
             path = SVNPathUtil.removeTail(path);
@@ -98,7 +93,7 @@ public class DAVUtil {
             }
         }
         if (properties == null) {
-            SVNErrorManager.error("svn: resource '" + path + "' is not part of repository");
+            SVNErrorManager.error("svn: resource '" + originalPath + "' is not part of repository");
         }
         String vcc = (String) properties.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
         String baselineRelativePath = (String) properties.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH);

@@ -1227,17 +1227,11 @@ public class SVNWCClient extends SVNBasicClient {
             }
         }
         SVNRepository repository = createRepository(topURL, true);
-        SVNDebugLog.logInfo("top url is: " + topURL);
         final SVNURL rootURL = repository.getRepositoryRoot(true);
-        SVNDebugLog.logInfo("root url is: " + rootURL);
         repository.lock(pathsRevisionsMap, lockMessage, stealLock, new ISVNLockHandler() {
             public void handleLock(String path, SVNLock lock, SVNException error) throws SVNException {
                 SVNURL fullURL = rootURL.appendPath(path, false);
-                SVNDebugLog.logInfo("updating locked file with path: " + path);
-                SVNDebugLog.logInfo("updating locked file with url: " + fullURL);
                 LockInfo lockInfo = (LockInfo) entriesMap.get(fullURL);
-                SVNDebugLog.logInfo("lock info is: " + lockInfo);
-                SVNDebugLog.logInfo("lock info file: " + lockInfo.myFile);
                 SVNWCAccess wcAccess = createWCAccess(lockInfo.myFile);
                 if (error == null) {
                     try {
@@ -1527,7 +1521,6 @@ public class SVNWCClient extends SVNBasicClient {
             } finally {
                 wcAccess.close(false);
             }
-            SVNDebugLog.logInfo("fetching remote info for: " + path);
             doInfo(url, pegRevision == null || !pegRevision.isValid() || pegRevision.isLocal() ? wcRevision : pegRevision, revision, recursive, handler);
             return;
         }
