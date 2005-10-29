@@ -39,7 +39,7 @@ public class SVNPasswordAuthentication extends SVNAuthentication {
      */
     public SVNPasswordAuthentication(String userName, String password, boolean storageAllowed) {
         super(userName, storageAllowed);
-        myPassword = password;
+        myPassword = password == null ? "" : password;
     }
     
     /**
