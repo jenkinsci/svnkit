@@ -796,7 +796,7 @@ public class SVNDirectory {
         }
     }
 
-    public SVNDirectory createChildDirectory(String name, String url,  long revision) throws SVNException {
+    public SVNDirectory createChildDirectory(String name, String url, String reposURL, long revision) throws SVNException {
         File dir = new File(myDirectory, name);
         createVersionedDirectory(dir);
 
@@ -810,6 +810,7 @@ public class SVNDirectory {
         if (url != null) {
             rootEntry.setURL(url);
         }
+        rootEntry.setRepositoryRoot(reposURL);
         rootEntry.setRevision(revision);
         rootEntry.setKind(SVNNodeKind.DIR);
         child.getEntries().save(true);
@@ -1032,6 +1033,7 @@ public class SVNDirectory {
         if (fileKind == SVNNodeKind.DIR) {
             // compose new url
             String parentURL = getEntries().getEntry("", true).getURL();
+            String reposURL = getEntries().getEntry("", true).getRepositoryRoot();
             String childURL = SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(name));
             // if child dir exists (deleted) -> check that url is the same and
             // revision is the same
@@ -1043,7 +1045,7 @@ public class SVNDirectory {
                     SVNErrorManager.error("svn: URL doesn't match");
                 }
             } else {
-                childDir = createChildDirectory(name, childURL, 0);
+                childDir = createChildDirectory(name, childURL, reposURL, 0);
             }
             if (!replace) {
                 childDir.getEntries().getEntry("", true).scheduleForAddition();

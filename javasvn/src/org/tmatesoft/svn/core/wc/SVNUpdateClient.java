@@ -649,8 +649,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             if (recursive && entry.isDirectory() && !"".equals(entry.getName())) {
                 if (dir.getChildDirectory(entry.getName()) != null) {
-                    doRelocate(dir.getChildDirectory(entry.getName()), null,
-                            oldURL, newURL, recursive);
+                    doRelocate(dir.getChildDirectory(entry.getName()), null, oldURL, newURL, recursive);
                 }
             } else if (entry.isFile() || "".equals(entry.getName())) {
                 String url = entry.getURL();

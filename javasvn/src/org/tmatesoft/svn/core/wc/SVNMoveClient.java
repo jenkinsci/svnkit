@@ -252,6 +252,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 String srcURL = srcEntry.getURL();
                 String srcCFURL = srcEntry.getCopyFromURL();
                 String dstURL = dstParentEntry.getURL();
+                String repositoryRootURL = dstParentEntry.getRepositoryRoot();
                 long srcRevision = srcEntry.getRevision();
                 long srcCFRevision = srcEntry.getCopyFromRevision();
 
@@ -297,9 +298,9 @@ public class SVNMoveClient extends SVNBasicClient {
                         dstEntry.setCopyFromRevision(srcRevision);
                         dstEntry.setURL(dstURL);
                         dstEntry.setCopyFromURL(srcURL);
+                        dstEntry.setRepositoryRoot(repositoryRootURL);
 
-                        SVNCopyClient.updateCopiedDirectory(dstDir, "", dstURL,
-                                null, -1);
+                        SVNCopyClient.updateCopiedDirectory(dstDir, "", dstURL, repositoryRootURL, null, -1);
                         dstDir.getEntries().save(true);
                     } finally {
                         dstAccess.close(false);
@@ -508,6 +509,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 String dstURL = dstParentEntry.getURL();
                 long srcRevision = srcEntry.getRevision();
                 long srcCFRevision = srcEntry.getCopyFromRevision();
+                String repositoryRootURL = srcEntry.getRepositoryRoot();
 
                 dstURL = SVNPathUtil
                         .append(dstURL, SVNEncodingUtil.uriEncode(dst.getName()));
@@ -548,17 +550,16 @@ public class SVNMoveClient extends SVNBasicClient {
                         dstEntry.setCopyFromRevision(srcRevision);
                         dstEntry.setURL(dstURL);
                         dstEntry.setCopyFromURL(srcURL);
+                        dstEntry.setRepositoryRoot(repositoryRootURL);
 
-                        SVNCopyClient.updateCopiedDirectory(dstDir, "", dstURL,
-                                null, -1);
+                        SVNCopyClient.updateCopiedDirectory(dstDir, "", dstURL, repositoryRootURL,  null, -1);
                         dstDir.getEntries().save(true);
                     } finally {
                         dstAccess.close(false);
                     }
                 } else {
                     // replay
-                    dstAccess.getAnchor().getEntries().deleteEntry(
-                            dst.getName());
+                    dstAccess.getAnchor().getEntries().deleteEntry(dst.getName());
                     dstAccess.getAnchor().getEntries().save(true);
                     SVNFileUtil.deleteAll(dst, this);
                     SVNFileUtil.copy(src, dst, false, false);

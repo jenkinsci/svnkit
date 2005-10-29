@@ -367,6 +367,7 @@ public class SVNMerger {
         SVNEntry entry = entries.getEntry(name, true);
         String url = null;
         String uuid = entries.getEntry("", true).getUUID();
+        String reposRootURL = entries.getEntry("", true).getRepositoryRoot();
         if (entry != null) {
             entry.loadProperties(entryProps);
             if (entry.isScheduledForDeletion()) {
@@ -387,7 +388,7 @@ public class SVNMerger {
         entries.save(false);
         SVNDirectory childDir = parentDir.getChildDirectory(name);
         if (childDir == null) {
-            childDir = parentDir.createChildDirectory(name, url, copyFromRev);
+            childDir = parentDir.createChildDirectory(name, url, reposRootURL, copyFromRev);
             SVNEntry root = childDir.getEntries().getEntry("", true);
             root.scheduleForAddition();
             root.setUUID(uuid);
@@ -403,6 +404,7 @@ public class SVNMerger {
         rootEntry.setCopyFromURL(copyFromURL);
         rootEntry.setCopyFromRevision(copyFromRev);
         rootEntry.setCopied(true);
+        rootEntry.setRepositoryRoot(reposRootURL);
         entries.save(false);
     }
 

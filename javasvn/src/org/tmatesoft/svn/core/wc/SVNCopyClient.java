@@ -423,7 +423,7 @@ public class SVNCopyClient extends SVNBasicClient {
         
         boolean sameRepositories;
         
-        repository.getRepositoryRoot(true);
+        SVNURL repositoryRootURL = repository.getRepositoryRoot(true);
         String srcUUID = repository.getRepositoryUUID();
         SVNWCAccess dstParentAccess = createWCAccess(dstPath.getParentFile());
         SVNEntry dstParentEntry = dstParentAccess.getTargetEntry();
@@ -460,7 +460,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     addDir(dstParentAccess.getTarget(), dstPath.getName(), srcURL.toString(), revision);
                     dstAccess = createWCAccess(dstPath);
                     addDir(dstAccess.getTarget(), "", srcURL.toString(), revision);
-                    updateCopiedDirectory(dstAccess.getTarget(), "", newURL.toString(), null, -1);
+                    updateCopiedDirectory(dstAccess.getTarget(), "", newURL.toString(), repositoryRootURL.toString(), null, -1);
                 } finally {
                     dstAccess.close(true);
                 }
@@ -569,6 +569,12 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNWCAccess srcAccess = createWCAccess(srcPath);
         SVNWCAccess dstAccess = createWCAccess(dstPath);
         try {
+            // compare src entry repos with dst parent repos.
+            String srcRepos = srcAccess.getTargetEntry().getRepositoryRoot();
+            String dstRepos = dstAccess.getAnchor().getEntries().getEntry("", true).getRepositoryRoot();
+            if (srcRepos != null && dstRepos != null && !srcRepos.equals(dstRepos)) {
+                SVNErrorManager.error("svn: Cannot copy to '" + dstPath + "', as it is not from repository '" + srcRepos + "'; it is from '" + dstRepos + "'");
+            }
             if (isMove) {
                 if (srcAccess.getAnchor().getRoot().equals(dstAccess.getAnchor().getRoot())) {
                     dstAccess = srcAccess;
@@ -716,7 +722,7 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         entry.scheduleForAddition();
         if ("".equals(name) && copyFromURL != null) {
-            updateCopiedDirectory(dir, name, null, null, -1);
+            updateCopiedDirectory(dir, name, null, entry.getRepositoryRoot(), null, -1);
         }
         dir.getEntries().save(true);
     }
@@ -732,6 +738,7 @@ public class SVNCopyClient extends SVNBasicClient {
         long copyFromRev = srcEntry.getRevision();
 
         String newURL = dstAccess.getAnchor().getEntries().getEntry("", true).getURL();
+        String reposRootURL = dstAccess.getAnchor().getEntries().getEntry("", true).getRepositoryRoot();
         newURL = SVNPathUtil.append(newURL, SVNEncodingUtil.uriEncode(dstName));
 
         File dstPath = new File(dstAccess.getAnchor().getRoot(), dstName);
@@ -751,7 +758,7 @@ public class SVNCopyClient extends SVNBasicClient {
         dispatchEvent(event);
         dstAccess.getTarget().getEntries().save(true);
 
-        updateCopiedDirectory(newDir, "", newURL, null, -1);
+        updateCopiedDirectory(newDir, "", newURL, reposRootURL, null, -1);
         SVNEntry newRoot = newDir.getEntries().getEntry("", true);
         newRoot.scheduleForAddition();
         newRoot.setCopyFromRevision(copyFromRev);
@@ -760,7 +767,7 @@ public class SVNCopyClient extends SVNBasicClient {
         // fire added event.
     }
 
-    static void updateCopiedDirectory(SVNDirectory dir, String name, String newURL, String copyFromURL, long copyFromRevision) throws SVNException {
+    static void updateCopiedDirectory(SVNDirectory dir, String name, String newURL, String reposRootURL, String copyFromURL, long copyFromRevision) throws SVNException {
         SVNEntries entries = dir.getEntries();
         SVNEntry entry = entries.getEntry(name, true);
         if (entry != null) {
@@ -768,6 +775,7 @@ public class SVNCopyClient extends SVNBasicClient {
             if (newURL != null) {
                 entry.setURL(newURL);
             }
+            entry.setRepositoryRoot(reposRootURL);
             if (entry.isFile()) {
                 dir.getWCProperties(name).delete();
                 if (copyFromURL != null) {
@@ -795,7 +803,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNDirectory childDir = dir.getChildDirectory(name);
                 if (childDir != null) {
                     String childCopyFromURL = copyFromURL == null ? null : SVNPathUtil.append(copyFromURL, SVNEncodingUtil.uriEncode(entry.getName()));
-                    updateCopiedDirectory(childDir, "", newURL, childCopyFromURL, copyFromRevision);
+                    updateCopiedDirectory(childDir, "", newURL, reposRootURL, childCopyFromURL, copyFromRevision);
                 }
             } else if ("".equals(name)) {
                 dir.getWCProperties("").delete();
@@ -810,7 +818,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     }
                     String childCopyFromURL = copyFromURL == null ? null : SVNPathUtil.append(copyFromURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
                     String newChildURL = newURL == null ? null : SVNPathUtil.append(newURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
-                    updateCopiedDirectory(dir, childEntry.getName(), newChildURL, childCopyFromURL, copyFromRevision);
+                    updateCopiedDirectory(dir, childEntry.getName(), newChildURL, reposRootURL, childCopyFromURL, copyFromRevision);
                 }
                 entries.save(true);
             }

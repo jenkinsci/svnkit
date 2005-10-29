@@ -155,7 +155,7 @@ public class SVNUpdateEditor implements ISVNEditor {
         entry.setDeleted(false);
         parentDir.getEntries().save(true);
 
-        SVNDirectory dir = parentDir.createChildDirectory(name, myCurrentDirectory.URL, myTargetRevision);
+        SVNDirectory dir = parentDir.createChildDirectory(name, myCurrentDirectory.URL, null, myTargetRevision);
         if (dir == null) {
             SVNErrorManager.error("svn: Failed to add directory '" + path + "': directory is missing or not locked");
         } else {

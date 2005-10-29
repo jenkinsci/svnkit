@@ -272,7 +272,7 @@ public class SVNLogRunner {
             boolean setNotExecutable = false;
 
             SVNFileType tmpPropsType = SVNFileType.getType(tmpProps.getFile());
-            if (tmpPropsType == SVNFileType.FILE) {
+            if (tmpPropsType == SVNFileType.FILE || tmpPropsType == SVNFileType.NONE) {
                 Map propDiff = wcProps.compareTo(tmpProps);
                 boolean equals = propDiff == null || propDiff.isEmpty();
                 propTime = equals ? wcProps.getFile().lastModified() : tmpProps.getFile().lastModified();
@@ -286,12 +286,16 @@ public class SVNLogRunner {
                             && propDiff.get(SVNProperty.EXECUTABLE) == null;
                 }
                 try {
-                    SVNFileUtil.rename(tmpProps.getFile(), baseProps.getFile());
-                    SVNFileUtil.setReadonly(baseProps.getFile(), true);
+                    if (tmpPropsType == SVNFileType.FILE) {
+                        SVNFileUtil.rename(tmpProps.getFile(), baseProps.getFile());
+                        SVNFileUtil.setReadonly(baseProps.getFile(), true);
+                    } else {
+                        baseProps.delete();
+                    }
                 } finally {
                     tmpProps.delete();
                 }
-            } else if (entry.getPropTime() == null && !wcProps.isEmpty()) {
+            } else if (entry.getPropTime() == null && !wcProps.isEmpty()) {            
                 propTime = wcProps.getFile().lastModified();
             }
             
