@@ -12,15 +12,15 @@
 
 package org.tmatesoft.svn.cli.command;
 
+import java.io.File;
+import java.io.PrintStream;
+
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
-
-import java.io.File;
-import java.io.PrintStream;
 
 /**
  * @author TMate Software Ltd.
@@ -48,8 +48,8 @@ public class ImportCommand extends SVNCommand {
             commitClient.getOptions().setUseAutoProperties(true);
         }
 
-        boolean noIgnore = getCommandLine().hasArgument(SVNArgument.NO_IGNORE);
-        SVNCommitInfo info = commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, !noIgnore, recursive);
+        boolean useGlobalIgnores = !getCommandLine().hasArgument(SVNArgument.NO_IGNORE);
+        SVNCommitInfo info = commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, useGlobalIgnores, recursive);
         if (info != SVNCommitInfo.NULL) {
             out.println();
             out.println("Imported revision " + info.getNewRevision() + ".");
