@@ -66,8 +66,10 @@ public class SVNDeltaProcessor {
             }
         }
         if (myChunkFile == null) {
+            // no chunks was received, but delta end was not, that denotes empty file.
+            SVNFileUtil.createEmptyFile(targetFile);
             close();
-            return false;
+            return true;
         }
         try {
             if (myWindows == null || myWindows.isEmpty()) {
