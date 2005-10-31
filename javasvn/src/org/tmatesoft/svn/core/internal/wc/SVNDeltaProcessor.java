@@ -36,7 +36,6 @@ public class SVNDeltaProcessor {
     private File myChunkFile;
     private ChunkOutputStream myChunkStream;
     private Collection myWindows;
-    private String myChecksum;
 
     public OutputStream textDeltaChunk(File chunkFile, SVNDiffWindow window) throws SVNException {
         if (myChunkStream != null) {
@@ -47,15 +46,11 @@ public class SVNDeltaProcessor {
         myChunkFile = chunkFile;
         myChunkStream = new ChunkOutputStream(SVNFileUtil.openFileForWriting(myChunkFile));
         myWindows.add(window);
-        
         return myChunkStream;
     }
     
-    public String getChecksum() {
-        return myChecksum;
-    }
-    
-    public boolean textDeltaEnd(File baseFile, File targetFile, boolean computeChecksum) throws SVNException {
+    public String textDeltaEnd(File baseFile, File targetFile, boolean computeChecksum) throws SVNException {
+        String checksum = null;
         if (myChunkStream != null) {
             try {
                 myChunkStream.reallyClose();
@@ -69,12 +64,12 @@ public class SVNDeltaProcessor {
             // no chunks was received, but delta end was not, that denotes empty file.
             SVNFileUtil.createEmptyFile(targetFile);
             close();
-            return true;
+            return null;
         }
         try {
             if (myWindows == null || myWindows.isEmpty()) {
                 close();
-                return false;
+                return null;
             }
             InputStream data = SVNFileUtil.openFileForReading(myChunkFile);
             MessageDigest digest = null;
@@ -90,12 +85,12 @@ public class SVNDeltaProcessor {
                 }
             } finally {
                 SVNFileUtil.closeFile(data);
-                myChecksum = baton.close();
+                checksum = baton.close();
             }
         } finally {
             close();
         }
-        return true;
+        return checksum;
     }
     
     public void close() {
@@ -105,6 +100,7 @@ public class SVNDeltaProcessor {
         myChunkFile = null;
         myWindows = null;
         myChunkStream = null;
+        return;
     }
     
     private static class ChunkOutputStream extends FilterOutputStream {

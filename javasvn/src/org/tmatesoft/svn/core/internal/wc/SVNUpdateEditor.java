@@ -326,10 +326,8 @@ public class SVNUpdateEditor implements ISVNEditor {
     public void textDeltaEnd(String commitPath) throws SVNException {
         File baseTmpFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name, true);
         File targetFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name + ".tmp", true);
-        if (myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile, true)) {
-            myCurrentFile.Checksum = myDeltaProcessor.getChecksum();
-            SVNFileUtil.rename(targetFile, baseTmpFile);
-        }
+        myCurrentFile.Checksum = myDeltaProcessor.textDeltaEnd(baseTmpFile, targetFile, true);
+        SVNFileUtil.rename(targetFile, baseTmpFile);
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {

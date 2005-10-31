@@ -133,8 +133,7 @@ public class SVNExportEditor implements ISVNEditor {
         SVNFileUtil.createEmptyFile(myCurrentTmpFile);
         File fakeBase = SVNFileUtil.createUniqueFile(myCurrentDirectory, myCurrentFile.getName(), ".tmp");
         try {
-            myDeltaProcessor.textDeltaEnd(fakeBase, myCurrentTmpFile, true);
-            myChecksum = myDeltaProcessor.getChecksum();
+            myChecksum = myDeltaProcessor.textDeltaEnd(fakeBase, myCurrentTmpFile, true);
         } finally {
             fakeBase.delete();
         }

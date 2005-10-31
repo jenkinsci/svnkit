@@ -161,9 +161,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     }
 
     public void handleDiffWindowClosed(String token) throws SVNException {
-        if (!myDeltaProcessor.textDeltaEnd(myPreviousFile, myCurrentFile, false)) {
-            return;
-        }
+        myDeltaProcessor.textDeltaEnd(myPreviousFile, myCurrentFile, false);
         RandomAccessFile left = null;
         RandomAccessFile right = null;
         try {
