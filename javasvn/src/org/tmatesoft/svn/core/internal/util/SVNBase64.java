@@ -108,14 +108,17 @@ public class SVNBase64 {
 
     private static int ourLength;
 
-    private static byte[] base64ToByteArray(StringBuffer s, byte[] result,
-            boolean alternate) {
+    private static byte[] base64ToByteArray(StringBuffer s, byte[] result, boolean alternate) {
         byte[] alphaToInt = (alternate ? altBase64ToInt : base64ToInt);
         int sLen = s.length();
         int numGroups = sLen / 4;
-        if (4 * numGroups != sLen)
-            throw new IllegalArgumentException(
-                    "String length must be a multiple of four.");
+        if (4 * numGroups != sLen) {
+            for (int i = 0; i < 4 - (sLen % 4); i++) {
+                s = s.append('=');
+            }
+            numGroups++;
+            sLen = 4 * numGroups;
+        }
         int missingBytesInLastGroup = 0;
         int numFullGroups = numGroups;
         if (sLen != 0) {

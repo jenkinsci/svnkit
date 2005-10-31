@@ -85,6 +85,20 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
             StringBuffer toDecode = new StringBuffer();
             toDecode.append(myDeltaOutputStream);
             toDecode.delete(myDeltaOutputStream.length() - remains, myDeltaOutputStream.length());
+            // trim spaces.
+            
+            int index = 0;
+            while(index < toDecode.length() && Character.isWhitespace(toDecode.charAt(index))) {
+                index++;
+            }
+            if  (index > 0) {
+                toDecode = toDecode.delete(0, index);
+            }   
+            index = toDecode.length() - 1;
+            while(index >= 0 && Character.isWhitespace(toDecode.charAt(index))) {
+                toDecode.delete(index, toDecode.length());
+                index--;
+            }
             
             byte[] decoded = SVNBase64.base64ToByteArray(toDecode, null);
             myPreviousStream = new SequenceIntputStream(decoded, myPreviousStream);
