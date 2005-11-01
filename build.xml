@@ -171,6 +171,7 @@
         <copy todir="build/lib" flatten="true">
             <fileset dir=".">
                 <include name="changelog.txt" />
+                <include name="README.txt" />
                 <include name="COPYING" />
                 <include name="contrib/javahl/JAVAHL-LICENSE" />
                 <include name="contrib/sequence/SEQUENCE-LICENSE" />
@@ -226,6 +227,7 @@
         <copy todir="build/eclipse/${javasvn.plugin.name}">
             <fileset dir="build/lib">
                 <include name="changelog.txt" />
+                <include name="README.txt" />
                 <include name="COPYING" />
                 <include name="GANYMED-LICENSE" />
                 <include name="SEQUENCE-LICENSE" />
