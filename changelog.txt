@@ -1,3 +1,8 @@
+= version 1.0.0
+
++ documentation related improvements
++ bugfixes
+
 = version 0.9.3
 
 + licensing conditions changed
