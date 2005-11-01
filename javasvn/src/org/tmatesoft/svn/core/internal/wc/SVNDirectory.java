@@ -1191,7 +1191,9 @@ public class SVNDirectory {
         dir.getEntries().save(true);
 
         SVNFileUtil.deleteAll(new File(dir.getRoot(), dir.getAdminDirectory().getName()), dir.getWCAccess());
-        dir.getRoot().delete();
+        if (deleteWorkingFiles) {
+            dir.getRoot().delete();
+        }
     }
 
     public void commit(String target, SVNCommitInfo info, Map wcPropChanges,

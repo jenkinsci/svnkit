@@ -28,6 +28,9 @@ import org.xml.sax.Attributes;
  */
 public class DAVGetLocksHandler extends BasicDAVHandler {
     
+    private static final String LOCK_COMMENT_SUFFIX = "</ns0:owner>";
+    private static final String LOCK_COMMENT_PREFIX = "<ns0:owner xmlns:ns0=\"DAV:\">";
+
     public static StringBuffer generateGetLocksRequest(StringBuffer body) {
         body = body == null ? new StringBuffer() : body;
 
@@ -84,12 +87,15 @@ public class DAVGetLocksHandler extends BasicDAVHandler {
         } else if (element == DAVElement.SVN_LOCK_OWNER && cdata != null) {
             myOwner = cdata.toString();
             if (myIsBase64) {
-                myOwner = new String(SVNBase64.base64ToByteArray(new StringBuffer(myComment), null));
+                myOwner = new String(SVNBase64.base64ToByteArray(new StringBuffer(myComment.trim()), null));
             }
         } else if (element == DAVElement.SVN_LOCK_COMMENT && cdata != null) {
             myComment = cdata.toString();
+            if (myComment != null && myComment.startsWith(LOCK_COMMENT_PREFIX) && myComment.endsWith(LOCK_COMMENT_SUFFIX)) {
+                myComment = myComment.substring(LOCK_COMMENT_PREFIX.length(), myComment.length() - LOCK_COMMENT_SUFFIX.length());
+            }
             if (myIsBase64) {
-                myComment = new String(SVNBase64.base64ToByteArray(new StringBuffer(myComment), null));
+                myComment = new String(SVNBase64.base64ToByteArray(new StringBuffer(myComment.trim()), null));
             }
         } else if (element == DAVElement.SVN_LOCK_CREATION_DATE && cdata != null) {
             myCreationDate = SVNTimeUtil.parseDate(cdata.toString());

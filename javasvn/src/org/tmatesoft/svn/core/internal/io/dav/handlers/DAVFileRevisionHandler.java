@@ -121,7 +121,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             if (myPropertyName != null) {
                 String value;
                 if ("base64".equals(myPropertyEncoding)) {
-                    byte[] bytes = SVNBase64.base64ToByteArray(cdata, null);
+                    byte[] bytes = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), null);
                     value = new String(bytes);
                 } else {
                     value = cdata.toString();
