@@ -55,6 +55,10 @@ class FSMergerBySequence {
 	public int merge(QSequenceLineRAData baseData,
 	                 QSequenceLineRAData localData, QSequenceLineRAData latestData,
 	                 OutputStream result) throws IOException {
+        dump("base", baseData);
+        dump("local", localData);
+        dump("latest", latestData);
+        
 		final QSequenceLineResult localResult;
 		final QSequenceLineResult latestResult;
 		try {
@@ -140,7 +144,11 @@ class FSMergerBySequence {
 
 	private boolean intersect(QSequenceDifferenceBlock block1,
 	                          QSequenceDifferenceBlock block2) {
-		return block1.getLeftFrom() <= block2.getLeftTo() + 1 && block2.getLeftFrom() <= block1.getLeftTo() + 1;
+		final int from1 = block1.getLeftFrom();
+		final int from2 = block2.getLeftFrom();
+		final int to1 = Math.max(from1, block1.getLeftTo());
+		final int to2 = Math.max(from2, block2.getLeftTo());
+		return (from1 >= from2 && from1 <= to2) || (from2 >= from1 && from2 <= to1);
 	}
 
 	private int appendLines(OutputStream result,
@@ -262,4 +270,14 @@ class FSMergerBySequence {
 			}
 		}
 	}
+    
+    private void dump(String name, QSequenceLineRAData data) throws IOException {
+        System.out.println("==========");
+        System.out.println(name);
+        byte[] contents = new byte[(int) data.length()];
+        
+        data.get(contents, 0, data.length());
+        System.out.println(new String(contents));
+        System.out.println("==========");
+    }
 }
