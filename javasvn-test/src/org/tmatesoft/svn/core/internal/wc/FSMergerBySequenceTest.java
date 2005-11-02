@@ -23,6 +23,7 @@ public class FSMergerBySequenceTest extends TestCase {
         // Merged ...
         test("abc", "xbc", "aby", "xby", FSMergerBySequence.MERGED);
         test("abcd", "xbcd", "abyd", "xbyd", FSMergerBySequence.MERGED);
+	    test("abc", "xbc", "ac", "xc", FSMergerBySequence.MERGED);
         test("abc", "xabc", "abc", "xabc", FSMergerBySequence.MERGED);
         test("abc", "abcx", "abc", "abcx", FSMergerBySequence.MERGED);
         test("abc", "axxxbc", "abc", "axxxbc", FSMergerBySequence.MERGED);
@@ -47,9 +48,11 @@ public class FSMergerBySequenceTest extends TestCase {
         test("abc", "xbc", "yby", ">x=y<by", FSMergerBySequence.CONFLICTED);
         test("abc", "xbc", "bc", ">x=<bc", FSMergerBySequence.CONFLICTED);
         test("abc", "xbc", "", ">xbc=<", FSMergerBySequence.CONFLICTED);
-        test("abc", "xbc", "ac", ">xb=a<c", FSMergerBySequence.CONFLICTED);
-        test("abc", "axxxbc", "aybyyyc", "a>xxx=y<byyyc", FSMergerBySequence.CONFLICTED);
+	    test("abc", "xbc", "bc", ">x=<bc", FSMergerBySequence.CONFLICTED);
+	    test("abc", "axxxbc", "aybyyyc", "a>xxx=y<byyyc", FSMergerBySequence.CONFLICTED);
         test("abc", "axxxbc", "ayyyyc", "a>xxxb=yyyy<c", FSMergerBySequence.CONFLICTED);
+	    test("abcd", "ybcd", "xabcd", ">y=xa<bcd", FSMergerBySequence.CONFLICTED);
+        test("abcd", "ybcd", "axbcd", "yxbcd", FSMergerBySequence.MERGED);
         test("abcd", "xbcxxd", "ybcdyyy", ">x=y<bcxxdyyy", FSMergerBySequence.CONFLICTED);
         test("abcdefg", "xxxdxxx", "abyyyfg", ">xxxdxxx=abyyyfg<", FSMergerBySequence.CONFLICTED);
         test("abcdefghijk", "xxxdxxxhxxx", "abyyyfyyyjk", ">xxxdxxxhxxx=abyyyfyyyjk<", FSMergerBySequence.CONFLICTED);
