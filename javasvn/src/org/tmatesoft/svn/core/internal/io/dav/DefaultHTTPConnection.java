@@ -370,7 +370,10 @@ class DefaultHTTPConnection implements IHTTPConnection {
                     }
                     if (errorMessage.indexOf("</m:human-readable>") >= 0) {
                         errorMessage = errorMessage.substring(0, errorMessage.indexOf("</m:human-readable>"));
-                        errorMessage = "svn: " + errorMessage.trim();
+                        errorMessage = errorMessage.trim();
+                        if (!errorMessage.startsWith("svn: ")) {
+                            errorMessage = "svn: " + errorMessage;
+                        }
                     }
                 }
                 status.setErrorText(errorMessage);
@@ -721,7 +724,11 @@ class DefaultHTTPConnection implements IHTTPConnection {
             readError(url, status);
             String message = "svn: " + method + " request failed on '" + url + "'";
             if (status.getErrorText() != null && !"".equals(status.getErrorText())) {
-                message += "\nsvn: " + status.getErrorText();
+                message += "\n";
+                if (!status.getErrorText().startsWith("svn:")) {
+                    message += "svn: ";
+                }
+                message += status.getErrorText();
             }
             SVNErrorManager.error(message);
         }
@@ -733,7 +740,11 @@ class DefaultHTTPConnection implements IHTTPConnection {
         readError(url, status);
         String message = "svn: " + method + " request failed on '" + url + "'";
         if (status.getErrorText() != null && !"".equals(status.getErrorText())) {
-            message += "\nsvn: " + status.getErrorText();
+            message += "\n";
+            if (!status.getErrorText().startsWith("svn:")) {
+                message += "svn: ";
+            }
+            message += status.getErrorText();
         }
         SVNErrorManager.error(message);
     }

@@ -25,6 +25,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
@@ -167,7 +168,10 @@ class DAVRepository extends SVNRepository {
             info = DAVUtil.getBaselineInfo(myConnection, path, revision, true, false, info);
             kind = info.isDirectory ? SVNNodeKind.DIR : SVNNodeKind.FILE;
         } catch (SVNException e) {
-            if (e instanceof SVNAuthenticationException) {
+            if (e instanceof SVNAuthenticationException || e instanceof SVNCancelException) {
+                throw e;
+            }
+            if (e.getMessage() == null || !e.getMessage().endsWith("path not found")) {
                 throw e;
             }
         } finally {
