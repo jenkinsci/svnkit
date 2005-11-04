@@ -269,7 +269,6 @@ public class SVNWCClient extends SVNBasicClient {
                 try {
                     os = SVNFileUtil.openFileForWriting(tmpFile);
                     repos.getFile("", revNumber, null, os);
-//                    doGetFileContents(url, SVNRevision.create(pegRevisionNumber), SVNRevision.create(revNumber), false, os);
                     SVNFileUtil.closeFile(os);
                     os = null;
                     // translate
@@ -331,9 +330,6 @@ public class SVNWCClient extends SVNBasicClient {
         SVNNodeKind nodeKind = repos.checkPath("", revisionNumber);
         if (nodeKind == SVNNodeKind.DIR) {
             SVNErrorManager.error("svn: URL '" + url + " refers to a directory");
-        }
-        if (nodeKind != SVNNodeKind.FILE) {
-            return;
         }
         OutputStream os = null;
         InputStream is = null;
