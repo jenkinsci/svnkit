@@ -55,10 +55,6 @@ class FSMergerBySequence {
 	public int merge(QSequenceLineRAData baseData,
 	                 QSequenceLineRAData localData, QSequenceLineRAData latestData,
 	                 OutputStream result) throws IOException {
-        dump("base", baseData);
-        dump("local", localData);
-        dump("latest", latestData);
-        
 		final QSequenceLineResult localResult;
 		final QSequenceLineResult latestResult;
 		try {
@@ -270,14 +266,4 @@ class FSMergerBySequence {
 			}
 		}
 	}
-    
-    private void dump(String name, QSequenceLineRAData data) throws IOException {
-        System.out.println("==========");
-        System.out.println(name);
-        byte[] contents = new byte[(int) data.length()];
-        
-        data.get(contents, 0, data.length());
-        System.out.println(new String(contents));
-        System.out.println("==========");
-    }
 }
