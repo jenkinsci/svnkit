@@ -161,6 +161,10 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     }
 
     public void handleDiffWindowClosed(String token) throws SVNException {
+        if (myCurrentFile == null) {
+            // no chunk was received, deltaEnd will create empty file.
+            myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
+        } 
         myDeltaProcessor.textDeltaEnd(myPreviousFile, myCurrentFile, false);
         RandomAccessFile left = null;
         RandomAccessFile right = null;
