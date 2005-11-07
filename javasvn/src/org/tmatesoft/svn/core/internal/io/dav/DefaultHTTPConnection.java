@@ -47,11 +47,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.Version;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXNotSupportedException;
-import org.xml.sax.SAXParseException;
+import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
@@ -59,6 +55,12 @@ import org.xml.sax.helpers.DefaultHandler;
  *
  */
 class DefaultHTTPConnection implements IHTTPConnection {
+
+	private static EntityResolver NO_ENTITY_RESOLVER = new EntityResolver() {
+		public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
+			return new InputSource(new ByteArrayInputStream(new byte[0]));
+		}
+	};
 
     private OutputStream myOutputStream;
     private InputStream myInputStream;
@@ -71,7 +73,7 @@ class DefaultHTTPConnection implements IHTTPConnection {
     private Map myCredentialsChallenge;
     private SVNAuthentication myLastValidAuth;
     private SVNRepository myRepository;
-    
+
     private static final DefaultHandler DEFAULT_SAX_HANDLER = new DefaultHandler();
 
     public DefaultHTTPConnection(SVNRepository repos) {
@@ -233,7 +235,7 @@ class DefaultHTTPConnection implements IHTTPConnection {
                 myCredentialsChallenge.put("methodname", method);
                 myCredentialsChallenge.put("uri", path);
             }
-        }                
+        }
         while (true) {
             DAVStatus status;
             try {
@@ -249,7 +251,7 @@ class DefaultHTTPConnection implements IHTTPConnection {
                 close();
                 acknowledgeSSLContext(false);
                 throw new SVNException(e);
-            } 
+            }
             acknowledgeSSLContext(true);
             if (status != null
                     && (status.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED || status.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN)) {
@@ -420,7 +422,12 @@ class DefaultHTTPConnection implements IHTTPConnection {
                 }
                 XMLReader reader = new XMLReader(is);
                 while (!reader.isClosed()) {
-                    mySAXParser.parse(new InputSource(reader), handler);
+                  org.xml.sax.XMLReader xmlReader = mySAXParser.getXMLReader();
+	                xmlReader.setContentHandler(handler);
+	                xmlReader.setDTDHandler(handler);
+	                xmlReader.setErrorHandler(handler);
+	                xmlReader.setEntityResolver(NO_ENTITY_RESOLVER);
+	                xmlReader.parse(new InputSource(reader));
                 }
             }
         } catch (SAXException e) {
@@ -443,14 +450,14 @@ class DefaultHTTPConnection implements IHTTPConnection {
             // to avoid memory leaks when connection is cached.
             org.xml.sax.XMLReader xmlReader = null;
             try {
-                xmlReader = mySAXParser.getXMLReader(); 
+                xmlReader = mySAXParser.getXMLReader();
             } catch (SAXException e) {
             }
             if (xmlReader != null) {
                 xmlReader.setContentHandler(DEFAULT_SAX_HANDLER);
                 xmlReader.setDTDHandler(DEFAULT_SAX_HANDLER);
                 xmlReader.setErrorHandler(DEFAULT_SAX_HANDLER);
-                xmlReader.setEntityResolver(DEFAULT_SAX_HANDLER);
+                xmlReader.setEntityResolver(NO_ENTITY_RESOLVER);
             }
         }
     }
@@ -462,11 +469,11 @@ class DefaultHTTPConnection implements IHTTPConnection {
         StringBuffer sb = new StringBuffer();
         sb.append(method);
         sb.append(' ');
-        
+
         SVNURL location = myRepository.getLocation();
         ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
         ISVNProxyManager proxyAuth = authManager != null ? authManager.getProxyManager(location) : null;
-        boolean isProxied = proxyAuth != null; 
+        boolean isProxied = proxyAuth != null;
         if (isProxied && !isSecured()) {
             // prepend path with host name.
             sb.append("http://");
@@ -506,7 +513,7 @@ class DefaultHTTPConnection implements IHTTPConnection {
         if (requestBody instanceof ByteArrayInputStream) {
             sb.append("Content-Length: ");
             sb.append(requestBody.available());
-        } else if (requestBody instanceof IMeasurable) { 
+        } else if (requestBody instanceof IMeasurable) {
             sb.append("Content-Length: ");
             sb.append(((IMeasurable) requestBody).getLength());
         } else if (requestBody != null) {
@@ -568,7 +575,7 @@ class DefaultHTTPConnection implements IHTTPConnection {
         DAVStatus responseCode = null;
         StringBuffer line = new StringBuffer();
         InputStream is = SVNDebugLog.createLogStream(getInputStream());
-        
+
         boolean firstLine = true;
         try {
             while (true) {
@@ -605,7 +612,7 @@ class DefaultHTTPConnection implements IHTTPConnection {
                     break;
                 }
                 firstLine = false;
-    
+
                 int index = line.indexOf(":");
                 if (index >= 0 && headerProperties != null) {
                     String name = line.substring(0, index);
@@ -614,7 +621,7 @@ class DefaultHTTPConnection implements IHTTPConnection {
                 } else if (responseCode == null) {
                     responseCode = DAVStatus.parse(lineStr);
                 }
-    
+
                 line.delete(0, line.length());
             }
         } finally {
