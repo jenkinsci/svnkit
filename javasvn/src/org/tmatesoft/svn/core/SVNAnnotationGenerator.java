@@ -116,7 +116,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myDeltaProcessor = new SVNDeltaProcessor();
     }
     
-    public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException {
+    public void openRevision(SVNFileRevision fileRevision) throws SVNException {
         Map propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);
         if (SVNProperty.isBinaryMimeType(newMimeType)) {
@@ -143,29 +143,36 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             myCurrentFile.delete();
         }
         myCurrentFile = null;
+        System.out.println(">> open");
+    }
 
+    public void closeRevision(String token) throws SVNException {
+        System.out.println(">> close");
+    }
+    
+    public void applyTextDelta(String token) throws SVNException {
         if (myPreviousFile == null) {
-            // create previous file.
             myPreviousFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
             SVNFileUtil.createEmptyFile(myPreviousFile);
         }
-    }
+        myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
+        System.out.println("delta: current file created");
+    }    
 
-    public OutputStream handleDiffWindow(String token, SVNDiffWindow diffWindow) throws SVNException {
-        if (myCurrentFile == null) {
-            myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
-            SVNFileUtil.createEmptyFile(myCurrentFile);
-        }        
+    public OutputStream textDeltaChunk(String token, SVNDiffWindow diffWindow) throws SVNException {
+        System.out.println("delta: chunk");
         File tmpFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
+        SVNFileUtil.createEmptyFile(tmpFile);
         return myDeltaProcessor.textDeltaChunk(tmpFile, diffWindow);
     }
 
-    public void handleDiffWindowClosed(String token) throws SVNException {
-        if (myCurrentFile == null) {
-            // no chunk was received, deltaEnd will create empty file.
-            myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
-        } 
+    public void textDeltaEnd(String token) throws SVNException {
+        System.out.println("delta: end");
         myDeltaProcessor.textDeltaEnd(myPreviousFile, myCurrentFile, false);
+        if (!myCurrentFile.exists()) {
+            System.out.println("empty file created");
+            SVNFileUtil.createEmptyFile(myCurrentFile);
+        }
         RandomAccessFile left = null;
         RandomAccessFile right = null;
         try {

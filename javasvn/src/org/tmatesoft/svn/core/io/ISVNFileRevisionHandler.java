@@ -44,7 +44,7 @@ public interface ISVNFileRevisionHandler {
      * @throws SVNException
      * @see 					SVNFileRevision
      */
-	public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException;
+	public void openRevision(SVNFileRevision fileRevision) throws SVNException;
 	
     /**
      * Handles a next diff window for a file (represented by a token) and
@@ -58,7 +58,9 @@ public interface ISVNFileRevisionHandler {
      *                          for <code>diffWindow</code> will be written
      * @throws SVNException
 	 */
-    public OutputStream handleDiffWindow(String token, SVNDiffWindow diffWindow) throws SVNException;
+    public void applyTextDelta(String token) throws SVNException;
+
+    public OutputStream textDeltaChunk(String token, SVNDiffWindow diffWindow) throws SVNException;
     
     /**
      * Finilazes collecting deltas (diff windows) for a file. This method is
@@ -70,7 +72,9 @@ public interface ISVNFileRevisionHandler {
      *                        for which finalizing steps should be performed
      * @throws SVNException
      */
-    public void handleDiffWindowClosed(String token) throws SVNException;
+    public void textDeltaEnd(String token) throws SVNException;
+    
+    public void closeRevision(String token) throws SVNException;
 
 }
 

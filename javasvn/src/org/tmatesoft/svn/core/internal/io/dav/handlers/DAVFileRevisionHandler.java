@@ -83,6 +83,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             myPropertyName = attrs.getValue("name");
             myPropertyEncoding = attrs.getValue("encoding");
         } if (element == TX_DELTA) {
+            // handle file revision with props.
             if (myPath != null && myFileRevisionsHandler != null) {
                 if (myProperties == null) {
                     myProperties = Collections.EMPTY_MAP;
@@ -91,8 +92,9 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                     myPropertiesDelta = Collections.EMPTY_MAP;
                 }
                 SVNFileRevision revision = new SVNFileRevision(myPath, myRevision, myProperties, myPropertiesDelta);
-                myFileRevisionsHandler.handleFileRevision(revision);
-                myPath = null;
+                myFileRevisionsHandler.openRevision(revision);
+                myProperties = null;
+                myPropertiesDelta = null;
             }
             setDeltaProcessing(true);
 		}
@@ -100,6 +102,21 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
     
 	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == FILE_REVISION) {
+            if (myPath != null && myFileRevisionsHandler != null) {
+                // handle file revision if was not handled yet (no tx delta).
+                if (myProperties == null) {
+                    myProperties = Collections.EMPTY_MAP;
+                }
+                if (myPropertiesDelta == null) {
+                    myPropertiesDelta = Collections.EMPTY_MAP;
+                }
+                SVNFileRevision revision = new SVNFileRevision(myPath, myRevision, myProperties, myPropertiesDelta);
+                myFileRevisionsHandler.openRevision(revision);
+            }
+            // handle close revision with props?
+            if (myFileRevisionsHandler != null) {
+                myFileRevisionsHandler.closeRevision(myPath);
+            }
             myPath = null;
             myProperties = null;
             myPropertiesDelta = null;
@@ -196,15 +213,18 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
         }
 
         public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+            if (myHandler != null) {
+                myHandler.applyTextDelta(path);
+            }
         }
 
         public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-            return myHandler != null ? myHandler.handleDiffWindow(path, diffWindow) : null;
+            return myHandler != null ? myHandler.textDeltaChunk(path, diffWindow) : null;
         }
 
         public void textDeltaEnd(String path) throws SVNException {
             if (myHandler != null) {
-                myHandler.handleDiffWindowClosed(path);
+                myHandler.textDeltaEnd(path);
             }
         }
 

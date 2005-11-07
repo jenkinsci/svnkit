@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
@@ -763,18 +764,17 @@ public abstract class SVNRepository {
     public Collection getFileRevisions(String path, Collection revisions, long sRevision, long eRevision) throws SVNException {
         final Collection result = revisions != null ? revisions : new LinkedList();
         ISVNFileRevisionHandler handler = new ISVNFileRevisionHandler() {
-            public void handleFileRevision(SVNFileRevision fileRevision) {
+            public void openRevision(SVNFileRevision fileRevision) throws SVNException {
                 result.add(fileRevision);
             }
-            public OutputStream handleDiffWindow(String token, SVNDiffWindow delta) {
-            	return new OutputStream() {
-                    public void write(byte[] b, int o, int l) {
-                    }
-                    public void write(int r) {
-                    }
-                };
+            public void applyTextDelta(String token) throws SVNException {
             }
-            public void handleDiffWindowClosed(String token) {
+            public OutputStream textDeltaChunk(String token, SVNDiffWindow diffWindow) throws SVNException {
+                return SVNFileUtil.DUMMY_OUT;
+            }
+            public void textDeltaEnd(String token) throws SVNException {
+            }
+            public void closeRevision(String token) throws SVNException {
             }
         };
         getFileRevisions(path, sRevision, eRevision, handler);
