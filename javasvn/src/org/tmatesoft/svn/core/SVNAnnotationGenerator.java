@@ -143,11 +143,9 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             myCurrentFile.delete();
         }
         myCurrentFile = null;
-        System.out.println(">> open");
     }
 
     public void closeRevision(String token) throws SVNException {
-        System.out.println(">> close");
     }
     
     public void applyTextDelta(String token) throws SVNException {
@@ -156,23 +154,16 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             SVNFileUtil.createEmptyFile(myPreviousFile);
         }
         myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
-        System.out.println("delta: current file created");
     }    
 
     public OutputStream textDeltaChunk(String token, SVNDiffWindow diffWindow) throws SVNException {
-        System.out.println("delta: chunk");
-        File tmpFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
+        File tmpFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate.chunk", ".tmp");
         SVNFileUtil.createEmptyFile(tmpFile);
         return myDeltaProcessor.textDeltaChunk(tmpFile, diffWindow);
     }
 
     public void textDeltaEnd(String token) throws SVNException {
-        System.out.println("delta: end");
         myDeltaProcessor.textDeltaEnd(myPreviousFile, myCurrentFile, false);
-        if (!myCurrentFile.exists()) {
-            System.out.println("empty file created");
-            SVNFileUtil.createEmptyFile(myCurrentFile);
-        }
         RandomAccessFile left = null;
         RandomAccessFile right = null;
         try {

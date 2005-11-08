@@ -95,6 +95,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                 myFileRevisionsHandler.openRevision(revision);
                 myProperties = null;
                 myPropertiesDelta = null;
+                myFileRevisionsHandler.applyTextDelta(myPath);
             }
             setDeltaProcessing(true);
 		}

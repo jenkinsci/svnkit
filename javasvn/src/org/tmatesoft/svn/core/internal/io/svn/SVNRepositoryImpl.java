@@ -375,7 +375,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     // apply delta here.
                     if (!windowRead) {
                         if (handler != null) {
-                            System.out.println("apply delta");
                             handler.applyTextDelta(name == null ? path : name);
                             windowRead = true;
                         }
@@ -383,7 +382,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     builder.accept(line, 0);
                     SVNDiffWindow window = builder.getDiffWindow();
                     if (window != null) {
-                        System.out.println("delta chunk: " + window.getInstructionsLength());
                         OutputStream os = handler.textDeltaChunk(name == null ? path : name, window);
                         if (os != null) {
                             try {
@@ -394,7 +392,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         }
                         builder.reset(SVNDiffWindowBuilder.OFFSET);
                         long length = window.getNewDataLength();
-                        System.out.println("new data length: " + length);
                         while (length > 0) {
                             byte[] contents = (byte[]) myConnection.read("B", null)[0];
                             length -= contents.length;
@@ -418,7 +415,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 if (windowRead) {
                     handler.textDeltaEnd(name == null ? path : name);
                 }
-                // only call that when there was a real diff window.
                 if (handler != null) {
                     handler.closeRevision(name == null ? path : name);
                 }
