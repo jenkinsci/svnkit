@@ -119,7 +119,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myStartRevision = startRevision;
     }
     
-    public void handleFileRevision(SVNFileRevision fileRevision) throws SVNException {
+    public void openRevision(SVNFileRevision fileRevision) throws SVNException {
         Map propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);
         if (SVNProperty.isBinaryMimeType(newMimeType)) {
@@ -148,6 +148,12 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             myPreviousFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
             SVNFileUtil.createEmptyFile(myPreviousFile);
         }
+    }
+    
+    public void closeRevision(String token) throws SVNException {
+    }
+    
+    public void applyTextDelta(String token) throws SVNException {
         if (myCurrentFile != null) {
             myCurrentFile.delete();
         } else {
@@ -156,11 +162,11 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myDeltaProcessor.applyTextDelta(myPreviousFile, myCurrentFile, false);
     }
 
-    public OutputStream handleDiffWindow(String token, SVNDiffWindow diffWindow) throws SVNException {
+    public OutputStream textDeltaChunk(String token, SVNDiffWindow diffWindow) throws SVNException {
         return myDeltaProcessor.textDeltaChunk(diffWindow);
     }
 
-    public void handleDiffWindowClosed(String token) throws SVNException {
+    public void textDeltaEnd(String token) throws SVNException {
         myDeltaProcessor.textDeltaEnd();
         
         RandomAccessFile left = null;

@@ -352,13 +352,16 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     buffer[3] = null;
                 }
                 if (handler != null && fileRevision != null) {
-                    handler.handleFileRevision(fileRevision);
+                    handler.openRevision(fileRevision);
                 }
                 if (skipDelta) {
+                    if (handler != null) {
+                        handler.closeRevision(name == null ? path : name);
+                    }
                     continue;
                 }
-                SVNDiffWindowBuilder builder = SVNDiffWindowBuilder
-                        .newInstance();
+                SVNDiffWindowBuilder builder = SVNDiffWindowBuilder.newInstance();
+                boolean windowRead = false;
                 while (true) {
                     byte[] line = (byte[]) read("?W?B", buffer)[1];
                     if (line == null) {
@@ -369,10 +372,17 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         // empty line, delta end.
                         break;
                     }
+                    // apply delta here.
+                    if (!windowRead) {
+                        if (handler != null) {
+                            handler.applyTextDelta(name == null ? path : name);
+                            windowRead = true;
+                        }
+                    }
                     builder.accept(line, 0);
                     SVNDiffWindow window = builder.getDiffWindow();
                     if (window != null) {
-                        OutputStream os = handler.handleDiffWindow(name == null ? path : name, window);
+                        OutputStream os = handler.textDeltaChunk(name == null ? path : name, window);
                         if (os != null) {
                             try {
                                 os.write(builder.getInstructionsData());
@@ -402,7 +412,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         }
                     }
                 }
-                handler.handleDiffWindowClosed(name == null ? path : name);
+                if (windowRead) {
+                    handler.textDeltaEnd(name == null ? path : name);
+                }
+                if (handler != null) {
+                    handler.closeRevision(name == null ? path : name);
+                }
             }
         } finally {
             closeConnection();

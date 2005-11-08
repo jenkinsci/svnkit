@@ -414,7 +414,27 @@ public class SVNUpdateEditor implements ISVNEditor {
                 command.clear();
             } else {
                 // do test merge.
-                textStatus = dir.mergeText(name, basePath, tmpPath, "", "", "", myIsLeaveConflicts, true);
+                String oldEolStyle = null;
+                String oldKeywords = null;
+                SVNProperties props = dir.getProperties(myCurrentFile.Name, false);
+                try {
+                    if (magicPropsChanged && 
+                            (modifiedProps.containsKey(SVNProperty.EOL_STYLE) || modifiedProps.containsKey(SVNProperty.KEYWORDS))) {
+                        // use new valuse to let dry-run merge use the same input as real merge will use.
+                        oldKeywords = props.getPropertyValue(SVNProperty.KEYWORDS);
+                        oldEolStyle = props.getPropertyValue(SVNProperty.EOL_STYLE);
+                        props.setPropertyValue(SVNProperty.EOL_STYLE, (String) modifiedProps.get(SVNProperty.EOL_STYLE));
+                        props.setPropertyValue(SVNProperty.KEYWORDS, (String) modifiedProps.get(SVNProperty.KEYWORDS));
+                    }
+                    textStatus = dir.mergeText(name, basePath, tmpPath, "", "", "", myIsLeaveConflicts, true);
+                } finally {
+                    if (magicPropsChanged && 
+                            (modifiedProps.containsKey(SVNProperty.EOL_STYLE) || modifiedProps.containsKey(SVNProperty.KEYWORDS))) {
+                        // restore original values.
+                        props.setPropertyValue(SVNProperty.EOL_STYLE, oldEolStyle);
+                        props.setPropertyValue(SVNProperty.KEYWORDS, oldKeywords);
+                    }
+                }
                 if (textStatus == SVNStatusType.UNCHANGED) {
                     textStatus = SVNStatusType.MERGED;
                 }
