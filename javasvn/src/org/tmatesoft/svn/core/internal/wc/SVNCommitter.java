@@ -210,6 +210,10 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         Map diff = replaced ? props.asMap() : baseProps.compareTo(props);
         if (diff != null && !diff.isEmpty()) {
             props.copyTo(dir.getBaseProperties(name, true));
+            if (!props.getFile().exists()) {
+                // create empty file just to make sure it will be used on post-commit.
+                SVNFileUtil.createEmptyFile(props.getFile());
+            }
             myTmpFiles.add(dir.getBaseProperties(name, true).getFile());
 
             for (Iterator names = diff.keySet().iterator(); names.hasNext();) {
