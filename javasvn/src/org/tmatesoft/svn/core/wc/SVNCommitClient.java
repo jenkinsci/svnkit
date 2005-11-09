@@ -437,9 +437,13 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         boolean changed;
         if (srcKind == SVNFileType.DIRECTORY) {
-            changed = importDir(path, path, newDirPath, recursive, useGlobalIgnores, commitEditor);
+            changed = importDir(path, path, newDirPath, useGlobalIgnores, recursive, commitEditor);
         } else {
-            changed = importFile(path.getParentFile(), path, srcKind, filePath, commitEditor);
+            if (useGlobalIgnores && getOptions().isIgnored(path.getName())) {
+                changed = false;
+            } else {
+                changed = importFile(path.getParentFile(), path, srcKind, filePath, commitEditor);
+            }
         }
         if (!changed) {
             try {
@@ -881,7 +885,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 handleEvent(event, ISVNEventHandler.UNKNOWN);
                 importDir(rootFile, file, path, useGlobalIgnores, recursive, editor);
                 editor.closeDir();
-            } else {
+            } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK){
                 changed |= importFile(rootFile, file, fileType, path, editor);
             }
 
