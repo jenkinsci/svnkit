@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -208,13 +209,15 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         SVNProperties baseProps = replaced ? null : dir.getBaseProperties(name,
                 false);
         Map diff = replaced ? props.asMap() : baseProps.compareTo(props);
+        SVNDebugLog.logInfo("prop diff: " + diff);
         if (diff != null && !diff.isEmpty()) {
-            props.copyTo(dir.getBaseProperties(name, true));
-            if (!props.getFile().exists()) {
-                // create empty file just to make sure it will be used on post-commit.
-                SVNFileUtil.createEmptyFile(props.getFile());
+            SVNProperties tmpProps = dir.getBaseProperties(name, true);
+            props.copyTo(tmpProps);
+            if (!tmpProps.getFile().exists()) {
+                // create empty tmp (!) file just to make sure it will be used on post-commit.
+                SVNFileUtil.createEmptyFile(tmpProps.getFile());
             }
-            myTmpFiles.add(dir.getBaseProperties(name, true).getFile());
+            myTmpFiles.add(tmpProps.getFile());
 
             for (Iterator names = diff.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
