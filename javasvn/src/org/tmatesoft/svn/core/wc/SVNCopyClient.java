@@ -569,6 +569,9 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNWCAccess srcAccess = createWCAccess(srcPath);
         SVNWCAccess dstAccess = createWCAccess(dstPath);
         try {
+            if (srcAccess.getTargetEntry() == null) {
+                SVNErrorManager.error("svn: '" + srcPath + "' is not under version control");
+            }
             // compare src entry repos with dst parent repos.
             String srcRepos = srcAccess.getTargetEntry().getRepositoryRoot();
             String dstRepos = dstAccess.getAnchor().getEntries().getEntry("", true).getRepositoryRoot();
