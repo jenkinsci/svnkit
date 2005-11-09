@@ -820,34 +820,13 @@ public class SVNDirectory {
     public static void createVersionedDirectory(File dir) throws SVNException {
         dir.mkdirs();
         File adminDir = new File(dir, SVNFileUtil.getAdminDirectoryName());
-        adminDir.mkdirs();
+        adminDir.mkdir();
         SVNFileUtil.setHidden(adminDir, true);
-        File format = new File(adminDir, "format");
-        OutputStream os = null;
-        try {
-            os = SVNFileUtil.openFileForWriting(format);
-            os.write(new byte[] { '4', '\n' });
-        } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot create file '" + format + "'");
-        } finally {
-            SVNFileUtil.closeFile(os);
-        }
-        File readme = new File(adminDir, "README.txt");
-        try {
-            os = SVNFileUtil.openFileForWriting(readme);
-            String eol = System.getProperty("line.separator");
-            eol = eol == null ? "\n" : eol;
-            os.write(("This is a Subversion working copy administrative directory."
-                            + eol
-                            + "Visit http://subversion.tigris.org/ for more information." + eol)
-                            .getBytes());
-        } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot create file '" + readme + "'");
-        } finally {
-            SVNFileUtil.closeFile(os);
-        }
-        File empty = new File(adminDir, "empty-file");
-        SVNFileUtil.createEmptyFile(empty);
+        // lock dir.
+        File lock = new File(adminDir, "lock"); 
+        SVNFileUtil.createEmptyFile(lock);
+        SVNAdminUtil.createReadmeFile(adminDir);
+        SVNFileUtil.createEmptyFile(new File(adminDir, "empty-file"));
         File[] tmp = {
                 new File(adminDir, "tmp"),
                 new File(adminDir, "tmp" + File.separatorChar + "props"),
@@ -859,6 +838,9 @@ public class SVNDirectory {
         for (int i = 0; i < tmp.length; i++) {
             tmp[i].mkdir();
         }
+        SVNAdminUtil.createFormatFile(adminDir);
+        // unlock dir.
+        SVNFileUtil.deleteFile(lock);
     }
 
     public void destroy(String name, boolean deleteWorkingFiles) throws SVNException {
