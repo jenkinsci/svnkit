@@ -196,7 +196,7 @@ public class SVNReporter implements ISVNReporterBaton {
                     if (!reportAll) {
                         reporter.deletePath(path);
                     }
-                    return;
+                    continue;
                 }
                 if (file.isFile()) {
                     SVNErrorManager.error("svn: Cannot report information on directory '" + file + "': entry is obstructed with node of another type");
