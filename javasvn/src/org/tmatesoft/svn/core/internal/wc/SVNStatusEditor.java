@@ -316,10 +316,11 @@ public class SVNStatusEditor implements ISVNEditor {
         }
         if (myTarget != null) {
             File file = myWCAccess.getAnchor().getFile(myTarget);
-            if (file.isDirectory()) {
-                SVNEntries entries = myWCAccess.getAnchor().getEntries();
-                SVNEntry entry = entries.getEntry(myTarget, false);
-                entries.close();
+            SVNEntries entries = myWCAccess.getAnchor().getEntries();
+            SVNEntry entry = entries.getEntry(myTarget, false);
+            SVNNodeKind entryKind = entry == null ? null : entry.getKind();
+            entries.close();
+            if (file.isDirectory() && (entry == null || entryKind == SVNNodeKind.DIR)) {
                 if (entry != null) {
                     reportStatus(myWCAccess.getTarget(), null, false, myIsRecursive);
                 } else {
