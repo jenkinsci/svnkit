@@ -279,9 +279,11 @@ public class SVNStatusEditor implements ISVNEditor {
         myCurrentFile.IsContentsChanged = true;
     }
 
-    public void changeFileProperty(String commitPath, String name, String value)
-            throws SVNException {
-        myCurrentFile.IsPropertiesChanged = true;
+    public void changeFileProperty(String commitPath, String name, String value) throws SVNException {
+        if (name != null && !name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)
+                && !name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+            myCurrentFile.IsPropertiesChanged = true;
+        }
         if (SVNProperty.COMMITTED_REVISION.equals(name) && value != null) {
             myCurrentFile.RemoteRevision = SVNRevision.parse(value);
         } else if (SVNProperty.COMMITTED_DATE.equals(name) && value != null) {
@@ -325,10 +327,12 @@ public class SVNStatusEditor implements ISVNEditor {
         }
         if (myTarget != null) {
             File file = myWCAccess.getAnchor().getFile(myTarget);
-            if (file.isDirectory()) {
-                SVNEntries entries = myWCAccess.getAnchor().getEntries();
-                SVNEntry entry = entries.getEntry(myTarget, false);
-                entries.close();
+            // this could be a file from entries point of view.
+            SVNEntries entries = myWCAccess.getAnchor().getEntries();
+            SVNEntry entry = entries.getEntry(myTarget, false);
+            SVNNodeKind kind = entry == null ? null : entry.getKind();
+            entries.close();
+            if (file.isDirectory() && (kind == null || kind == SVNNodeKind.DIR)) {
                 if (entry != null) {
                     reportStatus(myWCAccess.getTarget(), null, false, myIsRecursive);
                 } else {

@@ -615,31 +615,40 @@ class DAVRepository extends SVNRepository {
     }
 
     public ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, ISVNWorkspaceMediator mediator) throws SVNException {
-        openConnection();
-        Map translatedLocks = null;
-        if (locks != null) {
-            translatedLocks = new HashMap(locks.size());
-            String root = getRepositoryRoot().getPath();
-            root = SVNEncodingUtil.uriEncode(root);
-            for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
-                String path = (String) paths.next();
-                String lock = (String) locks.get(path);
-
-                if (path.startsWith("/")) {
-                    path = SVNPathUtil.append(root, SVNEncodingUtil.uriEncode(path));
-                } else {
-                    path = getFullPath(path);
-                    path = SVNEncodingUtil.uriEncode(path);
+        try {
+            openConnection();
+            Map translatedLocks = null;
+            if (locks != null) {
+                translatedLocks = new HashMap(locks.size());
+                String root = getRepositoryRoot(true).getPath();
+                root = SVNEncodingUtil.uriEncode(root);
+                for (Iterator paths = locks.keySet().iterator(); paths.hasNext();) {
+                    String path = (String) paths.next();
+                    String lock = (String) locks.get(path);
+    
+                    if (path.startsWith("/")) {
+                        path = SVNPathUtil.append(root, SVNEncodingUtil.uriEncode(path));
+                    } else {
+                        path = getFullPath(path);
+                        path = SVNEncodingUtil.uriEncode(path);
+                    }
+                    translatedLocks.put(path, lock);
                 }
-                translatedLocks.put(path, lock);
             }
+            myConnection.setLocks(translatedLocks, keepLocks);
+            return new DAVCommitEditor(this, myConnection, logMessage, mediator, new Runnable() {
+                public void run() {
+                    closeConnection();
+                }
+            });
+        } catch (Throwable th) {
+            closeConnection();
+            if (th instanceof SVNException) {
+                throw (SVNException) th;
+            } 
+            SVNErrorManager.error("svn: Unexpected error on getting commit editor: '" + th.getMessage() + "'");
+            return null;
         }
-        myConnection.setLocks(translatedLocks, keepLocks);
-        return new DAVCommitEditor(this, myConnection, logMessage, mediator, new Runnable() {
-            public void run() {
-                closeConnection();
-            }
-        });
     }
 
     public SVNLock getLock(String path) throws SVNException {
