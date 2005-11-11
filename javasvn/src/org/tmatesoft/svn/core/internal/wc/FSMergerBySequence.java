@@ -30,6 +30,7 @@ import de.regnis.q.sequence.line.QSequenceLineResult;
  */
 class FSMergerBySequence {
 
+	public static final String DEFAULT_EOL = System.getProperty("line.separator");
 	public static final int NOT_MODIFIED = 0;
 	public static final int MERGED = 4;
 	public static final int CONFLICTED = 2;
@@ -40,8 +41,6 @@ class FSMergerBySequence {
 	private final byte[] myConflictSeparator;
 	private final byte[] myConflictEnd;
 	private final byte[] myEOLBytes;
-
-	private static final byte[] DEFAULT_EOL = System.getProperty("line.separator").getBytes();
 
 	// Setup ==================================================================
 
@@ -61,7 +60,7 @@ class FSMergerBySequence {
 //        dump("base", baseData);
 //        dump("latest", latestData);
 //        dump("local", localData);
-        
+
 		final QSequenceLineResult localResult;
 		final QSequenceLineResult latestResult;
 		try {
@@ -94,7 +93,7 @@ class FSMergerBySequence {
 				if (local.hasCurrent() && latest.hasCurrent()) {
 					final QSequenceDifferenceBlock localStartBlock = local.current();
 					final QSequenceDifferenceBlock latestStartBlock = latest.current();
-					if (checkConflict(local, latest, localLines, latestLines)) {
+					if (checkConflict(local, latest, localLines, latestLines, baseLines.getLineCount())) {
 						baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest								.current(), baseLines, localLines, latestLines, baseLineIndex);
 						local.forward();
 						latest.forward();
@@ -146,12 +145,32 @@ class FSMergerBySequence {
 	}
 
 	private boolean intersect(QSequenceDifferenceBlock block1,
-	                          QSequenceDifferenceBlock block2) {
+	                          QSequenceDifferenceBlock block2, int baseLineCount) {
 		final int from1 = block1.getLeftFrom();
 		final int from2 = block2.getLeftFrom();
-		final int to1 = Math.max(from1, block1.getLeftTo());
-		final int to2 = Math.max(from2, block2.getLeftTo());
-		return (from1 >= from2 && from1 <= to2) || (from2 >= from1 && from2 <= to1);
+		final int to1 = block1.getLeftTo();
+		final int to2 = block2.getLeftTo();
+
+		if (to1 < from1) {
+			if (to2 < from2) {
+				return from1 == from2;
+			}
+			else {
+				if (from1 == baseLineCount && to2 >= baseLineCount - 1) {
+					return true;
+				}
+				return from1 >= from2 && from1 <= to2;
+			}
+		}
+		else if (to2 < from2) {
+			if (from2 == baseLineCount && to1 >= baseLineCount - 1) {
+				return true;
+			}
+			return from2 >= from1 && from2 <= to1;
+		}
+		else {
+			return (from1 >= from2 && from1 <= to2) || (from2 >= from1 && from2 <= to1);
+		}
 	}
 
 	private int appendLines(OutputStream result,
@@ -193,14 +212,14 @@ class FSMergerBySequence {
 
 	private boolean checkConflict(FSMergerBySequenceList localChanges,
 	                              FSMergerBySequenceList latestChanges,
-	                              QSequenceLineCache localLines, QSequenceLineCache latestLines)
+	                              QSequenceLineCache localLines, QSequenceLineCache latestLines, int baseLineCount)
 			throws IOException {
 		boolean conflict = false;
-		while (intersect(localChanges.current(), latestChanges.current()) && !isEqualChange(localChanges.current(), latestChanges.current(), localLines, latestLines)) {
+		while (intersect(localChanges.current(), latestChanges.current(), baseLineCount) && !isEqualChange(localChanges.current(), latestChanges.current(), localLines, latestLines)) {
 			conflict = true;
 
 			if (localChanges.current().getLeftTo() <= latestChanges.current().getLeftTo()) {
-				if (localChanges.hasNext() && intersect(localChanges.peekNext(), latestChanges.current())) {
+				if (localChanges.hasNext() && intersect(localChanges.peekNext(), latestChanges.current(), baseLineCount)) {
 					localChanges.forward();
 				}
 				else {
@@ -208,7 +227,7 @@ class FSMergerBySequence {
 				}
 			}
 			else {
-				if (latestChanges.hasNext() && intersect(localChanges.current(), latestChanges.peekNext())) {
+				if (latestChanges.hasNext() && intersect(localChanges.current(), latestChanges.peekNext(), baseLineCount)) {
 					latestChanges.forward();
 				}
 				else {
@@ -269,18 +288,18 @@ class FSMergerBySequence {
 				os.write(myEOLBytes);
 			}
 			else {
-				os.write(DEFAULT_EOL);
+				os.write(DEFAULT_EOL.getBytes());
 			}
 		}
 	}
-    
+
     public static void dump(String name, QSequenceLineRAData data) throws IOException {
         SVNDebugLog.logInfo("=== " + name + " ===");
         byte[] buffer = new byte[(int) data.length()];
         data.get(buffer, 0, data.length());
         SVNDebugLog.logInfo(new String(buffer));
         SVNDebugLog.logInfo("===");
-        
+
     }
-    
+
 }
