@@ -32,17 +32,15 @@ public class DefaultSVNMerger implements ISVNMerger {
     private byte[] myStart;
     private byte[] mySeparator;
     private byte[] myEnd;
-    private byte[] myEOL;
 
-    public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end, byte[] eol) {
+    public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end) {
         myStart = start;
         mySeparator = sep;
         myEnd = end;
-        myEOL = eol;
     }
 
     public SVNStatusType mergeText(File baseFile, File localFile, File latestFile, boolean dryRun, OutputStream result) throws SVNException {
-        FSMergerBySequence merger = new FSMergerBySequence(myStart, mySeparator, myEnd, myEOL);
+        FSMergerBySequence merger = new FSMergerBySequence(myStart, mySeparator, myEnd);
         int mergeResult = 0;
         RandomAccessFile localIS = null;
         RandomAccessFile latestIS = null;

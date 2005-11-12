@@ -50,7 +50,7 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 	public void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
 		final QSequenceLineResult result;
 		try {
-			result = QSequenceLineMedia.createBlocks(QSequenceLineRAByteData.create(left), QSequenceLineRAByteData.create(right), isCompareEOLs() ? null : new byte[0]);
+			result = QSequenceLineMedia.createBlocks(QSequenceLineRAByteData.create(left), QSequenceLineRAByteData.create(right), null);
 		}
 		catch (QSequenceException ex) {
 			throw new IOException(ex.getMessage());
@@ -85,10 +85,6 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 		return System.getProperty("line.separator", "\n");
 	}
 
-	protected boolean isCompareEOLs() {
-		return Boolean.TRUE.toString().equals(getProperties().get(QDiffGeneratorFactory.COMPARE_EOL_PROPERTY));
-	}
-
 	protected int getGutter() {
 		Object gutterStr = getProperties().get(QDiffGeneratorFactory.GUTTER_PROPERTY);
 		if (gutterStr == null) {
@@ -104,7 +100,7 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 
 	protected String printLine(QSequenceLine line, String encoding) throws IOException {
 		String str = new String(line.getBytes(), encoding);
-		return isCompareEOLs() ? str : str + getEOL();
+		return str;
 	}
 
 	protected void println(Writer output) throws IOException {

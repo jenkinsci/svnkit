@@ -21,7 +21,6 @@ public interface QDiffGeneratorFactory {
 	public static final String GUTTER_PROPERTY = "gutter";
 	public static final String EOL_PROPERTY = "eol";
 	public static final String WHITESPACE_PROPERTY = "whitespace";
-	public static final String COMPARE_EOL_PROPERTY = "compareEOL";
 
 	public QDiffGenerator createGenerator(Map properties);
 }

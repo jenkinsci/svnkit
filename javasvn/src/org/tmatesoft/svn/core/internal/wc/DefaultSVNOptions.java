@@ -324,7 +324,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         return Pattern.compile(result.toString());
     }
 
-    public ISVNMerger createMerger(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd, byte[] eol) {
-        return new DefaultSVNMerger(conflictStart, conflictSeparator, conflictEnd, eol);
+    public ISVNMerger createMerger(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd) {
+        return new DefaultSVNMerger(conflictStart, conflictSeparator, conflictEnd);
     }
 }

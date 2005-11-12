@@ -40,15 +40,13 @@ class FSMergerBySequence {
 	private final byte[] myConflictStart;
 	private final byte[] myConflictSeparator;
 	private final byte[] myConflictEnd;
-	private final byte[] myEOLBytes;
 
 	// Setup ==================================================================
 
-	public FSMergerBySequence(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd, byte[] eolBytesArray) {
+	public FSMergerBySequence(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd) {
 		myConflictStart = conflictStart;
 		myConflictSeparator = conflictSeparator;
 		myConflictEnd = conflictEnd;
-		myEOLBytes = eolBytesArray;
 	}
 
 	// Accessing ==============================================================
@@ -64,8 +62,8 @@ class FSMergerBySequence {
 		final QSequenceLineResult localResult;
 		final QSequenceLineResult latestResult;
 		try {
-			localResult = QSequenceLineMedia.createBlocks(baseData, localData, myEOLBytes);
-			latestResult = QSequenceLineMedia.createBlocks(baseData, latestData, myEOLBytes);
+			localResult = QSequenceLineMedia.createBlocks(baseData, localData, null);
+			latestResult = QSequenceLineMedia.createBlocks(baseData, latestData, null);
 		}
 		catch (QSequenceException ex) {
 			throw new IOException(ex.getMessage());
@@ -155,12 +153,10 @@ class FSMergerBySequence {
 			if (to2 < from2) {
 				return from1 == from2;
 			}
-			else {
-				if (from1 == baseLineCount && to2 >= baseLineCount - 1) {
-					return true;
-				}
-				return from1 >= from2 && from1 <= to2;
+			if (from1 == baseLineCount && to2 >= baseLineCount - 1) {
+				return true;
 			}
+			return from1 >= from2 && from1 <= to2;
 		}
 		else if (to2 < from2) {
 			if (from2 == baseLineCount && to1 >= baseLineCount - 1) {
@@ -284,12 +280,7 @@ class FSMergerBySequence {
 			throws IOException {
 		if (bytes.length > 0) {
 			os.write(bytes);
-			if (myEOLBytes != null) {
-				os.write(myEOLBytes);
-			}
-			else {
-				os.write(DEFAULT_EOL.getBytes());
-			}
+			os.write(DEFAULT_EOL.getBytes());
 		}
 	}
 

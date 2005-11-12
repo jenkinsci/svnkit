@@ -161,7 +161,7 @@ public class FSMergerBySequenceTest extends TestCase {
 	}
 
 	private void testDirect(String baseFile, String localFile, String latestFile, String resultFile, String resultEol, int expectedStatus) throws IOException {
-		final FSMergerBySequence merger = new FSMergerBySequence(">".getBytes(), "=".getBytes(), "<".getBytes(), resultEol != null ? resultEol.getBytes() : null);
+		final FSMergerBySequence merger = new FSMergerBySequence(">".getBytes(), "=".getBytes(), "<".getBytes());
 		final ByteArrayOutputStream result = new ByteArrayOutputStream();
 		final int status = merger.merge(new QSequenceLineRAByteData(baseFile.getBytes()), new QSequenceLineRAByteData(localFile.getBytes()), new QSequenceLineRAByteData(latestFile.getBytes()), result);
 

@@ -109,14 +109,14 @@ public final class QDiffUniGenerator extends QDiffSequenceGenerator implements Q
 			for (int j = block.getLeftFrom(); j <= block.getLeftTo(); j++) {
 				String line = printLine(sourceLines.getLine(j), encoding);
 				print("-" + line, output);
-				if (j == sourceLines.getLineCount() - 1 && isCompareEOLs()) {
+				if (j == sourceLines.getLineCount() - 1) {
 					printNoNewLine(output, line);
 				}
 			}
 			for (int j = block.getRightFrom(); j <= block.getRightTo(); j++) {
 				String line = printLine(targetLines.getLine(j), encoding);
 				print("+" + line, output);
-				if (j == targetLines.getLineCount() - 1 && isCompareEOLs()) {
+				if (j == targetLines.getLineCount() - 1) {
 					printNoNewLine(output, line);
 				}
 			}
@@ -128,7 +128,7 @@ public final class QDiffUniGenerator extends QDiffSequenceGenerator implements Q
 			for (int j = block.getLeftTo() + 1; j <= end; j++) {
 				String line = printLine(sourceLines.getLine(j), encoding);
 				print(" " + printLine(sourceLines.getLine(j), encoding), output);
-				if (j == sourceLines.getLineCount() - 1 && isCompareEOLs()) {
+				if (j == sourceLines.getLineCount() - 1) {
 					printNoNewLine(output, line);
 				}
 			}

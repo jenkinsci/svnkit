@@ -345,7 +345,7 @@ public class SVNDirectory {
         byte[] conflictEnd = (">>>>>>> " + latestLabel).getBytes();
         byte[] separator = ("=======").getBytes();
         ISVNMergerFactory factory = myWCAccess.getOptions().getMergerFactory();
-        ISVNMerger merger = factory.createMerger(conflictStart, separator, conflictEnd, null);
+        ISVNMerger merger = factory.createMerger(conflictStart, separator, conflictEnd);
         
         result = resultFile == null ? SVNFileUtil.DUMMY_OUT : SVNFileUtil.openFileForWriting(resultFile);
         SVNStatusType status = SVNStatusType.UNCHANGED;
