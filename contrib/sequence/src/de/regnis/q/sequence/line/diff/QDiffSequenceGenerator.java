@@ -50,7 +50,7 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 	public void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
 		final QSequenceLineResult result;
 		try {
-			result = QSequenceLineMedia.createBlocks(QSequenceLineRAByteData.create(left), QSequenceLineRAByteData.create(right), null);
+			result = QSequenceLineMedia.createBlocks(QSequenceLineRAByteData.create(left), QSequenceLineRAByteData.create(right));
 		}
 		catch (QSequenceException ex) {
 			throw new IOException(ex.getMessage());

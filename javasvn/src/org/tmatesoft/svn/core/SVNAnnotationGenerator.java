@@ -178,7 +178,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             ArrayList newLines = new ArrayList();
             int lastStart = 0;
 
-            final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right), null);
+            final QSequenceLineResult result = QSequenceLineMedia.createBlocks(new QSequenceLineRAFileData(left), new QSequenceLineRAFileData(right));
             try {
                 List blocksList = result.getBlocks();
                 for(int i = 0; i < blocksList.size(); i++) {

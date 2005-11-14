@@ -62,8 +62,8 @@ class FSMergerBySequence {
 		final QSequenceLineResult localResult;
 		final QSequenceLineResult latestResult;
 		try {
-			localResult = QSequenceLineMedia.createBlocks(baseData, localData, null);
-			latestResult = QSequenceLineMedia.createBlocks(baseData, latestData, null);
+			localResult = QSequenceLineMedia.createBlocks(baseData, localData);
+			latestResult = QSequenceLineMedia.createBlocks(baseData, latestData);
 		}
 		catch (QSequenceException ex) {
 			throw new IOException(ex.getMessage());

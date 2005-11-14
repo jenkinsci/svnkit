@@ -93,8 +93,8 @@ public class QSequenceLineMediaTest extends TestCase {
 	private QSequenceLineResult createBlocksInMemory(final File leftFile, final File rightFile) throws IOException, QSequenceException {
 		final FileInputStream left = new FileInputStream(leftFile);
 		final FileInputStream right = new FileInputStream(rightFile);
-		final QSequenceLineMemoryCache leftCache = QSequenceLineMemoryCache.read(left, null);
-		final QSequenceLineMemoryCache rightCache = QSequenceLineMemoryCache.read(right, null);
+		final QSequenceLineMemoryCache leftCache = QSequenceLineMemoryCache.read(left);
+		final QSequenceLineMemoryCache rightCache = QSequenceLineMemoryCache.read(right);
 		final QSequenceLineMedia lineMedia = new QSequenceLineMedia(leftCache, rightCache);
 		final QSequenceCachingMedia cachingMedia = new QSequenceCachingMedia(lineMedia, new QSequenceDummyCanceller());
 		final List blocks = new QSequenceDifference(cachingMedia, new QSequenceMediaDummyIndexTransformer(cachingMedia)).getBlocks();
@@ -106,7 +106,7 @@ public class QSequenceLineMediaTest extends TestCase {
 		final RandomAccessFile leftRAFile = new RandomAccessFile(leftFile, "r");
 		final RandomAccessFile rightRAFile = new RandomAccessFile(rightFile, "r");
 		try {
-			return QSequenceLineMedia.createBlocksInFilesystem(new QSequenceLineRAFileData(leftRAFile), new QSequenceLineRAFileData(rightRAFile), new QSequenceLineSystemTempDirectoryFactory(), null, 1.0, maximumMemorySize, fileSegmentSize);
+			return QSequenceLineMedia.createBlocksInFilesystem(new QSequenceLineRAFileData(leftRAFile), new QSequenceLineRAFileData(rightRAFile), new QSequenceLineSystemTempDirectoryFactory(), 1.0, maximumMemorySize, fileSegmentSize);
 		}
 		finally {
 			leftRAFile.close();

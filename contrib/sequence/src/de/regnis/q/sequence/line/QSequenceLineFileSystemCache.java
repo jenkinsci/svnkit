@@ -10,9 +10,9 @@ final class QSequenceLineFileSystemCache implements QSequenceLineCache {
 
 	// Static =================================================================
 
-	public static QSequenceLineFileSystemCache create(QSequenceLineRAData data, QSequenceLineTempDirectoryFactory tempDirectoryFactory, byte[] customEolBytes, int maximumBytesInMemory, int maximumSegmentSize) throws IOException {
+	public static QSequenceLineFileSystemCache create(QSequenceLineRAData data, QSequenceLineTempDirectoryFactory tempDirectoryFactory, int maximumBytesInMemory, int maximumSegmentSize) throws IOException {
 		final QSequenceLineFileSystemCache cache = new QSequenceLineFileSystemCache(data, tempDirectoryFactory, maximumBytesInMemory, maximumSegmentSize);
-		final QSequenceLineReader reader = new QSequenceLineReader(customEolBytes);
+		final QSequenceLineReader reader = new QSequenceLineReader();
 		final InputStream stream = data.read(0, data.length());
 		reader.read(stream, cache);
 		stream.close();

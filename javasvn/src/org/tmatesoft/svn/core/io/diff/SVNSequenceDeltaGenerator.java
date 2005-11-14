@@ -120,7 +120,7 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 	private static void doGenerateDiffWindow(String commitPath, ISVNRAData workFile, ISVNRAData baseFile, ISVNEditor consumer, int memoryTreshold, int fileSegmentSize, double searchDepthExponent, final File tempDirectory) throws IOException, SVNException {
 		final QSequenceLineResult result;
 		try {
-			result = QSequenceLineMedia.createBlocks(new SVNSequenceLineRAData(baseFile), new SVNSequenceLineRAData(workFile), null, memoryTreshold, fileSegmentSize, searchDepthExponent, new QSequenceLineFixedTempDirectoryFactory(tempDirectory));
+			result = QSequenceLineMedia.createBlocks(new SVNSequenceLineRAData(baseFile), new SVNSequenceLineRAData(workFile), memoryTreshold, fileSegmentSize, searchDepthExponent, new QSequenceLineFixedTempDirectoryFactory(tempDirectory));
 		}
 		catch (QSequenceException ex) {
 			throw new SVNException(ex);

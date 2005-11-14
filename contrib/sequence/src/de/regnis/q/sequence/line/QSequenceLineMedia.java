@@ -43,30 +43,30 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 
 	// Static =================================================================
 
-	public static QSequenceLineCache readLines(QSequenceLineRAData data, byte[] customEolBytes) throws IOException {
+	public static QSequenceLineCache readLines(QSequenceLineRAData data) throws IOException {
 		if (data.length() <= MEMORY_THRESHOLD) {
 			final InputStream stream = data.read(0, data.length());
 			try {
-				return QSequenceLineMemoryCache.read(stream, customEolBytes);
+				return QSequenceLineMemoryCache.read(stream);
 			}
 			finally {
 				stream.close();
 			}
 		}
 
-		return QSequenceLineFileSystemCache.create(data, new QSequenceLineSystemTempDirectoryFactory(), customEolBytes, MEMORY_THRESHOLD, FILE_SEGMENT_SIZE);
+		return QSequenceLineFileSystemCache.create(data, new QSequenceLineSystemTempDirectoryFactory(), MEMORY_THRESHOLD, FILE_SEGMENT_SIZE);
 	}
 
-	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData, byte[] customEolBytes) throws IOException, QSequenceException {
-		return createBlocks(leftData, rightData, customEolBytes, MEMORY_THRESHOLD, FILE_SEGMENT_SIZE, SEARCH_DEPTH_EXPONENT, new QSequenceLineSystemTempDirectoryFactory());
+	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData) throws IOException, QSequenceException {
+		return createBlocks(leftData, rightData, MEMORY_THRESHOLD, FILE_SEGMENT_SIZE, SEARCH_DEPTH_EXPONENT, new QSequenceLineSystemTempDirectoryFactory());
 	}
 
-	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData, byte[] customEolBytes, int memoryThreshold, int fileSegmentSize, double searchDepthExponent, QSequenceLineTempDirectoryFactory tempDirectoryFactory) throws IOException, QSequenceException {
+	public static QSequenceLineResult createBlocks(QSequenceLineRAData leftData, QSequenceLineRAData rightData, int memoryThreshold, int fileSegmentSize, double searchDepthExponent, QSequenceLineTempDirectoryFactory tempDirectoryFactory) throws IOException, QSequenceException {
 		if (leftData.length() <= memoryThreshold && rightData.length() <= memoryThreshold) {
 			final InputStream leftStream = leftData.read(0, leftData.length());
 			final InputStream rightStream = rightData.read(0, rightData.length());
 			try {
-				return createBlocksInMemory(leftStream, rightStream, customEolBytes, searchDepthExponent);
+				return createBlocksInMemory(leftStream, rightStream, searchDepthExponent);
 			}
 			finally {
 				leftStream.close();
@@ -74,12 +74,12 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 			}
 		}
 
-		return createBlocksInFilesystem(leftData, rightData, tempDirectoryFactory, customEolBytes, searchDepthExponent, memoryThreshold, fileSegmentSize);
+		return createBlocksInFilesystem(leftData, rightData, tempDirectoryFactory, searchDepthExponent, memoryThreshold, fileSegmentSize);
 	}
 
-	static QSequenceLineResult createBlocksInMemory(InputStream leftStream, InputStream rightStream, byte[] customEolBytes, double searchDepthExponent) throws IOException, QSequenceException {
-		final QSequenceLineMemoryCache leftCache = QSequenceLineMemoryCache.read(leftStream, customEolBytes);
-		final QSequenceLineMemoryCache rightCache = QSequenceLineMemoryCache.read(rightStream, customEolBytes);
+	static QSequenceLineResult createBlocksInMemory(InputStream leftStream, InputStream rightStream, double searchDepthExponent) throws IOException, QSequenceException {
+		final QSequenceLineMemoryCache leftCache = QSequenceLineMemoryCache.read(leftStream);
+		final QSequenceLineMemoryCache rightCache = QSequenceLineMemoryCache.read(rightStream);
 		final QSequenceLineMedia lineMedia = new QSequenceLineMedia(leftCache, rightCache);
 		final QSequenceCachingMedia cachingMedia = new QSequenceCachingMedia(lineMedia, new QSequenceDummyCanceller());
 		final QSequenceDiscardingMedia discardingMedia = new QSequenceDiscardingMedia(cachingMedia, new QSequenceDiscardingMediaNoConfusionDectector(true), new QSequenceDummyCanceller());
@@ -88,9 +88,9 @@ public final class QSequenceLineMedia implements QSequenceCachableMedia, QSequen
 		return new QSequenceLineResult(blocks, leftCache, rightCache);
 	}
 
-	static QSequenceLineResult createBlocksInFilesystem(QSequenceLineRAData leftData, QSequenceLineRAData rightData, QSequenceLineTempDirectoryFactory tempDirectoryFactory, byte[] customEolBytes, double searchDepthExponent, int memoryThreshold, int fileSegmentSize) throws IOException, QSequenceException {
-		final QSequenceLineFileSystemCache leftCache = QSequenceLineFileSystemCache.create(leftData, tempDirectoryFactory, customEolBytes, memoryThreshold, fileSegmentSize);
-		final QSequenceLineFileSystemCache rightCache = QSequenceLineFileSystemCache.create(rightData, tempDirectoryFactory, customEolBytes, memoryThreshold, fileSegmentSize);
+	static QSequenceLineResult createBlocksInFilesystem(QSequenceLineRAData leftData, QSequenceLineRAData rightData, QSequenceLineTempDirectoryFactory tempDirectoryFactory, double searchDepthExponent, int memoryThreshold, int fileSegmentSize) throws IOException, QSequenceException {
+		final QSequenceLineFileSystemCache leftCache = QSequenceLineFileSystemCache.create(leftData, tempDirectoryFactory, memoryThreshold, fileSegmentSize);
+		final QSequenceLineFileSystemCache rightCache = QSequenceLineFileSystemCache.create(rightData, tempDirectoryFactory, memoryThreshold, fileSegmentSize);
 		final QSequenceLineMedia lineMedia = new QSequenceLineMedia(leftCache, rightCache);
 		final List blocks = new QSequenceDifference(lineMedia, new QSequenceMediaDummyIndexTransformer(lineMedia), getSearchDepth(lineMedia, searchDepthExponent)).getBlocks();
 		new QSequenceDifferenceBlockShifter(lineMedia, lineMedia).shiftBlocks(blocks);
