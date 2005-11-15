@@ -50,44 +50,46 @@ public class SVNTimeUtil {
             return NULL;
         }
         try {
-            int year = Integer.parseInt(str.substring(0, 4));
-            int month = Integer.parseInt(str.substring(5, 7));
-            int date = Integer.parseInt(str.substring(8, 10));
-
-            int hour = Integer.parseInt(str.substring(11, 13));
-            int min = Integer.parseInt(str.substring(14, 16));
-            int sec;
-            int ms;
-            if (str.charAt(18) == '.') {
-                sec = Integer.parseInt(str.substring(17, 18));
-                ms = Integer.parseInt(str.substring(19, 22));
-            } else {
-                sec = Integer.parseInt(str.substring(17, 19));
-                ms = Integer.parseInt(str.substring(20, 23));
-            }
-
-            CALENDAR.clear();
-            CALENDAR.set(year, month - 1, date, hour, min, sec);
-            CALENDAR.set(Calendar.MILLISECOND, ms);
-            return CALENDAR.getTime();
+            return new Date(parseDateAsLong(str));
         } catch (Throwable th) {
             //
         }
-        return NULL;
+        return NULL;        
     }
+    
+    private static final char[] DATE_SEPARATORS = {'-','-','T',':',':','.','Z'}; 
 
     public static long parseDateAsLong(String str) {
         if (str == null) {
             return -1;
         }
-        int year = Integer.parseInt(str.substring(0, 4));
-        int month = Integer.parseInt(str.substring(5, 7));
-        int date = Integer.parseInt(str.substring(8, 10));
+        int index = 0;
+        int charIndex = 0;
+        int startIndex = 0;
+        int[] result = new int[7];
+        while(index < DATE_SEPARATORS.length && charIndex < str.length()) {
+            if (str.charAt(charIndex) == DATE_SEPARATORS[index]) {
+                String segment = str.substring(startIndex, charIndex);
+                if (segment.length() == 0) {
+                    result[index] = 0;
+                } else if (index + 1 < DATE_SEPARATORS.length) {
+                    result[index] = Integer.parseInt(segment);
+                } else {
+                    result[index] = Integer.parseInt(segment.substring(0, Math.min(3, segment.length())));
+                }
+                startIndex = charIndex + 1;
+                index++;
+            }
+            charIndex++;
+        }
+        int year = result[0];
+        int month = result[1];
+        int date = result[2];
 
-        int hour = Integer.parseInt(str.substring(11, 13));
-        int min = Integer.parseInt(str.substring(14, 16));
-        int sec = Integer.parseInt(str.substring(17, 19));
-        int ms = Integer.parseInt(str.substring(20, 23));
+        int hour = result[3];
+        int min = result[4];
+        int sec = result[5];
+        int ms = result[6];
 
         CALENDAR.clear();
         CALENDAR.set(year, month - 1, date, hour, min, sec);
