@@ -240,6 +240,8 @@ public abstract class SVNRepository {
      * 
      * @return 	the repository root directory location url
      * @see     #getRepositoryRoot(boolean)
+     * 
+     * @deprecated use #getRepositoryRoot(boolean) instead
      */
     public SVNURL getRepositoryRoot() {
         try {
@@ -306,7 +308,7 @@ public abstract class SVNRepository {
      * @param uuid 		the repository's Universal Unique IDentifier 
      * 					(UUID) 
      * @param rootURL	the repository's root directory location
-     * @see 			#getRepositoryRoot()
+     * @see 			#getRepositoryRoot(boolean)
      * @see 			#getRepositoryUUID()
      */
     protected void setRepositoryCredentials(String uuid, SVNURL rootURL) {
@@ -1691,7 +1693,7 @@ public abstract class SVNRepository {
      *                      this <b>SVNRepository</b> is set
      * @return              a path relative to the repository root
      */
-    public String getRepositoryPath(String relativePath) {
+    public String getRepositoryPath(String relativePath) throws SVNException {
         if (relativePath == null) {
             return "/";
         }
@@ -1699,7 +1701,7 @@ public abstract class SVNRepository {
             return relativePath;
         }
         String fullPath = SVNPathUtil.append(getLocation().getPath(), relativePath);
-        String repositoryPath = fullPath.substring(getRepositoryRoot().getPath().length());
+        String repositoryPath = fullPath.substring(getRepositoryRoot(true).getPath().length());
         if ("".equals(repositoryPath)) {
             return "/";
         }
@@ -1715,13 +1717,13 @@ public abstract class SVNRepository {
      *                                  repository 
      * @return                          a path relative to the host
      */
-    public String getFullPath(String relativeOrRepositoryPath) {
+    public String getFullPath(String relativeOrRepositoryPath) throws SVNException {
         if (relativeOrRepositoryPath == null) {
             return getFullPath("/");
         }
         String fullPath;
         if (relativeOrRepositoryPath.length() > 0 && relativeOrRepositoryPath.charAt(0) == '/') {
-            fullPath = SVNPathUtil.append(getRepositoryRoot().getPath(), relativeOrRepositoryPath);
+            fullPath = SVNPathUtil.append(getRepositoryRoot(true).getPath(), relativeOrRepositoryPath);
         } else {
             fullPath = SVNPathUtil.append(getLocation().getPath(), relativeOrRepositoryPath);
         }

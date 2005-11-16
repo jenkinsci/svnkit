@@ -731,8 +731,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    void updateCredentials(String uuid, SVNURL rootURL) {
-        if (getRepositoryRoot() != null) {
+    void updateCredentials(String uuid, SVNURL rootURL) throws SVNException {
+        if (getRepositoryRoot(false) != null) {
             return;
         }
         setRepositoryCredentials(uuid, rootURL);
@@ -837,7 +837,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         write("(w())", new Object[] { "abort-report" });
     }
 
-    private String[] getRepositoryPaths(String[] paths) {
+    private String[] getRepositoryPaths(String[] paths) throws SVNException {
         if (paths == null || paths.length == 0) {
             return paths;
         }

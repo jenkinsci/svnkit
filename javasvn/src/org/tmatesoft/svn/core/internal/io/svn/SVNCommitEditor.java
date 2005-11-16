@@ -65,7 +65,7 @@ class SVNCommitEditor implements ISVNEditor {
     public void addDir(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
         if (copyFromPath != null) {
-            String rootURL = myRepository.getRepositoryRoot().toString();
+            String rootURL = myRepository.getRepositoryRoot(false).toString();
             copyFromPath = SVNPathUtil.append(rootURL, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
             myConnection.write("(w(sss(sn)))", new Object[] { "add-dir", path,
                     myCurrentPath, path, copyFromPath,
@@ -98,7 +98,7 @@ class SVNCommitEditor implements ISVNEditor {
     public void addFile(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
         if (copyFromPath != null) {
-            String host = myRepository.getRepositoryRoot().toString();
+            String host = myRepository.getRepositoryRoot(false).toString();
             copyFromPath = SVNPathUtil.append(host, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
             myConnection.write("(w(sss(sn)))", new Object[] { "add-file", path,
                     myCurrentPath, path, copyFromPath,

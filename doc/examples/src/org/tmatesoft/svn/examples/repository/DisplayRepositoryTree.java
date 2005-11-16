@@ -144,8 +144,7 @@ public class DisplayRepositoryTree {
              * getRepositoryRoot returns the actual root directory where the
              * repository was created
              */
-            System.out.println("Repository Root: "
-                    + repository.getRepositoryRoot());
+            System.out.println("Repository Root: " + repository.getRepositoryRoot(true));
             /*
              * getRepositoryUUID returns Universal Unique IDentifier (UUID) - an
              * identifier of the repository

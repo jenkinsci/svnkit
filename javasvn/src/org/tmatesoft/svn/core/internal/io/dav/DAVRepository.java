@@ -485,7 +485,7 @@ class DAVRepository extends SVNRepository {
             openConnection();
             if (path.startsWith("/")) {
                 // (root + path), relative to location
-                path = SVNPathUtil.append(getRepositoryRoot().getPath(), path);
+                path = SVNPathUtil.append(getRepositoryRoot(true).getPath(), path);
                 if (path.equals(getLocation().getPath())) {
                     path = "";
                 } else {
