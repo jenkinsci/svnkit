@@ -87,9 +87,12 @@ public class DAVUtil {
                 break;
             }
             loppedPath = SVNPathUtil.append(SVNPathUtil.tail(path), loppedPath);
+            if ("/".equals(path) || "".equals(path)) {
+                break;
+            }
             path = SVNPathUtil.removeTail(path);
             if ("".equals(path)) {
-                break;
+                path = "/";
             }
         }
         if (properties == null) {

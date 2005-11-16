@@ -1719,9 +1719,15 @@ public abstract class SVNRepository {
         if (relativeOrRepositoryPath == null) {
             return getFullPath("/");
         }
+        String fullPath;
         if (relativeOrRepositoryPath.length() > 0 && relativeOrRepositoryPath.charAt(0) == '/') {
-            return SVNPathUtil.append(getRepositoryRoot().getPath(), relativeOrRepositoryPath);
+            fullPath = SVNPathUtil.append(getRepositoryRoot().getPath(), relativeOrRepositoryPath);
+        } else {
+            fullPath = SVNPathUtil.append(getLocation().getPath(), relativeOrRepositoryPath);
         }
-        return SVNPathUtil.append(getLocation().getPath(), relativeOrRepositoryPath);
+        if (!fullPath.startsWith("/")) {
+            fullPath = "/" + fullPath;
+        }
+        return fullPath;
     }
 }
