@@ -1061,9 +1061,8 @@ public abstract class SVNRepository {
 	 * @param  targetRevision   a revision number of the entry located at the 
      *                          specified <code>url</code>; defaults to the
      *                          latest revision (HEAD) if this arg is invalid
-     * @param  revision 		a revision number of the entry located at the 
-     *                          specified <code>url</code>; defaults to the
-     *                          latest revision (HEAD) if this arg is invalid
+     * @param  revision         a revision number of the repository location to which 
+     *                          this driver object is set
 	 * @param  target 			a target entry name (optional)
 	 * @param  ignoreAncestry 	if <span class="javakeyword">true</span> then
      *                          the ancestry of the two entries to be diffed is 
@@ -1131,9 +1130,8 @@ public abstract class SVNRepository {
      * 
      * @param  url              a repository location of the entry against which 
      *                          differences are calculated 
-     * @param  revision         a revision number of the entry located at the 
-     *                          specified <code>url</code>; defaults to the
-     *                          latest revision (HEAD) if this arg is invalid
+     * @param  revision         a revision number of the repository location to which 
+     *                          this driver object is set
      * @param  target           a target entry name (optional)
      * @param  ignoreAncestry   if <span class="javakeyword">true</span> then
      *                          the ancestry of the two entries to be diffed is 
