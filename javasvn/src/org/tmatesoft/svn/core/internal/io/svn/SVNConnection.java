@@ -158,7 +158,7 @@ class SVNConnection {
             if (!myIsCredentialsReceived) {
                 Object[] creds = read("[(?S?S)]", null);
                 if (repository != null
-                        && repository.getRepositoryRoot() == null) {
+                        && repository.getRepositoryRoot(false) == null) {
                     SVNURL rootURL = creds[1] != null ? SVNURL.parseURIEncoded((String) creds[1]) : null; 
                     repository.updateCredentials((String) creds[0], rootURL);
                 }
