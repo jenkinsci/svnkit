@@ -133,12 +133,9 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             throws SVNException {
         myCurrentFile = new SVNFileInfo(path);
         myCurrentFile.myBaseProperties = Collections.EMPTY_MAP;
-        myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(myRoot,
-                SVNPathUtil.tail(path), ".tmp");
+        myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(path), ".tmp");
         SVNFileUtil.createEmptyFile(myCurrentFile.myBaseFile);
-        myCurrentFile.myFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil
-                .tail(path), ".tmp");
-        SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
+        myCurrentFile.myFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(path), ".tmp");
     }
 
     public void openFile(String path, long revision) throws SVNException {
@@ -159,10 +156,10 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
         if (myCurrentFile.myBaseFile == null) {
             myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(commitPath), ".tmp");
+            SVNFileUtil.createEmptyFile(myCurrentFile.myBaseFile);
             myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos, myRevision);
             myCurrentFile.myFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(commitPath), ".tmp");
-            SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
-        }
+        } 
     }
 
     public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
