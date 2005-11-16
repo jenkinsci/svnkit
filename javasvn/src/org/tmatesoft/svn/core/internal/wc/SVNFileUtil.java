@@ -884,15 +884,11 @@ public class SVNFileUtil {
     }
 
     public static File createTempDirectory(String name) throws SVNException {
-        File homeDir = new File(System.getProperty("java.io.tmpdir"), "javasvn.tmp");
-        if (!homeDir.exists()) {
-            homeDir.mkdirs();
-        }
         File tmpFile = null;
         try {
-            tmpFile = File.createTempFile("." + name + ".", ".tmp", homeDir);
+            tmpFile = File.createTempFile(".javasvn." + name + ".", ".tmp");
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot create temp directory at '" + homeDir + "', " + e.getMessage());
+            SVNErrorManager.error("svn: Cannot create temp directory: " + e.getMessage());
         }
         if (tmpFile.exists()) {
             tmpFile.delete();
