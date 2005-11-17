@@ -243,7 +243,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         long revNumber = getRevisionNumber(revision, repos, null);
         SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
         String uuid = repos.getRepositoryUUID();
-        SVNURL repositoryRoot = repos.getRepositoryRoot();
+        SVNURL repositoryRoot = repos.getRepositoryRoot(true);
         if (targetNodeKind == SVNNodeKind.FILE) {
             SVNErrorManager.error("svn: URL '" + url + "' refers to a file not a directory");
         } else if (targetNodeKind == SVNNodeKind.NONE) {
