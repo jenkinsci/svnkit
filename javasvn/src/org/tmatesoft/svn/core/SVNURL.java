@@ -107,6 +107,7 @@ public class SVNURL {
         DEFAULT_PORTS.put("svn+ssh", new Integer(22));
         DEFAULT_PORTS.put("http", new Integer(80));
         DEFAULT_PORTS.put("https", new Integer(443));
+        DEFAULT_PORTS.put("file", new Integer(0));
     }
     
     private String myURL;

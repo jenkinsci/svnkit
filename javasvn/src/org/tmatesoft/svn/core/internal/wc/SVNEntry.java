@@ -63,13 +63,10 @@ public class SVNEntry implements Comparable {
         return url;
     }
     
-    public SVNURL getSVNURL() {
+    public SVNURL getSVNURL() throws SVNException {
         String url = getURL();
         if (url != null) {
-            try {
-                return SVNURL.parseURIEncoded(url);
-            } catch (SVNException e) {
-            }
+            return SVNURL.parseURIEncoded(url);
         }
         return null;
     }
@@ -296,13 +293,10 @@ public class SVNEntry implements Comparable {
         return myEntries.getPropertyValue(myName, SVNProperty.COPYFROM_URL);
     }
 
-    public SVNURL getCopyFromSVNURL() {
+    public SVNURL getCopyFromSVNURL() throws SVNException {
         String url = getCopyFromURL();
         if (url != null) {
-            try {
-                return SVNURL.parseURIEncoded(url);
-            } catch (SVNException e) {
-            }
+            return SVNURL.parseURIEncoded(url);
         }
         return null;
     }
@@ -337,13 +331,10 @@ public class SVNEntry implements Comparable {
         return myEntries.getPropertyValue(myName, SVNProperty.REPOS);
     }
 
-    public SVNURL getRepositoryRootURL() {
+    public SVNURL getRepositoryRootURL() throws SVNException {
         String url = getRepositoryRoot();
         if (url != null) {
-            try {
-                return SVNURL.parseURIEncoded(url);
-            } catch (SVNException e) {
-            }
+            return SVNURL.parseURIEncoded(url);
         }
         return null;
     }

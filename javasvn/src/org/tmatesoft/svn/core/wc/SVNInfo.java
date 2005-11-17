@@ -14,6 +14,7 @@ import java.io.File;
 import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
@@ -115,7 +116,7 @@ public class SVNInfo {
 
     private File myPropConflictFile;
 
-    static SVNInfo createInfo(File file, SVNEntry entry) {
+    static SVNInfo createInfo(File file, SVNEntry entry) throws SVNException {
         if (entry == null) {
             return null;
         }

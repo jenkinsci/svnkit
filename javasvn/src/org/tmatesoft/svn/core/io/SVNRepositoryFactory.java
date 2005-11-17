@@ -172,7 +172,7 @@ public abstract class SVNRepositoryFactory {
     			return ((SVNRepositoryFactory) myFactoriesMap.get(key)).createRepositoryImpl(url, options);
     		}
     	}
-    	SVNErrorManager.error("svn: Unable to open an ra_local session to URL '" + url + "'\nsvn: No connection protocol implementation for " + url.getProtocol());
+    	SVNErrorManager.error("svn: Unable to open an ra_local session to URL '" + url + "'\nsvn: No connection protocol implementation for '" + url.getProtocol() + "' protocol");
         return null;
     }
 
