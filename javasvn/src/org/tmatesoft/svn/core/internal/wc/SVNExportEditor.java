@@ -129,9 +129,9 @@ public class SVNExportEditor implements ISVNEditor {
 
     public void textDeltaEnd(String commitPath) throws SVNException {
         // apply all deltas
-        myCurrentTmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory, myCurrentFile.getName(), ".tmp");
-        SVNFileUtil.createEmptyFile(myCurrentTmpFile);
         File fakeBase = SVNFileUtil.createUniqueFile(myCurrentDirectory, myCurrentFile.getName(), ".tmp");
+        SVNFileUtil.createEmptyFile(fakeBase);
+        myCurrentTmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory, myCurrentFile.getName(), ".tmp");
         try {
             myChecksum = myDeltaProcessor.textDeltaEnd(fakeBase, myCurrentTmpFile, true);
         } finally {
