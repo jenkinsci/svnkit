@@ -73,6 +73,14 @@ public class SVNFileRevision implements Comparable {
      * @return	a map which keys are revision property names and values
      * 			are their values (both are strings)
      */
+    public Map getRevisionProperties() {
+        return myProperties;
+    }
+
+    /**
+     * Use {@link #getRevisionProperties() } instead.
+     * @deprecated
+     */
     public Map getProperties() {
         return myProperties;
     }
