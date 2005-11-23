@@ -264,8 +264,13 @@ public class SVNURL {
         } else {
             segment = SVNEncodingUtil.autoURIEncode(segment);
         }
-        String newPath = SVNPathUtil.append(getURIEncodedPath(), segment);
-        String url = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), newPath);
+        String path = getURIEncodedPath();
+        if ("".equals(path)) {
+            path = "/" + segment;
+        } else {
+            path = SVNPathUtil.append(path, segment);
+        }
+        String url = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), path);
         try {
             return parseURIEncoded(url);
         } catch (SVNException e) {

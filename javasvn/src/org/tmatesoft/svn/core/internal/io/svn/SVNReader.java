@@ -216,14 +216,13 @@ class SVNReader {
                     String name = readString(is);
                     String value = null;
                     // may not be there
-                    InputStream is2 = new RollbackInputStream(is);
-                    is2.mark(0x100);
+                    is.mark(0x100);
                     try {
-                        value = readString(is2);
+                        value = readString(is);
                     } catch (SVNException exception) {
                         try {
                             value = null;
-                            is2.reset();
+                            is.reset();
                         } catch (IOException e1) {
                         }
                     }
@@ -235,14 +234,13 @@ class SVNReader {
                     String value = null;
                     // may not be there
                     readChar(is, '(');
-                    InputStream is2 = new RollbackInputStream(is);
-                    is2.mark(0x100);
+                    is.mark(0x100);
                     try {
-                        value = readString(is2);
+                        value = readString(is);
                     } catch (SVNException exception) {
                         try {
                             value = null;
-                            is2.reset();
+                            is.reset();
                         } catch (IOException e1) {
                         }
                     }
@@ -263,20 +261,19 @@ class SVNReader {
                         // read errors and throw
                         readChar(is, '(');
                         StringBuffer errorMessage = new StringBuffer();
-                        RollbackInputStream is2 = new RollbackInputStream(is);
                         try {
                             while (true) {
-                                is2.mark(0x5);
+                                is.mark(0x5);
                                 if (errorMessage.length() > 0) {
                                     errorMessage.append("\n");
                                 }
-                                errorMessage.append(readError(is2));
+                                errorMessage.append(readError(is));
                             }
                         } catch (SVNException e) {
                             try {
-                                is2.reset();
-                                readChar(is2, ')');
-                                readChar(is2, ')');
+                                is.reset();
+                                readChar(is, ')');
+                                readChar(is, ')');
                             } catch (IOException e1) {
                                 //
                             } catch (SVNException e2) {
@@ -297,9 +294,9 @@ class SVNReader {
                 } else if (ch == '(') {
                     readChar(is, '(');
                 } else if (ch == 'd') {
-                    result = readDirEntry(new RollbackInputStream(is));
+                    result = readDirEntry(is);//new RollbackInputStream(is));
                 } else if (ch == 'f') {
-                    result = readStatEntry(new RollbackInputStream(is));
+                    result = readStatEntry(is);//new RollbackInputStream(is));
                 } else if (ch == 'e') {
                     if (editorBaton == null) {
                         editorBaton = new SVNEditModeReader();
@@ -335,7 +332,7 @@ class SVNReader {
                                         + word + "' read.");
                     }
                 } else if (ch == 'l') {
-                    result = readLock(new RollbackInputStream(is));
+                    result = readLock(is);//new RollbackInputStream(is));
                 }
                 if (doRead) {
                     target = reportResult(target, targetIndex, result, multiple);
@@ -611,7 +608,7 @@ class SVNReader {
     }
 
     private static String readError(InputStream is) throws SVNException {
-        InputStream pis = new RollbackInputStream(is);
+        InputStream pis = is;//new RollbackInputStream(is);
         readChar(pis, '(');
         try {
             pis.mark(0x20);

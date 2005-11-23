@@ -240,7 +240,7 @@ class SVNConnection {
             try {
                 myInputStream = SVNDebugLog.createLogStream(new BufferedInputStream(myConnector.getInputStream()));
                 myLoggingInputStream = myInputStream;
-                myInputStream = new RollbackInputStream(myInputStream);
+                myInputStream = new SVNRollbackInputStream(myInputStream, 1024);
             } catch (IOException ex) {
                 throw new SVNException(ex);
             }
