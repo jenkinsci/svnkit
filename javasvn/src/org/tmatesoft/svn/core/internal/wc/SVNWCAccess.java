@@ -434,6 +434,9 @@ public class SVNWCAccess implements ISVNEventHandler {
 
     public SVNDirectory addDirectory(String path, File file, boolean recursive,
             boolean lock) throws SVNException {
+        if (file == null || !file.isDirectory()) {
+            return null;
+        }
         if (myDirectories != null) {
             SVNDirectory dir = new SVNDirectory(this, path, file);
             if (myDirectories.put(path, dir) == null && lock && !dir.isLocked()) {
@@ -441,7 +444,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             }
             if (recursive) {
                 File[] dirs = file.listFiles();
-                for (int i = 0; i < dirs.length; i++) {
+                for (int i = 0; dirs != null && i < dirs.length; i++) {
                     File childDir = dirs[i];
                     if (SVNFileUtil.getAdminDirectoryName().equals(childDir)) {
                         continue;
