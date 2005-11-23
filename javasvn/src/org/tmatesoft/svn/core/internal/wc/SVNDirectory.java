@@ -1156,10 +1156,20 @@ public class SVNDirectory {
             if (entry.getKind() == SVNNodeKind.FILE) {
                 dir.destroyFile(entry.getName(), deleteWorkingFiles);
             } else if (entry.getKind() == SVNNodeKind.DIR) {
-                SVNDirectory childDirectory = dir.getChildDirectory(entry
-                        .getName());
+                SVNDirectory childDirectory = dir.getChildDirectory(entry.getName());
                 if (childDirectory == null) {
-                    entries.deleteEntry(entry.getName());
+                    try {
+                        File childFile = dir.getFile(entry.getName());
+                        String childPath = SVNPathUtil.append(dir.getPath(), entry.getName());
+                        childDirectory = dir.getWCAccess().addDirectory(childPath, childFile, true, true);
+                    } catch (SVNException e) {
+                        //
+                    }
+                    if (childDirectory != null) {
+                        destroyDirectory(dir, childDirectory, deleteWorkingFiles);
+                    } else {
+                        entries.deleteEntry(entry.getName());
+                    }
                 } else {
                     destroyDirectory(dir, childDirectory, deleteWorkingFiles);
                 }
