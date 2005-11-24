@@ -10,7 +10,6 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +47,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     protected static final byte[] HEADER_SEPARATOR = "===================================================================".getBytes();
     protected static final byte[] EOL = SVNTranslator.getEOL("native");
     protected static final String WC_REVISION_LABEL = "(working copy)";
-    protected static final InputStream EMPTY_FILE_IS = new ByteArrayInputStream(new byte[0]);
+    protected static final InputStream EMPTY_FILE_IS = SVNFileUtil.DUMMY_IN;
 
     private boolean myIsForcedBinaryDiff;
     private String myAnchorPath1;
