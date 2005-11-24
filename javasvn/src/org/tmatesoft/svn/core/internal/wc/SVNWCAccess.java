@@ -430,8 +430,10 @@ public class SVNWCAccess implements ISVNEventHandler {
         return addDirectory(path, file, false, false);
     }
 
-    public SVNDirectory addDirectory(String path, File file, boolean recursive,
-            boolean lock) throws SVNException {
+    public SVNDirectory addDirectory(String path, File file, boolean recursive, boolean lock) throws SVNException {
+        if (file == null || !file.isDirectory()) {
+            return null;
+        }
         if (myDirectories != null) {
             SVNDirectory dir = new SVNDirectory(this, path, file);
             if (myDirectories.put(path, dir) == null && lock && !dir.isLocked()) {
