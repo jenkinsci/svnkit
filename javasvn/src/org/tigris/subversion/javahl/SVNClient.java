@@ -346,4 +346,7 @@ public class SVNClient implements SVNClientInterface {
     public static int versionMicro() {
         return SVNClientImpl.versionMicro();
     }
+    
+    public static void initNative() {
+    }
 }
