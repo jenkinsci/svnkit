@@ -272,7 +272,7 @@ public class SVNDiffEditor implements ISVNEditor {
             if (myCurrentFile.myFile != null) {
                 String wcMimeType = dir.getProperties(fileName, false).getPropertyValue(SVNProperty.MIME_TYPE);
                 if (!myIsCompareToBase && myCurrentFile.myIsScheduledForDeletion) {
-                    myCurrentFile.myBaseFile = dir.getAdminFile("empty-file");
+                    myCurrentFile.myBaseFile = null;
                 } else if (!myIsCompareToBase) {
                     File wcTmpFile = SVNFileUtil.createUniqueFile(myCurrentFile.myFile.getParentFile(), fileName,  ".tmp");
                     String path = SVNFileUtil.getBasePath(wcTmpFile);

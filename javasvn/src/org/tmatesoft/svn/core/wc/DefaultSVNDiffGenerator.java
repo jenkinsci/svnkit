@@ -100,7 +100,10 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             return ".";
         }
         if (path.startsWith(basePath + "/")) {
-            return path.substring(basePath.length() + 1);
+            path = path.substring(basePath.length() + 1);
+            if (path.startsWith("./")) {
+                path = path.substring("./".length());
+            }
         }
         return path;
     }
@@ -256,6 +259,14 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                     bos.writeTo(result);
                 } catch (IOException e) {
                 }
+            }
+            return;
+        }
+        if (file1 == file2 && file1 == null) {
+            try {
+                bos.close();
+                bos.writeTo(result);
+            } catch (IOException e) {
             }
             return;
         }
