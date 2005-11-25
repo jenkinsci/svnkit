@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
-<head><title>How&nbsp;to&nbsp;build&nbsp;JavaSVN&nbsp;library&nbsp;from&nbsp;sources</title>
+<head><title>How&nbsp;to&nbsp;build&nbsp;JavaSVN&nbsp;Subclipse&nbsp;Extension&nbsp;plugin&nbsp;from&nbsp;sources</title>
 <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
 <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
@@ -14,7 +14,7 @@
 <div class="leftedge" >
 <div class="rightedge">
 
-<table  cellpadding="0" align="center" width="870" style="height: 1000px" border="0"  cellspacing="0">
+<table  cellpadding="0" align="center" width="870" border="0"  cellspacing="0">
 <tr align="center" valign="top">
 <td align="left" valign="top" style="padding: 3px 20px 20px 20px;">
 
@@ -55,25 +55,47 @@ The only pure Java Subversion library in the world!
 </tr>
 </table>
 
-
-<h1>How to build JavaSVN library from sources</h1>
+<h1>How to build JavaSVN Subclipse Extension plugin from sources</h1>
 <p>Get JavaSVN source code with the svn command line client</p>
 <pre>
 $ svn co http://svn.tmate.org/repos/jsvn/trunk javasvn
+</pre>
+<p>or  (to check out specific version):</p>
+<pre>
+$ svn co http://svn.tmate.org/repos/jsvn/tags/TAG_NAME javasvn
 </pre>
 <p>Go to the checked out directory</p>
 <pre>
 $ cd javasvn
 </pre>
+<p>Set ECLIPSE_HOME environment variable (should point to <b>Eclipse 3.1M6</b> (or newer) home directory)</p>
+<pre>
+$ set ECLIPSE_HOME=/home/user/java/eclipse31M6
+</pre>
 <p>Use ANT to build javasvn.jar</p>
 <pre>
-$ ant build-standalone
+$ ant deploy
 </pre>
-<p><code>javasvn/lib</code> directory will contain built library jar file <code>(javasvn.jar)</code>
-and JSCH library <code>(jsch.jar)</code> that is needed if you are going to use svn+ssh connection
-protocol.</p>
+<p><code>build/eclipse</code> directory will contain Eclipse javasvn plugin, feature and update site files.</p>
+<p>To make Eclipse use the plugin you've just built, copy all files
+from <code>JAVASVN/build/eclipse/plugins</code> and <code>JAVASVN/build/eclipse/features</code> to corresponding Eclipse directories and restart Eclipse:
+<pre>
+$ eclipse -clean
+</pre>
+<p>Or use "Local Update Site" at <code>JAVASVN/build/eclipse/site</code> directory to install JavaSVN Subclipse Extension</p>
+<br/>
 
-<br>
+<!--For Subclipse (and svnant) Users-->
+<h4>Using Subclipse with the JavaSVN library</h4>
+<p>The latest version of Subclipse (0.9.33) already comes with JavaSVN embedded. All you need
+is to select JavaSVN on the <code>SVN</code> preference page (in Eclipse Window menu -> Preferences -> Team). If using a version earlier than 0.9.33
+you still need to perform the following steps with Eclipse Update Manager (tested with Eclipse 3.1M6, WinXP):
+<br/>
+<ul>
+<li>Add <b>http://tmate.org/svn/</b> as an update site to Eclipse Update Manager.<br/>
+Use <code>Help | Software Updates | Find and Install</code> in main menu.</li>
+<li>Install "JavaSVN  Subclipse Extension" feature.</li>
+</ul>
 <br>
 <p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
 <a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
@@ -90,6 +112,5 @@ protocol.</p>
 </td>
 </tr>
 </table>
-
 </body>
 </html>

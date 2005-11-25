@@ -57,9 +57,9 @@ Get Library
 </table>
 
 <h1>Get Latest Development Version</h1>
-To browse source code visit <a id="normal" href="http://72.9.228.230:8080/svn/jsvn/">http://72.9.228.230:8080/svn/jsvn/</a>
+To browse source code visit <a id="normal" href="http://svn.tmate.org/repos/jsvn/">http://svn.tmate.org/repos/jsvn/</a>
 <br />To get the latest source code (with the SVN command line client) use the following command:
-<pre>$ svn co http://72.9.228.230:8080/svn/jsvn/trunk/</pre>
+<pre>$ svn co http://svn.tmate.org/repos/jsvn/trunk/</pre>
 <h1>Get JavaSVN Eclipse Plugin from update site</h1>
 <p>To get an Eclipse plugin version use <b>http://tmate.org/svn/</b> as an update site location in Eclipse Update Manager.
 <ul>

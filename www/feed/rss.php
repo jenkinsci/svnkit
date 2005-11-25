@@ -15,7 +15,7 @@ $rss->editor = "TMate Software";
 $rss->authorEmail = "support@tmatesoft.com"; 
 $rss->editorEmail = "support@tmatesoft.com"; 
 
-$repository = "http://72.9.228.230/svn/jsvn/tags/";
+$repository = "http://svn.tmate.org/repos/jsvn/tags/";
 $contents = read_contents($repository);
 if (!$contents) {
    echo $rss->createFeed();

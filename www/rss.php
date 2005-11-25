@@ -1,9 +1,9 @@
 <?
-include($_SERVER["DOCUMENT_ROOT"] . "/svn/feed/feedcreator.class.php");
-include($_SERVER["DOCUMENT_ROOT"] . "/svn/feed/rss_util.php");
-//include($_SERVER["DOCUMENT_ROOT"] . "/stats/counter.php");
+include($_SERVER["DOCUMENT_ROOT"] . "/svn.old/feed/feedcreator.class.php");
+include($_SERVER["DOCUMENT_ROOT"] . "/svn.old/feed/rss_util.php");
+include($_SERVER["DOCUMENT_ROOT"] . "/stats/counter.php");
 
-$cacheFile = $_SERVER["DOCUMENT_ROOT"] . "/svn/feed/rss20.cache";
+$cacheFile = $_SERVER["DOCUMENT_ROOT"] . "/svn.old/feed/rss20.cache";
 
 if (file_exists($cacheFile)) {
 //    if (time() - filemtime($cacheFile) <= 3600) {
@@ -16,7 +16,7 @@ $rss = new UniversalFeedCreator();
 $rss->useCached("RSS1.0", $cacheFile);
 $rss->title = "TMate JavaSVN";
 $rss->description = "TMate JavaSVN Library Change Log";
-$rss->link = "http://tmate.org/svn/";
+$rss->link = "http://tmate.org/svn.old/";
 $rss->syndicationURL = "http://tmate.org/" . $PHP_SELF;
 $rss->author = "TMate Software"; 
 $rss->editor = "TMate Software"; 
@@ -30,7 +30,7 @@ if (!$contents) {
    exit;
 }
 
-$items = publish_rss20($repository, $contents, "http://tmate.org/svn/");
+$items = publish_rss20($repository, $contents, "http://tmate.org/svn.old/");
 for($i = 0; $i < count($items); $i++) {
 
      $item = $items[$i];

@@ -94,7 +94,7 @@ public class Export {
         /*
          * Default values:
          */
-        String url = "http://72.9.228.230:8080/svn/jsvn/branches/0.9.0/doc";
+        String url = "http://svn.tmate.org/svn/jsvn/branches/0.9.0/doc";
         String name = "anonymous";
         String password = "anonymous";
         String exportDirPath = "/export";
