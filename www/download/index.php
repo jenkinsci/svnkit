@@ -69,6 +69,10 @@ To browse source code visit <a id="normal" href="http://svn.tmate.org/repos/jsvn
 <li>Type <b>http://tmate.org/svn/</b> in the URL field and your preferred name for the update site in the name field. 
 <li>Check the new site (it should appear in the list of update sites) and follow further steps prompted by Eclipse.
 </ul>
+<b>Note</b>: Following above instructions you will get a JavaSVN library installed as an Eclipse plugin, so Eclipse plugins you're 
+developing could use JavaSVN library. <b>There is no need to install JavaSVN as Eclipse plugin for Subclipse users</b>, 
+because Subclipse already includes JavaSVN library and does not need any additional plugins to use it. Just select 'JavaSVN' in 
+Subclipse preference page to make Subclipse use JavaSVN.
 </p>
 <h1>Latest Stable Version</h1>
 
