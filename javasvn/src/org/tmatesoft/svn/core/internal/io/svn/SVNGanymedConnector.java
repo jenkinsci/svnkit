@@ -58,8 +58,8 @@ public class SVNGanymedConnector implements ISVNConnector {
                     if (connection == null) {
                         SVNErrorManager.error("svn: Connection to '" + realm + "'failed");
                     }
-                    authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
-                    repository.setExternalUserName(authentication.getUserName());
+//                    authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
+                    repository.setExternalAuthentication(authentication);
                     break;
                 } catch (SVNAuthenticationException e) {
                     authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getMessage(), authentication);

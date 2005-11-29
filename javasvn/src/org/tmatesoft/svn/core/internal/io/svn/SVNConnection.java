@@ -87,9 +87,14 @@ class SVNConnection {
         ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
         SVNURL location = myRepository.getLocation();        
         SVNPasswordAuthentication auth = null;
-        if (repository.getExternalUserName() != null && mechs.contains("EXTERNAL")) {
+        if (repository.getExternalAuthentication() != null && mechs.contains("EXTERNAL")) {
             write("(w(s))", new Object[] { "EXTERNAL", "" });
+            boolean rootReceived = myRoot == null;
             failureReason = readAuthResponse(repository);
+            if (failureReason == null && rootReceived) {
+                String realm = "<" + location.getProtocol() + "://" + location.getHost() + ":" + location.getPort() + "> " + myRealm;
+                authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, repository.getExternalAuthentication());
+            }
         } else if (mechs.contains("ANONYMOUS")) {
             write("(w())", new Object[] { "ANONYMOUS" });
             failureReason = readAuthResponse(repository);

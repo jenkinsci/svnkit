@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -55,7 +56,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     private SVNConnection myConnection;
     private String myRealm;
-    private String myExternalUserName;
+    private SVNAuthentication myExternalUserName;
 
     protected SVNRepositoryImpl(SVNURL location, ISVNSession options) {
         super(location, options);
@@ -854,11 +855,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     // get full path (path starting with /, relative to host).
     // get relative path (repository path, now relative to repository location, not starting with '/').
 
-    public void setExternalUserName(String userName) {
-        myExternalUserName = userName;
+    public void setExternalAuthentication(SVNAuthentication auth) {
+        myExternalUserName = auth;
     }
 
-    public String getExternalUserName() {
+    public SVNAuthentication getExternalAuthentication() {
         return myExternalUserName;
     }
 
