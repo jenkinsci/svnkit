@@ -66,7 +66,7 @@ public class SVNRollbackInputStream extends InputStream {
             // from buffer as long as possible.
             read = Math.min(len, myLength - myPosition);
             reallyRead = read;
-            System.arraycopy(myBuffer, myPosition, b, off, Math.min(len, myLength - myPosition));
+            System.arraycopy(myBuffer, myPosition, b, off, read);
             myPosition += read;
         }
         if (read < len) {

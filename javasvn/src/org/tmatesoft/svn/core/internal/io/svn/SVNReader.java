@@ -301,8 +301,7 @@ class SVNReader {
                     if (editorBaton == null) {
                         editorBaton = new SVNEditModeReader();
                         if (target[targetIndex] instanceof ISVNEditor) {
-                            editorBaton
-                                    .setEditor((ISVNEditor) target[targetIndex]);
+                            editorBaton.setEditor((ISVNEditor) target[targetIndex]);
                         }
                     }
                     readChar(is, '(');
@@ -584,8 +583,15 @@ class SVNReader {
         if (buffer == null || buffer.length < length) {
             buffer = new byte[length];
         }
+        int offset = 0;
         try {
-            is.read(buffer, 0, length);
+            while (offset < length) {
+                int r = is.read(buffer, offset, length - offset);
+                if (r <= 0) {
+                    throw new SVNException("svn: Input/Output error while receiving svndiff delta window");
+                }
+                offset += r;
+            }
         } catch (IOException e) {
             throw new SVNException(e);
         }
