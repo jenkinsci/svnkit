@@ -113,8 +113,7 @@ public class SVNEditModeReader {
             return true;
         }
 
-        boolean last = "close-edit".equals(commandName)
-                || "abort-edit".equals(commandName);
+        boolean last = "close-edit".equals(commandName) || "abort-edit".equals(commandName);
         Object[] items = SVNReader.parse(parameters, pattern, new Object[10]);
         if ("target-rev".equals(commandName)) {
             myEditor.targetRevision(SVNReader.getLong(items, 0));

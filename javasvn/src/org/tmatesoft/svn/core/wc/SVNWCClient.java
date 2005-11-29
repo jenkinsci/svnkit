@@ -268,17 +268,19 @@ public class SVNWCClient extends SVNBasicClient {
                 InputStream is = null;
                 try {
                     os = SVNFileUtil.openFileForWriting(tmpFile);
-                    repos.getFile("", revNumber, null, os);
+                    Map properties = new HashMap();
+                    repos.getFile("", revNumber, properties, os);
                     SVNFileUtil.closeFile(os);
                     os = null;
-                    // translate
+                    String keywords = (String) properties.get(SVNProperty.KEYWORDS);
+                    String eol = (String) properties.get(SVNProperty.EOL_STYLE);
+                    byte[] eolBytes = SVNTranslator.getWorkingEOL(eol);
+                    Map keywordsMap = SVNTranslator.computeKeywords(keywords, repos.getLocation().toString(),
+                            (String) properties.get(SVNProperty.LAST_AUTHOR),
+                            (String) properties.get(SVNProperty.COMMITTED_DATE),
+                            (String) properties.get(SVNProperty.COMMITTED_REVISION));
                     tmpFile2 = SVNFileUtil.createUniqueFile(new File(path.getParentFile(), adminDir + "/tmp/text-base"), path.getName(), ".tmp");
-                    boolean special = wcAccess.getAnchor().getProperties(path.getName(), false).getPropertyValue(SVNProperty.SPECIAL) != null;
-                    if (special) {
-                        tmpFile2 = tmpFile;
-                    } else {
-                        SVNTranslator.translate(wcAccess.getAnchor(), path.getName(), SVNFileUtil.getBasePath(tmpFile), SVNFileUtil.getBasePath(tmpFile2), true, false);
-                    }
+                    SVNTranslator.translate(tmpFile, tmpFile2, eolBytes, keywordsMap, false, true);
                     // cat tmp file
                     is = SVNFileUtil.openFileForReading(tmpFile2);
                     int r;

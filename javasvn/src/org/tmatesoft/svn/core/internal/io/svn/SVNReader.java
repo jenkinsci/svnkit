@@ -301,7 +301,8 @@ class SVNReader {
                     if (editorBaton == null) {
                         editorBaton = new SVNEditModeReader();
                         if (target[targetIndex] instanceof ISVNEditor) {
-	                        }
+                            editorBaton.setEditor((ISVNEditor) target[targetIndex]);
+                        }
                     }
                     readChar(is, '(');
                     String commandName = readWord(is);

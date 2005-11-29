@@ -202,8 +202,7 @@ public class SVNTranslator {
                         dst.write(keywordBuffer, 0, length);
                     }
                 } else if (keywordLength > 0) {
-                    int from = translateKeyword(dst, keywords, keywordBuffer,
-                            keywordLength);
+                    int from = translateKeyword(dst, keywords, keywordBuffer, keywordLength);
                     in.unread(keywordBuffer, from, length - from);
                 }
             } else {
@@ -212,8 +211,7 @@ public class SVNTranslator {
         }
     }
 
-    private static int translateKeyword(OutputStream os, Map keywords,
-            byte[] keyword, int length) throws IOException {
+    private static int translateKeyword(OutputStream os, Map keywords, byte[] keyword, int length) throws IOException {
         // $$ = 0, 2 => 1,0
         String keywordName = null;
         int i = 0;
@@ -249,32 +247,36 @@ public class SVNTranslator {
                 if (value == null) {
                     keyword[i] = ' ';
                 } else {
-                    keyword[i] = vOffset < value.length ? value[vOffset]
-                            : (byte) ' ';
+                    keyword[i] = vOffset < value.length ? value[vOffset] : (byte) ' ';
                 }
                 vOffset++;
             }
-            keyword[i] = (byte) (value != null && vOffset < value.length ? '#'
-                    : ' ');
+            keyword[i] = (byte) (value != null && vOffset < value.length ? '#' : ' ');
             // now save all.
             os.write(keyword, start, length - start);
-        } else if (length - i > 4 && keyword[i] == ':' && keyword[i + 1] == ' '
-                && keyword[length - 2] == ' ') {
+        } else if (length - i > 4 && keyword[i] == ':' && keyword[i + 1] == ' ' && keyword[length - 2] == ' ') {
             // : x $
             if (value != null) {
                 os.write(keyword, i, value.length > 0 ? 1 : 2); // ': ' or ':'
-                os.write(value);
+                if (value.length > 250) {
+                    os.write(value, 0, 250);
+                } else {
+                    os.write(value);
+                }
                 os.write(keyword, length - 2, 2); // ' $';
             } else {
                 os.write('$');
             }
-        } else if (keyword[i] == '$'
-                || (keyword[i] == ':' && keyword[i + 1] == '$')) {
+        } else if (keyword[i] == '$' || (keyword[i] == ':' && keyword[i + 1] == '$')) {
             // $ or :$
             if (value != null) {
                 os.write(':');
                 os.write(' ');
-                os.write(value);
+                if (value.length > 250 - keywordName.length()) {
+                    os.write(value, 0, 250 - keywordName.length());
+                } else {
+                    os.write(value);
+                }
                 if (value.length > 0) {
                     os.write(' ');
                 }
@@ -291,8 +293,7 @@ public class SVNTranslator {
 
     }
 
-    public static Map computeKeywords(String keywords, String u, String a,
-            String d, String r) {
+    public static Map computeKeywords(String keywords, String u, String a, String d, String r) {
         if (keywords == null) {
             return Collections.EMPTY_MAP;
         }
@@ -308,39 +309,31 @@ public class SVNTranslator {
 
         Map map = new HashMap();
         try {
-            for (StringTokenizer tokens = new StringTokenizer(keywords,
-                    " \t\n\b\r\f"); tokens.hasMoreTokens();) {
+            for (StringTokenizer tokens = new StringTokenizer(keywords," \t\n\b\r\f"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
                 if ("LastChangedDate".equals(token) || "Date".equals(token)) {
                     date = expand && date == null ? SVNFormatUtil.formatDate(jDate, true).getBytes("UTF-8") : date;
                     map.put("LastChangedDate", date);
                     map.put("Date", date);
-                } else if ("LastChangedRevision".equals(token)
-                        || "Revision".equals(token) || "Rev".equals(token)) {
+                } else if ("LastChangedRevision".equals(token) || "Revision".equals(token) || "Rev".equals(token)) {
                     rev = expand && rev == null ? r.getBytes("UTF-8") : rev;
                     map.put("LastChangedRevision", rev);
                     map.put("Revision", rev);
                     map.put("Rev", rev);
-                } else if ("LastChangedBy".equals(token)
-                        || "Author".equals(token)) {
-                    author = expand && author == null ? (a == null ? new byte[0]
-                            : a.getBytes("UTF-8"))
-                            : author;
+                } else if ("LastChangedBy".equals(token) || "Author".equals(token)) {
+                    author = expand && author == null ? (a == null ? new byte[0] : a.getBytes("UTF-8")) : author;
                     map.put("LastChangedBy", author);
                     map.put("Author", author);
                 } else if ("HeadURL".equals(token) || "URL".equals(token)) {
-                    url = expand && url == null ? SVNEncodingUtil.uriDecode(u).getBytes(
-                            "UTF-8") : url;
+                    url = expand && url == null ? SVNEncodingUtil.uriDecode(u).getBytes("UTF-8") : url;
                     map.put("HeadURL", url);
                     map.put("URL", url);
                 } else if ("Id".equals(token)) {
                     if (expand && id == null) {
                         rev = rev == null ? r.getBytes("UTF-8") : rev;
                         date = date == null ? SVNFormatUtil.formatDate(jDate, false).getBytes("UTF-8") : date;
-                        name = name == null ? SVNEncodingUtil.uriDecode(SVNPathUtil.tail(u))
-                                .getBytes("UTF-8") : name;
-                        author = author == null ? (a == null ? new byte[0] : a
-                                .getBytes("UTF-8")) : author;
+                        name = name == null ? SVNEncodingUtil.uriDecode(SVNPathUtil.tail(u)).getBytes("UTF-8") : name;
+                        author = author == null ? (a == null ? new byte[0] : a.getBytes("UTF-8")) : author;
                         ByteArrayOutputStream bos = new ByteArrayOutputStream();
                         bos.write(name);
                         bos.write(' ');
