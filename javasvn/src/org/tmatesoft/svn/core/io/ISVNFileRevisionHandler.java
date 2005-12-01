@@ -53,13 +53,15 @@ public interface ISVNFileRevisionHandler {
      * 
      * @param  token            a file path or name (or anything an implementor would
      *                          like to use for his own implementation)
-     * @param  diffWindow       a diff window representing a delta chunk 
-     * @return                  an output stream where instructions and new text data
      *                          for <code>diffWindow</code> will be written
      * @throws SVNException
 	 */
     public void applyTextDelta(String token) throws SVNException;
 
+    /**
+     * @param  diffWindow       a diff window representing a delta chunk 
+     * @return                  an output stream where instructions and new text data
+     */
     public OutputStream textDeltaChunk(String token, SVNDiffWindow diffWindow) throws SVNException;
     
     /**
