@@ -215,8 +215,7 @@ public class SVNFileUtil {
         }
     }
 
-    public static void copyFile(File src, File dst, boolean safe)
-            throws SVNException {
+    public static void copyFile(File src, File dst, boolean safe) throws SVNException {
         if (src == null || dst == null) {
             return;
         }
@@ -237,10 +236,14 @@ public class SVNFileUtil {
         }
         FileChannel srcChannel = null;
         FileChannel dstChannel = null;
+        FileInputStream is = null;
+        FileOutputStream os = null;
         dst.getParentFile().mkdirs();
         try {
-            srcChannel = new FileInputStream(src).getChannel();
-            dstChannel = new FileOutputStream(tmpDst).getChannel();
+            is = new FileInputStream(src);
+            srcChannel = is.getChannel();
+            os = new FileOutputStream(tmpDst);
+            dstChannel = os.getChannel();
             long count = srcChannel.size();
             while (count > 0) {
                 count -= dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
@@ -248,13 +251,6 @@ public class SVNFileUtil {
         } catch (IOException e) {
             SVNErrorManager.error("svn: Cannot copy file '" + src + "' to '" + dst + "'");
         } finally {
-            if (dstChannel != null) {
-                try {
-                    dstChannel.close();
-                } catch (IOException e) {
-                    //
-                }
-            }
             if (srcChannel != null) {
                 try {
                     srcChannel.close();
@@ -262,6 +258,15 @@ public class SVNFileUtil {
                     //
                 }
             }
+            if (dstChannel != null) {
+                try {
+                    dstChannel.close();
+                } catch (IOException e) {
+                    //
+                }
+            }
+            SVNFileUtil.closeFile(is);
+            SVNFileUtil.closeFile(os);
         }
         if (safe && tmpDst != dst) {
             rename(tmpDst, dst);

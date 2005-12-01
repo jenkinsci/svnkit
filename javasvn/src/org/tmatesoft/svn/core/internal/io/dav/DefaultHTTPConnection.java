@@ -484,7 +484,7 @@ class DefaultHTTPConnection implements IHTTPConnection {
         if (path == null) {
             path = "/";
         }
-        if (path.length() == 0 || path.charAt(0) != '/') {
+        if (!"CONNECT".equals(method) && (path.length() == 0 || path.charAt(0) != '/')) {
             path = "/" + path;
         }
         DAVUtil.getCanonicalPath(path, sb);
@@ -520,7 +520,7 @@ class DefaultHTTPConnection implements IHTTPConnection {
             sb.append("Transfer-Encoding: chunked");
             chunked = true;
         } else {
-            sb.append("Content-Lenght: 0");
+            sb.append("Content-Length: 0");
         }
         sb.append(DefaultHTTPConnection.CRLF);
         sb.append("Accept-Encoding: gzip");
