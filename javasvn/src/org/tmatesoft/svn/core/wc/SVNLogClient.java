@@ -334,9 +334,6 @@ public class SVNLogClient extends SVNBasicClient {
         }
         paths = paths == null || paths.length == 0 ? new String[] {""} : paths;
         long targetRevNumber = startRevision.getNumber();
-        if (endRevision.getNumber() > 0) {
-            targetRevNumber = Math.max(targetRevNumber, startRevision.getNumber());
-        }
         SVNRepository repos = targetRevNumber > 0 && pegRevision.isValid() && !pegRevision.isLocal() ?
                 createRepository(url, null, pegRevision, SVNRevision.create(targetRevNumber)) : createRepository(url, true);
         long startRev = getRevisionNumber(startRevision, repos, null);
