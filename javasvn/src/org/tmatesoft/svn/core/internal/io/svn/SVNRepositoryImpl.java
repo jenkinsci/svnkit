@@ -673,7 +673,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 SVNLock lock = null;
                 SVNException error = null;
                 try {
-                    read("[(L)]", buffer);
+                    read("[L]", buffer);
                     lock = (SVNLock) buffer[0];
                     path = lock.getPath();
                 } catch (SVNException e) {
@@ -683,6 +683,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         read("[()]", buffer);
                         return;
                     } catch (SVNException e2) {
+                        //
+                        SVNDebugLog.logInfo(e2);
                         //
                     }
                     path = getRepositoryPath(path);
