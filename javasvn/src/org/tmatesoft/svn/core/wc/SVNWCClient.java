@@ -1063,7 +1063,6 @@ public class SVNWCClient extends SVNBasicClient {
                     wcAccess.getTarget() == wcAccess.getAnchor()) {
                 // missing or obstructed dir.
                 recursive = false;
-                System.out.println("revered: " + reverted);
             }
             if (kind == SVNNodeKind.DIR && recursive) {
                 // iterate over targets and revert
