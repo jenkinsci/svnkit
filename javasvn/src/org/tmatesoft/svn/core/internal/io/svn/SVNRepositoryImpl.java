@@ -677,16 +677,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     lock = (SVNLock) buffer[0];
                     path = lock.getPath();
                 } catch (SVNException e) {
-                    // try to read 'x'
-                    try {
-                        read("x", buffer);
-                        read("[()]", buffer);
-                        return;
-                    } catch (SVNException e2) {
-                        //
-                        SVNDebugLog.logInfo(e2);
-                        //
-                    }
                     path = getRepositoryPath(path);
                     error = e;
                 }
@@ -751,17 +741,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     read("[(S)]", buffer);
                     path = (String) buffer[0];
                 } catch (SVNException e) {
-                    // try to read 'x'
-                    try {
-                        read("x", buffer);
-                        read("[()]", buffer);
-                        return;
-                    } catch (SVNException e2) {
-                        //
-                    }
-                    path = getRepositoryPath(path);
                     error = e;
                 }
+                path = getRepositoryPath(path);
                 if (handler != null) {
                     handler.handleUnlock(path, new SVNLock(path, id, null, null, null, null), error);
                 }
