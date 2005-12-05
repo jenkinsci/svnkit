@@ -982,16 +982,15 @@ public class SVNWCClient extends SVNBasicClient {
         Collection recursiveFiles = new ArrayList();
         try {
             wcAccess.open(true, false);
-            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(
-                    wcAccess.getTargetName(), true);
+            SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), true);
             if (entry == null) {
-                SVNErrorManager.error("svn: '" + path
-                        + "' is not under version control");
+                SVNErrorManager.error("svn: '" + path + "' is not under version control");
             }
             kind = entry.getKind();
             File file = wcAccess.getAnchor().getFile(wcAccess.getTargetName());
             if (entry.isDirectory()) {
                 if (!entry.isScheduledForAddition() && !file.isDirectory()) {
+                    // missing and not scheduled for addition.
                     handleEvent(SVNEventFactory.createNotRevertedEvent(
                             wcAccess, wcAccess.getAnchor(), entry),
                             ISVNEventHandler.UNKNOWN);
@@ -999,20 +998,17 @@ public class SVNWCClient extends SVNBasicClient {
                 }
             }
 
-            SVNEvent event = SVNEventFactory.createRevertedEvent(wcAccess,
-                    wcAccess.getAnchor(), entry);
+            SVNEvent event = SVNEventFactory.createRevertedEvent(wcAccess, wcAccess.getAnchor(), entry);
             if (entry.isScheduledForAddition()) {
                 boolean deleted = entry.isDeleted();
                 if (entry.isFile()) {
                     wcAccess.getAnchor().destroy(entry.getName(), false);
                 } else if (entry.isDirectory()) {
                     if ("".equals(wcAccess.getTargetName())) {
-                        SVNErrorManager
-                                .error("svn: Cannot revert addition of the root directory; please try again from the parent directory");
+                        SVNErrorManager.error("svn: Cannot revert addition of the root directory; please try again from the parent directory");
                     }
                     if (!file.exists()) {
-                        wcAccess.getAnchor().getEntries().deleteEntry(
-                                entry.getName());
+                        wcAccess.getAnchor().getEntries().deleteEntry(entry.getName());
                     } else {
                         wcAccess.open(true, true, true);
                         wcAccess.getAnchor().destroy(entry.getName(), false);
@@ -1021,22 +1017,20 @@ public class SVNWCClient extends SVNBasicClient {
                 reverted = true;
                 if (deleted && !"".equals(wcAccess.getTargetName())) {
                     // we are not in the root.
-                    SVNEntry replacement = wcAccess.getAnchor().getEntries()
-                            .addEntry(entry.getName());
+                    SVNEntry replacement = wcAccess.getAnchor().getEntries().addEntry(entry.getName());
                     replacement.setDeleted(true);
                     replacement.setKind(kind);
                 }
-            } else if (entry.isScheduledForReplacement()
-                    || entry.isScheduledForDeletion()) {
+            } else if (entry.isScheduledForReplacement() || entry.isScheduledForDeletion()) {
                 replaced = entry.isScheduledForReplacement();
-                if (entry.isDirectory()) {
+                if (entry.isDirectory() && wcAccess.getAnchor() != wcAccess.getTarget()) {
                     reverted |= wcAccess.getTarget().revert("");
                 } else {
                     reverted |= wcAccess.getAnchor().revert(entry.getName());
                 }
                 reverted = true;
             } else {
-                if (entry.isDirectory()) {
+                if (entry.isDirectory() && wcAccess.getAnchor() != wcAccess.getTarget()) {
                     reverted |= wcAccess.getTarget().revert("");
                 } else {
                     reverted |= wcAccess.getAnchor().revert(entry.getName());
@@ -1054,9 +1048,8 @@ public class SVNWCClient extends SVNBasicClient {
                     entry.setPropRejectFile(null);
                 }
                 wcAccess.getAnchor().getEntries().save(false);
-                if (kind == SVNNodeKind.DIR) {
-                    SVNEntry inner = wcAccess.getTarget().getEntries()
-                            .getEntry("", true);
+                if (kind == SVNNodeKind.DIR && wcAccess.getTarget() != wcAccess.getAnchor()) {
+                    SVNEntry inner = wcAccess.getTarget().getEntries().getEntry("", true);
                     if (inner != null) {
                         // may be null if it was removed from wc.
                         inner.unschedule();
@@ -1068,11 +1061,16 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 wcAccess.getTarget().getEntries().save(false);
             }
+            if (!"".equals(wcAccess.getTargetName()) && 
+                    wcAccess.getTarget() == wcAccess.getAnchor()) {
+                // missing or obstructed dir.
+                recursive = false;
+                System.out.println("revered: " + reverted);
+            }
             if (kind == SVNNodeKind.DIR && recursive) {
                 // iterate over targets and revert
                 checkCancelled();
-                for (Iterator ents = wcAccess.getTarget().getEntries().entries(
-                        true); ents.hasNext();) {
+                for (Iterator ents = wcAccess.getTarget().getEntries().entries(true); ents.hasNext();) {
                     SVNEntry childEntry = (SVNEntry) ents.next();
                     if ("".equals(childEntry.getName())) {
                         continue;
@@ -1395,7 +1393,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
         });
     }
-    
+
     /**
      * Unlocks file items in a repository.
      * 
@@ -1421,6 +1419,9 @@ public class SVNWCClient extends SVNBasicClient {
         
         checkCancelled();
         SVNRepository repository = createRepository(topURL, true);
+        if (!breakLock) {
+            pathsToTokens = fetchLockTokens(repository, pathsToTokens);
+        }
         repository.unlock(pathsToTokens, breakLock, new ISVNLockHandler() {
             public void handleLock(String path, SVNLock lock, SVNException error) throws SVNException {
             }
@@ -2175,6 +2176,20 @@ public class SVNWCClient extends SVNBasicClient {
             value = "*";
         }
         return value;
+    }
+    
+    private Map fetchLockTokens(SVNRepository repository, Map pathsTokensMap) throws SVNException {
+        Map tokens = new HashMap();
+        for (Iterator paths = pathsTokensMap.keySet().iterator(); paths.hasNext();) {
+            String path = (String) paths.next();
+            SVNLock lock = repository.getLock(path);
+            if (lock == null || lock.getID() == null) {
+                SVNErrorManager.error("svn: '" + path + "' is not locked");
+                continue;
+            }
+            tokens.put(path, lock.getID());
+        }
+        return tokens;
     }
 
     private static class LockInfo {
