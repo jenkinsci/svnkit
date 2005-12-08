@@ -178,12 +178,17 @@ public class SVNStatusEditor implements ISVNEditor {
                 myCurrentDirectory.Parent.tweakStatus(myCurrentDirectory.Path,
                         SVNNodeKind.DIR, myCurrentDirectory.Name,
                         reposContentsStatus, reposPropStatus, null, myCurrentDirectory.RemoteRevision, myCurrentDirectory.RemoteDate, myCurrentDirectory.RemoteAuthor);
+            } else if (myAnchorStatus != null && myTarget == null) {
+                // we are in the anchor.
+                myAnchorStatus.setRemoteStatus(myCurrentDirectory.getURL(), reposContentsStatus, reposPropStatus, null, SVNNodeKind.DIR, myCurrentDirectory.RemoteRevision,
+                        myCurrentDirectory.RemoteDate, myCurrentDirectory.RemoteAuthor);
             }
         }
         if (myCurrentDirectory.Parent != null && myIsRecursive) {
             boolean deleted = false;
             SVNStatus dirStatus = (SVNStatus) myCurrentDirectory.Parent.ChildrenStatuses.get(myCurrentDirectory.Name);
-            if (dirStatus != null && (dirStatus.getRemoteContentsStatus() == SVNStatusType.STATUS_DELETED || dirStatus.getRemoteContentsStatus() == SVNStatusType.STATUS_REPLACED)) {
+            if (dirStatus != null && 
+                    (dirStatus.getRemoteContentsStatus() == SVNStatusType.STATUS_DELETED || dirStatus.getRemoteContentsStatus() == SVNStatusType.STATUS_REPLACED)) {
                 deleted = true;
             }
             handleDirStatuses(myCurrentDirectory, deleted);
@@ -226,7 +231,9 @@ public class SVNStatusEditor implements ISVNEditor {
             myHandler = new ISVNStatusHandler() {
                 public void handleStatus(SVNStatus status) {
                     if (oldHalder != null) {
-                        status.setContentsStatus(SVNStatusType.STATUS_DELETED);
+                        if (status.getRemoteContentsStatus() != SVNStatusType.STATUS_ADDED) {                            
+                            status.setRemoteStatus(SVNStatusType.STATUS_DELETED);
+                        } 
                         oldHalder.handleStatus(status);
                     }
                 }
@@ -244,7 +251,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 SVNEntry currentEntry = dir.getEntries().getEntry(name, false);
                 if (currentEntry != null
                         && !currentEntry.isScheduledForDeletion()) {
-                    status.setContentsStatus(SVNStatusType.STATUS_MISSING);
+                    status.setRemoteStatus(SVNStatusType.STATUS_MISSING);
                 }
             } else if (myIsRecursive && status.getURL() != null && status.getKind() == SVNNodeKind.DIR) {
                 String path = "".equals(dirInfo.Path) ? name : SVNPathUtil.append(dirInfo.Path, name);
@@ -252,9 +259,6 @@ public class SVNStatusEditor implements ISVNEditor {
                 if (childDir != null) {
                     reportStatus(childDir, null, true, myIsRecursive);
                 }
-            }
-            if (dirIsDeleted) {
-                status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);
             }
             if (isSendableStatus(status)) {
                 myHandler.handleStatus(status);
