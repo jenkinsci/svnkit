@@ -83,7 +83,7 @@ A large subset of the command line arguments are available via the
 javasvn-cli.jar file, including lesser used switches such as "svn
 status -u".</p>
 <h4>Examples</h4>
-<b>Checking out files from the repository</b>
+<b>Checking out files from a repository</b>
 <p>If you need to do an initial checkout, this target will checkout files
 from <code>http://sources.example.com/TESTING</code> to the local directory
 <code>/usr/src/TESTREPO</code>. The username and password arguments can be omitted if you have
@@ -112,7 +112,36 @@ anonymous checkouts from your repository.</p>
 Don't forget to put a <code>ganymed.jar</code> onto the classpath (if using an SSH tunnel).
 
 <p>
-<b>Commiting files to the repository</b>
+<b>Checking out files from a repository via the svn+ssh:// protocol</b>
+<p>
+This is another example of checking out a working copy from a repository that uses 
+an svn+ssh:// protocol.</p>
+
+<pre style="color: rgb(0,0,128);" class="javaCode">
+  &lt;target name=<span class="javaCommentSingle">"svnCheckout"</span>&gt;
+    &lt;property name=<span class="javaCommentSingle">"source-root"</span> value=<span class="javaCommentSingle">"/tmp"</span> /&gt;
+    &lt;property name=<span class="javaCommentSingle">"repository.URL"</span> 
+              value=<span class="javaCommentSingle">"svn+ssh://my-svnserver/svn_rep/myproject"</span> /&gt;
+    &lt;java classname=<span class="javaCommentSingle">"org.tmatesoft.svn.cli.SVN"</span> 
+          dir=<span class="javaCommentSingle">"${source-root}/my_module"</span> 
+          fork=<span class="javaCommentSingle">"true"</span> 
+          failonerror=<span class="javaCommentSingle">"true"</span>&gt;
+      &lt;sysproperty key=<span class="javaCommentSingle">"javasvn.ssh2.key"</span> 
+                   value=<span class="javaCommentSingle">"/path/to/PuttyPrivateKey.openssh"</span> /&gt;
+      &lt;sysproperty key=<span class="javaCommentSingle">"javasvn.ssh2.username"</span> value=<span class="javaCommentSingle">"username"</span> /&gt;
+      &lt;sysproperty key=<span class="javaCommentSingle">"javasvn.ssh2.passphrase"</span> value=<span class="javaCommentSingle">"mypassword"</span> /&gt;
+      &lt;arg value=<span class="javaCommentSingle">"co"</span> /&gt;
+      &lt;arg value=<span class="javaCommentSingle">"${repository.URL}"</span> /&gt;
+        &lt;classpath&gt;
+          &lt;pathelement location=<span class="javaCommentSingle">"${! antroot}/ganymed.jar"</span> /&gt;
+          &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/javasvn.jar"</span> /&gt;
+          &lt;pathelement location=<span class="javaCommentSingle">"${antroot}/javasvn-cli.jar"</span> /&gt;
+        &lt;/classpath&gt;
+    &lt;/java&gt;
+  &lt;/target&gt;
+</pre>
+<p>
+<b>Commiting files to a repository</b>
 
 <p>If you had an existing local copy of a repository that you want to
 check files into, you could use the following target to commit the
