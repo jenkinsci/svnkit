@@ -67,6 +67,15 @@ so on.
 <p>By default JavaSVN uses proxy settings from the <i>servers</i> configuration file
 that is located in the default SVN run-time configuration area.
 </p>
+<p>Default configuration area is located at <code>~/.subversion</code> on Linux and OS X and 
+at <code>C:\Documents and Settings\userName\Application Data\Subversion</code> on Windows. 
+You may read more on Subversion client configuration files at <a href="http://svnbook.red-bean.com/en/1.1/ch07.html#svn-ch-7-sect-1">Subversion Book</a>.
+</p>
+<h4>SVN+SSH authentication whith Subclipse</h4>
+<p>If you're using JavaSVN with Subclipse version 0.9.37 or newer there is no 
+need to use system properties to define SSH credentials, Subclipse will automatically prompt you for 
+private key or password during establishing SSH connection.
+</p>
 <h4>SVN+SSH authentication with private key</h4>
 <p>By default JavaSVN tries to obtain all necessary information
 from the <i>[tunnels]</i> section of the <i>config</i> file that is
