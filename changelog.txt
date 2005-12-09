@@ -1,3 +1,7 @@
+= version 1.0.1
+
++ bugfixes
+
 = version 1.0.0
 
 + documentation related improvements
