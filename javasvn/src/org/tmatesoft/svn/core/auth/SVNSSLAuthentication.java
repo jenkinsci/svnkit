@@ -9,15 +9,26 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.javahl;
+package org.tmatesoft.svn.core.auth;
 
+import java.io.File;
 
+public class SVNSSLAuthentication extends SVNAuthentication {
 
-/**
- * @version 1.0
- * @author  TMate Software Ltd.
- * 
- * @deprecated use PromptUserPasswordSSL instead
- */
-public interface PromptUserPassword4 extends PromptUserPasswordSSH {
+    private File myCertificate;
+    private String myPassword;
+    
+    public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed) {
+        super(null, storageAllowed);
+        myCertificate = certFile;
+        myPassword = password;
+    }
+
+    public String getPassword() {
+        return myPassword;
+    }
+
+    public File getCertificateFile() {
+        return myCertificate;
+    }
 }

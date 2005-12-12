@@ -11,13 +11,18 @@
  */
 package org.tmatesoft.svn.core.javahl;
 
+import org.tigris.subversion.javahl.PromptUserPassword3;
 
 
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
- * 
- * @deprecated use PromptUserPasswordSSL instead
  */
-public interface PromptUserPassword4 extends PromptUserPasswordSSH {
+public interface PromptUserPasswordSSL extends PromptUserPassword3 {
+
+    public boolean promptSSL(String realm, boolean maySave);
+    
+    public String getSSLClientCertPath();
+    
+    public String getSSLClientCertPassword();
 }

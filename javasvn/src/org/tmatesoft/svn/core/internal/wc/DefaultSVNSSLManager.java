@@ -37,8 +37,11 @@ import javax.net.ssl.X509TrustManager;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 
 
@@ -60,14 +63,17 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
     private File myAuthDirectory;
     private boolean myIsUseKeyStore;
     private File[] myServerCertFiles;
+    private boolean myIsPromptForClientCert;
 
     public DefaultSVNSSLManager(File authDir, SVNURL url, 
-            File[] serverCertFiles, boolean useKeyStore, File clientFile, String clientPassword, 
+            File[] serverCertFiles, boolean useKeyStore, File clientFile, String clientPassword,
+            boolean promptForClientCert,
             DefaultSVNAuthenticationManager authManager) {
         myURL = url;
         myAuthDirectory = authDir;
         myClientCertFile = clientFile;
         myClientCertPassword = clientPassword;
+        myIsPromptForClientCert = promptForClientCert;
         myRealm = "https://" + url.getHost() + ":" + url.getPort();
         myAuthManager = authManager;
         myIsUseKeyStore = useKeyStore;
@@ -245,6 +251,13 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
             return myKeyManagers;
         }
         myIsKeyManagerCreated = true;
+        if (myIsPromptForClientCert) {
+            SVNAuthentication auth = myAuthManager.getAuthenticationProvider().requestClientAuthentication(ISVNAuthenticationManager.SSL, myURL, myRealm, null, null, myAuthManager.isAuthStorageEnabled());
+            if (auth instanceof SVNSSLAuthentication) {
+                myClientCertFile = ((SVNSSLAuthentication) auth).getCertificateFile();
+                myClientCertPassword = ((SVNSSLAuthentication) auth).getPassword();
+            }
+        }
         if (myClientCertFile == null) {
             return null;
         }
