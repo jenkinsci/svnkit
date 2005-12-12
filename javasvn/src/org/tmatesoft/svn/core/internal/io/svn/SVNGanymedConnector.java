@@ -32,7 +32,7 @@ import ch.ethz.ssh2.StreamGobbler;
  */
 public class SVNGanymedConnector implements ISVNConnector {
 
-    private static final String SVNSERVE_COMMAND = "svnserve --tunnel";
+    private static final String SVNSERVE_COMMAND = "svnserve -t";
 
     private Session mySession;
     private InputStream myInputStream;
