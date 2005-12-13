@@ -259,34 +259,34 @@ public class SVNDirectory {
 
         if (!conflicts.isEmpty()) {
             result = SVNStatusType.CONFLICTED;
-
-            String prejTmpPath = "".equals(name) ? "tmp/dir_conflicts" : "tmp/props/" + name;
-            File prejTmpFile = SVNFileUtil.createUniqueFile(getAdminDirectory(),  prejTmpPath, ".prej");
-            prejTmpPath = SVNFileUtil.getBasePath(prejTmpFile);
-
-            String prejPath = getEntries().getEntry(name, true)
-                    .getPropRejectFile();
-            getEntries().close();
-
-            if (prejPath == null) {
-                prejPath = "".equals(name) ? "dir_conflicts" : name;
-                File prejFile = SVNFileUtil.createUniqueFile(getRoot(),
-                        prejPath, ".prej");
-                prejPath = SVNFileUtil.getBasePath(prejFile);
-            }
-            File file = getFile(prejTmpPath);
-            OutputStream os = SVNFileUtil.openFileForWriting(file);
-            try {
-                for (Iterator lines = conflicts.iterator(); lines.hasNext();) {
-                    String line = (String) lines.next();
-                    os.write(line.getBytes("UTF-8"));
-                }
-            } catch (IOException e) {
-                SVNErrorManager.error("svn: Cannot save properties conflict file '" + file + "'");
-            } finally {
-                SVNFileUtil.closeFile(os);
-            }
             if (log != null) {
+                String prejTmpPath = "".equals(name) ? "tmp/dir_conflicts" : "tmp/props/" + name;
+                File prejTmpFile = SVNFileUtil.createUniqueFile(getAdminDirectory(),  prejTmpPath, ".prej");
+                prejTmpPath = SVNFileUtil.getBasePath(prejTmpFile);
+
+                String prejPath = getEntries().getEntry(name, true)
+                        .getPropRejectFile();
+                getEntries().close();
+
+                if (prejPath == null) {
+                    prejPath = "".equals(name) ? "dir_conflicts" : name;
+                    File prejFile = SVNFileUtil.createUniqueFile(getRoot(),
+                            prejPath, ".prej");
+                    prejPath = SVNFileUtil.getBasePath(prejFile);
+                }
+                File file = getFile(prejTmpPath);
+                OutputStream os = SVNFileUtil.openFileForWriting(file);
+                try {
+                    for (Iterator lines = conflicts.iterator(); lines.hasNext();) {
+                        String line = (String) lines.next();
+                        os.write(line.getBytes("UTF-8"));
+                    }
+                } catch (IOException e) {
+                    SVNErrorManager.error("svn: Cannot save properties conflict file '" + file + "'");
+                } finally {
+                    SVNFileUtil.closeFile(os);
+                }
+
                 command.put(SVNLog.NAME_ATTR, prejTmpPath);
                 command.put(SVNLog.DEST_ATTR, prejPath);
                 log.addCommand(SVNLog.APPEND, command, false);
