@@ -829,7 +829,7 @@ public class SVNCommitClient extends SVNBasicClient {
             File file = children[i];
             if (SVNFileUtil.getAdminDirectoryName().equals(file.getName())) {
                 SVNEvent skippedEvent = SVNEventFactory.createSkipEvent(
-                        rootFile, file, SVNEventAction.SKIP, SVNNodeKind.NONE);
+                        rootFile, file, SVNEventAction.SKIP, SVNEventAction.COMMIT_ADDED, SVNNodeKind.NONE);
                 handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
                 continue;
             }

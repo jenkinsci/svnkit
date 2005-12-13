@@ -35,6 +35,14 @@ public class SVNEventFactory {
         return event;
     }
 
+    public static SVNEvent createMergeEvent(SVNWCAccess source, String path,
+            SVNEventAction action, SVNEventAction expectedAction, SVNStatusType cType, SVNStatusType pType, SVNNodeKind kind) {
+        SVNEvent event = new SVNEvent(source, null, SVNPathUtil.tail(path),
+                action, expectedAction, kind, -1, null, cType, pType, null, null, null);
+        event.setPath(path);
+        return event;
+    }
+
     public static SVNEvent createCommitEvent(File rootFile, File file,
             SVNEventAction action, SVNNodeKind kind, String mimeType) {
         return new SVNEvent(rootFile, file, action, kind, -1, mimeType,
@@ -50,8 +58,8 @@ public class SVNEventFactory {
     }
 
     public static SVNEvent createSkipEvent(File rootFile, File file,
-            SVNEventAction action, SVNNodeKind kind) {
-        return new SVNEvent(rootFile, file, action, kind, -1, null,
+            SVNEventAction action, SVNEventAction expectedAction, SVNNodeKind kind) {
+        return new SVNEvent(rootFile, file, action, expectedAction, kind, -1, null,
                 SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE,
                 SVNStatusType.LOCK_INAPPLICABLE, null, null);
     }
