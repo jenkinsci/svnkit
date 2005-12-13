@@ -176,10 +176,8 @@ public class SVNDirectory {
     public SVNStatusType mergeProperties(String name, Map changedProperties,
             Map locallyChanged, boolean updateBaseProps, SVNLog log)
             throws SVNException {
-        changedProperties = changedProperties == null ? Collections.EMPTY_MAP
-                : changedProperties;
-        locallyChanged = locallyChanged == null ? Collections.EMPTY_MAP
-                : locallyChanged;
+        changedProperties = changedProperties == null ? Collections.EMPTY_MAP : changedProperties;
+        locallyChanged = locallyChanged == null ? Collections.EMPTY_MAP : locallyChanged;
 
         SVNProperties working = getProperties(name, false);
         SVNProperties workingTmp = getProperties(name, true);
@@ -192,10 +190,8 @@ public class SVNDirectory {
         }
 
         Collection conflicts = new ArrayList();
-        SVNStatusType result = changedProperties.isEmpty() ? SVNStatusType.UNCHANGED
-                : SVNStatusType.CHANGED;
-        for (Iterator propNames = changedProperties.keySet().iterator(); propNames
-                .hasNext();) {
+        SVNStatusType result = changedProperties.isEmpty() ? SVNStatusType.UNCHANGED : SVNStatusType.CHANGED;
+        for (Iterator propNames = changedProperties.keySet().iterator(); propNames.hasNext();) {
             String propName = (String) propNames.next();
             String propValue = (String) changedProperties.get(propName);
             if (updateBaseProps) {
@@ -207,19 +203,16 @@ public class SVNDirectory {
                 String conflict = null;
                 // if (workingValue != null) {
                 if (workingValue == null && propValue != null) {
-                    conflict = MessageFormat
-                            .format(
+                    conflict = MessageFormat.format(
                                     "Property ''{0}'' locally deleted, but update sets it to ''{1}''\n",
                                     new Object[] { propName, propValue });
                 } else if (workingValue != null && propValue == null) {
-                    conflict = MessageFormat
-                            .format(
+                    conflict = MessageFormat.format(
                                     "Property ''{0}'' locally changed to ''{1}'', but update deletes it\n",
                                     new Object[] { propName, workingValue });
                 } else if (workingValue != null
                         && !workingValue.equals(propValue)) {
-                    conflict = MessageFormat
-                            .format(
+                    conflict = MessageFormat.format(
                                     "Property ''{0}'' locally changed to ''{1}'', but update sets it to ''{2}''\n",
                                     new Object[] { propName, workingValue,
                                             propValue });
@@ -229,7 +222,6 @@ public class SVNDirectory {
                     continue;
                 }
                 result = SVNStatusType.MERGED;
-                // }
             }
             workingTmp.setPropertyValue(propName, propValue);
         }
@@ -256,33 +248,31 @@ public class SVNDirectory {
         if (!conflicts.isEmpty()) {
             result = SVNStatusType.CONFLICTED;
 
-            String prejTmpPath = "".equals(name) ? "tmp/dir_conflicts" : "tmp/props/" + name;
-            File prejTmpFile = SVNFileUtil.createUniqueFile(getAdminDirectory(),  prejTmpPath, ".prej");
-            prejTmpPath = SVNFileUtil.getBasePath(prejTmpFile);
-
-            String prejPath = getEntries().getEntry(name, true)
-                    .getPropRejectFile();
-            getEntries().close();
-
-            if (prejPath == null) {
-                prejPath = "".equals(name) ? "dir_conflicts" : name;
-                File prejFile = SVNFileUtil.createUniqueFile(getRoot(),
-                        prejPath, ".prej");
-                prejPath = SVNFileUtil.getBasePath(prejFile);
-            }
-            File file = getFile(prejTmpPath);
-            OutputStream os = SVNFileUtil.openFileForWriting(file);
-            try {
-                for (Iterator lines = conflicts.iterator(); lines.hasNext();) {
-                    String line = (String) lines.next();
-                    os.write(line.getBytes("UTF-8"));
-                }
-            } catch (IOException e) {
-                SVNErrorManager.error("svn: Cannot save properties conflict file '" + file + "'");
-            } finally {
-                SVNFileUtil.closeFile(os);
-            }
             if (log != null) {
+                String prejTmpPath = "".equals(name) ? "tmp/dir_conflicts" : "tmp/props/" + name;
+                File prejTmpFile = SVNFileUtil.createUniqueFile(getAdminDirectory(),  prejTmpPath, ".prej");
+                prejTmpPath = SVNFileUtil.getBasePath(prejTmpFile);
+    
+                String prejPath = getEntries().getEntry(name, true).getPropRejectFile();
+                getEntries().close();
+    
+                if (prejPath == null) {
+                    prejPath = "".equals(name) ? "dir_conflicts" : name;
+                    File prejFile = SVNFileUtil.createUniqueFile(getRoot(), prejPath, ".prej");
+                    prejPath = SVNFileUtil.getBasePath(prejFile);
+                }
+                File file = getFile(prejTmpPath);
+                OutputStream os = SVNFileUtil.openFileForWriting(file);
+                try {
+                    for (Iterator lines = conflicts.iterator(); lines.hasNext();) {
+                        String line = (String) lines.next();
+                        os.write(line.getBytes("UTF-8"));
+                    }
+                } catch (IOException e) {
+                    SVNErrorManager.error("svn: Cannot save properties conflict file '" + file + "'");
+                } finally {
+                    SVNFileUtil.closeFile(os);
+                }
                 command.put(SVNLog.NAME_ATTR, prejTmpPath);
                 command.put(SVNLog.DEST_ATTR, prejPath);
                 log.addCommand(SVNLog.APPEND, command, false);
@@ -292,9 +282,7 @@ public class SVNDirectory {
                 command.clear();
 
                 command.put(SVNLog.NAME_ATTR, name);
-                command.put(SVNProperty
-                        .shortPropertyName(SVNProperty.PROP_REJECT_FILE),
-                        prejPath);
+                command.put(SVNProperty.shortPropertyName(SVNProperty.PROP_REJECT_FILE), prejPath);
                 log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
             }
         }
