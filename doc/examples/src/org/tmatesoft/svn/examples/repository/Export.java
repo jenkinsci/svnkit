@@ -94,7 +94,7 @@ public class Export {
         /*
          * Default values:
          */
-        String url = "http://72.9.228.230:8080/svn/jsvn/branches/0.9.0/doc";
+        String url = "http://svn.tmate.org:8080/svn/jsvn/branches/0.9.0/doc";
         String name = "anonymous";
         String password = "anonymous";
         String exportDirPath = "/export";
@@ -225,7 +225,7 @@ public class Export {
              * the local copy of "/doc". 
              */
             repository.update(latestRevision, null, true,
-                    new ExportReporterBaton(), new ExportEditor(
+                    new ExportReporterBaton(latestRevision), new ExportEditor(
                             exportDirPath, new WorkspaceMediator()));
         } catch (SVNException svne) {
             System.err.println("error while exporting '" + url + "': "
@@ -347,6 +347,10 @@ public class Export {
      * ISVNReporterBaton that describes that intention.
 	 */ 
     private static class ExportReporterBaton implements ISVNReporterBaton {
+        private long exportRevision;
+        public ExportReporterBaton(long revision){
+            exportRevision = revision;
+        }
         /*
 		 * Reports that the repository node tree (the location to which the 
 		 * SVNRepository is created) is to be exported.
@@ -370,7 +374,7 @@ public class Export {
          */
         public void report(ISVNReporter reporter) throws SVNException {
             try{
-	            reporter.setPath("", null, 0, true);
+	            reporter.setPath("", null, exportRevision, true);
 	            /*
 	             * Don't forget to finish the report!
 	             */
@@ -732,6 +736,7 @@ public class Export {
                         }
                     }
                 } finally {
+                    applyBaton.close();
                     if (targetFile.exists()) {
                         sourceFile.delete();
                         targetFile.renameTo(sourceFile);
