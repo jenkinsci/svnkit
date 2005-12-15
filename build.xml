@@ -6,12 +6,17 @@
         <property name="eclipse.home" value="${env.ECLIPSE_HOME}" />
         <property name="java.home" value="${env.JAVA_HOME}" />
     	<property name="eclipse.runtime" value="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.jar"/>    	
+    	<property name="eclipse.runtime_323" value="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.v20051027.jar"/>
     	<property name="eclipse.osgi_31" value="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0.jar"/>    	
     	<property name="eclipse.osgi_32" value="${eclipse.home}/plugins/org.eclipse.osgi_3.2.0.jar"/>    	
+    	<property name="eclipse.osgi_323" value="${eclipse.home}/plugins/org.eclipse.osgi_3.2.0.v20051030.jar "/>    	
         <property file="javasvn.build.properties"/>
     		
     	<condition property="eclipse.present">
-        	<available file="${eclipse.runtime}" property="eclipse.runtime.jar"/>
+    		<or>
+            	<available file="${eclipse.runtime}" property="eclipse.runtime.jar"/>
+            	<available file="${eclipse.runtime_323}" property="eclipse.runtime.jar"/>
+    		</or>
         </condition>
 
     	<condition property="os" value="windows">
@@ -58,8 +63,10 @@
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
             <pathelement path="${eclipse.runtime}" />
+            <pathelement path="${eclipse.runtime_323}" />
             <pathelement path="${eclipse.osgi_31}" />
             <pathelement path="${eclipse.osgi_32}" />
+            <pathelement path="${eclipse.osgi_323}" />
             <fileset dir="contrib/httpclient">
                 <include name="*.jar"/>
             </fileset>
@@ -91,8 +98,10 @@
             <pathelement path="build/lib/javasvn.jar" />
             <pathelement path="build/lib/ganymed.jar" />
             <pathelement path="${eclipse.runtime}" />
+            <pathelement path="${eclipse.runtime_323}" />
             <pathelement path="${eclipse.osgi_31}" />
             <pathelement path="${eclipse.osgi_32}" />
+            <pathelement path="${eclipse.osgi_323}" />
         </path>
 
         <javac debug="true"
