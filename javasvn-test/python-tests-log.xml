@@ -1,0 +1,723 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PythonTests start="2005.12.14  at 20:07:14 CET" elapsed="3 hours 6 minutes 48 seconds">
+  <server name="svnserve" url="svn://localhost">
+    <suite name="autoprop" total="14" passed="14" failed="0">
+      <test name="add: config=no,  commandline=none" id="1" result="PASSED"></test>
+      <test name="add: config=yes, commandline=none" id="2" result="PASSED"></test>
+      <test name="add: config=no,  commandline=yes" id="3" result="PASSED"></test>
+      <test name="add: config=yes, commandline=yes" id="4" result="PASSED"></test>
+      <test name="add: config=no,  commandline=no" id="5" result="PASSED"></test>
+      <test name="add: config=yes, commandline=no" id="6" result="PASSED"></test>
+      <test name="import: config=no,  commandline=none" id="7" result="PASSED"></test>
+      <test name="import: config=yes, commandline=none" id="8" result="PASSED"></test>
+      <test name="import: config=no,  commandline=yes" id="9" result="PASSED"></test>
+      <test name="import: config=yes, commandline=yes" id="10" result="PASSED"></test>
+      <test name="import: config=no,  commandline=no" id="11" result="PASSED"></test>
+      <test name="import: config=yes, commandline=no" id="12" result="PASSED"></test>
+      <test name="add directory" id="13" result="PASSED"></test>
+      <test name="import directory" id="14" result="PASSED"></test>
+    </suite>
+    <suite name="basic" total="22" passed="21" failed="1">
+      <test name="basic checkout of a wc" id="1" result="PASSED"></test>
+      <test name="basic status command" id="2" result="PASSED"></test>
+      <test name="basic commit command" id="3" result="PASSED"></test>
+      <test name="basic update command" id="4" result="PASSED"></test>
+      <test name="basic mkdir URL" id="5" result="PASSED"></test>
+      <test name="basic corruption detection" id="6" result="PASSED"></test>
+      <test name="receiving text merges as part of an update" id="7" result="PASSED"></test>
+      <test name="basic conflict creation and resolution" id="8" result="PASSED"></test>
+      <test name="basic cleanup command" id="9" result="PASSED"></test>
+      <test name="basic revert command" id="10" result="PASSED"></test>
+      <test name="basic switch command" id="11" result="PASSED"></test>
+      <test name="basic delete command" id="12" result="PASSED"></test>
+      <test name="checkout a path no longer in HEAD" id="13" result="PASSED"></test>
+      <test name="attempt to change node kind" id="14" result="PASSED"></test>
+      <test name="basic import of single new file" id="15" result="PASSED"></test>
+      <test name="basic cat of files" id="16" result="PASSED"></test>
+      <test name="basic ls" id="17" result="PASSED"></test>
+      <test name="'svn log file:///nonexistent_path' should fail" id="18" result="FAILED"></test>
+      <test name="basic auth caching" id="19" result="PASSED"></test>
+      <test name="ignored files in added dirs should not be added" id="20" result="PASSED"></test>
+      <test name="make sure URI syntaxes are parsed correctly" id="21" result="PASSED"></test>
+      <test name="trying to check out a file should fail" id="22" result="PASSED"></test>
+    </suite>
+    <suite name="blame" total="4" passed="4" failed="0">
+      <test name="basic info command" id="23" result="PASSED"></test>
+      <test name="annotate a file whose name contains a space" id="1" result="PASSED"></test>
+      <test name="annotate a binary file" id="2" result="PASSED"></test>
+      <test name="annotating a directory not allowed" id="3" result="PASSED"></test>
+    </suite>
+    <suite name="cat" total="4" passed="4" failed="0">
+      <test name="cat a local directory" id="1" result="PASSED"></test>
+      <test name="cat a remote directory" id="2" result="PASSED"></test>
+      <test name="cat a file at revision BASE" id="3" result="PASSED"></test>
+      <test name="cat a nonexistant file" id="4" result="PASSED"></test>
+    </suite>
+    <suite name="commit" total="31" passed="31" failed="0">
+      <test name="commit one file" id="1" result="PASSED"></test>
+      <test name="commit one newly added file" id="2" result="PASSED"></test>
+      <test name="commit one newly added binary file" id="3" result="PASSED"></test>
+      <test name="commit multiple targets" id="4" result="PASSED"></test>
+      <test name="commit multiple targets, 2nd variation" id="5" result="PASSED"></test>
+      <test name="commit wc_dir/A/D -- includes D. (anchor=A, tgt=D)" id="6" result="PASSED"></test>
+      <test name="commit wc_dir -- (anchor=wc_dir, tgt={})" id="7" result="PASSED"></test>
+      <test name="committing unversioned object produces error" id="8" result="PASSED"></test>
+      <test name="replace two nested dirs, verify empty contents" id="9" result="PASSED"></test>
+      <test name="hudson prob 1.0:  delete file, commit, update" id="10" result="PASSED"></test>
+      <test name="hudson prob 1.1:  delete dir, commit, update" id="11" result="PASSED"></test>
+      <test name="hudson prob 1.2:  delete, commit, re-add, commit" id="12" result="PASSED"></test>
+      <test name="hudson prob 2.0:  prop commit on old dir fails" id="13" result="PASSED"></test>
+      <test name="hudson prob 2.1:  move files, update empty dir" id="14" result="PASSED"></test>
+      <test name="commit mixed-rev wc (no erroneous merge error)" id="16" result="PASSED"></test>
+      <test name="commit files and dirs with URI-unsafe characters" id="17" result="PASSED"></test>
+      <test name="commit deleted yet edited files" id="18" result="PASSED"></test>
+      <test name="commit a file inside dir scheduled for addition" id="19" result="PASSED"></test>
+      <test name="commit deleted (and missing) file" id="20" result="PASSED"></test>
+      <test name="issue 644 attempt to add a file twice" id="21" result="PASSED"></test>
+      <test name="commit from a dir with a longer name than the wc" id="22" result="PASSED"></test>
+      <test name="try to commit when directory is locked" id="23" result="PASSED"></test>
+      <test name="commit the current directory" id="24" result="PASSED"></test>
+      <test name="attempted commit from multiple wc fails" id="25" result="PASSED"></test>
+      <test name="commit named targets with -N (issues #1195, #1239)" id="26" result="PASSED"></test>
+      <test name="commit with conflicts and check txn in repo" id="27" result="PASSED"></test>
+      <test name="commit deletion of out-of-date file or dir" id="28" result="PASSED"></test>
+      <test name="commit with a log message containing bad data" id="29" result="PASSED"></test>
+      <test name="commit with invalid external editor cmd" id="30" result="PASSED"></test>
+      <test name="commit with mods in schedule delete" id="31" result="PASSED"></test>
+      <test name="tabs in paths" id="32" result="PASSED"></test>
+    </suite>
+    <suite name="copy" total="28" passed="28" failed="0">
+      <test name="basic copy and move commands -- on files only" id="1" result="PASSED"></test>
+      <test name="test fix for 'svn mv unversioned_file some_dst'" id="2" result="PASSED"></test>
+      <test name="receive a copied directory during update" id="3" result="PASSED"></test>
+      <test name="resurrect a deleted directory" id="4" result="PASSED"></test>
+      <test name="svn cp URL URL cannot overwrite destination" id="5" result="PASSED"></test>
+      <test name="svn cp PATH PATH cannot overwrite destination" id="6" result="PASSED"></test>
+      <test name="copy and tree and modify before commit" id="7" result="PASSED"></test>
+      <test name="copy files with properties" id="8" result="PASSED"></test>
+      <test name="copy a tree and delete part of it before commit" id="9" result="PASSED"></test>
+      <test name="move and revert a directory" id="10" result="PASSED"></test>
+      <test name="executable bit should be preserved when copying" id="11" result="PASSED"></test>
+      <test name="working-copy to repository copy" id="12" result="PASSED"></test>
+      <test name="repository to working-copy copy" id="13" result="PASSED"></test>
+      <test name="copy item to root of repository" id="14" result="PASSED"></test>
+      <test name="copy URL URL/subdir" id="15" result="PASSED"></test>
+      <test name="copy WC URL/subdir" id="16" result="PASSED"></test>
+      <test name="resurrect a deleted file" id="17" result="PASSED"></test>
+      <test name="copy file from repos to working copy and run diff" id="18" result="PASSED"></test>
+      <test name="repos->WC copy with keyword or eol property set" id="19" result="PASSED"></test>
+      <test name="revision-kind keywords with non-URL source" id="20" result="PASSED"></test>
+      <test name="copy over a missing file" id="21" result="PASSED"></test>
+      <test name="copy a deleted directory back from the repos" id="22" result="PASSED"></test>
+      <test name="check for double URI escaping in svn ls -R" id="23" result="PASSED"></test>
+      <test name="wc to wc copy with deleted=true items" id="24" result="PASSED"></test>
+      <test name="svn cp src-URL non-existent-URL-path" id="25" result="PASSED"></test>
+      <test name="svn cp oldrev-of-deleted-URL URL" id="26" result="PASSED"></test>
+      <test name="test URL to URL copying edge case" id="27" result="PASSED"></test>
+      <test name="copy wc dir to itself" id="28" result="PASSED"></test>
+    </suite>
+    <suite name="diff" total="25" passed="25" failed="0">
+      <test name="update a file" id="1" result="PASSED"></test>
+      <test name="add a file" id="2" result="PASSED"></test>
+      <test name="add a file in an added directory" id="3" result="PASSED"></test>
+      <test name="replace a file with a file" id="4" result="PASSED"></test>
+      <test name="multiple revisions diff'd forwards and backwards" id="5" result="PASSED"></test>
+      <test name="non-recursive behaviour" id="6" result="PASSED"></test>
+      <test name="diff only part of the repository" id="7" result="PASSED"></test>
+      <test name="non version controlled files" id="8" result="PASSED"></test>
+      <test name="pure repository diff update a file" id="9" result="PASSED"></test>
+      <test name="diff when property was changed but text was not" id="10" result="PASSED"></test>
+      <test name="don't diff file marked as binary type" id="11" result="PASSED"></test>
+      <test name="svn diff errors against a non-existant URL" id="12" result="PASSED"></test>
+      <test name="diff against the head of a moved file" id="13" result="PASSED"></test>
+      <test name="diff text-bases against repository" id="14" result="PASSED"></test>
+      <test name="repos-repos diff on item deleted from HEAD" id="15" result="PASSED"></test>
+      <test name="select diff targets" id="16" result="PASSED"></test>
+      <test name="diff for branches" id="17" result="PASSED"></test>
+      <test name="diff between repos URLs and WC paths" id="18" result="PASSED"></test>
+      <test name="diff between two file URLs (issue #1311)" id="19" result="PASSED"></test>
+      <test name="check for omitted prefix in path component" id="21" result="PASSED"></test>
+      <test name="diff a file that has been renamed" id="22" result="PASSED"></test>
+      <test name="diff a file within a renamed directory" id="23" result="PASSED"></test>
+      <test name="diff a prop change on a dir named explicitly" id="24" result="PASSED"></test>
+      <test name="ensure that diff won't show keywords" id="25" result="PASSED"></test>
+      <test name="show diffs for binary files with --force" id="26" result="PASSED"></test>
+    </suite>
+    <suite name="export" total="14" passed="14" failed="0">
+      <test name="export an empty directory" id="1" result="PASSED"></test>
+      <test name="export the greek tree" id="2" result="PASSED"></test>
+      <test name="export working copy" id="3" result="PASSED"></test>
+      <test name="export working copy with mods" id="4" result="PASSED"></test>
+      <test name="export over existing dir" id="5" result="PASSED"></test>
+      <test name="export with keyword translation" id="6" result="PASSED"></test>
+      <test name="export with eol translation" id="7" result="PASSED"></test>
+      <test name="export working copy with keyword translation" id="8" result="PASSED"></test>
+      <test name="export working copy with property mods" id="9" result="PASSED"></test>
+      <test name="export working copy at base revision" id="10" result="PASSED"></test>
+      <test name="export with --native-eol" id="11" result="PASSED"></test>
+      <test name="export nonexistant file" id="12" result="PASSED"></test>
+      <test name="export unversioned file" id="13" result="PASSED"></test>
+      <test name="export with state deleted=true" id="14" result="PASSED"></test>
+    </suite>
+    <suite name="externals" total="9" passed="9" failed="0">
+      <test name="test checkouts with externals" id="1" result="PASSED"></test>
+      <test name="update to receive a new external module" id="2" result="PASSED"></test>
+      <test name="update to lose an external module" id="3" result="PASSED"></test>
+      <test name="update change to an unmodified external module" id="4" result="PASSED"></test>
+      <test name="update changes to a modified external module" id="5" result="PASSED"></test>
+      <test name="update changes under an external module" id="6" result="PASSED"></test>
+      <test name="commit and update additional externals" id="7" result="PASSED"></test>
+      <test name="error if external target dir involves '.' or '..'" id="8" result="PASSED"></test>
+      <test name="test exports with externals" id="9" result="PASSED"></test>
+    </suite>
+    <suite name="history" total="1" passed="1" failed="0">
+      <test name="verify that 'svn cat' traces renames" id="1" result="PASSED"></test>
+    </suite>
+    <suite name="import" total="3" passed="3" failed="0">
+      <test name="import of executable files" id="1" result="PASSED"></test>
+      <test name="do not import ignored files in imported dirs" id="2" result="PASSED"></test>
+      <test name="avoid creating empty revisions with import" id="3" result="PASSED"></test>
+    </suite>
+    <suite name="lock" total="26" passed="26" failed="0">
+      <test name="lock a file and verify that it's locked" id="1" result="PASSED"></test>
+      <test name="commit a file and keep lock" id="2" result="PASSED"></test>
+      <test name="commit a file and release lock" id="3" result="PASSED"></test>
+      <test name="commit a locked file with a prop change" id="4" result="PASSED"></test>
+      <test name="lock a file and verify lock breaking behavior" id="5" result="PASSED"></test>
+      <test name="lock a file and verify lock stealing behavior" id="6" result="PASSED"></test>
+      <test name="examine the fields of a lockfile for correctness" id="7" result="PASSED"></test>
+      <test name="verify behavior when a lock in a wc is defunct" id="8" result="PASSED"></test>
+      <test name="verify svn:needs-lock read-only behavior" id="9" result="PASSED"></test>
+      <test name="verify svn:needs-lock behavior with defunct lock" id="10" result="PASSED"></test>
+      <test name="verify lock removal on a deleted path" id="11" result="PASSED"></test>
+      <test name="lock and unlock some files" id="12" result="PASSED"></test>
+      <test name="verify removal of a directory with locks inside" id="13" result="PASSED"></test>
+      <test name="verify status of lock in working copy" id="14" result="PASSED"></test>
+      <test name="verify status of stolen lock" id="15" result="PASSED"></test>
+      <test name="verify status of broken lock" id="16" result="PASSED"></test>
+      <test name="lock an out-of-date file and ensure failure" id="17" result="PASSED"></test>
+      <test name="update handles svn:needs-lock correctly" id="18" result="PASSED"></test>
+      <test name="verify svn:needs-lock behavior with revert" id="19" result="PASSED"></test>
+      <test name="examine the fields of a lock from a URL" id="20" result="PASSED"></test>
+      <test name="lock/unlock several files in one go" id="21" result="PASSED"></test>
+      <test name="svn:needs-lock and svn:executable, part I" id="22" result="PASSED"></test>
+      <test name="svn:needs-lock and svn:executable, part II" id="23" result="PASSED"></test>
+      <test name="lock/unlock switched files" id="24" result="PASSED"></test>
+      <test name="lock and unlock a file with an URI-unsafe name" id="25" result="PASSED"></test>
+      <test name="commit file with xml-unsafe name and release lock" id="26" result="PASSED"></test>
+    </suite>
+    <suite name="log" total="9" passed="8" failed="1">
+      <test name="'svn log', no args, top of wc" id="1" result="PASSED"></test>
+      <test name="'svn commit -F foo' when foo is a versioned file" id="2" result="FAILED"></test>
+      <test name="'svn log' on an empty repository" id="3" result="PASSED"></test>
+      <test name="'svn log -rN some_dir_unchanged_in_N'" id="4" result="PASSED"></test>
+      <test name="'svn log -v -r 1:0 wc_root'" id="5" result="PASSED"></test>
+      <test name="'svn log', with args, top of wc" id="6" result="PASSED"></test>
+      <test name="'svn log -r N URL' when URL is not in HEAD " id="7" result="PASSED"></test>
+      <test name="'svn log TGT' with copyfrom history" id="8" result="PASSED"></test>
+      <test name="mod_dav_svn must escape invalid XML control chars" id="9" result="PASSED"></test>
+    </suite>
+    <suite name="merge" total="21" passed="21" failed="0">
+      <test name="performing a merge, with mixed results" id="1" result="PASSED"></test>
+      <test name="merge and add new files/dirs with history" id="2" result="PASSED"></test>
+      <test name="merge that deletes items" id="3" result="PASSED"></test>
+      <test name="some simple property merges" id="4" result="PASSED"></test>
+      <test name="merging a file with no explicit target path" id="5" result="PASSED"></test>
+      <test name="merge should not die if a target file is absent" id="6" result="PASSED"></test>
+      <test name="merge on deleted directory in target" id="7" result="PASSED"></test>
+      <test name="merging similar trees ancestrally unrelated" id="8" result="PASSED"></test>
+      <test name="merge operations using PREV revision" id="9" result="PASSED"></test>
+      <test name="merge change into unchanged binary file" id="10" result="PASSED"></test>
+      <test name="merge one file (issue #1150)" id="11" result="PASSED"></test>
+      <test name="diff after merge that creates a new file" id="12" result="PASSED"></test>
+      <test name="merge should skip over unversioned obstructions" id="13" result="PASSED"></test>
+      <test name="merge into missing must not break working copy" id="14" result="PASSED"></test>
+      <test name="merge --dry-run adding a new file with props" id="15" result="PASSED"></test>
+      <test name="merge binary files with common ancestry" id="16" result="PASSED"></test>
+      <test name="merge with funny characters (issue #1905)" id="17" result="PASSED"></test>
+      <test name="merge changes to keyword expansion property" id="18" result="PASSED"></test>
+      <test name="merge prop change into deleted target" id="19" result="PASSED"></test>
+      <test name="merge a file whose name contains a space" id="20" result="PASSED"></test>
+      <test name="merge between branches (Issue #2222)" id="21" result="PASSED"></test>
+    </suite>
+    <suite name="prop" total="15" passed="15" failed="0">
+      <test name="write/read props in wc only (ps, pl, pdel)" id="1" result="PASSED"></test>
+      <test name="commit properties" id="2" result="PASSED"></test>
+      <test name="receive properties via update" id="3" result="PASSED"></test>
+      <test name="receive property changes as part of a downdate" id="4" result="PASSED"></test>
+      <test name="commit the removal of props" id="5" result="PASSED"></test>
+      <test name="update with conflicting props" id="6" result="PASSED"></test>
+      <test name="props work when committing a replacement" id="7" result="PASSED"></test>
+      <test name="props work when reverting a replacement" id="8" result="PASSED"></test>
+      <test name="try to set inappropriate props" id="9" result="PASSED"></test>
+      <test name="file copies inherit (not re-derive) special props" id="10" result="PASSED"></test>
+      <test name="set, get, and delete a revprop change" id="11" result="PASSED"></test>
+      <test name="some svn: properties should be converted" id="12" result="PASSED"></test>
+      <test name="test binary property support" id="13" result="PASSED"></test>
+      <test name="recursive property operations in BASE and WC" id="14" result="PASSED"></test>
+      <test name="property operations on an URL" id="15" result="PASSED"></test>
+    </suite>
+    <suite name="revert" total="0" passed="0" failed="0">
+    </suite>
+    <suite name="schedule" total="19" passed="19" failed="0">
+      <test name="revert a replaced file with no properties" id="3" result="PASSED"></test>
+      <test name="schedule: add some files" id="1" result="PASSED"></test>
+      <test name="schedule: add some directories" id="2" result="PASSED"></test>
+      <test name="schedule: add some nested files and directories" id="3" result="PASSED"></test>
+      <test name="schedule: add some executable files" id="4" result="PASSED"></test>
+      <test name="schedule: delete some files" id="5" result="PASSED"></test>
+      <test name="schedule: delete some directories" id="6" result="PASSED"></test>
+      <test name="revert: add some files" id="7" result="PASSED"></test>
+      <test name="revert: add some directories" id="8" result="PASSED"></test>
+      <test name="revert: add some nested files and directories" id="9" result="PASSED"></test>
+      <test name="revert: add some executable files" id="10" result="PASSED"></test>
+      <test name="revert: delete some files" id="11" result="PASSED"></test>
+      <test name="revert: delete some directories" id="12" result="PASSED"></test>
+      <test name="unschedule addition on missing items" id="19" result="PASSED"></test>
+      <test name="schedule and commit deletion on missing items" id="20" result="PASSED"></test>
+      <test name="revert inside a newly added dir" id="21" result="PASSED"></test>
+      <test name="status after add of deleted directory" id="22" result="PASSED"></test>
+      <test name="'svn add' should traverse already-versioned dirs" id="23" result="PASSED"></test>
+      <test name="'svn mkdir' should clean up after itself on error" id="24" result="PASSED"></test>
+    </suite>
+    <suite name="special" total="6" passed="6" failed="0">
+      <test name="general symlink handling" id="1" result="PASSED"></test>
+      <test name="replace a normal file with a special file" id="2" result="PASSED"></test>
+      <test name="import and export a symlink" id="3" result="PASSED"></test>
+      <test name="'svn cp dir1 dir2' which contains a symlink" id="4" result="PASSED"></test>
+      <test name="replace a special file with a non-special file" id="5" result="PASSED"></test>
+      <test name="remove a symlink" id="6" result="PASSED"></test>
+    </suite>
+    <suite name="stat" total="16" passed="16" failed="0">
+      <test name="status on unversioned file in current directory" id="1" result="PASSED"></test>
+      <test name="run 'status -u' when nested additions are pending" id="2" result="PASSED"></test>
+      <test name="status -vN shows all items in current directory" id="3" result="PASSED"></test>
+      <test name="status with a versioned file missing" id="4" result="PASSED"></test>
+      <test name="status on versioned items whose type has changed" id="5" result="PASSED"></test>
+      <test name="status on versioned items replaced by symlinks" id="6" result="PASSED"></test>
+      <test name="status -u with new files in the repository" id="7" result="PASSED"></test>
+      <test name="status for unignored file and directory" id="8" result="PASSED"></test>
+      <test name="status on missing and unversioned file" id="9" result="PASSED"></test>
+      <test name="status -u indicates out-of-dateness" id="10" result="PASSED"></test>
+      <test name="status -u on outdated, added file shows only that" id="11" result="PASSED"></test>
+      <test name="status -u on working copy deleted in HEAD" id="12" result="PASSED"></test>
+      <test name="timestamp behaviour" id="13" result="PASSED"></test>
+      <test name="status on '..' where '..' is not versioned" id="14" result="PASSED"></test>
+      <test name="status -u in partially non-recursive wc" id="15" result="PASSED"></test>
+      <test name="a missing dir in the anchor" id="16" result="PASSED"></test>
+    </suite>
+    <suite name="switch" total="13" passed="13" failed="0">
+      <test name="test some basic switching operations" id="1" result="PASSED"></test>
+      <test name="commits after some basic switching operations" id="2" result="PASSED"></test>
+      <test name="update wc that contains switched things" id="3" result="PASSED"></test>
+      <test name="reverse update wc that contains switched things" id="4" result="PASSED"></test>
+      <test name="update switched wc things to HEAD" id="5" result="PASSED"></test>
+      <test name="reverse update switched wc things to an older rev" id="6" result="PASSED"></test>
+      <test name="show logs for a switched file" id="7" result="PASSED"></test>
+      <test name="relocate with deleted, missing and copied entries" id="8" result="PASSED"></test>
+      <test name="switch that deletes a sub-directory" id="9" result="PASSED"></test>
+      <test name="non-recursive switch" id="11" result="PASSED"></test>
+      <test name="anchor=target that fails due to local mods" id="12" result="PASSED"></test>
+      <test name="bad intermediate urls in use" id="13" result="PASSED"></test>
+      <test name="obstructed switch" id="14" result="PASSED"></test>
+    </suite>
+    <suite name="trans" total="8" passed="8" failed="0">
+      <test name="commit new files with keywords active from birth" id="1" result="PASSED"></test>
+      <test name="update modified file with eol-style 'native'" id="5" result="PASSED"></test>
+      <test name="committing eol-style change forces text send" id="6" result="PASSED"></test>
+      <test name="keyword expansion for lone file in directory" id="7" result="PASSED"></test>
+      <test name="keyword expanded on cat" id="8" result="PASSED"></test>
+      <test name="copy, propset svn:eol-style, commit" id="9" result="PASSED"></test>
+      <test name="propset, commit, check out into another wc" id="10" result="PASSED"></test>
+      <test name="propset, revert" id="11" result="PASSED"></test>
+    </suite>
+    <suite name="update" total="26" passed="26" failed="0">
+      <test name="update a locally-modified binary file" id="1" result="PASSED"></test>
+      <test name="update to an old revision of a binary files" id="2" result="PASSED"></test>
+      <test name="update should not munge adds or replaces" id="3" result="PASSED"></test>
+      <test name="update to revision 0" id="4" result="PASSED"></test>
+      <test name="overlapping identical changes should not conflict" id="5" result="PASSED"></test>
+      <test name="delete files and update to resolve text conflicts" id="6" result="PASSED"></test>
+      <test name="update that deletes modified files" id="7" result="PASSED"></test>
+      <test name="update after add/rm of deleted state" id="8" result="PASSED"></test>
+      <test name="update missing items (by name) in working copy" id="9" result="PASSED"></test>
+      <test name="update that replaces a directory" id="10" result="PASSED"></test>
+      <test name="update with explicit file target" id="11" result="PASSED"></test>
+      <test name="receive prop update to file scheduled for deletion" id="12" result="PASSED"></test>
+      <test name="bail when receive a file or dir named .svn" id="13" result="PASSED"></test>
+      <test name="update missing dir to rev in which it is absent" id="14" result="PASSED"></test>
+      <test name="another 'hudson' problem: updates that delete" id="15" result="PASSED"></test>
+      <test name="explicit update of deleted=true targets" id="16" result="PASSED"></test>
+      <test name="receive new dir with spaces in its name" id="17" result="PASSED"></test>
+      <test name="non-recursive update" id="18" result="PASSED"></test>
+      <test name="check out an empty dir" id="19" result="PASSED"></test>
+      <test name="update target till it's gone, then get it back" id="20" result="PASSED"></test>
+      <test name="update child before parent of a deleted tree" id="21" result="PASSED"></test>
+      <test name="update a schedule-add directory" id="22" result="PASSED"></test>
+      <test name="update target that was added in a future rev" id="23" result="PASSED"></test>
+      <test name="update a nested wc in a read-only wc" id="24" result="PASSED"></test>
+      <test name="obstructed update alters WC properties" id="25" result="PASSED"></test>
+      <test name="update dir with xml-unsafe name" id="26" result="PASSED"></test>
+    </suite>
+  </server>
+  <server name="apache" url="http://localhost:8082">
+    <suite name="autoprop" total="14" passed="14" failed="0">
+      <test name="add: config=no,  commandline=none" id="1" result="PASSED"></test>
+      <test name="add: config=yes, commandline=none" id="2" result="PASSED"></test>
+      <test name="add: config=no,  commandline=yes" id="3" result="PASSED"></test>
+      <test name="add: config=yes, commandline=yes" id="4" result="PASSED"></test>
+      <test name="add: config=no,  commandline=no" id="5" result="PASSED"></test>
+      <test name="add: config=yes, commandline=no" id="6" result="PASSED"></test>
+      <test name="import: config=no,  commandline=none" id="7" result="PASSED"></test>
+      <test name="import: config=yes, commandline=none" id="8" result="PASSED"></test>
+      <test name="import: config=no,  commandline=yes" id="9" result="PASSED"></test>
+      <test name="import: config=yes, commandline=yes" id="10" result="PASSED"></test>
+      <test name="import: config=no,  commandline=no" id="11" result="PASSED"></test>
+      <test name="import: config=yes, commandline=no" id="12" result="PASSED"></test>
+      <test name="add directory" id="13" result="PASSED"></test>
+      <test name="import directory" id="14" result="PASSED"></test>
+    </suite>
+    <suite name="basic" total="23" passed="22" failed="1">
+      <test name="basic checkout of a wc" id="1" result="PASSED"></test>
+      <test name="basic status command" id="2" result="PASSED"></test>
+      <test name="basic commit command" id="3" result="PASSED"></test>
+      <test name="basic update command" id="4" result="PASSED"></test>
+      <test name="basic mkdir URL" id="5" result="PASSED"></test>
+      <test name="basic corruption detection" id="6" result="PASSED"></test>
+      <test name="receiving text merges as part of an update" id="7" result="PASSED"></test>
+      <test name="basic conflict creation and resolution" id="8" result="PASSED"></test>
+      <test name="basic cleanup command" id="9" result="PASSED"></test>
+      <test name="basic revert command" id="10" result="PASSED"></test>
+      <test name="basic switch command" id="11" result="PASSED"></test>
+      <test name="basic delete command" id="12" result="PASSED"></test>
+      <test name="checkout a path no longer in HEAD" id="13" result="PASSED"></test>
+      <test name="attempt to change node kind" id="14" result="PASSED"></test>
+      <test name="basic import of single new file" id="15" result="PASSED"></test>
+      <test name="basic cat of files" id="16" result="PASSED"></test>
+      <test name="basic ls" id="17" result="PASSED"></test>
+      <test name="'svn log file:///nonexistent_path' should fail" id="18" result="FAILED"></test>
+      <test name="basic auth caching" id="19" result="PASSED"></test>
+      <test name="ignored files in added dirs should not be added" id="20" result="PASSED"></test>
+      <test name="make sure URI syntaxes are parsed correctly" id="21" result="PASSED"></test>
+      <test name="trying to check out a file should fail" id="22" result="PASSED"></test>
+      <test name="basic info command" id="23" result="PASSED"></test>
+    </suite>
+    <suite name="blame" total="3" passed="3" failed="0">
+      <test name="annotate a file whose name contains a space" id="1" result="PASSED"></test>
+      <test name="annotate a binary file" id="2" result="PASSED"></test>
+      <test name="annotating a directory not allowed" id="3" result="PASSED"></test>
+    </suite>
+    <suite name="cat" total="4" passed="4" failed="0">
+      <test name="cat a local directory" id="1" result="PASSED"></test>
+      <test name="cat a remote directory" id="2" result="PASSED"></test>
+      <test name="cat a file at revision BASE" id="3" result="PASSED"></test>
+      <test name="cat a nonexistant file" id="4" result="PASSED"></test>
+    </suite>
+    <suite name="commit" total="31" passed="31" failed="0">
+      <test name="commit one file" id="1" result="PASSED"></test>
+      <test name="commit one newly added file" id="2" result="PASSED"></test>
+      <test name="commit one newly added binary file" id="3" result="PASSED"></test>
+      <test name="commit multiple targets" id="4" result="PASSED"></test>
+      <test name="commit multiple targets, 2nd variation" id="5" result="PASSED"></test>
+      <test name="commit wc_dir/A/D -- includes D. (anchor=A, tgt=D)" id="6" result="PASSED"></test>
+      <test name="commit wc_dir -- (anchor=wc_dir, tgt={})" id="7" result="PASSED"></test>
+      <test name="committing unversioned object produces error" id="8" result="PASSED"></test>
+      <test name="replace two nested dirs, verify empty contents" id="9" result="PASSED"></test>
+      <test name="hudson prob 1.0:  delete file, commit, update" id="10" result="PASSED"></test>
+      <test name="hudson prob 1.1:  delete dir, commit, update" id="11" result="PASSED"></test>
+      <test name="hudson prob 1.2:  delete, commit, re-add, commit" id="12" result="PASSED"></test>
+      <test name="hudson prob 2.0:  prop commit on old dir fails" id="13" result="PASSED"></test>
+      <test name="hudson prob 2.1:  move files, update empty dir" id="14" result="PASSED"></test>
+      <test name="commit mixed-rev wc (no erroneous merge error)" id="16" result="PASSED"></test>
+      <test name="commit files and dirs with URI-unsafe characters" id="17" result="PASSED"></test>
+      <test name="commit deleted yet edited files" id="18" result="PASSED"></test>
+      <test name="commit a file inside dir scheduled for addition" id="19" result="PASSED"></test>
+      <test name="commit deleted (and missing) file" id="20" result="PASSED"></test>
+      <test name="issue 644 attempt to add a file twice" id="21" result="PASSED"></test>
+      <test name="commit from a dir with a longer name than the wc" id="22" result="PASSED"></test>
+      <test name="try to commit when directory is locked" id="23" result="PASSED"></test>
+      <test name="commit the current directory" id="24" result="PASSED"></test>
+      <test name="attempted commit from multiple wc fails" id="25" result="PASSED"></test>
+      <test name="commit named targets with -N (issues #1195, #1239)" id="26" result="PASSED"></test>
+      <test name="commit with conflicts and check txn in repo" id="27" result="PASSED"></test>
+      <test name="commit deletion of out-of-date file or dir" id="28" result="PASSED"></test>
+      <test name="commit with a log message containing bad data" id="29" result="PASSED"></test>
+      <test name="commit with invalid external editor cmd" id="30" result="PASSED"></test>
+      <test name="commit with mods in schedule delete" id="31" result="PASSED"></test>
+      <test name="tabs in paths" id="32" result="PASSED"></test>
+    </suite>
+    <suite name="copy" total="28" passed="28" failed="0">
+      <test name="basic copy and move commands -- on files only" id="1" result="PASSED"></test>
+      <test name="test fix for 'svn mv unversioned_file some_dst'" id="2" result="PASSED"></test>
+      <test name="receive a copied directory during update" id="3" result="PASSED"></test>
+      <test name="resurrect a deleted directory" id="4" result="PASSED"></test>
+      <test name="svn cp URL URL cannot overwrite destination" id="5" result="PASSED"></test>
+      <test name="svn cp PATH PATH cannot overwrite destination" id="6" result="PASSED"></test>
+      <test name="copy and tree and modify before commit" id="7" result="PASSED"></test>
+      <test name="copy files with properties" id="8" result="PASSED"></test>
+      <test name="copy a tree and delete part of it before commit" id="9" result="PASSED"></test>
+      <test name="move and revert a directory" id="10" result="PASSED"></test>
+      <test name="executable bit should be preserved when copying" id="11" result="PASSED"></test>
+      <test name="working-copy to repository copy" id="12" result="PASSED"></test>
+      <test name="repository to working-copy copy" id="13" result="PASSED"></test>
+      <test name="copy item to root of repository" id="14" result="PASSED"></test>
+      <test name="copy URL URL/subdir" id="15" result="PASSED"></test>
+      <test name="copy WC URL/subdir" id="16" result="PASSED"></test>
+      <test name="resurrect a deleted file" id="17" result="PASSED"></test>
+      <test name="copy file from repos to working copy and run diff" id="18" result="PASSED"></test>
+      <test name="repos->WC copy with keyword or eol property set" id="19" result="PASSED"></test>
+      <test name="revision-kind keywords with non-URL source" id="20" result="PASSED"></test>
+      <test name="copy over a missing file" id="21" result="PASSED"></test>
+      <test name="copy a deleted directory back from the repos" id="22" result="PASSED"></test>
+      <test name="check for double URI escaping in svn ls -R" id="23" result="PASSED"></test>
+      <test name="wc to wc copy with deleted=true items" id="24" result="PASSED"></test>
+      <test name="svn cp src-URL non-existent-URL-path" id="25" result="PASSED"></test>
+      <test name="svn cp oldrev-of-deleted-URL URL" id="26" result="PASSED"></test>
+      <test name="test URL to URL copying edge case" id="27" result="PASSED"></test>
+      <test name="copy wc dir to itself" id="28" result="PASSED"></test>
+    </suite>
+    <suite name="diff" total="25" passed="25" failed="0">
+      <test name="update a file" id="1" result="PASSED"></test>
+      <test name="add a file" id="2" result="PASSED"></test>
+      <test name="add a file in an added directory" id="3" result="PASSED"></test>
+      <test name="replace a file with a file" id="4" result="PASSED"></test>
+      <test name="multiple revisions diff'd forwards and backwards" id="5" result="PASSED"></test>
+      <test name="non-recursive behaviour" id="6" result="PASSED"></test>
+      <test name="diff only part of the repository" id="7" result="PASSED"></test>
+      <test name="non version controlled files" id="8" result="PASSED"></test>
+      <test name="pure repository diff update a file" id="9" result="PASSED"></test>
+      <test name="diff when property was changed but text was not" id="10" result="PASSED"></test>
+      <test name="don't diff file marked as binary type" id="11" result="PASSED"></test>
+      <test name="svn diff errors against a non-existant URL" id="12" result="PASSED"></test>
+      <test name="diff against the head of a moved file" id="13" result="PASSED"></test>
+      <test name="diff text-bases against repository" id="14" result="PASSED"></test>
+      <test name="repos-repos diff on item deleted from HEAD" id="15" result="PASSED"></test>
+      <test name="select diff targets" id="16" result="PASSED"></test>
+      <test name="diff for branches" id="17" result="PASSED"></test>
+      <test name="diff between repos URLs and WC paths" id="18" result="PASSED"></test>
+      <test name="diff between two file URLs (issue #1311)" id="19" result="PASSED"></test>
+      <test name="check for omitted prefix in path component" id="21" result="PASSED"></test>
+      <test name="diff a file that has been renamed" id="22" result="PASSED"></test>
+      <test name="diff a file within a renamed directory" id="23" result="PASSED"></test>
+      <test name="diff a prop change on a dir named explicitly" id="24" result="PASSED"></test>
+      <test name="ensure that diff won't show keywords" id="25" result="PASSED"></test>
+      <test name="show diffs for binary files with --force" id="26" result="PASSED"></test>
+    </suite>
+    <suite name="export" total="14" passed="14" failed="0">
+      <test name="export an empty directory" id="1" result="PASSED"></test>
+      <test name="export the greek tree" id="2" result="PASSED"></test>
+      <test name="export working copy" id="3" result="PASSED"></test>
+      <test name="export working copy with mods" id="4" result="PASSED"></test>
+      <test name="export over existing dir" id="5" result="PASSED"></test>
+      <test name="export with keyword translation" id="6" result="PASSED"></test>
+      <test name="export with eol translation" id="7" result="PASSED"></test>
+      <test name="export working copy with keyword translation" id="8" result="PASSED"></test>
+      <test name="export working copy with property mods" id="9" result="PASSED"></test>
+      <test name="export working copy at base revision" id="10" result="PASSED"></test>
+      <test name="export with --native-eol" id="11" result="PASSED"></test>
+      <test name="export nonexistant file" id="12" result="PASSED"></test>
+      <test name="export unversioned file" id="13" result="PASSED"></test>
+      <test name="export with state deleted=true" id="14" result="PASSED"></test>
+    </suite>
+    <suite name="externals" total="9" passed="9" failed="0">
+      <test name="test checkouts with externals" id="1" result="PASSED"></test>
+      <test name="update to receive a new external module" id="2" result="PASSED"></test>
+      <test name="update to lose an external module" id="3" result="PASSED"></test>
+      <test name="update change to an unmodified external module" id="4" result="PASSED"></test>
+      <test name="update changes to a modified external module" id="5" result="PASSED"></test>
+      <test name="update changes under an external module" id="6" result="PASSED"></test>
+      <test name="commit and update additional externals" id="7" result="PASSED"></test>
+      <test name="error if external target dir involves '.' or '..'" id="8" result="PASSED"></test>
+      <test name="test exports with externals" id="9" result="PASSED"></test>
+    </suite>
+    <suite name="history" total="1" passed="1" failed="0">
+      <test name="verify that 'svn cat' traces renames" id="1" result="PASSED"></test>
+    </suite>
+    <suite name="import" total="3" passed="3" failed="0">
+      <test name="import of executable files" id="1" result="PASSED"></test>
+      <test name="do not import ignored files in imported dirs" id="2" result="PASSED"></test>
+      <test name="avoid creating empty revisions with import" id="3" result="PASSED"></test>
+    </suite>
+    <suite name="lock" total="26" passed="26" failed="0">
+      <test name="lock a file and verify that it's locked" id="1" result="PASSED"></test>
+      <test name="commit a file and keep lock" id="2" result="PASSED"></test>
+      <test name="commit a file and release lock" id="3" result="PASSED"></test>
+      <test name="commit a locked file with a prop change" id="4" result="PASSED"></test>
+      <test name="lock a file and verify lock breaking behavior" id="5" result="PASSED"></test>
+      <test name="lock a file and verify lock stealing behavior" id="6" result="PASSED"></test>
+      <test name="examine the fields of a lockfile for correctness" id="7" result="PASSED"></test>
+      <test name="verify behavior when a lock in a wc is defunct" id="8" result="PASSED"></test>
+      <test name="verify svn:needs-lock read-only behavior" id="9" result="PASSED"></test>
+      <test name="verify svn:needs-lock behavior with defunct lock" id="10" result="PASSED"></test>
+      <test name="verify lock removal on a deleted path" id="11" result="PASSED"></test>
+      <test name="lock and unlock some files" id="12" result="PASSED"></test>
+      <test name="verify removal of a directory with locks inside" id="13" result="PASSED"></test>
+      <test name="verify status of lock in working copy" id="14" result="PASSED"></test>
+      <test name="verify status of stolen lock" id="15" result="PASSED"></test>
+      <test name="verify status of broken lock" id="16" result="PASSED"></test>
+      <test name="lock an out-of-date file and ensure failure" id="17" result="PASSED"></test>
+      <test name="update handles svn:needs-lock correctly" id="18" result="PASSED"></test>
+      <test name="verify svn:needs-lock behavior with revert" id="19" result="PASSED"></test>
+      <test name="examine the fields of a lock from a URL" id="20" result="PASSED"></test>
+      <test name="lock/unlock several files in one go" id="21" result="PASSED"></test>
+      <test name="svn:needs-lock and svn:executable, part I" id="22" result="PASSED"></test>
+      <test name="svn:needs-lock and svn:executable, part II" id="23" result="PASSED"></test>
+      <test name="lock/unlock switched files" id="24" result="PASSED"></test>
+      <test name="lock and unlock a file with an URI-unsafe name" id="25" result="PASSED"></test>
+      <test name="commit file with xml-unsafe name and release lock" id="26" result="PASSED"></test>
+    </suite>
+    <suite name="log" total="9" passed="8" failed="1">
+      <test name="'svn log', no args, top of wc" id="1" result="PASSED"></test>
+      <test name="'svn commit -F foo' when foo is a versioned file" id="2" result="FAILED"></test>
+      <test name="'svn log' on an empty repository" id="3" result="PASSED"></test>
+      <test name="'svn log -rN some_dir_unchanged_in_N'" id="4" result="PASSED"></test>
+      <test name="'svn log -v -r 1:0 wc_root'" id="5" result="PASSED"></test>
+      <test name="'svn log', with args, top of wc" id="6" result="PASSED"></test>
+      <test name="'svn log -r N URL' when URL is not in HEAD " id="7" result="PASSED"></test>
+      <test name="'svn log TGT' with copyfrom history" id="8" result="PASSED"></test>
+      <test name="mod_dav_svn must escape invalid XML control chars" id="9" result="PASSED"></test>
+    </suite>
+    <suite name="merge" total="21" passed="21" failed="0">
+      <test name="performing a merge, with mixed results" id="1" result="PASSED"></test>
+      <test name="merge and add new files/dirs with history" id="2" result="PASSED"></test>
+      <test name="merge that deletes items" id="3" result="PASSED"></test>
+      <test name="some simple property merges" id="4" result="PASSED"></test>
+      <test name="merging a file with no explicit target path" id="5" result="PASSED"></test>
+      <test name="merge should not die if a target file is absent" id="6" result="PASSED"></test>
+      <test name="merge on deleted directory in target" id="7" result="PASSED"></test>
+      <test name="merging similar trees ancestrally unrelated" id="8" result="PASSED"></test>
+      <test name="merge operations using PREV revision" id="9" result="PASSED"></test>
+      <test name="merge change into unchanged binary file" id="10" result="PASSED"></test>
+      <test name="merge one file (issue #1150)" id="11" result="PASSED"></test>
+      <test name="diff after merge that creates a new file" id="12" result="PASSED"></test>
+      <test name="merge should skip over unversioned obstructions" id="13" result="PASSED"></test>
+      <test name="merge into missing must not break working copy" id="14" result="PASSED"></test>
+      <test name="merge --dry-run adding a new file with props" id="15" result="PASSED"></test>
+      <test name="merge binary files with common ancestry" id="16" result="PASSED"></test>
+      <test name="merge with funny characters (issue #1905)" id="17" result="PASSED"></test>
+      <test name="merge changes to keyword expansion property" id="18" result="PASSED"></test>
+      <test name="merge prop change into deleted target" id="19" result="PASSED"></test>
+      <test name="merge a file whose name contains a space" id="20" result="PASSED"></test>
+      <test name="merge between branches (Issue #2222)" id="21" result="PASSED"></test>
+    </suite>
+    <suite name="prop" total="15" passed="15" failed="0">
+      <test name="write/read props in wc only (ps, pl, pdel)" id="1" result="PASSED"></test>
+      <test name="commit properties" id="2" result="PASSED"></test>
+      <test name="receive properties via update" id="3" result="PASSED"></test>
+      <test name="receive property changes as part of a downdate" id="4" result="PASSED"></test>
+      <test name="commit the removal of props" id="5" result="PASSED"></test>
+      <test name="update with conflicting props" id="6" result="PASSED"></test>
+      <test name="props work when committing a replacement" id="7" result="PASSED"></test>
+      <test name="props work when reverting a replacement" id="8" result="PASSED"></test>
+      <test name="try to set inappropriate props" id="9" result="PASSED"></test>
+      <test name="file copies inherit (not re-derive) special props" id="10" result="PASSED"></test>
+      <test name="set, get, and delete a revprop change" id="11" result="PASSED"></test>
+      <test name="some svn: properties should be converted" id="12" result="PASSED"></test>
+      <test name="test binary property support" id="13" result="PASSED"></test>
+      <test name="recursive property operations in BASE and WC" id="14" result="PASSED"></test>
+      <test name="property operations on an URL" id="15" result="PASSED"></test>
+    </suite>
+    <suite name="revert" total="1" passed="1" failed="0">
+      <test name="revert a replaced file with no properties" id="3" result="PASSED"></test>
+    </suite>
+    <suite name="schedule" total="18" passed="18" failed="0">
+      <test name="schedule: add some files" id="1" result="PASSED"></test>
+      <test name="schedule: add some directories" id="2" result="PASSED"></test>
+      <test name="schedule: add some nested files and directories" id="3" result="PASSED"></test>
+      <test name="schedule: add some executable files" id="4" result="PASSED"></test>
+      <test name="schedule: delete some files" id="5" result="PASSED"></test>
+      <test name="schedule: delete some directories" id="6" result="PASSED"></test>
+      <test name="revert: add some files" id="7" result="PASSED"></test>
+      <test name="revert: add some directories" id="8" result="PASSED"></test>
+      <test name="revert: add some nested files and directories" id="9" result="PASSED"></test>
+      <test name="revert: add some executable files" id="10" result="PASSED"></test>
+      <test name="revert: delete some files" id="11" result="PASSED"></test>
+      <test name="revert: delete some directories" id="12" result="PASSED"></test>
+      <test name="unschedule addition on missing items" id="19" result="PASSED"></test>
+      <test name="schedule and commit deletion on missing items" id="20" result="PASSED"></test>
+      <test name="revert inside a newly added dir" id="21" result="PASSED"></test>
+      <test name="status after add of deleted directory" id="22" result="PASSED"></test>
+      <test name="'svn add' should traverse already-versioned dirs" id="23" result="PASSED"></test>
+      <test name="'svn mkdir' should clean up after itself on error" id="24" result="PASSED"></test>
+    </suite>
+    <suite name="special" total="6" passed="6" failed="0">
+      <test name="general symlink handling" id="1" result="PASSED"></test>
+      <test name="replace a normal file with a special file" id="2" result="PASSED"></test>
+      <test name="import and export a symlink" id="3" result="PASSED"></test>
+      <test name="'svn cp dir1 dir2' which contains a symlink" id="4" result="PASSED"></test>
+      <test name="replace a special file with a non-special file" id="5" result="PASSED"></test>
+      <test name="remove a symlink" id="6" result="PASSED"></test>
+    </suite>
+    <suite name="stat" total="16" passed="16" failed="0">
+      <test name="status on unversioned file in current directory" id="1" result="PASSED"></test>
+      <test name="run 'status -u' when nested additions are pending" id="2" result="PASSED"></test>
+      <test name="status -vN shows all items in current directory" id="3" result="PASSED"></test>
+      <test name="status with a versioned file missing" id="4" result="PASSED"></test>
+      <test name="status on versioned items whose type has changed" id="5" result="PASSED"></test>
+      <test name="status on versioned items replaced by symlinks" id="6" result="PASSED"></test>
+      <test name="status -u with new files in the repository" id="7" result="PASSED"></test>
+      <test name="status for unignored file and directory" id="8" result="PASSED"></test>
+      <test name="status on missing and unversioned file" id="9" result="PASSED"></test>
+      <test name="status -u indicates out-of-dateness" id="10" result="PASSED"></test>
+      <test name="status -u on outdated, added file shows only that" id="11" result="PASSED"></test>
+      <test name="status -u on working copy deleted in HEAD" id="12" result="PASSED"></test>
+      <test name="timestamp behaviour" id="13" result="PASSED"></test>
+      <test name="status on '..' where '..' is not versioned" id="14" result="PASSED"></test>
+      <test name="status -u in partially non-recursive wc" id="15" result="PASSED"></test>
+      <test name="a missing dir in the anchor" id="16" result="PASSED"></test>
+    </suite>
+    <suite name="switch" total="13" passed="13" failed="0">
+      <test name="test some basic switching operations" id="1" result="PASSED"></test>
+      <test name="commits after some basic switching operations" id="2" result="PASSED"></test>
+      <test name="update wc that contains switched things" id="3" result="PASSED"></test>
+      <test name="reverse update wc that contains switched things" id="4" result="PASSED"></test>
+      <test name="update switched wc things to HEAD" id="5" result="PASSED"></test>
+      <test name="reverse update switched wc things to an older rev" id="6" result="PASSED"></test>
+      <test name="show logs for a switched file" id="7" result="PASSED"></test>
+      <test name="relocate with deleted, missing and copied entries" id="8" result="PASSED"></test>
+      <test name="switch that deletes a sub-directory" id="9" result="PASSED"></test>
+      <test name="non-recursive switch" id="11" result="PASSED"></test>
+      <test name="anchor=target that fails due to local mods" id="12" result="PASSED"></test>
+      <test name="bad intermediate urls in use" id="13" result="PASSED"></test>
+      <test name="obstructed switch" id="14" result="PASSED"></test>
+    </suite>
+    <suite name="trans" total="8" passed="8" failed="0">
+      <test name="commit new files with keywords active from birth" id="1" result="PASSED"></test>
+      <test name="update modified file with eol-style 'native'" id="5" result="PASSED"></test>
+      <test name="committing eol-style change forces text send" id="6" result="PASSED"></test>
+      <test name="keyword expansion for lone file in directory" id="7" result="PASSED"></test>
+      <test name="keyword expanded on cat" id="8" result="PASSED"></test>
+      <test name="copy, propset svn:eol-style, commit" id="9" result="PASSED"></test>
+      <test name="propset, commit, check out into another wc" id="10" result="PASSED"></test>
+      <test name="propset, revert" id="11" result="PASSED"></test>
+    </suite>
+    <suite name="update" total="26" passed="26" failed="0">
+      <test name="update a locally-modified binary file" id="1" result="PASSED"></test>
+      <test name="update to an old revision of a binary files" id="2" result="PASSED"></test>
+      <test name="update should not munge adds or replaces" id="3" result="PASSED"></test>
+      <test name="update to revision 0" id="4" result="PASSED"></test>
+      <test name="overlapping identical changes should not conflict" id="5" result="PASSED"></test>
+      <test name="delete files and update to resolve text conflicts" id="6" result="PASSED"></test>
+      <test name="update that deletes modified files" id="7" result="PASSED"></test>
+      <test name="update after add/rm of deleted state" id="8" result="PASSED"></test>
+      <test name="update missing items (by name) in working copy" id="9" result="PASSED"></test>
+      <test name="update that replaces a directory" id="10" result="PASSED"></test>
+      <test name="update with explicit file target" id="11" result="PASSED"></test>
+      <test name="receive prop update to file scheduled for deletion" id="12" result="PASSED"></test>
+      <test name="bail when receive a file or dir named .svn" id="13" result="PASSED"></test>
+      <test name="update missing dir to rev in which it is absent" id="14" result="PASSED"></test>
+      <test name="another 'hudson' problem: updates that delete" id="15" result="PASSED"></test>
+      <test name="explicit update of deleted=true targets" id="16" result="PASSED"></test>
+      <test name="receive new dir with spaces in its name" id="17" result="PASSED"></test>
+      <test name="non-recursive update" id="18" result="PASSED"></test>
+      <test name="check out an empty dir" id="19" result="PASSED"></test>
+      <test name="update target till it's gone, then get it back" id="20" result="PASSED"></test>
+      <test name="update child before parent of a deleted tree" id="21" result="PASSED"></test>
+      <test name="update a schedule-add directory" id="22" result="PASSED"></test>
+      <test name="update target that was added in a future rev" id="23" result="PASSED"></test>
+      <test name="update a nested wc in a read-only wc" id="24" result="PASSED"></test>
+      <test name="obstructed update alters WC properties" id="25" result="PASSED"></test>
+      <test name="update dir with xml-unsafe name" id="26" result="PASSED"></test>
+    </suite>
+  </server>
+</PythonTests>
