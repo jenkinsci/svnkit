@@ -159,7 +159,7 @@ public class SVNEvent {
             SVNStatusType lstatus, SVNLock lock, String error) {
         myMimeType = mimetype;
         myErrorMessage = error;
-        myExpectedAction = expectedAction;
+        myExpectedAction = expectedAction != null ? expectedAction : action;
         myAction = action;
         myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
         myRevision = revision;
@@ -209,7 +209,7 @@ public class SVNEvent {
             SVNStatusType cstatus, SVNStatusType pstatus,
             SVNStatusType lstatus, SVNLock lock, String error) {
         myMimeType = mimetype;
-        myExpectedAction = expected;
+        myExpectedAction = expected != null ? expected : action;
         myErrorMessage = error;
         myAction = action;
         myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
