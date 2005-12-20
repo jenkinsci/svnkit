@@ -80,31 +80,6 @@ via the <code>http://</code> protocol:
 <p>
 When you call <code>DAVRepositoryFactory.setup()</code>, JavaSVN takes into use a default
 implementation of <code>IHTTPConnectionFactory</code> - <code>IHTTPConnectionFactory.DEFAULT</code>.
-Depending on use conditions this implementation can produce two kinds of <code>IHTTPConnection</code>
-implementations:
-<ul>
-<li>One that uses the jakarta Commons-HttpClient library - <code>CommonsHTTPConnection</code> 
-(<b>org.tmatesoft.svn.core.internal.io.dav.commons</b>).
-<li>Another one - <code>DefaultHTTPConnection</code> (<b>org.tmatesoft.svn.core.internal.io.dav</b>) -  a JavaSVN default HTTP connection
-implementation.
-</ul>
-</p>
-<h4>Differences between DefaultHTTPConnection and CommonsHTTPConnection</h4>
-<code>CommonsHTTPConnection</code> uses the <a href="http://jakarta.apache.org/commons/httpclient/">Commons-HttpClient</a> (apache's jakarta project)
-library which is a thorough realization of the HTTP protocol that implements all specifications
-and features of the protocol. Meanwhile using <code>DefaultHTTPConnection</code> you may
-probably experience problems with some servers. Thus, of the two implementations <code>CommonsHTTPConnection</code> is
-the one that is more stable and safe in usage with the <code>http://</code> protocol.
-<h4>Switching between JavaSVN implementations of IHTTPConnection</h4>
-<code>CommonsHTTPConnection</code> is optional and not used by default. Instead <code>IHTTPConnectionFactory.DEFAULT</code> 
-provides <code>DefaultHTTPConnection</code> instances. To switch to using <code>CommonsHTTPConnection</code> you should:
-<ol>
-<li>place the commons-httpclient and commons-codec jar archive files onto your classpath (these archives are distributed along with the 
-JavaSVN builds, also they can be found in the <code>'contrib/httpclient'</code> directory of the
-JavaSVN project),
-<li>set the system property <code>"javasvn.httpclient"</code> to <code>"jakarta"</code> (see
-the IHTTPConnectionFactory source code for details).
-</ol>
 <br />
 <br />
 <p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
