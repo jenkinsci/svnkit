@@ -32,6 +32,7 @@ import javax.net.ssl.X509TrustManager;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
+import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
@@ -182,6 +183,11 @@ public class SVNSocketFactory {
             return context;
         }
         public void acknowledgeSSLContext(boolean accepted, String errorMessage) {
+        }
+        public boolean isClientCertPromptRequired() {
+            return false;
+        }
+        public void setClientAuthentication(SVNSSLAuthentication sslAuthentication) {
         }
     };
 

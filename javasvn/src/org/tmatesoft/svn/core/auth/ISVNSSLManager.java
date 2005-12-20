@@ -15,6 +15,8 @@ import java.io.IOException;
 
 import javax.net.ssl.SSLContext;
 
+import org.tmatesoft.svn.core.SVNURL;
+
 /**
  * The <b>ISVNSSLManager</b> interface is intended for 
  * creating secure SSL contexts over sockets used for data i/o. 
@@ -50,6 +52,7 @@ import javax.net.ssl.SSLContext;
  * @see     ISVNAuthenticationManager
  */
 public interface ISVNSSLManager {
+    
     /**
      * Returns an SSL context for the appropriate authentiation realm. 
      * 
@@ -57,6 +60,17 @@ public interface ISVNSSLManager {
      * @throws IOException  if an i/o error occurred
      */
     public SSLContext getSSLContext() throws IOException;
+    
+    /**
+     * @return true if user should be prompted for client certificate
+     */
+    public boolean isClientCertPromptRequired();
+    
+    
+    /**
+     * Sets client authentication that will be used in SSLContext. 
+     */
+    public void setClientAuthentication(SVNSSLAuthentication sslAuthentication);
     
     /**
      * Accepts this SSL context if authentication has succeeded or 

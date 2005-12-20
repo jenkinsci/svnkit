@@ -186,6 +186,9 @@ public interface ISVNAuthenticationManager {
      */
     public void setRuntimeStorage(ISVNAuthenticationStorage storage);
     
+    /**
+     * @deprecated
+     */
     public boolean isAuthenticationForced();
 
 }

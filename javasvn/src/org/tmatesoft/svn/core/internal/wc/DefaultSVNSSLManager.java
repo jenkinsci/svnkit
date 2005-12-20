@@ -37,10 +37,8 @@ import javax.net.ssl.X509TrustManager;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNSSLManager;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 
@@ -132,7 +130,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
 
     public SSLContext getSSLContext() throws IOException {
         try {
-            SSLContext context = SSLContext.getInstance("TLS");
+            SSLContext context = SSLContext.getInstance("SSLv3");
             context.init(getKeyManagers(), new TrustManager[] {new X509TrustManager() { 
                 public X509Certificate[] getAcceptedIssuers() {
                     init();
@@ -183,6 +181,11 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
     }
 
     public void acknowledgeSSLContext(boolean accepted, String errorMessage) {
+        if (!accepted) {
+            myIsKeyManagerCreated = false;
+            myKeyManagers = null;
+            myTrustedCerts = null;
+        }
     }
     
     private int getServerCertificateFailures(X509Certificate cert) {
@@ -251,13 +254,6 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
             return myKeyManagers;
         }
         myIsKeyManagerCreated = true;
-        if (myIsPromptForClientCert) {
-            SVNAuthentication auth = myAuthManager.getAuthenticationProvider().requestClientAuthentication(ISVNAuthenticationManager.SSL, myURL, myRealm, null, null, myAuthManager.isAuthStorageEnabled());
-            if (auth instanceof SVNSSLAuthentication) {
-                myClientCertFile = ((SVNSSLAuthentication) auth).getCertificateFile();
-                myClientCertPassword = ((SVNSSLAuthentication) auth).getPassword();
-            }
-        }
         if (myClientCertFile == null) {
             return null;
         }
@@ -312,6 +308,19 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
         } finally {
             SVNFileUtil.closeFile(is);
         }
+    }
+
+    public boolean isClientCertPromptRequired() {
+        return myIsPromptForClientCert;
+    }
+
+    public void setClientAuthentication(SVNSSLAuthentication sslAuthentication) {
+        if (sslAuthentication != null) {
+            myClientCertFile = sslAuthentication.getCertificateFile();
+            myClientCertPassword = sslAuthentication.getPassword();
+        } else {
+            myClientCertFile = null;
+            myClientCertPassword = null;
+        }
     } 
-    
 }
