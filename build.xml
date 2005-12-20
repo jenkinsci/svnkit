@@ -7,18 +7,22 @@
         <property name="java.home" value="${env.JAVA_HOME}" />
     	<property name="eclipse.runtime" value="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.jar"/>    	
     	<property name="eclipse.runtime_323" value="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.v20051027.jar"/>
+    	<property name="eclipse.runtime_324" value="${eclipse.home}/plugins/org.eclipse.core.runtime_3.2.0.v20051208.jar"/>
     	<property name="eclipse.osgi_31" value="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0.jar"/>    	
     	<property name="eclipse.osgi_32" value="${eclipse.home}/plugins/org.eclipse.osgi_3.2.0.jar"/>    	
-    	<property name="eclipse.osgi_323" value="${eclipse.home}/plugins/org.eclipse.osgi_3.2.0.v20051030.jar "/>    	
+    	<property name="eclipse.osgi_323" value="${eclipse.home}/plugins/org.eclipse.osgi_3.2.0.v20051030.jar"/>    	
+    	<property name="eclipse.osgi_324" value="${eclipse.home}/plugins/org.eclipse.osgi_3.2.0.v20051212a.jar"/>    	
+    	<property name="eclipse.equinox_324" value="${eclipse.home}/plugins/org.eclipse.equinox.common_1.0.0.v20051205.jar"/>
         <property file="javasvn.build.properties"/>
     		
     	<condition property="eclipse.present">
     		<or>
             	<available file="${eclipse.runtime}" property="eclipse.runtime.jar"/>
             	<available file="${eclipse.runtime_323}" property="eclipse.runtime.jar"/>
+            	<available file="${eclipse.runtime_324}" property="eclipse.runtime.jar"/>
     		</or>
         </condition>
-
+    	
     	<condition property="os" value="windows">
             <os family="dos" />
         </condition>
@@ -39,9 +43,6 @@
             <pathelement location="contrib/ganymed/ganymed.jar" />
             <pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
-            <fileset dir="contrib/httpclient">
-                <include name="*.jar"/>
-            </fileset>
         </path>
 
         <javac debug="true" destdir="contrib/javahl/bin" srcdir="contrib/javahl/src">
@@ -64,12 +65,12 @@
             <pathelement path="contrib/sequence/bin" />
             <pathelement path="${eclipse.runtime}" />
             <pathelement path="${eclipse.runtime_323}" />
+            <pathelement path="${eclipse.runtime_324}" />
+            <pathelement path="${eclipse.equinox_324}" />
             <pathelement path="${eclipse.osgi_31}" />
             <pathelement path="${eclipse.osgi_32}" />
             <pathelement path="${eclipse.osgi_323}" />
-            <fileset dir="contrib/httpclient">
-                <include name="*.jar"/>
-            </fileset>
+            <pathelement path="${eclipse.osgi_324}" />
         </path>
         <javac debug="true"
                destdir="javasvn/bin"
@@ -99,9 +100,12 @@
             <pathelement path="build/lib/ganymed.jar" />
             <pathelement path="${eclipse.runtime}" />
             <pathelement path="${eclipse.runtime_323}" />
+            <pathelement path="${eclipse.runtime_324}" />
+            <pathelement path="${eclipse.equinox_324}" />
             <pathelement path="${eclipse.osgi_31}" />
             <pathelement path="${eclipse.osgi_32}" />
             <pathelement path="${eclipse.osgi_323}" />
+            <pathelement path="${eclipse.osgi_324}" />
         </path>
 
         <javac debug="true"
