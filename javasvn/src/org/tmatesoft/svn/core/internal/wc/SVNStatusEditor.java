@@ -57,6 +57,7 @@ public class SVNStatusEditor implements ISVNEditor {
     private DirectoryInfo myCurrentDirectory;
     private FileInfo myCurrentFile;
     private SVNStatus myAnchorStatus;
+    private boolean myTargetIsProcessed;
 
     public SVNStatusEditor(ISVNOptions globalOptions, SVNWCAccess wcAccess,
             ISVNStatusHandler handler, Map externals, boolean includeIgnored,
@@ -203,6 +204,13 @@ public class SVNStatusEditor implements ISVNEditor {
             if (myTarget != null) {
                 SVNStatus targetStatus = (SVNStatus) myCurrentDirectory.ChildrenStatuses.get(myTarget);
                 if (targetStatus != null) {
+                    // report target children only if target dir was not reported.
+                    if (!myTargetIsProcessed) {
+                        myTargetIsProcessed = true;
+                        if (targetStatus.getURL() != null && targetStatus.getKind() == SVNNodeKind.DIR) {
+                            reportStatus(myWCAccess.getTarget(), null, true, myIsRecursive);
+                        }
+                    }
                     if (isSendableStatus(targetStatus)) {
                         myHandler.handleStatus(targetStatus);
                     }
@@ -218,6 +226,7 @@ public class SVNStatusEditor implements ISVNEditor {
             // we are in target dir now and status is not descending.
             // parent is anchor and not null.
             if (myTarget != null) {
+                myTargetIsProcessed = true;
                 handleDirStatuses(myCurrentDirectory, false);
             }
         }
