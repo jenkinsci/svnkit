@@ -64,6 +64,11 @@ public class SVNUpdateEditor implements ISVNEditor {
         if (myTarget != null) {
             myTargetURL = SVNPathUtil.append(myTargetURL, SVNEncodingUtil.uriEncode(myTarget));
         }
+        if (mySwitchURL != null && entry != null && entry.getRepositoryRoot() != null) {
+            if (!mySwitchURL.startsWith(entry.getRepositoryRoot() + "/")) {
+                SVNErrorManager.error("svn: '" + mySwitchURL + "'\nis not the same repository as\n'" + entry.getRepositoryRoot() + "'");
+            }
+        }
         wcAccess.getTarget().getEntries().close();
 
         if ("".equals(myTarget)) {
