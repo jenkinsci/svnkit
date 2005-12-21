@@ -6,6 +6,7 @@ contrib/sequence/bin-test
 doc/examples/bin
 javasvn-eclipse/bin
 javasvn-test/bin
+javasvn-test/python-tests-log.xml
 javasvn-test/test.properties
 /javasvn.iws
 javasvn/bin
