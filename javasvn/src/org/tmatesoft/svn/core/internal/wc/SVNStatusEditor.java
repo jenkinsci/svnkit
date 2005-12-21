@@ -198,14 +198,11 @@ public class SVNStatusEditor implements ISVNEditor {
                 }
             }
             myCurrentDirectory.Parent.ChildrenStatuses.remove(myCurrentDirectory.Name);
-            myCurrentDirectory = myCurrentDirectory.Parent;
         } else if (myCurrentDirectory.Parent == null) {
+            // we are in anchor now.
             if (myTarget != null) {
                 SVNStatus targetStatus = (SVNStatus) myCurrentDirectory.ChildrenStatuses.get(myTarget);
                 if (targetStatus != null) {
-                    if (targetStatus.getURL() != null && targetStatus.getKind() == SVNNodeKind.DIR) {
-                        reportStatus(myWCAccess.getTarget(), null, true, myIsRecursive);
-                    }
                     if (isSendableStatus(targetStatus)) {
                         myHandler.handleStatus(targetStatus);
                     }
@@ -216,12 +213,15 @@ public class SVNStatusEditor implements ISVNEditor {
                     myHandler.handleStatus(myAnchorStatus);
                 }
                 myAnchorStatus = null;
-
             }
-            myCurrentDirectory = null;
         } else {
-            myCurrentDirectory = myCurrentDirectory.Parent;
+            // we are in target dir now and status is not descending.
+            // parent is anchor and not null.
+            if (myTarget != null) {
+                handleDirStatuses(myCurrentDirectory, false);
+            }
         }
+        myCurrentDirectory = myCurrentDirectory.Parent;
     }
 
     private void handleDirStatuses(DirectoryInfo dirInfo, boolean dirIsDeleted)
@@ -232,7 +232,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 public void handleStatus(SVNStatus status) {
                     if (oldHalder != null) {
                         if (status.getRemoteContentsStatus() != SVNStatusType.STATUS_ADDED) {                            
-                            status.setRemoteStatus(SVNStatusType.STATUS_DELETED);
+                            status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);
                         } 
                         oldHalder.handleStatus(status);
                     }
@@ -251,7 +251,7 @@ public class SVNStatusEditor implements ISVNEditor {
                 SVNEntry currentEntry = dir.getEntries().getEntry(name, false);
                 if (currentEntry != null
                         && !currentEntry.isScheduledForDeletion()) {
-                    status.setRemoteStatus(SVNStatusType.STATUS_MISSING);
+                    status.setContentsStatus(SVNStatusType.STATUS_MISSING);
                 }
             } else if (myIsRecursive && status.getURL() != null && status.getKind() == SVNNodeKind.DIR) {
                 String path = "".equals(dirInfo.Path) ? name : SVNPathUtil.append(dirInfo.Path, name);
@@ -738,7 +738,7 @@ public class SVNStatusEditor implements ISVNEditor {
                         && pContent != SVNStatusType.OBSTRUCTED
                         && pContent != SVNStatusType.STATUS_EXTERNAL
                         && parentStatus.getKind() == SVNNodeKind.DIR
-                        && (myIsRecursive || Parent == null)) {
+                        && (myIsRecursive || Parent == null || (!myIsRecursive && Parent.Parent == null))) {
                     // put children statuses into this dir map.
                     ISVNStatusHandler oldHandler = myHandler;
                     boolean oldRecursive = myIsRecursive;

@@ -543,7 +543,7 @@ public class SVNStatus {
      * 
      * @param statusType status type of the item's contents
      */
-    public void setRemoteStatus(SVNStatusType statusType) {
-        setRemoteStatus(statusType, null, null, null);
+    public void setContentsStatus(SVNStatusType statusType) {
+        myContentsStatus = statusType;
     }
 }

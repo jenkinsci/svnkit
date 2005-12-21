@@ -197,6 +197,8 @@ public class SVNStatusClient extends SVNBasicClient {
             SVNNodeKind kind = repos.checkPath("", -1);
             if (kind == SVNNodeKind.NONE) {
                 deletedInRepos[0] = true;
+                reportAll = true;
+                statusEditor = new SVNStatusEditor(getOptions(), wcAccess, realHandler, parentExternals, includeIgnored, reportAll, recursive);
             } else {
                 SVNRepository locksRepos = createRepository(url, false);
     

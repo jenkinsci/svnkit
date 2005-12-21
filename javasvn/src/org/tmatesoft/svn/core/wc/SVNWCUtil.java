@@ -23,7 +23,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * The <b>SVNWCUtil</b> is a utility class providing some common methods 
@@ -156,7 +155,6 @@ public class SVNWCUtil {
                     }
                 }
             } catch (Throwable e) {
-                SVNDebugLog.logInfo(e);
             } 
         }
         return new DefaultSVNAuthenticationManager(configDir, storeAuth, userName, password);
