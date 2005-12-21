@@ -144,13 +144,14 @@ public class SVNURL {
             return;
         }
         myHost = httpURL.getHost();
+        String httpPath = norlmalizeURLPath(httpURL.getPath());
         if (uriEncoded) {
             // autoencode it.
-            myEncodedPath = SVNEncodingUtil.autoURIEncode(httpURL.getPath());
+            myEncodedPath = SVNEncodingUtil.autoURIEncode(httpPath);
             SVNEncodingUtil.assertURISafe(myEncodedPath);
             myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
         } else {
-            myPath = httpURL.getPath();
+            myPath = httpPath;
             myEncodedPath = SVNEncodingUtil.uriEncode(myPath);
         }
         myUserName = httpURL.getUserInfo();
@@ -348,5 +349,18 @@ public class SVNURL {
         }
         url.append(path);
         return url.toString();
+    }
+    
+    private static String norlmalizeURLPath(String path) {
+        StringBuffer result = new StringBuffer(path.length());
+        for (int i = 0; i < path.length(); i++) {
+            char ch = path.charAt(i);
+            // skip '/1*[/]'
+            if (ch == '/' && result.length() > 0 && result.charAt(result.length() - 1) == '/') {
+                continue;
+            }
+            result.append(ch);
+        }
+        return result.toString();
     }
 } 
