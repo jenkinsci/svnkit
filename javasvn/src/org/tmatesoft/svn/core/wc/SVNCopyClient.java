@@ -458,8 +458,10 @@ public class SVNCopyClient extends SVNBasicClient {
                     newURL = newURL.appendPath(dstPath.getName(), false);
                     
                     addDir(dstParentAccess.getTarget(), dstPath.getName(), srcURL.toString(), revision);
+                    dstAccess.close(true);
                     dstAccess = createWCAccess(dstPath);
                     addDir(dstAccess.getTarget(), "", srcURL.toString(), revision);
+                    dstAccess.open(true, true);
                     updateCopiedDirectory(dstAccess.getTarget(), "", newURL.toString(), repositoryRootURL.toString(), null, -1);
                 } finally {
                     dstAccess.close(true);
