@@ -15,6 +15,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -144,7 +145,7 @@ public class SVNURL {
             return;
         }
         myHost = httpURL.getHost();
-        String httpPath = norlmalizeURLPath(httpURL.getPath());
+        String httpPath = norlmalizeURLPath(url, httpURL.getPath());
         if (uriEncoded) {
             // autoencode it.
             myEncodedPath = SVNEncodingUtil.autoURIEncode(httpPath);
@@ -351,15 +352,21 @@ public class SVNURL {
         return url.toString();
     }
     
-    private static String norlmalizeURLPath(String path) {
+    private static String norlmalizeURLPath(String url, String path) throws SVNException {
         StringBuffer result = new StringBuffer(path.length());
-        for (int i = 0; i < path.length(); i++) {
-            char ch = path.charAt(i);
-            // skip '/1*[/]'
-            if (ch == '/' && result.length() > 0 && result.charAt(result.length() - 1) == '/') {
+        for(StringTokenizer tokens = new StringTokenizer(path, "/"); tokens.hasMoreTokens();) {
+            String token = tokens.nextToken();
+            if ("".equals(token) || ".".equals(token)) {
                 continue;
+            } else if ("..".equals(token)) {
+                SVNErrorManager.error("svn: URL '" + url + "' contains a '..' element");
+            } else {
+                result.append("/");
+                result.append(token);
             }
-            result.append(ch);
+        }
+        if (!path.startsWith("/") && result.length() > 0) {
+            result = result.delete(0, 1);
         }
         return result.toString();
     }
