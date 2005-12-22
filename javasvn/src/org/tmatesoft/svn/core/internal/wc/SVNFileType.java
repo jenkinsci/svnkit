@@ -61,7 +61,7 @@ public class SVNFileType {
                 canonicalPath = file.getAbsolutePath();
             }
             if (!file.exists()) {
-                File[] children = file.getParentFile().listFiles();
+                File[] children = file.getParentFile() != null ? file.getParentFile().listFiles() : null;
                 for (int i = 0; children != null && i < children.length; i++) {
                     File child = children[i];
                     if (child.getName().equals(file.getName())) {
