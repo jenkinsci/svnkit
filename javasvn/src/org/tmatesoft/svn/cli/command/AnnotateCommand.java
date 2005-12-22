@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Date;
 
@@ -24,6 +25,9 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.xml.AbstractXMLHandler;
+import org.tmatesoft.svn.core.wc.xml.SVNXMLAnnotateHandler;
+import org.tmatesoft.svn.core.wc.xml.SVNXMLSerializer;
 
 /**
  * @author TMate Software Ltd.
@@ -49,17 +53,33 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
         if (endRevision == null || !endRevision.isValid()) {
             endRevision = SVNRevision.HEAD;
         }
+        ISVNAnnotateHandler handler = this;
+        SVNXMLSerializer serializer = null;
+        if (getCommandLine().hasArgument(SVNArgument.XML)) {
+            serializer = new SVNXMLSerializer(System.out);
+            handler = new SVNXMLAnnotateHandler(serializer);
+            if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
+                ((AbstractXMLHandler) handler).startDocument();
+            }
+        }
+        
         for(int i = 0; i < getCommandLine().getURLCount(); i++) {
             String url = getCommandLine().getURL(i);
             SVNRevision pegRevision = getCommandLine().getPegRevision(i);
+            if (serializer != null) {
+                ((SVNXMLAnnotateHandler) handler).startTarget(url);
+            }
             try {
-                logClient.doAnnotate(SVNURL.parseURIEncoded(url), pegRevision, startRevision, endRevision, this);
+                logClient.doAnnotate(SVNURL.parseURIEncoded(url), pegRevision, startRevision, endRevision, handler);
             } catch (SVNException e) {
                 if (e.getMessage() != null && e.getMessage().indexOf("binary") >= 0) {
                     out.println("Skipping binary file: '" + url + "'");
                 } else {
                     throw e;
                 }
+            }
+            if (serializer != null) {
+                ((SVNXMLAnnotateHandler) handler).endTarget();
             }
         }
         endRevision = parseRevision(getCommandLine());
@@ -69,14 +89,29 @@ public class AnnotateCommand extends SVNCommand implements ISVNAnnotateHandler {
         for(int i = 0; i < getCommandLine().getPathCount(); i++) {
             File path = new File(getCommandLine().getPathAt(i)).getAbsoluteFile();
             SVNRevision pegRevision = getCommandLine().getPathPegRevision(i);
+            if (serializer != null) {
+                ((SVNXMLAnnotateHandler) handler).startTarget(getCommandLine().getPathAt(i));
+            }
             try {
-                logClient.doAnnotate(path, pegRevision, startRevision, endRevision, this);
+                logClient.doAnnotate(path, pegRevision, startRevision, endRevision, handler);
             } catch (SVNException e) {
                 if (e.getMessage() != null && e.getMessage().indexOf("binary") >= 0) {
                     err.println("Skipping binary file: '" + SVNFormatUtil.formatPath(path) + "'");
                 } else {
                     throw e;
                 }
+            }
+            if (serializer != null) {
+                ((SVNXMLAnnotateHandler) handler).endTarget();
+            }
+        }
+        if (getCommandLine().hasArgument(SVNArgument.XML)) {
+            if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
+                ((AbstractXMLHandler) handler).endDocument();
+            }
+            try {
+                serializer.flush();
+            } catch (IOException e) {
             }
         }
     }

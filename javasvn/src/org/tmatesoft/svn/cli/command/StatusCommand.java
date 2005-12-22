@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
@@ -21,7 +22,10 @@ import org.tmatesoft.svn.cli.SVNCommandLine;
 import org.tmatesoft.svn.cli.SVNCommandStatusHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
+import org.tmatesoft.svn.core.wc.xml.SVNXMLSerializer;
+import org.tmatesoft.svn.core.wc.xml.SVNXMLStatusHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -52,20 +56,46 @@ public class StatusCommand extends SVNCommand {
         boolean ignored = getCommandLine().hasArgument(SVNArgument.NO_IGNORE);
         boolean quiet = getCommandLine().hasArgument(SVNArgument.QUIET);
 
-        getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
+        if (!getCommandLine().hasArgument(SVNArgument.XML)) {
+            getClientManager().setEventHandler(new SVNCommandEventProcessor(out, err, false));
+        }
         SVNStatusClient stClient = getClientManager().getStatusClient();
-        org.tmatesoft.svn.core.wc.ISVNStatusHandler handler = new SVNCommandStatusHandler(System.out, reportAll || showUpdates, reportAll, quiet, showUpdates);
+        ISVNStatusHandler handler = new SVNCommandStatusHandler(System.out, reportAll || showUpdates, reportAll, quiet, showUpdates);
+        SVNXMLSerializer serializer;
+        serializer = getCommandLine().hasArgument(SVNArgument.XML) ? new SVNXMLSerializer(System.out) : null;
+        if (serializer != null) {
+            handler = new SVNXMLStatusHandler(serializer);
+            if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
+                ((SVNXMLStatusHandler) handler).startDocument();
+            }
+        }
         boolean error = false;
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
               String path = getCommandLine().getPathAt(i);
               File file = new File(path).getAbsoluteFile();
+              if (serializer != null) {
+                  ((SVNXMLStatusHandler) handler).startTarget(new File(path));
+              }
+              long rev = -1;
               try {
-                stClient.doStatus(file, recursive, showUpdates, reportAll, ignored, handler);
+                rev = stClient.doStatus(file, recursive, showUpdates, reportAll, ignored, handler);
               } catch (SVNException e) {
                   SVNDebugLog.logInfo(e);
                   err.println(e.getMessage());
                   error = true;
               }
+              if (serializer != null) {
+                  ((SVNXMLStatusHandler) handler).endTarget(rev);
+              }
+        }
+        if (serializer != null) {
+            if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
+                ((SVNXMLStatusHandler) handler).endDocument();
+            }
+            try {
+                serializer.flush();
+            } catch (IOException e) {
+            }
         }
         if (error) {
             System.exit(1);

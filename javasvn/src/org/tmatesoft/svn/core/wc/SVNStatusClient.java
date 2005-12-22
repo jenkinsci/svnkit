@@ -121,10 +121,10 @@ public class SVNStatusClient extends SVNBasicClient {
      * @throws SVNException
      * @see	                    ISVNStatusHandler
      */
-    public void doStatus(File path, boolean recursive, boolean remote,
+    public long doStatus(File path, boolean recursive, boolean remote,
                          boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler)
             throws SVNException {
-        doStatus(path, recursive, remote, reportAll, includeIgnored, false,
+        return doStatus(path, recursive, remote, reportAll, includeIgnored, false,
                  handler);
     }
     

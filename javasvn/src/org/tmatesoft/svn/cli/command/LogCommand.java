@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -31,6 +32,9 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.xml.AbstractXMLHandler;
+import org.tmatesoft.svn.core.wc.xml.SVNXMLLogHandler;
+import org.tmatesoft.svn.core.wc.xml.SVNXMLSerializer;
 
 /**
  * @author TMate Software Ltd.
@@ -81,6 +85,15 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
             } catch (NumberFormatException nfe) {}
         }
         SVNLogClient logClient = getClientManager().getLogClient();
+        ISVNLogEntryHandler handler = this;
+        SVNXMLSerializer serializer = null;
+        if (getCommandLine().hasArgument(SVNArgument.XML)) {
+            serializer = new SVNXMLSerializer(System.out);
+            handler = new SVNXMLLogHandler(serializer);
+            if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
+                ((AbstractXMLHandler) handler).startDocument();
+            }                
+        }
         if (getCommandLine().hasURLs()) {
             String url = getCommandLine().getURL(0);
             Collection targets = new ArrayList();
@@ -88,16 +101,24 @@ public class LogCommand extends SVNCommand implements ISVNLogEntryHandler {
                 targets.add(getCommandLine().getPathAt(i));
             }
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);
-            logClient.doLog(SVNURL.parseURIEncoded(url), paths, SVNRevision.UNDEFINED, startRevision ,endRevision, stopOnCopy, myReportPaths, limit, this);
+            logClient.doLog(SVNURL.parseURIEncoded(url), paths, SVNRevision.UNDEFINED, startRevision ,endRevision, stopOnCopy, myReportPaths, limit, handler);
         } else if (getCommandLine().hasPaths()) {
             Collection targets = new ArrayList();
             for(int i = 0; i < getCommandLine().getPathCount(); i++) {
                 targets.add(new File(getCommandLine().getPathAt(i)).getAbsoluteFile());
             }
             File[] paths = (File[]) targets.toArray(new File[targets.size()]);
-            logClient.doLog(paths, startRevision ,endRevision, stopOnCopy, myReportPaths, limit, this);
+            logClient.doLog(paths, startRevision ,endRevision, stopOnCopy, myReportPaths, limit, handler);
         }
-        if (myHasLogEntries) {
+        if (getCommandLine().hasArgument(SVNArgument.XML)) {
+            if (!getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
+                ((AbstractXMLHandler) handler).endDocument();
+            }
+            try {
+                serializer.flush();
+            } catch (IOException e) {
+            }
+        } else if (myHasLogEntries) {
             myPrintStream.print(SEPARATOR);
             myPrintStream.flush();
         }
