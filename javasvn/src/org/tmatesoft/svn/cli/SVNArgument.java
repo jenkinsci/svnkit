@@ -46,6 +46,7 @@ public abstract class SVNArgument {
     public static final SVNArgument NEW = createStringArgument(new String[] {"--new"});
     public static final SVNArgument NO_AUTH_CACHE = createUnaryArgument(new String[] {"--no-auth-cache"});
     public static final SVNArgument FORCE = createUnaryArgument(new String[] { "--force" });
+    public static final SVNArgument FORCE_LOG = createUnaryArgument(new String[] { "--force-log" });
     public static final SVNArgument FILE = createStringArgument(new String[] { "-F" });
     public static final SVNArgument EDITOR_CMD = createStringArgument(new String[] { "--editor-cmd" });
     public static final SVNArgument STRICT = createUnaryArgument(new String[] { "--strict" });
@@ -88,6 +89,7 @@ public abstract class SVNArgument {
         ourArguments.add(SVNArgument.MESSAGE);
         ourArguments.add(SVNArgument.REVISION);
         ourArguments.add(SVNArgument.FORCE);
+        ourArguments.add(SVNArgument.FORCE_LOG);
         ourArguments.add(SVNArgument.FILE);
         ourArguments.add(SVNArgument.EDITOR_CMD);
         ourArguments.add(SVNArgument.STRICT);

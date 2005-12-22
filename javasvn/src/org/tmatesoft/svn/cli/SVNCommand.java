@@ -45,6 +45,7 @@ public abstract class SVNCommand {
 
     private static Map ourCommands;
     private static Set ourPegCommands;
+    private static HashSet ourForceLogCommands;
     
     private boolean myIsStoreCreds;
     private SVNClientManager myClientManager;
@@ -144,8 +145,18 @@ public abstract class SVNCommand {
     }
 
     public static boolean hasPegRevision(String commandName) {
+        String fullName = getFullCommandName(commandName);
+        return fullName != null && ourPegCommands.contains(fullName);
+    }
+
+    public static boolean isForceLogCommand(String commandName) {
+        String fullName = getFullCommandName(commandName);
+        return fullName != null && ourForceLogCommands.contains(fullName);
+    }
+
+    private static String getFullCommandName(String commandName) {
         if (commandName == null) {
-            return false;
+            return null;
         }
         String fullName = null;
         for (Iterator keys = ourCommands.keySet().iterator(); keys.hasNext();) {
@@ -160,7 +171,7 @@ public abstract class SVNCommand {
                 break;
             }
         }
-        return fullName != null && ourPegCommands.contains(fullName);
+        return fullName;
     }
 
     protected static SVNRevision parseRevision(SVNCommandLine commandLine) {
@@ -239,8 +250,10 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "annotate", "blame", "praise", "ann" }, "org.tmatesoft.svn.cli.command.AnnotateCommand");
         
         ourPegCommands = new HashSet();
-        ourPegCommands.addAll(Arrays.asList(
-                new String[] {"cat", "annotate", "checkout", "diff", "export", "info", "ls", "merge", "propget", "proplist"}));
+        ourPegCommands.addAll(Arrays.asList(new String[] {"cat", "annotate", "checkout", "diff", "export", "info", "ls", "merge", "propget", "proplist"}));
+
+        ourForceLogCommands = new HashSet();
+        ourForceLogCommands.addAll(Arrays.asList(new String[] {"commit", "copy", "delete", "import", "mkdir", "move", "lock"}));
     }
 
     protected static int getLinesCount(String str) {
