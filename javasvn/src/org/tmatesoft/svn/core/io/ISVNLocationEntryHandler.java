@@ -12,6 +12,8 @@
 
 package org.tmatesoft.svn.core.io;
 
+import org.tmatesoft.svn.core.SVNException;
+
 /**
  * This public interface should be implemented for using within 
  * {@link SVNRepository#getLocations(String, long, long[], ISVNLocationEntryHandler) 
@@ -30,6 +32,6 @@ public interface ISVNLocationEntryHandler {
      * @param locationEntry 	a location entry
      * @see 					SVNLocationEntry
      */
-    public void handleLocationEntry(SVNLocationEntry locationEntry);
+    public void handleLocationEntry(SVNLocationEntry locationEntry) throws SVNException;
 
 }

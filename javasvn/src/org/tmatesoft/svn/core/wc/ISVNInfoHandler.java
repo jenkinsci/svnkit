@@ -10,6 +10,8 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import org.tmatesoft.svn.core.SVNException;
+
 /**
  * The <b>ISVNInfoHandler</b> interface should be implemented in order to
  * be further provided to some of <b>SVNWCClient</b>'s doInfo() methods
@@ -39,6 +41,6 @@ public interface ISVNInfoHandler {
      * 
      * @param info an object that contain's item's information details
      */
-    public void handleInfo(SVNInfo info);
+    public void handleInfo(SVNInfo info) throws SVNException;
 
 }

@@ -628,7 +628,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 
-    private void handleExternals(SVNWCAccess wcAccess) {
+    private void handleExternals(SVNWCAccess wcAccess) throws SVNException {
         for (Iterator externals = wcAccess.externals(); externals.hasNext();) {
             SVNExternalInfo external = (SVNExternalInfo) externals.next();
             if (external.getOldURL() == null && external.getNewURL() == null) {

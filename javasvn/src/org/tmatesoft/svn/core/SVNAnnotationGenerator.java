@@ -239,7 +239,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      *                       author & revision info
      * @param inputEncoding  a desired character set (encoding) of text lines
      */
-    public void reportAnnotations(ISVNAnnotateHandler handler, String inputEncoding) {
+    public void reportAnnotations(ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
         if (myLines == null || handler == null) {
             return;
         }

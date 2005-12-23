@@ -257,7 +257,7 @@ class DAVRepository extends SVNRepository {
             if (handler != null) {
                 final int parentPathSegments = SVNPathUtil.getSegmentsCount(path);
                 myConnection.doPropfind(path, 1, null, null, new IDAVResponseHandler() {
-                    public void handleDAVResponse(DAVResponse child) {
+                    public void handleDAVResponse(DAVResponse child) throws SVNException {
                         String href = child.getHref();
                         if (parentPathSegments == SVNPathUtil.getSegmentsCount(href)) {
                             return;

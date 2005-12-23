@@ -12,6 +12,8 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
+import org.tmatesoft.svn.core.SVNException;
+
 
 /**
  * @version 1.0
@@ -19,6 +21,6 @@ package org.tmatesoft.svn.core.internal.io.dav;
  */
 public interface IDAVResponseHandler {
     
-    public void handleDAVResponse(DAVResponse response);
+    public void handleDAVResponse(DAVResponse response) throws SVNException;
 
 }

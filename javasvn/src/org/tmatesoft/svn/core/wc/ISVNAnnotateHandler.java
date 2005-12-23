@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.wc;
 
 import java.util.Date;
 
+import org.tmatesoft.svn.core.SVNException;
+
 /**
  * The <b>ISVNAnnotateHandler</b> interface should be implemented to be further
  * provided to <b>SVNLogClient</b>'s <b>doAnnotate()</b> methods for processing
@@ -63,6 +65,6 @@ public interface ISVNAnnotateHandler {
      *                  {@link SVNLogClient#doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler) doAnnotate()}
      *                  was invoked)  
 	 */
-	public void handleLine(Date date, long revision, String author, String line);
+	public void handleLine(Date date, long revision, String author, String line) throws SVNException;
 
 }

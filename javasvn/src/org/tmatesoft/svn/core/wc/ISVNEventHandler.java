@@ -11,6 +11,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * The <b>ISVNEventHandler</b> interface should be implemented in
@@ -91,7 +92,7 @@ public interface ISVNEventHandler {
      * @param progress  currently reserved for future use; now it's value
      *                  is always set to {@link #UNKNOWN}
      */
-    public void handleEvent(SVNEvent event, double progress);
+    public void handleEvent(SVNEvent event, double progress) throws SVNException;
     
     /**
      * Checks if the current operation is cancelled (somehow interrupted)

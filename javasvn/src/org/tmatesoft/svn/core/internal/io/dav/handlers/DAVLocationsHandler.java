@@ -57,7 +57,7 @@ public class DAVLocationsHandler extends BasicDAVHandler {
 		init();
 	}
 	
-	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) {
+	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (parent == LOCATION_REPORT && element == LOCATION) {
             String revStr = attrs.getValue("rev");
             if (revStr != null) {

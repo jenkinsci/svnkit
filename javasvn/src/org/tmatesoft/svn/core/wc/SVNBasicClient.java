@@ -201,12 +201,12 @@ public class SVNBasicClient implements ISVNEventHandler {
         return myRepositoryPool;
     }
 
-    protected void dispatchEvent(SVNEvent event) {
+    protected void dispatchEvent(SVNEvent event) throws SVNException {
         dispatchEvent(event, ISVNEventHandler.UNKNOWN);
 
     }
 
-    protected void dispatchEvent(SVNEvent event, double progress) {
+    protected void dispatchEvent(SVNEvent event, double progress) throws SVNException {
         if (myEventDispatcher != null) {
             String path = "";
             if (!myPathPrefixesStack.isEmpty()) {
@@ -244,7 +244,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         SVNWCAccess wcAccess = SVNWCAccess.create(file);
         if (pathPrefix != null) {
             wcAccess.setEventDispatcher(new ISVNEventHandler() {
-                public void handleEvent(SVNEvent event, double progress) {
+                public void handleEvent(SVNEvent event, double progress) throws SVNException {
                     String fullPath = SVNPathUtil.append(pathPrefix, event.getPath());
                     event.setPath(fullPath);
                     dispatchEvent(event, progress);
@@ -267,7 +267,7 @@ public class SVNBasicClient implements ISVNEventHandler {
      * @param event       the current event
      * @param progress    progress state (from 0 to 1)
      */
-    public void handleEvent(SVNEvent event, double progress) {
+    public void handleEvent(SVNEvent event, double progress) throws SVNException {
         dispatchEvent(event, progress);
     }
     

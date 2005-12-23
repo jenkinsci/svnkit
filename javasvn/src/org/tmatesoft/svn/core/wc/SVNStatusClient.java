@@ -183,7 +183,7 @@ public class SVNStatusClient extends SVNBasicClient {
         }
         final boolean[] deletedInRepos = new boolean[] {false};
         ISVNStatusHandler realHandler = new ISVNStatusHandler() {
-            public void handleStatus(SVNStatus status) {
+            public void handleStatus(SVNStatus status) throws SVNException {
                 if (deletedInRepos[0]) {
                     status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);
                 }

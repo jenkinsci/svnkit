@@ -65,7 +65,7 @@ public class SVNMerger {
             final ISVNEventHandler oldDispatcher = myWCAccess
                     .getEventDispatcher();
             myWCAccess.setEventDispatcher(new ISVNEventHandler() {
-                public void handleEvent(SVNEvent event, double progress) {
+                public void handleEvent(SVNEvent event, double progress) throws SVNException {
                     String eventPath = event.getPath();
                     eventPath = eventPath.replace(File.separatorChar, '/');
                     if (event.getPath().equals(path)) {

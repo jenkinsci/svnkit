@@ -375,7 +375,7 @@ class SVNReader {
             ']', '?', '*', '<' };
 
     private static Object[] reportResult(Object[] target, int index,
-            Object result, boolean multiple) {
+            Object result, boolean multiple) throws SVNException {
         // capacity
         if (target == null) {
             target = new Object[index + 1];

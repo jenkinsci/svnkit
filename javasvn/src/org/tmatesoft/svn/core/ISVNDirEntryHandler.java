@@ -26,6 +26,6 @@ public interface ISVNDirEntryHandler {
      * @param dirEntry 		a directory entry
      * @see 				SVNDirEntry 
      */
-    public void handleDirEntry(SVNDirEntry dirEntry); 
+    public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException; 
 
 }

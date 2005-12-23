@@ -13,8 +13,10 @@ package org.tmatesoft.svn.core.wc.xml;
 
 import java.util.Date;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -51,6 +53,7 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
             addAttribute(PATH_ATTR, pathOrURL);
             openTag(TARGET_TAG);
         } catch (SAXException e) {
+            SVNDebugLog.logError(e);
         }
     }
 
@@ -59,10 +62,11 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
         try {
             closeTag(TARGET_TAG);
         } catch (SAXException e) {
+            SVNDebugLog.logError(e);
         }
     }
 
-    public void handleLine(Date date, long revision, String author, String line) {
+    public void handleLine(Date date, long revision, String author, String line) throws SVNException {
         try {
             addAttribute(LINE_NUMBER_TAG, myLineNumber + "");
             openTag(ENTRY_TAG);
@@ -75,6 +79,8 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
             }
             closeTag(ENTRY_TAG);
         } catch (SAXException e) {
+            SVNDebugLog.logError(e);
+            throw new SVNException(e);
         } finally {
             myLineNumber++;
         }

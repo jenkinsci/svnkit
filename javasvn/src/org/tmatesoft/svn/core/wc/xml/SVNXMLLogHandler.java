@@ -53,6 +53,7 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
         try {
             sendToHandler(logEntry);
         } catch (SAXException e) {
+            throw new SVNException(e);
         }
     }
     

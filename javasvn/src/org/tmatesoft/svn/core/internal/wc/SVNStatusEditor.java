@@ -238,7 +238,7 @@ public class SVNStatusEditor implements ISVNEditor {
         final ISVNStatusHandler oldHalder = myHandler;
         if (dirIsDeleted) {
             myHandler = new ISVNStatusHandler() {
-                public void handleStatus(SVNStatus status) {
+                public void handleStatus(SVNStatus status) throws SVNException {
                     if (oldHalder != null) {
                         if (status.getRemoteContentsStatus() != SVNStatusType.STATUS_ADDED) {                            
                             status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);

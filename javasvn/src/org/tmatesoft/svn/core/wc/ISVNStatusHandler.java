@@ -10,6 +10,8 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import org.tmatesoft.svn.core.SVNException;
+
 /**
  * The <b>ISVNStatusHandler</b> interface should be implemented in order to
  * be further provided to some of <b>SVNStatusClient</b>'s doStatus() methods
@@ -39,5 +41,5 @@ public interface ISVNStatusHandler {
      * 
      * @param status  an object that contains per item status information
      */
-    public void handleStatus(SVNStatus status);
+    public void handleStatus(SVNStatus status) throws SVNException;
 }

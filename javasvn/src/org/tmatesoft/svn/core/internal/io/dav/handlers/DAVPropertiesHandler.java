@@ -12,6 +12,7 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVResponse;
 import org.tmatesoft.svn.core.internal.io.dav.DAVStatus;
@@ -63,7 +64,7 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
         }        
 	}
 
-	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
+	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == DAVElement.HREF) {
             if (parent == DAVElement.RESPONSE) {
                 myResponse.setHref(cdata.toString());

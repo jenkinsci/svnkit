@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.wc.xml;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -65,14 +66,16 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
             addAttribute(PATH_ATTR, path.getPath());
             openTag(TARGET_TAG);
         } catch (SAXException e) {
+            SVNDebugLog.logError(e);
         }
     }
 
-    public void handleStatus(SVNStatus status) {
+    public void handleStatus(SVNStatus status) throws SVNException {
         try {
             sendToHandler(status);
-        } catch (Throwable th) {
+        } catch (SAXException th) {
             SVNDebugLog.logError(th);
+            throw new SVNException(th);
         }
     }
     
@@ -86,6 +89,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
             }
             closeTag(TARGET_TAG);
         } catch (SAXException e) {
+            SVNDebugLog.logError(e);
         }
     }
     
@@ -154,12 +158,12 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
         }
         StringBuffer relativePath = new StringBuffer();
         // collect path till target is met, then prepend target.
-        char eol = File.separatorChar;
+        char pathSeparator = File.separatorChar;
         boolean targetMeet = false;
         if (!path.getAbsoluteFile().equals(myTargetPath.getAbsoluteFile())) {
             do {
                 if (relativePath.length() > 0) {
-                    relativePath.insert(0, eol);
+                    relativePath.insert(0, pathSeparator);
                 }
                 relativePath = relativePath.insert(0, path.getName());
                 path = path.getParentFile();
@@ -173,7 +177,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
 
         if (path != null) {
             if (relativePath.length() > 0) {
-                relativePath.insert(0, eol);
+                relativePath.insert(0, pathSeparator);
             }
             relativePath = relativePath.insert(0, myTargetPath.getPath());
         } else {
