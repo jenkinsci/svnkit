@@ -12,7 +12,9 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -20,6 +22,7 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNAnnotationGenerator;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -355,6 +358,7 @@ public class SVNLogClient extends SVNBasicClient {
      * @param  path           a WC item to get its repository location            
      * @param  pegRevision    a revision in which the item's URL is first looked up
      * @param  revision       a target revision
+     * @param  fetchLocks     fetch locks information from repository
      * @param  recursive      <span class="javakeyword">true</span> to
      *                        descend recursively (relevant for directories)    
      * @param  handler        a caller's directory entry handler (to process
@@ -362,13 +366,18 @@ public class SVNLogClient extends SVNBasicClient {
      * @throws SVNException 
      * @see                   #doList(SVNURL, SVNRevision, SVNRevision, boolean, ISVNDirEntryHandler)  
      */
-    public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
+    public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.BASE;
         }
         SVNRepository repos = createRepository(null, path, pegRevision, revision);
         long rev = getRevisionNumber(revision, repos, path);
-        doList(repos, rev, handler, recursive);
+        doList(repos, rev, handler, fetchLocks, recursive);
+    }
+
+    public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
+        doList(path, pegRevision, revision, false, recursive, handler);
+        
     }
     
     /**
@@ -385,6 +394,7 @@ public class SVNLogClient extends SVNBasicClient {
      * @param  url            a repository location to be "listed"
      * @param  pegRevision    a revision in which the item's URL is first looked up
      * @param  revision       a target revision
+     * @param  fetchLocks     fetch locks information from repository
      * @param  recursive      <span class="javakeyword">true</span> to
      *                        descend recursively (relevant for directories)    
      * @param  handler        a caller's directory entry handler (to process
@@ -392,7 +402,7 @@ public class SVNLogClient extends SVNBasicClient {
      * @throws SVNException
      * @see                   #doList(File, SVNRevision, SVNRevision, boolean, ISVNDirEntryHandler)   
      */
-    public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
+    public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
@@ -401,10 +411,35 @@ public class SVNLogClient extends SVNBasicClient {
         if (pegRev[0] < 0) {
             pegRev[0] = getRevisionNumber(revision, repos, null);
         }
-        doList(repos, pegRev[0], handler, recursive);
+        doList(repos, pegRev[0], handler, fetchLocks, recursive);
     }
 
-    private void doList(SVNRepository repos, long rev, ISVNDirEntryHandler handler, boolean recursive) throws SVNException {
+    public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
+        doList(url, pegRevision, revision, false, recursive, handler);
+    }
+
+    private void doList(SVNRepository repos, long rev, final ISVNDirEntryHandler handler, boolean fetchLocks, boolean recursive) throws SVNException {
+        final Map locksMap = new HashMap();
+        if (fetchLocks) {
+            SVNLock[] locks = new SVNLock[0];
+            try {
+                locks = repos.getLocks("");                
+            } catch (SVNException e) {}
+            
+            if (locks != null && locks.length > 0) {
+                SVNURL root = repos.getRepositoryRoot(true);
+                for (int i = 0; i < locks.length; i++) {
+                    String repositoryPath = locks[i].getPath();
+                    locksMap.put(root.appendPath(repositoryPath, false), locks[i]); 
+                }
+            }
+        }
+        ISVNDirEntryHandler nestedHandler = new ISVNDirEntryHandler() {
+            public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
+                dirEntry.setLock((SVNLock) locksMap.get(dirEntry.getURL()));
+                handler.handleDirEntry(dirEntry);
+            }
+        };
         if (repos.checkPath("", rev) == SVNNodeKind.FILE) {
             String name = SVNPathUtil.tail(repos.getLocation().getPath());
             SVNURL fileULR = repos.getLocation();
@@ -421,12 +456,12 @@ public class SVNLogClient extends SVNBasicClient {
             }
             if (fileEntry != null) {
                 fileEntry.setRelativePath(name);
-                handler.handleDirEntry(fileEntry);
+                nestedHandler.handleDirEntry(fileEntry);
             } else {
                 SVNErrorManager.error("svn: URL '" + fileULR + "' non-existent in that revision");
             }
         } else {
-            list(repos, "", rev, recursive, handler);
+            list(repos, "", rev, recursive, nestedHandler);
         }
     }
 
