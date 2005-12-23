@@ -788,11 +788,13 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (!"".equals(name)) {
             SVNEntry entry = dir.getEntries().getEntry(name, true);
             relocateEntry(entry, from, to, validatedURLs);
+            dir.getWCProperties(name).setPropertyValue(SVNProperty.WC_URL, null);
             dir.getEntries().save(true);
             return validatedURLs;
         }
         SVNEntry rootEntry = dir.getEntries().getEntry("", true);
         validatedURLs = relocateEntry(rootEntry, from, to, validatedURLs);
+        dir.getWCProperties("").setPropertyValue(SVNProperty.WC_URL, null);
         // now all child entries that doesn't has repos/url has new values.
         for(Iterator ents = dir.getEntries().entries(true); ents.hasNext();) {
             SVNEntry entry = (SVNEntry) ents.next();
@@ -808,6 +810,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
             }
             validatedURLs = relocateEntry(entry, from, to, validatedURLs);
+            dir.getWCProperties(entry.getName()).setPropertyValue(SVNProperty.WC_URL, null);
         }
         dir.getEntries().save(true);
         return validatedURLs;
