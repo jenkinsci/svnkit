@@ -777,7 +777,7 @@ public class SVNStatusEditor implements ISVNEditor {
             RemoteRevision = SVNRevision.UNDEFINED;
         }
 
-        public SVNURL getURL() {
+        public SVNURL getURL() throws SVNException {
             if (Name == null && myAnchorStatus != null) {
                 return myAnchorStatus.getURL();
             } else if (Parent != null) {

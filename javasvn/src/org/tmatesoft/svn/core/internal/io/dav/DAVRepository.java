@@ -249,6 +249,7 @@ class DAVRepository extends SVNRepository {
             openConnection();
             path = getFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
+            final String fullPath = path;
             if (revision != -2) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
                 path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
@@ -283,8 +284,9 @@ class DAVRepository extends SVNRepository {
                                 break;
                             }
                         }
-                        SVNDirEntry dirEntry = new SVNDirEntry(name, kind, size, hasProperties, lastRevision, date, author);
-                        
+                        SVNURL url = getLocation().setPath(fullPath, true);
+                        url = url.appendPath(name, false);
+                        SVNDirEntry dirEntry = new SVNDirEntry(url, name, kind, size, hasProperties, lastRevision, date, author);
                         handler.handleDirEntry(dirEntry);
                     }
                 });
@@ -319,6 +321,7 @@ class DAVRepository extends SVNRepository {
             openConnection();
             path = getFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
+            final String fullPath = path;
             if (revision >= 0) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
                 path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
@@ -330,7 +333,7 @@ class DAVRepository extends SVNRepository {
                     DAVElement.VERSION_NAME, DAVElement.GET_CONTENT_LENGTH, DAVElement.RESOURCE_TYPE, 
                     DAVElement.CREATOR_DISPLAY_NAME, DAVElement.CREATION_DATE};
             myConnection.doPropfind(path, 1, null, dirProperties, new IDAVResponseHandler() {
-                public void handleDAVResponse(DAVResponse child) {
+                public void handleDAVResponse(DAVResponse child) throws SVNException {
                     String href = child.getHref();
                     String name = "";
                     if (parentPathSegments != SVNPathUtil.getSegmentsCount(href)) {
@@ -347,11 +350,13 @@ class DAVRepository extends SVNRepository {
                     String author = (String) child.getPropertyValue(DAVElement.CREATOR_DISPLAY_NAME);
                     String dateStr = (String) child.getPropertyValue(DAVElement.CREATION_DATE);
                     Date date = dateStr != null ? SVNTimeUtil.parseDate(dateStr) : null;
+                    SVNURL url = getLocation().setPath(fullPath, true);
                     if ("".equals(name)) {
-                        parent[0] = new SVNDirEntry(name, kind, size, false, lastRevision, date, author);
+                        parent[0] = new SVNDirEntry(url, name, kind, size, false, lastRevision, date, author);
                         parentVCC[0] = (String) child.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
                     } else {
-                        entries.add(new SVNDirEntry(name, kind, size, false, lastRevision, date, author));
+                        url = url.appendPath(name, false);
+                        entries.add(new SVNDirEntry(url, name, kind, size, false, lastRevision, date, author));
                         vccs.add(child.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION));
                     }
                 }
@@ -736,12 +741,13 @@ class DAVRepository extends SVNRepository {
             openConnection();
             path = getFullPath(path);
             path = SVNEncodingUtil.uriEncode(path);
+            final String fullPath = path;
             if (revision >= 0) {
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, revision, false, true, null);
                 path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             }
             myConnection.doPropfind(path, 0, null, null, new IDAVResponseHandler() {
-                public void handleDAVResponse(DAVResponse child) {
+                public void handleDAVResponse(DAVResponse child) throws SVNException {
                     String href = child.getHref();
                     href = SVNEncodingUtil.uriDecode(href);
                     String name = SVNPathUtil.tail(href);
@@ -766,7 +772,8 @@ class DAVRepository extends SVNRepository {
                             break;
                         }
                     }
-                    result[0] = new SVNDirEntry(name, kind, size, hasProperties, lastRevision, date, author);
+                    SVNURL url = getLocation().setPath(fullPath, true);
+                    result[0] = new SVNDirEntry(url, name, kind, size, hasProperties, lastRevision, date, author);
                 }
             });
         } finally {

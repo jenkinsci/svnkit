@@ -317,7 +317,7 @@ public class WorkingCopy {
     private static ISVNEventHandler myUpdateEventHandler;
     private static ISVNEventHandler myWCEventHandler;
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SVNException {
         /*
          * Initializes the library (it must be done before ever using the library 
          * itself)

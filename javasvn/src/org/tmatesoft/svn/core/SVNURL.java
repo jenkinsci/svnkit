@@ -257,7 +257,7 @@ public class SVNURL {
      *                      otherwise 
      * @return              a new <b>SVNURL</b> representation
      */
-    public SVNURL appendPath(String segment, boolean uriEncoded) {
+    public SVNURL appendPath(String segment, boolean uriEncoded) throws SVNException {
         if (segment == null) {
             return this;
         }
@@ -273,12 +273,20 @@ public class SVNURL {
             path = SVNPathUtil.append(path, segment);
         }
         String url = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), path);
-        try {
-            return parseURIEncoded(url);
-        } catch (SVNException e) {
-            //
+        return parseURIEncoded(url);
+    }
+
+    public SVNURL setPath(String path, boolean uriEncoded) throws SVNException {
+        if (path == null || "".equals(path)) {
+            path = "/";
         }
-        return null;
+        if (!uriEncoded) {
+            path = SVNEncodingUtil.uriEncode(path);
+        } else {
+            path = SVNEncodingUtil.autoURIEncode(path);
+        }
+        String url = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), path);
+        return parseURIEncoded(url);
     }
     
     /**
@@ -287,15 +295,10 @@ public class SVNURL {
      * 
      * @return  a new <b>SVNURL</b> representation
      */
-    public SVNURL removePathTail() {
+    public SVNURL removePathTail() throws SVNException {
         String newPath = SVNPathUtil.removeTail(myPath);
         String url = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), newPath);
-        try {
-            return parseURIEncoded(url);
-        } catch (SVNException e) {
-            //
-        }
-        return null;
+        return parseURIEncoded(url);
     }
     /**
      * Compares this object with another one.

@@ -420,7 +420,7 @@ public class SVNLogClient extends SVNBasicClient {
                 }
             }
             if (fileEntry != null) {
-                fileEntry.setPath(name);
+                fileEntry.setRelativePath(name);
                 handler.handleDirEntry(fileEntry);
             } else {
                 SVNErrorManager.error("svn: URL '" + fileULR + "' non-existent in that revision");
@@ -437,7 +437,7 @@ public class SVNLogClient extends SVNBasicClient {
         for (Iterator iterator = entries.iterator(); iterator.hasNext();) {
             SVNDirEntry entry = (SVNDirEntry) iterator.next();
             String childPath = SVNPathUtil.append(path, entry.getName());
-            entry.setPath(childPath);
+            entry.setRelativePath(childPath);
             handler.handleDirEntry(entry);
             if (entry.getKind() == SVNNodeKind.DIR && entry.getDate() != null && recursive) {
                 list(repository, childPath, rev, recursive, handler);

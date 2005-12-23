@@ -45,7 +45,7 @@ public class SVNURLUtil {
         String path2 = url2.getPath();
         String commonPath = SVNPathUtil.getCommonPathAncestor(path1, path2);
         try {
-            return SVNURL.create(url1.getProtocol(), url1.getUserInfo(), url1.getHost(), url1.hasPort() ? url1.getPort() : -1, commonPath, false);
+            return url1.setPath(commonPath, false);
         } catch (SVNException e) {
         }
         return null;

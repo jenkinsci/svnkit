@@ -295,9 +295,9 @@ class SVNReader {
                 } else if (ch == '(') {
                     readChar(is, '(');
                 } else if (ch == 'd') {
-                    result = readDirEntry(is);//new RollbackInputStream(is));
+                    result = readDirEntry(is);
                 } else if (ch == 'f') {
-                    result = readStatEntry(is);//new RollbackInputStream(is));
+                    result = readStatEntry(is);
                 } else if (ch == 'e') {
                     if (editorBaton == null) {
                         editorBaton = new SVNEditModeReader();
@@ -651,7 +651,7 @@ class SVNReader {
         long revision = SVNReader.getLong(items, 4);
         Date date = items[5] != null ? SVNTimeUtil.parseDate(SVNReader.getString(items, 5)) : null;
         String author = SVNReader.getString(items, 6);
-        return new SVNDirEntry(name, kind, size, hasProps, revision, date, author);
+        return new SVNDirEntry(null, name, kind, size, hasProps, revision, date, author);
     }
 
     private static SVNDirEntry readStatEntry(InputStream is) throws SVNException {
@@ -663,7 +663,7 @@ class SVNReader {
         long revision = SVNReader.getLong(items, 3);
         Date date = items[4] != null ? SVNTimeUtil.parseDate(SVNReader.getString(items, 4)) : null;
         String author = SVNReader.getString(items, 5);
-        return new SVNDirEntry(null, kind, size, hasProps, revision, date, author);
+        return new SVNDirEntry(null, null, kind, size, hasProps, revision, date, author);
     }
 
     private static SVNLock readLock(InputStream is) throws SVNException {

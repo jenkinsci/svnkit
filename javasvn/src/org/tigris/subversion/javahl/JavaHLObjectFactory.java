@@ -236,9 +236,9 @@ public class JavaHLObjectFactory {
             return null;
         }
         return new DirEntry(
-                dirEntry.getPath() != null ? dirEntry.getPath() : dirEntry.getName(),
+                dirEntry.getRelativePath(),
                 getNodeKind(dirEntry.getKind()),
-                dirEntry.size(),
+                dirEntry.getSize(),
                 dirEntry.hasProperties(),
                 dirEntry.getRevision(),
                 dirEntry.getDate() != null ? dirEntry.getDate().getTime()*1000 : 0,

@@ -52,7 +52,7 @@ public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
     }
 
     public void handleDirEntry(SVNDirEntry dirEntry) {
-        myPrintStream.print(dirEntry.getPath());
+        myPrintStream.print(dirEntry.getRelativePath());
         if (dirEntry.getKind() == SVNNodeKind.DIR) {
             myPrintStream.print('/');
         }

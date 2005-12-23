@@ -119,8 +119,7 @@ public class DAVConnection {
             // remove relative part from the path
             rootPath = rootPath.substring(0, rootPath.length() - info.baselinePath.length());
             SVNURL location = repository.getLocation();
-            SVNURL url = SVNURL.create(location.getProtocol(), location.getUserInfo(), 
-                    location.getHost(), location.hasPort() ? location.getPort() : -1, rootPath, true);
+            SVNURL url = location.setPath(rootPath, true);
             repository.setRepositoryRoot(url);
         }
     }

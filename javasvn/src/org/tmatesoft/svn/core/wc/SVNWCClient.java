@@ -1564,7 +1564,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (e.getMessage().indexOf("Unknown command 'stat'") >= 0) {
                 // for svnserve older then 1.2.0
                 if (repos.getLocation().equals(repos.getRepositoryRoot(true))) {
-                    rootEntry = new SVNDirEntry("", SVNNodeKind.DIR, -1, false, -1, null, null);
+                    rootEntry = new SVNDirEntry(url, "", SVNNodeKind.DIR, -1, false, -1, null, null);
                 } else {
                     String name = SVNPathUtil.tail(url.getPath());
                     SVNURL location = repos.getLocation();
