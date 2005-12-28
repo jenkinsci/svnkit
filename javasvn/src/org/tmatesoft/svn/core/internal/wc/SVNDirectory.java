@@ -992,7 +992,7 @@ public class SVNDirectory {
             }
             return entry;
         } else if (entry != null && entry.getKind() != fileKind) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NODE_KIND_CHANGE, "Can't replace ''{0}'' with a node of different type;" +
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NODE_KIND_CHANGE, "Can''t replace ''{0}'' with a node of different type;" +
                     "commit the deletion, update the parent and then add ''{0}''", file);            
             SVNErrorManager.error(err);
         } else if (entry == null && SVNWCUtil.isVersionedDirectory(file)) {

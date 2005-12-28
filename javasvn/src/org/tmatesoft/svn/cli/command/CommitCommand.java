@@ -53,7 +53,7 @@ public class CommitCommand extends SVNCommand {
         if (editorCommand == null) {
             return;
         }
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_EDITOR, "Commit failed. Can't handle external editor " + editorCommand);
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_EDITOR, "Commit failed. Can''t handle external editor " + editorCommand);
         throw new SVNException(err);
     }
 }

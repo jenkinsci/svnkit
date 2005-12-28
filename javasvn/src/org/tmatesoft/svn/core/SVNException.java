@@ -28,6 +28,14 @@ public class SVNException extends Exception {
         this(new SVNErrorMessage[] {errorMessage == null ? SVNErrorMessage.UNKNOWN_ERROR_MESSAGE : errorMessage}, cause);
     }
 
+    public SVNException(SVNErrorMessage errorMessage) {
+        this(errorMessage, null);
+    }
+
+    public SVNException(SVNErrorMessage[] errorMessages) {
+        this(errorMessages, null);
+    }
+
     public SVNException(SVNErrorMessage[] errorMessages, Throwable cause) {
         super(cause);
         if (cause instanceof SVNException) {
@@ -35,14 +43,6 @@ public class SVNException extends Exception {
             errorMessages = append(errorMessages, nestedMessages);
         }
         myErrorMessages = errorMessages;
-    }
-
-    public SVNException(SVNErrorMessage errorMessage) {
-        this(errorMessage, null);
-    }
-
-    public SVNException(SVNErrorMessage[] errorMessages) {
-        this(errorMessages, null);
     }
     
     public SVNErrorMessage getErrorMessage() {
