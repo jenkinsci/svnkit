@@ -15,6 +15,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
@@ -62,15 +64,15 @@ public class SVNGanymedConnector implements ISVNConnector {
                     repository.setExternalUserName(authentication.getUserName());
                     break;
                 } catch (SVNAuthenticationException e) {
-                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getMessage(), authentication);
+                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getErrorMessage(), authentication);
                     authentication = (SVNSSHAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
                     connection = null;
                 }
             }
             if (authentication == null) {
-                throw new SVNAuthenticationException("svn: Authenticantion cancelled");
+                SVNErrorManager.cancel("authentication cancelled");
             } else if (connection == null) {
-                SVNErrorManager.error("svn: Connection to '" + realm + "' failed");
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Can not establish connection with to ''{0}''", realm));
             }
             try {
                 mySession = connection.openSession();

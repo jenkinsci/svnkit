@@ -35,6 +35,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
@@ -181,7 +182,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
         }            
     }
 
-    public void acknowledgeSSLContext(boolean accepted, String errorMessage) {
+    public void acknowledgeSSLContext(boolean accepted, SVNErrorMessage errorMessage) {
         if (!accepted) {
             myIsKeyManagerCreated = false;
             myKeyManagers = null;

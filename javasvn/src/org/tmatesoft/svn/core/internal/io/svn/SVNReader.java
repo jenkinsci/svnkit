@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.io.svn;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -25,10 +26,13 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -160,10 +164,6 @@ class SVNReader {
      */
 
     public static Object[] parse(InputStream is, String templateStr, Object[] target) throws SVNException {
-        if (!is.markSupported()) {
-            throw new SVNException(
-                    "SVNReader works only with markable input streams");
-        }
         if (target != null) {
             for (int i = 0; i < target.length; i++) {
                 if (target[i] instanceof Collection || target[i] instanceof Map
@@ -188,14 +188,12 @@ class SVNReader {
             ch = Character.toLowerCase(ch);
             if (optional) {
                 // cardinality
-                char next = i + 1 < template.length() ? template.charAt(i + 1)
-                        : '<';
+                char next = i + 1 < template.length() ? template.charAt(i + 1) : '<';
                 doRead = Character.isUpperCase(next)
                         && !isListed(INVALID_CARDINALITY_SUBJECTS, next);
                 next = Character.toLowerCase(next);
                 if (isListed(INVALID_CARDINALITY_SUBJECTS, next)) {
-                    throw new SVNException("malformed template '" + templateStr
-                            + "' invalid type after cardinality: " + next);
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed template data, ''{0}''", templateStr));
                 }
                 i++;
                 ch = next;
@@ -259,36 +257,21 @@ class SVNReader {
                     String word = readWord(is);
                     if ("failure".equals(word)) {
                         // read errors and throw
-                        unconditionalThrow = true;
                         readChar(is, '(');
-                        StringBuffer errorMessage = new StringBuffer();
+                        List errorMessages = new ArrayList();
                         try {
+                            is.mark(0x100);
                             while (true) {
-                                is.mark(0x5);
-                                if (errorMessage.length() > 0) {
-                                    errorMessage.append("\n");
-                                }
-                                errorMessage.append(readError(is));
+                                errorMessages.add(readError(is));
                             }
                         } catch (SVNException e) {
-                            try {
-                                is.reset();
-                                readChar(is, ')');
-                                readChar(is, ')');
-                            } catch (IOException e1) {
-                                //
-                            } catch (SVNException e2) {
-                                //
-                            }
+                            is.reset();
+                            readChar(is, ')');
+                            readChar(is, ')');
                         }
-                        String message = "svn: " + (errorMessage.length() == 0 ? 
-                                "svnserve reported an error"
-                                : errorMessage.toString());
-                        throw new SVNException(message);
+                        SVNErrorManager.error(errorMessages);
                     } else if (!"success".equals(word)) {
-                        throw new SVNException(
-                                "network data doesn't match template, 'success' or 'failure' expected, '"
-                                        + word + "' read");
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Unknown status ''{0}'' in command response", word));
                     }
                 } else if (ch == ')' || ch == ']') {
                     readChar(is, ')');
@@ -302,12 +285,13 @@ class SVNReader {
                     if (editorBaton == null) {
                         editorBaton = new SVNEditModeReader();
                         if (target[targetIndex] instanceof ISVNEditor) {
-                            editorBaton.setEditor((ISVNEditor) target[targetIndex]);
+                            editorBaton
+                                    .setEditor((ISVNEditor) target[targetIndex]);
                         }
                     }
                     readChar(is, '(');
                     String commandName = readWord(is);
-                    boolean hasMore;
+                    boolean hasMore = false;
                     try {
                         hasMore = editorBaton.processCommand(commandName, is);
                     } catch (Throwable th) {
@@ -316,7 +300,7 @@ class SVNReader {
                         if (th instanceof SVNException) {
                             throw ((SVNException) th);
                         }
-                        throw new SVNException(th);
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, th.getMessage()), th);
                     }
                     if (!"textdelta-chunk".equals(commandName)) {
                         readChar(is, ')');
@@ -327,9 +311,7 @@ class SVNReader {
                 } else if (ch == 'x') {
                     String word = readWord(is);
                     if (!"done".equals(word)) {
-                        throw new SVNException(
-                                "netword data doesn't match template, 'done' was expected, but '"
-                                        + word + "' read.");
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, 'done' expected"));
                     }
                 } else if (ch == 'l') {
                     result = readLock(is);//new RollbackInputStream(is));
@@ -358,6 +340,8 @@ class SVNReader {
                 } else {
                     throw e;
                 }
+            } catch (IOException ioException) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, ioException.getMessage()));
             }
         }
         if (target == null) {
@@ -374,8 +358,7 @@ class SVNReader {
     private static final char[] INVALID_CARDINALITY_SUBJECTS = { '(', ')', '[',
             ']', '?', '*', '<' };
 
-    private static Object[] reportResult(Object[] target, int index,
-            Object result, boolean multiple) throws SVNException {
+    private static Object[] reportResult(Object[] target, int index, Object result, boolean multiple) throws SVNException {
         // capacity
         if (target == null) {
             target = new Object[index + 1];
@@ -433,8 +416,7 @@ class SVNReader {
         return target;
     }
 
-    private static StringBuffer normalizeTemplate(String template)
-            throws SVNException {
+    private static StringBuffer normalizeTemplate(String template) throws SVNException {
         StringBuffer sb = new StringBuffer(template.length());
         for (int i = 0; i < template.length(); i++) {
             char ch = template.charAt(i);
@@ -446,8 +428,7 @@ class SVNReader {
                 sb.append(ch);
                 continue;
             }
-            throw new SVNException("malformed template' " + template
-                    + "' invalid char: " + ch);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Template ''{0}'' is not valid", template));
         }
         return sb;
     }
@@ -461,146 +442,107 @@ class SVNReader {
         return false;
     }
 
-    private static char skipWhitespace(InputStream is) throws SVNException {
-        try {
-            while (true) {
-                char read = (char) is.read();
-                if (Character.isWhitespace(read)) {
-                    continue;
-                }
-                return read;
+    private static char skipWhitespace(InputStream is) throws IOException {
+        while (true) {
+            char read = (char) is.read();
+            if (Character.isWhitespace(read)) {
+                continue;
             }
-        } catch (IOException e) {
-            throw new SVNException(e);
+            return read;
         }
     }
 
-    private static byte[] readStringAsBytes(InputStream is) throws SVNException {
+    private static byte[] readStringAsBytes(InputStream is) throws IOException, SVNException {
         int length = readStringLength(is);
         return readBytes(is, length, null);
     }
 
-    private static String readString(InputStream is) throws SVNException {
+    private static String readString(InputStream is) throws IOException, SVNException {
         int length = readStringLength(is);
-        try {
-            return new String(readBytes(is, length, null), 0, length, "UTF-8");
-        } catch (IOException e) {
-            throw new SVNException(e);
-        }
+        return new String(readBytes(is, length, null), 0, length, "UTF-8");
     }
 
-    private static int readStringLength(InputStream is) throws SVNException {
+    private static int readStringLength(InputStream is) throws IOException, SVNException {
         char ch = skipWhitespace(is);
         int length = 0;
         while (Character.isDigit(ch)) {
             length *= 10;
             length += (ch - '0');
-            try {
-                ch = (char) is.read();
-            } catch (IOException e) {
-                throw new SVNException(e);
-            }
+            ch = (char) is.read();
         }
         if (ch == ':') {
             return length;
         }
-        throw new SVNException(
-                "network data doesn't match template, can't read string length.");
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, string length expected"));
+        return -1;
     }
 
-    private static int readNumber(InputStream is) throws SVNException {
+    private static int readNumber(InputStream is) throws IOException, SVNException {
         char ch = skipWhitespace(is);
         int length = 0;
         while (Character.isDigit(ch)) {
             length *= 10;
             length += (ch - '0');
-            try {
-                ch = (char) is.read();
-            } catch (IOException e) {
-                throw new SVNException(e);
-            }
+            ch = (char) is.read();
         }
         if (Character.isWhitespace(ch)) {
             return length;
         }
-        throw new SVNException(
-                "network data doesn't match template, can't read number.");
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, number expected"));
+        return -1;
     }
 
-    private static String readWord(InputStream is) throws SVNException {
+    private static String readWord(InputStream is) throws IOException, SVNException {
         char ch = skipWhitespace(is);
         StringBuffer buffer = new StringBuffer();
         int count = 0;
         while (true) {
-            try {
-                if (Character.isWhitespace(ch)) {
-                    break;
-                }
-                if (count == 0 && !Character.isLetter(ch)) {
-                    throw new SVNException(
-                            "network data doesn't match template, invalid word start: "
-                                    + ch);
-                } else if (count > 0
-                        && !(Character.isLetterOrDigit(ch) || ch == '-')) {
-                    throw new SVNException(
-                            "network data doesn't match template, invalid word symbol: "
-                                    + ch);
-                }
-                buffer.append(ch);
-                count++;
-                ch = (char) is.read();
-            } catch (IOException e) {
-                throw new SVNException(e);
+            if (Character.isWhitespace(ch)) {
+                break;
             }
+            if (count == 0 && !Character.isLetter(ch)) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data"));
+            } else if (count > 0
+                    && !(Character.isLetterOrDigit(ch) || ch == '-')) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data"));
+            }
+            buffer.append(ch);
+            count++;
+            ch = (char) is.read();
         }
         return buffer.toString();
     }
 
-    private static boolean readBoolean(InputStream is) throws SVNException {
+    private static boolean readBoolean(InputStream is) throws IOException, SVNException {
         String word = readWord(is);
         if ("true".equalsIgnoreCase(word)) {
             return true;
         } else if ("false".equalsIgnoreCase(word)) {
             return false;
         }
-        throw new SVNException(
-                "network data doesn't match template, can't read boolean.");
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, 'true' or 'false' expected"));
+        return false;
     }
 
-    private static void readChar(InputStream is, char test) throws SVNException {
+    private static void readChar(InputStream is, char test) throws IOException, SVNException {
         char ch = skipWhitespace(is);
         if (ch != test) {
             if (ch < 0) {
-                throw new SVNException("no more data to read");
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
             }
-            throw new SVNException(
-                    "network data doesn't match template, expected " + test
-                            + ", read " + ch + " (" + ((int) ch) + ")");
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data"));
         }
     }
 
-    private static byte[] readBytes(InputStream is, int length, byte[] buffer)
-            throws SVNException {
+    private static byte[] readBytes(InputStream is, int length, byte[] buffer) throws IOException {
         if (buffer == null || buffer.length < length) {
             buffer = new byte[length];
         }
-        int offset = 0;
-        try {
-            while (offset < length) {
-                int r = is.read(buffer, offset, length - offset);
-                if (r <= 0) {
-                    throw new SVNException("svn: Input/Output error while receiving svndiff delta window");
-                }
-                offset += r;
-            }
-        } catch (IOException e) {
-            throw new SVNException(e);
-        }
+        is.read(buffer, 0, length);
         return buffer;
     }
 
-    private static InputStream createDelegatingStream(final InputStream source)
-            throws SVNException {
+    private static InputStream createDelegatingStream(final InputStream source) throws IOException, SVNException {
         int length = readStringLength(source);
         final int[] counter = new int[] { length };
         return new InputStream() {
@@ -614,31 +556,16 @@ class SVNReader {
         };
     }
 
-    private static String readError(InputStream is) throws SVNException {
-        InputStream pis = is;//new RollbackInputStream(is);
+    private static SVNErrorMessage readError(InputStream is) throws IOException, SVNException {
+        InputStream pis = is;
         readChar(pis, '(');
-        try {
-            pis.mark(0x20);
-            readNumber(pis);
-        } catch (SVNException e) {
-            try {
-                pis.reset();
-            } catch (IOException e1) {
-            }
-        }
+        int code = readNumber(pis);
         String errorMessage = readString(pis);
-        try {
-            pis.mark(0x100);
-            readString(pis);
-            readNumber(pis);
-        } catch (SVNException e) {
-            try {
-                pis.reset();
-            } catch (IOException e1) {
-            }
-        }
+        readString(pis);
+        readNumber(pis);
         readChar(pis, ')');
-        return errorMessage;
+        SVNErrorCode errorCode = SVNErrorCode.getErrorCode(code);        
+        return SVNErrorMessage.create(errorCode, errorMessage);
     }
 
     private static SVNDirEntry readDirEntry(InputStream is) throws SVNException {

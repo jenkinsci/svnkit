@@ -414,7 +414,11 @@ public class JavaHLObjectFactory {
     }
 
     public static void throwException(SVNException e) throws ClientException {
-        ClientException ec = new ClientException(e.getMessage(), "", 0);
+        int code = 0;
+        if (e.getErrorMessage() != null) {
+            code = e.getErrorMessage().getErrorCode().getCode();
+        }
+        ClientException ec = new ClientException(e.getMessage(), "", code);
         SVNDebugLog.logInfo(ec);
         SVNDebugLog.logInfo(e);
         throw ec;

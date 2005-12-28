@@ -15,6 +15,7 @@ import java.io.IOException;
 
 import javax.net.ssl.SSLContext;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 
 /**
@@ -83,5 +84,5 @@ public interface ISVNSSLManager {
      *                      <span class="javakeyword">false</span>
      * @param errorMessage  the reason of the authentication failure
      */
-    public void acknowledgeSSLContext(boolean accepted, String errorMessage);
+    public void acknowledgeSSLContext(boolean accepted, SVNErrorMessage errorMessage);
 }

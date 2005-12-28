@@ -10,6 +10,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.util.Collection;
+
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -39,6 +41,11 @@ public class SVNErrorManager {
 
     public static void authenticationFailed(String message, Object messageObject) throws SVNException {
         throw new SVNAuthenticationException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, message, messageObject));
+    }
+    
+    public static void error(Collection errorMessage) throws SVNException {
+        SVNErrorMessage[] errorMessages = (SVNErrorMessage[]) errorMessage.toArray(new SVNErrorMessage[errorMessage.size()]);
+        throw new SVNException(errorMessages);
     }
     
     public static void error(SVNErrorMessage err) throws SVNException {

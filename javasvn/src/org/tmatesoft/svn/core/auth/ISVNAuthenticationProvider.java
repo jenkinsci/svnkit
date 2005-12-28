@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.auth;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 
 /**
@@ -72,7 +73,7 @@ public interface ISVNAuthenticationProvider {
      * @return                  a next user credential
      */
     public SVNAuthentication requestClientAuthentication(String kind,
-            SVNURL url, String realm, String errorMessage, SVNAuthentication previousAuth,
+            SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth,
             boolean authMayBeStored);
     /**
      * Checks a server authentication certificate and whether accepts it 

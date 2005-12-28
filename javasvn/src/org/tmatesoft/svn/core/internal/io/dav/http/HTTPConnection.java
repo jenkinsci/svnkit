@@ -118,12 +118,15 @@ class HTTPConnection implements IHTTPConnection {
                         myOutputStream = null;
                         mySocket = SVNSocketFactory.createSSLSocket(sslManager, host, port, mySocket);
                         myIsProxied = true;
+                        proxyAuth.acknowledgeProxyContext(true, null);
                         return;
                     }
                     SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyAuth.getProxyHost() + ":" + proxyAuth.getProxyPort()); 
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "'{0}' request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
+                    proxyAuth.acknowledgeProxyContext(true, err);
                     SVNErrorManager.error(err, connectRequest.getErrorMessage());
                 }
+                proxyAuth.acknowledgeProxyContext(true, null);
             } else {
                 mySocket = myIsSecured ? SVNSocketFactory.createSSLSocket(sslManager, host, port) : SVNSocketFactory.createPlainSocket(host, port);
             }
@@ -238,7 +241,8 @@ class HTTPConnection implements IHTTPConnection {
                     SVNSSLAuthentication sslAuth = sslManager.getClientAuthentication();
                     if (sslAuth != null) {
                         close();
-                        myRepository.getAuthenticationManager().acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, sslRealm, ssl.getMessage(), sslAuth);
+                        SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", ssl.getLocalizedMessage());
+                        myRepository.getAuthenticationManager().acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, sslRealm, sslErr, sslAuth);
                         promptSSLClientCertificate(false);
                         continue;
                     }
@@ -254,7 +258,7 @@ class HTTPConnection implements IHTTPConnection {
             if (err != null) {
                 close();
                 if (sslManager != null) {
-                    sslManager.acknowledgeSSLContext(false, err.getMessage());
+                    sslManager.acknowledgeSSLContext(false, err);
                 }
                 break;
             }

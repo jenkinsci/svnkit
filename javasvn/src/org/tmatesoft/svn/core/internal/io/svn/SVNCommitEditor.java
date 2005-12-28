@@ -17,9 +17,12 @@ import java.io.OutputStream;
 import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
@@ -124,7 +127,6 @@ class SVNCommitEditor implements ISVNEditor {
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         myConnection.write("(w(s", new Object[] { "textdelta-chunk", path });
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        
         try {
             SVNDiffWindowBuilder.save(diffWindow, myDiffWindowCount == 0, bos);
             byte[] header = bos.toByteArray();
@@ -135,8 +137,9 @@ class SVNCommitEditor implements ISVNEditor {
             myConnection.getOutputStream().write(length.getBytes("UTF-8"));
             return new ChunkOutputStream();
         } catch (IOException e) {
-            throw new SVNException(e);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
         }
+        return null;
     }
 
     public void textDeltaEnd(String path) throws SVNException {

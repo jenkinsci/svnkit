@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -186,7 +187,7 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
      * @param errorMessage
      * @param authentication
      */
-    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, String errorMessage, SVNAuthentication authentication) {
+    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) {
     }
     
     /**
@@ -223,7 +224,7 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
      * @param accepted
      * @param errorMessage
      */
-    public void acknowledgeProxyContext(boolean accepted, String errorMessage) {
+    public void acknowledgeProxyContext(boolean accepted, SVNErrorMessage errorMessage) {
     }
 
 }

@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.auth;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
+
 /**
  * The <b>ISVNProxyManager</b> interface is used to manage http server 
  * options. 
@@ -72,5 +74,5 @@ public interface ISVNProxyManager {
      * @param errorMessage  the reason of the failure to connect to 
      *                      the proxy server
      */
-    public void acknowledgeProxyContext(boolean accepted, String errorMessage);
+    public void acknowledgeProxyContext(boolean accepted, SVNErrorMessage errorMessage);
 }

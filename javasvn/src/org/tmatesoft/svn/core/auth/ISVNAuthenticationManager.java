@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.auth;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -175,7 +176,7 @@ public interface ISVNAuthenticationManager {
      * @param errorMessage   the reason of the authentication failure 
      * @param authentication a user credential to accept/drop
      */
-    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, String errorMessage, SVNAuthentication authentication);
+    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication);
     
     /**
      * Sets a specific runtime authentication storage manager. This storage 

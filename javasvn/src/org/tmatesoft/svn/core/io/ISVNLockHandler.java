@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.io;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 
@@ -37,7 +38,7 @@ public interface ISVNLockHandler {
      *                        the <code>path</code>
      * @throws SVNException
      */
-    public void handleLock(String path, SVNLock lock, SVNException error) throws SVNException;
+    public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException;
     
     /**
      * Handles the path unlocked.
@@ -51,5 +52,5 @@ public interface ISVNLockHandler {
      *                        may be <span class="javakeyword">null</code>
      * @throws SVNException
      */
-    public void handleUnlock(String path, SVNLock lock, SVNException error) throws SVNException;
+    public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException;
 }

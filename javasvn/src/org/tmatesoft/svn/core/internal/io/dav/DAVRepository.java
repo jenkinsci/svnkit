@@ -729,7 +729,7 @@ class DAVRepository extends SVNRepository {
                 path = getFullPath(path);
                 path = SVNEncodingUtil.uriEncode(path);
                 SVNLock lock = null;
-                SVNException error = null;
+                SVNErrorMessage error = null;
                 long revisionNumber = revision != null ? revision.longValue() : -1;
                 try {
                      lock = myConnection.doLock(path, this, comment, force, revisionNumber);
@@ -738,7 +738,7 @@ class DAVRepository extends SVNRepository {
                     if (e.getErrorMessage() != null) {
                         SVNErrorCode code = e.getErrorMessage().getErrorCode();
                         if (code == SVNErrorCode.FS_PATH_ALREADY_LOCKED || code == SVNErrorCode.FS_OUT_OF_DATE) {
-                            error = e;                            
+                            error = e.getErrorMessage();                            
                         }
                     }
                     if (error == null) {
@@ -764,16 +764,14 @@ class DAVRepository extends SVNRepository {
                 String repositoryPath = getRepositoryPath(path);
                 path = getFullPath(path);
                 path = SVNEncodingUtil.uriEncode(path);
-                SVNException error = null;
+                SVNErrorMessage error = null;
                 try {
                     myConnection.doUnlock(path, this, id, force);
                     error = null;
                 } catch (SVNException e) {
                     if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_LOCKED) {
-                        error = e;
-                        SVNErrorMessage err = e.getErrorMessage();
-                        err = SVNErrorMessage.create(err.getErrorCode(), err.getMessageTemplate(), shortPath);
-                        error = new SVNException(err);
+                        error = e.getErrorMessage();
+                        error = SVNErrorMessage.create(error.getErrorCode(), error.getMessageTemplate(), shortPath);
                     } else {
                         throw e;
                     }

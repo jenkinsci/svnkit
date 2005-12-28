@@ -21,6 +21,7 @@ import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -46,7 +47,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private File myConfigDirectory;
     
     private SVNAuthentication myPreviousAuthentication;
-    private String myPreviousErrorMessage;
+    private SVNErrorMessage myPreviousErrorMessage;
     private SVNConfigFile myServersFile;
     private ISVNAuthenticationStorage myRuntimeAuthStorage;
     private int myLastProviderIndex;
@@ -171,7 +172,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         throw new SVNAuthenticationException("svn: Authentication required for '" + realm + "'");
     }
 
-    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, String errorMessage, SVNAuthentication authentication) {
+    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) {
         if (!accepted) {
             myPreviousErrorMessage = errorMessage;
             myPreviousAuthentication = authentication;
@@ -316,7 +317,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             myPassword = password;
             myIsStore = store;
         }
-        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
             if (previousAuth == null) {
                 if (ISVNAuthenticationManager.SSH.equals(kind)) {
                     SVNSSHAuthentication sshAuth = getDefaultSSHAuthentication();
@@ -351,7 +352,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 
     private class CacheAuthenticationProvider implements ISVNAuthenticationProvider {        
 
-        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
             // get next after prev for select kind and realm.
             if (previousAuth != null) {
                 return null;
@@ -385,7 +386,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             myDirectory = directory;
         }
 
-        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, String errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
             File dir = new File(myDirectory, kind);
             if (!dir.isDirectory()) {
                 return null;
@@ -517,7 +518,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             return myProxyPassword;
         }
 
-        public void acknowledgeProxyContext(boolean accepted, String errorMessage) {
+        public void acknowledgeProxyContext(boolean accepted, SVNErrorMessage errorMessage) {
         }
     }
 
