@@ -106,7 +106,7 @@ public class SVNDirectory {
 
     boolean innerLock() throws SVNException {
         if (getLockFile().isFile()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' is locked; try performing 'cleanup'", getRoot());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked; try performing ''cleanup''", getRoot());
             SVNErrorManager.error(err);
         }
         boolean created = false;
