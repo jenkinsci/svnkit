@@ -150,6 +150,7 @@ public class DAVUtil {
         info = info == null ? new DAVBaselineInfo() : info;
         info.baselinePath = baselineProperties.getURL();
         info.baselineBase = baselineProperties.getPropertyValue(DAVElement.BASELINE_COLLECTION);
+        info.baseline = baselineProperties.getOriginalURL();
         if (info.baselineBase == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "'DAV:baseline-collection' not present on the baseline resource");
             SVNErrorManager.error(err);

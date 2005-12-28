@@ -23,5 +23,6 @@ public class DAVBaselineInfo {
     public String baselineBase;
 
     public long revision;
-    public boolean isDirectory;    
+    public boolean isDirectory;
+    public String baseline;    
 }

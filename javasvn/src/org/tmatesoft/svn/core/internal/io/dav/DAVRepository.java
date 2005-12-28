@@ -639,16 +639,12 @@ class DAVRepository extends SVNRepository {
         StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, propertyName, propertyValue);
         try {
             openConnection();
-            // 1. get vcc for root.
+            // get baseline url and proppatch.
             DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, SVNEncodingUtil.uriEncode(getLocation().getPath()), revision, false, false, null);
             String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
-
-            path = DAVUtil.getVCCPath(myConnection, this, path);
-            
-            // 2. get href from specific vcc with using "label"
-            DAVProperties blProps = DAVUtil.getBaselineProperties(myConnection, this, path, revision, new DAVElement[] {DAVElement.AUTO_VERSION});
+            path = info.baseline;
             try {
-                myConnection.doProppatch(null, blProps.getURL(), request, null);
+                myConnection.doProppatch(null, path, request, null);
             } catch (SVNException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "DAV request failed; it's possible that the repository's " +
                         "pre-rev-propchange hook either failed or is non-existent");

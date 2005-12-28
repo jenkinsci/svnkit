@@ -25,7 +25,7 @@ public class SVNException extends Exception {
     private SVNErrorMessage[] myErrorMessages;
 
     public SVNException(SVNErrorMessage errorMessage, Throwable cause) {
-        this(new SVNErrorMessage[] {errorMessage == null ? SVNErrorMessage.UNKNOWN_ERROR_MESSAGE : null}, cause);
+        this(new SVNErrorMessage[] {errorMessage == null ? SVNErrorMessage.UNKNOWN_ERROR_MESSAGE : errorMessage}, cause);
     }
 
     public SVNException(SVNErrorMessage[] errorMessages, Throwable cause) {
@@ -67,17 +67,11 @@ public class SVNException extends Exception {
         if (myErrorMessages != null && myErrorMessages.length > 0) {
             for (int i = 0; i < myErrorMessages.length; i++) {
                 SVNErrorMessage err = myErrorMessages[i];
-                message.append(err.toString());
-                message.append("\n");
+                if (err != null) {
+                    message.append(err.toString());
+                    message.append("\n");
+                }
             }
-            return message.toString();
-        }
-        if (super.getMessage() != null && !"".equals(super.getMessage().trim())) {
-            message.append(super.getMessage());
-        }
-        if (getCause() instanceof SVNException) {
-            message.append("\n");
-            message.append(((SVNException) getCause()).getMessage());
         }
         return message.toString();
     }

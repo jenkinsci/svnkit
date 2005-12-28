@@ -21,6 +21,7 @@ public class DAVProperties {
     private boolean myIsCollection;
     private String myURL;
     private String myLoppedPath;
+    private String myOriginalURL;
     
     public String getURL() {
         return myURL;
@@ -51,7 +52,12 @@ public class DAVProperties {
     }
     
     public void setURL(String url) {
+        myOriginalURL = myURL;
         myURL = url;
+    }
+    
+    public String getOriginalURL() {
+        return myOriginalURL;
     }
     
     public void setCollection(boolean collection) {
