@@ -214,7 +214,7 @@ public class SVNWCClient extends SVNBasicClient {
             boolean delete = false;
             SVNEntry entry = wcAccess.getAnchor().getEntries().getEntry(wcAccess.getTargetName(), false);
             if (entry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", wcAccess.getAnchor().getFile(name));
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control or doesn''t exist", path, SVNErrorMessage.TYPE_WARNING);
                 SVNErrorManager.error(err);
             }
             try {
