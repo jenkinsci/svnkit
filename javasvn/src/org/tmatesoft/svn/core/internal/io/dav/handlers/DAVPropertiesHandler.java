@@ -12,11 +12,19 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.io.dav.DAVResponse;
-import org.tmatesoft.svn.core.internal.io.dav.DAVStatus;
-import org.tmatesoft.svn.core.internal.io.dav.IDAVResponseHandler;
+import org.tmatesoft.svn.core.internal.io.dav.DAVProperties;
+import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.xml.sax.Attributes;
 
 
@@ -46,41 +54,133 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
 
 	}
     
-    private DAVResponse myResponse;
-    private IDAVResponseHandler myResponseHandler;
-    
-    public DAVPropertiesHandler(IDAVResponseHandler handler) {
-    	setResponsesHandler(handler);
+    private static final Set PROP_ELEMENTS = new HashSet();
+    static {
+        PROP_ELEMENTS.add(DAVElement.HREF);
+        PROP_ELEMENTS.add(DAVElement.STATUS);
+        PROP_ELEMENTS.add(DAVElement.BASELINE);
+        PROP_ELEMENTS.add(DAVElement.BASELINE_COLLECTION);
+        PROP_ELEMENTS.add(DAVElement.COLLECTION);
+        PROP_ELEMENTS.add(DAVElement.VERSION_NAME);
+        PROP_ELEMENTS.add(DAVElement.GET_CONTENT_LENGTH);
+        PROP_ELEMENTS.add(DAVElement.CREATION_DATE);
+        PROP_ELEMENTS.add(DAVElement.CREATOR_DISPLAY_NAME);
+        PROP_ELEMENTS.add(DAVElement.BASELINE_RELATIVE_PATH);
+        PROP_ELEMENTS.add(DAVElement.MD5_CHECKSUM);
+        PROP_ELEMENTS.add(DAVElement.REPOSITORY_UUID);
     }
     
-    public void setResponsesHandler(IDAVResponseHandler handler) {
-    	init();
-        myResponseHandler = handler;
+    private DAVProperties myCurrentResource;
+    private int myStatusCode;
+    private String myEncoding;
+    private Map myResources;
+    private Map myCurrentProperties;
+    
+    public DAVPropertiesHandler() {
+        init();
+    }
+    
+    public Map getDAVProperties() {
+        return myResources;
     }
 
-    protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) {
+    protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (element == DAVElement.RESPONSE) {
-            myResponse = new DAVResponse();            
-        }        
+            if (myCurrentResource != null) {
+                invalidXML();
+            }
+            myCurrentResource = new DAVProperties();
+            myCurrentProperties = new HashMap();
+            myStatusCode = 0;
+        } else if (element == DAVElement.PROPSTAT) {
+            myStatusCode = 0;
+        } else if (element == DAVElement.COLLECTION) {
+            myCurrentResource.setCollection(true);
+        } else {
+            myEncoding = attrs.getValue("encoding");
+        }
 	}
 
 	protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
-        if (element == DAVElement.HREF) {
-            if (parent == DAVElement.RESPONSE) {
-                myResponse.setHref(cdata.toString());
-            } else {
-                myResponse.putPropertyValue(parent, cdata.toString());
+        DAVElement name = null;
+        String value = null;
+        if (element == DAVElement.RESPONSE) {
+            if (myCurrentResource.getURL() == null) {
+                invalidXML();
             }
-        } else if (element == DAVElement.RESPONSE) {
-            myResponseHandler.handleDAVResponse(myResponse);
-            myResponse = null;
-        } else if (element == DAVElement.COLLECTION || element == DAVElement.BASELINE) {
-            myResponse.putPropertyValue(parent, element);
+            myResources.put(myCurrentResource.getURL(), myCurrentResource);
+            myCurrentResource = null;            
+            return;
+        } else if (element == DAVElement.PROPSTAT) {
+            if (myStatusCode != 0) {
+                for (Iterator names = myCurrentProperties.keySet().iterator(); names.hasNext();) {
+                    DAVElement propName = (DAVElement) names.next();
+                    String propValue = (String) myCurrentProperties.get(propName);
+                    if (myStatusCode == 200) {
+                        myCurrentResource.setProperty(propName, propValue);
+                    }
+                }
+                myCurrentProperties.clear();
+            } else {
+                invalidXML();
+            }
+            return;
         } else if (element == DAVElement.STATUS) {
-            myResponse.setStatus(DAVStatus.parse(cdata.toString()));
-        } else if (cdata != null && cdata.length() > 0 && myResponse != null) {
-            myResponse.putPropertyValue(element, cdata.toString());
+            if (cdata == null) {
+                invalidXML();
+            }
+            try {
+                HTTPStatus status = HTTPStatus.createHTTPStatus(cdata.toString());
+                if (status == null) {
+                    invalidXML();
+                }
+                myStatusCode = status.getCode();
+            } catch (IOException e) {
+                invalidXML();
+            }
+            return;
+        } else if (element == DAVElement.HREF) {
+            if (parent == DAVElement.RESPONSE) {
+                // set resource url
+                String path = cdata.toString();
+                if (path.endsWith("/")) {
+                    path = path.substring(0, path.length() - 1);
+                }
+                myCurrentResource.setURL(path);
+                return;
+            }
+            name = parent;
+            if (name == null) {
+                return;
+            }
+            value = cdata.toString();
+        } else if (cdata != null) {
+            if (myCurrentProperties.containsKey(element)) {
+                // was already set with href.
+                return;
+            }
+            name = element;
+            if (myEncoding == null) {
+                value = cdata.toString();
+            } else if ("base64".equals(myEncoding)) {
+                byte[] buffer = SVNBase64.base64ToByteArray(cdata, null);
+                try {
+                    value = new String(buffer, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    value = new String(buffer);
+                }                
+            } else {
+                invalidXML();
+            }
+            myEncoding = null;
+        }
+        if (name != null && value != null) {
+            myCurrentProperties.put(name, value);
         }
 	}
+    
+    public void setDAVProperties(Map result) {
+        myResources = result;
+    }
 
 }

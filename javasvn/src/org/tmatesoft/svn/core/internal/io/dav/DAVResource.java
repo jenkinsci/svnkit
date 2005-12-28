@@ -85,26 +85,29 @@ class DAVResource {
     }
     
     public String getVersionURL() throws SVNException {
-        // do fetch from server if empty...
         if (myVURL == null) {
             if (myMediator != null) {
                 myVURL = myMediator.getWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), "svn:wc:ra_dav:version-url");
-                if (myVURL != null) {
-                    return myVURL;
-                }
             }
-            String path = myURL;
-            if (myRevision >= 0) {
-                // get baseline collection url for revision from public url.
-                DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, path, myRevision, false, false, null);
-                path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
-            }
-            // get "checked-in" property from baseline collection or from HEAD, this will be vURL.
-            // this shouldn't be called for copied urls.
-            myVURL = (String) DAVUtil.getPropertyValue(myConnection, path, null, DAVElement.CHECKED_IN);
         }
         return myVURL;
     }    
+    
+    public void fetchVersionURL(boolean force) throws SVNException {
+        if (!force && getVersionURL() != null) {
+            return;
+        }
+        // now from server.
+        String path = myURL;
+        if (myRevision >= 0) {
+            // get baseline collection url for revision from public url.
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, null, path, myRevision, false, false, null);
+            path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
+        }
+        // get "checked-in" property from baseline collection or from HEAD, this will be vURL.
+        // this shouldn't be called for copied urls.
+        myVURL = DAVUtil.getPropertyValue(myConnection, path, null, DAVElement.CHECKED_IN);
+    }
 
     public String getWorkingURL() {
         return myWURL;

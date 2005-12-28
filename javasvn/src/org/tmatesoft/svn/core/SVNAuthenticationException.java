@@ -61,4 +61,12 @@ public class SVNAuthenticationException extends SVNException {
     public SVNAuthenticationException(Throwable cause) {
         super(cause);
     }
+    
+    public SVNAuthenticationException(SVNErrorMessage errorMessage, Throwable cause) {
+        super(errorMessage, cause);
+    }
+
+    public SVNAuthenticationException(SVNErrorMessage errorMessage) {
+        super(errorMessage);
+    }
 }

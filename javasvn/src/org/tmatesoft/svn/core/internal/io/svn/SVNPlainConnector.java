@@ -35,7 +35,11 @@ public class SVNPlainConnector implements ISVNConnector {
             return;
         }
         SVNURL location = repository.getLocation();
-        mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort());
+        try {
+            mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort());
+        } catch (IOException e) {
+            throw new SVNException(e);
+        }
     }
 
     public void close() throws SVNException {

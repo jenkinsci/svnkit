@@ -32,7 +32,6 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -209,7 +208,6 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         SVNProperties baseProps = replaced ? null : dir.getBaseProperties(name,
                 false);
         Map diff = replaced ? props.asMap() : baseProps.compareTo(props);
-        SVNDebugLog.logInfo("prop diff: " + diff);
         if (diff != null && !diff.isEmpty()) {
             SVNProperties tmpProps = dir.getBaseProperties(name, true);
             props.copyTo(tmpProps);

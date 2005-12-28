@@ -16,8 +16,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -96,6 +99,11 @@ public abstract class BasicDAVHandler extends DefaultHandler {
     protected abstract void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException; 
 
     protected abstract void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException;
+    
+    protected void invalidXML() throws SVNException {
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "Malformed XML"));
+        
+    }
     
     private DAVElement getParent() {
         Object parent = myParent.peek();

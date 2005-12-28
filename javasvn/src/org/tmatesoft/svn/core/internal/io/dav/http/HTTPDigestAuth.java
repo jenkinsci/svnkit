@@ -9,10 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.io.dav;
-
-import org.tmatesoft.svn.core.SVNAuthenticationException;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+package org.tmatesoft.svn.core.internal.io.dav.http;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -20,11 +17,17 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class HttpDigestAuth {
+class HTTPDigestAuth {
 
     private static final char[] HEXADECIMAL = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
@@ -38,7 +41,7 @@ public class HttpDigestAuth {
 
     private SVNPasswordAuthentication myCredentials;
 
-    public HttpDigestAuth(SVNPasswordAuthentication credentials, Map challenge) throws SVNAuthenticationException {
+    public HTTPDigestAuth(SVNPasswordAuthentication credentials, Map challenge) throws SVNException {
         myChallenge = challenge;
         String qop = (String) challenge.get("qop");
         String selectedQop = null;
@@ -52,14 +55,15 @@ public class HttpDigestAuth {
             }
         }
         if (selectedQop != null && !"auth".equals(selectedQop)) {
-            throw new SVNAuthenticationException("Digest HTTP auth: '" + selectedQop + "' is not supported");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Digest HTTP auth: ''(0}'' is not supported", selectedQop);
+            SVNErrorManager.error(err);
         }
         myQop = selectedQop;
         myCnonce = createCnonce();
         myCredentials = credentials;
     }
 
-    public String authenticate() throws SVNAuthenticationException {
+    public String authenticate() throws SVNException {
         String uname = myCredentials.getUserName();
 
         String digest = createDigest(uname, myCredentials.getPassword(), "US-ASCII");
@@ -67,10 +71,7 @@ public class HttpDigestAuth {
         String uri = getParameter("uri");
         String realm = getParameter("realm");
         String nonce = getParameter("nonce");
-//        String nc = getParameter("nc");
         String opaque = getParameter("opaque");
-//        String response = digest;
-//        String qop = getParameter("qop");
         String algorithm = getParameter("algorithm", "MD5");
 
         StringBuffer sb = new StringBuffer();
@@ -92,13 +93,12 @@ public class HttpDigestAuth {
         return sb.toString();
     }
 
-    private String createDigest(String uname, String pwd, String charset) throws SVNAuthenticationException {
+    private String createDigest(String uname, String pwd, String charset) throws SVNException {
         final String digAlg = "MD5";
 
         String uri = getParameter("uri");
         String realm = getParameter("realm");
         String nonce = getParameter("nonce");
-//        String qop = getParameter("qop");
         String method = getParameter("methodname");
         String algorithm = getParameter("algorithm", "MD5");
 
@@ -106,9 +106,9 @@ public class HttpDigestAuth {
         try {
             md5Helper = MessageDigest.getInstance(digAlg);
         } catch (Exception e) {
-            throw new SVNAuthenticationException(
-              "Unsupported algorithm in HTTP Digest authentication: "
-               + digAlg);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unsupported algorithm in HTTP Digest authentication: ''{0}''", digAlg);
+            SVNErrorManager.error(err);
+            return null;
         }
         StringBuffer tmp = new StringBuffer(uname.length() + realm.length() + pwd.length() + 2);
         tmp.append(uname);

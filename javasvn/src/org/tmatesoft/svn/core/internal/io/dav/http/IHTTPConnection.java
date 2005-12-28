@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.io.dav;
+package org.tmatesoft.svn.core.internal.io.dav.http;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -21,17 +21,13 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public interface IHTTPConnection {
 
-    public void close();
+    public HTTPStatus request(String method, String path, Map header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException;
+
+    public HTTPStatus request(String method, String path, Map header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException;
 
     public SVNAuthentication getLastValidCredentials();
 
-    public DAVStatus request(String method, String path, int depth, String label, StringBuffer requestBody, DefaultHandler handler, int[] okCodes) throws SVNException;
-
-    public DAVStatus request(String method, String path, int depth, String label, StringBuffer requestBody, OutputStream result, int[] okCodes) throws SVNException;
-
-    public DAVStatus request(String method, String path, Map header, InputStream body, DefaultHandler handler, int[] okCodes) throws SVNException;
-
-    public DAVStatus request(String method, String path, Map header, StringBuffer reqBody, DefaultHandler handler, int[] okCodes) throws SVNException;
-
     public void clearAuthenticationCache();
+
+    public void close();
 }

@@ -12,8 +12,6 @@
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.io.dav.DAVResponse;
-import org.tmatesoft.svn.core.internal.io.dav.IDAVResponseHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.xml.sax.Attributes;
 
@@ -22,7 +20,7 @@ import org.xml.sax.Attributes;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class DAVGetLockHandler extends DAVPropertiesHandler {
+public class DAVGetLockHandler extends BasicDAVHandler {
 
     public static StringBuffer generateGetLockRequest(StringBuffer body) {
         return DAVPropertiesHandler.generatePropertiesRequest(body, new DAVElement[] {DAVElement.LOCK_DISCOVERY});
@@ -46,10 +44,7 @@ public class DAVGetLockHandler extends DAVPropertiesHandler {
     private String myExpiration;
 
     public DAVGetLockHandler() {
-        super(new IDAVResponseHandler() {
-            public void handleDAVResponse(DAVResponse response) {
-            }
-        });
+        init();        
     }    
     public String getComment() {
         return myComment;

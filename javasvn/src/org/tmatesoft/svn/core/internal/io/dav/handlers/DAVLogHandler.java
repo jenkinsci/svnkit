@@ -76,6 +76,8 @@ public class DAVLogHandler extends BasicDAVHandler {
 	private int myCount;
     private long myLimit;
 
+    private boolean myIsCompatibleMode;
+
 	public DAVLogHandler(ISVNLogEntryHandler handler, long limit) {
 		myLogEntryHandler = handler;
 		myRevision = -1;
@@ -83,6 +85,10 @@ public class DAVLogHandler extends BasicDAVHandler {
         myLimit = limit;
 		init();
 	}
+    
+    public boolean isCompatibleMode() {
+        return myIsCompatibleMode;
+    }
 	
 	protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) {
 		char type = 0;
@@ -120,6 +126,8 @@ public class DAVLogHandler extends BasicDAVHandler {
     				SVNLogEntry logEntry = new SVNLogEntry(myPaths, myRevision, myAuthor, myDate, myComment);
     				myLogEntryHandler.handleLogEntry(logEntry);
     			}
+            } else if (myLimit < myCount) {
+                myIsCompatibleMode = true;
             }
 			myPaths = null;
 			myRevision = -1;

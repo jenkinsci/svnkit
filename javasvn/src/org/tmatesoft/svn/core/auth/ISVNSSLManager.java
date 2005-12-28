@@ -71,6 +71,8 @@ public interface ISVNSSLManager {
      * Sets client authentication that will be used in SSLContext. 
      */
     public void setClientAuthentication(SVNSSLAuthentication sslAuthentication);
+
+    public SVNSSLAuthentication getClientAuthentication();
     
     /**
      * Accepts this SSL context if authentication has succeeded or 

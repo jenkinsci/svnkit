@@ -15,6 +15,8 @@ package org.tmatesoft.svn.core.internal.io.dav;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.internal.io.dav.http.XMLReader;
+
 
 /**
  * @version 1.0
@@ -45,6 +47,7 @@ public class DAVElement {
     public static final String SVN_DAV_PROPERTY_NAMESPACE = "http://subversion.tigris.org/xmlns/dav/";
     public static final String SVN_CUSTOM_PROPERTY_NAMESPACE = "http://subversion.tigris.org/xmlns/custom/";
     public static final String SVN_SVN_PROPERTY_NAMESPACE = "http://subversion.tigris.org/xmlns/svn/";
+    public static final String SVN_APACHE_PROPERTY_NAMESPACE = "http://apache.org/dav/xmlns";
     
     public static final String SVN_DAV_ERROR_NAMESPACE = "svn:";
     public static final String DAV_NAMESPACE = "DAV:";

@@ -32,4 +32,8 @@ public class SVNCancelException extends SVNException {
     public SVNCancelException(String message) {
         super(message);
     }
+    
+    public SVNCancelException(SVNErrorMessage errorMessage) {
+        super(errorMessage);
+    }
 }

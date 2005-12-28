@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.io.dav;
+package org.tmatesoft.svn.core.internal.io.dav.http;
 
 import java.io.IOException;
 import java.io.InputStream;

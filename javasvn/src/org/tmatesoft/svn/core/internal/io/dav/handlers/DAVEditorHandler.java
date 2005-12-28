@@ -14,6 +14,8 @@ package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import java.io.UnsupportedEncodingException;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
@@ -24,6 +26,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -112,7 +115,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                     report.append("start-empty=\"true\" ");
                 }
                 String linkedPath = url.getURIEncodedPath();
-                DAVBaselineInfo info = DAVUtil.getBaselineInfo(connection, linkedPath, revision, false, false, null);
+                DAVBaselineInfo info = DAVUtil.getBaselineInfo(connection, null, linkedPath, revision, false, false, null);
 
                 String switchUrl = SVNEncodingUtil.uriDecode(info.baselinePath);
                 report.append("linkpath=\"");
@@ -127,7 +130,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             public void finishReport() {
             }
             public void abortReport() throws SVNException {
-                throw new SVNException();
+                SVNErrorManager.cancel("report aborted");
             }
         });
         buffer.append("</S:update-report>");
@@ -174,7 +177,8 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         if (element == UPDATE_REPORT) {
             String receiveAll = attrs.getValue(SEND_ALL_ATTR);
             if (receiveAll == null || !Boolean.valueOf(receiveAll).booleanValue()) {
-                throw new SVNException("update-report format used by server is not supported");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'update' response format used by the server is not supported");
+                SVNErrorManager.error(err);
             }
         } else if (element == TARGET_REVISION) {
             long revision = Long.parseLong(attrs.getValue(REVISION_ATTR));
@@ -236,7 +240,8 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 myEditor.changeFileProperty(myPath, name, null);
             }            
         } else if (element == RESOURCE || element == FETCH_FILE || element == FETCH_PROPS) {
-            throw new SVNException(element + " element is not supported in update-report");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'update' response format used by the server is not supported; element ''{0}'' was not expected", element.toString());
+            SVNErrorManager.error(err);
         } else if (element == TX_DELTA) {
             if (myIsFetchContent) {
                 setDeltaProcessing(true);

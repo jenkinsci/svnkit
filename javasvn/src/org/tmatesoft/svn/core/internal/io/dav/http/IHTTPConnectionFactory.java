@@ -9,8 +9,9 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.io.dav;
+package org.tmatesoft.svn.core.internal.io.dav.http;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 /**
  * @version 1.0
@@ -20,12 +21,12 @@ public interface IHTTPConnectionFactory {
     
     public IHTTPConnectionFactory DEFAULT = new IHTTPConnectionFactory() {
 
-        public IHTTPConnection createHTTPConnection(SVNRepository repository) {
-            return new DefaultHTTPConnection(repository);
+        public IHTTPConnection createHTTPConnection(SVNRepository repository) throws SVNException {
+            return new HTTPConnection(repository);
         }
         
     };
     
-    public IHTTPConnection createHTTPConnection(SVNRepository repository);
+    public IHTTPConnection createHTTPConnection(SVNRepository repository) throws SVNException;
 
 }

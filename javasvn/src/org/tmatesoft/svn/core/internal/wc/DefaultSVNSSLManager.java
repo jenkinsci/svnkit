@@ -62,6 +62,7 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
     private boolean myIsUseKeyStore;
     private File[] myServerCertFiles;
     private boolean myIsPromptForClientCert;
+    private SVNSSLAuthentication myClientAuthentication;
 
     public DefaultSVNSSLManager(File authDir, SVNURL url, 
             File[] serverCertFiles, boolean useKeyStore, File clientFile, String clientPassword,
@@ -322,5 +323,10 @@ public class DefaultSVNSSLManager implements ISVNSSLManager {
             myClientCertFile = null;
             myClientCertPassword = null;
         }
+        myClientAuthentication = sslAuthentication;
     } 
+    
+    public SVNSSLAuthentication getClientAuthentication() {
+        return myClientAuthentication;
+    }
 }
