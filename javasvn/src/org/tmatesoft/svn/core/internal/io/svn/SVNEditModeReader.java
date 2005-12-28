@@ -78,7 +78,8 @@ public class SVNEditModeReader {
                 try {
                     items = SVNReader.parse(parameters, "(SB))", null);
                 } catch (Throwable th) {
-                    SVNErrorManager.error("svn: Cannot read edit command: " + th.getMessage());
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Cannot read editor command: {0}", th.getLocalizedMessage());
+                    SVNErrorManager.error(err, th);
                 } 
                 byte[] bytes = (byte[]) items[1];
                 myBuilder.accept(bytes, 0);
@@ -91,7 +92,8 @@ public class SVNEditModeReader {
                     try {
                         myDiffStream.write(myBuilder.getInstructionsData());
                     } catch (IOException e) {
-                        SVNErrorManager.error(e.getMessage());
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getLocalizedMessage());
+                        SVNErrorManager.error(err, e);
                     }
                     if (myLenght == 0) {
                         closeDiffStream();

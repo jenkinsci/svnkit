@@ -18,6 +18,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -116,7 +118,8 @@ public class SVNLogRunner {
                     os.write(r);
                 }
             } catch (IOException e) {
-                SVNErrorManager.error("svn: Cannot append data to file '" + dst + "'");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write to ''{0}'': {1}", new Object[] {dst, e.getLocalizedMessage()});
+                SVNErrorManager.error(err, e);
             } finally {
                 SVNFileUtil.closeFile(os);
                 SVNFileUtil.closeFile(is);
@@ -182,14 +185,14 @@ public class SVNLogRunner {
                     mergeResult == SVNStatusType.CONFLICTED_UNRESOLVED);
         } else if (SVNLog.COMMIT.equals(name)) {
             if (attributes.get(SVNLog.REVISION_ATTR) == null) {
-                SVNErrorManager.error("svn: Missing revision attribute for '"
-                        + fileName + "'");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_ADM_LOG, "Missing revision attribute for ''{0}''", fileName);
+                SVNErrorManager.error(err);
             }
             SVNEntry entry = dir.getEntries().getEntry(fileName, true);
             if (entry == null
                     || (!"".equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
-                SVNErrorManager.error("svn: Log command for directory '"
-                        + dir.getRoot() + "' is mislocated");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_ADM_LOG, "Log command for directory ''{0}'' is mislocated", dir.getRoot()); 
+                SVNErrorManager.error(err);
             }
             setEntriesChanged(true);
             long revisionNumber = Long.parseLong((String) attributes
@@ -203,16 +206,15 @@ public class SVNLogRunner {
                         try {
                             killMe.createNewFile();
                         } catch (IOException e) {
-                            SVNErrorManager.error("svn: Cannot create file '"
-                                    + killMe + "'");
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create file ''{0}'': {1}", new Object[] {killMe, e.getLocalizedMessage()}); 
+                            SVNErrorManager.error(err, e);
                         }
                     }
                 } else {
                     dir.destroy(fileName, false);
                     SVNEntry parentEntry = dir.getEntries().getEntry("", true);
                     if (revisionNumber > parentEntry.getRevision()) {
-                        SVNEntry fileEntry = dir.getEntries()
-                                .addEntry(fileName);
+                        SVNEntry fileEntry = dir.getEntries().addEntry(fileName);
                         fileEntry.setKind(SVNNodeKind.FILE);
                         fileEntry.setDeleted(true);
                         fileEntry.setRevision(revisionNumber);

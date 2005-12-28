@@ -336,7 +336,7 @@ public class Export {
             File newDir = new File(myRootDirectory, path);
             if (!newDir.exists()) {
                 if (!newDir.mkdirs()) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "error: failed to add the directory ''{0}''.", newDir);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "error: failed to add the directory ''{0}''.", newDir);
                     throw new SVNException(err);
                 }
             }
@@ -352,7 +352,7 @@ public class Export {
             File file = new File(myRootDirectory, path);
 
             if (file.exists()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "error: exported file ''{0}'' already exists!", file);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "error: exported file ''{0}'' already exists!", file);
                 throw new SVNException(err);
             }
             /*
@@ -383,7 +383,7 @@ public class Export {
             try {
                 return myMediator.createTemporaryLocation(myCurrentPath, diffWindow);
             } catch (IOException ioe) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, ioe.getLocalizedMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
                 throw new SVNException(err, ioe);
             }
         }
@@ -397,7 +397,7 @@ public class Export {
                 sourceFile.createNewFile();
             } catch (IOException ioe) {
                 sourceFile.delete();
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, ioe.getLocalizedMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
                 throw new SVNException(err, ioe);
             }
             File targetFile = new File(myRootDirectory, myCurrentPath + ".tmp");
@@ -441,7 +441,7 @@ public class Export {
                              */
                             window.apply(applyBaton, newData);
                         } catch (IOException ioe) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "error while fetching a temporary delta storage.");
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "error while fetching a temporary delta storage.");
                             throw new SVNException(err, ioe);
                         } finally {
                             if (newData != null) {

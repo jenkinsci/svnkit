@@ -58,7 +58,8 @@ public class SVNGanymedConnector implements ISVNConnector {
                 try {
                     connection = SVNGanymedSession.getConnection(repository.getLocation(), authentication);
                     if (connection == null) {
-                        SVNErrorManager.error("svn: Connection to '" + realm + "'failed");
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}''", repository.getLocation().setPath("", false));
+                        SVNErrorManager.error(err);
                     }
                     authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
                     repository.setExternalUserName(authentication.getUserName());
@@ -95,7 +96,8 @@ public class SVNGanymedConnector implements ISVNConnector {
                 }
                 SVNDebugLog.logInfo(e);
                 close();
-                SVNErrorManager.error("svn: Connection to '" + realm + "' failed\nsvn: Could not open SSH session: " + e.getMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {repository.getLocation().setPath("", false), e.getLocalizedMessage()});
+                SVNErrorManager.error(err, e);
             }
         }
     }

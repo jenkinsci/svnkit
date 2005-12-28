@@ -16,6 +16,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.HashMap;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
@@ -94,15 +96,18 @@ public class SVNEncodingUtil {
         try {
             bytes = path.getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
-            SVNErrorManager.error("svn: Path '" + path + "' could not be encoded as UTF-8");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "path ''{0}'' could not be encoded as UTF-8", path);
+            SVNErrorManager.error(err);
             return;
         }
         if (bytes == null || bytes.length != path.length()) {
-            SVNErrorManager.error("svn: Path '" + path + "' does not look like URI-encoded path");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "path ''{0}'' doesn not look like URI-encoded path", path);
+            SVNErrorManager.error(err);
         }
         for (int i = 0; i < bytes.length; i++) {
             if (uri_char_validity[bytes[i]] <= 0 && bytes[i] != '%') {
-                SVNErrorManager.error("svn: Path '" + path + "' does not look like URI-encoded path; character '" + ((char) bytes[i]) + "' is URI unsafe");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "path ''{0}'' doesn not look like URI-encoded path; character ''{1}'' is URI unsafe", new Object[] {path, ((char) bytes[i]) + ""});
+                SVNErrorManager.error(err);
             }
         }
         return;

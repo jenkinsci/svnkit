@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 
 
@@ -45,7 +47,8 @@ public class SVNAdminUtil {
             os = SVNFileUtil.openFileForWriting(new File(adminDir, "README.txt"));
             os.write(README_TEXT);            
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Can not write README.txt file: '" + e.getMessage() + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         } finally {
             SVNFileUtil.closeFile(os);
         }
@@ -58,7 +61,8 @@ public class SVNAdminUtil {
             os = SVNFileUtil.openFileForWriting(new File(adminDir, "format"));
             os.write(FORMAT_TEXT);            
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Can not write format file: '" + e.getMessage() + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         } finally {
             SVNFileUtil.closeFile(os);
         }

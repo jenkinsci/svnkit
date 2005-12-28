@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -55,7 +57,8 @@ public class DefaultSVNMerger implements ISVNMerger {
             QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
             mergeResult = merger.merge(baseData, localData, latestData, result);
         } catch (IOException e) {
-            SVNErrorManager.error("svn: I/O error while merge: '" + e.getMessage() + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         } finally {
             if (localIS != null) {
                 try {

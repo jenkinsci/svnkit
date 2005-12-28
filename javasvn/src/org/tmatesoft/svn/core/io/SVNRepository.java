@@ -189,8 +189,8 @@ public abstract class SVNRepository {
             if (url == null) {
                 return;
             } else if (!url.getProtocol().equals(myLocation.getProtocol())) {
-                SVNErrorManager.error("svn: SVNRepository.setLocation could not change connection protocol '" + myLocation.getProtocol() + "' to '" + url.getProtocol() + "';\n" +
-                        "svn: Create another SVNRepository instance instead");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "SVNRepository URL could not be changed from ''{0}'' to ''{1}''; create new SVNRepository instance instead", new Object[] {myLocation, url});
+                SVNErrorManager.error(err);
             }
             
             if (forceReconnect || myRepositoryRoot == null) {
@@ -1679,7 +1679,8 @@ public abstract class SVNRepository {
     
     protected static void assertValidRevision(long revision) throws SVNException {
         if (!isValidRevision(revision)) {
-            SVNErrorManager.error("svn: Invalid revision number '" + revision + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Invalid revision number ''{0}''", new Long(revision));
+            SVNErrorManager.error(err);
         }
     }
 

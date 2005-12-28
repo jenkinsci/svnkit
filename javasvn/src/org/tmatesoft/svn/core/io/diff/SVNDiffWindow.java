@@ -15,6 +15,8 @@ package org.tmatesoft.svn.core.io.diff;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
@@ -214,7 +216,8 @@ public class SVNDiffWindow {
                 }
                 applyBaton.mySourceStream.read(applyBaton.mySourceBuffer, length, applyBaton.mySourceBuffer.length - length);
             } catch (IOException e) {
-                SVNErrorManager.error(e.getMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                SVNErrorManager.error(err, e);
             }
         }
         // update offsets in baton.
@@ -227,7 +230,8 @@ public class SVNDiffWindow {
             try {
                 newData.read(instrBytes);
             } catch (IOException e) {
-                SVNErrorManager.error(e.getMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                SVNErrorManager.error(err, e);
             }
             myInstructions = SVNDiffWindowBuilder.createInstructions(instrBytes);
         }
@@ -266,8 +270,8 @@ public class SVNDiffWindow {
             }
             applyBaton.myTargetStream.write(applyBaton.myTargetBuffer, 0, (int) getTargetViewLength());
         } catch (IOException e) {
-            SVNErrorManager.error(e.getMessage());
-            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         }
     }
     

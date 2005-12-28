@@ -41,9 +41,10 @@ public class CatCommand extends SVNCommand {
                 wcClient.doGetFileContents(new File(absolutePath), pegRevision, revision, true, out);
             } catch (SVNException e) {
                 String message = e.getMessage();
+                /*
                 if (message.startsWith("svn:")) {
                     message = "svn: warning:" + message.substring("svn:".length());
-                }
+                }*/
                 err.println(message);                
             }
             out.flush();

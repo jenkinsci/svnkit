@@ -116,7 +116,7 @@ public class SVNSequenceDeltaGeneratorTest extends TestCase {
 				}
 			}
 			catch (IOException ex) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, ex.getLocalizedMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ex.getLocalizedMessage());
                 SVNErrorManager.error(err, ex);
 			}
 		}
@@ -158,7 +158,7 @@ public class SVNSequenceDeltaGeneratorTest extends TestCase {
 				((ByteArrayOutputStream)streams.get(streams.size() - 1)).close();
 			}
 			catch (IOException ex) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, ex.getLocalizedMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ex.getLocalizedMessage());
                 SVNErrorManager.error(err, ex);
 			}
 		}

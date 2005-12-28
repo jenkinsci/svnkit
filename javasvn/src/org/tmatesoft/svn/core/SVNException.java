@@ -69,7 +69,9 @@ public class SVNException extends Exception {
                 SVNErrorMessage err = myErrorMessages[i];
                 if (err != null) {
                     message.append(err.toString());
-                    message.append("\n");
+                    if (i + 1 < myErrorMessages.length) {
+                        message.append("\n");
+                    }
                 }
             }
         }

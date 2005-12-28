@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -84,7 +86,7 @@ public class SVNTranslator {
 
     public static void translate(File src, File dst, byte[] eol, Map keywords, boolean special, boolean expand) throws SVNException {
         if (src == null || dst == null) {
-            SVNErrorManager.error("svn: Invalid agruments in SVNFileUtil.translate method");
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS));
             return;
         }
         if (src.equals(dst)) {
@@ -115,7 +117,8 @@ public class SVNTranslator {
         try {
             copy(is, os, eol, keywords);
         } catch (IOException e) {
-            SVNErrorManager.error("svn: I/O error while transalting file '" + src + "' to '" + dst + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         } finally {
             SVNFileUtil.closeFile(os);
             SVNFileUtil.closeFile(is);

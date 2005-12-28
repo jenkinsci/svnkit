@@ -262,12 +262,14 @@ class SVNReader {
                         try {
                             is.mark(0x100);
                             while (true) {
-                                errorMessages.add(readError(is));
+                                SVNErrorMessage err = readError(is);
+                                SVNDebugLog.logError(err.toString());
+                                errorMessages.add(err);
                             }
                         } catch (SVNException e) {
+                            SVNDebugLog.logError("size of errors: " + errorMessages.size());
+                            SVNDebugLog.logError(e);
                             is.reset();
-                            readChar(is, ')');
-                            readChar(is, ')');
                         }
                         SVNErrorManager.error(errorMessages);
                     } else if (!"success".equals(word)) {
@@ -564,6 +566,9 @@ class SVNReader {
         readString(pis);
         readNumber(pis);
         readChar(pis, ')');
+        int cat = code/2000; 
+        code = code - cat*2000;
+        code = 70000 + cat*5000 + code; 
         SVNErrorCode errorCode = SVNErrorCode.getErrorCode(code);        
         return SVNErrorMessage.create(errorCode, errorMessage);
     }

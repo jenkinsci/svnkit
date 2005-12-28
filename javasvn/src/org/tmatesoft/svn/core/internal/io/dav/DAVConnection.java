@@ -284,7 +284,7 @@ public class DAVConnection {
                     bos.write(b);
                 }
             } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, e.getMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
                 SVNErrorManager.error(err, e);
             } finally {
                 try {

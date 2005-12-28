@@ -21,6 +21,8 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
@@ -50,7 +52,8 @@ public class SVNWCAccess implements ISVNEventHandler {
         String name = file.getName();
         if (parentFile != null && (!parentFile.exists() || !parentFile.isDirectory())) {
             // parent doesn't exist or not a directory
-            SVNErrorManager.error("svn: '" + parentFile + "' does not exist");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' does not exist", parentFile);
+            SVNErrorManager.error(err);
         }
         SVNDirectory anchor = parentFile != null ? new SVNDirectory(null, "", parentFile) : null;
         SVNDirectory target = file.isDirectory() ? new SVNDirectory(null, name, file) : null;
@@ -111,7 +114,8 @@ public class SVNWCAccess implements ISVNEventHandler {
             }
         } else if (target == null && anchor == null) {
             // both are not versioned :(
-            SVNErrorManager.error("svn: '" + file + "' is not under version control");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", file);
+            SVNErrorManager.error(err);
         }
         return new SVNWCAccess(anchor != null ? anchor : target, target != null ? target : anchor, anchor != null ? name : "");
     }

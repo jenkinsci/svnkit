@@ -20,6 +20,8 @@ import java.io.Writer;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -146,7 +148,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             }
             bos.write(EOL);
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         } finally {
             try {
                 bos.close();
@@ -220,7 +223,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 bos.writeTo(result);
             } catch (IOException inner) {
             }
-            SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         }
         if (!isForcedBinaryDiff() && (SVNProperty.isBinaryMimeType(mimeType1) || SVNProperty.isBinaryMimeType(mimeType2))) {
             try {
@@ -252,7 +256,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                     }
                 }
             } catch (IOException e) {
-                SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                SVNErrorManager.error(err, e);
             } finally {
                 try {
                     bos.close();
@@ -288,7 +293,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 bos.writeTo(result);
             } catch (IOException inner) {
             }
-            SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         }
         InputStream is1 = null;
         InputStream is2 = null;
@@ -303,7 +309,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             writer.flush();
             writer.close();
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Failed to save diff data: " + e.getMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         } finally {
             SVNFileUtil.closeFile(is1);
             SVNFileUtil.closeFile(is2);

@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -57,9 +59,11 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         wcAccess.checkCancelled();
         if (item.isCopied()) {
             if (item.getCopyFromURL() == null) {
-                SVNErrorManager.error("svn: Commit item '" + item.getFile() + "' has copy flag but no copyfrom URL");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Commit item ''{0}'' has copy flag but no copyfrom URL", item.getFile());                    
+                SVNErrorManager.error(err);
             } else if (item.getRevision().getNumber() < 0) {
-                SVNErrorManager.error("svn: Commit item '" + item.getFile() + "' has copy flag but an invalid revision");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Commit item ''{0}'' has copy flag but an invalid revision", item.getFile());                    
+                SVNErrorManager.error(err);
             }
         }
         SVNEvent event = null;
@@ -152,7 +156,9 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                 checksum = SVNFileUtil.computeChecksum(dir.getBaseFile(name, false));
                 String realChecksum = entry.getChecksum();
                 if (realChecksum != null && !realChecksum.equals(checksum)) {
-                    SVNErrorManager.error("svn: Checksum mismatch for '" + dir.getFile(name) + "'; expected '" + realChecksum + "', actual: '" + checksum + "'");
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
+                            new Object[] {dir.getFile(name), realChecksum, checksum}); 
+                    SVNErrorManager.error(err);
                 }
             }
             editor.applyTextDelta(path, checksum);

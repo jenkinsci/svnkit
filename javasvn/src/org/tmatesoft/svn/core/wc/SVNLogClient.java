@@ -21,6 +21,8 @@ import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNAnnotationGenerator;
 import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -123,7 +125,7 @@ public class SVNLogClient extends SVNBasicClient {
         long endRev = getRevisionNumber(endRevision, repos, path);
         long startRev = getRevisionNumber(startRevision, repos, path);
         if (endRev < startRev) {
-            SVNErrorManager.error("svn: Start revision must precede end revision (" + startRev + ":" + endRev + ")");
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"));
         }
         File tmpFile = new File(path.getParentFile(), SVNFileUtil.getAdminDirectoryName());
         tmpFile = new File(tmpFile, "tmp/text-base");
@@ -160,7 +162,7 @@ public class SVNLogClient extends SVNBasicClient {
         long endRev = getRevisionNumber(endRevision, repos, null);
         long startRev = getRevisionNumber(startRevision, repos, null);
         if (endRev < startRev) {
-            SVNErrorManager.error("svn: Start revision must precede end revision (" + startRev + ":" + endRev + ")");
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"));
         }
         File tmpFile = SVNFileUtil.createTempDirectory("annotate");
         doAnnotate(repos.getLocation().toString(), startRev, tmpFile, repos, endRev, handler);
@@ -244,11 +246,13 @@ public class SVNLogClient extends SVNBasicClient {
             SVNWCAccess wcAccess = createWCAccess(path);
             SVNEntry entry = wcAccess.getTargetEntry();
             if (entry == null) {
-                SVNErrorManager.error("svn: '" + path + "' is not under version control");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", path);
+                SVNErrorManager.error(err);
                 return;
             }
             if (entry.getURL() == null) {
-                SVNErrorManager.error("svn: '" + path + "' has no URL");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
+                SVNErrorManager.error(err);
             }
             urls[i] = entry.getSVNURL();
         }
@@ -258,7 +262,8 @@ public class SVNLogClient extends SVNBasicClient {
         Collection targets = new TreeSet();
         SVNURL baseURL = SVNURLUtil.condenceURLs(urls, targets, true);
         if (baseURL == null) {
-            SVNErrorManager.error("svn: Entries belong to different repositories");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "target log paths belong to different repositories");
+            SVNErrorManager.error(err);
         }
         if (targets.isEmpty()) {
             targets.add("");
@@ -458,7 +463,8 @@ public class SVNLogClient extends SVNBasicClient {
                 fileEntry.setRelativePath(name);
                 nestedHandler.handleDirEntry(fileEntry);
             } else {
-                SVNErrorManager.error("svn: URL '" + fileULR + "' non-existent in that revision");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "URL ''{0}'' non-existent in that revision", fileULR);
+                SVNErrorManager.error(err);
             }
         } else {
             list(repos, "", rev, recursive, nestedHandler);

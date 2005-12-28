@@ -399,7 +399,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                             try {
                                 os.write(builder.getInstructionsData());
                             } catch (IOException e) {
-                                SVNErrorManager.error(e.getMessage());
+                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                                SVNErrorManager.error(err, e);
                             }
                         }
                         builder.reset(SVNDiffWindowBuilder.OFFSET);

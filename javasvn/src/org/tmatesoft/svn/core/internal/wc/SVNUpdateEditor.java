@@ -17,6 +17,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -66,7 +68,9 @@ public class SVNUpdateEditor implements ISVNEditor {
         }
         if (mySwitchURL != null && entry != null && entry.getRepositoryRoot() != null) {
             if (!mySwitchURL.startsWith(entry.getRepositoryRoot() + "/")) {
-                SVNErrorManager.error("svn: '" + mySwitchURL + "'\nis not the same repository as\n'" + entry.getRepositoryRoot() + "'");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, "''{0}''\nis not in the same repository as\n''{1}''",
+                        new Object[] {mySwitchURL, entry.getRepositoryRoot()});
+                SVNErrorManager.error(err);
             }
         }
         wcAccess.getTarget().getEntries().close();
@@ -143,14 +147,17 @@ public class SVNUpdateEditor implements ISVNEditor {
         String name = SVNPathUtil.tail(path);
         File file = parentDir.getFile(name);
         if (file.exists()) {
-            SVNErrorManager.error("svn: Failed to add directory '" + path + "': object of the same name already exists");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to add directory ''{0}'': object of the same name already exists", path);
+            SVNErrorManager.error(err);
         } else if (SVNFileUtil.getAdminDirectoryName().equals(name)) {
-            SVNErrorManager.error("svn: Failed to add directory '" + path + "': object of the same name as the administrative directory");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to add directory ''{0}'':  object of the same name as the administrative directory", path);
+            SVNErrorManager.error(err);
         }
         SVNEntry entry = parentDir.getEntries().getEntry(name, true);
         if (entry != null) {
             if (entry.isScheduledForAddition()) {
-                SVNErrorManager.error("svn: Failed to add directory '" + path + "': object of the same name already exists and schedule for addition");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to add directory ''{0}'': object of the same name already exists", path);
+                SVNErrorManager.error(err);
             }
         } else {
             entry = parentDir.getEntries().addEntry(name);
@@ -162,7 +169,8 @@ public class SVNUpdateEditor implements ISVNEditor {
 
         SVNDirectory dir = parentDir.createChildDirectory(name, myCurrentDirectory.URL, null, myTargetRevision);
         if (dir == null) {
-            SVNErrorManager.error("svn: Failed to add directory '" + path + "': directory is missing or not locked");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy ''{0}'' is missing or not locked", parentDir.getFile(name));
+            SVNErrorManager.error(err);
         } else {
             dir.getEntries().getEntry("", false).setIncomplete(true);
             dir.getEntries().save(true);
@@ -174,7 +182,8 @@ public class SVNUpdateEditor implements ISVNEditor {
     public void openDir(String path, long revision) throws SVNException {
         myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, path, false);
         if (myCurrentDirectory.getDirectory() == null) {
-            SVNErrorManager.error("svn: Working copy '" + path + "' is missing or not locked");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy ''{0}'' is missing or not locked", path);
+            SVNErrorManager.error(err);
         }
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
         SVNEntry entry = entries.getEntry("", true);
@@ -200,11 +209,8 @@ public class SVNUpdateEditor implements ISVNEditor {
         SVNEntries entries = myCurrentDirectory.getDirectory().getEntries();
         SVNEntry entry = entries.getEntry(name, true);
         if (entry != null && entry.isScheduledForAddition()) {
-            if (kind == SVNNodeKind.FILE) {
-                SVNErrorManager.error("svn: Failed to add entry for absent file '" + path + "': object of the same name already exists and scheduled for addition");
-            } else {
-                SVNErrorManager.error("svn: Failed to add entry for absent directory '" + path + "': object of the same name already exists and scheduled for addition");
-            }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to mark ''{0}'' absent: item of the same name is already scheduled for addition");
+            SVNErrorManager.error(err);
         }
         if (entry == null) {
             entry = entries.addEntry(name);
@@ -313,7 +319,9 @@ public class SVNUpdateEditor implements ISVNEditor {
             }
             String realChecksum = SVNFileUtil.computeChecksum(baseFile);
             if (baseChecksum != null && (realChecksum == null || !realChecksum.equals(baseChecksum))) {
-                SVNErrorManager.error("svn: Checksum mismatch for '" + myCurrentFile.getPath() + "'; expected: '" + baseChecksum + "', actual: '" + realChecksum + "'");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
+                        new Object[] {myCurrentFile.getPath(), baseChecksum, realChecksum}); 
+                SVNErrorManager.error(err);
             }
         }
         File baseTmpFile = dir.getBaseFile(myCurrentFile.Name, true);
@@ -339,7 +347,9 @@ public class SVNUpdateEditor implements ISVNEditor {
             File baseTmpFile = myCurrentFile.getDirectory().getBaseFile(myCurrentFile.Name, true);
             checksum = myCurrentFile.Checksum != null ? myCurrentFile.Checksum : SVNFileUtil.computeChecksum(baseTmpFile);            
             if (!textChecksum.equals(checksum)) {
-                SVNErrorManager.error("svn: Checksum differs, expected '" + textChecksum + "'; actual: '" + checksum + "'");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
+                        new Object[] {myCurrentFile.getPath(), textChecksum, checksum}); 
+                SVNErrorManager.error(err);
             }
             checksum = textChecksum;
         }
@@ -607,7 +617,8 @@ public class SVNUpdateEditor implements ISVNEditor {
             }
             SVNEntries entries = info.getDirectory().getEntries();
             if (entries.getEntry("", true) == null) {
-                SVNErrorManager.error("svn: Cannot get root entry for '" + info.getDirectory().getPath() + "'");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No root entry found in ''{0}''", info.getDirectory().getPath());
+                SVNErrorManager.error(err);
             }
             for (Iterator ents = entries.entries(true); ents.hasNext();) {
                 SVNEntry entry = (SVNEntry) ents.next();
@@ -642,17 +653,21 @@ public class SVNUpdateEditor implements ISVNEditor {
         info.Name = SVNPathUtil.tail(path);
         SVNDirectory dir = parent.getDirectory();
         if (added && dir.getFile(info.Name).exists()) {
-            SVNErrorManager.error("svn: Failed to add file '" + path + "': object of the same name already exists");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to add file ''{0}'': object of the same name already exists", path);
+            SVNErrorManager.error(err);
         }
         SVNEntries entries = null;
         try {
             entries = dir.getEntries();
             SVNEntry entry = entries.getEntry(info.Name, true);
             if (added && entry != null && entry.isScheduledForAddition()) {
-                SVNErrorManager.error("svn: Failed to add file '" + path + "': object of the same name already exists and scheduled for addition");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to add file ''{0}'': object of the same name already exists and scheduled for addition", path);
+                SVNErrorManager.error(err);
             }
             if (!added && entry == null) {
-                SVNErrorManager.error("svn: File '" + info.Name + "' in directory '" + dir.getRoot() + "' is not a versioned resource");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "File ''{0}'' in directory ''{1}'' is not a versioned resource", 
+                        new Object[] {info.Name, dir.getRoot()});
+                SVNErrorManager.error(err);
             }
             if (mySwitchURL != null || entry == null) {
                 info.URL = SVNPathUtil.append(parent.URL, SVNEncodingUtil.uriEncode(info.Name));

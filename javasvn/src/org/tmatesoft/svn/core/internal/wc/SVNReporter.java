@@ -14,6 +14,8 @@ import java.io.File;
 import java.util.Date;
 import java.util.Iterator;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
@@ -106,9 +108,8 @@ public class SVNReporter implements ISVNReporterBaton {
             if (th instanceof SVNException) {
                 throw (SVNException) th;
             }
-            SVNErrorManager
-                    .error("svn: Working copy state was not reported properly: "
-                            + th.getMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "WC report failed: {1}", th.getLocalizedMessage());
+            SVNErrorManager.error(err, th);
         }
     }
 
@@ -199,7 +200,8 @@ public class SVNReporter implements ISVNReporterBaton {
                     continue;
                 }
                 if (file.isFile()) {
-                    SVNErrorManager.error("svn: Cannot report information on directory '" + file + "': entry is obstructed with node of another type");
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "The entry ''{0}'' is no longer a directory; remove the entry before updating", file);
+                    SVNErrorManager.error(err);
                 }
                 SVNDirectory childDir = directory.getChildDirectory(entry
                         .getName());

@@ -22,6 +22,8 @@ import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
@@ -285,7 +287,8 @@ public class SVNBasicClient implements ISVNEventHandler {
     
     protected long getRevisionNumber(SVNRevision revision, SVNRepository repository, File path) throws SVNException {
         if (repository == null && (revision == SVNRevision.HEAD || revision.getDate() != null)) {
-            SVNErrorManager.error("svn: RA access is required to get revision number for '" + revision + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_RA_ACCESS_REQUIRED);
+            SVNErrorManager.error(err);
         }
         if (revision.getNumber() >= 0) {
             return revision.getNumber();
@@ -298,19 +301,22 @@ public class SVNBasicClient implements ISVNEventHandler {
         } else if (revision == SVNRevision.COMMITTED || revision == SVNRevision.WORKING || 
                 revision == SVNRevision.BASE || revision == SVNRevision.PREVIOUS) {
             if (path == null) {
-                SVNErrorManager.error("svn: Path is required to get revision number for '" + revision + "'");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_VERSIONED_PATH_REQUIRED);
+                SVNErrorManager.error(err);
             }
             SVNWCAccess wcAccess = createWCAccess(path);
             SVNEntry entry = wcAccess.getTargetEntry();
             if (entry == null) {
-                SVNErrorManager.error("svn: '" + path + "' is not under version control");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not unvderversion control", path);
+                SVNErrorManager.error(err);
             }
             if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
                 return entry.getRevision();
             }
             return revision == SVNRevision.PREVIOUS ? entry.getCommittedRevision() - 1 : entry.getCommittedRevision();            
         } else {
-            SVNErrorManager.error("svn: Unrecognized revision type requested for '" + path + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Unrecognized revision type requested for ''{0}''", path != null ? path : (Object) repository.getLocation());
+            SVNErrorManager.error(err);
         }
         return -1;
     }
@@ -323,7 +329,8 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (url == null) {
             SVNURL pathURL = getURL(path);
             if (pathURL == null) {
-                SVNErrorManager.error("svn: '" + path + "' has no URL");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
+                SVNErrorManager.error(err);
             }
         }
         if (!revision.isValid() && pegRevision.isValid()) {
@@ -366,7 +373,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     
     protected SVNRepositoryLocation[] getLocations(SVNURL url, File path, SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
         if (!revision.isValid() || !start.isValid()) {
-            SVNErrorManager.error("svn: Bad revision '" + revision + "' or '" + start + "'");
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION));
         }
         long pegRevisionNumber = -1;
         long startRevisionNumber;
@@ -385,7 +392,8 @@ public class SVNBasicClient implements ISVNEventHandler {
             } else if (entry.getURL() != null){
                 url = entry.getSVNURL();
             } else {
-                SVNErrorManager.error("svn: '" + path + "' has no URL");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
+                SVNErrorManager.error(err);
             }
         }
         SVNRepository repository = createRepository(url, true);
@@ -429,12 +437,14 @@ public class SVNBasicClient implements ISVNEventHandler {
         
         if (startPath == null) {
             Object source = path != null ? (Object) path : (Object) url;
-            SVNErrorManager.error("svn: Unable to find repository location for '" + source + "' in revision " + startRevisionNumber);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "Unable to find repository location for ''{0}'' in revision ''{1}''", new Object[] {source, new Long(startRevisionNumber)});
+            SVNErrorManager.error(err);
         }
         if (endPath == null) {
             Object source = path != null ? (Object) path : (Object) url;
-            SVNErrorManager.error("The location for '" + source + "' for revision " + endRevisionNumber +" does not exist in the " +
-                                    "repository or refers to an unrelated object");            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "The location for ''{0}'' for revision {1} does not exist in the " +
+                    "repository or refers to an unrelated object", new Object[] {source, new Long(endRevisionNumber)});
+            SVNErrorManager.error(err);
         }
         
         SVNRepositoryLocation[] result = new SVNRepositoryLocation[2];
@@ -451,7 +461,8 @@ public class SVNBasicClient implements ISVNEventHandler {
         final String path = repos.getRepositoryPath("");
         final SVNNodeKind kind = repos.checkPath("", pegRevision);
         if (kind == SVNNodeKind.NONE) {
-            SVNErrorManager.error("svn: path '" + path + "' doesn't exist at revision " + pegRevision);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "path ''{0}'' doesn't exist at revision {1}", new Object[] {path, new Long(pegRevision)});
+            SVNErrorManager.error(err);
         }
         long logStart = pegRevision;
         logStart = Math.max(startRevision, logStart);
@@ -468,7 +479,8 @@ public class SVNBasicClient implements ISVNEventHandler {
         String endPath = handler.myEndPath == null ? handler.myCurrentPath : handler.myEndPath;
         
         if (pegPath == null) {
-            SVNErrorManager.error("svn: '" + path + "' in revision " + logStart + " is an unrelated object");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "path ''{0}'' in revision {1} is an unrelated object", new Object[] {path, new Long(logStart)});
+            SVNErrorManager.error(err);
         }
         Map result = new HashMap();
         result.put(new Long(startRevision), new SVNLocationEntry(-1, startPath));
@@ -507,7 +519,8 @@ public class SVNBasicClient implements ISVNEventHandler {
             if (kind == SVNNodeKind.DIR) {
                 prevPath = path;
             } else {
-                SVNErrorManager.error("svn: Missing changed-path information for '" + path + "' in revision " + logEntry.getRevision());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "Missing changed-path information for ''{0}'' in revision {1}", new Object[] {path, new Long(logEntry.getRevision())});
+                SVNErrorManager.error(err);
             }            
         }
         return prevPath;

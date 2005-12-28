@@ -57,7 +57,6 @@ public class SVNGanymedSession {
             port = 22;
         }
         String key = credentials.getUserName() + ":" + location.getHost() + ":" + port;
-        String hostID = location.getHost() + ":" + port;
         Connection connection = isUsePersistentConnection() ? (Connection) ourConnectionsPool.get(key) : null;
         
         if (connection == null) {
@@ -128,7 +127,8 @@ public class SVNGanymedSession {
                         ourConnectionsPool.remove(key);
                     }
                 }
-                SVNErrorManager.error("svn: Connection to '" + hostID + "' failed: '" + e.getMessage() + "'");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {location.setPath("", false), e.getLocalizedMessage()});
+                SVNErrorManager.error(err, e);
             } 
         } 
         return connection;

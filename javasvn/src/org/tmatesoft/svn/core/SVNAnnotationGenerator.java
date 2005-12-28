@@ -123,7 +123,8 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         Map propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);
         if (SVNProperty.isBinaryMimeType(newMimeType)) {
-            SVNErrorManager.error("svn: Cannot calculate blame information for binary file '" + myPath + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_BINARY_FILE, "Cannot calculate blame information for binary file ''{0}''", myPath);
+            SVNErrorManager.error(err);
         }
         myCurrentRevision = fileRevision.getRevision();
         boolean known = fileRevision.getRevision() >= myStartRevision;

@@ -98,6 +98,7 @@ public class SVNErrorCode {
     public static final int AUTHZ_CATEGORY = ERR_BASE + 20*ERR_CATEGORY_SIZE;
     
     public static final SVNErrorCode UNKNOWN = new SVNErrorCode(MISC_CATEGORY, ERR_CATEGORY_SIZE - 100, "Uknown error");
+    public static final SVNErrorCode IO_ERROR = new SVNErrorCode(MISC_CATEGORY, ERR_CATEGORY_SIZE - 101, "Generic IO error");
 
     public static final SVNErrorCode BAD_CONTAINING_POOL = new SVNErrorCode(BAD_CATEGORY, 0, "Bad parent pool passed to svn_make_pool()");
     public static final SVNErrorCode BAD_FILENAME = new SVNErrorCode(BAD_CATEGORY, 1, "Bogus filename");
@@ -158,6 +159,7 @@ public class SVNErrorCode {
     public static final SVNErrorCode WC_BAD_PATH = new SVNErrorCode(WC_CATEGORY, 22, "Path syntax not supported in this context");
     public static final SVNErrorCode WC_INVALID_SCHEDULE = new SVNErrorCode(WC_CATEGORY, 23, "Invalid schedule");
     public static final SVNErrorCode WC_INVALID_RELOCATION = new SVNErrorCode(WC_CATEGORY, 24, "Invalid relocation");
+    public static final SVNErrorCode WC_INVALID_SWITCH = new SVNErrorCode(WC_CATEGORY, 25, "Invalid switch");
     
     public static final SVNErrorCode FS_GENERAL = new SVNErrorCode(FS_CATEGORY, 0, "General filesystem error");
     public static final SVNErrorCode FS_CLEANUP = new SVNErrorCode(FS_CATEGORY, 1, "Error closing filesystem");

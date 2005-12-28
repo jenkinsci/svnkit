@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeSet;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
@@ -63,7 +65,8 @@ public class SVNProperties {
                 readProperty('V', is, null);
             }
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot read properties file '" + getFile() + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -87,7 +90,8 @@ public class SVNProperties {
                 nameOS.reset();
             }
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot read properties file '" + getFile() + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read properties file ''{0}'': {1}", new Object[] {getFile(), e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -188,7 +192,8 @@ public class SVNProperties {
                     }
                 }
             } catch (IOException e) {
-                SVNErrorManager.error("svn: I/O error while comparing properties files: " + e.getMessage());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                SVNErrorManager.error(err, e);
             } finally {
                 if (tmpFile2 != null) {
                     tmpFile2.delete();
@@ -243,7 +248,8 @@ public class SVNProperties {
                 readProperty('V', is, null);                
             }
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot read properties file '" + getFile() + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -372,7 +378,8 @@ public class SVNProperties {
                 os.write(new byte[] { 'E', 'N', 'D', '\n' });
             }
         } catch (IOException e) {
-            SVNErrorManager.error(e.getMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         }
         return propCount > 0;
     }

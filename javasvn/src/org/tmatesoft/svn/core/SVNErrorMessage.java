@@ -20,39 +20,60 @@ import java.text.MessageFormat;
  */
 public class SVNErrorMessage {
     
+    public static final int TYPE_ERROR = 0;
+    public static final int TYPE_WARNING = 1;
+    
     private Object[] myObjects;
     private String myMessage;
     private SVNErrorCode myErrorCode;
+    private int myType;
     
     private static final Object[] EMPTY_ARRAY = new Object[0];
     
     public static SVNErrorMessage UNKNOWN_ERROR_MESSAGE = create(SVNErrorCode.UNKNOWN);
     
     public static SVNErrorMessage create(SVNErrorCode code) {
-        return create(code, "");
+        return create(code, "", TYPE_ERROR);
     }
 
     public static SVNErrorMessage create(SVNErrorCode code, String message) {
-        return new SVNErrorMessage(code, message, EMPTY_ARRAY);
+        return create(code, message, TYPE_ERROR);
     }
 
     public static SVNErrorMessage create(SVNErrorCode code, String message, Object object) {
-        return new SVNErrorMessage(code == null ? SVNErrorCode.BASE : code, message == null ? "" : message, 
-                object == null ? new Object[] {"NULL"} : new Object[] {object});
+        return create(code, message, object, TYPE_ERROR);
     }
 
     public static SVNErrorMessage create(SVNErrorCode code, String message, Object[] objects) {
-        return new SVNErrorMessage(code == null ? SVNErrorCode.BASE : code, message == null ? "" : message, 
-                objects == null ? EMPTY_ARRAY : objects);
+        return create(code, message, objects, TYPE_ERROR);
     }
 
-    protected SVNErrorMessage(SVNErrorCode code, String message, Object[] relatedObjects) {
+    public static SVNErrorMessage create(SVNErrorCode code, String message, int type) {
+        return new SVNErrorMessage(code, message, EMPTY_ARRAY, type);
+    }
+
+    public static SVNErrorMessage create(SVNErrorCode code, String message, Object object, int type) {
+        return new SVNErrorMessage(code == null ? SVNErrorCode.BASE : code, message == null ? "" : message, 
+                object == null ? new Object[] {"NULL"} : new Object[] {object}, type);
+    }
+
+    public static SVNErrorMessage create(SVNErrorCode code, String message, Object[] objects, int type) {
+        return new SVNErrorMessage(code == null ? SVNErrorCode.BASE : code, message == null ? "" : message, 
+                objects == null ? EMPTY_ARRAY : objects, type);
+    }
+
+    protected SVNErrorMessage(SVNErrorCode code, String message, Object[] relatedObjects, int type) {
         myErrorCode = code;
         if (message != null && message.startsWith("svn: ")) {
             message = message.substring("svn: ".length());
         }
         myMessage = message;
         myObjects = relatedObjects;
+        myType = type;
+    }
+    
+    public int getType() {
+        return myType;
     }
     
     public SVNErrorCode getErrorCode() {
@@ -72,9 +93,16 @@ public class SVNErrorMessage {
     }    
     
     public String toString() {
-        if ("".equals(myMessage)) {
-            return "svn: " + myErrorCode.toString();
+        StringBuffer line = new StringBuffer();
+        line.append("svn: ");
+        if (getType() == TYPE_WARNING) {
+            line.append("warning: ");
         }
-        return "svn: " + (myObjects.length > 0 ? MessageFormat.format(myMessage, myObjects) : myMessage);
+        if ("".equals(myMessage)) {
+            line.append(myErrorCode.toString());
+        } else {
+            line.append(myObjects.length > 0 ? MessageFormat.format(myMessage, myObjects) : myMessage);
+        }
+        return line.toString();
     }
 }

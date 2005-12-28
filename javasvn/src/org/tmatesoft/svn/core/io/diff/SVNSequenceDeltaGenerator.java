@@ -115,7 +115,7 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 			doGenerateDiffWindow(commitPath, workFile, baseFile, consumer, memoryThreshold, fileSegmentSize, searchDepthExponent, tempDirectory);
 		}
 		catch (IOException ex) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, ex.getLocalizedMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ex.getLocalizedMessage());
             SVNErrorManager.error(err, ex);
 		}
 	}
@@ -126,7 +126,7 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 			result = QSequenceLineMedia.createBlocks(new SVNSequenceLineRAData(baseFile), new SVNSequenceLineRAData(workFile), memoryTreshold, fileSegmentSize, searchDepthExponent, new QSequenceLineFixedTempDirectoryFactory(tempDirectory));
 		}
 		catch (QSequenceException ex) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, ex.getLocalizedMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ex.getLocalizedMessage());
             SVNErrorManager.error(err, ex);
             return;
 		}
@@ -160,7 +160,8 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 			}
 		}
 		catch (IOException e) {
-			SVNErrorManager.error(e.getMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
 		}
 		finally {
 			SVNFileUtil.closeFile(is);
@@ -173,7 +174,8 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 			}
 		}
 		catch (IOException e) {
-			SVNErrorManager.error(e.getMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
 		}
 		finally {
 			SVNFileUtil.closeFile(is);

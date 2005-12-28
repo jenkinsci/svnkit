@@ -122,26 +122,30 @@ public class SVNURL {
     
     private SVNURL(String url, boolean uriEncoded) throws SVNException {
         if (url == null) {
-            SVNErrorManager.error("svn: invalid URL '" + url + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL cannot be NULL");
+            SVNErrorManager.error(err);
         }
         if (url.endsWith("/")) {
             url = url.substring(0, url.length() - 1);
         }
         int index = url.indexOf("://");
         if (index <= 0) {
-            SVNErrorManager.error("svn: invalid URL '" + url + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Malformed URL ''{0}''", url);
+            SVNErrorManager.error(err);
         }
         myProtocol = url.substring(0, index);
         myProtocol = myProtocol.toLowerCase();
         if (!DEFAULT_PORTS.containsKey(myProtocol)) {
-            SVNErrorManager.error("svn: invalid URL '" + url + "': protocol '" + myProtocol + "' is not supported");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL protocol is not supported ''{0}''", url);
+            SVNErrorManager.error(err);
         }
         String testURL = "http" + url.substring(index);
         URL httpURL;
         try {
             httpURL = new URL(testURL);
         } catch (MalformedURLException e) {
-            SVNErrorManager.error("svn: invalid URL '" + url + "': " + e.getMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Malformed URL: ''{0}'': {1}", new Object[] {url, e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
             return;
         }
         myHost = httpURL.getHost();
@@ -362,7 +366,8 @@ public class SVNURL {
             if ("".equals(token) || ".".equals(token)) {
                 continue;
             } else if ("..".equals(token)) {
-                SVNErrorManager.error("svn: URL '" + url + "' contains a '..' element");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL ''{0}'' contains '..' element", url);
+                SVNErrorManager.error(err);
             } else {
                 result.append("/");
                 result.append(token);

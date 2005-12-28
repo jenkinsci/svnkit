@@ -17,7 +17,6 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -25,15 +24,6 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNErrorManager {
 
-    public static void error(String message) throws SVNException {
-        if (message == null) {
-            message = "unknow error";
-        } 
-        SVNDebugLog.logInfo(message);
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, message);
-        throw new SVNException(err);
-    }
-    
     public static void cancel(String message) throws SVNCancelException {
         throw new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, message));
     }

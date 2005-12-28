@@ -27,6 +27,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -122,7 +124,8 @@ public class SVNEntries {
                 }
             }
         } catch (IOException e) {
-            SVNErrorManager.error("svn: Cannot load entries file '" + myFile + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read entries file ''{0}'': {1}", new Object[] {myFile, e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
         } finally {
             SVNFileUtil.closeFile(reader);
         }
@@ -194,7 +197,8 @@ public class SVNEntries {
         } catch (IOException e) {
             SVNFileUtil.closeFile(os);
             SVNFileUtil.deleteFile(tmpFile);
-            SVNErrorManager.error("svn: Cannot save entries file '" + myFile + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot wrtie entries file ''{0}'': {1}", new Object[] {myFile, e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
         } finally {
             SVNFileUtil.closeFile(os);
         }

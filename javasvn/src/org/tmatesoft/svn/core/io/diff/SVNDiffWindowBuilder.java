@@ -19,6 +19,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -344,7 +346,8 @@ public class SVNDiffWindowBuilder {
                         }
                     }
                 } catch (IOException e) {
-                    SVNErrorManager.error(e.getMessage());
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                    SVNErrorManager.error(err, e);
                 }
                 if (myHeader[myHeader.length - 1] >= 0) {
                     myState = OFFSET;
@@ -358,7 +361,8 @@ public class SVNDiffWindowBuilder {
                         try {
                             readInt(is, myOffsets, i);
                         } catch (IOException e) {
-                            SVNErrorManager.error(e.getMessage());
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                            SVNErrorManager.error(err, e);
                         }
                         if (myOffsets[i] < 0) {
                             // can't read?
@@ -381,7 +385,8 @@ public class SVNDiffWindowBuilder {
                     try {
                         length = is.read(myInstructions, myInstructions.length - length, length);
                     } catch (IOException e) {
-                        SVNErrorManager.error(e.getMessage());
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                        SVNErrorManager.error(err, e);
                     }
                     if (length <= 0) {
                         return false;
@@ -399,7 +404,8 @@ public class SVNDiffWindowBuilder {
                             try {
                                 myNewDataStream.write(myInstructions);
                             } catch (IOException e) {
-                                SVNErrorManager.error(e.getMessage());
+                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                                SVNErrorManager.error(err, e);
                             }
                         }
                     }
@@ -426,7 +432,8 @@ public class SVNDiffWindowBuilder {
                         myFedDataCount++;
                     }
                 } catch (IOException e) {
-                    SVNErrorManager.error(e.getMessage());
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                    SVNErrorManager.error(err, e);
                 }
                 SVNFileUtil.closeFile(myNewDataStream);
                 reset(SVNDiffWindowBuilder.OFFSET);

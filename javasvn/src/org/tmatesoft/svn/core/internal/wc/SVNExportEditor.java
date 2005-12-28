@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -74,13 +76,18 @@ public class SVNExportEditor implements ISVNEditor {
         if (dirType == SVNFileType.FILE || dirType == SVNFileType.SYMLINK) {
             // export is obstructed.
             if (!myIsForce) {
-                SVNErrorManager.error("svn: Failed to add directory '" + myCurrentDirectory + "': file of the same name already exists; use 'force' to overwrite existing file");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' exists and is not a directory", myCurrentDirectory);
+                SVNErrorManager.error(err);
             } else {
                 SVNFileUtil.deleteAll(myCurrentDirectory, myEventDispatcher);
             }
-        } else if (dirType == SVNFileType.NONE) {
+        } else if (dirType == SVNFileType.DIRECTORY && !myIsForce) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' already exists", myCurrentDirectory);
+            SVNErrorManager.error(err);
+        } else if (dirType == SVNFileType.NONE) {        
             if (!myCurrentDirectory.mkdirs()) {
-                SVNErrorManager.error("svn: Failed to add directory '" + myCurrentDirectory + "'");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Cannot create directory ''{0}''", myCurrentDirectory);
+                SVNErrorManager.error(err);
             }
         }
         myEventDispatcher.handleEvent(SVNEventFactory.createExportAddedEvent(
@@ -104,7 +111,8 @@ public class SVNExportEditor implements ISVNEditor {
         File file = new File(myRoot, path);
 
         if (!myIsForce && file.exists()) {
-            SVNErrorManager.error("svn: Failed to add file '" + file + "': file of the same name already exists; use 'force' to overwrite exsiting file");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "File ''{0}'' already exists", file);
+            SVNErrorManager.error(err);
         }
         myCurrentFile = file;
         myFileProperties = new HashMap();
@@ -145,7 +153,9 @@ public class SVNExportEditor implements ISVNEditor {
         myChecksum = null;
         if (textChecksum != null
                 && !textChecksum.equals(realChecksum)) {
-            SVNErrorManager.error("svn: Checksum differs, expected '" + textChecksum + "'; actual: '" + realChecksum + "'");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
+                    new Object[] {myCurrentFile, textChecksum, realChecksum}); 
+            SVNErrorManager.error(err);
         }
         // retranslate.
         try {

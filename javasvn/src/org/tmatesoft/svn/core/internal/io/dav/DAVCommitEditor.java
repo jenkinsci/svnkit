@@ -263,7 +263,7 @@ class DAVCommitEditor implements ISVNEditor {
             SVNDiffWindowBuilder.save(diffWindow, firstWindow, myCurrentDelta);
             return myCurrentDelta;
         } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, e.getMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
             SVNErrorManager.error(err, e);
             return null;
         }
@@ -287,7 +287,7 @@ class DAVCommitEditor implements ISVNEditor {
                 try {
                     os.close();
                 } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, e.getMessage());
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
                     SVNErrorManager.error(err, e);
                 }
                 
@@ -297,7 +297,7 @@ class DAVCommitEditor implements ISVNEditor {
                     combinedData = currentFile.getTextDelta(0);
                     myConnection.doPutDiff(currentFile.getURL(), currentFile.getWorkingURL(), combinedData);
                 } catch (IOException e1) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, e1.getLocalizedMessage());
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e1.getLocalizedMessage());
                     SVNErrorManager.error(err, e1);
                 } finally {
                     SVNFileUtil.closeFile(combinedData);
