@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -113,7 +115,8 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 			doGenerateDiffWindow(commitPath, workFile, baseFile, consumer, memoryThreshold, fileSegmentSize, searchDepthExponent, tempDirectory);
 		}
 		catch (IOException ex) {
-			throw new SVNException(ex);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, ex.getLocalizedMessage());
+            SVNErrorManager.error(err, ex);
 		}
 	}
 
@@ -123,7 +126,9 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 			result = QSequenceLineMedia.createBlocks(new SVNSequenceLineRAData(baseFile), new SVNSequenceLineRAData(workFile), memoryTreshold, fileSegmentSize, searchDepthExponent, new QSequenceLineFixedTempDirectoryFactory(tempDirectory));
 		}
 		catch (QSequenceException ex) {
-			throw new SVNException(ex);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, ex.getLocalizedMessage());
+            SVNErrorManager.error(err, ex);
+            return;
 		}
 
 		try {

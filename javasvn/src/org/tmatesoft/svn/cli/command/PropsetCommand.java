@@ -20,6 +20,8 @@ import java.io.PrintStream;
 
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
@@ -55,7 +57,8 @@ public class PropsetCommand extends SVNCommand {
                     os.write(r);
                 }
             } catch (IOException e) {
-                throw new SVNException(e);
+                SVNErrorMessage msg = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, e.getLocalizedMessage());
+                throw new SVNException(msg, e);
             } finally {
                 try {
                     os.close();

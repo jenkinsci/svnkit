@@ -12,7 +12,10 @@ import java.util.List;
 import junit.framework.TestCase;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 
 import de.regnis.q.sequence.line.QSequenceLineMedia;
@@ -113,7 +116,8 @@ public class SVNSequenceDeltaGeneratorTest extends TestCase {
 				}
 			}
 			catch (IOException ex) {
-				throw new SVNException(ex);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, ex.getLocalizedMessage());
+                SVNErrorManager.error(err, ex);
 			}
 		}
 
@@ -154,7 +158,8 @@ public class SVNSequenceDeltaGeneratorTest extends TestCase {
 				((ByteArrayOutputStream)streams.get(streams.size() - 1)).close();
 			}
 			catch (IOException ex) {
-				throw new SVNException(ex);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, ex.getLocalizedMessage());
+                SVNErrorManager.error(err, ex);
 			}
 		}
 

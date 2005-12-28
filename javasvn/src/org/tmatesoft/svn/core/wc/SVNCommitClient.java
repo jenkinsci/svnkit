@@ -26,6 +26,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -743,7 +744,10 @@ public class SVNCommitClient extends SVNBasicClient {
             return new SVNCommitPacket(wcAccess, commitItems, lockTokens);
         } catch (SVNException e) {
             wcAccess.close(true);
-            throw new SVNException("svn: Commit failed (details follow):", e);
+            SVNErrorMessage nestedErr = e.getErrorMessage();
+            SVNErrorMessage err = SVNErrorMessage.create(nestedErr.getErrorCode(), "Commit failed (details follow):");
+            SVNErrorManager.error(err);
+            return null;
         }
     }
     
@@ -807,7 +811,9 @@ public class SVNCommitClient extends SVNBasicClient {
                 for (int j = 0; j < wcAccesses.length; j++) {
                     wcAccesses[j].close(true);
                 }
-                throw new SVNException("svn: Commit failed (details follow):", e);
+                SVNErrorMessage nestedErr = e.getErrorMessage();
+                SVNErrorMessage err = SVNErrorMessage.create(nestedErr.getErrorCode(), "Commit failed (details follow):");
+                SVNErrorManager.error(err);
             }
         }
         SVNCommitPacket[] packetsArray = (SVNCommitPacket[]) packets.toArray(new SVNCommitPacket[packets.size()]);
@@ -854,7 +860,9 @@ public class SVNCommitClient extends SVNBasicClient {
             for (int j = 0; j < wcAccesses.length; j++) {
                 wcAccesses[j].close(true);
             }
-            throw new SVNException("svn: Commit failed (details follow):", e);
+            SVNErrorMessage nestedErr = e.getErrorMessage();
+            SVNErrorMessage err = SVNErrorMessage.create(nestedErr.getErrorCode(), "Commit failed (details follow):");
+            SVNErrorManager.error(err);
         }
         return packetsArray;        
     }

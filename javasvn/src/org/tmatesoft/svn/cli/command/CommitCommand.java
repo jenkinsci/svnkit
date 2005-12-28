@@ -15,6 +15,8 @@ package org.tmatesoft.svn.cli.command;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 
@@ -51,7 +53,7 @@ public class CommitCommand extends SVNCommand {
         if (editorCommand == null) {
             return;
         }
-
-        throw new SVNException("Commit failed. Can't handle external editor " + editorCommand);
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_EDITOR, "Commit failed. Can't handle external editor " + editorCommand);
+        throw new SVNException(err);
     }
 }

@@ -19,8 +19,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import org.tmatesoft.svn.core.SVNAuthenticationException;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -147,10 +145,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 return auth;
             }
             if (i == 3) {
-                throw new SVNCancelException("svn: Authentication cancelled");
+                SVNErrorManager.cancel("authentication cancelled");
             }
         }
-        throw new SVNAuthenticationException("svn: Authentication required for '" + realm + "'");
+        SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
+        return null;
     }
 
     public SVNAuthentication getNextAuthentication(String kind, String realm, SVNURL url) throws SVNException {
@@ -166,10 +165,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 return auth;
             }
             if (i == 3) {
-                throw new SVNCancelException("svn: Authentication cancelled");
+                SVNErrorManager.cancel("authentication cancelled");
             }
         }
-        throw new SVNAuthenticationException("svn: Authentication required for '" + realm + "'");
+        SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
+        return null;
     }
 
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) {

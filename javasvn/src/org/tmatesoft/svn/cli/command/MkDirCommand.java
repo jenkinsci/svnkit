@@ -12,20 +12,21 @@
 
 package org.tmatesoft.svn.cli.command;
 
-import org.tmatesoft.svn.cli.SVNArgument;
-import org.tmatesoft.svn.cli.SVNCommand;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
-
 import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+
+import org.tmatesoft.svn.cli.SVNArgument;
+import org.tmatesoft.svn.cli.SVNCommand;
+import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 /**
  * @author TMate Software Ltd.
@@ -35,7 +36,8 @@ public class MkDirCommand extends SVNCommand {
     public final void run(final PrintStream out, PrintStream err) throws SVNException {
         if (!getCommandLine().hasURLs()) {
             if (getCommandLine().getArgumentValue(SVNArgument.MESSAGE) != null) {
-                SVNErrorManager.error("svn: Local, non-commit operations do not take a log message.");
+                SVNErrorMessage msg = SVNErrorMessage.create(SVNErrorCode.CL_UNNECESSARY_LOG_MESSAGE, "Local, non-commit operations do not take a log message.");
+                throw new SVNException(msg);
             }
             createLocalDirectories(out, err);
         } else {

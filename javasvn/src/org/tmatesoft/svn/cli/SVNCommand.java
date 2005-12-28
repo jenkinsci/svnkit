@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -92,12 +94,14 @@ public abstract class SVNCommand {
                     }
                     if (r == 0) {
                         // invalid
-                        throw new SVNException("error: commit message contains a zero byte");
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_BAD_LOG_MESSAGE, "error: commit message contains a zero byte");
+                        throw new SVNException(err);
                     }
                     bos.write(r);
                 }
             } catch (IOException e) {
-                throw new SVNException(e);
+                SVNErrorMessage msg = SVNErrorMessage.create(SVNErrorCode.CL_BAD_LOG_MESSAGE, e.getLocalizedMessage());
+                throw new SVNException(msg, e);
             } finally {
                 try {
                     if (is != null) {
@@ -105,7 +109,8 @@ public abstract class SVNCommand {
                     }
                     bos.close();
                 } catch (IOException e) {
-                    throw new SVNException(e);
+                    SVNErrorMessage msg = SVNErrorMessage.create(SVNErrorCode.CL_BAD_LOG_MESSAGE, e.getLocalizedMessage());
+                    throw new SVNException(msg, e);
                 }
             }
             return new String(bos.toByteArray());

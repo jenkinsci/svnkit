@@ -13,8 +13,11 @@ package org.tmatesoft.svn.core.wc.xml;
 
 import java.util.Date;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.ContentHandler;
@@ -80,7 +83,8 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
             closeTag(ENTRY_TAG);
         } catch (SAXException e) {
             SVNDebugLog.logError(e);
-            throw new SVNException(e);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
         } finally {
             myLineNumber++;
         }

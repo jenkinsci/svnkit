@@ -44,6 +44,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
@@ -1105,7 +1106,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 public void checkCancelled() throws SVNCancelException {
                     if(myCancelOperation){
                         myCancelOperation = false;
-                        throw new SVNCancelException("operation cancelled");
+                        SVNErrorManager.cancel("operation cancelled");
                     }
                 }
             };

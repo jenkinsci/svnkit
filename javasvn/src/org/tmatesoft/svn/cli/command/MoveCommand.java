@@ -18,6 +18,8 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNArgument;
 import org.tmatesoft.svn.cli.SVNCommand;
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
@@ -42,7 +44,8 @@ public class MoveCommand extends SVNCommand {
 
 	private void runRemote(PrintStream out, PrintStream err) throws SVNException {
         if (getCommandLine().getURLCount() != 2) {
-            throw new SVNException("Please enter SRC and DST URL");
+            SVNErrorMessage msg = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Please enter SRC and DST URLs");
+            throw new SVNException(msg);
         }
         String srcURL = getCommandLine().getURL(0);
         SVNRevision srcRevision = SVNRevision.parse((String) getCommandLine().getArgumentValue(SVNArgument.REVISION));
@@ -64,7 +67,8 @@ public class MoveCommand extends SVNCommand {
 
 	private void runLocally(final PrintStream out, PrintStream err) throws SVNException {
         if (getCommandLine().getPathCount() != 2) {
-            throw new SVNException("Please enter SRC and DST path");
+            SVNErrorMessage msg = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Please enter SRC and DST path");
+            throw new SVNException(msg);
         }
 
         final String absoluteSrcPath = getCommandLine().getPathAt(0);

@@ -21,6 +21,8 @@ import java.util.Map;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -1341,7 +1343,11 @@ public abstract class SVNRepository {
         // check path?
         SVNNodeKind nodeKind = checkPath("", revision);
         if (nodeKind == SVNNodeKind.FILE) {
-            throw new SVNException("svn: URL '" + getLocation().toString() + "' refers to a file, not a directory");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' refers to a file, not a directory", getLocation());
+            SVNErrorManager.error(err);
+        } else if (nodeKind == SVNNodeKind.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' doesn't exist", getLocation());
+            SVNErrorManager.error(err);
         }
         update(revision, target, recursive, new ISVNReporterBaton() {
                     public void report(ISVNReporter reporter) throws SVNException {

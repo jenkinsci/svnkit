@@ -19,8 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
@@ -135,7 +136,8 @@ public class SVNCommandLine {
             if (previousArgument != null) {
                 // parse as value.
                 if (argument.startsWith("--") || argument.startsWith("-")) {
-                    throw new SVNException("argument '" + previousArgumentName + "' requires value");
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "argument '" + previousArgumentName + "' requires value");
+                    throw new SVNException(err);
                 }
                 Object value = previousArgument.parseValue(argument);
                 myBinaryArguments.put(previousArgument, value);
@@ -156,7 +158,8 @@ public class SVNCommandLine {
                         myUnaryArguments.add(svnArgument);
                     }
                 } else {
-                    throw new SVNException("invalid argument '" + argument + "'");
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid argument '" + argument + "'");
+                    throw new SVNException(err);
                 }
             } else if (argument.startsWith("-")) {
                 for (int j = 1; j < argument.length(); j++) {
@@ -178,7 +181,8 @@ public class SVNCommandLine {
                             myUnaryArguments.add(svnArgument);
                         }
                     } else {
-                        throw new SVNException("invalid argument '" + name + "'");
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid argument '" + name + "'");
+                        throw new SVNException(err);
                     }
                 }
             } else {
@@ -196,7 +200,8 @@ public class SVNCommandLine {
                             try {
                                 Long.parseLong(pegRevision);
                             } catch (NumberFormatException e) {                            
-                                SVNErrorManager.error("svn: Syntax error parsing revision '" + pegRevision + "'");
+                                SVNErrorMessage msg = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error parsing revision '" + pegRevision + "'");
+                                throw new SVNException(msg);
                             }
                         } else if (atIndex > 0 && atIndex == argument.length() - 1) {
                             argument = argument.substring(0, argument.length() - 1);
@@ -215,7 +220,8 @@ public class SVNCommandLine {
         }
 
         if (myCommandName == null) {
-            throw new SVNException("no command name defined");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "no command name defined");
+            throw new SVNException(err);
         }
 
         if (myPathURLs.isEmpty()) {

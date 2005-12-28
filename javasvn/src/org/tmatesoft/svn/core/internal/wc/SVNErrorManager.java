@@ -27,19 +27,18 @@ public class SVNErrorManager {
 
     public static void error(String message) throws SVNException {
         if (message == null) {
-            message = "svn: unknow error";
-        } else if (!message.startsWith("svn: ")) {
-            message = "svn: " + message;
-        }
+            message = "unknow error";
+        } 
         SVNDebugLog.logInfo(message);
-        throw new SVNException(message);
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, message);
+        throw new SVNException(err);
     }
     
-    public static void cancel(String message) throws SVNException {
+    public static void cancel(String message) throws SVNCancelException {
         throw new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, message));
     }
 
-    public static void authenticationFailed(String message, Object messageObject) throws SVNException {
+    public static void authenticationFailed(String message, Object messageObject) throws SVNAuthenticationException {
         throw new SVNAuthenticationException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, message, messageObject));
     }
     

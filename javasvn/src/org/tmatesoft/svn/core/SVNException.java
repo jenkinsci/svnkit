@@ -24,46 +24,8 @@ public class SVNException extends Exception {
     
     private SVNErrorMessage[] myErrorMessages;
 
-    /**
-     * A default constructor.
-     *
-     */
-    public SVNException() {
-    }
-    
-    /**
-     * Constructs an <b>SVNException</b> provided an error 
-     * description message.
-     * 
-     * @param message	an informational message
-     */
-    public SVNException(String message) {
-        super(message);
-    }
-    
-    /**
-     * Constructs an <b>SVNException</b> provided an error description 
-     * message and an original exception - the cause of this exception.
-     * 
-     * @param message	an informational message
-     * @param cause		an initial cause of this exception 
-     */
-    public SVNException(String message, Throwable cause) {
-        super(message, cause);
-    }
-    
-    /**
-     * Constructs an <code>SVNException</code> provided an original 
-     * <code>Throwable</code> - as a real cause of the exception.
-     * 
-     * @param cause		an initial cause of this exception 
-     */
-    public SVNException(Throwable cause) {
-        super(cause);
-    }
-    
     public SVNException(SVNErrorMessage errorMessage, Throwable cause) {
-        this(new SVNErrorMessage[] {errorMessage}, cause);
+        this(new SVNErrorMessage[] {errorMessage == null ? SVNErrorMessage.UNKNOWN_ERROR_MESSAGE : null}, cause);
     }
 
     public SVNException(SVNErrorMessage[] errorMessages, Throwable cause) {

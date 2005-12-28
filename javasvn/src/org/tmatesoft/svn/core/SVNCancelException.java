@@ -22,6 +22,7 @@ package org.tmatesoft.svn.core;
  *
  */
 public class SVNCancelException extends SVNException {
+
     /**
      * Constructs an <b>SVNCancelException</b> given the
      * error message.
@@ -29,10 +30,6 @@ public class SVNCancelException extends SVNException {
      * @param message  an error message describing why the operation 
      *                 was cancelled
      */
-    public SVNCancelException(String message) {
-        super(message);
-    }
-    
     public SVNCancelException(SVNErrorMessage errorMessage) {
         super(errorMessage);
     }

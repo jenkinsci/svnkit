@@ -12,6 +12,8 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -132,11 +134,11 @@ public class SVNMoveClient extends SVNBasicClient {
      */ 
     public void doMove(File src, File dst) throws SVNException {
         if (dst.exists()) {
-            throw new SVNException("svn: Cannot move '" + src
-                    + "' over existing file '" + dst);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "File ''{0}'' already exists", dst);
+            SVNErrorManager.error(err);
         } else if (!src.exists()) {
-            throw new SVNException("svn: Cannot move '" + src
-                    + "'; file does not exist");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Path ''{0}'' does not exist", src);
+            SVNErrorManager.error(err);
         }
         // src considered as unversioned when it is not versioned
         boolean srcIsVersioned = isVersionedFile(src);
@@ -398,8 +400,8 @@ public class SVNMoveClient extends SVNBasicClient {
     public void undoMove(File src, File dst) throws SVNException {
         // dst could exists, if it is deleted directory.
         if (!src.exists()) {
-            throw new SVNException("svn: Cannot undo move of '" + dst
-                    + "'; file '" + src + "' does not exist");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Path ''{0}'' does not exist", src);
+            SVNErrorManager.error(err);
         }
         // src considered as unversioned when it is not versioned
         boolean srcIsVersioned = isVersionedFile(src);
