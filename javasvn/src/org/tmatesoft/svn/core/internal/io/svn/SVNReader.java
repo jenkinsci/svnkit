@@ -263,12 +263,9 @@ class SVNReader {
                             is.mark(0x100);
                             while (true) {
                                 SVNErrorMessage err = readError(is);
-                                SVNDebugLog.logError(err.toString());
                                 errorMessages.add(err);
                             }
                         } catch (SVNException e) {
-                            SVNDebugLog.logError("size of errors: " + errorMessages.size());
-                            SVNDebugLog.logError(e);
                             is.reset();
                         }
                         SVNErrorManager.error(errorMessages);
