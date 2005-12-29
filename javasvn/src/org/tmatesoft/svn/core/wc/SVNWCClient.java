@@ -1445,10 +1445,10 @@ public class SVNWCClient extends SVNBasicClient {
             }
             public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
                 if (error != null) {
-                    handleEvent(SVNEventFactory.createLockEvent(path, SVNEventAction.UNLOCK_FAILED, null, null),
+                    handleEvent(SVNEventFactory.createLockEvent(path, SVNEventAction.UNLOCK_FAILED, null, error.getMessage()),
                             ISVNEventHandler.UNKNOWN);
                 } else {
-                    handleEvent(SVNEventFactory.createLockEvent(path, SVNEventAction.UNLOCKED, null, error.getMessage()),
+                    handleEvent(SVNEventFactory.createLockEvent(path, SVNEventAction.UNLOCKED, null, null),
                             ISVNEventHandler.UNKNOWN);
                 }
             }
