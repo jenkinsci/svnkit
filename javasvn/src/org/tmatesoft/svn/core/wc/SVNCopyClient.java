@@ -347,7 +347,7 @@ public class SVNCopyClient extends SVNBasicClient {
             }
             
             SVNCommitUtil.harvestCommitables(commitables, wcAccess.getTarget(), srcPath, null, entry, dstURL.toString(), entry.getURL(), 
-                    true, false, false, null, true);
+                    true, false, false, null, true, false);
             items = (SVNCommitItem[]) commitables.values().toArray(new SVNCommitItem[commitables.values().size()]);
             for (int i = 0; i < items.length; i++) {
                 items[i].setWCAccess(wcAccess);

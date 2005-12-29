@@ -182,6 +182,10 @@ public class SVNWCAccess implements ISVNEventHandler {
         return (SVNDirectory) myDirectories.get(path);
     }
 
+    public SVNDirectory[] getAllDirectories() {
+        return (SVNDirectory[]) myDirectories.values().toArray(new SVNDirectory[myDirectories.size()]);
+    }
+
     public SVNDirectory[] getChildDirectories(String path) {
         if (path.startsWith("/")) {
             path = path.substring(1);
@@ -465,12 +469,26 @@ public class SVNWCAccess implements ISVNEventHandler {
     }
 
     public void removeDirectory(String path) throws SVNException {
+        removeDirectory(path, false);
+    }
+
+    public void removeDirectory(String path, boolean recursive) throws SVNException {
         SVNDirectory dir = (SVNDirectory) myDirectories.remove(path);
         if (dir != null) {
             if (myExternals != null) {
                 myExternals.remove(path);
             }
             dir.unlock();
+        }
+        if (recursive) {
+            for (Iterator paths = myDirectories.keySet().iterator(); paths.hasNext();) {
+                String p = (String) paths.next();
+                SVNDirectory childDir = (SVNDirectory) myDirectories.get(p);
+                if (p.startsWith(path + "/")) {
+                    paths.remove();
+                    childDir.unlock();
+                }
+            }
         }
     }
 

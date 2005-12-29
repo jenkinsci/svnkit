@@ -204,6 +204,28 @@ public class SVNCommitUtil {
                     baseAccess.addDirectory(path, pathFile, true, true);
                 }
             }
+            // if commit is non-recursive and forced, remove those child dirs 
+            // that were not explicitly added but are explicitly copied. ufff.
+            if (!recursive && force) {
+                SVNDirectory[] lockedDirs = baseAccess.getAllDirectories();
+                for (int i = 0; i < lockedDirs.length; i++) {
+                    SVNDirectory dir = lockedDirs[i];
+                    SVNEntry rootEntry = dir.getEntries().getEntry("", true);
+                    if (rootEntry.getCopyFromURL() != null) {
+                        File dirRoot = dir.getRoot();
+                        boolean keep = false;
+                        for (int j = 0; j < paths.length; j++) {
+                            if (dirRoot.equals(paths[j])) {
+                                keep = true;
+                                break;
+                            }
+                        }
+                        if (!keep) {
+                            baseAccess.removeDirectory(dir.getPath(), true);
+                        }
+                    }
+                }
+            }
         } catch (SVNException e) {
             baseAccess.close(true);
             throw e;
@@ -250,6 +272,8 @@ public class SVNCommitUtil {
         Map commitables = new TreeMap();
         Collection danglers = new HashSet();
         Iterator targets = paths.iterator();
+        
+        boolean isRecursionForced = false;
 
         do {
             String target = targets.hasNext() ? (String) targets.next() : "";
@@ -294,8 +318,7 @@ public class SVNCommitUtil {
                 }
             }
             boolean recurse = recursive;
-            if (entry != null && entry.isCopied()
-                    && entry.getSchedule() == null) {
+            if (entry != null && entry.isCopied() && entry.getSchedule() == null) {
                 // if commit is forced => we could collect this entry, assuming
                 // that its parent is already included into commit
                 // it will be later removed from commit anyway.
@@ -311,9 +334,9 @@ public class SVNCommitUtil {
                     // commit.
                     continue;
                 }
-            } else if (entry != null && entry.isCopied()
-                    && entry.isScheduledForAddition()) {
+            } else if (entry != null && entry.isCopied() && entry.isScheduledForAddition()) {
                 if (force) {
+                    isRecursionForced = !recursive;
                     recurse = true;
                 }
             } else if (entry != null && entry.isScheduledForDeletion()) {
@@ -332,11 +355,12 @@ public class SVNCommitUtil {
                             paths.contains(parentPath)) {
                         continue;
                     }
+                    // this recursion is not considered as "forced", all children should be 
+                    // deleted anyway.
                     recurse = true;
                 }
             }
-            harvestCommitables(commitables, dir, targetFile, null, entry, url,
-                    null, false, false, justLocked, lockTokens, recurse);
+            harvestCommitables(commitables, dir, targetFile, null, entry, url, null, false, false, justLocked, lockTokens, recurse, isRecursionForced);
         } while (targets.hasNext());
 
         for (Iterator ds = danglers.iterator(); ds.hasNext();) {
@@ -349,8 +373,39 @@ public class SVNCommitUtil {
                 SVNErrorManager.error(err);
             }
         }
-        return (SVNCommitItem[]) commitables.values().toArray(
-                new SVNCommitItem[commitables.values().size()]);
+        if (isRecursionForced) {
+            // if commit is non-recursive and forced and there are elements included into commit 
+            // that not only 'copied' but also has local mods (modified or deleted), remove those items?
+            // or not?
+            for (Iterator items = commitables.values().iterator(); items.hasNext();) {
+                SVNCommitItem item = (SVNCommitItem) items.next();
+                if (item.isDeleted()) {
+                    // to detect deleted copied items.
+                    File file = item.getFile();
+                    if (item.getKind() == SVNNodeKind.DIR) {
+                        if (!file.exists()) {
+                            continue;
+                        } 
+                    } else {
+                        String path = SVNPathUtil.removeTail(item.getPath());
+                        String name = SVNPathUtil.tail(item.getPath());
+                        SVNDirectory dir = baseAccess.getDirectory(path);
+                        if (!dir.getBaseFile(name, false).exists()) {
+                            continue;
+                        }
+                    }
+                }
+                if (item.isContentsModified() || item.isDeleted() || item.isPropertiesModified()) {
+                    // if item was not explicitly included into commit, then just make it 'added'
+                    // but do not remove that are marked as 'deleted'
+                    String itemPath = item.getPath();
+                    if (!paths.contains(itemPath)) {
+                        items.remove(); 
+                    }
+                }
+            }
+        }
+        return (SVNCommitItem[]) commitables.values().toArray(new SVNCommitItem[commitables.values().size()]);
     }
 
     public static String translateCommitables(SVNCommitItem[] items,
@@ -410,7 +465,7 @@ public class SVNCommitUtil {
     public static void harvestCommitables(Map commitables, SVNDirectory dir,
             File path, SVNEntry parentEntry, SVNEntry entry, String url,
             String copyFromURL, boolean copyMode, boolean addsOnly,
-            boolean justLocked, Map lockTokens, boolean recursive)
+            boolean justLocked, Map lockTokens, boolean recursive, boolean forcedRecursion)
             throws SVNException {
         if (commitables.containsKey(path)) {
             return;
@@ -571,6 +626,10 @@ public class SVNCommitUtil {
                 if ("".equals(currentEntry.getName())) {
                     continue;
                 }
+                // if recursion is forced and entry is explicitly copied, skip it.
+                if (currentEntry.isCopied() && currentEntry.getCopyFromURL() != null) {
+                    continue;
+                }
                 String currentCFURL = cfURL != null ? cfURL : copyFromURL;
                 if (currentCFURL != null) {
                     currentCFURL = SVNPathUtil.append(currentCFURL, SVNEncodingUtil.uriEncode(currentEntry.getName()));
@@ -584,16 +643,13 @@ public class SVNCommitUtil {
                 if (currentEntry.getKind() == SVNNodeKind.DIR) {
                     childDir = dir.getChildDirectory(currentEntry.getName());
                     if (childDir == null) {
-                        SVNFileType currentType = SVNFileType
-                                .getType(currentFile);
-                        if (currentType == SVNFileType.NONE
-                                && currentEntry.isScheduledForDeletion()) {
+                        SVNFileType currentType = SVNFileType.getType(currentFile);
+                        if (currentType == SVNFileType.NONE && currentEntry.isScheduledForDeletion()) {
                             SVNCommitItem item = new SVNCommitItem(currentFile,
                                     SVNURL.parseURIEncoded(currentURL), null, currentEntry.getKind(),
                                     SVNRevision.UNDEFINED, false, true, false,
                                     false, false, false);
-                            item.setPath(SVNPathUtil.append(dir.getPath(),
-                                    currentEntry.getName()));
+                            item.setPath(SVNPathUtil.append(dir.getPath(), currentEntry.getName()));
                             commitables.put(currentFile, item);
                             continue;
                         }
@@ -603,7 +659,7 @@ public class SVNCommitUtil {
                 }
                 harvestCommitables(commitables, dir, currentFile, entry,
                         currentEntry, currentURL, currentCFURL, copyMode,
-                        addsOnly, justLocked, lockTokens, true);
+                        addsOnly, justLocked, lockTokens, true, forcedRecursion);
 
             }
         }

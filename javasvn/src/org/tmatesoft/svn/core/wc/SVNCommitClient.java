@@ -603,6 +603,13 @@ public class SVNCommitClient extends SVNBasicClient {
                 info = SVNCommitter.commit(mediator.getTmpFiles(), commitables, repositoryRoot, commitEditor);
                 // update wc.
                 Collection processedItems = new HashSet();
+                Collection explicitCommitPaths = new HashSet();
+                for (Iterator urls = commitables.keySet().iterator(); urls.hasNext();) {
+                    String url = (String) urls.next();
+                    SVNCommitItem item = (SVNCommitItem) commitables.get(url);
+                    explicitCommitPaths.add(item.getPath());
+                }
+                
                 for (Iterator urls = commitables.keySet().iterator(); urls.hasNext();) {
                     String url = (String) urls.next();
                     SVNCommitItem item = (SVNCommitItem) commitables.get(url);
@@ -654,7 +661,7 @@ public class SVNCommitClient extends SVNBasicClient {
                     boolean removeLock = !keepLocks && item.isLocked();
                     // update entry in dir.
                     Map wcPropChanges = mediator.getWCProperties(item);
-                    dir.commit(target, info, wcPropChanges, removeLock, recurse);
+                    dir.commit(target, info, wcPropChanges, removeLock, recurse, explicitCommitPaths);
                     processedItems.add(path);
                 } 
                 needsSleepForTimeStamp = true;

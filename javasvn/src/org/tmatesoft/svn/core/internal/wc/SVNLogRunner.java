@@ -189,15 +189,14 @@ public class SVNLogRunner {
                 SVNErrorManager.error(err);
             }
             SVNEntry entry = dir.getEntries().getEntry(fileName, true);
-            if (entry == null
-                    || (!"".equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
+            if (entry == null || (!"".equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_ADM_LOG, "Log command for directory ''{0}'' is mislocated", dir.getRoot()); 
                 SVNErrorManager.error(err);
             }
+            boolean implicit = attributes.get("implicit") != null && entry.isCopied();
             setEntriesChanged(true);
-            long revisionNumber = Long.parseLong((String) attributes
-                    .get(SVNLog.REVISION_ATTR));
-            if (entry.isScheduledForDeletion()) {
+            long revisionNumber = Long.parseLong((String) attributes.get(SVNLog.REVISION_ATTR));
+            if (!implicit && entry.isScheduledForDeletion()) {
                 if ("".equals(fileName)) {
                     entry.setRevision(revisionNumber);
                     entry.setKind(SVNNodeKind.DIR);
@@ -223,36 +222,30 @@ public class SVNLogRunner {
                 return;
             }
 
-            if (entry.isScheduledForReplacement() && "".equals(fileName)) {
-                for (Iterator ents = dir.getEntries().entries(true); ents
-                        .hasNext();) {
+            if (!implicit && entry.isScheduledForReplacement() && "".equals(fileName)) {
+                for (Iterator ents = dir.getEntries().entries(true); ents.hasNext();) {
                     SVNEntry currentEntry = (SVNEntry) ents.next();
                     if (!currentEntry.isScheduledForDeletion()) {
                         continue;
                     }
-                    if (currentEntry.getKind() == SVNNodeKind.FILE
-                            || currentEntry.getKind() == SVNNodeKind.DIR) {
+                    if (currentEntry.getKind() == SVNNodeKind.FILE || currentEntry.getKind() == SVNNodeKind.DIR) {
                         dir.destroy(currentEntry.getName(), false);
                     }
                 }
             }
 
             long textTime = 0;
-            if (!"".equals(fileName)) {
+            if (!implicit && !"".equals(fileName)) {
                 File tmpFile = dir.getBaseFile(fileName, true);
                 SVNFileType fileType = SVNFileType.getType(tmpFile);
-                if (fileType == SVNFileType.FILE
-                        || fileType == SVNFileType.SYMLINK) {
+                if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
                     // check if wc file is not modified
-                    File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile
-                            .getParentFile(), fileName, ".tmp");
+                    File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp");
                     boolean equals = true;
                     try {
                         String tmpFile2Path = SVNFileUtil.getBasePath(tmpFile2);
-                        SVNTranslator.translate(dir, fileName, fileName,
-                                tmpFile2Path, false, false);
-                        equals = SVNFileUtil.compareFiles(tmpFile, tmpFile2,
-                                null);
+                        SVNTranslator.translate(dir, fileName, fileName, tmpFile2Path, false, false);
+                        equals = SVNFileUtil.compareFiles(tmpFile, tmpFile2, null);
                     } finally {
                         tmpFile2.delete();
                     }
@@ -266,7 +259,7 @@ public class SVNLogRunner {
             SVNProperties baseProps = dir.getBaseProperties(fileName, false);
             SVNProperties wcProps = dir.getProperties(fileName, false);
             SVNProperties tmpProps = dir.getBaseProperties(fileName, true);
-            if (entry.isScheduledForReplacement()) {
+            if (!implicit && entry.isScheduledForReplacement()) {
                 baseProps.delete();
             }
             long propTime = 0;
@@ -298,17 +291,15 @@ public class SVNLogRunner {
                 propTime = wcProps.getFile().lastModified();
             }
             
-            if (!"".equals(fileName)) {
+            if (!"".equals(fileName) && !implicit) {
                 File tmpFile = dir.getBaseFile(fileName, true);
                 File baseFile = dir.getBaseFile(fileName, false);
                 File wcFile = dir.getFile(fileName);
-                File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile
-                        .getParentFile(), fileName, ".tmp");
+                File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp");
                 try {
                     boolean overwritten = false;
                     SVNFileType fileType = SVNFileType.getType(tmpFile);
-                    boolean special = dir.getProperties(fileName, false)
-                            .getPropertyValue(SVNProperty.SPECIAL) != null;
+                    boolean special = dir.getProperties(fileName, false).getPropertyValue(SVNProperty.SPECIAL) != null;
                     if (SVNFileUtil.isWindows || !special) {
                         if (fileType == SVNFileType.FILE) {
                             SVNTranslator.translate(dir, fileName, 
@@ -323,12 +314,8 @@ public class SVNLogRunner {
                             overwritten = true;
                         }
                     }
-                    boolean needsReadonly = dir.getProperties(fileName, false)
-                            .getPropertyValue(SVNProperty.NEEDS_LOCK) != null
-                            && entry.getLockToken() == null;
-                    boolean needsExecutable = dir
-                            .getProperties(fileName, false).getPropertyValue(
-                                    SVNProperty.EXECUTABLE) != null;
+                    boolean needsReadonly = dir.getProperties(fileName, false).getPropertyValue(SVNProperty.NEEDS_LOCK) != null && entry.getLockToken() == null;
+                    boolean needsExecutable = dir.getProperties(fileName, false).getPropertyValue(SVNProperty.EXECUTABLE) != null;
                     if (needsReadonly) {
                         SVNFileUtil.setReadonly(wcFile, true);
                         overwritten = true;
@@ -358,15 +345,16 @@ public class SVNLogRunner {
             }
             // update entry
             entry.setRevision(revisionNumber);
-            entry.setKind("".equals(fileName) ? SVNNodeKind.DIR
-                    : SVNNodeKind.FILE);
-            entry.unschedule();
+            entry.setKind("".equals(fileName) ? SVNNodeKind.DIR : SVNNodeKind.FILE);
+            if (!implicit) {
+                entry.unschedule();
+            }
             entry.setCopied(false);
             entry.setDeleted(false);
-            if (textTime != 0) {
+            if (textTime != 0 && !implicit) {
                 entry.setTextTime(SVNTimeUtil.formatDate(new Date(textTime)));
             }
-            if (propTime != 0) {
+            if (propTime != 0 && !implicit) {
                 entry.setPropTime(SVNTimeUtil.formatDate(new Date(propTime)));
             }
             entry.setConflictNew(null);
@@ -394,10 +382,11 @@ public class SVNLogRunner {
                 parentAccess.open(true, false);
             }
             String nameInParent = dirFile.getName();
-            SVNEntry entryInParent = parentDir.getEntries().getEntry(
-                    nameInParent, false);
+            SVNEntry entryInParent = parentDir.getEntries().getEntry(nameInParent, false);
             if (entryInParent != null) {
-                entryInParent.unschedule();
+                if (!implicit) {
+                    entryInParent.unschedule();
+                }
                 entryInParent.setCopied(false);
                 entryInParent.setCopyFromRevision(-1);
                 entryInParent.setCopyFromURL(null);

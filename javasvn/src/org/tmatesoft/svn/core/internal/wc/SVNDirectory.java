@@ -1194,9 +1194,18 @@ public class SVNDirectory {
     }
 
     public void commit(String target, SVNCommitInfo info, Map wcPropChanges,
-            boolean removeLock, boolean recursive) throws SVNException {
-        SVNLog log = getLog(0);
+            boolean removeLock, boolean recursive, Collection explicitCommitPaths) throws SVNException {
+        
+        String path = "".equals(target) ? getPath() : SVNPathUtil.append(getPath(), target);
+        if (!explicitCommitPaths.contains(path)) {
+            // if this item is explicitly copied -> skip it.
+            SVNEntry entry = getEntries().getEntry(target, true);
+            if (entry != null && entry.getCopyFromURL() != null) {
+                return;
+            }
+        }
 
+        SVNLog log = getLog(0);
         //
         String checksum = null;
         if (!"".equals(target)) {
@@ -1216,21 +1225,15 @@ public class SVNDirectory {
         Map command = new HashMap();
         if (info != null) {
             command.put(SVNLog.NAME_ATTR, target);
-            command.put(SVNProperty
-                    .shortPropertyName(SVNProperty.COMMITTED_REVISION), Long
-                    .toString(info.getNewRevision()));
-            command.put(SVNProperty
-                    .shortPropertyName(SVNProperty.COMMITTED_DATE), SVNTimeUtil
-                    .formatDate(info.getDate()));
-            command.put(SVNProperty.shortPropertyName(SVNProperty.LAST_AUTHOR),
-                    info.getAuthor());
+            command.put(SVNProperty.shortPropertyName(SVNProperty.COMMITTED_REVISION), Long.toString(info.getNewRevision()));
+            command.put(SVNProperty.shortPropertyName(SVNProperty.COMMITTED_DATE), SVNTimeUtil.formatDate(info.getDate()));
+            command.put(SVNProperty.shortPropertyName(SVNProperty.LAST_AUTHOR), info.getAuthor());
             log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
             command.clear();
         }
         if (checksum != null) {
             command.put(SVNLog.NAME_ATTR, target);
-            command.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM),
-                    checksum);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), checksum);
             log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
             command.clear();
         }
@@ -1240,13 +1243,14 @@ public class SVNDirectory {
             command.clear();
         }
         command.put(SVNLog.NAME_ATTR, target);
-        command.put(SVNLog.REVISION_ATTR, info == null ? null : Long
-                .toString(info.getNewRevision()));
+        command.put(SVNLog.REVISION_ATTR, info == null ? null : Long.toString(info.getNewRevision()));
+        if (!explicitCommitPaths.contains(path)) {
+            command.put("implicit", "true");
+        }
         log.addCommand(SVNLog.COMMIT, command, false);
         command.clear();
         if (wcPropChanges != null && !wcPropChanges.isEmpty()) {
-            for (Iterator propNames = wcPropChanges.keySet().iterator(); propNames
-                    .hasNext();) {
+            for (Iterator propNames = wcPropChanges.keySet().iterator(); propNames.hasNext();) {
                 String propName = (String) propNames.next();
                 String propValue = (String) wcPropChanges.get(propName);
                 command.put(SVNLog.NAME_ATTR, target);
@@ -1269,10 +1273,10 @@ public class SVNDirectory {
                 if (entry.getKind() == SVNNodeKind.DIR) {
                     SVNDirectory childDir = getChildDirectory(entry.getName());
                     if (childDir != null) {
-                        childDir.commit("", info, null, removeLock, true);
+                        childDir.commit("", info, null, removeLock, true, explicitCommitPaths);
                     }
                 } else {
-                    commit(entry.getName(), info, null, removeLock, false);
+                    commit(entry.getName(), info, null, removeLock, false, explicitCommitPaths);
                 }
             }
         }
