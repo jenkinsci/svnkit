@@ -228,6 +228,8 @@ class DAVCommitEditor implements ISVNEditor {
         if (parent.isCopy()) {
             // part of copied structure -> derive wurl
             file.setWorkingURL(SVNPathUtil.append(parent.getWorkingURL(), SVNPathUtil.tail(path)));
+        } else {
+            file.fetchVersionURL(false);
         }
         checkoutResource(file, true);
         myPathsMap.put(file.getURL(), file.getPath());
