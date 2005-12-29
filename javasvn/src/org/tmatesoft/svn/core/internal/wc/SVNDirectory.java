@@ -493,7 +493,7 @@ public class SVNDirectory {
                 File src = getBaseFile(name, false);
                 File dst = getFile(name);
                 if (!src.exists()) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD, "Revert of ''{0}'' failed: no text-base found", dst);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD, "Error restoring text for ''{0}''", dst);
                     SVNErrorManager.error(err);
                 }
                 SVNTranslator.translate(this, name, SVNFileUtil.getBasePath(src), SVNFileUtil.getBasePath(dst), true, true);
