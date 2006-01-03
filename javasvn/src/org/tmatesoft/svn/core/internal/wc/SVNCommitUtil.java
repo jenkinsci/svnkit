@@ -627,7 +627,7 @@ public class SVNCommitUtil {
                     continue;
                 }
                 // if recursion is forced and entry is explicitly copied, skip it.
-                if (currentEntry.isCopied() && currentEntry.getCopyFromURL() != null) {
+                if (forcedRecursion && currentEntry.isCopied() && currentEntry.getCopyFromURL() != null) {
                     continue;
                 }
                 String currentCFURL = cfURL != null ? cfURL : copyFromURL;
