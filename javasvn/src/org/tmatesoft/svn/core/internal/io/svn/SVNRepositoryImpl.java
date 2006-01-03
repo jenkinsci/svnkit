@@ -673,72 +673,163 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     public void lock(Map pathsToRevisions, String comment, boolean force, ISVNLockHandler handler) throws SVNException {
         try {
             openConnection();
-            for(Iterator paths = pathsToRevisions.keySet().iterator(); paths.hasNext();) {
-                String path = (String) paths.next();
-                Long revision = (Long) pathsToRevisions.get(path);
-                path = getRepositoryPath(path);
-                Object[] buffer = new Object[] { "lock", path, comment, Boolean.valueOf(force), revision };
-                write("(w(s(s)w(n)))", buffer);
+            Object[] buffer = new Object[] { "lock-many", comment, Boolean.valueOf(force) };
+            write("(w((s)w(", buffer);
+            buffer = new Object[2];
+            for (Iterator paths = pathsToRevisions.keySet().iterator(); paths.hasNext();) {
+                buffer[0] = paths.next();
+                buffer[1] = pathsToRevisions.get(buffer[0]);
+                write("(s(n))", buffer);
+            }
+            write(")))", buffer);
+            try {
                 authenticate();
+            } catch (SVNException e) {
+                if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
+                    lock12(pathsToRevisions, comment, force, handler);
+                    return;
+                }
+                throw e;
+            }
+            for (Iterator paths = pathsToRevisions.keySet().iterator(); paths.hasNext();) {
+                String path = (String) paths.next();
+                SVNLock lock = null;
                 SVNErrorMessage error = null;
                 try {
-                    read("[(L)]", buffer);
+                    read("[L]", buffer);
+                    lock = (SVNLock) buffer[0];
+                    path = lock.getPath();
                 } catch (SVNException e) {
+                    path = getRepositoryPath(path);
                     error = e.getErrorMessage();
                 }
                 if (handler != null) {
-                    SVNLock lock = (SVNLock) buffer[0];
                     handler.handleLock(path, lock, error);
                 }
             }
+            read("x", buffer);
+            read("[()]", buffer);
         } catch (SVNException e) {
             handleUnsupportedCommand(e, "Server doesn't support the lock command");
         } finally {
             closeConnection();
         }
     }
+    
+    private void lock12(Map pathsToRevisions, String comment, boolean force, ISVNLockHandler handler) throws SVNException {
+        for(Iterator paths = pathsToRevisions.keySet().iterator(); paths.hasNext();) {
+            String path = (String) paths.next();
+            Long revision = (Long) pathsToRevisions.get(path);
+            path = getRepositoryPath(path);
+            Object[] buffer = new Object[] { "lock", path, comment, Boolean.valueOf(force), revision };
+            write("(w(s(s)w(n)))", buffer);
+            authenticate();
+            SVNErrorMessage error = null;
+            try {
+                read("[(L)]", buffer);
+            } catch (SVNException e) {                
+                if (e.getErrorMessage() != null) {
+                    SVNErrorCode code = e.getErrorMessage().getErrorCode();
+                    if (code == SVNErrorCode.FS_PATH_ALREADY_LOCKED || code == SVNErrorCode.FS_OUT_OF_DATE) {
+                        error = e.getErrorMessage();                            
+                    }
+                }
+                if (error == null) {
+                    throw e;
+                }
+            }
+            if (handler != null) {
+                SVNLock lock = (SVNLock) buffer[0];
+                handler.handleLock(path, lock, error);
+            }
+        }
+    }
 
     public void unlock(Map pathToTokens, boolean force, ISVNLockHandler handler) throws SVNException {
         try {
             openConnection();
+            Object[] buffer = new Object[] { "unlock-many", Boolean.valueOf(force) };
+            write("(w(w(", buffer);
+            buffer = new Object[2];
+            for (Iterator paths = pathToTokens.keySet().iterator(); paths.hasNext();) {
+                buffer[0] = paths.next();
+                buffer[1] = pathToTokens.get(buffer[0]);
+                write("(s(s))", buffer);
+            }
+            write(")))", buffer);
+            try {
+                authenticate();
+            } catch (SVNException e) {
+                if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
+                    unlock12(pathToTokens, force, handler);
+                    return;
+                }
+                throw e;
+            }
             for (Iterator paths = pathToTokens.keySet().iterator(); paths.hasNext();) {
                 String path = (String) paths.next();
                 String id = (String) pathToTokens.get(path);
-                path = getRepositoryPath(path);
-                if (id  == null) {
-                    Object[] buffer = new Object[] { "get-lock", path };
-                    write("(w(s))", buffer);
-                    authenticate();
-                    read("[((?L))]", buffer);
-                    SVNLock lock = (SVNLock) buffer[0];
-                    if (lock == null) {
-                        lock = new SVNLock(path, "", null, null, null, null);
-                        SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.RA_NOT_LOCKED, "No lock on path ''{0}''", path);
-                        handler.handleUnlock(path, lock, errorMessage);
-                        continue;
-                    }
-                    id = lock.getID();
-                }
-                Object[] buffer = new Object[] { "unlock", path, id, Boolean.valueOf(force) };
-                write("(w(s(s)w))", buffer);
-                authenticate();
                 SVNErrorMessage error = null;
                 try {
-                    read("[()]", buffer);
+                    read("[(S)]", buffer);
+                    path = (String) buffer[0];
                 } catch (SVNException e) {
                     error = e.getErrorMessage();
                 }
+                path = getRepositoryPath(path);
                 if (handler != null) {
-                    SVNLock lock = new SVNLock(path, id, null, null, null, null);
-                    handler.handleUnlock(path, lock, error);
+                    handler.handleUnlock(path, new SVNLock(path, id, null, null, null, null), error);
                 }
             }
+            read("x", buffer);
+            read("[()]", buffer);
         } catch (SVNException e) {
             handleUnsupportedCommand(e, "Server doesn't support the unlock command");
         } finally {
             closeConnection();
         }
     }
+    
+    private void unlock12(Map pathToTokens, boolean force, ISVNLockHandler handler) throws SVNException {
+        for (Iterator paths = pathToTokens.keySet().iterator(); paths.hasNext();) {
+            String path = (String) paths.next();
+            String id = (String) pathToTokens.get(path);
+            path = getRepositoryPath(path);
+            if (id  == null) {
+                Object[] buffer = new Object[] { "get-lock", path };
+                write("(w(s))", buffer);
+                authenticate();
+                read("[((?L))]", buffer);
+                SVNLock lock = (SVNLock) buffer[0];
+                if (lock == null) {
+                    lock = new SVNLock(path, "", null, null, null, null);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_LOCKED, "No lock on path ''{0}''", path);
+                    handler.handleUnlock(path, lock, err);
+                    continue;
+                }
+                id = lock.getID();
+            }
+            Object[] buffer = new Object[] { "unlock", path, id, Boolean.valueOf(force) };
+            write("(w(s(s)w))", buffer);
+            authenticate();
+            SVNErrorMessage error = null;
+            try {
+                read("[()]", buffer);
+            } catch (SVNException e) {
+                if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_LOCKED) {
+                    error = e.getErrorMessage();
+                    error = SVNErrorMessage.create(error.getErrorCode(), error.getMessageTemplate(), path);
+                } else {
+                    throw e;
+                }
+            }
+            if (handler != null) {
+                SVNLock lock = new SVNLock(path, id, null, null, null, null);
+                handler.handleUnlock(path, lock, error);
+            }
+        }
+    }
+
 
     public SVNDirEntry info(String path, long revision) throws SVNException {
         try {
