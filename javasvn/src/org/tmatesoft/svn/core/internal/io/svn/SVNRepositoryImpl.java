@@ -684,8 +684,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             write(")))", buffer);
             try {
                 authenticate();
-            } catch (SVNException e) {
+            } catch (SVNException e) {                
+                SVNDebugLog.logInfo(e.getErrorMessage().getErrorCode() + "");
                 if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
+                    closeSession();
+                    unlock();
+                    openConnection();
                     lock12(pathsToRevisions, comment, force, handler);
                     return;
                 }
@@ -710,6 +714,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             read("x", buffer);
             read("[()]", buffer);
         } catch (SVNException e) {
+            SVNDebugLog.logInfo(e);
             handleUnsupportedCommand(e, "Server doesn't support the lock command");
         } finally {
             closeConnection();
@@ -761,6 +766,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 authenticate();
             } catch (SVNException e) {
                 if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
+                    closeSession();
+                    unlock();
+                    openConnection();
                     unlock12(pathToTokens, force, handler);
                     return;
                 }
@@ -997,12 +1005,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
     
-    private static void handleUnsupportedCommand(SVNException e, String message) throws SVNException {
+    private void handleUnsupportedCommand(SVNException e, String message) throws SVNException {
         if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, message);
             SVNErrorManager.error(err, e.getErrorMessage());
         }
         throw e;
-
     }
 }
