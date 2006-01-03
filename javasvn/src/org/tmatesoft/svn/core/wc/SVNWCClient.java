@@ -24,8 +24,8 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -1575,6 +1575,9 @@ public class SVNWCClient extends SVNBasicClient {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
+        if (pegRevision == null || !pegRevision.isValid()) {
+            pegRevision = revision;
+        }
 
         SVNRepository repos = createRepository(url, null, pegRevision, revision);;
         url = repos.getLocation();
@@ -1613,16 +1616,19 @@ public class SVNWCClient extends SVNBasicClient {
         }
         SVNURL reposRoot = repos.getRepositoryRoot(true);
         String reposUUID = repos.getRepositoryUUID();
-        // 1. get locks for this dir and below.
-        SVNLock[] locks;
-        try {
-            locks = repos.getLocks("");
-        } catch (SVNException e) {
-            // may be not supported.
-            if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
-                locks = new SVNLock[0];
-            } else {
-                throw e;
+        // 1. get locks for this dir and below (only for dir).
+        // and only when pegRev is HEAD.
+        SVNLock[] locks = null;
+        if (pegRevision == SVNRevision.HEAD && rootEntry.getKind() == SVNNodeKind.DIR) {
+            try {
+                locks = repos.getLocks("");
+            } catch (SVNException e) {
+                // may be not supported.
+                if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
+                    locks = new SVNLock[0];
+                } else {
+                    throw e;
+                }
             }
         }
         locks = locks == null ? new SVNLock[0] : locks;
@@ -1630,7 +1636,35 @@ public class SVNWCClient extends SVNBasicClient {
         for (int i = 0; i < locks.length; i++) {
             SVNLock lock = locks[i];
             locksMap.put(lock.getPath(), lock);
+        }        
+        // 2. add lock for this entry, only when it is 'related' to head.
+        
+        try {
+            SVNRepositoryLocation[] locations = getLocations(url, null, revision, SVNRevision.HEAD, SVNRevision.UNDEFINED);
+            if (locations != null && locations.length > 0) {
+                SVNURL headURL = locations[0].getURL();
+                if (headURL.equals(url)) {
+                    // get lock for this item (@headURL).
+                    try {
+                        SVNLock lock = repos.getLock("");
+                        if (lock != null) {
+                            locksMap.put(lock.getPath(), lock);
+                        }
+                    } catch (SVNException e) {
+                        if (!(e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED)) {
+                            throw e;
+                        } 
+                    }
+                }
+            }
+        } catch (SVNException e) {
+            SVNErrorCode code = e.getErrorMessage().getErrorCode();
+            if (code != SVNErrorCode.FS_NOT_FOUND && code != SVNErrorCode.CLIENT_UNRELATED_RESOURCES) {
+                throw e;
+            }
+            SVNDebugLog.logInfo("received error is: " + code);
         }
+        
         String fullPath = url.getPath();
         String rootPath = fullPath.substring(reposRoot.getPath().length());
         if (!rootPath.startsWith("/")) {
