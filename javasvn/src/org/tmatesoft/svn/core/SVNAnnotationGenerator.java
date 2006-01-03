@@ -133,14 +133,14 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             myCancelBaton.handleEvent(event, ISVNEventHandler.UNKNOWN);
             myCancelBaton.checkCancelled();
         }
-        Map props = fileRevision.getProperties();
+        Map props = fileRevision.getRevisionProperties();
         if (known && props != null && props.get(SVNRevisionProperty.AUTHOR) != null) {
             myCurrentAuthor = props.get(SVNRevisionProperty.AUTHOR).toString();
         } else {
             myCurrentAuthor = null;
         }
         if (known && props != null && props.get(SVNRevisionProperty.DATE) != null) {
-            myCurrentDate = SVNTimeUtil.parseDate(fileRevision.getProperties().get(SVNRevisionProperty.DATE).toString());
+            myCurrentDate = SVNTimeUtil.parseDate(fileRevision.getRevisionProperties().get(SVNRevisionProperty.DATE).toString());
         } else {
             myCurrentDate = null;
         }

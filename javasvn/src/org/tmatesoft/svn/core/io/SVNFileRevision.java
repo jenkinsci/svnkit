@@ -70,10 +70,23 @@ public class SVNFileRevision implements Comparable {
      * constants (they are revision property names) to retrieve values of the
      * corresponding properties.
      * 
+     * @deprecated use {@link #getRevisionProperties() } instead 
      * @return	a map which keys are revision property names and values
      * 			are their values (both are strings)
      */
     public Map getProperties() {
+        return myProperties;
+    }
+    
+    /**
+     * Returns revision properties. Use {@link org.tmatesoft.svn.core.SVNRevisionProperty}
+     * constants (they are revision property names) to retrieve values of the
+     * corresponding properties.
+     * 
+     * @return  a map which keys are revision property names and values
+     *          are their values (both are strings)
+     */
+    public Map getRevisionProperties() {
         return myProperties;
     }
     

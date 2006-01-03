@@ -94,17 +94,17 @@ public class SVNCommitInfo {
     }
     
     /**
-     * Gets an exception that occurred (if occurred) while committing 
+     * Gets an array of error messages that occurred (if occurred) while committing 
      * a new revision.
      * 
-     * @return an exception with description of an error
+     * @return an array of error messages or null. 
      */
     public SVNErrorMessage[] getErrorMessages() {
         return myErrors;
     }
 
     /**
-     * @deprecated
+     * @deprecated use {@link #getErrorMessages() } instead
      */
     public SVNException getError() {
         if (myErrors != null) {
