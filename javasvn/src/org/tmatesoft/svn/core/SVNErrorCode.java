@@ -73,7 +73,7 @@ public class SVNErrorCode {
         return myCode + ": " + myDescription;
     }
     
-    private static final int ERR_BASE = 70000;
+    private static final int ERR_BASE = 120000;
     private static final int ERR_CATEGORY_SIZE = 5000;
 
     public static final int BAD_CATEGORY = ERR_BASE + 1*ERR_CATEGORY_SIZE;

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -532,8 +533,8 @@ public class SVNCommitClient extends SVNBasicClient {
     public SVNCommitInfo doCommit(SVNCommitPacket commitPacket, boolean keepLocks, String commitMessage) throws SVNException {
         SVNCommitInfo[] info = doCommit(new SVNCommitPacket[] {commitPacket}, keepLocks, commitMessage);
         if (info != null && info.length > 0) {
-            if (info[0].getError() != null) {
-                throw info[0].getError();
+            if (info[0].getErrorMessages() != null) {
+                SVNErrorManager.error(Arrays.asList(info[0].getErrorMessages()));
             }
             return info[0];
         } 
@@ -668,7 +669,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 // commit completed, include revision number.
                 dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, info.getNewRevision()), ISVNEventHandler.UNKNOWN);
             } catch (SVNException e) {
-                infos.add(new SVNCommitInfo(-1, null, null, e));
+                infos.add(new SVNCommitInfo(-1, null, null, e.getErrorMessages()));
                 dispatchEvent(new SVNEvent(e.getMessage()), ISVNEventHandler.UNKNOWN);
                 continue;
             } finally {

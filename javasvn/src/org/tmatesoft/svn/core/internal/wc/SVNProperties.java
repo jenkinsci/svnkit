@@ -373,7 +373,6 @@ public class SVNProperties {
                 writeProperty(os, 'V', value, length);
                 propCount++;
             }
-            // TODO
             if (propCount > 0) {
                 os.write(new byte[] { 'E', 'N', 'D', '\n' });
             }

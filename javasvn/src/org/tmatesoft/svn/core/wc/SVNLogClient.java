@@ -429,7 +429,11 @@ public class SVNLogClient extends SVNBasicClient {
             SVNLock[] locks = new SVNLock[0];
             try {
                 locks = repos.getLocks("");                
-            } catch (SVNException e) {}
+            } catch (SVNException e) {
+                if (!(e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED)) {
+                    throw e;
+                }                
+            }
             
             if (locks != null && locks.length > 0) {
                 SVNURL root = repos.getRepositoryRoot(true);

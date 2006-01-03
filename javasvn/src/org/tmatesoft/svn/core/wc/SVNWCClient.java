@@ -1577,12 +1577,13 @@ public class SVNWCClient extends SVNBasicClient {
         }
 
         SVNRepository repos = createRepository(url, null, pegRevision, revision);;
+        url = repos.getLocation();
         long revNum = getRevisionNumber(revision, repos, null);
         SVNDirEntry rootEntry = null;
         try {
             rootEntry = repos.info("", revNum);
         } catch (SVNException e) {
-            if (e.getMessage().indexOf("Unknown command 'stat'") >= 0) {
+            if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
                 // for svnserve older then 1.2.0
                 if (repos.getLocation().equals(repos.getRepositoryRoot(true))) {
                     rootEntry = new SVNDirEntry(url, "", SVNNodeKind.DIR, -1, false, -1, null, null);
@@ -1593,6 +1594,7 @@ public class SVNWCClient extends SVNBasicClient {
                     Collection dirEntries = repos.getDir("", revNum, null, (Collection) null);
                     for (Iterator ents = dirEntries.iterator(); ents.hasNext();) {
                         SVNDirEntry dirEntry = (SVNDirEntry) ents.next();
+                        // dir entry name may differ from 'name', due to renames...
                         if (name.equals(dirEntry.getName())) {
                             rootEntry = dirEntry;
                             break;
@@ -1617,7 +1619,11 @@ public class SVNWCClient extends SVNBasicClient {
             locks = repos.getLocks("");
         } catch (SVNException e) {
             // may be not supported.
-            locks = new SVNLock[0];
+            if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
+                locks = new SVNLock[0];
+            } else {
+                throw e;
+            }
         }
         locks = locks == null ? new SVNLock[0] : locks;
         Map locksMap = new HashMap();

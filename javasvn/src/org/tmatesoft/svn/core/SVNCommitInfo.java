@@ -36,7 +36,7 @@ public class SVNCommitInfo {
     private long myNewRevision;
     private Date myDate;
     private String myAuthor;
-    private SVNException myError;
+    private SVNErrorMessage myErrors[];
 
     /**
      * 
@@ -59,11 +59,11 @@ public class SVNCommitInfo {
      * @param error         if a commit failed - this is an exception containing
      *                      an error description 
      */
-    public SVNCommitInfo(long revision, String author, Date date, SVNException error) {
+    public SVNCommitInfo(long revision, String author, Date date, SVNErrorMessage[] errors) {
         myNewRevision = revision;
         myAuthor = author;
         myDate = date;
-        myError = error;
+        myErrors = errors;
     }
 
     /**
@@ -99,7 +99,17 @@ public class SVNCommitInfo {
      * 
      * @return an exception with description of an error
      */
+    public SVNErrorMessage[] getErrorMessages() {
+        return myErrors;
+    }
+
+    /**
+     * @deprecated
+     */
     public SVNException getError() {
-        return myError;
+        if (myErrors != null) {
+            return new SVNException(getErrorMessages());
+        }
+        return null;
     }
 }

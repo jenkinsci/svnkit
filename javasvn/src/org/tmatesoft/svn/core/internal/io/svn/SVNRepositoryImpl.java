@@ -161,8 +161,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
-    public int getLocations(String path, long pegRevision, long[] revisions,
-            ISVNLocationEntryHandler handler) throws SVNException {
+    public int getLocations(String path, long pegRevision, long[] revisions, ISVNLocationEntryHandler handler) throws SVNException {
         assertValidRevision(pegRevision);
         for (int i = 0; i < revisions.length; i++) {
             assertValidRevision(revisions[i]);
@@ -193,6 +192,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             }
             read("x", buffer);
             read("[()]", buffer);
+        } catch (SVNException e) {
+            handleUnsupportedCommand(e, "'get-locations' not implemented");
         } finally {
             closeConnection();
         }
@@ -432,9 +433,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     handler.closeRevision(name == null ? path : name);
                 }
             }
+        } catch (SVNException e) {
+            handleUnsupportedCommand(e, "'get-file-revs' not implemented");
         } finally {
             closeConnection();
         }
+        return -1;
     }
 
     public long log(String[] targetPaths, long startRevision, long endRevision,
@@ -640,9 +644,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             authenticate();
             read("[((?L))]", buffer);
             return (SVNLock) buffer[0];
+        } catch (SVNException e) {
+            handleUnsupportedCommand(e, "Server doesn't support the get-lock command");
         } finally {
             closeConnection();
         }
+        return null;
     }
 
     public SVNLock[] getLocks(String path) throws SVNException {
@@ -655,9 +662,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             read("[((*L))]", buffer);
             Collection lockObjects = (Collection) buffer[0];
             return lockObjects == null ? new SVNLock[0] : (SVNLock[]) lockObjects.toArray(new SVNLock[lockObjects.size()]);
+        } catch (SVNException e) {
+            handleUnsupportedCommand(e, "Server doesn't support the get-lock command");            
         } finally {
             closeConnection();
         }
+        return null;
     }
 
     public void lock(Map pathsToRevisions, String comment, boolean force, ISVNLockHandler handler) throws SVNException {
@@ -681,6 +691,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     handler.handleLock(path, lock, error);
                 }
             }
+        } catch (SVNException e) {
+            handleUnsupportedCommand(e, "Server doesn't support the lock command");
         } finally {
             closeConnection();
         }
@@ -721,6 +733,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     handler.handleUnlock(path, lock, error);
                 }
             }
+        } catch (SVNException e) {
+            handleUnsupportedCommand(e, "Server doesn't support the unlock command");
         } finally {
             closeConnection();
         }
@@ -741,9 +755,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 entry = new SVNDirEntry(url, SVNPathUtil.tail(path), entry.getKind(), entry.getSize(), entry.hasProperties(), entry.getRevision(), entry.getDate(), entry.getAuthor());
             }
             return entry;
+        } catch (SVNException e) {
+            handleUnsupportedCommand(e, "'stat' not implemented");
         } finally {
             closeConnection();
         }
+        return null;
     }
 
     void updateCredentials(String uuid, SVNURL rootURL) throws SVNException {
@@ -781,7 +798,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     private void closeConnection() {
         if (getOptions().keepConnection(this)) {
             unlock();
-            return;
+            return; 
         }
         if (myConnection != null) {
             try {
@@ -887,5 +904,14 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 myConnection = null;
             }
         }
+    }
+    
+    private static void handleUnsupportedCommand(SVNException e, String message) throws SVNException {
+        if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, message);
+            SVNErrorManager.error(err, e.getErrorMessage());
+        }
+        throw e;
+
     }
 }

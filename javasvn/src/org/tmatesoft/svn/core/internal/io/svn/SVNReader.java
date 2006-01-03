@@ -563,9 +563,6 @@ class SVNReader {
         readString(pis);
         readNumber(pis);
         readChar(pis, ')');
-        int cat = code/2000; 
-        code = code - cat*2000;
-        code = 70000 + cat*5000 + code; 
         SVNErrorCode errorCode = SVNErrorCode.getErrorCode(code);        
         return SVNErrorMessage.create(errorCode, errorMessage);
     }

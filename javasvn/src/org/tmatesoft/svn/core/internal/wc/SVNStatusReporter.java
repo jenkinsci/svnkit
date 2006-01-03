@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
@@ -93,7 +94,9 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
             myRepositoryRoot = myRepository.getRepositoryRoot(true);
             locks = myRepository.getLocks("");
         } catch (SVNException e) {
-            //
+            if (!(e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED)) {
+                throw e;
+            }
         }
         if (locks != null) {
             for (int i = 0; i < locks.length; i++) {

@@ -424,8 +424,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         try {
             locations = repository.getLocations("", (Map) null, pegRevisionNumber, revisionsRange);
         } catch (SVNException e) {
-            if (e.getMessage().indexOf("The requested report is unknown") >= 0 ||
-                    e.getMessage().indexOf("Unknown command 'get-locations'") >= 0) {
+            if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
                 locations = getLocations10(repository, pegRevisionNumber, startRevisionNumber, endRevisionNumber);
             } else {
                 throw e;
