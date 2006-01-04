@@ -1637,32 +1637,32 @@ public class SVNWCClient extends SVNBasicClient {
             SVNLock lock = locks[i];
             locksMap.put(lock.getPath(), lock);
         }        
-        // 2. add lock for this entry, only when it is 'related' to head.
-        
-        try {
-            SVNRepositoryLocation[] locations = getLocations(url, null, revision, SVNRevision.HEAD, SVNRevision.UNDEFINED);
-            if (locations != null && locations.length > 0) {
-                SVNURL headURL = locations[0].getURL();
-                if (headURL.equals(url)) {
-                    // get lock for this item (@headURL).
-                    try {
-                        SVNLock lock = repos.getLock("");
-                        if (lock != null) {
-                            locksMap.put(lock.getPath(), lock);
+        // 2. add lock for this entry, only when it is 'related' to head (and is a file).
+        if (rootEntry.getKind() == SVNNodeKind.FILE) {
+            try {
+                SVNRepositoryLocation[] locations = getLocations(url, null, revision, SVNRevision.HEAD, SVNRevision.UNDEFINED);
+                if (locations != null && locations.length > 0) {
+                    SVNURL headURL = locations[0].getURL();
+                    if (headURL.equals(url)) {
+                        // get lock for this item (@headURL).
+                        try {
+                            SVNLock lock = repos.getLock("");
+                            if (lock != null) {
+                                locksMap.put(lock.getPath(), lock);
+                            }
+                        } catch (SVNException e) {
+                            if (!(e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED)) {
+                                throw e;
+                            } 
                         }
-                    } catch (SVNException e) {
-                        if (!(e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED)) {
-                            throw e;
-                        } 
                     }
                 }
+            } catch (SVNException e) {
+                SVNErrorCode code = e.getErrorMessage().getErrorCode();
+                if (code != SVNErrorCode.FS_NOT_FOUND && code != SVNErrorCode.CLIENT_UNRELATED_RESOURCES) {
+                    throw e;
+                }
             }
-        } catch (SVNException e) {
-            SVNErrorCode code = e.getErrorMessage().getErrorCode();
-            if (code != SVNErrorCode.FS_NOT_FOUND && code != SVNErrorCode.CLIENT_UNRELATED_RESOURCES) {
-                throw e;
-            }
-            SVNDebugLog.logInfo("received error is: " + code);
         }
         
         String fullPath = url.getPath();
