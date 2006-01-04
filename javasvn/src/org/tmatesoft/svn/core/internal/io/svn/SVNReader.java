@@ -537,7 +537,14 @@ class SVNReader {
         if (buffer == null || buffer.length < length) {
             buffer = new byte[length];
         }
-        is.read(buffer, 0, length);
+        int offset = 0;
+        while (offset < length) {
+            int r = is.read(buffer, offset, length - offset);
+            if (r <= 0) {
+                throw new IOException("Input/Output error while receiving svn data");
+            }
+            offset += r;
+        }
         return buffer;
     }
 
