@@ -11,7 +11,7 @@
       <library name="javasvn.jar">
          <export name="*"/>
       </library>
-      <library name="contrib/jsch/ganymed.jar"/>
+      <library name="contrib/ganymed/ganymed.jar"/>
       <library name="contrib/junit/junit.jar"/>
    </runtime>
    <requires>
