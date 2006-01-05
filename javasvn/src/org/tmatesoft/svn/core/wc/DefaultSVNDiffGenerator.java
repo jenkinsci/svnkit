@@ -296,6 +296,13 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         }
+        try {
+            bos.close();
+            bos.writeTo(result);
+        } catch (IOException inner) {
+            //
+        }
+
         InputStream is1 = null;
         InputStream is2 = null;
         try {
@@ -304,22 +311,15 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
             QDiffUniGenerator.setup();
             QDiffGenerator generator = QDiffManager.getDiffGenerator(QDiffUniGenerator.TYPE, null);
-            Writer writer = new OutputStreamWriter(bos, getEncoding());
+            Writer writer = new OutputStreamWriter(result, getEncoding());
             QDiffManager.generateTextDiff(is1, is2, getEncoding(), writer, generator);
             writer.flush();
-            writer.close();
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         } finally {
             SVNFileUtil.closeFile(is1);
             SVNFileUtil.closeFile(is2);
-            try {
-                bos.close();
-                bos.writeTo(result);
-            } catch (IOException inner) {
-                //
-            }
         }
     }
 
