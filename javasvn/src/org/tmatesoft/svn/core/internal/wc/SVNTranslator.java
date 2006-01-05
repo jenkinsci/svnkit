@@ -161,7 +161,7 @@ public class SVNTranslator {
         return true;
     }
 
-    private static void copy(InputStream src, OutputStream dst, byte[] eol, Map keywords) throws IOException {
+    public static void copy(InputStream src, OutputStream dst, byte[] eol, Map keywords) throws IOException {
         if (keywords != null && keywords.isEmpty()) {
             keywords = null;
         }
