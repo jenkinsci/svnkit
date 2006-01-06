@@ -10,13 +10,14 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
-
 import java.io.File;
 import java.util.Date;
 import java.util.Map;
+
+import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 /**
  * The <b>SVNStatus</b> class is used to provide detailed status information for
@@ -120,6 +121,8 @@ public class SVNStatus {
     private SVNNodeKind myRemoteKind;
     private String myRemoteAuthor;
     private Date myRemoteDate;
+    private Date myLocalContentsDate;
+    private Date myLocalPropertiesDate;
 
     /**
      * Constructs an <b>SVNStatus</b> object filling it with status information
@@ -481,6 +484,32 @@ public class SVNStatus {
     
     public String getRemoteAuthor() {
         return myRemoteAuthor;
+    }
+    
+    public Date getWorkingContentsDate() {
+        if (myLocalContentsDate == null) {
+            if (getFile() != null && getKind() == SVNNodeKind.FILE) {
+                myLocalContentsDate = new Date(getFile().lastModified());
+            } else {
+                myLocalContentsDate = new Date(0);
+            }
+        }
+        return myLocalContentsDate;
+    }
+
+    public Date getWorkingPropertiesDate() {
+        if (myLocalPropertiesDate == null) {
+            File propFile = null;
+            if (getFile() != null && getKind() == SVNNodeKind.DIR) {
+                propFile = new File(getFile().getAbsoluteFile().getParentFile(), SVNFileUtil.getAdminDirectoryName());
+                propFile = new File(propFile, "dir-props");
+            } else if (getFile() != null && getKind() == SVNNodeKind.FILE) {
+                propFile = new File(getFile().getAbsoluteFile().getParentFile(), SVNFileUtil.getAdminDirectoryName());
+                propFile = new File(propFile, "props/" + getFile().getName() + ".svn-work");
+            }
+            myLocalContentsDate = propFile != null ? new Date(propFile.lastModified()) : new Date(0);
+        }
+        return myLocalPropertiesDate;
     }
     
     /**
