@@ -668,8 +668,10 @@ public class SVNCommitClient extends SVNBasicClient {
                 // commit completed, include revision number.
                 dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, info.getNewRevision()), ISVNEventHandler.UNKNOWN);
             } catch (SVNException e) {
-                infos.add(new SVNCommitInfo(-1, null, null, e.getErrorMessage()));
-                dispatchEvent(new SVNEvent(e.getErrorMessage()), ISVNEventHandler.UNKNOWN);
+                SVNErrorMessage err =  SVNErrorMessage.create(e.getErrorMessage().getErrorCode(), "Commit failed (details follow):");
+                err.setChildErrorMessage(e.getErrorMessage());
+                infos.add(new SVNCommitInfo(-1, null, null, err));
+                dispatchEvent(new SVNEvent(err), ISVNEventHandler.UNKNOWN);
                 continue;
             } finally {
                 if (info == null && commitEditor != null) {

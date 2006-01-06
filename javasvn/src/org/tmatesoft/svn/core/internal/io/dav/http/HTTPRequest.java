@@ -201,6 +201,9 @@ class HTTPRequest {
         }
         SVNErrorMessage davError = myConnection.readError(this, request, path);
         if (davError != null) {
+            if (error != null) {
+                davError.setChildErrorMessage(error);
+            }
             return davError; 
         }
         return error;

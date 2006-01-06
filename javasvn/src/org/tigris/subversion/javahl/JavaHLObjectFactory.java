@@ -399,13 +399,18 @@ public class JavaHLObjectFactory {
     }
 
     public static NotifyInformation createNotifyInformation(SVNEvent event, String path) {
+        // include full error message.
+        String errMsg = null;
+        if (event.getErrorMessage() != null) {
+            errMsg = event.getErrorMessage().getFullMessage();
+        }
         return new NotifyInformation(
                 path,
                 JavaHLObjectFactory.getNotifyActionValue(event.getAction()),
                 JavaHLObjectFactory.getNodeKind(event.getNodeKind()),
                 event.getMimeType(),
                 JavaHLObjectFactory.createLock(event.getLock()),
-                event.getErrorMessage() != null ? event.getErrorMessage().getMessage() : null,
+                errMsg,
                 JavaHLObjectFactory.getStatusValue(event.getContentsStatus()),
                 JavaHLObjectFactory.getStatusValue(event.getPropertiesStatus()),
                 JavaHLObjectFactory.getLockStatusValue(event.getLockStatus()),

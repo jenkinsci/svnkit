@@ -53,15 +53,10 @@ public class SVNException extends Exception {
      * @return an informational message
      */
     public String getMessage() {
-        StringBuffer message = new StringBuffer();
         SVNErrorMessage error = getErrorMessage();
-        while(error != null) {
-            message.append(error.toString());
-            if (error.hasChildErrorMessage()) {
-                message.append("\n");
-            }
-            error = error.getChildErrorMessage();
+        if (error != null) {
+            return error.getFullMessage();
         }
-        return message.toString();
+        return super.getMessage();
     }
 }

@@ -85,6 +85,19 @@ public class SVNErrorMessage {
         return toString();
     }
     
+    public String getFullMessage() {
+        SVNErrorMessage err = this;            
+        StringBuffer buffer = new StringBuffer();
+        while (err != null) {
+            buffer.append(err.getMessage());
+            if (err.hasChildErrorMessage()) {
+                buffer.append('\n');
+            }
+            err = err.getChildErrorMessage();
+        }
+        return buffer.toString();
+    }
+    
     public String getMessageTemplate() {
         return myMessage;
     }
