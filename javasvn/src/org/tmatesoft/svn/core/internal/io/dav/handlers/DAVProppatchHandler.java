@@ -104,11 +104,9 @@ public class DAVProppatchHandler extends BasicDAVHandler {
     }
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
-        System.err.println(element);
     }
 
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
-        System.err.println(element);
     }
     
     private static boolean hasNullValues(Map map) {
