@@ -27,6 +27,7 @@ public class SVNErrorMessage {
     private String myMessage;
     private SVNErrorCode myErrorCode;
     private int myType;
+    private SVNErrorMessage myChildErrorMessage;
     
     private static final Object[] EMPTY_ARRAY = new Object[0];
     
@@ -92,6 +93,14 @@ public class SVNErrorMessage {
         return myObjects;
     }    
     
+    public SVNErrorMessage getChildErrorMessage() {
+        return myChildErrorMessage;
+    }
+    
+    public boolean hasChildErrorMessage() {
+        return myChildErrorMessage != null;
+    }
+    
     public String toString() {
         StringBuffer line = new StringBuffer();
         line.append("svn: ");
@@ -104,5 +113,9 @@ public class SVNErrorMessage {
             line.append(myObjects.length > 0 ? MessageFormat.format(myMessage, myObjects) : myMessage);
         }
         return line.toString();
+    }
+
+    public void setChildErrorMessage(SVNErrorMessage childMessage) {
+        myChildErrorMessage = childMessage;
     }
 }

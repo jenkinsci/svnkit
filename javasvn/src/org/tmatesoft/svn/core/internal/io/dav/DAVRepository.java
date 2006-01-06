@@ -174,13 +174,12 @@ class DAVRepository extends SVNRepository {
             info = DAVUtil.getBaselineInfo(myConnection, this, path, revision, true, false, info);
             kind = info.isDirectory ? SVNNodeKind.DIR : SVNNodeKind.FILE;
         } catch (SVNException e) {
-            SVNErrorMessage[] errs = e.getErrorMessages();
-            if (errs != null && errs.length > 0) {
-                for (int i = 0; i < errs.length; i++) {
-                    if (errs[i].getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
-                        return kind;
-                    }
+            SVNErrorMessage error = e.getErrorMessage();
+            if (error != null) {
+                if (error.getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+                    return kind;
                 }
+                error = error.getChildErrorMessage();
             }
             throw e;
         } finally {

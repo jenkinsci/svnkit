@@ -10,8 +10,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.util.Collection;
-
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -30,11 +28,6 @@ public class SVNErrorManager {
 
     public static void authenticationFailed(String message, Object messageObject) throws SVNAuthenticationException {
         throw new SVNAuthenticationException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, message, messageObject));
-    }
-    
-    public static void error(Collection errorMessage) throws SVNException {
-        SVNErrorMessage[] errorMessages = (SVNErrorMessage[]) errorMessage.toArray(new SVNErrorMessage[errorMessage.size()]);
-        throw new SVNException(errorMessages);
     }
     
     public static void error(SVNErrorMessage err) throws SVNException {
@@ -69,15 +62,12 @@ public class SVNErrorManager {
         } else if (err2 == null) {
             error(err1);
         }
+        err1.setChildErrorMessage(err2);
         if (err1.getErrorCode() == SVNErrorCode.CANCELLED || err2.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err1);
-        } else if (err1.getErrorCode().isAuthentication()) {
+        } else if (err1.getErrorCode().isAuthentication() || err2.getErrorCode().isAuthentication()) {
             throw new SVNAuthenticationException(err1);
-        } else if (err2.getErrorCode().isAuthentication()) {
-            throw new SVNAuthenticationException(err2);
-        }
-        
-        SVNErrorMessage[] errs = new SVNErrorMessage[] {err1, err2};
-        throw new SVNException(errs);
+        } 
+        throw new SVNException(err1);
     }
 }

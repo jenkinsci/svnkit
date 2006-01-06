@@ -405,7 +405,7 @@ public class JavaHLObjectFactory {
                 JavaHLObjectFactory.getNodeKind(event.getNodeKind()),
                 event.getMimeType(),
                 JavaHLObjectFactory.createLock(event.getLock()),
-                event.getErrorMessage(),
+                event.getErrorMessage() != null ? event.getErrorMessage().getMessage() : null,
                 JavaHLObjectFactory.getStatusValue(event.getContentsStatus()),
                 JavaHLObjectFactory.getStatusValue(event.getPropertiesStatus()),
                 JavaHLObjectFactory.getLockStatusValue(event.getLockStatus()),

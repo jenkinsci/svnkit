@@ -1265,7 +1265,7 @@ public class SVNWCClient extends SVNBasicClient {
                         wcAccess.close(true);
                     }
                 } else {
-                    handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCK_FAILED, lock, error.getMessage()), 
+                    handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.LOCK_FAILED, lock, error), 
                             ISVNEventHandler.UNKNOWN);
                 }
             }
@@ -1302,7 +1302,7 @@ public class SVNWCClient extends SVNBasicClient {
         repository.lock(pathsToRevisions, lockMessage, stealLock, new ISVNLockHandler() {
             public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
                 if (error != null) {
-                    handleEvent(SVNEventFactory.createLockEvent(path, SVNEventAction.LOCK_FAILED, lock, error.getMessage()), ISVNEventHandler.UNKNOWN);
+                    handleEvent(SVNEventFactory.createLockEvent(path, SVNEventAction.LOCK_FAILED, lock, error), ISVNEventHandler.UNKNOWN);
                 } else {
                     handleEvent(SVNEventFactory.createLockEvent(path, SVNEventAction.LOCKED, lock, null), ISVNEventHandler.UNKNOWN);
                 }
@@ -1386,7 +1386,7 @@ public class SVNWCClient extends SVNBasicClient {
                 LockInfo lockInfo = (LockInfo) entriesMap.get(fullURL);
                 SVNWCAccess wcAccess = createWCAccess(lockInfo.myFile);
                 if (error != null) {
-                    handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCK_FAILED, null, error.getMessage()), ISVNEventHandler.UNKNOWN);
+                    handleEvent(SVNEventFactory.createLockEvent(wcAccess, wcAccess.getTargetName(), SVNEventAction.UNLOCK_FAILED, null, error), ISVNEventHandler.UNKNOWN);
                 }
                 if (lock != null) {
                     try {
@@ -1445,11 +1445,9 @@ public class SVNWCClient extends SVNBasicClient {
             }
             public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
                 if (error != null) {
-                    handleEvent(SVNEventFactory.createLockEvent(path, SVNEventAction.UNLOCK_FAILED, null, error.getMessage()),
-                            ISVNEventHandler.UNKNOWN);
+                    handleEvent(SVNEventFactory.createLockEvent(path, SVNEventAction.UNLOCK_FAILED, null, error), ISVNEventHandler.UNKNOWN);
                 } else {
-                    handleEvent(SVNEventFactory.createLockEvent(path, SVNEventAction.UNLOCKED, null, null),
-                            ISVNEventHandler.UNKNOWN);
+                    handleEvent(SVNEventFactory.createLockEvent(path, SVNEventAction.UNLOCKED, null, null), ISVNEventHandler.UNKNOWN);
                 }
             }
         });

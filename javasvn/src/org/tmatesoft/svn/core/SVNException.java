@@ -22,38 +22,28 @@ package org.tmatesoft.svn.core;
  */
 public class SVNException extends Exception {
     
-    private SVNErrorMessage[] myErrorMessages;
+    private SVNErrorMessage myErrorMessage;
 
-    public SVNException(SVNErrorMessage errorMessage, Throwable cause) {
-        this(new SVNErrorMessage[] {errorMessage == null ? SVNErrorMessage.UNKNOWN_ERROR_MESSAGE : errorMessage}, cause);
-    }
 
     public SVNException(SVNErrorMessage errorMessage) {
         this(errorMessage, null);
     }
 
-    public SVNException(SVNErrorMessage[] errorMessages) {
-        this(errorMessages, null);
-    }
-
-    public SVNException(SVNErrorMessage[] errorMessages, Throwable cause) {
+    public SVNException(SVNErrorMessage errorMessage, Throwable cause) {
         super(cause);
         if (cause instanceof SVNException) {
-            SVNErrorMessage[] nestedMessages = ((SVNException) cause).getErrorMessages();
-            errorMessages = append(errorMessages, nestedMessages);
+            SVNErrorMessage childMessages = ((SVNException) cause).getErrorMessage();
+            SVNErrorMessage parent = errorMessage;
+            while(parent.hasChildErrorMessage()) {
+                parent = parent.getChildErrorMessage();
+            }
+            parent.setChildErrorMessage(childMessages);
         }
-        myErrorMessages = errorMessages;
+        myErrorMessage = errorMessage;
     }
     
     public SVNErrorMessage getErrorMessage() {
-        if (myErrorMessages != null && myErrorMessages.length > 0) {
-            return myErrorMessages[0];
-        }
-        return null;
-    }
-
-    public SVNErrorMessage[] getErrorMessages() {
-        return myErrorMessages;
+        return myErrorMessage;
     }
     
     /**
@@ -64,29 +54,14 @@ public class SVNException extends Exception {
      */
     public String getMessage() {
         StringBuffer message = new StringBuffer();
-        if (myErrorMessages != null && myErrorMessages.length > 0) {
-            for (int i = 0; i < myErrorMessages.length; i++) {
-                SVNErrorMessage err = myErrorMessages[i];
-                if (err != null) {
-                    message.append(err.toString());
-                    if (i + 1 < myErrorMessages.length) {
-                        message.append("\n");
-                    }
-                }
+        SVNErrorMessage error = getErrorMessage();
+        while(error != null) {
+            message.append(error.toString());
+            if (error.hasChildErrorMessage()) {
+                message.append("\n");
             }
+            error = error.getChildErrorMessage();
         }
         return message.toString();
-    }
-    
-    private static SVNErrorMessage[] append(SVNErrorMessage[] e1, SVNErrorMessage[] e2) {
-        if (e1 == null) {
-            return e2;
-        } else if (e2 == null) {
-            return e1;
-        } 
-        SVNErrorMessage[] result = new SVNErrorMessage[e1.length + e2.length];
-        System.arraycopy(e1, 0, result, 0, e1.length);
-        System.arraycopy(e2, 0, result, e1.length, e2.length);
-        return result;
     }
 }

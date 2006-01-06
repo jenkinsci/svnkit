@@ -558,8 +558,8 @@ public class SVNUpdateClient extends SVNBasicClient {
                         try {
                             setEventPathPrefix(relativePath);
                             doExport(srcURL, targetDir, srcRevision, srcRevision, eolStyle, force, recursive);
-                        } catch (Throwable th) {
-                            dispatchEvent(new SVNEvent(th.getMessage()));
+                        } catch (SVNException e) {
+                            dispatchEvent(new SVNEvent(e.getErrorMessage()));
                         } finally {
                             setEventPathPrefix(null);
                         }
@@ -700,8 +700,8 @@ public class SVNUpdateClient extends SVNBasicClient {
                         }
                     }
                 }
-            } catch (Throwable th) {
-                dispatchEvent(new SVNEvent(th.getMessage()));
+            } catch (SVNException th) {
+                dispatchEvent(new SVNEvent(th.getErrorMessage()));
                 SVNDebugLog.logInfo(th);
             } finally {
                 setEventPathPrefix(null);

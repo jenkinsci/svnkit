@@ -268,7 +268,13 @@ class SVNReader {
                         } catch (SVNException e) {
                             is.reset();
                         }
-                        SVNErrorManager.error(errorMessages);
+                        SVNErrorMessage topError = (SVNErrorMessage) errorMessages.get(0);
+                        for(int k = 1; k < errorMessages.size(); k++) {
+                            SVNErrorMessage child = (SVNErrorMessage) errorMessages.get(k);
+                            topError.setChildErrorMessage(child);
+                            topError = child;
+                        }   
+                        SVNErrorManager.error((SVNErrorMessage) errorMessages.get(0));
                     } else if (!"success".equals(word)) {
                         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Unknown status ''{0}'' in command response", word));
                     }

@@ -12,6 +12,7 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
@@ -101,7 +102,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 public class SVNEvent {
 
     private String myMimeType;
-    private String myErrorMessage;
+    private SVNErrorMessage myErrorMessage;
     private SVNEventAction myAction;
     private SVNNodeKind myNodeKind;
     private long myRevision;
@@ -124,7 +125,7 @@ public class SVNEvent {
      * 
      * @param errorMessage the message describing the operation fault
      */
-    public SVNEvent(String errorMessage) {
+    public SVNEvent(SVNErrorMessage errorMessage) {
         myErrorMessage = errorMessage;
     }
     
@@ -155,7 +156,7 @@ public class SVNEvent {
     public SVNEvent(SVNWCAccess source, SVNDirectory dir, String name,
             SVNEventAction action, SVNNodeKind kind, long revision,
             String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNLock lock, String error) {
+            SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
         myMimeType = mimetype;
         myErrorMessage = error;
         myAction = action;
@@ -197,7 +198,7 @@ public class SVNEvent {
     public SVNEvent(File rootFile, File file, SVNEventAction action,
             SVNNodeKind kind, long revision, String mimetype,
             SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNLock lock, String error) {
+            SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
         myMimeType = mimetype;
         myErrorMessage = error;
         myAction = action;
@@ -297,7 +298,7 @@ public class SVNEvent {
      *          <span class="javakeyword">null</span> if everything
      *          is OK
      */
-    public String getErrorMessage() {
+    public SVNErrorMessage getErrorMessage() {
         return myErrorMessage;
     }
     
