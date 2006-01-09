@@ -60,6 +60,7 @@ public interface ISVNDeltaGenerator {
      * <p>  
      * Use {@link SVNRAFileData} to wrap files.
      * 
+     * @deprecated use {@link SVNDeltaGenerator} instead
      * @param  commitPath      a file path  
      * @param  consumer        an editor that receives the generated
      *                         dif window(s)

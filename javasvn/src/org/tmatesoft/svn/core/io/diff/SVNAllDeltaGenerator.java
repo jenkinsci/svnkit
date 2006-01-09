@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
  * Used to generate diff windows for binary files (that are not generally
  * compared with base revision files), and for new text files, which contents
  * are represented as a delta versus empty contents.
+ * @deprecated see {@link SVNDeltaGenerator}
  * 
  * @version 1.0
  * @author  TMate Software Ltd.

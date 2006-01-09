@@ -24,6 +24,8 @@ import de.regnis.q.sequence.line.QSequenceLineRAData;
  * objects, so that they could be used with <b>de.regnis.q.sequence.line</b> 
  * classes. This adapter is used by the <b>SVNSequenceDeltaGenerator</b> class.  
  * 
+ * @deprecated see {@link SVNDeltaGenerator}
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  * @see     SVNSequenceDeltaGenerator

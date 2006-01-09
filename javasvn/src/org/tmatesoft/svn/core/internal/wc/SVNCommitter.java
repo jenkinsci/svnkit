@@ -11,7 +11,7 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -26,10 +26,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.diff.ISVNDeltaGenerator;
-import org.tmatesoft.svn.core.io.diff.SVNAllDeltaGenerator;
-import org.tmatesoft.svn.core.io.diff.SVNRAFileData;
-import org.tmatesoft.svn.core.io.diff.SVNSequenceDeltaGenerator;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -45,6 +42,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
     private Map myModifiedFiles;
     private Collection myTmpFiles;
     private String myRepositoryRoot;
+    private SVNDeltaGenerator myDeltaGenerator;
 
     public SVNCommitter(Map commitItems, String reposRoot, Collection tmpFiles) {
         myCommitItems = commitItems;
@@ -151,7 +149,6 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             SVNTranslator.translate(dir, name, name, SVNFileUtil.getBasePath(tmpFile), false, false);
 
             String checksum = null;
-            String newChecksum = SVNFileUtil.computeChecksum(tmpFile);
             if (!item.isAdded()) {
                 checksum = SVNFileUtil.computeChecksum(dir.getBaseFile(name, false));
                 String realChecksum = entry.getChecksum();
@@ -162,39 +159,26 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                 }
             }
             editor.applyTextDelta(path, checksum);
-            boolean binary = dir.getProperties(name, false).getPropertyValue(
-                    SVNProperty.MIME_TYPE) != null
-                    || dir.getBaseProperties(name, false).getPropertyValue(
-                            SVNProperty.MIME_TYPE) != null;
-            ISVNDeltaGenerator generator;
-            if (item.isAdded() || binary) {
-                generator = new SVNAllDeltaGenerator();
-            } else {
-	            generator = new SVNSequenceDeltaGenerator(tmpFile.getParentFile());
+            if (myDeltaGenerator == null) {
+                myDeltaGenerator = new SVNDeltaGenerator();
             }
-            SVNRAFileData base = new SVNRAFileData(dir.getBaseFile(name, false), true);
-            SVNRAFileData work = new SVNRAFileData(tmpFile, true);
+            InputStream sourceIS = null;
+            InputStream targetIS = null;
+            File baseFile = dir.getBaseFile(name, false);
+            String newChecksum = null;
             try {
-                generator.generateDiffWindow(path, editor, work, base);
+                sourceIS = baseFile.exists() ? SVNFileUtil.openFileForReading(dir.getBaseFile(name, false)) : SVNFileUtil.DUMMY_IN;
+                targetIS = tmpFile.exists() ? SVNFileUtil.openFileForReading(tmpFile) : SVNFileUtil.DUMMY_IN;
+                newChecksum = myDeltaGenerator.sendDelta(path, sourceIS, targetIS, editor, true);
             } finally {
-                try {
-                    base.close();
-                } catch (IOException e) {
-                    //
-                }
-                try {
-                    work.close();
-                } catch (IOException e) {
-                    //
-                }
+                SVNFileUtil.closeFile(sourceIS);
+                SVNFileUtil.closeFile(targetIS);
             }
             editor.closeFile(path, newChecksum);
         }
     }
 
-    private void sendPropertiedDelta(String commitPath, SVNCommitItem item,
-            ISVNEditor editor) throws SVNException {
-
+    private void sendPropertiedDelta(String commitPath, SVNCommitItem item, ISVNEditor editor) throws SVNException {
         SVNDirectory dir;
         String name;
         SVNWCAccess wcAccess = item.getWCAccess();

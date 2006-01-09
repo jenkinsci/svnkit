@@ -38,6 +38,7 @@ import de.regnis.q.sequence.line.QSequenceLineResult;
  * produces defferences delta for two text files, and full text delta if a 
  * target file is binary.
  * 
+ * @deprecated see {@link SVNDeltaGenerator} 
  * @author  TMate Software Ltd.
  * @version 1.0
  */

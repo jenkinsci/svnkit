@@ -112,4 +112,26 @@ public class SVNCommitInfo {
         }
         return null;
     }
+    
+    public String toString() {
+        if (this == NULL) {
+            return "EMPTY COMMIT";
+        } else if (myErrorMessage == null) {
+            StringBuffer sb = new StringBuffer();
+            sb.append("r");
+            sb.append(myNewRevision);
+            if (myAuthor != null) {
+                sb.append(" by '");
+                sb.append(myAuthor);
+                sb.append("'");
+            }
+            if (myDate != null) {
+                sb.append(" at ");
+                sb.append(myDate);
+            }
+            return sb.toString(); 
+        } else {         
+            return myErrorMessage.getFullMessage();
+        }
+    }
 }

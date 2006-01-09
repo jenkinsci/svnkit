@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * The <b>SVNRAFileData</b> class represents a random access data storage 
  * wrapper for files.
  * 
+ * @deprecated see {@link SVNDeltaGenerator}
  * @version 1.0
  * @author  TMate Software Ltd.
  */

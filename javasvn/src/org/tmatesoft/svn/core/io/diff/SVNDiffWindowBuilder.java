@@ -497,7 +497,7 @@ public class SVNDiffWindowBuilder {
         for(int i = 0; i < offsets.length; i++) {
             writeInt(os, offsets[i]);
         }
-        os.write(bos.toByteArray());
+        bos.writeTo(os);
     }
     
     /**

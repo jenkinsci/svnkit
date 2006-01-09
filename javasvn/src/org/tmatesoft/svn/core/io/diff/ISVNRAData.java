@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
  * Used to provide random access to files and buffers upon which
  * delta is generated. 
  * 
+ * @deprecated see {@link SVNDeltaGenerator}
  * @version 1.0
  * @author  TMate Software Ltd.
  * @see     SVNRAFileData
