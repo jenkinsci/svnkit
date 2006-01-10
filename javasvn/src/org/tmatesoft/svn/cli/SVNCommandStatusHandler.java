@@ -1,3 +1,14 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.  The terms
+ * are also available at http://tmate.org/svn/license.html.
+ * If newer versions of this license are posted there, you may use a
+ * newer version instead, at your option.
+ * ====================================================================
+ */
 package org.tmatesoft.svn.cli;
 
 import java.io.PrintStream;
@@ -8,13 +19,6 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
-/**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 07.06.2005
- * Time: 22:48:39
- * To change this template use File | Settings | File Templates.
- */
 public class SVNCommandStatusHandler implements ISVNStatusHandler {
 
     private PrintStream myOut;

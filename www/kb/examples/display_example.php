@@ -54,5 +54,5 @@
 	$geshi->set_footer_content_style('font-family: Verdana, Arial, sans-serif; color: #808080; font-size: 70%; font-weight: bold; background-color: #f0f0ff; border-top: 1px solid #d0d0d0; padding: 2px;');
 	$geshi->set_url_for_keyword_group(3,"http://java.sun.com/j2se/1.4.2/docs/api/");
 	$code = $geshi->parse_code();
-	echo "<html><body><h1 >".$fileName."</h1>".$code."<div style=\"max-width: 800px; width: 800px;\"><center><small style=\"color: #669999; font-size: 100%; margin: 0px; padding: 0px; margin-top: 0.5em; font-weight: normal;\"><span style=\"font-size: 80%;\">(c) 2004-2005 TMate Software. All rights reserved.</span></small></center></div></body></html>";
+	echo "<html><body><h1 >".$fileName."</h1>".$code."<div style=\"max-width: 800px; width: 800px;\"><center><small style=\"color: #669999; font-size: 100%; margin: 0px; padding: 0px; margin-top: 0.5em; font-weight: normal;\"><span style=\"font-size: 80%;\">(c) 2004-2006 TMate Software. All rights reserved.</span></small></center></div></body></html>";
 ?>
