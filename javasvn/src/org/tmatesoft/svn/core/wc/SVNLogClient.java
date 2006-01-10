@@ -165,7 +165,7 @@ public class SVNLogClient extends SVNBasicClient {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"));
         }
         File tmpFile = SVNFileUtil.createTempDirectory("annotate");
-        doAnnotate(repos.getLocation().toString(), startRev, tmpFile, repos, endRev, handler);
+        doAnnotate(repos.getLocation().toDecodedString(), startRev, tmpFile, repos, endRev, handler);
     }
     
     private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, ISVNAnnotateHandler handler) throws SVNException {

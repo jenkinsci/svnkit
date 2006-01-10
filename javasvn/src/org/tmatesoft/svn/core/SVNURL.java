@@ -73,6 +73,18 @@ public class SVNURL {
             path = path.substring(0, path.length() - 1);
         }
         protocol = protocol == null ? "http" : protocol.toLowerCase();
+        String errorMessage = null;
+        if (userInfo != null && userInfo.indexOf('/') >= 0) {
+            errorMessage = "Malformed URL: user info part could not include '/' symbol";
+        } else if (host == null) {
+            errorMessage = "Malformed URL: host could not be NULL";
+        } else if (host.indexOf('/') >= 0) {
+            errorMessage = "Malformed URL: host could not include '/' symbol";
+        }
+        if (errorMessage != null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, errorMessage);
+            SVNErrorManager.error(err);
+        }
         String url = composeURL(protocol, userInfo, host, port, path);
         return new SVNURL(url, true);
     }
@@ -248,6 +260,10 @@ public class SVNURL {
             myURL = composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), getURIEncodedPath());
         }
         return myURL;
+    }
+
+    public String toDecodedString() {
+        return composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), getPath());
     }
     
     /**
