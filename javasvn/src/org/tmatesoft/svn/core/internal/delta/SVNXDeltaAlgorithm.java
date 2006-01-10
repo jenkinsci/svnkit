@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.delta;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.Adler32;
 
 /**
  * @version 1.0
@@ -28,9 +27,10 @@ public class SVNXDeltaAlgorithm extends SVNDeltaAlgorithm {
             copyFromNewData(b, 0, bLength);
             return;
         }
-        Map aMatchesTable = createMatchesTable(a, aLength, MATCH_BLOCK_SIZE);
-        Adler32 bAdler = new Adler32();
-        bAdler.update(b, 0, MATCH_BLOCK_SIZE);
+        PseudoAdler32 bAdler = new PseudoAdler32();
+        Map aMatchesTable = createMatchesTable(a, aLength, MATCH_BLOCK_SIZE, bAdler);
+        bAdler.reset();
+        bAdler.add(b, 0, MATCH_BLOCK_SIZE);
 
         int lo = 0;
         int size = bLength;
@@ -52,9 +52,12 @@ public class SVNXDeltaAlgorithm extends SVNDeltaAlgorithm {
                 copyFromSource(match.position, match.length);                
             }
             int advance = match != null ? match.advance : 1;
-            bAdler.reset();
-            int nextBlockLength = Math.min(MATCH_BLOCK_SIZE, bLength - (lo + advance));
-            bAdler.update(b, lo + advance, nextBlockLength);
+            for (int next = lo; next < lo + advance; next++) {
+                bAdler.remove(b[next]);
+                if (next + MATCH_BLOCK_SIZE < bLength) {
+                    bAdler.add(b[next + MATCH_BLOCK_SIZE]);
+                }
+            }
             lo += advance;
         }
         if (previousInsertion != null && previousInsertion.length > 0) {
@@ -63,12 +66,11 @@ public class SVNXDeltaAlgorithm extends SVNDeltaAlgorithm {
         }
     }
     
-    private Match findMatch(Map matchesTable, Adler32 checksum, byte[] a, int aLength, byte[] b, int bLength, int bPos, Match previousInsertion) {
-        Match existingMatch = (Match) matchesTable.get(new Long(checksum.getValue()));
+    private static Match findMatch(Map matchesTable, PseudoAdler32 checksum, byte[] a, int aLength, byte[] b, int bLength, int bPos, Match previousInsertion) {
+        Match existingMatch = (Match) matchesTable.get(new Integer(checksum.getValue()));
         if (existingMatch == null) {
             return null;
         }
-        // compare bytes in b at bpos with those in a at match
         if (!equals(a, aLength, existingMatch.position, existingMatch.length, b, bLength, bPos)) {
             return null;
         }
@@ -96,14 +98,12 @@ public class SVNXDeltaAlgorithm extends SVNDeltaAlgorithm {
         return existingMatch;
     }
     
-    private Map createMatchesTable(byte[] data, int dataLength, int blockLength) {
-        Adler32 adler32 = new Adler32();
+    private static Map createMatchesTable(byte[] data, int dataLength, int blockLength, PseudoAdler32 adler32) {
         Map matchesTable = new HashMap();
         for(int i = 0; i < dataLength; i+= blockLength) {
-            // align block for Adler 
             int length = i + blockLength >= dataLength ? dataLength - i : blockLength;
-            adler32.update(data, i, length);
-            Long checksum = new Long(adler32.getValue());
+            adler32.add(data, i, length);
+            Integer checksum = new Integer(adler32.getValue());
             if (!matchesTable.containsKey(checksum)) {
                 matchesTable.put(checksum, new Match(i, length));
             }
@@ -113,7 +113,7 @@ public class SVNXDeltaAlgorithm extends SVNDeltaAlgorithm {
     }
     
     private static boolean equals(byte[] a, int aLength, int aPos, int length, byte[] b, int bLength, int bPos) {
-        if (aPos + length >= aLength || bPos + length >= bLength) {
+        if (aPos + length - 1 > aLength || bPos + length > bLength) {
             return false;
         }
         for(int i = 0; i < length; i++) {
@@ -136,5 +136,51 @@ public class SVNXDeltaAlgorithm extends SVNDeltaAlgorithm {
         public int advance;
     }
 
+    private static int ADLER32_MASK = 0x0000FFFF;
+
+    private static class PseudoAdler32 {        
+        
+        private int myS1;
+        private int myS2;
+        private int myLength;
+        
+        public PseudoAdler32() {
+            reset();
+        }
+        
+        public void add(byte b) {
+            int z = b & 0x000000FF;
+            myS1 = myS1 + z;
+            myS1 = myS1 & ADLER32_MASK;
+            myS2 = myS2 + myS1;
+            myS2 = myS2 & ADLER32_MASK;
+            myLength++;
+        }
+        
+        public void remove(byte b) {
+            int z = b & 0x000000FF;
+            myS1 = myS1 - z;
+            myS1 = myS1 & ADLER32_MASK;
+            myS2 = myS2 - (myLength * z + 1);
+            myS2 = myS2 & ADLER32_MASK;
+            myLength--;
+        }
+        
+        public void add(byte[] data, int offset, int length) {
+            for (int i = offset; i < offset + length; i++) {
+                add(data[i]);
+            }
+        }
+        
+        public int getValue() {
+            return (myS2 << 16) | myS1;
+        }
+        
+        public void reset() {
+            myS1 = 1;
+            myS2 = 0;
+            myLength = 0;
+        }
+    }
 }
  

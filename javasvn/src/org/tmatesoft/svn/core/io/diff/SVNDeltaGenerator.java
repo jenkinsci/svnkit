@@ -99,7 +99,9 @@ public class SVNDeltaGenerator {
             sendDelta(path, sourceOffset, mySourceBuffer, sourceLength, myTargetBuffer, targetLength, consumer);
             sourceOffset += sourceLength;
         }
-        consumer.textDeltaEnd(path);
+        if (consumer != null) {
+            consumer.textDeltaEnd(path);
+        }
         return SVNFileUtil.toHexDigest(digest);
     }
     
@@ -108,6 +110,10 @@ public class SVNDeltaGenerator {
         SVNDeltaAlgorithm algorithm = sourceLength == 0 ? myVDelta : myXDelta;
         algorithm.computeDelta(source, sourceLength, target, targetLength);
         // send single diff window to the editor.
+        if (consumer == null) {
+            algorithm.reset();
+            return;
+        }
         SVNDiffInstruction[] instructions = algorithm.getDiffInstructions();        
         ByteArrayOutputStream newData = algorithm.getNewDataStream();
         SVNDiffWindow window = new SVNDiffWindow(sourceOffset, sourceLength, targetLength, instructions, newData.size());
