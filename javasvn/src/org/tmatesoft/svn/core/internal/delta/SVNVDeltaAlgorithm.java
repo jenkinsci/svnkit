@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.delta;
 
+import java.util.Arrays;
+
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
@@ -48,18 +50,18 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
             int currentMatch = -1;
             int currentMatchLength = 0;
             int key;
-            Slot slot;
+            int slot;
             boolean progress = false;
             
             key = here;
             
             do {
                 progress = false;
-                for(slot = table.getBucket(table.getBucketIndex(data, key)); slot != null; slot = slot.nextSlot) {
-                    if (slot.index < key - here) {
+                for(slot = table.getBucket(table.getBucketIndex(data, key)); slot >= 0; slot = table.mySlots[slot]) {
+                    if (slot < key - here) {
                         continue;
                     }
-                    int match = slot.index - (key - here);
+                    int match = slot - (key - here);
                     int matchLength = findMatchLength(data, match, here, end);
                     if (match < start && match + matchLength > start) {
                         matchLength = start - match;
@@ -76,7 +78,7 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
             } while (progress && end - key >= VD_KEY_SIZE);
             
             if (currentMatchLength < VD_KEY_SIZE) {
-                table.storeSlot(data, here, here);
+                table.storeSlot(data, here);
                 if (insertFrom < 0) {
                     insertFrom = here;
                 }
@@ -97,7 +99,7 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
             if (end - here >= VD_KEY_SIZE) {
                 int last = here - (VD_KEY_SIZE - 1);
                 for(; last < here; ++last) {
-                    table.storeSlot(data, last, last);
+                    table.storeSlot(data, last);
                 }
             }            
         }
@@ -113,29 +115,17 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
         }
         return here - from;
     }
-
-
-    private static class Slot {
-        
-        public Slot(int index) {
-            this.index = index;
-        }
-        
-        public int index;
-        public Slot nextSlot;
-    }
     
     private static class SlotsTable {
-        private Slot[] mySlots;
-        private Slot[] myBuckets;
+        private int[] mySlots;
+        private int[] myBuckets;
 
         public SlotsTable(int length) {
-            mySlots = new Slot[length];
+            mySlots = new int[length];
             int bucketsCount = (length / 3) | 1;
-            myBuckets = new Slot[bucketsCount];
-            for(int i = 0; i < mySlots.length; i++) {
-                mySlots[i] = new Slot(i);
-            }
+            myBuckets = new int[bucketsCount];
+            Arrays.fill(myBuckets, -1);
+            Arrays.fill(mySlots, -1);
         }
         
         public int getBucketIndex(byte[] data, int index) {
@@ -147,16 +137,15 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
             return Math.abs((int) hash);
         }
         
-        public Slot getBucket(int bucketIndex) {
+        public int getBucket(int bucketIndex) {
             return myBuckets[bucketIndex];
         }
         
-        public void storeSlot(byte[] data, int index, int slotIndex) {
-            int bucketIndex = getBucketIndex(data, index);
-            Slot slot = mySlots[slotIndex];
-            slot.nextSlot = myBuckets[bucketIndex];
-            myBuckets[bucketIndex] = slot;
+        public void storeSlot(byte[] data, int slotIndex) {
+            int bucketIndex = getBucketIndex(data, slotIndex);
+            int currentNext = mySlots[slotIndex];
+            mySlots[slotIndex] = myBuckets[bucketIndex];
+            myBuckets[bucketIndex] = currentNext; 
         }
     }
-
 }

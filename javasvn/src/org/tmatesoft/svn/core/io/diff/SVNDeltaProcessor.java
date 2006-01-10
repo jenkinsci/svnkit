@@ -34,7 +34,11 @@ public class SVNDeltaProcessor {
     private SVNDiffWindowApplyBaton myApplyBaton;
     
     public SVNDeltaProcessor() {
-        myDataStream = new ByteArrayOutputStream(110*1024);
+        this(100*1024);
+    }
+
+    public SVNDeltaProcessor(int inialNewDataSize) {
+        myDataStream = new ByteArrayOutputStream(inialNewDataSize);
     }
     
     public void applyTextDelta(InputStream base, OutputStream target, boolean computeCheksum) {
