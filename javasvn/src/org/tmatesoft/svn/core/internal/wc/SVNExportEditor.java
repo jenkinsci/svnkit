@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 
@@ -137,12 +138,12 @@ public class SVNExportEditor implements ISVNEditor {
     private String myChecksum;
 
     public void textDeltaEnd(String commitPath) throws SVNException {
-        myDeltaProcessor.textDeltaEnd();
-        myChecksum = myDeltaProcessor.getChecksum();
+//        myDeltaProcessor.textDeltaEnd();
+        myChecksum = myDeltaProcessor.textDeltaEnd();
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {
-        myDeltaProcessor.close();
+//        myDeltaProcessor.close();
         if (textChecksum == null) {
             textChecksum = (String) myFileProperties.get(SVNProperty.CHECKSUM);
         }

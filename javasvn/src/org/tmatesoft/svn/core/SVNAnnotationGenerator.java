@@ -22,12 +22,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;

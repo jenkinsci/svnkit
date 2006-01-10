@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 
@@ -176,7 +177,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {
-        myDeltaProcessor.close();
+//        myDeltaProcessor.close();
         String displayPath = SVNPathUtil.append(myBasePath, myCurrentFile.myPath);
         if (myCurrentFile.myFile != null) {
             String mimeType1 = (String) myCurrentFile.myBaseProperties.get(SVNProperty.MIME_TYPE);

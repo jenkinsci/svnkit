@@ -9,18 +9,18 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.wc;
+package org.tmatesoft.svn.core.io.diff;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindowApplyBaton;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
 /**
@@ -28,8 +28,6 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindowApplyBaton;
  * @author  TMate Software Ltd.
  */
 public class SVNDeltaProcessor {
-    
-    private String myChecksum;
     
     private SVNDiffWindow myLastWindow;
     private ByteArrayOutputStream myDataStream;
@@ -39,22 +37,23 @@ public class SVNDeltaProcessor {
         myDataStream = new ByteArrayOutputStream(110*1024);
     }
     
-    public void applyTextDelta(File baseFile, File targetFile, boolean computeCheksum) throws SVNException {
+    public void applyTextDelta(InputStream base, OutputStream target, boolean computeCheksum) {
+        reset();
         MessageDigest digest = null;
         try {
             digest = computeCheksum ? MessageDigest.getInstance("MD5") : null;
         } catch (NoSuchAlgorithmException e1) {
         }
+        base = base == null ? SVNFileUtil.DUMMY_IN : base;
+        myApplyBaton = SVNDiffWindowApplyBaton.create(base, target, digest);
+    }
+    
+    public void applyTextDelta(File baseFile, File targetFile, boolean computeCheksum) throws SVNException {
         if (!targetFile.exists()) {
             SVNFileUtil.createEmptyFile(targetFile);
         }
-        myChecksum = null;
-        myDataStream.reset();
-        if (baseFile != null) {
-            myApplyBaton = SVNDiffWindowApplyBaton.create(baseFile, targetFile, digest);
-        } else {
-            myApplyBaton = SVNDiffWindowApplyBaton.create(SVNFileUtil.DUMMY_IN, SVNFileUtil.openFileForWriting(targetFile), digest);
-        }
+        InputStream base = baseFile != null && baseFile.exists() ? SVNFileUtil.openFileForReading(baseFile) : SVNFileUtil.DUMMY_IN;
+        applyTextDelta(base, SVNFileUtil.openFileForWriting(targetFile), computeCheksum);
     }
 
     public OutputStream textDeltaChunk(SVNDiffWindow window) throws SVNException {
@@ -67,27 +66,25 @@ public class SVNDeltaProcessor {
         return myDataStream;
     }
     
-    public String getChecksum() {
-        return myChecksum;
+    private void reset() {
+        myDataStream.reset();
+        if (myApplyBaton != null) {
+            myApplyBaton.close();
+            myApplyBaton = null;
+        }
+        myLastWindow = null;
     }
     
-    public boolean textDeltaEnd() throws SVNException {
-        boolean result = false;
+    public String textDeltaEnd() throws SVNException {
         if (myLastWindow != null) {
-            // apply last window.
-            result = true;
             myLastWindow.apply(myApplyBaton, new ByteArrayInputStream(myDataStream.toByteArray()));
         }
         myLastWindow = null;
         myDataStream.reset();
-        close();
-        return result;
-    }
-    
-    public void close() {
-        if (myApplyBaton != null) {
-            myChecksum = myApplyBaton.close();
-            myApplyBaton = null;
+        try {
+            return myApplyBaton.close();
+        } finally { 
+            reset();
         }
     }
 }

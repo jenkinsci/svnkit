@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -221,9 +222,8 @@ public class SVNMergeEditor implements ISVNEditor {
         myDeltaProcessor.textDeltaEnd();
     }
 
-    public void closeFile(String commitPath, String textChecksum)
-            throws SVNException {
-        myDeltaProcessor.close();
+    public void closeFile(String commitPath, String textChecksum) throws SVNException {
+//        myDeltaProcessor.close();
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myWCPath);
         if (dir == null && !myMerger.isDryRun()) {
             // not for dry run?
