@@ -136,7 +136,7 @@ public class DAVUtil {
         DAVProperties properties = findStartingProperties(connection, repository, path);
         String vcc = properties.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
         if (vcc == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "svn: The VCC property was not found on the resource");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The VCC property was not found on the resource");
             SVNErrorManager.error(err);
         }
         return vcc;
