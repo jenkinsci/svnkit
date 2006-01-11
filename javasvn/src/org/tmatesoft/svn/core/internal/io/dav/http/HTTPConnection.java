@@ -336,7 +336,7 @@ class HTTPConnection implements IHTTPConnection {
                 break;
             }
             if (httpAuth != null && realm != null && myRepository.getAuthenticationManager() != null) {
-                myRepository.getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, myLastValidAuth);
+                myRepository.getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, httpAuth);
             }
             myLastValidAuth = httpAuth;
             status.setHeader(request.getResponseHeader());
