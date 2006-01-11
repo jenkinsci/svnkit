@@ -72,7 +72,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
     
     public void setLocation(SVNURL url, boolean forceReconnect) throws SVNException {
-        if (!url.equals(myConnection)) {
+        if (!url.equals(getLocation())) {
             super.setLocation(url, true);
         } else {
             super.setLocation(url, forceReconnect);

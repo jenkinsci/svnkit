@@ -193,18 +193,19 @@ public abstract class SVNRepository {
                 SVNErrorManager.error(err);
             }
             
-            if (forceReconnect || myRepositoryRoot == null) {
+            if (forceReconnect) {
                 closeSession();
                 myRepositoryRoot = null;
                 myRepositoryUUID = null;
+            } else if (myRepositoryRoot == null) {
+                // no way to check whether repos is the same. just compare urls
+                if (!(url.toString().startsWith(myLocation.toString() + "/") || url.equals(getLocation()))) {
+                    closeSession();
+                    myRepositoryRoot = null;
+                    myRepositoryUUID = null;
+                }
             } else if (url.toString().startsWith(myRepositoryRoot.toString() + "/") || myRepositoryRoot.equals(url)) {
-                // just do nothing
-            } else if (url.getProtocol().equals(myRepositoryRoot.getProtocol()) && 
-                    url.getHost().equals(myRepositoryRoot.getHost()) &&
-                    url.getPort() == myRepositoryRoot.getPort()) {
-                closeSession();
-                myRepositoryRoot = null;
-                myRepositoryUUID = null;
+                // just do nothing, we are still below old root.
             } else {
                 closeSession();
                 myRepositoryRoot = null;

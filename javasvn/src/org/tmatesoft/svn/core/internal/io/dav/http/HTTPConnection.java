@@ -211,6 +211,7 @@ class HTTPConnection implements IHTTPConnection {
         ISVNSSLManager sslManager = promptSSLClientCertificate(true);
         String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
         SVNAuthentication httpAuth = myLastValidAuth;
+        String realm = null;
 
         // 2. create request instance.
         HTTPRequest request = new HTTPRequest();
@@ -292,7 +293,7 @@ class HTTPConnection implements IHTTPConnection {
                     break;
                 }
 
-                String realm = (String) myCredentialsChallenge.get("realm");
+                realm = (String) myCredentialsChallenge.get("realm");
                 realm = realm == null ? "" : " " + realm;
                 realm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">" + realm;
                 if (httpAuth == null) {
@@ -305,7 +306,6 @@ class HTTPConnection implements IHTTPConnection {
                     err = SVNErrorMessage.create(SVNErrorCode.CANCELLED, "HTTP authorization cancelled");
                     break;
                 }
-                myLastValidAuth = httpAuth;
                 continue;
             } else if (status.getCode() == HttpURLConnection.HTTP_MOVED_PERM || status.getCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
                 close();
@@ -335,6 +335,10 @@ class HTTPConnection implements IHTTPConnection {
             if (err != null) {
                 break;
             }
+            if (httpAuth != null && realm != null && myRepository.getAuthenticationManager() != null) {
+                myRepository.getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, myLastValidAuth);
+            }
+            myLastValidAuth = httpAuth;
             status.setHeader(request.getResponseHeader());
             return status;
         }
