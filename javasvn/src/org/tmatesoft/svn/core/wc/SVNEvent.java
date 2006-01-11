@@ -115,6 +115,7 @@ public class SVNEvent {
     private String myPath;
     private File myRoot;
     private File myRootFile;
+    private SVNEventAction myExpectedAction;
     
     /**
      * Constructs an <b>SVNEvent</b> object given
@@ -154,11 +155,12 @@ public class SVNEvent {
      * @param error      an error message
      */
     public SVNEvent(SVNWCAccess source, SVNDirectory dir, String name,
-            SVNEventAction action, SVNNodeKind kind, long revision,
-            String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
+            SVNEventAction action, SVNEventAction expectedAction, SVNNodeKind kind, 
+            long revision, String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
             SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
         myMimeType = mimetype;
         myErrorMessage = error;
+        myExpectedAction = expectedAction != null ? expectedAction : action;
         myAction = action;
         myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
         myRevision = revision;
@@ -173,6 +175,14 @@ public class SVNEvent {
         myRoot = dir != null ? dir.getRoot() : null;
         myName = name;
     }
+
+    public SVNEvent(SVNWCAccess source, SVNDirectory dir, String name,
+            SVNEventAction action, SVNNodeKind kind, long revision,
+            String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
+            SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
+        this(source, dir, name, action, null, kind, revision, mimetype, cstatus, pstatus, lstatus, lock, error);
+    }
+
     
     /**
      * Constructs an <b>SVNEvent</b> object filling it with informational 
@@ -195,11 +205,12 @@ public class SVNEvent {
      * @param lock       the item's lock
      * @param error      an error message
      */
-    public SVNEvent(File rootFile, File file, SVNEventAction action,
+    public SVNEvent(File rootFile, File file, SVNEventAction action, SVNEventAction expected,
             SVNNodeKind kind, long revision, String mimetype,
             SVNStatusType cstatus, SVNStatusType pstatus,
             SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
         myMimeType = mimetype;
+        myExpectedAction = expected != null ? expected : action;
         myErrorMessage = error;
         myAction = action;
         myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
@@ -214,6 +225,13 @@ public class SVNEvent {
         myRoot = file != null ? file.getParentFile() : null;
         myRootFile = rootFile;
         myName = file != null ? file.getName() : "";
+    }
+    
+    public SVNEvent(File rootFile, File file, SVNEventAction action,            
+            SVNNodeKind kind, long revision, String mimetype,
+            SVNStatusType cstatus, SVNStatusType pstatus,
+            SVNStatusType lstatus, SVNLock lock, SVNErrorMessage error) {
+        this(rootFile, file, action, null, kind, revision, mimetype, cstatus, pstatus, lstatus, lock, error);
     }
     
     /**
@@ -276,6 +294,10 @@ public class SVNEvent {
      */
     public SVNEventAction getAction() {
         return myAction;
+    }
+
+    public SVNEventAction getExpectedAction() {
+        return myExpectedAction;
     }
     
     /**
