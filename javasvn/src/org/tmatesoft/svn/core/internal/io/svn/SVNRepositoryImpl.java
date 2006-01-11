@@ -683,8 +683,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             } catch (SVNException e) {                
                 SVNDebugLog.logInfo(e.getErrorMessage().getErrorCode() + "");
                 if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
-                    closeSession();
-                    unlock();
+                    closeConnection();
                     openConnection();
                     lock12(pathsToRevisions, comment, force, handler);
                     return;
@@ -762,8 +761,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 authenticate();
             } catch (SVNException e) {
                 if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
-                    closeSession();
-                    unlock();
+                    closeConnection();
                     openConnection();
                     unlock12(pathToTokens, force, handler);
                     return;
@@ -867,8 +865,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     private void openConnection() throws SVNException {
         lock();
-        if (getOptions().keepConnection(this) && myConnection != null) {
-            return;
+        if (myConnection != null) {
+            closeConnection();
         }
         ISVNConnector connector = SVNRepositoryFactoryImpl.getConnectorFactory().createConnector(this);
         myConnection = new SVNConnection(connector, this);
@@ -891,10 +889,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     private void closeConnection() {
-        if (getOptions().keepConnection(this)) {
-            unlock();
-            return; 
-        }
         if (myConnection != null) {
             try {
                 myConnection.close();
