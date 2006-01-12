@@ -417,14 +417,18 @@ class HTTPConnection implements IHTTPConnection {
             }
         } catch (SAXException e) {
             if (e instanceof SAXParseException) {
-                // skip it?
-                return null;
+                if (handler instanceof DAVErrorHandler) {
+                    // failed to read svn-specific error, return null.
+                    return null;
+                }
+            } else if (e.getException() instanceof SVNException) {
+                return ((SVNException) e.getException()).getErrorMessage();
             } else if (e.getCause() instanceof SVNException) {
                 return ((SVNException) e.getCause()).getErrorMessage();
-            }
-            return SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The {0} request returned invalid XML in the response: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
+            } 
+            return SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Processing {0} request response failed: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
         } catch (ParserConfigurationException e) {
-            return SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The {0} request returned invalid XML in the response: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
+            return SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "XML parser configuration error while processing {0} request response: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
         } catch (EOFException e) {
             // skip it.
         } finally {
