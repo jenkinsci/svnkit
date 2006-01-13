@@ -23,6 +23,10 @@ package org.tmatesoft.svn.core;
  */
 public class SVNCancelException extends SVNException {
 
+    public SVNCancelException() {
+        super(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Operation cancelled"));
+    }
+
     /**
      * Constructs an <b>SVNCancelException</b> given the
      * error message.
