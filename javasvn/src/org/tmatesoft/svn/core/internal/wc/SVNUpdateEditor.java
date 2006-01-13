@@ -68,7 +68,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             myTargetURL = SVNPathUtil.append(myTargetURL, SVNEncodingUtil.uriEncode(myTarget));
         }
         if (mySwitchURL != null && entry != null && entry.getRepositoryRoot() != null) {
-            if (!mySwitchURL.startsWith(entry.getRepositoryRoot() + "/")) {
+            if (!mySwitchURL.startsWith(entry.getRepositoryRoot() + "/") && !mySwitchURL.equals(entry.getRepositoryRoot())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, "''{0}''\nis not the same repository as\n''{1}''",
                         new Object[] {mySwitchURL, entry.getRepositoryRoot()});
                 SVNErrorManager.error(err);
