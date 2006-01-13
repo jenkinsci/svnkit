@@ -79,8 +79,14 @@ public class SVNDeltaGenerator {
                 return null;
             }
             if (targetLength <= 0) {
+                // send empty window, needed to create empty file.
+                if (consumer != null) {
+                    SVNDiffWindow window = new SVNDiffWindow(sourceOffset, 0, 0, new SVNDiffInstruction[0], 0);
+                    OutputStream os = consumer.textDeltaChunk(path, window);
+                    SVNFileUtil.closeFile(os);
+                }
                 break;
-            }
+            } 
             try {
                 sourceLength = source.read(mySourceBuffer, 0, mySourceBuffer.length);
             } catch (IOException e) {

@@ -40,9 +40,12 @@ import org.tigris.subversion.javahl.SVNClientLogLevel;
 import org.tigris.subversion.javahl.Status;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNURL;
@@ -144,6 +147,20 @@ public class SVNClientImpl implements SVNClientInterface {
                 }
             });
         } catch (SVNException e) {
+            SVNErrorMessage err = e.getErrorMessage();
+            if (err == null || e instanceof SVNAuthenticationException || e instanceof SVNCancelException) {
+                throwException(e);
+            }
+            while(err != null) {
+                int category = err.getErrorCode().getCategory();
+                if (category == SVNErrorCode.RA_CATEGORY ||
+                        category == SVNErrorCode.FS_CATEGORY ||
+                        category == SVNErrorCode.RA_SVN_CATEGORY ||
+                        category == SVNErrorCode.RA_DAV_CATEGORY) {
+                    throwException(e);
+                }
+                err = err.getChildErrorMessage();
+            }
             return new Status[] {};
         }
         return (Status[]) statuses.toArray(new Status[statuses.size()]);
