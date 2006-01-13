@@ -12,14 +12,10 @@
 package org.tmatesoft.svn.examples.repository;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
@@ -27,11 +23,9 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /*
@@ -91,172 +85,106 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * 
  * That's all. The repository is now available via svn://localhost/rep.
  * 
- * 
- * As an example here's one of the program layouts:
- * 
- * Repository latest revision (before committing): 48
- * 
- * The directory was added. 
- * The last author:userName 
- * Date:Thu Jun 09 13:22:40 NOVST 2005 
- * Committed to revision 49
- * 
- * The file was changed. 
- * The last author:userName 
- * Date:Thu Jun 09 13:22:40 NOVST 2005 
- * Committed to revision 50
- * 
- * The directory was copied to a branch. 
- * The last author:userName 
- * Date:Thu Jun 09 13:22:40 NOVST 2005 
- * Committed to revision 51
- * 
- * The directory was deleted. 
- * The last author:userName 
- * Date:Thu Jun 09 13:22:40 NOVST 2005 
- * Committed to revision 52
  */
 public class Commit {
 
-    /*
-     * args  parameter  is  used  to  obtain  a  repository location URL, user's 
-     * account name and password to  authenticate  him  to  the  server,  a  new 
-     * directory path (should be relative to the /rep directory), new file name, 
-     * branch directory path and commit message.
-     */
     public static void main(String[] args) {
         /*
-         * Default values:
-         */
-        String url = "svn://localhost/rep";
-        String name = "userName";
-        String password = "userPassword";
-        String dirPath = "/test";
-        String filePath = "/test/myTemp.txt";
-        String copyPath = "/testCopy";
-        String commitMessage = "adding a new directory with a file!";
-        /*
-         * This is the text of the file to be created in the repository.
-         */
-        byte[] binaryData = "This is a new file".getBytes();
-        /*
-         * This is a new text to overwrite the contents of the created file.
-         */
-        byte[] changedBinaryData = "This is the same file but modified a little."
-                .getBytes();
-        /*
-         * Initializes  the  library  (it  must  be  done  before ever using the
-         * library itself)
+         * Initialize the library. It must be done before calling any 
+         * method of the library.
          */
         setupLibrary();
-
-        if (args != null) {
-            /*
-             * Obtains a repository location URL
-             */
-            url = (args.length >= 1) ? args[0] : url;
-            /*
-             * Obtains an account name (will be used to authenticate the user to
-             * the server)
-             */
-            name = (args.length >= 2) ? args[1] : name;
-            /*
-             * Obtains a password
-             */
-            password = (args.length >= 3) ? args[2] : password;
-            /*
-             * Obtains a new dir path
-             */
-            dirPath = (args.length >= 4) ? args[3] : dirPath;
-            /*
-             * Obtains a file name
-             */
-            filePath = (args.length >= 5) ? args[4] : filePath;
-            /*
-             * Obtains a path where an existing directory will be copied to 
-             * (branched).
-             */
-            copyPath = (args.length >= 6) ? args[5] : copyPath;
-            /*
-             * Obtains a commit message.
-             */
-            commitMessage = (args.length >= 7) ? args[6] : commitMessage;
-        }
-
-        SVNRepository repository = null;
+        
+        /*
+         * Run commit example and process error if any.
+         */
         try {
-           /*
-            * Creates an instance of SVNRepository to work with the  repository.
-            * All  user's  requests  to  the  repository  are  relative  to  the 
-            * repository location used to create this SVNRepository. SVNURL is a 
-            * wrapper for URL strings that represent repository locations.
-            */
-            repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
-        } catch (SVNException svne) {
-            System.err
-                    .println("error while creating an SVNRepository for the location '"
-                            + url + "': " + svne.getMessage());
+            commitExample();
+        } catch (SVNException e) {
+            SVNErrorMessage err = e.getErrorMessage();
+            /*
+             * Display all tree of error messages. 
+             * Utility method SVNErrorMessage.getFullMessage() may be used instead of the loop.
+             */
+            while(err != null) {
+                System.err.println(err.getErrorCode().getCode() + " : " + err.getMessage());
+                err = err.getChildErrorMessage();
+            }
             System.exit(1);
         }
+        System.exit(0);
+    }
+
+    private static void commitExample() throws SVNException {
+        /*
+         * URL that points to repository. 
+         */
+        SVNURL url = SVNURL.parseURIEncoded("svn://localhost/rep");
+        /*
+         * Credentials to use for authentication.
+         */
+        String userName = "foo";
+        String userPassword = "bar";
+        
+        /*
+         * Sample file contents.
+         */
+        byte[] contents = "This is a new file".getBytes();
+        byte[] modifiedContents = "This is the same file but modified a little.".getBytes();
+
+        /*
+         * Create instance of SVNRepository class. This class is the main entry point 
+         * for all "low-level" Subversion operations supported by Subversion protocol. 
+         * 
+         * These operations includes browsing, update and commit operations. See 
+         * SVNRepository methods javadoc for more details.
+         */
+        SVNRepository repository = SVNRepositoryFactory.create(url);
 
         /*
          * User's authentication information (name/password) is provided via  an 
          * ISVNAuthenticationManager  instance.  SVNWCUtil  creates  a   default 
          * authentication manager given user's name and password.
+         * 
+         * Default authentication manager first attempts to use provided user name 
+         * and password and then falls back to the credentials stored in the 
+         * default Subversion credentials storage that is located in Subversion 
+         * configuration area. If you'd like to use provided user name and password 
+         * only you may use BasicAuthenticationManager class instead of default 
+         * authentication manager:
+         * 
+         *  authManager = new BasicAuthenticationsManager(userName, userPassword);
          */
-        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name, password);
-
-        /*
-         * In  this  way authentication info is provided  to  the  SVNRepository 
-         * driver. 
-         */
+        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(userName, userPassword);
         repository.setAuthenticationManager(authManager);
 
-        SVNNodeKind nodeKind = null;
-        try {
-            /*
-             * Gets the node kind of the path for which the SVNRepository driver 
-             * was created. -1 means the latest revision.
-             */
-            nodeKind = repository.checkPath("", -1);
-        } catch (SVNException svne) {
-            System.err
-                    .println("error while getting the node kind of the repository location dir: "
-                            + svne.getMessage());
-            System.exit(1);
-        }
+        /*
+         * Get type of the node located at URL we used to create SVNRepository.
+         * 
+         * "" (empty string) is path relative to that URL, 
+         * -1 is value that mya be used to specify HEAD (latest) revision.
+         */
+        SVNNodeKind nodeKind = repository.checkPath("", -1);
+
         /*
          * Checks  up  if the current path really corresponds to a directory. If 
          * it doesn't, the program exits. SVNNodeKind is that one who says  what
          * is located at a path in a revision. 
          */
         if (nodeKind == SVNNodeKind.NONE) {
-            System.err.println("There is no entry at '" + url + "'.");
-            System.exit(1);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "No entry at URL ''{0}''", url);
+            throw new SVNException(err);
         } else if (nodeKind == SVNNodeKind.FILE) {
-            System.err.println("The entry at '" + url
-                    + "' is a file while a directory was expected.");
-            System.exit(1);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Entry at URL ''{0}'' is a file while directory was expected", url);
+            throw new SVNException(err);
         }
         
-        long latestRevision = -1;
-        try {
-            /*
-             * Gets the latest revision number of the repository.
-             */
-            latestRevision = repository.getLatestRevision();
-        } catch (SVNException svne) {
-            System.err
-                    .println("error while fetching the latest repository revision: "
-                            + svne.getMessage());
-            System.exit(1);
-        }
-        System.out.println("Repository latest revision (before committing): "
-                + latestRevision);
-        System.out.println("");
+        /*
+         * Get exact value of the latest (HEAD) revision.
+         */
+        long latestRevision = repository.getLatestRevision();
+        System.out.println("Repository latest revision (before committing): " + latestRevision);
         
-        ISVNEditor editor = null;
-
         /*
          * Gets an editor for committing the changes to  the  repository.  NOTE:
          * you  must not invoke methods of the SVNRepository until you close the
@@ -264,169 +192,73 @@ public class Commit {
          * 
          * commitMessage will be applied as a log message of the commit.
          * 
-         * ISVNWorkspaceMediator  will  be  used by the editor for  intermediate 
-         * file delta storing.
+         * ISVNWorkspaceMediator instance will be used to store temporary files, 
+         * when 'null' is passed, then default system temporary directory will be used to
+         * create temporary files.  
          */
-        try {
-            editor = repository.getCommitEditor(commitMessage,
-                    new WorkspaceMediator());
-        } catch (SVNException svne) {
-            System.err
-                    .println("error while getting a commit editor for the location '"
-                            + url + "': " + svne.getMessage());
-            System.exit(1);
-        }
-
-        SVNCommitInfo commitInfo = null;
-        /*
-         * Adding a new directory containing a file to the repository.
-         */
-        try {
-            commitInfo = addDir(editor, dirPath, filePath, binaryData);
-        } catch (SVNException svne) {
-            try {
-                System.err
-                        .println("failed to add the directory with the file due to errors: "
-                                + svne.getMessage());
-                /*
-                 * An exception was thrown during the work  of  the  editor. The
-                 * editor must be aborted to behave in a  right  way in order to
-                 * the breakdown won't cause any unstability.
-                 */
-                editor.abortEdit();
-            } catch (SVNException inner) {
-                //
-            }
-            System.exit(1);
-        }
-        System.out.println("The directory was added.");
-        /*
-         * Displaying the commit info.
-         */
-        printCommitInfo(commitInfo);
+        ISVNEditor editor = repository.getCommitEditor("directory and file added", null);
 
         /*
-         * Obtains a new editor for the next commit.
-         */
-        try {
-            editor = repository.getCommitEditor(commitMessage,
-                    new WorkspaceMediator());
-        } catch (SVNException svne) {
-            System.err
-                    .println("error while getting a commit editor for the location '"
-                            + url + "': " + svne.getMessage());
-            System.exit(1);
-        }
-
-        /*
-         * Changing the file contents.
-         */
-        try {
-            commitInfo = modifyFile(editor, dirPath, filePath, changedBinaryData);
-        } catch (SVNException svne) {
-            try {
-                System.err.println("failed to modify the file due to errors: "
-                        + svne.getMessage());
-                editor.abortEdit();
-            } catch (SVNException inner) {
-                //
-            }
-            System.exit(1);
-        }
-        System.out.println("The file was changed.");
-
-        printCommitInfo(commitInfo);
-
-        try {
-            latestRevision = repository.getLatestRevision();
-        } catch (SVNException svne) {
-            System.err
-                    .println("error while fetching the latest repository revision: "
-                            + svne.getMessage());
-            System.exit(1);
-        }
-
-        try {
-            editor = repository.getCommitEditor(commitMessage,
-                    new WorkspaceMediator());
-        } catch (SVNException svne) {
-            System.err
-                    .println("error while getting a commit editor for the location '"
-                            + url + "': " + svne.getMessage());
-            System.exit(1);
-        }
-
-        /*
-         * Making a branch in the repository  -  copying the existing  directory
-         * and all its  entries  to  another  location  under  the  common  root 
-         * directory. 
+         * Add a directory and a file within that directory.
          * 
-         * dirPath  - the source path in the latestRevision.
-         * copyPath - the destination path.
+         * SVNCommitInfo object contains basic information on the committed revision, i.e.
+         * revision number, author name, commit date and commit message. 
          */
-        try {
-            commitInfo = copyDir(editor, copyPath, dirPath, latestRevision);
-        } catch (SVNException svne) {
-            try {
-                System.err
-                        .println("failed to copy the directory due to errors: "
-                                + svne.getMessage());
-                editor.abortEdit();
-            } catch (SVNException inner) {
-                //
-            }
-            System.exit(1);
-        }
-        System.out.println("The directory was copied to a branch.");
-
-        printCommitInfo(commitInfo);
-
-        try {
-            editor = repository.getCommitEditor(commitMessage,
-                    new WorkspaceMediator());
-        } catch (SVNException svne) {
-            System.err
-                    .println("error while getting a commit editor for the location '"
-                            + url + "': " + svne.getMessage());
-            System.exit(1);
-        }
+        SVNCommitInfo commitInfo = addDir(editor, "test", "test/file.txt", contents);
+        System.out.println("The directory was added: " + commitInfo);
 
         /*
-         * Deleting the directory.
+         * Modify file added at the previous revision.
          */
-        try {
-            commitInfo = deleteDir(editor, dirPath);
-        } catch (SVNException svne) {
-            try {
-                System.err
-                        .println("failed to delete the directory due to errors: "
-                                + svne.getMessage());
-                editor.abortEdit();
-            } catch (SVNException inner) {
-                //
-            }
-            System.exit(1);
-        }
-        System.out.println("The directory was deleted.");
+        editor = repository.getCommitEditor("file contents changed", null);
+        commitInfo = modifyFile(editor, "test", "test/file.txt", modifiedContents);
+        System.out.println("The file was changed: " + commitInfo);
 
-        printCommitInfo(commitInfo);
-
-        System.exit(0);
-    }
-
-    /*
-     * Initializes the library to work with a repository either via  svn:// (and
-     * svn+ssh://) or via http:// (and https://)
-     */
-    private static void setupLibrary() {
         /*
-         * for DAV (over http and https)
+         * Copy recently added directory to another location. This operation
+         * will create new directory "test2" taking its properties and contents 
+         * from the directory "test". Revisions history will will be preserved.
+         * 
+         * Copy is usually used to create tags or branches in repository or to 
+         * rename files or directories.
          */
-        DAVRepositoryFactory.setup();
+        
         /*
-         * for SVN (over svn and svn+ssh)
+         * To make a copy of repository entry, absolute path of that entry
+         * and revision from which to make a copy are needed. 
+         * 
+         * Absolute path is the path relative to repository root URL and 
+         * such paths always starts with '/'. Relative paths are relative 
+         * to SVNRepository instance location.
+         * 
+         * For more information see SVNRepository.getRepositoryRoot(...) and
+         * SVNRepository.getLocation() methods. Utility method getRepositoryPath(...)
+         * converts relative path to the absolute one.
          */
-        SVNRepositoryFactoryImpl.setup();
+        String absoluteSrcPath = repository.getRepositoryPath("test");
+        long srcRevision = repository.getLatestRevision();
+
+        editor = repository.getCommitEditor("directory copied", null);        
+        
+        commitInfo = copyDir(editor, absoluteSrcPath, "test2", srcRevision);
+        System.out.println("The directory was copied: " + commitInfo);
+
+        /*
+         * Delete directory "test".
+         */
+        editor = repository.getCommitEditor("directory deleted", null);
+        commitInfo = deleteDir(editor, "test");
+        System.out.println("The directory was deleted: " + commitInfo);
+
+        /*
+         * And directory "test2".
+         */
+        editor = repository.getCommitEditor("copied directory deleted", null);
+        commitInfo = deleteDir(editor, "test2");
+        System.out.println("The copied directory was deleted: " + commitInfo);
+        
+        latestRevision = repository.getLatestRevision();
+        System.out.println("Repository latest revision (after committing): " + latestRevision);
     }
 
     /*
@@ -470,53 +302,25 @@ public class Commit {
          * the full contents of the file in this case).
          */
         editor.applyTextDelta(filePath, null);
-        long deltaLength = data.length;
         /*
-         * Creating  a  new  diff  window  (provided  the  size  of the delta  - 
-         * deltaLength) that will contain instructions of applying the delta  to
-         * the file in the repository.
+         * Use delta generator utility class to generate and send delta
+         * 
+         * Note that you may use only 'target' data to generate delta when there is no 
+         * access to the 'base' (previous) version of the file. However, using 'base' 
+         * data will result in smaller network overhead.
+         * 
+         * SVNDeltaGenerator will call editor.textDeltaChunk(...) method for each generated 
+         * "diff window" and then editor.textDeltaEnd(...) in the end of delta transmission.  
+         * Number of diff windows depends on the file size. 
+         *  
          */
-        SVNDiffWindow diffWindow = SVNDiffWindowBuilder
-                .createReplacementDiffWindow(deltaLength);
-        /*
-         * Gets an OutputStream where the delta will be written to.
-         */
-        OutputStream os = editor.textDeltaChunk(filePath, diffWindow);
+        SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
+        String checksum = deltaGenerator.sendDelta(filePath, new ByteArrayInputStream(data), editor, true);
 
-        try {
-            /*
-             * If the file is not empty this code writes the file delta  to  the
-             * OutputStream.
-             */
-            for (int i = 0; i < deltaLength; i++) {
-                os.write(data[i]);
-            }
-        } catch (IOException ioe) {
-            System.err.println("An i/o error while writing the delta bytes: "
-                    + ioe.getMessage());
-        } finally {
-           /*
-            * Don't forget to close the stream after you have written the delta!
-            */
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (IOException ioeInternal) {
-                    //
-                }
-            }
-        }
-
-        /*
-         * Finally closes the delta when all the bytes are already written. From
-         * this  point  the previously defined diff window 'knows' how to  apply 
-         * the delta to the file (that will be created in the repository).
-         */
-        editor.textDeltaEnd(filePath);
         /*
          * Closes the new added file.
          */
-        editor.closeFile(filePath, null);
+        editor.closeFile(filePath, checksum);
         /*
          * Closes the new added directory.
          */
@@ -562,57 +366,31 @@ public class Commit {
          * filePath is also defined as a relative path to the root directory.
          */
         editor.openFile(filePath, -1);
+        
         /*
          * The next steps are directed to applying and writing the file delta.
          */
         editor.applyTextDelta(filePath, null);
-        long deltaLength = newData.length;
+        
         /*
-         * Creating  a  new  diff  window  (provided  the  size  of the delta  - 
-         * deltaLength) that will contain instructions of applying the delta  to
-         * the file in the repository.
+         * Use delta generator utility class to generate and send delta
+         * 
+         * Note that you may use only 'target' data to generate delta when there is no 
+         * access to the 'base' (previous) version of the file. However, using 'base' 
+         * data will result in smaller network overhead.
+         * 
+         * SVNDeltaGenerator will call editor.textDeltaChunk(...) method for each generated 
+         * "diff window" and then editor.textDeltaEnd(...) in the end of delta transmission.  
+         * Number of diff windows depends on the file size. 
+         *  
          */
-        SVNDiffWindow diffWindow = SVNDiffWindowBuilder
-                .createReplacementDiffWindow(deltaLength);
-        /*
-         * Gets an OutputStream where the delta will be written to.
-         */
-        OutputStream os = editor.textDeltaChunk(filePath, diffWindow);
-        try {
-            /*
-             * If there's non-empty file delta this code writes the delta to the
-             * OutputStream.
-             */
-            for (int i = 0; i < deltaLength; i++) {
-                os.write(newData[i]);
-            }
-        } catch (IOException ioe) {
-            System.err.println("An i/o error while writing the delta bytes: "
-                    + ioe.getMessage());
-        } finally {
-            /*
-            * Don't forget to close the stream after you have written the delta!
-            */
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (IOException ioeInternal) {
-                    //
-                }
-            }
-        }
-
-        /*
-         * Finally closes the delta when all the bytes are already written. From
-         * this point the previously defined diff window 'knows'  how  to  apply 
-         * the delta to the file.
-         */
-        editor.textDeltaEnd(filePath);
+        SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
+        String checksum = deltaGenerator.sendDelta(filePath, new ByteArrayInputStream(newData), editor, true);
 
         /*
          * Closes the file.
          */
-        editor.closeFile(filePath, null);
+        editor.closeFile(filePath, checksum);
 
         /*
          * Closes the directory.
@@ -636,8 +414,7 @@ public class Commit {
     /*
      * This method performs committing a deletion of a directory.
      */
-    private static SVNCommitInfo deleteDir(ISVNEditor editor, String dirPath)
-            throws SVNException {
+    private static SVNCommitInfo deleteDir(ISVNEditor editor, String dirPath) throws SVNException {
         /*
          * Always called first. Opens the current root directory. It  means  all
          * modifications will be applied to this directory until  a  next  entry
@@ -669,8 +446,8 @@ public class Commit {
      * This  method  performs how a directory in the repository can be copied to
      * branch.
      */
-    private static SVNCommitInfo copyDir(ISVNEditor editor, String destDirPath,
-            String srcDirPath, long revision) throws SVNException {
+    private static SVNCommitInfo copyDir(ISVNEditor editor, String srcDirPath,
+            String dstDirPath, long revision) throws SVNException {
         /*
          * Always called first. Opens the current root directory. It  means  all
          * modifications will be applied to this directory until  a  next  entry
@@ -679,18 +456,19 @@ public class Commit {
          * -1 - revision is HEAD
          */
         editor.openRoot(-1);
+        
         /*
          * Adds a new directory that is a copy of the existing one.
          * 
          * srcDirPath   -  the  source  directory  path (relative  to  the  root 
          * directory).
          * 
-         * destDirPath - the destination directory path where the source will be
+         * dstDirPath - the destination directory path where the source will be
          * copied to (relative to the root directory).
          * 
          * revision    - the number of the source directory revision. 
          */
-        editor.addDir(destDirPath, srcDirPath, revision);
+        editor.addDir(dstDirPath, srcDirPath, revision);
         /*
          * Closes the just added copy of the directory.
          */
@@ -709,81 +487,17 @@ public class Commit {
     }
 
     /*
-     * This method is used to print out new information about the last
-     * successful commit.
+     * Initializes the library to work with a repository either via  svn:// (and
+     * svn+ssh://) or via http:// (and https://)
      */
-    private static void printCommitInfo(SVNCommitInfo commitInfo) {
+    private static void setupLibrary() {
         /*
-         * The author of the last commit.
+         * for DAV (over http and https)
          */
-        System.out.println("The last author:" + commitInfo.getAuthor());
+        DAVRepositoryFactory.setup();
         /*
-         * The time moment when the changes were committed.
+         * for SVN (over svn and svn+ssh)
          */
-        System.out.println("Date:" + commitInfo.getDate().toString());
-        /*
-         * And the new committed revision.
-         */
-        System.out.println("Committed to revision "
-                + commitInfo.getNewRevision());
-        System.out.println("");
-    }
-
-    /*
-     * This class is to be used for temporary storage allocations needed  by  an
-     * ISVNEditor to write file delta that will be supplied  to  the  repository
-     * server.
-     */
-    private static class WorkspaceMediator implements
-            ISVNWorkspaceMediator {
-        private Map myTmpFiles = new HashMap();
-
-        public String getWorkspaceProperty(String path, String name)
-                throws SVNException {
-            return null;
-        }
-
-        public void setWorkspaceProperty(String path, String name, String value)
-                throws SVNException {
-        }
-
-        /*
-         * Creates a temporary file delta  storage.  id  will  be  used  as  the
-         * temporary storage identifier. Returns  an  OutputStream to write  the
-         * delta data into the temporary storage.
-         */
-        public OutputStream createTemporaryLocation(String path, Object id)
-                throws IOException {
-            ByteArrayOutputStream tempStorageOS = new ByteArrayOutputStream();
-            myTmpFiles.put(id, tempStorageOS);
-            return tempStorageOS;
-        }
-
-        /*
-         * Returns an InputStream of the temporary file delta storage identified
-         * by id to read the delta.
-         */
-        public InputStream getTemporaryLocation(Object id) throws IOException {
-            return new ByteArrayInputStream(((ByteArrayOutputStream)myTmpFiles.get(id)).toByteArray());
-        }
-
-        /*
-         * Gets the length of the  delta  that  was  written  to  the  temporary 
-         * storage identified by id.
-         */
-        public long getLength(Object id) throws IOException {
-            ByteArrayOutputStream tempStorageOS = (ByteArrayOutputStream)myTmpFiles.get(id);
-            if (tempStorageOS != null) {
-                return tempStorageOS.size();
-            }
-            return 0;
-        }
-
-        /*
-         * Deletes the temporary file delta storage identified by id.
-         */
-        public void deleteTemporaryLocation(Object id) {
-            myTmpFiles.remove(id);
-        }
+        SVNRepositoryFactoryImpl.setup();
     }
 }
