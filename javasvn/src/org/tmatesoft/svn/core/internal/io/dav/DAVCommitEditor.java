@@ -146,7 +146,7 @@ class DAVCommitEditor implements ISVNEditor {
                     try {
                         DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, myRepository, newDir.getURL(), -1, false, false, null);
                         if (info != null) {
-                            err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_ALREADY_EXISTS, "Path ''{0}'' already exits", newDir.getURL());
+                            err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_ALREADY_EXISTS, "Path ''{0}'' already exists", newDir.getURL());
                         }
                     } catch (SVNException inner) {
                     }

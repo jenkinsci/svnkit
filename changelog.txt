@@ -4,6 +4,7 @@
 + ssh 'keyboard-interactive' authentication support.
 + ssl client certificate prompt support.
 + error codes and error messages hierarchy support in the API.
++ utility classes to genereta operatios output in XML format.
 + faster delta generation and delta processing code.
 + utility API classes to process and generate deltas.
 + documentations improved, Commit and Export examples simplified.
