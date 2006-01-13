@@ -11,17 +11,9 @@
  */
 package org.tmatesoft.svn.examples.repository;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -35,208 +27,397 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
-import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindowApplyBaton;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /*
- * This example program illustrates how you can export a clean directory tree 
- * from a repository using the SVNRepository.update method. Actually, a checkout 
- * (compatible with the native Subversion command line client) works in a similar 
- * way but additionally administrative directories are created (one .svn directory
- * per each exported directory).
+ * This example program export contents of the repository directory into file system using 
+ * JavaSVN library low level API.
  * 
- * Basic aspects of this example:
+ * In general, approach we are using in this example is the same that is used for operations
+ * like 'update', 'remote status', 'diff' or 'checkout'. The export operation is the most 
+ * simple one and allows to demonstrate this approach without going too much into the details.
  * 
- * 0)first of all the library is initialized (setupLibrary() method) - it must be
- * done prior to using the library;
+ * You may find and an article describing this (update) technique at 
+ * http://tmate.org/svn/kb/dev-guide-update-operation.html
  * 
- * 1)an SVNRepository is created to the location (represented by a URL string) that 
- * will be the root of the repository tree to be exported;
+ * To perform any update-like operation one have to do the following:
  * 
- * 2)user's authentication is usually non-necessary for reading operations however the
- * repository may have a restriction to accept requests of only authenticated users;
- * the example shows how to provide user's authentication info;
- * 
- * 3)INTRO: you have to implement ISVNReporterBaton and ISVNEditor to affect the 
- * behaviour of the SVNRepository.update method (for ISVNReporterBaton an 
- * implementation depends on whether you want to update your copy of a repository 
- * node that may have been changed since you last updated it (or checked out) or you
- * have no copy yet but want to check it out; for ISVNEditor an implementation 
- * depends on how exactly you would like either to save the exported copy - if you 
- * perform a checkout, - or bring  the copy up to date if you already have the copy). 
- * The aim of ISVNReporterBaton is to report to the repository server about the state 
- * of the user's working files and directories when they are updated as well as report
- * that there are no directories and files yet, they are to be exported - in the case 
- * of a checkout. Then having got this description information the server sends
- * commands which are translated into calls to your ISVNEditor implementation methods 
- * where you define how exactly files and directories to be updated/exported.
- * 
- * Calling SVNRepository.update you also provide the number of the revision you wish to
- * be updated to. As for an export/checkout - this will be the revision of the 
- * exported/checked out repository tree copy.
- * 
- * For more details see descriptions of UpdateReporterBaton, UpdateEditor in this 
- * program code.
- * 
- * If the program succeeds you'll see something like this:
- * 
- * Exported revision: 82   
+ * 1. Report the state of the client's working copy to the Subversion server. Of course, it could be 
+ *    'virtual' working copy, not necessary stored in the Subversion wc format or, in case of export or
+ *    diff operation there could be no working copy at all, which is reflected in report.
+ *    
+ *    Report is performed with the help ISVNReporter instance that is passed to the client's ISVNReporterBaton
+ *    object at the moment report have to be sent. 
+ *    
+ * 2. Process instructions received from the server. These instructions describes how to modify working copy
+ *    to make it be at the desirable revision. Amount of instructions depends on the report sent by the client. 
+ *    Different operations process received instructions in different manner. For instance, update operation 
+ *    updates working copy in the filsystem, remote status operation merely logs files and directories that 
+ *    have to be updated and displays this information. 
+ *    
+ *    With JavaSVN API you may implement your own processing code, e.g. repository replication or custom merging code.
+ *    ISVNEditor is the interface which implementations process update instructions sent by the server and in 
+ *    this example ISVNEditor implementation (ExportEditor) creates files and directories corresponding to those 
+ *    in the repository.  
+ *      
  */
 public class Export {
-    /*
-     * args parameter is used to obtain a repository location URL, a local path 
-     * (relative or absolute) where a copy will be created, user's account name &
-     * password to authenticate him to the server.
-     */
+    
     public static void main(String[] args) {
         /*
-         * Default values:
-         */
-        String url = "http://svn.tmate.org:8080/svn/jsvn/branches/0.9.0/doc";
-        String name = "anonymous";
-        String password = "anonymous";
-        String exportDirPath = "/export";
-        /*
-         * Initializes the library (it must be done before ever using the
-         * library itself)
+         * Initialize the library. It must be done before calling any 
+         * method of the library.
          */
         setupLibrary();
-
-        if (args != null) {
+        
+        /*
+         * Run export example and process error if any.
+         */
+        try {
+            exportExample();
+        } catch (SVNException e) {
+            SVNErrorMessage err = e.getErrorMessage();
             /*
-             * Obtains a repository location URL
+             * Display all tree of error messages. 
+             * Utility method SVNErrorMessage.getFullMessage() may be used instead of the loop.
              */
-            url = (args.length >= 1) ? args[0] : url;
-            /*
-             * Obtains a local dir path where the repository tree
-             * will be exported to
-             */
-            exportDirPath = (args.length >= 2) ? args[1] : exportDirPath;
-            /*
-             * Obtains an account name (will be used to authenticate the user to
-             * the server)
-             */
-            name = (args.length >= 3) ? args[2] : name;
-            /*
-             * Obtains a password
-             */
-            password = (args.length >= 4) ? args[3] : password;
-        }
-
-        File exportDir = new File(exportDirPath);
-        if (exportDir.exists()) {
-            System.err.println("the destination directory '"
-                    + exportDir.getAbsolutePath() + "' already exists!");
+            while(err != null) {
+                System.err.println(err.getErrorCode().getCode() + " : " + err.getMessage());
+                err = err.getChildErrorMessage();
+            }
             System.exit(1);
+        }
+        System.exit(0);
+    }
+
+    private static void exportExample() throws SVNException {
+
+        SVNURL url = SVNURL.parseURIEncoded("http://svn.tmate.org/svn/jsvn/trunk/doc");
+        String userName = "foo";
+        String userPassword = "bar";
+        
+        /*
+         * Prepare filesystem directory (export destination).
+         */
+        File exportDir = new File("export");
+        if (exportDir.exists()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Path ''{0}'' already exists", exportDir);
+            throw new SVNException(err);
         }
         exportDir.mkdirs();
 
-        SVNRepository repository = null;
-        try {
-            /*
-             * Creates an instance of SVNRepository to work with the repository.
-             * All user's requests to the repository are relative to the
-             * repository location used to create this SVNRepository.
-             * SVNURL is a wrapper for URL strings that refer to repository locations.
-             */
-            repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
-        } catch (SVNException svne) {
-            /*
-             * Perhaps a malformed URL is the cause of this exception.
-             */
-            System.err
-                    .println("error while creating an SVNRepository for the location '"
-                            + url + "': " + svne.getMessage());
-            System.exit(1);
-        }
+        /*
+         * Create an instance of SVNRepository class. This class is the main entry point 
+         * for all "low-level" Subversion operations supported by Subversion protocol. 
+         * 
+         * These operations includes browsing, update and commit operations. See 
+         * SVNRepository methods javadoc for more details.
+         */
+        SVNRepository repository = SVNRepositoryFactory.create(url);
 
         /*
-         * User's authentication information is provided via an ISVNAuthenticationManager
-         * instance. SVNWCUtil creates a default usre's authentication manager given user's
-         * name and password.
+         * User's authentication information (name/password) is provided via  an 
+         * ISVNAuthenticationManager  instance.  SVNWCUtil  creates  a   default 
+         * authentication manager given user's name and password.
+         * 
+         * Default authentication manager first attempts to use provided user name 
+         * and password and then falls back to the credentials stored in the 
+         * default Subversion credentials storage that is located in Subversion 
+         * configuration area. If you'd like to use provided user name and password 
+         * only you may use BasicAuthenticationManager class instead of default 
+         * authentication manager:
+         * 
+         *  authManager = new BasicAuthenticationsManager(userName, userPassword);
+         *  
+         * You may also skip this point - anonymous access will be used. 
          */
-        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name, password);
-
-        /*
-         * Sets the manager of the user's authentication information that will 
-         * be used to authenticate the user to the server (if needed) during 
-         * operations handled by the SVNRepository.
-         */
+        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(userName, userPassword);
         repository.setAuthenticationManager(authManager);
 
-        SVNNodeKind nodeKind = null;
-        try {
-            /*
-             * Checks up if the current path really corresponds to a directory.
-             * If doesn't the program exits. SVNNodeKind is that one who says what
-             * is located at a path in a revision. -1 means the latest revision.
-             */
-            nodeKind = repository.checkPath("", -1);
-        } catch (SVNException svne) {
-            System.err
-                    .println("error while getting the node kind of the repository location dir: "
-                            + svne.getMessage());
-            System.exit(1);
-        }
-
+        /*
+         * Get type of the node located at URL we used to create SVNRepository.
+         * 
+         * "" (empty string) is path relative to that URL, 
+         * -1 is value that mya be used to specify HEAD (latest) revision.
+         */
+        SVNNodeKind nodeKind = repository.checkPath("", -1);
         if (nodeKind == SVNNodeKind.NONE) {
-            System.err.println("There is no entry at '" + url + "'.");
-            System.exit(1);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "No entry at URL ''{0}''", url);
+            throw new SVNException(err);
         } else if (nodeKind == SVNNodeKind.FILE) {
-            System.err.println("The entry at '" + url
-                    + "' is a file while a directory was expected.");
-            System.exit(1);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Entry at URL ''{0}'' is a file while directory was expected", url);
+            throw new SVNException(err);
         }
 
-        long latestRevision = -1;
-        try {
-            /*
-             * Gets the latest revision number of the repository.
-             */
-            latestRevision = repository.getLatestRevision();
-        } catch (SVNException svne) {
-            System.err
-                    .println("error while fetching the latest repository revision: "
-                            + svne.getMessage());
-            System.exit(1);
-        }
-
-        try {
-            /*
-             * This call will make a simple checkout (export) of the entire directory
-             * "/doc" being at the latest revision from the repository to your 
-             * exportDirPath.
-             * 
-             * latestRevision is the repository revision itself we're interested in.
-             * 
-             * the 2nd parameter - target - is null as we are not restricting the
-             * checkout scope to only this entry, we need the entire directory.
-             * 
-             * the 3rd parameter - recursive - is true as we're not restricting
-             * the checkout scope to only entries located in "/doc" directory,
-             * we need the full tree.
-             * 
-             * the 4th parameter is an ISVNReporterBaton who will report to the 
-             * server that we need to checkout the "/doc" directory.
-             * 
-             * the 5th parameter is an ISVNEditor who will "make" the work - create
-             * the local copy of "/doc". 
-             */
-            repository.update(latestRevision, null, true,
-                    new ExportReporterBaton(latestRevision), new ExportEditor(
-                            exportDirPath, new WorkspaceMediator()));
-        } catch (SVNException svne) {
-            System.err.println("error while exporting '" + url + "': "
-                    + svne.getMessage());
-            svne.printStackTrace();
-            System.exit(1);
-        }
+        /*
+         * Get latest repository revision. We will export repository contents at this very revision.
+         */
+        long latestRevision = repository.getLatestRevision();
+        
+        /*
+         * Create reporterBaton. This class is responsible for reporting 'wc state' to the server.
+         * 
+         * In this example it will always report that working copy is empty to receive update
+         * instructions that are sufficient to create complete directories hierarchy and get full
+         * files contents.
+         */
+        ISVNReporterBaton reporterBaton = new ExportReporterBaton(latestRevision);
+        
+        /*
+         * Create editor. This class will process update instructions received from the server and 
+         * will create directories and files accordingly.
+         * 
+         * As we've reported 'emtpy working copy', server will only send 'addDir/addFile' instructions
+         * and will never ask our editor implementation to modify a file or directory properties. 
+         */
+        ISVNEditor exportEditor = new ExportEditor(exportDir);
+        
+        /*
+         * Now ask JavaSVN to perform generic 'update' operation using our reporter and editor.
+         * 
+         * We are passing:
+         * 
+         * - revision from which we would like to export
+         * - null as "target" name, to perform export from the URL SVNRepository was created for, 
+         *   not from some child directory.
+         * - reporterBaton
+         * - exportEditor.  
+         */
+        repository.update(latestRevision, null, true, reporterBaton, exportEditor);
+        
         System.out.println("Exported revision: " + latestRevision);
-        System.exit(0);
+    }
+
+    /*
+     * ReporterBaton implementation that always reports 'empty wc' state.
+     */
+    private static class ExportReporterBaton implements ISVNReporterBaton {
+
+        private long exportRevision;
+        
+        public ExportReporterBaton(long revision){
+            exportRevision = revision;
+        }
+        
+        public void report(ISVNReporter reporter) throws SVNException {
+            /*
+             * Here empty working copy is reported.
+             * 
+             * ISVNReporter includes methods that allows to report mixed-rev working copy
+             * and even let server know that some files or directories are locally missing or
+             * locked. 
+             */
+            reporter.setPath("", null, exportRevision, true);
+            
+            /*
+             * Don't forget to finish the report!
+             */
+            reporter.finishReport();
+        }
+    }
+
+    /*
+     * ISVNEditor implementation that will add directories and files into the target directory
+     * accordingly to update instructions sent by the server. 
+     */
+    private static class ExportEditor implements ISVNEditor {
+        
+        private File myRootDirectory;
+        private SVNDeltaProcessor myDeltaProcessor;
+        
+        /*
+         * root - the local directory where the node tree is to be exported into.
+         */
+        public ExportEditor(File root) {
+            myRootDirectory = root;
+            /*
+             * Utility class that will help us to transform 'deltas' sent by the 
+             * server to the new files contents.  
+             */
+            myDeltaProcessor = new SVNDeltaProcessor();
+        }
+
+        /*
+         * Server reports revision to which application of the further 
+         * instructions will update working copy to.
+         */
+        public void targetRevision(long revision) throws SVNException {
+        }
+
+        /*
+         * Called before sending other instructions.
+         */
+        public void openRoot(long revision) throws SVNException {
+        }
+        
+        /*
+         * Called when a new directory has to be added.
+         * 
+         * For each 'addDir' call server will call 'closeDir' method after 
+         * all children of the added directory are added.
+         * 
+         * This implementation creates corresponding directory below root directory. 
+         */
+        public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+            File newDir = new File(myRootDirectory, path);
+            if (!newDir.exists()) {
+                if (!newDir.mkdirs()) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "error: failed to add the directory ''{0}''.", newDir);
+                    throw new SVNException(err);
+                }
+            }
+            System.out.println("dir added: " + path);
+        }
+        
+        /*
+         * Called when there is an existing directory that has to be 'opened' either 
+         * to modify this directory properties or to process other files and directories 
+         * inside this directory. 
+         * 
+         * In case of export this method will never be called because we reported 
+         * that our 'working copy' is empty and so server knows that there are
+         * no 'existing' directories. 
+         */
+        public void openDir(String path, long revision) throws SVNException {
+        }
+
+        /*
+         * Instructs to change opened or added directory property.
+         *   
+         * This method is called to update properties set by the user as well
+         * as those created automatically, like "svn:committed-rev". 
+         * See SVNProperty class for default property names. 
+         * 
+         * When property has to be deleted value will be 'null'. 
+         */
+        public void changeDirProperty(String name, String value) throws SVNException {
+        }
+
+        /*
+         * Called when a new file has to be created.
+         * 
+         * For each 'addFile' call server will call 'closeFile' method after 
+         * sending file properties and contents. 
+         * 
+         * This implementation creates empty file below root directory, file contents
+         * will be updated later, and for empty files may not be sent at all. 
+         */
+        public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+            File file = new File(myRootDirectory, path);
+            if (file.exists()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "error: exported file ''{0}'' already exists!", file);
+                throw new SVNException(err);
+            }
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "error: cannot create new  file ''{0}''", file);
+                throw new SVNException(err);
+            }
+        }
+        
+        /*
+         * Called when there is an existing files that has to be 'opened' either 
+         * to modify file contents or properties.
+         * 
+         * In case of export this method will never be called because we reported 
+         * that our 'working copy' is empty and so server knows that there are
+         * no 'existing' files. 
+         */
+        public void openFile(String path, long revision) throws SVNException {
+        }
+
+        /*
+         * Instructs to add, modify or delete file property.
+         * In this example we skip this instruction, but 'real' export operation
+         * may inspect 'svn:eol-style' or 'svn:mime-type' property values to 
+         * transfor file contents propertly after receiving.
+         */
+        public void changeFileProperty(String path, String name, String value) throws SVNException {
+        }        
+
+        /*
+         * Called before sending 'delta' for a file. Delta may include instructions
+         * on how to create a file or how to modify existing file. In this example
+         * delta will always contain instructions on how to create a new file and so
+         * we set up deltaProcessor with 'null' base file and target file to which we would 
+         * like to store the result of delta application. 
+         */
+        public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+            myDeltaProcessor.applyTextDelta(null, new File(myRootDirectory, path), false);
+        }
+
+        /*
+         * Server sends deltas in form of 'diff windows'. Depending on the file size 
+         * there may be several diff windows. Utility class SVNDeltaProcessor process 
+         * these windows for us.
+         */
+        public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow)   throws SVNException {
+            return myDeltaProcessor.textDeltaChunk(diffWindow);
+        }
+        
+        /*
+         * Called when all diff windows (delta) is transferred. 
+         */
+        public void textDeltaEnd(String path) throws SVNException {
+            myDeltaProcessor.textDeltaEnd();
+        }
+        
+        /*
+         * Called when file update is completed. 
+         * This call always matches addFile or openFile call.
+         */
+        public void closeFile(String path, String textChecksum) throws SVNException {
+            System.out.println("file added: " + path);
+        }
+
+        /*
+         * Called when all child files and directories are processed. 
+         * This call always matches addDir, openDir or openRoot call.
+         */
+        public void closeDir() throws SVNException {
+        }
+
+        /*
+         * Insturcts to delete an entry in the 'working copy'. Of course will not be 
+         * called during export operation. 
+         */
+        public void deleteEntry(String path, long revision) throws SVNException {
+        }
+        
+        /*
+         * Called when directory at 'path' should be somehow processed, 
+         * but authenticated user (or anonymous user) doesn't have enough 
+         * access rights to get information on this directory (properties, children).
+         */
+        public void absentDir(String path) throws SVNException {
+        }
+
+        /*
+         * Called when file at 'path' should be somehow processed, 
+         * but authenticated user (or anonymous user) doesn't have enough 
+         * access rights to get information on this file (contents, properties).
+         */
+        public void absentFile(String path) throws SVNException {
+        }        
+        
+        /*
+         * Called when update is completed. 
+         */
+        public SVNCommitInfo closeEdit() throws SVNException {
+            return null;
+        }
+        
+        /*
+         * Called when update is completed with an error or server 
+         * requests client to abort update operation. 
+         */
+        public void abortEdit() throws SVNException {
+        }
     }
 
     /*
@@ -252,382 +433,5 @@ public class Export {
          * for SVN (over svn and svn+ssh)
          */
         SVNRepositoryFactoryImpl.setup();
-    }
-
-    private static class ExportReporterBaton implements ISVNReporterBaton {
-        private long exportRevision;
-        public ExportReporterBaton(long revision){
-            exportRevision = revision;
-        }
-        /*
-		 * Reports that the repository node tree (the location to which the 
-		 * SVNRepository is created) is to be exported.
-		 *  
-		 * "" - if the target parameter in the SVNRepository.update call is null then 
-		 * "" means the directory that the SVNRepository object was created for; 
-		 * otherwise if the target parameter is non-null then "" means target itself.
-		 * In this example program target is null and therefore "" means the directory 
-		 * the SVNRepository is created to. 
-		 * 
-		 * lockToken is null as this parameter is irrelevant in an export.
-		 * 
-		 * rev=0 - revision being described is actually irrelevant (therefore it can
-		 * be any non-negative value that doesn't exceed the real latest revision of the
-		 * repository); significant is the revision of the export scope being  passed to 
-		 * SVNRepository.update. (But if this is an update of an existing copy, 
-		 * certainly you are to provide the real revision for each entry).
-		 *  
-		 * The last flag (startEmpty) is set to true says that there are no local 
-		 * copies yet and they are to be exported from the repository.     
-         */
-        public void report(ISVNReporter reporter) throws SVNException {
-            try{
-	            reporter.setPath("", null, exportRevision, true);
-	            /*
-	             * Don't forget to finish the report!
-	             */
-	            reporter.finishReport();
-            }catch(SVNException svne){
-                try{
-                    reporter.abortReport();
-                }catch(SVNException svneInner){
-                    //
-                }
-                throw svne;
-            }
-        }
-    }
-
-    /*
-     * ExportEditor is a simple ISVNEditor implementation that stores exported 
-     * directories and files to a client's filesystem (not creating .svn directories
-     * for them). ExportEditor implements the following methods of the ISVNEditor
-     * interface: addDir, addFile, textDeltaChunk, textDeltaEnd, closeFile, 
-     * changeFileProperty. The rest ISVNEditor methods are empty - not used in this
-     * example program.
-     */
-    private static class ExportEditor implements ISVNEditor {
-        private String myRootDirectory;
-
-        private ISVNWorkspaceMediator myMediator;
-
-        private String myCurrentPath;
-
-        private List myDiffWindows;
-
-        private Map myFileProperties;
-        /*
-         * root - the local directory where the node tree is to be exported into.
-         * mediator - used for temporary delta storage allocations.
-         */
-        public ExportEditor(String root, ISVNWorkspaceMediator mediator) {
-            myRootDirectory = (root != null) ? root : myRootDirectory;
-            myMediator = (mediator != null) ? mediator
-                    : new WorkspaceMediator();
-        }
-
-        /*
-         * Called when a new directory is to be added.
-         * path - relative to the root directory that is being exported.
-         * Creates a directory in a filesystem (relative to myRootDirectory).
-         */
-        public void addDir(String path, String copyFromPath,
-                long copyFromRevision) throws SVNException {
-            File newDir = new File(myRootDirectory, path);
-            if (!newDir.exists()) {
-                if (!newDir.mkdirs()) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "error: failed to add the directory ''{0}''.", newDir);
-                    throw new SVNException(err);
-                }
-            }
-        }
-
-        /*
-         * Called when a new file is to be added.
-         * path is relative to the root directory that is being exported 
-         * (myRootDirectory).
-         */
-        public void addFile(String path, String copyFromPath,
-                long copyFromRevision) throws SVNException {
-            File file = new File(myRootDirectory, path);
-
-            if (file.exists()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "error: exported file ''{0}'' already exists!", file);
-                throw new SVNException(err);
-            }
-            /*
-             * remember the path
-             */
-            myCurrentPath = path;
-            myFileProperties = new HashMap();
-        }
-
-        /*
-         * Provides an OutputStream where file delta (contents) sent by the server
-         * will be written. diffWindow will be associated with this OutputStream
-         * because exactly this diffWindow has got instructions on how to apply 
-         * the delta that will be written exactly in this OutputStream.
-         * For too "weighty" files delta may be devided into parts, therefore
-         * ISVNEditor.textDeltaChunk will be called a number of times.   
-         */
-        public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow)
-                throws SVNException {
-            if (myDiffWindows == null) {
-                /*
-                 * this is the collection for all diffWindows (if any)
-                 * which will be supplied
-                 */
-                myDiffWindows = new LinkedList();
-            }
-            myDiffWindows.add(diffWindow);
-            try {
-                return myMediator.createTemporaryLocation(myCurrentPath, diffWindow);
-            } catch (IOException ioe) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-                throw new SVNException(err, ioe);
-            }
-        }
-        
-        /*
-         * All delta is transmitted. Now it's time to apply it.
-         */
-        public void textDeltaEnd(String path) throws SVNException {
-            File sourceFile = new File(myRootDirectory, myCurrentPath);
-            try {
-                sourceFile.createNewFile();
-            } catch (IOException ioe) {
-                sourceFile.delete();
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-                throw new SVNException(err, ioe);
-            }
-            File targetFile = new File(myRootDirectory, myCurrentPath + ".tmp");
-
-            /*
-             * if myDiffWindows is null - the file is empty.
-             */
-            if (myDiffWindows != null) {
-                SVNDiffWindowApplyBaton applyBaton = SVNDiffWindowApplyBaton.create(sourceFile, targetFile, null);
-                try {
-                    for (Iterator windows = myDiffWindows.iterator(); windows.hasNext();) {
-                        /*
-                         * obtains a next SVNDiffWindow. 
-                         */
-                        SVNDiffWindow window = (SVNDiffWindow) windows.next();
-                        if (window == null)
-                            continue;
-
-                        InputStream newData = null;
-                        
-                        try {
-                            /*
-                             * Gets the InputStream based upon the OutpruStream (where
-                             * the delta was written to) that is associated with the
-                             * current window
-                             */
-                            newData = myMediator.getTemporaryLocation(window);
-                            /*
-                             * Here the delta is applied.
-                             * target is the file where the dleta is being written.
-                             * 
-                             * newData - source bytes stored in a temporary delta 
-                             * storage.
-                             * 
-                             * The last parameter - offset in the file - is to be the 
-                             * current file size. If some delta chunk consists of bytes
-                             * of the same value the server won't transmit the full 
-                             * chunk but provide one byte and an instruction how many
-                             * times it should be repeated. These bytes are written to
-                             * the current end of the file.  
-                             */
-                            window.apply(applyBaton, newData);
-                        } catch (IOException ioe) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "error while fetching a temporary delta storage.");
-                            throw new SVNException(err, ioe);
-                        } finally {
-                            if (newData != null) {
-                                try {
-                                    newData.close();
-                                } catch (IOException e1) {
-                                    //
-                                }
-                            }
-                            /*
-                             * doesn't need the temporary storage anymore.
-                             */
-                            myMediator.deleteTemporaryLocation(window);
-                        }
-                    }
-                } finally {
-                    applyBaton.close();
-                    if (targetFile.exists()) {
-                        sourceFile.delete();
-                        targetFile.renameTo(sourceFile);
-                    }                    
-                    myDiffWindows.clear();
-                    myDiffWindows = null;
-                }
-            }
-        }
-        /*
-         * Saves a file property.
-         */
-        public void changeFileProperty(String path, String name, String value) throws SVNException {
-            myFileProperties.put(name, value);
-        }
-        /*
-         * File update completed.
-         */
-        public void closeFile(String path, String textChecksum) throws SVNException {
-            myCurrentPath = null;
-            myFileProperties = null;
-        }
-        
-        /*
-         * The rest ISVNEditor methods are left empty since there's no work for them.
-         */
-        
-        /*
-         * Should be implemented to receive the revision a copy is being 
-         * updated to.
-         */
-        public void targetRevision(long revision) throws SVNException {
-        }
-        
-        /*
-         * Should be implemented to perform actions after an update finishes. 
-         */
-        public SVNCommitInfo closeEdit() throws SVNException {
-            return null;
-        }
-
-        /*
-         * Should be implemented to perform actions when the root directory
-         * is opened. Not called during a checkout.
-         */
-        public void openRoot(long revision) throws SVNException {
-        }
-        
-        /*
-         * Should be implemented to delete a local entry as it was deleted in
-         * a repository.
-         */
-        public void deleteEntry(String path, long revision) throws SVNException {
-        }
-        
-        /*
-         * Should be implemented to perform actions on that fact that 
-         * a directory can not be checked out from a repository - will
-         * be absent in a local copy.
-         */
-        public void absentDir(String path) throws SVNException {
-        }
-
-        /*
-         * Should be implemented to perform actions on that fact that 
-         * a file can not be checked out from a repository - will
-         * be absent in a local copy.
-         */
-        public void absentFile(String path) throws SVNException {
-        }
-        
-        /*
-         * Should be implemented to perform actions on opening a file
-         * for further modifications.
-         */
-        public void openFile(String path, long revision) throws SVNException {
-        }
-        
-        /*
-         * Should be implemented to compare the received baseChecksum with the
-         * one which an implementor evaluates upon the BASE revision copy of the
-         * file. baseChecksum is irrelevant in a checkout.
-         */
-        public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-        }
-        
-        /*
-         * Should be implemented to perform actions on closing the currently
-         * opened directory.
-         */
-        public void closeDir() throws SVNException {
-        }
-        
-        /*
-         * Should be implemented to perform actions on opening a directory
-         * that is to be modified.
-         */
-        public void openDir(String path, long revision) throws SVNException {
-        }
-        
-        /*
-         * Should be implemented to change/save directory properties.
-         */
-        public void changeDirProperty(String name, String value)
-                throws SVNException {
-        }
-        
-        /*
-         * Should be implemented to perform actions if an editor fails.
-         */
-        public void abortEdit() throws SVNException {
-        }
-    }
-
-    /*
-     * This class is to be used for temporary storage allocations needed by an
-     * ISVNEditor to store file delta received from the server. 
-     */
-    private static class WorkspaceMediator implements ISVNWorkspaceMediator {
-        private Map myTmpFiles = new HashMap();
-
-        public String getWorkspaceProperty(String path, String name)
-                throws SVNException {
-            return null;
-        }
-
-        public void setWorkspaceProperty(String path, String name, String value)
-                throws SVNException {
-        }
-
-        /*
-         * Creates a temporary file delta storage. id will be used as the
-         * temporary storage identifier. Returns an OutputStream to write the
-         * delta data into the temporary storage.
-         */
-        public OutputStream createTemporaryLocation(String path, Object id)
-                throws IOException {
-            ByteArrayOutputStream tempStorageOS = new ByteArrayOutputStream();
-            myTmpFiles.put(id, tempStorageOS);
-            return tempStorageOS;
-        }
-
-        /*
-         * Returns an InputStream of the temporary file delta storage identified
-         * by id to read the delta.
-         */
-        public InputStream getTemporaryLocation(Object id) throws IOException {
-            return new ByteArrayInputStream(
-                    ((ByteArrayOutputStream) myTmpFiles.get(id)).toByteArray());
-        }
-
-        /*
-         * Gets the length of the delta that was written to the temporary storage 
-         * identified by id.
-         */
-        public long getLength(Object id) throws IOException {
-            ByteArrayOutputStream tempStorageOS = (ByteArrayOutputStream) myTmpFiles
-                    .get(id);
-            if (tempStorageOS != null) {
-                return tempStorageOS.size();
-            }
-            return 0;
-        }
-
-        /*
-         * Deletes the temporary file delta storage identified by id.
-         */
-        public void deleteTemporaryLocation(Object id) {
-            myTmpFiles.remove(id);
-        }
     }
 }

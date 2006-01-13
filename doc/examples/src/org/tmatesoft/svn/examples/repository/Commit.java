@@ -133,7 +133,7 @@ public class Commit {
         byte[] modifiedContents = "This is the same file but modified a little.".getBytes();
 
         /*
-         * Create instance of SVNRepository class. This class is the main entry point 
+         * Create an instance of SVNRepository class. This class is the main entry point 
          * for all "low-level" Subversion operations supported by Subversion protocol. 
          * 
          * These operations includes browsing, update and commit operations. See 
@@ -154,6 +154,8 @@ public class Commit {
          * authentication manager:
          * 
          *  authManager = new BasicAuthenticationsManager(userName, userPassword);
+         *  
+         * You may also skip this point - anonymous access will be used. 
          */
         ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(userName, userPassword);
         repository.setAuthenticationManager(authManager);
