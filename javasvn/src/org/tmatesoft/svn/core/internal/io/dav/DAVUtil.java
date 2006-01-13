@@ -171,8 +171,10 @@ public class DAVUtil {
             if (status.getError() != null) {
                 SVNErrorManager.error(status.getError());
             }
-            DAVProperties props = (DAVProperties) propsMap.get(path);
-            info.isDirectory = props != null && props.isCollection();
+            if (!propsMap.isEmpty()) {
+                DAVProperties props = (DAVProperties) propsMap.values().iterator().next();
+                info.isDirectory = props != null && props.isCollection();
+            }
         }
         return info;
     }
