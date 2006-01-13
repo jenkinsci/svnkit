@@ -1,3 +1,26 @@
+= version 1.0.2
+
++ full support of the new Subversion 1.3.0 features.
++ ssh 'keyboard-interactive' authentication support.
++ ssl client certificate prompt support.
++ error codes and error messages hierarchy support in the API.
++ faster delta generation and delta processing code.
++ utility API classes to process and generate deltas.
++ documentations improved, Commit and Export examples simplified.
++ bugfixes
+
+! note: 
+  this version includes minor API changes and is not binary compatible with the previous versions.
+
+= version 1.0.1
+
++ bugfixes
+
+= version 1.0.0
+
++ documentation related improvements
++ bugfixes
+
 = version 0.9.3
 
 + licensing conditions changed
