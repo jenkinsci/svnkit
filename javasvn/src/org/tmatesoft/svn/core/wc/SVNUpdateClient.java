@@ -630,10 +630,6 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @throws SVNException
      */
     public void doRelocate(File dst, SVNURL oldURL, SVNURL newURL, boolean recursive) throws SVNException {
-        doRelocate(dst, oldURL, newURL, recursive, true);        
-    }
-    
-    public void doRelocate(File dst, SVNURL oldURL, SVNURL newURL, boolean recursive, boolean validateUUID) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(dst);
         try {
             wcAccess.open(true, recursive);
@@ -642,7 +638,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (entry != null && entry.isFile()) {
                 name = entry.getName();
             }
-            doRelocate(wcAccess.getTarget(), name, oldURL.toString(), newURL.toString(), recursive, validateUUID ? new HashMap() : null);
+            doRelocate(wcAccess.getTarget(), name, oldURL.toString(), newURL.toString(), recursive, new HashMap());
         } finally {
             wcAccess.close(true);
 
