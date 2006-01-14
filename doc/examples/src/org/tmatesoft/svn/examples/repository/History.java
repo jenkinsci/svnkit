@@ -70,7 +70,7 @@ public class History {
         /*
          * Default values:
          */
-        String url = "http://svn.tmate.org/svn/jsvn/branches/0.9.0/doc";
+        String url = "http://svn.tmate.org:8080/svn/jsvn/branches/0.9.0/doc";
         String name = "anonymous";
         String password = "anonymous";
         long startRevision = 0;

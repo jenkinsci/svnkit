@@ -71,7 +71,7 @@ public class DisplayFile {
         /*
          * Default values:
          */
-        String url = "http://svn.tmate.org/svn/jsvn/trunk";
+        String url = "http://svn.tmate.org:8080/svn/jsvn/trunk";
         String name = "anonymous";
         String password = "anonymous";
         String filePath = "www/usage.html";
