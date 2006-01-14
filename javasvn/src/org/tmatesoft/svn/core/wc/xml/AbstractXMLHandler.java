@@ -18,6 +18,10 @@ import org.xml.sax.helpers.AttributesImpl;
 
 
 /**
+ * <b>AbstractXMLLogger</b> is a basic XML formatter for all 
+ * XML handler classes which are provided in this package. All 
+ * XML output is written to a specified <b>ContentHandler</b>.
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  */
@@ -29,7 +33,11 @@ public abstract class AbstractXMLHandler {
     protected AbstractXMLHandler(ContentHandler contentHandler) {
         myHandler = contentHandler;
     }
-
+    
+    /**
+     * Starts logging. 
+     *
+     */
     public void startDocument() {
         try {
             getHandler().startDocument();
@@ -37,7 +45,11 @@ public abstract class AbstractXMLHandler {
         } catch (SAXException e) {
         }
     }
-
+    
+    /**
+     * Stops logging.
+     *
+     */
     public void endDocument() {
         try {
             closeTag(getHeaderName());

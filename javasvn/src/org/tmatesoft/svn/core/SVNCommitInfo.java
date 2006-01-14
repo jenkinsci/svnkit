@@ -30,7 +30,9 @@ import java.util.Date;
  * @author 	TMate Software Ltd.
  */
 public class SVNCommitInfo {
-
+    /**
+     * Denotes an unsuccessful commit.
+     */
     public static final SVNCommitInfo NULL = new SVNCommitInfo(-1, null, null, null);
     
     private long myNewRevision;
@@ -56,8 +58,8 @@ public class SVNCommitInfo {
      * @param revision      a revision number 
      * @param author        the name of the author who committed the revision
      * @param date          the datestamp when the revision was committed
-     * @param error         if a commit failed - this is an exception containing
-     *                      an error description 
+     * @param error         if a commit failed - this is an error description 
+     *                      containing details on the failure 
      */
     public SVNCommitInfo(long revision, String author, Date date, SVNErrorMessage error) {
         myNewRevision = revision;
@@ -94,10 +96,12 @@ public class SVNCommitInfo {
     }
     
     /**
-     * Gets an array of error messages that occurred (if occurred) while committing 
-     * a new revision.
+     * Gets an error message for a failed commit (if it 
+     * has failed). This message will usually keep the entire 
+     * stack trace of all the error messages as of results of errors
+     * occurred. 
      * 
-     * @return an array of error messages or null. 
+     * @return an error messages or <span class="javakeyword">null</span>. 
      */
     public SVNErrorMessage getErrorMessage() {
         return myErrorMessage;
@@ -113,6 +117,11 @@ public class SVNCommitInfo {
         return null;
     }
     
+    /**
+     * Gives a string representation of this object.
+     * 
+     * @return a string describing commit info
+     */
     public String toString() {
         if (this == NULL) {
             return "EMPTY COMMIT";

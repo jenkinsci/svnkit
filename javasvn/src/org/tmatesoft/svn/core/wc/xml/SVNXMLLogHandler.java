@@ -27,6 +27,9 @@ import org.xml.sax.SAXException;
 
 
 /**
+ * This log handler implementation writes xml formatted information 
+ * about the log entries it's passed to a specified <b>ContentHandler</b>. 
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  */
@@ -43,11 +46,21 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
     public static final String AUTHOR_TAG = "author";
     public static final String LOGENTRY_TAG = "logentry";
     public static final String LOG_TAG = "log";
-
+    
+    /**
+     * Creates a new log handler.
+     * 
+     * @param contentHandler a <b>ContentHandler</b> to form 
+     *                       an XML tree
+     */
     public SVNXMLLogHandler(ContentHandler contentHandler) {
         super(contentHandler);
     }
-
+    /**
+     * Returns the header name specific for a log handler.
+     * 
+     * @return {@link #LOG_TAG} string
+     */
     public String getHeaderName() {
         return LOG_TAG;
     }

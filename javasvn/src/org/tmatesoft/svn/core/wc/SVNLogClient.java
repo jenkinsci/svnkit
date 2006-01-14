@@ -363,7 +363,8 @@ public class SVNLogClient extends SVNBasicClient {
      * @param  path           a WC item to get its repository location            
      * @param  pegRevision    a revision in which the item's URL is first looked up
      * @param  revision       a target revision
-     * @param  fetchLocks     fetch locks information from repository
+     * @param  fetchLocks     <span class="javakeyword">true</span> to fetch locks 
+     *                        information from a repository
      * @param  recursive      <span class="javakeyword">true</span> to
      *                        descend recursively (relevant for directories)    
      * @param  handler        a caller's directory entry handler (to process
@@ -380,6 +381,27 @@ public class SVNLogClient extends SVNBasicClient {
         doList(repos, rev, handler, fetchLocks, recursive);
     }
 
+    /**
+     * Browses directory entries from a repository (using Working 
+     * Copy paths to get corresponding URLs) and uses the provided dir 
+     * entry handler to process them.
+     * 
+     * <p>
+     * On every entry that this method stops it gets some useful entry 
+     * information which is packed into an {@link org.tmatesoft.svn.core.SVNDirEntry}
+     * object and passed to the <code>handler</code>'s 
+     * {@link org.tmatesoft.svn.core.ISVNDirEntryHandler#handleDirEntry(SVNDirEntry) handleDirEntry()} method.
+     *  
+     * @param  path           a WC item to get its repository location            
+     * @param  pegRevision    a revision in which the item's URL is first looked up
+     * @param  revision       a target revision
+     * @param  recursive      <span class="javakeyword">true</span> to
+     *                        descend recursively (relevant for directories)    
+     * @param  handler        a caller's directory entry handler (to process
+     *                        info on an entry)
+     * @throws SVNException 
+     * @see                   #doList(SVNURL, SVNRevision, SVNRevision, boolean, ISVNDirEntryHandler)  
+     */
     public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
         doList(path, pegRevision, revision, false, recursive, handler);
         
@@ -399,7 +421,8 @@ public class SVNLogClient extends SVNBasicClient {
      * @param  url            a repository location to be "listed"
      * @param  pegRevision    a revision in which the item's URL is first looked up
      * @param  revision       a target revision
-     * @param  fetchLocks     fetch locks information from repository
+     * @param  fetchLocks     <span class="javakeyword">true</span> to 
+     *                        fetch locks information from repository
      * @param  recursive      <span class="javakeyword">true</span> to
      *                        descend recursively (relevant for directories)    
      * @param  handler        a caller's directory entry handler (to process
@@ -419,6 +442,27 @@ public class SVNLogClient extends SVNBasicClient {
         doList(repos, pegRev[0], handler, fetchLocks, recursive);
     }
 
+    /**
+     * Browses directory entries from a repository and uses the provided 
+     * dir entry handler to process them. This method is 
+     * especially useful when having no Working Copy. 
+     * 
+     * <p>
+     * On every entry that this method stops it gets some useful entry 
+     * information which is packed into an {@link org.tmatesoft.svn.core.SVNDirEntry}
+     * object and passed to the <code>handler</code>'s 
+     * {@link org.tmatesoft.svn.core.ISVNDirEntryHandler#handleDirEntry(SVNDirEntry) handleDirEntry()} method.
+     * 
+     * @param  url            a repository location to be "listed"
+     * @param  pegRevision    a revision in which the item's URL is first looked up
+     * @param  revision       a target revision
+     * @param  recursive      <span class="javakeyword">true</span> to
+     *                        descend recursively (relevant for directories)    
+     * @param  handler        a caller's directory entry handler (to process
+     *                        info on an entry)
+     * @throws SVNException
+     * @see                   #doList(File, SVNRevision, SVNRevision, boolean, ISVNDirEntryHandler)   
+     */
     public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
         doList(url, pegRevision, revision, false, recursive, handler);
     }

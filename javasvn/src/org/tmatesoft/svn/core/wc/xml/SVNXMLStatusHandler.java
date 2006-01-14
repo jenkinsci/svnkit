@@ -27,6 +27,10 @@ import org.xml.sax.SAXException;
 
 
 /**
+ * This is an implementation of the <b>ISVNStatusHandler</b> interface 
+ * that writes XML formatted status information to a specified 
+ * <b>ContentHandler</b>. 
+ *  
  * @version 1.0
  * @author  TMate Software Ltd.
  */
@@ -58,11 +62,23 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
     private static final String TRUE = "true";
 
     private File myTargetPath;
-
+    
+    /**
+     * Creates a new handler.
+     * 
+     * @param saxHandler a <b>ContentHandler</b> to form 
+     *                   an XML tree
+     */
     public SVNXMLStatusHandler(ContentHandler saxHandler) {
         super(saxHandler);
     }    
     
+    /**
+     * Begins an XML tree with the target path for which the 
+     * status is run. 
+     * 
+     * @param path a WC target path
+     */
     public void startTarget(File path) {
         try {
             myTargetPath = path;
@@ -83,6 +99,12 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
         }
     }
     
+    /**
+     * Closes the formatted XML with the revision against which 
+     * the status is run. 
+     * 
+     * @param revision a revision against which the status is run
+     */
     public void endTarget(long revision) {
         try {
             myTargetPath = null;

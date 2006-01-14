@@ -225,7 +225,13 @@ public class SVNBasicClient implements ISVNEventHandler {
             myEventDispatcher.handleEvent(event, progress);
         }
     }
-
+    
+    /**
+     * Removes or adds a path prefix. This method is not intended for 
+     * users (from an API point of view). 
+     * 
+     * @param prefix a path prefix
+     */
     public void setEventPathPrefix(String prefix) {
         if (prefix == null && !myPathPrefixesStack.isEmpty()) {
             myPathPrefixesStack.remove(myPathPrefixesStack.size() - 1);
@@ -268,6 +274,7 @@ public class SVNBasicClient implements ISVNEventHandler {
      * 
      * @param event       the current event
      * @param progress    progress state (from 0 to 1)
+     * @throws SVNException
      */
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
         dispatchEvent(event, progress);

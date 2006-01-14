@@ -139,20 +139,27 @@ public class SVNEvent {
      * Used by JavaSVN internals to construct and initialize an 
      * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
      * 
-     * @param source     a JavaSVN internal for managing Working Copy entries,
-     *                   administrative area, etc.
-     * @param dir        a JavaSVN internal used to specify the fylesystem root 
-     *                   directory for the entry the event is to be generated for
-     * @param name       the name of the item
-     * @param action     the type of action the item is exposed to
-     * @param kind       the item's node kind
-     * @param revision   a revision number
-     * @param mimetype   the item's MIME type
-     * @param cstatus    the item's contents status
-     * @param pstatus    the item's properties status
-     * @param lstatus    the item's lock status
-     * @param lock       the item's lock
-     * @param error      an error message
+     * <p>
+     * If <code>action</code> is {@link SVNEventAction#SKIP} (i.e. operation is skipped) 
+     * then the expected action (that would have occurred if the operation hadn't been skipped) 
+     * is provided in <code>expectedAction</code>. 
+     * 
+     * @param source           a JavaSVN internal for managing Working Copy entries,
+     *                         administrative area, etc.
+     * @param dir              a JavaSVN internal used to specify the fylesystem root 
+     *                         directory for the entry the event is to be generated for
+     * @param name             the name of the item
+     * @param action           the type of action the item is exposed to
+     * @param expectedAction   the action that is expected to happen, but may
+     *                         be skipped in real for some reason
+     * @param kind             the item's node kind
+     * @param revision         a revision number
+     * @param mimetype         the item's MIME type
+     * @param cstatus          the item's contents status
+     * @param pstatus          the item's properties status
+     * @param lstatus          the item's lock status
+     * @param lock             the item's lock
+     * @param error            an error message
      */
     public SVNEvent(SVNWCAccess source, SVNDirectory dir, String name,
             SVNEventAction action, SVNEventAction expectedAction, SVNNodeKind kind, 
@@ -175,7 +182,32 @@ public class SVNEvent {
         myRoot = dir != null ? dir.getRoot() : null;
         myName = name;
     }
-
+    
+    /**
+    /**
+     * Constructs an <b>SVNEvent</b> object filling it with informational 
+     * details most of that would be retrieved and analized by an 
+     * <b>ISVNEventHandler</b> implementation. 
+     * 
+     * <p>
+     * Used by JavaSVN internals to construct and initialize an 
+     * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
+     * 
+     * @param source           a JavaSVN internal for managing Working Copy entries,
+     *                         administrative area, etc.
+     * @param dir              a JavaSVN internal used to specify the fylesystem root 
+     *                         directory for the entry the event is to be generated for
+     * @param name             the name of the item
+     * @param action           the type of action the item is exposed to
+     * @param kind             the item's node kind
+     * @param revision         a revision number
+     * @param mimetype         the item's MIME type
+     * @param cstatus          the item's contents status
+     * @param pstatus          the item's properties status
+     * @param lstatus          the item's lock status
+     * @param lock             the item's lock
+     * @param error            an error message
+     */
     public SVNEvent(SVNWCAccess source, SVNDirectory dir, String name,
             SVNEventAction action, SVNNodeKind kind, long revision,
             String mimetype, SVNStatusType cstatus, SVNStatusType pstatus,
@@ -192,10 +224,17 @@ public class SVNEvent {
      * <p>
      * Used by JavaSVN internals to construct and initialize an 
      * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
+     *
+     * <p>
+     * If <code>action</code> is {@link SVNEventAction#SKIP} (i.e. operation is skipped) 
+     * then the expected action (that would have occurred if the operation hadn't been skipped) 
+     * is provided in <code>expected</code>. 
      * 
      * @param rootFile   the item's root directory
      * @param file       the item's path itself
      * @param action     the type of action the item is exposed to
+     * @param expected   the action that is expected to happen, but may
+     *                   be skipped in real for some reason
      * @param kind       the item's node kind
      * @param revision   a revision number
      * @param mimetype   the item's MIME type
@@ -227,6 +266,27 @@ public class SVNEvent {
         myName = file != null ? file.getName() : "";
     }
     
+    /**
+     * Constructs an <b>SVNEvent</b> object filling it with informational 
+     * details most of that would be retrieved and analized by an 
+     * <b>ISVNEventHandler</b> implementation. 
+     * 
+     * <p>
+     * Used by JavaSVN internals to construct and initialize an 
+     * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
+     *
+     * @param rootFile   the item's root directory
+     * @param file       the item's path itself
+     * @param action     the type of action the item is exposed to
+     * @param kind       the item's node kind
+     * @param revision   a revision number
+     * @param mimetype   the item's MIME type
+     * @param cstatus    the item's contents status
+     * @param pstatus    the item's properties status
+     * @param lstatus    the item's lock status
+     * @param lock       the item's lock
+     * @param error      an error message
+     */
     public SVNEvent(File rootFile, File file, SVNEventAction action,            
             SVNNodeKind kind, long revision, String mimetype,
             SVNStatusType cstatus, SVNStatusType pstatus,
@@ -295,7 +355,15 @@ public class SVNEvent {
     public SVNEventAction getAction() {
         return myAction;
     }
-
+    
+    /**
+     * Returns the expected action. It is always the same as
+     * the action returned by {@link #getAction()} except those cases 
+     * when {@link #getAction()} returns {@link SVNEventAction#SKIP} (i.e. 
+     * when the expected operation is skipped).
+     *  
+     * @return the expected action
+     */
     public SVNEventAction getExpectedAction() {
         return myExpectedAction;
     }

@@ -31,6 +31,13 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
+ * The <b>SVNDeltaGenerator</b> is intended for generating diff windows of 
+ * fixed size reading two verions of file contents from two 
+ * {@link InputStream} streams - source and target ones. The main feature 
+ * of this generator is that it uses implementations of native SVN V-Delta 
+ * (for binary & new text files) and X-Delta (for calculating changes 
+ * between target and source text files) algorithms.    
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  */
@@ -42,19 +49,83 @@ public class SVNDeltaGenerator {
     private byte[] mySourceBuffer;
     private byte[] myTargetBuffer;
     
+    /**
+     * Creates a generator that will produce diff windows of 
+     * 100Kbytes contents length. That is, after applying of 
+     * such a window you get 100Kbytes of file contents.
+     * 
+     * @see #SVNDeltaGenerator(int)
+     */
     public SVNDeltaGenerator() {
         this(1024*100);
     }
     
+    /**
+     * Creates a generator that will produce diff windows of 
+     * a specified contents length.  
+     * 
+     * @param maximumDiffWindowSize a maximum size of file contents
+     *                              for diff windows to be produced
+     */
     public SVNDeltaGenerator(int maximumDiffWindowSize) {
         mySourceBuffer = new byte[maximumDiffWindowSize];
         myTargetBuffer = new byte[maximumDiffWindowSize];
     }
-
+    
+    /**
+     * Generates a series of diff windows of fixed size comparing 
+     * target bytes (from <code>target</code> stream) against an 
+     * empty file and sends produced windows to the provided 
+     * consumer. <code>consumer</code>'s {@link org.tmatesoft.svn.core.io.ISVNEditor#textDeltaChunk(String, SVNDiffWindow) textDeltaChunk()} 
+     * method is called to process generated windows (new data is written to 
+     * the output stream returned by that method). 
+     * 
+     * <p>
+     * If <code>computeChecksum</code> is <span class="javakeyword">true</span>, 
+     * the return value will be a strig containing a hex representation 
+     * of the MD5 digest computed for the target contents. 
+     * 
+     * @param  path             a file repository path
+     * @param  target           an input stream to read target bytes
+     *                          from
+     * @param  consumer         a diff windows consumer
+     * @param  computeChecksum  <span class="javakeyword">true</span> to 
+     *                          compute a checksum 
+     * @return                  if <code>computeChecksum</code> is <span class="javakeyword">true</span>,  
+     *                          a string representing a hex form of the 
+     *                          MD5 checksum computed for the target contents; otherwise  <span class="javakeyword">null</span>
+     * @throws SVNException
+     */
     public String sendDelta(String path, InputStream target, ISVNEditor consumer, boolean computeChecksum) throws SVNException {
         return sendDelta(path, SVNFileUtil.DUMMY_IN, target, consumer, computeChecksum);
     }
     
+    /**
+     * Generates a series of diff windows of fixed size comparing 
+     * target bytes (read from <code>target</code> stream) against source
+     * bytes (read from <code>source</code> stream), and sends produced windows to the provided 
+     * consumer. <code>consumer</code>'s {@link org.tmatesoft.svn.core.io.ISVNEditor#textDeltaChunk(String, SVNDiffWindow) textDeltaChunk()} 
+     * method is called to process generated windows (new data is written to 
+     * the output stream returned by that method). 
+     * 
+     * <p>
+     * If <code>computeChecksum</code> is <span class="javakeyword">true</span>, 
+     * the return value will be a strig containing a hex representation 
+     * of the MD5 digest computed for the target contents. 
+     * 
+     * @param  path             a file repository path
+     * @param  source           an input stream to read source bytes
+     *                          from
+     * @param  target           an input stream to read target bytes
+     *                          from
+     * @param  consumer         a diff windows consumer
+     * @param  computeChecksum  <span class="javakeyword">true</span> to 
+     *                          compute a checksum 
+     * @return                  if <code>computeChecksum</code> is <span class="javakeyword">true</span>,  
+     *                          a string representing a hex form of the 
+     *                          MD5 checksum computed for the target contents; otherwise  <span class="javakeyword">null</span>
+     * @throws SVNException
+     */
     public String sendDelta(String path, InputStream source, InputStream target, ISVNEditor consumer, boolean computeChecksum) throws SVNException {
         MessageDigest digest = null;
         if (computeChecksum) {

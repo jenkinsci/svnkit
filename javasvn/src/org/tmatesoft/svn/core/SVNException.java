@@ -15,7 +15,9 @@ package org.tmatesoft.svn.core;
 
 /**
  * A main exception class that is used in the JavaSVN library. All other
- * JavaSVN exception classes extend this one. 
+ * JavaSVN exception classes extend this one. Detailed information 
+ * on the error (description, error code) is encapsulated inside an error 
+ * message that is held by an <b>SVNException</b>. 
  *  
  * @version	1.0
  * @author 	TMate Software Ltd.
@@ -24,11 +26,21 @@ public class SVNException extends Exception {
     
     private SVNErrorMessage myErrorMessage;
 
-
+    /**
+     * Creates an exception given an error message. 
+     * 
+     * @param errorMessage an error message
+     */
     public SVNException(SVNErrorMessage errorMessage) {
         this(errorMessage, null);
     }
-
+    
+    /**
+     * Creates an exception given an error message and the cause exception.
+     * 
+     * @param errorMessage an error message
+     * @param cause        the real cause of the error
+     */
     public SVNException(SVNErrorMessage errorMessage, Throwable cause) {
         super(cause);
         if (cause instanceof SVNException) {
@@ -42,6 +54,11 @@ public class SVNException extends Exception {
         myErrorMessage = errorMessage;
     }
     
+    /**
+     * Returns an error message provided to this exception object.
+     * 
+     * @return an error message that contains details on the error
+     */
     public SVNErrorMessage getErrorMessage() {
         return myErrorMessage;
     }

@@ -29,8 +29,9 @@ public interface ISVNLocationEntryHandler {
     /**
      * To be implemented for location entries handling.
      * 
-     * @param locationEntry 	a location entry
+     * @param  locationEntry 	a location entry
      * @see 					SVNLocationEntry
+     * @throws SVNException
      */
     public void handleLocationEntry(SVNLocationEntry locationEntry) throws SVNException;
 

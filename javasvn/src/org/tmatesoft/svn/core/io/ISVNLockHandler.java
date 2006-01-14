@@ -33,9 +33,9 @@ public interface ISVNLockHandler {
      *                        root directory         
      * @param  lock           the lock set on this <code>path</code>
      * @param  error          if not <span class="javakeyword">null</code> then
-     *                        it's an exception occurred while trying to lock, in 
-     *                        this case <code>lock</code> may be <span class="javakeyword">null</code> 
-     *                        the <code>path</code>
+     *                        it's an error message object for an error occurred 
+     *                        while trying to lock an entry, in this case 
+     *                        <code>lock</code> may be <span class="javakeyword">null</code> 
      * @throws SVNException
      */
     public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException;

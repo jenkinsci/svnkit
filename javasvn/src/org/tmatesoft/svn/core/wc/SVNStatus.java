@@ -555,6 +555,8 @@ public class SVNStatus {
      * @param lock     item's lock in the repository
      * @param kind     item's node kind
      * @param revision item's latest revision when it was last committed
+     * @param date     last item's committed date 
+     * @param author   last item's committed author
      */
     public void setRemoteStatus(SVNURL url, SVNStatusType contents, SVNStatusType props, SVNLock lock, SVNNodeKind kind, SVNRevision revision,
             Date date, String author) {

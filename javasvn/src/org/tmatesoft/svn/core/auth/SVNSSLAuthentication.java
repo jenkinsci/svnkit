@@ -13,21 +13,46 @@ package org.tmatesoft.svn.core.auth;
 
 import java.io.File;
 
+/**
+ * The <b>SVNSSLAuthentication</b> class represents user's credentials used 
+ * to authenticate a user in secure connections.
+ * 
+ * @version 1.0
+ * @author  TMate Software Ltd.
+ */
 public class SVNSSLAuthentication extends SVNAuthentication {
 
     private File myCertificate;
     private String myPassword;
     
+    /**
+     * Creates an SSL credentials object. 
+     * 
+     * @param certFile         user's certificate file
+     * @param password         user's password 
+     * @param storageAllowed   to store or not this credential in a 
+     *                         credentials cache    
+     */
     public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed) {
         super(null, storageAllowed);
         myCertificate = certFile;
         myPassword = password;
     }
-
+    
+    /**
+     * Return a user's password. 
+     * 
+     * @return a password
+     */
     public String getPassword() {
         return myPassword;
     }
 
+    /**
+     * Returns a user's certificate file. 
+     * 
+     * @return certificate file
+     */
     public File getCertificateFile() {
         return myCertificate;
     }

@@ -251,9 +251,9 @@ public class SVNURL {
     }
     
     /**
-     * Returns a string representation of this object.
+     * Returns a string representing a UTF-8 encoded url. 
      * 
-     * @return a url string
+     * @return an encoded url string
      */
     public String toString() {
         if (myURL == null) {
@@ -261,7 +261,12 @@ public class SVNURL {
         }
         return myURL;
     }
-
+    
+    /**
+     * Returns a string representing a decoded url. 
+     * 
+     * @return a decoded url string
+     */
     public String toDecodedString() {
         return composeURL(getProtocol(), getUserInfo(), getHost(), myIsDefaultPort ? -1 : getPort(), getPath());
     }
@@ -276,6 +281,7 @@ public class SVNURL {
      *                      <span class="javakeyword">false</span> 
      *                      otherwise 
      * @return              a new <b>SVNURL</b> representation
+     * @throws SVNException if a parse error occurred
      */
     public SVNURL appendPath(String segment, boolean uriEncoded) throws SVNException {
         if (segment == null) {
@@ -296,6 +302,16 @@ public class SVNURL {
         return parseURIEncoded(url);
     }
 
+    /**
+     * Creates a new <b>SVNURL</b> object replacing a path component of 
+     * this object with a new provided one. 
+     * 
+     * @param  path            a path component
+     * @param  uriEncoded      <span class="javakeyword">true</span> if <code>path</code> 
+     *                         is UTF-8 encoded
+     * @return                 a new <b>SVNURL</b> representation                 
+     * @throws SVNException    if a parse error occurred
+     */
     public SVNURL setPath(String path, boolean uriEncoded) throws SVNException {
         if (path == null || "".equals(path)) {
             path = "/";

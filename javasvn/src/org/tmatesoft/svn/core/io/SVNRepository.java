@@ -528,12 +528,11 @@ public abstract class SVNRepository {
 	 * been invoked at least once.
 	 * 
 	 * <p>
-	 * In a series of calls to {@link ISVNFileRevisionHandler#handleFileRevision(SVNFileRevision)
-	 * handler.handleFileRevision()}, the file contents for the first interesting 
-	 * revision will be provided as a text delta against the empty file.  In the 
-	 * following calls, the delta will be against the fulltext contents for the 
-	 * previous call.
-	 * 
+	 * For the first interesting revision the file contents  
+     * will be provided to the <code>handler</code> as a text delta against an empty file.  
+     * For the following revisions, the delta will be against the fulltext contents of the 
+     * previous revision.
+     * 
 	 * <p>
      * <b>NOTES:</b> 
      * <ul>
@@ -1530,7 +1529,7 @@ public abstract class SVNRepository {
      * <p>
 	 * Each path to be locked is handled with the provided <code>handler</code>.
      * If a path was successfully locked, the <code>handler</code>'s 
-     * {@link ISVNLockHandler#handleLock(String, SVNLock, SVNException) handleLock()}
+     * {@link ISVNLockHandler#handleLock(String, SVNLock, SVNErrorMessage) handleLock()}
      * is called that receives the path and either a lock object (representing the lock
      * that was set on the path) or an error exception, if locking failed for that path.
      * 
@@ -1580,7 +1579,7 @@ public abstract class SVNRepository {
      * <p>
      * Each path to be unlocked is handled with the provided <code>handler</code>.
      * If a path was successfully unlocked, the <code>handler</code>'s 
-     * {@link ISVNLockHandler#handleUnlock(String, SVNLock, SVNException) handleUnlock()}
+     * {@link ISVNLockHandler#handleUnlock(String, SVNLock, SVNErrorMessage) handleUnlock()}
      * is called that receives the path and either a lock object (representing the lock
      * that was removed from the path) or an error exception, if unlocking failed for 
      * that path.
@@ -1698,6 +1697,7 @@ public abstract class SVNRepository {
      * @param  relativePath a path relative to the location to which
      *                      this <b>SVNRepository</b> is set
      * @return              a path relative to the repository root
+     * @throws SVNException             
      */
     public String getRepositoryPath(String relativePath) throws SVNException {
         if (relativePath == null) {
@@ -1722,6 +1722,7 @@ public abstract class SVNRepository {
      * @param  relativeOrRepositoryPath a relative path within the
      *                                  repository 
      * @return                          a path relative to the host
+     * @throws SVNException
      */
     public String getFullPath(String relativeOrRepositoryPath) throws SVNException {
         if (relativeOrRepositoryPath == null) {

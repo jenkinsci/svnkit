@@ -24,6 +24,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
 /**
+ * The <b>SVNDeltaProcessor</b> is used to get a full text of a file 
+ * in series applying diff windows being passed to a processor.  
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  */
@@ -33,14 +36,44 @@ public class SVNDeltaProcessor {
     private ByteArrayOutputStream myDataStream;
     private SVNDiffWindowApplyBaton myApplyBaton;
     
+    /**
+     * Creates a processor with a buffer for new data of a 
+     * fixed size - 100Kbytes. 
+     */
     public SVNDeltaProcessor() {
         this(100*1024);
     }
-
+    
+    /**
+     * Creates a processor with a buffer for new data of a 
+     * fixed size - <code>inialNewDataSize</code>. 
+     * 
+     * @param inialNewDataSize
+     */
     public SVNDeltaProcessor(int inialNewDataSize) {
         myDataStream = new ByteArrayOutputStream(inialNewDataSize);
     }
     
+    /**
+     * Starts processing deltas given a base file stream and an output stream 
+     * to write resultant target bytes to.
+     * 
+     * <p>
+     * If a target full text is a newly added file (text deltas would be vs. empty), 
+     * then source bytes are not needed and <code>base</code> may be passed as 
+     * <span class="javakeyword">null</span>.
+     * 
+     * <p>
+     * If <code>computeChecksum</code> is <span class="javakeyword">true</span>, then 
+     * an MD5 checksum will be calculated for target bytes.
+     * 
+     * @param base             an input stream to take base file contents 
+     *                         from
+     * @param target           an output stream to write the resultant target 
+     *                         contents to
+     * @param computeCheksum   <span class="javakeyword">true</span> to calculate
+     *                         checksum
+     */
     public void applyTextDelta(InputStream base, OutputStream target, boolean computeCheksum) {
         reset();
         MessageDigest digest = null;
@@ -52,6 +85,31 @@ public class SVNDeltaProcessor {
         myApplyBaton = SVNDiffWindowApplyBaton.create(base, target, digest);
     }
     
+    /**
+     * Starts processing deltas given a base file and one 
+     * to write resultant target bytes to.
+     * 
+     * <p>
+     * If a target full text is a newly added file (text deltas would be vs. empty), 
+     * then source bytes are not needed and <code>baseFile</code> may be passed as 
+     * <span class="javakeyword">null</span>.
+     * 
+     * <p>
+     * If a file represented by <code>targetFile</code> does not exist 
+     * yet, first tries to create an empty file.
+     * 
+     * <p>
+     * If <code>computeChecksum</code> is <span class="javakeyword">true</span>, then 
+     * an MD5 checksum will be calculated for target bytes.
+     * 
+     * @param  baseFile          a base file to read base file contents 
+     *                           from
+     * @param  targetFile        a destination file where resultant 
+     *                           target bytes will be written
+     * @param  computeCheksum    <span class="javakeyword">true</span> to calculate
+     *                           checksum
+     * @throws SVNException
+     */
     public void applyTextDelta(File baseFile, File targetFile, boolean computeCheksum) throws SVNException {
         if (!targetFile.exists()) {
             SVNFileUtil.createEmptyFile(targetFile);
@@ -59,7 +117,16 @@ public class SVNDeltaProcessor {
         InputStream base = baseFile != null && baseFile.exists() ? SVNFileUtil.openFileForReading(baseFile) : SVNFileUtil.DUMMY_IN;
         applyTextDelta(base, SVNFileUtil.openFileForWriting(targetFile), computeCheksum);
     }
-
+    
+    /**
+     * Receives a next diff window to be applied and returns a stream for 
+     * new data bytes of the window to be written to.
+     * 
+     * @param   window           a diff window
+     * @return                   an output stream where new data bytes 
+     *                           will be written to
+     * @throws  SVNException
+     */
     public OutputStream textDeltaChunk(SVNDiffWindow window) throws SVNException {
         if (myLastWindow != null) {
             // apply last window.
@@ -79,6 +146,16 @@ public class SVNDeltaProcessor {
         myLastWindow = null;
     }
     
+    /**
+     * Performs delta processing finalizing steps. Applies the last 
+     * window left (if any) and finalizes checksum calculation (if a 
+     * checksum was required).  
+     *  
+     * @return  a string representing a hex form of the calculated
+     *          MD5 checksum or <span class="javakeyword">null</span> 
+     *          if checksum calculation was not required 
+     * @throws  SVNException
+     */
     public String textDeltaEnd() throws SVNException {
         if (myLastWindow != null) {
             myLastWindow.apply(myApplyBaton, new ByteArrayInputStream(myDataStream.toByteArray()));

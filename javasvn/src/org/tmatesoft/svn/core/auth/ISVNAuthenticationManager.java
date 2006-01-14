@@ -69,7 +69,9 @@ public interface ISVNAuthenticationManager {
      * An ssh credential kind (<span class="javastring">"svn.ssh"</span>)
      */
     public static final String SSH = "svn.ssh";
-
+    /**
+     * An ssl credential kind (<span class="javastring">"svn.ssl"</span>)
+     */
     public static final String SSL = "svn.ssl";
     
     /**

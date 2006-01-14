@@ -24,6 +24,9 @@ import org.xml.sax.SAXException;
 
 
 /**
+ * This implementation of <b>ContentHandler</b> can write XML contents to 
+ * a specified output stream or writer.  
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  */
@@ -32,7 +35,13 @@ public class SVNXMLSerializer implements ContentHandler {
     private Writer myWriter;
     private String myEol = System.getProperty("line.separator");
     private boolean myCharacters = false;
-
+    
+    /**
+     * Creates a serializer to write XML contents to the specified 
+     * output stream.
+     * 
+     * @param os an output stream to write contents to
+     */
     public SVNXMLSerializer(final OutputStream os) {
         try {
             myWriter = new OutputStreamWriter(os, "UTF-8");
@@ -40,11 +49,22 @@ public class SVNXMLSerializer implements ContentHandler {
             myWriter = new OutputStreamWriter(os);
         }
     }
-
+    
+    /**
+     * Creates a serializer to write XML contents to the specified 
+     * writer.
+     * 
+     * @param writer a writer to write contents to
+     */
     public SVNXMLSerializer(Writer writer) {
         myWriter = writer;
     }
     
+    /**
+     * Flushes written bytes.  
+     * 
+     * @throws IOException
+     */
     public void flush() throws IOException {
         myWriter.flush();
     }
@@ -106,7 +126,12 @@ public class SVNXMLSerializer implements ContentHandler {
             myCharacters = false;
         }
     }
-
+    
+    /**
+     * Does nothing.
+     * 
+     * @throws SAXException
+     */
     public void endDocument() throws SAXException {
         try {
             myWriter.write(myEol);
@@ -115,21 +140,60 @@ public class SVNXMLSerializer implements ContentHandler {
         }
     }
 
+    /**
+     * Does nothing.
+     * 
+     * @param ch
+     * @param start
+     * @param length
+     * @throws SAXException
+     */
     public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
     }
-
+    
+    /**
+     * Does nothing.
+     * 
+     * @param prefix
+     * @throws SAXException
+     */
     public void endPrefixMapping(String prefix) throws SAXException {
     }
-
+    
+    /**
+     * Does nothing.
+     * 
+     * @param name
+     * @throws SAXException
+     */
     public void skippedEntity(String name) throws SAXException {
     }
-
+    
+    /**
+     * Does nothing.
+     * 
+     * @param locator
+     */
     public void setDocumentLocator(Locator locator) {
     }
-
+    
+    /**
+     * Does nothing.
+     * 
+     * @param target
+     * @param data
+     * @throws SAXException
+     */
     public void processingInstruction(String target, String data) throws SAXException {
     }
-
+    
+    /**
+     * Does nothing.
+     * 
+     * @param prefix
+     * @param uri
+     * @throws SAXException
+     */
     public void startPrefixMapping(String prefix, String uri) throws SAXException {
     }
 

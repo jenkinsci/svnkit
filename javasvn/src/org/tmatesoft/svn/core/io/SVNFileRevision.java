@@ -24,7 +24,7 @@ import java.util.Map;
  * When getting a range of file revisions (in particular, annotating), 
  * calling an <b>SVNRepository</b>'s 
  * {@link SVNRepository#getFileRevisions(String, long, long, ISVNFileRevisionHandler) getFileRevision()}
- * <b>SVNFileRevision</b> objects are passed to an <b>ISVNFileRevisionHandler</b>'s {@link ISVNFileRevisionHandler#handleFileRevision(SVNFileRevision) handleFileRevision()}
+ * <b>SVNFileRevision</b> objects are passed to an <b>ISVNFileRevisionHandler</b>'s {@link ISVNFileRevisionHandler#openRevision(SVNFileRevision) openRevision()}
  * method.  
  * 
  * @version	1.0

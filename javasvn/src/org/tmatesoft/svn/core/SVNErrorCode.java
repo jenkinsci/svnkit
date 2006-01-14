@@ -16,6 +16,15 @@ import java.util.Map;
 
 
 /**
+ * The <b>SVNErrorCode</b> class represents possible predefined kinds 
+ * of errors with their own identifying information. Each <b>SVNErrorCode</b> 
+ * has its common description, belongs to a definite category of errors and 
+ * also has its unique error code int value based upon the category.
+ * 
+ * <p>
+ * Error codes (values, common descriptions and categories) are similar 
+ * to ones in the native SVN. 
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  */
@@ -27,6 +36,14 @@ public class SVNErrorCode {
     
     private static final Map ourErrorCodes = new HashMap();
     
+    /**
+     * Gets an error code object given its unique error code number. 
+     * If no definite error code objects corresponds to the provided 
+     * value, returns {@link #UNKNOWN}.
+     * 
+     * @param  code an error code number
+     * @return a corresponding <b>SVNErrorCode</b>.
+     */
     public static SVNErrorCode getErrorCode(int code) {
         SVNErrorCode errorCode = (SVNErrorCode) ourErrorCodes.get(new Integer(code));
         if (errorCode == null) {
@@ -42,33 +59,72 @@ public class SVNErrorCode {
         ourErrorCodes.put(new Integer(myCode), this);
     }
     
+    /**
+     * Returns a unique error code value. 
+     * 
+     * @return an error code number
+     */
     public int getCode() {
         return myCode;
     }
     
+    /**
+     * Returns the category this error code object belongs to. 
+     * 
+     * @return an error code category
+     */
     public int getCategory() {
         return myCategory;
     }
     
+    /**
+     * Returns a description of this error. 
+     * 
+     * @return an error description common for all errors of the same
+     *         error code 
+     */
     public String getDescription() {
         return myDescription;
     }
     
+    /**
+     * Returns a hash code for this object.
+     * 
+     * @return hash code value
+     */
     public int hashCode() {
         return myCode;
     }
     
+    /**
+     * Says if the given object and this one are equal.
+     * 
+     * @param  o an object to compare with
+     * @return   <span class="javakeyword">true</span> if equals,
+     *           <span class="javakeyword">false</span> otherwise 
+     */
     public boolean equals(Object o) {
         if (o == null || o.getClass() != SVNErrorCode.class) {
             return false;
         }
         return myCode == ((SVNErrorCode) o).myCode;
     }
-
+    
+    /**
+     * Says if this error is an authentication error.
+     *  
+     * @return  <span class="javakeyword">true</span> if it is,
+     *          <span class="javakeyword">false</span> otherwise 
+     */
     public boolean isAuthentication() {
         return this == RA_NOT_AUTHORIZED || this == RA_UNKNOWN_AUTH || getCategory() == AUTHZ_CATEGORY || getCategory() == AUTHN_CATEGORY;
     }
     
+    /**
+     * Gives a string representation of this object.
+     * 
+     * @return a string representing this object
+     */
     public String toString() {
         return myCode + ": " + myDescription;
     }

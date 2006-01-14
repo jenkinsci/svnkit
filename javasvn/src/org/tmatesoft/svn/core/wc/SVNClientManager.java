@@ -212,8 +212,8 @@ public class SVNClientManager implements ISVNRepositoryPool {
      * a repository. 
      * 
      * <p>
-     * The driver created will be set the same {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager} 
-     * that this <b>SVNClientManager</b> keeps.
+     * The driver created will be set a default {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager} 
+     * manager.
      * 
      * <p>
      * Used by <b>SVN</b>*<b>Client</b> objects (managed by this 
@@ -222,6 +222,9 @@ public class SVNClientManager implements ISVNRepositoryPool {
      * @param  url           a repository location to establish a 
      *                       connection with (will be the root directory
      *                       for the working session)
+     * @param  mayReuse      if <span class="javakeyword">true</span> then tries
+     *                       first tries to find a reusable driver or creates a new 
+     *                       reusable one
      * @return               a low-level API driver for direct interacting
      *                       with a repository
      * @throws SVNException

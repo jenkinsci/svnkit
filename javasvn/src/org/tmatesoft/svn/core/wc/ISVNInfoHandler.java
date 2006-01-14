@@ -40,6 +40,7 @@ public interface ISVNInfoHandler {
      * Handles item's information using an <b>SVNInfo</b> object.
      * 
      * @param info an object that contain's item's information details
+     * @throws SVNException
      */
     public void handleInfo(SVNInfo info) throws SVNException;
 

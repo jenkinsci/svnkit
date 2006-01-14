@@ -91,6 +91,7 @@ public interface ISVNEventHandler {
      *                   
      * @param progress  currently reserved for future use; now it's value
      *                  is always set to {@link #UNKNOWN}
+     * @throws SVNException
      */
     public void handleEvent(SVNEvent event, double progress) throws SVNException;
     

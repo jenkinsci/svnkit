@@ -117,6 +117,11 @@ public class SVNStatusType {
         return myID;
     }
     
+    /**
+     * Returns id of this object. 
+     * 
+     * @return id code
+     */
     public char getCode() {
         return myCode;
     }

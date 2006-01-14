@@ -25,6 +25,10 @@ import org.xml.sax.SAXException;
 
 
 /**
+ * This is an implementation of the <b>ISVNAnnotateHandler</b> interface 
+ * that writes XML formatted annotation information to a specified 
+ * <b>ContentHandler</b>. 
+ * 
  * @version 1.0
  * @author  TMate Software Ltd.
  */
@@ -41,7 +45,13 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
     public static final String BLAME_TAG = "blame";
     
     private long myLineNumber;
-
+    
+    /**
+     * Creates a new annotation handler.
+     * 
+     * @param contentHandler a <b>ContentHandler</b> to form 
+     *                       an XML tree
+     */
     public SVNXMLAnnotateHandler(ContentHandler contentHandler) {
         super(contentHandler);
     }
@@ -50,6 +60,12 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
         return BLAME_TAG;
     }
     
+    /**
+     * Begins an XML tree with the target path/URL for which 
+     * annotating is run.
+     *  
+     * @param pathOrURL a target file WC path or URL 
+     */
     public void startTarget(String pathOrURL) {
         myLineNumber = 1;
         try {
@@ -59,7 +75,11 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
             SVNDebugLog.logError(e);
         }
     }
-
+    
+    /**
+     * Closes the formatted XML. 
+     *
+     */
     public void endTarget() {
         myLineNumber = 1;
         try {

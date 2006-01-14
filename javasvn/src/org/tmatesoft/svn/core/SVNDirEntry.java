@@ -47,7 +47,7 @@ public class SVNDirEntry implements Comparable {
 
     /**
      * Constructs an instance of <b>SVNDirEntry</b>.
-     * 
+     * @param url           a url of this entry 
      * @param name 			an entry name
      * @param kind 			the node kind for the entry
      * @param size 			the entry size in bytes
@@ -182,13 +182,19 @@ public class SVNDirEntry implements Comparable {
         return myCommitMessage;
     }
     
-    
+    /**
+     * Gets the lock object for this entry (if it's locked).
+     * 
+     * @return a lock object or <span class="javakeyword">null</span>
+     */
     public SVNLock getLock() {
         return myLock;
     }
 
     /**
      * This method is used by JavaSVN internals and not intended for users (from an API point of view).
+     * 
+     * @param path this entry's path
      */
     public void setRelativePath(String path) {
         myPath = path;
@@ -196,13 +202,17 @@ public class SVNDirEntry implements Comparable {
     
     /**
      * This method is used by JavaSVN internals and not intended for users (from an API point of view).
+     * 
+     * @param message a commit message
      */
     public void setCommitMessage(String message) {
         myCommitMessage = message;
     }
 
     /**
-     * This method is used by JavaSVN internals and not intended for users (from an API point of view).
+     * Sets the lock object for this entry (if it's locked).
+     * 
+     * @param lock a lock object
      */
     public void setLock(SVNLock lock) {
         myLock = lock;

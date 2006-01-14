@@ -36,7 +36,7 @@ public interface ISVNRepositoryPool {
      * 
      * <p>
      * If <code>mayReuse</code> is <span class="javakeyword">true</span>
-     * and the pool feature for caching <b>SVNRepository</b> objects is suported
+     * and the pool feature for caching <b>SVNRepository</b> objects is supported
      * by the concrete implementation of this interface, then this method first 
      * tries to find an existing <b>SVNRepository</b> object 
      * in the pool of the current thread. If such an object is found that was

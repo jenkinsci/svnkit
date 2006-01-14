@@ -236,9 +236,10 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      * Dispatches file lines along with author & revision info to the provided
      * annotation handler.  
      * 
-     * @param handler        an annotation handler that processes file lines with
-     *                       author & revision info
-     * @param inputEncoding  a desired character set (encoding) of text lines
+     * @param  handler        an annotation handler that processes file lines with
+     *                        author & revision info
+     * @param  inputEncoding  a desired character set (encoding) of text lines
+     * @throws SVNException
      */
     public void reportAnnotations(ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
         if (myLines == null || handler == null) {

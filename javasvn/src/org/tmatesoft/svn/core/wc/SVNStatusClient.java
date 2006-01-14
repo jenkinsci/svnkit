@@ -118,6 +118,8 @@ public class SVNStatusClient extends SVNBasicClient {
      * 							ignores), otherwise <span class="javakeyword">false</span>  
      * @param  handler			a caller's status handler that will be involved
      * 							in processing status information
+     * @return                  the revision number the status information was collected
+     *                          against
      * @throws SVNException
      * @see	                    ISVNStatusHandler
      */

@@ -63,7 +63,8 @@ public interface ISVNAnnotateHandler {
 	 * @param author	the person who did those changes
 	 * @param line		a text line of the target file (on which 
      *                  {@link SVNLogClient#doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler) doAnnotate()}
-     *                  was invoked)  
+     *                  was invoked)
+     * @throws SVNException  
 	 */
 	public void handleLine(Date date, long revision, String author, String line) throws SVNException;
 

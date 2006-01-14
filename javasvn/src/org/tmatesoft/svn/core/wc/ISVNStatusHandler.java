@@ -40,6 +40,7 @@ public interface ISVNStatusHandler {
      * Handles WC item's status information using an <b>SVNStatus</b> object.
      * 
      * @param status  an object that contains per item status information
+     * @throws SVNException
      */
     public void handleStatus(SVNStatus status) throws SVNException;
 }

@@ -233,6 +233,11 @@ public class SVNCommitItem {
         myPath = path;
     }
     
+    /**
+     * This method is not intended for users (from an API point of view).
+     * 
+     * @return wc access object
+     */
     public SVNWCAccess getWCAccess() {
         return myWCAccess;
     }
