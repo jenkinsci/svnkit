@@ -60,7 +60,7 @@ Knowledge Base
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="javadoc/index.html">JavaSVN API (javadoc)</a>&nbsp;&nbsp;Last Updated: 2005.11.02
+<a href="javadoc/index.html">JavaSVN API (javadoc)</a>
 <br>
 Generated Java Documentation for API packages which include:
 <br>
@@ -68,6 +68,9 @@ Generated Java Documentation for API packages which include:
 <br>
 <b>org.tmatesoft.svn.core.wc</b> - contains a high-level API for managing Working Copies. This package 
 represents client classes which functionality is similar to the native SVN command line client.
+<br>
+<b>org.tmatesoft.svn.core.wc.xml</b> - provides a set of log, status & blame 
+handlers that output information to an org.xml.sax.ContentHandler.
 <br>
 <b>org.tmatesoft.svn.core</b> - common package that contains interfaces and classes used
 by the low-level API as well as the high-level one.
@@ -85,7 +88,6 @@ And yet one package for a javahl replacement:
 <br>
 <b>org.tmatesoft.svn.core.javahl</b> - contains an implementation of SVNClientInterface to use instead of 
 the native SVN binding - SVNClient. This implementation uses the JavaSVN library. 
-  
 </td>
 </tr>
 
@@ -109,7 +111,7 @@ click on file links.
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="dev-guide-update-operation.html" >Subversion operations: update</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<a href="dev-guide-update-operation.html" >Subversion operations: update</a>
 <br>
 This article gives information on using <b>ISVNReporter/ISVNEditor</b> (from the  
 <b>org.tmatesoft.svn.core.io</b> package) in update-related operations (update, checkout, etc.). 
@@ -119,7 +121,7 @@ This article gives information on using <b>ISVNReporter/ISVNEditor</b> (from the
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="dev-guide-commit-operation.html" >Subversion operations: commit</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<a href="dev-guide-commit-operation.html" >Subversion operations: commit</a>
 <br>
 This article gives information on using <b>ISVNEditor</b> (from the  
 <b>org.tmatesoft.svn.core.io</b> package) in commit operations. 
@@ -129,7 +131,7 @@ This article gives information on using <b>ISVNEditor</b> (from the
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="dev-guide-multithreaded-environment.html">Using JavaSVN in multithreaded environment</a>&nbsp;&nbsp;Last Updated: 2005.09.17
+<a href="dev-guide-multithreaded-environment.html">Using JavaSVN in multithreaded environment</a>
 <br>
 Some notes on how JavaSVN objects must be used in multithreaded programs.
 </td>
@@ -138,7 +140,7 @@ Some notes on how JavaSVN objects must be used in multithreaded programs.
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="dev-guide-network-connection.html" >Customizing network connections</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<a href="dev-guide-network-connection.html" >Customizing network connections</a>
 <br>
 This article describes how to customize JavaSVN http-connections, what default client-side 
 implementations of the HTTP protocol are used and what is needed to switch between them.
@@ -148,7 +150,7 @@ implementations of the HTTP protocol are used and what is needed to switch betwe
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="dev-guide-authentication.html" >Authentication</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<a href="dev-guide-authentication.html" >Authentication</a>
 <br>
 Read about how JavaSVN authenticates a client to a server, how to use default SVN
 credentials storage and settings, and how to make JavaSVN use your authentication driver.
@@ -158,7 +160,7 @@ credentials storage and settings, and how to make JavaSVN use your authenticatio
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="dev-guide-general-options.html" >General options</a>&nbsp;&nbsp;Last Updated: 2005.09.17
+<a href="dev-guide-general-options.html" >General options</a>
 <br>
 Like the SVN command line client JavaSVN WC managment classes use run-time configuration options. 
 This article is an overview of how those options are managed (read, save) and how default ones 
@@ -169,7 +171,7 @@ are used.
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="dev-guide-setting-custom-logger.html" >Setting a custom logger (for debug logging)</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<a href="dev-guide-setting-custom-logger.html" >Setting a custom logger (for debug logging)</a>
 <br>
 Read brief instructions on how to customize logging JavaSVN operations.
 </td>
@@ -178,7 +180,7 @@ Read brief instructions on how to customize logging JavaSVN operations.
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="dev-guide-svnclient.html">Using JavaSVN via SVNClientInterface (JavaHL) API</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<a href="dev-guide-svnclient.html">Using JavaSVN via SVNClientInterface (JavaHL) API</a>
 <br>
 Some notes on how you can use JavaSVN via the JavaHL API.
 </td>
@@ -193,7 +195,7 @@ Some notes on how you can use JavaSVN via the JavaHL API.
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="user-guide-debug-logs.html">Obtaining debug logs of JavaSVN operations</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<a href="user-guide-debug-logs.html">Obtaining debug logs of JavaSVN operations</a>
 <br>
 This article gives information on how to put into usage default logging of JavaSVN operations.
 </td>
@@ -220,7 +222,7 @@ This article describes how you can use JavaSVN in Ant tasks.
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="user-guide-config-settings.html" >Supported system properties and configuration options</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<a href="user-guide-config-settings.html" >Supported system properties and configuration options</a>
 <br>
 This article describes what configuration settings JavaSVN uses during
 run-time which include proxy, ssh, ssl and other ones. The article explains what is 
@@ -232,7 +234,7 @@ configuration is not available for some reason.
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="user-guide-javahl-replacement.html">Replacement for JavaHL API</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<a href="user-guide-javahl-replacement.html">Replacement for JavaHL API</a>
 <br>
 Some notes on how you can replace the JavaHL SVNClient class with the SVNClient
 one that uses only JavaSVN API.
@@ -242,7 +244,7 @@ one that uses only JavaSVN API.
 <tr>
 <td align=RIGHT valign=TOP style="padding-top: 10px"><img src="../img/arrow.gif" border=0 ></td>
 <td align=LEFT valign=TOP>
-<a href="user-guide-command-line-client.html" >JavaSVN command line client</a>&nbsp;&nbsp;Last Updated: 2005.09.11
+<a href="user-guide-command-line-client.html" >JavaSVN command line client</a>
 <br>
 Read information on the JavaSVN command line client which is an alternate for
 the native SVN one (supports most of the SVN's main commands).
