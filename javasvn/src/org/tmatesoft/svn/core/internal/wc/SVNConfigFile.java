@@ -96,7 +96,7 @@ public class SVNConfigFile {
             if (!groupMatched && matchGroup(line, groupName)) {
                 groupMatched = true;
             } else if (groupMatched) {
-                if (matchGroup(line, null)) {
+                if (matchGroup(line, null) /* or last line found*/) {
                     // property was not saved!!!
                     if (propertyValue != null) {
                         String[] lines = new String[myLines.length + 1];
@@ -121,12 +121,15 @@ public class SVNConfigFile {
                         save();
                     }
                     return;
-                }
+                } 
             }
         }
         if (propertyValue != null) {
-            String[] lines = new String[myLines.length + 2];
-            lines[lines.length - 2] = "[" + groupName + "]";
+            
+            String[] lines = new String[myLines.length + (groupMatched ? 1 : 2)];
+            if (!groupMatched) {
+                lines[lines.length - 2] = "[" + groupName + "]";
+            }
             lines[lines.length - 1] = propertyName + "  = " + propertyValue;
             System.arraycopy(myLines, 0, lines, 0, myLines.length);
             myLines = lines;
