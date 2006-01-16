@@ -10,8 +10,12 @@
 + documentations improved, Commit and Export examples simplified.
 + bugfixes
 
-! note: 
-  this version includes minor API changes and is not binary compatible with the previous versions.
+! Note: 
+  This version includes minor API changes and is not binary compatible 
+  with the previous versions. API changes are:
+  * String error messages replaced with SVNErrorMessage objects
+  * ISVNFileRevisionHanlder callback interface changed
+  * all callback interfaces methods now declared as throwing SVNException
 
 = version 1.0.1
 
