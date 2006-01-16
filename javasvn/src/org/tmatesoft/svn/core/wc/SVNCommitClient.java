@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -669,6 +670,9 @@ public class SVNCommitClient extends SVNBasicClient {
                 // commit completed, include revision number.
                 dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, info.getNewRevision()), ISVNEventHandler.UNKNOWN);
             } catch (SVNException e) {
+                if (e instanceof SVNCancelException) {
+                    throw e;
+                }
                 SVNErrorMessage err = SVNErrorMessage.create(e.getErrorMessage().getErrorCode(), "Commit failed (details follow):");
                 err.setChildErrorMessage(e.getErrorMessage());
                 infos.add(new SVNCommitInfo(-1, null, null, err));
@@ -754,6 +758,9 @@ public class SVNCommitClient extends SVNBasicClient {
             return new SVNCommitPacket(wcAccess, commitItems, lockTokens);
         } catch (SVNException e) {
             wcAccess.close(true);
+            if (e instanceof SVNCancelException) {
+                throw e;
+            }
             SVNErrorMessage nestedErr = e.getErrorMessage();
             SVNErrorMessage err = SVNErrorMessage.create(nestedErr.getErrorCode(), "Commit failed (details follow):");
             SVNErrorManager.error(err, e);
@@ -821,6 +828,9 @@ public class SVNCommitClient extends SVNBasicClient {
                 for (int j = 0; j < wcAccesses.length; j++) {
                     wcAccesses[j].close(true);
                 }
+                if (e instanceof SVNCancelException) {
+                    throw e;
+                }
                 SVNErrorMessage nestedErr = e.getErrorMessage();
                 SVNErrorMessage err = SVNErrorMessage.create(nestedErr.getErrorCode(), "Commit failed (details follow):");
                 SVNErrorManager.error(err, e);
@@ -877,6 +887,9 @@ public class SVNCommitClient extends SVNBasicClient {
             for (int j = 0; j < wcAccesses.length; j++) {
                 wcAccesses[j].close(true);
             }
+            if (e instanceof SVNCancelException) {
+                throw e;
+            }            
             SVNErrorMessage nestedErr = e.getErrorMessage();
             SVNErrorMessage err = SVNErrorMessage.create(nestedErr.getErrorCode(), "Commit failed (details follow):");
             SVNErrorManager.error(err, e);

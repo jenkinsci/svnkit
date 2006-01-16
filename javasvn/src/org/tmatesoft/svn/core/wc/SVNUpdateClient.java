@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -560,6 +561,9 @@ public class SVNUpdateClient extends SVNBasicClient {
                             setEventPathPrefix(relativePath);
                             doExport(srcURL, targetDir, srcRevision, srcRevision, eolStyle, force, recursive);
                         } catch (SVNException e) {
+                            if (e instanceof SVNCancelException) {
+                                throw e;
+                            }
                             dispatchEvent(new SVNEvent(e.getErrorMessage()));
                         } finally {
                             setEventPathPrefix(null);
@@ -698,6 +702,9 @@ public class SVNUpdateClient extends SVNBasicClient {
                     }
                 }
             } catch (SVNException th) {
+                if (th instanceof SVNCancelException) {
+                    throw th;
+                }
                 dispatchEvent(new SVNEvent(th.getErrorMessage()));
                 SVNDebugLog.logInfo(th);
             } finally {

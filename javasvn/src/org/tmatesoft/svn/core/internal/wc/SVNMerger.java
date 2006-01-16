@@ -54,7 +54,7 @@ public class SVNMerger {
         return myIsDryRun;
     }
 
-    public SVNStatusType directoryDeleted(final String path) {
+    public SVNStatusType directoryDeleted(final String path) throws SVNException {
         SVNDirectory parentDir = getParentDirectory(path);
         if (parentDir == null) {
             return SVNStatusType.MISSING;
@@ -88,6 +88,9 @@ public class SVNMerger {
                     try {
                         parentDir.canScheduleForDeletion(name);
                     } catch (SVNException e) {
+                        if (e instanceof SVNCancelException) {
+                            throw e;
+                        }
                         SVNDebugLog.logInfo(e);
                         return SVNStatusType.OBSTRUCTED;
                     }
@@ -96,6 +99,9 @@ public class SVNMerger {
                     try {
                         parentDir.scheduleForDeletion(name, true);
                     } catch (SVNException e) {
+                        if (e instanceof SVNCancelException) {
+                            throw e;
+                        }
                         return SVNStatusType.OBSTRUCTED;
                     }
                 }
@@ -109,7 +115,7 @@ public class SVNMerger {
         return SVNStatusType.MISSING;
     }
 
-    public SVNStatusType fileDeleted(String path) {
+    public SVNStatusType fileDeleted(String path) throws SVNException {
         SVNDirectory parentDir = getParentDirectory(path);
         if (parentDir == null) {
             return SVNStatusType.MISSING;
@@ -119,13 +125,24 @@ public class SVNMerger {
         if (targetFile.isDirectory()) {
             return SVNStatusType.OBSTRUCTED;
         } else if (targetFile.isFile()) {
-            ISVNEventHandler oldDispatcher = myWCAccess.getEventDispatcher();
+            final ISVNEventHandler oldDispatcher = myWCAccess.getEventDispatcher();
             try {
-                myWCAccess.setEventDispatcher(null);
+                myWCAccess.setEventDispatcher(new ISVNEventHandler() {
+                    public void handleEvent(SVNEvent event, double progress) throws SVNException {
+                    }
+                    public void checkCancelled() throws SVNCancelException {
+                        if (oldDispatcher != null) {
+                            oldDispatcher.checkCancelled();
+                        }
+                    }                    
+                });
                 if (!myIsForce) {
                     try {
                         parentDir.canScheduleForDeletion(name);
                     } catch (SVNException e) {
+                        if (e instanceof SVNCancelException) {
+                            throw e;
+                        }
                         return SVNStatusType.OBSTRUCTED;
                     }
                 }
@@ -133,6 +150,9 @@ public class SVNMerger {
                     try {
                         parentDir.scheduleForDeletion(name, true);
                     } catch (SVNException e) {
+                        if (e instanceof SVNCancelException) {
+                            throw e;
+                        }
                         return SVNStatusType.OBSTRUCTED;
                     }
                 }

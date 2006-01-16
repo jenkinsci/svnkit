@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -213,6 +214,7 @@ public class SVNStatusClient extends SVNBasicClient {
             }
         }
         // to report all when there is completely no changes
+        checkCancelled();
         statusEditor.closeEdit();
         if (remote && statusEditor.getTargetRevision() >= 0) {
             SVNEvent event = SVNEventFactory.createStatusCompletedEvent(wcAccess, statusEditor.getTargetRevision());
@@ -233,6 +235,9 @@ public class SVNStatusClient extends SVNBasicClient {
                     doStatus(externalFile, recursive, remote, reportAll, includeIgnored, false, handler);
                 } catch (SVNException e) {
                     // fire error event.
+                    if (e instanceof SVNCancelException) {
+                        throw e;
+                    }
                 } finally {
                     setEventPathPrefix(externalPath);
                 }

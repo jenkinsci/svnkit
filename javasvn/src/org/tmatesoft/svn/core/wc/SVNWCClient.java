@@ -1707,7 +1707,7 @@ public class SVNWCClient extends SVNBasicClient {
     public String doGetWorkingCopyID(final File path, String trailURL) throws SVNException {
         try {
             createWCAccess(path);
-        } catch (SVNException e) {
+        } catch (SVNException e) {            
             SVNFileType pathType = SVNFileType.getType(path);
             if (pathType == SVNFileType.DIRECTORY) {
                 return "exported";
@@ -1968,6 +1968,7 @@ public class SVNWCClient extends SVNBasicClient {
                 try {
                     doSetLocalProperty(dir, name, propName, propValue, false, false, null);
                 } catch (SVNException e) {
+                    // skip cancellation here.
                 }
             }
         }
