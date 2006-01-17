@@ -469,7 +469,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNWCAccess wcAccess = createWCAccess(path);
         try {
             wcAccess.open(true, recursive);
-            doSetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(), propName, propValue, force, recursive, handler);
+            doSetLocalProperty(wcAccess.getAnchor(), wcAccess.getTargetName(), propName, propValue, force, recursive, true, handler);
         } finally {
             wcAccess.close(true);
         }
@@ -1966,7 +1966,7 @@ public class SVNWCClient extends SVNBasicClient {
                 String propName = (String) names.next();
                 String propValue = (String) props.get(propName);
                 try {
-                    doSetLocalProperty(dir, name, propName, propValue, false, false, null);
+                    doSetLocalProperty(dir, name, propName, propValue, false, false, false, null);
                 } catch (SVNException e) {
                     // skip cancellation here.
                 }
@@ -2102,8 +2102,10 @@ public class SVNWCClient extends SVNBasicClient {
 
     private void doSetLocalProperty(SVNDirectory anchor, String name,
             String propName, String propValue, boolean force,
-            boolean recursive, ISVNPropertyHandler handler) throws SVNException {
-        checkCancelled();
+            boolean recursive, boolean cancel, ISVNPropertyHandler handler) throws SVNException {
+        if (cancel) {
+            checkCancelled();
+        }
         SVNEntries entries = anchor.getEntries();
         if (!"".equals(name)) {
             SVNEntry entry = entries.getEntry(name, true);
@@ -2114,7 +2116,7 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNDirectory dir = anchor.getChildDirectory(name);
                 if (dir != null) {
                     doSetLocalProperty(dir, "", propName, propValue, force,
-                            recursive, handler);
+                            recursive, cancel, handler);
                 }
             } else if (entry.getKind() == SVNNodeKind.FILE) {
                 File wcFile = anchor.getFile(name);
@@ -2186,7 +2188,7 @@ public class SVNWCClient extends SVNBasicClient {
                 continue;
             }
             doSetLocalProperty(anchor, entry.getName(), propName, propValue,
-                    force, recursive, handler);
+                    force, recursive, cancel, handler);
         }
     }
 
