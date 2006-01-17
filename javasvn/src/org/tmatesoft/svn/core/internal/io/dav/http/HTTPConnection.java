@@ -444,6 +444,10 @@ class HTTPConnection implements IHTTPConnection {
                 xmlReader.setErrorHandler(DEFAULT_SAX_HANDLER);
                 xmlReader.setEntityResolver(NO_ENTITY_RESOLVER);
             }
+            // try to skip data if there are any.
+            try {
+                while(is.skip(2048) > 0);
+            } catch (IOException e) {}
             SVNDebugLog.flushStream(is);
         }
         return null;
