@@ -236,7 +236,6 @@ class HTTPConnection implements IHTTPConnection {
                 }
                 request.dispatch(method, path, header, ok1, ok2);
                 status = request.getStatus();
-                finishResponse(request.getResponseHeader());                
             } catch (SSLHandshakeException ssl) {
                 if (sslManager != null) {
                     SVNSSLAuthentication sslAuth = sslManager.getClientAuthentication();
@@ -255,6 +254,13 @@ class HTTPConnection implements IHTTPConnection {
                 } else {
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
                 }
+            } catch (SVNException e) {
+                // force connection close on SVNException 
+                // (could be thrown by user's auth manager methods).
+                close();
+                throw e;
+            } finally {            
+                finishResponse(request);                
             }
             if (err != null) {
                 close();
@@ -342,9 +348,11 @@ class HTTPConnection implements IHTTPConnection {
             status.setHeader(request.getResponseHeader());
             return status;
         }
+        // force close on error that was not processed before.
+        // these are errors that has no relation to http status (processing error or cancellation).
+        close();
         if (err != null && err.getErrorCode().getCategory() != SVNErrorCode.RA_DAV_CATEGORY &&
             err.getErrorCode() != SVNErrorCode.UNSUPPORTED_FEATURE) {
-            // handler error.
             SVNErrorManager.error(err);
         }
             
@@ -444,10 +452,6 @@ class HTTPConnection implements IHTTPConnection {
                 xmlReader.setErrorHandler(DEFAULT_SAX_HANDLER);
                 xmlReader.setEntityResolver(NO_ENTITY_RESOLVER);
             }
-            // try to skip data if there are any.
-            try {
-                while(is.skip(2048) > 0);
-            } catch (IOException e) {}
             SVNDebugLog.flushStream(is);
         }
         return null;
@@ -512,15 +516,17 @@ class HTTPConnection implements IHTTPConnection {
         return myOutputStream;
     }
 
-    private void finishResponse(Map readHeader) {
+    private void finishResponse(HTTPRequest request) {
         if (myOutputStream != null) {
             try {
                 myOutputStream.flush();
             } catch (IOException ex) {
             }
         }
-        if ("close".equalsIgnoreCase((String) readHeader.get("Connection")) || 
-                "close".equalsIgnoreCase((String) readHeader.get("Proxy-Connection"))) {
+        Map header = request != null ? request.getResponseHeader() : null;
+        if (header == null || 
+                "close".equalsIgnoreCase((String) header.get("Connection")) || 
+                "close".equalsIgnoreCase((String) header.get("Proxy-Connection"))) {
             close();
         }
     }
