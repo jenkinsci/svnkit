@@ -158,22 +158,30 @@ class SVNCommitEditor implements ISVNEditor {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
-        myConnection.write("(w())", new Object[] { "close-edit" });
+	    try {
+		    myConnection.write("(w())", new Object[] { "close-edit" });
 
-        myConnection.read("[()]", null);
-        myRepository.authenticate();
+		    myConnection.read("[()]", null);
+		    myRepository.authenticate();
 
-        Object[] items = myConnection.read("(N(?S)(?S))", new Object[3]);
-        long revision = SVNReader.getLong(items, 0);
-        Date date = SVNReader.getDate(items, 1);
+		    Object[] items = myConnection.read("(N(?S)(?S))", new Object[3]);
+		    long revision = SVNReader.getLong(items, 0);
+		    Date date = SVNReader.getDate(items, 1);
 
-        myCloseCallback.run();
-        return new SVNCommitInfo(revision, (String) items[2], date);
+		    return new SVNCommitInfo(revision, (String) items[2], date);
+	    }
+	    finally {
+		    myCloseCallback.run();
+	    }
     }
 
     public void abortEdit() throws SVNException {
-        myConnection.write("(w())", new Object[] { "abort-edit" });
-        myCloseCallback.run();
+	    try {
+		    myConnection.write("(w())", new Object[] { "abort-edit" });
+	    }
+	    finally {
+		    myCloseCallback.run();
+	    }
     }
 
     private static String computeParentPath(String path) {

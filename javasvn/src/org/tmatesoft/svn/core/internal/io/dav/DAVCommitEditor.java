@@ -338,43 +338,55 @@ class DAVCommitEditor implements ISVNEditor {
     }
     
     public SVNCommitInfo closeEdit() throws SVNException {
-        if (!myDirsStack.isEmpty()) {
-            DAVResource resource = (DAVResource) myDirsStack.pop();
-            // do proppatch if there were property changes.
-            if (resource.getProperties() != null) {
-                StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, resource.getProperties());
-                myConnection.doProppatch(resource.getURL(), resource.getWorkingURL(), request, null);
-            }
-            resource.dispose();
-        }
-        DAVMergeHandler handler = new DAVMergeHandler(myCommitMediator, myPathsMap);
-        HTTPStatus status = myConnection.doMerge(myActivity, true, handler);
-        abortEdit();
-        if (status.getError() != null) {
-            SVNErrorManager.error(status.getError());
-        }
-        return handler.getCommitInfo();
+	    try {
+		    if (!myDirsStack.isEmpty()) {
+		        DAVResource resource = (DAVResource) myDirsStack.pop();
+		        // do proppatch if there were property changes.
+		        if (resource.getProperties() != null) {
+		            StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, resource.getProperties());
+		            myConnection.doProppatch(resource.getURL(), resource.getWorkingURL(), request, null);
+		        }
+		        resource.dispose();
+		    }
+		    DAVMergeHandler handler = new DAVMergeHandler(myCommitMediator, myPathsMap);
+		    HTTPStatus status = myConnection.doMerge(myActivity, true, handler);
+		    if (status.getError() != null) {
+		        SVNErrorManager.error(status.getError());
+		    }
+		    return handler.getCommitInfo();
+	    }
+	    finally {
+		    abortEdit();
+	    }
     }
     
     public void abortEdit() throws SVNException {
-        // DELETE activity
-        if (myActivity != null) {
-            myConnection.doDelete(myActivity);
-        }
-        // dispose all resources!
-        if (myFilesMap != null) {
-            for (Iterator files = myFilesMap.values().iterator(); files.hasNext();) {
-                DAVResource file = (DAVResource) files.next();
-                file.dispose();
-            }
-            myFilesMap = null;
-        }
-        for(Iterator files = myDirsStack.iterator(); files.hasNext();) {
-            DAVResource resource = (DAVResource) files.next();
-            resource.dispose();            
-        }
-        myDirsStack = null;
-        myCloseCallback.run();
+	    try {
+		    try {
+			    // DELETE activity
+			    if (myActivity != null) {
+			        myConnection.doDelete(myActivity);
+			    }
+		    }
+		    finally {
+			    // dispose all resources!
+			    if (myFilesMap != null) {
+			        for (Iterator files = myFilesMap.values().iterator(); files.hasNext();) {
+			            DAVResource file = (DAVResource) files.next();
+			            file.dispose();
+			        }
+			        myFilesMap = null;
+			    }
+			    for(Iterator files = myDirsStack.iterator(); files.hasNext();) {
+			        DAVResource resource = (DAVResource) files.next();
+			        resource.dispose();
+			    }
+			    myDirsStack = null;
+		    }
+	    }
+	    finally {
+		    myCloseCallback.run();
+	    }
     }
     
     private String createActivity(String logMessage) throws SVNException {
