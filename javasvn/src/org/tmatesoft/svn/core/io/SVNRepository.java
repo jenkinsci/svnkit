@@ -1643,7 +1643,7 @@ public abstract class SVNRepository {
             synchronized(this) {
                 while ((myLockCount > 0) || (myLocker != null)) {
                     if (Thread.currentThread() == myLocker) {
-                        throw new Error("SVNRerpository methods are not reenterable");
+                        throw new Error("SVNRepository methods are not reenterable");
                     }
                     wait();
                 }
