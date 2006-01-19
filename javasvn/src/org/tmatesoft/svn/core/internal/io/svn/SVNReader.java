@@ -261,14 +261,17 @@ class SVNReader {
                         readChar(is, '(');
                         List errorMessages = new ArrayList();
                         try {
-                            is.mark(0x100);
                             while (true) {
+                                is.mark(0x100);
                                 SVNErrorMessage err = readError(is);
                                 errorMessages.add(err);
                             }
                         } catch (SVNException e) {
                             is.reset();
-                        }
+                            readChar(is, ')');
+                            readChar(is, ')');
+                        } 
+                        unconditionalThrow = true;
                         SVNErrorMessage topError = (SVNErrorMessage) errorMessages.get(0);
                         for(int k = 1; k < errorMessages.size(); k++) {
                             SVNErrorMessage child = (SVNErrorMessage) errorMessages.get(k);
@@ -315,9 +318,15 @@ class SVNReader {
                         return target;
                     }
                 } else if (ch == 'x') {
-                    String word = readWord(is);
-                    if (!"done".equals(word)) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, 'done' expected"));
+                    try {
+                        String word = readWord(is);
+                        if (!"done".equals(word)) {
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, 'done' expected"));
+                        }
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed network data, 'done' expected"));
+                        }
                     }
                 } else if (ch == 'l') {
                     result = readLock(is);//new RollbackInputStream(is));

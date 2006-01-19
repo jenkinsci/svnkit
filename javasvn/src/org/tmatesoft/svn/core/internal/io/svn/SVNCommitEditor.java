@@ -124,6 +124,7 @@ class SVNCommitEditor implements ISVNEditor {
     }
 
     private int myDiffWindowCount = 0;
+    private boolean myIsAborted;
     
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         myConnection.write("(w(s", new Object[] { "textdelta-chunk", path });
@@ -169,18 +170,22 @@ class SVNCommitEditor implements ISVNEditor {
 		    Date date = SVNReader.getDate(items, 1);
 
 		    return new SVNCommitInfo(revision, (String) items[2], date);
-	    }
-	    finally {
+	    } finally {
 		    myCloseCallback.run();
+            myCloseCallback = null;
 	    }
     }
 
     public void abortEdit() throws SVNException {
+        if (myIsAborted || myCloseCallback == null) {
+            return;
+        }
+        myIsAborted = true;
 	    try {
 		    myConnection.write("(w())", new Object[] { "abort-edit" });
-	    }
-	    finally {
+	    } finally {
 		    myCloseCallback.run();
+            myCloseCallback = null;
 	    }
     }
 

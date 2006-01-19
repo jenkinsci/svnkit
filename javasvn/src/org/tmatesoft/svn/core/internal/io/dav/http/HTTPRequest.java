@@ -299,10 +299,10 @@ class HTTPRequest {
     
     public static SVNErrorMessage createDefaultErrorMessage(SVNURL host, HTTPStatus status, String context, Object[] contextObjects) {
         SVNErrorCode errorCode = SVNErrorCode.RA_DAV_REQUEST_FAILED;
-        String message = status != null ? status.getStatusLine() : "";
+        String message = status != null ? status.getCode() + " " + status.getReason() : "";
         if (status != null && status.getCode() == HttpURLConnection.HTTP_FORBIDDEN || status.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
             errorCode = SVNErrorCode.RA_NOT_AUTHORIZED;
-            message = "authorization failed";
+            message = status.getCode() + " " + status.getReason();
         }
         // extend context object to include host:port (empty location).
         Object[] messageObjects = contextObjects == null ? new Object[1] : new Object[contextObjects.length + 1];

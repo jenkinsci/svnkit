@@ -262,6 +262,7 @@ class DAVCommitEditor implements ISVNEditor {
     
     private OutputStream myCurrentDelta = null;
     private OutputStream myRealDeltaStream = null;
+    private boolean myIsAborted;
     
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         // save window, create temp file.
@@ -361,6 +362,10 @@ class DAVCommitEditor implements ISVNEditor {
     }
     
     public void abortEdit() throws SVNException {
+        if (myIsAborted) {
+            return;
+        }
+        myIsAborted = true;
 	    try {
 		    try {
 			    // DELETE activity
