@@ -368,7 +368,7 @@ class HTTPConnection implements IHTTPConnection {
         SVNSSLAuthentication sslAuth = null;
         String sslRealm = "<" + location.getProtocol() + "://" + location.getHost() + ":" + location.getPort() + ">";
         if (myIsSecured) {
-            sslManager = authManager.getSSLManager(location);
+            sslManager = authManager != null ? authManager.getSSLManager(location) : null;
         }
         if (authManager != null && sslManager != null && sslManager.isClientCertPromptRequired()) {
             if (firstAuth) {
