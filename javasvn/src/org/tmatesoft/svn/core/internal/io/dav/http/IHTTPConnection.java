@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.xml.sax.helpers.DefaultHandler;
@@ -23,7 +24,11 @@ public interface IHTTPConnection {
 
     public HTTPStatus request(String method, String path, Map header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException;
 
+    public HTTPStatus request(String method, String path, Map header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException;
+
     public HTTPStatus request(String method, String path, Map header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException;
+
+    public HTTPStatus request(String method, String path, Map header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException;
 
     public SVNAuthentication getLastValidCredentials();
 

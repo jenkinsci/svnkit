@@ -131,7 +131,7 @@ class HTTPRequest {
      *  - body may be resetable inputStream + length - IMeasurable.
      *  // this may throw IOException that will be converted to: timeout error, can't connect error, or ssl will re-prompt.
      */
-    public void dispatch(String request, String path, Map header, int ok1, int ok2) throws IOException {
+    public void dispatch(String request, String path, Map header, int ok1, int ok2, SVNErrorMessage context) throws IOException {
         int length = 0;
         if (myRequestBody != null) {
             length = myRequestBody.length;
@@ -147,7 +147,8 @@ class HTTPRequest {
         } else if (myRequestStream != null && length > 0) {
             myConnection.sendData(myRequestStream, length);
         }
-        myConnection.readHeader(this);
+        myConnection.readHeader(this);        
+        context = context == null ? SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} of ''{1}''", new Object[] {request, path}) : context; 
         
         // check status.
         if (myStatus.getCode() == HttpURLConnection.HTTP_MOVED_PERM || 
@@ -155,7 +156,7 @@ class HTTPRequest {
                 myStatus.getCode() == HttpURLConnection.HTTP_FORBIDDEN ||
                 myStatus.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
             // these errors are always processed by the caller, to allow retry.
-            myErrorMessage = createDefaultErrorMessage(myConnection.getHost(), myStatus, "{0} of ''{1}''", new Object[] {request, path});
+            myErrorMessage = createDefaultErrorMessage(myConnection.getHost(), myStatus, context.getMessageTemplate(), context.getRelatedObjects());
             myConnection.skipData(this);
             return;
         }
@@ -172,11 +173,11 @@ class HTTPRequest {
         }
         if (notExpected) {
             // unexpected response code.
-            myErrorMessage = readError(request, path);
+            myErrorMessage = readError(request, path, context);
         } else if (myStatus.getCode() == HttpURLConnection.HTTP_NO_CONTENT) {
             myConnection.skipData(this);
         } else if (myStatus.getCode() >= 300 || myStatus.getCode() != expectedCode) {
-            SVNErrorMessage error = readError(request, path);
+            SVNErrorMessage error = readError(request, path, context);
             myStatus.setError(error);
         } else if (myResponseStream != null) {
             myErrorMessage = myConnection.readData(this, myResponseStream);
@@ -187,18 +188,14 @@ class HTTPRequest {
         }
     }
 
-    private SVNErrorMessage readError(String request, String path) {
-        String context;
-        Object[] contextObjects;
-        SVNErrorMessage error;
+    private SVNErrorMessage readError(String request, String path, SVNErrorMessage context) {
+        String contextMessage = context.getMessageTemplate();
+        Object[] contextObjects = context.getRelatedObjects();
         if (myStatus.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-            context = "''{0}'' path not found";
-            error = SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, context, path);
-        } else {
-            context = "{0} of ''{1}''";
-            contextObjects = new Object[] {request, path};
-            error = createDefaultErrorMessage(myConnection.getHost(), myStatus, context, contextObjects);
-        }
+            contextMessage = "''{0}'' path not found";
+            contextObjects = new Object[] {path};
+        } 
+        SVNErrorMessage error = createDefaultErrorMessage(myConnection.getHost(), myStatus, contextMessage, contextObjects);
         SVNErrorMessage davError = myConnection.readError(this, request, path);
         if (davError != null) {
             if (error != null) {
@@ -311,7 +308,7 @@ class HTTPRequest {
         if (messageObjects.length > 1) {
             System.arraycopy(contextObjects, 0, messageObjects, 0, contextObjects.length);
         }
-        return SVNErrorMessage.create(errorCode, context + ": " + message + " (''{" + index + "}'')", messageObjects);
+        return SVNErrorMessage.create(errorCode, context + ": " + message + " ({" + index + "})", messageObjects);
     }
     
 }

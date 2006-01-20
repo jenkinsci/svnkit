@@ -643,7 +643,7 @@ class DAVRepository extends SVNRepository {
             String path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             path = info.baseline;
             try {
-                myConnection.doProppatch(null, path, request, null);
+                myConnection.doProppatch(null, path, request, null, null);
             } catch (SVNException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "DAV request failed; it's possible that the repository's " +
                         "pre-rev-propchange hook either failed or is non-existent");

@@ -111,7 +111,7 @@ class HTTPConnection implements IHTTPConnection {
                     HTTPRequest connectRequest = new HTTPRequest();
                     connectRequest.setConnection(this);
                     connectRequest.setProxyAuthentication(myProxyAuthentication);
-                    connectRequest.dispatch("CONNECT", host + ":" + port, null, 0, 0);
+                    connectRequest.dispatch("CONNECT", host + ":" + port, null, 0, 0, null);
                     HTTPStatus status = connectRequest.getStatus();
                     if (status.getCode() == HttpURLConnection.HTTP_OK) {
                         myInputStream = null;
@@ -191,6 +191,10 @@ class HTTPConnection implements IHTTPConnection {
     }
 
     public HTTPStatus request(String method, String path, Map header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
+        return request(method, path, header, body, ok1, ok2, dst, handler, null);
+    }
+
+    public HTTPStatus request(String method, String path, Map header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
         byte[] buffer = null;
         if (body != null) {
             try {
@@ -199,10 +203,14 @@ class HTTPConnection implements IHTTPConnection {
                 buffer = body.toString().getBytes();
             }
         } 
-        return request(method, path, header, buffer != null ? new ByteArrayInputStream(buffer) : null, ok1, ok2, dst, handler);
+        return request(method, path, header, buffer != null ? new ByteArrayInputStream(buffer) : null, ok1, ok2, dst, handler, context);
+    }
+
+    public HTTPStatus request(String method, String path, Map header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
+        return request(method, path, header, body, ok1, ok2, dst, handler, null);
     }
     
-    public HTTPStatus request(String method, String path, Map header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
+    public HTTPStatus request(String method, String path, Map header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
         if (myCredentialsChallenge != null) {
             myCredentialsChallenge.put("methodname", method);
             myCredentialsChallenge.put("uri", path);
@@ -234,7 +242,7 @@ class HTTPConnection implements IHTTPConnection {
                 if (httpAuth != null && myCredentialsChallenge != null) {
                     request.setAuthentication(composeAuthResponce(httpAuth, myCredentialsChallenge));
                 }
-                request.dispatch(method, path, header, ok1, ok2);
+                request.dispatch(method, path, header, ok1, ok2, context);
                 status = request.getStatus();
             } catch (SSLHandshakeException ssl) {
                 if (sslManager != null) {
@@ -285,9 +293,20 @@ class HTTPConnection implements IHTTPConnection {
                 myLastValidAuth = null;
                 close();
                 
-                myCredentialsChallenge = HTTPParser.parseAuthParameters((String) request.getResponseHeader().get("WWW-Authenticate"));
+                String authHeader = (String) request.getResponseHeader().get("WWW-Authenticate");
+                if (authHeader == null) {
+                    err = request.getErrorMessage();
+                    status.setError(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, err.getMessageTemplate(), err.getRelatedObjects()));
+                    if ("LOCK".equalsIgnoreCase(method)) {
+                        status.getError().setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                                "Probably you are trying to lock file in repository that only allows anonymous access"));
+                    }
+                    SVNErrorManager.error(status.getError());
+                    return status;  
+                }
+                myCredentialsChallenge = HTTPParser.parseAuthParameters(authHeader);
                 if (myCredentialsChallenge == null) {
-                    err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "HTTP authorization method ''{0}'' is not supported", request.getResponseHeader().get("WWW-Authenticate")); 
+                    err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "HTTP authorization method ''{0}'' is not supported", authHeader); 
                     break;
                 }
                 myCredentialsChallenge.put("methodname", method);
@@ -355,9 +374,9 @@ class HTTPConnection implements IHTTPConnection {
             err.getErrorCode() != SVNErrorCode.UNSUPPORTED_FEATURE) {
             SVNErrorManager.error(err);
         }
-            
+        // err2 is another default context...
         SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path});
-        SVNErrorManager.error(err2, err);
+        SVNErrorManager.error(err, err2);
         return null;
     }
 

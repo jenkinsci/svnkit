@@ -103,7 +103,8 @@ public class DAVConnection {
         DAVBaselineInfo info = DAVUtil.getBaselineInfo(this, repos, path, -1, false, true, null);
         StringBuffer body = DAVGetLockHandler.generateGetLockRequest(null);
         DAVGetLockHandler handler = new DAVGetLockHandler();
-        HTTPStatus rc = myHttpConnection.request("PROPFIND", path, null, body, 200, 207, null, handler);
+        SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Failed to fetch lock information");
+        HTTPStatus rc = myHttpConnection.request("PROPFIND", path, null, body, 200, 207, null, handler, context);
         
         String id = handler.getID();
         if (id == null) {
@@ -161,12 +162,9 @@ public class DAVConnection {
             header.put("X-SVN-Options", "lock-steal");
         }
         DAVGetLockHandler handler = new DAVGetLockHandler();
-        HTTPStatus status = myHttpConnection.request("LOCK", path, header, body, -1, 0, null, handler);
+        SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Lock request failed");
+        HTTPStatus status = myHttpConnection.request("LOCK", path, header, body, -1, 0, null, handler, context);
         if (status.getError() != null) {
-            if (status.getError().getErrorCode().getCategory() == SVNErrorCode.RA_DAV_CATEGORY) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Lock request failed");
-                SVNErrorManager.error(err, status.getError());
-            }
             SVNErrorManager.error(status.getError());
         }
         if (status != null) {
@@ -198,27 +196,29 @@ public class DAVConnection {
         if (force) {
             header.put("X-SVN-Options", "lock-break");
         }
-        myHttpConnection.request("UNLOCK", path, header, (StringBuffer) null, 204, 0, null, null);
+        SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unlock request failed");
+        myHttpConnection.request("UNLOCK", path, header, (StringBuffer) null, 204, 0, null, null, context);
     }
 
 	public void doGet(String path, OutputStream os) throws SVNException {
-		myHttpConnection.request("GET", path, null, (StringBuffer) null, 200, 226, os, null);
+        SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "GET request failed for ''{0}''", path);
+		myHttpConnection.request("GET", path, null, (StringBuffer) null, 200, 226, os, null, context);
     }
 	
 	public HTTPStatus doReport(String path, StringBuffer requestBody, DefaultHandler handler) throws SVNException {
 		return myHttpConnection.request("REPORT", path, null, requestBody, -1, 0, null, handler);
 	}
 
-    public void doProppatch(String repositoryPath, String path, StringBuffer requestBody, DefaultHandler handler) throws SVNException {
+    public void doProppatch(String repositoryPath, String path, StringBuffer requestBody, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
         Map header = null;
         if (myLocks != null && repositoryPath != null && myLocks.containsKey(repositoryPath)) {
             header = new HashMap();
             header.put("If", "(<" + myLocks.get(repositoryPath) + ">)");
         }
         try {
-            myHttpConnection.request("PROPPATCH", path, header, requestBody, 200, 207, null, handler);
+            myHttpConnection.request("PROPPATCH", path, header, requestBody, 200, 207, null, handler, context);
         } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
+            if (context == null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPPATCH_FAILED, "At least one property change failed; repository is unchanged");
                 SVNErrorManager.error(err);
             }
@@ -346,7 +346,8 @@ public class DAVConnection {
         Map header = new HashMap();
         header.put("Destination", dst);
         header.put("Depth", depth > 0 ? "infinity" : "0");
-        HTTPStatus status = myHttpConnection.request("COPY", src, header, (StringBuffer) null, -1, 0, null, null);
+        SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "COPY of {0}", src);
+        HTTPStatus status = myHttpConnection.request("COPY", src, header, (StringBuffer) null, -1, 0, null, null, context);
         if (status.getCode() >= 300 && status.getError() != null) {
             SVNErrorMessage err = status.getError();
             SVNErrorManager.error(err);

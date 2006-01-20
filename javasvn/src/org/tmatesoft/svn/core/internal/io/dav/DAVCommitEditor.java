@@ -186,7 +186,7 @@ class DAVCommitEditor implements ISVNEditor {
         // do proppatch if there were property changes.
         if (resource.getProperties() != null) {
             StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, resource.getProperties());
-            myConnection.doProppatch(resource.getURL(), resource.getWorkingURL(), request, null);
+            myConnection.doProppatch(resource.getURL(), resource.getWorkingURL(), request, null, null);
         }
         resource.dispose();
     }
@@ -328,7 +328,7 @@ class DAVCommitEditor implements ISVNEditor {
             // do proppatch if there were property changes.
             if (currentFile.getProperties() != null) {
                 StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, currentFile.getProperties());
-                myConnection.doProppatch(currentFile.getURL(), currentFile.getWorkingURL(), request, null);
+                myConnection.doProppatch(currentFile.getURL(), currentFile.getWorkingURL(), request, null, null);
             }
         } finally {
             currentFile.dispose();
@@ -345,7 +345,7 @@ class DAVCommitEditor implements ISVNEditor {
 		        // do proppatch if there were property changes.
 		        if (resource.getProperties() != null) {
 		            StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, resource.getProperties());
-		            myConnection.doProppatch(resource.getURL(), resource.getWorkingURL(), request, null);
+		            myConnection.doProppatch(resource.getURL(), resource.getWorkingURL(), request, null, null);
 		        }
 		        resource.dispose();
 		    }
@@ -411,8 +411,9 @@ class DAVCommitEditor implements ISVNEditor {
         // proppatch log message.
         logMessage = logMessage == null ? "" : logMessage;
         StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, SVNRevisionProperty.LOG, logMessage);
+        SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "applying log message to {0}", path);
         try {
-            myConnection.doProppatch(null, location, request, null);
+            myConnection.doProppatch(null, location, request, null, context);
         } catch (SVNException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "applying log message to {0}", path);
             SVNErrorManager.error(err);
