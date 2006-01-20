@@ -68,8 +68,9 @@ public class SVNReporter implements ISVNReporterBaton {
                 revision = anchorEntries.getEntry("", true).getRevision();
             }
             reporter.setPath("", null, revision, targetEntry.isIncomplete());
-            boolean missing = !targetEntry.isScheduledForDeletion() &&  
-                !myWCAccess.getAnchor().getFile(myWCAccess.getTargetName()).exists();
+            File file = myWCAccess.getAnchor().getFile(myWCAccess.getTargetName());
+            SVNFileType fileType = SVNFileType.getType(file);
+            boolean missing = !targetEntry.isScheduledForDeletion() && fileType == SVNFileType.NONE;
             
             if (targetEntry.isDirectory()) {
                 if (missing) {
@@ -145,17 +146,16 @@ public class SVNReporter implements ISVNReporterBaton {
                 continue;
             }
             File file = directory.getFile(entry.getName());
-            boolean missing = !file.exists();
+            SVNFileType fileType = SVNFileType.getType(file);
+            boolean missing = fileType == SVNFileType.NONE;
             if (entry.isFile()) {
                 if (!reportAll) {
-                    // check svn:special files -> symlinks that could be
-                    // directory.
+                    // check svn:special files -> symlinks that could be directory.
                     boolean special = SVNFileUtil.isWindows
-                            && directory.getProperties(entry.getName(), false)
-                                    .getPropertyValue(SVNProperty.SPECIAL) != null;
+                            && directory.getProperties(entry.getName(), false).getPropertyValue(SVNProperty.SPECIAL) != null;
 
-                    if ((special && !file.exists())
-                            || (!special && file.isDirectory())) {
+                    if ((special && fileType != SVNFileType.SYMLINK) || 
+                            (!special && fileType == SVNFileType.DIRECTORY)) {
                         reporter.deletePath(path);
                         continue;
                     }
