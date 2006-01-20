@@ -300,6 +300,8 @@ class HTTPRequest {
         if (status != null && status.getCode() == HttpURLConnection.HTTP_FORBIDDEN || status.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
             errorCode = SVNErrorCode.RA_NOT_AUTHORIZED;
             message = status.getCode() + " " + status.getReason();
+        } else if (status != null && status.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+            errorCode = SVNErrorCode.RA_DAV_PATH_NOT_FOUND;
         }
         // extend context object to include host:port (empty location).
         Object[] messageObjects = contextObjects == null ? new Object[1] : new Object[contextObjects.length + 1];

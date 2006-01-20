@@ -376,7 +376,7 @@ class HTTPConnection implements IHTTPConnection {
         }
         // err2 is another default context...
         SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path});
-        SVNErrorManager.error(err, err2);
+        SVNErrorManager.error(err2, err);
         return null;
     }
 
