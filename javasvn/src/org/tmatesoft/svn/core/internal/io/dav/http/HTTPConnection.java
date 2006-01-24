@@ -111,6 +111,7 @@ class HTTPConnection implements IHTTPConnection {
                     HTTPRequest connectRequest = new HTTPRequest();
                     connectRequest.setConnection(this);
                     connectRequest.setProxyAuthentication(myProxyAuthentication);
+                    connectRequest.setForceProxyAuth(true);
                     connectRequest.dispatch("CONNECT", host + ":" + port, null, 0, 0, null);
                     HTTPStatus status = connectRequest.getStatus();
                     if (status.getCode() == HttpURLConnection.HTTP_OK) {
@@ -123,7 +124,7 @@ class HTTPConnection implements IHTTPConnection {
                     }
                     SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyAuth.getProxyHost() + ":" + proxyAuth.getProxyPort()); 
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "'{0}' request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
-                    proxyAuth.acknowledgeProxyContext(true, err);
+                    proxyAuth.acknowledgeProxyContext(false, err);
                     SVNErrorManager.error(err, connectRequest.getErrorMessage());
                 }
                 proxyAuth.acknowledgeProxyContext(true, null);

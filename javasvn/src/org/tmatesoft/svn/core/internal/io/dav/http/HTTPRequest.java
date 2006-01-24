@@ -53,6 +53,8 @@ class HTTPRequest {
     private byte[] myRequestBody;
     private InputStream myRequestStream;
 
+    private boolean myIsProxyAuthForced;
+
     public HTTPRequest() {
     }
     
@@ -88,6 +90,10 @@ class HTTPRequest {
 
     public void setProxyAuthentication(String auth) {
         myProxyAuthentication = auth;
+    }
+    
+    public void setForceProxyAuth(boolean force) {
+        myIsProxyAuthForced = force;
     }
     
     public void setResponseHandler(DefaultHandler handler) {
@@ -267,7 +273,7 @@ class HTTPRequest {
             sb.append(myAuthentication);
             sb.append(HTTPRequest.CRLF);
         }
-        if (myIsProxied && !myIsSecured && myProxyAuthentication != null) {
+        if ((myIsProxyAuthForced || (myIsProxied && !myIsSecured)) && myProxyAuthentication != null) {
             sb.append("Proxy-Authorization: ");
             sb.append(myProxyAuthentication);
             sb.append(HTTPRequest.CRLF);
