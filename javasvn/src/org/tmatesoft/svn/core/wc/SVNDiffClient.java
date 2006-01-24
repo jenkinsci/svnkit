@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -594,7 +595,7 @@ public class SVNDiffClient extends SVNBasicClient {
         File tmpFile = getDiffGenerator().createTempDirectory();
         try {
             String baseDisplayPath = basePath != null ? basePath.getAbsolutePath().replace(File.separatorChar, '/') : "";
-            SVNRemoteDiffEditor editor = new SVNRemoteDiffEditor(baseDisplayPath, tmpFile, getDiffGenerator(), repository2, rev1, result);
+            SVNRemoteDiffEditor editor = new SVNRemoteDiffEditor(baseDisplayPath, tmpFile, getDiffGenerator(), repository2, rev1, result, this);
             ISVNReporterBaton reporter = new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {
                     reporter.setPath("", null, rev1, false);
@@ -1041,7 +1042,7 @@ public class SVNDiffClient extends SVNBasicClient {
         SVNRepository repository2 = createRepository(url1, false);
         
         SVNMerger merger = new SVNMerger(wcAccess, url2.toString(), rev2, force, dryRun, isLeaveConflictsUnresolved());
-        SVNMergeEditor mergeEditor = new SVNMergeEditor(wcAccess, repository2, rev1, rev2, merger);
+        SVNMergeEditor mergeEditor = new SVNMergeEditor(wcAccess, repository2, rev1, rev2, merger, this);
         
         repository1.diff(url2, rev2, rev1, null, !useAncestry, recursive,
                 new ISVNReporterBaton() {
@@ -1114,7 +1115,7 @@ public class SVNDiffClient extends SVNBasicClient {
         OutputStream os = null;
         try {
             os = SVNFileUtil.openFileForWriting(result); 
-            repository.getFile("", revisionNumber, properties, os);
+            repository.getFile("", revisionNumber, properties, new SVNCancellableOutputStream(os, this));
         } finally {
             SVNFileUtil.closeFile(os);
         }

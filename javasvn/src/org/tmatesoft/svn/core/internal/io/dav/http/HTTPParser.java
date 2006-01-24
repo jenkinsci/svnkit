@@ -71,6 +71,9 @@ class HTTPParser {
 
     private static String readLine(InputStream is) throws IOException {
         byte[] bytes = readPlainLine(is);
+        if (bytes == null) {
+            return null;
+        }
         int length = bytes.length;
         if (length > 0 && bytes[length - 1] == '\n') {
             length--;

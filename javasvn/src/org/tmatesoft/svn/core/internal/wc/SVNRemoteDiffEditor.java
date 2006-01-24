@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 
 /**
  * @version 1.0
@@ -47,9 +48,10 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     private String myBasePath;
     
     private SVNDeltaProcessor myDeltaProcessor;
+    private ISVNEventHandler myEventHandler;
 
     public SVNRemoteDiffEditor(String basePath, File tmpRoot, ISVNDiffGenerator diffGenerator,
-            SVNRepository repos, long revision, OutputStream result) {
+            SVNRepository repos, long revision, OutputStream result, ISVNEventHandler handler) {
         myBasePath = basePath;
         myRoot = tmpRoot;
         myRepos = repos;
@@ -57,6 +59,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         myDiffGenerator = diffGenerator;
         myResult = result;
         myRevision1 = "(revision " + revision + ")";
+        myEventHandler = handler;
         
         myDeltaProcessor = new SVNDeltaProcessor();
     }
@@ -81,7 +84,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             File tmpFile = SVNFileUtil.createUniqueFile(myRoot, name, ".tmp");
             SVNFileInfo info = new SVNFileInfo(path);
             try {
-                info.loadFromRepository(tmpFile, myRepos, myRevision);
+                info.loadFromRepository(tmpFile, myRepos, myRevision, myEventHandler);
                 String mimeType = (String) info.myBaseProperties
                         .get(SVNProperty.MIME_TYPE);
                 String displayPath = SVNPathUtil.append(myBasePath, path);
@@ -161,7 +164,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
         if (myCurrentFile.myBaseFile == null) {
             myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(commitPath), ".tmp");
-            myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos, myRevision);
+            myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos, myRevision, myEventHandler);
             myCurrentFile.myFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(commitPath), ".tmp");
             SVNFileUtil.createEmptyFile(myCurrentFile.myFile);
         }
@@ -238,12 +241,11 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             myPath = path;
         }
 
-        public void loadFromRepository(File dst, SVNRepository repos,
-                long revision) throws SVNException {
+        public void loadFromRepository(File dst, SVNRepository repos, long revision, ISVNEventHandler handler) throws SVNException {
             OutputStream os = SVNFileUtil.openFileForWriting(dst);
             try {
                 myBaseProperties = new HashMap();
-                repos.getFile(myPath, revision, myBaseProperties, os);
+                repos.getFile(myPath, revision, myBaseProperties, new SVNCancellableOutputStream(os, handler));
             } finally {
                 SVNFileUtil.closeFile(os);
             }

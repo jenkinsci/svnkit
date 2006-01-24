@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -589,7 +590,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             File tmpFile = SVNFileUtil.createUniqueFile(dstPath.getParentFile(), dstPath.getName(), ".tmp");
             os = SVNFileUtil.openFileForWriting(tmpFile);
             try {
-                repository.getFile("", revNumber, properties, os);
+                repository.getFile("", revNumber, properties, new SVNCancellableOutputStream(os, this));
             } finally {
                 SVNFileUtil.closeFile(os);
             }
