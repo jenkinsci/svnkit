@@ -51,13 +51,15 @@ public class SVNMergeEditor implements ISVNEditor {
     private SVNFileInfo myCurrentFile;
     private SVNMerger myMerger;
     private SVNDeltaProcessor myDeltaProcessor;
+    private ISVNEventHandler myEventHandler;
 
     public SVNMergeEditor(SVNWCAccess wcAccess, SVNRepository repos,
-            long revision1, long revision2, SVNMerger merger) {
+            long revision1, long revision2, SVNMerger merger, ISVNEventHandler handler) {
         myRepos = repos;
         myRevision1 = revision1;
         myRevision2 = revision2;
         myWCAccess = wcAccess;
+        myEventHandler = handler;
         myMerger = merger;
         myTarget = "".equals(myWCAccess.getTargetName()) ? null : myWCAccess.getTargetName();
         myDeltaProcessor = new SVNDeltaProcessor();
@@ -185,8 +187,7 @@ public class SVNMergeEditor implements ISVNEditor {
     public void openFile(String path, long revision) throws SVNException {
         myCurrentFile = new SVNFileInfo(myCurrentDirectory, path, false);
         // props only
-        myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos,
-                myRevision1);
+        myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos, myRevision1, myEventHandler);
     }
 
     public void changeFileProperty(String commitPath, String name, String value)
@@ -212,8 +213,7 @@ public class SVNMergeEditor implements ISVNEditor {
         if (myCurrentFile.myIsAdded) {
             SVNFileUtil.createEmptyFile(myCurrentFile.myBaseFile);
         } else {
-            myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos,
-                    myRevision1);
+            myCurrentFile.loadFromRepository(myCurrentFile.myBaseFile, myRepos, myRevision1, myEventHandler);
         }
         myCurrentFile.myFile = myMerger.getFile(myCurrentFile.myWCPath, false);
         myDeltaProcessor.applyTextDelta(myCurrentFile.myBaseFile, myCurrentFile.myFile, false);
@@ -365,13 +365,12 @@ public class SVNMergeEditor implements ISVNEditor {
             }
         }
 
-        public void loadFromRepository(File dst, SVNRepository repos,
-                long revision) throws SVNException {
+        public void loadFromRepository(File dst, SVNRepository repos, long revision, ISVNEventHandler handler) throws SVNException {
             OutputStream os = null;
             myBaseProperties = new HashMap();
             try {
                 os = dst == null ? null : SVNFileUtil.openFileForWriting(dst);
-                repos.getFile(myPath, revision, myBaseProperties, os);
+                repos.getFile(myPath, revision, myBaseProperties, new SVNCancellableOutputStream(os, handler));
             } finally {
                 SVNFileUtil.closeFile(os);
             }

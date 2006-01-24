@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitter;
@@ -511,7 +512,7 @@ public class SVNCopyClient extends SVNBasicClient {
             OutputStream os = SVNFileUtil.openFileForWriting(tmpFile);
 
             try {
-                repository.getFile("", srcRevisionNumber, properties, os);
+                repository.getFile("", srcRevisionNumber, properties, new SVNCancellableOutputStream(os, this));
             } finally {
                 SVNFileUtil.closeFile(os);
             }

@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNDirectory;
 import org.tmatesoft.svn.core.internal.wc.SVNEntries;
 import org.tmatesoft.svn.core.internal.wc.SVNEntry;
@@ -209,6 +210,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "''{0}'' refers to a directory", path, SVNErrorMessage.TYPE_WARNING);
             SVNErrorManager.error(err);
         }
+        checkCancelled();
         String name = wcAccess.getTargetName();
         if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
             File file = wcAccess.getAnchor().getBaseFile(name, false);
@@ -260,9 +262,11 @@ public class SVNWCClient extends SVNBasicClient {
             }
         } else {
             SVNRepository repos = createRepository(null, path, pegRevision, revision);
+            checkCancelled();
             long revNumber = getRevisionNumber(revision, repos, path);
+            checkCancelled();
             if (!expandKeywords) {
-                repos.getFile("", revNumber, null, dst);
+                repos.getFile("", revNumber, null, new SVNCancellableOutputStream(dst, this));
             } else {
                 String adminDir = SVNFileUtil.getAdminDirectoryName();
                 File tmpFile = SVNFileUtil.createUniqueFile(new File(path.getParentFile(), adminDir + "/tmp/text-base"), path.getName(), ".tmp");
@@ -272,7 +276,7 @@ public class SVNWCClient extends SVNBasicClient {
                 try {
                     os = SVNFileUtil.openFileForWriting(tmpFile);
                     Map properties = new HashMap();
-                    repos.getFile("", revNumber, properties, os);
+                    repos.getFile("", revNumber, properties, new SVNCancellableOutputStream(os, this));
                     SVNFileUtil.closeFile(os);
                     os = null;
                     String keywords = (String) properties.get(SVNProperty.KEYWORDS);
@@ -332,28 +336,37 @@ public class SVNWCClient extends SVNBasicClient {
         // now get contents from URL.
         Map properties = new HashMap();
         SVNRepository repos = createRepository(url, null, pegRevision, revision);
+        checkCancelled();
         long revisionNumber = getRevisionNumber(revision, repos, null);
+        checkCancelled();
         SVNNodeKind nodeKind = repos.checkPath("", revisionNumber);
+        checkCancelled();
         if (nodeKind == SVNNodeKind.DIR) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "URL ''{0}'' refers to a directory", url, SVNErrorMessage.TYPE_WARNING);
             SVNErrorManager.error(err);
         }
         OutputStream os = null;
         InputStream is = null;
-        File file;
-        File file2;
+        File file = null;
+        File file2 = null;
         try {
             file = File.createTempFile("svn-contents", ".tmp");
             file2 = File.createTempFile("svn-contents", ".tmp");
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            if (file != null) {
+                file.delete();
+            }
+            if (file2 != null) {
+                file2.delete();
+            }
             SVNErrorManager.error(err, e);
             return;
         }
         try {
             
             os = new FileOutputStream(file);
-            repos.getFile("", revisionNumber, properties, os);
+            repos.getFile("", revisionNumber, properties, new SVNCancellableOutputStream(os, this));
             os.close();
             os = null;
             if (expandKeywords) {
