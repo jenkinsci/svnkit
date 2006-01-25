@@ -192,7 +192,9 @@ class HTTPRequest {
         } else if (myResponseHandler != null) {            
             myErrorMessage = myConnection.readData(this, request, path, myResponseHandler);
         } else {
-            myConnection.skipData(this);
+            if (!"CONNECT".equalsIgnoreCase(request)) {
+                myConnection.skipData(this);
+            }
         }
     }
 

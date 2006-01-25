@@ -269,7 +269,7 @@ class HTTPConnection implements IHTTPConnection {
                 // (could be thrown by user's auth manager methods).
                 close();
                 throw e;
-            } finally {            
+            } finally {
                 finishResponse(request);                
             }
             if (err != null) {
@@ -557,9 +557,7 @@ class HTTPConnection implements IHTTPConnection {
             is = new FixedSizeInputStream(is, Long.parseLong(readHeader.get("Content-Length").toString()));
         } else if ("chunked".equals(readHeader.get("Transfer-Encoding"))) {
             is = new ChunkedInputStream(is);
-        } else {
-            is = SVNFileUtil.DUMMY_IN;
-        }
+        } 
         if ("gzip".equals(readHeader.get("Content-Encoding"))) {
             is = new GZIPInputStream(is);
         }
