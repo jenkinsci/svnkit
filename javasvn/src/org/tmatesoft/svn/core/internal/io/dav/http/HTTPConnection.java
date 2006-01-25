@@ -45,6 +45,7 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVErrorHandler;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.EntityResolver;
@@ -107,6 +108,7 @@ class HTTPConnection implements IHTTPConnection {
             if (proxyAuth != null && proxyAuth.getProxyHost() != null) {
                 mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort());
                 myProxyAuthentication = getProxyAuthString(proxyAuth.getProxyUserName(), proxyAuth.getProxyPassword());
+                myIsProxied = true;
                 if (myIsSecured) {
                     HTTPRequest connectRequest = new HTTPRequest();
                     connectRequest.setConnection(this);
@@ -118,12 +120,11 @@ class HTTPConnection implements IHTTPConnection {
                         myInputStream = null;
                         myOutputStream = null;
                         mySocket = SVNSocketFactory.createSSLSocket(sslManager, host, port, mySocket);
-                        myIsProxied = true;
                         proxyAuth.acknowledgeProxyContext(true, null);
                         return;
                     }
                     SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyAuth.getProxyHost() + ":" + proxyAuth.getProxyPort()); 
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "'{0}' request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
                     proxyAuth.acknowledgeProxyContext(false, err);
                     SVNErrorManager.error(err, connectRequest.getErrorMessage());
                 }
@@ -556,6 +557,8 @@ class HTTPConnection implements IHTTPConnection {
             is = new FixedSizeInputStream(is, Long.parseLong(readHeader.get("Content-Length").toString()));
         } else if ("chunked".equals(readHeader.get("Transfer-Encoding"))) {
             is = new ChunkedInputStream(is);
+        } else {
+            is = SVNFileUtil.DUMMY_IN;
         }
         if ("gzip".equals(readHeader.get("Content-Encoding"))) {
             is = new GZIPInputStream(is);

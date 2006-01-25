@@ -153,6 +153,8 @@ class HTTPRequest {
         } else if (myRequestStream != null && length > 0) {
             myConnection.sendData(myRequestStream, length);
         }
+        // if method is "CONNECT", then just return normal status 
+        // only if there is nothing to read.
         myConnection.readHeader(this);        
         context = context == null ? SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} of ''{1}''", new Object[] {request, path}) : context; 
         
