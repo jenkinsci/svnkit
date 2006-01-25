@@ -53,6 +53,8 @@ class HTTPRequest {
     private byte[] myRequestBody;
     private InputStream myRequestStream;
 
+    private boolean myIsProxyAuthForced;
+
     public HTTPRequest() {
     }
     
@@ -88,6 +90,10 @@ class HTTPRequest {
 
     public void setProxyAuthentication(String auth) {
         myProxyAuthentication = auth;
+    }
+    
+    public void setForceProxyAuth(boolean force) {
+        myIsProxyAuthForced = force;
     }
     
     public void setResponseHandler(DefaultHandler handler) {
@@ -147,6 +153,8 @@ class HTTPRequest {
         } else if (myRequestStream != null && length > 0) {
             myConnection.sendData(myRequestStream, length);
         }
+        // if method is "CONNECT", then just return normal status 
+        // only if there is nothing to read.
         myConnection.readHeader(this);        
         context = context == null ? SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} of ''{1}''", new Object[] {request, path}) : context; 
         
@@ -184,7 +192,9 @@ class HTTPRequest {
         } else if (myResponseHandler != null) {            
             myErrorMessage = myConnection.readData(this, request, path, myResponseHandler);
         } else {
-            myConnection.skipData(this);
+            if (!"CONNECT".equalsIgnoreCase(request)) {
+                myConnection.skipData(this);
+            }
         }
     }
 
@@ -267,7 +277,7 @@ class HTTPRequest {
             sb.append(myAuthentication);
             sb.append(HTTPRequest.CRLF);
         }
-        if (myIsProxied && !myIsSecured && myProxyAuthentication != null) {
+        if ((myIsProxyAuthForced || (myIsProxied && !myIsSecured)) && myProxyAuthentication != null) {
             sb.append("Proxy-Authorization: ");
             sb.append(myProxyAuthentication);
             sb.append(HTTPRequest.CRLF);

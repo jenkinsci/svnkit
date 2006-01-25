@@ -107,23 +107,24 @@ class HTTPConnection implements IHTTPConnection {
             if (proxyAuth != null && proxyAuth.getProxyHost() != null) {
                 mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort());
                 myProxyAuthentication = getProxyAuthString(proxyAuth.getProxyUserName(), proxyAuth.getProxyPassword());
+                myIsProxied = true;
                 if (myIsSecured) {
                     HTTPRequest connectRequest = new HTTPRequest();
                     connectRequest.setConnection(this);
                     connectRequest.setProxyAuthentication(myProxyAuthentication);
+                    connectRequest.setForceProxyAuth(true);
                     connectRequest.dispatch("CONNECT", host + ":" + port, null, 0, 0, null);
                     HTTPStatus status = connectRequest.getStatus();
                     if (status.getCode() == HttpURLConnection.HTTP_OK) {
                         myInputStream = null;
                         myOutputStream = null;
                         mySocket = SVNSocketFactory.createSSLSocket(sslManager, host, port, mySocket);
-                        myIsProxied = true;
                         proxyAuth.acknowledgeProxyContext(true, null);
                         return;
                     }
                     SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyAuth.getProxyHost() + ":" + proxyAuth.getProxyPort()); 
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "'{0}' request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
-                    proxyAuth.acknowledgeProxyContext(true, err);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
+                    proxyAuth.acknowledgeProxyContext(false, err);
                     SVNErrorManager.error(err, connectRequest.getErrorMessage());
                 }
                 proxyAuth.acknowledgeProxyContext(true, null);
@@ -267,7 +268,7 @@ class HTTPConnection implements IHTTPConnection {
                 // (could be thrown by user's auth manager methods).
                 close();
                 throw e;
-            } finally {            
+            } finally {
                 finishResponse(request);                
             }
             if (err != null) {
@@ -555,7 +556,7 @@ class HTTPConnection implements IHTTPConnection {
             is = new FixedSizeInputStream(is, Long.parseLong(readHeader.get("Content-Length").toString()));
         } else if ("chunked".equals(readHeader.get("Transfer-Encoding"))) {
             is = new ChunkedInputStream(is);
-        }
+        } 
         if ("gzip".equals(readHeader.get("Content-Encoding"))) {
             is = new GZIPInputStream(is);
         }
