@@ -374,6 +374,22 @@
         />
     </target>
 
+	<target name="test-special" depends="init-environment,compile-tests">
+        <path id="test.classpath">
+            <pathelement path="contrib/junit/junit.jar" />
+            <pathelement path="javasvn/bin" />
+            <pathelement path="contrib/sequence/bin" />
+            <pathelement path="javasvn-test/bin" />
+            <pathelement path="contrib/sequence/bin-test" />
+        </path>
+        <java classpathref="test.classpath"
+              dir="javasvn-test"
+              fork="true"
+              classname="org.tmatesoft.svn.core.test.SpecialTest"
+           	  args="svn://localhost/repos/special wc"
+        />
+    </target>
+
     <target name="test-python" depends="init-environment,compile-tests,build-library,build-cli">
         <copy file="javasvn-test/test.${os}.properties"
               tofile="javasvn-test/test.properties"
