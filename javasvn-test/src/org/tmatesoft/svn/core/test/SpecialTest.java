@@ -50,9 +50,13 @@ public class SpecialTest {
         createFixture(url, wc);
         System.out.println("FIXTURE CREATED");
         createSymlink(wc, "trunk/link", "../linked");
-        System.out.println("SYMLINK CREATED");
+        createSymlink(wc, "trunk/empty-link", "../missing");
+        System.out.println("SYMLINKS CREATED");
+        
         addSymlink(wc, "trunk/link");
         System.out.println("SYMLINK ADDED");
+        addSymlink(wc, "trunk/empty-link");
+        System.out.println("SYMLINK TO MISSING TARGET ADDED");
     }
     
     private static void addSymlink(File wc, String linkPath) throws SVNException {
@@ -67,7 +71,7 @@ public class SpecialTest {
         // checkout from repository, create directories and commit.
         getClientManager().getUpdateClient().doCheckout(url, wc, SVNRevision.UNDEFINED, SVNRevision.HEAD, true);
         getClientManager().getWCClient().doAdd(new File(wc, "trunk"), true, true, false, false);
-        getClientManager().getWCClient().doAdd(new File(wc, "linkTarget"), true, true, false, false);
+        getClientManager().getWCClient().doAdd(new File(wc, "linked"), true, true, false, false);
         getClientManager().getCommitClient().doCommit(new File[] {wc}, false, "import", false, true);        
     }
     
