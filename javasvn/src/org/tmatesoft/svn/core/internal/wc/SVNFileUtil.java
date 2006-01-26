@@ -105,15 +105,20 @@ public class SVNFileUtil {
         return created;
     }
 
-    public static File createUniqueFile(File parent, String name, String suffix) {
+    public static File createUniqueFile(File parent, String name, String suffix) throws SVNException {
         File file = new File(parent, name + suffix);
         for (int i = 1; i < 99999; i++) {
-            if (!file.exists()) {
+            if (SVNFileType.getType(file) == SVNFileType.NONE) {
                 return file;
             }
             file = new File(parent, name + "." + i + suffix);
         }
-        return file;
+        if (SVNFileType.getType(file) == SVNFileType.NONE) {
+            return file;
+        }
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNIQUE_NAMES_EXHAUSTED);
+        SVNErrorManager.error(err);
+        return null;
     }
 
     public static void rename(File src, File dst) throws SVNException {
@@ -911,6 +916,17 @@ public class SVNFileUtil {
             tmpFile.delete();
         }
         tmpFile.mkdirs();
+        return tmpFile;
+    }
+
+    public static File createTempFile(String prefix, String suffix) throws SVNException {
+        File tmpFile = null;
+        try {
+            tmpFile = File.createTempFile(prefix, suffix);
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create temporary file: {1}", e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
+        }
         return tmpFile;
     }
 }

@@ -11,16 +11,15 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
-
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 
 /**
  * @version 1.0
@@ -46,33 +45,22 @@ public class SVNImportMediator implements ISVNWorkspaceMediator {
             throws SVNException {
     }
 
-    public OutputStream createTemporaryLocation(String path, Object id)
-            throws IOException {
-        File tmpFile = SVNFileUtil.createUniqueFile(myRoot,
-                SVNPathUtil.tail(path), ".tmp");
-        OutputStream os;
-        try {
-            os = SVNFileUtil.openFileForWriting(tmpFile);
-        } catch (SVNException e) {
-            throw new IOException(e.getMessage());
-        }
+    public OutputStream createTemporaryLocation(String path, Object id) throws SVNException {
+        File tmpFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(path), ".tmp");
+        OutputStream os = SVNFileUtil.openFileForWriting(tmpFile);
         myLocations.put(id, tmpFile);
         return os;
     }
 
-    public InputStream getTemporaryLocation(Object id) throws IOException {
+    public InputStream getTemporaryLocation(Object id) throws SVNException {
         File file = (File) myLocations.get(id);
         if (file != null) {
-            try {
-                return SVNFileUtil.openFileForReading(file);
-            } catch (SVNException e) {
-                throw new IOException(e.getMessage());
-            }
+            return SVNFileUtil.openFileForReading(file);
         }
         return null;
     }
 
-    public long getLength(Object id) throws IOException {
+    public long getLength(Object id) throws SVNException {
         File file = (File) myLocations.get(id);
         if (file != null) {
             return file.length();

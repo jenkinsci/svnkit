@@ -318,9 +318,6 @@ class DAVCommitEditor implements ISVNEditor {
                 try {
                     combinedData = currentFile.getTextDelta(0);
                     myConnection.doPutDiff(currentFile.getURL(), currentFile.getWorkingURL(), combinedData);
-                } catch (IOException e1) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e1.getLocalizedMessage());
-                    SVNErrorManager.error(err, e1);
                 } finally {
                     SVNFileUtil.closeFile(combinedData);
                 }

@@ -344,7 +344,7 @@ public class SVNMerger {
         return propertiesChanged(path, "", baseProps, propDiff);
     }
 
-    public File getFile(String path, boolean base) {
+    public File getFile(String path, boolean base) throws SVNException {
         SVNDirectory dir = null;
         String parentPath = path;
         while (dir == null && !"".equals(parentPath)) {
