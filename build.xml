@@ -376,25 +376,26 @@
 
 	<target name="test-special" depends="init-environment,compile-tests">
 		<!-- remove wc --> 
-		<delete failonerror="false">
-			<fileset dir="wc">
+		<delete failonerror="false" includeemptydirs="true">
+			<fileset dir="javasvn-test/wc">
 				<include name="**/**"/>
 			</fileset>
 		</delete>
 		
 		<!-- and repository -->
-		<delete failonerror="false">
-			<fileset dir="repos/special">
+		<delete failonerror="false" includeemptydirs="true">
+			<fileset dir="javasvn-test/repos/special">
 				<include name="**/**"/>
 			</fileset>
 		</delete>
 		
 		<!-- create new repos with anon access -->
-		<exec command="svnadmin">
+                <mkdir dir="javasvn-test/repos" />
+		<exec executable="svnadmin">
 			<arg value="create"/>
-			<arg value="repos/special"/>
+			<arg value="javasvn-test/repos/special"/>
 		</exec>
-		<echo append="true" file="repos/special/conf/svnserve.conf" message="[global]\nanon-access=write\n" />
+		<echo append="true" file="javasvn-test/repos/special/conf/svnserve.conf" message="[global]${line.separator}anon-access=write${line.separator}" />
 		
         <path id="test.classpath">
             <pathelement path="contrib/junit/junit.jar" />
