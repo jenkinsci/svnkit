@@ -67,6 +67,17 @@ public class SpecialTest {
         
         commitWC(wc);
         System.out.println("WC COMMITTED");
+        
+        remove(new File(wc, "trunk/link"));
+        System.out.println("LINK REMOVED");
+        remove(new File(wc, "trunk/link2"));
+        System.out.println("ANOTHER LINK REMOVED");
+        remove(new File(wc, "trunk/empty-link"));
+        System.out.println("EMPTY LINK REMOVED");
+    }
+    
+    private static void remove(File link) throws SVNException {
+        getClientManager().getWCClient().doDelete(link, false, false);
     }
     
     private static void commitWC(File wc) throws SVNException {
