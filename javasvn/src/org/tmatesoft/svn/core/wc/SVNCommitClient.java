@@ -432,43 +432,36 @@ public class SVNCommitClient extends SVNBasicClient {
             }
         }
         checkCancelled();
-        commitEditor.openRoot(-1);
-        String newDirPath = null;
-        for (int i = newPaths.size() - 1; i >= 0; i--) {
-            newDirPath = newDirPath == null ? (String) newPaths.get(i) : SVNPathUtil.append(newDirPath, (String) newPaths.get(i));
-            commitEditor.addDir(newDirPath, null, -1);
-        }
-        boolean changed;
-        if (srcKind == SVNFileType.DIRECTORY) {
-            changed = importDir(path, path, newDirPath, useGlobalIgnores, recursive, commitEditor);
-        } else {
-            if (useGlobalIgnores && getOptions().isIgnored(path.getName())) {
-                changed = false;
-            } else {
-                changed = importFile(path.getParentFile(), path, srcKind, filePath, commitEditor);
-            }
-        }
-        if (!changed) {
-            try {
-                commitEditor.abortEdit();
-            } catch (SVNException e) {
-                //
-            }
-            return SVNCommitInfo.NULL;
-        }
-        for (int i = 0; i < newPaths.size(); i++) {
-            commitEditor.closeDir();
-        }
+        boolean changed = false;
         SVNCommitInfo info = null;
         try {
-            info = commitEditor.closeEdit();
-        } catch (SVNException e) {
-            try {
-                commitEditor.abortEdit();
-            } catch (SVNException e1) {
-                // inner
+            commitEditor.openRoot(-1);
+            String newDirPath = null;
+            for (int i = newPaths.size() - 1; i >= 0; i--) {
+                newDirPath = newDirPath == null ? (String) newPaths.get(i) : SVNPathUtil.append(newDirPath, (String) newPaths.get(i));
+                commitEditor.addDir(newDirPath, null, -1);
             }
-            throw e;
+            if (srcKind == SVNFileType.DIRECTORY) {
+                changed = importDir(path, path, newDirPath, useGlobalIgnores, recursive, commitEditor);
+            } else {
+                if (useGlobalIgnores && getOptions().isIgnored(path.getName())) {
+                    changed = false;
+                } else {
+                    changed = importFile(path.getParentFile(), path, srcKind, filePath, commitEditor);
+                }
+            }
+            for (int i = 0; i < newPaths.size(); i++) {
+                commitEditor.closeDir();
+            }
+            info = commitEditor.closeEdit();
+        } finally {
+            if (!changed || info == null) {
+                try {
+                    commitEditor.abortEdit();
+                } catch (SVNException e) {
+                    //
+                }
+            }
         }
         if (info != null && info.getNewRevision() >= 0) { 
             dispatchEvent(SVNEventFactory.createCommitCompletedEvent(null, info.getNewRevision()), ISVNEventHandler.UNKNOWN);
