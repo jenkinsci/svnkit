@@ -68,12 +68,26 @@ public class SpecialTest {
         commitWC(wc);
         System.out.println("WC COMMITTED");
         
+        copyLink(new File(wc, "trunk/link2"), new File(wc, "trunk/link3"), true);
+        System.out.println("LINK MOVED");
+        commitWC(wc);
+        System.out.println("WC COMMITTED");
+
+        copyLink(new File(wc, "trunk/link3"), new File(wc, "trunk/link2"), false);
+        System.out.println("LINK COPIED BACK");
+        commitWC(wc);
+        System.out.println("WC COMMITTED");
+        
         remove(new File(wc, "trunk/link"));
         System.out.println("LINK REMOVED");
         remove(new File(wc, "trunk/link2"));
         System.out.println("ANOTHER LINK REMOVED");
         remove(new File(wc, "trunk/empty-link"));
         System.out.println("EMPTY LINK REMOVED");
+    }
+    
+    private static void copyLink(File link, File dst, boolean move) throws SVNException {
+        getClientManager().getCopyClient().doCopy(link, SVNRevision.WORKING, dst, false, move);
     }
     
     private static void remove(File link) throws SVNException {
