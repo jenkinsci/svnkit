@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
 
@@ -53,7 +52,9 @@ public class SVNFileType {
         if (file == null) {
             return SVNFileType.UNKNOWN;
         }
-        if (!SVNFileUtil.isWindows) {
+        if (!SVNFileUtil.isWindows && SVNFileUtil.isSymlink(file)) {
+            return SVNFileType.SYMLINK;
+            /*
             String absolutePath = file.getAbsolutePath();
             String canonicalPath;
             try {
@@ -73,7 +74,7 @@ public class SVNFileType {
                 }
             } else if (!absolutePath.equals(canonicalPath) && SVNFileUtil.isSymlink(file)) {
                 return SVNFileType.SYMLINK;
-            }
+            }*/
         }
 
         if (file.isFile()) {
