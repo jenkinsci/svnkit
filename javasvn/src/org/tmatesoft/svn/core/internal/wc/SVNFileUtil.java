@@ -470,7 +470,8 @@ public class SVNFileUtil {
         if (dir == null) {
             return;
         }
-        File[] children = dir.listFiles();
+        SVNFileType fileType = SVNFileType.getType(dir);
+        File[] children = fileType == SVNFileType.DIRECTORY ? dir.listFiles() : null;
         if (children != null) {
             if (cancelBaton != null) {
                 cancelBaton.checkCancelled();
@@ -483,7 +484,7 @@ public class SVNFileUtil {
                 cancelBaton.checkCancelled();
             }
         }
-        if (dir.isDirectory() && !deleteDirs) {
+        if (fileType == SVNFileType.DIRECTORY && !deleteDirs) {
             return;
         }
         deleteFile(dir);

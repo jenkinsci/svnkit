@@ -1095,9 +1095,8 @@ public class SVNDirectory {
 
     private void deleteWorkingFiles(String name) throws SVNException {
         File file = getFile(name);
-        if (file.isFile()) {
-            file.delete();
-        } else if (file.isDirectory()) {
+        SVNFileType fileType = SVNFileType.getType(file);
+        if (fileType == SVNFileType.DIRECTORY) {
             SVNDirectory childDir = getChildDirectory(file.getName());
             if (childDir != null) {
                 SVNEntries childEntries = childDir.getEntries();
@@ -1121,6 +1120,8 @@ public class SVNDirectory {
             } else {
                 SVNFileUtil.deleteAll(file, getWCAccess());
             }
+        } else {
+            file.delete();
         }
     }
 
