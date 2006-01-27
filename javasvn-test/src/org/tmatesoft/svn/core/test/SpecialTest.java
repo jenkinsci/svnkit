@@ -39,6 +39,7 @@ public class SpecialTest {
 
             test(url, wc);
         } catch (SVNException e) {
+            e.printStackTrace();
             System.err.println(e.getErrorMessage().getFullMessage());
             System.exit(1);
         }
@@ -70,8 +71,8 @@ public class SpecialTest {
     private static void createFixture(SVNURL url, File wc) throws SVNException {
         // checkout from repository, create directories and commit.
         getClientManager().getUpdateClient().doCheckout(url, wc, SVNRevision.UNDEFINED, SVNRevision.HEAD, true);
-        getClientManager().getWCClient().doAdd(new File(wc, "trunk"), true, true, false, false);
-        getClientManager().getWCClient().doAdd(new File(wc, "linked"), true, true, false, false);
+        getClientManager().getWCClient().doAdd(new File(wc, "trunk"), false, true, false, false);
+        getClientManager().getWCClient().doAdd(new File(wc, "linked"), false, true, false, false);
         getClientManager().getCommitClient().doCommit(new File[] {wc}, false, "import", false, true);        
     }
     
