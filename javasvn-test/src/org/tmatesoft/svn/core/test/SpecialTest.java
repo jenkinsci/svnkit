@@ -51,13 +51,30 @@ public class SpecialTest {
         createFixture(url, wc);
         System.out.println("FIXTURE CREATED");
         createSymlink(wc, "trunk/link", "../linked");
+        createSymlink(wc, "trunk/link2", "../linked");
         createSymlink(wc, "trunk/empty-link", "../missing");
         System.out.println("SYMLINKS CREATED");
         
         addSymlink(wc, "trunk/link");
         System.out.println("SYMLINK ADDED");
+        addSymlink(wc, "trunk/link2");
+        System.out.println("ANOTHER SYMLINK ADDED");
         addSymlink(wc, "trunk/empty-link");
         System.out.println("SYMLINK TO MISSING TARGET ADDED");
+        
+        commitLink(new File(wc, "trunk/link"));
+        System.out.println("SYMLINK ADDITION COMMITTED");
+        
+        commitWC(wc);
+        System.out.println("WC COMMITTED");
+    }
+    
+    private static void commitWC(File wc) throws SVNException {
+        getClientManager().getCommitClient().doCommit(new File[] {wc}, false, "commit", false, true);
+    }
+
+    private static void commitLink(File file) throws SVNException {
+        getClientManager().getCommitClient().doCommit(new File[] {file}, false, "commit", false, false);
     }
     
     private static void addSymlink(File wc, String linkPath) throws SVNException {
