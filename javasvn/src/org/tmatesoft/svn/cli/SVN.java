@@ -16,6 +16,7 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -85,7 +86,8 @@ public class SVN {
                     }
                 }
                 DAVRepositoryFactory.setup();
-                SVNRepositoryFactoryImpl.setup();                
+                SVNRepositoryFactoryImpl.setup();
+                FSRepositoryFactory.setup();
     
                 command.setCommandLine(commandLine);
                 try {
