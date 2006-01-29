@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
 
@@ -22,14 +23,12 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 public class SVNFileType {
 
     public static final SVNFileType UNKNOWN = new SVNFileType(0);
-
     public static final SVNFileType NONE = new SVNFileType(1);
-
     public static final SVNFileType FILE = new SVNFileType(2);
-
     public static final SVNFileType SYMLINK = new SVNFileType(3);
-
     public static final SVNFileType DIRECTORY = new SVNFileType(4);
+    
+    private static final boolean canonPathCacheUsed = "true".equalsIgnoreCase(System.getProperty("sun.io.useCanonCaches"));
 
     private int myType;
 
@@ -52,9 +51,9 @@ public class SVNFileType {
         if (file == null) {
             return SVNFileType.UNKNOWN;
         }
-        if (!SVNFileUtil.isWindows && SVNFileUtil.isSymlink(file)) {
+        if (!SVNFileUtil.isWindows && canonPathCacheUsed && SVNFileUtil.isSymlink(file)) {
             return SVNFileType.SYMLINK;
-            /*
+        } else if (!SVNFileUtil.isWindows && !canonPathCacheUsed) {            
             String absolutePath = file.getAbsolutePath();
             String canonicalPath;
             try {
@@ -68,13 +67,13 @@ public class SVNFileType {
                     File child = children[i];
                     if (child.getName().equals(file.getName())) {
                         if (SVNFileUtil.isSymlink(file)) {
-                               return SVNFileType.SYMLINK;
+                            return SVNFileType.SYMLINK;
                         }
                     }
                 }
             } else if (!absolutePath.equals(canonicalPath) && SVNFileUtil.isSymlink(file)) {
                 return SVNFileType.SYMLINK;
-            }*/
+            }
         }
 
         if (file.isFile()) {
