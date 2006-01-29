@@ -450,6 +450,12 @@ public class SVNCommitClient extends SVNBasicClient {
                     changed = importFile(path.getParentFile(), path, srcKind, filePath, commitEditor);
                 }
             }
+            if (!changed) {
+                try {
+                    commitEditor.abortEdit();
+                } catch (SVNException e) {}
+                return SVNCommitInfo.NULL;
+            }
             for (int i = 0; i < newPaths.size(); i++) {
                 commitEditor.closeDir();
             }
