@@ -72,7 +72,7 @@ public interface ISVNWorkspaceMediator {
      * @throws IOException  if an output stream can not be created
      * @see					#getTemporaryLocation(Object)
      */
-    public OutputStream createTemporaryLocation(String path, Object id) throws IOException;
+    public OutputStream createTemporaryLocation(String path, Object id) throws SVNException;
     
     /**
      * Retrieves an input stream to read data from the temporary storage mapped
@@ -84,7 +84,7 @@ public interface ISVNWorkspaceMediator {
      * @throws IOException  if an input stream can not be created
      * @see                 #createTemporaryLocation(String, Object)
      */
-    public InputStream getTemporaryLocation(Object id) throws IOException;
+    public InputStream getTemporaryLocation(Object id) throws SVNException;
     
     /**
      * Gets the size of a temporary data storage mapped against the given
@@ -96,7 +96,7 @@ public interface ISVNWorkspaceMediator {
      * @see					#createTemporaryLocation(String, Object)
      * @see					#getTemporaryLocation(Object)
      */
-    public long getLength(Object id) throws IOException;
+    public long getLength(Object id) throws SVNException;
     
     /**
      * Disposes a temporary data storage mapped against the given 

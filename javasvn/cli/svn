@@ -20,7 +20,7 @@ if [ ! -d $JAVASVN_LOGDIR ]; then
 	mkdir $JAVASVN_LOGDIR
 fi
 
-JAVASVN_VM_OPTIONS=-Djava.util.logging.config.file=$JAVASVN_HOME/logging.properties
+JAVASVN_VM_OPTIONS="-Dsun.io.useCanonCaches=false -Djava.util.logging.config.file=$JAVASVN_HOME/logging.properties"
 
 JAVASVN_MAINCLASS=org.tmatesoft.svn.cli.SVN
 $JAVA_HOME/bin/java $JAVASVN_VM_OPTIONS -cp $JAVASVN_CP $JAVASVN_MAINCLASS "$@"

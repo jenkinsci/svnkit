@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -85,8 +84,7 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         ((Map) myWCPropsMap.get(item)).put(name, value);
     }
 
-    public OutputStream createTemporaryLocation(String path, Object id)
-            throws IOException {
+    public OutputStream createTemporaryLocation(String path, Object id) throws SVNException {
         SVNCommitItem item = (SVNCommitItem) myCommitItems.get(path);
         SVNDirectory dir;
         String target;
@@ -102,23 +100,15 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         tmpFile = SVNFileUtil.createUniqueFile(tmpFile, target, ".tmp");
         myTmpFiles.add(tmpFile);
         myTmpFilesMap.put(id, tmpFile);
-        try {
-            return SVNFileUtil.openFileForWriting(tmpFile);
-        } catch (SVNException e) {
-            throw new IOException(e.getMessage());
-        }
+        return SVNFileUtil.openFileForWriting(tmpFile);
     }
 
-    public InputStream getTemporaryLocation(Object id) throws IOException {
+    public InputStream getTemporaryLocation(Object id) throws SVNException {
         File file = (File) myTmpFilesMap.get(id);
-        try {
-            return SVNFileUtil.openFileForReading(file);
-        } catch (SVNException e) {
-            throw new IOException(e.getMessage());
-        }
+        return SVNFileUtil.openFileForReading(file);
     }
 
-    public long getLength(Object id) throws IOException {
+    public long getLength(Object id) throws SVNException {
         File file = (File) myTmpFilesMap.get(id);
         if (file != null) {
             return file.length();

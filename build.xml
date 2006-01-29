@@ -374,6 +374,38 @@
         />
     </target>
 
+	<target name="test-special" depends="init-environment,compile-tests">
+		<!-- remove wc --> 
+		<delete failonerror="false" includeemptydirs="true" dir="javasvn-test/wc">
+		</delete>
+		
+		<!-- and repository -->
+		<delete failonerror="false" includeemptydirs="true" dir="javasvn-test/repos/special">
+		</delete>
+		
+		<!-- create new repos with anon access -->
+                <mkdir dir="javasvn-test/repos" />
+		<exec executable="svnadmin">
+			<arg value="create"/>
+			<arg value="javasvn-test/repos/special"/>
+		</exec>
+		<echo append="true" file="javasvn-test/repos/special/conf/svnserve.conf" message="[general]${line.separator}anon-access=write${line.separator}" />
+		
+        <path id="test.classpath">
+            <pathelement path="contrib/junit/junit.jar" />
+            <pathelement path="javasvn/bin" />
+            <pathelement path="contrib/sequence/bin" />
+            <pathelement path="javasvn-test/bin" />
+            <pathelement path="contrib/sequence/bin-test" />
+        </path>
+        <java classpathref="test.classpath"
+              dir="javasvn-test"
+              fork="true"
+              classname="org.tmatesoft.svn.core.test.SpecialTest"
+           	  args="svn://localhost/repos/special wc"
+        />
+    </target>
+
     <target name="test-python" depends="init-environment,compile-tests,build-library,build-cli">
         <copy file="javasvn-test/test.${os}.properties"
               tofile="javasvn-test/test.properties"

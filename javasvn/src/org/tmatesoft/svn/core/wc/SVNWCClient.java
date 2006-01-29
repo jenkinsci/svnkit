@@ -943,10 +943,9 @@ public class SVNWCClient extends SVNBasicClient {
      *                                     <code>mkdir</code> is <span class="javakeyword">false</span>
      *                                     <li><code>path</code> is the root directory of the Working Copy
      */
-    public void doAdd(File path, boolean force, boolean mkdir,
-            boolean climbUnversionedParents, boolean recursive)
-            throws SVNException {
-        if (!path.exists() && !mkdir) {
+    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive) throws SVNException {
+        SVNFileType fType = SVNFileType.getType(path); 
+        if (fType == SVNFileType.NONE && !mkdir) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' does not exist", path);
             SVNErrorManager.error(err);
         }
@@ -967,10 +966,9 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
             SVNDirectory dir = wcAccess.getAnchor();
-            SVNFileType ftype = SVNFileType.getType(path);
-            if (ftype == SVNFileType.FILE || ftype == SVNFileType.SYMLINK) {
+            if (fType == SVNFileType.FILE || fType == SVNFileType.SYMLINK) {
                 addSingleFile(dir, name);
-            } else if (ftype == SVNFileType.DIRECTORY && recursive) {
+            } else if (fType == SVNFileType.DIRECTORY && recursive) {
                 // add dir and recurse.
                 addDirectory(wcAccess, wcAccess.getAnchor(), name, force);
             } else {

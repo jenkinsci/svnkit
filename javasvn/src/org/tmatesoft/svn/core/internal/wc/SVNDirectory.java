@@ -980,13 +980,11 @@ public class SVNDirectory {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' not found", file);            
             SVNErrorManager.error(err);
         }
-        SVNNodeKind fileKind = fileType == SVNFileType.NONE
-                || fileType == SVNFileType.DIRECTORY ? SVNNodeKind.DIR
-                : SVNNodeKind.FILE;
+        SVNNodeKind fileKind = fileType == SVNFileType.NONE || fileType == SVNFileType.DIRECTORY ? 
+                SVNNodeKind.DIR : SVNNodeKind.FILE;
         SVNEntry entry = getEntries().getEntry(name, true);
 
-        if (entry != null && !entry.isDeleted()
-                && !entry.isScheduledForDeletion()) {
+        if (entry != null && !entry.isDeleted() && !entry.isScheduledForDeletion()) {
             if (!force) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' already under version control", file);            
                 SVNErrorManager.error(err);
@@ -996,7 +994,7 @@ public class SVNDirectory {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NODE_KIND_CHANGE, "Can''t replace ''{0}'' with a node of different type;" +
                     "\ncommit the deletion, update the parent and then add ''{0}''", file);            
             SVNErrorManager.error(err);
-        } else if (entry == null && SVNWCUtil.isVersionedDirectory(file)) {
+        } else if (entry == null && fileType != SVNFileType.SYMLINK && SVNWCUtil.isVersionedDirectory(file)) {
             if (!force) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' already under version control", file);            
                 SVNErrorManager.error(err);
@@ -1097,9 +1095,8 @@ public class SVNDirectory {
 
     private void deleteWorkingFiles(String name) throws SVNException {
         File file = getFile(name);
-        if (file.isFile()) {
-            file.delete();
-        } else if (file.isDirectory()) {
+        SVNFileType fileType = SVNFileType.getType(file);
+        if (fileType == SVNFileType.DIRECTORY) {
             SVNDirectory childDir = getChildDirectory(file.getName());
             if (childDir != null) {
                 SVNEntries childEntries = childDir.getEntries();
@@ -1123,6 +1120,8 @@ public class SVNDirectory {
             } else {
                 SVNFileUtil.deleteAll(file, getWCAccess());
             }
+        } else {
+            file.delete();
         }
     }
 
