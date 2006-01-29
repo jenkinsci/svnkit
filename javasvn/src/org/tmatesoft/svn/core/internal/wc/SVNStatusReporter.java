@@ -88,7 +88,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     }
 
     public void finishReport() throws SVNException {
-        myReporter.finishReport();
+        myEditor.setStatusReporter(this);
         // collect locks
         SVNLock[] locks = null;
         try {
@@ -105,7 +105,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
                 myLocks.put(lock.getPath(), lock);
             }
         }
-        myEditor.setStatusReporter(this);
+        myReporter.finishReport();
     }
 
     public void abortReport() throws SVNException {

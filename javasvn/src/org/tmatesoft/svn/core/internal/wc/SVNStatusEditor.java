@@ -75,8 +75,7 @@ public class SVNStatusEditor implements ISVNEditor {
         myTargetRevision = -1;
     }
 
-    public void setStatusReporter(SVNStatusReporter reporter)
-            throws SVNException {
+    public void setStatusReporter(SVNStatusReporter reporter) throws SVNException {
         myStatusReporter = reporter;
         if (myStatusReporter != null) {
             SVNEntry anchorEntry = myWCAccess.getAnchor().getEntries()
