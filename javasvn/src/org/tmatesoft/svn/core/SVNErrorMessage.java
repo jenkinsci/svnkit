@@ -298,4 +298,36 @@ public class SVNErrorMessage {
     public void setChildErrorMessage(SVNErrorMessage childMessage) {
         myChildErrorMessage = childMessage;
     }
+    
+    /**
+     * Wraps this error message into a new one that is returned as 
+     * a parent error message. A parent message is set the error code 
+     * of this error message, a new error description and this error 
+     * message as its child. 
+     *  
+     * @param  parentMessage     a parent error description
+     * @return                   a parent error message
+     */
+    public SVNErrorMessage wrap(String parentMessage){
+        SVNErrorMessage parentError = SVNErrorMessage.create(this.getErrorCode(), parentMessage);
+        parentError.setChildErrorMessage(this);
+        return parentError;
+    }
+
+    /**
+     * Wraps this error message into a new one that is returned as 
+     * a parent error message. A parent message is set the error code 
+     * of this error message, a new error description and this error 
+     * message as its child. 
+     *  
+     * @param  parentMessage     a parent error description
+     * @param  relatedObject     an object to be formatted with <code>parentMessage</code>
+     * @return                   a parent error message
+     */
+    public SVNErrorMessage wrap(String parentMessage, Object relatedObject){
+        SVNErrorMessage parentError = SVNErrorMessage.create(this.getErrorCode(), parentMessage, relatedObject);
+        parentError.setChildErrorMessage(this);
+        return parentError;
+    }
+    
 }

@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.io.diff;
 
+import java.io.OutputStream;
+
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 
@@ -69,4 +71,8 @@ public interface ISVNDeltaGenerator {
      * @throws SVNException    if an i/o error occurred
 	 */
     void generateDiffWindow(String commitPath, ISVNEditor consumer, ISVNRAData workFile, ISVNRAData baseFile) throws SVNException;
+    
+    void generateNextDiffWindow(String commitPath, ISVNEditor consumer, ISVNRAData workFile, ISVNRAData baseFile, long sourceViewOffset) throws SVNException;
+    
+    public SVNDiffWindow generateNextDiffWindow(ISVNRAData workFile, ISVNRAData baseFile, long sourceViewOffset, OutputStream newDataOS) throws SVNException;
 }

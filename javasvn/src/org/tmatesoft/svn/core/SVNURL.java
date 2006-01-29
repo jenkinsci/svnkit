@@ -16,6 +16,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.io.File;
+import java.io.IOException;
 
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -76,9 +78,9 @@ public class SVNURL {
         String errorMessage = null;
         if (userInfo != null && userInfo.indexOf('/') >= 0) {
             errorMessage = "Malformed URL: user info part could not include '/' symbol";
-        } else if (host == null) {
+        } else if (host == null && !"file".equals(protocol)) {
             errorMessage = "Malformed URL: host could not be NULL";
-        } else if (host.indexOf('/') >= 0) {
+        } else if (!"file".equals(protocol) && host.indexOf('/') >= 0) {
             errorMessage = "Malformed URL: host could not include '/' symbol";
         }
         if (errorMessage != null) {
@@ -151,33 +153,83 @@ public class SVNURL {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL protocol is not supported ''{0}''", url);
             SVNErrorManager.error(err);
         }
-        String testURL = "http" + url.substring(index);
-        URL httpURL;
-        try {
-            httpURL = new URL(testURL);
-        } catch (MalformedURLException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Malformed URL: ''{0}'': {1}", new Object[] {url, e.getLocalizedMessage()});
-            SVNErrorManager.error(err, e);
-            return;
-        }
-        myHost = httpURL.getHost();
-        String httpPath = norlmalizeURLPath(url, httpURL.getPath());
-        if (uriEncoded) {
-            // autoencode it.
-            myEncodedPath = SVNEncodingUtil.autoURIEncode(httpPath);
-            SVNEncodingUtil.assertURISafe(myEncodedPath);
-            myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
-        } else {
-            myPath = httpPath;
-            myEncodedPath = SVNEncodingUtil.uriEncode(myPath);
-        }
-        myUserName = httpURL.getUserInfo();
-        myPort = httpURL.getPort();
-        myIsDefaultPort = myPort < 0;
-        if (myPort < 0) {
+        if("file".equals(myProtocol)){
+            URL testURL = null;
+            //file protocol specifics - may be make this common?
+            try {
+                testURL = new URL(myProtocol + url.substring(index));
+            } catch (MalformedURLException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Malformed URL: ''{0}'': {1}", new Object[] {url, e.getLocalizedMessage()});
+                SVNErrorManager.error(err, e);
+                return;
+            }
+            if(testURL.getPath() == null || "".equals(testURL.getPath())){
+                //no path, only host - follow subversion behaviour
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains only a hostname, no path", url);
+                SVNErrorManager.error(err);
+                return;
+            }
+            myHost = "";
+            if (uriEncoded) {
+                // autoencode it.
+                myEncodedPath = SVNEncodingUtil.autoURIEncode(testURL.getPath());
+                SVNEncodingUtil.assertURISafe(myEncodedPath);
+                myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
+                try{
+                    myPath = new File(myPath).getCanonicalPath();
+                }catch(IOException ioe){
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not convert path ''{0}'' to a canonical form", myPath);
+                    SVNErrorManager.error(err);
+                }
+                if(!myPath.startsWith("/")){
+                    myPath = "/" + myPath;
+                }
+                myPath = myPath.replace(File.separatorChar, '/');
+            } else {
+                try{
+                    myPath = new File(testURL.getPath()).getCanonicalPath();
+                }catch(IOException ioe){
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not convert path ''{0}'' to a canonical form", myPath);
+                    SVNErrorManager.error(err);
+                }
+                if(!myPath.startsWith("/")){
+                    myPath = "/" + myPath;
+                }
+                myPath = myPath.replace(File.separatorChar, '/');
+                myEncodedPath = SVNEncodingUtil.uriEncode(myPath);
+            }
+            myUserName = testURL.getUserInfo();
             Integer defaultPort = (Integer) DEFAULT_PORTS.get(myProtocol);
             myPort = defaultPort.intValue();
-        } 
+        }else{
+            String testURL = "http" + url.substring(index);
+            URL httpURL;
+            try {
+                httpURL = new URL(testURL);
+            } catch (MalformedURLException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Malformed URL: ''{0}'': {1}", new Object[] {url, e.getLocalizedMessage()});
+                SVNErrorManager.error(err, e);
+                return;
+            }
+            myHost = httpURL.getHost();
+            String httpPath = norlmalizeURLPath(url, httpURL.getPath());
+            if (uriEncoded) {
+                // autoencode it.
+                myEncodedPath = SVNEncodingUtil.autoURIEncode(httpPath);
+                SVNEncodingUtil.assertURISafe(myEncodedPath);
+                myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
+            } else {
+                myPath = httpPath;
+                myEncodedPath = SVNEncodingUtil.uriEncode(myPath);
+            }
+            myUserName = httpURL.getUserInfo();
+            myPort = httpURL.getPort();
+            myIsDefaultPort = myPort < 0;
+            if (myPort < 0) {
+                Integer defaultPort = (Integer) DEFAULT_PORTS.get(myProtocol);
+                myPort = defaultPort.intValue();
+            } 
+        }
     }
     
     /**
@@ -284,7 +336,7 @@ public class SVNURL {
      * @throws SVNException if a parse error occurred
      */
     public SVNURL appendPath(String segment, boolean uriEncoded) throws SVNException {
-        if (segment == null) {
+        if (segment == null || "".equals(segment)) {
             return this;
         }
         if (!uriEncoded) {
@@ -378,6 +430,14 @@ public class SVNURL {
         StringBuffer url = new StringBuffer();
         url.append(protocol);
         url.append("://");
+        if("file".equals(protocol)){
+            if(!path.startsWith("/")){
+                url.append("/");
+            }
+            url.append(path);
+            return url.toString();
+        }
+
         if (userInfo != null) {
             url.append(userInfo);
             url.append("@");

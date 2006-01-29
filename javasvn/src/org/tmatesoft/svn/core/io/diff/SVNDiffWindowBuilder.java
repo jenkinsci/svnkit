@@ -15,6 +15,7 @@ package org.tmatesoft.svn.core.io.diff;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -332,6 +333,85 @@ public class SVNDiffWindowBuilder {
      *                       </ul> 
      * @throws SVNException  if an i/o error occurred while reading from <code>is</code>
      */
+    public void accept(RandomAccessFile file) throws SVNException, IOException {       
+        SVNErrorMessage err;
+        switch (myState) {
+            case HEADER:
+                try{
+                    for(int i = 0; i < myHeader.length; i++) {
+                        if (myHeader[i] < 0) {
+                            int r = file.read();
+                            if (r < 0) {
+                                break;
+                            }
+                            myHeader[i] = (byte) (r & 0xFF);
+                        }
+                    }
+                    if (myHeader[myHeader.length - 1] >= 0) {
+                        myState = OFFSET;
+                        accept(file);
+                        return;
+                    }
+                }catch(IOException ioe){
+                    err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+                    SVNErrorManager.error(err, ioe);
+                }
+                err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_INVALID_HEADER);
+                SVNErrorManager.error(err);
+            case OFFSET:
+                for(int i = 0; i < myOffsets.length; i++) {
+                    if (myOffsets[i] < 0) {
+                        readInt(file, myOffsets, i);
+                        if (myOffsets[i] < 0) {
+                            err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_INVALID_OPS);
+                            SVNErrorManager.error(err);
+                        }
+                    }
+                }
+                if (myOffsets[myOffsets.length - 1] >= 0) {
+                    myState = INSTRUCTIONS;
+                    accept(file);
+                    return;
+                }
+                err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_INVALID_OPS);
+                SVNErrorManager.error(err);
+            case INSTRUCTIONS:
+                if (myOffsets[3] > 0) {
+                    if (myInstructions == null) {
+                        myInstructions = new byte[myOffsets[3]];                        
+                    }
+                    int length =  myOffsets[3];
+                    // read length bytes (!!!!)
+                    try {
+                        length = file.read(myInstructions, myInstructions.length - length, length);
+                    } catch (IOException e) {
+                        err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                        SVNErrorManager.error(err, e);
+                    }
+                    if (length <= 0) {
+                        err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_UNEXPECTED_END);
+                        SVNErrorManager.error(err);
+                    }
+                    myOffsets[3] -= length;
+                    if (myOffsets[3] == 0) {
+                        myState = DONE;
+                        if (myDiffWindow == null) {
+                            myDiffWindow = createDiffWindow(myOffsets, myInstructions);
+                        }
+                    }else{
+                        err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_UNEXPECTED_END);
+                        SVNErrorManager.error(err);
+                    }
+                }
+                if (myDiffWindow == null) {
+                    myDiffWindow = createDiffWindow(myOffsets, myInstructions);
+                } 
+                myState = DONE;
+            default:
+                // all is read.
+        }
+    }
+
     public boolean accept(InputStream is, ISVNEditor consumer, String path) throws SVNException {       
         switch (myState) {
             case HEADER:
@@ -499,6 +579,42 @@ public class SVNDiffWindowBuilder {
         }
         bos.writeTo(os);
     }
+
+    public static void save(SVNDiffWindow window, boolean saveHeader, RandomAccessFile file) throws IOException {
+        if (saveHeader) {
+            file.write(HEADER_BYTES);
+        } 
+        if (window.getInstructionsCount() == 0) {
+            return;
+        }
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        for(int i = 0; i < window.getInstructionsCount(); i++) {
+            SVNDiffInstruction instruction = window.getInstructionAt(i);
+            byte first = (byte) (instruction.type << 6);
+            if (instruction.length <= 0x3f && instruction.length > 0) {
+                // single-byte lenght;
+                first |= (instruction.length & 0x3f);
+                bos.write(first & 0xff);
+            } else {
+                bos.write(first & 0xff);
+                writeInt(bos, instruction.length);
+            }
+            if (instruction.type == 0 || instruction.type == 1) {
+                writeInt(bos, instruction.offset);
+            }
+        }
+
+        long[] offsets = new long[5];
+        offsets[0] = window.getSourceViewOffset();
+        offsets[1] = window.getSourceViewLength();
+        offsets[2] = window.getTargetViewLength();
+        offsets[3] = bos.size();
+        offsets[4] = window.getNewDataLength();
+        for(int i = 0; i < offsets.length; i++) {
+            writeInt(file, offsets[i]);
+        }
+        file.write(bos.toByteArray());
+    }
     
     /**
      * Creates a diff window intended for replacing the whole contents of a file
@@ -531,7 +647,7 @@ public class SVNDiffWindowBuilder {
         SVNDiffInstruction[] instructions = (SVNDiffInstruction[]) instructionsList.toArray(new SVNDiffInstruction[instructionsList.size()]);
         return new SVNDiffWindow(0, 0, totalLength, instructions, totalLength);
     }
-    
+
     /**
      * Creates a diff window/windows intended for replacing the whole contents of 
      * a file with new data. It is mainly intended for binary and newly added text 
@@ -591,6 +707,26 @@ public class SVNDiffWindowBuilder {
             os.write(bytes[j]);
         }
     }
+
+    private static void writeInt(RandomAccessFile file, long i) throws IOException {
+        if (i == 0) {
+            file.write(0);
+            return;
+        }
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        while(i > 0) {
+            byte b = (byte) (i & 0x7f);
+            i = i >> 7;
+            if (bos.size() > 0) {
+                b |= 0x80;
+            }
+            bos.write(b);            
+        } 
+        byte[] bytes = bos.toByteArray();
+        for(int j = bytes.length - 1; j  >= 0; j--) {
+            file.write(bytes[j]);
+        }
+    }
 	
     private static int readInt(byte[] bytes, int offset, int[] target, int index) {
         int newOffset = offset;
@@ -622,6 +758,24 @@ public class SVNDiffWindowBuilder {
                 is.reset();
                 target[index] = -1;
                 return;
+            }
+            byte b = (byte) (r & 0xFF);
+            target[index] = target[index] << 7;
+            target[index] = target[index] | (b & 0x7f);
+            if ((b & 0x80) != 0) {
+                continue;
+            }
+            return;
+        }
+    }
+
+    private static void readInt(RandomAccessFile file, int[] target, int index) throws SVNException, IOException {
+        target[index] = 0;
+        while(true) {
+            int r = file.read();
+            if (r < 0) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_UNEXPECTED_END);
+                SVNErrorManager.error(err);
             }
             byte b = (byte) (r & 0xFF);
             target[index] = target[index] << 7;

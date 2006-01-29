@@ -34,7 +34,8 @@ import org.tmatesoft.svn.core.SVNException;
  * @author TMate Software Ltd.
  */
 public class SVNProperties {
-
+    public static final String SVN_HASH_TERMINATOR = "END";
+    
     private File myFile;
 
     private String myPath;
@@ -96,6 +97,106 @@ public class SVNProperties {
         } finally {
             SVNFileUtil.closeFile(is);
         }
+        return result;
+    }
+
+    public static Map asMap(Map result, InputStream hashStream, boolean incremental, String terminator) throws SVNException {
+        try{
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
+            result = result == null ? new HashMap() : result;
+            if (hashStream == null) {
+                return result;
+            }
+            while(true){
+                /* Read a key length line.  Might be END, though. */
+                Object[] newLine = readLine(hashStream); 
+                boolean eof = ((Boolean)newLine[1]).booleanValue();
+                String line = (String)newLine[0];
+                /* Check for the end of the hash. */
+                if((terminator == null && eof && line.length() == 0) || (terminator != null && terminator.equals(line))){
+                    return result;
+                }
+                /* Check for unexpected end of stream */
+                if(eof){
+                    SVNErrorManager.error(err);
+                }
+                if(line.length() >= 3 && line.charAt(0) == 'K' && line.charAt(1) == ' '){
+                    /* Get the length of the key */
+                    int keyLength = Integer.parseInt(line.substring(2));
+                    if(keyLength < 0){
+                        SVNErrorManager.error(err);
+                    }
+                    /* Now read that much into a buffer. */
+                    byte[] key = new byte[keyLength];
+                    int r = hashStream.read(key);
+                    String keyName = new String(key, 0, r);
+                    /* Suck up extra newline after key data */
+                    if(hashStream.read() != '\n'){
+                        SVNErrorManager.error(err);
+                    }
+                    /* Read a val length line */
+                    newLine = readLine(hashStream); 
+                    line = (String)newLine[0];
+                    if(line.length() >= 3 && line.charAt(0) == 'V' && line.charAt(1) == ' '){
+                        /* Get the length of the value */
+                        int valueLength = Integer.parseInt(line.substring(2));
+                        if(valueLength < 0){
+                            SVNErrorManager.error(err);
+                        }
+                        /* Now read that much into a buffer. */
+                        byte[] value = new byte[valueLength];
+                        r = hashStream.read(value);
+                        String valueName = new String(value, 0, r);
+                        /* Suck up extra newline after key data */
+                        if(hashStream.read() != '\n'){
+                            SVNErrorManager.error(err);
+                        }
+                        /* Add a new hash entry. */
+                        result.put(keyName, valueName);
+                    }else{
+                        SVNErrorManager.error(err);
+                    }
+                }else if(incremental && line.length() >= 3 && line.charAt(0) == 'D' && line.charAt(1) == ' '){
+                    /* Get the length of the key */
+                    int keyLength = Integer.parseInt(line.substring(2));
+                    if(keyLength < 0){
+                        SVNErrorManager.error(err);
+                    }
+                    /* Now read that much into a buffer. */
+                    byte[] key = new byte[keyLength];
+                    int r = hashStream.read(key);
+                    String keyName = new String(key, 0, r);
+                    /* Remove this hash entry. */
+                    result.remove(keyName);
+                    /* Suck up extra newline after key data */
+                    if(hashStream.read() != '\n'){
+                        SVNErrorManager.error(err);
+                    }
+                }else{
+                    SVNErrorManager.error(err);
+                }
+            }
+        }catch(IOException ioe){
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
+        }
+        return null;
+    }
+    
+    private static Object[] readLine(InputStream is) throws IOException {
+        StringBuffer buffer = new StringBuffer();
+        int r = -1;
+        boolean eof = false;
+        while((r = is.read()) != '\n'){
+            if(r == -1){
+                eof = true;
+                break;
+            }
+            buffer.append((char)r);
+        }
+        Object[] result = new Object[2];
+        result[0] = buffer.toString();
+        result[1] = new Boolean(eof);
         return result;
     }
 
@@ -342,6 +443,79 @@ public class SVNProperties {
         SVNFileUtil.deleteFile(getFile());
     }
 
+    public static void setProperties(Map namesToValues, File target) throws SVNException {
+        OutputStream dst = null;
+        File tmpFile = null;
+        try {
+            tmpFile = SVNFileUtil.createUniqueFile(target.getParentFile(),
+                    target.getName(), ".tmp");
+            dst = SVNFileUtil.openFileForWriting(tmpFile);
+            
+            Object[] keys = namesToValues.keySet().toArray();
+            for(int i = 0; i < keys.length; i++){
+                String propertyName = (String)keys[i];
+                writeProperty(dst, 'K', propertyName.getBytes());
+                String propertyValue = (String)namesToValues.get(propertyName);
+                writeProperty(dst, 'V', propertyValue.getBytes());
+            }
+            dst.write(new byte[] { 'E', 'N', 'D', '\n' });
+        }catch(IOException ioe){    
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
+        } finally {
+            SVNFileUtil.closeFile(dst);
+        }
+        if (tmpFile != null) {
+            SVNFileUtil.rename(tmpFile, target);
+            SVNFileUtil.setReadonly(target, true);
+        }
+    }
+
+    public static void setProperties(Map namesToValues, OutputStream target, String terminator) throws SVNException {
+        try {
+            Object[] keys = namesToValues.keySet().toArray();
+            for(int i = 0; i < keys.length; i++){
+                String propertyName = (String)keys[i];
+                writeProperty(target, 'K', propertyName.getBytes());
+                String propertyValue = (String)namesToValues.get(propertyName);
+                writeProperty(target, 'V', propertyValue.getBytes());
+            }
+            if(terminator != null){
+                String terminatingLine = terminator + "\n";
+                target.write(terminatingLine.getBytes());
+            }
+        }catch(IOException ioe){    
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
+        }
+    }
+    
+    public static void appendProperty(String name, String value, OutputStream target) throws SVNException {
+        if(name == null || value == null){
+            return;
+        }
+        try {
+            writeProperty(target, 'K', name.getBytes());
+            writeProperty(target, 'V', value.getBytes());
+        }catch(IOException ioe){    
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
+        }
+    }
+    
+    //only for commit txns
+    public static void appendPropertyDeleted(String name, OutputStream target) throws SVNException {
+        if(name == null){
+            return;
+        }
+        try {
+            writeProperty(target, 'D', name.getBytes());
+        }catch(IOException ioe){    
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
+        }
+    }
+    
     /** @noinspection ResultOfMethodCallIgnored */
     private static boolean copyProperties(InputStream is, OutputStream os,
             String name, InputStream value, int length) throws SVNException {

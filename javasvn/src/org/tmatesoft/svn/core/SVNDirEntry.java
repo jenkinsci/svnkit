@@ -79,6 +79,20 @@ public class SVNDirEntry implements Comparable {
     public SVNURL getURL() {
         return myURL;
     }
+
+    public SVNDirEntry(SVNURL url, String name, SVNNodeKind kind, long size,
+            boolean hasProperties, long revision, Date createdDate,
+            String lastAuthor, String commitMessage) {
+        myURL = url;
+        myName = name;
+        myKind = kind;
+        mySize = size;
+        myHasProperties = hasProperties;
+        myRevision = revision;
+        myCreatedDate = createdDate;
+        myLastAuthor = lastAuthor;
+        myCommitMessage = commitMessage;
+    }
     
     /**
      * Gets the the directory entry name

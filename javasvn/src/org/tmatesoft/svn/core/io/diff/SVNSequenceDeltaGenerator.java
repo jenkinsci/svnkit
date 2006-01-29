@@ -153,7 +153,99 @@ public class SVNSequenceDeltaGenerator implements ISVNDeltaGenerator {
 		}
 	}
 
-	private static boolean canProcess(ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
+    public void generateNextDiffWindow(String commitPath, ISVNEditor consumer, ISVNRAData workFile, ISVNRAData baseFile, long sourceViewOffset) throws SVNException {
+        try {
+            if (!canProcess(workFile, baseFile)) {
+                ALL_DELTA_GENERATOR.generateNextDiffWindow(commitPath, consumer, workFile, baseFile, sourceViewOffset);
+                return;
+            }
+            doGenerateNextDiffWindow(commitPath, workFile, baseFile, consumer, sourceViewOffset, memoryThreshold, fileSegmentSize, searchDepthExponent, tempDirectory);
+        }
+        catch (IOException ex) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ex.getLocalizedMessage());
+            SVNErrorManager.error(err, ex);
+        }
+    }
+
+    private static void doGenerateNextDiffWindow(String commitPath, ISVNRAData workFile, ISVNRAData baseFile, ISVNEditor consumer, long sourceViewOffset, int memoryTreshold, int fileSegmentSize, double searchDepthExponent, File tempDirectory) throws IOException, SVNException {
+        final QSequenceLineResult result;
+        try {
+            result = QSequenceLineMedia.createBlocks(new SVNSequenceLineRAData(baseFile), new SVNSequenceLineRAData(workFile), memoryTreshold, fileSegmentSize, searchDepthExponent, new QSequenceLineFixedTempDirectoryFactory(tempDirectory));
+        }
+        catch (QSequenceException ex) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ex.getLocalizedMessage());
+            SVNErrorManager.error(err, ex);
+            return;
+        }
+        try {
+            final List instructions = new ArrayList();
+            final List newDatas = new ArrayList();
+            createInstructions(result, instructions, newDatas);
+
+            final QSequenceLineCache baseLines = result.getLeftCache();
+            final QSequenceLineCache workLines = result.getRightCache();
+            final long sourceLength = baseLines.getLineCount() > 0 ? baseLines.getLine(baseLines.getLineCount() - 1).getTo() + 1 : 0;
+            final long targetLength = workLines.getLineCount() > 0 ? workLines.getLine(workLines.getLineCount() - 1).getTo() + 1 : 0;
+            final long newDataLength = determineNewDataLength(newDatas);
+            final SVNDiffInstruction[] instructionsArray = (SVNDiffInstruction[])instructions.toArray(new SVNDiffInstruction[instructions.size()]);
+            OutputStream stream = null;
+            try{
+                stream = consumer.textDeltaChunk(commitPath, new SVNDiffWindow(sourceViewOffset, sourceLength, targetLength, instructionsArray, newDataLength));
+                sendData(newDatas, stream);
+            }finally{
+                SVNFileUtil.closeFile(stream);
+            }
+        }
+        finally {
+            result.close();
+        }
+    }
+
+    public SVNDiffWindow generateNextDiffWindow(ISVNRAData workFile, ISVNRAData baseFile, long sourceViewOffset, OutputStream newDataOS) throws SVNException {
+        try {
+            if (!canProcess(workFile, baseFile)) {
+                return ALL_DELTA_GENERATOR.generateNextDiffWindow(workFile, baseFile, sourceViewOffset, newDataOS);
+            }
+            return doGenerateNextDiffWindow(workFile, baseFile, sourceViewOffset, newDataOS, memoryThreshold, fileSegmentSize, searchDepthExponent, tempDirectory);
+        }catch (IOException ex) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ex.getLocalizedMessage());
+            SVNErrorManager.error(err, ex);
+        }finally{
+            SVNFileUtil.closeFile(newDataOS);
+        }
+        return null;
+    }
+
+    private static SVNDiffWindow doGenerateNextDiffWindow(ISVNRAData workFile, ISVNRAData baseFile, long sourceViewOffset, OutputStream newDataOS, int memoryTreshold, int fileSegmentSize, double searchDepthExponent, File tempDirectory) throws IOException, SVNException {
+        QSequenceLineResult result = null;
+        SVNDiffWindow window = null;
+        try {
+            result = QSequenceLineMedia.createBlocks(new SVNSequenceLineRAData(baseFile), new SVNSequenceLineRAData(workFile), memoryTreshold, fileSegmentSize, searchDepthExponent, new QSequenceLineFixedTempDirectoryFactory(tempDirectory));
+        }catch (QSequenceException ex) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ex.getLocalizedMessage());
+            SVNErrorManager.error(err, ex);
+        }
+        try {
+            final List instructions = new ArrayList();
+            final List newDatas = new ArrayList();
+            createInstructions(result, instructions, newDatas);
+
+            final QSequenceLineCache baseLines = result.getLeftCache();
+            final QSequenceLineCache workLines = result.getRightCache();
+            final long sourceLength = baseLines.getLineCount() > 0 ? baseLines.getLine(baseLines.getLineCount() - 1).getTo() + 1 : 0;
+            final long targetLength = workLines.getLineCount() > 0 ? workLines.getLine(workLines.getLineCount() - 1).getTo() + 1 : 0;
+            final long newDataLength = determineNewDataLength(newDatas);
+            final SVNDiffInstruction[] instructionsArray = (SVNDiffInstruction[])instructions.toArray(new SVNDiffInstruction[instructions.size()]);
+            window = new SVNDiffWindow(sourceViewOffset, sourceLength, targetLength, instructionsArray, newDataLength);
+            sendData(newDatas, newDataOS);
+        }finally {
+            SVNFileUtil.closeFile(newDataOS);
+            result.close();
+        }
+        return window;
+    }
+
+    private static boolean canProcess(ISVNRAData workFile, ISVNRAData baseFile) throws SVNException {
 		InputStream is = workFile.read(0, Math.min(1024, workFile.length()));
 		try {
 			if (SVNFileUtil.detectMimeType(workFile.read(0, Math.min(workFile.length(), 1024))) != null) {

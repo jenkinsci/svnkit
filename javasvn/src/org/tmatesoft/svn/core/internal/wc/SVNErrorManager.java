@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -24,17 +25,21 @@ import org.tmatesoft.svn.core.SVNException;
 public class SVNErrorManager {
 
     public static void cancel(String message) throws SVNCancelException {
+        SVNDebugLog.logInfo(message);
         throw new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, message));
     }
 
     public static void authenticationFailed(String message, Object messageObject) throws SVNAuthenticationException {
-        throw new SVNAuthenticationException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, message, messageObject));
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, message, messageObject);
+        SVNDebugLog.logInfo(err.getMessage());
+        throw new SVNAuthenticationException(err);
     }
     
     public static void error(SVNErrorMessage err) throws SVNException {
         if (err == null) {
             err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
         }
+        SVNDebugLog.logInfo(err.getMessage());
         if (err.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err);
         } else if (err.getErrorCode().isAuthentication()) {
@@ -48,6 +53,7 @@ public class SVNErrorManager {
         if (err == null) {
             err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
         }
+        SVNDebugLog.logInfo(err.getMessage());
         if (err.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err);
         } else if (err.getErrorCode().isAuthentication()) {
@@ -64,6 +70,7 @@ public class SVNErrorManager {
             error(err1);
         }
         err1.setChildErrorMessage(err2);
+        SVNDebugLog.logInfo(err1.getMessage());
         if (err1.getErrorCode() == SVNErrorCode.CANCELLED || err2.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err1);
         } else if (err1.getErrorCode().isAuthentication() || err2.getErrorCode().isAuthentication()) {

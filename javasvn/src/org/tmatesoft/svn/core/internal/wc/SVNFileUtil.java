@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.io.RandomAccessFile;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
@@ -35,6 +36,7 @@ import java.util.StringTokenizer;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -56,7 +58,7 @@ public class SVNFileUtil {
         }
     };
     
-
+    private static String nativeEOLMarker;
     private static String ourGroupID;
     private static String ourUserID;
     private static File ourAppDataPath;
@@ -116,7 +118,7 @@ public class SVNFileUtil {
         if (SVNFileType.getType(file) == SVNFileType.NONE) {
             return file;
         }
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNIQUE_NAMES_EXHAUSTED);
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNIQUE_NAMES_EXHAUSTED, "Unable to make name for ''{0}''", new File(parent, name));
         SVNErrorManager.error(err);
         return null;
     }
@@ -201,7 +203,26 @@ public class SVNFileUtil {
             SVNDebugLog.logInfo(th);
         }
     }
-
+    
+    public static File resolveSymlinkToFile(File file){
+        File targetFile = file;
+        while(isSymlink(targetFile)){
+            String symlinkName = getSymlinkName(targetFile); 
+            if(symlinkName == null){
+                return null;
+            }
+            if(symlinkName.startsWith("/")){
+                targetFile = new File(symlinkName);
+            }else{
+                targetFile = new File(targetFile.getParentFile(), symlinkName);
+            }
+        }
+        if(targetFile == null || !targetFile.isFile()){
+            return null;
+        }
+        return targetFile;
+    }
+    
     public static boolean isSymlink(File file) {
         if (isWindows || file == null) {
             return false;
@@ -342,7 +363,8 @@ public class SVNFileUtil {
         if (ls == null || ls.lastIndexOf(" -> ") < 0) {
             return null;
         }
-        return ls.substring(ls.lastIndexOf(" -> ") + " -> ".length()).trim();
+        String[] attributes = ls.split("\\s+");
+        return attributes[attributes.length - 1];
     }
 
     public static String computeChecksum(String line) {
@@ -539,7 +561,65 @@ public class SVNFileUtil {
         }
         return hexDigest;
     }
+    
+    public static String toHexDigest(byte[] digest) {
+        if (digest == null) {
+            return null;
+        }
 
+        String hexDigest = "";
+        for (int i = 0; i < digest.length; i++) {
+            byte b = digest[i];
+            int lo = b & 0xf;
+            int hi = (b >> 4) & 0xf;
+            hexDigest += Integer.toHexString(hi) + Integer.toHexString(lo);
+        }
+        return hexDigest;
+    }
+
+    public static byte[] fromHexDigest(String hexDigest){
+        if(hexDigest == null || hexDigest.length()==0){
+            return null;
+        }
+        
+        String hexMD5Digest = hexDigest.toLowerCase();
+        
+        int digestLength = hexMD5Digest.length()/2;
+        
+        if(digestLength==0 || 2*digestLength != hexMD5Digest.length()){
+            return null;
+        }
+        
+        byte[] digest = new byte[digestLength];
+        for(int i = 0; i < hexMD5Digest.length()/2; i++){
+            if(!isHex(hexMD5Digest.charAt(2*i)) || !isHex(hexMD5Digest.charAt(2*i + 1))){
+                return null;
+            }
+            
+            int hi = Character.digit(hexMD5Digest.charAt(2*i), 16)<<4;
+
+            int lo =  Character.digit(hexMD5Digest.charAt(2*i + 1), 16);
+            Integer ib = new Integer(hi | lo);
+            byte b = ib.byteValue();
+            
+            digest[i] = b;
+        }
+        
+        return digest; 
+    }
+    
+    private static boolean isHex(char ch){
+        return Character.isDigit(ch) || 
+              (Character.toUpperCase(ch) >= 'A' && Character.toUpperCase(ch) <= 'F');
+    }
+    
+    public static String getNativeEOLMarker(){
+        if(nativeEOLMarker == null){
+            nativeEOLMarker = new String(SVNTranslator.getEOL(SVNProperty.EOL_STYLE_NATIVE));
+        }
+        return nativeEOLMarker;
+    }
+    
     public static long roundTimeStamp(long tstamp) {
         return (tstamp / 1000) * 1000;
     }
@@ -700,6 +780,29 @@ public class SVNFileUtil {
         }
         return null;
     }
+    
+    public static RandomAccessFile openRAFileForWriting(File file, boolean append) throws SVNException {
+        if (file == null) {
+            return null;
+        }
+        if (!file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }
+        RandomAccessFile raFile = null;
+        try{
+            raFile = new RandomAccessFile(file, "rw");
+            if(append){
+                raFile.seek(raFile.length());
+            }
+        } catch (FileNotFoundException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not write to file ''{0}'': {1}", new Object[]{file, e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
+        } catch(IOException ioe){
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not set position pointer in file ''{0}'': {1}", new Object[]{file, ioe.getLocalizedMessage()});
+            SVNErrorManager.error(err, ioe);
+        }
+        return raFile;
+    }
 
     public static InputStream openFileForReading(File file) throws SVNException {
         if (file == null) {
@@ -717,6 +820,27 @@ public class SVNFileUtil {
         } catch (FileNotFoundException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from to ''{0}'': {1}", new Object[] {file, e.getLocalizedMessage()});
             SVNErrorManager.error(err, e);
+        }
+        return null;
+    }
+
+    public static RandomAccessFile openRAFileForReading(File file) throws SVNException {
+        if (file == null) {
+            return null;
+        }
+        if (!file.isFile() || !file.canRead()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from ''{0}'': path refers to a directory or read access is denied", file);
+            SVNErrorManager.error(err);
+        }
+        if (!file.exists()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "File ''{0}'' does not exist", file);
+            SVNErrorManager.error(err);
+        }
+        try {
+            return new RandomAccessFile(file, "r");
+        } catch (FileNotFoundException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from ''{0}'': {1}", new Object[]{file, e.getLocalizedMessage()});
+            SVNErrorManager.error(err);
         }
         return null;
     }
@@ -742,7 +866,18 @@ public class SVNFileUtil {
             //
         }
     }
-    
+
+    public static void closeFile(RandomAccessFile raf) {
+        if (raf == null) {
+            return;
+        }
+        try {
+            raf.close();
+        } catch (IOException e) {
+            //
+        }
+    }
+
     private static String execCommand(String[] commandLine) {
         return execCommand(commandLine, false);
     }

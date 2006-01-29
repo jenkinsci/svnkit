@@ -30,6 +30,14 @@ public class SVNProperty {
      * An <span class="javastring">"svn:wc:"</span> prefix.
      */
     public static final String SVN_WC_PREFIX = "svn:wc:";
+
+    /* These are transaction properties that correspond to the bitfields
+     * in the 'flags' argument to svn_fs_lock().  
+     */
+    public static final String TXN_CHECK_LOCKS = SVN_PREFIX + "check-locks";
+    
+    public static final String TXN_CHECK_OUT_OF_DATENESS = SVN_PREFIX + "check-ood";
+
     /**
      * An <span class="javastring">"svn:entry:"</span> prefix.
      */
@@ -280,6 +288,20 @@ public class SVNProperty {
     public static boolean isSVNProperty(String name) {
         return name != null && name.startsWith(SVN_PREFIX);
     }
+
+    /*
+     * Regular are some "svn:" props and all user props, i.e. ones 
+     * stored in the repository fs.
+     */
+    public static boolean isRegularProperty(String name){
+        if(name == null){
+            return false;
+        }else if(name.startsWith(SVN_WC_PREFIX) || name.startsWith(SVN_ENTRY_PREFIX)){
+            return false;
+        }else{
+            return true;
+        }
+    }
     
     /**
      * Says if the given MIME-type corresponds to a text type.
@@ -293,6 +315,7 @@ public class SVNProperty {
     public static boolean isTextMimeType(String mimeType) {
         return mimeType == null || mimeType.startsWith("text/");
     }
+    
     /**
      * Says if the given MIME-type corresponds to a binary (non-textual) type.
      * 
