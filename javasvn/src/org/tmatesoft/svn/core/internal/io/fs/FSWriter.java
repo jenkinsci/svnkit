@@ -272,9 +272,9 @@ public class FSWriter {
                     textRep.setSize(size);
                     textRep.setHexDigest(hexDigest);
                     textRep.setExpandedSize(textRep.getSize());
-                }catch(NoSuchAlgorithmException nae){
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, nae.getLocalizedMessage());
-                    SVNErrorManager.error(err, nae);
+                }catch(NoSuchAlgorithmException nsae){
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
+                    SVNErrorManager.error(err, nsae);
                 }
             }
         }else{
@@ -301,9 +301,9 @@ public class FSWriter {
                 propsRep.setHexDigest(hexDigest);
                 propsRep.setTxnId(FSID.ID_INAPPLICABLE);
                 propsRep.setRevision(revision);
-            }catch(NoSuchAlgorithmException nae){
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, nae.getLocalizedMessage());
-                SVNErrorManager.error(err, nae);
+            }catch(NoSuchAlgorithmException nsae){
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
+                SVNErrorManager.error(err, nsae);
             }
         }
         /* Convert our temporary ID into a permanent revision one. */

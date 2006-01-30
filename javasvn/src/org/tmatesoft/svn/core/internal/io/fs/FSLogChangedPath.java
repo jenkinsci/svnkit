@@ -14,9 +14,9 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;;
 
 /**
- * Class is used as value in hash table in returning argument of detectChanged()
- * (class FSRepository)
- * */
+ * @version 1.0
+ * @author  TMate Software Ltd.
+ */
 public class FSLogChangedPath {
     
     /*'A'dd, 'D'elete, 'M'odify, 'R'eplace*/

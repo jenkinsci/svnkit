@@ -77,7 +77,7 @@ public class FSInputStream extends InputStream {
         try {
             myDigest = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException nsae) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, nsae.getLocalizedMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
             SVNErrorManager.error(err, nsae);
         }
         try{
@@ -266,6 +266,7 @@ public class FSInputStream extends InputStream {
      * window. 
      */
     private SVNDiffWindow readWindow(FSRepresentationState state, int thisChunk, OutputStream dataBuf) throws SVNException, IOException {
+        //assertion
         if(state.chunkIndex > thisChunk){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Fatal error while reading diff windows");
             SVNErrorManager.error(err);

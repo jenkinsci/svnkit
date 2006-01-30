@@ -18,10 +18,8 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
- * @author Tim
- *
- * TODO To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Style - Code Templates
+ * @version 1.0
+ * @author  TMate Software Ltd.
  */
 public class FSNodeHistory
 {	

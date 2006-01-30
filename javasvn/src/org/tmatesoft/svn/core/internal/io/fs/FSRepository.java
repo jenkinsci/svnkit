@@ -46,7 +46,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.diff.SVNDeltaChunksGenerator;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -318,7 +318,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             if (!SVNRepository.isValidRevision(revision)) {
                 revision = FSReader.getYoungestRevision(myReposRootDir);
             }
-            path = path == null ? "" : path;
             String repositoryPath = getRepositoryPath(path);
             InputStream fileStream = null;
             try{
@@ -405,11 +404,13 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         revProps = FSRepositoryUtil.getRevisionProperties(reposRootDir, repEntry.getId().getRevision());
         String lastAuthor = null;
         String log = null;
+        Date lastCommitDate = null;
         if (revProps != null && revProps.size() > 0) {
             lastAuthor = (String) revProps.get(SVNRevisionProperty.AUTHOR);
             log = (String) revProps.get(SVNRevisionProperty.LOG);
+            String timeString = (String)revProps.get(SVNRevisionProperty.DATE);
+            lastCommitDate = timeString != null ? SVNTimeUtil.parseDateString(timeString) : null;
         }
-        Date lastCommitDate = getTime(reposRootDir, repEntry.getId().getRevision());
         SVNURL entryURL = parentURL.appendPath(repEntry.getName(), false);
         SVNDirEntry dirEntry = new SVNDirEntry(entryURL, repEntry.getName(), repEntry.getType(), size, hasProps, repEntry.getId().getRevision(), lastCommitDate, lastAuthor, includeLogs ? log : null);
         dirEntry.setRelativePath(repEntry.getName());
@@ -444,7 +445,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             if (!SVNRepository.isValidRevision(revision)) {
                 revision = FSReader.getYoungestRevision(myReposRootDir);
             }
-            path = path == null ? "" : path;
             String repositoryPath = getRepositoryPath(path);
             SVNURL parentURL = getLocation().appendPath(path, false);
             FSRevisionNode parent = myRevNodesPool.getRevisionNode(revision, repositoryPath, myReposRootDir);
@@ -1200,7 +1200,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         myReporterContext.getEditor().closeEdit();
         
         disposeReporterContext();
-        
     }
 
     public void abortReport() throws SVNException {
@@ -1335,8 +1334,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                     sourceStream = FSInputStream.createDeltaStream((FSRevisionNode)null, myReposRootDir);
                 }
                 targetStream = FSReader.getFileContentsInputStream(FSRoot.createRevisionRoot(myReporterContext.getTargetRevision(), myReporterContext.getTargetRoot()), targetPath, myRevNodesPool, myReposRootDir);//FSInputStream.createDeltaStream(targetNode, myReposRootDir);
-                SVNDeltaChunksGenerator deltaGenerator = new SVNDeltaChunksGenerator(sourceStream, targetStream, myReporterContext.getEditor(), editPath, FSWriter.getTmpDir());
-                deltaGenerator.sendWindows();
+                SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
+                deltaGenerator.sendDelta(editPath, sourceStream, targetStream, myReporterContext.getEditor(), false);
             }finally{
                 SVNFileUtil.closeFile(sourceStream);
                 SVNFileUtil.closeFile(targetStream);
