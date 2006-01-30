@@ -113,14 +113,21 @@ class DAVRepository extends SVNRepository {
         return myRepositoryRoot;
     }
 
-    public String getRepositoryUUID() {
-        if (myConnection != null) {
-            try {
+    public String getRepositoryUUID(boolean forceConnection) throws SVNException {
+        if (myRepositoryUUID == null) {
+            if (myConnection != null) {
                 myConnection.fetchRepositoryUUID(this);
-            } catch (SVNException e) {
+            } else if (forceConnection) {
+               openConnection();
+               try {
+                   myConnection.fetchRepositoryUUID(this);
+                   
+               } finally {
+                   closeConnection();
+               }
             }
         }
-        return super.getRepositoryUUID();
+        return myRepositoryUUID;
     }
     
     public void setAuthenticationManager(ISVNAuthenticationManager authManager) {

@@ -854,7 +854,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 if (uuid == null) {
                     if (url != null) {
                         SVNRepository repos = createRepository(url, true);
-                        uuid = repos.getRepositoryUUID();
+                        uuid = repos.getRepositoryUUID(true);
                     } else {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", wcRoot);
                         SVNErrorManager.error(err);
