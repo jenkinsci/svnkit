@@ -1625,7 +1625,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         SVNURL reposRoot = repos.getRepositoryRoot(true);
-        String reposUUID = repos.getRepositoryUUID();
+        String reposUUID = repos.getRepositoryUUID(true);
         // 1. get locks for this dir and below (only for dir).
         // and only when pegRev is HEAD.
         SVNLock[] locks = null;

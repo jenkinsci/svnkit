@@ -149,8 +149,7 @@ public class DisplayRepositoryTree {
              * getRepositoryUUID returns Universal Unique IDentifier (UUID) - an
              * identifier of the repository
              */
-            System.out.println("Repository UUID: "
-                    + repository.getRepositoryUUID());
+            System.out.println("Repository UUID: " + repository.getRepositoryUUID(true));
             System.out.println("");
 
             /*

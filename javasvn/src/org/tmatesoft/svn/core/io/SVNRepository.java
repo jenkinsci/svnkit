@@ -218,29 +218,37 @@ public abstract class SVNRepository {
     }
 
     /**
-     * Gets a cached repository's Universal Unique IDentifier (UUID). 
-     * According to uniqueness for different repositories UUID values 
-     * (36 character strings) are different. UUID is got and cached at 
-     * the time of the first successful repository access operation. 
-     * Before that it's <span class="javakeyword">null</span>.
-     * 
-     * @return 	the UUID of a repository 
+     * @return 	the UUID of a repository
+     * @deprecated use {@link #getRepositoryUUID(boolean) } instead 
      */
     public String getRepositoryUUID() {
+        try {
+            return getRepositoryUUID(false);
+        } catch (SVNException e) {
+        }
         return myRepositoryUUID;
     }
 
     /**
-     * Gets a cached repository's root directory location. The root directory
-     * is evaluated and cached at the time of the first successful repository
-     * access operation. Before that it's <span class="javakeyword">null</span>.
-     * If this driver object is switched to a different repository location during
-     * runtime (probably to an absolutely different repository, see {@link #setLocation(SVNURL, boolean) setLocation()}), 
-     * the root directory location may be changed. 
-     * <p>
-     * This method does not force this <b>SVNRepository</b> driver to
-     * test a connection.
-     * 
+     * Gets a repository's Universal Unique IDentifier (UUID). 
+     * According to uniqueness for different repositories UUID values 
+     * (36 character strings) are different. 
+     *  
+     * @param   forceConnection   if <span class="javakeyword">true</span> then forces
+     *                            this driver to test a connection - try to access a 
+     *                            repository 
+     * @return  the UUID of a repository
+     * @throws SVNException
+     */
+    public String getRepositoryUUID(boolean forceConnection) throws SVNException {
+        if (forceConnection && myRepositoryUUID == null) {
+            testConnection();
+        }
+        return myRepositoryUUID;
+    }
+
+
+    /**
      * @return 	the repository root directory location url
      * @see     #getRepositoryRoot(boolean)
      * 
@@ -256,9 +264,7 @@ public abstract class SVNRepository {
     }
     
     /**
-     * Gets a cached repository's root directory location. The root directory
-     * is evaluated and cached at the time of the first successful repository
-     * access operation. Before that it's <span class="javakeyword">null</span>.
+     * Gets a repository's root directory location. 
      * If this driver object is switched to a different repository location during
      * runtime (probably to an absolutely different repository, see {@link #setLocation(SVNURL, boolean) setLocation()}), 
      * the root directory location may be changed. 
@@ -312,7 +318,7 @@ public abstract class SVNRepository {
      * 					(UUID) 
      * @param rootURL	the repository's root directory location
      * @see 			#getRepositoryRoot(boolean)
-     * @see 			#getRepositoryUUID()
+     * @see 			#getRepositoryUUID(boolean)
      */
     protected void setRepositoryCredentials(String uuid, SVNURL rootURL) {
         if (uuid != null && rootURL != null) {

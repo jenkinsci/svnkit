@@ -250,7 +250,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         SVNRepository repos = createRepository(url, null, pegRevision, revision);
         long revNumber = getRevisionNumber(revision, repos, null);
         SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
-        String uuid = repos.getRepositoryUUID();
+        String uuid = repos.getRepositoryUUID(true);
         SVNURL repositoryRoot = repos.getRepositoryRoot(true);
         if (targetNodeKind == SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "URL ''{0}'' refers to a file, not a directory", url);
@@ -772,8 +772,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
         SVNRepository repos = createRepository(targetURL, true);
-        repos.testConnection();
-        String actualUUID = repos.getRepositoryUUID();
+        String actualUUID = repos.getRepositoryUUID(true);
         if (actualUUID == null || !actualUUID.equals(expectedUUID)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_RELOCATION, "The repository at ''{0}'' has uuid ''{1}'', but the WC has ''{2}''",
                     new Object[] {targetURL, actualUUID, expectedUUID});

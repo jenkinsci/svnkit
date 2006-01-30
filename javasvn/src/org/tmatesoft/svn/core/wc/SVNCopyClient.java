@@ -447,12 +447,12 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNEntry dstParentEntry = dstParentAccess.getTargetEntry();
         SVNURL repositoryRootURL = repository.getRepositoryRoot(true);
         try {
-            srcUUID = repository.getRepositoryUUID();
+            srcUUID = repository.getRepositoryUUID(true);
             dstUUID = dstParentEntry != null ? dstParentEntry.getUUID() : null;
             if (dstParentEntry != null && dstParentEntry.getURL() != null && dstUUID == null) {
                 SVNURL url = dstParentEntry.getSVNURL();
                 SVNRepository dstRepos = createRepository(url, false);
-                dstUUID = dstRepos.getRepositoryUUID();
+                dstUUID = dstRepos.getRepositoryUUID(true);
             }
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NO_REPOS_UUID) {

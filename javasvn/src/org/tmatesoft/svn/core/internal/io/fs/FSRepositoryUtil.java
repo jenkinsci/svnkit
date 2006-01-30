@@ -148,7 +148,7 @@ public class FSRepositoryUtil {
         revProps = getRevisionProperties(reposRootDir, revision);
         String author = (String) revProps.get(SVNRevisionProperty.AUTHOR);
         String date = (String) revProps.get(SVNRevisionProperty.DATE);
-        String uuid = repository.getRepositoryUUID();
+        String uuid = repository.getRepositoryUUID(true);
         String rev = String.valueOf(revision);
 
         metaProps.put(SVNProperty.LAST_AUTHOR, author);
