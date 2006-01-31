@@ -195,12 +195,12 @@ public class JavaHLObjectFactory {
     public static SVNRevision getSVNRevision(Revision r){
         if(r == null){
             return SVNRevision.UNDEFINED;
-        }
-        if(r.getKind() == RevisionKind.number){
+        } else if(r.getKind() == RevisionKind.number){
             return SVNRevision.create(((Revision.Number)r).getNumber());
-        }
-        if(r.getKind() == RevisionKind.date){
+        } else if(r.getKind() == RevisionKind.date){
             return SVNRevision.create(((Revision.DateSpec)r).getDate());
+        } else if (r == Revision.START) {
+            return SVNRevision.create(0);
         }
         return (SVNRevision)REVISION_KIND_CONVERSION_MAP.get(new Integer(r.getKind()));
     }

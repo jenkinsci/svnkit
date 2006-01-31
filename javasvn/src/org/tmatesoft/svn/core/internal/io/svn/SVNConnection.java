@@ -203,7 +203,6 @@ class SVNConnection {
     
     public void write(String template, Object[] items) throws SVNException {
         try {
-//            checkConnection();
             SVNWriter.write(getOutputStream(), template, items);
         } finally {
             try {
