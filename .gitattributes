@@ -106,9 +106,6 @@ javasvn/src/org/tmatesoft/svn/core/internal/wc/config/README.txt eol=lf
 javasvn/src/org/tmatesoft/svn/core/internal/wc/config/config eol=lf
 javasvn/src/org/tmatesoft/svn/core/internal/wc/config/servers eol=lf
 javasvn/src/org/tmatesoft/svn/core/io/ISVNSession.java -text
-javasvn/src/org/tmatesoft/svn/core/io/diff/ISVNDiffWindowHandler.java -text
-javasvn/src/org/tmatesoft/svn/core/io/diff/SVNDeltaChunksGenerator.java -text
-javasvn/src/org/tmatesoft/svn/core/io/diff/SVNRABufferData.java -text
 javasvn/src/org/tmatesoft/svn/core/io/diff/package.html -text
 javasvn/src/org/tmatesoft/svn/core/io/package.html -text
 javasvn/src/org/tmatesoft/svn/core/javahl/package.html -text

@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindowApplyBaton;
  * @author  TMate Software Ltd.
  */
 public class FSCommitDeltaProcessor extends FSBufferStream{
+    
     private InputStream mySourceStream;
     
     private OutputStream myTargetStream;

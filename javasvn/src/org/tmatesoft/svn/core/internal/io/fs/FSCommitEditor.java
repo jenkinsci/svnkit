@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 
 /**
  * @version 1.0
@@ -57,7 +58,7 @@ public class FSCommitEditor implements ISVNEditor {
     private FSRepository myRepository;
     private Stack myDirsStack;
     private FSOutputStream myTargetStream;
-    private FSCommitDeltaProcessor myDeltaProcessor;
+    private SVNDeltaProcessor myDeltaProcessor;
     
     public FSCommitEditor(String path, String logMessage, String userName, Map lockTokens, boolean keepLocks, FSTransactionInfo txn, FSRepository repository){
         myPathsToLockTokens = !keepLocks ? lockTokens : null;  
@@ -626,7 +627,8 @@ public class FSCommitEditor implements ISVNEditor {
         try{
             sourceStream = FSInputStream.createDeltaStream(node, myReposRootDir);
             targetStream = FSOutputStream.createStream(node, txnId, myReposRootDir);
-            myDeltaProcessor = new FSCommitDeltaProcessor(sourceStream, targetStream);
+            myDeltaProcessor = new SVNDeltaProcessor();
+            myDeltaProcessor.applyTextDelta(sourceStream, targetStream, false);
         }catch(SVNException svne){
             SVNFileUtil.closeFile(sourceStream);
             throw svne;
@@ -723,11 +725,11 @@ public class FSCommitEditor implements ISVNEditor {
     }
     
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        return myDeltaProcessor.handleDiffWindow(diffWindow);
+        return myDeltaProcessor.textDeltaChunk(diffWindow);
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        myDeltaProcessor.onTextDeltaEnd();
+        myDeltaProcessor.textDeltaEnd();
     }
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
