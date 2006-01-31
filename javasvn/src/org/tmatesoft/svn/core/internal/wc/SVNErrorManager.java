@@ -39,7 +39,7 @@ public class SVNErrorManager {
         if (err == null) {
             err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
         }
-        SVNDebugLog.logInfo(err.getMessage());
+        SVNDebugLog.logInfo(err.getFullMessage());
         if (err.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err);
         } else if (err.getErrorCode().isAuthentication()) {
