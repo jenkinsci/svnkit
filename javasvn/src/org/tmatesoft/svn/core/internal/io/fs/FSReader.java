@@ -594,11 +594,14 @@ public class FSReader {
             SVNErrorManager.error(err);
         }
         //first try to ask the object's cache for entries
-        Map entries = parent.getDirContents(); 
-        if(entries == null){
-            entries = getDirContents(parent, reposRootDir);
-            entries = entries == null ? new HashMap() : entries;
-            parent.setDirContents(entries);
+        Map entries = new HashMap();
+        Map dirContents = parent.getDirContents(); 
+        if(dirContents == null){
+            dirContents = getDirContents(parent, reposRootDir);
+            parent.setDirContents(dirContents);
+        }
+        if(dirContents != null){
+            entries.putAll(dirContents);
         }
         return entries;
     }

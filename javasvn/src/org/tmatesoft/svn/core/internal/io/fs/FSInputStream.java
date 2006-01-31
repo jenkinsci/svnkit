@@ -34,7 +34,6 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffInstruction;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowApplyBaton;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -228,8 +227,6 @@ public class FSInputStream extends InputStream {
                             sourceInstructions++;
                         }
                     }
-                    SVNDebugLog.logInfo("copy-from-source-instructions: " + sourceInstructions + ", source view length: " + myDiffWindowBuilder.getDiffWindow().getSourceViewLength());
-
                     if(sourceInstructions == 0){
                         break;
                     }
@@ -255,7 +252,6 @@ public class FSInputStream extends InputStream {
                 SVNErrorManager.error(err, ioe);
             }
             SVNDiffWindowApplyBaton applyBaton = SVNDiffWindowApplyBaton.create(source, target, null);
-            SVNDebugLog.logInfo("Test debug: " + window.getSourceViewLength() + ", index: " + startIndex + ", count: " + myRepStateList.size());
             window.apply(applyBaton, new ByteArrayInputStream(data.toByteArray()));
             if(states.hasPrevious()){
                 source = new ByteArrayInputStream(target.toByteArray());
