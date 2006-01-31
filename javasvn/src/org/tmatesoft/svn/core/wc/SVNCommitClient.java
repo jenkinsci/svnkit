@@ -96,6 +96,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 public class SVNCommitClient extends SVNBasicClient {
 
     private ISVNCommitHandler myCommitHandler;
+    private ISVNCommitParameters myCommitParameters;
     
     /**
      * Constructs and initializes an <b>SVNCommitClient</b> object
@@ -165,6 +166,17 @@ public class SVNCommitClient extends SVNBasicClient {
             myCommitHandler = new DefaultSVNCommitHandler();
         }
         return myCommitHandler;
+    }
+    
+    public void setCommitParameters(ISVNCommitParameters parameters) {
+        myCommitParameters = parameters;
+    }
+    
+    public ISVNCommitParameters getCommitParameters() {
+        if (myCommitParameters == null) {
+            myCommitParameters = new DefaultSVNCommitParameters();
+        }
+        return myCommitParameters;
     }
     
     /**
@@ -738,7 +750,7 @@ public class SVNCommitClient extends SVNBasicClient {
         SVNWCAccess wcAccess = SVNCommitUtil.createCommitWCAccess(paths, recursive, force, targets, statusClient);
         try {
             Map lockTokens = new HashMap();
-            SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targets, lockTokens, !keepLocks, recursive, force);
+            SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targets, lockTokens, !keepLocks, recursive, force, getCommitParameters());
             boolean hasModifications = false;
             for (int i = 0; commitItems != null && i < commitItems.length; i++) {
                 SVNCommitItem commitItem = commitItems[i];
@@ -809,7 +821,7 @@ public class SVNCommitClient extends SVNBasicClient {
             Collection targetPaths = (Collection) targets.get(wcAccess);
             try {
                 Map lockTokens = new HashMap();
-                SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targetPaths, lockTokens, !keepLocks, recursive, force);
+                SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targetPaths, lockTokens, !keepLocks, recursive, force, getCommitParameters());
                 boolean hasModifications = false;
                 for (int j = 0; commitItems != null && j < commitItems.length; j++) {
                     SVNCommitItem commitItem = commitItems[j];

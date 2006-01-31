@@ -100,6 +100,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 public class SVNCopyClient extends SVNBasicClient {
 
     private ISVNCommitHandler myCommitHandler;
+    private ISVNCommitParameters myCommitParameters;
     /**
      * Constructs and initializes an <b>SVNCopyClient</b> object
      * with the specified run-time configuration and authentication 
@@ -168,6 +169,17 @@ public class SVNCopyClient extends SVNBasicClient {
             myCommitHandler = new DefaultSVNCommitHandler();
         }
         return myCommitHandler;
+    }
+
+    public void setCommitParameters(ISVNCommitParameters parameters) {
+        myCommitParameters = parameters;
+    }
+
+    public ISVNCommitParameters getCommitParameters() {
+        if (myCommitParameters == null) {
+            myCommitParameters = new DefaultSVNCommitParameters();
+        }
+       return myCommitParameters;
     }
     
     /**
@@ -349,7 +361,7 @@ public class SVNCopyClient extends SVNBasicClient {
             }
             
             SVNCommitUtil.harvestCommitables(commitables, wcAccess.getTarget(), srcPath, null, entry, dstURL.toString(), entry.getURL(), 
-                    true, false, false, null, true, false);
+                    true, false, false, null, true, false, getCommitParameters());
             items = (SVNCommitItem[]) commitables.values().toArray(new SVNCommitItem[commitables.values().size()]);
             for (int i = 0; i < items.length; i++) {
                 items[i].setWCAccess(wcAccess);

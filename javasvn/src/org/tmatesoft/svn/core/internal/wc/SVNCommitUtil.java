@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -269,7 +270,7 @@ public class SVNCommitUtil {
 
     public static SVNCommitItem[] harvestCommitables(SVNWCAccess baseAccess,
             Collection paths, Map lockTokens, boolean justLocked,
-            boolean recursive, boolean force) throws SVNException {
+            boolean recursive, boolean force, ISVNCommitParameters params) throws SVNException {
         Map commitables = new TreeMap();
         Collection danglers = new HashSet();
         Iterator targets = paths.iterator();
@@ -361,7 +362,7 @@ public class SVNCommitUtil {
                     recurse = true;
                 }
             }
-            harvestCommitables(commitables, dir, targetFile, null, entry, url, null, false, false, justLocked, lockTokens, recurse, isRecursionForced);
+            harvestCommitables(commitables, dir, targetFile, null, entry, url, null, false, false, justLocked, lockTokens, recurse, isRecursionForced, params);
         } while (targets.hasNext());
 
         for (Iterator ds = danglers.iterator(); ds.hasNext();) {
@@ -466,7 +467,7 @@ public class SVNCommitUtil {
     public static void harvestCommitables(Map commitables, SVNDirectory dir,
             File path, SVNEntry parentEntry, SVNEntry entry, String url,
             String copyFromURL, boolean copyMode, boolean addsOnly,
-            boolean justLocked, Map lockTokens, boolean recursive, boolean forcedRecursion)
+            boolean justLocked, Map lockTokens, boolean recursive, boolean forcedRecursion, ISVNCommitParameters params)
             throws SVNException {
         if (commitables.containsKey(path)) {
             return;
@@ -523,6 +524,18 @@ public class SVNCommitUtil {
         }
         boolean commitDeletion = !addsOnly
                 && ((entry.isDeleted() && entry.getSchedule() == null) || entry.isScheduledForDeletion() || entry.isScheduledForReplacement());
+        if (!addsOnly && !commitDeletion && fileType == SVNFileType.NONE && params != null) {
+            ISVNCommitParameters.Action action = 
+                entry.getKind() == SVNNodeKind.DIR ? params.onMissingDirectory(path) : params.onMissingFile(path);
+            if (action == ISVNCommitParameters.ERROR) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy file ''{0}'' is missing", path);
+                SVNErrorManager.error(err);
+            } else if (action == ISVNCommitParameters.DELETE) {
+                commitDeletion = true;
+                entry.scheduleForDeletion();
+                dir.getEntries().save(false);
+            }
+        }
         boolean commitAddition = false;
         boolean commitCopy = false;
         if (entry.isScheduledForAddition() || entry.isScheduledForReplacement()) {
@@ -653,14 +666,34 @@ public class SVNCommitUtil {
                             item.setPath(SVNPathUtil.append(dir.getPath(), currentEntry.getName()));
                             commitables.put(currentFile, item);
                             continue;
+                        } else if (currentType != SVNFileType.NONE) {
+                            // directory is not missing, but obstructed, 
+                            // or no special params are specified.
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy ''{0}'' is missing or not locked", currentFile);
+                            SVNErrorManager.error(err);
+                        } else { 
+                            ISVNCommitParameters.Action action = 
+                                params != null ? params.onMissingDirectory(dir.getFile(currentEntry.getName())) : ISVNCommitParameters.ERROR;
+                            if (action == ISVNCommitParameters.DELETE) {
+                                SVNCommitItem item = new SVNCommitItem(currentFile,
+                                        SVNURL.parseURIEncoded(currentURL), null, currentEntry.getKind(),
+                                        SVNRevision.UNDEFINED, false, true, false,
+                                        false, false, false);
+                                item.setPath(SVNPathUtil.append(dir.getPath(), currentEntry.getName()));
+                                commitables.put(currentFile, item);
+                                currentEntry.scheduleForDeletion();
+                                entries.save(false);
+                                continue;
+                            } else if (action != ISVNCommitParameters.SKIP) {
+                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy ''{0}'' is missing or not locked", currentFile);
+                                SVNErrorManager.error(err);
+                            }
                         }
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy ''{0}'' is missing or not locked", currentFile);
-                        SVNErrorManager.error(err);
                     }
                 }
                 harvestCommitables(commitables, dir, currentFile, entry,
                         currentEntry, currentURL, currentCFURL, copyMode,
-                        addsOnly, justLocked, lockTokens, true, forcedRecursion);
+                        addsOnly, justLocked, lockTokens, true, forcedRecursion, params);
 
             }
         }

@@ -113,6 +113,8 @@ javasvn/src/org/tmatesoft/svn/core/io/diff/package.html -text
 javasvn/src/org/tmatesoft/svn/core/io/package.html -text
 javasvn/src/org/tmatesoft/svn/core/javahl/package.html -text
 javasvn/src/org/tmatesoft/svn/core/package.html -text
+javasvn/src/org/tmatesoft/svn/core/wc/DefaultSVNCommitParameters.java -text
+javasvn/src/org/tmatesoft/svn/core/wc/ISVNCommitParameters.java -text
 javasvn/src/org/tmatesoft/svn/core/wc/ISVNMerger.java -text
 javasvn/src/org/tmatesoft/svn/core/wc/ISVNMergerFactory.java -text
 javasvn/src/org/tmatesoft/svn/core/wc/package.html -text
