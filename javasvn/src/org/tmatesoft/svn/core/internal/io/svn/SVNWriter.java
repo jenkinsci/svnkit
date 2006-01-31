@@ -57,7 +57,7 @@ public class SVNWriter {
                     continue;
                 }
                 if (item instanceof Date) {
-                    item = SVNTimeUtil.formatDate((Date) item);
+                    item = SVNTimeUtil.formatDate((Date) item, true);
                 }
                 if (ch == 'i') {
 

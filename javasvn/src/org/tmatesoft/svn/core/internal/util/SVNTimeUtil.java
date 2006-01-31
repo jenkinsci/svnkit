@@ -40,9 +40,15 @@ public class SVNTimeUtil {
     }
 
     public static String formatDate(Date date) {
-        if (date == null || date.getTime() == 0) {
+        return formatDate(date, false);
+    }
+
+    public static String formatDate(Date date, boolean formatZeroDate) {
+        if (date == null) {
             return null;
-        }
+        } else if (!formatZeroDate && date.getTime() == 0) {
+            return null;
+        }        
         return ISO8601_FORMAT_OUT.format(date);
     }
 
