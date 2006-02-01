@@ -154,10 +154,10 @@ public class SVNURL {
             SVNErrorManager.error(err);
         }
         if("file".equals(myProtocol)){
+            String canonicalizedPath = SVNPathUtil.canonicalizeURIPath(url.substring("file://".length()));
             URL testURL = null;
-            //file protocol specifics - may be make this common?
             try {
-                testURL = new URL(myProtocol + url.substring(index));
+                testURL = new URL(myProtocol + "://" + canonicalizedPath);
             } catch (MalformedURLException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Malformed URL: ''{0}'': {1}", new Object[] {url, e.getLocalizedMessage()});
                 SVNErrorManager.error(err, e);
@@ -181,21 +181,21 @@ public class SVNURL {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not convert path ''{0}'' to a canonical form", myPath);
                     SVNErrorManager.error(err);
                 }
+                myPath = myPath.replace(File.separatorChar, '/');
                 if(!myPath.startsWith("/")){
                     myPath = "/" + myPath;
                 }
-                myPath = myPath.replace(File.separatorChar, '/');
             } else {
                 try{
                     myPath = new File(testURL.getPath()).getCanonicalPath();
                 }catch(IOException ioe){
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not convert path ''{0}'' to a canonical form", myPath);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not convert path ''{0}'' to a canonical form", testURL.getPath());
                     SVNErrorManager.error(err);
                 }
+                myPath = myPath.replace(File.separatorChar, '/');
                 if(!myPath.startsWith("/")){
                     myPath = "/" + myPath;
                 }
-                myPath = myPath.replace(File.separatorChar, '/');
                 myEncodedPath = SVNEncodingUtil.uriEncode(myPath);
             }
             myUserName = testURL.getUserInfo();
