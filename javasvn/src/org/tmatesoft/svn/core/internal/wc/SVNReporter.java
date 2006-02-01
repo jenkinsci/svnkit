@@ -49,15 +49,9 @@ public class SVNReporter implements ISVNReporterBaton {
             SVNEntries anchorEntries = myWCAccess.getAnchor().getEntries();
             SVNEntry targetEntry = anchorEntries.getEntry(myWCAccess.getTargetName(), true);
 
-            if (targetEntry == null
-                    || targetEntry.isHidden()
-                    || (targetEntry.isDirectory() && targetEntry
-                            .isScheduledForAddition())) {
+            if (targetEntry == null || targetEntry.isHidden() || (targetEntry.isDirectory() && targetEntry.isScheduledForAddition())) {
                 long revision = anchorEntries.getEntry("", true).getRevision();
-                reporter
-                        .setPath("", null, revision,
-                                targetEntry != null ? targetEntry
-                                        .isIncomplete() : true);
+                reporter.setPath("", null, revision, targetEntry != null ? targetEntry.isIncomplete() : true);
                 reporter.deletePath("");
                 reporter.finishReport();
                 return;
@@ -88,13 +82,9 @@ public class SVNReporter implements ISVNReporterBaton {
                 String expectedURL = SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(targetEntry.getName()));
                 if (!expectedURL.equals(url)) {
                     SVNURL svnURL = SVNURL.parseURIEncoded(url);
-                    reporter.linkPath(svnURL, "",
-                            targetEntry.getLockToken(), targetEntry
-                                    .getRevision(), false);
-                } else if (targetEntry.getRevision() != parentEntry.getRevision()
-                        || targetEntry.getLockToken() != null) {
-                    reporter.setPath("", targetEntry.getLockToken(),
-                            targetEntry.getRevision(), false);
+                    reporter.linkPath(svnURL, "", targetEntry.getLockToken(), targetEntry.getRevision(), false);
+                } else if (targetEntry.getRevision() != parentEntry.getRevision() || targetEntry.getLockToken() != null) {
+                    reporter.setPath("", targetEntry.getLockToken(), targetEntry.getRevision(), false);
                 }
             }
             reporter.finishReport();
@@ -121,14 +111,12 @@ public class SVNReporter implements ISVNReporterBaton {
         for (int i = 0; externals != null && i < externals.length; i++) {
             externals[i].setOldExternal(externals[i].getNewURL(), externals[i].getNewRevision());
         }
-        SVNDebugLog.logInfo("externals collected"); 
 
         for (Iterator e = entries.entries(true); e.hasNext();) {
             SVNEntry entry = (SVNEntry) e.next();
             if ("".equals(entry.getName())) {
                 continue;
             }
-            SVNDebugLog.logInfo("processing entry: " + entry.getName()); 
             String path = "".equals(dirPath) ? entry.getName() : SVNPathUtil.append(dirPath, entry.getName());
             if (entry.isDeleted() || entry.isAbsent()) {
                 if (!reportAll) {
@@ -144,43 +132,38 @@ public class SVNReporter implements ISVNReporterBaton {
             boolean missing = fileType == SVNFileType.NONE;
             if (entry.isFile()) {
                 if (!reportAll) {
+                    // local file could be of different kind. 
+                    // if so report as deleted.
                     // check svn:special files -> symlinks that could be directory.
-                    boolean special = SVNFileUtil.isWindows && directory.getProperties(entry.getName(), false).getPropertyValue(SVNProperty.SPECIAL) != null;
-
-                    if ((special && fileType != SVNFileType.SYMLINK) || 
-                            (!special && fileType == SVNFileType.DIRECTORY)) {
+                    boolean special = !SVNFileUtil.isWindows && directory.getProperties(entry.getName(), false).getPropertyValue(SVNProperty.SPECIAL) != null;
+                    SVNFileType expectedType = special ? SVNFileType.SYMLINK : SVNFileType.FILE;
+                    if (fileType != expectedType) {
                         reporter.deletePath(path);
                         continue;
                     }
                 }
-                if (missing && !entry.isScheduledForDeletion()
-                        && !entry.isScheduledForReplacement()) {
+                if (missing && !entry.isScheduledForDeletion() && !entry.isScheduledForReplacement()) {
                     restoreFile(directory, entry.getName());
                 }
                 String url = entry.getURL();
                 String parentURL = entries.getPropertyValue("", SVNProperty.URL);
                 String expectedURL = SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(entry.getName()));
                 if (reportAll) {
-                    if (!url.equals(expectedURL)
-                            && !entry.isScheduledForAddition()
-                            && !entry.isScheduledForReplacement()) {
+                    if (!url.equals(expectedURL) && !entry.isScheduledForAddition() && !entry.isScheduledForReplacement()) {
                         SVNURL svnURL = SVNURL.parseURIEncoded(url);
                         reporter.linkPath(svnURL, path, entry.getLockToken(), entry.getRevision(), false);
                     } else {
                         reporter.setPath(path, entry.getLockToken(), entry.getRevision(), false);
                     }
-                } else if (!entry.isScheduledForReplacement()
-                        && !url.equals(expectedURL)) {
+                } else if (!entry.isScheduledForReplacement() && !url.equals(expectedURL)) {
                     // link path
                     SVNURL svnURL = SVNURL.parseURIEncoded(url);
                     reporter.linkPath(svnURL, path, entry.getLockToken(), entry.getRevision(), false);
-                } else if (entry.getRevision() != baseRevision
-                        || entry.getLockToken() != null) {
+                } else if (entry.getRevision() != baseRevision || entry.getLockToken() != null) {
                     reporter.setPath(path, entry.getLockToken(), entry.getRevision(), false);
                 }
             } else if (entry.isDirectory() && recursive) {
-                if (missing
-                        || directory.getChildDirectory(entry.getName()) == null) {
+                if (missing || directory.getChildDirectory(entry.getName()) == null) {
                     if (!reportAll) {
                         reporter.deletePath(path);
                     }
