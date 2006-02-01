@@ -68,7 +68,11 @@ public class PythonTests {
 
         String pythonTestsRoot = properties.getProperty("python.tests");
 		properties.setProperty("repository.root", new File(pythonTestsRoot).getAbsolutePath());
-        String url = "file:///" + new File(pythonTestsRoot).getAbsolutePath().replace(File.separatorChar, '/');
+        String absTestsRootLocation = new File(pythonTestsRoot).getAbsolutePath().replace(File.separatorChar, '/');
+        if(!absTestsRootLocation.startsWith("/")){
+            absTestsRootLocation = "/" + absTestsRootLocation; 
+        }
+        String url = "file://" + absTestsRootLocation;
         if (Boolean.TRUE.toString().equals(properties.getProperty("python.file"))) {
             try {
                 for (int i = 0; i < ourLoggers.length; i++) {

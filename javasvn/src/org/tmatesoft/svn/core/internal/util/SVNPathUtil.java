@@ -470,49 +470,6 @@ public class SVNPathUtil {
     	return newString.toString();
     }    
     
-    public static String canonicalizeURIPath(String sourcePath){
-        if(sourcePath == null || sourcePath.length() == 0){
-            return sourcePath;
-        }
-        int srcPos = 0;
-        StringBuffer dst = new StringBuffer();
-        /* If this is an absolute path, then just copy over the initial
-         * separator character. 
-         */
-        if(sourcePath.charAt(srcPos) == '/'){
-            dst.append(sourcePath.charAt(srcPos++));
-        }
-        int canonSegments = 0;
-        while(srcPos < sourcePath.length()){
-            /* Parse each segment, find the closing '/' */
-            int nextSegmentPos = srcPos;
-            while(nextSegmentPos < sourcePath.length() && sourcePath.charAt(nextSegmentPos) != '/'){
-                nextSegmentPos++;
-            }
-            int segmentLength = nextSegmentPos - srcPos;
-            if(segmentLength == 0 || (segmentLength == 1 && sourcePath.charAt(srcPos) == '.')){
-                /* Noop segment, so do nothing. */
-            }else{
-                /* An actual segment, append it to the destination path */
-                if(nextSegmentPos < sourcePath.length()){
-                    segmentLength++;
-                }
-                dst.append(sourcePath.substring(srcPos, srcPos + segmentLength));
-                canonSegments++;
-            }
-            /* Skip over trailing slash to the next segment. */
-            srcPos = nextSegmentPos;
-            if(srcPos < sourcePath.length()){
-                srcPos++;
-            }
-        }
-        /* Remove the trailing slash. */
-        if(canonSegments > 0 && dst.charAt(dst.length() - 1) == '/'){
-            dst.deleteCharAt(dst.length() - 1);
-        }
-        return dst.toString();
-    }
-    
     public static String pathIsChild(String path, String pathChild){
     	if(path == null || pathChild == null){
     		return null;
