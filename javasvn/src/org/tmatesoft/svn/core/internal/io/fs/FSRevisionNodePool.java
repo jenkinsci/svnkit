@@ -101,19 +101,17 @@ public abstract class FSRevisionNodePool {
                         child = FSReader.getChildDirNode(entry, here, reposRootDir);
                     }catch(SVNException svne){
                         if(svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND){
-                            if(child == null){
-                                /* If this was the last path component, and the caller
-                                 * said it was optional, then don't return an error;
-                                 * just put a null node pointer in the path.  
-                                 */                
-                                if(isLastComponentOptional && (next == null || "".equals(next)) ){
-                                    return new FSParentPath(null, entry, parentPath);
-                                }
-                                /* Build a better error message than FSReader.getChildDirNode()
-                                 * can provide, giving the root and full path name.  
-                                 */
-                                SVNErrorManager.error(FSErrors.errorNotFound(root, path), svne);
-                            }   
+                            /* If this was the last path component, and the caller
+                             * said it was optional, then don't return an error;
+                             * just put a null node pointer in the path.  
+                             */                
+                            if(isLastComponentOptional && (next == null || "".equals(next)) ){
+                                return new FSParentPath(null, entry, parentPath);
+                            }
+                            /* Build a better error message than FSReader.getChildDirNode()
+                             * can provide, giving the root and full path name.  
+                             */
+                            SVNErrorManager.error(FSErrors.errorNotFound(root, path), svne);
                         }
                         throw svne;
                     }
