@@ -154,10 +154,10 @@ public class SVNURL {
             SVNErrorManager.error(err);
         }
         if("file".equals(myProtocol)){
-            String canonicalizedPath = SVNPathUtil.canonicalizeURIPath(url.substring("file://".length()));
+            String normalizedPath = norlmalizeURLPath(url, url.substring("file://".length()));
             URL testURL = null;
             try {
-                testURL = new URL(myProtocol + "://" + canonicalizedPath);
+                testURL = new URL(myProtocol + "://" + normalizedPath);
             } catch (MalformedURLException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Malformed URL: ''{0}'': {1}", new Object[] {url, e.getLocalizedMessage()});
                 SVNErrorManager.error(err, e);
