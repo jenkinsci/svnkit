@@ -131,7 +131,7 @@ public class SVNReporter implements ISVNReporterBaton {
             SVNFileType fileType = SVNFileType.getType(file);
             boolean missing = fileType == SVNFileType.NONE;
             if (entry.isFile()) {
-                if (!reportAll) {
+                if (!reportAll && !missing) {
                     // local file could be of different kind. 
                     // if so report as deleted.
                     // check svn:special files -> symlinks that could be directory.
