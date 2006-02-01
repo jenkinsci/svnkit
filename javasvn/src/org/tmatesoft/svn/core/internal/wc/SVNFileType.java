@@ -28,7 +28,7 @@ public class SVNFileType {
     public static final SVNFileType SYMLINK = new SVNFileType(3);
     public static final SVNFileType DIRECTORY = new SVNFileType(4);
     
-    private static final boolean canonPathCacheUsed = "true".equalsIgnoreCase(System.getProperty("sun.io.useCanonCaches"));
+    private static final boolean canonPathCacheUsed = !"false".equalsIgnoreCase(System.getProperty("sun.io.useCanonCaches"));
 
     private int myType;
 
