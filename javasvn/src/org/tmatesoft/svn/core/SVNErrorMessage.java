@@ -13,8 +13,6 @@ package org.tmatesoft.svn.core;
 
 import java.text.MessageFormat;
 
-import org.tmatesoft.svn.util.SVNDebugLog;
-
 
 /**
  * The <b>SVNErrorMessage</b> class represents error and warning messages describing 
@@ -162,8 +160,6 @@ public class SVNErrorMessage {
      * @return            a new error message
      */
     public static SVNErrorMessage create(SVNErrorCode code, String message, Object[] objects, int type) {
-        // log stack trace.
-        SVNDebugLog.logInfo(new Exception("error message created"));
         return new SVNErrorMessage(code == null ? SVNErrorCode.BASE : code, message == null ? "" : message, 
                 objects == null ? EMPTY_ARRAY : objects, type);
     }
