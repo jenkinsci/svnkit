@@ -301,6 +301,7 @@ public class FSWriter {
                 propsRep.setHexDigest(hexDigest);
                 propsRep.setTxnId(FSID.ID_INAPPLICABLE);
                 propsRep.setRevision(revision);
+                propsRep.setExpandedSize(size);
             }catch(NoSuchAlgorithmException nsae){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
                 SVNErrorManager.error(err, nsae);
