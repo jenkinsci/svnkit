@@ -1261,7 +1261,7 @@ public class FSReader {
     }
 
     //TODO: uid format should be as in the native svn
-    public static String generateLockToken(File reposRootDir)throws SVNException{
+    public static String generateLockToken(){
         UID forToken = new UID();        
         return FSConstants.SVN_OPAQUE_LOCK_TOKEN + forToken.toString();
     }    

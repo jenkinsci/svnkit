@@ -1050,7 +1050,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             String keyPath = (String)keyIter.next();
             Long revVal = (Long)pathsToRevisions.get(keyPath);
             String absLockPath = SVNPathUtil.canonicalizeAbsPath(keyPath);
-            SVNLock lockToBeMade = new SVNLock(absLockPath, /*ID*/FSReader.generateLockToken(myReposRootDir), /*owner*/System.getProperty("user.name"), comment, new Date(System.currentTimeMillis()), null/*expiration Date*/);
+            SVNLock lockToBeMade = new SVNLock(absLockPath, /*ID*/FSReader.generateLockToken(), /*owner*/System.getProperty("user.name"), comment, new Date(System.currentTimeMillis()), null/*expiration Date*/);
             FSWriter.doLock(lockToBeMade, myReposRootDir, myRevNodesPool, force, revVal.longValue());
             if(handler != null){
                 handler.handleLock(keyPath, lockToBeMade, null);
