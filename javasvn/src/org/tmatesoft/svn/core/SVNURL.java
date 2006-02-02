@@ -401,6 +401,15 @@ public class SVNURL {
             return false;
         }
         SVNURL url = (SVNURL) obj;
+        if("file".equals(myProtocol)){
+            /* In file:// protocol we are interested only in  
+             * protocol name and path equality, no more else.
+             */
+            if(myProtocol.equals(url.myProtocol) && myPath.equals(url.myPath)){
+                return true;
+            }
+            return false;
+        }
         boolean eq = myProtocol.equals(url.myProtocol) && 
             myPort == url.myPort &&
             myHost.equals(url.myHost) &&

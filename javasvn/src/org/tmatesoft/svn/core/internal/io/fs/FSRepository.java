@@ -940,11 +940,14 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
              * as the original session url! 
              */
             SVNURL reposRootURL = getRepositoryRoot(false);
-            if(switchURL.toString().indexOf(reposRootURL.toString()) == -1){
+            if(switchURL.toDecodedString().indexOf(reposRootURL.toDecodedString()) == -1){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "''{0}''\nis not the same repository as\n''{1}''", new Object[]{switchURL, getRepositoryRoot(false)});
                 SVNErrorManager.error(err);
             }
-            switchPath = switchURL.toString().substring(reposRootURL.toString().length());
+            switchPath = switchURL.toDecodedString().substring(reposRootURL.toDecodedString().length());
+            if("".equals(switchPath)){
+                switchPath = "/"; 
+            }
         }
         String anchor = getRepositoryPath("");
         String fullTargetPath = switchPath != null ? switchPath : SVNPathUtil.concatToAbs(anchor, target);
@@ -1507,7 +1510,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         /* If there's a source and it's not related to the target, nuke it. */
         if(sourceEntry != null && !related){
-            myReporterContext.getEditor().deleteEntry(editPath, -1);
+            myReporterContext.getEditor().deleteEntry(editPath, FSConstants.SVN_INVALID_REVNUM);
             sourcePath = null;
         }
         /* If there's no target, we have nothing more to do. */
@@ -1519,7 +1522,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             if(related){
                 myReporterContext.getEditor().openDir(editPath, sourceRevision);
             }else{
-                myReporterContext.getEditor().addDir(editPath, null, -1);
+                myReporterContext.getEditor().addDir(editPath, null, FSConstants.SVN_INVALID_REVNUM);
             }
             diffDirs(sourceRevision, sourcePath, targetPath, editPath, pathInfo != null ? pathInfo.isStartEmpty() : false);
             myReporterContext.getEditor().closeDir();
@@ -1527,7 +1530,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             if(related){
                 myReporterContext.getEditor().openFile(editPath, sourceRevision);
             }else{
-                myReporterContext.getEditor().addFile(editPath, null, -1);
+                myReporterContext.getEditor().addFile(editPath, null, FSConstants.SVN_INVALID_REVNUM);
             }
             diffFiles(sourceRevision, sourcePath, targetPath, editPath, pathInfo != null ? pathInfo.getLockToken() : null);
             FSRevisionNode targetNode = myRevNodesPool.getRevisionNode(myReporterContext.getTargetRoot(), targetPath, myReposRootDir);
