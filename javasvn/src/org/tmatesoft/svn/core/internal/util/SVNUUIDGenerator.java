@@ -65,7 +65,9 @@ public class SVNUUIDGenerator {
     }
     
     public static synchronized byte[] generateUUID() throws SVNException {
-        initState();
+        if(ourUUIDStateNode[0] == 0){
+            initState();
+        }
         long timestamp = getCurrentTime();
         byte[] uuidData = new byte[16];
         uuidData[0] = (byte)timestamp;
