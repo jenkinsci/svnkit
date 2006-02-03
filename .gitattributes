@@ -61,7 +61,6 @@ javasvn/src/org/tmatesoft/svn/core/internal/io/fs/DefaultFSRevisionNodePool.java
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSBufferStream.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSChange.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSClosestCopy.java -text
-javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSCommitDeltaProcessor.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSCommitEditor.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSConstants.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSEntry.java -text
@@ -100,6 +99,7 @@ javasvn/src/org/tmatesoft/svn/core/internal/util/SVNFormatUtil.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/util/SVNLogInputStream.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/util/SVNLogOutputStream.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/util/SVNPathUtil.java -text
+javasvn/src/org/tmatesoft/svn/core/internal/util/SVNUUIDGenerator.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/wc/DefaultSVNMerger.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/wc/SVNCancellableOutputStream.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/wc/config/README.txt eol=lf

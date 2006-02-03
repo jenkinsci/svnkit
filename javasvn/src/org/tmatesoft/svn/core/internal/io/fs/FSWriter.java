@@ -143,7 +143,7 @@ public class FSWriter {
         }
         SVNLock newLock = null;
         if(lock.getID() == null){
-            newLock = new SVNLock(lock.getPath(), FSReader.generateLockToken(), lock.getOwner(), lock.getComment(), lock.getCreationDate(), lock.getExpirationDate());
+            newLock = new SVNLock(lock.getPath(), FSRepositoryUtil.generateLockToken(), lock.getOwner(), lock.getComment(), lock.getCreationDate(), lock.getExpirationDate());
         }else{
             newLock = new SVNLock(lock.getPath(), lock.getID(), lock.getOwner(), lock.getComment(), lock.getCreationDate(), lock.getExpirationDate());
         }

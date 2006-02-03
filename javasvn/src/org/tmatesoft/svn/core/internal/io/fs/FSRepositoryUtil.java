@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -377,5 +378,13 @@ public class FSRepositoryUtil {
 
     public static File getRepositoryDBDir(File reposRootDir) {
         return new File(reposRootDir, FSConstants.SVN_REPOS_DB_DIR);
+    }
+
+    public static String generateLockToken() throws SVNException {
+        /* For now, we generate a URI that matches the DAV RFC.  We could
+         * change this to some other URI scheme someday, if we wish. 
+         */
+        String uuid = SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
+        return FSConstants.SVN_OPAQUE_LOCK_TOKEN + uuid;
     }   
 }

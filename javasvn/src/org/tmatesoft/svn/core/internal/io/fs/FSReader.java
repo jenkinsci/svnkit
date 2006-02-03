@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
-import java.rmi.server.UID;
 
 public class FSReader {
     
@@ -1259,13 +1258,6 @@ public class FSReader {
         }
         return new FSChange(new String(pathStr), new FSID(nodeRevID), changesKind, textModeBool, propModeBool, copyfromEntry);
     }
-
-    //TODO: uid format should be as in the native svn
-    public static String generateLockToken(){
-        UID forToken = new UID();        
-        return FSConstants.SVN_OPAQUE_LOCK_TOKEN + forToken.toString();
-    }    
-
 
     public static long getYoungestRevision(File reposRootDir) throws SVNException {
         File dbCurrentFile = FSRepositoryUtil.getFSCurrentFile(reposRootDir);
