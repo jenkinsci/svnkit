@@ -1166,7 +1166,7 @@ public class SVNDirectory {
                     try {
                         File childFile = dir.getFile(entry.getName());
                         String childPath = SVNPathUtil.append(dir.getPath(), entry.getName());
-                        childDirectory = dir.getWCAccess().addDirectory(childPath, childFile, true, true);
+                        childDirectory = dir.getWCAccess().addDirectory(childPath, childFile, true, true, true);
                     } catch (SVNException e) {
                         //
                     }

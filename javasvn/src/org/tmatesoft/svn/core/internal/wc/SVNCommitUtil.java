@@ -198,12 +198,12 @@ public class SVNCommitUtil {
                 for (Iterator nonRecusivePaths = dirsToLock.iterator(); nonRecusivePaths.hasNext();) {
                     String path = (String) nonRecusivePaths.next();
                     File pathFile = new File(baseDir, path);
-                    baseAccess.addDirectory(path, pathFile, false, true);
+                    baseAccess.addDirectory(path, pathFile, false, true, true);
                 }
                 for (Iterator recusivePaths = dirsToLockRecursively.iterator(); recusivePaths.hasNext();) {
                     String path = (String) recusivePaths.next();
                     File pathFile = new File(baseDir, path);
-                    baseAccess.addDirectory(path, pathFile, true, true);
+                    baseAccess.addDirectory(path, pathFile, true, true, true);
                 }
             }
             // if commit is non-recursive and forced, remove those child dirs 
