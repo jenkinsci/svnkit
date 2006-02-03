@@ -802,7 +802,7 @@ public class SVNCopyClient extends SVNBasicClient {
 
         SVNFileUtil.copyDirectory(srcAccess.getTarget().getRoot(), dstPath, true, this);
 
-        SVNDirectory newDir = dstAccess.addDirectory(dstName, dstPath, true, true);
+        SVNDirectory newDir = dstAccess.addDirectory(dstName, dstPath, true, true, false);
 
         SVNEntry entry = dstAccess.getAnchor().getEntries().addEntry(dstName);
         entry.setCopyFromRevision(copyFromRev);

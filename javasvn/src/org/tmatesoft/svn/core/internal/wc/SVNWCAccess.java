@@ -438,16 +438,16 @@ public class SVNWCAccess implements ISVNEventHandler {
     }
 
     public SVNDirectory addDirectory(String path, File file) throws SVNException {
-        return addDirectory(path, file, false, false);
+        return addDirectory(path, file, false, false, false);
     }
 
-    public SVNDirectory addDirectory(String path, File file, boolean recursive, boolean lock) throws SVNException {
+    public SVNDirectory addDirectory(String path, File file, boolean recursive, boolean lock, boolean checkVersioned) throws SVNException {
         if (file == null || SVNFileType.getType(file) != SVNFileType.DIRECTORY) {
             return null;
         }
         if (myDirectories != null) {
-            SVNDirectory dir = new SVNDirectory(this, path, file);            
-            if (!dir.isVersioned()) {
+            SVNDirectory dir = new SVNDirectory(this, path, file);
+            if (checkVersioned && !dir.isVersioned()) {
                 return null;
             }
             if (myDirectories.put(path, dir) == null && lock && !dir.isLocked()) {
@@ -464,7 +464,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                     if (fType == SVNFileType.DIRECTORY && SVNWCAccess.isVersionedDirectory(childDir)) {
                         // recurse
                         String childPath = SVNPathUtil.append(path, childDir.getName());
-                        addDirectory(childPath, childDir, recursive, lock);
+                        addDirectory(childPath, childDir, recursive, lock, checkVersioned);
                     }
                 }
             }
