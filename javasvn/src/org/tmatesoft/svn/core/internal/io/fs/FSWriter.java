@@ -534,7 +534,7 @@ public class FSWriter {
         FSID id = FSID.createTxnId(oldId.getNodeID(), copyId, txnId);
         newRevNode.setId(id);
         if(newRevNode.getCopyRootPath() == null){
-            newRevNode.setCopyRootPath(newRevNode.getCopyFromPath());
+            newRevNode.setCopyRootPath(newRevNode.getCreatedPath());
             newRevNode.setCopyRootRevision(newRevNode.getId().getRevision());
         }
         putTxnRevisionNode(newRevNode.getId(), newRevNode, reposRootDir);

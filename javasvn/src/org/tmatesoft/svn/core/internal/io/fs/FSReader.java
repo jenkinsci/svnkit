@@ -84,7 +84,7 @@ public class FSReader {
         if(FSRepository.isInvalidRevision(revision) || revision > youngestRev){
             revision = youngestRev; 
         }
-        FSRevisionNode root = revNodesPool.getRootRevisionNode(revision, reposRootDir);
+        FSRoot root = FSRoot.createRevisionRoot(revision, revNodesPool.getRootRevisionNode(revision, reposRootDir));
         FSNodeHistory hist = null;
         try{
             hist = FSNodeHistory.getNodeHistory(reposRootDir, root, path);
@@ -1343,8 +1343,8 @@ public class FSReader {
     
     /* Discover the copy ancestry of PATH under ROOT.  Return a relevant
      * ancestor/revision combination in PATH(SVNLocationEntry) and REVISON(SVNLocationEntry)*/
-    public static SVNLocationEntry copiedFrom(File reposRootDir, FSRevisionNode root, String path, FSRevisionNodePool revNodesPool)throws SVNException{
-        FSRevisionNode node = revNodesPool.getRevisionNode(FSRoot.createRevisionRoot(root.getId().getRevision(), root), path, reposRootDir);
+    public static SVNLocationEntry copiedFrom(File reposRootDir, FSRevisionNode root, String path, FSRevisionNodePool revNodesPool) throws SVNException {
+        FSRevisionNode node = revNodesPool.getRevisionNode(root, path, reposRootDir);
         return new SVNLocationEntry(node.getCopyFromRevision(), node.getCopyFromPath());
     }
 }
