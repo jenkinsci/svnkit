@@ -1953,7 +1953,7 @@ public class SVNWCClient extends SVNBasicClient {
 
         String mimeType;
         SVNProperties properties = dir.getProperties(name, false);
-        if (SVNFileUtil.isSymlink(file)) {
+        if (SVNFileType.getType(file) == SVNFileType.SYMLINK) {
             properties.setPropertyValue(SVNProperty.SPECIAL, "*");
         } else {
             Map props = new HashMap();

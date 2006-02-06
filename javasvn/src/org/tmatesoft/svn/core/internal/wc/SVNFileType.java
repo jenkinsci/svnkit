@@ -28,6 +28,7 @@ public class SVNFileType {
     public static final SVNFileType SYMLINK = new SVNFileType(3);
     public static final SVNFileType DIRECTORY = new SVNFileType(4);
     
+    private static final boolean fastSymlinkResoution = !"false".equalsIgnoreCase(System.getProperty("javasvn.fastSymlinkResolution"));
     private static final boolean canonPathCacheUsed = !"false".equalsIgnoreCase(System.getProperty("sun.io.useCanonCaches"));
 
     private int myType;
@@ -51,9 +52,9 @@ public class SVNFileType {
         if (file == null) {
             return SVNFileType.UNKNOWN;
         }
-        if (!SVNFileUtil.isWindows && canonPathCacheUsed && SVNFileUtil.isSymlink(file)) {
+        if (!SVNFileUtil.isWindows && canonPathCacheUsed && !fastSymlinkResoution && SVNFileUtil.isSymlink(file)) {
             return SVNFileType.SYMLINK;
-        } else if (!SVNFileUtil.isWindows && !canonPathCacheUsed) {            
+        } else if (!SVNFileUtil.isWindows && (!canonPathCacheUsed || fastSymlinkResoution)) {            
             String absolutePath = file.getAbsolutePath();
             String canonicalPath;
             try {
