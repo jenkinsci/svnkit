@@ -697,10 +697,8 @@ public class SVNDirectory {
                 SVNErrorManager.error(err);
             } else {
                 SVNNodeKind kind = entry.getKind();
-                if ((childFile.isFile() && kind == SVNNodeKind.DIR)
-                        || (childFile.isDirectory()
-                                && !SVNFileUtil.isSymlink(childFile) && kind == SVNNodeKind.FILE)
-                        || (SVNFileUtil.isSymlink(childFile) && kind != SVNNodeKind.FILE)) {
+                SVNFileType fileType = SVNFileType.getType(childFile);
+                if ((fileType.isFile() && kind == SVNNodeKind.DIR) || (fileType == SVNFileType.DIRECTORY && kind == SVNNodeKind.FILE)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "''{0}'' is in the way of the resource actually under version control", path);
                     SVNErrorManager.error(err);
                 } else if (kind == SVNNodeKind.FILE) {

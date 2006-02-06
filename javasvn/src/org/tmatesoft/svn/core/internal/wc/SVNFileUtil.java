@@ -122,7 +122,7 @@ public class SVNFileUtil {
     }
 
     public static void rename(File src, File dst) throws SVNException {
-        if (!src.exists() && !isSymlink(src)) {
+        if (SVNFileType.getType(src) == SVNFileType.NONE) {
             deleteFile(dst);
             return;
         }
@@ -284,12 +284,11 @@ public class SVNFileUtil {
         dst.setLastModified(src.lastModified());
     }
 
-    public static boolean createSymlink(File link, File linkName)
-            throws SVNException {
+    public static boolean createSymlink(File link, File linkName) throws SVNException {
         if (isWindows) {
             return false;
         }
-        if (link.exists() || isSymlink(link)) {
+        if (SVNFileType.getType(link) != SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create symbolic link ''{0}''; file already exists", link);
             SVNErrorManager.error(err);
         }
@@ -316,7 +315,7 @@ public class SVNFileUtil {
         if (isWindows) {
             return false;
         }
-        if (!isSymlink(src)) {
+        if (SVNFileType.getType(src) != SVNFileType.SYMLINK) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot detranslate symbolic link ''{0}''; file does not exist or not a symbolic link", src);
             SVNErrorManager.error(err);
         }
