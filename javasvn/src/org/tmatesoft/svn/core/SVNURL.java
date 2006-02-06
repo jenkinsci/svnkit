@@ -62,6 +62,9 @@ public class SVNURL {
      *                       components) is malformed
      */
     public static SVNURL create(String protocol, String userInfo, String host, int port, String path, boolean uriEncoded) throws SVNException {
+        if (host == null || host.indexOf('@') >= 0) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid host name ''{0}''", host));
+        }
         path = path == null ? "/" : path.trim();
         if (!uriEncoded) {
             path = SVNEncodingUtil.uriEncode(path);
