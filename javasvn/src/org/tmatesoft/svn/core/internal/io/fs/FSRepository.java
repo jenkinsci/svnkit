@@ -36,6 +36,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
@@ -256,7 +258,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propertyName);
                 SVNErrorManager.error(err);
             }
-            String userName = System.getProperty("user.name");
+            String userName = getUserName();
             String oldValue = FSRepositoryUtil.getRevisionProperty(myReposRootDir, revision, propertyName);
             String action = null;
             if (propertyValue == null) {// delete
@@ -988,7 +990,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             closeRepository();
             throw svne;
         }
-        FSCommitEditor commitEditor = new FSCommitEditor(getRepositoryPath(""), logMessage, System.getProperty("user.name"), locks, keepLocks, null, this);
+        FSCommitEditor commitEditor = new FSCommitEditor(getRepositoryPath(""), logMessage, getUserName(), locks, keepLocks, null, this);
         return commitEditor;
     }
 
@@ -1033,7 +1035,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             String keyPath = (String)keyIter.next();
             Long revVal = (Long)pathsToRevisions.get(keyPath);
             String absLockPath = SVNPathUtil.canonicalizeAbsPath(keyPath);
-            SVNLock lockToBeMade = new SVNLock(absLockPath, /*ID*/FSRepositoryUtil.generateLockToken(), /*owner*/System.getProperty("user.name"), comment, new Date(System.currentTimeMillis()), null/*expiration Date*/);
+            SVNLock lockToBeMade = new SVNLock(absLockPath, /*ID*/FSRepositoryUtil.generateLockToken(), /*owner*/getUserName(), comment, new Date(System.currentTimeMillis()), null/*expiration Date*/);
             FSWriter.doLock(lockToBeMade, myReposRootDir, myRevNodesPool, force, revVal.longValue());
             if(handler != null){
                 handler.handleLock(keyPath, lockToBeMade, null);
@@ -1050,7 +1052,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         while(keyPathIter.hasNext()){
             String keyPath = (String)keyPathIter.next();
             String tokenVal = (String)pathToTokens.get(keyPath);
-            FSWriter.doUnlock(keyPath, tokenVal, System.getProperty("user.name"), force, myReposRootDir);
+            FSWriter.doUnlock(keyPath, tokenVal, getUserName(), force, myReposRootDir);
         }
     }
     
@@ -1809,5 +1811,18 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     	}    	
         /* The copy destination checks out.  Return it. */
         return new FSClosestCopy(copyDstRoot, copyDstEntry.getPath());
+    }
+    
+    private String getUserName() {
+        if (getAuthenticationManager() != null) {
+            try {
+                SVNAuthentication auth = getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, getRepositoryRoot(true).toString(), getLocation());
+                if (auth != null) {
+                    return auth.getUserName();
+                }
+            } catch (SVNException e) {
+            }
+        }
+        return System.getProperty("user.name");
     }
 }
