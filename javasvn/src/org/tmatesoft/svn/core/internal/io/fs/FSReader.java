@@ -106,6 +106,9 @@ public class FSReader {
         }
     }                                       
     
+    /*
+     * Returns only changed paths
+     */
     public static Map fetchTxnChanges(Map changedPaths, String txnId, Map copyFromCache, File reposRootDir) throws SVNException {
         changedPaths = changedPaths == null ? new HashMap() : changedPaths;
         File changesFile = FSRepositoryUtil.getTxnChangesFile(txnId, reposRootDir);
@@ -121,16 +124,15 @@ public class FSReader {
     
     /* Return Object[] consist of two Maps:
      * Object[0]: pathChanged Map
-     * Object[1]: copyfromCache Map*/    
-    public static Object[] fetchAllChanges(Map changedPaths, RandomAccessFile changesFile, boolean prefolded, Map mapCopyfrom)throws SVNException{        
+     * Object[1]: copyfromCache Map
+     */    
+    public static Object[] fetchAllChanges(Map changedPaths, RandomAccessFile changesFile, boolean prefolded, Map mapCopyfrom) throws SVNException {        
         changedPaths = changedPaths != null ? changedPaths : new HashMap();  
         mapCopyfrom = mapCopyfrom != null ? mapCopyfrom : new HashMap();
         FSChange change = FSReader.readChange(changesFile);        
         while(change != null){
             foldChange(changedPaths, change, mapCopyfrom);
-            if((FSPathChangeKind.FS_PATH_CHANGE_DELETE == change.getKind() || 
-                FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getKind()) && 
-                prefolded == false){                                
+            if((FSPathChangeKind.FS_PATH_CHANGE_DELETE == change.getKind() || FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getKind()) && !prefolded){                                
                 Collection keySet = changedPaths.keySet();
                 Iterator curIter = keySet.iterator();
                 while(curIter.hasNext()){
@@ -184,9 +186,7 @@ public class FSReader {
             /* Sanity check: we should be talking about the same node
             revision ID as our last change except where the last change
             was a deletion*/
-            if((change.getNodeRevID() != null) && 
-                    (!oldChange.getRevNodeId().equals(change.getNodeRevID())) && 
-                    (oldChange.getChangeKind() != FSPathChangeKind.FS_PATH_CHANGE_DELETE)){
+            if((change.getNodeRevID() != null) && (!oldChange.getRevNodeId().equals(change.getNodeRevID())) && (oldChange.getChangeKind() != FSPathChangeKind.FS_PATH_CHANGE_DELETE)){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change ordering: new node revision ID without delete");
                 SVNErrorManager.error(err);
             }
@@ -1190,9 +1190,9 @@ public class FSReader {
      * OffsetContainerClass before invoking 'readChanges' method contains offset to changes, after invoking 
      * 'readChanges' contains offset to next changes (if file has them) in raFile */
     public static FSChange readChange(RandomAccessFile raReader) throws SVNException {
-        String line = null;
+        String changeLine = null;
         try{
-            line = FSReader.readNextLine(raReader, 4096);
+            changeLine = FSReader.readNextLine(raReader, 4096);
         }catch(SVNException svne){
             /* Check for a blank line. */
             if(svne.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF){
@@ -1201,26 +1201,26 @@ public class FSReader {
             throw svne;
         }
         /* Check for a blank line. */
-        if(line.length() == 0){
+        if(changeLine.length() == 0){
             return null;
         }        
-        String [] piecesOfLine = line.split(" ");
-        if(piecesOfLine == null || piecesOfLine.length < 5){
+        String [] piecesOfChangeLine = changeLine.split(" ", 5);
+        if(piecesOfChangeLine.length < 5){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
             SVNErrorManager.error(err);
         }
         /* Get the node-id of the change. */
-        String nodeRevStr = piecesOfLine[0];
+        String nodeRevStr = piecesOfChangeLine[0];
         FSID nodeRevID = parseID(nodeRevStr);
         /* Get the change type. */
-        String changesKindStr = piecesOfLine[1];
+        String changesKindStr = piecesOfChangeLine[1];
         FSPathChangeKind changesKind = (FSPathChangeKind)FSConstants.ACTIONS_TO_CHANGE_KINDS.get(changesKindStr);
         if(changesKind == null){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change kind in rev file");
             SVNErrorManager.error(err);
         }
         /* Get the text-mod flag. */
-        String textModeStr = piecesOfLine[2];
+        String textModeStr = piecesOfChangeLine[2];
         boolean textModeBool = false;
         if(textModeStr.equals(FSConstants.FLAG_TRUE)){
             textModeBool = true;
@@ -1231,7 +1231,7 @@ public class FSReader {
             SVNErrorManager.error(err);
         }
         /* Get the prop-mod flag. */
-        String propModeStr = piecesOfLine[3];
+        String propModeStr = piecesOfChangeLine[3];
         boolean propModeBool = false;
         if(propModeStr.equals(new String(FSConstants.FLAG_TRUE))){
             propModeBool = true;
@@ -1242,19 +1242,19 @@ public class FSReader {
             SVNErrorManager.error(err);
         }
         /* Get the changed path. */
-        String pathStr = piecesOfLine[4];
+        String pathStr = piecesOfChangeLine[4];
         /* Read the next line, the copyfrom line. */
-        String nextLine = FSReader.readNextLine(raReader, 4096);
+        String copyfromLine = FSReader.readNextLine(raReader, 4096);
         SVNLocationEntry copyfromEntry = null;
-        if(nextLine.length() == 0){
+        if(copyfromLine.length() == 0){
             copyfromEntry = new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null);
         }else{
-            String [] piecesOfNextLine = nextLine.split(" ");
-            if(piecesOfNextLine == null || piecesOfNextLine.length < 2){
+            String[] piecesOfCopyfromLine = copyfromLine.split(" ", 2);
+            if(piecesOfCopyfromLine.length < 2){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
                 SVNErrorManager.error(err);
             }
-            copyfromEntry = new SVNLocationEntry(Long.parseLong(piecesOfNextLine[0]), piecesOfNextLine[1]);
+            copyfromEntry = new SVNLocationEntry(Long.parseLong(piecesOfCopyfromLine[0]), piecesOfCopyfromLine[1]);
         }
         return new FSChange(new String(pathStr), new FSID(nodeRevID), changesKind, textModeBool, propModeBool, copyfromEntry);
     }

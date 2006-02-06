@@ -139,15 +139,19 @@ public class SVNProperties {
                     newLine = readLine(hashStream); 
                     line = (String)newLine[0];
                     if(line.length() >= 3 && line.charAt(0) == 'V' && line.charAt(1) == ' '){
+                        String valueName = null;
                         /* Get the length of the value */
                         int valueLength = Integer.parseInt(line.substring(2));
                         if(valueLength < 0){
                             SVNErrorManager.error(err);
+                        }else if(valueLength == 0){
+                            valueName = "";
+                        }else{
+                            /* Now read that much into a buffer. */
+                            byte[] value = new byte[valueLength];
+                            r = hashStream.read(value);
+                            valueName = new String(value, 0, r);
                         }
-                        /* Now read that much into a buffer. */
-                        byte[] value = new byte[valueLength];
-                        r = hashStream.read(value);
-                        String valueName = new String(value, 0, r);
                         /* Suck up extra newline after key data */
                         if(hashStream.read() != '\n'){
                             SVNErrorManager.error(err);

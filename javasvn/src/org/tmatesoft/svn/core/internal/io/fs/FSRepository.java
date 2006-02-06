@@ -291,7 +291,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             if (!SVNRepository.isValidRevision(revision)) {
                 revision = FSReader.getYoungestRevision(myReposRootDir);
             }
-            path = path == null ? "" : path;
             String repositoryPath = getRepositoryPath(path);
             return checkNodeKind(repositoryPath, FSRoot.createRevisionRoot(revision, null));
         } finally {
@@ -354,8 +353,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
     
     // path is relative to this FSRepository's location
-    private Collection getDirEntries(FSRevisionNode parent, SVNURL parentURL, File reposRootDir, boolean includeLogs) throws SVNException {
-        Map entries = FSReader.getDirEntries(parent, reposRootDir);
+    private Collection getDirEntries(FSRevisionNode parent, SVNURL parentURL, boolean includeLogs) throws SVNException {
+        Map entries = FSReader.getDirEntries(parent, myReposRootDir);
         Set keys = entries.keySet();
         Iterator dirEntries = keys.iterator();
         Collection dirEntriesList = new LinkedList();
@@ -363,7 +362,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             String name = (String) dirEntries.next();
             FSEntry repEntry = (FSEntry) entries.get(name);
             if (repEntry != null) {
-                dirEntriesList.add(buildDirEntry(repEntry, parentURL, null, reposRootDir, includeLogs));
+                dirEntriesList.add(buildDirEntry(repEntry, parentURL, null, includeLogs));
             }
         }
         return dirEntriesList;
@@ -389,18 +388,18 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         return properties;
     }
 	
-    private SVNDirEntry buildDirEntry(FSEntry repEntry, SVNURL parentURL, FSRevisionNode entryNode, File reposRootDir, boolean includeLogs) throws SVNException {
-        entryNode = entryNode == null ? FSReader.getRevNodeFromID(reposRootDir, repEntry.getId()) : entryNode;
+    private SVNDirEntry buildDirEntry(FSEntry repEntry, SVNURL parentURL, FSRevisionNode entryNode, boolean includeLogs) throws SVNException {
+        entryNode = entryNode == null ? FSReader.getRevNodeFromID(myReposRootDir, repEntry.getId()) : entryNode;
         // dir size is equated to 0
         long size = 0;
         if (entryNode.getType() == SVNNodeKind.FILE) {
-            size = entryNode.getTextRepresentation().getExpandedSize();
+            size = getFileLength(entryNode);
         }
         Map props = null;
-        props = FSReader.getProperties(entryNode, reposRootDir);
+        props = FSReader.getProperties(entryNode, myReposRootDir);
         boolean hasProps = (props == null || props.size() == 0) ? false : true;
         Map revProps = null;
-        revProps = FSRepositoryUtil.getRevisionProperties(reposRootDir, repEntry.getId().getRevision());
+        revProps = FSRepositoryUtil.getRevisionProperties(myReposRootDir, repEntry.getId().getRevision());
         String lastAuthor = null;
         String log = null;
         Date lastCommitDate = null;
@@ -426,7 +425,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             FSRevisionNode parent = myRevNodesPool.getRevisionNode(revision, repositoryPath, myReposRootDir);
             if(handler != null){
                 SVNURL parentURL = getLocation().appendPath(path, false);
-                Collection entriesCollection = getDirEntries(parent, parentURL, myReposRootDir, false);
+                Collection entriesCollection = getDirEntries(parent, parentURL, false);
                 Iterator entries = entriesCollection.iterator();
                 while (entries.hasNext()) {
                     SVNDirEntry entry = (SVNDirEntry) entries.next();
@@ -452,9 +451,9 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             SVNURL parentURL = getLocation().appendPath(path, false);
             FSRevisionNode parent = myRevNodesPool.getRevisionNode(revision, repositoryPath, myReposRootDir);
             if(entries != null){
-                entries.addAll(getDirEntries(parent, parentURL, myReposRootDir, includeCommitMessages));
+                entries.addAll(getDirEntries(parent, parentURL, includeCommitMessages));
             }
-            SVNDirEntry parentDirEntry = buildDirEntry(new FSEntry(parent.getId(), parent.getType(), ""), parentURL, parent, myReposRootDir, false);
+            SVNDirEntry parentDirEntry = buildDirEntry(new FSEntry(parent.getId(), parent.getType(), ""), parentURL, parent, false);
             return parentDirEntry;
         } finally {
             closeRepository();
@@ -956,37 +955,27 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
     }
 
-    /*TODO is there the difference between size of dir and size of file???*/
     public SVNDirEntry info(String path, long revision) throws SVNException {
         try{
             openRepository();
-            String fullPath = getFullPath(path);
-            SVNURL url = getLocation().setPath(fullPath, false);
             path = getRepositoryPath(path);
             path = SVNPathUtil.canonicalizeAbsPath(path);
-            long youngestRev = FSReader.getYoungestRevision(myReposRootDir);
-            if(FSRepository.isInvalidRevision(revision) || revision > youngestRev){
-                revision = youngestRev;
+            if(FSRepository.isInvalidRevision(revision)){
+                revision = FSReader.getYoungestRevision(myReposRootDir);
             }
-            FSRevisionNode root = myRevNodesPool.getRootRevisionNode(revision, myReposRootDir);
-            FSRevisionNode curRevNode = myRevNodesPool.getRevisionNode(root, path, myReposRootDir);
-            long createdRev = FSReader.getCreatedRevision(myReposRootDir, myRevNodesPool, path, revision);
-            Map createdRevProps = FSRepositoryUtil.getRevisionProperties(myReposRootDir, createdRev);
-            Map currentRevProps = FSRepositoryUtil.getRevisionProperties(myReposRootDir, revision);
-            boolean hasProps = false;
-            String lastAuthor = null;
-            String commitMessage = null;
-            Date createdDate = null;            
-            long size = curRevNode.getTextRepresentation().getExpandedSize();
-            if(!currentRevProps.isEmpty()){
-                hasProps = true;
-                lastAuthor = (String)currentRevProps.get(SVNRevisionProperty.AUTHOR);
-                commitMessage = (String)currentRevProps.get(SVNRevisionProperty.LOG);
+            FSRoot root = FSRoot.createRevisionRoot(revision, myRevNodesPool.getRootRevisionNode(revision, myReposRootDir)); 
+            SVNNodeKind kind = checkNodeKind(path, root); 
+            if(kind == SVNNodeKind.NONE){
+                return null;
             }
-            if(!createdRevProps.isEmpty()){
-                createdDate = SVNTimeUtil.parseDateString((String)createdRevProps.get(SVNRevisionProperty.DATE));
-            }
-            return new SVNDirEntry(url, path, curRevNode.getType(), size, hasProps, createdRev, createdDate, lastAuthor, commitMessage);
+            FSRevisionNode revNode = myRevNodesPool.getRevisionNode(root, path, myReposRootDir);
+            String fullPath = getFullPath(path);
+            String parentFullPath = "/".equals(path) ? fullPath : SVNPathUtil.removeTail(fullPath); 
+            SVNURL url = getLocation().setPath(parentFullPath, false);
+            String name = SVNPathUtil.tail(path);
+            FSEntry fsEntry = new FSEntry(revNode.getId(), revNode.getType(), name);
+            SVNDirEntry entry = buildDirEntry(fsEntry, url, revNode, false);
+            return entry;
         }finally{
             closeRepository();
         }
