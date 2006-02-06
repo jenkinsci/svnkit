@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import org.tigris.subversion.javahl.BlameCallback;
 import org.tigris.subversion.javahl.ClientException;
@@ -495,14 +496,37 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public void mkdir(String[] path, String message) throws ClientException {
         SVNCommitClient client = getSVNCommitClient();
-        try {
-            SVNURL[] urls = new SVNURL[path.length];
-            for (int i = 0; i < path.length; i++) {
-                urls[i] = SVNURL.parseURIEncoded(path[i]);
+        List urls = new ArrayList();
+        List paths = new ArrayList();
+        for (int i = 0; i < path.length; i++) {
+            if (isURL(path[i])) {
+                try {
+                    urls.add(SVNURL.parseURIEncoded(path[i]));
+                } catch (SVNException e) {
+                    throwException(e);
+                }
+            } else {
+                paths.add(new File(path[i]));
             }
-            client.doMkDir(urls, message);
-        } catch (SVNException e) {
-            throwException(e);
+        }
+        SVNURL[] svnURLs = (SVNURL[]) urls.toArray(new SVNURL[urls.size()]);
+        File[] files = (File[]) paths.toArray(new File[paths.size()]);
+        if (svnURLs.length > 0) {
+            try {
+                client.doMkDir(svnURLs, message);
+            } catch (SVNException e) {
+                throwException(e);
+            }
+        }
+        if (files.length > 0) {
+            for (int i = 0; i < files.length; i++) {
+                File file = files[i];
+                try {
+                    getSVNWCClient().doAdd(file, false, true, false, false);
+                } catch (SVNException e) {
+                    throwException(e);
+                }
+            }
         }
     }
 
