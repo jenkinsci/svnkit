@@ -747,11 +747,20 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         Set targets = new TreeSet();
         SVNStatusClient statusClient = new SVNStatusClient(getRepositoryPool(), getOptions());
+        statusClient.setEventHandler(new ISVNEventHandler() {
+            public void handleEvent(SVNEvent event, double progress) throws SVNException {
+            }
+            public void checkCancelled() throws SVNCancelException {
+                SVNCommitClient.this.checkCancelled();
+            }
+        });
         SVNWCAccess wcAccess = SVNCommitUtil.createCommitWCAccess(paths, recursive, force, targets, statusClient);
         try {
             Map lockTokens = new HashMap();
+            checkCancelled();
             SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targets, lockTokens, !keepLocks, recursive, force, getCommitParameters());
             boolean hasModifications = false;
+            checkCancelled();
             for (int i = 0; commitItems != null && i < commitItems.length; i++) {
                 SVNCommitItem commitItem = commitItems[i];
                 if (commitItem.isAdded() || commitItem.isDeleted()
@@ -814,14 +823,23 @@ public class SVNCommitClient extends SVNBasicClient {
         Collection packets = new ArrayList();
         Map targets = new HashMap();
         SVNStatusClient statusClient = new SVNStatusClient(getRepositoryPool(), getOptions());
+        statusClient.setEventHandler(new ISVNEventHandler() {
+            public void handleEvent(SVNEvent event, double progress) throws SVNException {
+            }
+            public void checkCancelled() throws SVNCancelException {
+                SVNCommitClient.this.checkCancelled();
+            }
+        });
         SVNWCAccess[] wcAccesses = SVNCommitUtil.createCommitWCAccess2(paths, recursive, force, targets, statusClient);
 
         for (int i = 0; i < wcAccesses.length; i++) {
             SVNWCAccess wcAccess = wcAccesses[i];
             Collection targetPaths = (Collection) targets.get(wcAccess);
             try {
+                checkCancelled();
                 Map lockTokens = new HashMap();
                 SVNCommitItem[] commitItems = SVNCommitUtil.harvestCommitables(wcAccess, targetPaths, lockTokens, !keepLocks, recursive, force, getCommitParameters());
+                checkCancelled();
                 boolean hasModifications = false;
                 for (int j = 0; commitItems != null && j < commitItems.length; j++) {
                     SVNCommitItem commitItem = commitItems[j];
@@ -857,12 +875,14 @@ public class SVNCommitClient extends SVNBasicClient {
             // get wc root for each packet and uuid for each root.
             // group items by uuid.
             for (int i = 0; i < packetsArray.length; i++) {
+                checkCancelled();
                 SVNCommitPacket packet = packetsArray[i];
                 File wcRoot = SVNWCUtil.getWorkingCopyRoot(packet.getCommitItems()[0].getWCAccess().getAnchor().getRoot(), true);
                 SVNWCAccess rootWCAccess = SVNWCAccess.create(wcRoot);
                 String uuid = rootWCAccess.getTargetEntry().getUUID();
                 SVNURL url = rootWCAccess.getTargetEntry().getSVNURL();
                 rootWCAccess.close(false);
+                checkCancelled();
                 if (uuid == null) {
                     if (url != null) {
                         SVNRepository repos = createRepository(url, true);
@@ -884,10 +904,12 @@ public class SVNCommitClient extends SVNBasicClient {
                 if (packet.getLockTokens() != null) {
                     lockTokens.putAll(packet.getLockTokens());
                 }
+                checkCancelled();
             }
             packetsArray = new SVNCommitPacket[repoUUIDs.size()];
             int index = 0;
             for (Iterator roots = repoUUIDs.keySet().iterator(); roots.hasNext();) {
+                checkCancelled();
                 String uuid = (String) roots.next();
                 Collection items = (Collection) repoUUIDs.get(uuid);
                 Map lockTokens = (Map) locktokensMap.get(uuid);
