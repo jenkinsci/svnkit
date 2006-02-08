@@ -782,9 +782,9 @@ public class FSCommitEditor implements ISVNEditor {
         /* Maybe unlock the paths. */
         if(myPathsToLockTokens != null){
             for(Iterator paths = myPathsToLockTokens.keySet().iterator(); paths.hasNext();){
-                String relPath = (String)paths.next();
-                String absPath = SVNPathUtil.concatToAbs(myBasePath, relPath);
-                String token = (String)myPathsToLockTokens.get(absPath);
+                String path = (String)paths.next();
+                String token = (String)myPathsToLockTokens.get(path);
+                String absPath = !path.startsWith("/") ? SVNPathUtil.concatToAbs(myBasePath, path) : path;
                 /* We may get errors here if the lock was broken or stolen
                  * after the commit succeeded.  This is fine and should be
                  * ignored. 

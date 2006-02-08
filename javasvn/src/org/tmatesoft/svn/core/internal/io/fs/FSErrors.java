@@ -123,5 +123,34 @@ public class FSErrors {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_ALREADY_LOCKED, "Path ''{0}'' is already locked by user ''{1}'' in filesystem ''{2}''", new Object[]{path, owner, fsDir});
         return err;
     }
+
+    /*
+     * Return TRUE if err is an error specifically related to locking a
+     * path in the repository, FALSE otherwise. 
+     *
+     * FS_OUT_OF_DATE is in here because it's a non-fatal error
+     * that can be thrown when attempting to lock an item.
+     */
+    public static boolean isLockError(SVNErrorMessage err){
+        if(err == null){
+            return false;
+        }
+        SVNErrorCode errCode = err.getErrorCode();
+        return errCode == SVNErrorCode.FS_PATH_ALREADY_LOCKED || errCode == SVNErrorCode.FS_OUT_OF_DATE;
+    }
+
+    /*
+     * Return TRUE if err is an error specifically related to unlocking
+     * a path in the repository, FALSE otherwise.
+     */
+    public static boolean isUnlockError(SVNErrorMessage err){
+        if(err == null){
+            return false;
+        }
+        SVNErrorCode errCode = err.getErrorCode();
+        return errCode == SVNErrorCode.FS_PATH_NOT_LOCKED || errCode == SVNErrorCode.FS_BAD_LOCK_TOKEN || 
+               errCode == SVNErrorCode.FS_LOCK_OWNER_MISMATCH || errCode == SVNErrorCode.FS_NO_SUCH_LOCK || 
+               errCode == SVNErrorCode.RA_NOT_LOCKED || errCode == SVNErrorCode.FS_LOCK_EXPIRED;  
+    }
     
 }

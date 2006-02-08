@@ -995,64 +995,89 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
 
     public SVNLock getLock(String path) throws SVNException {
-        path = getRepositoryPath(path);
-        SVNLock lock = FSReader.getLockHelper(path, false, myReposRootDir);        
-        return lock;
+        try{
+            openRepository();
+            path = SVNPathUtil.canonicalizeAbsPath(getRepositoryPath(path));
+            SVNLock lock = FSReader.getLockHelper(path, false, myReposRootDir);        
+            return lock;
+        }finally{
+            closeRepository();
+        }
     }    
     
     public SVNLock[] getLocks(String path) throws SVNException {
-        path = getRepositoryPath(path);
-        String reposPath = SVNPathUtil.canonicalizeAbsPath(path);
-        String digestPath = FSRepositoryUtil.getDigestFromRepositoryPath(reposPath);
-        final ArrayList locks = new ArrayList(0);
-        ISVNLockHandler handler = new ISVNLockHandler(){
-            public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
-                locks.add(lock);
-            }
-            
-            public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException{
-            }
-        };
-        FSReader.walkDigestFiles(FSRepositoryUtil.getDigestFileFromDigest(digestPath, myReposRootDir), handler, false, myReposRootDir);
-        if(locks == null || locks.isEmpty()){
-            return null;
+        try{
+            openRepository();
+            /* Get the absolute path. */
+            path = SVNPathUtil.canonicalizeAbsPath(getRepositoryPath(path));
+            /* Get the top digest path in our tree of interest, and then walk it. */
+            File digestFile = FSRepositoryUtil.getDigestFileFromRepositoryPath(path, myReposRootDir); 
+            final ArrayList locks = new ArrayList();
+            ISVNLockHandler handler = new ISVNLockHandler(){
+                public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
+                    locks.add(lock);
+                }
+                
+                public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException{
+                }
+            };
+            FSReader.walkDigestFiles(digestFile, handler, false, myReposRootDir);
+            return (SVNLock[])locks.toArray(new SVNLock[locks.size()]);
+        }finally{
+            closeRepository();
         }
-        SVNLock [] retLocks = new SVNLock[locks.size()];
-        for(int count = 0; count < locks.size(); count++){
-            retLocks[count] = (SVNLock)locks.get(count);
-        }
-        return retLocks;
     }
 
-    /*Note: if handler == null, it will never be invoking. Handling is invoked when setting lock is successfull*/
     public void lock(Map pathsToRevisions, String comment, boolean force, ISVNLockHandler handler) throws SVNException {
-        if(pathsToRevisions == null || pathsToRevisions.isEmpty()){
-            return;
-        }        
-        /*The cycle below is used to find each path came to function*/
-        Iterator keyIter = pathsToRevisions.keySet().iterator();
-        while(keyIter.hasNext()){
-            String keyPath = (String)keyIter.next();
-            Long revVal = (Long)pathsToRevisions.get(keyPath);
-            String absLockPath = SVNPathUtil.canonicalizeAbsPath(keyPath);
-            SVNLock lockToBeMade = new SVNLock(absLockPath, /*ID*/FSRepositoryUtil.generateLockToken(), /*owner*/getUserName(), comment, new Date(System.currentTimeMillis()), null/*expiration Date*/);
-            FSWriter.doLock(lockToBeMade, myReposRootDir, myRevNodesPool, force, revVal.longValue());
-            if(handler != null){
-                handler.handleLock(keyPath, lockToBeMade, null);
-            }            
+        try{
+            openRepository();
+            for (Iterator paths = pathsToRevisions.keySet().iterator(); paths.hasNext();) {
+                String path = (String)paths.next();
+                Long revision = (Long)pathsToRevisions.get(path);
+                String reposPath = getRepositoryPath(path);
+                long curRevision = (revision == null || isInvalidRevision(revision.longValue())) ? FSReader.getYoungestRevision(myReposRootDir) : revision.longValue(); 
+                SVNLock lock = null;
+                SVNErrorMessage error = null;
+                try{
+                    lock = FSWriter.lockPath(reposPath, null, getUserName(), comment, null, curRevision, force, this, myReposRootDir);
+                }catch(SVNException svne){
+                    error = svne.getErrorMessage();
+                    if(!FSErrors.isLockError(error)){
+                        throw svne;
+                    }
+                }
+                if(handler != null){
+                    handler.handleLock(reposPath, lock, error);
+                }
+            }
+        }finally{
+            closeRepository();
         }
     }   
 
+    
     public void unlock(Map pathToTokens, boolean force, ISVNLockHandler handler) throws SVNException {
-        if(pathToTokens == null || pathToTokens.isEmpty()){
-            return;
-        }        
-        Set keySet = pathToTokens.keySet();
-        Iterator keyPathIter = keySet.iterator();
-        while(keyPathIter.hasNext()){
-            String keyPath = (String)keyPathIter.next();
-            String tokenVal = (String)pathToTokens.get(keyPath);
-            FSWriter.doUnlock(keyPath, tokenVal, getUserName(), force, myReposRootDir);
+        try{
+            openRepository();
+            for (Iterator paths = pathToTokens.keySet().iterator(); paths.hasNext();) {
+                String path = (String)paths.next();
+                String token = (String)pathToTokens.get(path);
+                String reposPath = getRepositoryPath(path);
+                SVNErrorMessage error = null;
+                try{
+                    FSWriter.unlockPath(reposPath, token, getUserName(), force, myReposRootDir);
+                }catch(SVNException svne){
+                    error = svne.getErrorMessage();
+                    if(!FSErrors.isUnlockError(error)){
+                        throw svne;
+                    }
+                }
+                if(handler != null){
+                    handler.handleUnlock(reposPath, new SVNLock(reposPath, token, null, null, null, null), error);
+                }
+            }
+        }finally{
+            closeRepository();
         }
     }
     
@@ -1484,7 +1509,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         boolean related = false;
         if(sourceEntry != null && targetEntry != null && sourceEntry.getType() == targetEntry.getType()){
             int distance = FSID.compareIds(sourceEntry.getId(), targetEntry.getId());
-            if(distance == 0 && !PathInfo.isRelevant(myReporterContext.getCurrentPathInfo(), editPath) && (pathInfo == null || (!pathInfo.isStartEmpty() && pathInfo.getLinkPath() == null))){
+            if(distance == 0 && !PathInfo.isRelevant(myReporterContext.getCurrentPathInfo(), editPath) && (pathInfo == null || (!pathInfo.isStartEmpty() && pathInfo.getLockToken() == null))){
                 return;
             }else if(distance != -1 || myReporterContext.isIgnoreAncestry()){
                 related = true;
@@ -1818,6 +1843,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             try {
                 SVNAuthentication auth = getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, getRepositoryRoot(true).toString(), getLocation());
                 if (auth != null) {
+                    getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, getRepositoryRoot(false).toDecodedString(), null, auth);
                     return auth.getUserName();
                 }
             } catch (SVNException e) {

@@ -136,13 +136,6 @@ public class FSRepositoryUtil {
         return SVNFileUtil.toHexDigest(digestFromPath); 
     }
     
-    /*Constuct digest in hex on path*/
-    public static String getDigestPathFromPath(File reposRootDir, String path)throws SVNException{
-        String digest = FSRepositoryUtil.getDigestFromRepositoryPath(path);
-        File dbLockDigestFile = new File(new File(FSRepositoryUtil.getDBLocksDir(reposRootDir), digest.substring(0, FSConstants.DIGEST_SUBDIR_LEN)), digest);
-        return dbLockDigestFile.getAbsolutePath();
-    }
-    
     public static Map getMetaProps(File reposRootDir, long revision, FSRepository repository) throws SVNException {
         Map metaProps = new HashMap();
         Map revProps = null;
