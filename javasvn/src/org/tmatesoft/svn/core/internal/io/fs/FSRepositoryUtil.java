@@ -57,6 +57,12 @@ public class FSRepositoryUtil {
     
     public static Map getPropsDiffs(Map sourceProps, Map targetProps){
         Map result = new HashMap();
+        if(sourceProps == null){
+            sourceProps = new HashMap();
+        }
+        if(targetProps == null){
+            targetProps = new HashMap();
+        }
         /* Loop over sourceProps and examine each key.  This will allow 
          * us to detect any `deletion' events or `set-modification' 
          * events.  
