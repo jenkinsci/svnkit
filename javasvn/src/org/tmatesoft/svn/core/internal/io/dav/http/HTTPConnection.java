@@ -478,6 +478,9 @@ class HTTPConnection implements IHTTPConnection {
     }
     
     public void skipData(HTTPRequest request) throws IOException {
+        if (hasToCloseConnection(request.getResponseHeader())) {
+            return;
+        }
         InputStream is = createInputStream(request.getResponseHeader(), getInputStream());
         while(is.skip(2048) > 0);        
     }
@@ -544,19 +547,42 @@ class HTTPConnection implements IHTTPConnection {
             }
         }
         Map header = request != null ? request.getResponseHeader() : null;
-        if (header == null || 
-                "close".equalsIgnoreCase((String) header.get("Connection")) || 
-                "close".equalsIgnoreCase((String) header.get("Proxy-Connection"))) {
+        if (hasToCloseConnection(header)) {
             close();
         }
     }
     
-    private static InputStream createInputStream(Map readHeader, InputStream is) throws IOException {
-        if (readHeader.get("Content-Length") != null) {
-            is = new FixedSizeInputStream(is, Long.parseLong(readHeader.get("Content-Length").toString()));
-        } else if ("chunked".equals(readHeader.get("Transfer-Encoding"))) {
+    private static boolean hasToCloseConnection(Map header) {
+        if (header == null || 
+                "close".equalsIgnoreCase((String) header.get("Connection")) || 
+                "close".equalsIgnoreCase((String) header.get("Proxy-Connection"))) {
+            return true;
+        }
+        return false;
+    }
+    
+    private InputStream createInputStream(Map readHeader, InputStream is) throws IOException {
+        if ("chunked".equalsIgnoreCase((String) readHeader.get("Transfer-Encoding"))) {
             is = new ChunkedInputStream(is);
-        } 
+        } else if (readHeader.get("Content-Length") != null) {
+            is = new FixedSizeInputStream(is, Long.parseLong(readHeader.get("Content-Length").toString()));
+        } else if (!hasToCloseConnection(readHeader)) {
+            // only when there is no "Connection: close" or "Proxy-Connection: close" header,
+            // in that case just return "is". 
+            // skipData will no read that as it should also analyze "close" instruction.
+            SVNDebugLog.logInfo("invalid header: " + readHeader);
+            SVNDebugLog.logInfo(new Exception());
+            // no content length and no valid transfer-encoding!
+            // consider as empty response.
+            
+            // return empty stream. 
+            // and force connection close? (not to read garbage on the next request).
+            is = new FixedSizeInputStream(is, 0);
+            readHeader.put("Connection", "close");
+        } else {
+            // connection has to be closed.
+        }
+        
         if ("gzip".equals(readHeader.get("Content-Encoding"))) {
             is = new GZIPInputStream(is);
         }
