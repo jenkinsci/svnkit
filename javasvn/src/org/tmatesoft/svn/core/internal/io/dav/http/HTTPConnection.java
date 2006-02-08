@@ -567,21 +567,21 @@ class HTTPConnection implements IHTTPConnection {
         } else if (readHeader.get("Content-Length") != null) {
             is = new FixedSizeInputStream(is, Long.parseLong(readHeader.get("Content-Length").toString()));
         } else if (!hasToCloseConnection(readHeader)) {
-            // only when there is no "Connection: close" or "Proxy-Connection: close" header,
-            // in that case just return "is". 
-            // skipData will no read that as it should also analyze "close" instruction.
-            SVNDebugLog.logInfo("invalid header: " + readHeader);
-            SVNDebugLog.logInfo(new Exception());
             // no content length and no valid transfer-encoding!
             // consider as empty response.
+
+            // but only when there is no "Connection: close" or "Proxy-Connection: close" header,
+            // in that case just return "is". 
+            // skipData will not read that as it should also analyze "close" instruction.
+            SVNDebugLog.logInfo("invalid header: " + readHeader);
+            SVNDebugLog.logInfo(new Exception());
             
             // return empty stream. 
             // and force connection close? (not to read garbage on the next request).
             is = new FixedSizeInputStream(is, 0);
+            // this will force connection to close.
             readHeader.put("Connection", "close");
-        } else {
-            // connection has to be closed.
-        }
+        } 
         
         if ("gzip".equals(readHeader.get("Content-Encoding"))) {
             is = new GZIPInputStream(is);
