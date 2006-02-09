@@ -11,11 +11,15 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -34,7 +38,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Set;
 
 public class FSReader {
     
@@ -1277,60 +1280,54 @@ public class FSReader {
      * significant change.  "Significant" means that the text or
      * properties of the node were changed, or that the node was added or
      * deleted.
-     * Keys are String paths and values are FSLogChangedPath.
+     * Keys are String paths and values are SVNLogEntryPaths.
      */
-    public static Map detectChanged(File reposRootDir, FSRevisionNodePool revNodesPool, FSRoot root)throws SVNException{
-        Map returnChanged = new HashMap();
-        Map changes = FSReader.getFSpathChanged(reposRootDir, root);        
+    public static Map detectChanged(File reposRootDir, FSRevisionNodePool revNodesPool, FSRoot root) throws SVNException {
+        Map changedPaths = new HashMap();
+        Map changes = getChangedPaths(reposRootDir, root);        
         if(changes.size() == 0){
+            /* No paths changed in this revision?  Uh, sure, I guess the
+             * revision is readable, then.  
+             */
             return changes;
         }
-        Set hashKeys = changes.keySet();
-        Iterator chgIter = hashKeys.iterator();
-        while(chgIter.hasNext()){
-            char action;
-            String hashPathKey = (String)chgIter.next();
-            FSPathChange change = (FSPathChange)changes.get(hashPathKey);
-            String path = hashPathKey;                      
+        for(Iterator paths = changes.keySet().iterator(); paths.hasNext();){
+            String changedPath = (String)paths.next();
+            FSPathChange change = (FSPathChange)changes.get(changedPath);
             if(change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_RESET){
                 continue;
-            }else if(change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_ADD){
-                action = 'A';
-            }else if(change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_DELETE){
-                action = 'D';
-            }else if(change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_REPLACE){
-                action = 'R';
-            }else{
-                action = 'M';
             }
-            FSLogChangedPath itemCopyfrom = new FSLogChangedPath(action, new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null));
-            if(action == 'A' || action == 'R'){                                
-                SVNLocationEntry copyfromEntry = FSReader.copiedFrom(reposRootDir, root.getRootRevisionNode(), path, revNodesPool);
+            char action = change.getChangeKind().toString().toUpperCase().charAt(0);
+            long copyfromRevision = FSConstants.SVN_INVALID_REVNUM;
+            String copyfromPath = null;
+            if(change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_ADD || change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_REPLACE){
+                SVNLocationEntry copyfromEntry = copiedFrom(reposRootDir, root.getRootRevisionNode(), changedPath, revNodesPool);
                 if(copyfromEntry.getPath() != null && FSRepository.isValidRevision(copyfromEntry.getRevision())){
-                    itemCopyfrom = new FSLogChangedPath(action, copyfromEntry);
+                    copyfromPath = copyfromEntry.getPath();
+                    copyfromRevision = copyfromEntry.getRevision();
                 }                
             }
-            returnChanged.put(path, itemCopyfrom);
+            changedPaths.put(changedPath, new SVNLogEntryPath(changedPath, action, copyfromPath, copyfromRevision));
         }
-        return returnChanged;
+        return changedPaths;
     }
     
     /* Return MAP with hash containing descriptions of the paths changed under ROOT. 
-     * The hash is keyed with String paths and has FSPathChange values
+     * The hash is keyed with String paths and has FSPathChange values.
      */    
-    public static Map getFSpathChanged(File reposRootDir, FSRoot root) throws SVNException{   
+    public static Map getChangedPaths(File reposRootDir, FSRoot root) throws SVNException {   
         Map changedPaths = new HashMap();
         if(root.isTxnRoot()){
-            return FSReader.fetchTxnChanges(changedPaths, root.getTxnId(), null, reposRootDir);
+            return fetchTxnChanges(changedPaths, root.getTxnId(), null, reposRootDir);
         }           
-        long changesOffset = FSReader.getChangesOffset(reposRootDir, root.getRevision());
+        long changesOffset = getChangesOffset(reposRootDir, root.getRevision());
         File revFile = FSRepositoryUtil.getRevisionFile(reposRootDir, root.getRevision());
         RandomAccessFile raRevFile = null;
         Object[] result = null;
         try{
             raRevFile = SVNFileUtil.openRAFileForReading(revFile);
             raRevFile.seek(changesOffset);
-            result = FSReader.fetchAllChanges(changedPaths, raRevFile, true, root.getCopyfromCache());
+            result = fetchAllChanges(changedPaths, raRevFile, true, root.getCopyfromCache());
         }catch(IOException ioe){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
@@ -1338,7 +1335,7 @@ public class FSReader {
             SVNFileUtil.closeFile(raRevFile);
         }
         root.setCopyfromCache((Map)result[1]);
-        return (Map)result[0];      
+        return changedPaths;      
     }
     
     /* Discover the copy ancestry of PATH under ROOT.  Return a relevant
@@ -1347,4 +1344,31 @@ public class FSReader {
         FSRevisionNode node = revNodesPool.getRevisionNode(root, path, reposRootDir);
         return new SVNLocationEntry(node.getCopyFromRevision(), node.getCopyFromPath());
     }
+
+    /* Pass history information about REV to handler.
+     * reposRootDir is used with REV to fetch the interesting history information,
+     * such as author, date, etc.
+     * The detectChanged() function if DISCOVER_CHANGED_PATHS is TRUE.
+     */
+     public static void sendChangeRev(File reposRootDir, FSRevisionNodePool revNodesPool, long revNum, boolean discoverChangedPaths, ISVNLogEntryHandler handler) throws SVNException {      
+        Map revisionProps = FSRepositoryUtil.getRevisionProperties(reposRootDir, revNum);
+        Map changedPaths = null;
+        String author = null;     
+        Date date = null;
+        String message = null;
+        if(revisionProps != null){
+            author = (String)revisionProps.get(SVNRevisionProperty.AUTHOR);     
+            String datestamp = (String)revisionProps.get(SVNRevisionProperty.DATE);
+            message = (String)revisionProps.get(SVNRevisionProperty.LOG);
+            date = datestamp != null ? SVNTimeUtil.parseDateString(datestamp) : null;
+        }
+        /* Discover changed paths if the user requested them
+         * or if we need to check that they are readable
+         */
+        if(revNum > 0 && discoverChangedPaths){
+            FSRevisionNode newRoot = getRootRevNode(reposRootDir, revNum);
+            changedPaths = detectChanged(reposRootDir, revNodesPool, FSRoot.createRevisionRoot(revNum, newRoot));
+        }
+        handler.handleLogEntry(new SVNLogEntry(changedPaths, revNum, author, date, message));
+     }
 }

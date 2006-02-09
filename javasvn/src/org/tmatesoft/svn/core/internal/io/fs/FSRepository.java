@@ -524,7 +524,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 /* Special case: In the first revision, we always provide a delta. */
             	boolean contentsChanged = false;
                 if(lastRoot != null){
-                    contentsChanged = this.areFileContentsChanged(lastRoot, lastPath, root, revPath);
+                    contentsChanged = areFileContentsChanged(lastRoot, lastPath, root, revPath);
                 }else{
                     contentsChanged = true;
                 }
@@ -565,205 +565,233 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }        
     }
 
-    /* Note: If targetPaths has one or more elements, 
-     * all of them must be valid at earliest revision passed as startRevision or endRevision,
-     * otherwise SVNException is thrown*/
-    public long log(String[] targetPaths, long startRevision, long endRevision, boolean discoverChangedPath, boolean strictNode, long limit, ISVNLogEntryHandler handler) throws SVNException {
+    public long log(String[] targetPaths, long startRevision, long endRevision, boolean discoverChangedPaths, boolean strictNode, long limit, ISVNLogEntryHandler handler) throws SVNException {
     	try{
     		openRepository();
+            String[] absPaths = null;
+            if(targetPaths != null){
+                absPaths = new String[targetPaths.length];
+                for(int i = 0; i < targetPaths.length; i++){
+                    absPaths[i] = SVNPathUtil.canonicalizeAbsPath(getRepositoryPath(targetPaths[i]));
+                }
+            }
+            long histStart = startRevision;
+            long histEnd = endRevision;            
             long youngestRev = FSReader.getYoungestRevision(myReposRootDir);
-            if(FSRepository.isInvalidRevision(startRevision)){
+            if(isInvalidRevision(startRevision)){
                 startRevision = youngestRev;
             }
+            if(isInvalidRevision(endRevision)){
+                endRevision = youngestRev;
+            }
+            /* Check that revisions are sane before ever invoking the handler. */
             if(startRevision > youngestRev){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0,number,integer}", new Long(startRevision));
                 SVNErrorManager.error(err);
-            }
-            if(FSRepository.isInvalidRevision(endRevision)){
-                endRevision = youngestRev;
             }
             if(endRevision > youngestRev){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0,number,integer}", new Long(endRevision));
                 SVNErrorManager.error(err);
             }
-            long histStart = FSConstants.SVN_INVALID_REVNUM;
-            long histEnd = FSConstants.SVN_INVALID_REVNUM;            
-        	//Get an ordered copy of the start and end
+            /* Get an ordered copy of the start and end. */
         	if(startRevision > endRevision){
         		histStart = endRevision;
         		histEnd = startRevision;
-        	}else{            
-        	    histStart = startRevision;
-                histEnd = endRevision;
-            }
-       	    
+        	}
         	/* If paths were specified, then we only really care about revisions
             *  in which those paths were changed.  So we ask the filesystem for
             *  all the revisions in which any of the paths was changed.
             *  
-            *  SPECIAL CASE: If we were given only path, and that path is empty,
+            *  SPECIAL CASE: If we were given the only path, and that path is "/" or empty,
             *  then the results are the same as if we were passed no paths at
             *  all.  Why?  Because the answer to the question "In which
             *  revisions was the root of the filesystem changed?" is always
             *  "Every single one of them."  And since this section of code is
             *  only about answering that question, and we already know the
-            *  answer ... well, you get the picture.*/
+            *  answer.
+            */
         	long sendCount = 0;
-        	if(targetPaths == null || (targetPaths.length == 1 && "".equals(targetPaths[0]))){
-        		sendCount = histEnd - histStart + 1;
+        	if(absPaths == null || absPaths.length == 0 || (absPaths.length == 1 && "/".equals(absPaths[0]))){
+                /* They want history for the root path, so every rev has a change. */
+                sendCount = histEnd - histStart + 1;
         		if(limit != 0 && sendCount > limit){
         			sendCount = limit;
         		}
-                int count = 0;
-                int reallyHandled = 0;
-        		for(count = 0; count < sendCount; count++){
-        			long rev = histStart + count;
+        		for(int i = 0; i < sendCount; i++){
+        			long rev = histStart + i;
         			if(startRevision > endRevision){
-        				rev = histEnd - count;
+        				rev = histEnd - i;
         			}        		
                     if(handler != null){
-                        FSWriter.sendChangeRev(myReposRootDir, myRevNodesPool, rev, discoverChangedPath, handler);
-                        reallyHandled++;
+                        FSReader.sendChangeRev(myReposRootDir, myRevNodesPool, rev, discoverChangedPaths, handler);
                     }
         		}
-                return reallyHandled;
+                return sendCount;
         	}
-            /*make all coming path absolute*/
-            ArrayList absPaths = null;
-            if(targetPaths != null){
-                absPaths = new ArrayList(0);
-                for(int count = 0; count < targetPaths.length; count++){
-                    absPaths.add(getRepositoryPath(targetPaths[count]));
-                }
-            }
-        	ArrayList histories = new ArrayList(0);
-        	for(int count = 0; count < absPaths.size(); count++){
-        		String thisPath = (String)absPaths.get(count);
-        		//FSRevisionNode root = myRevNodesPool.getRootRevisionNode(histEnd, myReposRootDir);        		
-        		FSRoot root = FSRoot.createRevisionRoot(histEnd, myRevNodesPool.getRootRevisionNode(histEnd, myReposRootDir));
-                FSNodeHistory hist = null;
-        		/*if there is no path at specified root, SVNException is thrown*/
-                hist = FSNodeHistory.getNodeHistory(myReposRootDir, root, thisPath);
+            /* Create a history object for each path so we can walk through
+             * them all at the same time until we have all changes or LIMIT
+             * is reached.
+             */
+        	LinkedList histories = new LinkedList();
+            FSRoot root = FSRoot.createRevisionRoot(histEnd, myRevNodesPool.getRootRevisionNode(histEnd, myReposRootDir));
+            for(int i = 0; i < absPaths.length; i++){
+        		String path = absPaths[i];
+        		/* if there is no path at specified root, SVNException is thrown */
+                FSNodeHistory hist = FSNodeHistory.getNodeHistory(myReposRootDir, root, path);
                 LogPathInfo info = new LogPathInfo(hist);
         		info.pickUpNextHistory(myReposRootDir, strictNode, histStart);
-        		histories.add(info);
+        		histories.addLast(info);
         	}
-        	boolean anyHistLeft = true;
-        	ArrayList revsArr = null;
-            boolean firstCycleIteration = false;
-        	for(long current = histEnd; current >= histStart && anyHistLeft; ){        		
-        		long nextRev = FSConstants.SVN_INVALID_REVNUM;
-        		boolean changed = false;
-        		anyHistLeft = false;
-                /*calculating next value for 'current'*/
-                /*first iteration must be with histEnd value*/
-                if(firstCycleIteration){
-                    for(int count = 0; count < histories.size(); count++){        			
-        			    LogPathInfo info = ((LogPathInfo)histories.get(count));
-        			    if(info.getHistory() == null){
-        			        continue;
-        			    }
-        			    if(info.getHistoryRevision() > nextRev){
-        			        nextRev = info.getHistoryRevision();        				
-        			    }        			
-        		    }
-                    current = nextRev;
-                }       
-                firstCycleIteration = true;
-                boolean changedFlag = false;
-        		for(int count = 0; count < histories.size(); count++){
-        			LogPathInfo info = ((LogPathInfo)histories.get(count));
-        	        /* Check history for this path in current rev. */
-                    changed = info.checkHistory(myReposRootDir, current, strictNode, histStart);
-                    if(changed){
-                        changedFlag = true; 
+            /* Loop through all the revisions in the range and add any
+             * where a path was changed to the array, or if they wanted
+             * history in reverse order just send it to them right away.
+             */
+            LinkedList revisions = null;
+            boolean anyHistoriesLeft = true;
+            for(long currentRev = histEnd; currentRev >= histStart && anyHistoriesLeft; currentRev = getNextHistoryRevision(histories)){
+                boolean changed = false;
+                anyHistoriesLeft = false;
+                for(ListIterator infoes = histories.listIterator(); infoes.hasNext();){
+                    LogPathInfo info = (LogPathInfo)infoes.next();
+                    /* Check history for this path in current rev. */
+                    if(info.checkHistory(myReposRootDir, currentRev, strictNode, histStart)){
+                        changed = true;
                     }
-        			if(info.getHistory() != null){
-        				anyHistLeft = true;
-        			}
-        		}
-        		if(changedFlag == true){
-        			if(startRevision > endRevision){ 
+                    if(info.getHistory() != null){
+                        anyHistoriesLeft = true;
+                    }
+                }
+                /* If any of the paths changed in this rev then add or send it. */
+                if(changed){
+                    /* If they wanted it in reverse order we can send it completely
+                     * right now. 
+                     */
+                    if(startRevision > endRevision){ 
                         if(handler != null){
-                            FSWriter.sendChangeRev(myReposRootDir, myRevNodesPool, current, discoverChangedPath, handler);
-                            sendCount++;
+                            FSReader.sendChangeRev(myReposRootDir, myRevNodesPool, currentRev, discoverChangedPaths, handler);
                         }
-        				if(limit != 0 && sendCount >= limit){
-        					break;
-        				}
-        			}else
-        			{
-        				if(revsArr == null){
-        					revsArr = new ArrayList(0);
-        				}	
-        				revsArr.add(new Long(current));
-        			}
-        		}
-        	}
-            int count = 0;
-            int reallyHandled = 0;
-        	if(revsArr != null){                
-        		for(count = 0; count < revsArr.size(); count++){
-                    if(handler != null){
-                        FSWriter.sendChangeRev(myReposRootDir, myRevNodesPool, ((Long)revsArr.get(revsArr.size() - count - 1)).longValue(), discoverChangedPath, handler);
-                        reallyHandled++;
+                        if(limit != 0 && ++sendCount >= limit){
+                            break;
+                        }
+                    }else{
+                        /* They wanted it in forward order, so we have to buffer up
+                         * a list of revs and process it later. 
+                         */
+                        if(revisions == null){
+                            revisions = new LinkedList();
+                        }   
+                        revisions.addFirst(new Long(currentRev));
                     }
-        			if(limit != 0 && count + 1 >= limit){
-        				break;
-        			}
-        		}
-                return reallyHandled;
-        	}
-            return sendCount;            
+                }
+            }
+            if(revisions != null){
+                /* Work loop for processing the revisions we found since they wanted
+                 * history in forward order. 
+                 */
+                int i = 0;
+                for(ListIterator revs = revisions.listIterator(); revs.hasNext();){
+                    FSReader.sendChangeRev(myReposRootDir, myRevNodesPool, ((Long)revs.next()).longValue(), discoverChangedPaths, handler);
+                    if(limit != 0 && ++i >= limit){
+                        break;
+                    }
+                }
+                return i;
+            }
+            return sendCount;
     	}finally{
     		closeRepository();
     	}
     }    
     
-    private class LogPathInfo{
-    	//private FSRevisionNode root;
-    	//private String path;
-    	private FSNodeHistory hist;
-    	//private long historyRev;
+    /* Return the next interesting revision in our list of HISTORIES. */
+    private long getNextHistoryRevision(LinkedList histories){
+        long nextRevision = FSConstants.SVN_INVALID_REVNUM;
+        for(ListIterator infoes = histories.listIterator(); infoes.hasNext();){
+            LogPathInfo info = (LogPathInfo)infoes.next();
+            if(info.getHistory() == null){
+                continue;
+            }
+            long historyRevision = info.getHistoryRevision(); 
+            if(historyRevision > nextRevision){
+                nextRevision = historyRevision;
+            }
+        }
+        return nextRevision;
+    }
+    
+    private class LogPathInfo {
+
+        private FSNodeHistory myHistory;
     	
-    	private LogPathInfo(/*FSRevisionNode newRoot, String newPath,*/ FSNodeHistory newHist/*, long newHistoryRev*/){
-    		//root = newRoot;
-    		//path = newPath;
-    		hist = newHist;
-    		//historyRev = newHistoryRev;
+    	private LogPathInfo(FSNodeHistory hist){
+    		myHistory = hist;
     	}
-        private FSNodeHistory getHistory(){
-    		return hist;
+        
+        public FSNodeHistory getHistory(){
+    		return myHistory;
     	}
-    	private long getHistoryRevision(){
-    		return hist == null ? FSConstants.SVN_INVALID_REVNUM : hist.getHistoryEntry().getRevision();
+    	
+        public long getHistoryRevision(){
+    		return myHistory == null ? FSConstants.SVN_INVALID_REVNUM : myHistory.getHistoryEntry().getRevision();
     	}
-    	private void pickUpNextHistory(File reposRootDir, boolean strict, long start)throws SVNException{
-            if(hist == null){
+
+        /* Set LogPathInfo.myHistory to the next history for the path.
+         *
+         * If no more history is available or the history revision is less
+         * than (earlier) than START then LogPathInfo.myHistory is set to NULL.
+         *
+         * A STRICT value of FALSE will indicate to follow history across copied
+         * paths.
+         */
+        public void pickUpNextHistory(File reposRootDir, boolean strict, long start) throws SVNException {
+            if(myHistory == null){
                 return;
             }
-    		FSNodeHistory tempHist = hist.fsHistoryPrev(reposRootDir, strict ? true : false, myRevNodesPool);
+    		FSNodeHistory tempHist = myHistory.fsHistoryPrev(reposRootDir, strict ? false : true, myRevNodesPool);
     		if(tempHist == null){
-    			hist = null;
+    			myHistory = null;
     			return;
     		}
-   			hist = tempHist;
-//    		path = hist.getHistoryEntry().getPath();
-//    		historyRev = hist.getHistoryEntry().getRevision();
-    		if(hist.getHistoryEntry().getRevision() < start){
-    			hist = null;
+   			myHistory = tempHist;
+            /* If this history item predates our START revision then
+             * don't fetch any more for this path. 
+             */
+            if(myHistory.getHistoryEntry().getRevision() < start){
+    			myHistory = null;
     			return;
     		}
-    		return;
     	}
-    	private boolean checkHistory(File reposRootDir, long currRev, boolean strict, long start)throws SVNException{
-    		if(hist == null){
+
+        /* Set LogPathInfo.myHistory to the next history for the path *if* there is 
+         * history available and LogPathInfo.myHistory's HISTORY_REV is equal to or 
+         * greater than CURRENT.
+         *
+         * Returns TRUE if the path has history in the CURRENT revision,
+         * otherwise it is not touched.
+         *
+         * If we do need to get the next history revision for the path, we call
+         * pickUpNextHistory to do it.
+         */
+        public boolean checkHistory(File reposRootDir, long currentRev, boolean strict, long start) throws SVNException {
+            /* If we're already done with histories for this path,
+             * don't try to fetch any more. 
+             */
+            if(myHistory == null){
     			return false;
     		}
-    		if(hist.getHistoryEntry().getRevision() < currRev){
+            /* If the last rev we got for this path is less than CURRENT,
+             * then just return and don't fetch history for this path.
+             * The caller will get to this rev eventually or else reach
+             * the limit. 
+             */
+            if(getHistoryRevision() < currentRev){
     			return false;
     		}
-    		this.pickUpNextHistory(reposRootDir, strict, start);
+            /* If the last rev we got for this path is equal to CURRENT
+             * then get the next history rev where this path was changed and 
+             * return true. 
+             */
+            pickUpNextHistory(reposRootDir, strict, start);
     		return true;
     	}        
     }
@@ -1846,9 +1874,9 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     private String getUserName() {
         if (getAuthenticationManager() != null) {
             try {
-                SVNAuthentication auth = getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, getRepositoryRoot(true).toString(), getLocation());
+                SVNAuthentication auth = getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, getRepositoryUUID(false), getLocation());
                 if (auth != null) {
-                    getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, getRepositoryRoot(false).toDecodedString(), null, auth);
+                    getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, getRepositoryUUID(false), null, auth);
                     return auth.getUserName();
                 }
             } catch (SVNException e) {

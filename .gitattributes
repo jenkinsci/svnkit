@@ -69,7 +69,6 @@ javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSHooks.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSID.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSInputStream.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSKeyGenerator.java -text
-javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSLogChangedPath.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSNodeHistory.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSOutputStream.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSParentPath.java -text
