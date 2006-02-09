@@ -573,8 +573,6 @@ class HTTPConnection implements IHTTPConnection {
             // but only when there is no "Connection: close" or "Proxy-Connection: close" header,
             // in that case just return "is". 
             // skipData will not read that as it should also analyze "close" instruction.
-            SVNDebugLog.logInfo("invalid header: " + readHeader);
-            SVNDebugLog.logInfo(new Exception());
             
             // return empty stream. 
             // and force connection close? (not to read garbage on the next request).
