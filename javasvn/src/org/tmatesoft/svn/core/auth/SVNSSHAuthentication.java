@@ -47,7 +47,7 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      *                         global auth cache, otherwise not
      */
     public SVNSSHAuthentication(String userName, String password, int portNumber, boolean storageAllowed) {
-        super(userName, storageAllowed);
+        super(ISVNAuthenticationManager.SSH, userName, storageAllowed);
         myPassword = password;
         myPortNumber = portNumber;
     }
@@ -66,7 +66,7 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      *                         global auth cache, otherwise not
      */
     public SVNSSHAuthentication(String userName, File keyFile, String passphrase, int portNumber, boolean storageAllowed) {
-        super(userName, storageAllowed);
+        super(ISVNAuthenticationManager.SSH, userName, storageAllowed);
         myPrivateKey = keyFile;
         myPassphrase = passphrase;
         myPortNumber = portNumber;
@@ -112,5 +112,4 @@ public class SVNSSHAuthentication extends SVNAuthentication {
     public int getPortNumber() {
         return myPortNumber;
     }
-
 }

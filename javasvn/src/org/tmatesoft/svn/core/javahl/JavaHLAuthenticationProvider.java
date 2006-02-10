@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
+import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 
 class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
     
@@ -97,6 +98,19 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                 return new SVNSSHAuthentication(userName, new File(keyPath), passPhrase, -1, true);
             }
             // try to get password for ssh from the user.
+        } else if(ISVNAuthenticationManager.USERNAME.equals(kind)) {
+            String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : System.getProperty("user.name");
+            if (myPrompt instanceof PromptUserPassword3) {
+                PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
+                if (prompt3.prompt(realm, userName, authMayBeStored))  {
+                    return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave());
+                }
+                return null;
+            }
+            if (myPrompt.prompt(realm, userName)) {
+                return new SVNUserNameAuthentication(myPrompt.getUsername(), true);
+            }
+            return null;            
         } else if(!ISVNAuthenticationManager.PASSWORD.equals(kind)){
             return null;
         }

@@ -34,7 +34,7 @@ public class SVNSSLAuthentication extends SVNAuthentication {
      *                         credentials cache    
      */
     public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed) {
-        super(null, storageAllowed);
+        super(ISVNAuthenticationManager.SSL, null, storageAllowed);
         myCertificate = certFile;
         myPassword = password;
     }

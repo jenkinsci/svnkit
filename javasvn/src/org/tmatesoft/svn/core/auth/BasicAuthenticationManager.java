@@ -44,8 +44,10 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     
     private List myPasswordAuthentications;
     private List mySSHAuthentications;
+    private List myUserNameAuthentications;
     private int mySSHIndex;
     private int myPasswordIndex;
+    private int myUserNameIndex;
 
     private String myProxyHost;
     private int myProxyPort;
@@ -132,6 +134,9 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         } else if (ISVNAuthenticationManager.PASSWORD.equals(kind) && myPasswordAuthentications.size() > 0) {
             myPasswordIndex = 0; 
             return (SVNAuthentication) myPasswordAuthentications.get(0);
+        } else if (ISVNAuthenticationManager.USERNAME.equals(kind) && myUserNameAuthentications.size() > 0) {
+            myUserNameIndex = 0; 
+            return (SVNAuthentication) myUserNameAuthentications.get(0);
         }
         SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
         return null;
@@ -144,7 +149,10 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         } else if (ISVNAuthenticationManager.PASSWORD.equals(kind) && myPasswordIndex + 1 < myPasswordAuthentications.size()) {
             myPasswordIndex++; 
             return (SVNAuthentication) myPasswordAuthentications.get(myPasswordIndex);
-        }
+        } else if (ISVNAuthenticationManager.USERNAME.equals(kind) && myUserNameIndex + 1 < myUserNameAuthentications.size()) {
+            myUserNameIndex++; 
+            return (SVNAuthentication) myUserNameAuthentications.get(myUserNameIndex);
+        } 
         SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
         return null;
     }

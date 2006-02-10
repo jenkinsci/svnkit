@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.auth.ISVNSSLManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
+import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
@@ -330,6 +330,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                         return null;
                     }
                     return new SVNPasswordAuthentication(myUserName, myPassword, myIsStore);
+                } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
+                    if (myUserName == null) {
+                        return null;
+                    }
+                    return new SVNUserNameAuthentication(myUserName, myIsStore);
                 }
             }
             return null;
@@ -364,8 +369,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             if (auth == null || realm == null) {
                 return;
             }
-            String kind = auth instanceof SVNSSHAuthentication ? 
-                    ISVNAuthenticationManager.SSH : (auth instanceof SVNSSLAuthentication) ? ISVNAuthenticationManager.SSL : ISVNAuthenticationManager.PASSWORD;
+            String kind = auth.getKind();
             getRuntimeAuthStorage().putData(kind, realm, auth);
         }
         
@@ -427,6 +431,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                         } else if (password != null) {
                             return new SVNSSHAuthentication(userName, password, portNumber, authMayBeStored);
                         }                    
+                    } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
+                        return new SVNUserNameAuthentication(userName, authMayBeStored);
                     }
                 } catch (SVNException e) {
                     //
@@ -469,7 +475,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                         props.setPropertyValue("passphrase", sshAuth.getPassphrase());
                         props.setPropertyValue("key", path);
                     }
-                }
+                } 
                 SVNFileUtil.setReadonly(props.getFile(), false);
             } catch (SVNException e) {
                 props.getFile().delete();

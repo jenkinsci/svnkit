@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
+import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 
 /**
  * @version 1.0
@@ -92,6 +93,8 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
                     } else if (info.get("password") != null) {
                         return new SVNSSHAuthentication((String) info.get("username"), (String) info.get("password"), port, authMayBeStored);
                     }
+                } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
+                    return new SVNUserNameAuthentication((String) info.get("username"), authMayBeStored);
                 }
             }
             return null;
