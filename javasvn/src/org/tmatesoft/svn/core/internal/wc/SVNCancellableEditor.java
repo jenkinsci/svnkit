@@ -123,7 +123,7 @@ public class SVNCancellableEditor implements ISVNEditor {
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
         myCancel.checkCancelled();
-        SVNDebugLog.logInfo("change file prop " + name);
+        SVNDebugLog.logInfo("change file prop " + name + " = " + value);
         myDelegate.changeFileProperty(path, name, value);
     }
 

@@ -16,12 +16,12 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
+import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
@@ -30,7 +30,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.0
@@ -179,10 +178,7 @@ public class FSRepositoryUtil {
 
     public static String getRepositoryUUID(File reposRootDir) throws SVNException {
         File uuidFile = getRepositoryUUIDFile(reposRootDir);
-        SVNDebugLog.logInfo("reading UUID from: " + uuidFile);
-        String uuidLine = FSReader.readSingleLine(uuidFile, FSConstants.SVN_UUID_FILE_LENGTH + 2);
-        SVNDebugLog.logInfo("UUID: " + uuidLine);
-        return uuidLine;
+        return FSReader.readSingleLine(uuidFile, FSConstants.SVN_UUID_FILE_LENGTH + 2);
     }
     
     public static File findRepositoryRoot(File path) throws IOException {
