@@ -777,7 +777,7 @@ public abstract class SVNRepository {
             public void openRevision(SVNFileRevision fileRevision) throws SVNException {
                 result.add(fileRevision);
             }
-            public void applyTextDelta(String token) throws SVNException {
+            public void applyTextDelta(String path, String baseChecksum) throws SVNException {
             }
             public OutputStream textDeltaChunk(String token, SVNDiffWindow diffWindow) throws SVNException {
                 return SVNFileUtil.DUMMY_OUT;

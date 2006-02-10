@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.internal.delta.SVNVDeltaAlgorithm;
 import org.tmatesoft.svn.core.internal.delta.SVNXDeltaAlgorithm;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 
@@ -96,7 +96,7 @@ public class SVNDeltaGenerator {
      *                          MD5 checksum computed for the target contents; otherwise  <span class="javakeyword">null</span>
      * @throws SVNException
      */
-    public String sendDelta(String path, InputStream target, ISVNEditor consumer, boolean computeChecksum) throws SVNException {
+    public String sendDelta(String path, InputStream target, ISVNDeltaConsumer consumer, boolean computeChecksum) throws SVNException {
         return sendDelta(path, SVNFileUtil.DUMMY_IN, target, consumer, computeChecksum);
     }
     
@@ -126,7 +126,7 @@ public class SVNDeltaGenerator {
      *                          MD5 checksum computed for the target contents; otherwise  <span class="javakeyword">null</span>
      * @throws SVNException
      */
-    public String sendDelta(String path, InputStream source, InputStream target, ISVNEditor consumer, boolean computeChecksum) throws SVNException {
+    public String sendDelta(String path, InputStream source, InputStream target, ISVNDeltaConsumer consumer, boolean computeChecksum) throws SVNException {
         MessageDigest digest = null;
         if (computeChecksum) {
             try {
@@ -182,7 +182,7 @@ public class SVNDeltaGenerator {
         return SVNFileUtil.toHexDigest(digest);
     }
 
-    public String sendDelta(String path, InputStream source, int sourceOffset, InputStream target, ISVNEditor consumer, boolean computeChecksum) throws SVNException {
+    public String sendDelta(String path, InputStream source, int sourceOffset, InputStream target, ISVNDeltaConsumer consumer, boolean computeChecksum) throws SVNException {
         MessageDigest digest = null;
         if (computeChecksum) {
             try {
@@ -237,7 +237,7 @@ public class SVNDeltaGenerator {
         return SVNFileUtil.toHexDigest(digest);
     }
 
-    private void sendDelta(String path, int sourceOffset, byte[] source, int sourceLength, byte[] target, int targetLength, ISVNEditor consumer) throws SVNException {
+    private void sendDelta(String path, int sourceOffset, byte[] source, int sourceLength, byte[] target, int targetLength, ISVNDeltaConsumer consumer) throws SVNException {
         // use x or v algorithm depending on sourceLength
         SVNDeltaAlgorithm algorithm = sourceLength == 0 ? myVDelta : myXDelta;
         algorithm.computeDelta(source, sourceLength, target, targetLength);

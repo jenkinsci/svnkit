@@ -12,10 +12,7 @@
 
 package org.tmatesoft.svn.core.io;
 
-import java.io.OutputStream;
-
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 
 
@@ -34,7 +31,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * @see 	SVNRepository
  * @see     org.tmatesoft.svn.core.SVNAnnotationGenerator
  */
-public interface ISVNFileRevisionHandler {
+public interface ISVNFileRevisionHandler extends ISVNDeltaConsumer {
     
     /**
      * Handles a file revision info.
@@ -46,39 +43,6 @@ public interface ISVNFileRevisionHandler {
      */
 	public void openRevision(SVNFileRevision fileRevision) throws SVNException;
 	
-    /**
-     * Starts deltas applying for a given file name or path (denoted by token). 
-     * 
-     * @param  token         a file token
-     * @throws SVNException
-	 */
-    public void applyTextDelta(String token) throws SVNException;
-    /**
-     * Handles a next diff window for a file (represented by a token) and
-     * returns an output stream to write instructions and new text data for
-     * the window. 
-     * 
-     * @param  token            a file path or name (or anything an implementor would
-     *                          like to use for his own implementation)
-     * @param  diffWindow       a diff window representing a delta chunk 
-     * @return                  an output stream where instructions and new text data
-     *                          for <code>diffWindow</code> will be written
-     * @throws SVNException
-     */
-    public OutputStream textDeltaChunk(String token, SVNDiffWindow diffWindow) throws SVNException;
-    
-    /**
-     * Finilazes collecting deltas (diff windows) for a file. This method is
-     * called just when all the diff windows for a file were handled. It may be here
-     * where the collected deltas are applied.
-     *  
-     * @param  token          defines a path or a name (or anything an implementor would
-     *                        like to use for his own implementation) of the file
-     *                        for which finalizing steps should be performed
-     * @throws SVNException
-     */
-    public void textDeltaEnd(String token) throws SVNException;
-    
     /**
      * Performs final handling for the processed file revision (when all 
      * deltas are applied and fulltext is got). 

@@ -385,7 +385,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     // apply delta here.
                     if (!windowRead) {
                         if (handler != null) {
-                            handler.applyTextDelta(name == null ? path : name);
+                            handler.applyTextDelta(name == null ? path : name, null);
                             windowRead = true;
                         }
                     }

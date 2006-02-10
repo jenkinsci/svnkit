@@ -154,7 +154,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     public void closeRevision(String token) throws SVNException {
     }
     
-    public void applyTextDelta(String token) throws SVNException {
+    public void applyTextDelta(String token, String baseChecksum) throws SVNException {
         if (myCurrentFile != null) {
             myCurrentFile.delete();
         } else {

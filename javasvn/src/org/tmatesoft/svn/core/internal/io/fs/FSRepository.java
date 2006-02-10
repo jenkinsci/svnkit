@@ -11,56 +11,54 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.io.IOException;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.OutputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.File;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
-import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.io.SVNFileRevision;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
+import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
+import org.tmatesoft.svn.core.io.SVNFileRevision;
+import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
 
 /**
  * @version 1.0
@@ -534,7 +532,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 if(handler != null){
                     handler.openRevision(new SVNFileRevision(revPath, rev, revProps, propDiffs));
                     if(contentsChanged){
-                        handler.applyTextDelta(path);
+                        handler.applyTextDelta(path, null);
                         InputStream sourceStream = null;
                         InputStream targetStream = null;
                         try{
@@ -545,7 +543,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                             }
                             targetStream = FSReader.getFileContentsInputStream(root, revPath, myRevNodesPool, myReposRootDir);
                             SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
-                            deltaGenerator.sendDelta(path, sourceStream, targetStream, new FileRevisionHandlerToEditorAdapter(handler), false);
+                            deltaGenerator.sendDelta(path, sourceStream, targetStream, handler, false);
                         }finally{
                             SVNFileUtil.closeFile(sourceStream);
                             SVNFileUtil.closeFile(targetStream);
@@ -1901,72 +1899,5 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
         }
         return System.getProperty("user.name");
-    }
-    
-    private class FileRevisionHandlerToEditorAdapter implements ISVNEditor {
-        
-        private ISVNFileRevisionHandler myHandler;
-        
-        public FileRevisionHandlerToEditorAdapter(ISVNFileRevisionHandler handler){
-            myHandler = handler;
-        }
-        
-        public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException{
-            return myHandler.textDeltaChunk(path, diffWindow);
-        }
-
-        public void textDeltaEnd(String path) throws SVNException{
-            myHandler.textDeltaEnd(path);
-        }
-
-        //unnecessary methods 
-        public void applyTextDelta(String path, String baseChecksum) throws SVNException{
-        }
-
-        public void changeFileProperty(String path, String name, String value) throws SVNException{
-        }
-
-        public void closeFile(String path, String textChecksum) throws SVNException{
-        }
-
-        public SVNCommitInfo closeEdit() throws SVNException{
-            return null;
-        }
-
-        public void abortEdit() throws SVNException{
-        }
-
-        public void targetRevision(long revision) throws SVNException{
-        }
-
-        public void openRoot(long revision) throws SVNException{
-        }
-
-        public void deleteEntry(String path, long revision) throws SVNException{
-        }
-        
-        public void absentDir(String path) throws SVNException{
-        }
-        
-        public void absentFile(String path) throws SVNException{
-        }
-        
-        public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException{
-        }
-        
-        public void openDir(String path, long revision) throws SVNException{
-        }
-        
-        public void changeDirProperty(String name, String value) throws SVNException{
-        }
-
-        public void closeDir() throws SVNException{
-        }
-
-        public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException{
-        }
-
-        public void openFile(String path, long revision) throws SVNException{
-        }
     }
 }

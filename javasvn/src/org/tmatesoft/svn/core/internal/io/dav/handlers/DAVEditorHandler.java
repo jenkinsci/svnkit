@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -297,7 +298,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         return myPath;
     }
     
-    protected ISVNEditor getEditor() {
+    protected ISVNDeltaConsumer getDeltaConsumer() {
         return myEditor;
     }
     

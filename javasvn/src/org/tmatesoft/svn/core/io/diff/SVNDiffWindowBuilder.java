@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -412,7 +413,7 @@ public class SVNDiffWindowBuilder {
         }
     }
 
-    public boolean accept(InputStream is, ISVNEditor consumer, String path) throws SVNException {       
+    public boolean accept(InputStream is, ISVNDeltaConsumer consumer, String path) throws SVNException {       
         switch (myState) {
             case HEADER:
                 try {
