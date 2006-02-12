@@ -20,7 +20,7 @@ import java.io.RandomAccessFile;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -30,13 +30,12 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
-import org.tmatesoft.svn.core.io.ISVNEditor;
 
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class FSOutputStream extends FSBufferStream implements ISVNEditor {
+public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer {
     
     public static final int WRITE_BUFFER_SIZE = 512000;
 
@@ -352,51 +351,4 @@ public class FSOutputStream extends FSBufferStream implements ISVNEditor {
     //unnecessary methods 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException{
     }
-
-    public void changeFileProperty(String path, String name, String value) throws SVNException{
-    }
-
-    public void closeFile(String path, String textChecksum) throws SVNException{
-    }
-
-    public SVNCommitInfo closeEdit() throws SVNException{
-        return null;
-    }
-
-    public void abortEdit() throws SVNException{
-    }
-
-    public void targetRevision(long revision) throws SVNException{
-    }
-
-    public void openRoot(long revision) throws SVNException{
-    }
-
-    public void deleteEntry(String path, long revision) throws SVNException{
-    }
-    
-    public void absentDir(String path) throws SVNException{
-    }
-    
-    public void absentFile(String path) throws SVNException{
-    }
-    
-    public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException{
-    }
-    
-    public void openDir(String path, long revision) throws SVNException{
-    }
-    
-    public void changeDirProperty(String name, String value) throws SVNException{
-    }
-
-    public void closeDir() throws SVNException{
-    }
-
-    public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException{
-    }
-
-    public void openFile(String path, long revision) throws SVNException{
-    }
-    
 }

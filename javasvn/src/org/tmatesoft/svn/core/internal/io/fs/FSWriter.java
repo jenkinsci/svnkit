@@ -13,8 +13,6 @@ package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile; 
 import java.util.ArrayList;
@@ -600,7 +598,6 @@ public class FSWriter {
     public static FSTransactionInfo createTxn(long baseRevision, FSRevisionNodePool revNodesPool, File reposRootDir) throws SVNException {
         /* Get the txn id. */
         String txnId = createTxnDir(baseRevision, reposRootDir); 
-        //TODO: add to FSTransactionInfo an equivalent of txn_vtable (??)
         FSTransactionInfo txn = new FSTransactionInfo(baseRevision, txnId);
         FSRevisionNode root = revNodesPool.getRootRevisionNode(baseRevision, reposRootDir);
         /* Create a new root node for this transaction. */
@@ -868,59 +865,6 @@ public class FSWriter {
             return false;
         }
         return true;
-    }
-    
-    public static File createUniqueTemporaryFile(String name, String suffix) throws SVNException {
-        File tmpDir = getTmpDir();
-        File tmpFile = null;
-        try {
-            tmpFile = SVNFileUtil.createUniqueFile(tmpDir, name, suffix);
-            tmpFile.createNewFile();
-            tmpFile.deleteOnExit();
-        } catch (IOException ioe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err);
-        }
-        return tmpFile;
-    }
-
-    public static File getTmpDir() throws SVNException {
-        File tmpDir = FSWriter.getTempDir(new File(""));
-        if(tmpDir == null){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't find a temporary directory");
-            SVNErrorManager.error(err);
-        }
-        return tmpDir;
-    }
-
-    private static File getTempDir(File tmpDir){
-        File tmpFile = null;
-        FileOutputStream fos = null;
-        for(int i = 0; i < 2; i++){
-            try{
-                tmpFile = File.createTempFile("javasvn-tempdir-test", ".tmp", i == 0 ? null : tmpDir);
-                fos = new FileOutputStream(tmpFile);
-                fos.write('!');
-                fos.close();
-                return tmpFile.getParentFile();
-            }catch(FileNotFoundException fnfe){
-                continue;
-            }catch(IOException ioe){
-                continue;
-            }catch(SecurityException se){
-                continue;
-            }finally{
-                SVNFileUtil.closeFile(fos);
-                /* it should not be a fatal error that a security
-                 * exception may occur?
-                 */
-                try{
-                    SVNFileUtil.deleteFile(tmpFile);
-                }catch(SecurityException se){
-                }
-            }
-        }
-        return null;
     }
     
     private static void setLock(SVNLock lock, File reposRootDir) throws SVNException {
