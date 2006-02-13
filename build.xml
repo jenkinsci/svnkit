@@ -54,6 +54,7 @@
                destdir="javasvn/bin"
                srcdir="javasvn/src"
                classpathref="library.classpath">
+            <exclude name="org/tmatesoft/svn/util/SVNTest.java" />
         </javac>
         	
     </target>
