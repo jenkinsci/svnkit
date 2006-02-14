@@ -492,7 +492,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 
         public SimpleProxyManager(String host, String port, String user, String password) {
             myProxyHost = host;
-            myProxyPort = port == null ? "80" : port;
+            myProxyPort = port == null ? "3128" : port;
             myProxyUser = user;
             myProxyPassword = password;
         }
@@ -507,7 +507,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             } catch (NumberFormatException nfe) {
                 //
             }
-            return 80;
+            return 3128;
         }
 
         public String getProxyUserName() {
