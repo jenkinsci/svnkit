@@ -277,14 +277,15 @@ public class SVNStatusClient extends SVNBasicClient {
      * 									for the item
      * @throws SVNException
      */
-    public SVNStatus doStatus(final File path, boolean remote, boolean collectParentExternals) throws SVNException {
+    public SVNStatus doStatus(File path, boolean remote, boolean collectParentExternals) throws SVNException {
         final SVNStatus[] result = new SVNStatus[] { null };
+        final File absPath = path.getAbsoluteFile();
         ISVNStatusHandler handler = new ISVNStatusHandler() {
             public void handleStatus(SVNStatus status) {
-                if (path.equals(status.getFile())) {
+                if (absPath.equals(status.getFile())) {
                     if (result[0] != null
                         && result[0].getContentsStatus() == SVNStatusType.STATUS_EXTERNAL
-                        && path.isDirectory()) {
+                        && absPath.isDirectory()) {
                         result[0] = status;
                         result[0].markExternal();
                     } else if (result[0] == null) {
