@@ -499,7 +499,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         String prevPath = null;
         SVNLogEntryPath logPath = (SVNLogEntryPath) logEntry.getChangedPaths().get(path);
         if (logPath != null) {
-            if (logPath.getType() != 'A' && logPath.getType() != 'R') {
+            if (logPath.getType() != SVNLogEntryPath.TYPE_ADDED && logPath.getType() != SVNLogEntryPath.TYPE_REPLACED) {
                 return logPath.getPath();
             }
             if (logPath.getCopyPath() != null) {

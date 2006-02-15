@@ -29,6 +29,11 @@ package org.tmatesoft.svn.core;
  */
 public class SVNLogEntryPath {
     
+    public static final char TYPE_ADDED = 'A';
+    public static final char TYPE_DELETED = 'D';
+    public static final char TYPE_MODIFIED = 'M';
+    public static final char TYPE_REPLACED = 'R';
+    
     private String myPath;
     private char myType;
     private String myCopyPath;

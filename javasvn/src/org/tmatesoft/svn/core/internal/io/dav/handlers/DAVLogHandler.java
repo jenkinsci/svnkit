@@ -95,7 +95,7 @@ public class DAVLogHandler extends BasicDAVHandler {
 		String copyPath = null;
 		long copyRevision = -1;
 		if (element == ADDED_PATH || element == REPLACED_PATH) {
-			type = element == ADDED_PATH ? 'A' : 'R';
+			type = element == ADDED_PATH ? SVNLogEntryPath.TYPE_ADDED : SVNLogEntryPath.TYPE_REPLACED;
 			copyPath = attrs.getValue("copyfrom-path");
 			String copyRevisionStr = attrs.getValue("copyfrom-rev");
 			if (copyPath != null && copyRevisionStr != null) {
@@ -105,9 +105,9 @@ public class DAVLogHandler extends BasicDAVHandler {
 				}
 			} 
 		} else if (element == MODIFIED_PATH) {
-			type = 'M';
+			type = SVNLogEntryPath.TYPE_MODIFIED;
 		} else if (element == DELETED_PATH) {
-			type = 'D';			
+			type = SVNLogEntryPath.TYPE_DELETED;			
 		}
 		if (type != 0) {
 			myPath = new SVNLogEntryPathEx(type, copyPath, copyRevision);
