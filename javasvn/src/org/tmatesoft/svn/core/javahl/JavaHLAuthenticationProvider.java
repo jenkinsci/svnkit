@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
     
@@ -54,10 +55,13 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                 port = prompt4.getSSHPort();
                 if (port < 0 && url != null) {
                     port = url.getPort();
+                    SVNDebugLog.logInfo("using URL port: " + port);
                 }
                 if (port < 0) {
                     port = 22;
+                    SVNDebugLog.logInfo("using default port: " + port);
                 }
+                SVNDebugLog.logInfo("port number from user's prompt is: " + port);
                 boolean save = prompt4.userAllowedSave();
                 if (keyPath != null && !"".equals(keyPath)) {
                     return new SVNSSHAuthentication(userName, new File(keyPath), passphrase, port, save);
