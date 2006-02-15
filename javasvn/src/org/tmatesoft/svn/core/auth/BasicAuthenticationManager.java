@@ -122,7 +122,7 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
      */
     public void setProxy(String proxyHost, int proxyPort, String proxyUserName, String proxyPassword) {
         myProxyHost = proxyHost;
-        myProxyPort = proxyPort >= 0 ? proxyPort : 80;
+        myProxyPort = proxyPort >= 0 ? proxyPort : 3128;
         myProxyUserName = proxyUserName;
         myProxyPassword = proxyPassword;
     }
