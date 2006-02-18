@@ -1431,11 +1431,9 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 r1 = file1IS.read();
                 r2 = file2IS.read();
                 if(r1 != r2){
-                    SVNFileUtil.closeFile(file1IS);
-                    SVNFileUtil.closeFile(file2IS);
                     return true;
                 }
-                if(r1 == -1){//we've finished - files do differ
+                if(r1 == -1){//we've finished - files do not differ
                     break;
                 }
             }

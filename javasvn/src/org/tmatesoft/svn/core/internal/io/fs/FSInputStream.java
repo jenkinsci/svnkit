@@ -137,7 +137,7 @@ public class FSInputStream extends InputStream {
         }catch(SVNException svne){
             throw new IOException(svne.getMessage());
         }
-        return r == 0 ? -1 : buf[0];
+        return r == 0 ? -1 : (int)(buf[0] & 0xFF);
     }
     
     private int readContents(byte[] buf) throws SVNException {
