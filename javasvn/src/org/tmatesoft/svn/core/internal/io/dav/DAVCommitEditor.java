@@ -349,12 +349,18 @@ class DAVCommitEditor implements ISVNEditor {
 		    DAVMergeHandler handler = new DAVMergeHandler(myCommitMediator, myPathsMap);
 		    HTTPStatus status = myConnection.doMerge(myActivity, true, handler);
 		    if (status.getError() != null) {
+                // DELETE shouldn't be called anymore if there is an error or MERGE.
+                // calling abortEdit will do nothing on closeEdit failure now.
+                myIsAborted = true;
 		        SVNErrorManager.error(status.getError());
 		    }
+            // abort edit will not be run if there was an error on MERGE.
+            abortEdit();
 		    return handler.getCommitInfo();
 	    }
 	    finally {
-		    abortEdit();
+            // always run close callback to 'unlock' SVNRepository.
+            runCloseCallback();            
 	    }
     }
     
@@ -387,8 +393,15 @@ class DAVCommitEditor implements ISVNEditor {
 		    }
 	    }
 	    finally {
-		    myCloseCallback.run();
+            runCloseCallback();
 	    }
+    }
+    
+    private void runCloseCallback() {
+        if (myCloseCallback != null) {
+            myCloseCallback.run();
+            myCloseCallback = null;
+        }
     }
     
     private String createActivity(String logMessage) throws SVNException {
