@@ -65,8 +65,12 @@ public class SVNFileUtil {
 
     static {
         String osName = System.getProperty("os.name");
-        isWindows = osName != null
+        boolean windows = osName != null
                 && osName.toLowerCase().indexOf("windows") >= 0;
+        if (!windows && osName != null) {
+            windows = osName.toLowerCase().indexOf("os/2") >= 0;
+        }
+        isWindows = windows;
     }
 
     public static String getBasePath(File file) {
