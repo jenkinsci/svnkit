@@ -46,6 +46,10 @@ javasvn-test/PythonTests.xsl -text
 javasvn-test/apache/python.template.conf eol=lf
 javasvn-test/apache/users eol=lf
 javasvn-test/logging.properties -text
+javasvn-test/src/org/tmatesoft/svn/core/internal/io/fs/test/CommitMediator.java -text
+javasvn-test/src/org/tmatesoft/svn/core/internal/io/fs/test/FSRepositoryTest.java -text
+javasvn-test/src/org/tmatesoft/svn/core/internal/io/fs/test/PropertyHandler.java -text
+javasvn-test/src/org/tmatesoft/svn/core/internal/io/fs/test/UpdatesToCommitsEditor.java -text
 javasvn-test/src/org/tmatesoft/svn/core/test/SpecialTest.java -text
 javasvn-test/test.mac.properties eol=lf
 javasvn-test/test.unix.properties eol=lf
