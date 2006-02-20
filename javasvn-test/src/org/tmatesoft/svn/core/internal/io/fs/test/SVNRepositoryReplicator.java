@@ -60,7 +60,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class FSRepositoryTest {
+public class SVNRepositoryReplicator {
     
     public static void main(String[] args){
         if(args.length < 4){
@@ -270,7 +270,7 @@ public class FSRepositoryTest {
             //1. first investigate paths for copies if there're any 
             copiedPaths.clear();
             Collection logEntries = sourceRepos.log(null, null, i, i, true, false);
-            ISVNEditor commitEditor = targetRepos.getCommitEditor(commitMessage + i, new CommitMediator());
+            ISVNEditor commitEditor = targetRepos.getCommitEditor(commitMessage + i, null);
             try{
                 //open root
                 commitEditor.openRoot(i);
@@ -285,7 +285,7 @@ public class FSRepositoryTest {
                     }
                 }
                 //2. now run the update-commit
-                bridgeEditor = new UpdatesToCommitsEditor(sourceRepos, changedPaths, copiedPaths, commitEditor, i);
+                bridgeEditor = new SVNReplicationEditor(sourceRepos, changedPaths, copiedPaths, commitEditor, i);
                 final long previousRev = i - 1;
                 sourceRepos.update(i, null, true, new ISVNReporterBaton(){
                     public void report(ISVNReporter reporter) throws SVNException {

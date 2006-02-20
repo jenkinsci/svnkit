@@ -42,7 +42,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class UpdatesToCommitsEditor implements ISVNEditor {
+public class SVNReplicationEditor implements ISVNEditor {
 
     private static final int ACCEPT = 0;
     private static final int IGNORE = 1;
@@ -64,7 +64,7 @@ public class UpdatesToCommitsEditor implements ISVNEditor {
 
     Stack myDirsStack = new Stack();
 
-    public UpdatesToCommitsEditor(SVNRepository repository,  Map changedPaths, Map copiedPaths, ISVNEditor commitEditor, long rev){
+    public SVNReplicationEditor(SVNRepository repository,  Map changedPaths, Map copiedPaths, ISVNEditor commitEditor, long rev){
         myRepos = repository;
         myCommitEditor = commitEditor;
         myChangedPaths = changedPaths;
