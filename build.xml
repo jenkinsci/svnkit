@@ -8,11 +8,14 @@
     	<property name="eclipse.runtime" value="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.jar"/>    	
     	<property name="eclipse.runtime_323" value="${eclipse.home}/plugins/org.eclipse.core.runtime_3.1.0.v20051027.jar"/>
     	<property name="eclipse.runtime_324" value="${eclipse.home}/plugins/org.eclipse.core.runtime_3.2.0.v20051208.jar"/>
+    	<property name="eclipse.runtime_325" value="${eclipse.home}/plugins/org.eclipse.core.runtime_3.2.0.v20060216.jar"/>
     	<property name="eclipse.osgi_31" value="${eclipse.home}/plugins/org.eclipse.osgi_3.1.0.jar"/>    	
     	<property name="eclipse.osgi_32" value="${eclipse.home}/plugins/org.eclipse.osgi_3.2.0.jar"/>    	
     	<property name="eclipse.osgi_323" value="${eclipse.home}/plugins/org.eclipse.osgi_3.2.0.v20051030.jar"/>    	
     	<property name="eclipse.osgi_324" value="${eclipse.home}/plugins/org.eclipse.osgi_3.2.0.v20051212a.jar"/>    	
+    	<property name="eclipse.osgi_325" value="${eclipse.home}/plugins/org.eclipse.osgi_3.2.0.v20060214.jar"/>    	
     	<property name="eclipse.equinox_324" value="${eclipse.home}/plugins/org.eclipse.equinox.common_1.0.0.v20051205.jar"/>
+    	<property name="eclipse.equinox_325" value="${eclipse.home}/plugins/org.eclipse.equinox.common_1.0.0.v20060215a.jar"/>
         <property file="javasvn.build.properties"/>
     		
     	<condition property="eclipse.present">
@@ -20,6 +23,7 @@
             	<available file="${eclipse.runtime}" property="eclipse.runtime.jar"/>
             	<available file="${eclipse.runtime_323}" property="eclipse.runtime.jar"/>
             	<available file="${eclipse.runtime_324}" property="eclipse.runtime.jar"/>
+            	<available file="${eclipse.runtime_325}" property="eclipse.runtime.jar"/>
     		</or>
         </condition>
     	
@@ -67,11 +71,14 @@
             <pathelement path="${eclipse.runtime}" />
             <pathelement path="${eclipse.runtime_323}" />
             <pathelement path="${eclipse.runtime_324}" />
+            <pathelement path="${eclipse.runtime_325}" />
             <pathelement path="${eclipse.equinox_324}" />
+            <pathelement path="${eclipse.equinox_325}" />
             <pathelement path="${eclipse.osgi_31}" />
             <pathelement path="${eclipse.osgi_32}" />
             <pathelement path="${eclipse.osgi_323}" />
             <pathelement path="${eclipse.osgi_324}" />
+            <pathelement path="${eclipse.osgi_325}" />
         </path>
         <javac debug="true"
                destdir="javasvn/bin"
@@ -102,11 +109,14 @@
             <pathelement path="${eclipse.runtime}" />
             <pathelement path="${eclipse.runtime_323}" />
             <pathelement path="${eclipse.runtime_324}" />
+            <pathelement path="${eclipse.runtime_325}" />
             <pathelement path="${eclipse.equinox_324}" />
+            <pathelement path="${eclipse.equinox_325}" />
             <pathelement path="${eclipse.osgi_31}" />
             <pathelement path="${eclipse.osgi_32}" />
             <pathelement path="${eclipse.osgi_323}" />
             <pathelement path="${eclipse.osgi_324}" />
+            <pathelement path="${eclipse.osgi_325}" />
         </path>
 
         <javac debug="true"
