@@ -61,7 +61,8 @@ public class SVNMerger {
         }
         String name = SVNPathUtil.tail(path);
         File targetFile = parentDir.getFile(name);
-        if (targetFile.isDirectory()) {
+        SVNFileType targetFileType = SVNFileType.getType(targetFile);
+        if (targetFileType == SVNFileType.DIRECTORY) {
             // check for normal entry?
             final ISVNEventHandler oldDispatcher = myWCAccess
                     .getEventDispatcher();
@@ -109,7 +110,7 @@ public class SVNMerger {
                 myWCAccess.setEventDispatcher(oldDispatcher);
             }
             return SVNStatusType.CHANGED;
-        } else if (targetFile.isFile()) {
+        } else if (targetFileType.isFile()) {
             return SVNStatusType.OBSTRUCTED;
         }
         return SVNStatusType.MISSING;
@@ -122,9 +123,10 @@ public class SVNMerger {
         }
         String name = SVNPathUtil.tail(path);
         File targetFile = parentDir.getFile(name);
-        if (targetFile.isDirectory()) {
+        SVNFileType targetFileType = SVNFileType.getType(targetFile);
+        if (targetFileType == SVNFileType.DIRECTORY) {
             return SVNStatusType.OBSTRUCTED;
-        } else if (targetFile.isFile()) {
+        } else if (targetFileType.isFile()) {
             final ISVNEventHandler oldDispatcher = myWCAccess.getEventDispatcher();
             try {
                 myWCAccess.setEventDispatcher(new ISVNEventHandler() {
@@ -175,7 +177,8 @@ public class SVNMerger {
         }
         String name = SVNPathUtil.tail(path);
         File file = parentDir.getFile(name);
-        if (!file.exists()) {
+        SVNFileType fileType = SVNFileType.getType(file);
+        if (fileType == SVNFileType.NONE) {
             SVNEntry entry = parentDir.getEntries().getEntry(name, true);
             if (entry != null && !entry.isScheduledForDeletion()) {
                 // missing entry.
@@ -189,7 +192,7 @@ public class SVNMerger {
                 myAddedPath = path + "/";
             }
             return SVNStatusType.CHANGED;
-        } else if (file.isDirectory()) {
+        } else if (fileType == SVNFileType.DIRECTORY) {
             SVNEntry entry = parentDir.getEntries().getEntry(name, true);
             if (entry == null || entry.isScheduledForDeletion()) {
                 if (myIsDryRun) {
@@ -202,7 +205,7 @@ public class SVNMerger {
                 return SVNStatusType.CHANGED;
             }
             return SVNStatusType.OBSTRUCTED;            
-        } else if (file.isFile()) {
+        } else if (fileType.isFile()) {
             if (myIsDryRun) {
                 myAddedPath = null;
             }
@@ -227,8 +230,8 @@ public class SVNMerger {
         String name = SVNPathUtil.tail(path);
         File mine = parentDir.getFile(name);
         SVNEntry entry = parentDir.getEntries().getEntry(name, true);
-
-        if (!mine.isFile() || entry == null || entry.isHidden()) {
+        SVNFileType mineType = SVNFileType.getType(mine);
+        if (!mineType.isFile() || entry == null || entry.isHidden()) {
             result[0] = SVNStatusType.MISSING;
             result[1] = SVNStatusType.MISSING;
             return result;
@@ -298,8 +301,8 @@ public class SVNMerger {
         }
         String name = SVNPathUtil.tail(path);
         File mine = parentDir.getFile(name);
-
-        if (!mine.exists()) {
+        SVNFileType mineType = SVNFileType.getType(mine);
+        if (mineType == SVNFileType.NONE) {
             SVNEntry entry = parentDir.getEntries().getEntry(name, true);
             if (entry != null && !entry.isScheduledForDeletion()) {
                 result[0] = SVNStatusType.OBSTRUCTED;
@@ -314,9 +317,9 @@ public class SVNMerger {
             if (propDiff != null && !propDiff.isEmpty()) {
                 result[1] = SVNStatusType.CHANGED;
             }
-        } else if (mine.isDirectory()) {
+        } else if (mineType == SVNFileType.DIRECTORY) {
             result[0] = SVNStatusType.OBSTRUCTED;
-        } else if (mine.isFile()) {
+        } else if (mineType.isFile()) {
             SVNEntry entry = parentDir.getEntries().getEntry(name, true);
             if (entry == null || entry.isScheduledForDeletion()) {
                 result[0] = SVNStatusType.OBSTRUCTED;

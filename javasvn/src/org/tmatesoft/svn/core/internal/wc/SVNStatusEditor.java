@@ -345,7 +345,8 @@ public class SVNStatusEditor implements ISVNEditor {
             SVNEntry entry = entries.getEntry(myTarget, false);
             SVNNodeKind kind = entry == null ? null : entry.getKind();
             entries.close();
-            if (file.isDirectory() && (kind == null || kind == SVNNodeKind.DIR)) {
+            SVNFileType targetType = SVNFileType.getType(file);
+            if (targetType == SVNFileType.DIRECTORY && (kind == null || kind == SVNNodeKind.DIR)) {
                 if (entry != null) {
                     reportStatus(myWCAccess.getTarget(), null, false, myIsRecursive);
                 } else {
@@ -395,7 +396,7 @@ public class SVNStatusEditor implements ISVNEditor {
             SVNEntry entry = entries.getEntry(entryName, false);
             if (entry != null) {
                 sendVersionedStatus(dir, entryName);
-            } else if (dir.getFile(entryName).exists()) {
+            } else if (SVNFileType.getType(dir.getFile(entryName)) != SVNFileType.NONE) {
                 sendUnversionedStatus(dir, entryName);
             }
             return;
