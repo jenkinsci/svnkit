@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
 
@@ -30,6 +32,15 @@ public class SVNFileType {
     
     private static final boolean fastSymlinkResoution = !"false".equalsIgnoreCase(System.getProperty("javasvn.fastSymlinkResolution"));
     private static final boolean canonPathCacheUsed = !"false".equalsIgnoreCase(System.getProperty("sun.io.useCanonCaches"));
+    private static final Set ADMIN_FILE_PARENTS = new HashSet();
+    
+    static {
+        ADMIN_FILE_PARENTS.add("text-base");
+        ADMIN_FILE_PARENTS.add("prop-base");
+        ADMIN_FILE_PARENTS.add("props");
+        ADMIN_FILE_PARENTS.add("wcprops");
+        ADMIN_FILE_PARENTS.add("tmp");
+    }
 
     private int myType;
 
@@ -52,28 +63,30 @@ public class SVNFileType {
         if (file == null) {
             return SVNFileType.UNKNOWN;
         }
-        if (!SVNFileUtil.isWindows && canonPathCacheUsed && !fastSymlinkResoution && SVNFileUtil.isSymlink(file)) {
-            return SVNFileType.SYMLINK;
-        } else if (!SVNFileUtil.isWindows && (!canonPathCacheUsed || fastSymlinkResoution)) {            
-            String absolutePath = file.getAbsolutePath();
-            String canonicalPath;
-            try {
-                canonicalPath = file.getCanonicalPath();
-            } catch (IOException e) {
-                canonicalPath = file.getAbsolutePath();
-            }
-            if (!file.exists()) {
-                File[] children = file.getParentFile() != null ? file.getParentFile().listFiles() : null;
-                for (int i = 0; children != null && i < children.length; i++) {
-                    File child = children[i];
-                    if (child.getName().equals(file.getName())) {
-                        if (SVNFileUtil.isSymlink(file)) {
-                            return SVNFileType.SYMLINK;
+        if (!SVNFileUtil.isWindows && !isAdminFile(file)) {
+            if (canonPathCacheUsed && !fastSymlinkResoution && SVNFileUtil.isSymlink(file)) {
+                return SVNFileType.SYMLINK;
+            } else if (!canonPathCacheUsed || fastSymlinkResoution) {            
+                String absolutePath = file.getAbsolutePath();
+                String canonicalPath;
+                try {
+                    canonicalPath = file.getCanonicalPath();
+                } catch (IOException e) {
+                    canonicalPath = file.getAbsolutePath();
+                }
+                if (!file.exists()) {
+                    File[] children = file.getParentFile() != null ? file.getParentFile().listFiles() : null;
+                    for (int i = 0; children != null && i < children.length; i++) {
+                        File child = children[i];
+                        if (child.getName().equals(file.getName())) {
+                            if (SVNFileUtil.isSymlink(file)) {
+                                return SVNFileType.SYMLINK;
+                            }
                         }
                     }
+                } else if (!absolutePath.equals(canonicalPath) && SVNFileUtil.isSymlink(file)) {
+                    return SVNFileType.SYMLINK;
                 }
-            } else if (!absolutePath.equals(canonicalPath) && SVNFileUtil.isSymlink(file)) {
-                return SVNFileType.SYMLINK;
             }
         }
 
@@ -96,6 +109,19 @@ public class SVNFileType {
             return type == SVNFileType.NONE;
         } else if (nodeKind == SVNNodeKind.UNKNOWN) {
             return type == SVNFileType.UNKNOWN;
+        }
+        return false;
+    }
+    
+    private static boolean isAdminFile(File file) {
+        for(int i = 0; file != null && i < 3; i++) {
+            String name = file.getName();
+            if (!ADMIN_FILE_PARENTS.contains(name)) {
+                return false;
+            } else if (".svn".equals(file.getName())) {
+                return true;
+            }
+            file = file.getParentFile();
         }
         return false;
     }
