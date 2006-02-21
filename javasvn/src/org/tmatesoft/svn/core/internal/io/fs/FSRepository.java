@@ -246,6 +246,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             Map revProps = FSRepositoryUtil.getRevisionProperties(myReposRootDir, revision);
             if (properties == null) {
                 properties = revProps;
+            }else{
+                properties.putAll(revProps);
             }
         } finally {
             closeRepository();
