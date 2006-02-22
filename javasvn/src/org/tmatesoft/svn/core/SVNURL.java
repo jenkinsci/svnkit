@@ -118,6 +118,15 @@ public class SVNURL {
         return new SVNURL(url, true);
     }
     
+    public static SVNURL fromFile(File repositoryPath) throws SVNException {
+        if (repositoryPath == null) {
+            return null;
+        }
+        String path = repositoryPath.getAbsoluteFile().getAbsolutePath();
+        path = path.replace(File.separatorChar, '/');
+        return SVNURL.parseURIDecoded("file://" + path);
+    }
+    
     private static final Map DEFAULT_PORTS = new HashMap();
     
     static {

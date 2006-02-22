@@ -240,7 +240,7 @@ public abstract class SVNRepositoryFactory {
             SVNFileUtil.closeFile(uuidOS);
             SVNFileUtil.deleteFile(jarFile);
         }
-        return SVNURL.parseURIDecoded("file://" + path.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/'));
+        return SVNURL.fromFile(path);
     }
 
     protected abstract SVNRepository createRepositoryImpl(SVNURL url, ISVNSession session);
