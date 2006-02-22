@@ -195,8 +195,12 @@ public abstract class SVNRepositoryFactory {
         SVNErrorManager.error(err);
         return null;
     }
-    
+
     public static SVNURL createLocalRepository(File path, boolean force) throws SVNException {
+        return createLocalRepository(path, null, force);
+    }
+    
+    public static SVNURL createLocalRepository(File path, String uuid, boolean force) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (!force && fType != SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
@@ -225,12 +229,15 @@ public abstract class SVNRepositoryFactory {
                 translateFiles(new File(path, "locks"));
             }
             // generate and write UUID.
-            byte[] uuid = SVNUUIDGenerator.generateUUID();
             File uuidFile = new File(path, "db/uuid");
-            uuidOS = SVNFileUtil.openFileForWriting(uuidFile);
-            String uuidStr = SVNUUIDGenerator.formatUUID(uuid) + '\n';
+            if (uuid == null || uuid.length() != 36) {
+                byte[] uuidBytes = SVNUUIDGenerator.generateUUID();
+                uuid = SVNUUIDGenerator.formatUUID(uuidBytes);
+            } 
+            uuid += '\n'; 
             try {
-                uuidOS.write(uuidStr.getBytes("US-ASCII"));
+                uuidOS = SVNFileUtil.openFileForWriting(uuidFile);
+                uuidOS.write(uuid.getBytes("US-ASCII"));
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository UUID to ''{0}''", uuidFile);
                 err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
