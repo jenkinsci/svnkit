@@ -77,7 +77,9 @@ public class SVNRepositoryReplicationTest {
         try {
             SVNURL srcURL = SVNURL.parseURIDecoded(sourceRepositoryUrl);
             SVNURL dstURL = SVNURL.parseURIDecoded(targetRepositoryUrl);
-            topRev = SVNRepositoryReplicator.replicateRepository(srcURL, dstURL, topRev);
+            SVNRepository src = SVNRepositoryFactory.create(srcURL);
+            SVNRepository dst = SVNRepositoryFactory.create(dstURL);
+            topRev = SVNRepositoryReplicator.replicateRepository(src, dst, topRev);
             passed = compareRepositories1(srcURL, dstURL, topRev, new File(sourceWC), new File(targetWC));
         } catch (SVNException svne) {
             SVNDebugLog.logInfo("Repositories comparing test FAILED with errors: " + svne.getErrorMessage().getMessage());

@@ -11,20 +11,18 @@
  */
 package org.tmatesoft.svn.core.replicator;
 
+import java.util.Iterator;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.io.ISVNReporter;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.io.ISVNReporterBaton;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.ISVNReporter;
+import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -41,55 +39,45 @@ public class SVNRepositoryReplicator {
      * @return                   the number of revisions copied from the source repository
      * @throws SVNException
      */
-    public static long replicateRepository(SVNURL srcURL, SVNURL dstURL, long topRevision) throws SVNException {
-        SVNRepository sourceRepos = SVNRepositoryFactory.create(srcURL);
-        sourceRepos.setAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
-        
-        SVNRepository targetRepos = SVNRepositoryFactory.create(dstURL);
-        targetRepos.setAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
+    public static long replicateRepository(SVNRepository src, SVNRepository dst, long toRevision) throws SVNException {
         //assertion: we assume that the target repository is clear 
-        if(targetRepos.getLatestRevision() != 0){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "The target repository's latest revision must be 0");
+        if(dst.getLatestRevision() != 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "The target repository''s latest revision must be ''{0}''", new Long(0));
             SVNErrorManager.error(err);
         }
-        
-        long latestRev = sourceRepos.getLatestRevision();
-        latestRev = topRevision > 0 && topRevision <= latestRev? topRevision : latestRev;
+        src.testConnection();
+        long latestRev = src.getLatestRevision();
+        latestRev = toRevision > 0 && toRevision <= latestRev ? toRevision : latestRev;
         
         ISVNEditor bridgeEditor = null;
-        
-        SVNDebugLog.logInfo("Started replicating repository from '" + srcURL.toDecodedString() + "' to '" + dstURL.toDecodedString() + "', number of revisions to replicate: " + latestRev);
-        
-        for(long i = 1; i <= latestRev; i++){
+        for(long i = 1; i <= latestRev; i++) {
             SVNDebugLog.logInfo("Replicating revision #" + i);
-            Map revisionProps = sourceRepos.getRevisionProperties(i, null);
+            Map revisionProps = src.getRevisionProperties(i, null);
             String commitMessage = (String)revisionProps.get(SVNRevisionProperty.LOG);
             commitMessage = commitMessage == null ? "" : commitMessage;
-            ISVNEditor commitEditor = targetRepos.getCommitEditor(commitMessage, null);
+            ISVNEditor commitEditor = dst.getCommitEditor(commitMessage, null);
 
-            try{
-                bridgeEditor = new SVNReplicationEditor(sourceRepos, commitEditor);
+            try {
+                bridgeEditor = new SVNReplicationEditor(src, commitEditor);
                 final long previousRev = i - 1;
-                sourceRepos.update(i, null, true, new ISVNReporterBaton(){
+                src.update(i, null, true, new ISVNReporterBaton(){
                     public void report(ISVNReporter reporter) throws SVNException {
                         reporter.setPath("", null, previousRev, false);
                         reporter.finishReport();
                     }            
                 }, bridgeEditor);
-            }catch(SVNException svne){
+            } catch(SVNException svne) {
                 bridgeEditor.abortEdit();
                 throw svne;
             }
-            
-            String commitDate = (String)revisionProps.get(SVNRevisionProperty.DATE);
-            targetRepos.setRevisionPropertyValue(i, SVNRevisionProperty.DATE, commitDate);
-            String commitAuthor = (String)revisionProps.get(SVNRevisionProperty.AUTHOR);
-            targetRepos.setRevisionPropertyValue(i, SVNRevisionProperty.AUTHOR, commitAuthor);
-            commitMessage = (String)revisionProps.get(SVNRevisionProperty.LOG);
-            targetRepos.setRevisionPropertyValue(i, SVNRevisionProperty.LOG, commitMessage);
+            for (Iterator names = revisionProps.keySet().iterator(); names.hasNext();) {
+                String name = (String) names.next();
+                String value = (String) revisionProps.get(name);
+                if (name != null && value != null) {
+                    dst.setRevisionPropertyValue(i, name, value);
+                }
+            }
         }
-
-        SVNDebugLog.logInfo("Finished replicating repository from '" + srcURL.toDecodedString() + "' to '" + dstURL.toDecodedString() + "', number of copied revisions: " + latestRev);
         return latestRev;
     }
 }

@@ -227,6 +227,8 @@ public abstract class SVNRepositoryFactory {
                 translateFiles(new File(path, "conf"));
                 translateFiles(new File(path, "hooks"));
                 translateFiles(new File(path, "locks"));
+            } else {
+                SVNFileUtil.createEmptyFile(new File(path, "hooks/pre-revprop-change.bat"));
             }
             // generate and write UUID.
             File uuidFile = new File(path, "db/uuid");

@@ -11,9 +11,6 @@
  */
 package org.tmatesoft.svn.core.replicator;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashMap;
@@ -80,7 +77,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         //1. first investigate paths for copies if there're any 
         SVNRepository sourceRepos = SVNRepositoryFactory.create(myRepos.getLocation());
         sourceRepos.setAuthenticationManager(myRepos.getAuthenticationManager());
-        Collection logEntries = sourceRepos.log(null, null, myTargetRevision, myTargetRevision, true, false);
+        Collection logEntries = sourceRepos.log(new String[] {""}, null, myTargetRevision, myTargetRevision, true, false);
         SVNLogEntry logEntry = (SVNLogEntry)logEntries.toArray()[0];
         myChangedPaths = logEntry.getChangedPaths();
         
@@ -287,48 +284,16 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     private boolean areFileContentsEqual(String path1, long rev1, String path2, long rev2) throws SVNException {
-        File file1 = SVNFileUtil.createTempFile(path1 + ".left", "tmp");
-        File file2 = SVNFileUtil.createTempFile(path2 + ".right", "tmp");
-        OutputStream os1 = null;
-        OutputStream os2 = null;
-        try {
-            os1 = SVNFileUtil.openFileForWriting(file1);
-            os2 = SVNFileUtil.openFileForWriting(file2);
-            SVNRepository repos = SVNRepositoryFactory.create(myRepos.getLocation());
-            repos.setAuthenticationManager(myRepos.getAuthenticationManager());
-            repos.getFile(path1, rev1, null, os1);
-            repos.getFile(path2, rev2, null, os2);
-        } finally {
-            SVNFileUtil.closeFile(os1);
-            SVNFileUtil.closeFile(os2);
-        }
-        InputStream is1 = null;
-        InputStream is2 = null;
-        try {
-            is1 = SVNFileUtil.openFileForReading(file1);
-            is2 = SVNFileUtil.openFileForReading(file2);
-            int r1 = -1;
-            int r2 = -1;
-            while (true) {
-                r1 = is1.read();
-                r2 = is2.read();
-                if (r1 != r2) {
-                    return false;
-                }
-                if (r1 == -1) {// we've finished - files do not differ
-                    break;
-                }
-            }
-        } catch (IOException ioe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
-        } finally {
-            SVNFileUtil.closeFile(is1);
-            SVNFileUtil.closeFile(is2);
-            SVNFileUtil.deleteFile(file1);
-            SVNFileUtil.deleteFile(file2);
-        }
-        return true;
+        Map props1 = new HashMap();
+        Map props2 = new HashMap();
+
+        SVNRepository repos = SVNRepositoryFactory.create(myRepos.getLocation());
+        repos.setAuthenticationManager(myRepos.getAuthenticationManager());
+        repos.getFile(path1, rev1, props1, null);
+        repos.getFile(path2, rev2, props2, null);
+        String crc1 = (String) props1.get(SVNProperty.CHECKSUM);
+        String crc2 = (String) props1.get(SVNProperty.CHECKSUM);
+        return crc1 != null && crc1.equals(crc2);
     }
 
     public void openFile(String path, long revision) throws SVNException {
@@ -412,6 +377,7 @@ public class SVNReplicationEditor implements ISVNEditor {
          * were deleted from a locally copied dir (they're just not 
          * sent by the server, we need to delete them for ourselves)
          */
+        
         for(Iterator paths = myChangedPaths.keySet().iterator(); paths.hasNext();){
             String path = (String)paths.next();
             SVNLogEntryPath pathChange = (SVNLogEntryPath)myChangedPaths.get(path);
@@ -440,7 +406,9 @@ public class SVNReplicationEditor implements ISVNEditor {
         //close root & finish commit
         myCommitEditor.closeDir();
         SVNDebugLog.logInfo("Closing Edit");
+        System.out.println("revision processed: " + myTargetRevision);
         return myCommitEditor.closeEdit();
+        
     }
 
     public void abortEdit() throws SVNException {
