@@ -3,7 +3,6 @@
 	<name>org.tmatesoft.javasvn</name>
 	<comment></comment>
 	<projects>
-		<project>org.tmatesoft.javasvn</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
