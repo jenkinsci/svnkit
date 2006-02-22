@@ -47,8 +47,7 @@ javasvn-test/apache/python.template.conf eol=lf
 javasvn-test/apache/users eol=lf
 javasvn-test/logging.properties -text
 javasvn-test/src/org/tmatesoft/svn/core/internal/io/fs/test/PropertyHandler.java -text
-javasvn-test/src/org/tmatesoft/svn/core/internal/io/fs/test/SVNReplicationEditor.java -text
-javasvn-test/src/org/tmatesoft/svn/core/internal/io/fs/test/SVNRepositoryReplicator.java -text
+javasvn-test/src/org/tmatesoft/svn/core/internal/io/fs/test/SVNRepositoryReplicationTest.java -text
 javasvn-test/src/org/tmatesoft/svn/core/test/SpecialTest.java -text
 javasvn-test/test.mac.properties eol=lf
 javasvn-test/test.unix.properties eol=lf
@@ -113,6 +112,8 @@ javasvn/src/org/tmatesoft/svn/core/io/package.html -text
 javasvn/src/org/tmatesoft/svn/core/io/repository/template.jar -text
 javasvn/src/org/tmatesoft/svn/core/javahl/package.html -text
 javasvn/src/org/tmatesoft/svn/core/package.html -text
+javasvn/src/org/tmatesoft/svn/core/replicator/SVNReplicationEditor.java -text
+javasvn/src/org/tmatesoft/svn/core/replicator/SVNRepositoryReplicator.java -text
 javasvn/src/org/tmatesoft/svn/core/wc/DefaultSVNCommitParameters.java -text
 javasvn/src/org/tmatesoft/svn/core/wc/ISVNCommitParameters.java -text
 javasvn/src/org/tmatesoft/svn/core/wc/ISVNMerger.java -text

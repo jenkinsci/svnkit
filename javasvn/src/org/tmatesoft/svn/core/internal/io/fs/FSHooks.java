@@ -241,6 +241,12 @@ public class FSHooks {
                 SVNFileUtil.closeFile(osToStdIn);
             }
         }
+        
+        StreamGobbler inputGobbler = new StreamGobbler(hookProcess.getInputStream());
+        StreamGobbler errorGobbler = new StreamGobbler(hookProcess.getErrorStream());
+        inputGobbler.start();
+        errorGobbler.start();
+        
         int rc = -1;
         try{
             rc = hookProcess.waitFor();
@@ -248,32 +254,54 @@ public class FSHooks {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[]{hook, ie.getLocalizedMessage()});
             SVNErrorManager.error(err, ie);
         }
-        String errString = "";
-        if(readErrorStream){
-            InputStream is = null;
-            StringBuffer result = null;
-            is = hookProcess.getErrorStream();
-            result = new StringBuffer();
-            int r;            
-            try{
-                while (is != null && (r = is.read()) >= 0) {
-                    result.append((char) (r & 0xFF));
-                }
-            }catch(IOException ioe){
-                //
-            }finally{
-                SVNFileUtil.closeFile(is);
-            }
-            errString = result.toString();
+        
+        if(errorGobbler.getError() != null){
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, errorGobbler.getError().getLocalizedMessage());
+            SVNErrorManager.error(err, errorGobbler.getError());
         }
+        
         if (rc != 0) {
             if(!readErrorStream){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "''{0}'' hook failed; no error output available", hookName);
                 SVNErrorManager.error(err);
             }else{
+                String errString = errorGobbler.getResult(); 
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "''{0}'' hook failed with error output:\n{1}", new Object[]{hookName, errString});
                 SVNErrorManager.error(err);
             }
+        }
+    }
+    
+    private static class StreamGobbler extends Thread {
+        InputStream is;
+        StringBuffer result;
+        IOException error;
+        
+        StreamGobbler(InputStream is)
+        {
+            this.is = is;
+            result = new StringBuffer();
+        }
+        
+        public void run() {
+            try {
+                int r;            
+                while ((r = is.read()) >= 0) {
+                    result.append((char) (r & 0xFF));
+                }
+            } catch (IOException ioe) {
+                error = ioe;
+            } finally {
+                SVNFileUtil.closeFile(is);
+            }
+        }
+        
+        public String getResult(){
+            return result.toString();
+        }
+        
+        public IOException getError(){
+            return error;
         }
     }
 }
