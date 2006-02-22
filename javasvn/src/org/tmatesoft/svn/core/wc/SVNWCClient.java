@@ -1951,21 +1951,20 @@ public class SVNWCClient extends SVNBasicClient {
         File file = dir.getFile(name);
         dir.add(name, false, false);
 
-        String mimeType;
         SVNProperties properties = dir.getProperties(name, false);
         if (SVNFileType.getType(file) == SVNFileType.SYMLINK) {
             properties.setPropertyValue(SVNProperty.SPECIAL, "*");
         } else {
             Map props = new HashMap();
+	        String mimeType = SVNFileUtil.detectMimeType(file);
+	        if (mimeType != null) {
+	            props.put(SVNProperty.MIME_TYPE, mimeType);
+	        }
             boolean executable;
             props = getOptions().applyAutoProperties(name, props);
-            mimeType = (String) props.get(SVNProperty.MIME_TYPE);
-            if (mimeType == null) {
-                mimeType = SVNFileUtil.detectMimeType(file);
-                if (mimeType != null) {
-                    props.put(SVNProperty.MIME_TYPE, mimeType);
-                    props.remove(SVNProperty.EOL_STYLE);
-                }
+            if (props.get(SVNProperty.MIME_TYPE) == null && mimeType != null) {
+                props.put(SVNProperty.MIME_TYPE, mimeType);
+                props.remove(SVNProperty.EOL_STYLE);
             }
             if (!props.containsKey(SVNProperty.EXECUTABLE)) {
                 executable = SVNFileUtil.isExecutable(file);
