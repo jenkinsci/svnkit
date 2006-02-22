@@ -12,16 +12,28 @@
 
 package org.tmatesoft.svn.core.io;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 import java.util.regex.Pattern;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 
 /**
  * <b>SVNRepositoryFactory</b> is an abstract factory that is responsible
@@ -79,6 +91,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 public abstract class SVNRepositoryFactory {
     
     private static final Map myFactoriesMap = new HashMap();
+    private static final String REPOSITORY_TEMPLATE_PATH = "org/tmatesoft/svn/core/io/repository/template.jar";
     
     protected static void registerRepositoryFactory(String protocol, SVNRepositoryFactory factory) {
         if (protocol != null && factory != null) {
@@ -182,7 +195,149 @@ public abstract class SVNRepositoryFactory {
         SVNErrorManager.error(err);
         return null;
     }
+    
+    public static SVNURL createLocalRepository(File path, boolean force) throws SVNException {
+        SVNFileType fType = SVNFileType.getType(path);
+        if (!force && fType != SVNFileType.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
+            SVNErrorManager.error(err);
+        }
+        SVNFileUtil.deleteAll(path, true);
+        if (!path.mkdirs()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not create directory ''{0}''", path);
+            SVNErrorManager.error(err);
+        }
+        InputStream is = SVNRepositoryFactory.class.getClassLoader().getResourceAsStream(REPOSITORY_TEMPLATE_PATH);
+        if (is == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "No repository template found; should be part of JavaSVN library jar");
+            SVNErrorManager.error(err);
+        }
+        File jarFile = SVNFileUtil.createUniqueFile(path, "template.", ".jar");
+        OutputStream uuidOS = null; 
+        try {
+            copyToFile(is, jarFile);
+            extract(jarFile, path);
+            // translate eols.
+            if (!SVNFileUtil.isWindows) {
+                translateFiles(path);
+                translateFiles(new File(path, "conf"));
+                translateFiles(new File(path, "hooks"));
+                translateFiles(new File(path, "locks"));
+            }
+            // generate and write UUID.
+            byte[] uuid = SVNUUIDGenerator.generateUUID();
+            File uuidFile = new File(path, "db/uuid");
+            uuidOS = SVNFileUtil.openFileForWriting(uuidFile);
+            String uuidStr = SVNUUIDGenerator.formatUUID(uuid) + '\n';
+            try {
+                uuidOS.write(uuidStr.getBytes("US-ASCII"));
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository UUID to ''{0}''", uuidFile);
+                err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+                SVNErrorManager.error(err);
+            }
+        } finally {
+            SVNFileUtil.closeFile(uuidOS);
+            SVNFileUtil.deleteFile(jarFile);
+        }
+        return SVNURL.parseURIEncoded("file://" + path.getAbsoluteFile().getAbsolutePath());
+    }
 
     protected abstract SVNRepository createRepositoryImpl(SVNURL url, ISVNSession session);
+    
+    private static void copyToFile(InputStream is, File dstFile) throws SVNException {
+        OutputStream os = null; 
+        byte[] buffer = new byte[16*1024];
+        try {
+            os = SVNFileUtil.openFileForWriting(dstFile);
+            while(true) {
+                int r = is.read(buffer);
+                if (r <= 0) {
+                    break;
+                }
+                os.write(buffer, 0, r);
+            }
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not copy repository template file to ''{0}''", dstFile);
+            err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+            SVNErrorManager.error(err);
+        } finally {
+            SVNFileUtil.closeFile(os);
+            SVNFileUtil.closeFile(is);
+        }
+    }
 
+    private static void extract(File srcFile, File dst) throws SVNException {
+        JarInputStream jis = null;
+        InputStream is = SVNFileUtil.openFileForReading(srcFile);
+        byte[] buffer = new byte[16*1024];
+        
+        JarFile jarFile = null;
+        try {
+            jarFile = new JarFile(srcFile);
+            jis = new JarInputStream(is);
+            while(true) {
+                JarEntry entry = jis.getNextJarEntry();
+                if (entry == null) {
+                    break;
+                }
+                String name = entry.getName();
+                File entryFile = new File(dst, name); 
+                if (entry.isDirectory()) {
+                    entryFile.mkdirs();
+                } else {
+                    InputStream fis = null;
+                    OutputStream fos = null;
+                    try {
+                        fis = new BufferedInputStream(jarFile.getInputStream(entry));
+                        fos = SVNFileUtil.openFileForWriting(entryFile);
+                        while(true) {
+                            int r = fis.read(buffer);
+                            if (r <= 0) {
+                                break;
+                            }
+                            fos.write(buffer, 0, r);
+                        }
+                    } finally {
+                        SVNFileUtil.closeFile(fos);
+                        SVNFileUtil.closeFile(fis);
+                    }
+                }
+                jis.closeEntry();
+            }
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not extract repository files from ''{0}'' to ''{1}''", 
+                    new Object[] {srcFile, dst});
+            err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+            SVNErrorManager.error(err);
+        } finally {
+            SVNFileUtil.closeFile(jis);
+            SVNFileUtil.closeFile(is);
+            if (jarFile != null) {
+                try {
+                    jarFile.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+    }
+    
+    private static void translateFiles(File directory) throws SVNException {
+        File[] children = directory.listFiles();
+        byte[] eol = new byte[] {'\n'};
+        for (int i = 0; children != null && i < children.length; i++) {
+            File child = children[i];
+            File tmpChild = null;
+            try {
+                tmpChild = SVNFileUtil.createUniqueFile(directory, child.getName() + ".", ".tmp");
+                if (child.isFile()) {
+                    SVNTranslator.translate(child, tmpChild, eol, null, false, true);
+                }
+                SVNFileUtil.deleteFile(child);
+                SVNFileUtil.rename(tmpChild, child);
+            } finally {
+                SVNFileUtil.deleteFile(tmpChild);
+            }
+        }
+    }
 }

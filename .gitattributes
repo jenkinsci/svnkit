@@ -110,6 +110,7 @@ javasvn/src/org/tmatesoft/svn/core/internal/wc/config/servers eol=lf
 javasvn/src/org/tmatesoft/svn/core/io/ISVNSession.java -text
 javasvn/src/org/tmatesoft/svn/core/io/diff/package.html -text
 javasvn/src/org/tmatesoft/svn/core/io/package.html -text
+javasvn/src/org/tmatesoft/svn/core/io/repository/template.jar -text
 javasvn/src/org/tmatesoft/svn/core/javahl/package.html -text
 javasvn/src/org/tmatesoft/svn/core/package.html -text
 javasvn/src/org/tmatesoft/svn/core/wc/DefaultSVNCommitParameters.java -text

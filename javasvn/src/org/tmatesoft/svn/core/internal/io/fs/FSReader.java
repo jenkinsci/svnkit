@@ -1055,7 +1055,7 @@ public class FSReader {
             is = SVNFileUtil.openFileForReading(file);
             line = readSingleLine(is, limit);
         } catch (SVNException svne) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE, "Can't read length line in file ''{0}'': {1}", new Object[]{file, svne.getLocalizedMessage()});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE, "Can not read length line in file ''{0}'': {1}", new Object[]{file, svne.getLocalizedMessage()});
             SVNErrorManager.error(err, svne);
         } finally {
             SVNFileUtil.closeFile(is);
