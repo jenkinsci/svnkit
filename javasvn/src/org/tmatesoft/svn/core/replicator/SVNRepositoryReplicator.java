@@ -51,7 +51,8 @@ public class SVNRepositoryReplicator {
      * @throws SVNException
      */
     public long replicateRepository(SVNRepository src, SVNRepository dst, boolean incremental) throws SVNException {
-        return replicateRepository(src, dst, 0, -1, incremental);
+        long fromRevision = incremental ? dst.getLatestRevision() + 1 : 1;
+        return replicateRepository(src, dst, fromRevision, -1);
     }
 
     /**
@@ -62,20 +63,12 @@ public class SVNRepositoryReplicator {
      * @return                   the number of revisions copied from the source repository
      * @throws SVNException
      */
-    public long replicateRepository(SVNRepository src, SVNRepository dst, long fromRevision, long toRevision, boolean incremental) throws SVNException {
-        if(incremental){
-            fromRevision = dst.getLatestRevision() + 1;
-            if(fromRevision > src.getLatestRevision()){
-                return 0;
-            }
-            toRevision = -1;
-        }else {
-            fromRevision = fromRevision <= 0 ? 1 : fromRevision;
-            if(dst.getLatestRevision() != fromRevision - 1){
-                //assertion  
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "The target repository''s latest revision must be ''{0}''", new Long(fromRevision - 1));
-                SVNErrorManager.error(err);
-            }
+    public long replicateRepository(SVNRepository src, SVNRepository dst, long fromRevision, long toRevision) throws SVNException {
+        fromRevision = fromRevision <= 0 ? 1 : fromRevision;
+        if(dst.getLatestRevision() != fromRevision - 1){
+            //assertion  
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "The target repository''s latest revision must be ''{0}''", new Long(fromRevision - 1));
+            SVNErrorManager.error(err);
         }
         src.testConnection();
         long latestRev = src.getLatestRevision();
@@ -85,6 +78,7 @@ public class SVNRepositoryReplicator {
         long count = 0;
         for(long i = fromRevision; i <= toRevision; i++) {
             SVNDebugLog.logInfo("Replicating revision #" + i);
+            System.out.print("Replicating revision #" + i);
             Map revisionProps = src.getRevisionProperties(i, null);
             String commitMessage = (String)revisionProps.get(SVNRevisionProperty.LOG);
             
@@ -124,6 +118,7 @@ public class SVNRepositoryReplicator {
                     dst.setRevisionPropertyValue(i, name, value);
                 }
             }
+            System.out.println(" OK.");
             count++;
         }
         return count;

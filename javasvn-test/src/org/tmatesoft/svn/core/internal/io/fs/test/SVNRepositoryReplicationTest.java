@@ -92,7 +92,7 @@ public class SVNRepositoryReplicationTest {
             topRev = topRev > 0 && topRev <= latestRev ? topRev : latestRev;
             
             SVNRepositoryReplicator replicator = SVNRepositoryReplicator.newInstance();
-            long processedRevs = replicator.replicateRepository(src, dst, fromRev, topRev, false);
+            long processedRevs = replicator.replicateRepository(src, dst, fromRev, topRev);
             System.out.println("Number of processed revisions: " + processedRevs);
             SVNDebugLog.logInfo("Number of processed revisions: " + processedRevs);
             
