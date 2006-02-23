@@ -33,6 +33,27 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNRepositoryReplicator {
     
+    private SVNRepositoryReplicator(){
+    
+    }
+    
+    public static SVNRepositoryReplicator newInstance() {
+        return new SVNRepositoryReplicator();
+    }
+
+    /**
+     * Replicate the whole repository or incremental.
+     * 
+     * @param src
+     * @param dst
+     * @param incremental
+     * @return
+     * @throws SVNException
+     */
+    public long replicateRepository(SVNRepository src, SVNRepository dst, boolean incremental) throws SVNException {
+        return replicateRepository(src, dst, 0, -1, incremental);
+    }
+
     /**
      * 
      * @param  srcURL
@@ -41,19 +62,28 @@ public class SVNRepositoryReplicator {
      * @return                   the number of revisions copied from the source repository
      * @throws SVNException
      */
-    public static long replicateRepository(SVNRepository src, SVNRepository dst, long toRevision) throws SVNException {
-        //assertion: we assume that the target repository is clear 
-        if(dst.getLatestRevision() != 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "The target repository''s latest revision must be ''{0}''", new Long(0));
-            SVNErrorManager.error(err);
+    public long replicateRepository(SVNRepository src, SVNRepository dst, long fromRevision, long toRevision, boolean incremental) throws SVNException {
+        if(incremental){
+            fromRevision = dst.getLatestRevision() + 1;
+            if(fromRevision > src.getLatestRevision()){
+                return 0;
+            }
+            toRevision = -1;
+        }else {
+            fromRevision = fromRevision <= 0 ? 1 : fromRevision;
+            if(dst.getLatestRevision() != fromRevision - 1){
+                //assertion  
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "The target repository''s latest revision must be ''{0}''", new Long(fromRevision - 1));
+                SVNErrorManager.error(err);
+            }
         }
         src.testConnection();
         long latestRev = src.getLatestRevision();
-        latestRev = toRevision > 0 && toRevision <= latestRev ? toRevision : latestRev;
-        
+        toRevision = toRevision > 0 && toRevision <= latestRev ? toRevision : latestRev;
         ISVNEditor bridgeEditor = null;
         final SVNLogEntry[] currentRevision = new SVNLogEntry[1];
-        for(long i = 1; i <= latestRev; i++) {
+        long count = 0;
+        for(long i = fromRevision; i <= toRevision; i++) {
             SVNDebugLog.logInfo("Replicating revision #" + i);
             Map revisionProps = src.getRevisionProperties(i, null);
             String commitMessage = (String)revisionProps.get(SVNRevisionProperty.LOG);
@@ -94,7 +124,8 @@ public class SVNRepositoryReplicator {
                     dst.setRevisionPropertyValue(i, name, value);
                 }
             }
+            count++;
         }
-        return latestRev;
+        return count;
     }
 }

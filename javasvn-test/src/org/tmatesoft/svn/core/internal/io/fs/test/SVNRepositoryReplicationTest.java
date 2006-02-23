@@ -68,11 +68,11 @@ public class SVNRepositoryReplicationTest {
         String targetRepositoryUrl = args[1];
         String sourceWC = args[2];
         String targetWC = args[3];
-
-        long topRev = args.length > 4 ? Long.parseLong(args[4]) : -1;
+        long fromRev = args.length > 4 ? Long.parseLong(args[4]) : 1;
+        long topRev = args.length > 5 ? Long.parseLong(args[5]) : -1;
         boolean useCheckout = true;
-        if(args.length > 5){
-            if(Integer.parseInt(args[5]) == 0){
+        if(args.length > 6){
+            if(Integer.parseInt(args[6]) == 0){
                 useCheckout = false;
             }
         }
@@ -87,7 +87,15 @@ public class SVNRepositoryReplicationTest {
             SVNURL dstURL = SVNURL.parseURIDecoded(targetRepositoryUrl);
             SVNRepository src = SVNRepositoryFactory.create(srcURL);
             SVNRepository dst = SVNRepositoryFactory.create(dstURL);
-            topRev = SVNRepositoryReplicator.replicateRepository(src, dst, topRev);
+            
+            long latestRev = src.getLatestRevision();
+            topRev = topRev > 0 && topRev <= latestRev ? topRev : latestRev;
+            
+            SVNRepositoryReplicator replicator = SVNRepositoryReplicator.newInstance();
+            long processedRevs = replicator.replicateRepository(src, dst, fromRev, topRev, false);
+            System.out.println("Number of processed revisions: " + processedRevs);
+            SVNDebugLog.logInfo("Number of processed revisions: " + processedRevs);
+            
             passed = useCheckout ? compareRepositories1(srcURL, dstURL, topRev, new File(sourceWC), new File(targetWC)) : compareRepositories2(srcURL, dstURL, topRev, new File(sourceWC), new File(targetWC));
         } catch (SVNException svne) {
             SVNDebugLog.logInfo("Repositories comparing test FAILED with errors: " + svne.getErrorMessage().getMessage());
