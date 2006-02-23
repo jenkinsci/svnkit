@@ -136,9 +136,7 @@ public class FSReader {
         while(change != null){
             foldChange(changedPaths, change, mapCopyfrom);
             if((FSPathChangeKind.FS_PATH_CHANGE_DELETE == change.getKind() || FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getKind()) && !prefolded){                                
-                Collection keySet = changedPaths.keySet();
-                Iterator curIter = keySet.iterator();
-                while(curIter.hasNext()){
+                for(Iterator curIter = changedPaths.keySet().iterator(); curIter.hasNext();){
                     String hashKeyPath = (String)curIter.next();
                     //If we come across our own path, ignore it                    
                     if(change.getPath().equals(hashKeyPath)){
@@ -146,9 +144,9 @@ public class FSReader {
                     }
                     //If we come across a child of our path, remove it
                     if(SVNPathUtil.pathIsChild(change.getPath(), hashKeyPath) != null){
-                        changedPaths.remove(hashKeyPath);
+                        curIter.remove();
                     }
-                }                
+                }
             }
             change = FSReader.readChange(changesFile);
         }
