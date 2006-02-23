@@ -196,11 +196,11 @@ public abstract class SVNRepositoryFactory {
         return null;
     }
 
-    public static SVNURL createLocalRepository(File path, boolean force) throws SVNException {
-        return createLocalRepository(path, null, force);
+    public static SVNURL createLocalRepository(File path, boolean enableRevisionProperties, boolean force) throws SVNException {
+        return createLocalRepository(path, null, enableRevisionProperties, force);
     }
     
-    public static SVNURL createLocalRepository(File path, String uuid, boolean force) throws SVNException {
+    public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, boolean force) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (!force && fType != SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
@@ -227,8 +227,25 @@ public abstract class SVNRepositoryFactory {
                 translateFiles(new File(path, "conf"));
                 translateFiles(new File(path, "hooks"));
                 translateFiles(new File(path, "locks"));
-            } else {
-                SVNFileUtil.createEmptyFile(new File(path, "hooks/pre-revprop-change.bat"));
+            }
+            // create pre-rev-prop.
+            if (enableRevisionProperties) {
+                if (SVNFileUtil.isWindows) {
+                    SVNFileUtil.createEmptyFile(new File(path, "hooks/pre-revprop-change.bat"));
+                } else {
+                    File hookFile = new File(path, "hooks/pre-revprop-change");
+                    OutputStream os = null;
+                    try {
+                        os = SVNFileUtil.openFileForWriting(hookFile);
+                        os.write("#!/bin/sh\nexit 0".getBytes("US-ASCII"));                        
+                    } catch (IOException e) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create pre-rev-prop-change hook file at ''{0}'': {1}", 
+                                new Object[] {hookFile, e.getLocalizedMessage()});
+                        SVNErrorManager.error(err);
+                    } finally {
+                        SVNFileUtil.closeFile(os);
+                    }
+                }
             }
             // generate and write UUID.
             File uuidFile = new File(path, "db/uuid");
