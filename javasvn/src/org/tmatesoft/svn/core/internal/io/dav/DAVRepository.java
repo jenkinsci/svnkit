@@ -557,7 +557,8 @@ class DAVRepository extends SVNRepository {
             try {
                 bcPath = DAVUtil.getVCCPath(myConnection, this, bcPath);
             } catch (SVNException e) {
-                editor.closeEdit();
+                // no need to call close edit here, I suppose,
+                // no editing has been started yet.
                 throw e;
             }
         	HTTPStatus status = myConnection.doReport(bcPath, request, handler);
