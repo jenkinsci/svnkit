@@ -55,6 +55,8 @@ class HTTPRequest {
 
     private boolean myIsProxyAuthForced;
 
+    private boolean myIsKeepAlive;
+
     public HTTPRequest() {
     }
     
@@ -146,7 +148,7 @@ class HTTPRequest {
         } else if (myRequestStream instanceof IMeasurable) {
             length = (int) ((IMeasurable) myRequestStream).getLength();
         }
-        StringBuffer headerText = composeHTTPHeader(request, path, header, length);
+        StringBuffer headerText = composeHTTPHeader(request, path, header, length, myIsKeepAlive);
         myConnection.sendData(headerText.toString().getBytes());
         if (myRequestBody != null && length > 0) {
             myConnection.sendData(myRequestBody);
@@ -236,7 +238,7 @@ class HTTPRequest {
         return myErrorMessage;
     }
 
-    private StringBuffer composeHTTPHeader(String request, String path, Map header, int length) {
+    private StringBuffer composeHTTPHeader(String request, String path, Map header, int length, boolean keepAlive) {
         StringBuffer sb = new StringBuffer();
         sb.append(request);
         sb.append(' ');
@@ -266,10 +268,12 @@ class HTTPRequest {
         sb.append("User-Agent: ");
         sb.append(Version.getVersionString());
         sb.append(HTTPRequest.CRLF);
-        sb.append("Keep-Alive:");
-        sb.append(HTTPRequest.CRLF);
-        sb.append("Connection: TE, Keep-Alive");
-        sb.append(HTTPRequest.CRLF);
+        if (keepAlive) {
+            sb.append("Keep-Alive:");
+            sb.append(HTTPRequest.CRLF);
+            sb.append("Connection: TE, Keep-Alive");
+            sb.append(HTTPRequest.CRLF);
+        }
         sb.append("TE: trailers");
         sb.append(HTTPRequest.CRLF);
         if (myAuthentication != null) {
@@ -321,6 +325,10 @@ class HTTPRequest {
             System.arraycopy(contextObjects, 0, messageObjects, 0, contextObjects.length);
         }
         return SVNErrorMessage.create(errorCode, context + ": " + message + " ({" + index + "})", messageObjects);
+    }
+
+    public void setKeepAlive(boolean isKeepAlive) {
+        myIsKeepAlive = isKeepAlive;
     }
     
 }

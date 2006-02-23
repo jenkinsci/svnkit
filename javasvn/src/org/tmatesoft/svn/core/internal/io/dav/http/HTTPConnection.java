@@ -83,12 +83,14 @@ class HTTPConnection implements IHTTPConnection {
     private SVNAuthentication myLastValidAuth;
     private Map myCredentialsChallenge;
     private String myProxyAuthentication;
+    private boolean myIsKeepAlive;
 
     
     public HTTPConnection(SVNRepository repository) throws SVNException {
         myRepository = repository;
         myHost = repository.getLocation().setPath("", false);
         myIsSecured = "https".equalsIgnoreCase(myHost.getProtocol());
+        myIsKeepAlive = repository.getOptions().keepConnection(repository);
     }
     
     public SVNURL getHost() {
@@ -226,6 +228,7 @@ class HTTPConnection implements IHTTPConnection {
         // 2. create request instance.
         HTTPRequest request = new HTTPRequest();
         request.setConnection(this);
+        request.setKeepAlive(myIsKeepAlive);
         request.setRequestBody(body);
         request.setResponseHandler(handler);
         request.setResponseStream(dst);
@@ -512,6 +515,7 @@ class HTTPConnection implements IHTTPConnection {
             mySocket = null;
             myOutputStream = null;
             myInputStream = null;
+            SVNDebugLog.logInfo("HTTP connection closed");
         }
     }
 

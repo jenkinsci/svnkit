@@ -1637,9 +1637,9 @@ public abstract class SVNRepository {
      */
     public abstract void closeSession() throws SVNException;
     
-    protected ISVNSession getOptions() {
+    public ISVNSession getOptions() {
         if (myOptions == null) {
-            return ISVNSession.DEFAULT;
+            myOptions = ISVNSession.DEFAULT;
         }
         return myOptions;
     }
