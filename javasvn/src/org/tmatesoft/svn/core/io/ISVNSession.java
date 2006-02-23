@@ -108,13 +108,9 @@ public interface ISVNSession {
      */
     public boolean hasCommitMessage(SVNRepository repository, long revision);
     
-    /**
-     * A default implementation of the <b>ISVNSession</b> interface that does not allow
-     * to use a single socket connection and does not cache commit messages. 
-     */
-    public ISVNSession DEFAULT = new ISVNSession() {
+    public ISVNSession KEEP_ALIVE = new ISVNSession() {
         public boolean keepConnection(SVNRepository repository) {
-            return false;
+            return true;
         }
         public void saveCommitMessage(SVNRepository repository, long revision, String message) {
         }
@@ -126,4 +122,9 @@ public interface ISVNSession {
         }
     };
 
+    /**
+     * A default implementation of the <b>ISVNSession</b> interface that does not allow
+     * to use a single socket connection and does not cache commit messages. 
+     */
+    public ISVNSession DEFAULT = KEEP_ALIVE;
 }

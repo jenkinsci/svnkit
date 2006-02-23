@@ -45,6 +45,7 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVErrorHandler;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.EntityResolver;
@@ -423,6 +424,7 @@ class HTTPConnection implements IHTTPConnection {
             }
             throw e;
         } finally {
+            SVNFileUtil.closeFile(stream);
             SVNDebugLog.flushStream(stream);
         }
         return null;
@@ -472,6 +474,8 @@ class HTTPConnection implements IHTTPConnection {
                 xmlReader.setErrorHandler(DEFAULT_SAX_HANDLER);
                 xmlReader.setEntityResolver(NO_ENTITY_RESOLVER);
             }
+            // read remaining from is.
+            SVNFileUtil.closeFile(is);
             SVNDebugLog.flushStream(is);
         }
         return null;

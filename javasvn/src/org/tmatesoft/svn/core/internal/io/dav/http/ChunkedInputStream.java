@@ -51,6 +51,14 @@ class ChunkedInputStream extends InputStream {
         return myBuffer[myPosition++] & 0xff;
     }
 
+    public void close() throws IOException {
+        if (mySource != null) {
+            try {
+                FixedSizeInputStream.consumeRemaining(this);
+            } catch (IOException e) {}
+        }
+    }
+
     private int readChunkLength() throws IOException {
         
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

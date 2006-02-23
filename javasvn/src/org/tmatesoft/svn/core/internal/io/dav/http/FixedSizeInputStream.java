@@ -35,5 +35,20 @@ class FixedSizeInputStream extends InputStream {
         }
         return -1;
     }
+    
+    public void close() {
+        // just read remainging data.
+        if (myLength > 0) {
+            try {
+                consumeRemaining(this);
+            } catch (IOException e) {
+            }
+        }
+    }
+    
+    static void consumeRemaining(InputStream is) throws IOException {
+        byte[] buffer = new byte[1024];
+        while(is.read(buffer) > 0);
+    }
 
 }
