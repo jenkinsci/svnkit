@@ -14,9 +14,11 @@ package org.tmatesoft.svn.core.replicator;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -50,15 +52,27 @@ public class SVNRepositoryReplicator {
         latestRev = toRevision > 0 && toRevision <= latestRev ? toRevision : latestRev;
         
         ISVNEditor bridgeEditor = null;
+        final SVNLogEntry[] currentRevision = new SVNLogEntry[1];
         for(long i = 1; i <= latestRev; i++) {
             SVNDebugLog.logInfo("Replicating revision #" + i);
             Map revisionProps = src.getRevisionProperties(i, null);
             String commitMessage = (String)revisionProps.get(SVNRevisionProperty.LOG);
+            
+            currentRevision[0] = null;
+            src.log(new String[] {""}, i, i, true, false, 1, new ISVNLogEntryHandler() {
+                public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+                    currentRevision[0] = logEntry;
+                }
+            });
+            if (currentRevision[0] == null || currentRevision[0].getChangedPaths() == null ||
+                    currentRevision[0].getChangedPaths().isEmpty()) {
+                continue;
+            }
             commitMessage = commitMessage == null ? "" : commitMessage;
             ISVNEditor commitEditor = dst.getCommitEditor(commitMessage, null);
 
             try {
-                bridgeEditor = new SVNReplicationEditor(src, commitEditor);
+                bridgeEditor = new SVNReplicationEditor(src, commitEditor, currentRevision[0]);
                 final long previousRev = i - 1;
                 src.update(i, null, true, new ISVNReporterBaton(){
                     public void report(ISVNReporter reporter) throws SVNException {

@@ -59,33 +59,14 @@ public class SVNReplicationEditor implements ISVNEditor {
     
     private long myTargetRevision;
     
-    public SVNReplicationEditor(SVNRepository repository, ISVNEditor commitEditor) {
+    public SVNReplicationEditor(SVNRepository repository, ISVNEditor commitEditor, SVNLogEntry revision) {
         myRepos = repository;
         myCommitEditor = commitEditor;
         pathsToFileBatons = new HashMap();
         myDirsStack = new Stack();
-    }
-
-    public void targetRevision(long revision) throws SVNException {
-        if (!myRepos.getLocation().equals(myRepos.getRepositoryRoot(false))) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Repository location ''{0}'' should be the repository root ''{1}''", new Object[]{myRepos.getLocation(), myRepos.getRepositoryRoot(false)});
-            SVNErrorManager.error(err);
-        }
-        
-        myTargetRevision = revision;
         myCopiedPaths = new HashMap();
-        //1. first investigate paths for copies if there're any 
-        SVNRepository sourceRepos = SVNRepositoryFactory.create(myRepos.getLocation());
-        sourceRepos.setAuthenticationManager(myRepos.getAuthenticationManager());
-        Collection logEntries = sourceRepos.log(new String[] {""}, null, myTargetRevision, myTargetRevision, true, false);
-        SVNLogEntry logEntry = (SVNLogEntry)logEntries.toArray()[0];
-        myChangedPaths = logEntry.getChangedPaths();
-        
-        if(myChangedPaths == null || myChangedPaths.isEmpty()){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.AUTHZ_UNREADABLE, "Have no full read permissions on ''{0}''", myRepos.getLocation());
-            SVNErrorManager.error(err);
-        }
-        
+        myChangedPaths = revision.getChangedPaths();
+
         for(Iterator paths = myChangedPaths.keySet().iterator(); paths.hasNext();){
             String path = (String)paths.next();
             SVNLogEntryPath pathChange = (SVNLogEntryPath)myChangedPaths.get(path);
@@ -94,6 +75,14 @@ public class SVNReplicationEditor implements ISVNEditor {
                 myCopiedPaths.put(path, pathChange);
             }
         }
+    }
+
+    public void targetRevision(long revision) throws SVNException {
+        if (!myRepos.getLocation().equals(myRepos.getRepositoryRoot(false))) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Repository location ''{0}'' should be the repository root ''{1}''", new Object[]{myRepos.getLocation(), myRepos.getRepositoryRoot(false)});
+            SVNErrorManager.error(err);
+        }
+        myTargetRevision = revision;
     }
 
     public void openRoot(long revision) throws SVNException {
@@ -292,7 +281,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         repos.getFile(path1, rev1, props1, null);
         repos.getFile(path2, rev2, props2, null);
         String crc1 = (String) props1.get(SVNProperty.CHECKSUM);
-        String crc2 = (String) props1.get(SVNProperty.CHECKSUM);
+        String crc2 = (String) props2.get(SVNProperty.CHECKSUM);
         return crc1 != null && crc1.equals(crc2);
     }
 
@@ -406,7 +395,6 @@ public class SVNReplicationEditor implements ISVNEditor {
         //close root & finish commit
         myCommitEditor.closeDir();
         SVNDebugLog.logInfo("Closing Edit");
-        System.out.println("revision processed: " + myTargetRevision);
         return myCommitEditor.closeEdit();
         
     }
