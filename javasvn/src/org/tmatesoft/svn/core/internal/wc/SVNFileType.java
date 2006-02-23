@@ -114,16 +114,9 @@ public class SVNFileType {
     }
     
     private static boolean isAdminFile(File file) {
-        for(int i = 0; file != null && i < 3; i++) {
-            String name = file.getName();
-            if (!ADMIN_FILE_PARENTS.contains(name)) {
-                return false;
-            } else if (".svn".equals(file.getName())) {
-                return true;
-            }
-            file = file.getParentFile();
-        }
-        return false;
+        String path = file.getAbsolutePath().replace(File.separatorChar, '/');
+        String adminDir = "/" + SVNFileUtil.getAdminDirectoryName();
+        return path.lastIndexOf(adminDir + "/") > 0 || path.endsWith(adminDir);
     }
 
     public int getID() {
