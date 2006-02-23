@@ -64,9 +64,12 @@ public class SVNRepositoryReplicator {
                     currentRevision[0] = logEntry;
                 }
             });
-            if (currentRevision[0] == null || currentRevision[0].getChangedPaths() == null ||
-                    currentRevision[0].getChangedPaths().isEmpty()) {
-                continue;
+            if (currentRevision[0] == null || currentRevision[0].getChangedPaths() == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Revision ''{0}'' does not contain information on changed paths; probably access is denied", new Long(i));
+                SVNErrorManager.error(err);
+            } else if (currentRevision[0].getDate() == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Revision ''{0}'' does not contain commit date; probably access is denied", new Long(i));
+                SVNErrorManager.error(err);
             }
             commitMessage = commitMessage == null ? "" : commitMessage;
             ISVNEditor commitEditor = dst.getCommitEditor(commitMessage, null);
