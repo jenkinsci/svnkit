@@ -46,23 +46,18 @@ public class SVNReplicationEditor implements ISVNEditor {
     private static final int DECIDE = 2;
 
     private ISVNEditor myCommitEditor;
-
     private Map myCopiedPaths;
-
     private Map myChangedPaths;
-
     private SVNRepository myRepos;
-
-    private Map pathsToFileBatons;
-
+    private Map myPathsToFileBatons;
     private Stack myDirsStack;
-    
     private long myTargetRevision;
+    private SVNCommitInfo myCommitInfo;
     
     public SVNReplicationEditor(SVNRepository repository, ISVNEditor commitEditor, SVNLogEntry revision) {
         myRepos = repository;
         myCommitEditor = commitEditor;
-        pathsToFileBatons = new HashMap();
+        myPathsToFileBatons = new HashMap();
         myDirsStack = new Stack();
         myCopiedPaths = new HashMap();
         myChangedPaths = revision.getChangedPaths();
@@ -198,7 +193,7 @@ public class SVNReplicationEditor implements ISVNEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         EntryBaton baton = new EntryBaton();
-        pathsToFileBatons.put(path, baton);
+        myPathsToFileBatons.put(path, baton);
         String absPath = myRepos.getRepositoryPath(path);
         SVNLogEntryPath changedPath = (SVNLogEntryPath) myChangedPaths.get(absPath);
         
@@ -290,7 +285,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         EntryBaton baton = new EntryBaton();
         baton.myPropsAct = ACCEPT;
         baton.myTextAct = ACCEPT;
-        pathsToFileBatons.put(path, baton);
+        myPathsToFileBatons.put(path, baton);
         myCommitEditor.openFile(path, myTargetRevision);
         SVNDebugLog.logInfo("Opening file '" + absPath + "'");
 
@@ -298,7 +293,7 @@ public class SVNReplicationEditor implements ISVNEditor {
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         String absPath = myRepos.getRepositoryPath(path);
-        EntryBaton baton = (EntryBaton) pathsToFileBatons.get(path);
+        EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myTextAct == ACCEPT) {
             SVNDebugLog.logInfo("Accepting delta for file '" + absPath + "'");
             myCommitEditor.applyTextDelta(path, baseChecksum);
@@ -307,7 +302,7 @@ public class SVNReplicationEditor implements ISVNEditor {
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         String absPath = myRepos.getRepositoryPath(path);
-        EntryBaton baton = (EntryBaton) pathsToFileBatons.get(path);
+        EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myTextAct == ACCEPT) {
             SVNDebugLog.logInfo("Text chunk for file '" + absPath + "'");
             return myCommitEditor.textDeltaChunk(path, diffWindow);
@@ -317,7 +312,7 @@ public class SVNReplicationEditor implements ISVNEditor {
 
     public void textDeltaEnd(String path) throws SVNException {
         String absPath = myRepos.getRepositoryPath(path);
-        EntryBaton baton = (EntryBaton) pathsToFileBatons.get(path);
+        EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myTextAct == ACCEPT) {
             SVNDebugLog.logInfo("End of text for file '" + absPath + "'");
             myCommitEditor.textDeltaEnd(path);
@@ -328,7 +323,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         if (!SVNProperty.isRegularProperty(name)) {
             return;
         }
-        EntryBaton baton = (EntryBaton) pathsToFileBatons.get(path);
+        EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myPropsAct == ACCEPT) {
             myCommitEditor.changeFileProperty(path, name, value);
             SVNDebugLog.logInfo("Changing file property: " + name + "=" + value);
@@ -395,13 +390,18 @@ public class SVNReplicationEditor implements ISVNEditor {
         //close root & finish commit
         myCommitEditor.closeDir();
         SVNDebugLog.logInfo("Closing Edit");
-        return myCommitEditor.closeEdit();
+        myCommitInfo = myCommitEditor.closeEdit();
+        return myCommitInfo;
         
     }
 
     public void abortEdit() throws SVNException {
         SVNDebugLog.logInfo("Aborting Edit");
         myCommitEditor.abortEdit();
+    }
+    
+    public SVNCommitInfo getCommitInfo() {
+        return myCommitInfo;
     }
 
     private class EntryBaton {
