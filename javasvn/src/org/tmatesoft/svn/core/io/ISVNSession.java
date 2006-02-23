@@ -126,4 +126,17 @@ public interface ISVNSession {
         }
     };
 
+    public ISVNSession KEEP_ALIVE = new ISVNSession() {
+        public boolean keepConnection(SVNRepository repository) {
+            return true;
+        }
+        public void saveCommitMessage(SVNRepository repository, long revision, String message) {
+        }
+        public String getCommitMessage(SVNRepository repository, long revision) {
+            return null;
+        }
+        public boolean hasCommitMessage(SVNRepository repository, long revision) {
+            return false;
+        }
+    };
 }
