@@ -78,7 +78,6 @@ public class SVNRepositoryReplicator {
         long count = 0;
         for(long i = fromRevision; i <= toRevision; i++) {
             SVNDebugLog.logInfo("Replicating revision #" + i);
-            System.out.print("Replicating revision #" + i);
             Map revisionProps = src.getRevisionProperties(i, null);
             String commitMessage = (String)revisionProps.get(SVNRevisionProperty.LOG);
             
@@ -118,7 +117,6 @@ public class SVNRepositoryReplicator {
                     dst.setRevisionPropertyValue(i, name, value);
                 }
             }
-            System.out.println(" OK.");
             count++;
         }
         return count;
