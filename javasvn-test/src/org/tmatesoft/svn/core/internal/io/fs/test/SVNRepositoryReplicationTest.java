@@ -17,11 +17,14 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.replicator.SVNRepositoryReplicator;
@@ -67,7 +70,12 @@ public class SVNRepositoryReplicationTest {
         String targetWC = args[3];
 
         long topRev = args.length > 4 ? Long.parseLong(args[4]) : -1;
-
+        boolean useCheckout = true;
+        if(args.length > 5){
+            if(Integer.parseInt(args[5]) == 0){
+                useCheckout = false;
+            }
+        }
         boolean passed = false;
 
         FSRepositoryFactory.setup();
@@ -80,7 +88,7 @@ public class SVNRepositoryReplicationTest {
             SVNRepository src = SVNRepositoryFactory.create(srcURL);
             SVNRepository dst = SVNRepositoryFactory.create(dstURL);
             topRev = SVNRepositoryReplicator.replicateRepository(src, dst, topRev);
-            passed = compareRepositories1(srcURL, dstURL, topRev, new File(sourceWC), new File(targetWC));
+            passed = useCheckout ? compareRepositories1(srcURL, dstURL, topRev, new File(sourceWC), new File(targetWC)) : compareRepositories2(srcURL, dstURL, topRev, new File(sourceWC), new File(targetWC));
         } catch (SVNException svne) {
             SVNDebugLog.logInfo("Repositories comparing test FAILED with errors: " + svne.getErrorMessage().getMessage());
             System.out.println("Repositories comparing test FAILED with errors: " + svne.getErrorMessage().getMessage());
@@ -98,6 +106,14 @@ public class SVNRepositoryReplicationTest {
     }
 
     private static boolean compareRepositories1(SVNURL srcURL, SVNURL dstURL, long top, File srcWCRoot, File dstWCRoot) throws SVNException {
+        if (srcWCRoot.exists()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Source WC directory already exists");
+            SVNErrorManager.error(err);
+        }
+        if (dstWCRoot.exists()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Target WC directory already exists");
+            SVNErrorManager.error(err);
+        }
         SVNClientManager manager = SVNClientManager.newInstance();
         SVNUpdateClient updateClient = manager.getUpdateClient();
         for (long i = 1; i <= top; i++) {
@@ -114,6 +130,45 @@ public class SVNRepositoryReplicationTest {
             }
             updateClient.doCheckout(srcURL, srcWCRoot, SVNRevision.create(i), SVNRevision.create(i), true);
             updateClient.doCheckout(dstURL, dstWCRoot, SVNRevision.create(i), SVNRevision.create(i), true);
+            if (!compareDirs(srcWCRoot, dstWCRoot, true)) {
+                SVNDebugLog.logInfo("Unequal Working Copies at revision " + i);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean compareRepositories2(SVNURL srcURL, SVNURL dstURL, long top, File srcWCRoot, File dstWCRoot) throws SVNException {
+        if (srcWCRoot.exists()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Source WC directory already exists");
+            SVNErrorManager.error(err);
+        }
+        if (dstWCRoot.exists()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Target WC directory already exists");
+            SVNErrorManager.error(err);
+        }
+        SVNClientManager manager = SVNClientManager.newInstance();
+        SVNUpdateClient updateClient = manager.getUpdateClient();
+        long i = 1;
+        SVNDebugLog.logInfo("Checking revision #" + i);
+        System.out.println("Checking revision #" + i);
+        if (!compareRevisionProps(srcURL, dstURL, i)) {
+            return false;
+        }
+        updateClient.doCheckout(srcURL, srcWCRoot, SVNRevision.create(i), SVNRevision.create(i), true);
+        updateClient.doCheckout(dstURL, dstWCRoot, SVNRevision.create(i), SVNRevision.create(i), true);
+        if (!compareDirs(srcWCRoot, dstWCRoot, true)) {
+            SVNDebugLog.logInfo("Unequal Working Copies at revision " + i);
+            return false;
+        }
+        for ( i = 2; i <= top; i++ ) {
+            SVNDebugLog.logInfo("Checking revision #" + i);
+            System.out.println("Checking revision #" + i);
+            if (!compareRevisionProps(srcURL, dstURL, i)) {
+                return false;
+            }
+            updateClient.doUpdate(srcWCRoot, SVNRevision.create(i), true);
+            updateClient.doUpdate(dstWCRoot, SVNRevision.create(i), true);
             if (!compareDirs(srcWCRoot, dstWCRoot, true)) {
                 SVNDebugLog.logInfo("Unequal Working Copies at revision " + i);
                 return false;
