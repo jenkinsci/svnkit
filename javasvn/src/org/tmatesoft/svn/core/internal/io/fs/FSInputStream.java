@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.io.File;
 import java.io.RandomAccessFile;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.InputStream;
@@ -31,7 +30,6 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDiffInstruction;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindowApplyBaton;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 
@@ -238,9 +236,9 @@ public class FSInputStream extends InputStream {
     }
     
     private byte[] getNextTextChunk(int startIndex) throws SVNException {
-        ByteArrayOutputStream target = new ByteArrayOutputStream();
         ByteArrayOutputStream data = new ByteArrayOutputStream();
-        InputStream source = SVNFileUtil.DUMMY_IN;
+        byte[] targetView = null;
+        byte[] sourceView = null;
         for(ListIterator states = myRepStateList.listIterator(startIndex + 1); states.hasPrevious();){
             FSRepresentationState state = (FSRepresentationState)states.previous();
             data.reset();
@@ -251,15 +249,13 @@ public class FSInputStream extends InputStream {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
                 SVNErrorManager.error(err, ioe);
             }
-            SVNDiffWindowApplyBaton applyBaton = SVNDiffWindowApplyBaton.create(source, target, null);
-            window.apply(applyBaton, new ByteArrayInputStream(data.toByteArray()));
+            targetView = window.apply(sourceView, data.toByteArray());
             if(states.hasPrevious()){
-                source = new ByteArrayInputStream(target.toByteArray());
-                target.reset();
+                sourceView = targetView;
             }
         }
         myChunkIndex++;
-        return target.toByteArray();
+        return targetView;
     }
 
     /* Skip forwards to thisChunk in rep state and then read the next delta

@@ -274,6 +274,54 @@ public class SVNDiffWindow {
             SVNErrorManager.error(err, e);
         }
     }
+
+    public byte[] apply(byte[] sourceBuffer, byte[] newData) {
+        // here we have streams and buffer from the previous calls (or nulls).
+        
+        // 1. buffer for target.
+        byte[] targetBuffer = new byte[(int) getTargetViewLength()];
+        
+        // apply instructions. 
+        int dataOffset = 0;
+        if (myInstructions == null) {
+            byte[] instrBytes = new byte[(int) getInstructionsLength()];
+            //newData.read(instrBytes);
+            System.arraycopy(newData, 0, instrBytes, 0, (int) getInstructionsLength());
+            myInstructions = SVNDiffWindowBuilder.createInstructions(instrBytes);
+            dataOffset = (int) getInstructionsLength();
+        }
+        int tpos = 0;
+            for(int i = 0; i < myInstructions.length; i++) {
+                int iLength = myInstructions[i].length < getTargetViewLength() - tpos ? (int) myInstructions[i].length : (int) getTargetViewLength() - tpos; 
+                switch (myInstructions[i].type) {
+                    case SVNDiffInstruction.COPY_FROM_NEW_DATA:
+//                        newData.read(targetBuffer, tpos, iLength);
+                        System.arraycopy(newData, dataOffset, targetBuffer, tpos, iLength);
+                        dataOffset += iLength;
+                        break;
+                    case SVNDiffInstruction.COPY_FROM_TARGET:
+                        int start = (int) myInstructions[i].offset;
+                        int end = (int) myInstructions[i].offset + iLength;
+                        int tIndex = tpos;
+                        for(int j = start; j < end; j++) {
+                            targetBuffer[tIndex] = targetBuffer[j];
+                            tIndex++;
+                        }
+                        break;
+                    case SVNDiffInstruction.COPY_FROM_SOURCE:
+                        System.arraycopy(sourceBuffer, (int) myInstructions[i].offset, 
+                                targetBuffer, tpos, iLength);
+                        break;
+                    default:
+                }
+                tpos += myInstructions[i].length;
+                if (tpos >= getTargetViewLength()) {
+                    break;
+                }
+            }
+            myInstructions = null;
+        return targetBuffer;
+    }
     
     /**
      * Gives a string representation of this object.

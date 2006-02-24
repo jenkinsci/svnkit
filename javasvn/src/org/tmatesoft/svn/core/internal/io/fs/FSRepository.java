@@ -333,8 +333,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                      * end of the stream.  (We can't get a short write without an
                      * associated error.) 
                      */
+                    byte[] buffer = new byte[FSConstants.SVN_STREAM_CHUNK_SIZE];
                     while(true){
-                        byte[] buffer = new byte[FSConstants.SVN_STREAM_CHUNK_SIZE];
                         int length = fileStream.read(buffer);
                         if(length > 0){
                             contents.write(buffer, 0, length);
