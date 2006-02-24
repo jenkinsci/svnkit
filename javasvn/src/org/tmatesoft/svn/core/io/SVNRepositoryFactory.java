@@ -245,6 +245,7 @@ public abstract class SVNRepositoryFactory {
                     } finally {
                         SVNFileUtil.closeFile(os);
                     }
+                    SVNFileUtil.setExecutable(hookFile, true);
                 }
             }
             // generate and write UUID.
