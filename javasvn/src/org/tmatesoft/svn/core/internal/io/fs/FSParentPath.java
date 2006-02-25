@@ -26,7 +26,13 @@ import org.tmatesoft.svn.core.SVNErrorCode;
  */
 public class FSParentPath
 {	
-   /* A node along the path.  This could be the final node, one of its
+    //Copy id inheritance style 
+    public static final int COPY_ID_INHERIT_UNKNOWN = 0;
+    public static final int COPY_ID_INHERIT_SELF = 1;
+    public static final int COPY_ID_INHERIT_PARENT = 2;
+    public static final int COPY_ID_INHERIT_NEW = 3;
+
+    /* A node along the path.  This could be the final node, one of its
     * parents, or the root.  Every parent path ends with an element for
     * the root directory
     * */
@@ -159,7 +165,7 @@ public class FSParentPath
 		FSRevisionNode copyrootNode = null;				
 		
 		//If this child is already mutable, we have nothing to do
-		if(childID.getTxnID() != null){
+		if(childID.isTxn()){
 			return new SVNLocationEntry(FSParentPath.COPY_ID_INHERIT_SELF, null);
 		}
 		//From this point on, we'll assume that the child will just take
@@ -202,10 +208,4 @@ public class FSParentPath
 		}
 		return new SVNLocationEntry(FSParentPath.COPY_ID_INHERIT_NEW, child.getRevNode().getCreatedPath());
 	}	
-	//Copy id inheritance style 
-	public static final int COPY_ID_INHERIT_UNKNOWN = 0;
-	public static final int COPY_ID_INHERIT_SELF = 1;
-	public static final int COPY_ID_INHERIT_PARENT = 2;
-	public static final int COPY_ID_INHERIT_NEW = 3;
-	
 }
