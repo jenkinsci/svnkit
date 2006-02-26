@@ -206,7 +206,8 @@ public class SVNReplicationEditor implements ISVNEditor {
             HashMap props = new HashMap();
             SVNRepository rep = SVNRepositoryFactory.create(myRepos.getLocation());
             rep.setAuthenticationManager(myRepos.getAuthenticationManager());
-            rep.getDir(changedPath.getCopyPath(), changedPath.getCopyRevision(), props, (Collection) null);
+            rep.getFile(changedPath.getCopyPath(), changedPath.getCopyRevision(), props, null);
+            
             baton.myProps = props;
             myCommitEditor.addFile(path, changedPath.getCopyPath(), changedPath.getCopyRevision());
             SVNDebugLog.logInfo("Adding file '" + absPath + "'");
@@ -229,7 +230,8 @@ public class SVNReplicationEditor implements ISVNEditor {
             HashMap props = new HashMap();
             SVNRepository rep = SVNRepositoryFactory.create(myRepos.getLocation());
             rep.setAuthenticationManager(myRepos.getAuthenticationManager());
-            rep.getDir(realPath.getCopyPath(), realPath.getCopyRevision(), props, (Collection) null);
+            rep.getFile(realPath.getCopyPath(), realPath.getCopyRevision(), props, null);
+
             baton.myProps = props;
             myCommitEditor.openFile(path, myTargetRevision);
             SVNDebugLog.logInfo("Opening file '" + absPath + "'");
