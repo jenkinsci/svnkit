@@ -89,6 +89,9 @@ class SVNConnection {
             return;
         }
         ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
+        if (authManager.isAuthenticationForced() && mechs.contains("ANONYMOUS") && mechs.contains("CRAM-MD5")) {
+            mechs.remove("ANONYMOUS");
+        }
         SVNURL location = myRepository.getLocation();        
         SVNPasswordAuthentication auth = null;
         if (repository.getExternalUserName() != null && mechs.contains("EXTERNAL")) {

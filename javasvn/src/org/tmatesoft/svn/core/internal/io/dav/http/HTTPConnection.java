@@ -22,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
@@ -223,6 +224,13 @@ class HTTPConnection implements IHTTPConnection {
         ISVNSSLManager sslManager = promptSSLClientCertificate(true);
         String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
         SVNAuthentication httpAuth = myLastValidAuth;
+        if (httpAuth == null && myRepository.getAuthenticationManager().isAuthenticationForced()) {
+            httpAuth = myRepository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, sslRealm, null);
+            myCredentialsChallenge = new HashMap();
+            myCredentialsChallenge.put("", "Basic");
+            myCredentialsChallenge.put("methodname", method);
+            myCredentialsChallenge.put("uri", path);
+        } 
         String realm = null;
 
         // 2. create request instance.
@@ -245,7 +253,8 @@ class HTTPConnection implements IHTTPConnection {
                 request.setSecured(myIsSecured);
                 request.setProxyAuthentication(myProxyAuthentication);
                 if (httpAuth != null && myCredentialsChallenge != null) {
-                    request.setAuthentication(composeAuthResponce(httpAuth, myCredentialsChallenge));
+                    String authResponse = composeAuthResponce(httpAuth, myCredentialsChallenge);
+                    request.setAuthentication(authResponse);
                 }
                 request.dispatch(method, path, header, ok1, ok2, context);
                 status = request.getStatus();

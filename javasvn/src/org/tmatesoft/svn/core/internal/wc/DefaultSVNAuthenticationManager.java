@@ -50,6 +50,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private ISVNAuthenticationStorage myRuntimeAuthStorage;
     private int myLastProviderIndex;
     private SVNConfigFile myConfigFile;
+    private boolean myIsAuthenticationForced;
 
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password) {
         password = password == null ? "" : password;
@@ -529,6 +530,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     public boolean isAuthenticationForced() {
-        return false;
+        return myIsAuthenticationForced;
+    }
+
+    public void setAuthenticationForced(boolean forced) {
+        myIsAuthenticationForced = forced;
     }
 }

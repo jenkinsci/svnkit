@@ -53,6 +53,7 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     private int myProxyPort;
     private String myProxyUserName;
     private String myProxyPassword;
+    private boolean myIsAuthenticationForced;
     
     /**
      * Creates an auth manager given a user credential - a username 
@@ -209,7 +210,11 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     }
 
     public boolean isAuthenticationForced() {
-        return false;
+        return myIsAuthenticationForced;
+    }
+    
+    public void setAuthenticationForced(boolean forced) {
+        myIsAuthenticationForced = forced;
     }
 
     public String getProxyHost() {
