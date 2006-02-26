@@ -12,12 +12,12 @@
 package org.tmatesoft.svn.core.replicator;
 
 import java.io.OutputStream;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
 
+import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -53,6 +53,7 @@ public class SVNReplicationEditor implements ISVNEditor {
     private Stack myDirsStack;
     private long myTargetRevision;
     private SVNCommitInfo myCommitInfo;
+    private SVNRepository mySourceRepository;
     
     public SVNReplicationEditor(SVNRepository repository, ISVNEditor commitEditor, SVNLogEntry revision) {
         myRepos = repository;
@@ -118,9 +119,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         if (changedPath != null && changedPath.getType() == SVNLogEntryPath.TYPE_ADDED && changedPath.getCopyPath() != null && changedPath.getCopyRevision() >= 0) {
             baton.myPropsAct = DECIDE;
             HashMap props = new HashMap();
-            SVNRepository rep = SVNRepositoryFactory.create(myRepos.getLocation());
-            rep.setAuthenticationManager(myRepos.getAuthenticationManager());
-            rep.getDir(changedPath.getCopyPath(), changedPath.getCopyRevision(), props, (Collection) null);
+            getSourceRepository().getDir(changedPath.getCopyPath(), changedPath.getCopyRevision(), props, (ISVNDirEntryHandler) null);
             baton.myProps = props;
             
             myCommitEditor.addDir(path, changedPath.getCopyPath(), changedPath.getCopyRevision());
@@ -204,9 +203,7 @@ public class SVNReplicationEditor implements ISVNEditor {
                 baton.myTextAct = IGNORE;
             }
             HashMap props = new HashMap();
-            SVNRepository rep = SVNRepositoryFactory.create(myRepos.getLocation());
-            rep.setAuthenticationManager(myRepos.getAuthenticationManager());
-            rep.getFile(changedPath.getCopyPath(), changedPath.getCopyRevision(), props, null);
+            getSourceRepository().getFile(changedPath.getCopyPath(), changedPath.getCopyRevision(), props, null);
             
             baton.myProps = props;
             if(changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED){
@@ -236,9 +233,7 @@ public class SVNReplicationEditor implements ISVNEditor {
                 baton.myTextAct = IGNORE;
             }
             HashMap props = new HashMap();
-            SVNRepository rep = SVNRepositoryFactory.create(myRepos.getLocation());
-            rep.setAuthenticationManager(myRepos.getAuthenticationManager());
-            rep.getFile(realPath.getCopyPath(), realPath.getCopyRevision(), props, null);
+            getSourceRepository().getFile(realPath.getCopyPath(), realPath.getCopyRevision(), props, null);
 
             baton.myProps = props;
             myCommitEditor.openFile(path, myTargetRevision);
@@ -267,8 +262,7 @@ public class SVNReplicationEditor implements ISVNEditor {
             String relativePath = path.substring(copiedPath.endsWith("/") ? copiedPath.length() : copiedPath.length() + 1);
             SVNLogEntryPath changedPath = (SVNLogEntryPath) myCopiedPaths.get(copiedPath);
             String realFilePath = SVNPathUtil.concatToAbs(changedPath.getCopyPath(), relativePath);
-            SVNRepository repos = SVNRepositoryFactory.create(myRepos.getLocation());
-            repos.setAuthenticationManager(myRepos.getAuthenticationManager());
+            SVNRepository repos = getSourceRepository();
             if (repos.checkPath(realFilePath, changedPath.getCopyRevision()) == SVNNodeKind.FILE) {
                 realPath = new SVNLogEntryPath(path, ' ', realFilePath, changedPath.getCopyRevision());
                 break;
@@ -281,8 +275,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         Map props1 = new HashMap();
         Map props2 = new HashMap();
 
-        SVNRepository repos = SVNRepositoryFactory.create(myRepos.getLocation());
-        repos.setAuthenticationManager(myRepos.getAuthenticationManager());
+        SVNRepository repos = getSourceRepository();
         repos.getFile(path1, rev1, props1, null);
         repos.getFile(path2, rev2, props2, null);
         String crc1 = (String) props1.get(SVNProperty.CHECKSUM);
@@ -412,6 +405,15 @@ public class SVNReplicationEditor implements ISVNEditor {
     
     public SVNCommitInfo getCommitInfo() {
         return myCommitInfo;
+    }
+    
+    private SVNRepository getSourceRepository() throws SVNException {
+        if (mySourceRepository == null) {
+            mySourceRepository = SVNRepositoryFactory.create(myRepos.getLocation());
+            mySourceRepository.setAuthenticationManager(myRepos.getAuthenticationManager());
+        }
+        return mySourceRepository;
+
     }
 
     private class EntryBaton {
