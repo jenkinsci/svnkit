@@ -197,19 +197,22 @@ public class SVNReplicationEditor implements ISVNEditor {
         String absPath = myRepos.getRepositoryPath(path);
         SVNLogEntryPath changedPath = (SVNLogEntryPath) myChangedPaths.get(absPath);
         
-        if (changedPath != null && changedPath.getType() == SVNLogEntryPath.TYPE_ADDED && changedPath.getCopyPath() != null && changedPath.getCopyRevision() >= 0) {
+        if (changedPath != null && (changedPath.getType() == SVNLogEntryPath.TYPE_ADDED || changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED) && changedPath.getCopyPath() != null && changedPath.getCopyRevision() >= 0) {
             baton.myPropsAct = DECIDE;
             baton.myTextAct = ACCEPT;
             if (areFileContentsEqual(absPath, myTargetRevision, changedPath.getCopyPath(), changedPath.getCopyRevision())) {
                 baton.myTextAct = IGNORE;
             }
-            
             HashMap props = new HashMap();
             SVNRepository rep = SVNRepositoryFactory.create(myRepos.getLocation());
             rep.setAuthenticationManager(myRepos.getAuthenticationManager());
             rep.getFile(changedPath.getCopyPath(), changedPath.getCopyRevision(), props, null);
             
             baton.myProps = props;
+            if(changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED){
+                myCommitEditor.deleteEntry(path, myTargetRevision);
+                myChangedPaths.remove(absPath);
+            }
             myCommitEditor.addFile(path, changedPath.getCopyPath(), changedPath.getCopyRevision());
             SVNDebugLog.logInfo("Adding file '" + absPath + "'");
         } else if (changedPath != null && (changedPath.getType() == SVNLogEntryPath.TYPE_ADDED || changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED)) {
