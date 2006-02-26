@@ -203,6 +203,7 @@ public class SVNReplicationEditor implements ISVNEditor {
             if (areFileContentsEqual(absPath, myTargetRevision, changedPath.getCopyPath(), changedPath.getCopyRevision())) {
                 baton.myTextAct = IGNORE;
             }
+            
             HashMap props = new HashMap();
             SVNRepository rep = SVNRepositoryFactory.create(myRepos.getLocation());
             rep.setAuthenticationManager(myRepos.getAuthenticationManager());
@@ -214,6 +215,10 @@ public class SVNReplicationEditor implements ISVNEditor {
         } else if (changedPath != null && (changedPath.getType() == SVNLogEntryPath.TYPE_ADDED || changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED)) {
             baton.myPropsAct = ACCEPT;
             baton.myTextAct = ACCEPT;
+            if(changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED){
+                myCommitEditor.deleteEntry(path, myTargetRevision);
+                myChangedPaths.remove(absPath);
+            }
             myCommitEditor.addFile(path, null, -1);
             SVNDebugLog.logInfo("Adding file '" + absPath + "'");
         } else if (changedPath != null && changedPath.getType() == SVNLogEntryPath.TYPE_MODIFIED) {
