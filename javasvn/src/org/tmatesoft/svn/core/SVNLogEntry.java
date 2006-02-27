@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.core;
 
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Map;
 
 
@@ -103,5 +104,63 @@ public class SVNLogEntry {
      */
     public long getRevision() {
         return myRevision;
+    }
+
+    public int hashCode() {
+        final int PRIME = 31;
+        int result = 1;
+        result = PRIME * result + (int) (myRevision ^ (myRevision >>> 32));
+        result = PRIME * result + ((myAuthor == null) ? 0 : myAuthor.hashCode());
+        result = PRIME * result + ((myDate == null) ? 0 : myDate.hashCode());
+        result = PRIME * result + ((myMessage == null) ? 0 : myMessage.hashCode());
+        result = PRIME * result + ((myChangedPaths == null) ? 0 : myChangedPaths.hashCode());
+        return result;
+    }
+
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        SVNLogEntry other = (SVNLogEntry) obj;
+        return myRevision == other.myRevision &&
+            compare(myAuthor, other.myAuthor) &&
+            compare(myMessage, other.myMessage) &&
+            compare(myDate, other.myDate) &&
+            compare(myChangedPaths, other.myChangedPaths);
+    }
+    
+    public String toString() {
+        StringBuffer result = new StringBuffer();
+        result.append(myRevision);
+        if (myDate != null) {
+            result.append(' ');
+            result.append(myDate);
+        }
+        if (myAuthor != null) {
+            result.append(' ');
+            result.append(myAuthor);
+        }
+        if (myMessage != null) {
+            result.append('\n');
+            result.append(myMessage);
+        }
+        if (myChangedPaths != null && !myChangedPaths.isEmpty()) {
+            for (Iterator paths = myChangedPaths.values().iterator(); paths.hasNext();) {
+                result.append('\n');
+                SVNLogEntryPath path = (SVNLogEntryPath) paths.next();
+                result.append(path.toString());
+            }
+        }
+        return result.toString();
+    }
+    
+    static boolean compare(Object o1, Object o2) {
+        if (o1 == null) {
+            return o2 == null;
+        } 
+        return o1.equals(o2);
     }
 }

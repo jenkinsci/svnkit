@@ -118,4 +118,45 @@ public class SVNLogEntryPath {
     protected void setPath(String path) {
     	myPath = path;
     }
+
+    public int hashCode() {
+        final int PRIME = 31;
+        int result = 1;
+        result = PRIME * result + ((myPath == null) ? 0 : myPath.hashCode());
+        result = PRIME * result + myType;
+        result = PRIME * result + ((myCopyPath == null) ? 0 : myCopyPath.hashCode());
+        result = PRIME * result + (int) (myCopyRevision ^ (myCopyRevision >>> 32));
+        return result;
+    }
+
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || !(obj instanceof SVNLogEntryPath)) {
+            return false;
+        }
+        final SVNLogEntryPath other = (SVNLogEntryPath) obj;
+        return myCopyRevision == other.myCopyRevision &&
+            myType == other.myType &&
+            SVNLogEntry.compare(myPath, other.myPath) &&
+            SVNLogEntry.compare(myCopyPath, other.myCopyPath);
+    }
+    
+    public String toString() {
+        StringBuffer result = new StringBuffer();
+        result.append(myType);
+        result.append(' ');
+        result.append(myPath);
+        if (myCopyPath != null) {
+            result.append("(from ");
+            result.append(myCopyPath);
+            result.append(':');
+            result.append(myCopyRevision);
+            result.append(')');
+        }
+        return result.toString();
+    }
+    
+    
 }
