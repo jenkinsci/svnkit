@@ -67,13 +67,6 @@ public class SVNFileType {
             if (canonPathCacheUsed && !fastSymlinkResoution && SVNFileUtil.isSymlink(file)) {
                 return SVNFileType.SYMLINK;
             } else if (!canonPathCacheUsed || fastSymlinkResoution) {            
-                String absolutePath = file.getAbsolutePath();
-                String canonicalPath;
-                try {
-                    canonicalPath = file.getCanonicalPath();
-                } catch (IOException e) {
-                    canonicalPath = file.getAbsolutePath();
-                }
                 if (!file.exists()) {
                     File[] children = file.getParentFile() != null ? file.getParentFile().listFiles() : null;
                     for (int i = 0; children != null && i < children.length; i++) {
@@ -84,8 +77,17 @@ public class SVNFileType {
                             }
                         }
                     }
-                } else if (!absolutePath.equals(canonicalPath) && SVNFileUtil.isSymlink(file)) {
-                    return SVNFileType.SYMLINK;
+                } else {
+                    String absolutePath = file.getAbsolutePath();
+                    String canonicalPath;
+                    try {
+                        canonicalPath = file.getCanonicalPath();
+                    } catch (IOException e) {
+                        canonicalPath = file.getAbsolutePath();
+                    }
+                    if (!absolutePath.equals(canonicalPath) && SVNFileUtil.isSymlink(file)) {
+                        return SVNFileType.SYMLINK;
+                    }
                 }
             }
         }
