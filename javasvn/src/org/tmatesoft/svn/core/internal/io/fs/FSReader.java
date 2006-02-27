@@ -1367,6 +1367,7 @@ public class FSReader {
             FSRevisionNode newRoot = getRootRevNode(reposRootDir, revNum);
             changedPaths = detectChanged(reposRootDir, revNodesPool, FSRoot.createRevisionRoot(revNum, newRoot));
         }
+        changedPaths = changedPaths == null ? new HashMap() : changedPaths;
         handler.handleLogEntry(new SVNLogEntry(changedPaths, revNum, author, date, message));
      }
 }
