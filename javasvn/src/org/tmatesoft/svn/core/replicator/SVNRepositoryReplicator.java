@@ -73,8 +73,9 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
      */
     public long replicateRepository(SVNRepository src, SVNRepository dst, long fromRevision, long toRevision) throws SVNException {
         fromRevision = fromRevision <= 0 ? 1 : fromRevision;
+        long dstLatestRevision = dst.getLatestRevision();
 
-        if (dst.getLatestRevision() != fromRevision - 1) {
+        if (dstLatestRevision != fromRevision - 1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "The target repository''s latest revision must be ''{0}''", new Long(fromRevision - 1));
             SVNErrorManager.error(err);
         }
@@ -96,6 +97,10 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
         final SVNLogEntry[] currentRevision = new SVNLogEntry[1];
         
         long count = toRevision - fromRevision + 1;
+        if (dstLatestRevision == 0) { 
+            Map zeroRevisionProperties = src.getRevisionProperties(0, null);
+            updateRevisionProperties(dst, 0, zeroRevisionProperties);
+        }
         
         for(long i = fromRevision; i <= toRevision; i++) {
             SVNDebugLog.logInfo("Replicating revision #" + i);
@@ -153,14 +158,7 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
 
             SVNCommitInfo commitInfo = bridgeEditor.getCommitInfo();
             try {
-                for (Iterator names = revisionProps.keySet().iterator(); names.hasNext();) {
-                    checkCancelled();
-                    String name = (String) names.next();
-                    String value = (String) revisionProps.get(name);
-                    if (name != null && value != null) {
-                        dst.setRevisionPropertyValue(i, name, value);
-                    }
-                }
+                updateRevisionProperties(dst, i, revisionProps);
                 String author = (String) revisionProps.get(SVNRevisionProperty.AUTHOR);
                 Date date = SVNTimeUtil.parseDate((String) revisionProps.get(SVNRevisionProperty.DATE));
                 commitInfo = new SVNCommitInfo(i, author, date); 
@@ -170,6 +168,26 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
             fireReplicatedEvent(commitInfo);
         }
         return count;
+    }
+
+    private void updateRevisionProperties(SVNRepository repository, long revision, Map properties) throws SVNCancelException, SVNException {
+        if (!properties.containsKey(SVNRevisionProperty.AUTHOR)) {
+            properties.put(SVNRevisionProperty.AUTHOR, null);
+        }
+        if (!properties.containsKey(SVNRevisionProperty.DATE)) {
+            properties.put(SVNRevisionProperty.DATE, null);
+        }
+        if (!properties.containsKey(SVNRevisionProperty.AUTHOR)) {
+            properties.put(SVNRevisionProperty.LOG, null);
+        }
+        for (Iterator names = properties.keySet().iterator(); names.hasNext();) {
+            checkCancelled();
+            String name = (String) names.next();
+            String value = (String) properties.get(name);
+            if (name != null) {
+                repository.setRevisionPropertyValue(revision, name, value);
+            }
+        }
     }
     
     public void setReplicationHandler(ISVNReplicationHandler handler) {
