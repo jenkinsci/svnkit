@@ -12,13 +12,17 @@
 package org.tmatesoft.svn.core.internal.io.fs.test;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
@@ -310,6 +314,43 @@ public class SVNRepositoryReplicationTest {
         if (!checksum1.equals(checksum2)) {
             SVNDebugLog.logInfo("Unequal file contents: '" + file1 + "' (" + checksum1 + ") vs. '" + file2 + "' (" + checksum2 + ")");
             return false;
+        }
+        return true;
+    }
+
+    public static boolean compareHistory(SVNRepository src, SVNRepository dst) throws SVNException {
+        List srcLog = new ArrayList(); 
+        List dstLog = new ArrayList(); 
+        srcLog = (List) src.log(new String[] {""}, srcLog, 0, src.getLatestRevision(), true, false);
+        SVNDebugLog.logInfo("source history fetched");
+        dstLog = (List) dst.log(new String[] {""}, dstLog, 0, dst.getLatestRevision(), true, false);
+        SVNDebugLog.logInfo("target history fetched");
+        for (int i = 0; i < srcLog.size(); i++) {
+            SVNLogEntry srcEntry = (SVNLogEntry) srcLog.get(i);
+            SVNLogEntry dstEntry = (SVNLogEntry) dstLog.get(i);
+            SVNDebugLog.logInfo("processing revision " + srcEntry.getRevision());
+            if (!srcEntry.equals(dstEntry)) {
+                SVNDebugLog.logInfo("log entries are not equal:");
+                SVNDebugLog.logInfo("src:");
+                SVNDebugLog.logInfo(srcEntry.toString());
+                SVNDebugLog.logInfo("dst:");
+                SVNDebugLog.logInfo(dstEntry.toString());
+                SVNDebugLog.logInfo("");
+                for (Iterator paths = srcEntry.getChangedPaths().values().iterator(); paths.hasNext();) {
+                    SVNLogEntryPath path = (SVNLogEntryPath) paths.next();
+                    SVNLogEntryPath srcPath = (SVNLogEntryPath) dstEntry.getChangedPaths().remove(path.getPath()); 
+                    if (srcPath == null) {
+                        SVNDebugLog.logInfo("target miss: " + path);
+                    } else if (!srcPath.equals(path)) {
+                        SVNDebugLog.logInfo("target path is not equal to source: " + srcPath);
+                    }
+                }
+                if (!dstEntry.getChangedPaths().isEmpty()) {
+                    SVNDebugLog.logInfo("there are more paths in target entry:");
+                    SVNDebugLog.logInfo(dstEntry.toString());
+                }
+                return false;
+            }
         }
         return true;
     }
