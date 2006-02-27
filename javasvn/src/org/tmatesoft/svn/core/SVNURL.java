@@ -124,6 +124,9 @@ public class SVNURL {
         }
         String path = repositoryPath.getAbsoluteFile().getAbsolutePath();
         path = path.replace(File.separatorChar, '/');
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
         return SVNURL.parseURIDecoded("file://" + path);
     }
     
