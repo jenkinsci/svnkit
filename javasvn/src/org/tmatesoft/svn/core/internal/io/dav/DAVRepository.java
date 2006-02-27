@@ -449,7 +449,7 @@ class DAVRepository extends SVNRepository {
     public long log(String[] targetPaths, long startRevision, long endRevision,
             boolean changedPath, boolean strictNode, long limit, final ISVNLogEntryHandler handler) throws SVNException {
         if (targetPaths == null || targetPaths.length == 0) {
-            return 0;
+            targetPaths = new String[]{""};
         }
         DAVLogHandler davHandler = null;
         ISVNLogEntryHandler cachingHandler = new ISVNLogEntryHandler() {
