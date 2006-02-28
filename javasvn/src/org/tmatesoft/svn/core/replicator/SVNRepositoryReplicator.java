@@ -177,7 +177,7 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
         if (!properties.containsKey(SVNRevisionProperty.DATE)) {
             properties.put(SVNRevisionProperty.DATE, null);
         }
-        if (!properties.containsKey(SVNRevisionProperty.AUTHOR)) {
+        if (!properties.containsKey(SVNRevisionProperty.LOG)) {
             properties.put(SVNRevisionProperty.LOG, null);
         }
         for (Iterator names = properties.keySet().iterator(); names.hasNext();) {
