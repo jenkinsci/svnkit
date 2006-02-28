@@ -224,7 +224,7 @@ class HTTPConnection implements IHTTPConnection {
         ISVNSSLManager sslManager = promptSSLClientCertificate(true);
         String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
         SVNAuthentication httpAuth = myLastValidAuth;
-        if (httpAuth == null && myRepository.getAuthenticationManager().isAuthenticationForced()) {
+        if (httpAuth == null && myRepository.getAuthenticationManager() != null && myRepository.getAuthenticationManager().isAuthenticationForced()) {
             httpAuth = myRepository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, sslRealm, null);
             myCredentialsChallenge = new HashMap();
             myCredentialsChallenge.put("", "Basic");
