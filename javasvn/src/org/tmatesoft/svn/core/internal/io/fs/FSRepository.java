@@ -1872,6 +1872,9 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
     
     private String getUserName() throws SVNException {
+        if (getLocation().getUserInfo() != null && getLocation().getUserInfo().trim().length() > 0) {
+            return getLocation().getUserInfo();
+        }
         if (getAuthenticationManager() != null) {
             try {
                 String realm = getRepositoryUUID(true);
