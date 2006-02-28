@@ -184,7 +184,7 @@ public class SVNURL {
                 SVNErrorManager.error(err);
                 return;
             }
-            myHost = "";
+            myHost = testURL.getHost() == null ? "" : testURL.getHost();
             if (uriEncoded) {
                 // autoencode it.
                 myEncodedPath = SVNEncodingUtil.autoURIEncode(testURL.getPath());
@@ -214,8 +214,7 @@ public class SVNURL {
                 myEncodedPath = SVNEncodingUtil.uriEncode(myPath);
             }
             myUserName = testURL.getUserInfo();
-            Integer defaultPort = (Integer) DEFAULT_PORTS.get(myProtocol);
-            myPort = defaultPort.intValue();
+            myPort = testURL.getPort();
         }else{
             String testURL = "http" + url.substring(index);
             URL httpURL;
@@ -416,15 +415,6 @@ public class SVNURL {
             return false;
         }
         SVNURL url = (SVNURL) obj;
-        if("file".equals(myProtocol)){
-            /* In file:// protocol we are interested only in  
-             * protocol name and path equality, no more else.
-             */
-            if(myProtocol.equals(url.myProtocol) && myPath.equals(url.myPath)){
-                return true;
-            }
-            return false;
-        }
         boolean eq = myProtocol.equals(url.myProtocol) && 
             myPort == url.myPort &&
             myHost.equals(url.myHost) &&
@@ -454,14 +444,6 @@ public class SVNURL {
         StringBuffer url = new StringBuffer();
         url.append(protocol);
         url.append("://");
-        if("file".equals(protocol)){
-            if(!path.startsWith("/")){
-                url.append("/");
-            }
-            url.append(path);
-            return url.toString();
-        }
-
         if (userInfo != null) {
             url.append(userInfo);
             url.append("@");

@@ -983,13 +983,13 @@ public class FSReader {
     }
 
     public static long getRootOffset(File reposRootDir, long revision) throws SVNException {
-        Long[] offsets = readRootAndChangesOffset(reposRootDir, revision);
-        return offsets[0].longValue();
+        long[] offsets = readRootAndChangesOffset(reposRootDir, revision);
+        return offsets[0];
     }
 
     public static long getChangesOffset(File reposRootDir, long revision) throws SVNException {
-        Long[] offsets = readRootAndChangesOffset(reposRootDir, revision);
-        return offsets[1].longValue();
+        long[] offsets = readRootAndChangesOffset(reposRootDir, revision);
+        return offsets[1];
     }
 
     // Read in a rev-node given its offset in a rev-file.
@@ -1085,8 +1085,8 @@ public class FSReader {
         return null;
     }
 
-    private static Long[] readRootAndChangesOffset(File reposRootDir, long revision) throws SVNException {
-        File revFile = FSRepositoryUtil.getRevisionFile(reposRootDir, revision); // getRevFile(revision);
+    private static long[] readRootAndChangesOffset(File reposRootDir, long revision) throws SVNException {
+        File revFile = FSRepositoryUtil.getRevisionFile(reposRootDir, revision); 
         int size = 64;
         byte[] buffer = new byte[size];
         RandomAccessFile raRevFile = null;
@@ -1142,9 +1142,9 @@ public class FSReader {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can't parse changes offset in revision file");
             SVNErrorManager.error(err);
         }
-        Long[] offsets = new Long[2];
-        offsets[0] = new Long(rootOffset);
-        offsets[1] = new Long(changesOffset);
+        long[] offsets = new long[2];
+        offsets[0] = rootOffset;
+        offsets[1] = changesOffset;
         return offsets;
     }
 

@@ -88,13 +88,18 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         try{
             openRepositoryRoot();
         }catch(SVNException svne){
-            SVNErrorManager.error(svne.getErrorMessage().wrap("Unable to open an ra_local session to URL"));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toDecodedString());
+            err.setChildErrorMessage(svne.getErrorMessage());
+            SVNErrorManager.error(err.wrap("Unable to open an ra_local session to URL"));
         }
     }
 
     private void openRepositoryRoot() throws SVNException {
         lock();
-
+        if(!"".equals(getLocation().getHost()) && !getLocation().getHost().equalsIgnoreCase("localhost")){
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains unsupported hostname", getLocation().toDecodedString());
+            SVNErrorManager.error(err);
+        }
         // Perform steps similar to svn's ones
         // 1. Find repos root
         try {
@@ -149,7 +154,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         if (!rootDir.startsWith("/")) {
             rootDir = "/" + rootDir;
         }
-        setRepositoryCredentials(uuid, SVNURL.parseURIEncoded(getLocation().getProtocol() + "://" + rootDir));
+        setRepositoryCredentials(uuid, getLocation().setPath(rootDir, false));
     }
 
     void closeRepository() {
@@ -1141,11 +1146,14 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     public void linkPath(SVNURL url, String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
         assertValidRevision(revision);
         SVNURL reposRootURL = getRepositoryRoot(false);
-        if(url.getPath().indexOf(reposRootURL.getPath()) == -1){
+        if(url.toDecodedString().indexOf(reposRootURL.toDecodedString()) == -1){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "''{0}''\nis not the same repository as\n''{1}''", new Object[]{url, reposRootURL});
             SVNErrorManager.error(err);
         }
-        String reposLinkPath = url.toString().substring(reposRootURL.toString().length());
+        String reposLinkPath = url.toDecodedString().substring(reposRootURL.toDecodedString().length());
+        if("".equals(reposLinkPath)){
+            reposLinkPath = "/";
+        }
         try {
             FSWriter.writePathInfoToReportFile(myReporterContext.getReportFileForWriting(), myReporterContext.getReportTarget(), path, reposLinkPath, lockToken, revision, startEmpty);
         } catch (IOException ioe) {
