@@ -31,12 +31,10 @@ public class CramMD5 {
     }
 
     public byte[] buildChallengeReponse(byte[] challenge) {
-        String password = myCredentials.getPassword();
+        byte[] password = myCredentials.getPassword().getBytes();
         byte[] secret = new byte[64];
         Arrays.fill(secret, (byte) 0);
-        for (int i = 0; i < password.length(); i++) {
-            secret[i] = (byte) password.charAt(i);
-        }
+        System.arraycopy(password, 0, secret, 0, Math.min(secret.length, password.length));
         MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("MD5");
@@ -63,7 +61,7 @@ public class CramMD5 {
             hexDigest += Integer.toHexString(hi) + Integer.toHexString(lo);
         }
         String response = myCredentials.getUserName() + " " + hexDigest;
-        response = response.length() + ":" + response + " ";
+        response = response.getBytes().length + ":" + response + " ";
         return response.getBytes();
     }
 
