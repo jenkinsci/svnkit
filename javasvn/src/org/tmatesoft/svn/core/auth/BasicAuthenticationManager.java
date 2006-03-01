@@ -101,6 +101,7 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     public void setAuthentications(SVNAuthentication[] authentications) {
         myPasswordAuthentications = new ArrayList();
         mySSHAuthentications = new ArrayList();
+        myUserNameAuthentications = new ArrayList();
         myPasswordIndex = 0;
         mySSHIndex = 0;
         for (int i = 0; authentications != null && i < authentications.length; i++) {
