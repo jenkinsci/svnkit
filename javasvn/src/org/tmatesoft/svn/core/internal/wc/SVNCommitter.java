@@ -170,7 +170,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             try {
                 sourceIS = !item.isAdded() && baseFile.exists() ? SVNFileUtil.openFileForReading(baseFile) : SVNFileUtil.DUMMY_IN;
                 targetIS = tmpFile.exists() ? SVNFileUtil.openFileForReading(tmpFile) : SVNFileUtil.DUMMY_IN;
-                newChecksum = myDeltaGenerator.sendDelta(path, sourceIS, targetIS, editor, true);
+                newChecksum = myDeltaGenerator.sendDelta(path, sourceIS, 0, targetIS, editor, true);
             } finally {
                 SVNFileUtil.closeFile(sourceIS);
                 SVNFileUtil.closeFile(targetIS);

@@ -26,6 +26,7 @@ public class FSBufferStream extends OutputStream {
 
     public FSBufferStream(){
         super();
+        myBuffer = new byte[0];
         myBufferLength = 0;
     }
     

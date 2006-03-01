@@ -97,9 +97,9 @@ public class SVNDeltaGenerator {
      * @throws SVNException
      */
     public String sendDelta(String path, InputStream target, ISVNDeltaConsumer consumer, boolean computeChecksum) throws SVNException {
-        return sendDelta(path, SVNFileUtil.DUMMY_IN, target, consumer, computeChecksum);
+        return sendDelta(path, SVNFileUtil.DUMMY_IN, 0, target, consumer, computeChecksum);
     }
-    
+
     /**
      * Generates a series of diff windows of fixed size comparing 
      * target bytes (read from <code>target</code> stream) against source
@@ -116,6 +116,7 @@ public class SVNDeltaGenerator {
      * @param  path             a file repository path
      * @param  source           an input stream to read source bytes
      *                          from
+     * @param  sourceOffset     an offset of the source view in the given <code>source</code> stream 
      * @param  target           an input stream to read target bytes
      *                          from
      * @param  consumer         a diff windows consumer
@@ -126,62 +127,6 @@ public class SVNDeltaGenerator {
      *                          MD5 checksum computed for the target contents; otherwise  <span class="javakeyword">null</span>
      * @throws SVNException
      */
-    public String sendDelta(String path, InputStream source, InputStream target, ISVNDeltaConsumer consumer, boolean computeChecksum) throws SVNException {
-        MessageDigest digest = null;
-        if (computeChecksum) {
-            try {
-                digest = MessageDigest.getInstance("MD5");
-            } catch (NoSuchAlgorithmException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
-                return null;
-            }
-        }
-        int sourceOffset = 0;
-
-        while(true) {
-            int targetLength;
-            int sourceLength;
-            try {
-                targetLength = target.read(myTargetBuffer, 0, myTargetBuffer.length);
-            } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
-                return null;
-            }
-            if (targetLength <= 0) {
-                // send empty window, needed to create empty file.
-                if (consumer != null) {
-                    SVNDiffWindow window = new SVNDiffWindow(sourceOffset, 0, 0, new SVNDiffInstruction[0], 0);
-                    OutputStream os = consumer.textDeltaChunk(path, window);
-                    SVNFileUtil.closeFile(os);
-                }
-                break;
-            } 
-            try {
-                sourceLength = source.read(mySourceBuffer, 0, mySourceBuffer.length);
-            } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
-                return null;
-            }
-            if (sourceLength < 0) {
-                sourceLength = 0;
-            }
-            // update digest,
-            if (digest != null) {
-                digest.update(myTargetBuffer, 0, targetLength);
-            }
-            // generate and send window
-            sendDelta(path, sourceOffset, mySourceBuffer, sourceLength, myTargetBuffer, targetLength, consumer);
-            sourceOffset += sourceLength;
-        }
-        if (consumer != null) {
-            consumer.textDeltaEnd(path);
-        }
-        return SVNFileUtil.toHexDigest(digest);
-    }
-
     public String sendDelta(String path, InputStream source, int sourceOffset, InputStream target, ISVNDeltaConsumer consumer, boolean computeChecksum) throws SVNException {
         MessageDigest digest = null;
         if (computeChecksum) {

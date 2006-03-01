@@ -128,6 +128,8 @@ public class SVNRepositoryReplicationTest {
         }
         SVNClientManager manager = SVNClientManager.newInstance();
         SVNUpdateClient updateClient = manager.getUpdateClient();
+        updateClient.setIgnoreExternals(true);
+        
         for (long i = 1; i <= top; i++) {
             SVNDebugLog.logInfo("Checking revision #" + i);
             System.out.println("Checking revision #" + i);
@@ -161,6 +163,8 @@ public class SVNRepositoryReplicationTest {
         }
         SVNClientManager manager = SVNClientManager.newInstance();
         SVNUpdateClient updateClient = manager.getUpdateClient();
+        updateClient.setIgnoreExternals(true);
+
         long i = 1;
         SVNDebugLog.logInfo("Checking revision #" + i);
         System.out.println("Checking revision #" + i);

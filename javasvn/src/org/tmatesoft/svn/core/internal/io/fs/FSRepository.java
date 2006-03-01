@@ -550,7 +550,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                             }
                             targetStream = FSReader.getFileContentsInputStream(root, revPath, myRevNodesPool, myReposRootDir);
                             SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
-                            deltaGenerator.sendDelta(path, sourceStream, targetStream, handler, false);
+                            deltaGenerator.sendDelta(path, sourceStream, 0, targetStream, handler, false);
                         }finally{
                             SVNFileUtil.closeFile(sourceStream);
                             SVNFileUtil.closeFile(targetStream);
@@ -1388,7 +1388,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 }
                 targetStream = FSReader.getFileContentsInputStream(FSRoot.createRevisionRoot(myReporterContext.getTargetRevision(), myReporterContext.getTargetRoot()), targetPath, myRevNodesPool, myReposRootDir);//FSInputStream.createDeltaStream(targetNode, myReposRootDir);
                 SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
-                deltaGenerator.sendDelta(editPath, sourceStream, targetStream, myReporterContext.getEditor(), false);
+                deltaGenerator.sendDelta(editPath, sourceStream, 0, targetStream, myReporterContext.getEditor(), false);
             }finally{
                 SVNFileUtil.closeFile(sourceStream);
                 SVNFileUtil.closeFile(targetStream);

@@ -1254,7 +1254,7 @@ public class FSCommitEditor implements ISVNEditor {
         SVNFileUtil.deleteAll(FSRepositoryUtil.getTxnDir(myTxn.getTxnId(), myReposRootDir), true);
     }
     
-    private class DirBaton {
+    private static class DirBaton {
         /* the revision I'm based on  */
         private long myBaseRevision;
         /* the -absolute- path to this dir in the fs */

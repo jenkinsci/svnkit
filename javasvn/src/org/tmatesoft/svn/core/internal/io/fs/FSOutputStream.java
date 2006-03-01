@@ -233,7 +233,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
             flushNextWindow();
             super.myBufferLength = 0;
             super.myBuffer = null;
-            writeDiffWindow(null);
             FSRepresentation rep = new FSRepresentation();
             rep.setOffset(myRepOffset);
             /* Determine the length of the svndiff data. */
@@ -275,14 +274,10 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     private void writeDiffWindow(SVNDiffWindow window) throws SVNException {
         try{
             /* Make sure we write the header.  */
+            SVNDiffWindowBuilder.save(window, !isHeaderWritten, myTargetFile);
             if(!isHeaderWritten){
-                myTargetFile.write("SVN\0".getBytes());
                 isHeaderWritten = true;
             }
-            if(window == null){
-                return;
-            }
-            SVNDiffWindowBuilder.save(window, !isHeaderWritten, myTargetFile);
             myTargetFile.write(myNewDataStream.myBuffer, 0, myNewDataStream.myBufferLength);
         }catch(IOException ioe){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
@@ -324,11 +319,9 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     }
     
     private void flushNextWindow() throws SVNException {
-        if(myTargetLength > 0){
-            ByteArrayInputStream sourceData = new ByteArrayInputStream(mySourceBuf, 0, mySourceLength);
-            ByteArrayInputStream targetData = new ByteArrayInputStream(myTargetBuf, 0, myTargetLength);
-            myDeltaGenerator.sendDelta(null, sourceData, (int)mySourceOffset, targetData, this, false);
-        }
+        ByteArrayInputStream sourceData = new ByteArrayInputStream(mySourceBuf, 0, mySourceLength);
+        ByteArrayInputStream targetData = new ByteArrayInputStream(myTargetBuf, 0, myTargetLength);
+        myDeltaGenerator.sendDelta(null, sourceData, (int)mySourceOffset, targetData, this, false);
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException{
