@@ -201,15 +201,6 @@ public class SVNDiffWindowBuilder {
 		return myDiffWindow;
 	}
     
-    /**
-     * Returns the raw instructions data of the current diff window.
-     * 
-     * @return instructions bytes or <span class="javakeyword">null</span> 
-     *         if they have not been read
-     */
-    public byte[] getInstructionsData() {
-        return myInstructions;
-    }
 	
     /**
      * Builds a diff window from raw delta bytes. If every step of restoring 
@@ -291,6 +282,7 @@ public class SVNDiffWindowBuilder {
                     return offset + length;
                 }
                 if (myDiffWindow == null) {
+                    myInstructions = myInstructions == null ? new byte[0] : myInstructions;
                     myDiffWindow = createDiffWindow(myOffsets, myInstructions);
                 } 
                 myState = DONE;
@@ -405,6 +397,7 @@ public class SVNDiffWindowBuilder {
                     }
                 }
                 if (myDiffWindow == null) {
+                    myInstructions = myInstructions == null ? new byte[0] : myInstructions;
                     myDiffWindow = createDiffWindow(myOffsets, myInstructions);
                 } 
                 myState = DONE;
@@ -482,12 +475,6 @@ public class SVNDiffWindowBuilder {
                             if (myNewDataStream == null) {
                                 myNewDataStream = SVNFileUtil.DUMMY_OUT;
                             }
-                            try {
-                                myNewDataStream.write(myInstructions);
-                            } catch (IOException e) {
-                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                                SVNErrorManager.error(err, e);
-                            }
                         }
                     }
                     break;
@@ -549,25 +536,8 @@ public class SVNDiffWindowBuilder {
         if (saveHeader) {
             os.write(HEADER_BYTES);
         } 
-        if (window.getInstructionsCount() == 0) {
-            return;
-        }
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        for(int i = 0; i < window.getInstructionsCount(); i++) {
-            SVNDiffInstruction instruction = window.getInstructionAt(i);
-            byte first = (byte) (instruction.type << 6);
-            if (instruction.length <= 0x3f && instruction.length > 0) {
-                // single-byte lenght;
-                first |= (instruction.length & 0x3f);
-                bos.write(first & 0xff);
-            } else {
-                bos.write(first & 0xff);
-                writeInt(bos, instruction.length);
-            }
-            if (instruction.type == 0 || instruction.type == 1) {
-                writeInt(bos, instruction.offset);
-            }
-        }
+        saveInstructions(window, bos);
 
         long[] offsets = new long[5];
         offsets[0] = window.getSourceViewOffset();
@@ -581,29 +551,34 @@ public class SVNDiffWindowBuilder {
         bos.writeTo(os);
     }
 
+    private static void saveInstructions(SVNDiffWindow window, ByteArrayOutputStream bos) throws IOException {
+        if (window.getInstructionsData() != null) {
+            bos.write(window.getInstructionsData());
+        } else {
+            for(int i = 0; i < window.getInstructionsCount(); i++) {
+                SVNDiffInstruction instruction = window.getInstructionAt(i);
+                byte first = (byte) (instruction.type << 6);
+                if (instruction.length <= 0x3f && instruction.length > 0) {
+                    // single-byte lenght;
+                    first |= (instruction.length & 0x3f);
+                    bos.write(first & 0xff);
+                } else {
+                    bos.write(first & 0xff);
+                    writeInt(bos, instruction.length);
+                }
+                if (instruction.type == 0 || instruction.type == 1) {
+                    writeInt(bos, instruction.offset);
+                }
+            }
+        }
+    }
+
     public static void save(SVNDiffWindow window, boolean saveHeader, RandomAccessFile file) throws IOException {
         if (saveHeader) {
             file.write(HEADER_BYTES);
         } 
-        if (window.getInstructionsCount() == 0) {
-            return;
-        }
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        for(int i = 0; i < window.getInstructionsCount(); i++) {
-            SVNDiffInstruction instruction = window.getInstructionAt(i);
-            byte first = (byte) (instruction.type << 6);
-            if (instruction.length <= 0x3f && instruction.length > 0) {
-                // single-byte lenght;
-                first |= (instruction.length & 0x3f);
-                bos.write(first & 0xff);
-            } else {
-                bos.write(first & 0xff);
-                writeInt(bos, instruction.length);
-            }
-            if (instruction.type == 0 || instruction.type == 1) {
-                writeInt(bos, instruction.offset);
-            }
-        }
+        saveInstructions(window, bos);
 
         long[] offsets = new long[5];
         offsets[0] = window.getSourceViewOffset();
@@ -789,9 +764,11 @@ public class SVNDiffWindowBuilder {
     }
 
 	private static SVNDiffWindow createDiffWindow(int[] offsets, byte[] instructions) {
+        instructions = instructions == null ? new byte[0] : instructions;
 		SVNDiffWindow window = new SVNDiffWindow(offsets[0], offsets[1], offsets[2], 
 				instructions.length,
 				offsets[4]);
+        window.setInstructionsData(instructions);
 		return window;
 	}
 	

@@ -218,14 +218,16 @@ public class FSInputStream extends InputStream {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
                         SVNErrorManager.error(err, ioe);
                     }
-                    SVNDiffInstruction[] instructions = SVNDiffWindowBuilder.createInstructions(myDiffWindowBuilder.getInstructionsData());
-                    int sourceInstructions = 0;
-                    for(int i = 0; i < instructions.length; i++){
-                        if(instructions[i].type == SVNDiffInstruction.COPY_FROM_SOURCE){
-                            sourceInstructions++;
+                    SVNDiffWindow window = myDiffWindowBuilder.getDiffWindow();
+                    // TODO make window report whether it has cp_from_src instructions or not.
+                    SVNDiffInstruction[] instructions = SVNDiffWindowBuilder.createInstructions(window.getInstructionsData());
+                    boolean hasCopiesFromSource = false;
+                    for(int i = 0; !hasCopiesFromSource && i < instructions.length; i++){
+                        if(instructions[i].type == SVNDiffInstruction.COPY_FROM_SOURCE) {
+                            hasCopiesFromSource = true;
                         }
                     }
-                    if(sourceInstructions == 0){
+                    if(!hasCopiesFromSource){
                         break;
                     }
                 }
@@ -294,7 +296,6 @@ public class FSInputStream extends InputStream {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Reading one svndiff window read beyond the end of the representation");
             SVNErrorManager.error(err);
         }
-        dataBuf.write(myDiffWindowBuilder.getInstructionsData());
         dataBuf.write(buffer);
         return window;
     }

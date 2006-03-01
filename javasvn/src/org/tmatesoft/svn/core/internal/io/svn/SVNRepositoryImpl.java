@@ -393,14 +393,6 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     SVNDiffWindow window = builder.getDiffWindow();
                     if (window != null) {
                         OutputStream os = handler.textDeltaChunk(name == null ? path : name, window);
-                        if (os != null) {
-                            try {
-                                os.write(builder.getInstructionsData());
-                            } catch (IOException e) {
-                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                                SVNErrorManager.error(err, e);
-                            }
-                        }
                         builder.reset(SVNDiffWindowBuilder.OFFSET);
                         long length = window.getNewDataLength();
                         while (length > 0) {

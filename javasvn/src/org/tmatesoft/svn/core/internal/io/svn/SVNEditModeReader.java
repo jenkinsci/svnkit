@@ -90,12 +90,6 @@ public class SVNEditModeReader {
                     if (myDiffStream == null) {
                         myDiffStream = SVNFileUtil.DUMMY_OUT;
                     }
-                    try {
-                        myDiffStream.write(myBuilder.getInstructionsData());
-                    } catch (IOException e) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getLocalizedMessage());
-                        SVNErrorManager.error(err, e);
-                    }
                     if (myLenght == 0) {
                         closeDiffStream();
                     }
