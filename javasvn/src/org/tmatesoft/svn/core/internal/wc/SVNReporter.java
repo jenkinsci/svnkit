@@ -98,7 +98,7 @@ public class SVNReporter implements ISVNReporterBaton {
             if (th instanceof SVNException) {
                 throw (SVNException) th;
             }
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "WC report failed: {1}", th.getLocalizedMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "WC report failed: {1}", th.getMessage());
             SVNErrorManager.error(err, th);
         }
     }
