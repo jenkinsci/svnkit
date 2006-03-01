@@ -522,6 +522,7 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doSetRevisionProperty(File path, SVNRevision revision, String propName, String propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         propName = validatePropertyName(propName);
+        propValue = validatePropertyValue(propName, propValue, force);
         SVNURL url = getURL(path);
         doSetRevisionProperty(url, revision, propName, propValue, force, handler);
     }
@@ -560,6 +561,7 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, String propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         propName = validatePropertyName(propName);
+        propValue = validatePropertyValue(propName, propValue, force);
         if (!force && SVNRevisionProperty.AUTHOR.equals(propName) && propValue != null && propValue.indexOf('\n') >= 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_REVISION_AUTHOR_CONTAINS_NEWLINE, "Value will not be set unless forced");
             SVNErrorManager.error(err);
@@ -2229,26 +2231,25 @@ public class SVNWCClient extends SVNBasicClient {
         if (value == null) {
             return value;
         }
+        if (SVNProperty.isSVNProperty(name)) {
+            value = SVNTranslator.convertEOLs(value);
+        }
         if (!force && SVNProperty.EOL_STYLE.equals(name)) {
             value = value.trim();
         } else if (!force && SVNProperty.MIME_TYPE.equals(name)) {
             value = value.trim();
-        } else if (SVNProperty.IGNORE.equals(name)
-                || SVNProperty.EXTERNALS.equals(name)) {
+        } else if (SVNProperty.IGNORE.equals(name) || SVNProperty.EXTERNALS.equals(name)) {
             if (!value.endsWith("\n")) {
                 value += "\n";
             }
             if (SVNProperty.EXTERNALS.equals(name)) {
-                SVNExternalInfo[] externalInfos = SVNWCAccess.parseExternals(
-                        "", value);
-                for (int i = 0; externalInfos != null
-                        && i < externalInfos.length; i++) {
+                SVNExternalInfo[] externalInfos = SVNWCAccess.parseExternals("", value);
+                for (int i = 0; externalInfos != null && i < externalInfos.length; i++) {
                     String path = externalInfos[i].getPath();
                     if (path.indexOf(".") >= 0 || path.indexOf("..") >= 0 || path.startsWith("/")) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION, "Invalid property 'svn:externals': target involves '.' or '..' or is absolute path"); 
                         SVNErrorManager.error(err);
                     }
-
                 }
             }
         } else if (SVNProperty.KEYWORDS.equals(name)) {

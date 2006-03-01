@@ -84,6 +84,32 @@ public class SVNTranslator {
             }
         }
     }
+    
+    public static String convertEOLs(String line) {
+        if (line == null) {
+            return line;
+        }
+        StringBuffer result = null;
+        for (int i = 0; i < line.length(); i++) {
+            char ch = line.charAt(i);
+            if (ch == '\r') {
+                if (result == null) {
+                    result = new StringBuffer(line.length());
+                    result.append(line.substring(0, i));
+                }                
+                if (i + 1 < line.length() && line.charAt(i + 1) == '\n') {
+                    // skip \r in \r\n
+                    continue;
+                }
+                // replace \r with \r\n
+                ch = '\n';
+            }
+            if (result != null) {
+                result.append(ch);
+            }
+        }
+        return result != null ? result.toString() : line;
+    }
 
     public static void translate(File src, File dst, byte[] eol, Map keywords, boolean special, boolean expand) throws SVNException {
         if (src == null || dst == null) {
