@@ -536,6 +536,9 @@ public class SVNDiffWindowBuilder {
         if (saveHeader) {
             os.write(HEADER_BYTES);
         } 
+        if (!window.hasInstructions()) {
+            return;
+        }
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         saveInstructions(window, bos);
 
@@ -577,6 +580,9 @@ public class SVNDiffWindowBuilder {
         if (saveHeader) {
             file.write(HEADER_BYTES);
         } 
+        if (!window.hasInstructions()) {
+            return;
+        }
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         saveInstructions(window, bos);
 
@@ -591,7 +597,7 @@ public class SVNDiffWindowBuilder {
         }
         file.write(bos.toByteArray());
     }
-    
+
     /**
      * Creates a diff window intended for replacing the whole contents of a file
      * with new data. It is mainly intended for binary and newly added text files.  

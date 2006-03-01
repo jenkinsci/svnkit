@@ -366,4 +366,13 @@ public class SVNDiffWindow {
         sb.append(":");
         return sb.toString();
     }
+    
+    public boolean hasInstructions() {
+        if (myInstructions != null) {
+            return myInstructions.length > 0;
+        } else if (myInstructionsData != null) {
+            return myInstructionsData.length > 0;
+        }
+        return false;
+    }
 }
