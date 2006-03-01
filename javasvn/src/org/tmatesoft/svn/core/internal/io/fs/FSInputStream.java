@@ -207,6 +207,23 @@ public class FSInputStream extends InputStream {
                 int startIndex = 0;
                 for(ListIterator states = myRepStateList.listIterator(); states.hasNext();){
                     FSRepresentationState curState = (FSRepresentationState)states.next();
+
+                    try{
+                        /* Skip windows to reach the current chunk if we aren't there yet. */
+                        while(curState.chunkIndex < myChunkIndex){
+                            skipDiffWindow(curState.file);
+                            curState.chunkIndex++;
+                            curState.offset = curState.file.getFilePointer();
+                            if(curState.offset >= curState.end){
+                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Reading one svndiff window read beyond the end of the representation");
+                                SVNErrorManager.error(err);
+                            }
+                        }
+                    }catch(IOException ioe){
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+                        SVNErrorManager.error(err, ioe);
+                    }
+
                     startIndex = myRepStateList.indexOf(curState);
                     myDiffWindowBuilder.reset(SVNDiffWindowBuilder.OFFSET);
                     try{
