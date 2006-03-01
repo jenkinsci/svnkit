@@ -237,6 +237,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
         }
+        commitMessage = validateCommitMessage(commitMessage);
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, null);
         ISVNCommitPathHandler deleter = new ISVNCommitPathHandler() {
             public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
@@ -320,6 +321,7 @@ public class SVNCommitClient extends SVNBasicClient {
         }
         paths = decodedPaths;
         SVNRepository repos = createRepository(rootURL, true);
+        commitMessage = validateCommitMessage(commitMessage);
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, null);
         ISVNCommitPathHandler creater = new ISVNCommitPathHandler() {
             public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
@@ -434,6 +436,7 @@ public class SVNCommitClient extends SVNBasicClient {
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
         }
+        commitMessage = validateCommitMessage(commitMessage);
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, new SVNImportMediator(srcKind == SVNFileType.DIRECTORY ? path : path.getParentFile()));
         String filePath = "";
         if (srcKind != SVNFileType.DIRECTORY) {
@@ -594,11 +597,12 @@ public class SVNCommitClient extends SVNBasicClient {
                 continue;
             }
             try {
-                commitMessage = getCommitHandler().getCommitMessage(commitMessage, commitPacket.getCommitItems());
+                commitMessage = getCommitHandler().getCommitMessage(commitMessage, commitPacket.getCommitItems());                
                 if (commitMessage == null) {
                     infos.add(SVNCommitInfo.NULL);
                     continue;
                 }
+                commitMessage = validateCommitMessage(commitMessage);
                 Map commitables = new TreeMap();
                 String baseURL = SVNCommitUtil.translateCommitables(commitPacket.getCommitItems(), commitables);
                 Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket.getLockTokens(), baseURL);
@@ -1055,6 +1059,15 @@ public class SVNCommitClient extends SVNBasicClient {
             return false;
         }
         return hasProcessedParents(paths, path);
+    }
+    
+    static String validateCommitMessage(String message) {
+        if (message == null) {
+            return message;
+        }
+        message = message.replaceAll("\r\n", "\n");
+        message = message.replace('\r', '\n');
+        return message;
     }
 
 }

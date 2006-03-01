@@ -260,6 +260,7 @@ public class SVNCopyClient extends SVNBasicClient {
             return SVNCommitInfo.NULL;
         }
 
+        commitMessage = SVNCommitClient.validateCommitMessage(commitMessage);
         ISVNEditor commitEditor = repository.getCommitEditor(commitMessage, null, false, null);
         ISVNCommitPathHandler committer = new CopyCommitPathHandler(srcPath, srcRevNumber, srcKind, dstPath, isMove, isResurrect);
         Collection paths = isMove ? Arrays.asList(new String[] { srcPath, dstPath }) : Collections.singletonList(dstPath);
@@ -374,6 +375,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNCommitMediator mediator = new SVNCommitMediator(commitables);
             tmpFiles = mediator.getTmpFiles();
 
+            commitMessage = SVNCommitClient.validateCommitMessage(commitMessage);
             commitEditor = repository.getCommitEditor(commitMessage, null, false, mediator);
             info = SVNCommitter.commit(tmpFiles, commitables, repository.getRepositoryRoot(true).getPath(), commitEditor);
             commitEditor = null;
