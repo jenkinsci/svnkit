@@ -142,8 +142,8 @@ class SVNConnection {
                         failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, new String((byte[]) items[1]));
                         break;
                     } else if (STEP.equals(items[0])) {
-                        byte[] response = authenticator.buildChallengeReponse((byte[]) items[1]);
                         try {
+                            byte[] response = authenticator.buildChallengeReponse((byte[]) items[1]);
                             getOutputStream().write(response);
                             getOutputStream().flush();
                         } catch (IOException e) {
