@@ -57,7 +57,7 @@ public class SVNFileUtil {
             return -1;
         }
     };
-    
+
     private static String nativeEOLMarker;
     private static String ourGroupID;
     private static String ourUserID;
@@ -827,6 +827,27 @@ public class SVNFileUtil {
         return null;
     }
 
+    public static ISVNInputFile openSVNFileForReading(File file) throws SVNException {
+        if (file == null) {
+            return null;
+        }
+        if (!file.isFile() || !file.canRead()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from to ''{0}'': path refers to directory or read access is denied", file);
+            SVNErrorManager.error(err);
+        }
+        if (!file.exists()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "File ''{0}'' does not exist", file);
+            SVNErrorManager.error(err);
+        }
+        try {
+            return new SVNInputFileChannel(file);
+        } catch (FileNotFoundException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from to ''{0}'': {1}", new Object[] {file, e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
+        }
+        return null;
+    }
+    
     public static RandomAccessFile openRAFileForReading(File file) throws SVNException {
         if (file == null) {
             return null;
@@ -858,7 +879,18 @@ public class SVNFileUtil {
             //
         }
     }
-
+    
+    public static void closeFile(ISVNInputFile inFile) {
+        if (inFile == null) {
+            return;
+        }
+        try {
+            inFile.close();
+        } catch (IOException e) {
+            //
+        }
+    }
+    
     public static void closeFile(OutputStream os) {
         if (os == null) {
             return;

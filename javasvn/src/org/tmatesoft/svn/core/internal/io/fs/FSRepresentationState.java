@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.io.RandomAccessFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -19,6 +18,7 @@ import java.util.LinkedList;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.internal.wc.ISVNInputFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * @author  TMate Software Ltd.
  */
 public class FSRepresentationState {
-    RandomAccessFile file;
+    ISVNInputFile file;
     /* The starting offset for the raw svndiff/plaintext data minus header. */
     long start;
     /* The current offset into the file. */
@@ -45,7 +45,7 @@ public class FSRepresentationState {
     public FSRepresentationState() {
     }
 
-    public FSRepresentationState(RandomAccessFile file, long start, long offset, long end, int version, int index) {
+    public FSRepresentationState(ISVNInputFile file, long start, long offset, long end, int version, int index) {
         this.file = file;
         this.start = start;
         this.offset = offset;
@@ -61,7 +61,7 @@ public class FSRepresentationState {
      * is self-compressed. 
      */
     public static FSRepresentationState buildRepresentationList(FSRepresentation firstRep, LinkedList result, File reposRootDir) throws SVNException {
-        RandomAccessFile file = null;
+        ISVNInputFile file = null;
         FSRepresentation rep = new FSRepresentation(firstRep);
         try{
             while(true){
@@ -111,7 +111,7 @@ public class FSRepresentationState {
     /* Read the next line from a file and parse it as a text
      * representation entry. Return parsed args.
      */
-    private static FSRepresentationArgs readRepresentationLine(RandomAccessFile file) throws SVNException {
+    private static FSRepresentationArgs readRepresentationLine(ISVNInputFile file) throws SVNException {
         try{
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
             String line = FSReader.readNextLine(file, 160);

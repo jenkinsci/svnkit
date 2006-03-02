@@ -24,13 +24,13 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.wc.ISVNInputFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.io.File;
 import java.util.Date;
 import java.util.LinkedList;
@@ -115,9 +115,9 @@ public class FSReader {
     public static Map fetchTxnChanges(Map changedPaths, String txnId, Map copyFromCache, File reposRootDir) throws SVNException {
         changedPaths = changedPaths == null ? new HashMap() : changedPaths;
         File changesFile = FSRepositoryUtil.getTxnChangesFile(txnId, reposRootDir);
-        RandomAccessFile raChangesFile = null;
+        ISVNInputFile raChangesFile = null;
         try{
-            raChangesFile = SVNFileUtil.openRAFileForReading(changesFile);
+            raChangesFile = SVNFileUtil.openSVNFileForReading(changesFile);
             fetchAllChanges(changedPaths, raChangesFile, false, copyFromCache);
         }finally{
             SVNFileUtil.closeFile(raChangesFile);
@@ -129,7 +129,7 @@ public class FSReader {
      * Object[0]: pathChanged Map
      * Object[1]: copyfromCache Map
      */    
-    public static Object[] fetchAllChanges(Map changedPaths, RandomAccessFile changesFile, boolean prefolded, Map mapCopyfrom) throws SVNException {        
+    public static Object[] fetchAllChanges(Map changedPaths, ISVNInputFile changesFile, boolean prefolded, Map mapCopyfrom) throws SVNException {        
         changedPaths = changedPaths != null ? changedPaths : new HashMap();  
         mapCopyfrom = mapCopyfrom != null ? mapCopyfrom : new HashMap();
         FSChange change = FSReader.readChange(changesFile);        
@@ -271,7 +271,7 @@ public class FSReader {
     /* Given a representation 'rep', open the correct file and seek to the 
      * correction location. 
      */
-    public static RandomAccessFile openAndSeekRepresentation(FSRepresentation rep, File reposRootDir) throws SVNException {
+    public static ISVNInputFile openAndSeekRepresentation(FSRepresentation rep, File reposRootDir) throws SVNException {
         if(!rep.isTxn()){
             return openAndSeekRevision(rep.getRevision(), rep.getOffset(), reposRootDir);
         }
@@ -282,10 +282,10 @@ public class FSReader {
      * filesystem. Seek to an offset location before returning. Only appropriate 
      * for file contents, nor props or directory contents. 
      */
-    private static RandomAccessFile openAndSeekTransaction(FSRepresentation rep, File reposRootDir) throws SVNException {
-        RandomAccessFile file = null;
+    private static ISVNInputFile openAndSeekTransaction(FSRepresentation rep, File reposRootDir) throws SVNException {
+        ISVNInputFile file = null;
         try{
-            file = SVNFileUtil.openRAFileForReading(FSRepositoryUtil.getTxnRevFile(rep.getTxnId(), reposRootDir));
+            file = SVNFileUtil.openSVNFileForReading(FSRepositoryUtil.getTxnRevFile(rep.getTxnId(), reposRootDir));
             file.seek(rep.getOffset());
         }catch(IOException ioe){
             SVNFileUtil.closeFile(file);
@@ -301,10 +301,10 @@ public class FSReader {
     /* Open the revision file for a revision in a filesystem. Seek to an offset 
      * location before returning. 
      */
-    private static RandomAccessFile openAndSeekRevision(long revision, long offset, File reposRootDir) throws SVNException {
-        RandomAccessFile file = null;
+    private static ISVNInputFile openAndSeekRevision(long revision, long offset, File reposRootDir) throws SVNException {
+        ISVNInputFile file = null;
         try{
-            file = SVNFileUtil.openRAFileForReading(FSRepositoryUtil.getRevisionFile(reposRootDir, revision));
+            file = SVNFileUtil.openSVNFileForReading(FSRepositoryUtil.getRevisionFile(reposRootDir, revision));
             file.seek(offset);
         }catch(IOException ioe){
             SVNFileUtil.closeFile(file);
@@ -721,15 +721,15 @@ public class FSReader {
 
     public static FSRevisionNode getRevNodeFromID(File reposRootDir, FSID id) throws SVNException {
         Map headers = null;
-        RandomAccessFile raRevFile = null;
+        ISVNInputFile raRevFile = null;
         try{
             if(id.isTxn()){
                 /* This is a transaction node-rev. */
                 File revFile = FSRepositoryUtil.getTxnRevNodeFile(id, reposRootDir);
-                raRevFile = SVNFileUtil.openRAFileForReading(revFile);
+                raRevFile = SVNFileUtil.openSVNFileForReading(revFile);
             }else{
                 /* This is a revision node-rev. */
-                raRevFile = FSReader.openAndSeekRevision(id.getRevision(), id.getOffset(), reposRootDir);
+                raRevFile = openAndSeekRevision(id.getRevision(), id.getOffset(), reposRootDir);
             }
         }catch(SVNException svne){
             SVNFileUtil.closeFile(raRevFile);
@@ -993,7 +993,7 @@ public class FSReader {
     }
 
     // Read in a rev-node given its offset in a rev-file.
-    private static Map readRevNodeHeaders(RandomAccessFile revFile) throws SVNException {
+    private static Map readRevNodeHeaders(ISVNInputFile revFile) throws SVNException {
         Map map = new HashMap();
         try {
             while (true) {
@@ -1019,7 +1019,7 @@ public class FSReader {
     /* limitBytes MUST NOT be 0! it defines the maximum number of bytes 
      * that should be read (not counting EOL)
      */ 
-    public static String readNextLine(RandomAccessFile raFile, int limitBytes) throws SVNException {
+    public static String readNextLine(ISVNInputFile raFile, int limitBytes) throws SVNException {
         StringBuffer lineBuffer = new StringBuffer();
         int r = -1;
         try {
@@ -1089,14 +1089,14 @@ public class FSReader {
         File revFile = FSRepositoryUtil.getRevisionFile(reposRootDir, revision); 
         int size = 64;
         byte[] buffer = new byte[size];
-        RandomAccessFile raRevFile = null;
+        ISVNInputFile raRevFile = null;
         try {
             /*
              * svn: We will assume that the last line containing the two offsets
              * will never be longer than 64 characters. Read in this last block,
              * from which we will identify the last line.
              */
-            raRevFile = SVNFileUtil.openRAFileForReading(revFile);
+            raRevFile = SVNFileUtil.openSVNFileForReading(revFile);
             long offset = raRevFile.length() - size;
             raRevFile.seek(offset);
             size = raRevFile.read(buffer);
@@ -1190,7 +1190,7 @@ public class FSReader {
     /* Read changes from revision file, RandomAccessFile reader must be already opened.
      * OffsetContainerClass before invoking 'readChanges' method contains offset to changes, after invoking 
      * 'readChanges' contains offset to next changes (if file has them) in raFile */
-    public static FSChange readChange(RandomAccessFile raReader) throws SVNException {
+    public static FSChange readChange(ISVNInputFile raReader) throws SVNException {
         String changeLine = null;
         try{
             changeLine = FSReader.readNextLine(raReader, 4096);
@@ -1320,10 +1320,10 @@ public class FSReader {
         }           
         long changesOffset = getChangesOffset(reposRootDir, root.getRevision());
         File revFile = FSRepositoryUtil.getRevisionFile(reposRootDir, root.getRevision());
-        RandomAccessFile raRevFile = null;
+        ISVNInputFile raRevFile = null;
         Object[] result = null;
         try{
-            raRevFile = SVNFileUtil.openRAFileForReading(revFile);
+            raRevFile = SVNFileUtil.openSVNFileForReading(revFile);
             raRevFile.seek(changesOffset);
             result = fetchAllChanges(changedPaths, raRevFile, true, root.getCopyfromCache());
         }catch(IOException ioe){

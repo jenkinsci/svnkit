@@ -18,7 +18,6 @@ import java.util.LinkedList;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.io.File;
-import java.io.RandomAccessFile;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.InputStream;
@@ -27,6 +26,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc.ISVNInputFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDiffInstruction;
@@ -317,7 +317,7 @@ public class FSInputStream extends InputStream {
         return window;
     }
     
-    private void skipDiffWindow(RandomAccessFile file) throws IOException, SVNException {
+    private void skipDiffWindow(ISVNInputFile file) throws IOException, SVNException {
         myDiffWindowBuilder.reset(SVNDiffWindowBuilder.OFFSET);
         myDiffWindowBuilder.accept(file);
         SVNDiffWindow window = myDiffWindowBuilder.getDiffWindow();

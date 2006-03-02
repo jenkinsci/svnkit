@@ -23,6 +23,7 @@ import java.util.Collection;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.ISVNInputFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
@@ -326,7 +327,7 @@ public class SVNDiffWindowBuilder {
      *                       </ul> 
      * @throws SVNException  if an i/o error occurred while reading from <code>is</code>
      */
-    public void accept(RandomAccessFile file) throws SVNException, IOException {       
+    public void accept(ISVNInputFile file) throws SVNException, IOException {       
         SVNErrorMessage err;
         switch (myState) {
             case HEADER:
@@ -751,7 +752,7 @@ public class SVNDiffWindowBuilder {
         }
     }
 
-    private static void readInt(RandomAccessFile file, int[] target, int index) throws SVNException, IOException {
+    private static void readInt(ISVNInputFile file, int[] target, int index) throws SVNException, IOException {
         target[index] = 0;
         while(true) {
             int r = file.read();
