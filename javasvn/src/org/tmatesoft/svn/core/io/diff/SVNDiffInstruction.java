@@ -12,6 +12,9 @@
 
 package org.tmatesoft.svn.core.io.diff;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 
 /**
  * The <b>SVNDiffInstruction</b> class represents instructions used to
@@ -138,5 +141,41 @@ public class SVNDiffInstruction {
         b.append(":");
         b.append(length);
         return b.toString();
+    }
+    
+    public void writeTo(OutputStream os) throws IOException {
+        byte first = (byte) (type << 6);
+        if (length <= 0x3f && length > 0) {
+            // single-byte lenght;
+            first |= (length & 0x3f);
+            os.write(first & 0xff);
+        } else {
+            os.write(first & 0xff);
+            writeInt(os, length);
+        }
+        if (type == 0 || type == 1) {
+            writeInt(os, offset);
+        }
+    }
+
+    public static void writeInt(OutputStream os, long i) throws IOException {
+        if (i == 0) {
+            os.write(0);
+            return;
+        }
+        // how many bytes there are:
+        int count = 1;
+        long v = i >> 7;
+        while(v > 0) {
+            v = v >> 7;
+            count++;
+        }
+        byte b;
+        int r;
+        while(--count >= 0) {
+            b = (byte) ((count > 0 ? 0x1 : 0x0) << 7);
+            r = ((byte) ((i >> 7 * count) & 0x7f)) | b;
+            os.write(r);
+        }
     }
 }

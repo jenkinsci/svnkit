@@ -670,7 +670,7 @@ public class SVNDiffWindowBuilder {
         return (SVNDiffWindow[]) windows.toArray(new SVNDiffWindow[windows.size()]);
     }
     
-    private static void writeInt(OutputStream os, long i) throws IOException {
+    public static void writeInt(OutputStream os, long i) throws IOException {
         if (i == 0) {
             os.write(0);
             return;
