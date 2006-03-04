@@ -83,7 +83,7 @@ public class FSNodeHistory
     public static boolean checkAncestryOfPegPath(File reposRootDir, String fsPath, long pegRev, long futureRev, FSRevisionNodePool revNodesPool) throws SVNException {
    		//FSRevisionNode root = FSReader.getRootRevNode(reposRootDir, futureRev);
         FSRoot root = FSRoot.createRevisionRoot(futureRev, revNodesPool.getRootRevisionNode(futureRev, reposRootDir)); 
-        FSNodeHistory history = getNodeHistory(reposRootDir, root, fsPath);
+        FSNodeHistory history = getNodeHistory(reposRootDir, root, fsPath, revNodesPool);
         fsPath = null;
    		SVNLocationEntry currentHistory = null;
    		while(true){  
@@ -112,13 +112,24 @@ public class FSNodeHistory
     
     //Retrun FSNodeHistory as an opaque node history object which represents
     //PATH under ROOT. ROOT must be a revision root  
-    public static FSNodeHistory getNodeHistory(File reposRootDir, FSRoot root, String path) throws SVNException{
+    public static FSNodeHistory getNodeHistory(File reposRootDir, FSRoot root, String path, FSRevisionNodePool pool) throws SVNException{
         if(root.isTxnRoot()){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_REVISION_ROOT);
             SVNErrorManager.error(err);
         }        
         /*And we require that the path exist in the root*/
-    	SVNNodeKind kind = FSReader.checkNodeKind(path, root.getRootRevisionNode(), reposRootDir);    	
+        FSRevisionNode node = null;
+//        SVNNodeKind kind = FSReader.checkNodeKind(path, root.getRootRevisionNode(), reposRootDir);      
+        SVNNodeKind kind = null;      
+        try{
+            node = pool.openPath(root, path, false, null, reposRootDir, false).getRevNode(); //FSReader.getRevisionNode(reposRootDir, path, root, 0);
+        }catch(SVNException svne){
+            if(svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND){
+                kind = SVNNodeKind.NONE;
+            }
+            throw svne;
+        }   
+        kind = node.getType();
     	if(kind == SVNNodeKind.NONE){
     		SVNErrorManager.error(FSErrors.errorNotFound(root, path));
     	}    	

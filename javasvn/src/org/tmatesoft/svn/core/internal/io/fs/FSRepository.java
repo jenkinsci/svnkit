@@ -158,7 +158,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
 
     void closeRepository() {
-        myRevNodesPool.clearAllCaches();
+        //myRevNodesPool.clearAllCaches();
         unlock();
     }
 
@@ -489,7 +489,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
             LinkedList locationEntries = new LinkedList();
             /* Open a history object. */
-            FSNodeHistory history = FSNodeHistory.getNodeHistory(myReposRootDir, root, path);
+            FSNodeHistory history = FSNodeHistory.getNodeHistory(myReposRootDir, root, path, myRevNodesPool);
             /* Get the revisions we are interested in. */
             while(true){
             	history = history.fsHistoryPrev(myReposRootDir, true, myRevNodesPool);            	
@@ -644,7 +644,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             for(int i = 0; i < absPaths.length; i++){
         		String path = absPaths[i];
         		/* if there is no path at specified root, SVNException is thrown */
-                FSNodeHistory hist = FSNodeHistory.getNodeHistory(myReposRootDir, root, path);
+                FSNodeHistory hist = FSNodeHistory.getNodeHistory(myReposRootDir, root, path, myRevNodesPool);
                 LogPathInfo info = new LogPathInfo(hist);
         		info.pickUpNextHistory(myReposRootDir, strictNode, histStart);
         		histories.addLast(info);
@@ -857,7 +857,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             	}
             	// Follow the copy to its source.  Ignore all revs between the
                 // copy target rev and the copy source rev (non-inclusive).
-            	SVNLocationEntry sEntry = FSReader.copiedFrom(myReposRootDir, croot, cpath, myRevNodesPool);
+            	SVNLocationEntry sEntry = FSReader.copiedFrom(myReposRootDir, FSRoot.createRevisionRoot(croot.getId().getRevision(), croot), cpath, myRevNodesPool);
                 /*!!here is inconsitance with code of svn: they write locationRevs[count] > sEntry.getRevision()*/
            		while((count < revisions.length) && locationRevs[count] > sEntry.getRevision()){
            			++count;
@@ -1123,6 +1123,12 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     
     public void closeSession() throws SVNException {
     }
+    
+    public void setLocation(SVNURL url, boolean forceReconnect) throws SVNException {
+        myRevNodesPool.clearAllCaches();
+        super.setLocation(url, forceReconnect);
+    }
+
 
     public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
         assertValidRevision(revision);

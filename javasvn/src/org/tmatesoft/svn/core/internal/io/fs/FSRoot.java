@@ -54,7 +54,6 @@ public class FSRoot {
         myIsTxnRoot = false;
         myTxnId = FSID.ID_INAPPLICABLE;
         myTxnFlags = 0;
-        myCopyfromCache = new HashMap();
     }
 
     public static FSRoot createTransactionRoot(String txnId, int flags){
@@ -67,7 +66,6 @@ public class FSRoot {
         myIsTxnRoot = true;
         myRevision = FSConstants.SVN_INVALID_REVNUM;
         myRootRevNode = null;
-        myCopyfromCache = new HashMap();
     }
 
     public boolean isTxnRoot() {

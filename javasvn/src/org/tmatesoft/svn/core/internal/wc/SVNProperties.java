@@ -130,7 +130,7 @@ public class SVNProperties {
                     /* Now read that much into a buffer. */
                     byte[] key = new byte[keyLength];
                     int r = hashStream.read(key);
-                    String keyName = new String(key, 0, r);
+                    String keyName = new String(key, 0, r, "UTF-8");
                     /* Suck up extra newline after key data */
                     if(hashStream.read() != '\n'){
                         SVNErrorManager.error(err);
@@ -150,7 +150,7 @@ public class SVNProperties {
                             /* Now read that much into a buffer. */
                             byte[] value = new byte[valueLength];
                             r = hashStream.read(value);
-                            valueName = new String(value, 0, r);
+                            valueName = new String(value, 0, r, "UTF-8");
                         }
                         /* Suck up extra newline after key data */
                         if(hashStream.read() != '\n'){
@@ -170,7 +170,7 @@ public class SVNProperties {
                     /* Now read that much into a buffer. */
                     byte[] key = new byte[keyLength];
                     int r = hashStream.read(key);
-                    String keyName = new String(key, 0, r);
+                    String keyName = new String(key, 0, r, "UTF-8");
                     /* Remove this hash entry. */
                     result.remove(keyName);
                     /* Suck up extra newline after key data */

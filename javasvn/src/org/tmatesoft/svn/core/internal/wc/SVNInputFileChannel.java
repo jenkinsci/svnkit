@@ -44,19 +44,17 @@ public class SVNInputFileChannel implements ISVNInputFile {
         //return myFileStream.read();
         byte[] buf = new byte[1];
         int r = myChannel.read(ByteBuffer.wrap(buf));
-        return r <= 0 ? -1 : (int)(buf[0] & 0xFF);
+        return r < 0 ? -1 : (int)(buf[0] & 0xFF);
     }
 
     public int read(byte[] b) throws IOException {
         //return myFileStream.read(b);
-        int r = myChannel.read(ByteBuffer.wrap(b));
-        return r <= 0 ? -1 : r;
+        return myChannel.read(ByteBuffer.wrap(b));
     }
 
     public int read(byte[] b, int off, int len) throws IOException {
         //return myFileStream.read(b, off, len);
-        int r = myChannel.read(ByteBuffer.wrap(b, off, len));
-        return r <= 0 ? -1 : r;
+        return myChannel.read(ByteBuffer.wrap(b, off, len));
     }
     
     public long length() throws IOException {

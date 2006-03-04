@@ -150,7 +150,7 @@ public class FSParentPath
 	//		copy inheritance style
 	//2:	SVNLocationEntry.path
 	//		copy src path
-	public static SVNLocationEntry getCopyInheritance(File reposRootDir, FSParentPath child, String txnID) throws SVNException {
+	public static SVNLocationEntry getCopyInheritance(File reposRootDir, FSParentPath child, String txnID, FSRevisionNodePool pool) throws SVNException {
         /* Make some assertions about the function input. */
         if(child == null || child.getParent() == null || !FSID.isTxn(txnID)){
 			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: invalid parameters");
@@ -194,8 +194,8 @@ public class FSParentPath
 	    //or if it is a branch point that we are accessing via its original
 	    //copy destination path
 		SVNLocationEntry copyrootEntry = new SVNLocationEntry(child.getRevNode().getCopyRootRevision(), child.getRevNode().getCopyRootPath());
-        copyrootRoot = FSReader.getRootRevNode(reposRootDir, copyrootEntry.getRevision());
-        copyrootNode = FSReader.getRevisionNode(reposRootDir, copyrootEntry.getPath(), copyrootRoot, 0);
+        copyrootRoot = pool.getRootRevisionNode(copyrootEntry.getRevision(), reposRootDir); //FSReader.getRootRevNode(reposRootDir, copyrootEntry.getRevision());
+        copyrootNode = pool.openPath(FSRoot.createRevisionRoot(copyrootRoot.getId().getRevision(), copyrootRoot), copyrootEntry.getPath(), false, null, reposRootDir, false).getRevNode(); //FSReader.getRevisionNode(reposRootDir, copyrootEntry.getPath(), copyrootRoot, 0);
         copyrootID = copyrootNode.getId();
 		if(FSID.compareIds(copyrootID, childID) == -1){
 			return copyrootEntry;

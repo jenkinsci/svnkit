@@ -16,6 +16,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -36,13 +39,17 @@ class SVNCommitEditor implements ISVNEditor {
 
     private SVNConnection myConnection;
     private SVNRepositoryImpl myRepository;
-    private String myCurrentPath;
     private Runnable myCloseCallback;
+    private Stack myDirsStack;
+    private int myNextToken;
+    private Map myFilesToTokens;
 
     public SVNCommitEditor(SVNRepositoryImpl location, SVNConnection connection, Runnable closeCallback) {
         myRepository = location;
         myConnection = connection;
         myCloseCallback = closeCallback;
+        myDirsStack = new Stack();
+        myNextToken = 0;
     }
 
     /* do nothing */
@@ -56,85 +63,113 @@ class SVNCommitEditor implements ISVNEditor {
     }
 
     public void openRoot(long revision) throws SVNException {
-        myCurrentPath = "";
+        DirBaton rootBaton = new DirBaton(myNextToken++);
         myConnection.write("(w((n)s))", new Object[] { "open-root",
-                getRevisionObject(revision), "" });
+                getRevisionObject(revision), rootBaton.getToken() });
+        myDirsStack.push(rootBaton);
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
+        DirBaton parentBaton = (DirBaton)myDirsStack.peek();
         myConnection.write("(w(s(n)s))", new Object[] { "delete-entry", path,
-                getRevisionObject(revision), myCurrentPath });
+                getRevisionObject(revision), parentBaton.getToken() });
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
+        DirBaton parentBaton = (DirBaton)myDirsStack.peek();
+        DirBaton dirBaton = new DirBaton(myNextToken++);
+
         if (copyFromPath != null) {
             String rootURL = myRepository.getRepositoryRoot(false).toString();
             copyFromPath = SVNPathUtil.append(rootURL, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
             myConnection.write("(w(sss(sn)))", new Object[] { "add-dir", path,
-                    myCurrentPath, path, copyFromPath,
+                    parentBaton.getToken(), dirBaton.getToken(), copyFromPath,
                     getRevisionObject(copyFromRevision) });
         } else {
             myConnection.write("(w(sss()))", new Object[] { "add-dir", path,
-                    myCurrentPath, path });
+                    parentBaton.getToken(), dirBaton.getToken() });
         }
-        myCurrentPath = path;
+        myDirsStack.push(dirBaton);
     }
 
     public void openDir(String path, long revision) throws SVNException {
-        myCurrentPath = path;
+        DirBaton parentBaton = (DirBaton)myDirsStack.peek();
+        DirBaton dirBaton = new DirBaton(myNextToken++);
+
         myConnection.write("(w(sss(n)))", new Object[] { "open-dir", path,
-                computeParentPath(path), path, getRevisionObject(revision) });
+                parentBaton.getToken(), dirBaton.getToken(), getRevisionObject(revision) });
+        
+        myDirsStack.push(dirBaton);
     }
 
     public void changeDirProperty(String name, String value)
             throws SVNException {
+        DirBaton dirBaton = (DirBaton)myDirsStack.peek();
         myConnection.write("(w(ss(s)))", new Object[] { "change-dir-prop",
-                myCurrentPath, name, value });
+                dirBaton.getToken(), name, value });
     }
 
     public void closeDir() throws SVNException {
+        DirBaton dirBaton = (DirBaton)myDirsStack.pop();
+
         myConnection.write("(w(s))",
-                new Object[] { "close-dir", myCurrentPath });
-        myCurrentPath = computeParentPath(myCurrentPath);
+                new Object[] { "close-dir", dirBaton.getToken() });
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision)
             throws SVNException {
+        DirBaton parentBaton = (DirBaton)myDirsStack.peek();
+        String fileToken = "c" + myNextToken++; 
+            
         if (copyFromPath != null) {
             String host = myRepository.getRepositoryRoot(false).toString();
             copyFromPath = SVNPathUtil.append(host, SVNEncodingUtil.uriEncode(myRepository.getRepositoryPath(copyFromPath)));
             myConnection.write("(w(sss(sn)))", new Object[] { "add-file", path,
-                    myCurrentPath, path, copyFromPath,
+                    parentBaton.getToken(), fileToken, copyFromPath,
                     getRevisionObject(copyFromRevision) });
         } else {
             myConnection.write("(w(sss()))", new Object[] { "add-file", path,
-                    myCurrentPath, path });
+                    parentBaton.getToken(), fileToken });
         }
+        if(myFilesToTokens == null){
+            myFilesToTokens = new HashMap();
+        }
+        myFilesToTokens.put(path, fileToken);
     }
 
     public void openFile(String path, long revision) throws SVNException {
+        DirBaton parentBaton = (DirBaton)myDirsStack.peek();
+        String fileToken = "c" + myNextToken++; 
+
         myConnection.write("(w(sss(n)))", new Object[] { "open-file", path,
-                computeParentPath(path), path, getRevisionObject(revision) });
+                parentBaton.getToken(), fileToken, getRevisionObject(revision) });
+        if(myFilesToTokens == null){
+            myFilesToTokens = new HashMap();
+        }
+        myFilesToTokens.put(path, fileToken);
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+        String fileToken = (String)myFilesToTokens.get(path);
         myDiffWindowCount = 0;
-        myConnection.write("(w(s(s)))", new Object[] { "apply-textdelta", path, baseChecksum });
+        myConnection.write("(w(s(s)))", new Object[] { "apply-textdelta", fileToken, baseChecksum });
     }
 
     private int myDiffWindowCount = 0;
     private boolean myIsAborted;
     
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        myConnection.write("(w(s", new Object[] { "textdelta-chunk", path });
+        String fileToken = (String)myFilesToTokens.get(path);
+
+        myConnection.write("(w(s", new Object[] { "textdelta-chunk", fileToken });
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
             SVNDiffWindowBuilder.save(diffWindow, myDiffWindowCount == 0, bos);
             byte[] header = bos.toByteArray();
             myDiffWindowCount++;
             myConnection.write("b))", new Object[] { header });
-            myConnection.write("(w(s", new Object[] { "textdelta-chunk", path });
+            myConnection.write("(w(s", new Object[] { "textdelta-chunk", fileToken });
             String length = diffWindow.getNewDataLength() + ":";
             myConnection.getOutputStream().write(length.getBytes("UTF-8"));
             return new ChunkOutputStream();
@@ -145,17 +180,20 @@ class SVNCommitEditor implements ISVNEditor {
     }
 
     public void textDeltaEnd(String path) throws SVNException {
+        String fileToken = (String)myFilesToTokens.get(path);
         myDiffWindowCount = 0;
-        myConnection.write("(w(s))", new Object[] { "textdelta-end", path });
+        myConnection.write("(w(s))", new Object[] { "textdelta-end", fileToken });
     }
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
-        myConnection.write("(w(ss(s)))", new Object[] { "change-file-prop", path, name, value });
+        String fileToken = (String)myFilesToTokens.get(path);
+        myConnection.write("(w(ss(s)))", new Object[] { "change-file-prop", fileToken, name, value });
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
+        String fileToken = (String)myFilesToTokens.remove(path);
         myDiffWindowCount = 0;
-        myConnection.write("(w(s(s)))", new Object[] { "close-file", path, textChecksum });
+        myConnection.write("(w(s(s)))", new Object[] { "close-file", fileToken, textChecksum });
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
@@ -189,14 +227,24 @@ class SVNCommitEditor implements ISVNEditor {
 	    }
     }
 
-    private static String computeParentPath(String path) {
-        return SVNPathUtil.removeTail(path);
-    }
-
     private static Long getRevisionObject(long rev) {
         return rev >= 0 ? new Long(rev) : null;
     }
 
+    private final static class DirBaton {
+        
+        private String myToken;
+        
+        public DirBaton(int token){
+            myToken = "d" + token;
+        }
+        
+        public String getToken(){
+            return myToken;
+        }
+        
+    }
+    
     private final class ChunkOutputStream extends OutputStream {
         
         private boolean myIsClosed = false;
