@@ -72,7 +72,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     
     protected FSRepository(SVNURL location, ISVNSession options) {
         super(location, options);
-        myRevNodesPool = new DefaultFSRevisionNodePool();
+        myRevNodesPool = FSRevisionNodePool.createRevisionNodePool();
     }
 
     public void testConnection() throws SVNException {

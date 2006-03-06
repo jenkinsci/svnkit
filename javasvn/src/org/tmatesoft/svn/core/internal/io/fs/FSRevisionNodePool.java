@@ -27,18 +27,10 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
  */
 public abstract class FSRevisionNodePool {
 
-    public abstract void setRootsCacheSize(int numberOfRoots); 
+    public static FSRevisionNodePool createRevisionNodePool(){
+        return new DefaultFSRevisionNodePool(100, 100, 100);
+    }
     
-    public abstract void setRevisionNodesCacheSize(int numberOfNodes);
-    
-    public abstract void setRevisionsCacheSize(int numberOfRevs);
-    
-    public abstract int getRootsCacheSize(); 
-    
-    public abstract int getRevisionNodesCacheSize();
-    
-    public abstract int getRevisionsCacheSize();
-
     //first tries to find a necessary root node in the cache
     //if not found, the root node is read from the repository
     public FSRevisionNode getRootRevisionNode(long revision, File reposRootDir) throws SVNException{
@@ -181,8 +173,6 @@ public abstract class FSRevisionNodePool {
      */
     protected FSRevisionNode fetchRevisionNode(FSRoot root, String path) throws SVNException {
         if(!root.isTxnRoot()){
-//            FSRevisionNode rootNode = getRootNode(root, reposRootDir);
-//            return getRevisionNode(rootNode, path, reposRootDir);
             return fetchRevisionNode(root.getRevision(), path); 
         }
         return root.fetchRevNodeFromCache(path);

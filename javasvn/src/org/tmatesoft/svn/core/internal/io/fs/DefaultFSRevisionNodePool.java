@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.util.LinkedList;
 import java.util.TreeMap;
 import java.util.Map;
 
@@ -19,82 +20,44 @@ import java.util.Map;
  * @author  TMate Software Ltd.
  */
 public class DefaultFSRevisionNodePool extends FSRevisionNodePool {
-    private Map myRootsCache = new TreeMap();
-    private Map myRevisionsCache = new TreeMap();
-    private int myRootsCacheSize = 100;
-    private int myRevisionNodesCacheSize = 100;
-    private int myRevisionsCacheSize = 100;
+    private RevisionCache myRootsCache;
+    private RevisionCache myRevisionsCache;
+    private int myRootsCacheSize;
+    private int myRevisionNodesCacheSize;
+    private int myRevisionsCacheSize;
     
-    public DefaultFSRevisionNodePool(){
-    }
-
     public DefaultFSRevisionNodePool(int rootsCacheSize, int revisionsCacheSize, int revisionNodesCacheSize){
+        rootsCacheSize = rootsCacheSize < 0 ? 0 : rootsCacheSize;
+        revisionsCacheSize = revisionsCacheSize < 0 ? 0 : revisionsCacheSize;
+        revisionNodesCacheSize = revisionNodesCacheSize < 0 ? 0 : revisionNodesCacheSize;
+        
         myRootsCacheSize = rootsCacheSize;
         myRevisionNodesCacheSize = revisionsCacheSize;
         myRevisionsCacheSize = revisionNodesCacheSize;
-    }
-
-    public void setRootsCacheSize(int numberOfRoots) {
-        myRootsCacheSize = numberOfRoots;
-        resize(myRootsCache, myRootsCacheSize);
-    }
-    
-    public void setRevisionsCacheSize(int numberOfRevs){
-        myRevisionsCacheSize = numberOfRevs;
-        resize(myRevisionsCache, myRevisionsCacheSize);
-    }
-
-    public int getRevisionsCacheSize(){
-        return myRevisionsCacheSize;
-    }
-
-    public void setRevisionNodesCacheSize(int numberOfNodes) {
-        myRevisionNodesCacheSize = numberOfNodes;
-        Object[] revisions = myRevisionsCache.keySet().toArray();
-        for(int i = 0; i < revisions.length; i++){
-            Map pathsToRevNodes = (Map)myRevisionsCache.get(revisions[i]);
-            resize(pathsToRevNodes, myRevisionNodesCacheSize);
-        }
-    }
-    
-    private void resize(Map cache, int newSize){
-        if(cache != null && cache.size() > newSize){
-            Object[] keys = cache.keySet().toArray();
-            for(int i = 0; i < cache.size() - newSize; i++){
-                cache.remove(keys[newSize + i]);
-            }
-        }
-    }
-    
-    public int getRootsCacheSize() {
-        return myRootsCacheSize;
-    }
-
-    public int getRevisionNodesCacheSize() {
-        return myRevisionNodesCacheSize;
+        
+        myRootsCache = new RevisionCache(myRootsCacheSize);
+        myRevisionsCache = new RevisionCache(myRevisionsCacheSize);
     }
 
     protected FSRevisionNode fetchRootRevisionNode(long revision){
-        return (FSRevisionNode)myRootsCache.get(new Long(revision));
+        return (FSRevisionNode)myRootsCache.fetch(new Long(revision));
     }
 
     protected void cacheRootRevisionNode(long revision, FSRevisionNode root){
-        resize(myRootsCache, myRootsCacheSize - 1);
         myRootsCache.put(new Long(revision), root);
     }
     
     protected void cacheRevisionNode(long revision, String path, FSRevisionNode revNode){
-        Map pathsToRevNodes = (Map)myRevisionsCache.get(new Long(revision));
-        pathsToRevNodes = pathsToRevNodes == null ? new TreeMap() : pathsToRevNodes;
-        resize(pathsToRevNodes, myRevisionNodesCacheSize - 1);
+        RevisionCache pathsToRevNodes = (RevisionCache)myRevisionsCache.fetch(new Long(revision));
+        pathsToRevNodes = pathsToRevNodes == null ? new RevisionCache(myRevisionNodesCacheSize) : pathsToRevNodes;
         pathsToRevNodes.put(path, revNode);
         myRevisionsCache.put(new Long(revision), pathsToRevNodes);
     }
     
     protected FSRevisionNode fetchRevisionNode(long revision, String path){
-        Map pathsToRevNodes = (Map)myRevisionsCache.get(new Long(revision));
+        RevisionCache pathsToRevNodes = (RevisionCache)myRevisionsCache.fetch(new Long(revision));
         if(pathsToRevNodes != null){
-            FSRevisionNode revNode = (FSRevisionNode)pathsToRevNodes.get(path);
+            FSRevisionNode revNode = (FSRevisionNode)pathsToRevNodes.fetch(path);
             return revNode;
         }
         return null;
@@ -106,5 +69,46 @@ public class DefaultFSRevisionNodePool extends FSRevisionNodePool {
     
     public void clearRevisionsCache(){
         myRevisionsCache.clear();
+    }
+    
+    private static final class RevisionCache {
+        private LinkedList myKeys;
+        private Map myCache;
+        private int myMAXKeysNumber;
+        
+        public RevisionCache(int limit){
+            myMAXKeysNumber = limit;
+            myKeys = new LinkedList();
+            myCache = new TreeMap(); 
+        }
+        
+        public void put(Object key, Object value){
+            if(myMAXKeysNumber <= 0){
+                return;
+            }
+            if(myKeys.size() == myMAXKeysNumber){
+                Object cachedKey = myKeys.removeLast();
+                myCache.remove(cachedKey);
+            }
+            myKeys.addFirst(key);
+            myCache.put(key, value);
+        }
+        
+        public Object fetch(Object key){
+            int ind = myKeys.indexOf(key);
+            if(ind != -1){
+                if(ind != 0){
+                    Object cachedKey = myKeys.remove(ind);
+                    myKeys.addFirst(cachedKey);
+                } 
+                return myCache.get(key);
+            }
+            return null;
+        }
+        
+        public void clear(){
+            myKeys.clear();
+            myCache.clear();
+        }
     }
 }
