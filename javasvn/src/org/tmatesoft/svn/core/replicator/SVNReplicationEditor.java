@@ -54,6 +54,7 @@ public class SVNReplicationEditor implements ISVNEditor {
     private SVNRepository myRepos;
     private Map myPathsToFileBatons;
     private Stack myDirsStack;
+    private long myPreviousRevision;
     private long myTargetRevision;
     private SVNCommitInfo myCommitInfo;
     private SVNRepository mySourceRepository;
@@ -77,12 +78,13 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     public void targetRevision(long revision) throws SVNException {
+        myPreviousRevision = revision - 1;
         myTargetRevision = revision;
     }
 
     public void openRoot(long revision) throws SVNException {
         //open root
-        myCommitEditor.openRoot(myTargetRevision);
+        myCommitEditor.openRoot(myPreviousRevision);
         EntryBaton baton = new EntryBaton();
         baton.myPropsAct = ACCEPT;
         myDirsStack.push(baton);
@@ -99,10 +101,10 @@ public class SVNReplicationEditor implements ISVNEditor {
                 myChangedPaths.remove(absPath);
             }
         } else {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Expected that path ''{0}'' is deleted in revision {1,number,integer}", new Object[]{absPath, new Long(myTargetRevision)});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Expected that path ''{0}'' is deleted in revision {1,number,integer}", new Object[]{absPath, new Long(myPreviousRevision)});
             SVNErrorManager.error(err);
         }
-        myCommitEditor.deleteEntry(path, myTargetRevision);
+        myCommitEditor.deleteEntry(path, myPreviousRevision);
     }
 
     public void absentDir(String path) throws SVNException {
@@ -123,7 +125,7 @@ public class SVNReplicationEditor implements ISVNEditor {
             baton.myProps = props;
             
             if (changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED) {
-                myCommitEditor.deleteEntry(path, myTargetRevision);
+                myCommitEditor.deleteEntry(path, myPreviousRevision);
                 myChangedPaths.remove(absPath);
             }
             myCommitEditor.addDir(path, changedPath.getCopyPath(), changedPath.getCopyRevision());
@@ -134,11 +136,11 @@ public class SVNReplicationEditor implements ISVNEditor {
             SVNDebugLog.logInfo("Adding dir '" + absPath + "'");
         } else if (changedPath != null && changedPath.getType() == SVNLogEntryPath.TYPE_MODIFIED) {
             baton.myPropsAct = ACCEPT;
-            myCommitEditor.openDir(path, myTargetRevision);
+            myCommitEditor.openDir(path, myPreviousRevision);
             SVNDebugLog.logInfo("Opening dir '" + absPath + "'");
         } else if (changedPath == null) {
             baton.myPropsAct = IGNORE;
-            myCommitEditor.openDir(path, myTargetRevision);
+            myCommitEditor.openDir(path, myPreviousRevision);
             SVNDebugLog.logInfo("Opening dir '" + absPath + "'");
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unknown bug in addDir()");
@@ -150,7 +152,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         EntryBaton baton = new EntryBaton();
         baton.myPropsAct = ACCEPT;
         myDirsStack.push(baton);
-        myCommitEditor.openDir(path, myTargetRevision);
+        myCommitEditor.openDir(path, myPreviousRevision);
         SVNDebugLog.logInfo("Opening dir '" + path + "'");
     }
 
@@ -208,7 +210,7 @@ public class SVNReplicationEditor implements ISVNEditor {
             }
             baton.myProps = props;
             if(changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED){
-                myCommitEditor.deleteEntry(path, myTargetRevision);
+                myCommitEditor.deleteEntry(path, myPreviousRevision);
                 myChangedPaths.remove(absPath);
             }
             myCommitEditor.addFile(path, changedPath.getCopyPath(), changedPath.getCopyRevision());
@@ -217,7 +219,7 @@ public class SVNReplicationEditor implements ISVNEditor {
             baton.myPropsAct = ACCEPT;
             baton.myTextAct = ACCEPT;
             if(changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED){
-                myCommitEditor.deleteEntry(path, myTargetRevision);
+                myCommitEditor.deleteEntry(path, myPreviousRevision);
                 myChangedPaths.remove(absPath);
             }
             myCommitEditor.addFile(path, null, -1);
@@ -235,12 +237,12 @@ public class SVNReplicationEditor implements ISVNEditor {
                 baton.myTextAct = IGNORE;
             }
             baton.myProps = props;
-            myCommitEditor.openFile(path, myTargetRevision);
+            myCommitEditor.openFile(path, myPreviousRevision);
             SVNDebugLog.logInfo("Opening file '" + absPath + "'");
         } else if (changedPath == null) {
             baton.myPropsAct = IGNORE;
             baton.myTextAct = IGNORE;
-            myCommitEditor.openFile(path, myTargetRevision);
+            myCommitEditor.openFile(path, myPreviousRevision);
             SVNDebugLog.logInfo("Opening file '" + absPath + "'");
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unknown bug in addFile()");
@@ -294,7 +296,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         baton.myPropsAct = ACCEPT;
         baton.myTextAct = ACCEPT;
         myPathsToFileBatons.put(path, baton);
-        myCommitEditor.openFile(path, myTargetRevision);
+        myCommitEditor.openFile(path, myPreviousRevision);
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
@@ -371,7 +373,7 @@ public class SVNReplicationEditor implements ISVNEditor {
                 for(j = 0; j < entries.length - 1; j++){
                     currentOpened += entries[j];
                     SVNDebugLog.logInfo("Opening dir '" + "/" + currentOpened);
-                    myCommitEditor.openDir(currentOpened, myTargetRevision);
+                    myCommitEditor.openDir(currentOpened, myPreviousRevision);
                     currentOpened += "/";
                 }
                 String pathToDelete = currentOpened + entries[j];
