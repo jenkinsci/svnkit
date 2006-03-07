@@ -694,7 +694,7 @@ class DAVRepository extends SVNRepository {
             if (th instanceof SVNException) {
                 throw (SVNException) th;
             } 
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "can not get commit editor: ''{0}''", th.getLocalizedMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "cannot get commit editor: ''{0}''", th.getLocalizedMessage());
             SVNErrorManager.error(err, th);
             return null;
         }

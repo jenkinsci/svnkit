@@ -190,7 +190,7 @@ public class SVNCommitClient extends SVNBasicClient {
         List paths = new ArrayList();
         SVNURL rootURL = SVNURLUtil.condenceURLs(urls, paths, true);
         if (rootURL == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Can not compute common root URL for specified URLs");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Cannot compute common root URL for specified URLs");
             SVNErrorManager.error(err);
         }
         if (paths.isEmpty()) {
@@ -269,7 +269,7 @@ public class SVNCommitClient extends SVNBasicClient {
         List paths = new ArrayList();
         SVNURL rootURL = SVNURLUtil.condenceURLs(urls, paths, false);
         if (rootURL == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Can not compute common root URL for specified URLs");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Cannot compute common root URL for specified URLs");
             SVNErrorManager.error(err);
         }
         if (paths.isEmpty()) {

@@ -30,7 +30,7 @@ class HTTPParser {
             line = readLine(is);
         } while (line != null && line.length() == 0);
         if (line == null) {
-            throw new IOException("can not read HTTP status line");
+            throw new IOException("cannot read HTTP status line");
         }
         return HTTPStatus.createHTTPStatus(line);
     }
