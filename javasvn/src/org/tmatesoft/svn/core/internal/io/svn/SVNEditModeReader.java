@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 
 /**
@@ -54,14 +55,11 @@ public class SVNEditModeReader {
     }
 
     private ISVNEditor myEditor;
-
     private SVNDiffWindowBuilder myBuilder;
-
     private OutputStream myDiffStream;
-
     private long myLenght;
-
     private String myFilePath;
+    private boolean myIsDelta;
 
     public void setEditor(ISVNEditor editor) {
         myEditor = editor;
@@ -85,6 +83,7 @@ public class SVNEditModeReader {
                 byte[] bytes = (byte[]) items[1];
                 myBuilder.accept(bytes, 0);
                 if (myBuilder.getDiffWindow() != null) {
+                    myIsDelta = false;
                     myLenght = myBuilder.getDiffWindow().getNewDataLength();
                     myDiffStream = myEditor.textDeltaChunk(myFilePath, myBuilder.getDiffWindow());
                     if (myDiffStream == null) {
@@ -147,8 +146,19 @@ public class SVNEditModeReader {
             myBuilder.reset();
             myLenght = 0;
             myDiffStream = null;
+            myIsDelta = true;
             myEditor.applyTextDelta(myFilePath, (String) items[1]);
         } else if ("textdelta-end".equals(commandName)) {
+            // if there was text-delta-chunk, but no window was sent, sent empty one.
+            if (myIsDelta) {
+                OutputStream os = myEditor.textDeltaChunk(myFilePath, new SVNDiffWindow(0,0,0,0,0));
+                try {
+                    os.close();
+                } catch (IOException e) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
+                }
+            }
+            myIsDelta = false;
             myEditor.textDeltaEnd(myFilePath);
         } else if ("close-edit".equals(commandName)) {
             myEditor.closeEdit();
