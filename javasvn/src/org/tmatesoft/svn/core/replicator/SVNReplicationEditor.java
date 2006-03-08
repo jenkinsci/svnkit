@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.replicator;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -85,7 +86,7 @@ public class SVNReplicationEditor implements ISVNEditor {
     public void openRoot(long revision) throws SVNException {
         //open root
         myCommitEditor.openRoot(myPreviousRevision);
-        EntryBaton baton = new EntryBaton();
+        EntryBaton baton = new EntryBaton("/");
         baton.myPropsAct = ACCEPT;
         myDirsStack.push(baton);
         SVNDebugLog.logInfo("Opening Root");
@@ -104,6 +105,7 @@ public class SVNReplicationEditor implements ISVNEditor {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Expected that path ''{0}'' is deleted in revision {1,number,integer}", new Object[]{absPath, new Long(myPreviousRevision)});
             SVNErrorManager.error(err);
         }
+        SVNDebugLog.logInfo("Deleting entry '" + absPath + "'");
         myCommitEditor.deleteEntry(path, myPreviousRevision);
     }
 
@@ -114,9 +116,9 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-        EntryBaton baton = new EntryBaton();
-        myDirsStack.push(baton);
         String absPath = getSourceRepository().getRepositoryPath(path);
+        EntryBaton baton = new EntryBaton(absPath);
+        myDirsStack.push(baton);
         SVNLogEntryPath changedPath = (SVNLogEntryPath) myChangedPaths.get(absPath);
         if (changedPath != null && (changedPath.getType() == SVNLogEntryPath.TYPE_ADDED || changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED) && changedPath.getCopyPath() != null && changedPath.getCopyRevision() >= 0) {
             baton.myPropsAct = DECIDE;
@@ -149,7 +151,7 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     public void openDir(String path, long revision) throws SVNException {
-        EntryBaton baton = new EntryBaton();
+        EntryBaton baton = new EntryBaton(getSourceRepository().getRepositoryPath(path));
         baton.myPropsAct = ACCEPT;
         myDirsStack.push(baton);
         myCommitEditor.openDir(path, myPreviousRevision);
@@ -188,17 +190,23 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     public void closeDir() throws SVNException {
-        if (myDirsStack.size() > 1) {
-            myCommitEditor.closeDir();
+        if (myDirsStack.size() > 1 && !myCopiedPaths.isEmpty()) {
+            EntryBaton currentDir = (EntryBaton) myDirsStack.peek();
+            completeDeletion(currentDir.myPath);
         }
         myDirsStack.pop();
-        SVNDebugLog.logInfo("Closing dir");
+        if(myDirsStack.size() != 0){
+            SVNDebugLog.logInfo("Closing dir");
+        }else{
+            SVNDebugLog.logInfo("Closing Root");
+        }
+        myCommitEditor.closeDir();
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-        EntryBaton baton = new EntryBaton();
-        myPathsToFileBatons.put(path, baton);
         String absPath = getSourceRepository().getRepositoryPath(path);
+        EntryBaton baton = new EntryBaton(absPath);
+        myPathsToFileBatons.put(path, baton);
         SVNLogEntryPath changedPath = (SVNLogEntryPath) myChangedPaths.get(absPath);
         
         if (changedPath != null && (changedPath.getType() == SVNLogEntryPath.TYPE_ADDED || changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED) && changedPath.getCopyPath() != null && changedPath.getCopyRevision() >= 0) {
@@ -292,7 +300,7 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     public void openFile(String path, long revision) throws SVNException {
-        EntryBaton baton = new EntryBaton();
+        EntryBaton baton = new EntryBaton(getSourceRepository().getRepositoryPath(path));
         baton.myPropsAct = ACCEPT;
         baton.myTextAct = ACCEPT;
         myPathsToFileBatons.put(path, baton);
@@ -356,39 +364,6 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
-        /* for now we must have all explicitly deleted
-         * entries removed from changedPaths except those that
-         * were deleted from a locally copied dir (they're just not 
-         * sent by the server, we need to delete them for ourselves)
-         */
-        
-        for(Iterator paths = myChangedPaths.keySet().iterator(); paths.hasNext();){
-            String path = (String)paths.next();
-            SVNLogEntryPath pathChange = (SVNLogEntryPath)myChangedPaths.get(path);
-            //make sure it's a copy
-            if(pathChange.getType() == SVNLogEntryPath.TYPE_DELETED){
-                String[] entries = path.split("/");
-                String currentOpened = "";
-                int j = 0;
-                for(j = 0; j < entries.length - 1; j++){
-                    currentOpened += entries[j];
-                    SVNDebugLog.logInfo("Opening dir '" + "/" + currentOpened);
-                    myCommitEditor.openDir(currentOpened, myPreviousRevision);
-                    currentOpened += "/";
-                }
-                String pathToDelete = currentOpened + entries[j];
-                SVNDebugLog.logInfo("Deleting entry '" + "/" + pathToDelete);
-                myCommitEditor.deleteEntry(pathToDelete, myTargetRevision);
-                for(j = 0; j < entries.length - 1; j++){
-                    SVNDebugLog.logInfo("Closing dir");
-                    myCommitEditor.closeDir();
-                }
-            }
-        }
-        
-        SVNDebugLog.logInfo("Closing Root");
-        //close root & finish commit
-        myCommitEditor.closeDir();
         SVNDebugLog.logInfo("Closing Edit");
         myCommitInfo = myCommitEditor.closeEdit();
         return myCommitInfo;
@@ -412,11 +387,69 @@ public class SVNReplicationEditor implements ISVNEditor {
         return mySourceRepository;
 
     }
+    
+    private void completeDeletion(String dirPath) throws SVNException {
+        Collection pathsToDelete = new ArrayList();
+        for(Iterator paths = myChangedPaths.keySet().iterator(); paths.hasNext();){
+            String path = (String)paths.next();
+            if (!path.startsWith(dirPath + "/")) {
+                continue;
+            }
+            SVNLogEntryPath pathChange = (SVNLogEntryPath)myChangedPaths.get(path);
+            if(pathChange.getType() == SVNLogEntryPath.TYPE_DELETED){
+                String relativePath = path.substring(dirPath.length() + 1);
+                pathsToDelete.add(relativePath);
+            }
+        }
+        String[] pathsArray = (String[]) pathsToDelete.toArray(new String[pathsToDelete.size()]);
+        Arrays.sort(pathsArray, SVNPathUtil.PATH_COMPARATOR);
+        String currentOpened = "";
+        for(int i = 0; i < pathsArray.length; i++) {
+            String nextRelativePath = pathsArray[i];
+            while(!"".equals(currentOpened) && nextRelativePath.indexOf(currentOpened) == -1){
+                SVNDebugLog.logInfo("Closing dir");
+                myCommitEditor.closeDir();
+                currentOpened = SVNPathUtil.removeTail(currentOpened);
+            }
+            
+            String nextRelativePathToDelete = null;
+            if(!"".equals(currentOpened)){
+                nextRelativePathToDelete = nextRelativePath.substring(currentOpened.length() + 1);
+            }else{
+                nextRelativePathToDelete = nextRelativePath;
+            }
+
+            String[] entries = nextRelativePathToDelete.split("/");
+            int j = 0;
+            for(j = 0; j < entries.length - 1; j++){
+                currentOpened = SVNPathUtil.append(currentOpened, entries[j]);
+                String absCurrentOpened = SVNPathUtil.append(dirPath, currentOpened);
+                SVNDebugLog.logInfo("Opening dir '" + absCurrentOpened + "'");
+                myCommitEditor.openDir(SVNPathUtil.append(dirPath, currentOpened), myPreviousRevision);
+            }
+            String pathToDelete = SVNPathUtil.append(currentOpened, entries[j]);
+            String absPathToDelete = SVNPathUtil.append(dirPath, pathToDelete);
+            SVNDebugLog.logInfo("Deleting entry '" + absPathToDelete + "'");
+            myCommitEditor.deleteEntry(absPathToDelete, myPreviousRevision);
+            myChangedPaths.remove(absPathToDelete);
+        }
+        while(!"".equals(currentOpened)){
+            SVNDebugLog.logInfo("Closing dir");
+            myCommitEditor.closeDir();
+            currentOpened = SVNPathUtil.removeTail(currentOpened);
+        }
+    }
 
     private static class EntryBaton {
+        
+        public EntryBaton(String path) {
+            myPath = path;
+        }
 
+        private String myPath;
         private int myPropsAct;
         private int myTextAct;
         private Map myProps;
     }
 }
+
