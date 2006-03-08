@@ -127,6 +127,7 @@ public class FSFile {
             SVNFileUtil.closeFile(myInputStream);
             myChannel = null;
             myInputStream = null;
+            myPosition = 0;
         }
         
     }
