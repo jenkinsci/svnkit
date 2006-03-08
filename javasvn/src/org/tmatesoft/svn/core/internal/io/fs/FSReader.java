@@ -198,11 +198,7 @@ public class FSReader {
             newChange = oldChange;
         }else{
             newChange = new FSPathChange(new FSID(change.getNodeRevID()), change.getKind(), change.getTextModification(), change.getPropModification());
-            if(change.getCopyfromEntry().getRevision() != FSConstants.SVN_INVALID_REVNUM){
-                copyfromEntry = new SVNLocationEntry(change.getCopyfromEntry().getRevision(), change.getCopyfromEntry().getPath());
-            }else{
-                copyfromEntry = null;
-            }
+            copyfromEntry = new SVNLocationEntry(change.getCopyfromEntry().getRevision(), change.getCopyfromEntry().getPath());
             path = change.getPath();
         }
         /* Add (or update) this path. */
