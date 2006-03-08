@@ -1,3 +1,11 @@
+= version 1.0.4
+
++ minor HTTP support bugfixes
++ OS/2 support
++ SSH port number was not saved properly when JavaSVN is used within Eclipse
++ commit hook error was not properly reported in JavaSVN error message
++ bugfixes
+
 = version 1.0.3
 
 + improved cancellation support
