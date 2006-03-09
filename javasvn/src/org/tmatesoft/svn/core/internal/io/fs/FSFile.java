@@ -74,7 +74,7 @@ public class FSFile {
             while(myReadLineBuffer.hasRemaining()) {
                 int b = read();
                 if (b < 0) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t read length line from file {0}", getFile());
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, "Can''t read length line from file {0}", getFile());
                     SVNErrorManager.error(err);
                 } else if (b == '\n') {
                     break;
