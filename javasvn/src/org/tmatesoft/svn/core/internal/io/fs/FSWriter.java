@@ -696,7 +696,7 @@ public class FSWriter {
         }
         String output = idString + " " + changeString + " " + SVNProperty.toString(pathChange.isTextModified()) + " " + SVNProperty.toString(pathChange.arePropertiesModified()) + " " + path + "\n"; 
         changesFile.write(output.getBytes());
-        if(copyfromEntry != null){
+        if(copyfromEntry != null && copyfromEntry.getPath() != null && copyfromEntry.getRevision() != FSConstants.SVN_INVALID_REVNUM){
             String copyfromLine = copyfromEntry.getRevision() + " " + copyfromEntry.getPath();
             changesFile.write(copyfromLine.getBytes());
         }

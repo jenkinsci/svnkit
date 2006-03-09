@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
@@ -34,6 +35,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.replicator.SVNRepositoryReplicator;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
@@ -74,9 +76,10 @@ public class SVNRepositoryReplicationTest {
         String targetWC = args[3];
         long fromRev = args.length > 4 ? Long.parseLong(args[4]) : 1;
         long topRev = args.length > 5 ? Long.parseLong(args[5]) : -1;
+        
         boolean useCheckout = true;
-        if(args.length > 6){
-            if(Integer.parseInt(args[6]) == 0){
+        if(args.length > 8){
+            if(Integer.parseInt(args[8]) == 0){
                 useCheckout = false;
             }
         }
@@ -99,8 +102,17 @@ public class SVNRepositoryReplicationTest {
             long processedRevs = replicator.replicateRepository(src, dst, fromRev, topRev);
             System.out.println("Number of processed revisions: " + processedRevs);
             SVNDebugLog.logInfo("Number of processed revisions: " + processedRevs);
-            
-            passed = useCheckout ? compareRepositories1(srcURL, dstURL, topRev, new File(sourceWC), new File(targetWC)) : compareRepositories2(srcURL, dstURL, topRev, new File(sourceWC), new File(targetWC));
+            //compare history logs
+            System.out.println("Comparing full history...");
+            SVNDebugLog.logInfo("Comparing full history...");
+            compareHistory(src, dst);
+
+            long startComparisonRev = args.length > 6 ? Long.parseLong(args[6]) : 1;
+            startComparisonRev = startComparisonRev <= 0 ? 1 : startComparisonRev; 
+            long endComparisonRev = args.length > 7 ? Long.parseLong(args[7]) : topRev;
+            endComparisonRev = endComparisonRev <= 0 ? topRev : endComparisonRev; 
+
+            passed = useCheckout ? compareRepositories1(srcURL, dstURL, topRev, new File(sourceWC), new File(targetWC)) : compareRepositories2(srcURL, dstURL, startComparisonRev, endComparisonRev, new File(sourceWC), new File(targetWC));
         } catch (SVNException svne) {
             SVNDebugLog.logInfo("Repositories comparing test FAILED with errors: " + svne.getErrorMessage().getMessage());
             System.out.println("Repositories comparing test FAILED with errors: " + svne.getErrorMessage().getMessage());
@@ -152,7 +164,7 @@ public class SVNRepositoryReplicationTest {
         return true;
     }
 
-    private static boolean compareRepositories2(SVNURL srcURL, SVNURL dstURL, long top, File srcWCRoot, File dstWCRoot) throws SVNException {
+    private static boolean compareRepositories2(SVNURL srcURL, SVNURL dstURL, long start, long end, File srcWCRoot, File dstWCRoot) throws SVNException {
         if (srcWCRoot.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Source WC directory already exists");
             SVNErrorManager.error(err);
@@ -165,34 +177,89 @@ public class SVNRepositoryReplicationTest {
         SVNUpdateClient updateClient = manager.getUpdateClient();
         updateClient.setIgnoreExternals(true);
 
-        long i = 1;
+        Map events1 = new HashMap();
+        Map events2 = new HashMap();
+        long i = start;
         SVNDebugLog.logInfo("Checking revision #" + i);
         System.out.println("Checking revision #" + i);
         if (!compareRevisionProps(srcURL, dstURL, i)) {
             return false;
         }
+
+        UpdateHandler handler = new UpdateHandler();
+        handler.setEventsMap(events1);
+        updateClient.setEventHandler(handler);
         updateClient.doCheckout(srcURL, srcWCRoot, SVNRevision.create(i), SVNRevision.create(i), true);
+        
+        handler.setEventsMap(events2);
         updateClient.doCheckout(dstURL, dstWCRoot, SVNRevision.create(i), SVNRevision.create(i), true);
-        if (!compareDirs(srcWCRoot, dstWCRoot, true)) {
+        
+        if (!compareEvents(events1, events2, i)) {
             SVNDebugLog.logInfo("Unequal Working Copies at revision " + i);
             return false;
         }
-        for ( i = 2; i <= top; i++ ) {
+        
+/*        if (!compareDirs(srcWCRoot, dstWCRoot, true)) {
+            SVNDebugLog.logInfo("Unequal Working Copies at revision " + i);
+            return false;
+        }*/
+        
+        for ( i = start + 1; i <= end; i++ ) {
             SVNDebugLog.logInfo("Checking revision #" + i);
             System.out.println("Checking revision #" + i);
             if (!compareRevisionProps(srcURL, dstURL, i)) {
                 return false;
             }
+
+            events1.clear();
+            events2.clear();
+
+            handler.setEventsMap(events1);
             updateClient.doUpdate(srcWCRoot, SVNRevision.create(i), true);
+
+            handler.setEventsMap(events2);
             updateClient.doUpdate(dstWCRoot, SVNRevision.create(i), true);
-            if (!compareDirs(srcWCRoot, dstWCRoot, true)) {
+
+            if (!compareEvents(events1, events2, i)) {
                 SVNDebugLog.logInfo("Unequal Working Copies at revision " + i);
                 return false;
             }
+
+/*            if (!compareDirs(srcWCRoot, dstWCRoot, true)) {
+                SVNDebugLog.logInfo("Unequal Working Copies at revision " + i);
+                return false;
+            }*/
         }
         return true;
     }
 
+    private static boolean compareEvents(Map events1, Map events2, long revision) throws SVNException {
+        //first check that we've got the same number of update events
+        if(events1.size() != events2.size()){
+            SVNDebugLog.logInfo("Unequal Working Copies at revision " + revision + ": different number of events");
+            return false;
+        }
+        for(Iterator eventsIter = events1.keySet().iterator(); eventsIter.hasNext();){
+            String path = (String)eventsIter.next();
+            if(events2.get(path) == null){
+                SVNDebugLog.logInfo("Unequal Working Copies at revision " + revision + ": path '" + path + "'");
+                return false;
+            }
+            SVNEvent event1 = (SVNEvent)events1.get(path);
+            SVNEvent event2 = (SVNEvent)events2.get(path);
+            if(event1.getNodeKind() == SVNNodeKind.DIR){
+                if(!compareDirs(event1.getFile(), event2.getFile(), "".equals(path))){
+                    return false;
+                }
+            }else if(event1.getNodeKind() == SVNNodeKind.FILE){
+                if(!compareFiles(event1.getFile(), event2.getFile())){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
     private static boolean compareRevisionProps(SVNURL srcURL, SVNURL dstURL, long revision) throws SVNException {
         SVNRepository srcRep = SVNRepositoryFactory.create(srcURL);
         SVNRepository dstRep = SVNRepositoryFactory.create(dstURL);
@@ -250,7 +317,7 @@ public class SVNRepositoryReplicationTest {
             SVNDebugLog.logInfo("Unequal dir props: '" + dir1 + "' vs. '" + dir2 + "'");
             return false;
         }
-        File[] entries1 = dir1.listFiles();
+/*        File[] entries1 = dir1.listFiles();
         File[] entries2 = dir2.listFiles();
         if (entries1.length != entries2.length) {
             SVNDebugLog.logInfo("Unequal dirs (different number of children): '" + dir1 + "' (found " + entries1.length + " children) vs. '" + dir2 + "' (found " + entries2.length + " children)");
@@ -273,6 +340,13 @@ public class SVNRepositoryReplicationTest {
                 SVNDebugLog.logInfo("Missing entry named '" + entry.getName() + "' in folder '" + dir2 + "'");
                 return false;
             }
+            SVNInfo entryInfo = wcClient.doInfo(entry, SVNRevision.WORKING);
+            SVNInfo entryToCompareWithInfo = wcClient.doInfo(entryToCompareWith, SVNRevision.WORKING);
+            if(entryInfo.getKind() != entryToCompareWithInfo.getKind()){
+                SVNDebugLog.logInfo("Unequal node kinds: '" + entryInfo.getPath() + "' (" + entryInfo.getKind() + ") vs. '" + entryToCompareWithInfo.getPath() + "' (" + entryToCompareWithInfo.getKind() + ")");
+                return false;
+            }
+            /*
             if (entry.isDirectory()) {
                 if (!compareDirs(entry, entryToCompareWith, false)) {
                     return false;
@@ -281,8 +355,8 @@ public class SVNRepositoryReplicationTest {
                 if (!compareFiles(entry, entryToCompareWith)) {
                     return false;
                 }
-            }
-        }
+            }*/
+//        }
         return true;
     }
 

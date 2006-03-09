@@ -1294,8 +1294,9 @@ public class FSReader {
          * or if we need to check that they are readable
          */
         if(revNum > 0 && discoverChangedPaths){
-            FSRevisionNode newRoot = revNodesPool.getRootRevisionNode(revNum, reposRootDir);//getRootRevNode(reposRootDir, revNum);
-            changedPaths = detectChanged(reposRootDir, revNodesPool, FSRoot.createRevisionRoot(revNum, newRoot));
+//            FSRevisionNode newRoot = revNodesPool.getRootRevisionNode(revNum, reposRootDir);
+            FSRoot root = FSRoot.createRevisionRoot(revNum, null); 
+            changedPaths = detectChanged(reposRootDir, revNodesPool, root);
         }
         changedPaths = changedPaths == null ? new HashMap() : changedPaths;
         handler.handleLogEntry(new SVNLogEntry(changedPaths, revNum, author, date, message));
