@@ -152,10 +152,12 @@ public class SVNEditModeReader {
             // if there was text-delta-chunk, but no window was sent, sent empty one.
             if (myIsDelta) {
                 OutputStream os = myEditor.textDeltaChunk(myFilePath, new SVNDiffWindow(0,0,0,0,0));
-                try {
-                    os.close();
-                } catch (IOException e) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
+                if (os != null) {
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
+                    }
                 }
             }
             myIsDelta = false;
