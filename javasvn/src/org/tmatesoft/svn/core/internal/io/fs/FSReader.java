@@ -72,12 +72,13 @@ public class FSReader {
     public static Map fetchTxnChanges(Map changedPaths, String txnId, Map copyFromCache, File reposRootDir) throws SVNException {
         changedPaths = changedPaths == null ? new HashMap() : changedPaths;
         File changesFile = FSRepositoryUtil.getTxnChangesFile(txnId, reposRootDir);
-        ISVNInputFile raChangesFile = null;
+        FSFile raChangesFile = new FSFile(changesFile);
         try{
-            raChangesFile = SVNFileUtil.openSVNFileForReading(changesFile);
+//            raChangesFile = SVNFileUtil.openSVNFileForReading(changesFile);
             fetchAllChanges(changedPaths, raChangesFile, false, copyFromCache);
         }finally{
-            SVNFileUtil.closeFile(raChangesFile);
+            raChangesFile.close();
+//            SVNFileUtil.closeFile(raChangesFile);
         }
         return changedPaths;
     }
@@ -86,7 +87,7 @@ public class FSReader {
      * Object[0]: pathChanged Map
      * Object[1]: copyfromCache Map
      */    
-    public static Object[] fetchAllChanges(Map changedPaths, ISVNInputFile changesFile, boolean prefolded, Map mapCopyfrom) throws SVNException {        
+    public static Object[] fetchAllChanges(Map changedPaths, FSFile changesFile, boolean prefolded, Map mapCopyfrom) throws SVNException {        
         changedPaths = changedPaths != null ? changedPaths : new HashMap();  
         mapCopyfrom = mapCopyfrom != null ? mapCopyfrom : new HashMap();
         FSChange change = readChange(changesFile);        
@@ -1104,10 +1105,10 @@ public class FSReader {
     /* Read changes from revision file, RandomAccessFile reader must be already opened.
      * OffsetContainerClass before invoking 'readChanges' method contains offset to changes, after invoking 
      * 'readChanges' contains offset to next changes (if file has them) in raFile */
-    public static FSChange readChange(ISVNInputFile raReader) throws SVNException {
+    public static FSChange readChange(FSFile raReader) throws SVNException {
         String changeLine = null;
         try{
-            changeLine = FSReader.readNextLine(raReader, 4096);
+            changeLine = raReader.readLine(4096);//FSReader.readNextLine(raReader, 4096);
         }catch(SVNException svne){
             /* Check for a blank line. */
             if(svne.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF){
@@ -1116,9 +1117,10 @@ public class FSReader {
             throw svne;
         }
         /* Check for a blank line. */
-        if(changeLine.length() == 0){
+        if(changeLine == null || changeLine.length() == 0){
             return null;
         }        
+//        System.out.println("read: " + changeLine);
         String [] piecesOfChangeLine = changeLine.split(" ", 5);
         if(piecesOfChangeLine.length < 5){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
@@ -1159,7 +1161,7 @@ public class FSReader {
         /* Get the changed path. */
         String pathStr = piecesOfChangeLine[4];
         /* Read the next line, the copyfrom line. */
-        String copyfromLine = FSReader.readNextLine(raReader, 4096);
+        String copyfromLine = raReader.readLine(4096);//FSReader.readNextLine(raReader, 4096);
         SVNLocationEntry copyfromEntry = null;
         if(copyfromLine.length() == 0){
             copyfromEntry = new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null);
@@ -1234,17 +1236,15 @@ public class FSReader {
         }           
         long changesOffset = getChangesOffset(reposRootDir, root.getRevision());
         File revFile = FSRepositoryUtil.getRevisionFile(reposRootDir, root.getRevision());
-        ISVNInputFile raRevFile = null;
+        FSFile raRevFile = null;
         Object[] result = null;
+        raRevFile = new FSFile(revFile);
         try{
-            raRevFile = SVNFileUtil.openSVNFileForReading(revFile);
             raRevFile.seek(changesOffset);
             result = fetchAllChanges(changedPaths, raRevFile, true, null);
-        }catch(IOException ioe){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
-        }finally{
-            SVNFileUtil.closeFile(raRevFile);
+        } finally{
+            raRevFile.close();
+//            SVNFileUtil.closeFile(raRevFile);
         }
         root.setCopyfromCache((Map)result[1]);
         return changedPaths;      

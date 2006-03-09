@@ -19,6 +19,10 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
@@ -63,24 +67,31 @@ public class FSFile {
         return myPosition;
     }
     
-    public String readLine(int limit) throws IOException {
+    public String readLine(int limit) throws SVNException {
         myReadLineBuffer.clear();
         myReadLineBuffer.limit(limit);
-        while(myReadLineBuffer.hasRemaining()) {
-            int b = read();
-            if (b < 0) {
-                // error.
-            } else if (b == '\n') {
-                break;
+        try {
+            while(myReadLineBuffer.hasRemaining()) {
+                int b = read();
+                if (b < 0) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t read length line from file {0}", getFile());
+                    SVNErrorManager.error(err);
+                } else if (b == '\n') {
+                    break;
+                }
+                myReadLineBuffer.put((byte) (b & 0XFF));
             }
-            myReadLineBuffer.put((byte) (b & 0XFF));
+            myReadLineBuffer.flip();
+            return myDecoder.decode(myReadLineBuffer).toString();
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t read length line from file {0}", getFile());
+            SVNErrorManager.error(err, e);
         }
-        myReadLineBuffer.flip();
-        return myDecoder.decode(myReadLineBuffer).toString();
+        return null;
     }
     
     public int read() throws IOException {
-        if (!myBuffer.hasRemaining()) {
+        if (myChannel == null || !myBuffer.hasRemaining()) {
             if (fill() <= 0) {
                 return -1;
             }
@@ -111,7 +122,9 @@ public class FSFile {
         if (myChannel == null || myPosition < myBufferPosition || myPosition >= myBufferPosition + myBuffer.limit()) {
             myBufferPosition = myPosition;
             getChannel().position(myBufferPosition);
+            myBuffer.clear();
             int read = getChannel().read(myBuffer);
+            myBuffer.position(0);
             myBuffer.limit(read >= 0 ? read : 0);
             return read;
         } 
@@ -138,5 +151,9 @@ public class FSFile {
             myChannel = myInputStream.getChannel();
         }
         return myChannel;
+    }
+
+    public File getFile() {
+        return myFile;
     }
 }
