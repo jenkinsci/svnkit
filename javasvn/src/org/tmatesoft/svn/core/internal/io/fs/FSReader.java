@@ -41,23 +41,23 @@ import java.util.Collection;
 import java.util.HashMap;
 
 public class FSReader {
-    
-    /* Read the 'current' file for filesystem reposRootDir and return the next
-     * available node id and the next available copy id. 
-     *
-     * String[0] - current node-id
-     * String[1] - current copy-id
+
+    /*
+     * Read the 'current' file for filesystem reposRootDir and return the next
+     * available node id and the next available copy id.
+     * 
+     * String[0] - current node-id String[1] - current copy-id
      */
-    public static String[] getNextRevisionIds(File reposRootDir) throws SVNException{
+    public static String[] getNextRevisionIds(File reposRootDir) throws SVNException {
         String[] ids = new String[2];
         File currentFile = FSRepositoryUtil.getFSCurrentFile(reposRootDir);
         String idsLine = FSReader.readSingleLine(currentFile, 80);
-        if(idsLine == null || idsLine.length() == 0){
+        if (idsLine == null || idsLine.length() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupt current file");
             SVNErrorManager.error(err);
         }
         String[] parsedIds = idsLine.split(" ");
-        if(parsedIds.length < 3){
+        if (parsedIds.length < 3) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupt current file");
             SVNErrorManager.error(err);
         }
@@ -65,221 +65,76 @@ public class FSReader {
         ids[1] = parsedIds[2];
         return ids;
     }
-    
-    /*
-     * Returns only changed paths
-     */
-    public static Map fetchTxnChanges(Map changedPaths, String txnId, Map copyFromCache, File reposRootDir) throws SVNException {
-        changedPaths = changedPaths == null ? new HashMap() : changedPaths;
-        File changesFile = FSRepositoryUtil.getTxnChangesFile(txnId, reposRootDir);
-        FSFile raChangesFile = new FSFile(changesFile);
-        try{
-//            raChangesFile = SVNFileUtil.openSVNFileForReading(changesFile);
-            fetchAllChanges(changedPaths, raChangesFile, false, copyFromCache);
-        }finally{
-            raChangesFile.close();
-//            SVNFileUtil.closeFile(raChangesFile);
-        }
-        return changedPaths;
-    }
-    
-    /* Return Object[] consist of two Maps:
-     * Object[0]: pathChanged Map
-     * Object[1]: copyfromCache Map
-     */    
-    public static Object[] fetchAllChanges(Map changedPaths, FSFile changesFile, boolean prefolded, Map mapCopyfrom) throws SVNException {        
-        changedPaths = changedPaths != null ? changedPaths : new HashMap();  
-        mapCopyfrom = mapCopyfrom != null ? mapCopyfrom : new HashMap();
-        FSChange change = readChange(changesFile);        
-        while(change != null){
-            foldChange(changedPaths, change, mapCopyfrom);
-            if((FSPathChangeKind.FS_PATH_CHANGE_DELETE == change.getKind() || FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getKind()) && !prefolded){                                
-                for(Iterator curIter = changedPaths.keySet().iterator(); curIter.hasNext();){
-                    String hashKeyPath = (String)curIter.next();
-                    //If we come across our own path, ignore it                    
-                    if(change.getPath().equals(hashKeyPath)){
-                        continue;
-                    }
-                    //If we come across a child of our path, remove it
-                    if(SVNPathUtil.pathIsChild(change.getPath(), hashKeyPath) != null){
-                        curIter.remove();
-                    }
-                }
-            }
-            change = readChange(changesFile);
-        }
-        Object[] result = new Object[2];
-        result[0] = changedPaths;
-        result[1] = mapCopyfrom;
-        return result;        
-    }
-    
-    /* Merge the internal-use-only FSChange into a hash of FSPathChanges, 
-     * collapsing multiple changes into a single summarising change per path.  
-     * Also keep copyfromCache (here it is a parameter Map mapCopyfrom) up to date with new adds and replaces
-     * return Object[] arr, where 
-     * arr[0]: map of changed paths
-     * arr[1]: map of copyfrom's of specified path; 
-     * */
-    private static Object[] foldChange(Map mapChanges, FSChange change, Map mapCopyfrom) throws SVNException{
-        if(change == null){
-            return null;            
-        }
-        mapChanges = mapChanges != null ? mapChanges : new HashMap();
-        mapCopyfrom = mapCopyfrom != null ? mapCopyfrom : new HashMap();
-        FSPathChange newChange = null;
-        SVNLocationEntry copyfromEntry = null;
-        String path = null;
-        
-        FSPathChange oldChange = (FSPathChange)mapChanges.get(change.getPath());
-        if(oldChange != null){
-            /* Get the existing copyfrom entry for this path. */
-            copyfromEntry = (SVNLocationEntry)mapCopyfrom.get(change.getPath());
-            path = change.getPath();
-            /* Sanity check:  only allow NULL node revision ID in the 'reset' case. */
-            if((change.getNodeRevID() == null) && 
-                    (FSPathChangeKind.FS_PATH_CHANGE_RESET != change.getKind())){
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing required node revision ID");
-                SVNErrorManager.error(err);
-            }
-            /* Sanity check: we should be talking about the same node
-            revision ID as our last change except where the last change
-            was a deletion*/
-            if((change.getNodeRevID() != null) && (!oldChange.getRevNodeId().equals(change.getNodeRevID())) && (oldChange.getChangeKind() != FSPathChangeKind.FS_PATH_CHANGE_DELETE)){
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change ordering: new node revision ID without delete");
-                SVNErrorManager.error(err);
-            }
-            /* Sanity check: an add, replacement, or reset must be the first
-            thing to follow a deletion*/            
-            if(FSPathChangeKind.FS_PATH_CHANGE_DELETE == oldChange.getChangeKind() && 
-                    !( FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getKind() || 
-                       FSPathChangeKind.FS_PATH_CHANGE_RESET == change.getKind()   ||
-                       FSPathChangeKind.FS_PATH_CHANGE_ADD == change.getKind()) ){
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change ordering: non-add change on deleted path");
-                SVNErrorManager.error(err);
-            }    
-            /*Merging the changes*/
-            if(FSPathChangeKind.FS_PATH_CHANGE_MODIFY == change.getKind()){
-                if(change.getTextModification()){
-                    oldChange.setTextModified(true);
-                }
-                if(change.getPropModification()){
-                    oldChange.setPropertiesModified(true);
-                }                
-            }else if(FSPathChangeKind.FS_PATH_CHANGE_ADD == change.getKind() || FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getKind()){
-                oldChange.setChangeKind(FSPathChangeKind.FS_PATH_CHANGE_REPLACE);
-                oldChange.setRevNodeId(new FSID(change.getNodeRevID()));
-                oldChange.setTextModified(change.getTextModification());
-                oldChange.setPropertiesModified(change.getPropModification());
-                if(change.getCopyfromEntry() == null){
-                    copyfromEntry = null;
-                }else{
-                    copyfromEntry = new SVNLocationEntry(change.getCopyfromEntry().getRevision(), change.getCopyfromEntry().getPath());
-                }                
-            }else if(FSPathChangeKind.FS_PATH_CHANGE_DELETE == change.getKind()){
-                if(FSPathChangeKind.FS_PATH_CHANGE_ADD == oldChange.getChangeKind()){
-                    /*If the path was introduced in this transaction via an
-                    add, and we are deleting it, just remove the path altogether*/
-                    oldChange = null;
-                    mapChanges.remove(change.getPath());
-                }else{
-                    /* A deletion overrules all previous changes. */
-                    oldChange.setChangeKind(FSPathChangeKind.FS_PATH_CHANGE_DELETE);
-                    oldChange.setPropertiesModified(change.getPropModification());
-                    oldChange.setTextModified(change.getTextModification());
-                }
-                copyfromEntry = null;
-                mapCopyfrom.remove(change.getPath());
-            }else if(FSPathChangeKind.FS_PATH_CHANGE_RESET == change.getKind()){
-                oldChange = null;
-                copyfromEntry = null;
-                mapChanges.remove(change.getPath());
-                mapCopyfrom.remove(change.getPath());                
-            }
-            newChange = oldChange;
-        }else{
-            newChange = new FSPathChange(new FSID(change.getNodeRevID()), change.getKind(), change.getTextModification(), change.getPropModification());
-            copyfromEntry = new SVNLocationEntry(change.getCopyfromEntry().getRevision(), change.getCopyfromEntry().getPath());
-            path = change.getPath();
-        }
-        /* Add (or update) this path. */
-        mapChanges.put(path, newChange);        
-  
-        if(copyfromEntry == null){
-            mapCopyfrom.remove(path);
-        }else{
-            mapCopyfrom.put(path, copyfromEntry);            
-        }      
-        
-        Object[] result = new Object[2];
-        result[0] = mapChanges;
-        result[1] = mapCopyfrom;
-        return result;
-    }
-    
+
     public static InputStream getFileContentsInputStream(FSRoot root, String path, FSRevisionNodePool pool, File reposRootDir) throws SVNException {
         FSRevisionNode fileNode = pool.getRevisionNode(root, path, reposRootDir);
         return FSInputStream.createDeltaStream(fileNode, reposRootDir);
     }
 
-    /* Given a representation 'rep', open the correct file and seek to the 
-     * correction location. 
+    /*
+     * Given a representation 'rep', open the correct file and seek to the
+     * correction location.
      */
     public static ISVNInputFile openAndSeekRepresentation(FSRepresentation rep, File reposRootDir) throws SVNException {
-        if(!rep.isTxn()){
+        if (!rep.isTxn()) {
             return openAndSeekRevision(rep.getRevision(), rep.getOffset(), reposRootDir);
         }
         return openAndSeekTransaction(rep, reposRootDir);
     }
 
-    /* Open the representation for a node-revision in a transaction in 
-     * filesystem. Seek to an offset location before returning. Only appropriate 
-     * for file contents, nor props or directory contents. 
+    /*
+     * Open the representation for a node-revision in a transaction in
+     * filesystem. Seek to an offset location before returning. Only appropriate
+     * for file contents, nor props or directory contents.
      */
     private static ISVNInputFile openAndSeekTransaction(FSRepresentation rep, File reposRootDir) throws SVNException {
         ISVNInputFile file = null;
-        try{
+        try {
             file = SVNFileUtil.openSVNFileForReading(FSRepositoryUtil.getTxnRevFile(rep.getTxnId(), reposRootDir));
             file.seek(rep.getOffset());
-        }catch(IOException ioe){
+        } catch (IOException ioe) {
             SVNFileUtil.closeFile(file);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
-        }catch(SVNException svne){
+        } catch (SVNException svne) {
             SVNFileUtil.closeFile(file);
             throw svne;
         }
-        return file; 
+        return file;
     }
 
-    /* Open the revision file for a revision in a filesystem. Seek to an offset 
-     * location before returning. 
+    /*
+     * Open the revision file for a revision in a filesystem. Seek to an offset
+     * location before returning.
      */
     private static ISVNInputFile openAndSeekRevision(long revision, long offset, File reposRootDir) throws SVNException {
         ISVNInputFile file = null;
-        try{
+        try {
             file = SVNFileUtil.openSVNFileForReading(FSRepositoryUtil.getRevisionFile(reposRootDir, revision));
             file.seek(offset);
-        }catch(IOException ioe){
+        } catch (IOException ioe) {
             SVNFileUtil.closeFile(file);
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't set position pointer in file ''{0}'': {1}", new Object[]{FSRepositoryUtil.getRevisionFile(reposRootDir, revision), ioe.getLocalizedMessage()});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't set position pointer in file ''{0}'': {1}", new Object[] {
+                    FSRepositoryUtil.getRevisionFile(reposRootDir, revision), ioe.getLocalizedMessage()
+            });
             SVNErrorManager.error(err, ioe);
-        }catch(SVNException svne){
+        } catch (SVNException svne) {
             SVNFileUtil.closeFile(file);
             throw svne;
         }
-        return file; 
+        return file;
     }
-    
-    /* String[0] - is to be the fetched out node-id
-     * String[1] - is to be the fetched out copy-id
+
+    /*
+     * String[0] - is to be the fetched out node-id String[1] - is to be the
+     * fetched out copy-id
      */
     public static String[] readNextIds(String txnId, File reposRootDir) throws SVNException {
         String[] ids = new String[2];
         String idsToParse = null;
-        idsToParse = readSingleLine(FSRepositoryUtil.getTxnNextIdsFile(txnId, reposRootDir), FSConstants.MAX_KEY_SIZE*2 + 3);
+        idsToParse = readSingleLine(FSRepositoryUtil.getTxnNextIdsFile(txnId, reposRootDir), FSConstants.MAX_KEY_SIZE * 2 + 3);
         String[] parsedIds = idsToParse.split(" ");
-        if(parsedIds.length < 2){
+        if (parsedIds.length < 2) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "next-ids file corrupt");
             SVNErrorManager.error(err);
         }
@@ -287,187 +142,193 @@ public class FSReader {
         ids[1] = parsedIds[1];
         return ids;
     }
-    
+
     public static void allowLockedOperation(String path, final String username, final Collection lockTokens, boolean recursive, boolean haveWriteLock, File reposRootDir) throws SVNException {
         path = SVNPathUtil.canonicalizeAbsPath(path);
-        if(recursive){
-            ISVNLockHandler handler = new ISVNLockHandler(){
+        if (recursive) {
+            ISVNLockHandler handler = new ISVNLockHandler() {
+
                 private String myUsername = username;
                 private Collection myTokens = lockTokens;
-                
+
                 public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
                     verifyLock(lock, myTokens, myUsername);
                 }
-                
-                public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException{
+
+                public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
                 }
             };
             /* Discover all locks at or below the path. */
             walkDigestFiles(FSRepositoryUtil.getDigestFileFromRepositoryPath(path, reposRootDir), handler, haveWriteLock, reposRootDir);
-        }else{
+        } else {
             /* Discover and verify any lock attached to the path. */
             SVNLock lock = getLockHelper(path, haveWriteLock, reposRootDir);
-            if(lock != null){
+            if (lock != null) {
                 verifyLock(lock, lockTokens, username);
             }
         }
     }
-    
-    /* A recursive function that calls getLocksHandler for
-     * all locks in and under PATH in FS.
-     * haveWriteLock should be true if the caller (directly or indirectly)
-     * has the FS write lock. 
+
+    /*
+     * A recursive function that calls getLocksHandler for all locks in and
+     * under PATH in FS. haveWriteLock should be true if the caller (directly or
+     * indirectly) has the FS write lock.
      */
     public static void walkDigestFiles(File digestFile, ISVNLockHandler getLocksHandler, boolean haveWriteLock, File reposRootDir) throws SVNException {
         Collection children = new LinkedList();
         /* First, send up any locks in the current path. */
         SVNLock lock = fetchLockFromDigestFile(digestFile, null, children, reposRootDir);
-        if(lock != null){
+        if (lock != null) {
             Date current = new Date(System.currentTimeMillis());
             /* Don't report an expired lock. */
-            if(lock.getExpirationDate() == null || current.compareTo(lock.getExpirationDate()) < 0){
+            if (lock.getExpirationDate() == null || current.compareTo(lock.getExpirationDate()) < 0) {
                 getLocksHandler.handleLock(null, lock, null);
-            }else if(haveWriteLock) {
-                /* Only remove the lock if we have the write lock.
-                 * Read operations shouldn't change the filesystem. 
+            } else if (haveWriteLock) {
+                /*
+                 * Only remove the lock if we have the write lock. Read
+                 * operations shouldn't change the filesystem.
                  */
                 FSWriter.deleteLock(lock, reposRootDir);
             }
         }
         /* Now, recurse on this thing's child entries (if any; bail otherwise). */
-        if(children.isEmpty()){
+        if (children.isEmpty()) {
             return;
         }
-        for(Iterator entries = children.iterator(); entries.hasNext();){
-            String digestName = (String)entries.next();
+        for (Iterator entries = children.iterator(); entries.hasNext();) {
+            String digestName = (String) entries.next();
             File childDigestFile = FSRepositoryUtil.getDigestFileFromDigest(digestName, reposRootDir);
             walkDigestFiles(childDigestFile, getLocksHandler, haveWriteLock, reposRootDir);
         }
     }
-    
-    /* Utility function:  verify that a lock can be used. */
+
+    /* Utility function: verify that a lock can be used. */
     private static void verifyLock(SVNLock lock, Collection lockTokens, String username) throws SVNException {
-        if(username == null || "".equals(username)){
+        if (username == null || "".equals(username)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "Cannot verify lock on path ''{0}''; no username available", lock.getPath());
             SVNErrorManager.error(err);
-        }else if(username.compareTo(lock.getOwner()) != 0){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_LOCK_OWNER_MISMATCH, "User {0} does not own lock on path ''{1}'' (currently locked by {2})", new Object[]{username, lock.getPath(), lock.getOwner()});
+        } else if (username.compareTo(lock.getOwner()) != 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_LOCK_OWNER_MISMATCH, "User {0} does not own lock on path ''{1}'' (currently locked by {2})", new Object[] {
+                    username, lock.getPath(), lock.getOwner()
+            });
             SVNErrorManager.error(err);
         }
-        for(Iterator tokens = lockTokens.iterator(); tokens.hasNext();){
-            String token = (String)tokens.next();
-            if(token.equals(lock.getID())){
+        for (Iterator tokens = lockTokens.iterator(); tokens.hasNext();) {
+            String token = (String) tokens.next();
+            if (token.equals(lock.getID())) {
                 return;
             }
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, "Cannot verify lock on path ''{0}''; no matching lock-token available", lock.getPath());
         SVNErrorManager.error(err);
     }
-    
+
     public static SVNLock getLock(String repositoryPath, boolean haveWriteLock, File reposRootDir) throws SVNException {
         SVNLock lock = fetchLockFromDigestFile(null, repositoryPath, null, reposRootDir);
-        if(lock == null){
+        if (lock == null) {
             SVNErrorManager.error(FSErrors.errorNoSuchLock(repositoryPath, reposRootDir));
         }
         Date current = new Date(System.currentTimeMillis());
         /* Don't return an expired lock. */
-        if(lock.getExpirationDate() != null && current.compareTo(lock.getExpirationDate()) > 0){
-            /* Only remove the lock if we have the write lock.
-             * Read operations shouldn't change the filesystem. 
+        if (lock.getExpirationDate() != null && current.compareTo(lock.getExpirationDate()) > 0) {
+            /*
+             * Only remove the lock if we have the write lock. Read operations
+             * shouldn't change the filesystem.
              */
-            if(haveWriteLock){
+            if (haveWriteLock) {
                 FSWriter.deleteLock(lock, reposRootDir);
             }
             SVNErrorManager.error(FSErrors.errorLockExpired(lock.getID(), reposRootDir));
         }
         return lock;
     }
-    
+
     public static SVNLock getLockHelper(String repositoryPath, boolean haveWriteLock, File reposRootDir) throws SVNException {
         repositoryPath = SVNPathUtil.canonicalizeAbsPath(repositoryPath);
         SVNLock lock = null;
-        try{
+        try {
             lock = getLock(repositoryPath, haveWriteLock, reposRootDir);
-        }catch(SVNException svne){
-            /* They've deliberately decided that this function doesn't tell the
-             * caller *why* the lock is unavailable.  
+        } catch (SVNException svne) {
+            /*
+             * They've deliberately decided that this function doesn't tell the
+             * caller *why* the lock is unavailable.
              */
-            if(svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_LOCK || 
-                    svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_LOCK_EXPIRED){
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_LOCK || svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_LOCK_EXPIRED) {
                 return null;
             }
             throw svne;
         }
         return lock;
     }
-    
-    public static SVNLock fetchLockFromDigestFile(File digestFile, String repositoryPath, Collection children, File reposRootDir) throws SVNException {        
+
+    public static SVNLock fetchLockFromDigestFile(File digestFile, String repositoryPath, Collection children, File reposRootDir) throws SVNException {
         File digestLockFile = digestFile == null ? FSRepositoryUtil.getDigestFileFromRepositoryPath(repositoryPath, reposRootDir) : digestFile;
         SVNProperties props = new SVNProperties(digestLockFile, null);
         Map lockProps = null;
-        try{
+        try {
             lockProps = props.asMap();
-        } catch(SVNException svne){
+        } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Can't parse lock/entries hashfile ''{0}''", digestLockFile);
             SVNErrorManager.error(err);
         }
         SVNLock lock = null;
-        String lockPath = (String)lockProps.get(FSConstants.PATH_LOCK_KEY);
-        if(lockPath != null){
-            String lockToken = (String)lockProps.get(FSConstants.TOKEN_LOCK_KEY);
-            if(lockToken == null){
+        String lockPath = (String) lockProps.get(FSConstants.PATH_LOCK_KEY);
+        if (lockPath != null) {
+            String lockToken = (String) lockProps.get(FSConstants.TOKEN_LOCK_KEY);
+            if (lockToken == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, reposRootDir));
             }
-            String lockOwner = (String)lockProps.get(FSConstants.OWNER_LOCK_KEY);
-            if(lockOwner == null){
+            String lockOwner = (String) lockProps.get(FSConstants.OWNER_LOCK_KEY);
+            if (lockOwner == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, reposRootDir));
             }
-            String davComment = (String)lockProps.get(FSConstants.IS_DAV_COMMENT_LOCK_KEY);
-            if(davComment == null){
+            String davComment = (String) lockProps.get(FSConstants.IS_DAV_COMMENT_LOCK_KEY);
+            if (davComment == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, reposRootDir));
             }
-            String creationTime = (String)lockProps.get(FSConstants.CREATION_DATE_LOCK_KEY);
-            if(creationTime == null){
+            String creationTime = (String) lockProps.get(FSConstants.CREATION_DATE_LOCK_KEY);
+            if (creationTime == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, reposRootDir));
             }
             Date creationDate = SVNTimeUtil.parseDateString(creationTime);
-            String expirationTime = (String)lockProps.get(FSConstants.EXPIRATION_DATE_LOCK_KEY);
+            String expirationTime = (String) lockProps.get(FSConstants.EXPIRATION_DATE_LOCK_KEY);
             Date expirationDate = null;
-            if(expirationTime != null){
+            if (expirationTime != null) {
                 expirationDate = SVNTimeUtil.parseDateString(expirationTime);
             }
-            String comment = (String)lockProps.get(FSConstants.COMMENT_LOCK_KEY);
+            String comment = (String) lockProps.get(FSConstants.COMMENT_LOCK_KEY);
             lock = new SVNLock(lockPath, lockToken, lockOwner, comment, creationDate, expirationDate);
         }
-        String childEntries = (String)lockProps.get(FSConstants.CHILDREN_LOCK_KEY);
-        if(children != null && childEntries != null){
+        String childEntries = (String) lockProps.get(FSConstants.CHILDREN_LOCK_KEY);
+        if (children != null && childEntries != null) {
             String[] digests = childEntries.split("\n");
-            for(int i = 0; i < digests.length; i++){
+            for (int i = 0; i < digests.length; i++) {
                 children.add(digests[i]);
             }
         }
         return lock;
     }
-    
+
     public static FSTransaction getTxn(String txnId, File reposRootDir) throws SVNException {
         FSTransaction txn = getTxn(txnId, false, reposRootDir);
-        if(txn.getKind() != FSTransactionKind.TXN_KIND_NORMAL){
+        if (txn.getKind() != FSTransactionKind.TXN_KIND_NORMAL) {
             SVNErrorManager.error(FSErrors.errorTxnNotMutable(txnId, reposRootDir));
         }
         return txn;
     }
 
-    /* If expectDead is true, this transaction must be a dead one, 
-     * else an error is returned. If expectDead is false, an error is 
-     * thrown if the transaction is *not* dead. 
+    /*
+     * If expectDead is true, this transaction must be a dead one, else an error
+     * is returned. If expectDead is false, an error is thrown if the
+     * transaction is *not* dead.
      */
     private static FSTransaction getTxn(String txnId, boolean expectDead, File reposRootDir) throws SVNException {
         FSTransaction txn = fetchTxn(txnId, reposRootDir);
-        if(expectDead && txn.getKind() != FSTransactionKind.TXN_KIND_DEAD){
+        if (expectDead && txn.getKind() != FSTransactionKind.TXN_KIND_DEAD) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_TRANSACTION_NOT_DEAD, "Transaction is not dead: ''{0}''", txnId);
             SVNErrorManager.error(err);
         }
-        if(!expectDead && txn.getKind() == FSTransactionKind.TXN_KIND_DEAD){
+        if (!expectDead && txn.getKind() == FSTransactionKind.TXN_KIND_DEAD) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_TRANSACTION_DEAD, "Transaction is dead: ''{0}''", txnId);
             SVNErrorManager.error(err);
         }
@@ -480,7 +341,7 @@ public class FSReader {
         FSRevisionNode revNode = getRevNodeFromID(reposRootDir, rootId);
         return new FSTransaction(FSTransactionKind.TXN_KIND_NORMAL, revNode.getId(), revNode.getPredecessorId(), null, txnProps);
     }
-    
+
     public static FSRevisionNode getChildDirNode(String childName, FSRevisionNode parent, File reposRootDir) throws SVNException {
         /* Make sure that NAME is a single path component. */
         if (!SVNPathUtil.isSinglePathComponent(childName)) {
@@ -488,9 +349,9 @@ public class FSReader {
             SVNErrorManager.error(err);
         }
         /* Now get the node that was requested. */
-        Map entries = getDirEntries(parent, reposRootDir); 
+        Map entries = getDirEntries(parent, reposRootDir);
         FSEntry entry = entries != null ? (FSEntry) entries.get(childName) : null;
-        if(entry == null){
+        if (entry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Attempted to open non-existent child node ''{0}''", childName);
             SVNErrorManager.error(err);
         }
@@ -502,14 +363,14 @@ public class FSReader {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_DIRECTORY, "Can't get entries of non-directory");
             SVNErrorManager.error(err);
         }
-        //first try to ask the object's cache for entries
+        // first try to ask the object's cache for entries
         Map entries = new HashMap();
-        Map dirContents = parent.getDirContents(); 
-        if(dirContents == null){
+        Map dirContents = parent.getDirContents();
+        if (dirContents == null) {
             dirContents = getDirContents(parent, reposRootDir);
             parent.setDirContents(dirContents);
         }
-        if(dirContents != null){
+        if (dirContents != null) {
             entries.putAll(dirContents);
         }
         return entries;
@@ -520,49 +381,51 @@ public class FSReader {
     }
 
     private static Map getDirContents(FSRevisionNode revNode, File reposRootDir) throws SVNException {
-        if(revNode.getTextRepresentation() != null && revNode.getTextRepresentation().isTxn()){
-            /* The representation is mutable.  Read the old directory
-             * contents from the mutable children file, followed by the
-             * changes we've made in this transaction. 
+        if (revNode.getTextRepresentation() != null && revNode.getTextRepresentation().isTxn()) {
+            /*
+             * The representation is mutable. Read the old directory contents
+             * from the mutable children file, followed by the changes we've
+             * made in this transaction.
              */
             File childrenFile = FSRepositoryUtil.getTxnRevNodeChildrenFile(revNode.getId(), reposRootDir);
             InputStream file = null;
             Map entries = null;
-            try{
+            try {
                 file = SVNFileUtil.openFileForReading(childrenFile);
                 Map rawEntries = SVNProperties.asMap(null, file, false, SVNProperties.SVN_HASH_TERMINATOR);
                 rawEntries = SVNProperties.asMap(rawEntries, file, true, null);
                 entries = parsePlainRepresentation(rawEntries);
-            }finally{
+            } finally {
                 SVNFileUtil.closeFile(file);
             }
             return entries;
-        }else if(revNode.getTextRepresentation() != null){
+        } else if (revNode.getTextRepresentation() != null) {
             InputStream is = null;
-            FSRepresentation textRepresent = revNode.getTextRepresentation(); 
+            FSRepresentation textRepresent = revNode.getTextRepresentation();
             try {
-                is = FSInputStream.createPlainStream(textRepresent, reposRootDir);//readPlainRepresentation(textRepresent, reposRootDir);
+                is = FSInputStream.createPlainStream(textRepresent, reposRootDir);// readPlainRepresentation(textRepresent,
+                                                                                    // reposRootDir);
                 Map rawEntries = SVNProperties.asMap(null, is, false, SVNProperties.SVN_HASH_TERMINATOR);
                 return parsePlainRepresentation(rawEntries);
             } finally {
                 SVNFileUtil.closeFile(is);
             }
         }
-        return new HashMap();//returns an empty map, must not be null!!
+        return new HashMap();// returns an empty map, must not be null!!
     }
 
     private static Map getProplist(FSRevisionNode revNode, File reposRootDir) throws SVNException {
         Map properties = new HashMap();
-        if(revNode.getPropsRepresentation() != null && revNode.getPropsRepresentation().isTxn()){
+        if (revNode.getPropsRepresentation() != null && revNode.getPropsRepresentation().isTxn()) {
             File propsFile = FSRepositoryUtil.getTxnRevNodePropsFile(revNode.getId(), reposRootDir);
             InputStream file = null;
-            try{
+            try {
                 file = SVNFileUtil.openFileForReading(propsFile);
                 properties = SVNProperties.asMap(properties, file, false, SVNProperties.SVN_HASH_TERMINATOR);
-            }finally{
+            } finally {
                 SVNFileUtil.closeFile(file);
             }
-        }else if(revNode.getPropsRepresentation() != null){
+        } else if (revNode.getPropsRepresentation() != null) {
             InputStream is = null;
             FSRepresentation propsRepresent = revNode.getPropsRepresentation();
             try {
@@ -572,21 +435,21 @@ public class FSReader {
                 SVNFileUtil.closeFile(is);
             }
         }
-        return properties;//no properties? return an empty map 
+        return properties;// no properties? return an empty map
     }
 
     /*
-     * Now this routine is intended only for parsing dir entries since
-     * the static method asMap() of SVNProperties does all the job for 
-     * reading properties.
+     * Now this routine is intended only for parsing dir entries since the
+     * static method asMap() of SVNProperties does all the job for reading
+     * properties.
      */
     private static Map parsePlainRepresentation(Map entries) throws SVNException {
         Map representationMap = new HashMap();
         Object[] names = entries.keySet().toArray();
-        for(int i = 0; i < names.length; i++){
-            String name = (String)names[i];
-            FSEntry nextRepEntry = parseRepEntryValue(name, (String)entries.get(names[i]));
-            if(nextRepEntry == null){
+        for (int i = 0; i < names.length; i++) {
+            String name = (String) names[i];
+            FSEntry nextRepEntry = parseRepEntryValue(name, (String) entries.get(names[i]));
+            if (nextRepEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Directory entry corrupt");
                 SVNErrorManager.error(err);
             }
@@ -596,7 +459,7 @@ public class FSReader {
     }
 
     private static FSEntry parseRepEntryValue(String name, String value) {
-        if(value == null){
+        if (value == null) {
             return null;
         }
         String[] values = value.split(" ");
@@ -613,16 +476,16 @@ public class FSReader {
 
     public static FSRevisionNode getTxnRootNode(String txnId, File reposRootDir) throws SVNException {
         FSTransaction txn = getTxn(txnId, reposRootDir);
-        FSRevisionNode txnRootNode = getRevNodeFromID(reposRootDir, txn.getRootId()); 
+        FSRevisionNode txnRootNode = getRevNodeFromID(reposRootDir, txn.getRootId());
         return txnRootNode;
     }
 
     public static FSRevisionNode getTxnBaseRootNode(String txnId, File reposRootDir) throws SVNException {
         FSTransaction txn = getTxn(txnId, reposRootDir);
-        FSRevisionNode txnBaseNode = getRevNodeFromID(reposRootDir, txn.getBaseId()); 
+        FSRevisionNode txnBaseNode = getRevNodeFromID(reposRootDir, txn.getBaseId());
         return txnBaseNode;
     }
-    
+
     public static FSRevisionNode getRootRevNode(File reposRootDir, long revision) throws SVNException {
         FSID id = FSID.createRevId(FSID.ID_INAPPLICABLE, FSID.ID_INAPPLICABLE, revision, getRootOffset(reposRootDir, revision));
         return getRevNodeFromID(reposRootDir, id);
@@ -631,21 +494,22 @@ public class FSReader {
     public static FSRevisionNode getRevNodeFromID(File reposRootDir, FSID id) throws SVNException {
         Map headers = null;
         ISVNInputFile raRevFile = null;
-        try{
-            if(id.isTxn()){
+        try {
+            if (id.isTxn()) {
                 /* This is a transaction node-rev. */
                 File revFile = FSRepositoryUtil.getTxnRevNodeFile(id, reposRootDir);
                 raRevFile = SVNFileUtil.openSVNFileForReading(revFile);
-            }else{
+            } else {
                 /* This is a revision node-rev. */
                 raRevFile = openAndSeekRevision(id.getRevision(), id.getOffset(), reposRootDir);
             }
-        }catch(SVNException svne){
+        } catch (SVNException svne) {
             SVNFileUtil.closeFile(raRevFile);
             SVNErrorManager.error(FSErrors.errorDanglingId(id, reposRootDir));
         }
         headers = readRevNodeHeaders(raRevFile);
-        //actually the file should have been already closed in readRevNodeHeaders(raRevFile) 
+        // actually the file should have been already closed in
+        // readRevNodeHeaders(raRevFile)
         SVNFileUtil.closeFile(raRevFile);
         FSRevisionNode revNode = new FSRevisionNode();
 
@@ -656,8 +520,8 @@ public class FSReader {
             SVNErrorManager.error(err);
         }
 
-        FSID revnodeId = parseID(revNodeId);    
-        if(revnodeId == null){
+        FSID revnodeId = parseID(revNodeId);
+        if (revnodeId == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupt node-id in node-rev");
             SVNErrorManager.error(err);
         }
@@ -710,7 +574,7 @@ public class FSReader {
         String predId = (String) headers.get(FSConstants.HEADER_PRED);
         if (predId != null) {
             FSID predRevNodeId = parseID(predId);
-            if(predRevNodeId == null){
+            if (predRevNodeId == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupt predecessor node-id in node-rev");
                 SVNErrorManager.error(err);
             }
@@ -783,18 +647,18 @@ public class FSReader {
     }
 
     public static FSID parseID(String revNodeId) {
-        /* Now, we basically just need to "split" this data on `.'
-         * characters.
+        /*
+         * Now, we basically just need to "split" this data on `.' characters.
          */
         String[] idParts = revNodeId.split("\\.");
-        if(idParts.length != 3){
+        if (idParts.length != 3) {
             return null;
         }
         /* Node Id */
-        String nodeId = idParts[0];  
+        String nodeId = idParts[0];
         /* Copy Id */
         String copyId = idParts[1];
-        if(idParts[2].charAt(0) == 'r'){
+        if (idParts[2].charAt(0) == 'r') {
             /* This is a revision type ID */
             int slashInd = idParts[2].indexOf('/');
             long rev = -1;
@@ -806,7 +670,7 @@ public class FSReader {
                 return null;
             }
             return FSID.createRevId(nodeId, copyId, rev, offset);
-        }else if(idParts[2].charAt(0) == 't'){
+        } else if (idParts[2].charAt(0) == 't') {
             /* This is a transaction type ID */
             String txnId = idParts[2].substring(1);
             return FSID.createTxnId(nodeId, copyId, txnId);
@@ -829,15 +693,15 @@ public class FSReader {
             SVNErrorManager.error(err);
         }
         rep.setRevision(rev);
-        if(FSRepository.isInvalidRevision(rep.getRevision())){
+        if (FSRepository.isInvalidRevision(rep.getRevision())) {
             rep.setTxnId(txnId);
-            if(isData){
+            if (isData) {
                 revNode.setTextRepresentation(rep);
-            }else{
+            } else {
                 revNode.setPropsRepresentation(rep);
             }
-            //is it a mutable representation?
-            if(!isData || revNode.getType() == SVNNodeKind.DIR){
+            // is it a mutable representation?
+            if (!isData || revNode.getType() == SVNNodeKind.DIR) {
                 return;
             }
         }
@@ -925,19 +789,20 @@ public class FSReader {
         return map;
     }
 
-    /* limitBytes MUST NOT be 0! it defines the maximum number of bytes 
-     * that should be read (not counting EOL)
-     */ 
+    /*
+     * limitBytes MUST NOT be 0! it defines the maximum number of bytes that
+     * should be read (not counting EOL)
+     */
     public static String readNextLine(ISVNInputFile raFile, int limitBytes) throws SVNException {
         ByteArrayOutputStream lineStream = new ByteArrayOutputStream();
         int r = -1;
         try {
-            for(int i = 0; i < limitBytes; i++){
+            for (int i = 0; i < limitBytes; i++) {
                 r = raFile.read();
-                if(r == -1){//unexpected EOF?
+                if (r == -1) {// unexpected EOF?
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF);
                     SVNErrorManager.error(err);
-                }else if(r == '\n'){
+                } else if (r == '\n') {
                     return new String(lineStream.toByteArray(), "UTF-8");
                 }
                 lineStream.write(r);
@@ -951,7 +816,7 @@ public class FSReader {
         return null;
     }
 
-    //to read single line files only
+    // to read single line files only
     public static String readSingleLine(File file, int limit) throws SVNException {
         if (file == null) {
             return null;
@@ -962,7 +827,9 @@ public class FSReader {
             is = SVNFileUtil.openFileForReading(file);
             line = readSingleLine(is, limit);
         } catch (SVNException svne) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE, "Can not read length line in file ''{0}'': {1}", new Object[]{file, svne.getLocalizedMessage()});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE, "Can not read length line in file ''{0}'': {1}", new Object[] {
+                    file, svne.getLocalizedMessage()
+            });
             SVNErrorManager.error(err, svne);
         } finally {
             SVNFileUtil.closeFile(is);
@@ -974,19 +841,19 @@ public class FSReader {
     public static String readSingleLine(InputStream is, int limit) throws SVNException {
         int r = -1;
         ByteArrayOutputStream lineStream = new ByteArrayOutputStream();
-        
-        for(int i = 0; i < limit; i++){
-            try{
+
+        for (int i = 0; i < limit; i++) {
+            try {
                 r = is.read();
-            }catch(IOException ioe){
+            } catch (IOException ioe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
                 SVNErrorManager.error(err, ioe);
             }
-            if(r == -1){//unexpected EOF?
+            if (r == -1) {// unexpected EOF?
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF);
                 SVNErrorManager.error(err);
-            }else if(r == '\n' || r == '\r'){
-                try{
+            } else if (r == '\n' || r == '\r') {
+                try {
                     return new String(lineStream.toByteArray(), "UTF-8");
                 } catch (IOException ioe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't read length line in stream: {0}", ioe.getLocalizedMessage());
@@ -1001,7 +868,7 @@ public class FSReader {
     }
 
     private static long[] readRootAndChangesOffset(File reposRootDir, long revision) throws SVNException {
-        File revFile = FSRepositoryUtil.getRevisionFile(reposRootDir, revision); 
+        File revFile = FSRepositoryUtil.getRevisionFile(reposRootDir, revision);
         int size = 64;
         byte[] buffer = new byte[size];
         ISVNInputFile raRevFile = null;
@@ -1022,7 +889,7 @@ public class FSReader {
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
-        }finally{
+        } finally {
             SVNFileUtil.closeFile(raRevFile);
         }
         // The last byte should be a newline.
@@ -1101,80 +968,6 @@ public class FSReader {
         }
         return FSConstants.SVN_INVALID_REVNUM;
     }
-  
-    /* Read changes from revision file, RandomAccessFile reader must be already opened.
-     * OffsetContainerClass before invoking 'readChanges' method contains offset to changes, after invoking 
-     * 'readChanges' contains offset to next changes (if file has them) in raFile */
-    public static FSChange readChange(FSFile raReader) throws SVNException {
-        String changeLine = null;
-        try{
-            changeLine = raReader.readLine(4096);//FSReader.readNextLine(raReader, 4096);
-        }catch(SVNException svne){
-            /* Check for a blank line. */
-            if(svne.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF){
-                return null;
-            }
-            throw svne;
-        }
-        /* Check for a blank line. */
-        if(changeLine == null || changeLine.length() == 0){
-            return null;
-        }        
-//        System.out.println("read: " + changeLine);
-        String [] piecesOfChangeLine = changeLine.split(" ", 5);
-        if(piecesOfChangeLine.length < 5){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
-            SVNErrorManager.error(err);
-        }
-        /* Get the node-id of the change. */
-        String nodeRevStr = piecesOfChangeLine[0];
-        FSID nodeRevID = parseID(nodeRevStr);
-        /* Get the change type. */
-        String changesKindStr = piecesOfChangeLine[1];
-        FSPathChangeKind changesKind = (FSPathChangeKind)FSConstants.ACTIONS_TO_CHANGE_KINDS.get(changesKindStr);
-        if(changesKind == null){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change kind in rev file");
-            SVNErrorManager.error(err);
-        }
-        /* Get the text-mod flag. */
-        String textModeStr = piecesOfChangeLine[2];
-        boolean textModeBool = false;
-        if(textModeStr.equals(FSConstants.FLAG_TRUE)){
-            textModeBool = true;
-        }else if(textModeStr.equals(FSConstants.FLAG_FALSE)){
-            textModeBool = false;
-        }else{
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid text-mod flag in rev-file");
-            SVNErrorManager.error(err);
-        }
-        /* Get the prop-mod flag. */
-        String propModeStr = piecesOfChangeLine[3];
-        boolean propModeBool = false;
-        if(propModeStr.equals(new String(FSConstants.FLAG_TRUE))){
-            propModeBool = true;
-        }else if(propModeStr.equals(new String(FSConstants.FLAG_FALSE))){
-            propModeBool = false;
-        } else{
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid prop-mod flag in rev-file");
-            SVNErrorManager.error(err);
-        }
-        /* Get the changed path. */
-        String pathStr = piecesOfChangeLine[4];
-        /* Read the next line, the copyfrom line. */
-        String copyfromLine = raReader.readLine(4096);//FSReader.readNextLine(raReader, 4096);
-        SVNLocationEntry copyfromEntry = null;
-        if(copyfromLine.length() == 0){
-            copyfromEntry = new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null);
-        }else{
-            String[] piecesOfCopyfromLine = copyfromLine.split(" ", 2);
-            if(piecesOfCopyfromLine.length < 2){
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
-                SVNErrorManager.error(err);
-            }
-            copyfromEntry = new SVNLocationEntry(Long.parseLong(piecesOfCopyfromLine[0]), piecesOfCopyfromLine[1]);
-        }
-        return new FSChange(new String(pathStr), new FSID(nodeRevID), changesKind, textModeBool, propModeBool, copyfromEntry);
-    }
 
     public static long getYoungestRevision(File reposRootDir) throws SVNException {
         File dbCurrentFile = FSRepositoryUtil.getFSCurrentFile(reposRootDir);
@@ -1184,121 +977,103 @@ public class FSReader {
         try {
             latestRev = Long.parseLong(splittedLine[0]);
         } catch (NumberFormatException nfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can't parse revision number in file ''{0}'': {1}", new Object[]{dbCurrentFile, nfe.getLocalizedMessage()});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can't parse revision number in file ''{0}'': {1}", new Object[] {
+                    dbCurrentFile, nfe.getLocalizedMessage()
+            });
             SVNErrorManager.error(err, nfe);
         }
         return latestRev;
     }
-    
-    /* Store as keys in returned Map the paths of all node in ROOT that show a
-     * significant change.  "Significant" means that the text or
-     * properties of the node were changed, or that the node was added or
-     * deleted.
-     * Keys are String paths and values are SVNLogEntryPaths.
+
+    /*
+     * Store as keys in returned Map the paths of all node in ROOT that show a
+     * significant change. "Significant" means that the text or properties of
+     * the node were changed, or that the node was added or deleted. Keys are
+     * String paths and values are SVNLogEntryPaths.
      */
     public static Map detectChanged(File reposRootDir, FSRevisionNodePool revNodesPool, FSRoot root) throws SVNException {
         Map changedPaths = new HashMap();
-        Map changes = getChangedPaths(reposRootDir, root);        
-        if(changes.size() == 0){
-            /* No paths changed in this revision?  Uh, sure, I guess the
-             * revision is readable, then.  
+        Map changes = root.getChangedPaths();
+        if (changes.size() == 0) {
+            /*
+             * No paths changed in this revision? Uh, sure, I guess the revision
+             * is readable, then.
              */
             return changes;
         }
-        for(Iterator paths = changes.keySet().iterator(); paths.hasNext();){
-            String changedPath = (String)paths.next();
-            FSPathChange change = (FSPathChange)changes.get(changedPath);
-            if(change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_RESET){
+        for (Iterator paths = changes.keySet().iterator(); paths.hasNext();) {
+            String changedPath = (String) paths.next();
+            FSPathChange change = (FSPathChange) changes.get(changedPath);
+            if (change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_RESET) {
                 continue;
             }
             char action = change.getChangeKind().toString().toUpperCase().charAt(0);
             long copyfromRevision = FSConstants.SVN_INVALID_REVNUM;
             String copyfromPath = null;
-            if(change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_ADD || change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_REPLACE){
+            if (change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_ADD || change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_REPLACE) {
                 SVNLocationEntry copyfromEntry = copiedFrom(reposRootDir, root, changedPath, revNodesPool);
-                if(copyfromEntry.getPath() != null && FSRepository.isValidRevision(copyfromEntry.getRevision())){
+                if (copyfromEntry.getPath() != null && FSRepository.isValidRevision(copyfromEntry.getRevision())) {
                     copyfromPath = copyfromEntry.getPath();
                     copyfromRevision = copyfromEntry.getRevision();
-                }                
+                }
             }
             changedPaths.put(changedPath, new SVNLogEntryPath(changedPath, action, copyfromPath, copyfromRevision));
         }
         return changedPaths;
     }
-    
-    /* Return MAP with hash containing descriptions of the paths changed under ROOT. 
-     * The hash is keyed with String paths and has FSPathChange values.
-     */    
-    public static Map getChangedPaths(File reposRootDir, FSRoot root) throws SVNException {   
-        Map changedPaths = new HashMap();
-        if(root.isTxnRoot()){
-            return fetchTxnChanges(changedPaths, root.getTxnId(), null, reposRootDir);
-        }           
-        long changesOffset = getChangesOffset(reposRootDir, root.getRevision());
-        File revFile = FSRepositoryUtil.getRevisionFile(reposRootDir, root.getRevision());
-        FSFile raRevFile = null;
-        Object[] result = null;
-        raRevFile = new FSFile(revFile);
-        try{
-            raRevFile.seek(changesOffset);
-            result = fetchAllChanges(changedPaths, raRevFile, true, null);
-        } finally{
-            raRevFile.close();
-//            SVNFileUtil.closeFile(raRevFile);
-        }
-        root.setCopyfromCache((Map)result[1]);
-        return changedPaths;      
-    }
-    
-    /* Discover the copy ancestry of PATH under ROOT.  Return a relevant
-     * ancestor/revision combination in PATH(SVNLocationEntry) and REVISON(SVNLocationEntry)*/
+
+    /*
+     * Discover the copy ancestry of PATH under ROOT. Return a relevant
+     * ancestor/revision combination in PATH(SVNLocationEntry) and
+     * REVISON(SVNLocationEntry)
+     */
     public static SVNLocationEntry copiedFrom(File reposRootDir, FSRoot root, String path, FSRevisionNodePool revNodesPool) throws SVNException {
-        /* Check to see if there is a cached version of this copyfrom
-         * entry. 
+        /*
+         * Check to see if there is a cached version of this copyfrom entry.
          */
         Map copyfromCache = root.getCopyfromCache();
-        if(copyfromCache != null){
-            /* We have a cached entry that says there is no copyfrom
-             * here. 
+        if (copyfromCache != null) {
+            /*
+             * We have a cached entry that says there is no copyfrom here.
              */
-            if(copyfromCache.get(path) == null){
+            if (copyfromCache.get(path) == null) {
                 return new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null);
             }
-            return (SVNLocationEntry)copyfromCache.get(path);
+            return (SVNLocationEntry) copyfromCache.get(path);
         }
-        /* There is no cached entry, look it up the old-fashioned
-         * way. 
+        /*
+         * There is no cached entry, look it up the old-fashioned way.
          */
         FSRevisionNode node = revNodesPool.getRevisionNode(root, path, reposRootDir);
         return new SVNLocationEntry(node.getCopyFromRevision(), node.getCopyFromPath());
     }
 
-    /* Pass history information about REV to handler.
-     * reposRootDir is used with REV to fetch the interesting history information,
-     * such as author, date, etc.
-     * The detectChanged() function if DISCOVER_CHANGED_PATHS is TRUE.
+    /*
+     * Pass history information about REV to handler. reposRootDir is used with
+     * REV to fetch the interesting history information, such as author, date,
+     * etc. The detectChanged() function if DISCOVER_CHANGED_PATHS is TRUE.
      */
-     public static void sendChangeRev(File reposRootDir, FSRevisionNodePool revNodesPool, long revNum, boolean discoverChangedPaths, ISVNLogEntryHandler handler) throws SVNException {      
+    public static void sendChangeRev(File reposRootDir, FSRevisionNodePool revNodesPool, long revNum, boolean discoverChangedPaths, ISVNLogEntryHandler handler) throws SVNException {
         Map revisionProps = FSRepositoryUtil.getRevisionProperties(reposRootDir, revNum);
         Map changedPaths = null;
-        String author = null;     
+        String author = null;
         Date date = null;
         String message = null;
-        if(revisionProps != null){
-            author = (String)revisionProps.get(SVNRevisionProperty.AUTHOR);     
-            String datestamp = (String)revisionProps.get(SVNRevisionProperty.DATE);
-            message = (String)revisionProps.get(SVNRevisionProperty.LOG);
+        if (revisionProps != null) {
+            author = (String) revisionProps.get(SVNRevisionProperty.AUTHOR);
+            String datestamp = (String) revisionProps.get(SVNRevisionProperty.DATE);
+            message = (String) revisionProps.get(SVNRevisionProperty.LOG);
             date = datestamp != null ? SVNTimeUtil.parseDateString(datestamp) : null;
         }
-        /* Discover changed paths if the user requested them
-         * or if we need to check that they are readable
+        /*
+         * Discover changed paths if the user requested them or if we need to
+         * check that they are readable
          */
-        if(revNum > 0 && discoverChangedPaths){
-//            FSRevisionNode newRoot = revNodesPool.getRootRevisionNode(revNum, reposRootDir);
-            FSRoot root = FSRoot.createRevisionRoot(revNum, null); 
+        if (revNum > 0 && discoverChangedPaths) {
+            FSRoot root = FSRoot.createRevisionRoot(revNum, null, reposRootDir);
             changedPaths = detectChanged(reposRootDir, revNodesPool, root);
         }
         changedPaths = changedPaths == null ? new HashMap() : changedPaths;
         handler.handleLogEntry(new SVNLogEntry(changedPaths, revNum, author, date, message));
-     }
+    }
 }

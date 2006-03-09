@@ -27,34 +27,34 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
  */
 public abstract class FSRevisionNodePool {
 
-    public static FSRevisionNodePool createRevisionNodePool(){
+    public static FSRevisionNodePool createRevisionNodePool() {
         return new DefaultFSRevisionNodePool(100, 100, 100);
     }
-    
+
     //first tries to find a necessary root node in the cache
     //if not found, the root node is read from the repository
-    public FSRevisionNode getRootRevisionNode(long revision, File reposRootDir) throws SVNException{
-        if(reposRootDir == null || FSRepository.isInvalidRevision(revision)){
+    public FSRevisionNode getRootRevisionNode(long revision, File reposRootDir) throws SVNException {
+        if (reposRootDir == null || FSRepository.isInvalidRevision(revision)) {
             return null;
         }
         FSRevisionNode root = fetchRootRevisionNode(revision);
-        if(root == null){
+        if (root == null) {
             root = FSReader.getRootRevNode(reposRootDir, revision);
-            if(root != null){
+            if (root != null) {
                 cacheRootRevisionNode(revision, root);
             }
         }
         return root;
     }
-    
+
     protected abstract FSRevisionNode fetchRootRevisionNode(long revision);
-    
+
     protected abstract void cacheRootRevisionNode(long revision, FSRevisionNode root);
 
-    private FSRevisionNode getRootNode(FSRoot root, File reposRootDir) throws SVNException{
-        if(!root.isTxnRoot()){
-            if(root.getRootRevisionNode() == null){
-                FSRevisionNode rootRevNode = getRootRevisionNode(root.getRevision(), reposRootDir); 
+    private FSRevisionNode getRootNode(FSRoot root, File reposRootDir) throws SVNException {
+        if (!root.isTxnRoot()) {
+            if (root.getRootRevisionNode() == null) {
+                FSRevisionNode rootRevNode = getRootRevisionNode(root.getRevision(), reposRootDir);
                 root.setRootRevisionNode(rootRevNode);
                 return rootRevNode;
             }
@@ -63,41 +63,42 @@ public abstract class FSRevisionNodePool {
         return FSReader.getTxnRootNode(root.getTxnId(), reposRootDir);
     }
 
-    public FSParentPath openPath(FSRoot root, String path, boolean isLastComponentOptional, String txnId, File reposRootDir, boolean storeParents) throws SVNException{     
-    	String canonPath = SVNPathUtil.canonicalizeAbsPath(path);
-        FSRevisionNode here = getRootNode(root, reposRootDir);;
+    public FSParentPath openPath(FSRoot root, String path, boolean isLastComponentOptional, String txnId, File reposRootDir, boolean storeParents) throws SVNException {
+        String canonPath = SVNPathUtil.canonicalizeAbsPath(path);
+        FSRevisionNode here = getRootNode(root, reposRootDir);
+        ;
         String pathSoFar = "/";
-        
+
         //Make a parentPath item for the root node, using its own current copy-id
         FSParentPath parentPath = new FSParentPath(here, null, null);
         parentPath.setCopyStyle(FSParentPath.COPY_ID_INHERIT_SELF);
         String rest = canonPath.substring(1);// skip the leading '/'
-        
+
         /* Whenever we are at the top of this loop:
          - HERE is our current directory,
          - REST is the path we're going to find in HERE, and 
          - PARENT_PATH includes HERE and all its parents.  */
-        while(true){
+        while (true) {
             String entry = SVNPathUtil.head(rest);
             String next = SVNPathUtil.removeHead(rest);
             pathSoFar = SVNPathUtil.concatToAbs(pathSoFar, entry);
             FSRevisionNode child = null;
-            if(entry == null || "".equals(entry)){
+            if (entry == null || "".equals(entry)) {
                 child = here;
-            }else{
-                FSRevisionNode cachedRevNode = fetchRevisionNode(root, pathSoFar); 
-                if(cachedRevNode != null){
+            } else {
+                FSRevisionNode cachedRevNode = fetchRevisionNode(root, pathSoFar);
+                if (cachedRevNode != null) {
                     child = cachedRevNode;
-                }else{
-                    try{
+                } else {
+                    try {
                         child = FSReader.getChildDirNode(entry, here, reposRootDir);
-                    }catch(SVNException svne){
-                        if(svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND){
+                    } catch (SVNException svne) {
+                        if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                             /* If this was the last path component, and the caller
                              * said it was optional, then don't return an error;
                              * just put a null node pointer in the path.  
-                             */                
-                            if(isLastComponentOptional && (next == null || "".equals(next)) ){
+                             */
+                            if (isLastComponentOptional && (next == null || "".equals(next))) {
                                 return new FSParentPath(null, entry, parentPath);
                             }
                             /* Build a better error message than FSReader.getChildDirNode()
@@ -110,42 +111,42 @@ public abstract class FSRevisionNodePool {
                 }
                 parentPath.setParentPath(child, entry, storeParents ? new FSParentPath(parentPath) : null);
                 SVNLocationEntry copyInherEntry = null;
-                if(FSID.isTxn(txnId)){
+                if (FSID.isTxn(txnId)) {
                     copyInherEntry = FSParentPath.getCopyInheritance(reposRootDir, parentPath, txnId, this);
-                    parentPath.setCopyStyle((int)copyInherEntry.getRevision());
+                    parentPath.setCopyStyle((int) copyInherEntry.getRevision());
                     parentPath.setCopySrcPath(copyInherEntry.getPath());
                 }
                 /* Cache the node we found (if it wasn't already cached). */
-                if(cachedRevNode == null){
+                if (cachedRevNode == null) {
                     cacheRevisionNode(root, pathSoFar, child);
                 }
-            }       
-            if(next == null || "".equals(next)){
+            }
+            if (next == null || "".equals(next)) {
                 break;
             }
             /* The path isn't finished yet; we'd better be in a directory.  */
-            if(child.getType() != SVNNodeKind.DIR){
+            if (child.getType() != SVNNodeKind.DIR) {
                 SVNErrorMessage err = FSErrors.errorNotDirectory(pathSoFar, reposRootDir);
                 SVNErrorManager.error(err.wrap("Failure opening ''{0}''", path));
             }
             rest = next;
             here = child;
-        }       
+        }
         return parentPath;
     }
-    
+
     //first tries to find a necessary rev node in the cache
     //if not found, the rev node is read from the repository
-    public FSRevisionNode getRevisionNode(long revision, String path, File reposRootDir) throws SVNException{
-        if(reposRootDir == null || path == null || "".equals(path) || FSRepository.isInvalidRevision(revision)){
+    public FSRevisionNode getRevisionNode(long revision, String path, File reposRootDir) throws SVNException {
+        if (reposRootDir == null || path == null || "".equals(path) || FSRepository.isInvalidRevision(revision)) {
             return null;
         }
         FSRevisionNode revNode = fetchRevisionNode(revision, path);
-        if(revNode == null){
+        if (revNode == null) {
             FSRevisionNode root = getRootRevisionNode(revision, reposRootDir);//fetchRootRevisionNode(revision); 
             //get it from a rev-file
-            revNode = openPath(FSRoot.createRevisionRoot(revision, root), path, false, null, reposRootDir, false).getRevNode(); //FSReader.getRevisionNode(reposRootDir, path, root, revision);
-            if(revNode != null){
+            revNode = openPath(FSRoot.createRevisionRoot(revision, root, reposRootDir), path, false, null, reposRootDir, false).getRevNode(); //FSReader.getRevisionNode(reposRootDir, path, root, revision);
+            if (revNode != null) {
                 cacheRevisionNode(revision, path, revNode);
             }
         }
@@ -161,9 +162,9 @@ public abstract class FSRevisionNodePool {
      * we have.
      */
     protected void cacheRevisionNode(FSRoot root, String path, FSRevisionNode revNode) throws SVNException {
-        if(root.isTxnRoot()){
+        if (root.isTxnRoot()) {
             root.putRevNodeToCache(path, revNode);
-        }else{
+        } else {
             cacheRevisionNode(root.getRevision(), path, revNode);
         }
     }
@@ -172,55 +173,55 @@ public abstract class FSRevisionNodePool {
      * for non-txn roots rev-nodes are cached within this pool object
      */
     protected FSRevisionNode fetchRevisionNode(FSRoot root, String path) throws SVNException {
-        if(!root.isTxnRoot()){
-            return fetchRevisionNode(root.getRevision(), path); 
+        if (!root.isTxnRoot()) {
+            return fetchRevisionNode(root.getRevision(), path);
         }
         return root.fetchRevNodeFromCache(path);
     }
 
     //first tries to find a necessary rev node in the cache
     //if not found, the rev node is read from the repository
-    public FSRevisionNode getRevisionNode(FSRevisionNode root, String path, File reposRootDir) throws SVNException{
-        if(reposRootDir == null || path == null || "".equals(path) || root == null){
+    public FSRevisionNode getRevisionNode(FSRevisionNode root, String path, File reposRootDir) throws SVNException {
+        if (reposRootDir == null || path == null || "".equals(path) || root == null) {
             return null;
         }
         return getRevisionNode(root.getId().getRevision(), path, reposRootDir);
     }
-    
+
     public void removeRevisionNode(FSRoot root, String path) throws SVNException {
-        if(root.isTxnRoot()){
+        if (root.isTxnRoot()) {
             root.removeRevNodeFromCache(path);
         }
     }
-    
+
     //first tries to find a necessary rev node in the cache
     //if not found, the rev node is read from the repository
-    public FSRevisionNode getRevisionNode(FSRoot root, String path, File reposRootDir) throws SVNException{
-        if(reposRootDir == null || path == null || "".equals(path) || root == null){
+    public FSRevisionNode getRevisionNode(FSRoot root, String path, File reposRootDir) throws SVNException {
+        if (reposRootDir == null || path == null || "".equals(path) || root == null) {
             return null;
         }
         FSParentPath parentPath = getParentPath(root, path, true, reposRootDir);
         FSRevisionNode revNode = parentPath.getRevNode();
         return revNode;
     }
-    
+
     /*
      * Almost the same as getRevisionNode(), but returns a parent path
      * object containing the node-rev itself plus the chain of parent nodes 
      * up to the root.   
      */
-    public FSParentPath getParentPath(FSRoot root, String path, boolean entryMustExist, File reposRootDir) throws SVNException{
-        if(reposRootDir == null || path == null || "".equals(path) || root == null){
+    public FSParentPath getParentPath(FSRoot root, String path, boolean entryMustExist, File reposRootDir) throws SVNException {
+        if (reposRootDir == null || path == null || "".equals(path) || root == null) {
             return null;
         }
         return openPath(root, path, !entryMustExist, root.getTxnId(), reposRootDir, true);
     }
-    
+
     public abstract void clearRootsCache();
-    
+
     public abstract void clearRevisionsCache();
-    
-    public void clearAllCaches(){
+
+    public void clearAllCaches() {
         clearRootsCache();
         clearRevisionsCache();
     }
