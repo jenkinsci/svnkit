@@ -467,7 +467,7 @@ public class FSReader {
             return null;
         }
         SVNNodeKind type = SVNNodeKind.parseKind(values[0]);
-        FSID id = parseID(values[1]);
+        FSID id = FSID.fromString(values[1]);
         if ((type != SVNNodeKind.DIR && type != SVNNodeKind.FILE) || id == null) {
             return null;
         }
@@ -487,7 +487,7 @@ public class FSReader {
     }
 
     public static FSRevisionNode getRootRevNode(File reposRootDir, long revision) throws SVNException {
-        FSID id = FSID.createRevId(FSID.ID_INAPPLICABLE, FSID.ID_INAPPLICABLE, revision, getRootOffset(reposRootDir, revision));
+        FSID id = FSID.createRevId(null, null, revision, getRootOffset(reposRootDir, revision));
         return getRevNodeFromID(reposRootDir, id);
     }
 
@@ -520,7 +520,7 @@ public class FSReader {
             SVNErrorManager.error(err);
         }
 
-        FSID revnodeId = parseID(revNodeId);
+        FSID revnodeId = FSID.fromString(revNodeId);
         if (revnodeId == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupt node-id in node-rev");
             SVNErrorManager.error(err);
@@ -573,7 +573,7 @@ public class FSReader {
         // Get the predecessor rev-node id (if any).
         String predId = (String) headers.get(FSConstants.HEADER_PRED);
         if (predId != null) {
-            FSID predRevNodeId = parseID(predId);
+            FSID predRevNodeId = FSID.fromString(predId);
             if (predRevNodeId == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupt predecessor node-id in node-rev");
                 SVNErrorManager.error(err);
@@ -644,38 +644,6 @@ public class FSReader {
         }
         revNode.setCopyRootRevision(rev);
         revNode.setCopyRootPath(cpyroot[1]);
-    }
-
-    public static FSID parseID(String revNodeId) {
-        /*
-         * Now, we basically just need to "split" this data on `.' characters.
-         */
-        String[] idParts = revNodeId.split("\\.");
-        if (idParts.length != 3) {
-            return null;
-        }
-        /* Node Id */
-        String nodeId = idParts[0];
-        /* Copy Id */
-        String copyId = idParts[1];
-        if (idParts[2].charAt(0) == 'r') {
-            /* This is a revision type ID */
-            int slashInd = idParts[2].indexOf('/');
-            long rev = -1;
-            long offset = -1;
-            try {
-                rev = Long.parseLong(idParts[2].substring(1, slashInd));
-                offset = Long.parseLong(idParts[2].substring(slashInd + 1));
-            } catch (NumberFormatException nfe) {
-                return null;
-            }
-            return FSID.createRevId(nodeId, copyId, rev, offset);
-        } else if (idParts[2].charAt(0) == 't') {
-            /* This is a transaction type ID */
-            String txnId = idParts[2].substring(1);
-            return FSID.createTxnId(nodeId, copyId, txnId);
-        }
-        return null;
     }
 
     // isData - if true - text, otherwise - props

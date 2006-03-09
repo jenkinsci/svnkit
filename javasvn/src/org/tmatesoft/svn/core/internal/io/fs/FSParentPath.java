@@ -168,13 +168,13 @@ public class FSParentPath {
     // copy src path
     public static SVNLocationEntry getCopyInheritance(File reposRootDir, FSParentPath child, String txnID, FSRevisionNodePool pool) throws SVNException {
         /* Make some assertions about the function input. */
-        if (child == null || child.getParent() == null || !FSID.isTxn(txnID)) {
+        if (child == null || child.getParent() == null || txnID == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: invalid parameters");
             SVNErrorManager.error(err);
         }
         FSID childID = child.getRevNode().getId();
         FSID parentID = child.getParent().getRevNode().getId();
-        FSID copyrootID = new FSID();
+        FSID copyrootID = null;
         String childCopyID = childID.getCopyID();
         String parentCopyID = parentID.getCopyID();
         FSRevisionNode copyrootRoot = null;
@@ -217,7 +217,7 @@ public class FSParentPath {
                                                                                                                                                                                                             // copyrootRoot,
                                                                                                                                                                                                             // 0);
         copyrootID = copyrootNode.getId();
-        if (FSID.compareIds(copyrootID, childID) == -1) {
+        if (copyrootID.compareTo(childID) == -1) {
             return copyrootEntry;
         }
 

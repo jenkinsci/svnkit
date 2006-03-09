@@ -59,7 +59,7 @@ public class FSRoot {
         myRevision = revision;
         myRootRevNode = root;
         myIsTxnRoot = false;
-        myTxnId = FSID.ID_INAPPLICABLE;
+        myTxnId = null;
         myTxnFlags = 0;
         myReposRootDir = reposRootDir;
     }
@@ -210,7 +210,7 @@ public class FSRoot {
                 }
             } else if (FSPathChangeKind.FS_PATH_CHANGE_ADD == change.getKind() || FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getKind()) {
                 oldChange.setChangeKind(FSPathChangeKind.FS_PATH_CHANGE_REPLACE);
-                oldChange.setRevNodeId(new FSID(change.getNodeRevID()));
+                oldChange.setRevNodeId(change.getNodeRevID().copy());
                 oldChange.setTextModified(change.getTextModification());
                 oldChange.setPropertiesModified(change.getPropModification());
                 if (change.getCopyfromEntry() == null) {
@@ -240,7 +240,7 @@ public class FSRoot {
             }
             newChange = oldChange;
         } else {
-            newChange = new FSPathChange(new FSID(change.getNodeRevID()), change.getKind(), change.getTextModification(), change.getPropModification());
+            newChange = new FSPathChange(change.getNodeRevID().copy(), change.getKind(), change.getTextModification(), change.getPropModification());
             copyfromEntry = new SVNLocationEntry(change.getCopyfromEntry().getRevision(), change.getCopyfromEntry().getPath());
             path = change.getPath();
         }
@@ -284,7 +284,7 @@ public class FSRoot {
     private FSChange readChange(FSFile raReader) throws SVNException {
         String changeLine = null;
         try {
-            changeLine = raReader.readLine(4096);//FSReader.readNextLine(raReader, 4096);
+            changeLine = raReader.readLine(4096);
         } catch (SVNException svne) {
             /* Check for a blank line. */
             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF) {
@@ -296,59 +296,9 @@ public class FSRoot {
         if (changeLine == null || changeLine.length() == 0) {
             return null;
         }
-        String[] piecesOfChangeLine = changeLine.split(" ", 5);
-        if (piecesOfChangeLine.length < 5) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
-            SVNErrorManager.error(err);
-        }
-        /* Get the node-id of the change. */
-        String nodeRevStr = piecesOfChangeLine[0];
-        FSID nodeRevID = FSReader.parseID(nodeRevStr);
-        /* Get the change type. */
-        String changesKindStr = piecesOfChangeLine[1];
-        FSPathChangeKind changesKind = (FSPathChangeKind) FSConstants.ACTIONS_TO_CHANGE_KINDS.get(changesKindStr);
-        if (changesKind == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change kind in rev file");
-            SVNErrorManager.error(err);
-        }
-        /* Get the text-mod flag. */
-        String textModeStr = piecesOfChangeLine[2];
-        boolean textModeBool = false;
-        if (textModeStr.equals(FSConstants.FLAG_TRUE)) {
-            textModeBool = true;
-        } else if (textModeStr.equals(FSConstants.FLAG_FALSE)) {
-            textModeBool = false;
-        } else {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid text-mod flag in rev-file");
-            SVNErrorManager.error(err);
-        }
-        /* Get the prop-mod flag. */
-        String propModeStr = piecesOfChangeLine[3];
-        boolean propModeBool = false;
-        if (propModeStr.equals(new String(FSConstants.FLAG_TRUE))) {
-            propModeBool = true;
-        } else if (propModeStr.equals(new String(FSConstants.FLAG_FALSE))) {
-            propModeBool = false;
-        } else {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid prop-mod flag in rev-file");
-            SVNErrorManager.error(err);
-        }
-        /* Get the changed path. */
-        String pathStr = piecesOfChangeLine[4];
         /* Read the next line, the copyfrom line. */
-        String copyfromLine = raReader.readLine(4096);//FSReader.readNextLine(raReader, 4096);
-        SVNLocationEntry copyfromEntry = null;
-        if (copyfromLine.length() == 0) {
-            copyfromEntry = new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null);
-        } else {
-            String[] piecesOfCopyfromLine = copyfromLine.split(" ", 2);
-            if (piecesOfCopyfromLine.length < 2) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
-                SVNErrorManager.error(err);
-            }
-            copyfromEntry = new SVNLocationEntry(Long.parseLong(piecesOfCopyfromLine[0]), piecesOfCopyfromLine[1]);
-        }
-        return new FSChange(new String(pathStr), new FSID(nodeRevID), changesKind, textModeBool, propModeBool, copyfromEntry);
+        String copyfromLine = raReader.readLine(4096);
+        return FSChange.fromString(changeLine, copyfromLine);
     }
 
     public Map getCopyfromCache() {

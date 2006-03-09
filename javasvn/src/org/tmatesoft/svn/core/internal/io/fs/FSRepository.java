@@ -935,7 +935,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                                                                                                         // path,
                                                                                                         // root,
                                                                                                         // 0);
-                if (!FSID.checkIdsRelated(curNode.getId(), currentNode.getId())) {
+                if (!curNode.getId().isRelated(currentNode.getId())) {
                     break;
                 }
                 /* The node exists at the same path; record that and advance. */
@@ -1623,7 +1623,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
          */
         boolean related = false;
         if (sourceEntry != null && targetEntry != null && sourceEntry.getType() == targetEntry.getType()) {
-            int distance = FSID.compareIds(sourceEntry.getId(), targetEntry.getId());
+            int distance = sourceEntry.getId().compareTo(targetEntry.getId());
             if (distance == 0 && !PathInfo.isRelevant(myReporterContext.getCurrentPathInfo(), editPath) && (pathInfo == null || (!pathInfo.isStartEmpty() && pathInfo.getLockToken() == null))) {
                 return;
             } else if (distance != -1 || myReporterContext.isIgnoreAncestry()) {
@@ -1940,7 +1940,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                                                                                                     // path,
                                                                                                     // copyDstRoot,
                                                                                                     // 0);
-        if (!FSID.checkIdsRelated(parentPath.getRevNode().getId(), curRev.getId())) {
+        if (!parentPath.getRevNode().getId().isRelated(curRev.getId())) {
             return null;
         }
         /*

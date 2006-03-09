@@ -312,14 +312,14 @@ public class FSWriter {
                 FSEntry dirEntry = (FSEntry) entries.next();
                 newId = writeFinalRevision(newId, protoFile, revision, dirEntry.getId(), startNodeId, startCopyId, reposRootDir);
                 if (newId != null && newId.getRevision() == revision) {
-                    dirEntry.setId(new FSID(newId));
+                    dirEntry.setId(newId.copy());
                 }
             }
             if (revNode.getTextRepresentation() != null && revNode.getTextRepresentation().isTxn()) {
                 /* Write out the contents of this directory as a text rep. */
                 Map unparsedEntries = FSRepositoryUtil.unparseDirEntries(namesToEntries);
                 FSRepresentation textRep = revNode.getTextRepresentation();
-                textRep.setTxnId(FSID.ID_INAPPLICABLE);
+                textRep.setTxnId(null);
                 textRep.setRevision(revision);
                 try {
                     textRep.setOffset(protoFile.getFilePointer());
@@ -341,7 +341,7 @@ public class FSWriter {
              */
             if (revNode.getTextRepresentation() != null && revNode.getTextRepresentation().isTxn()) {
                 FSRepresentation textRep = revNode.getTextRepresentation();
-                textRep.setTxnId(FSID.ID_INAPPLICABLE);
+                textRep.setTxnId(null);
                 textRep.setRevision(revision);
             }
         }
@@ -356,7 +356,7 @@ public class FSWriter {
                 String hexDigest = SVNFileUtil.toHexDigest(checksum);
                 propsRep.setSize(size);
                 propsRep.setHexDigest(hexDigest);
-                propsRep.setTxnId(FSID.ID_INAPPLICABLE);
+                propsRep.setTxnId(null);
                 propsRep.setRevision(revision);
                 propsRep.setExpandedSize(size);
             } catch (NoSuchAlgorithmException nsae) {
@@ -510,7 +510,7 @@ public class FSWriter {
             if (entryId != null) {
                 SVNProperties.appendProperty(entryName, kind + " " + entryId.toString(), dst);
                 if (dirContents != null) {
-                    dirContents.put(entryName, new FSEntry(new FSID(entryId), kind, entryName));
+                    dirContents.put(entryName, new FSEntry(entryId.copy(), kind, entryName));
                 }
             } else {
                 SVNProperties.appendPropertyDeleted(entryName, dst);
@@ -698,11 +698,11 @@ public class FSWriter {
         revNodeFile.write(count.getBytes());
         if (revNode.getTextRepresentation() != null) {
             String textRepresentation = FSConstants.HEADER_TEXT + ": "
-                    + (FSID.isTxn(revNode.getTextRepresentation().getTxnId()) && revNode.getType() == SVNNodeKind.DIR ? "-1" : revNode.getTextRepresentation().toString()) + "\n";
+                    + (revNode.getTextRepresentation().getTxnId() != null && revNode.getType() == SVNNodeKind.DIR ? "-1" : revNode.getTextRepresentation().toString()) + "\n";
             revNodeFile.write(textRepresentation.getBytes());
         }
         if (revNode.getPropsRepresentation() != null) {
-            String propsRepresentation = FSConstants.HEADER_PROPS + ": " + (FSID.isTxn(revNode.getPropsRepresentation().getTxnId()) ? "-1" : revNode.getPropsRepresentation().toString()) + "\n";
+            String propsRepresentation = FSConstants.HEADER_PROPS + ": " + (revNode.getPropsRepresentation().getTxnId() != null ? "-1" : revNode.getPropsRepresentation().toString()) + "\n";
             revNodeFile.write(propsRepresentation.getBytes());
         }
         String cpath = FSConstants.HEADER_CPATH + ": " + revNode.getCreatedPath() + "\n";
@@ -734,7 +734,7 @@ public class FSWriter {
         if (pathChange.getRevNodeId() != null) {
             idString = pathChange.getRevNodeId().toString();
         } else {
-            idString = FSConstants.ACTION_RESET;
+            idString = FSPathChangeKind.ACTION_RESET;
         }
         String output = idString + " " + changeString + " " + SVNProperty.toString(pathChange.isTextModified()) + " " + SVNProperty.toString(pathChange.arePropertiesModified()) + " " + path + "\n";
         changesFile.write(output.getBytes());

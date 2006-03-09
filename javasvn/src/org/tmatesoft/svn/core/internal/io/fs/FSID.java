@@ -17,31 +17,22 @@ package org.tmatesoft.svn.core.internal.io.fs;
  * @author  TMate Software Ltd.
  */
 public class FSID {
-    public static final String ID_INAPPLICABLE = "inapplicable";
     private String myNodeID;
     private String myCopyID;
     private String myTxnID;
     private long myRevision;
     private long myOffset;
     
-    public FSID(){
-        myNodeID = ID_INAPPLICABLE;
-        myCopyID = ID_INAPPLICABLE;
-        myTxnID = ID_INAPPLICABLE;
-        myRevision = -1;
-        myOffset = -1;
-    }
-    
     public boolean isTxn(){
-        return isTxn(myTxnID);
+        return myTxnID != null;
     }
     
-    public static boolean isTxn(String txnId){
-        if(txnId != null && txnId != ID_INAPPLICABLE){
+/*    public static boolean isTxn(String txnId){
+        if(txnId != null){
             return true;
         }
         return false;
-    }
+    }*/
     
     public static FSID createTxnId(String nodeId, String copyId, String txnId){
         return new FSID(nodeId, txnId, copyId, FSConstants.SVN_INVALID_REVNUM, -1);
@@ -51,40 +42,16 @@ public class FSID {
         return new FSID(nodeId, null, copyId, revision, offset);
     }
     
-    public FSID(String nodeId, String txnId, String copyId, long revision, long offset){
-        myNodeID = (nodeId == null) ? ID_INAPPLICABLE :  nodeId;
-        myCopyID = (copyId == null) ? ID_INAPPLICABLE : copyId;
-        myTxnID = (txnId == null) ? ID_INAPPLICABLE :  txnId; 
+    private FSID(String nodeId, String txnId, String copyId, long revision, long offset){
+        myNodeID = nodeId;
+        myCopyID = copyId;
+        myTxnID = txnId; 
         myRevision = revision;
         myOffset = offset;
     }
 
-    public FSID(FSID id){
-        myNodeID = (id.getNodeID() == null) ? ID_INAPPLICABLE :  id.getNodeID();
-        myCopyID = (id.getCopyID() == null) ? ID_INAPPLICABLE : id.getCopyID();
-        myTxnID = (id.getTxnID() == null) ? ID_INAPPLICABLE :  id.getTxnID(); 
-        myRevision = id.getRevision();
-        myOffset = id.getOffset();
-    }
-
-    public void setNodeID(String nodeId){
-        myNodeID = (nodeId == null) ? ID_INAPPLICABLE :  nodeId;
-    }
-
-    public void setCopyID(String copyId){
-        myCopyID = (copyId == null) ? ID_INAPPLICABLE : copyId;
-    }
-
-    public void setTxnID(String txnId){
-        myTxnID = (txnId == null) ? ID_INAPPLICABLE :  txnId;
-    }
-    
-    public void setRevision(long rev){
-        myRevision = rev;
-    }
-
-    public void setOffset(long offset){
-        myOffset = offset;
+    public FSID copy(){
+        return new FSID(getNodeID(), getTxnID(), getCopyID(), getRevision(), getOffset());
     }
 
     public String getNodeID(){
@@ -115,19 +82,41 @@ public class FSID {
         if(this == id){
             return true;
         }
-        if(!myNodeID.equals(id.getNodeID())){
+        
+        if(myNodeID != null && !myNodeID.equals(id.getNodeID())){
+            return false;
+        }else if(myNodeID == null && id.getNodeID() != null){
             return false;
         }
-        if(!myCopyID.equals(id.getCopyID())){
+        
+        if(myCopyID != null && !myCopyID.equals(id.getCopyID())){
+            return false;
+        }else if(myCopyID == null && id.getCopyID() != null){
             return false;
         }
-        if(!myTxnID.equals(id.getTxnID())){
+        
+        if(myTxnID != null && !myTxnID.equals(id.getTxnID())){
+            return false;
+        }else if(myTxnID == null && id.getTxnID() != null){
             return false;
         }
+        
         if(myRevision != id.getRevision() || myOffset != id.getOffset()){
             return false;
         }
+        
         return true;
+    }
+    
+    public int hashCode() {
+        final int PRIME = 31;
+        int result = 1;
+        result = PRIME * result + ((myNodeID == null) ? 0 : myNodeID.hashCode());
+        result = PRIME * result + ((myCopyID == null) ? 0 : myCopyID.hashCode());
+        result = PRIME * result + ((myTxnID == null) ? 0 : myTxnID.hashCode());
+        result = PRIME * result + (int) (myRevision ^ (myRevision >>> 32));
+        result = PRIME * result + (int) (myOffset ^ (myOffset >>> 32));
+        return result;
     }
     
     /*
@@ -136,40 +125,68 @@ public class FSID {
      *  1 - id1 is related to id2 (id2 is a result of user's modifications)
      * -1 - id1 is not related to id2 (absolutely different items)  
      */
-    public static int compareIds(FSID id1, FSID id2){
-        if(areEqualIds(id1, id2)){
+    public int compareTo(FSID otherID){
+        if (otherID == null) {
+             return -1;
+        } else if (otherID.equals(this)) {
             return 0;
         }
-        return checkIdsRelated(id1, id2) ? 1 : -1;
+        return isRelated(otherID) ? 1 : -1;
     }
     
-    public static boolean checkIdsRelated(FSID id1, FSID id2){
-        if(id1 == id2){
+    public boolean isRelated(FSID otherID){
+        if (otherID == null) {
+            return false;
+        }
+        if(this == otherID){
             return true;
         }
         /* If both node ids start with _ and they have differing transaction
          * IDs, then it is impossible for them to be related. 
          */
-        if(id1.getNodeID().startsWith("_")){
-            if(!id1.getTxnID().equals(id2.getTxnID())){
+        if(myNodeID != null && myNodeID.startsWith("_")){
+            if(myTxnID != null && !myTxnID.equals(otherID.getTxnID())){
+                return false;
+            }else if(myTxnID == null && otherID.getTxnID() != null){
                 return false;
             }
         }
-        return id1.getNodeID().equals(id2.getNodeID());
-    }
-    
-    private static boolean areEqualIds(FSID id1, FSID id2){
-        if(id1 == id2){
-            return true;
-        }else if(id1 != null){
-            return id1.equals(id2);
-        }else if(id2 != null){
-            return id2.equals(id1);
-        }
-        return true;
+        return myNodeID.equals(otherID.getNodeID());
     }
     
     public String toString(){
         return myNodeID + "." + myCopyID + "." + (isTxn() ? "t" + myTxnID : "r" + myRevision + "/" + myOffset);
+    }
+
+    public static FSID fromString(String revNodeId) {
+        /*
+         * Now, we basically just need to "split" this data on `.' characters.
+         */
+        String[] idParts = revNodeId.split("\\.");
+        if (idParts.length != 3) {
+            return null;
+        }
+        /* Node Id */
+        String nodeId = idParts[0];
+        /* Copy Id */
+        String copyId = idParts[1];
+        if (idParts[2].charAt(0) == 'r') {
+            /* This is a revision type ID */
+            int slashInd = idParts[2].indexOf('/');
+            long rev = -1;
+            long offset = -1;
+            try {
+                rev = Long.parseLong(idParts[2].substring(1, slashInd));
+                offset = Long.parseLong(idParts[2].substring(slashInd + 1));
+            } catch (NumberFormatException nfe) {
+                return null;
+            }
+            return createRevId(nodeId, copyId, rev, offset);
+        } else if (idParts[2].charAt(0) == 't') {
+            /* This is a transaction type ID */
+            String txnId = idParts[2].substring(1);
+            return createTxnId(nodeId, copyId, txnId);
+        }
+        return null;
     }
 }

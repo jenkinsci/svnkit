@@ -467,7 +467,7 @@ public class FSCommitEditor implements ISVNEditor {
              * Create a successor with its predecessor pointing at the copy
              * source.
              */
-            toRevNode.setPredecessorId(new FSID(srcId));
+            toRevNode.setPredecessorId(srcId.copy());
             if (toRevNode.getCount() != -1) {
                 toRevNode.setCount(toRevNode.getCount() + 1);
             }

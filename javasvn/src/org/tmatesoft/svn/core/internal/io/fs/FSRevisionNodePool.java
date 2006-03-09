@@ -111,7 +111,7 @@ public abstract class FSRevisionNodePool {
                 }
                 parentPath.setParentPath(child, entry, storeParents ? new FSParentPath(parentPath) : null);
                 SVNLocationEntry copyInherEntry = null;
-                if (FSID.isTxn(txnId)) {
+                if (txnId != null) {
                     copyInherEntry = FSParentPath.getCopyInheritance(reposRootDir, parentPath, txnId, this);
                     parentPath.setCopyStyle((int) copyInherEntry.getRevision());
                     parentPath.setCopySrcPath(copyInherEntry.getPath());
