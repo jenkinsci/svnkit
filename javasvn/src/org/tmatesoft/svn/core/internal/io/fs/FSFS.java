@@ -19,80 +19,87 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
-
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
  */
 public class FSFS {
+    
+    private static final int REPOSITORY_FORMAT = 3;
+    private static final int DB_FORMAT = 1;
+    private static final String DB_TYPE = "fsfs";
+    
     private String myUUID;
     
     private File myRepositoryRoot;
+    private File myRevisionsRoot;
+    private File myRevisionPropertiesRoot;
+    private File myTransactionsRoot;
+    private File myDBRoot;
 
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
+        myDBRoot = new File(myRepositoryRoot, "db");
+        myRevisionsRoot = new File(myDBRoot, "revs");
+        myRevisionPropertiesRoot = new File(myDBRoot, "revprops");
+        myTransactionsRoot = new File(myDBRoot, "transactions");
     }
     
-    // checks format, loads uuid.
     public void open() throws SVNException {
-
-        checkRepositoryInfo();
-        
-        // Read and cache repository UUID
-        if(myUUID == null){
-            myUUID = FSRepositoryUtil.getRepositoryUUID(myRepositoryRoot);    
+        // repo format /root/format
+        FSFile formatFile = new FSFile(new File(myRepositoryRoot, "format"));
+        int format = -1;
+        try {
+            format = formatFile.readInt();
+        } finally {
+            formatFile.close();
         }
-    }
-    
-    public String getUUID(){
-        return myUUID;
-    }
-    
-    protected void checkRepositoryInfo() throws SVNException {
-        /* Check repos format (the format file must exist!) */
-        int formatNumber = FSRepositoryUtil.getFormat(FSRepositoryUtil.getRepositoryFormatFile(myRepositoryRoot), true, -1);
-        if (formatNumber != FSConstants.SVN_REPOS_FORMAT_NUMBER) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_UNSUPPORTED_VERSION, "Expected format ''{0,number,integer}'' of repository; found format ''{1,number,integer}''", new Object[]{new Integer(FSConstants.SVN_REPOS_FORMAT_NUMBER), new Integer(formatNumber)});
+        if (format != REPOSITORY_FORMAT) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_UNSUPPORTED_VERSION, "Expected format ''{0,number,integer}'' of repository; found format ''{1,number,integer}''", new Object[]{new Integer(REPOSITORY_FORMAT), new Integer(format)});
+            SVNErrorManager.error(err);
+        }
+        // fs format /root/db/format
+        formatFile = new FSFile(new File(myDBRoot, "format"));
+        try {
+            format = formatFile.readInt();
+        } finally {
+            formatFile.close();
+        }
+        if (format != DB_FORMAT) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNSUPPORTED_FORMAT, "Expected FS format ''{0,number,integer}''; found format ''{1,number,integer}''", new Object[]{new Integer(DB_FORMAT), new Integer(format)});
             SVNErrorManager.error(err);
         }
 
-        /* Check FS type for 'fsfs' */
-        File fsTypeFile = FSRepositoryUtil.getFSTypeFile(myRepositoryRoot);
-        FSFile reader = new FSFile(fsTypeFile);
+        // fs type /root/db/fs-type
+        formatFile = new FSFile(new File(myDBRoot, "fs-type"));
         String fsType = null;
+        try {
+            fsType = formatFile.readLine(128);    
+        } finally {
+            formatFile.close();
+        }
+        if (!DB_TYPE.equals(fsType)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNKNOWN_FS_TYPE, "Unsupported fs type ''{0}''", fsType);
+            SVNErrorManager.error(err);
+        }
 
-        try{
-            fsType = reader.readLine(128);    
-        }finally{
-            reader.close();
+        File dbCurrentFile = new File(myDBRoot, "current");
+        if(!(dbCurrentFile.exists() && dbCurrentFile.canRead())){
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can''t open file ''{0}''", dbCurrentFile);
+            SVNErrorManager.error(err);
         }
         
-        if (fsType == null || fsType.length() == 0 || !fsType.equals(FSConstants.SVN_REPOS_FSFS_FORMAT)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNKNOWN_FS_TYPE, "Unsupported fs type");
-            SVNErrorManager.error(err);
+        // uuid
+        formatFile = new FSFile(new File(myDBRoot, "uuid"));
+        try {
+            myUUID = formatFile.readLine(38);
+        } finally {
+            formatFile.close();
         }
-
-        /* Attempt to open the 'current' file of this repository */
-        File dbCurrentFile = FSRepositoryUtil.getFSCurrentFile(myRepositoryRoot);
-        if(!(dbCurrentFile.exists() && dbCurrentFile.canRead())){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't open file ''{0}''", dbCurrentFile);
-            SVNErrorManager.error(err);
-        }
-
-        /*
-         * Check the FS format number (db/format). Treat an absent format
-         * file as format 1. Do not try to create the format file on the fly,
-         * because the repository might be read-only for us, or we might have a
-         * umask such that even if we did create the format file, subsequent
-         * users would not be able to read it. See thread starting at
-         * http://subversion.tigris.org/servlets/ReadMsg?list=dev&msgNo=97600
-         * for more.
-         */
-        int dbFormatNumber = FSRepositoryUtil.getFormat(FSRepositoryUtil.getFSFormatFile(myRepositoryRoot), false, FSConstants.SVN_FS_FORMAT_NUMBER);
-        if (dbFormatNumber != FSConstants.SVN_FS_FORMAT_NUMBER) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNSUPPORTED_FORMAT, "Expected FS format ''{0,number,integer}''; found format ''{1,number,integer}''", new Object[]{new Integer(FSConstants.SVN_FS_FORMAT_NUMBER), new Integer(dbFormatNumber)});
-            SVNErrorManager.error(err);
-        }
+    }
+    
+    public String getUUID() {
+        return myUUID;
     }
     
     public FSRoot createRevisionRoot(long revision) {
@@ -100,39 +107,40 @@ public class FSFS {
     }
     
     public FSRevisionNode createRevisionNode(FSID id) throws SVNException  {
-        FSFile revFileReader = null;
+        FSFile revisionFile = null;
 
         if (id.isTxn()) {
-            /* This is a transaction node-rev. */
-            File revFile = FSRepositoryUtil.getTxnRevNodeFile(id, myRepositoryRoot);
-            revFileReader = new FSFile(revFile);
+            File file = new File(getTransactionDir(id.getTxnID()), "node" + id.getNodeID() + "." + id.getCopyID());
+            revisionFile = new FSFile(file);
         } else {
-            /* This is a revision node-rev. */
-            revFileReader = getRevisionFile(id.getRevision());
-            revFileReader.seek(id.getOffset());
+            revisionFile = getRevisionFile(id.getRevision());
+            revisionFile.seek(id.getOffset());
         }
 
         Map headers = null;
-        try{
-            headers = revFileReader.readHeader();
-        }finally{
-            revFileReader.close();
+        try {
+            headers = revisionFile.readHeader();
+        } finally{
+            revisionFile.close();
         }
-        
         return FSRevisionNode.fromMap(headers);
     }
     
     protected FSFile getRevisionFile(long revision)  throws SVNException {
-        File revFile = new File(FSRepositoryUtil.getRevisionsDir(myRepositoryRoot), String.valueOf(revision));
-        if (!revFile.exists()) {
+        File revisionFile = new File(myRevisionsRoot, String.valueOf(revision));
+        if (!revisionFile.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0,number,integer}", new Long(revision));
             SVNErrorManager.error(err);
         }
-        return new FSFile(revFile);
+        return new FSFile(revisionFile);
+    }
+
+    protected File getTransactionDir(String txnID) {
+        return new File(myTransactionsRoot, txnID + ".txn");
     }
 
     protected FSFile getRevisionPropertiesFile(long revision) {
-        return null;
+        File file = new File(myRevisionPropertiesRoot, String.valueOf(revision));
+        return new FSFile(file);
     }
-    
 }

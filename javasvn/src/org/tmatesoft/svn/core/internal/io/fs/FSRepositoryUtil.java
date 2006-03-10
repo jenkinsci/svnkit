@@ -209,23 +209,6 @@ public class FSRepositoryUtil {
         return true;
     }
 
-    public static void checkRepositoryFormat(File reposRootDir) throws SVNException {
-        int formatNumber = getFormat(getRepositoryFormatFile(reposRootDir), true, -1);
-        if (formatNumber != FSConstants.SVN_REPOS_FORMAT_NUMBER) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_UNSUPPORTED_VERSION, "Expected format ''{0,number,integer}'' of repository; found format ''{1,number,integer}''", new Object[]{new Integer(FSConstants.SVN_REPOS_FORMAT_NUMBER), new Integer(formatNumber)});
-            SVNErrorManager.error(err);
-        }
-    }
-    
-    public static void checkFSFormat(File reposRootDir) throws SVNException {
-        int formatNumber = -1;
-        formatNumber = getFormat(getFSFormatFile(reposRootDir), false, FSConstants.SVN_FS_FORMAT_NUMBER);
-        if (formatNumber != FSConstants.SVN_FS_FORMAT_NUMBER) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNSUPPORTED_FORMAT, "Expected FS format ''{0,number,integer}''; found format ''{1,number,integer}''", new Object[]{new Integer(FSConstants.SVN_FS_FORMAT_NUMBER), new Integer(formatNumber)});
-            SVNErrorManager.error(err);
-        }
-    }
-
     public static int getFormat(File formatFile, boolean formatFileMustExist, int defaultValue) throws SVNException {
         if(!formatFile.exists() && !formatFileMustExist){
             return defaultValue;

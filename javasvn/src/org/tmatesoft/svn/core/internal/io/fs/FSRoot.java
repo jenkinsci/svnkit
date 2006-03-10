@@ -29,30 +29,22 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
  */
 public class FSRoot {
 
-    /* The kind of root this is */
     private boolean myIsTxnRoot;
-    /* For transaction roots, the name of the transaction  */
     private String myTxnId;
-    /* For transaction roots, flags describing the txn's behavior. */
     private int myTxnFlags;
-    /* For revision roots, the number of the revision.  */
     private long myRevision;
-    /* For revision roots, the node-rev representation of the root */
     private FSRevisionNode myRootRevNode;
-
-    /* Cache structure for mapping String PATH to String COPYFROM_STRING, 
-     * so that pathsChanged can remember all the copyfrom information in the changes file.
-     * COPYFROM_STRING has the format "REV PATH", i.e SVNLocationEntry(), 
-     * or there is no entry in map if the path was added without history*/
     private Map myCopyfromCache;
 
-    //only for transactions 
     private Map myRevNodesCache;
-
     private File myReposRootDir;
 
     public static FSRoot createRevisionRoot(long revision, FSRevisionNode root, File reposRootDir) {
         return new FSRoot(revision, root, reposRootDir);
+    }
+
+    public static FSRoot createTransactionRoot(String txnId, int flags, File reposRootDir) {
+        return new FSRoot(txnId, flags, reposRootDir);
     }
 
     private FSRoot(long revision, FSRevisionNode root, File reposRootDir) {
@@ -62,10 +54,6 @@ public class FSRoot {
         myTxnId = null;
         myTxnFlags = 0;
         myReposRootDir = reposRootDir;
-    }
-
-    public static FSRoot createTransactionRoot(String txnId, int flags, File reposRootDir) {
-        return new FSRoot(txnId, flags, reposRootDir);
     }
 
     private FSRoot(String txnId, int flags, File reposRootDir) {
@@ -185,22 +173,16 @@ public class FSRoot {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing required node revision ID");
                 SVNErrorManager.error(err);
             }
-            /* Sanity check: we should be talking about the same node
-             revision ID as our last change except where the last change
-             was a deletion*/
             if ((change.getNodeRevID() != null) && (!oldChange.getRevNodeId().equals(change.getNodeRevID())) && (oldChange.getChangeKind() != FSPathChangeKind.FS_PATH_CHANGE_DELETE)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change ordering: new node revision ID without delete");
                 SVNErrorManager.error(err);
             }
-            /* Sanity check: an add, replacement, or reset must be the first
-             thing to follow a deletion*/
             if (FSPathChangeKind.FS_PATH_CHANGE_DELETE == oldChange.getChangeKind()
                     && !(FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getKind() || FSPathChangeKind.FS_PATH_CHANGE_RESET == change.getKind() || FSPathChangeKind.FS_PATH_CHANGE_ADD == change
                             .getKind())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change ordering: non-add change on deleted path");
                 SVNErrorManager.error(err);
             }
-            /*Merging the changes*/
             if (FSPathChangeKind.FS_PATH_CHANGE_MODIFY == change.getKind()) {
                 if (change.getTextModification()) {
                     oldChange.setTextModified(true);
@@ -220,12 +202,9 @@ public class FSRoot {
                 }
             } else if (FSPathChangeKind.FS_PATH_CHANGE_DELETE == change.getKind()) {
                 if (FSPathChangeKind.FS_PATH_CHANGE_ADD == oldChange.getChangeKind()) {
-                    /*If the path was introduced in this transaction via an
-                     add, and we are deleting it, just remove the path altogether*/
                     oldChange = null;
                     mapChanges.remove(change.getPath());
                 } else {
-                    /* A deletion overrules all previous changes. */
                     oldChange.setChangeKind(FSPathChangeKind.FS_PATH_CHANGE_DELETE);
                     oldChange.setPropertiesModified(change.getPropModification());
                     oldChange.setTextModified(change.getTextModification());
@@ -244,7 +223,7 @@ public class FSRoot {
             copyfromEntry = new SVNLocationEntry(change.getCopyfromEntry().getRevision(), change.getCopyfromEntry().getPath());
             path = change.getPath();
         }
-        /* Add (or update) this path. */
+        
         mapChanges.put(path, newChange);
 
         if (copyfromEntry == null) {
@@ -262,11 +241,9 @@ public class FSRoot {
             if ((FSPathChangeKind.FS_PATH_CHANGE_DELETE == change.getKind() || FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getKind()) && !prefolded) {
                 for (Iterator curIter = changedPaths.keySet().iterator(); curIter.hasNext();) {
                     String hashKeyPath = (String) curIter.next();
-                    //If we come across our own path, ignore it                    
                     if (change.getPath().equals(hashKeyPath)) {
                         continue;
                     }
-                    //If we come across a child of our path, remove it
                     if (SVNPathUtil.pathIsChild(change.getPath(), hashKeyPath) != null) {
                         curIter.remove();
                     }
@@ -277,26 +254,19 @@ public class FSRoot {
         return changedPaths;
     }
 
-    /* Read changes from revision file, RandomAccessFile reader must be already opened.
-     * OffsetContainerClass before invoking 'readChanges' method contains offset to changes, after invoking 
-     * 'readChanges' contains offset to next changes (if file has them) in raFile 
-     */
     private FSChange readChange(FSFile raReader) throws SVNException {
         String changeLine = null;
         try {
             changeLine = raReader.readLine(4096);
         } catch (SVNException svne) {
-            /* Check for a blank line. */
             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF) {
                 return null;
             }
             throw svne;
         }
-        /* Check for a blank line. */
         if (changeLine == null || changeLine.length() == 0) {
             return null;
         }
-        /* Read the next line, the copyfrom line. */
         String copyfromLine = raReader.readLine(4096);
         return FSChange.fromString(changeLine, copyfromLine);
     }
