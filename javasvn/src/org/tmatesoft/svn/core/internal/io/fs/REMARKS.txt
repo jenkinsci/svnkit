@@ -47,4 +47,11 @@ exception rather than returning a DUMMY IOStream.
 7) Another task for FSRevisionNodePool TODO: realize resorting rev nodes cache so 
    that frequently requested nodes not to be deleted when inserting a new node.
    
+************************************************************************************************
+
+We have merged it! A new Age began.... new Notes
+
+1) Replace File.getCanonicalFile() from SVNURL, openRoot(), etc.
+
+
    

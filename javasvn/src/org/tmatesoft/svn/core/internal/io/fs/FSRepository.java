@@ -12,8 +12,6 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -69,6 +67,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     private File myReposRootDir;
     private FSReporterContext myReporterContext;// for reporter
     private FSRevisionNodePool myRevNodesPool;
+    private FSFS myFSFS;
 
     protected FSRepository(SVNURL location, ISVNSession options) {
         super(location, options);
@@ -96,12 +95,14 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
     private void openRepositoryRoot() throws SVNException {
         lock();
+        
         if (!"".equals(getLocation().getHost()) && !getLocation().getHost().equalsIgnoreCase("localhost")) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains unsupported hostname", getLocation().toDecodedString());
             SVNErrorManager.error(err);
         }
+        
         // Perform steps similar to svn's ones
-        // 1. Find repos root
+        // Find repos root
         try {
             myReposRootDir = FSRepositoryUtil.findRepositoryRoot(new File(getLocation().getPath()).getCanonicalFile());
         } catch (IOException ioe) {
@@ -114,39 +115,12 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toDecodedString());
             SVNErrorManager.error(err);
         }
-        // 2. Check repos format (the format file must exist!)
-        FSRepositoryUtil.checkRepositoryFormat(myReposRootDir);
-
-        // 3. Check FS type for 'fsfs'
-        FSRepositoryUtil.checkFSType(myReposRootDir);
-
-        // 4. Attempt to open the 'current' file of this repository
-        File dbCurrentFile = FSRepositoryUtil.getFSCurrentFile(myReposRootDir);
-        FileInputStream fis = null;
-        try {
-            fis = new FileInputStream(dbCurrentFile);
-        } catch (FileNotFoundException fnfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't open file ''{0}'': ", new Object[] {
-                    dbCurrentFile, fnfe.getLocalizedMessage()
-            });
-            SVNErrorManager.error(err);
-        } finally {
-            SVNFileUtil.closeFile(fis);
-        }
-
-        /*
-         * 5. Check the FS format number (db/format). Treat an absent format
-         * file as format 1. Do not try to create the format file on the fly,
-         * because the repository might be read-only for us, or we might have a
-         * umask such that even if we did create the format file, subsequent
-         * users would not be able to read it. See thread starting at
-         * http://subversion.tigris.org/servlets/ReadMsg?list=dev&msgNo=97600
-         * for more.
-         */
-        FSRepositoryUtil.checkFSFormat(myReposRootDir);
-
-        // 6. Read and cache repository UUID
-        String uuid = FSRepositoryUtil.getRepositoryUUID(myReposRootDir);
+        
+        myFSFS = new FSFS(myReposRootDir);
+        myFSFS.open();
+        
+        // Read and cache repository UUID
+        
         String rootDir = null;
         try {
             rootDir = myReposRootDir.getCanonicalPath();
@@ -158,11 +132,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         if (!rootDir.startsWith("/")) {
             rootDir = "/" + rootDir;
         }
-        setRepositoryCredentials(uuid, getLocation().setPath(rootDir, false));
+        setRepositoryCredentials(myFSFS.getUUID(), getLocation().setPath(rootDir, false));
     }
 
     void closeRepository() {
-        // myRevNodesPool.clearAllCaches();
+        // myRevNodesPool.clearAllCaches();//not sure if this should be commented
         unlock();
     }
 
