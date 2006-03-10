@@ -78,8 +78,8 @@ abstract class SVNMeasurable implements Runnable {
         String name = getName() != null ? getName() : "untitled";
         long avg1 = myTime1/myRunCount;
         long avg2 = myTime2/myRunCount;
-        return name + ":\n\t" + myRepository1.getLocation() + ": " + percents1 + "% (total: " + myTime1 + "ms. avg: " + avg1 + "ms.)\n\t" + 
-                myRepository2.getLocation() + ": "+ percents2 + " % (total: " + myTime2 + "ms. avg: " + avg2 + "ms.)";
+        return name + ":\n\t" + myRepository1.getLocation() + ": " + percents1 + "% (total: " + myTime1 + " ms. avg: " + avg1 + " ms.)\n\t" + 
+                myRepository2.getLocation() + ": "+ percents2 + "% (total: " + myTime2 + " ms. avg: " + avg2 + " ms.)";
     }
     
     protected abstract void measure(SVNRepository repos) throws SVNException;

@@ -18,6 +18,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -84,10 +86,48 @@ public class FSFile {
             myReadLineBuffer.flip();
             return myDecoder.decode(myReadLineBuffer).toString();
         } catch (IOException e) {
+            e.printStackTrace();
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t read length line from file {0}", getFile());
             SVNErrorManager.error(err, e);
         }
         return null;
+    }
+    
+    public Map readProperties() throws SVNException {
+        Map map = new HashMap();
+//        System.out.println("reading line from " + myPosition);
+        String line = readLine(160); // PLAIN
+        try {
+            while(true) {
+//                System.out.println("reading line from " + myPosition);
+                line = readLine(160); // K length or END
+//                System.out.println(line);
+                if ("END".equals(line)) {
+                    break;
+                }
+                int length = Integer.parseInt(line.substring(2));
+                myReadLineBuffer.clear();
+                myReadLineBuffer.limit(length + 1);
+                read(myReadLineBuffer); // key.
+                myReadLineBuffer.flip();
+                myReadLineBuffer.limit(myReadLineBuffer.limit() - 1);
+                String key = myDecoder.decode(myReadLineBuffer).toString();
+                line = readLine(160); // V length
+//                System.out.println(line);
+                length = Integer.parseInt(line.substring(2));
+                myReadLineBuffer.clear();
+                myReadLineBuffer.limit(length + 1);
+                read(myReadLineBuffer); // value.
+                myReadLineBuffer.flip();
+                myReadLineBuffer.limit(myReadLineBuffer.limit() - 1);
+                String value = myDecoder.decode(myReadLineBuffer).toString();
+                map.put(key, value);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // 
+        return map;
     }
     
     public int read() throws IOException {
