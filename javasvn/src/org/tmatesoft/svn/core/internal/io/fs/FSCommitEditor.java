@@ -52,7 +52,7 @@ public class FSCommitEditor implements ISVNEditor {
     private String myBasePath;
     private String myLogMessage;
     private FSTransactionInfo myTxn;
-    private FSRoot myTxnRoot;
+    private FSOldRoot myTxnRoot;
     private boolean isTxnOwner;
     private File myReposRootDir;
     private FSRevisionNodePool myRevNodesPool;
@@ -114,7 +114,7 @@ public class FSCommitEditor implements ISVNEditor {
         if (txnProps.get(SVNProperty.TXN_CHECK_LOCKS) != null) {
             flags |= FSConstants.SVN_FS_TXN_CHECK_LOCKS;
         }
-        myTxnRoot = FSRoot.createTransactionRoot(myTxn.getTxnId(), flags, myReposRootDir);
+        myTxnRoot = FSOldRoot.createTransactionRoot(myTxn.getTxnId(), flags, myReposRootDir);
         DirBaton dirBaton = new DirBaton(revision, myBasePath, false);
         myDirsStack.push(dirBaton);
     }
@@ -185,7 +185,7 @@ public class FSCommitEditor implements ISVNEditor {
     /*
      * Delete the node at path under root. root must be a transaction root.
      */
-    private void deleteNode(FSRoot root, String path) throws SVNException {
+    private void deleteNode(FSOldRoot root, String path) throws SVNException {
         String txnId = root.getTxnId();
         if (!root.isTxnRoot()) {
             SVNErrorManager.error(FSErrors.errorNotTxn());
@@ -244,7 +244,7 @@ public class FSCommitEditor implements ISVNEditor {
              * Now use the copyFromPath as an absolute path within the
              * repository to make the copy from.
              */
-            FSRoot copyRoot = FSRoot.createRevisionRoot(copyFromRevision, myRevNodesPool.getRootRevisionNode(copyFromRevision, myReposRootDir), myReposRootDir);
+            FSOldRoot copyRoot = FSOldRoot.createRevisionRoot(copyFromRevision, myRevNodesPool.getRootRevisionNode(copyFromRevision, myReposRootDir), myReposRootDir);
             makeCopy(copyRoot, copyFromPath, myTxnRoot, fullPath, true);
             isCopied = true;
         } else {
@@ -265,7 +265,7 @@ public class FSCommitEditor implements ISVNEditor {
      * entries, and no properties. root must be the root of a transaction, not a
      * revision.
      */
-    private void makeDir(FSRoot root, String path) throws SVNException {
+    private void makeDir(FSOldRoot root, String path) throws SVNException {
         String txnId = root.getTxnId();
         FSParentPath parentPath = myRevNodesPool.getParentPath(root, path, false, myReposRootDir);
         /*
@@ -360,7 +360,7 @@ public class FSCommitEditor implements ISVNEditor {
      * is a directory, copy it recursively. If preserveHistory is true, then the
      * copy is recorded in the copies table.
      */
-    private void makeCopy(FSRoot fromRoot, String fromPath, FSRoot toRoot, String toPath, boolean preserveHistory) throws SVNException {
+    private void makeCopy(FSOldRoot fromRoot, String fromPath, FSOldRoot toRoot, String toPath, boolean preserveHistory) throws SVNException {
         String txnId = toRoot.getTxnId();
         if (fromRoot.isTxnRoot()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Copy from mutable tree not currently supported");
@@ -507,7 +507,7 @@ public class FSCommitEditor implements ISVNEditor {
      * points to either a string value to set the new contents to, or null if
      * the property should be deleted.
      */
-    private void changeNodeProperty(FSRoot root, String path, String propName, String propValue) throws SVNException {
+    private void changeNodeProperty(FSOldRoot root, String path, String propName, String propValue) throws SVNException {
         /* Validate the property. */
         if (!SVNProperty.isRegularProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
@@ -571,7 +571,7 @@ public class FSCommitEditor implements ISVNEditor {
              * Now use the copyFromPath as an absolute path within the
              * repository to make the copy from.
              */
-            FSRoot copyRoot = FSRoot.createRevisionRoot(copyFromRevision, myRevNodesPool.getRootRevisionNode(copyFromRevision, myReposRootDir), myReposRootDir);
+            FSOldRoot copyRoot = FSOldRoot.createRevisionRoot(copyFromRevision, myRevNodesPool.getRootRevisionNode(copyFromRevision, myReposRootDir), myReposRootDir);
             makeCopy(copyRoot, copyFromPath, myTxnRoot, fullPath, true);
         } else {
             /*
@@ -587,7 +587,7 @@ public class FSCommitEditor implements ISVNEditor {
     /*
      * Create an empty file path under the root.
      */
-    private void makeFile(FSRoot root, String path) throws SVNException {
+    private void makeFile(FSOldRoot root, String path) throws SVNException {
         String txnId = root.getTxnId();
         FSParentPath parentPath = myRevNodesPool.getParentPath(root, path, false, myReposRootDir);
         /*
@@ -685,7 +685,7 @@ public class FSCommitEditor implements ISVNEditor {
      * directories as needed. Adjust the dag nodes in parentPath to refer to the
      * clones. Use errorPath in error messages.
      */
-    private void makePathMutable(FSRoot root, FSParentPath parentPath, String errorPath) throws SVNException {
+    private void makePathMutable(FSOldRoot root, FSParentPath parentPath, String errorPath) throws SVNException {
         String txnId = root.getTxnId();
         /* Is the node mutable already? */
         if (parentPath.getRevNode().getId().isTxn()) {
@@ -912,7 +912,7 @@ public class FSCommitEditor implements ISVNEditor {
              * might get committed after we've obtained it.
              */
             long youngishRev = FSReader.getYoungestRevision(myReposRootDir);
-            FSRoot youngishRoot = FSRoot.createRevisionRoot(youngishRev, null, myReposRootDir);
+            FSOldRoot youngishRoot = FSOldRoot.createRevisionRoot(youngishRev, null, myReposRootDir);
             /*
              * Get the node for the youngest revision, also in one transaction.
              * Later we'll use it as the source argument to a merge, and if the

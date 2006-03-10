@@ -66,7 +66,7 @@ public class FSReader {
         return ids;
     }
 
-    public static InputStream getFileContentsInputStream(FSRoot root, String path, FSRevisionNodePool pool, File reposRootDir) throws SVNException {
+    public static InputStream getFileContentsInputStream(FSOldRoot root, String path, FSRevisionNodePool pool, File reposRootDir) throws SVNException {
         FSRevisionNode fileNode = pool.getRevisionNode(root, path, reposRootDir);
         return FSInputStream.createDeltaStream(fileNode, reposRootDir);
     }
@@ -959,7 +959,7 @@ public class FSReader {
      * the node were changed, or that the node was added or deleted. Keys are
      * String paths and values are SVNLogEntryPaths.
      */
-    public static Map detectChanged(File reposRootDir, FSRevisionNodePool revNodesPool, FSRoot root) throws SVNException {
+    public static Map detectChanged(File reposRootDir, FSRevisionNodePool revNodesPool, FSOldRoot root) throws SVNException {
         Map changedPaths = new HashMap();
         Map changes = root.getChangedPaths();
         if (changes.size() == 0) {
@@ -995,7 +995,7 @@ public class FSReader {
      * ancestor/revision combination in PATH(SVNLocationEntry) and
      * REVISON(SVNLocationEntry)
      */
-    public static SVNLocationEntry copiedFrom(File reposRootDir, FSRoot root, String path, FSRevisionNodePool revNodesPool) throws SVNException {
+    public static SVNLocationEntry copiedFrom(File reposRootDir, FSOldRoot root, String path, FSRevisionNodePool revNodesPool) throws SVNException {
         /*
          * Check to see if there is a cached version of this copyfrom entry.
          */
@@ -1038,7 +1038,7 @@ public class FSReader {
          * check that they are readable
          */
         if (revNum > 0 && discoverChangedPaths) {
-            FSRoot root = FSRoot.createRevisionRoot(revNum, null, reposRootDir);
+            FSOldRoot root = FSOldRoot.createRevisionRoot(revNum, null, reposRootDir);
             changedPaths = detectChanged(reposRootDir, revNodesPool, root);
         }
         changedPaths = changedPaths == null ? new HashMap() : changedPaths;

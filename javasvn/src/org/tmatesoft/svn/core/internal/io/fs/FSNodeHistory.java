@@ -90,7 +90,7 @@ public class FSNodeHistory {
     public static boolean checkAncestryOfPegPath(File reposRootDir, String fsPath, long pegRev, long futureRev, FSRevisionNodePool revNodesPool) throws SVNException {
         // FSRevisionNode root = FSReader.getRootRevNode(reposRootDir,
         // futureRev);
-        FSRoot root = FSRoot.createRevisionRoot(futureRev, revNodesPool.getRootRevisionNode(futureRev, reposRootDir), reposRootDir);
+        FSOldRoot root = FSOldRoot.createRevisionRoot(futureRev, revNodesPool.getRootRevisionNode(futureRev, reposRootDir), reposRootDir);
         FSNodeHistory history = getNodeHistory(reposRootDir, root, fsPath, revNodesPool);
         fsPath = null;
         SVNLocationEntry currentHistory = null;
@@ -120,7 +120,7 @@ public class FSNodeHistory {
 
     // Retrun FSNodeHistory as an opaque node history object which represents
     // PATH under ROOT. ROOT must be a revision root
-    public static FSNodeHistory getNodeHistory(File reposRootDir, FSRoot root, String path, FSRevisionNodePool pool) throws SVNException {
+    public static FSNodeHistory getNodeHistory(File reposRootDir, FSOldRoot root, String path, FSRevisionNodePool pool) throws SVNException {
         if (root.isTxnRoot()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_REVISION_ROOT);
             SVNErrorManager.error(err);
@@ -168,7 +168,7 @@ public class FSNodeHistory {
         // Construct a ROOT for the current revision
         // FSRevisionNode root = revNodesPool.getRootRevisionNode(revision,
         // reposRootDir);
-        FSRoot root = FSRoot.createRevisionRoot(revision, revNodesPool.getRootRevisionNode(revision, reposRootDir), reposRootDir);
+        FSOldRoot root = FSOldRoot.createRevisionRoot(revision, revNodesPool.getRootRevisionNode(revision, reposRootDir), reposRootDir);
         // Open path/revision and get all necessary info: node-id, ...
         FSParentPath parentPath = revNodesPool.getParentPath(root, path, true, reposRootDir);
         FSRevisionNode revNode = parentPath.getRevNode();

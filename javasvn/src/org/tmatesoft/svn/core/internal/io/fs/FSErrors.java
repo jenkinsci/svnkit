@@ -40,7 +40,7 @@ public class FSErrors {
         return err;
     }
     
-    public static SVNErrorMessage errorNotFound(FSRoot root, String path) {
+    public static SVNErrorMessage errorNotFound(FSOldRoot root, String path) {
         SVNErrorMessage err;
         if(root.isTxnRoot()){
             err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: transaction ''{0}'', path ''{1}''", new Object[]{root.getTxnId(), path});
@@ -67,7 +67,7 @@ public class FSErrors {
         return err;
     }
     
-    public static SVNErrorMessage errorAlreadyExists(FSRoot root, String path, File reposRootDir) {
+    public static SVNErrorMessage errorAlreadyExists(FSOldRoot root, String path, File reposRootDir) {
         File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
         SVNErrorMessage err = null;
         if(root.isTxnRoot()){

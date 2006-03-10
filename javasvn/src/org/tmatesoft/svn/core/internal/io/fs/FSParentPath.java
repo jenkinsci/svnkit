@@ -212,7 +212,7 @@ public class FSParentPath {
         SVNLocationEntry copyrootEntry = new SVNLocationEntry(child.getRevNode().getCopyRootRevision(), child.getRevNode().getCopyRootPath());
         copyrootRoot = pool.getRootRevisionNode(copyrootEntry.getRevision(), reposRootDir); // FSReader.getRootRevNode(reposRootDir,
                                                                                             // copyrootEntry.getRevision());
-        copyrootNode = pool.openPath(FSRoot.createRevisionRoot(copyrootRoot.getId().getRevision(), copyrootRoot, reposRootDir), copyrootEntry.getPath(), false, null, reposRootDir, false).getRevNode(); // FSReader.getRevisionNode(reposRootDir,
+        copyrootNode = pool.openPath(FSOldRoot.createRevisionRoot(copyrootRoot.getId().getRevision(), copyrootRoot, reposRootDir), copyrootEntry.getPath(), false, null, reposRootDir, false).getRevNode(); // FSReader.getRevisionNode(reposRootDir,
                                                                                                                                                                                                             // copyrootEntry.getPath(),
                                                                                                                                                                                                             // copyrootRoot,
                                                                                                                                                                                                             // 0);

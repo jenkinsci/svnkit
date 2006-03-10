@@ -137,7 +137,7 @@ public class FSWriter {
         FSRevisionNodePool revNodesPool = repository.getRevisionNodePool();
         long youngestRev = FSReader.getYoungestRevision(reposRootDir);
         FSRevisionNode rootNode = revNodesPool.getRootRevisionNode(youngestRev, reposRootDir);
-        SVNNodeKind kind = repository.checkNodeKind(path, FSRoot.createRevisionRoot(youngestRev, rootNode, reposRootDir));
+        SVNNodeKind kind = repository.checkNodeKind(path, FSOldRoot.createRevisionRoot(youngestRev, rootNode, reposRootDir));
         if (kind == SVNNodeKind.DIR) {
             SVNErrorManager.error(FSErrors.errorNotFile(path, reposRootDir));
         } else if (kind == SVNNodeKind.NONE) {
@@ -251,7 +251,7 @@ public class FSWriter {
      * Write the changed path info from transaction to the permanent rev-file.
      * Returns offset in the file of the beginning of this information.
      */
-    public static long writeFinalChangedPathInfo(final RandomAccessFile protoFile, FSRoot txnRoot, File reposRootDir) throws SVNException, IOException {
+    public static long writeFinalChangedPathInfo(final RandomAccessFile protoFile, FSOldRoot txnRoot, File reposRootDir) throws SVNException, IOException {
         long offset = protoFile.getFilePointer();
         Map changedPaths = txnRoot.getChangedPaths();
         Map copyfromCache = txnRoot.getCopyfromCache();
