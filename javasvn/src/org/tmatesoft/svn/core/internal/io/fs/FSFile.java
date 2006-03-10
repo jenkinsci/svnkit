@@ -70,8 +70,7 @@ public class FSFile {
     }
     
     public String readLine(int limit) throws SVNException {
-        myReadLineBuffer.clear();
-        myReadLineBuffer.limit(limit);
+        allocateReadBuffer(limit);
         try {
             while(myReadLineBuffer.hasRemaining()) {
                 int b = read();
@@ -86,47 +85,98 @@ public class FSFile {
             myReadLineBuffer.flip();
             return myDecoder.decode(myReadLineBuffer).toString();
         } catch (IOException e) {
-            e.printStackTrace();
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t read length line from file {0}", getFile());
             SVNErrorManager.error(err, e);
         }
         return null;
     }
     
-    public Map readProperties() throws SVNException {
+    public Map readProperties(boolean allowEOF) throws SVNException {
         Map map = new HashMap();
-//        System.out.println("reading line from " + myPosition);
-        String line = readLine(160); // PLAIN
+        String line = null;
         try {
             while(true) {
-//                System.out.println("reading line from " + myPosition);
-                line = readLine(160); // K length or END
-//                System.out.println(line);
-                if ("END".equals(line)) {
+                try {
+                    line = readLine(160); // K length or END, there may be EOF.
+                } catch (SVNException e) {
+                    if (allowEOF && e.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF) {
+                        break;
+                    }
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
+                    SVNErrorManager.error(err, e);
+                }
+                if (line == null || "".equals(line)) {
+                    break;
+                } else if (!allowEOF && "END".equals(line)) {
                     break;
                 }
-                int length = Integer.parseInt(line.substring(2));
-                myReadLineBuffer.clear();
-                myReadLineBuffer.limit(length + 1);
-                read(myReadLineBuffer); // key.
+                char kind = line.charAt(0);
+                int length = -1;
+                if ((kind != 'K' && kind != 'D') || line.length() < 3 || line.charAt(1) != ' ' || line.length() < 3) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
+                    SVNErrorManager.error(err);
+                } 
+                try {
+                    length = Integer.parseInt(line.substring(2));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
+                    SVNErrorManager.error(err);
+                }
+                if (length < 0) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
+                    SVNErrorManager.error(err);
+                }
+                allocateReadBuffer(length + 1);
+                read(myReadLineBuffer);
                 myReadLineBuffer.flip();
                 myReadLineBuffer.limit(myReadLineBuffer.limit() - 1);
                 String key = myDecoder.decode(myReadLineBuffer).toString();
-                line = readLine(160); // V length
-//                System.out.println(line);
-                length = Integer.parseInt(line.substring(2));
-                myReadLineBuffer.clear();
-                myReadLineBuffer.limit(length + 1);
-                read(myReadLineBuffer); // value.
+                if (kind == 'D') {
+                    map.put(key, null);
+                    continue;
+                }
+                line = readLine(160);
+                if (line == null || line.length() < 3 || line.charAt(0) != 'V' || line.charAt(1) != ' ') {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
+                    SVNErrorManager.error(err);
+                }
+                try {
+                    length = Integer.parseInt(line.substring(2));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
+                    SVNErrorManager.error(err);
+                }
+                if (length < 0) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
+                    SVNErrorManager.error(err);
+                }
+                allocateReadBuffer(length + 1);
+                read(myReadLineBuffer);
                 myReadLineBuffer.flip();
                 myReadLineBuffer.limit(myReadLineBuffer.limit() - 1);
                 String value = myDecoder.decode(myReadLineBuffer).toString();
                 map.put(key, value);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
+            SVNErrorManager.error(err, e);
         }
-        // 
+        return map;
+    }
+    
+    public Map readHeader() throws SVNException {
+        Map map = new HashMap();
+        String line;
+        while(true) {
+            line = readLine(4096);
+            if ("".equals(line)) {
+                break;
+            }
+            int colonIndex = line.indexOf(':');
+            String key = line.substring(0, colonIndex);
+            String value = line.substring(colonIndex + 2);
+            map.put(key, value);
+        }
         return map;
     }
     
@@ -145,7 +195,6 @@ public class FSFile {
         int read = 0;
         while(target.hasRemaining()) {
             if (fill() < 0) {
-                // return what was read so far.
                 return read > 0 ? read : -1;
             }
             myBuffer.position((int) (myPosition - myBufferPosition));
@@ -157,19 +206,9 @@ public class FSFile {
         }
         return read;
     }
-    
-    private int fill() throws IOException {
-        if (myChannel == null || myPosition < myBufferPosition || myPosition >= myBufferPosition + myBuffer.limit()) {
-            myBufferPosition = myPosition;
-            getChannel().position(myBufferPosition);
-            myBuffer.clear();
-            int read = getChannel().read(myBuffer);
-            myBuffer.position(0);
-            myBuffer.limit(read >= 0 ? read : 0);
-            return read;
-        } 
-        // position is within the buffer.
-        return 0;
+
+    public File getFile() {
+        return myFile;
     }
 
     public void close() {
@@ -185,6 +224,27 @@ public class FSFile {
         
     }
     
+    private int fill() throws IOException {
+        if (myChannel == null || myPosition < myBufferPosition || myPosition >= myBufferPosition + myBuffer.limit()) {
+            myBufferPosition = myPosition;
+            getChannel().position(myBufferPosition);
+            myBuffer.clear();
+            int read = getChannel().read(myBuffer);
+            myBuffer.position(0);
+            myBuffer.limit(read >= 0 ? read : 0);
+            return read;
+        } 
+        return 0;
+    }
+    
+    private void allocateReadBuffer(int limit) {
+        if (limit < myReadLineBuffer.capacity()) {
+            myReadLineBuffer = ByteBuffer.allocate(limit);
+        }
+        myReadLineBuffer.clear();
+        myReadLineBuffer.limit(limit);
+    }
+    
     private FileChannel getChannel() throws IOException {
         if (myChannel == null) {
             myInputStream = new FileInputStream(myFile);
@@ -192,8 +252,6 @@ public class FSFile {
         }
         return myChannel;
     }
-
-    public File getFile() {
-        return myFile;
-    }
+    
+    
 }
