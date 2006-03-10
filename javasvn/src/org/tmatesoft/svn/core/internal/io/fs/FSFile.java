@@ -168,7 +168,7 @@ public class FSFile {
         Map map = new HashMap();
         String line;
         while(true) {
-            line = readLine(4096);
+            line = readLine(1024);
             if ("".equals(line)) {
                 break;
             }

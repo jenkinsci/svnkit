@@ -647,7 +647,7 @@ public class FSReader {
     }
 
     // isData - if true - text, otherwise - props
-    private static void parseRepresentationHeader(String representation, FSRevisionNode revNode, String txnId, boolean isData) throws SVNException {
+    public static void parseRepresentationHeader(String representation, FSRevisionNode revNode, String txnId, boolean isData) throws SVNException {
         if (revNode == null) {
             return;
         }

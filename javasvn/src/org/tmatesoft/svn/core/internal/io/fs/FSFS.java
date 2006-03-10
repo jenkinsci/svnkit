@@ -12,11 +12,15 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc.ISVNInputFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
 /**
@@ -58,8 +62,14 @@ public class FSFS {
         /* Check FS type for 'fsfs' */
         File fsTypeFile = FSRepositoryUtil.getFSTypeFile(myRepositoryRoot);
         FSFile reader = new FSFile(fsTypeFile);
-        String fsType = reader.readLine(128);
-        reader.close();
+        String fsType = null;
+
+        try{
+            fsType = reader.readLine(128);    
+        }finally{
+            reader.close();
+        }
+        
         if (fsType == null || fsType.length() == 0 || !fsType.equals(FSConstants.SVN_REPOS_FSFS_FORMAT)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNKNOWN_FS_TYPE, "Unsupported fs type");
             SVNErrorManager.error(err);
@@ -92,12 +102,36 @@ public class FSFS {
         return null;
     }
     
-    public FSRevisionNode getRevisionNode(FSID id) {
-        return null;
+    public FSRevisionNode createRevisionNode(FSID id) throws SVNException  {
+        FSFile revFileReader = null;
+
+        if (id.isTxn()) {
+            /* This is a transaction node-rev. */
+            File revFile = FSRepositoryUtil.getTxnRevNodeFile(id, myRepositoryRoot);
+            revFileReader = new FSFile(revFile);
+        } else {
+            /* This is a revision node-rev. */
+            revFileReader = getRevisionFile(id.getRevision());
+            revFileReader.seek(id.getOffset());
+        }
+
+        Map headers = null;
+        try{
+            headers = revFileReader.readHeader();
+        }finally{
+            revFileReader.close();
+        }
+        
+        return FSRevisionNode.fromMap(headers);
     }
     
-    protected FSFile getRevisionFile(long revision) {
-        return null;
+    protected FSFile getRevisionFile(long revision)  throws SVNException {
+        File revFile = new File(FSRepositoryUtil.getRevisionsDir(myRepositoryRoot), String.valueOf(revision));
+        if (!revFile.exists()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0,number,integer}", new Long(revision));
+            SVNErrorManager.error(err);
+        }
+        return new FSFile(revFile);
     }
 
     protected FSFile getRevisionPropertiesFile(long revision) {
