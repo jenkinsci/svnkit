@@ -103,7 +103,7 @@ public class FSFS {
     }
     
     public FSRoot createRevisionRoot(long revision) {
-        return null;
+        return new FSRoot(this, revision);
     }
     
     public FSRevisionNode createRevisionNode(FSID id) throws SVNException  {
@@ -137,6 +137,11 @@ public class FSFS {
 
     protected File getTransactionDir(String txnID) {
         return new File(myTransactionsRoot, txnID + ".txn");
+    }
+    
+    protected FSFile getTransactionChangesFile(String txnID) {
+        File file = new File(getTransactionDir(txnID), "changes");
+        return new FSFile(file);
     }
 
     protected FSFile getRevisionPropertiesFile(long revision) {

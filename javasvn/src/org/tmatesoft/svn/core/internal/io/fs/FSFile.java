@@ -29,14 +29,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
 /**
- * This class uses:
- * 
- *  shared read buffer.
- *  shared read line buffer.
- *  shared transfer buffer.
- *  
- * Only one instance of this class may be used per thread at time.
- * 
  * @version 1.0
  * @author  TMate Software Ltd.
  */
@@ -67,6 +59,10 @@ public class FSFile {
 
     public long position() {
         return myPosition;
+    }
+
+    public long size() {
+        return myFile.length();
     }
     
     public int readInt() throws SVNException {
@@ -206,12 +202,12 @@ public class FSFile {
     }
     
     public int read() throws IOException {
-        if (myChannel == null || !myBuffer.hasRemaining()) {
+        if (myChannel == null || !myBuffer.hasRemaining() || myPosition < myBufferPosition || myPosition >= myBufferPosition + myBuffer.limit()) {
             if (fill() <= 0) {
                 return -1;
             }
         }
-        int r = myBuffer.get();
+        int r = (myBuffer.get() & 0xFF);
         myPosition++;
         return r;
     }
@@ -277,6 +273,4 @@ public class FSFile {
         }
         return myChannel;
     }
-    
-    
 }
