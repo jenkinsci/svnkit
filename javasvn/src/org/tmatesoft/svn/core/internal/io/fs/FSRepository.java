@@ -155,83 +155,71 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     public long getLatestRevision() throws SVNException {
         try {
             openRepository();
-            return FSReader.getYoungestRevision(myReposRootDir);
+            return myFSFS.getYoungestRevision();
         } finally {
             closeRepository();
         }
-    }
-
-    private Date getTime(File reposRootDir, long revision) throws SVNException {
-        String timeString = null;
-        timeString = FSRepositoryUtil.getRevisionProperty(reposRootDir, revision, SVNRevisionProperty.DATE);
-        if (timeString == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Failed to find time on revision {0,number,integer}", new Long(revision));
-            SVNErrorManager.error(err);
-        }
-        Date date = null;
-        date = SVNTimeUtil.parseDateString(timeString);
-        return date;
-    }
-
-    private long getDatedRev(File reposRootDir, Date date) throws SVNException {
-        long latestRev = FSReader.getYoungestRevision(reposRootDir);
-        long topRev = latestRev;
-        long botRev = 0;
-        long midRev;
-        Date curTime = null;
-
-        while (botRev <= topRev) {
-            midRev = (topRev + botRev) / 2;
-            curTime = getTime(reposRootDir, midRev);
-            if (curTime.compareTo(date) > 0) {// overshot
-                if ((midRev - 1) < 0) {
-                    return 0;
-                }
-                Date prevTime = getTime(reposRootDir, midRev - 1);
-                // see if time falls between midRev and midRev-1:
-                if (prevTime.compareTo(date) < 0) {
-                    return midRev - 1;
-                }
-                topRev = midRev - 1;
-            } else if (curTime.compareTo(date) < 0) {// undershot
-                if ((midRev + 1) > latestRev) {
-                    return latestRev;
-                }
-                Date nextTime = getTime(reposRootDir, midRev + 1);
-                // see if time falls between midRev and midRev+1:
-                if (nextTime.compareTo(date) > 0) {
-                    return midRev + 1;
-                }
-                botRev = midRev + 1;
-            } else {
-                return midRev;// exact match!
-            }
-        }
-        return 0;
     }
 
     public long getDatedRevision(Date date) throws SVNException {
         if (date == null) {
-            date = new Date(System.currentTimeMillis());
+            return getLatestRevision();
         }
         try {
             openRepository();
-            return getDatedRev(myReposRootDir, date);
+            long latest = myFSFS.getYoungestRevision();
+            long top = latest;
+            long bottom = 0;
+            long middle;
+            Date currentTime = null;
+
+            while (bottom <= top) {
+                middle = (top + bottom) / 2;
+                currentTime = getRevisionTime(middle);
+                if (currentTime.compareTo(date) > 0) {
+                    if ((middle - 1) < 0) {
+                        return 0;
+                    }
+                    Date prevTime = getRevisionTime(middle - 1);
+                    if (prevTime.compareTo(date) < 0) {
+                        return middle - 1;
+                    }
+                    top = middle - 1;
+                } else if (currentTime.compareTo(date) < 0) {
+                    if ((middle + 1) > latest) {
+                        return latest;
+                    }
+                    Date nextTime = getRevisionTime(middle + 1);
+                    if (nextTime.compareTo(date) > 0) {
+                        return middle + 1;
+                    }
+                    bottom = middle + 1;
+                } else {
+                    return middle;
+                }
+            }
+            return 0;
         } finally {
             closeRepository();
         }
+    }
+
+    private Date getRevisionTime(long revision) throws SVNException {
+        Map revisionProperties = myFSFS.getRevisionProperties(revision);
+        String timeString = (String) revisionProperties.get(SVNRevisionProperty.DATE);
+        if (timeString == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Failed to find time on revision {0,number,integer}", new Long(revision));
+            SVNErrorManager.error(err);
+        }
+        return SVNTimeUtil.parseDateString(timeString);
     }
 
     public Map getRevisionProperties(long revision, Map properties) throws SVNException {
         assertValidRevision(revision);
         try {
             openRepository();
-            Map revProps = FSRepositoryUtil.getRevisionProperties(myReposRootDir, revision);
-            if (properties == null) {
-                properties = revProps;
-            } else {
-                properties.putAll(revProps);
-            }
+            properties = properties == null ? new HashMap() : properties; 
+            properties.putAll(myFSFS.getRevisionProperties(revision));
         } finally {
             closeRepository();
         }
@@ -270,7 +258,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         try {
             openRepository();
-            return FSRepositoryUtil.getRevisionProperty(myReposRootDir, revision, propertyName);
+            return (String) myFSFS.getRevisionProperties(revision).get(propertyName);
         } finally {
             closeRepository();
         }
@@ -280,7 +268,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         try {
             openRepository();
             if (!SVNRepository.isValidRevision(revision)) {
-                revision = FSReader.getYoungestRevision(myReposRootDir);
+                revision = myFSFS.getYoungestRevision();
             }
             String repositoryPath = getRepositoryPath(path);
             return checkNodeKind(repositoryPath, FSOldRoot.createRevisionRoot(revision, null, myReposRootDir));

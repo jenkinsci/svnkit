@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -46,6 +47,10 @@ public class FSRoot {
     private Map myRevNodesCache;
     
     private FSFS myFSFS;
+
+    public static FSRoot createRevisionRoot(FSFS fsfs, long revision) {
+        return new FSRoot(fsfs, revision);
+    }
     
     protected FSRoot(FSFS owner) {
         myFSFS = owner;

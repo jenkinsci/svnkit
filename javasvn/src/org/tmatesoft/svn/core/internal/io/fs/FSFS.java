@@ -102,11 +102,38 @@ public class FSFS {
         return myUUID;
     }
     
+    public long getYoungestRevision() throws SVNException {
+        FSFile file = new FSFile(new File(myDBRoot, "current"));
+        try {
+            String line = file.readLine(180);
+            int spaceIndex = line.indexOf(' ');
+            if (spaceIndex > 0) {
+                return Long.parseLong(line.substring(0, spaceIndex));
+            }
+        } catch (NumberFormatException nfe) {
+            //
+        } finally {
+            file.close();
+        }
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t parse revision number in file ''{0}''", file); 
+        SVNErrorManager.error(err);
+        return - 1;
+    }
+    
+    public Map getRevisionProperties(long revision) throws SVNException {
+        FSFile file = getRevisionPropertiesFile(revision);
+        try {
+            return file.readProperties(false);
+        } finally {
+            file.close();
+        }
+    }
+    
     public FSRoot createRevisionRoot(long revision) {
         return new FSRoot(this, revision);
     }
     
-    public FSRevisionNode createRevisionNode(FSID id) throws SVNException  {
+    public FSRevisionNode getRevisionNode(FSID id) throws SVNException  {
         FSFile revisionFile = null;
 
         if (id.isTxn()) {
