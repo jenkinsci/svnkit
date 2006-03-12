@@ -408,6 +408,7 @@ class HTTPConnection implements IHTTPConnection {
     public SVNErrorMessage readData(HTTPRequest request, OutputStream dst) throws IOException {
         InputStream stream = createInputStream(request.getResponseHeader(), getInputStream());
         byte[] buffer = getBuffer();
+        boolean willCloseConnection = false;
         try {
             while (true) {
                 int count = stream.read(buffer);
@@ -419,12 +420,15 @@ class HTTPConnection implements IHTTPConnection {
                 }
             }
         } catch (IOException e) {
+            willCloseConnection = true;
             if (e.getCause() instanceof SVNException) {
                 return ((SVNException) e.getCause()).getErrorMessage();
             }
             throw e;
         } finally {
-            SVNFileUtil.closeFile(stream);
+            if (!willCloseConnection) {
+                SVNFileUtil.closeFile(stream);
+            }
             SVNDebugLog.flushStream(stream);
         }
         return null;
@@ -432,6 +436,7 @@ class HTTPConnection implements IHTTPConnection {
     
     public SVNErrorMessage readData(HTTPRequest request, String method, String path, DefaultHandler handler) throws IOException {
         InputStream is = createInputStream(request.getResponseHeader(), getInputStream());
+        boolean willCloseConnection = false;
         try {
             if (mySAXParser == null) {
                 mySAXParser = getSAXParserFactory().newSAXParser();
@@ -446,9 +451,11 @@ class HTTPConnection implements IHTTPConnection {
                 xmlReader.parse(new InputSource(reader));
             }
         } catch (SAXException e) {
+            willCloseConnection = true;
             if (e instanceof SAXParseException) {
                 if (handler instanceof DAVErrorHandler) {
                     // failed to read svn-specific error, return null.
+                    willCloseConnection = false;
                     return null;
                 }
             } else if (e.getException() instanceof SVNException) {
@@ -458,6 +465,7 @@ class HTTPConnection implements IHTTPConnection {
             } 
             return SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Processing {0} request response failed: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
         } catch (ParserConfigurationException e) {
+            willCloseConnection = true;
             return SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "XML parser configuration error while processing {0} request response: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
         } catch (EOFException e) {
             // skip it.
@@ -475,7 +483,9 @@ class HTTPConnection implements IHTTPConnection {
                 xmlReader.setEntityResolver(NO_ENTITY_RESOLVER);
             }
             // read remaining from is.
-            SVNFileUtil.closeFile(is);
+            if (!willCloseConnection) {
+                SVNFileUtil.closeFile(is);
+            }
             SVNDebugLog.flushStream(is);
         }
         return null;
