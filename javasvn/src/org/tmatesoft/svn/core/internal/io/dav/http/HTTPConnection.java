@@ -15,6 +15,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -83,6 +84,7 @@ class HTTPConnection implements IHTTPConnection {
     private SVNAuthentication myLastValidAuth;
     private Map myCredentialsChallenge;
     private String myProxyAuthentication;
+    private boolean myIsSpoolResponse;
 
     
     public HTTPConnection(SVNRepository repository) throws SVNException {
@@ -435,8 +437,49 @@ class HTTPConnection implements IHTTPConnection {
     }
     
     public SVNErrorMessage readData(HTTPRequest request, String method, String path, DefaultHandler handler) throws IOException {
-        InputStream is = createInputStream(request.getResponseHeader(), getInputStream());
-        boolean willCloseConnection = false;
+        InputStream is = null; 
+        File tmpFile = null; 
+        SVNErrorMessage err = null;
+        boolean closeStream = myIsSpoolResponse;
+        try {
+            if (myIsSpoolResponse) {
+                OutputStream dst = null;
+                try {
+                    tmpFile = SVNFileUtil.createTempFile(".javasvn", ".spool");
+                    dst = SVNFileUtil.openFileForWriting(tmpFile);
+                    err = readData(request, dst);
+                    closeStream |= err != null;
+                    if (err != null) {
+                        return err;
+                    }
+                    // this stream always have to be closed.
+                    is = SVNFileUtil.openFileForReading(tmpFile);
+                } catch (SVNException e) {
+                    return e.getErrorMessage();
+                } finally {
+                    SVNFileUtil.closeFile(dst);
+                }
+            } else {
+                is = createInputStream(request.getResponseHeader(), getInputStream());
+            }
+            err = readData(is, method, path, handler);
+            closeStream |= err != null;
+        } catch (IOException e) {
+            closeStream = true;
+            throw e;
+        } finally {
+            if (closeStream) {
+                SVNFileUtil.closeFile(is);
+            }
+            if (tmpFile != null) {
+                SVNFileUtil.deleteFile(tmpFile);
+            }
+            myIsSpoolResponse = false;
+        }
+        return err;
+    }
+
+    private SVNErrorMessage readData(InputStream is, String method, String path, DefaultHandler handler) throws FactoryConfigurationError, UnsupportedEncodingException, IOException {
         try {
             if (mySAXParser == null) {
                 mySAXParser = getSAXParserFactory().newSAXParser();
@@ -451,11 +494,9 @@ class HTTPConnection implements IHTTPConnection {
                 xmlReader.parse(new InputSource(reader));
             }
         } catch (SAXException e) {
-            willCloseConnection = true;
             if (e instanceof SAXParseException) {
                 if (handler instanceof DAVErrorHandler) {
                     // failed to read svn-specific error, return null.
-                    willCloseConnection = false;
                     return null;
                 }
             } else if (e.getException() instanceof SVNException) {
@@ -465,7 +506,6 @@ class HTTPConnection implements IHTTPConnection {
             } 
             return SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Processing {0} request response failed: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
         } catch (ParserConfigurationException e) {
-            willCloseConnection = true;
             return SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "XML parser configuration error while processing {0} request response: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
         } catch (EOFException e) {
             // skip it.
@@ -481,10 +521,6 @@ class HTTPConnection implements IHTTPConnection {
                 xmlReader.setDTDHandler(DEFAULT_SAX_HANDLER);
                 xmlReader.setErrorHandler(DEFAULT_SAX_HANDLER);
                 xmlReader.setEntityResolver(NO_ENTITY_RESOLVER);
-            }
-            // read remaining from is.
-            if (!willCloseConnection) {
-                SVNFileUtil.closeFile(is);
             }
             SVNDebugLog.flushStream(is);
         }
@@ -656,6 +692,10 @@ class HTTPConnection implements IHTTPConnection {
             ourSAXParserFactory.setValidating(false);
         }
         return ourSAXParserFactory;
+    }
+
+    public void setSpoolResponse(boolean spoolResponse) {
+        myIsSpoolResponse = spoolResponse;
     }
 
 }

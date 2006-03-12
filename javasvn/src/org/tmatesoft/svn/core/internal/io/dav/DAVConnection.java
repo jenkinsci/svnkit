@@ -205,8 +205,17 @@ public class DAVConnection {
 		myHttpConnection.request("GET", path, null, (StringBuffer) null, 200, 226, os, null, context);
     }
 	
-	public HTTPStatus doReport(String path, StringBuffer requestBody, DefaultHandler handler) throws SVNException {
-		return myHttpConnection.request("REPORT", path, null, requestBody, -1, 0, null, handler);
+    public HTTPStatus doReport(String path, StringBuffer requestBody, DefaultHandler handler) throws SVNException {
+        return doReport(path, requestBody, handler, false);
+    }
+
+    public HTTPStatus doReport(String path, StringBuffer requestBody, DefaultHandler handler, boolean spool) throws SVNException {
+        myHttpConnection.setSpoolResponse(spool);
+        try {
+            return myHttpConnection.request("REPORT", path, null, requestBody, -1, 0, null, handler);
+        } finally {
+            myHttpConnection.setSpoolResponse(false);
+        }
 	}
 
     public void doProppatch(String repositoryPath, String path, StringBuffer requestBody, DefaultHandler handler, SVNErrorMessage context) throws SVNException {

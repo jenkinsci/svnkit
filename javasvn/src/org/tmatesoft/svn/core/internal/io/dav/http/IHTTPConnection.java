@@ -21,6 +21,8 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.xml.sax.helpers.DefaultHandler;
 
 public interface IHTTPConnection {
+    
+    public void setSpoolResponse(boolean spoolResponse);
 
     public HTTPStatus request(String method, String path, Map header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException;
 
