@@ -371,6 +371,7 @@ public class PythonTests {
     private static void apache(Properties props, boolean start) throws Throwable {
         String[] command = null;
         File configFile = File.createTempFile("svn", "test");
+        configFile.deleteOnExit();
         String path = configFile.getAbsolutePath().replace(File.separatorChar, '/');
         generateApacheConfig(configFile, props);
 
