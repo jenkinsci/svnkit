@@ -11,12 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -24,6 +18,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -32,71 +27,19 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class FSRoot {
-
-    private boolean myIsTxnRoot;
-    private String myTxnId;
-    private int myTxnFlags;
-    private long myRevision;
-    
-    private FSRevisionNode myRootRevNode;
-    private long myRootOffset;
-    private long myChangesOffset;
+public abstract class FSRoot {
 
     private Map myCopyfromCache;
     private Map myRevNodesCache;
-    
+    protected FSRevisionNode myRootRevisionNode;
     private FSFS myFSFS;
 
-    public static FSRoot createRevisionRoot(FSFS fsfs, long revision) {
-        return new FSRoot(fsfs, revision);
-    }
-    
     protected FSRoot(FSFS owner) {
         myFSFS = owner;
     }
 
-    public FSRoot(FSFS owner, long revision) {
-        this(owner);
-        myRevision = revision;
-        myIsTxnRoot = false;
-        myTxnId = null;
-        myTxnFlags = 0;
-        myRootOffset = -1;
-        myChangesOffset = -1;
-    }
-
-    public FSRoot(FSFS owner, String txnId, int flags) {
-        this(owner);
-        myTxnId = txnId;
-        myTxnFlags = flags;
-        myIsTxnRoot = true;
-        myRevision = FSConstants.SVN_INVALID_REVNUM;
-        myRootRevNode = null;
-    }
-
-    public boolean isTxnRoot() {
-        return myIsTxnRoot;
-    }
-
-    public long getRevision() {
-        return myRevision;
-    }
-
-    public void setRootRevisionNode(FSRevisionNode root) {
-        myRootRevNode = root;
-    }
-
-    public int getTxnFlags() {
-        return myTxnFlags;
-    }
-
-    public void setTxnFlags(int txnFlags) {
-        myTxnFlags = txnFlags;
-    }
-
-    public String getTxnId() {
-        return myTxnId;
+    protected FSFS getOwner(){
+        return myFSFS;
     }
 
     public Map getCopyfromCache() {
@@ -106,25 +49,91 @@ public class FSRoot {
         return myCopyfromCache;
     }
     
-    public FSRevisionNode getRevisionNode(String path) throws SVNException {
-        return null;
-    }
+    public abstract FSRevisionNode getRevisionNode(String path) throws SVNException;
 
-    public FSRevisionNode getRootRevisionNode() throws SVNException {
-        if (myRootRevNode == null && !isTxnRoot()) {
-            FSFile file = myFSFS.getRevisionFile(getRevision());
-            try {
-                loadOffsets(file);
-                file.seek(myRootOffset);
-                Map headers = file.readHeader();
-                myRootRevNode = FSRevisionNode.fromMap(headers);
-            } finally {
-                file.close();
+    public abstract FSRevisionNode getRootRevisionNode() throws SVNException;
+
+    public abstract Map getChangedPaths() throws SVNException;
+
+    public abstract FSCopyInheritance getCopyInheritance(FSParentPath child) throws SVNException;
+    
+    public FSParentPath openPath(String path, boolean lastEntryMustExist, boolean storeParents) throws SVNException {
+        String canonPath = SVNPathUtil.canonicalizeAbsPath(path);
+        FSRevisionNode here = getRootRevisionNode();
+        String pathSoFar = "/";
+
+        //Make a parentPath item for the root node, using its own current copy-id
+        FSParentPath parentPath = new FSParentPath(here, null, null);
+        parentPath.setCopyStyle(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_SELF);
+        String rest = canonPath.substring(1);// skip the leading '/'
+
+        /* Whenever we are at the top of this loop:
+         - HERE is our current directory,
+         - REST is the path we're going to find in HERE, and 
+         - PARENT_PATH includes HERE and all its parents.  */
+        while (true) {
+            String entry = SVNPathUtil.head(rest);
+            String next = SVNPathUtil.removeHead(rest);
+            pathSoFar = SVNPathUtil.concatToAbs(pathSoFar, entry);
+            FSRevisionNode child = null;
+            if (entry == null || "".equals(entry)) {
+                child = here;
+            } else {
+                //TODO: add caching
+                FSRevisionNode cachedRevNode = null;//fetchRevisionNode(root, pathSoFar);
+                if (cachedRevNode != null) {
+                    child = cachedRevNode;
+                } else {
+                    try {
+                        //TODO: correct this
+                        child = here.getChildDirNode(entry, null);//FSReader.getChildDirNode(entry, here, reposRootDir);
+                    } catch (SVNException svne) {
+                        if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
+                            /* If this was the last path component, and the caller
+                             * said it was optional, then don't return an error;
+                             * just put a null node pointer in the path.  
+                             */
+                            if (!lastEntryMustExist && (next == null || "".equals(next))) {
+                                return new FSParentPath(null, entry, parentPath);
+                            }
+                            /* Build a better error message than FSReader.getChildDirNode()
+                             * can provide, giving the root and full path name.  
+                             */
+                            //TODO: correct this
+                            //SVNErrorManager.error(FSErrors.errorNotFound(root, path), svne);
+                        }
+                        throw svne;
+                    }
+                }
+                parentPath.setParentPath(child, entry, storeParents ? new FSParentPath(parentPath) : null);
+                FSCopyInheritance copyInheritance = getCopyInheritance(parentPath);
+                if(copyInheritance != null){
+                    parentPath.setCopyStyle(copyInheritance.getStyle());
+                    parentPath.setCopySourcePath(copyInheritance.getCopySourcePath());
+                }
+                
+                /* Cache the node we found (if it wasn't already cached). */
+                if (cachedRevNode == null) {
+                    //TODO: correct this
+                    //cacheRevisionNode(root, pathSoFar, child);
+                }
             }
+            if (next == null || "".equals(next)) {
+                break;
+            }
+            /* The path isn't finished yet; we'd better be in a directory.  */
+            if (child.getType() != SVNNodeKind.DIR) {
+                //TODO: correct this
+                //SVNErrorMessage err = FSErrors.errorNotDirectory(pathSoFar, reposRootDir);
+                //SVNErrorManager.error(err.wrap("Failure opening ''{0}''", path));
+            }
+            rest = next;
+            here = child;
         }
-        return myRootRevNode;
-    }
+        return parentPath;
 
+    }
+    
     public void putRevNodeToCache(String path, FSRevisionNode node) throws SVNException {
         if (myRevNodesCache == null) {
             myRevNodesCache = new HashMap();
@@ -156,25 +165,6 @@ public class FSRoot {
             SVNErrorManager.error(err);
         }
         return (FSRevisionNode) myRevNodesCache.get(path);
-    }
-
-    public Map getChangedPaths() throws SVNException {
-        if (isTxnRoot()) {
-            FSFile file = myFSFS.getTransactionChangesFile(getTxnId());
-            try {
-                return fetchAllChanges(file, false);
-            } finally {
-                file.close();
-            }
-        }
-        FSFile file = myFSFS.getRevisionFile(getRevision());
-        loadOffsets(file);
-        try {
-            file.seek(myChangesOffset);
-            return fetchAllChanges(file, true);
-        } finally {
-            file.close();
-        }
     }
 
     private void foldChange(Map mapChanges, FSChange change) throws SVNException {
@@ -254,7 +244,7 @@ public class FSRoot {
         }
     }
 
-    private Map fetchAllChanges(FSFile changesFile, boolean prefolded) throws SVNException {
+    protected Map fetchAllChanges(FSFile changesFile, boolean prefolded) throws SVNException {
         Map changedPaths = new HashMap();
         FSChange change = readChange(changesFile);
         while (change != null) {
@@ -292,57 +282,4 @@ public class FSRoot {
         return FSChange.fromString(changeLine, copyfromLine);
     }
     
-    private void loadOffsets(FSFile file) throws SVNException {
-        if (myRootOffset >= 0) {
-            return;
-        }
-        ByteBuffer buffer = ByteBuffer.allocate(64);
-        file.seek(file.size() - 64);
-        try {
-            file.read(buffer);
-        } catch (IOException e) {
-        }
-        buffer.flip();
-        if (buffer.get(buffer.limit() - 1) != '\n') {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Revision file lacks trailing newline");
-            SVNErrorManager.error(err);
-        }
-        int spaceIndex = -1;
-        int eolIndex = -1;
-        for(int i = buffer.limit() - 2; i >=0; i--) {
-            byte b = buffer.get(i);
-            if (b == ' ' && spaceIndex < 0) {
-                spaceIndex = i;
-            } else if (b == '\n' && eolIndex < 0) {
-                eolIndex = i;
-                break;
-            }
-        }
-        if (eolIndex < 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Final line in revision file longer than 64 characters");
-            SVNErrorManager.error(err);
-        }
-        if (spaceIndex < 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Final line in revision file missing space");
-            SVNErrorManager.error(err);
-        }
-        CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
-        try {
-            buffer.limit(buffer.limit() - 1);
-            buffer.position(spaceIndex + 1);
-            String line = decoder.decode(buffer).toString();
-            myChangesOffset = Long.parseLong(line);
-
-            buffer.limit(spaceIndex);
-            buffer.position(eolIndex + 1);
-            line = decoder.decode(buffer).toString();
-            myRootOffset = Long.parseLong(line); 
-        } catch (NumberFormatException nfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Final line in revision file missing changes and root offsets");
-            SVNErrorManager.error(err, nfe);
-        } catch (CharacterCodingException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Final line in revision file missing changes and root offsets");
-            SVNErrorManager.error(err, e);
-        }
-    }
 }

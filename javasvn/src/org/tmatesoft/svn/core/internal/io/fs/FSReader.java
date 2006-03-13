@@ -443,7 +443,9 @@ public class FSReader {
      * static method asMap() of SVNProperties does all the job for reading
      * properties.
      */
-    private static Map parsePlainRepresentation(Map entries) throws SVNException {
+    //TODO: we should be careful here - if the rep is a txn rep, it may happen
+    //to contain String->null mappings now...
+    public static Map parsePlainRepresentation(Map entries) throws SVNException {
         Map representationMap = new HashMap();
         Object[] names = entries.keySet().toArray();
         for (int i = 0; i < names.length; i++) {

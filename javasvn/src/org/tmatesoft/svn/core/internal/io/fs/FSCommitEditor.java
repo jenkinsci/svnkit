@@ -701,23 +701,18 @@ public class FSCommitEditor implements ISVNEditor {
             makePathMutable(root, parentPath.getParent(), errorPath);
             FSID parentId = null;
             String copyId = null;
-            switch (parentPath.getCopyStyle()) {
-                case FSParentPath.COPY_ID_INHERIT_PARENT:
-                    parentId = parentPath.getParent().getRevNode().getId();
-                    copyId = parentId.getCopyID();
-                    break;
-                case FSParentPath.COPY_ID_INHERIT_NEW:
-                    copyId = reserveCopyId(txnId);
-                    break;
-                case FSParentPath.COPY_ID_INHERIT_SELF:
-                    break;
-                case FSParentPath.COPY_ID_INHERIT_UNKNOWN:
-                    /*
-                     * uh-oh -- somebody didn't calculate copy-ID inheritance
-                     * data.
-                     */
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: can not make path ''{0}'' mutable", errorPath);
-                    SVNErrorManager.error(err);
+            if(parentPath.getCopyStyle() == FSCopyIDInheritanceStyle.COPY_ID_INHERIT_PARENT){
+                parentId = parentPath.getParent().getRevNode().getId();
+                copyId = parentId.getCopyID();
+            }else if(parentPath.getCopyStyle() == FSCopyIDInheritanceStyle.COPY_ID_INHERIT_NEW){
+                copyId = reserveCopyId(txnId);
+            }else if(parentPath.getCopyStyle() == FSCopyIDInheritanceStyle.COPY_ID_INHERIT_UNKNOWN){
+                /*
+                 * uh-oh -- somebody didn't calculate copy-ID inheritance
+                 * data.
+                 */
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: can not make path ''{0}'' mutable", errorPath);
+                SVNErrorManager.error(err);
             }
             /* Determine what copyroot our new child node should use. */
             String copyRootPath = parentPath.getRevNode().getCopyRootPath();

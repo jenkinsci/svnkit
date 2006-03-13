@@ -919,8 +919,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     public void diff(SVNURL url, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
-            File tmpFile = SVNFileUtil.createTempFile("report", ".tmp");
-            makeReporterContext(revision, tmpFile, target, url, recursive, ignoreAncestry, true, editor);
+            makeReporterContext(revision, target, url, recursive, ignoreAncestry, true, editor);
             reporter.report(this);
         } finally {
             closeRepository();
@@ -930,8 +929,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
-            File tmpFile = SVNFileUtil.createTempFile("report", ".tmp");
-            makeReporterContext(targetRevision, tmpFile, target, url, recursive, ignoreAncestry, true, editor);
+            makeReporterContext(targetRevision, target, url, recursive, ignoreAncestry, true, editor);
             reporter.report(this);
         } finally {
             closeRepository();
@@ -941,8 +939,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     public void update(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
-            File tmpFile = SVNFileUtil.createTempFile("report", ".tmp");
-            makeReporterContext(revision, tmpFile, target, null, recursive, false, true, editor);
+            makeReporterContext(revision, target, null, recursive, false, true, editor);
             reporter.report(this);
         } finally {
             closeRepository();
@@ -952,15 +949,14 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     public void status(long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
-            File tmpFile = SVNFileUtil.createTempFile("report", ".tmp");
-            makeReporterContext(revision, tmpFile, target, null, recursive, false, false, editor);
+            makeReporterContext(revision, target, null, recursive, false, false, editor);
             reporter.report(this);
         } finally {
             closeRepository();
         }
     }
 
-    private void makeReporterContext(long targetRevision, File reportFile, String target, SVNURL switchURL, boolean recursive, boolean ignoreAncestry, boolean textDeltas, ISVNEditor editor)
+    private void makeReporterContext(long targetRevision, String target, SVNURL switchURL, boolean recursive, boolean ignoreAncestry, boolean textDeltas, ISVNEditor editor)
             throws SVNException {
         target = target == null ? "" : target;
         if (!isValidRevision(targetRevision)) {
@@ -990,14 +986,13 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         String anchor = getRepositoryPath("");
         String fullTargetPath = switchPath != null ? switchPath : SVNPathUtil.concatToAbs(anchor, target);
-        myReporterContext = new FSReporterContext(targetRevision, reportFile, target, fullTargetPath, switchURL == null ? false : true, recursive, ignoreAncestry, textDeltas, editor);
+        myReporterContext = new FSReporterContext(targetRevision, SVNFileUtil.createTempFile("report", ".tmp"), target, fullTargetPath, switchURL == null ? false : true, recursive, ignoreAncestry, textDeltas, editor);
     }
 
     public void update(SVNURL url, long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
-            File tmpFile = SVNFileUtil.createTempFile("report", ".tmp");
-            makeReporterContext(revision, tmpFile, target, url, recursive, true, true, editor);
+            makeReporterContext(revision, target, url, recursive, true, true, editor);
             reporter.report(this);
         } finally {
             closeRepository();
@@ -1834,6 +1829,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         public void disposeContext() {
             SVNFileUtil.closeFile(myReportOS);
             SVNFileUtil.closeFile(myReportIS);
+            SVNFileUtil.deleteFile(myReportFile);
         }
 
         public ISVNEditor getEditor() {

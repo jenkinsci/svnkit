@@ -19,7 +19,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
 
 /**
  * @version 1.0
@@ -66,12 +65,11 @@ public abstract class FSRevisionNodePool {
     public FSParentPath openPath(FSOldRoot root, String path, boolean isLastComponentOptional, String txnId, File reposRootDir, boolean storeParents) throws SVNException {
         String canonPath = SVNPathUtil.canonicalizeAbsPath(path);
         FSRevisionNode here = getRootNode(root, reposRootDir);
-        ;
         String pathSoFar = "/";
 
         //Make a parentPath item for the root node, using its own current copy-id
         FSParentPath parentPath = new FSParentPath(here, null, null);
-        parentPath.setCopyStyle(FSParentPath.COPY_ID_INHERIT_SELF);
+        parentPath.setCopyStyle(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_SELF);
         String rest = canonPath.substring(1);// skip the leading '/'
 
         /* Whenever we are at the top of this loop:
@@ -110,11 +108,10 @@ public abstract class FSRevisionNodePool {
                     }
                 }
                 parentPath.setParentPath(child, entry, storeParents ? new FSParentPath(parentPath) : null);
-                SVNLocationEntry copyInherEntry = null;
                 if (txnId != null) {
-                    copyInherEntry = FSParentPath.getCopyInheritance(reposRootDir, parentPath, txnId, this);
-                    parentPath.setCopyStyle((int) copyInherEntry.getRevision());
-                    parentPath.setCopySrcPath(copyInherEntry.getPath());
+                    FSCopyInheritance copyInheritance = FSParentPath.getCopyInheritance(reposRootDir, parentPath, txnId, this);
+                    parentPath.setCopyStyle(copyInheritance.getStyle());
+                    parentPath.setCopySourcePath(copyInheritance.getCopySourcePath());
                 }
                 /* Cache the node we found (if it wasn't already cached). */
                 if (cachedRevNode == null) {

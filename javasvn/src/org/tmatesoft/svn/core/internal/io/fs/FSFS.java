@@ -128,16 +128,34 @@ public class FSFS {
             file.close();
         }
     }
-    
+
+    public Map getTransactionProperties(String txnID) throws SVNException {
+        FSFile txnPropsFile = getTransactionPropertiesFile(txnID);
+        try {
+            return txnPropsFile.readProperties(false);
+        } finally {
+            txnPropsFile.close();
+        }
+    }
+
+    public FSFile getTransactionPropertiesFile(String txnID) {
+        File file = new File(getTransactionDir(txnID), "props");
+        return new FSFile(file);
+    }
+
     public FSRoot createRevisionRoot(long revision) {
-        return new FSRoot(this, revision);
+        return new FSRevisionRoot(this, revision);
     }
     
+    public FSRoot createTransactionRoot(String txnID, int flags) {
+        return new FSTransactionRoot(this, txnID, flags);
+    }
+
     public FSRevisionNode getRevisionNode(FSID id) throws SVNException  {
         FSFile revisionFile = null;
 
         if (id.isTxn()) {
-            File file = new File(getTransactionDir(id.getTxnID()), "node" + id.getNodeID() + "." + id.getCopyID());
+            File file = new File(getTransactionDir(id.getTxnID()), "node." + id.getNodeID() + "." + id.getCopyID());
             revisionFile = new FSFile(file);
         } else {
             revisionFile = getRevisionFile(id.getRevision());
@@ -150,7 +168,9 @@ public class FSFS {
         } finally{
             revisionFile.close();
         }
-        return FSRevisionNode.fromMap(headers);
+        FSRevisionNode revNode =  FSRevisionNode.fromMap(headers);
+        revNode.setFSFS(this);
+        return revNode;
     }
     
     protected FSFile getRevisionFile(long revision)  throws SVNException {
@@ -171,8 +191,12 @@ public class FSFS {
         return new FSFile(file);
     }
 
-    protected FSFile getRevisionPropertiesFile(long revision) {
+    protected FSFile getRevisionPropertiesFile(long revision) throws SVNException {
         File file = new File(myRevisionPropertiesRoot, String.valueOf(revision));
+        if (!file.exists()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0,number,integer}", new Long(revision));
+            SVNErrorManager.error(err);
+        }
         return new FSFile(file);
     }
 }

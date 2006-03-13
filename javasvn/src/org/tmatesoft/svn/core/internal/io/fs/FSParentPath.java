@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.File;
 
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -37,117 +36,87 @@ public class FSParentPath {
      * or the root. Every parent path ends with an element for the root
      * directory
      */
-    FSRevisionNode revNode;
+    private FSRevisionNode myRevNode;
 
     /*
      * The name NODE has in its parent directory. This is zero for the root
      * directory, which (obviously) has no name in its parent
      */
-    String nameEntry;
+    private String myEntryName;
 
     /* The parent of NODE, or zero if NODE is the root directory */
-    FSParentPath parent;
+    private FSParentPath myParent;
 
     /* The copy ID inheritence style */
-    int copyStyle;
-
     /*
      * If copy ID inheritence style is copy_id_inherit_new, this is the path
      * which should be implicitly copied; otherwise, this is NULL
      */
-    String copySrcPath;
+
+    private FSCopyInheritance myCopyInheritance;
 
     /* constructors */
-    public FSParentPath() {
-    }
-
-    public FSParentPath(FSRevisionNode newRevNode, String newNameEntry, FSParentPath newParent, int newCopyStyle, String newCopySrcPath) {
-        revNode = newRevNode;
-        nameEntry = newNameEntry;
-        parent = newParent;
-        copyStyle = newCopyStyle;
-        copySrcPath = newCopySrcPath;
-    }
 
     public FSParentPath(FSParentPath newParentPath) {
-        revNode = newParentPath.getRevNode();
-        nameEntry = newParentPath.getNameEntry();
-        parent = newParentPath.getParent();
-        copyStyle = newParentPath.getCopyStyle();
-        copySrcPath = newParentPath.getCopySrcPath();
+        myRevNode = newParentPath.myRevNode;
+        myEntryName = newParentPath.myEntryName;
+        myParent = newParentPath.myParent;
+        myCopyInheritance = newParentPath.myCopyInheritance;
     }
 
     public FSParentPath(FSRevisionNode newRevNode, String newEntry, FSParentPath newParentPath) {
-        revNode = newRevNode;
-        nameEntry = newEntry;
-        parent = newParentPath;
-        copyStyle = FSParentPath.COPY_ID_INHERIT_UNKNOWN;
+        myRevNode = newRevNode;
+        myEntryName = newEntry;
+        myParent = newParentPath;
         if (newRevNode != null) {
-            copySrcPath = newRevNode.getCopyFromPath();
+            myCopyInheritance = new FSCopyInheritance(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_UNKNOWN, newRevNode.getCopyFromPath());
         } else {
-            copySrcPath = null;
+            myCopyInheritance = new FSCopyInheritance(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_UNKNOWN, null);
         }
-
     }
 
     // methods-accessors
     public FSRevisionNode getRevNode() {
-        return revNode;
+        return myRevNode;
     }
 
     public void setRevNode(FSRevisionNode newRevNode) {
-        revNode = newRevNode;
+        myRevNode = newRevNode;
     }
 
     public String getNameEntry() {
-        return nameEntry;
+        return myEntryName;
     }
 
     public void setNameEntry(String newNameEntry) {
-        nameEntry = newNameEntry;
+        myEntryName = newNameEntry;
     }
 
     public FSParentPath getParent() {
-        return parent;
+        return myParent;
     }
 
-    public void setParent(FSParentPath newParent) {
-        parent = newParent;
+    public FSCopyIDInheritanceStyle getCopyStyle() {
+        return myCopyInheritance.getStyle();
     }
 
-    public int getCopyStyle() {
-        return copyStyle;
+    public void setCopyStyle(FSCopyIDInheritanceStyle newCopyStyle) {
+        myCopyInheritance.setStyle(newCopyStyle);
     }
 
-    public void setCopyStyle(int newCopyStyle) {
-        copyStyle = newCopyStyle;
+    public String getCopySourcePath() {
+        return myCopyInheritance.getCopySourcePath();
     }
 
-    public String getCopySrcPath() {
-        return copySrcPath;
-    }
-
-    public void setCopySrcPath(String newCopyPath) {
-        copySrcPath = newCopyPath;
+    public void setCopySourcePath(String newCopyPath) {
+        myCopyInheritance.setCopySourcePath(newCopyPath);
     }
 
     public void setParentPath(FSRevisionNode newRevNode, String newEntry, FSParentPath newParentPath) {
-        revNode = newRevNode;
-        nameEntry = newEntry;
-        parent = newParentPath;
-        copyStyle = FSParentPath.COPY_ID_INHERIT_UNKNOWN;
-        copySrcPath = null;
-    }
-
-    // methods
-    public String constructParentPath() {
-        String pathSoFar = "/";
-
-        if (this.getParent() != null) {
-            pathSoFar = this.getParent().constructParentPath();
-        }
-
-        return this.getNameEntry() != null ? SVNPathUtil.append(pathSoFar, this.getNameEntry()) : pathSoFar;
+        myRevNode = newRevNode;
+        myEntryName = newEntry;
+        myParent = newParentPath;
+        myCopyInheritance = new FSCopyInheritance(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_UNKNOWN, null);
     }
 
     /*
@@ -155,8 +124,8 @@ public class FSParentPath {
      */
     public String getAbsPath() {
         String pathSoFar = "/";
-        if (parent != null) {
-            pathSoFar = parent.getAbsPath();
+        if (myParent != null) {
+            pathSoFar = myParent.getAbsPath();
         }
         return getNameEntry() != null ? SVNPathUtil.concatToAbs(pathSoFar, getNameEntry()) : pathSoFar;
     }
@@ -166,7 +135,7 @@ public class FSParentPath {
     // copy inheritance style
     // 2: SVNLocationEntry.path
     // copy src path
-    public static SVNLocationEntry getCopyInheritance(File reposRootDir, FSParentPath child, String txnID, FSRevisionNodePool pool) throws SVNException {
+    public static FSCopyInheritance getCopyInheritance(File reposRootDir, FSParentPath child, String txnID, FSRevisionNodePool pool) throws SVNException {
         /* Make some assertions about the function input. */
         if (child == null || child.getParent() == null || txnID == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: invalid parameters");
@@ -182,16 +151,19 @@ public class FSParentPath {
 
         // If this child is already mutable, we have nothing to do
         if (childID.isTxn()) {
-            return new SVNLocationEntry(FSParentPath.COPY_ID_INHERIT_SELF, null);
+            return new FSCopyInheritance(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_SELF, null);
+            //return new SVNLocationEntry(FSParentPath.COPY_ID_INHERIT_SELF, null);
         }
         // From this point on, we'll assume that the child will just take
         // its copy ID from its parent
-        SVNLocationEntry constrEntry = new SVNLocationEntry(FSParentPath.COPY_ID_INHERIT_PARENT, null);
+        FSCopyInheritance copyInheritance = new FSCopyInheritance(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_PARENT, null);
+        //SVNLocationEntry constrEntry = new SVNLocationEntry(FSParentPath.COPY_ID_INHERIT_PARENT, null);
 
         // Special case: if the child's copy ID is '0', use the parent's
         // copy ID
         if (childCopyID.compareTo("0") == 0) {
-            return constrEntry;
+            return copyInheritance;
+            //return constrEntry;
         }
 
         // Compare the copy IDs of the child and its parent. If they are
@@ -199,7 +171,8 @@ public class FSParentPath {
         // parent, and should use the same mutability copy ID that the
         // parent will use
         if (childCopyID.compareTo(parentCopyID) == 0) {
-            return constrEntry;
+            return copyInheritance;
+            //return constrEntry;
         }
 
         // If the child is on the same branch that the parent is on, the
@@ -209,23 +182,26 @@ public class FSParentPath {
         // branch as its parent if the child itself is not a branch point,
         // or if it is a branch point that we are accessing via its original
         // copy destination path
-        SVNLocationEntry copyrootEntry = new SVNLocationEntry(child.getRevNode().getCopyRootRevision(), child.getRevNode().getCopyRootPath());
-        copyrootRoot = pool.getRootRevisionNode(copyrootEntry.getRevision(), reposRootDir); // FSReader.getRootRevNode(reposRootDir,
-                                                                                            // copyrootEntry.getRevision());
-        copyrootNode = pool.openPath(FSOldRoot.createRevisionRoot(copyrootRoot.getId().getRevision(), copyrootRoot, reposRootDir), copyrootEntry.getPath(), false, null, reposRootDir, false).getRevNode(); // FSReader.getRevisionNode(reposRootDir,
-                                                                                                                                                                                                            // copyrootEntry.getPath(),
-                                                                                                                                                                                                            // copyrootRoot,
-                                                                                                                                                                                                            // 0);
+//        SVNLocationEntry copyrootEntry = new SVNLocationEntry(child.getRevNode().getCopyRootRevision(), child.getRevNode().getCopyRootPath());
+        long copyrootRevision = child.getRevNode().getCopyRootRevision();
+        String copyrootPath = child.getRevNode().getCopyRootPath(); 
+        copyrootRoot = pool.getRootRevisionNode(copyrootRevision, reposRootDir); 
+        copyrootNode = pool.openPath(FSOldRoot.createRevisionRoot(copyrootRoot.getId().getRevision(), copyrootRoot, reposRootDir), copyrootPath, false, null, reposRootDir, false).getRevNode(); 
         copyrootID = copyrootNode.getId();
         if (copyrootID.compareTo(childID) == -1) {
-            return copyrootEntry;
+            return copyInheritance;
         }
 
         //Determine if we are looking at the child via its original path or
         //as a subtree item of a copied tree
-        if (child.getRevNode().getCreatedPath().compareTo(child.constructParentPath()) == 0) {
-            return new SVNLocationEntry(FSParentPath.COPY_ID_INHERIT_SELF, null);
+        String idPath = child.getRevNode().getCreatedPath();
+        if (idPath.compareTo(child.getAbsPath()) == 0) {
+            copyInheritance.setStyle(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_SELF);
+            return copyInheritance;
         }
-        return new SVNLocationEntry(FSParentPath.COPY_ID_INHERIT_NEW, child.getRevNode().getCreatedPath());
+        copyInheritance.setStyle(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_NEW);
+        copyInheritance.setCopySourcePath(idPath);
+        return copyInheritance;
+        //return new SVNLocationEntry(FSParentPath.COPY_ID_INHERIT_NEW, child.getRevNode().getCreatedPath());
     }
 }
