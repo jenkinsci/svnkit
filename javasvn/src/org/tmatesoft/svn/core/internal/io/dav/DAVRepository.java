@@ -615,7 +615,7 @@ class DAVRepository extends SVNRepository {
             DAVEditorHandler handler = new DAVEditorHandler(editor, true);
             String path = SVNEncodingUtil.uriEncode(getLocation().getPath());
             path = DAVUtil.getVCCPath(myConnection, this, path);
-            HTTPStatus status = myConnection.doReport(path, request, handler);
+            HTTPStatus status = myConnection.doReport(path, request, handler, true);
             if (status.getError() != null) {
                 SVNErrorManager.error(status.getError());
             }

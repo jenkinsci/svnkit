@@ -15,6 +15,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -85,6 +86,7 @@ class HTTPConnection implements IHTTPConnection {
     private Map myCredentialsChallenge;
     private String myProxyAuthentication;
     private boolean myIsKeepAlive;
+    private boolean myIsSpoolResponse;
 
     
     public HTTPConnection(SVNRepository repository) throws SVNException {
@@ -420,6 +422,7 @@ class HTTPConnection implements IHTTPConnection {
     public SVNErrorMessage readData(HTTPRequest request, OutputStream dst) throws IOException {
         InputStream stream = createInputStream(request.getResponseHeader(), getInputStream());
         byte[] buffer = getBuffer();
+        boolean willCloseConnection = false;
         try {
             while (true) {
                 int count = stream.read(buffer);
@@ -431,19 +434,64 @@ class HTTPConnection implements IHTTPConnection {
                 }
             }
         } catch (IOException e) {
+            willCloseConnection = true;
             if (e.getCause() instanceof SVNException) {
                 return ((SVNException) e.getCause()).getErrorMessage();
             }
             throw e;
         } finally {
-            SVNFileUtil.closeFile(stream);
+            if (!willCloseConnection) {
+                SVNFileUtil.closeFile(stream);
+            }
             SVNDebugLog.flushStream(stream);
         }
         return null;
     }
     
     public SVNErrorMessage readData(HTTPRequest request, String method, String path, DefaultHandler handler) throws IOException {
-        InputStream is = createInputStream(request.getResponseHeader(), getInputStream());
+        InputStream is = null; 
+        File tmpFile = null; 
+        SVNErrorMessage err = null;
+        boolean closeStream = myIsSpoolResponse;
+        try {
+            if (myIsSpoolResponse) {
+                OutputStream dst = null;
+                try {
+                    tmpFile = SVNFileUtil.createTempFile(".javasvn", ".spool");
+                    dst = SVNFileUtil.openFileForWriting(tmpFile);
+                    err = readData(request, dst);
+                    closeStream |= err != null;
+                    if (err != null) {
+                        return err;
+                    }
+                    // this stream always have to be closed.
+                    is = SVNFileUtil.openFileForReading(tmpFile);
+                } catch (SVNException e) {
+                    return e.getErrorMessage();
+                } finally {
+                    SVNFileUtil.closeFile(dst);
+                }
+            } else {
+                is = createInputStream(request.getResponseHeader(), getInputStream());
+            }
+            err = readData(is, method, path, handler);
+            closeStream |= err != null;
+        } catch (IOException e) {
+            closeStream = true;
+            throw e;
+        } finally {
+            if (closeStream) {
+                SVNFileUtil.closeFile(is);
+            }
+            if (tmpFile != null) {
+                SVNFileUtil.deleteFile(tmpFile);
+            }
+            myIsSpoolResponse = false;
+        }
+        return err;
+    }
+
+    private SVNErrorMessage readData(InputStream is, String method, String path, DefaultHandler handler) throws FactoryConfigurationError, UnsupportedEncodingException, IOException {
         try {
             if (mySAXParser == null) {
                 mySAXParser = getSAXParserFactory().newSAXParser();
@@ -486,8 +534,6 @@ class HTTPConnection implements IHTTPConnection {
                 xmlReader.setErrorHandler(DEFAULT_SAX_HANDLER);
                 xmlReader.setEntityResolver(NO_ENTITY_RESOLVER);
             }
-            // read remaining from is.
-            SVNFileUtil.closeFile(is);
             SVNDebugLog.flushStream(is);
         }
         return null;
@@ -659,6 +705,10 @@ class HTTPConnection implements IHTTPConnection {
             ourSAXParserFactory.setValidating(false);
         }
         return ourSAXParserFactory;
+    }
+
+    public void setSpoolResponse(boolean spoolResponse) {
+        myIsSpoolResponse = spoolResponse;
     }
 
 }
