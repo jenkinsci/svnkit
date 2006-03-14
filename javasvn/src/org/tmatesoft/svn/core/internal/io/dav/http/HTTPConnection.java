@@ -522,17 +522,19 @@ class HTTPConnection implements IHTTPConnection {
         } catch (EOFException e) {
             // skip it.
         } finally {
-            // to avoid memory leaks when connection is cached.
-            org.xml.sax.XMLReader xmlReader = null;
-            try {
-                xmlReader = mySAXParser.getXMLReader();
-            } catch (SAXException e) {
-            }
-            if (xmlReader != null) {
-                xmlReader.setContentHandler(DEFAULT_SAX_HANDLER);
-                xmlReader.setDTDHandler(DEFAULT_SAX_HANDLER);
-                xmlReader.setErrorHandler(DEFAULT_SAX_HANDLER);
-                xmlReader.setEntityResolver(NO_ENTITY_RESOLVER);
+            if (mySAXParser != null) {
+                // to avoid memory leaks when connection is cached.
+                org.xml.sax.XMLReader xmlReader = null;
+                try {
+                    xmlReader = mySAXParser.getXMLReader();
+                } catch (SAXException e) {
+                }
+                if (xmlReader != null) {
+                    xmlReader.setContentHandler(DEFAULT_SAX_HANDLER);
+                    xmlReader.setDTDHandler(DEFAULT_SAX_HANDLER);
+                    xmlReader.setErrorHandler(DEFAULT_SAX_HANDLER);
+                    xmlReader.setEntityResolver(NO_ENTITY_RESOLVER);
+                }
             }
             SVNDebugLog.flushStream(is);
         }
