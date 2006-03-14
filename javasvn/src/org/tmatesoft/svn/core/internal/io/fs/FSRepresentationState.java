@@ -11,16 +11,14 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.internal.wc.ISVNInputFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 /**
  * Represents where in the current svndiff data block each
@@ -30,7 +28,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * @author  TMate Software Ltd.
  */
 public class FSRepresentationState {
-    ISVNInputFile file;
+    FSFile file;
     /* The starting offset for the raw svndiff/plaintext data minus header. */
     long start;
     /* The current offset into the file. */
@@ -45,7 +43,7 @@ public class FSRepresentationState {
     public FSRepresentationState() {
     }
 
-    public FSRepresentationState(ISVNInputFile file, long start, long offset, long end, int version, int index) {
+    public FSRepresentationState(FSFile file, long start, long offset, long end, int version, int index) {
         this.file = file;
         this.start = start;
         this.offset = offset;
@@ -60,17 +58,17 @@ public class FSRepresentationState {
      * we find at the end of the chain, or to null if the final delta representation 
      * is self-compressed. 
      */
-    public static FSRepresentationState buildRepresentationList(FSRepresentation firstRep, LinkedList result, File reposRootDir) throws SVNException {
-        ISVNInputFile file = null;
+    public static FSRepresentationState buildRepresentationList(FSRepresentation firstRep, LinkedList result, FSFS owner) throws SVNException {
+        FSFile file = null;
         FSRepresentation rep = new FSRepresentation(firstRep);
         try{
             while(true){
-                file = FSReader.openAndSeekRepresentation(rep, reposRootDir);
+                file = owner.openAndSeekRepresentation(rep);//FSReader.openAndSeekRepresentation(rep, reposRootDir);
                 FSRepresentationArgs repArgs = readRepresentationLine(file);
                 /* Create the rep_state for this representation. */
                 FSRepresentationState repState = new FSRepresentationState();
                 repState.file = file;
-                repState.start = file.getFilePointer();
+                repState.start = file.position();//file.getFilePointer();
                 repState.offset = repState.start;
                 repState.end = repState.start + rep.getSize();
                 if(!repArgs.isDelta){
@@ -78,13 +76,21 @@ public class FSRepresentationState {
                     return repState;
                 }
                 /* We are dealing with a delta, find out what version. */
-                byte[] buffer = new byte[4];
+                //byte[] buffer = new byte[4];
+                ByteBuffer buffer = ByteBuffer.allocate(4);
                 int r = file.read(buffer);
-                if(!(buffer[0] == 'S' && buffer[1] == 'V' && buffer[2] == 'N' && r == 4)){
+                
+                buffer.flip();
+                byte[] header = new byte[4];
+                for(int i = 0; i < 4 && buffer.hasRemaining(); i++){
+                    header[i] = buffer.get(i); 
+                }
+                
+                if(!(header[0] == 'S' && header[1] == 'V' && header[2] == 'N' && r == 4)){
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed svndiff data in representation");
                     SVNErrorManager.error(err);
                 }
-                repState.version = buffer[3];
+                repState.version = header[3];
                 repState.chunkIndex = 0;
                 repState.offset+= 4;
                 /* Push this rep onto the list.  If it's self-compressed, we're done. */
@@ -98,11 +104,13 @@ public class FSRepresentationState {
                 rep.setTxnId(null);
             }
         }catch(IOException ioe){
-            SVNFileUtil.closeFile(file);
+            file.close();
+            //SVNFileUtil.closeFile(file);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
         }catch(SVNException svne){
-            SVNFileUtil.closeFile(file);
+            file.close();
+            //SVNFileUtil.closeFile(file);
             throw svne;
         }
         return null;
@@ -111,10 +119,10 @@ public class FSRepresentationState {
     /* Read the next line from a file and parse it as a text
      * representation entry. Return parsed args.
      */
-    private static FSRepresentationArgs readRepresentationLine(ISVNInputFile file) throws SVNException {
+    private static FSRepresentationArgs readRepresentationLine(FSFile file) throws SVNException {
         try{
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
-            String line = FSReader.readNextLine(file, 160);
+            String line = file.readLine(160);//FSReader.readNextLine(file, 160);
             FSRepresentationArgs repArgs = new FSRepresentationArgs();
             repArgs.isDelta = false;
             if(FSConstants.REP_PLAIN.equals(line)){
@@ -145,7 +153,8 @@ public class FSRepresentationState {
             }
             return repArgs;
         }catch(SVNException svne){
-            SVNFileUtil.closeFile(file);
+            file.close();
+            //SVNFileUtil.closeFile(file);
             throw svne;
         }
     }

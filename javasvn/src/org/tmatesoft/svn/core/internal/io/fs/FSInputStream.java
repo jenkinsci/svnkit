@@ -66,7 +66,9 @@ public class FSInputStream extends InputStream {
     
     private int myBufPos = 0;
     
-    private FSInputStream(FSRepresentation representation, File reposRootDir) throws SVNException {
+    private FSFS myFSFS;
+    
+    private FSInputStream(FSRepresentation representation, FSFS owner) throws SVNException {
         myChunkIndex = 0;
         isChecksumFinalized = false;
         myHexChecksum = representation.getHexDigest();
@@ -79,7 +81,7 @@ public class FSInputStream extends InputStream {
             SVNErrorManager.error(err, nsae);
         }
         try{
-            mySourceState = FSRepresentationState.buildRepresentationList(representation, myRepStateList, reposRootDir);
+            mySourceState = FSRepresentationState.buildRepresentationList(representation, myRepStateList, owner);
         }catch(SVNException svne){
             /* Something terrible has happened while building rep list, 
              * need to close any files still opened 
@@ -100,14 +102,14 @@ public class FSInputStream extends InputStream {
         if(representation == null){
             return SVNFileUtil.DUMMY_IN; 
         }
-        return new FSInputStream(representation, reposRootDir);
+        return new FSInputStream(representation, new FSFS(reposRootDir));
     }
 
     public static InputStream createDeltaStream(FSRepresentation fileRep, File reposRootDir) throws SVNException {
         if(fileRep == null){
             return SVNFileUtil.DUMMY_IN;
         }
-        return new FSInputStream(fileRep, reposRootDir);
+        return new FSInputStream(fileRep, new FSFS(reposRootDir));
     }
 
     //to read plain text
@@ -115,7 +117,7 @@ public class FSInputStream extends InputStream {
         if(representation == null){
             return SVNFileUtil.DUMMY_IN; 
         }
-        return new FSInputStream(representation, reposRootDir);
+        return new FSInputStream(representation, new FSFS(reposRootDir));
     }
     
     public int read(byte[] buf) throws IOException {
@@ -308,7 +310,7 @@ public class FSInputStream extends InputStream {
             SVNErrorManager.error(err);
         }
         state.chunkIndex++;
-        state.offset = state.file.getFilePointer();
+        state.offset = state.file.position();
         if(state.offset > state.end){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Reading one svndiff window read beyond the end of the representation");
             SVNErrorManager.error(err);
@@ -329,11 +331,13 @@ public class FSInputStream extends InputStream {
     public void close() {
         for(Iterator states = myRepStateList.iterator(); states.hasNext();){
             FSRepresentationState state = (FSRepresentationState)states.next();
-            SVNFileUtil.closeFile(state.file);
+            state.file.close();
+            //SVNFileUtil.closeFile(state.file);
             states.remove();
         }
         if(mySourceState != null){
-            SVNFileUtil.closeFile(mySourceState.file);
+            mySourceState.file.close();
+            //SVNFileUtil.closeFile(mySourceState.file);
         }
     }
 }

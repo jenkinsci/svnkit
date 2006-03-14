@@ -11,8 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.io.File;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,8 +20,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 
 public class FSRevisionNode {
     //id: a.b.r<revID>/offset
@@ -59,8 +55,6 @@ public class FSRevisionNode {
 
     //for only node-revs representing dirs 
     private Map myDirContents;
-    
-    private FSFS myFSFS;
     
     public FSRevisionNode(){
     }
@@ -277,27 +271,23 @@ public class FSRevisionNode {
         return revNode;
     }
 
-    public void setFSFS(FSFS owner) {
-        myFSFS = owner;
-    }
-    
-    public FSRevisionNode getChildDirNode(String childName, File reposRootDir) throws SVNException {
+    public FSRevisionNode getChildDirNode(String childName, FSFS fsfsOwner) throws SVNException {
         /* Make sure that NAME is a single path component. */
         if (!SVNPathUtil.isSinglePathComponent(childName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_SINGLE_PATH_COMPONENT, "Attempted to open node with an illegal name ''{0}''", childName);
             SVNErrorManager.error(err);
         }
         /* Now get the node that was requested. */
-        Map entries = getDirEntries(reposRootDir);
+        Map entries = getDirEntries(fsfsOwner);
         FSEntry entry = entries != null ? (FSEntry) entries.get(childName) : null;
         if (entry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Attempted to open non-existent child node ''{0}''", childName);
             SVNErrorManager.error(err);
         }
-        return myFSFS.getRevisionNode(entry.getId());
+        return fsfsOwner.getRevisionNode(entry.getId());
     }
 
-    public Map getDirEntries(File reposRootDir) throws SVNException {
+    public Map getDirEntries(FSFS fsfsOwner) throws SVNException {
         if (getType() != SVNNodeKind.DIR) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_DIRECTORY, "Can't get entries of non-directory");
             SVNErrorManager.error(err);
@@ -306,7 +296,7 @@ public class FSRevisionNode {
         Map entries = new HashMap();
         Map dirContents = getDirContents();
         if (dirContents == null) {
-            dirContents = getDirContents(reposRootDir);
+            dirContents = fsfsOwner.getDirContents(this);
             setDirContents(dirContents);
         }
         if (dirContents != null) {
@@ -315,37 +305,5 @@ public class FSRevisionNode {
         return entries;
     }
 
-    private Map getDirContents(File reposRootDir) throws SVNException {
-        if (getTextRepresentation() != null && getTextRepresentation().isTxn()) {
-            /*
-             * The representation is mutable. Read the old directory contents
-             * from the mutable children file, followed by the changes we've
-             * made in this transaction.
-             */
-            File childrenFile = FSRepositoryUtil.getTxnRevNodeChildrenFile(getId(), reposRootDir);
-            InputStream file = null;
-            Map entries = null;
-            try {
-                file = SVNFileUtil.openFileForReading(childrenFile);
-                Map rawEntries = SVNProperties.asMap(null, file, false, SVNProperties.SVN_HASH_TERMINATOR);
-                rawEntries = SVNProperties.asMap(rawEntries, file, true, null);
-                entries = FSReader.parsePlainRepresentation(rawEntries);
-            } finally {
-                SVNFileUtil.closeFile(file);
-            }
-            return entries;
-        } else if (getTextRepresentation() != null) {
-            InputStream is = null;
-            FSRepresentation textRepresent = getTextRepresentation();
-            try {
-                is = FSInputStream.createPlainStream(textRepresent, reposRootDir);
-                Map rawEntries = SVNProperties.asMap(null, is, false, SVNProperties.SVN_HASH_TERMINATOR);
-                return FSReader.parsePlainRepresentation(rawEntries);
-            } finally {
-                SVNFileUtil.closeFile(is);
-            }
-        }
-        return new HashMap();// returns an empty map, must not be null!!
-    }
 
 }

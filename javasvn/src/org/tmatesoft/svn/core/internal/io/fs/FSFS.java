@@ -12,12 +12,16 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
+import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 
 /**
  * @version 1.0
@@ -168,11 +172,42 @@ public class FSFS {
         } finally{
             revisionFile.close();
         }
-        FSRevisionNode revNode =  FSRevisionNode.fromMap(headers);
-        revNode.setFSFS(this);
-        return revNode;
+
+        return FSRevisionNode.fromMap(headers);
     }
     
+    public Map getDirContents(FSRevisionNode revNode) throws SVNException {
+        if (revNode.getTextRepresentation() != null && revNode.getTextRepresentation().isTxn()) {
+            /*
+             * The representation is mutable. Read the old directory contents
+             * from the mutable children file, followed by the changes we've
+             * made in this transaction.
+             */
+            FSFile childrenFile = null;
+            Map entries = null;
+            try {
+                childrenFile = getTransactionRevisionNodeChildrenFile(revNode.getId());
+                Map rawEntries = childrenFile.readProperties(false);
+                rawEntries.putAll(childrenFile.readProperties(true));
+                entries = FSReader.parsePlainRepresentation(rawEntries);
+            } finally {
+                childrenFile.close();
+            }
+            return entries;
+        } else if (revNode.getTextRepresentation() != null) {
+            InputStream is = null;
+            try {
+                //TODO: review
+                is = FSInputStream.createPlainStream(revNode.getTextRepresentation(), myRepositoryRoot);
+                Map rawEntries = SVNProperties.asMap(null, is, false, SVNProperties.SVN_HASH_TERMINATOR);
+                return FSReader.parsePlainRepresentation(rawEntries);
+            } finally {
+                SVNFileUtil.closeFile(is);
+            }
+        }
+        return new HashMap();// returns an empty map, must not be null!!
+    }
+
     protected FSFile getRevisionFile(long revision)  throws SVNException {
         File revisionFile = new File(myRevisionsRoot, String.valueOf(revision));
         if (!revisionFile.exists()) {
@@ -191,6 +226,11 @@ public class FSFS {
         return new FSFile(file);
     }
 
+    protected FSFile getTransactionRevisionNodeChildrenFile(FSID txnID) {
+        File childrenFile = new File(getTransactionDir(txnID.getTxnID()), "node." + txnID.getNodeID() + "." + txnID.getCopyID() + ".children");
+        return new FSFile(childrenFile);
+    }
+    
     protected FSFile getRevisionPropertiesFile(long revision) throws SVNException {
         File file = new File(myRevisionPropertiesRoot, String.valueOf(revision));
         if (!file.exists()) {
@@ -199,4 +239,53 @@ public class FSFS {
         }
         return new FSFile(file);
     }
+    
+    protected FSFile getTransactionRevisionPrototypeFile(String txnID) {
+        File revFile = new File(getTransactionDir(txnID), "rev");
+        return new FSFile(revFile);
+    }
+
+    public File getRepositoryRoot(){
+        return myRepositoryRoot;
+    }
+    
+    /*
+     * Given a representation 'rep', open the correct file and seek to the
+     * correction location.
+     */
+    public FSFile openAndSeekRepresentation(FSRepresentation rep) throws SVNException {
+        if (!rep.isTxn()) {
+            return openAndSeekRevision(rep.getRevision(), rep.getOffset());
+        }
+        return openAndSeekTransaction(rep);
+    }
+
+    /*
+     * Open the representation for a node-revision in a transaction in
+     * filesystem. Seek to an offset location before returning. Only appropriate
+     * for file contents, nor props or directory contents.
+     */
+    private FSFile openAndSeekTransaction(FSRepresentation rep) {
+        FSFile file = null;
+        file = getTransactionRevisionPrototypeFile(rep.getTxnId());
+        file.seek(rep.getOffset());
+        return file;
+    }
+
+    /*
+     * Open the revision file for a revision in a filesystem. Seek to an offset
+     * location before returning.
+     */
+    private FSFile openAndSeekRevision(long revision, long offset) throws SVNException {
+        FSFile file = null;
+        try {
+            file = getRevisionFile(revision);
+            file.seek(offset);
+        } catch (SVNException svne) {
+            file.close();
+            throw svne;
+        }
+        return file;
+    }
+
 }

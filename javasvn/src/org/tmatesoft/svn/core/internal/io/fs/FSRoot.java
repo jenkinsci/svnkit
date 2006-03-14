@@ -112,7 +112,7 @@ public abstract class FSRoot {
                              * can provide, giving the root and full path name.  
                              */
                             //TODO: correct this
-                            //SVNErrorManager.error(FSErrors.errorNotFound(root, path), svne);
+                            //SVNErrorManager.error(FSErrors.errorNotFound(this, path), svne);
                         }
                         throw svne;
                     }
@@ -135,15 +135,13 @@ public abstract class FSRoot {
             }
             /* The path isn't finished yet; we'd better be in a directory.  */
             if (child.getType() != SVNNodeKind.DIR) {
-                //TODO: correct this
-                //SVNErrorMessage err = FSErrors.errorNotDirectory(pathSoFar, reposRootDir);
-                //SVNErrorManager.error(err.wrap("Failure opening ''{0}''", path));
+                SVNErrorMessage err = FSErrors.errorNotDirectory(pathSoFar, getOwner().getRepositoryRoot());
+                SVNErrorManager.error(err.wrap("Failure opening ''{0}''", path));
             }
             rest = next;
             here = child;
         }
         return parentPath;
-
     }
     
     public void putRevNodeToCache(String path, FSRevisionNode node) throws SVNException {
