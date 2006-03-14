@@ -11,22 +11,22 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.LinkedList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.ListIterator;
-import java.io.File;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.io.InputStream;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.wc.ISVNInputFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDiffInstruction;
@@ -46,27 +46,15 @@ public class FSInputStream extends InputStream {
     
     private boolean isChecksumFinalized;
     
-    /* The stored checksum of the representation we are reading, its
-     * length, and the amount we've read so far.  Some of this
-     * information is redundant with myReposStateList, but it's
-     * convenient for the checksumming code to have it here. 
-     */
     private String myHexChecksum;
     private long myLength;
     private long myOffset;
     
-    /* The plaintext state, if there is a plaintext. */
     private FSRepresentationState mySourceState;
-    
     private SVNDiffWindowBuilder myDiffWindowBuilder = SVNDiffWindowBuilder.newInstance();
-    
     private MessageDigest myDigest;
-    
     private byte[] myBuffer;
-    
     private int myBufPos = 0;
-    
-    private FSFS myFSFS;
     
     private FSInputStream(FSRepresentation representation, FSFS owner) throws SVNException {
         myChunkIndex = 0;
@@ -174,7 +162,8 @@ public class FSInputStream extends InputStream {
             int copyLength = remaining > mySourceState.end - mySourceState.offset ? (int)(mySourceState.end - mySourceState.offset) : remaining;
             int r = copyLength;
             try{
-                r = mySourceState.file.read(buffer, 0, copyLength);
+                ByteBuffer bBuffer = ByteBuffer.wrap(buffer, 0, copyLength);
+                r = mySourceState.file.read(bBuffer);
             }catch(IOException ioe){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
                 SVNErrorManager.error(err, ioe);
@@ -215,7 +204,7 @@ public class FSInputStream extends InputStream {
                         while(curState.chunkIndex < myChunkIndex){
                             skipDiffWindow(curState.file);
                             curState.chunkIndex++;
-                            curState.offset = curState.file.getFilePointer();
+                            curState.offset = curState.file.position();
                             if(curState.offset >= curState.end){
                                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Reading one svndiff window read beyond the end of the representation");
                                 SVNErrorManager.error(err);
@@ -229,7 +218,7 @@ public class FSInputStream extends InputStream {
                     startIndex = myRepStateList.indexOf(curState);
                     myDiffWindowBuilder.reset(SVNDiffWindowBuilder.OFFSET);
                     try{
-                        long currentPos = curState.file.getFilePointer();
+                        long currentPos = curState.file.position();
                         myDiffWindowBuilder.accept(curState.file);
                         //go back to the beginning of the window's offsets section
                         curState.file.seek(currentPos);
@@ -292,7 +281,7 @@ public class FSInputStream extends InputStream {
         while(state.chunkIndex < thisChunk){
             skipDiffWindow(state.file);
             state.chunkIndex++;
-            state.offset = state.file.getFilePointer();
+            state.offset = state.file.position();
             if(state.offset >= state.end){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Reading one svndiff window read beyond the end of the representation");
                 SVNErrorManager.error(err);
@@ -304,7 +293,8 @@ public class FSInputStream extends InputStream {
         SVNDiffWindow window = myDiffWindowBuilder.getDiffWindow();
         long length = window.getNewDataLength();
         byte[] buffer = new byte[(int)length];
-        int read = state.file.read(buffer);
+        ByteBuffer bBuffer = ByteBuffer.wrap(buffer, 0, (int) length);
+        int read = state.file.read(bBuffer);
         if(read < length){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_UNEXPECTED_END, "Unexpected end of svndiff input");
             SVNErrorManager.error(err);
@@ -319,12 +309,12 @@ public class FSInputStream extends InputStream {
         return window;
     }
     
-    private void skipDiffWindow(ISVNInputFile file) throws IOException, SVNException {
+    private void skipDiffWindow(FSFile file) throws IOException, SVNException {
         myDiffWindowBuilder.reset(SVNDiffWindowBuilder.OFFSET);
         myDiffWindowBuilder.accept(file);
         SVNDiffWindow window = myDiffWindowBuilder.getDiffWindow();
         long len = window.getNewDataLength();
-        long curPos = file.getFilePointer();
+        long curPos = file.position();
         file.seek(curPos + len);
     }
     

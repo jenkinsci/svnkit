@@ -15,15 +15,16 @@ package org.tmatesoft.svn.core.io.diff;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.ISVNInputFile;
+import org.tmatesoft.svn.core.internal.io.fs.FSFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
@@ -327,7 +328,7 @@ public class SVNDiffWindowBuilder {
      *                       </ul> 
      * @throws SVNException  if an i/o error occurred while reading from <code>is</code>
      */
-    public void accept(ISVNInputFile file) throws SVNException, IOException {       
+    public void accept(FSFile file) throws SVNException, IOException {       
         SVNErrorMessage err;
         switch (myState) {
             case HEADER:
@@ -377,7 +378,8 @@ public class SVNDiffWindowBuilder {
                     int length =  myOffsets[3];
                     // read length bytes (!!!!)
                     try {
-                        length = file.read(myInstructions, myInstructions.length - length, length);
+                        ByteBuffer bBuffer = ByteBuffer.wrap(myInstructions, myInstructions.length - length, length);
+                        length = file.read(bBuffer);
                     } catch (IOException e) {
                         err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
                         SVNErrorManager.error(err, e);
@@ -752,7 +754,7 @@ public class SVNDiffWindowBuilder {
         }
     }
 
-    private static void readInt(ISVNInputFile file, int[] target, int index) throws SVNException, IOException {
+    private static void readInt(FSFile file, int[] target, int index) throws SVNException, IOException {
         target[index] = 0;
         while(true) {
             int r = file.read();
