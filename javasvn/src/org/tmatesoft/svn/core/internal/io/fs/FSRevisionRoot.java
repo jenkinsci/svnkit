@@ -59,11 +59,6 @@ public class FSRevisionRoot extends FSRoot {
         return null;
     }
 
-    public FSRevisionNode getRevisionNode(String path) throws SVNException{
-        //TODO: correct this
-        return null;
-    }
-
     public FSRevisionNode getRootRevisionNode() throws SVNException {
         if (myRootRevisionNode == null) {
             FSFile file = getOwner().getRevisionFile(getRevision());

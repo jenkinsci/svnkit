@@ -13,7 +13,9 @@ package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -30,9 +32,10 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
 public abstract class FSRoot {
 
     private Map myCopyfromCache;
-    private Map myRevNodesCache;
-    protected FSRevisionNode myRootRevisionNode;
+    private RevisionCache myRevNodesCache;
     private FSFS myFSFS;
+
+    protected FSRevisionNode myRootRevisionNode;
 
     protected FSRoot(FSFS owner) {
         myFSFS = owner;
@@ -49,7 +52,17 @@ public abstract class FSRoot {
         return myCopyfromCache;
     }
     
-    public abstract FSRevisionNode getRevisionNode(String path) throws SVNException;
+    public FSRevisionNode getRevisionNode(String path) throws SVNException{
+        /* Canonicalize the input PATH. */
+        String canonPath = SVNPathUtil.canonicalizeAbsPath(path);
+        /* look for the rev-node in our cache. */
+        FSRevisionNode node = fetchRevNodeFromCache(canonPath);
+        if(node == null){
+            FSParentPath parentPath = openPath(path, true, false);
+            node = parentPath.getRevNode();
+        }
+        return node;
+    }
 
     public abstract FSRevisionNode getRootRevisionNode() throws SVNException;
 
@@ -79,8 +92,7 @@ public abstract class FSRoot {
             if (entry == null || "".equals(entry)) {
                 child = here;
             } else {
-                //TODO: add caching
-                FSRevisionNode cachedRevNode = null;//fetchRevisionNode(root, pathSoFar);
+                FSRevisionNode cachedRevNode = fetchRevNodeFromCache(pathSoFar);
                 if (cachedRevNode != null) {
                     child = cachedRevNode;
                 } else {
@@ -105,6 +117,7 @@ public abstract class FSRoot {
                         throw svne;
                     }
                 }
+                
                 parentPath.setParentPath(child, entry, storeParents ? new FSParentPath(parentPath) : null);
                 FSCopyInheritance copyInheritance = getCopyInheritance(parentPath);
                 if(copyInheritance != null){
@@ -114,8 +127,7 @@ public abstract class FSRoot {
                 
                 /* Cache the node we found (if it wasn't already cached). */
                 if (cachedRevNode == null) {
-                    //TODO: correct this
-                    //cacheRevisionNode(root, pathSoFar, child);
+                    putRevNodeToCache(pathSoFar, child);
                 }
             }
             if (next == null || "".equals(next)) {
@@ -135,25 +147,25 @@ public abstract class FSRoot {
     }
     
     public void putRevNodeToCache(String path, FSRevisionNode node) throws SVNException {
-        if (myRevNodesCache == null) {
-            myRevNodesCache = new HashMap();
-        }
         if (!path.startsWith("/")) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Invalid path ''{0}''", path);
             SVNErrorManager.error(err);
+        }
+        if (myRevNodesCache == null) {
+            myRevNodesCache = new RevisionCache(100);
         }
         myRevNodesCache.put(path, node);
     }
 
     public void removeRevNodeFromCache(String path) throws SVNException {
-        if (myRevNodesCache == null) {
-            return;
-        }
         if (!path.startsWith("/")) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Invalid path ''{0}''", path);
             SVNErrorManager.error(err);
         }
-        myRevNodesCache.remove(path);
+        if (myRevNodesCache == null) {
+            return;
+        }
+        myRevNodesCache.delete(path);
     }
 
     public FSRevisionNode fetchRevNodeFromCache(String path) throws SVNException {
@@ -164,7 +176,7 @@ public abstract class FSRoot {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Invalid path ''{0}''", path);
             SVNErrorManager.error(err);
         }
-        return (FSRevisionNode) myRevNodesCache.get(path);
+        return (FSRevisionNode) myRevNodesCache.fetch(path);
     }
 
     private void foldChange(Map mapChanges, FSChange change) throws SVNException {
@@ -282,4 +294,50 @@ public abstract class FSRoot {
         return FSChange.fromString(changeLine, copyfromLine);
     }
     
+    private static final class RevisionCache {
+        private LinkedList myKeys;
+        private Map myCache;
+        private int myMAXKeysNumber;
+        
+        public RevisionCache(int limit){
+            myMAXKeysNumber = limit;
+            myKeys = new LinkedList();
+            myCache = new TreeMap(); 
+        }
+        
+        public void put(Object key, Object value){
+            if(myMAXKeysNumber <= 0){
+                return;
+            }
+            if(myKeys.size() == myMAXKeysNumber){
+                Object cachedKey = myKeys.removeLast();
+                myCache.remove(cachedKey);
+            }
+            myKeys.addFirst(key);
+            myCache.put(key, value);
+        }
+        
+        public void delete(Object key){
+            myKeys.remove(key);
+            myCache.remove(key);
+        }
+        
+        public Object fetch(Object key){
+            int ind = myKeys.indexOf(key);
+            if(ind != -1){
+                if(ind != 0){
+                    Object cachedKey = myKeys.remove(ind);
+                    myKeys.addFirst(cachedKey);
+                } 
+                return myCache.get(key);
+            }
+            return null;
+        }
+        
+        public void clear(){
+            myKeys.clear();
+            myCache.clear();
+        }
+    }
+
 }
