@@ -18,6 +18,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,6 +45,7 @@ public class FSFile {
     private ByteBuffer myBuffer;
     private ByteBuffer myReadLineBuffer;
     private CharsetDecoder myDecoder;
+    private MessageDigest myDigest;
     
     public FSFile(File file) {
         myFile = file;
@@ -63,6 +66,20 @@ public class FSFile {
 
     public long size() {
         return myFile.length();
+    }
+    
+    public void resetDigest() {
+        if (myDigest == null) {
+            try {
+                myDigest = MessageDigest.getInstance("MD5");
+            } catch (NoSuchAlgorithmException e) {
+            }
+        }
+        myDigest.reset();
+    }
+    
+    public String digest() {
+        return SVNFileUtil.toHexDigest(myDigest);
     }
     
     public int readInt() throws SVNException {
@@ -210,6 +227,9 @@ public class FSFile {
             myBuffer.position((int) (myPosition - myBufferPosition));
         }
         int r = (myBuffer.get() & 0xFF);
+        if (myDigest != null) {
+            myDigest.update((byte) r);
+        }
         myPosition++;
         return r;
     }
@@ -221,8 +241,13 @@ public class FSFile {
                 return read > 0 ? read : -1;
             }
             myBuffer.position((int) (myPosition - myBufferPosition));
+
             while(myBuffer.hasRemaining() && target.hasRemaining()) {
-                target.put(myBuffer.get());
+                int r = (myBuffer.get() & 0xFF); 
+                if (myDigest != null) {
+                    myDigest.update((byte) r);
+                }
+                target.put((byte) r);
                 myPosition++;
                 read++;
             }
