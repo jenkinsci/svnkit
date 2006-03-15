@@ -206,6 +206,8 @@ public class FSFile {
             if (fill() <= 0) {
                 return -1;
             }
+        } else {
+            myBuffer.position((int) (myPosition - myBufferPosition));
         }
         int r = (myBuffer.get() & 0xFF);
         myPosition++;
