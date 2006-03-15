@@ -130,7 +130,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
             offset = targetFile.getFilePointer();
             /* Get the base for this delta. */
             FSRepresentation baseRep = chooseDeltaBase(revNode, reposRootDir);
-            sourceStream = FSInputStream.createDeltaStream(baseRep, reposRootDir);
+            sourceStream = FSInputStream.createDeltaStream(baseRep, new FSFS(reposRootDir));
             /* Write out the rep header. */
             String header;
             if(baseRep != null){

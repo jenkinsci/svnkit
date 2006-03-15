@@ -305,5 +305,8 @@ public class FSRevisionNode {
         return entries;
     }
 
+    public Map getProperties(FSFS fsfsOwner) throws SVNException {
+        return fsfsOwner.getProperties(this);
+    }
 
 }

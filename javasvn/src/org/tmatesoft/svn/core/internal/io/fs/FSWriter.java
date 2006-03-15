@@ -247,39 +247,24 @@ public class FSWriter {
         SVNFileUtil.rename(tmpCurrentFile, currentFile);
     }
 
-    /*
-     * Write the changed path info from transaction to the permanent rev-file.
-     * Returns offset in the file of the beginning of this information.
-     */
-    public static long writeFinalChangedPathInfo(final RandomAccessFile protoFile, FSOldRoot txnRoot, File reposRootDir) throws SVNException, IOException {
+    //TODO: replace RAF with OS
+    public static long writeFinalChangedPathInfo(final RandomAccessFile protoFile, FSRoot txnRoot, File reposRootDir) throws SVNException, IOException {
         long offset = protoFile.getFilePointer();
         Map changedPaths = txnRoot.getChangedPaths();
         Map copyfromCache = txnRoot.getCopyfromCache();
 
-        /*
-         * Iterate through the changed paths one at a time, and convert the
-         * temporary node-id into a permanent one for each change entry.
-         */
         for (Iterator paths = changedPaths.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             FSPathChange change = (FSPathChange) changedPaths.get(path);
             FSID id = change.getRevNodeId();
-            /*
-             * If this was a delete of a mutable node, then it is OK to leave
-             * the change entry pointing to the non-existant temporary node,
-             * since it will never be used.
-             */
+
             if (change.getChangeKind() != FSPathChangeKind.FS_PATH_CHANGE_DELETE && !id.isTxn()) {
                 FSRevisionNode revNode = FSReader.getRevNodeFromID(reposRootDir, id);
-                /*
-                 * noderev has the permanent node-id at this point, so we just
-                 * substitute it for the temporary one.
-                 */
                 change.setRevNodeId(revNode.getId());
             }
-            /* Find the cached copyfrom information. */
+
             SVNLocationEntry copyfromEntry = (SVNLocationEntry) copyfromCache.get(path);
-            /* Write out the new entry into the final rev-file. */
+
             OutputStream protoFileAdapter = new OutputStream() {
 
                 public void write(int b) throws IOException {
@@ -291,22 +276,16 @@ public class FSWriter {
         return offset;
     }
 
-    /*
-     * Copy a node-revision specified by id from a transaction into the
-     * prototype file (that will be a permanent rev-file). If this is a
-     * directory, all children are copied as well. startNodeId and startCopyId
-     * are the first available node and copy ids.
-     */
     public static FSID writeFinalRevision(FSID newId, final RandomAccessFile protoFile, long revision, FSID id, String startNodeId, String startCopyId, File reposRootDir) throws SVNException,
             IOException {
         newId = null;
-        /* Check to see if this is a transaction node. */
+        
         if (!id.isTxn()) {
             return newId;
         }
+
         FSRevisionNode revNode = FSReader.getRevNodeFromID(reposRootDir, id);
         if (revNode.getType() == SVNNodeKind.DIR) {
-            /* This is a directory. Write out all the children first. */
             Map namesToEntries = FSReader.getDirEntries(revNode, reposRootDir);
             for (Iterator entries = namesToEntries.values().iterator(); entries.hasNext();) {
                 FSEntry dirEntry = (FSEntry) entries.next();
@@ -316,7 +295,6 @@ public class FSWriter {
                 }
             }
             if (revNode.getTextRepresentation() != null && revNode.getTextRepresentation().isTxn()) {
-                /* Write out the contents of this directory as a text rep. */
                 Map unparsedEntries = FSRepositoryUtil.unparseDirEntries(namesToEntries);
                 FSRepresentation textRep = revNode.getTextRepresentation();
                 textRep.setTxnId(null);
@@ -335,17 +313,12 @@ public class FSWriter {
                 }
             }
         } else {
-            /*
-             * This is a file. We should make sure the data rep, if it exists in
-             * a "this" state, gets rewritten to our new revision num.
-             */
             if (revNode.getTextRepresentation() != null && revNode.getTextRepresentation().isTxn()) {
                 FSRepresentation textRep = revNode.getTextRepresentation();
                 textRep.setTxnId(null);
                 textRep.setRevision(revision);
             }
         }
-        /* Fix up the property reps. */
         if (revNode.getPropsRepresentation() != null && revNode.getPropsRepresentation().isTxn()) {
             Map props = FSReader.getProperties(revNode, reposRootDir);
             FSRepresentation propsRep = revNode.getPropsRepresentation();
@@ -364,7 +337,6 @@ public class FSWriter {
                 SVNErrorManager.error(err, nsae);
             }
         }
-        /* Convert our temporary ID into a permanent revision one. */
         long myOffset = protoFile.getFilePointer();
         String myNodeId = null;
         String nodeId = revNode.getId().getNodeID();
@@ -385,16 +357,15 @@ public class FSWriter {
         }
         newId = FSID.createRevId(myNodeId, myCopyId, revision, myOffset);
         revNode.setId(newId);
-        /* Write out our new node-revision. */
         OutputStream protoFileAdapter = new OutputStream() {
 
             public void write(int b) throws IOException {
                 protoFile.write(b);
             }
         };
+
         writeTxnNodeRevision(protoFileAdapter, revNode);
         putTxnRevisionNode(id, revNode, reposRootDir);
-        /* Return our ID that references the revision file. */
         return newId;
     }
 
@@ -523,11 +494,6 @@ public class FSWriter {
         }
     }
 
-    /*
-     * Delete the directory entry named entryName from parent. parent must be
-     * mutable. entryName must be a single path component. Throws an exception
-     * if there is no entry entryName in parent.
-     */
     public static void deleteEntry(FSRevisionNode parent, String entryName, String txnId, File reposRootDir) throws SVNException {
         /* Make sure parent is a directory. */
         if (parent.getType() != SVNNodeKind.DIR) {
@@ -557,7 +523,6 @@ public class FSWriter {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_ENTRY, "Delete failed--directory has no entry ''{0}''", entryName);
             SVNErrorManager.error(err);
         }
-        /* Use the id to get the entry's node. */
         /*
          * TODO: Well, I don't understand this place - why svn devs try to get
          * the node revision here, - just to act only as a sanity check or what?
@@ -610,48 +575,34 @@ public class FSWriter {
         return id;
     }
 
-    public static FSTransactionInfo beginTxn(long baseRevision, int flags, FSRevisionNodePool revNodesPool, File reposRootDir) throws SVNException {
-        FSTransactionInfo txn = createTxn(baseRevision, revNodesPool, reposRootDir);
-        /*
-         * Put a datestamp on the newly created txn, so we always know exactly
-         * how old it is. (This will help sysadmins identify long-abandoned txns
-         * that may need to be manually removed.) When a txn is promoted to a
-         * revision, this property will be automatically overwritten with a
-         * revision datestamp.
-         */
+    public static FSTransactionInfo beginTxn(long baseRevision, int flags, FSFS owner) throws SVNException {
+        FSTransactionInfo txn = createTxn(baseRevision, owner);
         String commitTime = SVNTimeUtil.formatDate(new Date(System.currentTimeMillis()));
-        setTransactionProperty(reposRootDir, txn.getTxnId(), SVNRevisionProperty.DATE, commitTime);
-        /*
-         * Set temporary txn props that represent the requested 'flags'
-         * behaviors.
-         */
+        setTransactionProperty(owner.getRepositoryRoot(), txn.getTxnId(), SVNRevisionProperty.DATE, commitTime);
+
         if ((flags & FSConstants.SVN_FS_TXN_CHECK_OUT_OF_DATENESS) != 0) {
-            setTransactionProperty(reposRootDir, txn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, SVNProperty.toString(true));
+            setTransactionProperty(owner.getRepositoryRoot(), txn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, SVNProperty.toString(true));
         }
+        
         if ((flags & FSConstants.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-            setTransactionProperty(reposRootDir, txn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, SVNProperty.toString(true));
+            setTransactionProperty(owner.getRepositoryRoot(), txn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, SVNProperty.toString(true));
         }
+        
         return txn;
     }
 
-    // create txn dir & necessary files in the fs
-    public static FSTransactionInfo createTxn(long baseRevision, FSRevisionNodePool revNodesPool, File reposRootDir) throws SVNException {
-        /* Get the txn id. */
-        String txnId = createTxnDir(baseRevision, reposRootDir);
+    public static FSTransactionInfo createTxn(long baseRevision, FSFS owner) throws SVNException {
+        String txnId = createTxnDir(baseRevision, owner.getRepositoryRoot());
         FSTransactionInfo txn = new FSTransactionInfo(baseRevision, txnId);
-        FSRevisionNode root = revNodesPool.getRootRevisionNode(baseRevision, reposRootDir);
-        /* Create a new root node for this transaction. */
-        FSWriter.createNewTxnNodeRevisionFromRevision(txn.getTxnId(), root, reposRootDir);
-        /* Create an empty rev file. */
-        SVNFileUtil.createEmptyFile(FSRepositoryUtil.getTxnRevFile(txn.getTxnId(), reposRootDir));
-        /* Create an empty changes file. */
-        SVNFileUtil.createEmptyFile(FSRepositoryUtil.getTxnChangesFile(txn.getTxnId(), reposRootDir));
-        /* Write the next-ids file. */
-        writeNextIds(txn.getTxnId(), "0", "0", reposRootDir);
+        FSRevisionRoot root = owner.createRevisionRoot(baseRevision);
+        FSRevisionNode rootNode = root.getRootRevisionNode(); 
+        createNewTxnNodeRevisionFromRevision(txn.getTxnId(), rootNode, owner.getRepositoryRoot());
+        SVNFileUtil.createEmptyFile(FSRepositoryUtil.getTxnRevFile(txn.getTxnId(), owner.getRepositoryRoot()));
+        SVNFileUtil.createEmptyFile(FSRepositoryUtil.getTxnChangesFile(txn.getTxnId(), owner.getRepositoryRoot()));
+        writeNextIds(txn.getTxnId(), "0", "0", owner.getRepositoryRoot());
         return txn;
     }
 
-    /* Copy a source revision node into the current transaction txnId. */
     public static void createNewTxnNodeRevisionFromRevision(String txnId, FSRevisionNode sourceNode, File reposRootDir) throws SVNException {
         if (sourceNode.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Copying from transactions not allowed");
@@ -662,7 +613,6 @@ public class FSWriter {
         revNode.setCount(revNode.getCount() + 1);
         revNode.setCopyFromPath(null);
         revNode.setCopyFromRevision(FSConstants.SVN_INVALID_REVNUM);
-        /* For the transaction root, the copyroot never changes. */
         revNode.setId(FSID.createTxnId(sourceNode.getId().getNodeID(), sourceNode.getId().getCopyID(), txnId));
         putTxnRevisionNode(revNode.getId(), revNode, reposRootDir);
     }
@@ -684,7 +634,6 @@ public class FSWriter {
         }
     }
 
-    /* Write the revision node revNode into the file. */
     private static void writeTxnNodeRevision(OutputStream revNodeFile, FSRevisionNode revNode) throws IOException {
         String id = FSConstants.HEADER_ID + ": " + revNode.getId() + "\n";
         revNodeFile.write(id.getBytes());
@@ -718,10 +667,6 @@ public class FSWriter {
         revNodeFile.write("\n".getBytes());
     }
 
-    /*
-     * Write a single change entry - path, path change info, and copyfrom string
-     * into the changes file.
-     */
     public static void writeChangeEntry(OutputStream changesFile, String path, FSPathChange pathChange, SVNLocationEntry copyfromEntry) throws SVNException, IOException {
         FSPathChangeKind changeKind = pathChange.getChangeKind();
         if (!(changeKind == FSPathChangeKind.FS_PATH_CHANGE_ADD || changeKind == FSPathChangeKind.FS_PATH_CHANGE_DELETE || changeKind == FSPathChangeKind.FS_PATH_CHANGE_MODIFY
@@ -745,10 +690,6 @@ public class FSWriter {
         changesFile.write("\n".getBytes());
     }
 
-    /*
-     * Write out the currently available next nodeId and copyId for transaction
-     * id in filesystem.
-     */
     public static void writeNextIds(String txnId, String nodeId, String copyId, File reposRootDir) throws SVNException {
         OutputStream nextIdsFile = null;
         try {
@@ -763,18 +704,13 @@ public class FSWriter {
         }
     }
 
-    /*
-     * Create a unique directory for a transaction in FS based on the provided
-     * revision. Return the ID for this transaction.
-     */
     public static String createTxnDir(long revision, File reposRootDir) throws SVNException {
         File parent = FSRepositoryUtil.getTransactionsDir(reposRootDir);
         File uniquePath = null;
-        /* Try to create directories named "<txndir>/<rev>-<uniquifier>.txn". */
+
         for (int i = 1; i < 99999; i++) {
             uniquePath = new File(parent, revision + "-" + i + FSConstants.TXN_PATH_EXT);
             if (!uniquePath.exists() && uniquePath.mkdirs()) {
-                /* We succeeded. Return the basename minus the ".txn" extension. */
                 return revision + "-" + i;
             }
         }

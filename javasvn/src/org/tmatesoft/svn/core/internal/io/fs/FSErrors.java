@@ -40,6 +40,19 @@ public class FSErrors {
         return err;
     }
     
+    public static SVNErrorMessage errorNotFound(FSRoot root, String path) {
+        SVNErrorMessage err;
+        if(root instanceof FSTransactionRoot){
+            FSTransactionRoot txnRoot = (FSTransactionRoot)root;
+            err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: transaction ''{0}'', path ''{1}''", new Object[]{txnRoot.getTxnID(), path});
+        }else{
+            FSRevisionRoot revRoot = (FSRevisionRoot)root;
+            err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: revision {0,number,integer}, path ''{1}''", new Object[]{new Long(revRoot.getRevision()), path});
+        }
+        return err;
+    }
+    
+    //TODO: remove later
     public static SVNErrorMessage errorNotFound(FSOldRoot root, String path) {
         SVNErrorMessage err;
         if(root.isTxnRoot()){
@@ -67,13 +80,15 @@ public class FSErrors {
         return err;
     }
     
-    public static SVNErrorMessage errorAlreadyExists(FSOldRoot root, String path, File reposRootDir) {
+    public static SVNErrorMessage errorAlreadyExists(FSRoot root, String path, File reposRootDir) {
         File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
         SVNErrorMessage err = null;
-        if(root.isTxnRoot()){
-            err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "File already exists: filesystem ''{0}'', transaction ''{1}'', path ''{2}''", new Object[]{fsDir, root.getTxnId(), path});
+        if(root instanceof FSTransactionRoot){
+            FSTransactionRoot txnRoot = (FSTransactionRoot)root;
+            err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "File already exists: filesystem ''{0}'', transaction ''{1}'', path ''{2}''", new Object[]{fsDir, txnRoot.getTxnID(), path});
         }else{
-            err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "File already exists: filesystem ''{0}'', revision {1}, path ''{2}''", new Object[]{fsDir, new Long(root.getRevision()), path});
+            FSRevisionRoot revRoot = (FSRevisionRoot)root;
+            err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "File already exists: filesystem ''{0}'', revision {1}, path ''{2}''", new Object[]{fsDir, new Long(revRoot.getRevision()), path});
         }
         return err;
     }

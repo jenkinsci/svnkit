@@ -87,7 +87,6 @@ javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSRevisionNode.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSRevisionNodePool.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSTransaction.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSTransactionInfo.java -text
-javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSTransactionKind.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSWriteLock.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSWriter.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/PathInfo.java -text

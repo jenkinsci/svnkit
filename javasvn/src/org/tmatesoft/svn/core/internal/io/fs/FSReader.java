@@ -66,9 +66,9 @@ public class FSReader {
         return ids;
     }
 
-    public static InputStream getFileContentsInputStream(FSOldRoot root, String path, FSRevisionNodePool pool, File reposRootDir) throws SVNException {
-        FSRevisionNode fileNode = pool.getRevisionNode(root, path, reposRootDir);
-        return FSInputStream.createDeltaStream(fileNode, reposRootDir);
+    public static InputStream getFileContentsInputStream(FSRoot root, String path) throws SVNException {
+        FSRevisionNode fileNode = root.getRevisionNode(path);//pool.getRevisionNode(root, path, owner);
+        return FSInputStream.createDeltaStream(fileNode, root.getOwner());
     }
 
     /*
@@ -309,37 +309,10 @@ public class FSReader {
         return lock;
     }
 
-    public static FSTransaction getTxn(String txnId, File reposRootDir) throws SVNException {
-        FSTransaction txn = getTxn(txnId, false, reposRootDir);
-        if (txn.getKind() != FSTransactionKind.TXN_KIND_NORMAL) {
-            SVNErrorManager.error(FSErrors.errorTxnNotMutable(txnId, reposRootDir));
-        }
-        return txn;
-    }
-
-    /*
-     * If expectDead is true, this transaction must be a dead one, else an error
-     * is returned. If expectDead is false, an error is thrown if the
-     * transaction is *not* dead.
-     */
-    private static FSTransaction getTxn(String txnId, boolean expectDead, File reposRootDir) throws SVNException {
-        FSTransaction txn = fetchTxn(txnId, reposRootDir);
-        if (expectDead && txn.getKind() != FSTransactionKind.TXN_KIND_DEAD) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_TRANSACTION_NOT_DEAD, "Transaction is not dead: ''{0}''", txnId);
-            SVNErrorManager.error(err);
-        }
-        if (!expectDead && txn.getKind() == FSTransactionKind.TXN_KIND_DEAD) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_TRANSACTION_DEAD, "Transaction is dead: ''{0}''", txnId);
-            SVNErrorManager.error(err);
-        }
-        return txn;
-    }
-
-    private static FSTransaction fetchTxn(String txnId, File reposRootDir) throws SVNException {
-        Map txnProps = FSRepositoryUtil.getTransactionProperties(reposRootDir, txnId);
-        FSID rootId = FSID.createTxnId("0", "0", txnId);
+    public static FSTransaction getTxn(String txnID, File reposRootDir) throws SVNException {
+        FSID rootId = FSID.createTxnId("0", "0", txnID);
         FSRevisionNode revNode = getRevNodeFromID(reposRootDir, rootId);
-        return new FSTransaction(FSTransactionKind.TXN_KIND_NORMAL, revNode.getId(), revNode.getPredecessorId(), null, txnProps);
+        return new FSTransaction(revNode.getId(), revNode.getPredecessorId());
     }
 
     public static FSRevisionNode getChildDirNode(String childName, FSRevisionNode parent, File reposRootDir) throws SVNException {
@@ -377,7 +350,27 @@ public class FSReader {
     }
 
     public static Map getProperties(FSRevisionNode revNode, File reposRootDir) throws SVNException {
-        return getProplist(revNode, reposRootDir);
+        Map properties = new HashMap();
+        if (revNode.getPropsRepresentation() != null && revNode.getPropsRepresentation().isTxn()) {
+            File propsFile = FSRepositoryUtil.getTxnRevNodePropsFile(revNode.getId(), reposRootDir);
+            InputStream file = null;
+            try {
+                file = SVNFileUtil.openFileForReading(propsFile);
+                properties = SVNProperties.asMap(properties, file, false, SVNProperties.SVN_HASH_TERMINATOR);
+            } finally {
+                SVNFileUtil.closeFile(file);
+            }
+        } else if (revNode.getPropsRepresentation() != null) {
+            InputStream is = null;
+            FSRepresentation propsRepresent = revNode.getPropsRepresentation();
+            try {
+                is = FSInputStream.createPlainStream(propsRepresent, new FSFS(reposRootDir));
+                properties = SVNProperties.asMap(properties, is, false, SVNProperties.SVN_HASH_TERMINATOR);
+            } finally {
+                SVNFileUtil.closeFile(is);
+            }
+        }
+        return properties;// no properties? return an empty map
     }
 
     private static Map getDirContents(FSRevisionNode revNode, File reposRootDir) throws SVNException {
@@ -394,7 +387,7 @@ public class FSReader {
                 file = SVNFileUtil.openFileForReading(childrenFile);
                 Map rawEntries = SVNProperties.asMap(null, file, false, SVNProperties.SVN_HASH_TERMINATOR);
                 rawEntries = SVNProperties.asMap(rawEntries, file, true, null);
-                entries = parsePlainRepresentation(rawEntries);
+                entries = parsePlainRepresentation(rawEntries, true);
             } finally {
                 SVNFileUtil.closeFile(file);
             }
@@ -403,10 +396,10 @@ public class FSReader {
             InputStream is = null;
             FSRepresentation textRepresent = revNode.getTextRepresentation();
             try {
-                is = FSInputStream.createPlainStream(textRepresent, reposRootDir);// readPlainRepresentation(textRepresent,
+                is = FSInputStream.createPlainStream(textRepresent, new FSFS(reposRootDir));// readPlainRepresentation(textRepresent,
                                                                                     // reposRootDir);
                 Map rawEntries = SVNProperties.asMap(null, is, false, SVNProperties.SVN_HASH_TERMINATOR);
-                return parsePlainRepresentation(rawEntries);
+                return parsePlainRepresentation(rawEntries, false);
             } finally {
                 SVNFileUtil.closeFile(is);
             }
@@ -414,43 +407,18 @@ public class FSReader {
         return new HashMap();// returns an empty map, must not be null!!
     }
 
-    private static Map getProplist(FSRevisionNode revNode, File reposRootDir) throws SVNException {
-        Map properties = new HashMap();
-        if (revNode.getPropsRepresentation() != null && revNode.getPropsRepresentation().isTxn()) {
-            File propsFile = FSRepositoryUtil.getTxnRevNodePropsFile(revNode.getId(), reposRootDir);
-            InputStream file = null;
-            try {
-                file = SVNFileUtil.openFileForReading(propsFile);
-                properties = SVNProperties.asMap(properties, file, false, SVNProperties.SVN_HASH_TERMINATOR);
-            } finally {
-                SVNFileUtil.closeFile(file);
-            }
-        } else if (revNode.getPropsRepresentation() != null) {
-            InputStream is = null;
-            FSRepresentation propsRepresent = revNode.getPropsRepresentation();
-            try {
-                is = FSInputStream.createPlainStream(propsRepresent, reposRootDir);
-                properties = SVNProperties.asMap(properties, is, false, SVNProperties.SVN_HASH_TERMINATOR);
-            } finally {
-                SVNFileUtil.closeFile(is);
-            }
-        }
-        return properties;// no properties? return an empty map
-    }
-
-    /*
-     * Now this routine is intended only for parsing dir entries since the
-     * static method asMap() of SVNProperties does all the job for reading
-     * properties.
-     */
-    //TODO: we should be careful here - if the rep is a txn rep, it may happen
-    //to contain String->null mappings now...
-    public static Map parsePlainRepresentation(Map entries) throws SVNException {
+    public static Map parsePlainRepresentation(Map entries, boolean mayContainNulls) throws SVNException {
         Map representationMap = new HashMap();
         Object[] names = entries.keySet().toArray();
         for (int i = 0; i < names.length; i++) {
             String name = (String) names[i];
-            FSEntry nextRepEntry = parseRepEntryValue(name, (String) entries.get(names[i]));
+            String unparsedEntry = (String) entries.get(names[i]);
+            
+            if(unparsedEntry == null && mayContainNulls){
+                continue;
+            }
+            
+            FSEntry nextRepEntry = parseRepEntryValue(name, unparsedEntry);
             if (nextRepEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Directory entry corrupt");
                 SVNErrorManager.error(err);
@@ -478,13 +446,13 @@ public class FSReader {
 
     public static FSRevisionNode getTxnRootNode(String txnId, File reposRootDir) throws SVNException {
         FSTransaction txn = getTxn(txnId, reposRootDir);
-        FSRevisionNode txnRootNode = getRevNodeFromID(reposRootDir, txn.getRootId());
+        FSRevisionNode txnRootNode = getRevNodeFromID(reposRootDir, txn.getRootID());
         return txnRootNode;
     }
 
     public static FSRevisionNode getTxnBaseRootNode(String txnId, File reposRootDir) throws SVNException {
         FSTransaction txn = getTxn(txnId, reposRootDir);
-        FSRevisionNode txnBaseNode = getRevNodeFromID(reposRootDir, txn.getBaseId());
+        FSRevisionNode txnBaseNode = getRevNodeFromID(reposRootDir, txn.getBaseID());
         return txnBaseNode;
     }
 
@@ -955,20 +923,10 @@ public class FSReader {
         return latestRev;
     }
 
-    /*
-     * Store as keys in returned Map the paths of all node in ROOT that show a
-     * significant change. "Significant" means that the text or properties of
-     * the node were changed, or that the node was added or deleted. Keys are
-     * String paths and values are SVNLogEntryPaths.
-     */
     public static Map detectChanged(File reposRootDir, FSRevisionNodePool revNodesPool, FSOldRoot root) throws SVNException {
         Map changedPaths = new HashMap();
         Map changes = root.getChangedPaths();
         if (changes.size() == 0) {
-            /*
-             * No paths changed in this revision? Uh, sure, I guess the revision
-             * is readable, then.
-             */
             return changes;
         }
         for (Iterator paths = changes.keySet().iterator(); paths.hasNext();) {
@@ -1011,34 +969,25 @@ public class FSReader {
             }
             return (SVNLocationEntry) copyfromCache.get(path);
         }
-        /*
-         * There is no cached entry, look it up the old-fashioned way.
-         */
+
         FSRevisionNode node = revNodesPool.getRevisionNode(root, path, reposRootDir);
         return new SVNLocationEntry(node.getCopyFromRevision(), node.getCopyFromPath());
     }
 
-    /*
-     * Pass history information about REV to handler. reposRootDir is used with
-     * REV to fetch the interesting history information, such as author, date,
-     * etc. The detectChanged() function if DISCOVER_CHANGED_PATHS is TRUE.
-     */
     public static void sendChangeRev(File reposRootDir, FSRevisionNodePool revNodesPool, long revNum, boolean discoverChangedPaths, ISVNLogEntryHandler handler) throws SVNException {
         Map revisionProps = FSRepositoryUtil.getRevisionProperties(reposRootDir, revNum);
         Map changedPaths = null;
         String author = null;
         Date date = null;
         String message = null;
+        
         if (revisionProps != null) {
             author = (String) revisionProps.get(SVNRevisionProperty.AUTHOR);
             String datestamp = (String) revisionProps.get(SVNRevisionProperty.DATE);
             message = (String) revisionProps.get(SVNRevisionProperty.LOG);
             date = datestamp != null ? SVNTimeUtil.parseDateString(datestamp) : null;
         }
-        /*
-         * Discover changed paths if the user requested them or if we need to
-         * check that they are readable
-         */
+
         if (revNum > 0 && discoverChangedPaths) {
             FSOldRoot root = FSOldRoot.createRevisionRoot(revNum, null, reposRootDir);
             changedPaths = detectChanged(reposRootDir, revNodesPool, root);

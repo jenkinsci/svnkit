@@ -46,13 +46,13 @@ public class FSTransactionRoot extends FSRoot {
 
         /* If this child is already mutable, we have nothing to do */
         if (childID.isTxn()) {
-            return new FSCopyInheritance(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_SELF, null);
+            return new FSCopyInheritance(FSCopyInheritance.COPY_ID_INHERIT_SELF, null);
         }
         
         /* From this point on, we'll assume that the child will just take
          * its copy ID from its parent
          */
-        FSCopyInheritance copyInheritance = new FSCopyInheritance(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_PARENT, null);
+        FSCopyInheritance copyInheritance = new FSCopyInheritance(FSCopyInheritance.COPY_ID_INHERIT_PARENT, null);
 
         /* Special case: if the child's copy ID is '0', use the parent's
          * copy ID
@@ -93,11 +93,11 @@ public class FSTransactionRoot extends FSRoot {
          */
         String idPath = child.getRevNode().getCreatedPath();
         if (idPath.compareTo(child.getAbsPath()) == 0) {
-            copyInheritance.setStyle(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_SELF);
+            copyInheritance.setStyle(FSCopyInheritance.COPY_ID_INHERIT_SELF);
             return copyInheritance;
         }
 
-        copyInheritance.setStyle(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_NEW);
+        copyInheritance.setStyle(FSCopyInheritance.COPY_ID_INHERIT_NEW);
         copyInheritance.setCopySourcePath(idPath);
         return copyInheritance;
     }
@@ -105,16 +105,15 @@ public class FSTransactionRoot extends FSRoot {
     public FSRevisionNode getRootRevisionNode() throws SVNException {
         if (myRootRevisionNode == null ) {
             FSTransaction txn = getTxn();
-            myRootRevisionNode = getOwner().getRevisionNode(txn.getRootId());
+            myRootRevisionNode = getOwner().getRevisionNode(txn.getRootID());
         }
         return myRootRevisionNode;
     }
 
     public FSTransaction getTxn() throws SVNException {
-        Map txnProps = getOwner().getTransactionProperties(myTxnID);
         FSID rootID = FSID.createTxnId("0", "0", myTxnID);
         FSRevisionNode revNode = getOwner().getRevisionNode(rootID);
-        FSTransaction txn = new FSTransaction(FSTransactionKind.TXN_KIND_NORMAL, revNode.getId(), revNode.getPredecessorId(), null, txnProps);
+        FSTransaction txn = new FSTransaction(revNode.getId(), revNode.getPredecessorId());
         return txn;
     }
 

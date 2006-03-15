@@ -142,16 +142,21 @@ public class FSFS {
         }
     }
 
-    public FSFile getTransactionPropertiesFile(String txnID) {
+    protected FSFile getTransactionPropertiesFile(String txnID) {
         File file = new File(getTransactionDir(txnID), "props");
         return new FSFile(file);
     }
 
-    public FSRoot createRevisionRoot(long revision) {
+    protected FSFile getTransactionRevisionNodePropertiesFile(FSID id) {
+        File revNodePropsFile = new File(getTransactionDir(id.getTxnID()), "node." + id.getNodeID() + "." + id.getCopyID() + ".props");
+        return new FSFile(revNodePropsFile);
+    }
+
+    public FSRevisionRoot createRevisionRoot(long revision) {
         return new FSRevisionRoot(this, revision);
     }
     
-    public FSRoot createTransactionRoot(String txnID, int flags) {
+    public FSTransactionRoot createTransactionRoot(String txnID, int flags) {
         return new FSTransactionRoot(this, txnID, flags);
     }
 
@@ -178,18 +183,21 @@ public class FSFS {
     
     public Map getDirContents(FSRevisionNode revNode) throws SVNException {
         if (revNode.getTextRepresentation() != null && revNode.getTextRepresentation().isTxn()) {
-            /*
-             * The representation is mutable. Read the old directory contents
-             * from the mutable children file, followed by the changes we've
-             * made in this transaction.
-             */
             FSFile childrenFile = null;
             Map entries = null;
             try {
                 childrenFile = getTransactionRevisionNodeChildrenFile(revNode.getId());
                 Map rawEntries = childrenFile.readProperties(false);
                 rawEntries.putAll(childrenFile.readProperties(true));
-                entries = FSReader.parsePlainRepresentation(rawEntries);
+                
+                Object[] keys = rawEntries.keySet().toArray();
+                for(int i = 0; i < keys.length; i++){
+                    if(rawEntries.get(keys[i]) == null){
+                        rawEntries.remove(keys[i]);
+                    }
+                }
+            
+                entries = FSReader.parsePlainRepresentation(rawEntries, true);
             } finally {
                 childrenFile.close();
             }
@@ -197,15 +205,38 @@ public class FSFS {
         } else if (revNode.getTextRepresentation() != null) {
             InputStream is = null;
             try {
-                //TODO: review
-                is = FSInputStream.createPlainStream(revNode.getTextRepresentation(), myRepositoryRoot);
+                //TODO: review - that is, we should use FSFile instead of SVNProperties
+                is = FSInputStream.createPlainStream(revNode.getTextRepresentation(), this);
                 Map rawEntries = SVNProperties.asMap(null, is, false, SVNProperties.SVN_HASH_TERMINATOR);
-                return FSReader.parsePlainRepresentation(rawEntries);
+                return FSReader.parsePlainRepresentation(rawEntries, false);
             } finally {
                 SVNFileUtil.closeFile(is);
             }
         }
         return new HashMap();// returns an empty map, must not be null!!
+    }
+
+    public Map getProperties(FSRevisionNode revNode) throws SVNException {
+        Map properties = new HashMap();
+        if (revNode.getPropsRepresentation() != null && revNode.getPropsRepresentation().isTxn()) {
+            FSFile propsFile = null;
+            try {
+                propsFile = getTransactionRevisionNodePropertiesFile(revNode.getId());
+                properties = propsFile.readProperties(false);
+            } finally {
+                propsFile.close();
+            }
+        } else if (revNode.getPropsRepresentation() != null) {
+            InputStream is = null;
+            FSRepresentation propsRepresent = revNode.getPropsRepresentation();
+            try {
+                is = FSInputStream.createPlainStream(propsRepresent, this);
+                properties = SVNProperties.asMap(properties, is, false, SVNProperties.SVN_HASH_TERMINATOR);
+            } finally {
+                SVNFileUtil.closeFile(is);
+            }
+        }
+        return properties;// no properties? return an empty map
     }
 
     protected FSFile getRevisionFile(long revision)  throws SVNException {
@@ -249,10 +280,6 @@ public class FSFS {
         return myRepositoryRoot;
     }
     
-    /*
-     * Given a representation 'rep', open the correct file and seek to the
-     * correction location.
-     */
     public FSFile openAndSeekRepresentation(FSRepresentation rep) throws SVNException {
         if (!rep.isTxn()) {
             return openAndSeekRevision(rep.getRevision(), rep.getOffset());
@@ -260,11 +287,6 @@ public class FSFS {
         return openAndSeekTransaction(rep);
     }
 
-    /*
-     * Open the representation for a node-revision in a transaction in
-     * filesystem. Seek to an offset location before returning. Only appropriate
-     * for file contents, nor props or directory contents.
-     */
     private FSFile openAndSeekTransaction(FSRepresentation rep) {
         FSFile file = null;
         file = getTransactionRevisionPrototypeFile(rep.getTxnId());
@@ -272,10 +294,6 @@ public class FSFS {
         return file;
     }
 
-    /*
-     * Open the revision file for a revision in a filesystem. Seek to an offset
-     * location before returning.
-     */
     private FSFile openAndSeekRevision(long revision, long offset) throws SVNException {
         FSFile file = null;
         try {

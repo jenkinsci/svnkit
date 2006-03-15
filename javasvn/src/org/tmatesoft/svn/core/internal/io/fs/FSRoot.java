@@ -77,7 +77,7 @@ public abstract class FSRoot {
 
         //Make a parentPath item for the root node, using its own current copy-id
         FSParentPath parentPath = new FSParentPath(here, null, null);
-        parentPath.setCopyStyle(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_SELF);
+        parentPath.setCopyStyle(FSCopyInheritance.COPY_ID_INHERIT_SELF);
         String rest = canonPath.substring(1);// skip the leading '/'
 
         /* Whenever we are at the top of this loop:
@@ -97,8 +97,7 @@ public abstract class FSRoot {
                     child = cachedRevNode;
                 } else {
                     try {
-                        //TODO: correct this
-                        child = here.getChildDirNode(entry, null);//FSReader.getChildDirNode(entry, here, reposRootDir);
+                        child = here.getChildDirNode(entry, getOwner());
                     } catch (SVNException svne) {
                         if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                             /* If this was the last path component, and the caller
@@ -111,8 +110,7 @@ public abstract class FSRoot {
                             /* Build a better error message than FSReader.getChildDirNode()
                              * can provide, giving the root and full path name.  
                              */
-                            //TODO: correct this
-                            //SVNErrorManager.error(FSErrors.errorNotFound(this, path), svne);
+                            SVNErrorManager.error(FSErrors.errorNotFound(this, path), svne);
                         }
                         throw svne;
                     }
@@ -143,7 +141,20 @@ public abstract class FSRoot {
         }
         return parentPath;
     }
-    
+
+    public SVNNodeKind checkNodeKind(String path) throws SVNException {
+        FSRevisionNode revNode = null;
+        try {
+            revNode = getRevisionNode(path);
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
+                return SVNNodeKind.NONE;
+            }
+            throw svne;
+        }
+        return revNode.getType();
+    }
+
     public void putRevNodeToCache(String path, FSRevisionNode node) throws SVNException {
         if (!path.startsWith("/")) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Invalid path ''{0}''", path);
@@ -295,19 +306,19 @@ public abstract class FSRoot {
     private static final class RevisionCache {
         private LinkedList myKeys;
         private Map myCache;
-        private int myMAXKeysNumber;
+        private int mySizeLimit;
         
         public RevisionCache(int limit){
-            myMAXKeysNumber = limit;
+            mySizeLimit = limit;
             myKeys = new LinkedList();
             myCache = new TreeMap(); 
         }
         
         public void put(Object key, Object value){
-            if(myMAXKeysNumber <= 0){
+            if(mySizeLimit <= 0){
                 return;
             }
-            if(myKeys.size() == myMAXKeysNumber){
+            if(myKeys.size() == mySizeLimit){
                 Object cachedKey = myKeys.removeLast();
                 myCache.remove(cachedKey);
             }

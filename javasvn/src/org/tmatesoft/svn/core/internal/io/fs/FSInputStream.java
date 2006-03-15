@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -79,7 +78,7 @@ public class FSInputStream extends InputStream {
         }
     }
     
-    public static InputStream createDeltaStream(FSRevisionNode fileNode, File reposRootDir) throws SVNException {
+    public static InputStream createDeltaStream(FSRevisionNode fileNode, FSFS owner) throws SVNException {
         if(fileNode == null){
             return SVNFileUtil.DUMMY_IN;
         }else if (fileNode.getType() != SVNNodeKind.FILE) {
@@ -90,22 +89,22 @@ public class FSInputStream extends InputStream {
         if(representation == null){
             return SVNFileUtil.DUMMY_IN; 
         }
-        return new FSInputStream(representation, new FSFS(reposRootDir));
+        return new FSInputStream(representation, owner);
     }
 
-    public static InputStream createDeltaStream(FSRepresentation fileRep, File reposRootDir) throws SVNException {
+    public static InputStream createDeltaStream(FSRepresentation fileRep, FSFS owner) throws SVNException {
         if(fileRep == null){
             return SVNFileUtil.DUMMY_IN;
         }
-        return new FSInputStream(fileRep, new FSFS(reposRootDir));
+        return new FSInputStream(fileRep, owner);
     }
 
     //to read plain text
-    public static InputStream createPlainStream(FSRepresentation representation, File reposRootDir) throws SVNException {
+    public static InputStream createPlainStream(FSRepresentation representation, FSFS owner) throws SVNException {
         if(representation == null){
             return SVNFileUtil.DUMMY_IN; 
         }
-        return new FSInputStream(representation, new FSFS(reposRootDir));
+        return new FSInputStream(representation, owner);
     }
     
     public int read(byte[] buf) throws IOException {

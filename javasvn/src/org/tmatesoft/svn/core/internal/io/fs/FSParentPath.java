@@ -69,9 +69,9 @@ public class FSParentPath {
         myEntryName = newEntry;
         myParent = newParentPath;
         if (newRevNode != null) {
-            myCopyInheritance = new FSCopyInheritance(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_UNKNOWN, newRevNode.getCopyFromPath());
+            myCopyInheritance = new FSCopyInheritance(FSCopyInheritance.COPY_ID_INHERIT_UNKNOWN, newRevNode.getCopyFromPath());
         } else {
-            myCopyInheritance = new FSCopyInheritance(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_UNKNOWN, null);
+            myCopyInheritance = new FSCopyInheritance(FSCopyInheritance.COPY_ID_INHERIT_UNKNOWN, null);
         }
     }
 
@@ -96,11 +96,11 @@ public class FSParentPath {
         return myParent;
     }
 
-    public FSCopyIDInheritanceStyle getCopyStyle() {
+    public int getCopyStyle() {
         return myCopyInheritance.getStyle();
     }
 
-    public void setCopyStyle(FSCopyIDInheritanceStyle newCopyStyle) {
+    public void setCopyStyle(int newCopyStyle) {
         myCopyInheritance.setStyle(newCopyStyle);
     }
 
@@ -116,7 +116,7 @@ public class FSParentPath {
         myRevNode = newRevNode;
         myEntryName = newEntry;
         myParent = newParentPath;
-        myCopyInheritance = new FSCopyInheritance(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_UNKNOWN, null);
+        myCopyInheritance = new FSCopyInheritance(FSCopyInheritance.COPY_ID_INHERIT_UNKNOWN, null);
     }
 
     /*
@@ -151,12 +151,12 @@ public class FSParentPath {
 
         // If this child is already mutable, we have nothing to do
         if (childID.isTxn()) {
-            return new FSCopyInheritance(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_SELF, null);
+            return new FSCopyInheritance(FSCopyInheritance.COPY_ID_INHERIT_SELF, null);
             //return new SVNLocationEntry(FSParentPath.COPY_ID_INHERIT_SELF, null);
         }
         // From this point on, we'll assume that the child will just take
         // its copy ID from its parent
-        FSCopyInheritance copyInheritance = new FSCopyInheritance(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_PARENT, null);
+        FSCopyInheritance copyInheritance = new FSCopyInheritance(FSCopyInheritance.COPY_ID_INHERIT_PARENT, null);
         //SVNLocationEntry constrEntry = new SVNLocationEntry(FSParentPath.COPY_ID_INHERIT_PARENT, null);
 
         // Special case: if the child's copy ID is '0', use the parent's
@@ -196,10 +196,10 @@ public class FSParentPath {
         //as a subtree item of a copied tree
         String idPath = child.getRevNode().getCreatedPath();
         if (idPath.compareTo(child.getAbsPath()) == 0) {
-            copyInheritance.setStyle(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_SELF);
+            copyInheritance.setStyle(FSCopyInheritance.COPY_ID_INHERIT_SELF);
             return copyInheritance;
         }
-        copyInheritance.setStyle(FSCopyIDInheritanceStyle.COPY_ID_INHERIT_NEW);
+        copyInheritance.setStyle(FSCopyInheritance.COPY_ID_INHERIT_NEW);
         copyInheritance.setCopySourcePath(idPath);
         return copyInheritance;
         //return new SVNLocationEntry(FSParentPath.COPY_ID_INHERIT_NEW, child.getRevNode().getCreatedPath());
