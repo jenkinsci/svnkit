@@ -54,8 +54,10 @@ public class SVNWCAccess implements ISVNEventHandler {
         SVNFileType parentType = SVNFileType.getType(parentFile);
         if (parentFile != null && parentType != SVNFileType.DIRECTORY) {
             // parent doesn't exist or not a directory
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' does not exist", parentFile);
-            SVNErrorManager.error(err);
+            if (!(parentType == SVNFileType.SYMLINK && parentFile.isDirectory())) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' does not exist", parentFile);
+                SVNErrorManager.error(err);
+            }
         }
         SVNFileType targetType = SVNFileType.getType(file);
         SVNDirectory anchor = parentFile != null ? new SVNDirectory(null, "", parentFile) : null;
@@ -65,6 +67,9 @@ public class SVNWCAccess implements ISVNEventHandler {
             // parent is not versioned, do not use it.
             anchor = null;
             if (target != null) {
+                target.setWCAccess(null, "");
+            } else if (targetType == SVNFileType.SYMLINK && file.isDirectory()) {
+                target = new SVNDirectory(null, name, file);
                 target.setWCAccess(null, "");
             }
         }
