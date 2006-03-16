@@ -16,7 +16,6 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.RandomAccessFile;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -44,7 +43,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     private boolean isHeaderWritten;
 
     /* Actual file to which we are writing. */
-    private RandomAccessFile myTargetFile;
+    private CountingWriter myTargetFile;
     
     /* Start of the actual data. */
     private long myDeltaStart;
@@ -81,7 +80,9 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     
     private SVNDiffWindow myLastWindow;
     
-    private FSOutputStream(FSRevisionNode revNode, RandomAccessFile file, InputStream source, long deltaStart, long repSize, long repOffset, File reposRootDir) throws SVNException {
+    private boolean myIsClosed;
+    
+    private FSOutputStream(FSRevisionNode revNode, CountingWriter file, InputStream source, long deltaStart, long repSize, long repOffset, File reposRootDir) throws SVNException {
         super();
         myReposRootDir = reposRootDir;
         myTargetFile = file;
@@ -97,6 +98,8 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
         isSourceDone = false;
         myTargetLength = 0;
         mySourceLength = 0;
+        myIsClosed = false;
+        
         try {
             myDigest = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException nsae) {
@@ -109,46 +112,47 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
      * revNode must be mutable!
      */
     public static OutputStream createStream(FSRevisionNode revNode, String txnId, File reposRootDir) throws SVNException {
-        /* Make sure our node is a file. */
         if(revNode.getType() != SVNNodeKind.FILE){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to set textual contents of a *non*-file node");
             SVNErrorManager.error(err);
         }
-        /* Make sure our node is mutable. */
+
         if(!revNode.getId().isTxn()){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempted to set textual contents of an immutable node");
             SVNErrorManager.error(err);
         }
-        RandomAccessFile targetFile = null;
+        
+        OutputStream targetOS = null;
         InputStream sourceStream = null;
         long offset = -1;
         long deltaStart = -1;
         try{
-            /* Open the prototype rev file and seek to its end. */
             txnId = revNode.getId().getTxnID();
-            targetFile = SVNFileUtil.openRAFileForWriting(FSRepositoryUtil.getTxnRevFile(txnId, reposRootDir), true);
-            offset = targetFile.getFilePointer();
-            /* Get the base for this delta. */
+            File targetFile = FSRepositoryUtil.getTxnRevFile(txnId, reposRootDir); 
+            offset = targetFile.length();
+            targetOS = SVNFileUtil.openFileForWriting(targetFile, true);
+            CountingWriter revWriter = new CountingWriter(targetOS, offset);
+            
             FSRepresentation baseRep = chooseDeltaBase(revNode, reposRootDir);
             sourceStream = FSInputStream.createDeltaStream(baseRep, new FSFS(reposRootDir));
-            /* Write out the rep header. */
             String header;
+            
             if(baseRep != null){
                 header = FSConstants.REP_DELTA + " " + baseRep.getRevision() + " " + baseRep.getOffset() + " " + baseRep.getSize() + "\n"; 
             }else{
                 header = FSConstants.REP_DELTA + "\n";
             }
-            targetFile.write(header.getBytes());
-            /* Now determine the offset of the actual svndiff data. */
-            deltaStart = targetFile.getFilePointer();
-            return new FSOutputStream(revNode, targetFile, sourceStream, deltaStart, 0, offset, reposRootDir);
+
+            revWriter.write(header.getBytes());
+            deltaStart = revWriter.getPosition();
+            return new FSOutputStream(revNode, revWriter, sourceStream, deltaStart, 0, offset, reposRootDir);
         }catch(IOException ioe){
-            SVNFileUtil.closeFile(targetFile);
+            SVNFileUtil.closeFile(targetOS);
             SVNFileUtil.closeFile(sourceStream);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
         }catch(SVNException svne){
-            SVNFileUtil.closeFile(targetFile);
+            SVNFileUtil.closeFile(targetOS);
             SVNFileUtil.closeFile(sourceStream);
             throw svne;
         }
@@ -227,27 +231,35 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     }
 
     public void close() throws IOException {
+        if(myIsClosed){
+            return;
+        }
+        
+        myIsClosed = true;
+        
         try{
             //flush all data that is still remaining
             makeDiffWindowFromData(super.myBuffer, super.myBufferLength);
             flushNextWindow();
+            
             super.myBufferLength = 0;
             super.myBuffer = null;
+            
             FSRepresentation rep = new FSRepresentation();
             rep.setOffset(myRepOffset);
-            /* Determine the length of the svndiff data. */
-            long offset = myTargetFile.getFilePointer();
+            
+            long offset = myTargetFile.getPosition();
+            
             rep.setSize(offset - myDeltaStart);
-            /* Fill in the rest of the representation field. */
             rep.setExpandedSize(myRepSize);
             rep.setTxnId(myRevNode.getId().getTxnID());
             rep.setRevision(FSConstants.SVN_INVALID_REVNUM);
-            /* Finalize the MD5 checksum. */
+            
             rep.setHexDigest(SVNFileUtil.toHexDigest(myDigest));
-            /* Write out their cosmetic end marker. */
+            
             myTargetFile.write("ENDREP\n".getBytes());
             myRevNode.setTextRepresentation(rep);
-            /* Write out the new node-rev information. */
+
             FSWriter.putTxnRevisionNode(myRevNode.getId(), myRevNode, myReposRootDir);
         }catch(SVNException svne){
             throw new IOException(svne.getMessage());
@@ -258,7 +270,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     
     public void closeStreams(){
         /* We're done; clean up. */
-        SVNFileUtil.closeFile(myTargetFile);
+        SVNFileUtil.closeFile(myTargetFile.getRealStream());
         SVNFileUtil.closeFile(mySourceStream);
     }
     

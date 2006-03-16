@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -224,9 +223,8 @@ public class FSWriter {
         SVNFileUtil.rename(tmpCurrentFile, currentFile);
     }
 
-    //TODO: replace RAF with OS
-    public static long writeFinalChangedPathInfo(final RandomAccessFile protoFile, FSRoot txnRoot, File reposRootDir) throws SVNException, IOException {
-        long offset = protoFile.getFilePointer();
+    public static long writeFinalChangedPathInfo(final CountingWriter protoFile, FSRoot txnRoot, File reposRootDir) throws SVNException, IOException {
+        long offset = protoFile.getPosition();
         Map changedPaths = txnRoot.getChangedPaths();
         Map copyfromCache = txnRoot.getCopyfromCache();
 
@@ -241,19 +239,12 @@ public class FSWriter {
             }
 
             SVNLocationEntry copyfromEntry = (SVNLocationEntry) copyfromCache.get(path);
-
-            OutputStream protoFileAdapter = new OutputStream() {
-
-                public void write(int b) throws IOException {
-                    protoFile.write(b);
-                }
-            };
-            writeChangeEntry(protoFileAdapter, path, change, copyfromEntry);
+            writeChangeEntry(protoFile, path, change, copyfromEntry);
         }
         return offset;
     }
 
-    public static FSID writeFinalRevision(FSID newId, final RandomAccessFile protoFile, long revision, FSID id, String startNodeId, String startCopyId, File reposRootDir) throws SVNException,
+    public static FSID writeFinalRevision(FSID newId, final CountingWriter protoFile, long revision, FSID id, String startNodeId, String startCopyId, FSFS owner) throws SVNException,
             IOException {
         newId = null;
         
@@ -261,12 +252,12 @@ public class FSWriter {
             return newId;
         }
 
-        FSRevisionNode revNode = FSReader.getRevNodeFromID(reposRootDir, id);
+        FSRevisionNode revNode = owner.getRevisionNode(id);//FSReader.getRevNodeFromID(reposRootDir, id);
         if (revNode.getType() == SVNNodeKind.DIR) {
-            Map namesToEntries = FSReader.getDirEntries(revNode, reposRootDir);
+            Map namesToEntries = revNode.getDirEntries(owner);//FSReader.getDirEntries(revNode, reposRootDir);
             for (Iterator entries = namesToEntries.values().iterator(); entries.hasNext();) {
                 FSEntry dirEntry = (FSEntry) entries.next();
-                newId = writeFinalRevision(newId, protoFile, revision, dirEntry.getId(), startNodeId, startCopyId, reposRootDir);
+                newId = writeFinalRevision(newId, protoFile, revision, dirEntry.getId(), startNodeId, startCopyId, owner);
                 if (newId != null && newId.getRevision() == revision) {
                     dirEntry.setId(newId.copy());
                 }
@@ -277,7 +268,7 @@ public class FSWriter {
                 textRep.setTxnId(null);
                 textRep.setRevision(revision);
                 try {
-                    textRep.setOffset(protoFile.getFilePointer());
+                    textRep.setOffset(protoFile.getPosition());
                     final MessageDigest checksum = MessageDigest.getInstance("MD5");
                     long size = HashRepresentationWriter.writeHashRepresentation(unparsedEntries, protoFile, checksum);
                     String hexDigest = SVNFileUtil.toHexDigest(checksum);
@@ -296,11 +287,12 @@ public class FSWriter {
                 textRep.setRevision(revision);
             }
         }
+        
         if (revNode.getPropsRepresentation() != null && revNode.getPropsRepresentation().isTxn()) {
-            Map props = FSReader.getProperties(revNode, reposRootDir);
+            Map props = revNode.getProperties(owner);//FSReader.getProperties(revNode, reposRootDir);
             FSRepresentation propsRep = revNode.getPropsRepresentation();
             try {
-                propsRep.setOffset(protoFile.getFilePointer());
+                propsRep.setOffset(protoFile.getPosition());
                 final MessageDigest checksum = MessageDigest.getInstance("MD5");
                 long size = HashRepresentationWriter.writeHashRepresentation(props, protoFile, checksum);
                 String hexDigest = SVNFileUtil.toHexDigest(checksum);
@@ -314,35 +306,35 @@ public class FSWriter {
                 SVNErrorManager.error(err, nsae);
             }
         }
-        long myOffset = protoFile.getFilePointer();
+        
+        long myOffset = protoFile.getPosition();
         String myNodeId = null;
         String nodeId = revNode.getId().getNodeID();
+        
         if (nodeId.startsWith("_")) {
             myNodeId = FSKeyGenerator.addKeys(startNodeId, nodeId.substring(1));
         } else {
             myNodeId = nodeId;
         }
+        
         String myCopyId = null;
         String copyId = revNode.getId().getCopyID();
+        
         if (copyId.startsWith("_")) {
             myCopyId = FSKeyGenerator.addKeys(startCopyId, copyId.substring(1));
         } else {
             myCopyId = copyId;
         }
+        
         if (revNode.getCopyRootRevision() == FSConstants.SVN_INVALID_REVNUM) {
             revNode.setCopyRootRevision(revision);
         }
+        
         newId = FSID.createRevId(myNodeId, myCopyId, revision, myOffset);
         revNode.setId(newId);
-        OutputStream protoFileAdapter = new OutputStream() {
 
-            public void write(int b) throws IOException {
-                protoFile.write(b);
-            }
-        };
-
-        writeTxnNodeRevision(protoFileAdapter, revNode);
-        putTxnRevisionNode(id, revNode, reposRootDir);
+        writeTxnNodeRevision(protoFile, revNode);
+        putTxnRevisionNode(id, revNode, owner.getRepositoryRoot());
         return newId;
     }
 
@@ -870,9 +862,9 @@ public class FSWriter {
 
         long mySize = 0;
         MessageDigest myChecksum;
-        RandomAccessFile myProtoFile;
+        OutputStream myProtoFile;
 
-        public HashRepresentationWriter(RandomAccessFile protoFile, MessageDigest digest) {
+        public HashRepresentationWriter(OutputStream protoFile, MessageDigest digest) {
             super();
             myChecksum = digest;
             myProtoFile = protoFile;
@@ -886,7 +878,7 @@ public class FSWriter {
             mySize++;
         }
 
-        public static long writeHashRepresentation(Map hashContents, RandomAccessFile protoFile, MessageDigest digest) throws IOException, SVNException {
+        public static long writeHashRepresentation(Map hashContents, OutputStream protoFile, MessageDigest digest) throws IOException, SVNException {
             HashRepresentationWriter targetFile = new HashRepresentationWriter(protoFile, digest);
             String header = FSConstants.REP_PLAIN + "\n";
             protoFile.write(header.getBytes());
@@ -897,25 +889,4 @@ public class FSWriter {
         }
     }
     
-    public static class CountingWriter extends OutputStream {
-
-        private long myPosition;
-        private OutputStream myWriter;
-        
-        public CountingWriter(OutputStream writer, long offset) {
-            super();
-            myPosition = offset;
-            myWriter = writer;
-        }
-
-        public void write(int b) throws IOException {
-            myWriter.write(b);
-            myPosition++;
-        }
-        
-        public long getPosition(){
-            return myPosition;
-        }
-    }
-
 }

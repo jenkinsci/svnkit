@@ -16,7 +16,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -579,28 +578,6 @@ public class SVNDiffWindowBuilder {
         }
     }
 
-    public static void save(SVNDiffWindow window, boolean saveHeader, RandomAccessFile file) throws IOException {
-        if (saveHeader) {
-            file.write(HEADER_BYTES);
-        } 
-        if (!window.hasInstructions()) {
-            return;
-        }
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        saveInstructions(window, bos);
-
-        long[] offsets = new long[5];
-        offsets[0] = window.getSourceViewOffset();
-        offsets[1] = window.getSourceViewLength();
-        offsets[2] = window.getTargetViewLength();
-        offsets[3] = bos.size();
-        offsets[4] = window.getNewDataLength();
-        for(int i = 0; i < offsets.length; i++) {
-            writeInt(file, offsets[i]);
-        }
-        file.write(bos.toByteArray());
-    }
-
     /**
      * Creates a diff window intended for replacing the whole contents of a file
      * with new data. It is mainly intended for binary and newly added text files.  
@@ -693,26 +670,6 @@ public class SVNDiffWindowBuilder {
         }
     }
 
-    private static void writeInt(RandomAccessFile file, long i) throws IOException {
-        if (i == 0) {
-            file.write(0);
-            return;
-        }
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        while(i > 0) {
-            byte b = (byte) (i & 0x7f);
-            i = i >> 7;
-            if (bos.size() > 0) {
-                b |= 0x80;
-            }
-            bos.write(b);            
-        } 
-        byte[] bytes = bos.toByteArray();
-        for(int j = bytes.length - 1; j  >= 0; j--) {
-            file.write(bytes[j]);
-        }
-    }
-	
     private static int readInt(byte[] bytes, int offset, int[] target, int index) {
         int newOffset = offset;
         target[index] = 0;

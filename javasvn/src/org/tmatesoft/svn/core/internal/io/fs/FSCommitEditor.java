@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.util.Map;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -557,6 +556,7 @@ public class FSCommitEditor implements ISVNEditor {
         if (textChecksum != null) {
             String fullPath = SVNPathUtil.concatToAbs(myBasePath, path);
             FSRevisionNode revNode = myTxnRoot.getRevisionNode(fullPath);//myRevNodesPool.getRevisionNode(myTxnRoot, fullPath, myReposRootDir);
+
             if (revNode.getTextRepresentation() != null && !textChecksum.equals(revNode.getTextRepresentation().getHexDigest())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH,
                         "Checksum mismatch for resulting fulltext\n({0}):\n   expected checksum:  {1}\n   actual checksum:    {2}\n", new Object[] {
@@ -674,22 +674,27 @@ public class FSCommitEditor implements ISVNEditor {
         String startCopyId = ids[1];
 
         long newRevision = oldRev + 1;
-        RandomAccessFile protoFile = null;
+        OutputStream protoFileOS = null;
         FSID newRootId = null;
         File revisionPrototypeFile = FSRepositoryUtil.getTxnRevFile(myTxn.getTxnId(), myFSFS.getRepositoryRoot());
+        long offset = revisionPrototypeFile.length();
+        
         try {
-            protoFile = SVNFileUtil.openRAFileForWriting(revisionPrototypeFile, true);
+            
+            protoFileOS = SVNFileUtil.openFileForWriting(revisionPrototypeFile, true);
             FSID rootId = FSID.createTxnId("0", "0", myTxn.getTxnId());
-            newRootId = FSWriter.writeFinalRevision(newRootId, protoFile, newRevision, rootId, startNodeId, startCopyId, myFSFS.getRepositoryRoot());
-            long changedPathOffset = FSWriter.writeFinalChangedPathInfo(protoFile, myTxnRoot, myFSFS.getRepositoryRoot());
+            
+            CountingWriter revWriter = new CountingWriter(protoFileOS, offset);
+            newRootId = FSWriter.writeFinalRevision(newRootId, revWriter, newRevision, rootId, startNodeId, startCopyId, myFSFS);
+            long changedPathOffset = FSWriter.writeFinalChangedPathInfo(revWriter, myTxnRoot, myFSFS.getRepositoryRoot());
             /* Write the final line. */
             String offsetsLine = "\n" + newRootId.getOffset() + " " + changedPathOffset + "\n";
-            protoFile.write(offsetsLine.getBytes());
+            protoFileOS.write(offsetsLine.getBytes());
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
         } finally {
-            SVNFileUtil.closeFile(protoFile);
+            SVNFileUtil.closeFile(protoFileOS);
         }
 
         Map txnProps = myFSFS.getTransactionProperties(myTxn.getTxnId());//FSRepositoryUtil.getTransactionProperties(myReposRootDir, myTxn.getTxnId());
