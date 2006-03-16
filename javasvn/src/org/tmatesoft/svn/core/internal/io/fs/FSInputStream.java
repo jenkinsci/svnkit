@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -88,19 +89,19 @@ public class FSInputStream extends InputStream {
         if(representation == null){
             return SVNFileUtil.DUMMY_IN; 
         }
-        return new FSInputStream(representation, owner);
+        return new BufferedInputStream(new FSInputStream(representation, owner));
     }
 
     public static InputStream createDeltaStream(FSRepresentation fileRep, FSFS owner) throws SVNException {
         if(fileRep == null){
             return SVNFileUtil.DUMMY_IN;
         }
-        return new FSInputStream(fileRep, owner);
+        return new BufferedInputStream(new FSInputStream(fileRep, owner));
     }
 
-    public int read(byte[] buf) throws IOException {
+    public int read(byte[] buf, int offset, int length) throws IOException {
         try{
-            int r = readContents(buf); 
+            int r = readContents(buf, offset, length); 
             return r == 0 ? -1 : r;
         }catch(SVNException svne){
             throw new IOException(svne.getMessage());
@@ -111,23 +112,23 @@ public class FSInputStream extends InputStream {
         byte[] buf = new byte[1];
         int r = 0;
         try{
-            r = readContents(buf);
+            r = readContents(buf, 0, 1);
         }catch(SVNException svne){
             throw new IOException(svne.getMessage());
         }
         return r == 0 ? -1 : (int)(buf[0] & 0xFF);
     }
     
-    private int readContents(byte[] buf) throws SVNException {
+    private int readContents(byte[] buf, int offset, int length) throws SVNException {
         /* Get the next block of data. */
-        int length = getContents(buf);
+        length = getContents(buf, offset, length);
         /* Perform checksumming.  We want to check the checksum as soon as
          * the last byte of data is read, in case the caller never performs
          * a short read, but we don't want to finalize the MD5 context
          * twice. 
          */
         if(!isChecksumFinalized){
-            myDigest.update(buf, 0, length);
+            myDigest.update(buf, offset, length);
             myOffset += length;
             if(myOffset == myLength){
                 isChecksumFinalized = true;
@@ -142,9 +143,9 @@ public class FSInputStream extends InputStream {
         return length;
     }
     
-    private int getContents(byte[] buffer) throws SVNException {
-        int remaining = buffer.length;
-        int targetPos = 0;
+    private int getContents(byte[] buffer, int offset, int length) throws SVNException {
+        int remaining = length;
+        int targetPos = offset;
 
         while(remaining > 0){
             if(myBuffer != null){
