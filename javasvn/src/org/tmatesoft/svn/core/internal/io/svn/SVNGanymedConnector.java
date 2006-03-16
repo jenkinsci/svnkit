@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -36,6 +37,7 @@ import ch.ethz.ssh2.StreamGobbler;
 public class SVNGanymedConnector implements ISVNConnector {
 
     private static final String SVNSERVE_COMMAND = "svnserve -t";
+    private static final String SVNSERVE_COMMAND_WITH_USER_NAME = "svnserve -t --tunnel-user ";
 
     private Session mySession;
     private InputStream myInputStream;
@@ -63,7 +65,6 @@ public class SVNGanymedConnector implements ISVNConnector {
                         SVNErrorManager.error(err);
                     }
                     authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
-                    repository.setExternalUserName(authentication.getUserName());
                     break;
                 } catch (SVNAuthenticationException e) {
                     authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getErrorMessage(), authentication);
@@ -78,7 +79,22 @@ public class SVNGanymedConnector implements ISVNConnector {
             }
             try {
                 mySession = connection.openSession();
-                mySession.execCommand(SVNSERVE_COMMAND);
+                SVNAuthentication author = authManager.getFirstAuthentication(ISVNAuthenticationManager.USERNAME, realm, repository.getLocation());
+                if (author == null) {
+                    SVNErrorManager.cancel("authentication cancelled");
+                }
+                authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, author);
+                if (author.getUserName() == null || author.getUserName().equals(authentication.getUserName()) || 
+                        "".equals(author.getUserName())) {
+                    repository.setExternalUserName("");
+                } else {
+                    repository.setExternalUserName(author.getUserName()); 
+                }
+                if ("".equals(repository.getExternalUserName())) {
+                    mySession.execCommand(SVNSERVE_COMMAND);
+                } else {
+                    mySession.execCommand(SVNSERVE_COMMAND_WITH_USER_NAME + repository.getExternalUserName());
+                }
     
                 myOutputStream = mySession.getStdin();
                 myInputStream = mySession.getStdout();
