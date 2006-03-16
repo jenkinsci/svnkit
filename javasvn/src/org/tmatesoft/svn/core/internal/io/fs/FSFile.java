@@ -42,6 +42,7 @@ public class FSFile {
     private long myPosition;
     
     private long myBufferPosition;
+    
     private ByteBuffer myBuffer;
     private ByteBuffer myReadLineBuffer;
     private CharsetDecoder myDecoder;
@@ -248,6 +249,30 @@ public class FSFile {
                     myDigest.update((byte) r);
                 }
                 target.put((byte) r);
+                myPosition++;
+                read++;
+            }
+        }
+        return read;
+    }
+
+    public int read(byte[] buffer, int offset, int length) throws IOException {
+        int read = 0;
+        int toRead = length;
+        while(toRead > 0) {
+            if (fill() < 0) {
+                return read > 0 ? read : -1;
+            }
+            myBuffer.position((int) (myPosition - myBufferPosition));
+
+            while(myBuffer.hasRemaining() && toRead > 0) {
+                int r = (myBuffer.get() & 0xFF); 
+                if (myDigest != null) {
+                    myDigest.update((byte) r);
+                }
+                buffer[offset] = (byte) r;
+                offset++;
+                toRead--;
                 myPosition++;
                 read++;
             }

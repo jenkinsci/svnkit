@@ -516,6 +516,9 @@ public class SVNFileUtil {
     }
     
     public static void deleteFile(File file) {
+        if (file == null) {
+            return;
+        }
         if (!isWindows || file.isDirectory() || !file.exists()) {
             file.delete();
             return;

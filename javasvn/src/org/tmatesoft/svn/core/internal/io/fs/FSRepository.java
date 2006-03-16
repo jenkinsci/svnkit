@@ -67,6 +67,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     private File myReposRootDir;
     private FSReporterContext myReporterContext;
     private FSFS myFSFS;
+    private SVNDeltaGenerator myDeltaGenerator;
 
     protected FSRepository(SVNURL location, ISVNSession options) {
         super(location, options);
@@ -492,8 +493,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                                 sourceStream = FSReader.getFileContentsInputStream(lastRoot, lastPath);
                             } else {
                                 sourceStream = FSInputStream.createDeltaStream((FSRevisionNode) null, myFSFS);
-                            }
-                            targetStream = FSReader.getFileContentsInputStream(root, revPath);
+                            }targetStream = FSReader.getFileContentsInputStream(root, revPath);
                             SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
                             deltaGenerator.sendDelta(path, sourceStream, 0, targetStream, handler, false);
                         } finally {
@@ -1096,7 +1096,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Cannot replace a directory from within");
             SVNErrorManager.error(err);
         }
-
+        myDeltaGenerator = new SVNDeltaGenerator();
         myReporterContext.getEditor().openRoot(sourceRevision);
 
         if ("".equals(myReporterContext.getReportTarget())) {
@@ -1184,7 +1184,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         String sourceHexDigest = null;
         FSRevisionRoot sourceRoot = null;
         if (sourcePath != null) {
-            sourceRoot = myReporterContext.getSourceRoot(sourceRevision);//FSOldRoot.createRevisionRoot(sourceRevision, sourceRootNode, myReposRootDir);
+            sourceRoot = myReporterContext.getSourceRoot(sourceRevision);
 
             boolean changed = false;
             if (myReporterContext.isIgnoreAncestry()) {
@@ -1210,8 +1210,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                     sourceStream = FSInputStream.createDeltaStream((FSRevisionNode) null, myFSFS);
                 }
                 targetStream = FSReader.getFileContentsInputStream(myReporterContext.getTargetRoot(), targetPath);
-                SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
-                deltaGenerator.sendDelta(editPath, sourceStream, 0, targetStream, myReporterContext.getEditor(), false);
+                myDeltaGenerator.sendDelta(editPath, sourceStream, 0, targetStream, myReporterContext.getEditor(), false);
             } finally {
                 SVNFileUtil.closeFile(sourceStream);
                 SVNFileUtil.closeFile(targetStream);

@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.delta;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -21,7 +22,7 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
     
     private static final int VD_KEY_SIZE = 4;
 
-    public void computeDelta(byte[] a, int aLength, byte[] b, int bLength) {
+    public void computeDelta(byte[] a, int aLength, byte[] b, int bLength) throws IOException {
         byte[] data = null;
         int dataLength;
         if (aLength > 0 && bLength > 0) {
@@ -44,28 +45,9 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
         vdelta(table, data, 0, aLength, false);
         vdelta(table, data, aLength, dataLength, true);
         
-        /*
-        int filled = table.myBuckets.length;
-        int collisions = 0;
-        for (int i = 0; i < table.myBuckets.length; i++) {        
-          int slotIndex = table.myBuckets[i];
-          if (slotIndex < 0) {
-            filled--;
-          } else {
-            while (slotIndex >= 0) {            
-              collisions++;
-              slotIndex = table.mySlots[slotIndex];
-            }
-          }
-        }
-        double percents = filled / (table.myBuckets.length/100);
-        String debug = "Hash stats: load " +  percents + "%, collisions " + collisions + ", buckets " + table.myBuckets.length;
-        System.out.println(debug);
-        */
-
     }
     
-    private void vdelta(SlotsTable table, byte[] data, int start, int end, boolean doOutput) {
+    private void vdelta(SlotsTable table, byte[] data, int start, int end, boolean doOutput) throws IOException {
         int here = start; 
         int insertFrom = -1; 
         
@@ -167,7 +149,7 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
             hash += hash*127 + (data[index + 2] & 0xFF);
             hash += hash*127 + (data[index + 3] & 0xFF);
             hash = hash % myBuckets.length;
-            return Math.abs(hash);
+            return hash < 0 ? -hash : hash;
         }
         
         public int getBucket(int bucketIndex) {

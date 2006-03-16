@@ -305,7 +305,7 @@ class DAVCommitEditor implements ISVNEditor {
         DAVResource currentFile = (DAVResource) myFilesMap.get(path);
         try {
             if (currentFile.isAdded() && currentFile.getDeltaCount() == 0) {
-                OutputStream os = textDeltaChunk(path, SVNDiffWindowBuilder.createReplacementDiffWindow(0));
+                OutputStream os = textDeltaChunk(path, new SVNDiffWindow(0,0,0,0,0));
                 try {
                     os.close();
                 } catch (IOException e) {

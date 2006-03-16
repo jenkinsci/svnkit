@@ -152,7 +152,7 @@ public class SVNDeltaGenerator {
             if (targetLength <= 0) {
                 // send empty window, needed to create empty file.
                 if (consumer != null) {
-                    SVNDiffWindow window = new SVNDiffWindow(sourceOffset, 0, 0, new SVNDiffInstruction[0], 0);
+                    SVNDiffWindow window = new SVNDiffWindow(sourceOffset, 0, 0, 0, 0);
                     OutputStream os = consumer.textDeltaChunk(path, window);
                     SVNFileUtil.closeFile(os);
                 }
@@ -185,15 +185,21 @@ public class SVNDeltaGenerator {
     private void sendDelta(String path, int sourceOffset, byte[] source, int sourceLength, byte[] target, int targetLength, ISVNDeltaConsumer consumer) throws SVNException {
         // use x or v algorithm depending on sourceLength
         SVNDeltaAlgorithm algorithm = sourceLength == 0 ? myVDelta : myXDelta;
-        algorithm.computeDelta(source, sourceLength, target, targetLength);
+        try {
+            algorithm.computeDelta(source, sourceLength, target, targetLength);
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+            SVNErrorManager.error(err, e);
+        }
         // send single diff window to the editor.
         if (consumer == null) {
             algorithm.reset();
             return;
         }
-        SVNDiffInstruction[] instructions = algorithm.getDiffInstructions();        
+        byte[] instructions = algorithm.getDiffInstructionsData();        
         ByteArrayOutputStream newData = algorithm.getNewDataStream();
-        SVNDiffWindow window = new SVNDiffWindow(sourceOffset, sourceLength, targetLength, instructions, newData.size());
+        SVNDiffWindow window = new SVNDiffWindow(sourceOffset, sourceLength, targetLength, instructions.length, newData.size());
+        window.setInstructionsData(instructions);
         OutputStream newDataStream = consumer.textDeltaChunk(path, window);
         try {
             newData.writeTo(newDataStream);

@@ -12,9 +12,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -53,8 +51,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -456,13 +453,14 @@ public class SVNCommitClient extends SVNBasicClient {
                 newDirPath = newDirPath == null ? (String) newPaths.get(i) : SVNPathUtil.append(newDirPath, (String) newPaths.get(i));
                 commitEditor.addDir(newDirPath, null, -1);
             }
+            SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
             if (srcKind == SVNFileType.DIRECTORY) {
-                changed = importDir(path, path, newDirPath, useGlobalIgnores, recursive, commitEditor);
+                changed = importDir(deltaGenerator, path, path, newDirPath, useGlobalIgnores, recursive, commitEditor);
             } else {
                 if (useGlobalIgnores && getOptions().isIgnored(path.getName())) {
                     changed = false;
                 } else {
-                    changed = importFile(path.getParentFile(), path, srcKind, filePath, commitEditor);
+                    changed = importFile(deltaGenerator, path.getParentFile(), path, srcKind, filePath, commitEditor);
                 }
             }
             if (!changed) {
@@ -934,7 +932,7 @@ public class SVNCommitClient extends SVNBasicClient {
         return packetsArray;        
     }
 
-    private boolean importDir(File rootFile, File dir, String importPath, boolean useGlobalIgnores, boolean recursive, ISVNEditor editor) throws SVNException {
+    private boolean importDir(SVNDeltaGenerator deltaGenerator, File rootFile, File dir, String importPath, boolean useGlobalIgnores, boolean recursive, ISVNEditor editor) throws SVNException {
         checkCancelled();
         File[] children = dir.listFiles();
         boolean changed = false;
@@ -958,17 +956,17 @@ public class SVNCommitClient extends SVNBasicClient {
                         file, SVNEventAction.COMMIT_ADDED, SVNNodeKind.DIR,
                         null);
                 handleEvent(event, ISVNEventHandler.UNKNOWN);
-                importDir(rootFile, file, path, useGlobalIgnores, recursive, editor);
+                importDir(deltaGenerator, rootFile, file, path, useGlobalIgnores, recursive, editor);
                 editor.closeDir();
             } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK){
-                changed |= importFile(rootFile, file, fileType, path, editor);
+                changed |= importFile(deltaGenerator, rootFile, file, fileType, path, editor);
             }
 
         }
         return changed;
     }
 
-    private boolean importFile(File rootFile, File file, SVNFileType fileType, String filePath, ISVNEditor editor) throws SVNException {
+    private boolean importFile(SVNDeltaGenerator deltaGenerator, File rootFile, File file, SVNFileType fileType, String filePath, ISVNEditor editor) throws SVNException {
         if (fileType == null || fileType == SVNFileType.UNKNOWN) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "unknown or unversionable type for ''{0}''", file);
             SVNErrorManager.error(err);
@@ -1008,7 +1006,6 @@ public class SVNCommitClient extends SVNBasicClient {
         // send "adding"
         SVNEvent addedEvent = SVNEventFactory.createCommitEvent(rootFile, file, SVNEventAction.COMMIT_ADDED, SVNNodeKind.FILE, mimeType);
         handleEvent(addedEvent, ISVNEventHandler.UNKNOWN);
-        editor.applyTextDelta(filePath, null);
         // translate and send file.
         String eolStyle = (String) autoProperties.get(SVNProperty.EOL_STYLE);
         String keywords = (String) autoProperties.get(SVNProperty.KEYWORDS);
@@ -1021,31 +1018,16 @@ public class SVNCommitClient extends SVNBasicClient {
             SVNTranslator.translate(file, tmpFile, eolBytes, keywordsMap, special, false);
         }
         File importedFile = tmpFile != null ? tmpFile : file;
-        String checksum = SVNFileUtil.computeChecksum(importedFile);
-        SVNDiffWindow[] windows = SVNDiffWindowBuilder.createReplacementDiffWindows(importedFile.length(), 100*1024);
-        byte[] newData = new byte[100*1024];
         InputStream is = null;
-        OutputStream os = null;
+        String checksum = null;
         try {
             is = SVNFileUtil.openFileForReading(importedFile);
-            for (int i = 0; i < windows.length; i++) {
-                SVNDiffWindow window = windows[i];
-                os = editor.textDeltaChunk(filePath, window);
-                is.read(newData, 0, (int) window.getNewDataLength());
-                os.write(newData, 0, (int) window.getNewDataLength());
-                SVNFileUtil.closeFile(os);
-            }
-        } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            editor.applyTextDelta(filePath, null);
+            checksum = deltaGenerator.sendDelta(filePath, is, editor, true);
         } finally {
             SVNFileUtil.closeFile(is);
-            SVNFileUtil.closeFile(os);
-            if (tmpFile != null) {
-                tmpFile.delete();
-            }
+            SVNFileUtil.deleteFile(tmpFile);
         }
-        editor.textDeltaEnd(filePath);
         editor.closeFile(filePath, checksum);
         return true;
     }

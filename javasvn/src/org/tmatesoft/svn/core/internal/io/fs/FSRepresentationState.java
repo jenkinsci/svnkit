@@ -113,7 +113,6 @@ public class FSRepresentationState {
      */
     private static FSRepresentationArgs readRepresentationLine(FSFile file) throws SVNException {
         try{
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
             String line = file.readLine(160);//FSReader.readNextLine(file, 160);
             FSRepresentationArgs repArgs = new FSRepresentationArgs();
             repArgs.isDelta = false;
@@ -131,9 +130,11 @@ public class FSRepresentationState {
             /* We have hopefully a DELTA vs. a non-empty base revision. */
             String[] args = line.split(" ");
             if(args.length < 4){
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                 SVNErrorManager.error(err);
             }
             if(!FSConstants.REP_DELTA.equals(args[0])){
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                 SVNErrorManager.error(err);
             }
             try{
@@ -141,6 +142,7 @@ public class FSRepresentationState {
                 repArgs.myBaseOffset = Long.parseLong(args[2]);
                 repArgs.myBaseLength = Long.parseLong(args[3]);
             }catch(NumberFormatException nfe){
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                 SVNErrorManager.error(err);
             }
             return repArgs;

@@ -83,7 +83,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     private boolean myIsClosed;
     
     private FSOutputStream(FSRevisionNode revNode, CountingWriter file, InputStream source, long deltaStart, long repSize, long repOffset, File reposRootDir) throws SVNException {
-        super();
         myReposRootDir = reposRootDir;
         myTargetFile = file;
         mySourceStream = source;

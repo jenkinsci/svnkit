@@ -204,10 +204,10 @@ public class FSInputStream extends InputStream {
                     }
                     SVNDiffWindow window = myDiffWindowBuilder.getDiffWindow();
                     // TODO make window report whether it has cp_from_src instructions or not.
-                    SVNDiffInstruction[] instructions = SVNDiffWindowBuilder.createInstructions(window.getInstructionsData());
                     boolean hasCopiesFromSource = false;
-                    for(int i = 0; !hasCopiesFromSource && i < instructions.length; i++){
-                        if(instructions[i].type == SVNDiffInstruction.COPY_FROM_SOURCE) {
+                    for(Iterator instructions = window.instructions(); !hasCopiesFromSource && instructions.hasNext();){
+                        SVNDiffInstruction instruction = (SVNDiffInstruction) instructions.next(); 
+                        if(instruction.type == SVNDiffInstruction.COPY_FROM_SOURCE) {
                             hasCopiesFromSource = true;
                         }
                     }

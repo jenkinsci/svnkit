@@ -12,13 +12,9 @@
 
 package org.tmatesoft.svn.core.io.diff;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -35,62 +31,12 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * The <b>SVNDiffWindowBuilder</b> class is used to build diff windows
  * from the raw delta data. 
  * 
- * <p>  
- * The process of restoring a diff window from raw delta data is 
- * represented by the following steps:
- * <ul>
- * <li>reading the header of the delta data; this step is represented
- * by the state {@link #HEADER} of this object;
- * <li>reading offsets for a diff window, now they are 5 and include:
- * a source view offset, a source view length, a target view length, 
- * instructions length, new data length; this step is represented by the 
- * step {@link #OFFSET} of this object;
- * <li>reading instructions bytes, parsing, decoding and converting them 
- * to <b>SVNDiffInstruction</b> objects; this step is represented by the 
- * state {@link #INSTRUCTIONS} of this object;
- * <li>after successful reading instructions data the builder is set to 
- * the state {@link #DONE} - the diff window is built and may be got via
- * calling {@link #getDiffWindow()}. 
- * </ul>
- * 
- * <p>
- * <b>Building a diff window:</b>
- * <p>
- * When a builder is set to the {@link #HEADER} state, at the first calling 
- * to a diff window restoring method -  <b>accept()</b> - the builder tries to 
- * read a header. If header bytes are valid, the builder resets itself to 
- * the state {@link #OFFSET}. 
- * 
- * <p>
- * At the second call to the <b>accept()</b> method
- * the builder tries to read offsets & lengths, and if succeeds, it resets to
- * the {@link #INSTRUCTIONS} state. 
- * 
- * <p>
- * At the next call it reads instructions bytes, 
- * but does not convert them to <b>SVNDiffInstruction</b> objects. So, the 
- * window being produced would not hold instruction objects but only instructions 
- * length, - this is done for memory economy, cause, for example, for large binary files 
- * (tens of Mbs) there could be several hundreds of windows and tens of thousands of  
- * instructions per window what may cause an out of memory exception. When applying a 
- * diff window with the {@link SVNDiffWindow#apply(SVNDiffWindowApplyBaton, InputStream) SVNDiffWindow.apply()} 
- * method, the method itself will restore diff instructions from the raw instructions data that must 
- * be concatenated with the new data provided to the apply method. But if you need to manually 
- * create diff instructions for the produced window, use the {@link #createInstructions(byte[]) createInstructions()} 
- * method. 
- * 
- * <p>
- * At last, if instructions have been read successfully, 
- * the builder resets to the {@link #DONE} state. 
- * 
  * @version 1.0
  * @author  TMate Software Ltd.
  * @see     SVNDiffWindow
  * @see     SVNDiffInstruction
  */
 public class SVNDiffWindowBuilder {
-	
-	private static final int MAX_DATA_CHUNK_LENGTH = 100*1024;
 
     /**
      * Creates a new diff window builder.
@@ -221,9 +167,6 @@ public class SVNDiffWindowBuilder {
      * again for building the next window.
      * 
      * <p> 
-     * Actually, diff windows created by the <b>SVNDiffWindowBuilder</b> builders
-     * are not supplied with diff instructions, use {@link #createInstructions(byte[]) createInstructions()} 
-     * to manually create them.
      * 
      * @param  bytes   raw delta bytes (header, offsets&lengths, instructions, new data, ...)
      * @param  offset  an offset in the raw delta bytes array, 
@@ -302,14 +245,6 @@ public class SVNDiffWindowBuilder {
      * <code>consumer</code> is used to collect diff windows and provide output 
      * streams to write raw instructions and new data to for each window. 
      * 
-     * <p> 
-     * Actually, diff windows created by the <b>SVNDiffWindowBuilder</b> builders
-     * are not supplied with diff instructions, use {@link #createInstructions(byte[]) createInstructions()} 
-     * to manually create them. Instructions are written into the same output stream 
-     * as the new data (just before the new data):
-     * <pre class="javacode">
-     *     OutputStream os = consumer.textDeltaChunk(path, window);</pre>
-     * 
      * @param  is            a source input stream from where raw delta bytes
      *                       are read
      * @param  consumer      an editor that collects diff windows 
@@ -377,8 +312,7 @@ public class SVNDiffWindowBuilder {
                     int length =  myOffsets[3];
                     // read length bytes (!!!!)
                     try {
-                        ByteBuffer bBuffer = ByteBuffer.wrap(myInstructions, myInstructions.length - length, length);
-                        length = file.read(bBuffer);
+                        length = file.read(myInstructions, myInstructions.length - length, length);
                     } catch (IOException e) {
                         err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
                         SVNErrorManager.error(err, e);
@@ -541,133 +475,20 @@ public class SVNDiffWindowBuilder {
         if (!window.hasInstructions()) {
             return;
         }
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        saveInstructions(window, bos);
-
         long[] offsets = new long[5];
         offsets[0] = window.getSourceViewOffset();
         offsets[1] = window.getSourceViewLength();
         offsets[2] = window.getTargetViewLength();
-        offsets[3] = bos.size();
+        offsets[3] = window.getInstructionsLength();
         offsets[4] = window.getNewDataLength();
         for(int i = 0; i < offsets.length; i++) {
-            writeInt(os, offsets[i]);
+            SVNDiffInstruction.writeInt(os, offsets[i]);
         }
-        bos.writeTo(os);
+        saveInstructions(window, os);
     }
 
-    private static void saveInstructions(SVNDiffWindow window, ByteArrayOutputStream bos) throws IOException {
-        if (window.getInstructionsData() != null) {
-            bos.write(window.getInstructionsData());
-        } else {
-            for(int i = 0; i < window.getInstructionsCount(); i++) {
-                SVNDiffInstruction instruction = window.getInstructionAt(i);
-                byte first = (byte) (instruction.type << 6);
-                if (instruction.length <= 0x3f && instruction.length > 0) {
-                    // single-byte lenght;
-                    first |= (instruction.length & 0x3f);
-                    bos.write(first & 0xff);
-                } else {
-                    bos.write(first & 0xff);
-                    writeInt(bos, instruction.length);
-                }
-                if (instruction.type == 0 || instruction.type == 1) {
-                    writeInt(bos, instruction.offset);
-                }
-            }
-        }
-    }
-
-    /**
-     * Creates a diff window intended for replacing the whole contents of a file
-     * with new data. It is mainly intended for binary and newly added text files.  
-     * 
-     * <p>
-     * The number of instructions depends on the <code>dataLength</code>: one 
-     * instruction per 100K data chunk. 
-     * 
-     * @param  dataLength    the length of new data 
-     * @return               a new diff window
-     */
-    public static SVNDiffWindow createReplacementDiffWindow(long dataLength) {
-        if (dataLength == 0) {
-            return new SVNDiffWindow(0, 0, dataLength, new SVNDiffInstruction[0], dataLength);
-        }
-        // divide data length in 100K segments
-        long totalLength = dataLength;
-        long offset = 0;
-        int instructionsCount = (int) ((dataLength / (MAX_DATA_CHUNK_LENGTH)) + 1);
-        Collection instructionsList = new ArrayList(instructionsCount);
-        while(dataLength > MAX_DATA_CHUNK_LENGTH) {
-            dataLength -= MAX_DATA_CHUNK_LENGTH; 
-            instructionsList.add(new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_NEW_DATA, MAX_DATA_CHUNK_LENGTH, offset));
-            offset += MAX_DATA_CHUNK_LENGTH;
-        }
-        if (dataLength > 0) {
-            instructionsList.add(new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_NEW_DATA, dataLength, offset));
-        }
-        SVNDiffInstruction[] instructions = (SVNDiffInstruction[]) instructionsList.toArray(new SVNDiffInstruction[instructionsList.size()]);
-        return new SVNDiffWindow(0, 0, totalLength, instructions, totalLength);
-    }
-
-    /**
-     * Creates a diff window/windows intended for replacing the whole contents of 
-     * a file with new data. It is mainly intended for binary and newly added text 
-     * files.  
-     * 
-     * <p>
-     * The point is that the data length may be too huge, so that one diff window 
-     * will eat a large amount of memory (on the machine where an svnserve process 
-     * runs, not JavaSVN) to apply its instructions. It's more safe 
-     * to devide the contents into a number of smaller windows.
-     * 
-     * <p>
-     * The number of windows produced depends on <code>dataLength</code> and 
-     * <code>maxWindowLength</code>: one diff window (with a single instruction) 
-     * per <code>maxWindowLength</code> data chunk.  
-     *  
-     * @param   dataLength        the length of new data 
-     * @param   maxWindowLength   the maximum length of one diff window
-     * @return                    diff windows 
-     */
-    public static SVNDiffWindow[] createReplacementDiffWindows(long dataLength, int maxWindowLength) {
-        if (dataLength == 0) {
-            return new SVNDiffWindow[] {new SVNDiffWindow(0, 0, dataLength, new SVNDiffInstruction[0], dataLength)};
-        }
-        int instructionsCount = (int) ((dataLength / (maxWindowLength)) + 1);
-        Collection windows = new ArrayList(instructionsCount);
-        while(dataLength > maxWindowLength) {
-            SVNDiffInstruction instruction = new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_NEW_DATA, maxWindowLength, 0); 
-            SVNDiffWindow window = new SVNDiffWindow(0, 0, maxWindowLength, new SVNDiffInstruction[] { instruction}, maxWindowLength);
-            windows.add(window);
-            dataLength -= maxWindowLength; 
-        }
-        if (dataLength > 0) {
-            SVNDiffInstruction instruction = new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_NEW_DATA, dataLength, 0);
-            SVNDiffWindow window = new SVNDiffWindow(0, 0, dataLength, new SVNDiffInstruction[] {instruction}, dataLength);
-            windows.add(window);
-        }
-        return (SVNDiffWindow[]) windows.toArray(new SVNDiffWindow[windows.size()]);
-    }
-    
-    public static void writeInt(OutputStream os, long i) throws IOException {
-        if (i == 0) {
-            os.write(0);
-            return;
-        }
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        while(i > 0) {
-            byte b = (byte) (i & 0x7f);
-            i = i >> 7;
-            if (bos.size() > 0) {
-                b |= 0x80;
-            }
-            bos.write(b);            
-        } 
-        byte[] bytes = bos.toByteArray();
-        for(int j = bytes.length - 1; j  >= 0; j--) {
-            os.write(bytes[j]);
-        }
+    private static void saveInstructions(SVNDiffWindow window, OutputStream bos) throws IOException {
+        bos.write(window.getInstructionsData());
     }
 
     private static int readInt(byte[] bytes, int offset, int[] target, int index) {
@@ -738,36 +559,4 @@ public class SVNDiffWindowBuilder {
 		return window;
 	}
 	
-    /**
-     * Parses, decodes the raw instructions bytes and converts them to 
-     * diff instruction objects.
-     * 
-     * @param  bytes  raw instructions bytes
-     * @return        diff instruction objects
-	 */
-	public static SVNDiffInstruction[] createInstructions(byte[] bytes) {
-        Collection instructions = new ArrayList();
-        int[] instr = new int[2];
-        for(int i = 0; i < bytes.length;) {            
-            SVNDiffInstruction instruction = new SVNDiffInstruction();
-            instruction.type = (bytes[i] & 0xC0) >> 6;
-            instruction.length = bytes[i] & 0x3f;
-            i++;
-            if (instruction.length == 0) {
-                // read length from next byte                
-            	i = readInt(bytes, i, instr, 0);
-                instruction.length = instr[0];
-            } 
-            if (instruction.type == 0 || instruction.type == 1) {
-                // read offset from next byte (no offset without length).
-            	i = readInt(bytes, i, instr, 1);
-                instruction.offset = instr[1];
-            } 
-            instructions.add(instruction);
-            instr[0] = 0;
-            instr[1] = 0;
-        }        
-        return (SVNDiffInstruction[]) instructions.toArray(new SVNDiffInstruction[instructions.size()]);
-    }
-
 }

@@ -12,9 +12,7 @@
 package org.tmatesoft.svn.core.internal.delta;
 
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.io.IOException;
 
 import org.tmatesoft.svn.core.io.diff.SVNDiffInstruction;
 
@@ -25,45 +23,41 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffInstruction;
  */
 public abstract class SVNDeltaAlgorithm {
 
-    private Collection myDiffInstructions = new ArrayList();
+    private ByteArrayOutputStream myDiffInstructions = new ByteArrayOutputStream();
     private ByteArrayOutputStream myNewData = new ByteArrayOutputStream();
 
     public void reset() {
-        myDiffInstructions.clear();
+        myDiffInstructions.reset();
         myNewData.reset();
     }
 
-    public abstract void computeDelta(byte[] a, int aLength, byte[] b, int bLength);
+    public abstract void computeDelta(byte[] a, int aLength, byte[] b, int bLength) throws IOException;
     
-    public SVNDiffInstruction[] getDiffInstructions() {
-        return (SVNDiffInstruction[]) myDiffInstructions.toArray(new SVNDiffInstruction[myDiffInstructions.size()]);
+    public byte[] getDiffInstructionsData() {
+        return myDiffInstructions.toByteArray();
     }
     
     public ByteArrayOutputStream getNewDataStream() {
         return myNewData;
     }
 
-    public Iterator diffInstructions() {
-        return myDiffInstructions.iterator();
-    }
-
     public byte[] getNewData() {
         return myNewData.toByteArray();
     }
 
-    protected void copyFromSource(int position, int length) {
+    protected void copyFromSource(int position, int length) throws IOException {
         SVNDiffInstruction instruction = new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_SOURCE, length, position);
-        myDiffInstructions.add(instruction);
+        instruction.writeTo(myDiffInstructions);
     }
 
-    protected void copyFromTarget(int position, int length) {
+    protected void copyFromTarget(int position, int length) throws IOException {
         SVNDiffInstruction instruction = new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_TARGET, length, position);
-        myDiffInstructions.add(instruction);
+        instruction.writeTo(myDiffInstructions);
     }
 
-    protected void copyFromNewData(byte[] data, int offset, int length) {
+    protected void copyFromNewData(byte[] data, int offset, int length) throws IOException {
         SVNDiffInstruction instruction = new SVNDiffInstruction(SVNDiffInstruction.COPY_FROM_NEW_DATA, length, 0);
-        myDiffInstructions.add(instruction);
+        instruction.writeTo(myDiffInstructions);
         myNewData.write(data, offset, length);
     }
 }
