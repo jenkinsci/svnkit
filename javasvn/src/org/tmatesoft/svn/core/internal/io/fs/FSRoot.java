@@ -20,6 +20,7 @@ import java.util.TreeMap;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -53,9 +54,7 @@ public abstract class FSRoot {
     }
     
     public FSRevisionNode getRevisionNode(String path) throws SVNException{
-        /* Canonicalize the input PATH. */
         String canonPath = SVNPathUtil.canonicalizeAbsPath(path);
-        /* look for the rev-node in our cache. */
         FSRevisionNode node = fetchRevNodeFromCache(canonPath);
         if(node == null){
             FSParentPath parentPath = openPath(path, true, false);
@@ -75,15 +74,10 @@ public abstract class FSRoot {
         FSRevisionNode here = getRootRevisionNode();
         String pathSoFar = "/";
 
-        //Make a parentPath item for the root node, using its own current copy-id
         FSParentPath parentPath = new FSParentPath(here, null, null);
         parentPath.setCopyStyle(FSCopyInheritance.COPY_ID_INHERIT_SELF);
         String rest = canonPath.substring(1);// skip the leading '/'
 
-        /* Whenever we are at the top of this loop:
-         - HERE is our current directory,
-         - REST is the path we're going to find in HERE, and 
-         - PARENT_PATH includes HERE and all its parents.  */
         while (true) {
             String entry = SVNPathUtil.head(rest);
             String next = SVNPathUtil.removeHead(rest);
@@ -100,16 +94,9 @@ public abstract class FSRoot {
                         child = here.getChildDirNode(entry, getOwner());
                     } catch (SVNException svne) {
                         if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
-                            /* If this was the last path component, and the caller
-                             * said it was optional, then don't return an error;
-                             * just put a null node pointer in the path.  
-                             */
                             if (!lastEntryMustExist && (next == null || "".equals(next))) {
                                 return new FSParentPath(null, entry, parentPath);
                             }
-                            /* Build a better error message than FSReader.getChildDirNode()
-                             * can provide, giving the root and full path name.  
-                             */
                             SVNErrorManager.error(FSErrors.errorNotFound(this, path), svne);
                         }
                         throw svne;
@@ -117,13 +104,15 @@ public abstract class FSRoot {
                 }
                 
                 parentPath.setParentPath(child, entry, storeParents ? new FSParentPath(parentPath) : null);
-                FSCopyInheritance copyInheritance = getCopyInheritance(parentPath);
-                if(copyInheritance != null){
-                    parentPath.setCopyStyle(copyInheritance.getStyle());
-                    parentPath.setCopySourcePath(copyInheritance.getCopySourcePath());
+                
+                if(storeParents){
+                    FSCopyInheritance copyInheritance = getCopyInheritance(parentPath);
+                    if(copyInheritance != null){
+                        parentPath.setCopyStyle(copyInheritance.getStyle());
+                        parentPath.setCopySourcePath(copyInheritance.getCopySourcePath());
+                    }
                 }
                 
-                /* Cache the node we found (if it wasn't already cached). */
                 if (cachedRevNode == null) {
                     putRevNodeToCache(pathSoFar, child);
                 }
@@ -131,7 +120,7 @@ public abstract class FSRoot {
             if (next == null || "".equals(next)) {
                 break;
             }
-            /* The path isn't finished yet; we'd better be in a directory.  */
+
             if (child.getType() != SVNNodeKind.DIR) {
                 SVNErrorMessage err = FSErrors.errorNotDirectory(pathSoFar, getOwner().getRepositoryRoot());
                 SVNErrorManager.error(err.wrap("Failure opening ''{0}''", path));
@@ -284,6 +273,45 @@ public abstract class FSRoot {
             change = readChange(changesFile);
         }
         return changedPaths;
+    }
+
+    public Map detectChanged() throws SVNException {
+        Map changes = getChangedPaths();
+        if (changes.size() == 0) {
+            return changes;
+        }
+
+        Map changedPaths = new HashMap();
+
+        for (Iterator paths = changes.keySet().iterator(); paths.hasNext();) {
+            String changedPath = (String) paths.next();
+            FSPathChange change = (FSPathChange) changes.get(changedPath);
+            if (change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_RESET) {
+                continue;
+            }
+            char action = change.getChangeKind().toString().toUpperCase().charAt(0);
+            long copyfromRevision = FSConstants.SVN_INVALID_REVNUM;
+            String copyfromPath = null;
+            if (change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_ADD || change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_REPLACE) {
+                SVNLocationEntry copyfromEntry = getCopyFromOrigin(changedPath);
+                if (copyfromEntry.getPath() != null && FSRepository.isValidRevision(copyfromEntry.getRevision())) {
+                    copyfromPath = copyfromEntry.getPath();
+                    copyfromRevision = copyfromEntry.getRevision();
+                }
+            }
+            changedPaths.put(changedPath, new SVNLogEntryPath(changedPath, action, copyfromPath, copyfromRevision));
+        }
+        return changedPaths;
+    }
+
+    public SVNLocationEntry getCopyFromOrigin(String path) throws SVNException {
+        Map copyfromCache = getCopyfromCache();
+        SVNLocationEntry location = (SVNLocationEntry)copyfromCache.get(path);
+        if(location == null){
+            FSRevisionNode node = getRevisionNode(path);
+            return new SVNLocationEntry(node.getCopyFromRevision(), node.getCopyFromPath());
+        }
+        return location;
     }
 
     private FSChange readChange(FSFile raReader) throws SVNException {

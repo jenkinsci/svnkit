@@ -110,7 +110,7 @@ public class FSNodeHistory {
         FSRevisionNode node = null;
         SVNNodeKind kind = null;
         try {
-            node = root.openPath(path, false, false).getRevNode();//pool.openPath(root, path, false, null, reposRootDir, false).getRevNode(); 
+            node = root.openPath(path, true, false).getRevNode();//pool.openPath(root, path, false, null, reposRootDir, false).getRevNode(); 
         } catch (SVNException svne) {
             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                 kind = SVNNodeKind.NONE;

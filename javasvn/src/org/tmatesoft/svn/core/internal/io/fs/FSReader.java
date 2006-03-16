@@ -17,10 +17,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
@@ -71,10 +69,6 @@ public class FSReader {
         return FSInputStream.createDeltaStream(fileNode, root.getOwner());
     }
 
-    /*
-     * Given a representation 'rep', open the correct file and seek to the
-     * correction location.
-     */
     public static ISVNInputFile openAndSeekRepresentation(FSRepresentation rep, File reposRootDir) throws SVNException {
         if (!rep.isTxn()) {
             return openAndSeekRevision(rep.getRevision(), rep.getOffset(), reposRootDir);
@@ -82,11 +76,6 @@ public class FSReader {
         return openAndSeekTransaction(rep, reposRootDir);
     }
 
-    /*
-     * Open the representation for a node-revision in a transaction in
-     * filesystem. Seek to an offset location before returning. Only appropriate
-     * for file contents, nor props or directory contents.
-     */
     private static ISVNInputFile openAndSeekTransaction(FSRepresentation rep, File reposRootDir) throws SVNException {
         ISVNInputFile file = null;
         try {
@@ -103,10 +92,6 @@ public class FSReader {
         return file;
     }
 
-    /*
-     * Open the revision file for a revision in a filesystem. Seek to an offset
-     * location before returning.
-     */
     private static ISVNInputFile openAndSeekRevision(long revision, long offset, File reposRootDir) throws SVNException {
         ISVNInputFile file = null;
         try {
@@ -125,10 +110,6 @@ public class FSReader {
         return file;
     }
 
-    /*
-     * String[0] - is to be the fetched out node-id String[1] - is to be the
-     * fetched out copy-id
-     */
     public static String[] readNextIds(String txnId, File reposRootDir) throws SVNException {
         String[] ids = new String[2];
         String idsToParse = null;
@@ -169,32 +150,23 @@ public class FSReader {
         }
     }
 
-    /*
-     * A recursive function that calls getLocksHandler for all locks in and
-     * under PATH in FS. haveWriteLock should be true if the caller (directly or
-     * indirectly) has the FS write lock.
-     */
     public static void walkDigestFiles(File digestFile, ISVNLockHandler getLocksHandler, boolean haveWriteLock, File reposRootDir) throws SVNException {
         Collection children = new LinkedList();
-        /* First, send up any locks in the current path. */
         SVNLock lock = fetchLockFromDigestFile(digestFile, null, children, reposRootDir);
+
         if (lock != null) {
             Date current = new Date(System.currentTimeMillis());
-            /* Don't report an expired lock. */
             if (lock.getExpirationDate() == null || current.compareTo(lock.getExpirationDate()) < 0) {
                 getLocksHandler.handleLock(null, lock, null);
             } else if (haveWriteLock) {
-                /*
-                 * Only remove the lock if we have the write lock. Read
-                 * operations shouldn't change the filesystem.
-                 */
                 FSWriter.deleteLock(lock, reposRootDir);
             }
         }
-        /* Now, recurse on this thing's child entries (if any; bail otherwise). */
+
         if (children.isEmpty()) {
             return;
         }
+        
         for (Iterator entries = children.iterator(); entries.hasNext();) {
             String digestName = (String) entries.next();
             File childDigestFile = FSRepositoryUtil.getDigestFileFromDigest(digestName, reposRootDir);
@@ -202,7 +174,6 @@ public class FSReader {
         }
     }
 
-    /* Utility function: verify that a lock can be used. */
     private static void verifyLock(SVNLock lock, Collection lockTokens, String username) throws SVNException {
         if (username == null || "".equals(username)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "Cannot verify lock on path ''{0}''; no username available", lock.getPath());
@@ -225,16 +196,14 @@ public class FSReader {
 
     public static SVNLock getLock(String repositoryPath, boolean haveWriteLock, File reposRootDir) throws SVNException {
         SVNLock lock = fetchLockFromDigestFile(null, repositoryPath, null, reposRootDir);
+        
         if (lock == null) {
             SVNErrorManager.error(FSErrors.errorNoSuchLock(repositoryPath, reposRootDir));
         }
+        
         Date current = new Date(System.currentTimeMillis());
-        /* Don't return an expired lock. */
+
         if (lock.getExpirationDate() != null && current.compareTo(lock.getExpirationDate()) > 0) {
-            /*
-             * Only remove the lock if we have the write lock. Read operations
-             * shouldn't change the filesystem.
-             */
             if (haveWriteLock) {
                 FSWriter.deleteLock(lock, reposRootDir);
             }
@@ -249,10 +218,6 @@ public class FSReader {
         try {
             lock = getLock(repositoryPath, haveWriteLock, reposRootDir);
         } catch (SVNException svne) {
-            /*
-             * They've deliberately decided that this function doesn't tell the
-             * caller *why* the lock is unavailable.
-             */
             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_LOCK || svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_LOCK_EXPIRED) {
                 return null;
             }
@@ -923,59 +888,8 @@ public class FSReader {
         return latestRev;
     }
 
-    public static Map detectChanged(File reposRootDir, FSRevisionNodePool revNodesPool, FSOldRoot root) throws SVNException {
-        Map changedPaths = new HashMap();
-        Map changes = root.getChangedPaths();
-        if (changes.size() == 0) {
-            return changes;
-        }
-        for (Iterator paths = changes.keySet().iterator(); paths.hasNext();) {
-            String changedPath = (String) paths.next();
-            FSPathChange change = (FSPathChange) changes.get(changedPath);
-            if (change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_RESET) {
-                continue;
-            }
-            char action = change.getChangeKind().toString().toUpperCase().charAt(0);
-            long copyfromRevision = FSConstants.SVN_INVALID_REVNUM;
-            String copyfromPath = null;
-            if (change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_ADD || change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_REPLACE) {
-                SVNLocationEntry copyfromEntry = copiedFrom(reposRootDir, root, changedPath, revNodesPool);
-                if (copyfromEntry.getPath() != null && FSRepository.isValidRevision(copyfromEntry.getRevision())) {
-                    copyfromPath = copyfromEntry.getPath();
-                    copyfromRevision = copyfromEntry.getRevision();
-                }
-            }
-            changedPaths.put(changedPath, new SVNLogEntryPath(changedPath, action, copyfromPath, copyfromRevision));
-        }
-        return changedPaths;
-    }
-
-    /*
-     * Discover the copy ancestry of PATH under ROOT. Return a relevant
-     * ancestor/revision combination in PATH(SVNLocationEntry) and
-     * REVISON(SVNLocationEntry)
-     */
-    public static SVNLocationEntry copiedFrom(File reposRootDir, FSOldRoot root, String path, FSRevisionNodePool revNodesPool) throws SVNException {
-        /*
-         * Check to see if there is a cached version of this copyfrom entry.
-         */
-        Map copyfromCache = root.getCopyfromCache();
-        if (copyfromCache != null) {
-            /*
-             * We have a cached entry that says there is no copyfrom here.
-             */
-            if (copyfromCache.get(path) == null) {
-                return new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null);
-            }
-            return (SVNLocationEntry) copyfromCache.get(path);
-        }
-
-        FSRevisionNode node = revNodesPool.getRevisionNode(root, path, reposRootDir);
-        return new SVNLocationEntry(node.getCopyFromRevision(), node.getCopyFromPath());
-    }
-
-    public static void sendChangeRev(File reposRootDir, FSRevisionNodePool revNodesPool, long revNum, boolean discoverChangedPaths, ISVNLogEntryHandler handler) throws SVNException {
-        Map revisionProps = FSRepositoryUtil.getRevisionProperties(reposRootDir, revNum);
+    public static void sendChangeRev(long revNum, boolean discoverChangedPaths, ISVNLogEntryHandler handler, FSFS owner) throws SVNException {
+        Map revisionProps = owner.getRevisionProperties(revNum);
         Map changedPaths = null;
         String author = null;
         Date date = null;
@@ -989,8 +903,8 @@ public class FSReader {
         }
 
         if (revNum > 0 && discoverChangedPaths) {
-            FSOldRoot root = FSOldRoot.createRevisionRoot(revNum, null, reposRootDir);
-            changedPaths = detectChanged(reposRootDir, revNodesPool, root);
+            FSRevisionRoot root = owner.createRevisionRoot(revNum);
+            changedPaths = root.detectChanged();
         }
         changedPaths = changedPaths == null ? new HashMap() : changedPaths;
         handler.handleLogEntry(new SVNLogEntry(changedPaths, revNum, author, date, message));

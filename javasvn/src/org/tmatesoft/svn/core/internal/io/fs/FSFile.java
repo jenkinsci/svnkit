@@ -286,7 +286,7 @@ public class FSFile {
     }
     
     private void allocateReadBuffer(int limit) {
-        if (limit < myReadLineBuffer.capacity()) {
+        if (limit > myReadLineBuffer.capacity()) {
             myReadLineBuffer = ByteBuffer.allocate(limit);
         }
         myReadLineBuffer.clear();

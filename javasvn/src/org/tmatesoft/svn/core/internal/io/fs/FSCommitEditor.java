@@ -876,11 +876,10 @@ public class FSCommitEditor implements ISVNEditor {
 
     private static class DirBaton {
 
-        /* the revision I'm based on */
         private long myBaseRevision;
-        /* the -absolute- path to this dir in the fs */
+
         private String myPath;
-        /* was this directory added with history? */
+
         private boolean isCopied;
 
         public DirBaton(long revision, String path, boolean copied) {
@@ -913,4 +912,5 @@ public class FSCommitEditor implements ISVNEditor {
             myPath = path;
         }
     }
+    
 }

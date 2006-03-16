@@ -59,7 +59,6 @@ javasvn/src/org/tigris/subversion/javahl/SVNClient.java -text
 javasvn/src/org/tmatesoft/svn/core/SVNURL.java -text
 javasvn/src/org/tmatesoft/svn/core/auth/package.html -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/DESCRIPTION.txt -text
-javasvn/src/org/tmatesoft/svn/core/internal/io/fs/DefaultFSRevisionNodePool.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSBufferStream.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSChange.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSClosestCopy.java -text
@@ -72,7 +71,6 @@ javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSID.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSInputStream.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSKeyGenerator.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSNodeHistory.java -text
-javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSOldRoot.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSOutputStream.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSParentPath.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSPathChange.java -text
@@ -84,7 +82,6 @@ javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSRepositoryUtil.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSRepresentation.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSRepresentationState.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSRevisionNode.java -text
-javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSRevisionNodePool.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSTransaction.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSTransactionInfo.java -text
 javasvn/src/org/tmatesoft/svn/core/internal/io/fs/FSWriteLock.java -text

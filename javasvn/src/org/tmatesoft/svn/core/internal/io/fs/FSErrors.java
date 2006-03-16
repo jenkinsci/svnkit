@@ -52,17 +52,6 @@ public class FSErrors {
         return err;
     }
     
-    //TODO: remove later
-    public static SVNErrorMessage errorNotFound(FSOldRoot root, String path) {
-        SVNErrorMessage err;
-        if(root.isTxnRoot()){
-            err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: transaction ''{0}'', path ''{1}''", new Object[]{root.getTxnId(), path});
-        }else{
-            err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: revision {0,number,integer}, path ''{1}''", new Object[]{new Long(root.getRevision()), path});
-        }
-        return err;
-    }
-    
     public static SVNErrorMessage errorNotDirectory(String path, File reposRootDir) {
         File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_DIRECTORY, "''{0}'' is not a directory in filesystem ''{1}''", new Object[]{path, fsDir});

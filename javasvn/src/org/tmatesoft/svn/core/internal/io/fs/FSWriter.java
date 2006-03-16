@@ -85,33 +85,27 @@ public class FSWriter {
         }
     }
 
-    public static SVNLock lockPath(String path, String token, String username, String comment, Date expirationDate, long currentRevision, boolean stealLock, FSRepository repository, File reposRootDir)
+    public static SVNLock lockPath(String path, String token, String username, String comment, Date expirationDate, long currentRevision, boolean stealLock, FSFS owner)
             throws SVNException {
-        /*
-         * Setup an array of paths in anticipation of the ra layers handling
-         * multiple locks in one request (1.3 most likely). This is only used by
-         * FSHooks.runPost[Unl/L]ockHook().
-         */
         String[] paths = {
             path
         };
+        
         if (username == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "Cannot lock path ''{0}'', no authenticated username available.", path);
             SVNErrorManager.error(err);
         }
+
         path = SVNPathUtil.canonicalizeAbsPath(path);
-        /*
-         * Run pre-lock hook. This could throw an error, preventing lock() from
-         * happening.
-         */
-        FSHooks.runPreLockHook(reposRootDir, path, username);
-        /* Lock. */
+        FSHooks.runPreLockHook(owner.getRepositoryRoot(), path, username);
         SVNLock lock = null;
-        FSWriteLock writeLock = FSWriteLock.getWriteLock(reposRootDir);
+        
+        FSWriteLock writeLock = FSWriteLock.getWriteLock(owner.getRepositoryRoot());
+
         synchronized (writeLock) {
             try {
                 writeLock.lock();
-                lock = lock(path, token, username, comment, expirationDate, currentRevision, stealLock, repository, reposRootDir);
+                lock = lock(path, token, username, comment, expirationDate, currentRevision, stealLock, owner);
             } finally {
                 writeLock.unlock();
                 FSWriteLock.realease(writeLock);
@@ -119,7 +113,7 @@ public class FSWriter {
         }
         /* Run post-lock hook. */
         try {
-            FSHooks.runPostLockHook(reposRootDir, paths, username);
+            FSHooks.runPostLockHook(owner.getRepositoryRoot(), paths, username);
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_LOCK_HOOK_FAILED, "Lock succeeded, but post-lock hook failed");
             err.setChildErrorMessage(svne.getErrorMessage());
@@ -128,41 +122,26 @@ public class FSWriter {
         return lock;
     }
 
-    private static SVNLock lock(String path, String token, String username, String comment, Date expirationDate, long currentRevision, boolean stealLock, FSRepository repository, File reposRootDir)
+    private static SVNLock lock(String path, String token, String username, String comment, Date expirationDate, long currentRevision, boolean stealLock, FSFS owner)
             throws SVNException {
-        /*
-         * Until we implement directory locks someday, we only allow locks on
-         * files or non-existent paths.
-         */
-        FSRevisionNodePool revNodesPool = repository.getRevisionNodePool();
-        long youngestRev = FSReader.getYoungestRevision(reposRootDir);
-        FSRevisionNode rootNode = revNodesPool.getRootRevisionNode(youngestRev, reposRootDir);
-        SVNNodeKind kind = repository.checkNodeKind(path, FSOldRoot.createRevisionRoot(youngestRev, rootNode, reposRootDir));
+        long youngestRev = owner.getYoungestRevision();
+        FSRevisionRoot root = owner.createRevisionRoot(youngestRev);//revNodesPool.getRootRevisionNode(youngestRev, reposRootDir);
+        SVNNodeKind kind = root.checkNodeKind(path); 
+
         if (kind == SVNNodeKind.DIR) {
-            SVNErrorManager.error(FSErrors.errorNotFile(path, reposRootDir));
+            SVNErrorManager.error(FSErrors.errorNotFile(path, owner.getRepositoryRoot()));
         } else if (kind == SVNNodeKind.NONE) {
-            /*
-             * While locking implementation easily supports the locking of
-             * nonexistent paths, we deliberately choose not to allow such
-             * madness.
-             */
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Path ''{0}'' doesn't exist in HEAD revision", path);
             SVNErrorManager.error(err);
         }
-        /* We need to have a username. */
+
         if (username == null || "".equals(username)) {
-            SVNErrorManager.error(FSErrors.errorNoUser(reposRootDir));
+            SVNErrorManager.error(FSErrors.errorNoUser(owner.getRepositoryRoot()));
         }
-        /* Is the caller attempting to lock an out-of-date working file? */
+
         if (FSRepository.isValidRevision(currentRevision)) {
-            FSRevisionNode node = revNodesPool.getRevisionNode(rootNode, path, reposRootDir);
+            FSRevisionNode node = root.getRevisionNode(path);//revNodesPool.getRevisionNode(rootNode, path, reposRootDir);
             long createdRev = node.getId().getRevision();
-            /*
-             * SVN_INVALID_REVNUM means the path doesn't exist. So apparently
-             * somebody is trying to lock something in their working copy, but
-             * somebody else has deleted the thing from HEAD. That counts as
-             * being 'out of date'.
-             */
             // TODO: I don't understand this check for invalidness...
             if (FSRepository.isInvalidRevision(createdRev)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, "Path ''{0}'' doesn't exist in HEAD revision", path);
@@ -173,27 +152,25 @@ public class FSWriter {
                 SVNErrorManager.error(err);
             }
         }
-        SVNLock existingLock = FSReader.getLockHelper(path, true, reposRootDir);
+        
+        SVNLock existingLock = FSReader.getLockHelper(path, true, owner.getRepositoryRoot());
+        
         if (existingLock != null) {
             if (!stealLock) {
-                /* Sorry, the path is already locked. */
-                SVNErrorManager.error(FSErrors.errorPathAlreadyLocked(existingLock.getPath(), existingLock.getOwner(), reposRootDir));
+                SVNErrorManager.error(FSErrors.errorPathAlreadyLocked(existingLock.getPath(), existingLock.getOwner(), owner.getRepositoryRoot()));
             } else {
-                /*
-                 * STEAL_LOCK was passed, so username is "stealing" the lock
-                 * from existingLock's owner. Destroy the existing lock.
-                 */
-                FSWriter.deleteLock(existingLock, reposRootDir);
+                deleteLock(existingLock, owner.getRepositoryRoot());
             }
         }
-        /* Create our new lock */
+
         SVNLock lock = null;
         if (token == null) {
             lock = new SVNLock(path, FSRepositoryUtil.generateLockToken(), username, comment, new Date(System.currentTimeMillis()), expirationDate);
         } else {
             lock = new SVNLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate);
         }
-        setLock(lock, reposRootDir);
+        
+        setLock(lock, owner.getRepositoryRoot());
         return lock;
     }
 
@@ -919,4 +896,26 @@ public class FSWriter {
             return targetFile.mySize;
         }
     }
+    
+    public static class CountingWriter extends OutputStream {
+
+        private long myPosition;
+        private OutputStream myWriter;
+        
+        public CountingWriter(OutputStream writer, long offset) {
+            super();
+            myPosition = offset;
+            myWriter = writer;
+        }
+
+        public void write(int b) throws IOException {
+            myWriter.write(b);
+            myPosition++;
+        }
+        
+        public long getPosition(){
+            return myPosition;
+        }
+    }
+
 }
