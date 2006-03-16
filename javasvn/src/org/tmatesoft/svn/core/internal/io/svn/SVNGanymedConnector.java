@@ -36,6 +36,8 @@ import ch.ethz.ssh2.StreamGobbler;
 public class SVNGanymedConnector implements ISVNConnector {
 
     private static final String SVNSERVE_COMMAND = "svnserve -t";
+    private static final String SVNSERVE_COMMAND_WITH_USER_NAME = "svnserve -t --tunnel-user ";
+    private static final String ourCustomUserName = System.getProperty("javasvn.ssh.author", "");
 
     private Session mySession;
     private InputStream myInputStream;
@@ -63,7 +65,7 @@ public class SVNGanymedConnector implements ISVNConnector {
                         SVNErrorManager.error(err);
                     }
                     authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
-                    repository.setExternalUserName(authentication.getUserName());
+                    repository.setExternalUserName(ourCustomUserName);
                     break;
                 } catch (SVNAuthenticationException e) {
                     authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getErrorMessage(), authentication);
@@ -78,7 +80,11 @@ public class SVNGanymedConnector implements ISVNConnector {
             }
             try {
                 mySession = connection.openSession();
-                mySession.execCommand(SVNSERVE_COMMAND);
+                if ("".equals(repository.getExternalUserName())) {
+                    mySession.execCommand(SVNSERVE_COMMAND);
+                } else {
+                    mySession.execCommand(SVNSERVE_COMMAND_WITH_USER_NAME + repository.getExternalUserName());
+                }
     
                 myOutputStream = mySession.getStdin();
                 myInputStream = mySession.getStdout();

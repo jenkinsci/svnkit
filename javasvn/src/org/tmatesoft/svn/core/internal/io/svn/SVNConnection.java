@@ -92,7 +92,7 @@ class SVNConnection {
         SVNURL location = myRepository.getLocation();        
         SVNPasswordAuthentication auth = null;
         if (repository.getExternalUserName() != null && mechs.contains("EXTERNAL")) {
-            write("(w(s))", new Object[] { "EXTERNAL", "" });
+            write("(w(s))", new Object[] { "EXTERNAL", repository.getExternalUserName() });
             failureReason = readAuthResponse(repository);
         } else if (mechs.contains("ANONYMOUS")) {
             write("(w())", new Object[] { "ANONYMOUS" });
