@@ -561,11 +561,15 @@ public class SVNStatusEditor implements ISVNEditor {
 
         if (isDir) {
             if (pathKind == SVNFileType.DIRECTORY) {
-                if (!SVNWCAccess.isVersionedDirectory(file)) {
+                if (!SVNWCAccess.isVersionedDirectory(file)) {                   
                     textStatus = SVNStatusType.STATUS_OBSTRUCTED;
                 }
             } else if (pathKind != SVNFileType.NONE) {
-                textStatus = SVNStatusType.STATUS_OBSTRUCTED;
+                if (myWCAccess.getAnchor().getRoot().equals(file) &&
+                        entry.getKind() == SVNNodeKind.DIR && pathKind == SVNFileType.SYMLINK && file.isDirectory()) {
+                } else {
+                    textStatus = SVNStatusType.STATUS_OBSTRUCTED;                        
+                }
             }
         }
 
@@ -626,7 +630,11 @@ public class SVNStatusEditor implements ISVNEditor {
                     textStatus = SVNStatusType.STATUS_MISSING;
                 }
             } else if (!SVNFileType.equals(pathKind, entry.getKind())) {
-                textStatus = SVNStatusType.STATUS_OBSTRUCTED;
+                if (myWCAccess.getAnchor().getRoot().equals(file) &&
+                        entry.getKind() == SVNNodeKind.DIR && pathKind == SVNFileType.SYMLINK && file.isDirectory()) {
+                } else {
+                    textStatus = SVNStatusType.STATUS_OBSTRUCTED;                        
+                }
             } else if (special != (pathKind == SVNFileType.SYMLINK)) {
                 textStatus = SVNStatusType.STATUS_OBSTRUCTED;
             }
