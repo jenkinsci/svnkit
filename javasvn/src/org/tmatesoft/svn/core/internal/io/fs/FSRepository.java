@@ -1085,7 +1085,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         String fullTargetPath = myReporterContext.getReportTargetPath();
         String fullSourcePath = SVNPathUtil.concatToAbs(getRepositoryPath(""), myReporterContext.getReportTarget());
         FSEntry targetEntry = fakeDirEntry(fullTargetPath, myReporterContext.getTargetRoot());
-        FSRevisionRoot srcRoot = myFSFS.createRevisionRoot(sourceRevision);
+        FSRevisionRoot srcRoot = myReporterContext.getSourceRoot(sourceRevision);
         FSEntry sourceEntry = fakeDirEntry(fullSourcePath, srcRoot);
 
         if (isValidRevision(info.getRevision()) && info.getLinkPath() == null && sourceEntry == null) {
@@ -1120,7 +1120,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         diffProplists(sourceRevision, startEmpty == true ? null : sourcePath, editPath, targetPath, null, true);
         Map sourceEntries = null;
         if (sourcePath != null && !startEmpty) {
-            FSRevisionRoot sourceRoot = myFSFS.createRevisionRoot(sourceRevision);
+            FSRevisionRoot sourceRoot = myReporterContext.getSourceRoot(sourceRevision);
             FSRevisionNode sourceNode = sourceRoot.getRevisionNode(sourcePath);
             sourceEntries = sourceNode.getDirEntries(myFSFS);//FSReader.getDirEntries(myRevNodesPool.getRevisionNode(sourceRevision, sourcePath, myReposRootDir), myReposRootDir);
         }
@@ -1184,7 +1184,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         String sourceHexDigest = null;
         FSRevisionRoot sourceRoot = null;
         if (sourcePath != null) {
-            sourceRoot = myFSFS.createRevisionRoot(sourceRevision);//FSOldRoot.createRevisionRoot(sourceRevision, sourceRootNode, myReposRootDir);
+            sourceRoot = myReporterContext.getSourceRoot(sourceRevision);//FSOldRoot.createRevisionRoot(sourceRevision, sourceRootNode, myReposRootDir);
 
             boolean changed = false;
             if (myReporterContext.isIgnoreAncestry()) {
@@ -1304,7 +1304,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         } else if (pathInfo != null && sourcePath != null) {
             sourcePath = pathInfo.getLinkPath() != null ? pathInfo.getLinkPath() : sourcePath;
             sourceRevision = pathInfo.getRevision();
-            FSRevisionRoot srcRoot = myFSFS.createRevisionRoot(sourceRevision);
+            FSRevisionRoot srcRoot = myReporterContext.getSourceRoot(sourceRevision);
             sourceEntry = fakeDirEntry(sourcePath, srcRoot);
         }
 
@@ -1462,7 +1462,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
         Map sourceProps = null;
         if (sourcePath != null) {
-            FSRevisionRoot sourceRoot = myFSFS.createRevisionRoot(sourceRevision);
+            FSRevisionRoot sourceRoot = myReporterContext.getSourceRoot(sourceRevision);
             FSRevisionNode sourceNode = sourceRoot.getRevisionNode(sourcePath);//myRevNodesPool.getRevisionNode(sourceRevision, sourcePath, myReposRootDir);
             boolean propsChanged = !FSRepositoryUtil.arePropertiesEqual(sourceNode, targetNode);
             if (!propsChanged) {
@@ -1520,6 +1520,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         private String myTargetPath;
         private boolean isSwitch;
         private FSRevisionRoot myTargetRoot;
+        private LinkedList myRootsCache;
 
         public FSReporterContext(long revision, File tmpFile, String target, String targetPath, boolean isSwitch, boolean recursive, boolean ignoreAncestry, boolean textDeltas, ISVNEditor editor) {
             myTargetRevision = revision;
@@ -1599,6 +1600,37 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 myTargetRoot = myFSFS.createRevisionRoot(myTargetRevision);//myRevNodesPool.getRootRevisionNode(myTargetRevision, myReposRootDir);
             }
             return myTargetRoot;
+        }
+        
+        private LinkedList getRootsCache(){
+            if(myRootsCache == null){
+                myRootsCache = new LinkedList();
+            }
+            return myRootsCache;
+        }
+        
+        public FSRevisionRoot getSourceRoot(long revision){
+            LinkedList cache = getRootsCache();
+            FSRevisionRoot root = null;     
+            int i = 0;
+            
+            for(;i < cache.size() && i < 10; i++){
+                root = (FSRevisionRoot)myRootsCache.get(i);
+                if(root.getRevision() == revision){
+                    break;
+                }
+                root = null;
+            }
+            
+            if(root == null){
+                if(i == 10){
+                    myRootsCache.removeLast();
+                }
+                root = myFSFS.createRevisionRoot(revision);
+                myRootsCache.addFirst(root);
+            }
+            
+            return root;
         }
     }
 
