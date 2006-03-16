@@ -52,12 +52,6 @@ public class FSRepresentationState {
         chunkIndex = index;
     }
 
-    /* Build an array of FSRepresentationState objects in 'result' giving the delta
-     * reps from firstRep to a self-compressed rep. 
-     * NOTE: result list must not be null! If it's a PLAIN text returns a rep state 
-     * we find at the end of the chain, or to null if the final delta representation 
-     * is self-compressed. 
-     */
     public static FSRepresentationState buildRepresentationList(FSRepresentation firstRep, LinkedList result, FSFS owner) throws SVNException {
         FSFile file = null;
         FSRepresentation rep = new FSRepresentation(firstRep);
@@ -72,10 +66,8 @@ public class FSRepresentationState {
                 repState.offset = repState.start;
                 repState.end = repState.start + rep.getSize();
                 if(!repArgs.isDelta){
-                    /* This is a plaintext, so just return the current repState. */
                     return repState;
                 }
-                /* We are dealing with a delta, find out what version. */
                 //byte[] buffer = new byte[4];
                 ByteBuffer buffer = ByteBuffer.allocate(4);
                 int r = file.read(buffer);

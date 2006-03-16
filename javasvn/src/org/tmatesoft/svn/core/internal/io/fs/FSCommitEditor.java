@@ -159,7 +159,7 @@ public class FSCommitEditor implements ISVNEditor {
         }
 
         makePathMutable(parentPath.getParent(), path);
-        FSWriter.deleteEntry(parentPath.getParent().getRevNode(), parentPath.getNameEntry(), txnId, myFSFS.getRepositoryRoot());
+        FSWriter.deleteEntry(parentPath.getParent().getRevNode(), parentPath.getNameEntry(), txnId, myFSFS);
         myTxnRoot.removeRevNodeFromCache(parentPath.getAbsPath());
         addChange(txnId, path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_DELETE, false, false, FSConstants.SVN_INVALID_REVNUM, null);
     }
@@ -244,7 +244,7 @@ public class FSCommitEditor implements ISVNEditor {
 
         FSRevisionNode childNode = myFSFS.getRevisionNode(newNodeId);//FSReader.getRevNodeFromID(myReposRootDir, newNodeId);
 
-        FSWriter.setEntry(parent, entryName, childNode.getId(), newRevNode.getType(), txnId, myFSFS.getRepositoryRoot());
+        FSWriter.setEntry(parent, entryName, childNode.getId(), newRevNode.getType(), txnId, myFSFS);
         return childNode;
     }
 
@@ -337,7 +337,7 @@ public class FSCommitEditor implements ISVNEditor {
             id = fromNode.getId();
         }
 
-        FSWriter.setEntry(toNode, entryName, id, fromNode.getType(), txnId, myFSFS.getRepositoryRoot());
+        FSWriter.setEntry(toNode, entryName, id, fromNode.getType(), txnId, myFSFS);
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
@@ -516,7 +516,7 @@ public class FSCommitEditor implements ISVNEditor {
             }
 
             String clonePath = parentPath.getParent().getAbsPath();
-            clone = FSWriter.cloneChild(parentPath.getParent().getRevNode(), clonePath, parentPath.getNameEntry(), copyId, txnId, isParentCopyRoot, myFSFS.getRepositoryRoot());
+            clone = FSWriter.cloneChild(parentPath.getParent().getRevNode(), clonePath, parentPath.getNameEntry(), copyId, txnId, isParentCopyRoot, myFSFS);
 
             myTxnRoot.putRevNodeToCache(parentPath.getAbsPath(), clone);
         } else {
@@ -804,9 +804,9 @@ public class FSCommitEditor implements ISVNEditor {
                  */
             } else if (targetEntry != null && ancestorEntry.getId().equals(targetEntry.getId())) {
                 if (sourceEntry != null) {
-                    FSWriter.setEntry(target, ancestorEntryName, sourceEntry.getId(), sourceEntry.getType(), txnId, myFSFS.getRepositoryRoot());
+                    FSWriter.setEntry(target, ancestorEntryName, sourceEntry.getId(), sourceEntry.getType(), txnId, myFSFS);
                 } else {
-                    FSWriter.deleteEntry(target, ancestorEntryName, txnId, myFSFS.getRepositoryRoot());
+                    FSWriter.deleteEntry(target, ancestorEntryName, txnId, myFSFS);
                 }
             } else {
                 if (sourceEntry == null || targetEntry == null) {
@@ -839,7 +839,7 @@ public class FSCommitEditor implements ISVNEditor {
             if (targetEntry != null) {
                 SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.concatToAbs(targetPath, targetEntry.getName())));
             }
-            FSWriter.setEntry(target, sourceEntry.getName(), sourceEntry.getId(), sourceEntry.getType(), txnId, myFSFS.getRepositoryRoot());
+            FSWriter.setEntry(target, sourceEntry.getName(), sourceEntry.getId(), sourceEntry.getType(), txnId, myFSFS);
         }
         long sourceCount = source.getCount();
         updateAncestry(sourceId, targetId, targetPath, sourceCount);

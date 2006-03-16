@@ -171,7 +171,7 @@ public class FSRevisionNode {
         return clone;
     }
 
-    public Map getDirContents() {
+    protected Map getDirContents() {
         return myDirContents;
     }
 

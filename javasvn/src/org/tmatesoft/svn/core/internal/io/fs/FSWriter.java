@@ -338,27 +338,26 @@ public class FSWriter {
         return newId;
     }
 
-    public static void removeRevisionNode(FSID id, File reposRootDir) throws SVNException {
-        /* Fetch the node. */
-        FSRevisionNode node = FSReader.getRevNodeFromID(reposRootDir, id);
-        /* If immutable, do nothing and return immediately. */
+    public static void removeRevisionNode(FSID id, FSFS owner) throws SVNException {
+        FSRevisionNode node = owner.getRevisionNode(id);//FSReader.getRevNodeFromID(reposRootDir, id);
+
         if (!node.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempted removal of immutable node");
             SVNErrorManager.error(err);
         }
-        /* Delete the node revision: */
-        /* Delete any mutable property representation. */
+
         if (node.getPropsRepresentation() != null && node.getPropsRepresentation().isTxn()) {
-            SVNFileUtil.deleteFile(FSRepositoryUtil.getTxnRevNodePropsFile(id, reposRootDir));
+            SVNFileUtil.deleteFile(FSRepositoryUtil.getTxnRevNodePropsFile(id, owner.getRepositoryRoot()));
         }
-        /* Delete any mutable data representation. */
+
         if (node.getTextRepresentation() != null && node.getTextRepresentation().isTxn() && node.getType() == SVNNodeKind.DIR) {
-            SVNFileUtil.deleteFile(FSRepositoryUtil.getTxnRevNodeChildrenFile(id, reposRootDir));
+            SVNFileUtil.deleteFile(FSRepositoryUtil.getTxnRevNodeChildrenFile(id, owner.getRepositoryRoot()));
         }
-        SVNFileUtil.deleteFile(FSRepositoryUtil.getTxnRevNodeFile(id, reposRootDir));
+        
+        SVNFileUtil.deleteFile(FSRepositoryUtil.getTxnRevNodeFile(id, owner.getRepositoryRoot()));
     }
 
-    public static FSRevisionNode cloneChild(FSRevisionNode parent, String parentPath, String childName, String copyId, String txnId, boolean isParentCopyRoot, File reposRootDir) throws SVNException {
+    public static FSRevisionNode cloneChild(FSRevisionNode parent, String parentPath, String childName, String copyId, String txnId, boolean isParentCopyRoot, FSFS owner) throws SVNException {
         /* First check that the parent is mutable. */
         if (!parent.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempted to clone child of non-mutable node");
@@ -371,7 +370,7 @@ public class FSWriter {
         }
         /* Find the node named childName in parent's entries list if it exists. */
         /* parent's current entry named childName */
-        FSRevisionNode childNode = FSReader.getChildDirNode(childName, parent, reposRootDir);
+        FSRevisionNode childNode = parent.getChildDirNode(childName, owner);//FSReader.getChildDirNode(childName, parent, reposRootDir);
         /* node id we'll put into new node */
         FSID newNodeId = null;
         /*
@@ -393,38 +392,35 @@ public class FSWriter {
                 childNode.setCount(childNode.getCount() + 1);
             }
             childNode.setCreatedPath(SVNPathUtil.concatToAbs(parentPath, childName));
-            newNodeId = createSuccessor(childNode.getId(), childNode, copyId, txnId, reposRootDir);
+            newNodeId = createSuccessor(childNode.getId(), childNode, copyId, txnId, owner.getRepositoryRoot());
             /*
              * Replace the id in the parent's entry list with the id which
              * refers to the mutable clone of this child.
              */
-            setEntry(parent, childName, newNodeId, childNode.getType(), txnId, reposRootDir);
+            setEntry(parent, childName, newNodeId, childNode.getType(), txnId, owner);
         }
         /* Initialize the youngster. */
-        return FSReader.getRevNodeFromID(reposRootDir, newNodeId);
+        return owner.getRevisionNode(newNodeId);//FSReader.getRevNodeFromID(reposRootDir, newNodeId);
     }
 
-    public static void setEntry(FSRevisionNode parentRevNode, String entryName, FSID entryId, SVNNodeKind kind, String txnId, File reposRootDir) throws SVNException {
-        /* Check it's a directory. */
+    public static void setEntry(FSRevisionNode parentRevNode, String entryName, FSID entryId, SVNNodeKind kind, String txnId, FSFS owner) throws SVNException {
         if (parentRevNode.getType() != SVNNodeKind.DIR) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_DIRECTORY, "Attempted to set entry in non-directory node");
             SVNErrorManager.error(err);
         }
-        /* Check it's mutable. */
+
         if (!parentRevNode.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempted to set entry in immutable node");
             SVNErrorManager.error(err);
         }
+        
         FSRepresentation textRep = parentRevNode.getTextRepresentation();
-        File childrenFile = FSRepositoryUtil.getTxnRevNodeChildrenFile(parentRevNode.getId(), reposRootDir);
+        File childrenFile = FSRepositoryUtil.getTxnRevNodeChildrenFile(parentRevNode.getId(), owner.getRepositoryRoot());
         OutputStream dst = null;
+        
         try {
             if (textRep == null || !textRep.isTxn()) {
-                /*
-                 * Before we can modify the directory, we need to dump its old
-                 * contents into a mutable representation file.
-                 */
-                Map entries = FSReader.getDirEntries(parentRevNode, reposRootDir);
+                Map entries = parentRevNode.getDirEntries(owner);//FSReader.getDirEntries(parentRevNode, reposRootDir);
                 Map unparsedEntries = FSRepositoryUtil.unparseDirEntries(entries);
                 dst = SVNFileUtil.openFileForWriting(childrenFile);
                 SVNProperties.setProperties(unparsedEntries, dst, SVNProperties.SVN_HASH_TERMINATOR);
@@ -433,20 +429,11 @@ public class FSWriter {
                 textRep.setRevision(FSConstants.SVN_INVALID_REVNUM);
                 textRep.setTxnId(txnId);
                 parentRevNode.setTextRepresentation(textRep);
-                putTxnRevisionNode(parentRevNode.getId(), parentRevNode, reposRootDir);
+                putTxnRevisionNode(parentRevNode.getId(), parentRevNode, owner.getRepositoryRoot());
             } else {
-                /*
-                 * The directory rep is already mutable, so just open it for
-                 * append.
-                 */
                 dst = SVNFileUtil.openFileForWriting(childrenFile, true);
             }
-            /* Make a note if we have this directory cached. */
             Map dirContents = parentRevNode.getDirContents();
-            /*
-             * Append an incremental hash entry for the entry change, and update
-             * the cached directory if necessary.
-             */
             if (entryId != null) {
                 SVNProperties.appendProperty(entryName, kind + " " + entryId.toString(), dst);
                 if (dirContents != null) {
@@ -463,31 +450,25 @@ public class FSWriter {
         }
     }
 
-    public static void deleteEntry(FSRevisionNode parent, String entryName, String txnId, File reposRootDir) throws SVNException {
-        /* Make sure parent is a directory. */
+    public static void deleteEntry(FSRevisionNode parent, String entryName, String txnId, FSFS owner) throws SVNException {
         if (parent.getType() != SVNNodeKind.DIR) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_DIRECTORY, "Attempted to delete entry ''{0}'' from *non*-directory node", entryName);
             SVNErrorManager.error(err);
         }
-        /* Make sure parent is mutable. */
+
         if (!parent.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempted to delete entry ''{0}'' from immutable directory node", entryName);
             SVNErrorManager.error(err);
         }
-        /* Make sure that entryName is a single path component. */
+
         if (!SVNPathUtil.isSinglePathComponent(entryName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_SINGLE_PATH_COMPONENT, "Attempted to delete a node with an illegal name ''{0}''", entryName);
             SVNErrorManager.error(err);
         }
-        /* Get a dirent hash for this directory. */
-        Map entries = FSReader.getDirEntries(parent, reposRootDir);
-        /* Find name in the entries hash. */
+
+        Map entries = parent.getDirEntries(owner);//FSReader.getDirEntries(parent, reposRootDir);
         FSEntry dirEntry = (FSEntry) entries.get(entryName);
-        /*
-         * If we never found id in entries (perhaps because there are no entries
-         * or maybe because just there's no such id in the existing entries...
-         * it doesn't matter), throw an exception.
-         */
+
         if (dirEntry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_ENTRY, "Delete failed--directory has no entry ''{0}''", entryName);
             SVNErrorManager.error(err);
@@ -499,35 +480,29 @@ public class FSWriter {
          * ...delete_if_mutable. So, that is already a check, but when it's
          * really needed.
          */
-        FSReader.getRevNodeFromID(reposRootDir, dirEntry.getId());
+        owner.getRevisionNode(dirEntry.getId());//FSReader.getRevNodeFromID(reposRootDir, dirEntry.getId());
         /* If mutable, remove it and any mutable children from fs. */
-        deleteEntryIfMutable(dirEntry.getId(), txnId, reposRootDir);
+        deleteEntryIfMutable(dirEntry.getId(), txnId, owner);
         /* Remove this entry from its parent's entries list. */
-        setEntry(parent, entryName, null, SVNNodeKind.UNKNOWN, txnId, reposRootDir);
+        setEntry(parent, entryName, null, SVNNodeKind.UNKNOWN, txnId, owner);
     }
 
-    private static void deleteEntryIfMutable(FSID id, String txnId, File reposRootDir) throws SVNException {
-        /* Get the node. */
-        FSRevisionNode node = FSReader.getRevNodeFromID(reposRootDir, id);
-        /* If immutable, do nothing and return immediately. */
+    private static void deleteEntryIfMutable(FSID id, String txnId, FSFS owner) throws SVNException {
+        FSRevisionNode node = owner.getRevisionNode(id);//FSReader.getRevNodeFromID(reposRootDir, id);
         if (!node.getId().isTxn()) {
             return;
         }
-        /* Else it's mutable. Recurse on directories... */
+
         if (node.getType() == SVNNodeKind.DIR) {
-            /* Loop over hash entries */
-            Map entries = FSReader.getDirEntries(node, reposRootDir);
+            Map entries = node.getDirEntries(owner);//FSReader.getDirEntries(node, reposRootDir);
             for (Iterator names = entries.keySet().iterator(); names.hasNext();) {
                 String name = (String) names.next();
                 FSEntry entry = (FSEntry) entries.get(name);
-                deleteEntryIfMutable(entry.getId(), txnId, reposRootDir);
+                deleteEntryIfMutable(entry.getId(), txnId, owner);
             }
         }
-        /*
-         * ... then delete the node itself, after deleting any mutable
-         * representations and strings it points to.
-         */
-        removeRevisionNode(id, reposRootDir);
+
+        removeRevisionNode(id, owner);
     }
 
     public static FSID createSuccessor(FSID oldId, FSRevisionNode newRevNode, String copyId, String txnId, File reposRootDir) throws SVNException {

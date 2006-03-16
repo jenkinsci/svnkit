@@ -313,7 +313,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
     // path is relative to this FSRepository's location
     private Collection getDirEntries(FSRevisionNode parent, SVNURL parentURL, boolean includeLogs) throws SVNException {
-        Map entries = FSReader.getDirEntries(parent, myReposRootDir);
+        Map entries = parent.getDirEntries(myFSFS);//FSReader.getDirEntries(parent, myReposRootDir);
         Set keys = entries.keySet();
         Iterator dirEntries = keys.iterator();
         Collection dirEntriesList = new LinkedList();
@@ -330,7 +330,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     private Map collectProperties(FSRevisionNode revNode) throws SVNException {
         Map properties = new HashMap();
         // first fetch out user props
-        Map versionedProps = FSReader.getProperties(revNode, myReposRootDir);
+        Map versionedProps = revNode.getProperties(myFSFS);//FSReader.getProperties(revNode, myReposRootDir);
         if (versionedProps != null && versionedProps.size() > 0) {
             properties.putAll(versionedProps);
         }
@@ -348,14 +348,14 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
 
     private SVNDirEntry buildDirEntry(FSEntry repEntry, SVNURL parentURL, FSRevisionNode entryNode, boolean includeLogs) throws SVNException {
-        entryNode = entryNode == null ? FSReader.getRevNodeFromID(myReposRootDir, repEntry.getId()) : entryNode;
+        entryNode = entryNode == null ? myFSFS.getRevisionNode(repEntry.getId()) : entryNode;
         // dir size is equated to 0
         long size = 0;
         if (entryNode.getType() == SVNNodeKind.FILE) {
             size = getFileLength(entryNode);
         }
         Map props = null;
-        props = FSReader.getProperties(entryNode, myReposRootDir);
+        props = entryNode.getProperties(myFSFS);
         boolean hasProps = (props == null || props.size() == 0) ? false : true;
         Map revProps = null;
         revProps = FSRepositoryUtil.getRevisionProperties(myReposRootDir, repEntry.getId().getRevision());
@@ -472,7 +472,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 root = myFSFS.createRevisionRoot(rev);//FSOldRoot.createRevisionRoot(rev, myRevNodesPool.getRootRevisionNode(rev, myReposRootDir), myReposRootDir);
 
                 FSRevisionNode fileNode = root.getRevisionNode(revPath);//myRevNodesPool.getRevisionNode(root.getRootRevisionNode(), revPath, myReposRootDir);
-                Map props = FSReader.getProperties(fileNode, myReposRootDir);
+                Map props = fileNode.getProperties(myFSFS);//FSReader.getProperties(fileNode, myReposRootDir);
                 Map propDiffs = FSRepositoryUtil.getPropsDiffs(props, lastProps);
                 boolean contentsChanged = false;
                 if (lastRoot != null) {
@@ -1468,7 +1468,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             if (!propsChanged) {
                 return;
             }
-            sourceProps = FSReader.getProperties(sourceNode, myReposRootDir);
+            sourceProps = sourceNode.getProperties(myFSFS);//FSReader.getProperties(sourceNode, myReposRootDir);
         } else {
             sourceProps = new HashMap();
         }

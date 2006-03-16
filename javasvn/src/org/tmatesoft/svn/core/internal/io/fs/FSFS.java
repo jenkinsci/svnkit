@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,8 +19,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 
 /**
  * @version 1.0
@@ -199,44 +196,83 @@ public class FSFS {
             
                 entries = FSReader.parsePlainRepresentation(rawEntries, true);
             } finally {
-                childrenFile.close();
+                if(childrenFile != null){
+                    childrenFile.close();
+                }
             }
             return entries;
         } else if (revNode.getTextRepresentation() != null) {
-            InputStream is = null;
+            FSRepresentation textRep = revNode.getTextRepresentation();
+            FSFile revisionFile = null;
+            
             try {
-                //TODO: review - that is, we should use FSFile instead of SVNProperties
-                is = FSInputStream.createPlainStream(revNode.getTextRepresentation(), this);
-                Map rawEntries = SVNProperties.asMap(null, is, false, SVNProperties.SVN_HASH_TERMINATOR);
+                revisionFile = openAndSeekRepresentation(textRep);
+                String repHeader = revisionFile.readLine(160);
+                
+                if(!"PLAIN".equals(repHeader)){
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
+                    SVNErrorManager.error(err);
+                }
+                
+                revisionFile.resetDigest();
+                Map rawEntries = revisionFile.readProperties(false);
+                String checksum = revisionFile.digest();
+               
+                if (!checksum.equals(textRep.getHexDigest())) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Checksum mismatch while reading representation:\n   expected:  {0}\n     actual:  {1}", new Object[]{checksum, textRep.getHexDigest()});
+                    SVNErrorManager.error(err);
+                }
+
                 return FSReader.parsePlainRepresentation(rawEntries, false);
             } finally {
-                SVNFileUtil.closeFile(is);
+                if(revisionFile != null){
+                    revisionFile.close();
+                }
             }
         }
         return new HashMap();// returns an empty map, must not be null!!
     }
 
     public Map getProperties(FSRevisionNode revNode) throws SVNException {
-        Map properties = new HashMap();
         if (revNode.getPropsRepresentation() != null && revNode.getPropsRepresentation().isTxn()) {
             FSFile propsFile = null;
             try {
                 propsFile = getTransactionRevisionNodePropertiesFile(revNode.getId());
-                properties = propsFile.readProperties(false);
+                return propsFile.readProperties(false);
             } finally {
-                propsFile.close();
+                if(propsFile != null){
+                    propsFile.close();
+                }
             }
         } else if (revNode.getPropsRepresentation() != null) {
-            InputStream is = null;
-            FSRepresentation propsRepresent = revNode.getPropsRepresentation();
+            FSRepresentation propsRep = revNode.getPropsRepresentation();
+            FSFile revisionFile = null;
+            
             try {
-                is = FSInputStream.createPlainStream(propsRepresent, this);
-                properties = SVNProperties.asMap(properties, is, false, SVNProperties.SVN_HASH_TERMINATOR);
+                revisionFile = openAndSeekRepresentation(propsRep);
+                String repHeader = revisionFile.readLine(160);
+                
+                if(!"PLAIN".equals(repHeader)){
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
+                    SVNErrorManager.error(err);
+                }
+
+                revisionFile.resetDigest();
+                Map props = revisionFile.readProperties(false);
+                String checksum = revisionFile.digest();
+
+                if (!checksum.equals(propsRep.getHexDigest())) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Checksum mismatch while reading representation:\n   expected:  {0}\n     actual:  {1}", new Object[]{checksum, propsRep.getHexDigest()});
+                    SVNErrorManager.error(err);
+                }
+                return props;
             } finally {
-                SVNFileUtil.closeFile(is);
+                if(revisionFile != null){
+                    revisionFile.close();
+                }
             }
         }
-        return properties;// no properties? return an empty map
+        return new HashMap();// no properties? return an empty map
     }
 
     protected FSFile getRevisionFile(long revision)  throws SVNException {
@@ -300,7 +336,9 @@ public class FSFS {
             file = getRevisionFile(revision);
             file.seek(offset);
         } catch (SVNException svne) {
-            file.close();
+            if(file != null){
+                file.close();
+            }
             throw svne;
         }
         return file;

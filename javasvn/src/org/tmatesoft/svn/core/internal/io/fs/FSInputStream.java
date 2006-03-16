@@ -49,7 +49,6 @@ public class FSInputStream extends InputStream {
     private long myLength;
     private long myOffset;
     
-    private FSRepresentationState mySourceState;
     private SVNDiffWindowBuilder myDiffWindowBuilder = SVNDiffWindowBuilder.newInstance();
     private MessageDigest myDigest;
     private byte[] myBuffer;
@@ -68,7 +67,7 @@ public class FSInputStream extends InputStream {
             SVNErrorManager.error(err, nsae);
         }
         try{
-            mySourceState = FSRepresentationState.buildRepresentationList(representation, myRepStateList, owner);
+            FSRepresentationState.buildRepresentationList(representation, myRepStateList, owner);
         }catch(SVNException svne){
             /* Something terrible has happened while building rep list, 
              * need to close any files still opened 
@@ -99,14 +98,6 @@ public class FSInputStream extends InputStream {
         return new FSInputStream(fileRep, owner);
     }
 
-    //to read plain text
-    public static InputStream createPlainStream(FSRepresentation representation, FSFS owner) throws SVNException {
-        if(representation == null){
-            return SVNFileUtil.DUMMY_IN; 
-        }
-        return new FSInputStream(representation, owner);
-    }
-    
     public int read(byte[] buf) throws IOException {
         try{
             int r = readContents(buf); 
@@ -154,22 +145,7 @@ public class FSInputStream extends InputStream {
     private int getContents(byte[] buffer) throws SVNException {
         int remaining = buffer.length;
         int targetPos = 0;
-        /* Special case for when there are no delta reps, only a plain
-         * text. 
-         */
-        if(myRepStateList.isEmpty()){
-            int copyLength = remaining > mySourceState.end - mySourceState.offset ? (int)(mySourceState.end - mySourceState.offset) : remaining;
-            int r = copyLength;
-            try{
-                ByteBuffer bBuffer = ByteBuffer.wrap(buffer, 0, copyLength);
-                r = mySourceState.file.read(bBuffer);
-            }catch(IOException ioe){
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-                SVNErrorManager.error(err, ioe);
-            }
-            mySourceState.offset += r;
-            return r;
-        }
+
         while(remaining > 0){
             if(myBuffer != null){
                 //copy bytes to buffer and mobe the bufPos pointer
@@ -320,13 +296,10 @@ public class FSInputStream extends InputStream {
     public void close() {
         for(Iterator states = myRepStateList.iterator(); states.hasNext();){
             FSRepresentationState state = (FSRepresentationState)states.next();
-            state.file.close();
-            //SVNFileUtil.closeFile(state.file);
+            if(state.file != null){
+                state.file.close();
+            }
             states.remove();
-        }
-        if(mySourceState != null){
-            mySourceState.file.close();
-            //SVNFileUtil.closeFile(mySourceState.file);
         }
     }
 }
