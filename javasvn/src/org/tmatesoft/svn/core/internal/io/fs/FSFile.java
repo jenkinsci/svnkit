@@ -220,7 +220,7 @@ public class FSFile {
     }
     
     public int read() throws IOException {
-        if (myChannel == null || !myBuffer.hasRemaining() || myPosition < myBufferPosition || myPosition >= myBufferPosition + myBuffer.limit()) {
+        if (myChannel == null || myPosition < myBufferPosition || myPosition >= myBufferPosition + myBuffer.limit()) {
             if (fill() <= 0) {
                 return -1;
             }
