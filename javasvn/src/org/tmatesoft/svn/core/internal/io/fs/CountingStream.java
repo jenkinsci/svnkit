@@ -19,12 +19,12 @@ import java.io.OutputStream;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class CountingWriter extends OutputStream {
+public class CountingStream extends OutputStream {
 
     private long myPosition;
     private OutputStream myWriter;
     
-    public CountingWriter(OutputStream writer, long offset) {
+    public CountingStream(OutputStream writer, long offset) {
         super();
         myPosition = offset >= 0 ? offset : 0;
         myWriter = writer;

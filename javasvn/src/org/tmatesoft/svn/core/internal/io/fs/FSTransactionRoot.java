@@ -26,7 +26,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 public class FSTransactionRoot extends FSRoot {
     private String myTxnID;
     private int myTxnFlags;
-
+    private FSTransaction myTxn;
+    private FSRevisionNode myBaseRootNode;
+    
     public FSTransactionRoot(FSFS owner, String txnID, int flags) {
         super(owner);
         myTxnID = txnID;
@@ -110,11 +112,21 @@ public class FSTransactionRoot extends FSRoot {
         return myRootRevisionNode;
     }
 
+    public FSRevisionNode getTxnBaseRootNode() throws SVNException {
+        if(myBaseRootNode == null){
+            FSTransaction txn = getTxn();
+            myBaseRootNode = getOwner().getRevisionNode(txn.getBaseID());//getRevNodeFromID(reposRootDir, txn.getBaseID());
+        }
+        return myBaseRootNode;
+    }
+
     public FSTransaction getTxn() throws SVNException {
-        FSID rootID = FSID.createTxnId("0", "0", myTxnID);
-        FSRevisionNode revNode = getOwner().getRevisionNode(rootID);
-        FSTransaction txn = new FSTransaction(revNode.getId(), revNode.getPredecessorId());
-        return txn;
+        if(myTxn == null){
+            FSID rootID = FSID.createTxnId("0", "0", myTxnID);
+            FSRevisionNode revNode = getOwner().getRevisionNode(rootID);
+            myTxn = new FSTransaction(revNode.getId(), revNode.getPredecessorId());
+        }
+        return myTxn;
     }
 
     public Map getChangedPaths() throws SVNException {

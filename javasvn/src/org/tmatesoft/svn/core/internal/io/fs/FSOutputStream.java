@@ -43,7 +43,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     private boolean isHeaderWritten;
 
     /* Actual file to which we are writing. */
-    private CountingWriter myTargetFile;
+    private CountingStream myTargetFile;
     
     /* Start of the actual data. */
     private long myDeltaStart;
@@ -82,7 +82,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     
     private boolean myIsClosed;
     
-    private FSOutputStream(FSRevisionNode revNode, CountingWriter file, InputStream source, long deltaStart, long repSize, long repOffset, File reposRootDir) throws SVNException {
+    private FSOutputStream(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, File reposRootDir) throws SVNException {
         myReposRootDir = reposRootDir;
         myTargetFile = file;
         mySourceStream = source;
@@ -130,7 +130,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
             File targetFile = FSRepositoryUtil.getTxnRevFile(txnId, reposRootDir); 
             offset = targetFile.length();
             targetOS = SVNFileUtil.openFileForWriting(targetFile, true);
-            CountingWriter revWriter = new CountingWriter(targetOS, offset);
+            CountingStream revWriter = new CountingStream(targetOS, offset);
             
             FSRepresentation baseRep = chooseDeltaBase(revNode, reposRootDir);
             sourceStream = FSInputStream.createDeltaStream(baseRep, new FSFS(reposRootDir));

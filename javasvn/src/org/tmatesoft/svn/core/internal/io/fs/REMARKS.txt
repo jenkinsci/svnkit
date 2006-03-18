@@ -1,27 +1,33 @@
 Remarks to the file:/// protocol implementation (FSRepository):
 
+*CLOSED* - are no more questions or tasks
+
 1) Pool for rev-nodes will surely optimize the methods run time 
 
-   **SOLVED**
+   *CLOSED*
 
 2) If it's true that in an FSFS repository a file may be represented with
    more than one diff window in a particular revision, it may cause a 
    trouble in getFile()? That is we'll have to keep the same source view 
    during applying those windows - now every next applying delta is 
    followed by replacing a previous source view with a previous target.
-
+   
+   *CLOSED*
+   
 3) I've noticed a problem with invoking a pre-revprop-change hook - 
    svn sucessfully manages to try an empty hook file, but in Java 
    Runtime.getRuntime().exec(cmd) failed to run an empty file - what's
    the problem? 
    
-   **SOLVED**
+   *CLOSED*
 
 4) It looks strange how delete_lock() works - why does it rewrite those
    files that haven't been changed? Why don't the svn devs make a break after 
    all interesting changes have been done? Whether there's a thing that I'm 
    not able to understand at now and there's a thing that prevents the devs 
    from breaking, or there's something they don't still know about:)
+   
+   *CLOSED*
    
 5) I've got big doubts on how the rev nodes pool is realized now. Should think
    of how to make it simplier and easier to use. The point is that now immutable
@@ -33,11 +39,13 @@ Remarks to the file:/// protocol implementation (FSRepository):
    are doing that only for txns. Maybe I should leave it as it is and maybe 
    it's not an issue at all, since it's pretty handy to have a single pool for
    reading operations. Hmm.. We'll see what we shall see.
+   
+   *CLOSED*
 ---------------------------------------------------------------------------------
-6) FSRepository.getFile() must be redone!!! It doesn't work correctly with huge |
+6) FSRepository.getFile() must be redone!!! It doesn't work correctly with huge 
    binary files (for example)!! Critical bug!
 
-   **FIXED**                                   |
+   **FIXED**                                   
 ---------------------------------------------------------------------------------
 
 8)I'm afraid that opening files with SVNFileUtil.openFileForReading(File file) is 
@@ -46,12 +54,14 @@ exception rather than returning a DUMMY IOStream.
 
 7) Another task for FSRevisionNodePool TODO: realize resorting rev nodes cache so 
    that frequently requested nodes not to be deleted when inserting a new node.
-   
+   *CLOSED*
 ************************************************************************************************
 
 We have merged it! A new Age began.... new Notes
 
 1) Replace File.getCanonicalFile() from SVNURL, openRoot(), etc.
-
+2) In FSWriteLock use UUID instead of repos root dir
+3) ideas for tests: concurrently running commits on the same 
+repository,..
 
    

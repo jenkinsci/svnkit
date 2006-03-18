@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -57,43 +58,37 @@ public class FSRepositoryUtil {
     
     public static Map getPropsDiffs(Map sourceProps, Map targetProps){
         Map result = new HashMap();
+        
         if(sourceProps == null){
-            sourceProps = new HashMap();
+            sourceProps = Collections.EMPTY_MAP;
         }
+        
         if(targetProps == null){
-            targetProps = new HashMap();
+            targetProps = Collections.EMPTY_MAP;
         }
-        /* Loop over sourceProps and examine each key.  This will allow 
-         * us to detect any `deletion' events or `set-modification' 
-         * events.  
-         */
-        Object[] names = sourceProps.keySet().toArray();
-        for(int i = 0; i < names.length; i++){
-            String propName = (String)names[i];
+
+        //Object[] names = sourceProps.keySet().toArray();
+        for(Iterator names = sourceProps.keySet().iterator(); names.hasNext();){
+            String propName = (String)names.next();
             String srcPropVal = (String)sourceProps.get(propName);
-            /* Does property name exist in targetProps? */
             String targetPropVal = (String)targetProps.get(propName);
+
             if(targetPropVal == null){
-                /* Add a delete event to the result */
                 result.put(propName, null);
             }else if(!targetPropVal.equals(srcPropVal)){
-                /* Add a set (modification) event to the result */
                 result.put(propName, targetPropVal);
             }
         }
-        /* Loop over targetProps and examine each key.  This allows us 
-         * to detect `set-creation' events 
-         */
-        names = targetProps.keySet().toArray();
-        for(int i = 0; i < names.length; i++){
-            String propName = (String)names[i];
+
+        //names = targetProps.keySet().toArray();
+        for(Iterator names = targetProps.keySet().iterator(); names.hasNext();){
+            String propName = (String)names.next();
             String targetPropVal = (String)targetProps.get(propName);
-            /* Does property name exist in sourceProps? */
             if(sourceProps.get(propName) == null){
-                /* Add a set (creation) event to the result */
                 result.put(propName, targetPropVal);
             }
         }        
+
         return result;
     }
     

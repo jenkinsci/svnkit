@@ -35,42 +35,35 @@ public class FSWriteLock {
     private RandomAccessFile myLockFile;
     private FileLock myLock;
     private int myReferencesCount = 0;
-    private String myReposRootPath; 
-    private File myReposRootDir;
+    private FSFS myFSFS; 
+    private String myUUID;
    
-    private FSWriteLock(String reposRootPath){
-        myReposRootPath = reposRootPath;
-        myReposRootDir = new File(myReposRootPath);
+    private FSWriteLock(String uuid, FSFS owner){
+        myUUID = uuid;
+        myFSFS = owner;
     }
     
-    public static synchronized FSWriteLock getWriteLock(File reposRootDir) throws SVNException {
-        String reposRootPath = null;
-        try{
-            reposRootPath = reposRootDir.getCanonicalPath();
-        }catch(IOException ioe){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
-        }
-        FSWriteLock lock = (FSWriteLock)ourThreadLocksCache.get(reposRootPath);
+    public static synchronized FSWriteLock getWriteLock(FSFS owner) throws SVNException {
+        String uuid = owner.getUUID();
+        FSWriteLock lock = (FSWriteLock)ourThreadLocksCache.get(uuid);
+
         if(lock == null){
-            lock = new FSWriteLock(reposRootPath);
-            ourThreadLocksCache.put(reposRootPath, lock);
+            lock = new FSWriteLock(uuid, owner);
+            ourThreadLocksCache.put(uuid, lock);
         }
         lock.myReferencesCount++;
         return lock;
     }
     
     public synchronized void lock() throws SVNException {
-        File writeLockFile = FSRepositoryUtil.getWriteLockFile(myReposRootDir);
+        File writeLockFile = myFSFS.getWriteLockFile();
+
         try{
-            /* svn 1.1.1 and earlier deferred lock file creation to the first
-             * commit.  So in case the repository was created by an earlier
-             * version of svn, check the lock file here. 
-             */            
             SVNFileType type = SVNFileType.getType(writeLockFile);
             if(type == SVNFileType.UNKNOWN || type == SVNFileType.NONE){
                 SVNFileUtil.createEmptyFile(writeLockFile);
             }
+
             myLockFile = new RandomAccessFile(writeLockFile, "rw");
             myLock = myLockFile.getChannel().lock();            
         }catch(IOException ioe){
@@ -85,7 +78,7 @@ public class FSWriteLock {
             return;
         }
         if((--lock.myReferencesCount) == 0){
-            ourThreadLocksCache.remove(lock);
+            ourThreadLocksCache.remove(lock.myUUID);
         }
     }
     

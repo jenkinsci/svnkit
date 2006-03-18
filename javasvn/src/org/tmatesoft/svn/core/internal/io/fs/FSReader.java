@@ -69,29 +69,6 @@ public class FSReader {
         return FSInputStream.createDeltaStream(fileNode, root.getOwner());
     }
 
-    public static ISVNInputFile openAndSeekRepresentation(FSRepresentation rep, File reposRootDir) throws SVNException {
-        if (!rep.isTxn()) {
-            return openAndSeekRevision(rep.getRevision(), rep.getOffset(), reposRootDir);
-        }
-        return openAndSeekTransaction(rep, reposRootDir);
-    }
-
-    private static ISVNInputFile openAndSeekTransaction(FSRepresentation rep, File reposRootDir) throws SVNException {
-        ISVNInputFile file = null;
-        try {
-            file = SVNFileUtil.openSVNFileForReading(FSRepositoryUtil.getTxnRevFile(rep.getTxnId(), reposRootDir));
-            file.seek(rep.getOffset());
-        } catch (IOException ioe) {
-            SVNFileUtil.closeFile(file);
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
-        } catch (SVNException svne) {
-            SVNFileUtil.closeFile(file);
-            throw svne;
-        }
-        return file;
-    }
-
     private static ISVNInputFile openAndSeekRevision(long revision, long offset, File reposRootDir) throws SVNException {
         ISVNInputFile file = null;
         try {
@@ -315,12 +292,6 @@ public class FSReader {
             return null;
         }
         return new FSEntry(id, type, name);
-    }
-
-    public static FSRevisionNode getTxnRootNode(String txnId, File reposRootDir) throws SVNException {
-        FSTransaction txn = getTxn(txnId, reposRootDir);
-        FSRevisionNode txnRootNode = getRevNodeFromID(reposRootDir, txn.getRootID());
-        return txnRootNode;
     }
 
     public static FSRevisionNode getTxnBaseRootNode(String txnId, File reposRootDir) throws SVNException {

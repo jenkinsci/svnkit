@@ -14,6 +14,8 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNLogEntryPath;
+
 
 
 /**
@@ -31,18 +33,16 @@ public class FSPathChangeKind {
     public static final String ACTION_RESET = "reset";
 
     /* default value */
-    public static final FSPathChangeKind FS_PATH_CHANGE_MODIFY = new FSPathChangeKind(0, ACTION_MODIFY); 
+    public static final FSPathChangeKind FS_PATH_CHANGE_MODIFY = new FSPathChangeKind(ACTION_MODIFY); 
     /* path added in txn */
-    public static final FSPathChangeKind FS_PATH_CHANGE_ADD = new FSPathChangeKind(1, ACTION_ADD); 
+    public static final FSPathChangeKind FS_PATH_CHANGE_ADD = new FSPathChangeKind(ACTION_ADD); 
     /* path removed in txn */
-    public static final FSPathChangeKind FS_PATH_CHANGE_DELETE = new FSPathChangeKind(2, ACTION_DELETE); 
+    public static final FSPathChangeKind FS_PATH_CHANGE_DELETE = new FSPathChangeKind(ACTION_DELETE); 
     /* path removed and re-added in txn */
-    public static final FSPathChangeKind FS_PATH_CHANGE_REPLACE = new FSPathChangeKind(3, ACTION_REPLACE); 
+    public static final FSPathChangeKind FS_PATH_CHANGE_REPLACE = new FSPathChangeKind(ACTION_REPLACE); 
     /* ignore all previous change items for path (internal-use only) */
-    public static final FSPathChangeKind FS_PATH_CHANGE_RESET = new FSPathChangeKind(4, ACTION_RESET); 
+    public static final FSPathChangeKind FS_PATH_CHANGE_RESET = new FSPathChangeKind(ACTION_RESET);
 
-    private int myID;
-    
     private String myName;
 
     private static final Map ACTIONS_TO_CHANGE_KINDS = new HashMap();
@@ -55,8 +55,7 @@ public class FSPathChangeKind {
         ACTIONS_TO_CHANGE_KINDS.put(ACTION_RESET, FSPathChangeKind.FS_PATH_CHANGE_RESET);
     }
 
-    private FSPathChangeKind(int id, String name) {
-        myID = id;
+    private FSPathChangeKind(String name) {
         myName = name;
     }
 
@@ -64,15 +63,20 @@ public class FSPathChangeKind {
         return myName;
     }
     
-    public int compareTo(Object o) {
-        if (o == null || o.getClass() != FSPathChangeKind.class) {
-            return -1;
-        }
-        int otherID = ((FSPathChangeKind) o).myID;
-        return myID > otherID ? 1 : myID < otherID ? -1 : 0;
-    }
-    
     public static FSPathChangeKind fromString(String changeKindStr){
         return (FSPathChangeKind)ACTIONS_TO_CHANGE_KINDS.get(changeKindStr);
     }
+    
+    public static char getType(FSPathChangeKind kind){
+        if(kind == FSPathChangeKind.FS_PATH_CHANGE_ADD){
+            return SVNLogEntryPath.TYPE_ADDED;
+        }else if(kind == FSPathChangeKind.FS_PATH_CHANGE_DELETE){
+            return SVNLogEntryPath.TYPE_DELETED;
+        }else if(kind == FSPathChangeKind.FS_PATH_CHANGE_MODIFY){
+            return SVNLogEntryPath.TYPE_MODIFIED;
+        }
+
+        return SVNLogEntryPath.TYPE_REPLACED;
+    }
+
 }

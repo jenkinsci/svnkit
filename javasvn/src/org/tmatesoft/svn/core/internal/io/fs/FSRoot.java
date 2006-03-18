@@ -20,11 +20,9 @@ import java.util.TreeMap;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
 
 /**
  * @version 1.0
@@ -32,7 +30,6 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
  */
 public abstract class FSRoot {
 
-    private Map myCopyfromCache;
     private RevisionCache myRevNodesCache;
     private FSFS myFSFS;
 
@@ -46,13 +43,6 @@ public abstract class FSRoot {
         return myFSFS;
     }
 
-    public Map getCopyfromCache() {
-        if (myCopyfromCache == null) {
-            myCopyfromCache = new HashMap();
-        }
-        return myCopyfromCache;
-    }
-    
     public FSRevisionNode getRevisionNode(String path) throws SVNException{
         String canonPath = SVNPathUtil.canonicalizeAbsPath(path);
         FSRevisionNode node = fetchRevNodeFromCache(canonPath);
@@ -177,89 +167,90 @@ public abstract class FSRoot {
         return (FSRevisionNode) myRevNodesCache.fetch(path);
     }
 
-    private void foldChange(Map mapChanges, FSChange change) throws SVNException {
+    private void foldChange(Map mapChanges, FSPathChange change) throws SVNException {
         if (change == null) {
             return;
         }
         mapChanges = mapChanges != null ? mapChanges : new HashMap();
-        Map mapCopyfrom = getCopyfromCache();
         FSPathChange newChange = null;
-        SVNLocationEntry copyfromEntry = null;
-        String path = null;
+        String copyfromPath = null;
+        long copyfromRevision = FSConstants.SVN_INVALID_REVNUM;
 
         FSPathChange oldChange = (FSPathChange) mapChanges.get(change.getPath());
         if (oldChange != null) {
-            copyfromEntry = (SVNLocationEntry) mapCopyfrom.get(change.getPath());
-            path = change.getPath();
-            if ((change.getNodeRevID() == null) && (FSPathChangeKind.FS_PATH_CHANGE_RESET != change.getKind())) {
+            copyfromPath = oldChange.getCopyPath();
+            copyfromRevision = oldChange.getCopyRevision();
+            
+            if ((change.getRevNodeId() == null) && (FSPathChangeKind.FS_PATH_CHANGE_RESET != change.getChangeKind())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing required node revision ID");
                 SVNErrorManager.error(err);
             }
-            if ((change.getNodeRevID() != null) && (!oldChange.getRevNodeId().equals(change.getNodeRevID())) && (oldChange.getChangeKind() != FSPathChangeKind.FS_PATH_CHANGE_DELETE)) {
+            if ((change.getRevNodeId() != null) && (!oldChange.getRevNodeId().equals(change.getRevNodeId())) && (oldChange.getChangeKind() != FSPathChangeKind.FS_PATH_CHANGE_DELETE)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change ordering: new node revision ID without delete");
                 SVNErrorManager.error(err);
             }
             if (FSPathChangeKind.FS_PATH_CHANGE_DELETE == oldChange.getChangeKind()
-                    && !(FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getKind() || FSPathChangeKind.FS_PATH_CHANGE_RESET == change.getKind() || FSPathChangeKind.FS_PATH_CHANGE_ADD == change
-                            .getKind())) {
+                    && !(FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getChangeKind() || FSPathChangeKind.FS_PATH_CHANGE_RESET == change.getChangeKind() || FSPathChangeKind.FS_PATH_CHANGE_ADD == change
+                            .getChangeKind())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change ordering: non-add change on deleted path");
                 SVNErrorManager.error(err);
             }
-            if (FSPathChangeKind.FS_PATH_CHANGE_MODIFY == change.getKind()) {
-                if (change.getTextModification()) {
+            if (FSPathChangeKind.FS_PATH_CHANGE_MODIFY == change.getChangeKind()) {
+                if (change.isTextModified()) {
                     oldChange.setTextModified(true);
                 }
-                if (change.getPropModification()) {
+                if (change.arePropertiesModified()) {
                     oldChange.setPropertiesModified(true);
                 }
-            } else if (FSPathChangeKind.FS_PATH_CHANGE_ADD == change.getKind() || FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getKind()) {
+            } else if (FSPathChangeKind.FS_PATH_CHANGE_ADD == change.getChangeKind() || FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getChangeKind()) {
                 oldChange.setChangeKind(FSPathChangeKind.FS_PATH_CHANGE_REPLACE);
-                oldChange.setRevNodeId(change.getNodeRevID().copy());
-                oldChange.setTextModified(change.getTextModification());
-                oldChange.setPropertiesModified(change.getPropModification());
-                if (change.getCopyfromEntry() == null) {
-                    copyfromEntry = null;
-                } else {
-                    copyfromEntry = new SVNLocationEntry(change.getCopyfromEntry().getRevision(), change.getCopyfromEntry().getPath());
+                oldChange.setRevNodeId(change.getRevNodeId());
+                oldChange.setTextModified(change.isTextModified());
+                oldChange.setPropertiesModified(change.arePropertiesModified());
+                if (change.getCopyPath() != null) {
+                    copyfromPath = change.getCopyPath();
+                    copyfromRevision = change.getCopyRevision();
                 }
-            } else if (FSPathChangeKind.FS_PATH_CHANGE_DELETE == change.getKind()) {
+            } else if (FSPathChangeKind.FS_PATH_CHANGE_DELETE == change.getChangeKind()) {
                 if (FSPathChangeKind.FS_PATH_CHANGE_ADD == oldChange.getChangeKind()) {
                     oldChange = null;
                     mapChanges.remove(change.getPath());
                 } else {
                     oldChange.setChangeKind(FSPathChangeKind.FS_PATH_CHANGE_DELETE);
-                    oldChange.setPropertiesModified(change.getPropModification());
-                    oldChange.setTextModified(change.getTextModification());
+                    oldChange.setPropertiesModified(change.arePropertiesModified());
+                    oldChange.setTextModified(change.isTextModified());
                 }
-                copyfromEntry = null;
-                mapCopyfrom.remove(change.getPath());
-            } else if (FSPathChangeKind.FS_PATH_CHANGE_RESET == change.getKind()) {
+                
+                copyfromPath = null;
+                copyfromRevision = FSConstants.SVN_INVALID_REVNUM;
+
+            } else if (FSPathChangeKind.FS_PATH_CHANGE_RESET == change.getChangeKind()) {
                 oldChange = null;
-                copyfromEntry = null;
+                copyfromPath = null;
+                copyfromRevision = FSConstants.SVN_INVALID_REVNUM;
                 mapChanges.remove(change.getPath());
-                mapCopyfrom.remove(change.getPath());
             }
+            
             newChange = oldChange;
         } else {
-            newChange = new FSPathChange(change.getNodeRevID().copy(), change.getKind(), change.getTextModification(), change.getPropModification());
-            copyfromEntry = new SVNLocationEntry(change.getCopyfromEntry().getRevision(), change.getCopyfromEntry().getPath());
-            path = change.getPath();
+            copyfromPath = change.getCopyPath();
+            copyfromRevision = change.getCopyRevision();
+            newChange = change;
         }
-        mapChanges.put(path, newChange);
-
-        if (copyfromEntry == null) {
-            mapCopyfrom.remove(path);
-        } else {
-            mapCopyfrom.put(path, copyfromEntry);
+        
+        if(newChange != null){
+            newChange.setCopyPath(copyfromPath);
+            newChange.setCopyRevision(copyfromRevision);
+            mapChanges.put(change.getPath(), newChange);
         }
     }
 
     protected Map fetchAllChanges(FSFile changesFile, boolean prefolded) throws SVNException {
         Map changedPaths = new HashMap();
-        FSChange change = readChange(changesFile);
+        FSPathChange change = readChange(changesFile);
         while (change != null) {
             foldChange(changedPaths, change);
-            if ((FSPathChangeKind.FS_PATH_CHANGE_DELETE == change.getKind() || FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getKind()) && !prefolded) {
+            if ((FSPathChangeKind.FS_PATH_CHANGE_DELETE == change.getChangeKind() || FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getChangeKind()) && !prefolded) {
                 for (Iterator curIter = changedPaths.keySet().iterator(); curIter.hasNext();) {
                     String hashKeyPath = (String) curIter.next();
                     if (change.getPath().equals(hashKeyPath)) {
@@ -281,40 +272,17 @@ public abstract class FSRoot {
             return changes;
         }
 
-        Map changedPaths = new HashMap();
-
         for (Iterator paths = changes.keySet().iterator(); paths.hasNext();) {
             String changedPath = (String) paths.next();
             FSPathChange change = (FSPathChange) changes.get(changedPath);
             if (change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_RESET) {
-                continue;
+                paths.remove();
             }
-            char action = change.getChangeKind().toString().toUpperCase().charAt(0);
-            long copyfromRevision = FSConstants.SVN_INVALID_REVNUM;
-            String copyfromPath = null;
-            if (change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_ADD || change.getChangeKind() == FSPathChangeKind.FS_PATH_CHANGE_REPLACE) {
-                SVNLocationEntry copyfromEntry = getCopyFromOrigin(changedPath);
-                if (copyfromEntry.getPath() != null && FSRepository.isValidRevision(copyfromEntry.getRevision())) {
-                    copyfromPath = copyfromEntry.getPath();
-                    copyfromRevision = copyfromEntry.getRevision();
-                }
-            }
-            changedPaths.put(changedPath, new SVNLogEntryPath(changedPath, action, copyfromPath, copyfromRevision));
         }
-        return changedPaths;
+        return changes;
     }
 
-    public SVNLocationEntry getCopyFromOrigin(String path) throws SVNException {
-        Map copyfromCache = getCopyfromCache();
-        SVNLocationEntry location = (SVNLocationEntry)copyfromCache.get(path);
-        if(location == null){
-            FSRevisionNode node = getRevisionNode(path);
-            return new SVNLocationEntry(node.getCopyFromRevision(), node.getCopyFromPath());
-        }
-        return location;
-    }
-
-    private FSChange readChange(FSFile raReader) throws SVNException {
+    private FSPathChange readChange(FSFile raReader) throws SVNException {
         String changeLine = null;
         try {
             changeLine = raReader.readLine(4096);
@@ -328,7 +296,7 @@ public abstract class FSRoot {
             return null;
         }
         String copyfromLine = raReader.readLine(4096);
-        return FSChange.fromString(changeLine, copyfromLine);
+        return FSPathChange.fromString(changeLine, copyfromLine);
     }
     
     private static final class RevisionCache {

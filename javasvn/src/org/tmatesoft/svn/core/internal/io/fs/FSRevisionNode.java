@@ -151,9 +151,9 @@ public class FSRevisionNode {
     
     public static FSRevisionNode dumpRevisionNode(FSRevisionNode revNode){
         FSRevisionNode clone = new FSRevisionNode();
-        clone.setId(revNode.getId().copy());
+        clone.setId(revNode.getId());
         if(revNode.getPredecessorId() != null){
-            clone.setPredecessorId(revNode.getPredecessorId().copy());
+            clone.setPredecessorId(revNode.getPredecessorId());
         }
         clone.setType(revNode.getType());
         clone.setCopyFromPath(revNode.getCopyFromPath());

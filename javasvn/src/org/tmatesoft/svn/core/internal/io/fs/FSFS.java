@@ -37,6 +37,7 @@ public class FSFS {
     private File myRevisionPropertiesRoot;
     private File myTransactionsRoot;
     private File myDBRoot;
+    private File myWriteLockFile;
 
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
@@ -44,6 +45,7 @@ public class FSFS {
         myRevisionsRoot = new File(myDBRoot, "revs");
         myRevisionPropertiesRoot = new File(myDBRoot, "revprops");
         myTransactionsRoot = new File(myDBRoot, "transactions");
+        myWriteLockFile = new File(myDBRoot, "write-lock");
     }
     
     public void open() throws SVNException {
@@ -90,17 +92,26 @@ public class FSFS {
             SVNErrorManager.error(err);
         }
         
-        // uuid
-        formatFile = new FSFile(new File(myDBRoot, "uuid"));
-        try {
-            myUUID = formatFile.readLine(38);
-        } finally {
-            formatFile.close();
-        }
     }
     
-    public String getUUID() {
+    public String getUUID() throws SVNException {
+        if(myUUID == null){
+            // uuid
+            FSFile formatFile = new FSFile(new File(myDBRoot, "uuid"));
+            try {
+                myUUID = formatFile.readLine(38);
+            } finally {
+                if(formatFile != null){
+                    formatFile.close();
+                }
+            }
+        }
+
         return myUUID;
+    }
+    
+    public File getWriteLockFile() {
+        return myWriteLockFile;
     }
     
     public long getYoungestRevision() throws SVNException {

@@ -36,7 +36,6 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 
 /**
@@ -302,12 +301,14 @@ public class FSCommitEditor implements ISVNEditor {
         OutputStream changesFile = null;
         try {
             changesFile = SVNFileUtil.openFileForWriting(FSRepositoryUtil.getTxnChangesFile(txnId, myFSFS.getRepositoryRoot()), true);
-            SVNLocationEntry copyfromEntry = null;
+            
+            /*SVNLocationEntry copyfromEntry = null;
             if (FSRepository.isValidRevision(copyFromRevision)) {
                 copyfromEntry = new SVNLocationEntry(copyFromRevision, copyFromPath);
-            }
-            FSPathChange pathChange = new FSPathChange(id, changeKind, textModified, propsModified);
-            FSWriter.writeChangeEntry(changesFile, path, pathChange, copyfromEntry);
+            }*/
+            
+            FSPathChange pathChange = new FSPathChange(path, id, changeKind, textModified, propsModified, copyFromPath, copyFromRevision);
+            FSWriter.writeChangeEntry(changesFile, pathChange);
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
@@ -323,7 +324,7 @@ public class FSCommitEditor implements ISVNEditor {
             FSRevisionNode toRevNode = FSRevisionNode.dumpRevisionNode(fromNode);
             String copyId = reserveCopyId(txnId);
 
-            toRevNode.setPredecessorId(srcId.copy());
+            toRevNode.setPredecessorId(srcId);
             if (toRevNode.getCount() != -1) {
                 toRevNode.setCount(toRevNode.getCount() + 1);
             }
@@ -604,7 +605,7 @@ public class FSCommitEditor implements ISVNEditor {
                 String absPath = !path.startsWith("/") ? SVNPathUtil.concatToAbs(myBasePath, path) : path;
 
                 try {
-                    FSWriter.unlockPath(absPath, token, myAuthor, false, myFSFS.getRepositoryRoot());
+                    FSWriter.unlockPath(absPath, token, myAuthor, false, myFSFS);
                 } catch (SVNException svne) {
                     // ignore exceptions
                 }
@@ -638,7 +639,7 @@ public class FSCommitEditor implements ISVNEditor {
             
             myTxn.setBaseRevision(youngishRev);
 
-            FSWriteLock writeLock = FSWriteLock.getWriteLock(myFSFS.getRepositoryRoot());
+            FSWriteLock writeLock = FSWriteLock.getWriteLock(myFSFS);
             synchronized (writeLock) {// multi-threaded synchronization within
                                       // the JVM
                 try {
@@ -686,7 +687,7 @@ public class FSCommitEditor implements ISVNEditor {
             protoFileOS = SVNFileUtil.openFileForWriting(revisionPrototypeFile, true);
             FSID rootId = FSID.createTxnId("0", "0", myTxn.getTxnId());
             
-            CountingWriter revWriter = new CountingWriter(protoFileOS, offset);
+            CountingStream revWriter = new CountingStream(protoFileOS, offset);
             newRootId = FSWriter.writeFinalRevision(newRootId, revWriter, newRevision, rootId, startNodeId, startCopyId, myFSFS);
             long changedPathOffset = FSWriter.writeFinalChangedPathInfo(revWriter, myTxnRoot, myFSFS.getRepositoryRoot());
             /* Write the final line. */
@@ -754,10 +755,12 @@ public class FSCommitEditor implements ISVNEditor {
 
     private void mergeChanges(FSRevisionNode ancestorNode, FSRevisionNode sourceNode) throws SVNException {
         String txnId = myTxn.getTxnId();
-        FSRevisionNode txnRootNode = FSReader.getTxnRootNode(txnId, myFSFS.getRepositoryRoot());
+        FSRevisionNode txnRootNode = myTxnRoot.getRootRevisionNode();
+        
         if (ancestorNode == null) {
-            ancestorNode = FSReader.getTxnBaseRootNode(txnId, myFSFS.getRepositoryRoot());
+            ancestorNode = myTxnRoot.getTxnBaseRootNode();//FSReader.getTxnBaseRootNode(txnId, myFSFS.getRepositoryRoot());
         }
+
         if (txnRootNode.getId().equals(ancestorNode.getId())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: no changes in transaction to commit");
             SVNErrorManager.error(err);

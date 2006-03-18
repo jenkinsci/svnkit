@@ -133,7 +133,6 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
 
     void closeRepository() {
-        // myRevNodesPool.clearAllCaches();//not sure if this should be commented
         unlock();
     }
 
@@ -742,13 +741,19 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                     locationEntries.add(new SVNLocationEntry(locationRevs[count], path));
                     ++count;
                 }
-                SVNLocationEntry sEntry = croot.getCopyFromOrigin(cpath);
-                while ((count < revisions.length) && locationRevs[count] > sEntry.getRevision()) {
+
+                FSRevisionNode copyfromNode = croot.getRevisionNode(path);
+                String copyfromPath = copyfromNode.getCopyFromPath();
+                long copyfromRevision = copyfromNode.getCopyFromRevision();
+
+                //SVNLocationEntry sEntry = croot.getCopyFromOrigin(cpath);
+                while ((count < revisions.length) && locationRevs[count] > copyfromRevision) {
                     ++count;
                 }
+                
                 String remainder = path.equals(cpath) ? "" : SVNPathUtil.pathIsChild(cpath, path);
-                path = SVNPathUtil.concatToAbs(sEntry.getPath(), remainder);
-                revision = sEntry.getRevision();
+                path = SVNPathUtil.concatToAbs(copyfromPath, remainder);
+                revision = copyfromRevision;
             }
             
             root = myFSFS.createRevisionRoot(revision);
@@ -972,7 +977,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 String reposPath = getRepositoryPath(path);
                 SVNErrorMessage error = null;
                 try {
-                    FSWriter.unlockPath(reposPath, token, getUserName(), force, myReposRootDir);
+                    FSWriter.unlockPath(reposPath, token, getUserName(), force, myFSFS);
                 } catch (SVNException svne) {
                     error = svne.getErrorMessage();
                     if (!FSErrors.isUnlockError(error)) {
@@ -1616,6 +1621,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             for(;i < cache.size() && i < 10; i++){
                 root = (FSRevisionRoot)myRootsCache.get(i);
                 if(root.getRevision() == revision){
+                    if(i != 0){
+                        myRootsCache.remove(i);
+                        myRootsCache.addFirst(root);
+                    }
                     break;
                 }
                 root = null;

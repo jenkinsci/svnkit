@@ -114,7 +114,7 @@ public class FSFile {
             myReadLineBuffer.flip();
             return myDecoder.decode(myReadLineBuffer).toString();
         } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t read length line from file {0}", getFile());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t read length line from file {0}: {1}", new Object[]{getFile(), e.getLocalizedMessage()});
             SVNErrorManager.error(err, e);
         }
         return null;

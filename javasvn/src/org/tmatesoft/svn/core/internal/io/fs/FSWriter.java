@@ -35,7 +35,6 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
 
 /**
  * @version 1.0
@@ -43,32 +42,27 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
  */
 public class FSWriter {
 
-    public static void unlockPath(String path, String token, String username, boolean breakLock, File reposRootDir) throws SVNException {
-        /*
-         * Setup an array of paths in anticipation of the ra layers handling
-         * multiple locks in one request (1.3 most likely). This is only used by
-         * FSHooks.runPost[Unl/L]ockHook().
-         */
+    public static void unlockPath(String path, String token, String username, boolean breakLock, FSFS owner) throws SVNException {
         String[] paths = {
             path
         };
+
         if (!breakLock && username == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "Cannot unlock path ''{0}'', no authenticated username available", path);
             SVNErrorManager.error(err);
         }
+        
         path = SVNPathUtil.canonicalizeAbsPath(path);
-        /*
-         * Run pre-unlock hook. This could throw error, preventing unlock() from
-         * happening.
-         */
-        FSHooks.runPreUnlockHook(reposRootDir, path, username);
-        /* Unlock. */
-        FSWriteLock writeLock = FSWriteLock.getWriteLock(reposRootDir);
+
+        FSHooks.runPreUnlockHook(owner.getRepositoryRoot(), path, username);
+
+        FSWriteLock writeLock = FSWriteLock.getWriteLock(owner);
+        
         synchronized (writeLock) {// multi-threaded synchronization within the
                                     // JVM
             try {
                 writeLock.lock();// multi-processed synchronization
-                unlock(path, token, username, breakLock, reposRootDir);
+                unlock(path, token, username, breakLock, owner.getRepositoryRoot());
             } finally {
                 writeLock.unlock();
                 FSWriteLock.realease(writeLock);// release the lock
@@ -76,7 +70,7 @@ public class FSWriter {
         }
         /* Run post-unlock hook. */
         try {
-            FSHooks.runPostUnlockHook(reposRootDir, paths, username);
+            FSHooks.runPostUnlockHook(owner.getRepositoryRoot(), paths, username);
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_UNLOCK_HOOK_FAILED, "Unlock succeeded, but post-unlock hook failed");
             err.setChildErrorMessage(svne.getErrorMessage());
@@ -99,7 +93,7 @@ public class FSWriter {
         FSHooks.runPreLockHook(owner.getRepositoryRoot(), path, username);
         SVNLock lock = null;
         
-        FSWriteLock writeLock = FSWriteLock.getWriteLock(owner.getRepositoryRoot());
+        FSWriteLock writeLock = FSWriteLock.getWriteLock(owner);
 
         synchronized (writeLock) {
             try {
@@ -141,7 +135,6 @@ public class FSWriter {
         if (FSRepository.isValidRevision(currentRevision)) {
             FSRevisionNode node = root.getRevisionNode(path);//revNodesPool.getRevisionNode(rootNode, path, reposRootDir);
             long createdRev = node.getId().getRevision();
-            // TODO: I don't understand this check for invalidness...
             if (FSRepository.isInvalidRevision(createdRev)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, "Path ''{0}'' doesn't exist in HEAD revision", path);
                 SVNErrorManager.error(err);
@@ -223,10 +216,9 @@ public class FSWriter {
         SVNFileUtil.rename(tmpCurrentFile, currentFile);
     }
 
-    public static long writeFinalChangedPathInfo(final CountingWriter protoFile, FSRoot txnRoot, File reposRootDir) throws SVNException, IOException {
+    public static long writeFinalChangedPathInfo(final CountingStream protoFile, FSRoot txnRoot, File reposRootDir) throws SVNException, IOException {
         long offset = protoFile.getPosition();
         Map changedPaths = txnRoot.getChangedPaths();
-        Map copyfromCache = txnRoot.getCopyfromCache();
 
         for (Iterator paths = changedPaths.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
@@ -238,13 +230,12 @@ public class FSWriter {
                 change.setRevNodeId(revNode.getId());
             }
 
-            SVNLocationEntry copyfromEntry = (SVNLocationEntry) copyfromCache.get(path);
-            writeChangeEntry(protoFile, path, change, copyfromEntry);
+            writeChangeEntry(protoFile, change);
         }
         return offset;
     }
 
-    public static FSID writeFinalRevision(FSID newId, final CountingWriter protoFile, long revision, FSID id, String startNodeId, String startCopyId, FSFS owner) throws SVNException,
+    public static FSID writeFinalRevision(FSID newId, final CountingStream protoFile, long revision, FSID id, String startNodeId, String startCopyId, FSFS owner) throws SVNException,
             IOException {
         newId = null;
         
@@ -259,7 +250,7 @@ public class FSWriter {
                 FSEntry dirEntry = (FSEntry) entries.next();
                 newId = writeFinalRevision(newId, protoFile, revision, dirEntry.getId(), startNodeId, startCopyId, owner);
                 if (newId != null && newId.getRevision() == revision) {
-                    dirEntry.setId(newId.copy());
+                    dirEntry.setId(newId);
                 }
             }
             if (revNode.getTextRepresentation() != null && revNode.getTextRepresentation().isTxn()) {
@@ -437,7 +428,7 @@ public class FSWriter {
             if (entryId != null) {
                 SVNProperties.appendProperty(entryName, kind + " " + entryId.toString(), dst);
                 if (dirContents != null) {
-                    dirContents.put(entryName, new FSEntry(entryId.copy(), kind, entryName));
+                    dirContents.put(entryName, new FSEntry(entryId, kind, entryName));
                 }
             } else {
                 SVNProperties.appendPropertyDeleted(entryName, dst);
@@ -611,7 +602,7 @@ public class FSWriter {
         revNodeFile.write("\n".getBytes());
     }
 
-    public static void writeChangeEntry(OutputStream changesFile, String path, FSPathChange pathChange, SVNLocationEntry copyfromEntry) throws SVNException, IOException {
+    public static void writeChangeEntry(OutputStream changesFile, FSPathChange pathChange) throws SVNException, IOException {
         FSPathChangeKind changeKind = pathChange.getChangeKind();
         if (!(changeKind == FSPathChangeKind.FS_PATH_CHANGE_ADD || changeKind == FSPathChangeKind.FS_PATH_CHANGE_DELETE || changeKind == FSPathChangeKind.FS_PATH_CHANGE_MODIFY
                 || changeKind == FSPathChangeKind.FS_PATH_CHANGE_REPLACE || changeKind == FSPathChangeKind.FS_PATH_CHANGE_RESET)) {
@@ -625,10 +616,15 @@ public class FSWriter {
         } else {
             idString = FSPathChangeKind.ACTION_RESET;
         }
-        String output = idString + " " + changeString + " " + SVNProperty.toString(pathChange.isTextModified()) + " " + SVNProperty.toString(pathChange.arePropertiesModified()) + " " + path + "\n";
+        
+        String output = idString + " " + changeString + " " + SVNProperty.toString(pathChange.isTextModified()) + " " + SVNProperty.toString(pathChange.arePropertiesModified()) + " " + pathChange.getPath() + "\n";
         changesFile.write(output.getBytes());
-        if (copyfromEntry != null && copyfromEntry.getPath() != null && copyfromEntry.getRevision() != FSConstants.SVN_INVALID_REVNUM) {
-            String copyfromLine = copyfromEntry.getRevision() + " " + copyfromEntry.getPath();
+        
+        String copyfromPath = pathChange.getCopyPath();
+        long copyfromRevision = pathChange.getCopyRevision();
+        
+        if (copyfromPath != null && copyfromRevision != FSConstants.SVN_INVALID_REVNUM) {
+            String copyfromLine = copyfromRevision + " " + copyfromPath;
             changesFile.write(copyfromLine.getBytes());
         }
         changesFile.write("\n".getBytes());
