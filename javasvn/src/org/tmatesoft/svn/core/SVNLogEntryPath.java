@@ -119,6 +119,18 @@ public class SVNLogEntryPath {
     	myPath = path;
     }
 
+    protected void setChangeType(char type){
+        myType = type;
+    }
+    
+    protected void setCopyRevision(long revision) {
+        myCopyRevision = revision;
+    }
+    
+    protected void setCopyPath(String path) {
+        myCopyPath = path;
+    }
+
     public int hashCode() {
         final int PRIME = 31;
         int result = 1;
