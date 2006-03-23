@@ -22,20 +22,20 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
  */
 public class FSErrors {
     
-    public static SVNErrorMessage errorDanglingId(FSID id, File reposRootDir) {
-        File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
+    public static SVNErrorMessage errorDanglingId(FSID id, FSFS owner) {
+        File fsDir = owner.getDBRoot();
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ID_NOT_FOUND, "Reference to non-existent node ''{0}'' in filesystem ''{1}''", new Object[]{id, fsDir});
         return err;
     }
     
-    public static SVNErrorMessage errorTxnNotMutable(String txnId, File reposRootDir) {
-        File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
+    public static SVNErrorMessage errorTxnNotMutable(String txnId, FSFS owner) {
+        File fsDir = owner.getDBRoot();
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_TRANSACTION_NOT_MUTABLE, "Cannot modify transaction named ''{0}'' in filesystem ''{1}''", new Object[]{txnId, fsDir});
         return err;
     }
 
-    public static SVNErrorMessage errorNotMutable(long revision, String path, File reposRootDir) {
-        File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
+    public static SVNErrorMessage errorNotMutable(long revision, String path, FSFS owner) {
+        File fsDir = owner.getDBRoot();
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "File is not mutable: filesystem ''{0}'', revision {1,number,integer}, path ''{2}''", new Object[]{fsDir, new Long(revision), path});
         return err;
     }
@@ -52,14 +52,14 @@ public class FSErrors {
         return err;
     }
     
-    public static SVNErrorMessage errorNotDirectory(String path, File reposRootDir) {
-        File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
+    public static SVNErrorMessage errorNotDirectory(String path, FSFS owner) {
+        File fsDir = owner.getDBRoot();
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_DIRECTORY, "''{0}'' is not a directory in filesystem ''{1}''", new Object[]{path, fsDir});
         return err;
     }
     
-    public static SVNErrorMessage errorCorruptLockFile(String path, File reposRootDir) {
-        File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
+    public static SVNErrorMessage errorCorruptLockFile(String path, FSFS owner) {
+        File fsDir = owner.getDBRoot();
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupt lockfile for path ''{0}'' in filesystem ''{1}''", new Object[]{path, fsDir});
         return err;
     }
@@ -69,8 +69,8 @@ public class FSErrors {
         return err;
     }
     
-    public static SVNErrorMessage errorAlreadyExists(FSRoot root, String path, File reposRootDir) {
-        File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
+    public static SVNErrorMessage errorAlreadyExists(FSRoot root, String path, FSFS owner) {
+        File fsDir = owner.getDBRoot();
         SVNErrorMessage err = null;
         if(root instanceof FSTransactionRoot){
             FSTransactionRoot txnRoot = (FSTransactionRoot)root;
@@ -92,49 +92,42 @@ public class FSErrors {
         return err;
     }
     
-    public static SVNErrorMessage errorNoSuchLock(String path, File reposRootDir){
-        File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
+    public static SVNErrorMessage errorNoSuchLock(String path, FSFS owner){
+        File fsDir = owner.getDBRoot();
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_LOCK, "No lock on path ''{0}'' in filesystem ''{1}''", new Object[]{path, fsDir});
         return err;
     }
     
-    public static SVNErrorMessage errorLockExpired(String lockToken, File reposRootDir){
-        File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
+    public static SVNErrorMessage errorLockExpired(String lockToken, FSFS owner){
+        File fsDir = owner.getDBRoot();
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_LOCK_EXPIRED, "Lock has expired:  lock-token ''{0}'' in filesystem ''{1}''", new Object[]{lockToken, fsDir});
         return err;
     }
     
-    public static SVNErrorMessage errorNoUser(File reposRootDir){
-        File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
+    public static SVNErrorMessage errorNoUser(FSFS owner){
+        File fsDir = owner.getDBRoot();
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "No username is currently associated with filesystem ''{0}''", fsDir);
         return err;
     }
 
-    public static SVNErrorMessage errorLockOwnerMismatch(String username, String lockOwner, File reposRootDir){
-        File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
+    public static SVNErrorMessage errorLockOwnerMismatch(String username, String lockOwner, FSFS owner){
+        File fsDir = owner.getDBRoot();
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_LOCK_OWNER_MISMATCH, "User ''{0}'' is trying to use a lock owned by ''{1}'' in filesystem ''{2}''", new Object[]{username, lockOwner, fsDir});
         return err;
     }
 
-    public static SVNErrorMessage errorNotFile(String path, File reposRootDir){
-        File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
+    public static SVNErrorMessage errorNotFile(String path, FSFS owner){
+        File fsDir = owner.getDBRoot();
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "''{0}'' is not a file in filesystem ''{1}''", new Object[]{path, fsDir});
         return err;
     }
 
-    public static SVNErrorMessage errorPathAlreadyLocked(String path, String owner, File reposRootDir){
-        File fsDir = FSRepositoryUtil.getRepositoryDBDir(reposRootDir);
+    public static SVNErrorMessage errorPathAlreadyLocked(String path, String owner, FSFS fsfsOwner){
+        File fsDir = fsfsOwner.getDBRoot();
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_ALREADY_LOCKED, "Path ''{0}'' is already locked by user ''{1}'' in filesystem ''{2}''", new Object[]{path, owner, fsDir});
         return err;
     }
 
-    /*
-     * Return TRUE if err is an error specifically related to locking a
-     * path in the repository, FALSE otherwise. 
-     *
-     * FS_OUT_OF_DATE is in here because it's a non-fatal error
-     * that can be thrown when attempting to lock an item.
-     */
     public static boolean isLockError(SVNErrorMessage err){
         if(err == null){
             return false;
@@ -143,10 +136,6 @@ public class FSErrors {
         return errCode == SVNErrorCode.FS_PATH_ALREADY_LOCKED || errCode == SVNErrorCode.FS_OUT_OF_DATE;
     }
 
-    /*
-     * Return TRUE if err is an error specifically related to unlocking
-     * a path in the repository, FALSE otherwise.
-     */
     public static boolean isUnlockError(SVNErrorMessage err){
         if(err == null){
             return false;

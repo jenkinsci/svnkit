@@ -22,15 +22,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @author  TMate Software Ltd.
  */
 public class FSPathChange extends SVNLogEntryPath {
-    /*Path of the change*/
     private String myPath;
-    /* node revision id of changed path */
     private FSID myRevNodeId;
-    /* kind of change */
     private FSPathChangeKind myChangeKind;
-    /* were there text mods? */
     boolean isTextModified;
-    /* were there property mods? */
     boolean arePropertiesModified;
     
     public FSPathChange(String path, FSID id, FSPathChangeKind kind, boolean textModified, boolean propsModified, String copyfromPath, long copyfromRevision) {
@@ -93,17 +88,14 @@ public class FSPathChange extends SVNLogEntryPath {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
             SVNErrorManager.error(err);
         }
-        /* Get the node-id of the change. */
         String nodeRevStr = piecesOfChangeLine[0];
         FSID nodeRevID = FSID.fromString(nodeRevStr);
-        /* Get the change type. */
         String changesKindStr = piecesOfChangeLine[1];
         FSPathChangeKind changesKind = FSPathChangeKind.fromString(changesKindStr);
         if (changesKind == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change kind in rev file");
             SVNErrorManager.error(err);
         }
-        /* Get the text-mod flag. */
         String textModeStr = piecesOfChangeLine[2];
         boolean textModeBool = false;
         if (FSConstants.FLAG_TRUE.equals(textModeStr)) {
@@ -114,7 +106,6 @@ public class FSPathChange extends SVNLogEntryPath {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid text-mod flag in rev-file");
             SVNErrorManager.error(err);
         }
-        /* Get the prop-mod flag. */
         String propModeStr = piecesOfChangeLine[3];
         boolean propModeBool = false;
         if (FSConstants.FLAG_TRUE.equals(propModeStr)) {
@@ -125,7 +116,6 @@ public class FSPathChange extends SVNLogEntryPath {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid prop-mod flag in rev-file");
             SVNErrorManager.error(err);
         }
-        /* Get the changed path. */
         String pathStr = piecesOfChangeLine[4];
 
         String copyfromPath = null;

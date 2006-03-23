@@ -27,13 +27,6 @@ public class FSID {
         return myTxnID != null;
     }
     
-/*    public static boolean isTxn(String txnId){
-        if(txnId != null){
-            return true;
-        }
-        return false;
-    }*/
-    
     public static FSID createTxnId(String nodeId, String copyId, String txnId){
         return new FSID(nodeId, txnId, copyId, FSConstants.SVN_INVALID_REVNUM, -1);
     }
@@ -138,12 +131,11 @@ public class FSID {
         if (otherID == null) {
             return false;
         }
+        
         if(this == otherID){
             return true;
         }
-        /* If both node ids start with _ and they have differing transaction
-         * IDs, then it is impossible for them to be related. 
-         */
+
         if(myNodeID != null && myNodeID.startsWith("_")){
             if(myTxnID != null && !myTxnID.equals(otherID.getTxnID())){
                 return false;
@@ -159,19 +151,13 @@ public class FSID {
     }
 
     public static FSID fromString(String revNodeId) {
-        /*
-         * Now, we basically just need to "split" this data on `.' characters.
-         */
         String[] idParts = revNodeId.split("\\.");
         if (idParts.length != 3) {
             return null;
         }
-        /* Node Id */
         String nodeId = idParts[0];
-        /* Copy Id */
         String copyId = idParts[1];
         if (idParts[2].charAt(0) == 'r') {
-            /* This is a revision type ID */
             int slashInd = idParts[2].indexOf('/');
             long rev = -1;
             long offset = -1;
@@ -183,7 +169,6 @@ public class FSID {
             }
             return createRevId(nodeId, copyId, rev, offset);
         } else if (idParts[2].charAt(0) == 't') {
-            /* This is a transaction type ID */
             String txnId = idParts[2].substring(1);
             return createTxnId(nodeId, copyId, txnId);
         }

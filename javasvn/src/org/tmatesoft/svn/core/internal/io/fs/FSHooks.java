@@ -190,11 +190,6 @@ public class FSHooks {
     private static void runChangeRevPropHook(File reposRootDir, String hookName, String propName, String propValue, String author, long revision, String action, boolean isPre) throws SVNException {
         File hookFile = getHookFile(reposRootDir, hookName);
         if(hookFile == null && isPre){
-            /* If the pre- hook doesn't exist at all, then default to
-             * MASSIVE PARANOIA.  Changing revision properties is a lossy
-             * operation; so unless the repository admininstrator has
-             * *deliberately* created the pre-hook, disallow all changes. 
-             */
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_DISABLED_FEATURE, "Repository has not been enabled to accept revision propchanges;\nask the administrator to create a pre-revprop-change hook");
             SVNErrorManager.error(err);
         }else if(hookFile == null){

@@ -42,16 +42,12 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
 
     private boolean isHeaderWritten;
 
-    /* Actual file to which we are writing. */
     private CountingStream myTargetFile;
     
-    /* Start of the actual data. */
     private long myDeltaStart;
 
-    /* How many bytes have been written to this rep already. */
     private long myRepSize;
     
-    /* Where is this representation header stored. */
     private long myRepOffset;
     
     private InputStream mySourceStream;
@@ -64,7 +60,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     
     private MessageDigest myDigest;
     
-    private File myReposRootDir;
+    private FSTransactionRoot myTxnRoot;
     
     private long mySourceOffset;
 
@@ -82,8 +78,8 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     
     private boolean myIsClosed;
     
-    private FSOutputStream(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, File reposRootDir) throws SVNException {
-        myReposRootDir = reposRootDir;
+    private FSOutputStream(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot) throws SVNException {
+        myTxnRoot = txnRoot;
         myTargetFile = file;
         mySourceStream = source;
         myDeltaStart = deltaStart;
@@ -107,10 +103,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
         }
     }
     
-    /*
-     * revNode must be mutable!
-     */
-    public static OutputStream createStream(FSRevisionNode revNode, String txnId, File reposRootDir) throws SVNException {
+    public static OutputStream createStream(FSRevisionNode revNode, FSTransactionRoot txnRoot) throws SVNException {
         if(revNode.getType() != SVNNodeKind.FILE){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to set textual contents of a *non*-file node");
             SVNErrorManager.error(err);
@@ -126,14 +119,13 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
         long offset = -1;
         long deltaStart = -1;
         try{
-            txnId = revNode.getId().getTxnID();
-            File targetFile = FSRepositoryUtil.getTxnRevFile(txnId, reposRootDir); 
+            File targetFile = txnRoot.getTransactionRevFile(); 
             offset = targetFile.length();
             targetOS = SVNFileUtil.openFileForWriting(targetFile, true);
             CountingStream revWriter = new CountingStream(targetOS, offset);
             
-            FSRepresentation baseRep = chooseDeltaBase(revNode, reposRootDir);
-            sourceStream = FSInputStream.createDeltaStream(baseRep, new FSFS(reposRootDir));
+            FSRepresentation baseRep = revNode.chooseDeltaBase(txnRoot.getOwner());
+            sourceStream = FSInputStream.createDeltaStream(baseRep, txnRoot.getOwner());
             String header;
             
             if(baseRep != null){
@@ -144,7 +136,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
 
             revWriter.write(header.getBytes());
             deltaStart = revWriter.getPosition();
-            return new FSOutputStream(revNode, revWriter, sourceStream, deltaStart, 0, offset, reposRootDir);
+            return new FSOutputStream(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
         }catch(IOException ioe){
             SVNFileUtil.closeFile(targetOS);
             SVNFileUtil.closeFile(sourceStream);
@@ -156,32 +148,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
             throw svne;
         }
         return null;
-    }
-    
-    private static FSRepresentation chooseDeltaBase(FSRevisionNode revNode, File reposRootDir) throws SVNException {
-        /* If we have no predecessors, then use the empty stream as a
-         * base. 
-         */
-        if(revNode.getCount() == 0){
-            return null;
-        }
-        /* Flip the rightmost '1' bit of the predecessor count to determine
-         * which file rev (counting from 0) we want to use.  (To see why
-         * count & (count - 1) unsets the rightmost set bit, think about how
-         * you decrement a binary number.) 
-         */
-        long count = revNode.getCount();
-        count = count & (count - 1);
-        /* Walk back a number of predecessors equal to the difference
-         * between count and the original predecessor count.  (For example,
-         * if noderev has ten predecessors and we want the eighth file rev,
-         * walk back two predecessors.) 
-         */
-        FSRevisionNode baseNode = revNode;
-        while((count++) < revNode.getCount()){
-            baseNode = FSReader.getRevNodeFromID(reposRootDir, baseNode.getId());
-        }
-        return baseNode.getTextRepresentation(); 
     }
     
     public void write(int b) throws IOException{
@@ -237,7 +203,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
         myIsClosed = true;
         
         try{
-            //flush all data that is still remaining
             makeDiffWindowFromData(super.myBuffer, super.myBufferLength);
             flushNextWindow();
             
@@ -259,7 +224,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
             myTargetFile.write("ENDREP\n".getBytes());
             myRevNode.setTextRepresentation(rep);
 
-            FSWriter.putTxnRevisionNode(myRevNode.getId(), myRevNode, myReposRootDir);
+            myTxnRoot.getOwner().putTxnRevisionNode(myRevNode.getId(), myRevNode);
         }catch(SVNException svne){
             throw new IOException(svne.getMessage());
         }finally{
@@ -268,7 +233,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     }
     
     public void closeStreams(){
-        /* We're done; clean up. */
         SVNFileUtil.closeFile(myTargetFile.getRealStream());
         SVNFileUtil.closeFile(mySourceStream);
     }
@@ -284,7 +248,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     
     private void writeDiffWindow(SVNDiffWindow window) throws SVNException {
         try{
-            /* Make sure we write the header.  */
             SVNDiffWindowBuilder.save(window, !isHeaderWritten, myTargetFile);
             if(!isHeaderWritten){
                 isHeaderWritten = true;
@@ -302,7 +265,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
         }
         int dataPos = 0;
         while(dataLength > 0){
-            /* Make sure we're all full up on source data, if possible. */
             if(mySourceLength == 0 && !isSourceDone){
                 mySourceLength = mySourceStream.read(mySourceBuf);
                 mySourceLength = mySourceLength < 0 ? 0 : mySourceLength;
@@ -310,7 +272,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
                     isSourceDone = true;
                 }
             }
-            /* Copy in the target data, up to SVN_DELTA_WINDOW_SIZE. */
             int chunkLength = SVN_DELTA_WINDOW_SIZE - myTargetLength;
             if(chunkLength > dataLength){
                 chunkLength = dataLength;
@@ -319,7 +280,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
             dataPos += chunkLength;
             dataLength -= chunkLength;
             myTargetLength += chunkLength;
-            /* If we're full of target data, compute and fire off a window. */
             if(myTargetLength == SVN_DELTA_WINDOW_SIZE){
                 flushNextWindow();
                 mySourceOffset += mySourceLength;

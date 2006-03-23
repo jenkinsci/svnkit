@@ -16,7 +16,6 @@ package org.tmatesoft.svn.core.internal.io.fs;
  * @author  TMate Software Ltd.
  */
 public class FSConstants {
-//    public static String SVN_REPOS_README = "README.txt";
     public static final String SVN_REPOS_DB_DIR = "db";
     public static final String SVN_REPOS_DAV_DIR = "dav";
     public static final String SVN_REPOS_LOCKS_DIR = "locks";
@@ -26,6 +25,7 @@ public class FSConstants {
     public static final String TXN_PATH_EXT_CHILDREN = ".children";
     public static final String PATH_PREFIX_NODE = "node.";
     public static final String TXN_PATH_EXT_PROPS = ".props";
+
     //txn specific paths
     public static final String TXN_PATH_REV = "rev";
     public static final String TXN_PATH_CHANGES = "changes";

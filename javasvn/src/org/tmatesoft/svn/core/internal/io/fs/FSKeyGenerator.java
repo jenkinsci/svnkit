@@ -24,18 +24,12 @@ public class FSKeyGenerator {
     
     public static String generateNextKey(char[] oldKey) throws SVNException {
         char[] nextKey = new char[oldKey.length + 1];
-        /* do we have a carry or not?
-         * We start with a carry, because we're
-         * incrementing the number, after all. 
-         */
         boolean carry = true;
-        /* Leading zeros are not allowed, except for the string "0". */
         if(oldKey.length > 1 && oldKey[0] == '0'){
             return null;
         }
         for(int i = oldKey.length - 1; i >= 0; i--){
             char c = oldKey[i];
-            /* Validate as we go. */
             if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z'))) {
                 return null;
             }
@@ -54,19 +48,11 @@ public class FSKeyGenerator {
                 nextKey[i] = c;
             }
         }
-        /* The new length is old length + 1 if there's a carry out of the
-         * leftmost digit. 
-         */
         int nextKeyLength = oldKey.length + (carry ? 1 : 0);
-        /* Ensure that we haven't overrun the (ludicrous) bound on key length.
-         * Note that MAX_KEY_SIZE is a bound on the size including
-         * the trailing null byte. 
-         */
         if(nextKeyLength >= FSConstants.MAX_KEY_SIZE){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: new key length is greater than the threshold {0,number,integer}", new Integer(FSConstants.MAX_KEY_SIZE));
             SVNErrorManager.error(err);
         }
-        /* Handle any leftover carry. */
         if(carry){
             System.arraycopy(nextKey, 0, nextKey, 1, oldKey.length);
             nextKey[0] = '1';
@@ -99,7 +85,6 @@ public class FSKeyGenerator {
                 --i2;
             }
         }
-        /* Now reverse the resulting string. */
         StringBuffer result = new StringBuffer();
         for(int i = 0; i < i3; i++){
             result.append(buf[i3 - i - 1]);

@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.io.File;
-import java.io.IOException;
 
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -190,24 +189,12 @@ public class SVNURL {
                 myEncodedPath = SVNEncodingUtil.autoURIEncode(testURL.getPath());
                 SVNEncodingUtil.assertURISafe(myEncodedPath);
                 myPath = SVNEncodingUtil.uriDecode(myEncodedPath);
-                try{
-                    myPath = new File(myPath).getCanonicalPath();
-                }catch(IOException ioe){
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not convert path ''{0}'' to a canonical form", myPath);
-                    SVNErrorManager.error(err);
-                }
                 myPath = myPath.replace(File.separatorChar, '/');
                 if(!myPath.startsWith("/")){
                     myPath = "/" + myPath;
                 }
             } else {
-                try{
-                    myPath = new File(testURL.getPath()).getCanonicalPath();
-                }catch(IOException ioe){
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not convert path ''{0}'' to a canonical form", testURL.getPath());
-                    SVNErrorManager.error(err);
-                }
-                myPath = myPath.replace(File.separatorChar, '/');
+                myPath = testURL.getPath();
                 if(!myPath.startsWith("/")){
                     myPath = "/" + myPath;
                 }

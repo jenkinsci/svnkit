@@ -25,22 +25,16 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
  * @author  TMate Software Ltd.
  */
 public class FSPathChangeKind {
-    //change actions - for commits
     public static final String ACTION_MODIFY = "modify";
     public static final String ACTION_ADD = "add";
     public static final String ACTION_DELETE = "delete";
     public static final String ACTION_REPLACE = "replace";
     public static final String ACTION_RESET = "reset";
 
-    /* default value */
     public static final FSPathChangeKind FS_PATH_CHANGE_MODIFY = new FSPathChangeKind(ACTION_MODIFY); 
-    /* path added in txn */
     public static final FSPathChangeKind FS_PATH_CHANGE_ADD = new FSPathChangeKind(ACTION_ADD); 
-    /* path removed in txn */
     public static final FSPathChangeKind FS_PATH_CHANGE_DELETE = new FSPathChangeKind(ACTION_DELETE); 
-    /* path removed and re-added in txn */
     public static final FSPathChangeKind FS_PATH_CHANGE_REPLACE = new FSPathChangeKind(ACTION_REPLACE); 
-    /* ignore all previous change items for path (internal-use only) */
     public static final FSPathChangeKind FS_PATH_CHANGE_RESET = new FSPathChangeKind(ACTION_RESET);
 
     private String myName;

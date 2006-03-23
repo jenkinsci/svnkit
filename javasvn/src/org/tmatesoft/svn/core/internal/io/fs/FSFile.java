@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -325,4 +326,44 @@ public class FSFile {
         }
         return myChannel;
     }
+    
+    public PathInfo readPathInfoFromReportFile() throws IOException {
+        int firstByte = read();
+        if (firstByte == -1 || firstByte == '-') {
+            return null;
+        }
+        String path = readStringFromReportFile();
+        String linkPath = read() == '+' ? readStringFromReportFile() : null;
+        long revision = readRevisionFromReportFile();
+        boolean startEmpty = read() == '+' ? true : false;
+        String lockToken = read() == '+' ? readStringFromReportFile() : null;
+        return new PathInfo(path, linkPath, lockToken, revision, startEmpty);
+    }
+
+    private String readStringFromReportFile() throws IOException {
+        int length = readNumberFromReportFile();
+        if (length == 0) {
+            return "";
+        }
+        byte[] buffer = new byte[length];
+        read(buffer, 0, length);
+        return new String(buffer, "UTF-8");
+    }
+
+    private int readNumberFromReportFile() throws IOException {
+        int b;
+        ByteArrayOutputStream resultStream = new ByteArrayOutputStream();
+        while ((b = read()) != ':') {
+            resultStream.write(b);
+        }
+        return Integer.parseInt(new String(resultStream.toByteArray(), "UTF-8"), 10);
+    }
+
+    private long readRevisionFromReportFile() throws IOException {
+        if (read() == '+') {
+            return readNumberFromReportFile();
+        }
+        return FSConstants.SVN_INVALID_REVNUM;
+    }
+    
 }

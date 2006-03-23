@@ -81,7 +81,7 @@ public class FSNodeHistory {
     }
 
     public static boolean checkAncestryOfPegPath(String fsPath, long pegRev, long futureRev, FSFS owner) throws SVNException {
-        FSRevisionRoot root = owner.createRevisionRoot(futureRev);//FSOldRoot.createRevisionRoot(futureRev, revNodesPool.getRootRevisionNode(futureRev, reposRootDir), reposRootDir);
+        FSRevisionRoot root = owner.createRevisionRoot(futureRev);
         FSNodeHistory history = getNodeHistory(root, fsPath);
         fsPath = null;
         SVNLocationEntry currentHistory = null;
@@ -110,7 +110,7 @@ public class FSNodeHistory {
         FSRevisionNode node = null;
         SVNNodeKind kind = null;
         try {
-            node = root.openPath(path, true, false).getRevNode();//pool.openPath(root, path, false, null, reposRootDir, false).getRevNode(); 
+            node = root.openPath(path, true, false).getRevNode(); 
         } catch (SVNException svne) {
             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                 kind = SVNNodeKind.NONE;
@@ -122,7 +122,7 @@ public class FSNodeHistory {
         if (kind == SVNNodeKind.NONE) {
             SVNErrorManager.error(FSErrors.errorNotFound(root, path));
         }
-        return new FSNodeHistory(new SVNLocationEntry(root.getRevision(), SVNPathUtil.canonicalizeAbsPath(path)), false, new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null));
+        return new FSNodeHistory(new SVNLocationEntry(root.getRevision(), path), false, new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null));
     }
 
     private FSNodeHistory historyPrev(boolean crossCopies, FSFS owner) throws SVNException {
@@ -139,8 +139,8 @@ public class FSNodeHistory {
             revision = searchResumeEntry.getRevision();
         }
 
-        FSRevisionRoot root = owner.createRevisionRoot(revision);//FSOldRoot.createRevisionRoot(revision, revNodesPool.getRootRevisionNode(revision, reposRootDir), reposRootDir);
-        FSParentPath parentPath = root.openPath(path, true, true);//revNodesPool.getParentPath(root, path, true, reposRootDir);
+        FSRevisionRoot root = owner.createRevisionRoot(revision);
+        FSParentPath parentPath = root.openPath(path, true, true);
         FSRevisionNode revNode = parentPath.getRevNode();
         SVNLocationEntry commitEntry = new SVNLocationEntry(revNode.getId().getRevision(), revNode.getCreatedPath());
 
@@ -154,15 +154,15 @@ public class FSNodeHistory {
             if (predId == null) {
                 return prevHist;
             }
-            revNode = owner.getRevisionNode(predId);//FSReader.getRevNodeFromID(reposRootDir, predId);
+            revNode = owner.getRevisionNode(predId);
             commitEntry = new SVNLocationEntry(revNode.getId().getRevision(), revNode.getCreatedPath());
         }
         SVNLocationEntry copyrootEntry = findYoungestCopyroot(owner.getRepositoryRoot(), parentPath);
         SVNLocationEntry srcEntry = new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null);
         long dstRev = FSConstants.SVN_INVALID_REVNUM;
         if (copyrootEntry.getRevision() > commitEntry.getRevision()) {
-            FSRevisionRoot copyrootRoot = owner.createRevisionRoot(copyrootEntry.getRevision());//revNodesPool.getRootRevisionNode(copyrootEntry.getRevision(), reposRootDir);
-            revNode = copyrootRoot.getRevisionNode(copyrootEntry.getPath());//revNodesPool.getRevisionNode(copyrootRoot, copyrootEntry.getPath(), reposRootDir);
+            FSRevisionRoot copyrootRoot = owner.createRevisionRoot(copyrootEntry.getRevision());
+            revNode = copyrootRoot.getRevisionNode(copyrootEntry.getPath());
             String copyDst = revNode.getCreatedPath();
             String reminder = null;
             if (path.equals(copyDst)) {

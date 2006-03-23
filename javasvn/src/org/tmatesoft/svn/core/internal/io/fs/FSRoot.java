@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -44,7 +45,7 @@ public abstract class FSRoot {
     }
 
     public FSRevisionNode getRevisionNode(String path) throws SVNException{
-        String canonPath = SVNPathUtil.canonicalizeAbsPath(path);
+        String canonPath = path;
         FSRevisionNode node = fetchRevNodeFromCache(canonPath);
         if(node == null){
             FSParentPath parentPath = openPath(path, true, false);
@@ -60,13 +61,15 @@ public abstract class FSRoot {
     public abstract FSCopyInheritance getCopyInheritance(FSParentPath child) throws SVNException;
     
     public FSParentPath openPath(String path, boolean lastEntryMustExist, boolean storeParents) throws SVNException {
-        String canonPath = SVNPathUtil.canonicalizeAbsPath(path);
+        String canonPath = path;
         FSRevisionNode here = getRootRevisionNode();
         String pathSoFar = "/";
 
         FSParentPath parentPath = new FSParentPath(here, null, null);
         parentPath.setCopyStyle(FSCopyInheritance.COPY_ID_INHERIT_SELF);
-        String rest = canonPath.substring(1);// skip the leading '/'
+
+        //skip the leading '/'
+        String rest = canonPath.substring(1);
 
         while (true) {
             String entry = SVNPathUtil.head(rest);
@@ -112,7 +115,7 @@ public abstract class FSRoot {
             }
 
             if (child.getType() != SVNNodeKind.DIR) {
-                SVNErrorMessage err = FSErrors.errorNotDirectory(pathSoFar, getOwner().getRepositoryRoot());
+                SVNErrorMessage err = FSErrors.errorNotDirectory(pathSoFar, getOwner());
                 SVNErrorManager.error(err.wrap("Failure opening ''{0}''", path));
             }
             rest = next;
@@ -299,6 +302,11 @@ public abstract class FSRoot {
         return FSPathChange.fromString(changeLine, copyfromLine);
     }
     
+    public InputStream getFileStreamForPath(String path) throws SVNException {
+        FSRevisionNode fileNode = getRevisionNode(path);
+        return FSInputStream.createDeltaStream(fileNode, getOwner());
+    }
+
     private static final class RevisionCache {
         private LinkedList myKeys;
         private Map myCache;

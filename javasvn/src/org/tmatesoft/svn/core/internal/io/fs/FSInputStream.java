@@ -38,10 +38,8 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
  * @author  TMate Software Ltd.
  */
 public class FSInputStream extends InputStream {
-    /* The state of all prior delta representations. */
     private LinkedList myRepStateList = new LinkedList();
 
-    /* The index of the current delta chunk, if we are reading a delta. */
     private int myChunkIndex;
     
     private boolean isChecksumFinalized;
@@ -70,9 +68,6 @@ public class FSInputStream extends InputStream {
         try{
             FSRepresentationState.buildRepresentationList(representation, myRepStateList, owner);
         }catch(SVNException svne){
-            /* Something terrible has happened while building rep list, 
-             * need to close any files still opened 
-             */
             close();
             throw svne;
         }
@@ -120,26 +115,23 @@ public class FSInputStream extends InputStream {
     }
     
     private int readContents(byte[] buf, int offset, int length) throws SVNException {
-        /* Get the next block of data. */
         length = getContents(buf, offset, length);
-        /* Perform checksumming.  We want to check the checksum as soon as
-         * the last byte of data is read, in case the caller never performs
-         * a short read, but we don't want to finalize the MD5 context
-         * twice. 
-         */
+
         if(!isChecksumFinalized){
             myDigest.update(buf, offset, length);
             myOffset += length;
+        
             if(myOffset == myLength){
                 isChecksumFinalized = true;
                 String hexDigest = SVNFileUtil.toHexDigest(myDigest);
-                // Compare read and expected checksums
+
                 if (!myHexChecksum.equals(hexDigest)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Checksum mismatch while reading representation:\n   expected:  {0}\n     actual:  {1}", new Object[]{myHexChecksum, hexDigest});
                     SVNErrorManager.error(err);
                 }
             }
         }
+        
         return length;
     }
     
@@ -149,34 +141,33 @@ public class FSInputStream extends InputStream {
 
         while(remaining > 0){
             if(myBuffer != null){
-                //copy bytes to buffer and mobe the bufPos pointer
-                /* Determine how much to copy from the buffer. */
                 int copyLength = myBuffer.length - myBufPos;
                 if(copyLength > remaining){
                     copyLength = remaining;
                 }
-                /* Actually copy the data. */
+
                 System.arraycopy(myBuffer, myBufPos, buffer, targetPos, copyLength);
                 myBufPos += copyLength;
                 targetPos += copyLength;
                 remaining -= copyLength;
-                /* If the buffer is all used up, clear it. 
-                 */
+
                 if(myBufPos == myBuffer.length){
                     myBuffer = null;
                     myBufPos = 0;
                 }
             }else{
                 FSRepresentationState resultState = (FSRepresentationState)myRepStateList.getFirst();
+                
                 if(resultState.offset == resultState.end){
                     break;
                 }
+                
                 int startIndex = 0;
+                
                 for(ListIterator states = myRepStateList.listIterator(); states.hasNext();){
                     FSRepresentationState curState = (FSRepresentationState)states.next();
 
                     try{
-                        /* Skip windows to reach the current chunk if we aren't there yet. */
                         while(curState.chunkIndex < myChunkIndex){
                             skipDiffWindow(curState.file);
                             curState.chunkIndex++;
@@ -196,14 +187,12 @@ public class FSInputStream extends InputStream {
                     try{
                         long currentPos = curState.file.position();
                         myDiffWindowBuilder.accept(curState.file);
-                        //go back to the beginning of the window's offsets section
                         curState.file.seek(currentPos);
                     }catch(IOException ioe){
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
                         SVNErrorManager.error(err, ioe);
                     }
                     SVNDiffWindow window = myDiffWindowBuilder.getDiffWindow();
-                    // TODO make window report whether it has cp_from_src instructions or not.
                     boolean hasCopiesFromSource = false;
                     for(Iterator instructions = window.instructions(); !hasCopiesFromSource && instructions.hasNext();){
                         SVNDiffInstruction instruction = (SVNDiffInstruction) instructions.next(); 
@@ -244,16 +233,12 @@ public class FSInputStream extends InputStream {
         return targetView;
     }
 
-    /* Skip forwards to thisChunk in rep state and then read the next delta
-     * window. 
-     */
     private SVNDiffWindow readWindow(FSRepresentationState state, int thisChunk, OutputStream dataBuf) throws SVNException, IOException {
-        //assertion
         if(state.chunkIndex > thisChunk){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Fatal error while reading diff windows");
             SVNErrorManager.error(err);
         }
-        /* Skip windows to reach the current chunk if we aren't there yet. */
+        
         while(state.chunkIndex < thisChunk){
             skipDiffWindow(state.file);
             state.chunkIndex++;
@@ -263,7 +248,7 @@ public class FSInputStream extends InputStream {
                 SVNErrorManager.error(err);
             }
         }
-        /* Read the next window. */
+
         myDiffWindowBuilder.reset(SVNDiffWindowBuilder.OFFSET);
         myDiffWindowBuilder.accept(state.file);
         SVNDiffWindow window = myDiffWindowBuilder.getDiffWindow();
