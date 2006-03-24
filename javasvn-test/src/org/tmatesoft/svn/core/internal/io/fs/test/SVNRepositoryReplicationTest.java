@@ -144,7 +144,7 @@ public class SVNRepositoryReplicationTest {
         }
     }
 
-    private static boolean compareRepositoriesWithoutWC(SVNRepository srcRepos, SVNRepository dstRepos, long start, long end) throws SVNException {
+    public static boolean compareRepositoriesWithoutWC(SVNRepository srcRepos, SVNRepository dstRepos, long start, long end) throws SVNException {
         Map srcItems = new HashMap();
         Map dstItems = new HashMap();
         for(long i = start; i <= end; i++){
@@ -161,14 +161,22 @@ public class SVNRepositoryReplicationTest {
             
             srcRepos.update(i, null, true, new ISVNReporterBaton(){
                 public void report(ISVNReporter reporter) throws SVNException {
-                    reporter.setPath("", null, previousRev, false);
+                    if (previousRev == -1) {
+                        reporter.setPath("", null, 0, true);
+                    } else {
+                        reporter.setPath("", null, previousRev, false);
+                    }
                     reporter.finishReport();
                 }            
             }, srcEditor);
             
             dstRepos.update(i, null, true, new ISVNReporterBaton(){
                 public void report(ISVNReporter reporter) throws SVNException {
-                    reporter.setPath("", null, previousRev, false);
+                    if (previousRev == -1) {
+                        reporter.setPath("", null, 0, true);
+                    } else {
+                        reporter.setPath("", null, previousRev, false);
+                    }
                     reporter.finishReport();
                 }            
             }, dstEditor);
