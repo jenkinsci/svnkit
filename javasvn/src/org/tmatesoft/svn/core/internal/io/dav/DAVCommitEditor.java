@@ -274,11 +274,12 @@ class DAVCommitEditor implements ISVNEditor {
             }
             diffWindow.writeTo(myCurrentDelta, myIsFirstWindow);
             myIsFirstWindow = false;
-            return myCurrentDelta;
+            return SVNFileUtil.DUMMY_OUT;
         } catch (IOException e) {
             SVNFileUtil.closeFile(myCurrentDelta);
             SVNFileUtil.deleteFile(myDeltaFile);
             myDeltaFile = null;
+            myCurrentDelta = null;
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
             SVNErrorManager.error(err, e);
             return null;

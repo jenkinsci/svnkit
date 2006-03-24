@@ -130,7 +130,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
     
     protected byte[] allocateBuffer(int length) {
         if (myDeltaBuffer == null || myDeltaBuffer.length < length) {
-            myDeltaBuffer = new byte[length];
+            myDeltaBuffer = new byte[length*3/2];
         }   
         return myDeltaBuffer;
     }

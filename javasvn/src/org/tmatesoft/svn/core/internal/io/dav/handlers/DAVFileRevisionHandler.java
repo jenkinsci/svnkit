@@ -137,7 +137,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                 String value;
                 if ("base64".equals(myPropertyEncoding)) {
                     byte[] bytes = allocateBuffer(cdata.length());
-                    int length = SVNBase64.base64ToByteArray(cdata, bytes);
+                    int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), bytes);
                     try {
                         value = new String(bytes, 0, length, "UTF-8");
                     } catch (UnsupportedEncodingException e) {

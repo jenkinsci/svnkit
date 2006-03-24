@@ -164,7 +164,7 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
                 value = cdata.toString();
             } else if ("base64".equals(myEncoding)) {
                 byte[] buffer = allocateBuffer(cdata.length()); 
-                int length = SVNBase64.base64ToByteArray(cdata, buffer);
+                int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
                 try {
                     value = new String(buffer, 0, length, "UTF-8");
                 } catch (UnsupportedEncodingException e) {
