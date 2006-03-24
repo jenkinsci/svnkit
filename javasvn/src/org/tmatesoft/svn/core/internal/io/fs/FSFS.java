@@ -376,7 +376,7 @@ public class FSFS {
 
     public File getNewRevisionFile(long revision) throws SVNException {
         File revFile = new File(myRevisionsRoot, String.valueOf(revision));
-        if(revFile.exists()){
+        if (revFile.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CONFLICT, "Revision already exists");
             SVNErrorManager.error(err);
         }

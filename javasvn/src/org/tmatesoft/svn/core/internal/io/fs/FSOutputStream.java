@@ -46,7 +46,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     private long myRepOffset;    
     private InputStream mySourceStream;    
     private SVNDeltaGenerator myDeltaGenerator;    
-    private FSBufferStream myNewDataStream;    
     private FSRevisionNode myRevNode;    
     private MessageDigest myDigest;    
     private FSTransactionRoot myTxnRoot;    
@@ -58,7 +57,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     private byte[] mySourceBuf = new byte[SVN_DELTA_WINDOW_SIZE];    
     private byte[] myTargetBuf = new byte[SVN_DELTA_WINDOW_SIZE];
     
-    private SVNDiffWindow myLastWindow;    
     private boolean myIsClosed;
     
     private FSOutputStream(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot) throws SVNException {
@@ -70,7 +68,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
         myRepOffset = repOffset; 
         isHeaderWritten = false;
         myDeltaGenerator = new SVNDeltaGenerator(SVN_DELTA_WINDOW_SIZE);
-        myNewDataStream = new FSBufferStream();
         myRevNode = revNode;
         mySourceOffset = 0;
         isSourceDone = false;
@@ -225,31 +222,23 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
         return myRevNode;
     }
     
-    public OutputStream getNewDataStream(){
-        myNewDataStream.myBufferLength = 0;
-        return myNewDataStream;
-    }
-    
     private void writeDiffWindow(SVNDiffWindow window) throws SVNException {
-        try{
+        try {
             window.writeTo(myTargetFile, !isHeaderWritten);
-            if(!isHeaderWritten){
-                isHeaderWritten = true;
-            }
-            myTargetFile.write(myNewDataStream.myBuffer, 0, myNewDataStream.myBufferLength);
-        }catch(IOException ioe){
+            isHeaderWritten = true;
+        } catch(IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
         }
     }
     
     private void makeDiffWindowFromData(byte[] data, int dataLength) throws IOException, SVNException {
-        if(data == null){
+        if(data == null) {
             return;
         }
         int dataPos = 0;
-        while(dataLength > 0){
-            if(mySourceLength == 0 && !isSourceDone){
+        while(dataLength > 0) {
+            if(mySourceLength == 0 && !isSourceDone) {
                 mySourceLength = mySourceStream.read(mySourceBuf);
                 mySourceLength = mySourceLength < 0 ? 0 : mySourceLength;
                 if(mySourceLength < SVN_DELTA_WINDOW_SIZE){
@@ -257,7 +246,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
                 }
             }
             int chunkLength = SVN_DELTA_WINDOW_SIZE - myTargetLength;
-            if(chunkLength > dataLength){
+            if(chunkLength > dataLength) {
                 chunkLength = dataLength;
             }
             System.arraycopy(data, dataPos, myTargetBuf, myTargetLength, chunkLength);
@@ -280,23 +269,12 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException{
-        if(myLastWindow != null){
-            writeDiffWindow(myLastWindow);
-        }
-        myLastWindow = diffWindow;
-        myNewDataStream.myBufferLength = 0;
-        return myNewDataStream;
-
+        writeDiffWindow(diffWindow);
+        return SVNFileUtil.DUMMY_OUT;
     }
 
     public void textDeltaEnd(String path) throws SVNException{
-        if(myLastWindow != null){
-            writeDiffWindow(myLastWindow);
-        }
-        myNewDataStream.myBufferLength = 0;
     }
-
-    //unnecessary methods 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException{
     }
 }

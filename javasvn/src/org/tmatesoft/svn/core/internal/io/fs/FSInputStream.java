@@ -146,16 +146,16 @@ public class FSInputStream extends InputStream {
                 myBuffer.get(buffer, targetPos, copyLength);
                 targetPos += copyLength;
                 remaining -= copyLength;
-            }else{
+            } else {
                 FSRepresentationState resultState = (FSRepresentationState)myRepStateList.getFirst();
                 if(resultState.offset == resultState.end) {
                     break;
                 }
-                myCombiner.reset(); // this also resets target.
+                myCombiner.reset();
                 for(ListIterator states = myRepStateList.listIterator(); states.hasNext();){
                     FSRepresentationState curState = (FSRepresentationState)states.next();
 
-                    while(curState.chunkIndex < myChunkIndex){
+                    while(curState.chunkIndex < myChunkIndex) {
                         myCombiner.skipWindow(curState.file);
                         curState.chunkIndex++;
                         curState.offset = curState.file.position();
@@ -274,7 +274,6 @@ public class FSInputStream extends InputStream {
             return repArgs;
         }catch(SVNException svne){
             file.close();
-            //SVNFileUtil.closeFile(file);
             throw svne;
         }
     }
