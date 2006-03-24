@@ -146,18 +146,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     }
     
     public void write(byte[] b) throws IOException{
-        super.write(b);
-        myDigest.update(b);
-        myRepSize += b.length;
-        if(super.myBufferLength > WRITE_BUFFER_SIZE){
-            try{
-                makeDiffWindowFromData(super.myBuffer, super.myBufferLength);
-            }catch(SVNException svne){
-                throw new IOException(svne.getMessage());
-            }
-            super.myBufferLength = 0;
-            super.myBuffer = null;
-        }
+        write(b, 0, b.length);
     }
     
     public void write(byte[] b, int off, int len) throws IOException{

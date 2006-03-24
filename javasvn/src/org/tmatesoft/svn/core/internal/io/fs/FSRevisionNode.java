@@ -442,7 +442,7 @@ public class FSRevisionNode {
         count = count & (count - 1);
         FSRevisionNode baseNode = this;
         while((count++) < getCount()){
-            baseNode = fsfsOwner.getRevisionNode(baseNode.getId());
+            baseNode = fsfsOwner.getRevisionNode(baseNode.getPredecessorId());
         }
         return baseNode.getTextRepresentation(); 
     }
