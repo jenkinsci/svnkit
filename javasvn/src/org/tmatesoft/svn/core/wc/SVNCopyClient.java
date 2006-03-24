@@ -206,13 +206,22 @@ public class SVNCopyClient extends SVNBasicClient {
      *                        </ul>
      */
     public SVNCommitInfo doCopy(SVNURL srcURL, SVNRevision srcRevision, SVNURL dstURL, boolean isMove, String commitMessage) throws SVNException {
+        return doCopy(srcURL, srcRevision, dstURL, isMove, false, commitMessage);
+    }
+    
+    public SVNCommitInfo doCopy(SVNURL srcURL, SVNRevision srcRevision, SVNURL dstURL, boolean isMove, boolean failWhenDstExists, String commitMessage) throws SVNException {
         SVNURL topURL = SVNURLUtil.getCommonURLAncestor(srcURL, dstURL);
         if (topURL == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Source and dest appear not to be in the same repository (src: ''{0}''; dst: ''{1}'')", new Object[] {srcURL, dstURL});
             SVNErrorManager.error(err);
         }
         boolean isResurrect = false;
+        
         if (dstURL.equals(srcURL)) {
+            if (failWhenDstExists) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "Destination URL could not be the same as source URL");
+                SVNErrorManager.error(err);
+            }
             topURL = srcURL.removePathTail();
             isResurrect = true;
         }
@@ -239,6 +248,10 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         SVNNodeKind dstKind = repository.checkPath(dstPath, latestRevision);
         if (dstKind == SVNNodeKind.DIR) {
+            if (failWhenDstExists) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "Path ''{0}'' already exists", dstPath);
+                SVNErrorManager.error(err);
+            }
             dstPath = SVNPathUtil.append(dstPath, SVNPathUtil.tail(srcURL.getPath()));
             if (repository.checkPath(dstPath, latestRevision) != SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "Path ''{0}'' already exists", dstPath);
@@ -310,6 +323,10 @@ public class SVNCopyClient extends SVNBasicClient {
      *                        </ul>
      */
     public SVNCommitInfo doCopy(File srcPath, SVNRevision srcRevision, SVNURL dstURL, String commitMessage) throws SVNException {
+        return doCopy(srcPath, srcRevision, dstURL, false, commitMessage);
+    }
+    
+    public SVNCommitInfo doCopy(File srcPath, SVNRevision srcRevision, SVNURL dstURL, boolean failWhenDstExists, String commitMessage) throws SVNException {
         // may be url->url.
         if (srcRevision.isValid() && srcRevision != SVNRevision.WORKING) {
             SVNWCAccess wcAccess = createWCAccess(srcPath);
@@ -322,7 +339,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", srcPath);
                 SVNErrorManager.error(err);
             }
-            return doCopy(srcEntry.getSVNURL(), srcRevision, dstURL, false, commitMessage);
+            return doCopy(srcEntry.getSVNURL(), srcRevision, dstURL, false, failWhenDstExists, commitMessage);
         }
         SVNWCAccess wcAccess = createWCAccess(srcPath);
         
@@ -333,6 +350,10 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNRepository repository = createRepository(dstAnchorURL, true);
         SVNNodeKind dstKind = repository.checkPath(dstTarget, -1);
         if (dstKind == SVNNodeKind.DIR) {
+            if (failWhenDstExists) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "Path ''{0}'' already exists", dstURL);
+                SVNErrorManager.error(err);
+            }
             dstURL = dstURL.appendPath(srcPath.getName(), false);
         } else if (dstKind == SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "File ''{0}'' already exists", dstURL);
