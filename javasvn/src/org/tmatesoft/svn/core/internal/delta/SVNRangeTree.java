@@ -191,7 +191,7 @@ public class SVNRangeTree {
                 }
             }
         }
-        SVNDeltaCombiner.assert(false, "assert #6");
+        SVNDeltaCombiner.assertCondition(false, "assert #6");
         return tail;
     }
 
@@ -260,7 +260,7 @@ public class SVNRangeTree {
             if (root.left.right == null) {
                 SVNRangeTreeNode node = root.left;
                 root.left = node.right;
-                SVNDeltaCombiner.assert(root.left == null, "not null I");
+                SVNDeltaCombiner.assertCondition(root.left == null, "not null I");
                 node.right = root;
                 root = node;
             } else {
@@ -288,7 +288,7 @@ public class SVNRangeTree {
             System.out.println("root.left: " + root.left);
             System.out.println("root.prev: " + root.prev);
         }
-        SVNDeltaCombiner.assert((offset >= root.offset) || (root.left == null && root.prev == null), "assert #4");
+        SVNDeltaCombiner.assertCondition((offset >= root.offset) || (root.left == null && root.prev == null), "assert #4");
     }
     
     public void insert(int offset, int limit, int targetOffset) {
@@ -326,7 +326,7 @@ public class SVNRangeTree {
                 cleanTree(limit);
             }   
         } else if (offset < myRoot.offset) {
-            SVNDeltaCombiner.assert(myRoot.left == null, "assert #5");
+            SVNDeltaCombiner.assertCondition(myRoot.left == null, "assert #5");
             SVNRangeTreeNode node = allocateTreeNode(offset, limit, targetOffset);
             
             node.left = node.prev = null;
