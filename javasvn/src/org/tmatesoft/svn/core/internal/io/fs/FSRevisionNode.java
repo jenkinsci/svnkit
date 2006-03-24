@@ -277,20 +277,25 @@ public class FSRevisionNode {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyfrom line in node-rev");
             SVNErrorManager.error(err);
         }
-        String[] cpyfrom = copyfrom.split(" ");
-        if (cpyfrom.length < 2) {
+
+        int delimiterInd = copyfrom.indexOf(' ');
+        if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyfrom line in node-rev");
             SVNErrorManager.error(err);
         }
+        
+        String copyfromRev = copyfrom.substring(0, delimiterInd);
+        String copyfromPath = copyfrom.substring(delimiterInd + 1);
+        
         long rev = -1;
         try {
-            rev = Long.parseLong(cpyfrom[0]);
+            rev = Long.parseLong(copyfromRev);
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyfrom line in node-rev");
             SVNErrorManager.error(err);
         }
         revNode.setCopyFromRevision(rev);
-        revNode.setCopyFromPath(cpyfrom[1]);
+        revNode.setCopyFromPath(copyfromPath);
     }
 
     private static void parseCopyRoot(String copyroot, FSRevisionNode revNode) throws SVNException {
@@ -299,36 +304,50 @@ public class FSRevisionNode {
             SVNErrorManager.error(err);
         }
 
-        String[] cpyroot = copyroot.split(" ");
-        if (cpyroot.length < 2) {
+        int delimiterInd = copyroot.indexOf(' ');
+        if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyroot line in node-rev");
             SVNErrorManager.error(err);
         }
+
+        String copyrootRev = copyroot.substring(0, delimiterInd);
+        String copyrootPath = copyroot.substring(delimiterInd + 1);
+        
         long rev = -1;
         try {
-            rev = Long.parseLong(cpyroot[0]);
+            rev = Long.parseLong(copyrootRev);
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyroot line in node-rev");
             SVNErrorManager.error(err);
         }
         revNode.setCopyRootRevision(rev);
-        revNode.setCopyRootPath(cpyroot[1]);
+        revNode.setCopyRootPath(copyrootPath);
     }
 
     private static void parseRepresentationHeader(String representation, FSRevisionNode revNode, String txnId, boolean isData) throws SVNException {
         if (revNode == null) {
             return;
         }
+        
         FSRepresentation rep = new FSRepresentation();
-        String[] offsets = representation.split(" ");
+        
+        int delimiterInd = representation.indexOf(' ');
+        String revision = null;
+        if (delimiterInd == -1) {
+            revision = representation;
+        }else{
+            revision = representation.substring(0, delimiterInd);    
+        }
+        
         long rev = -1;
         try {
-            rev = Long.parseLong(offsets[0]);
+            rev = Long.parseLong(revision);
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
             SVNErrorManager.error(err);
         }
         rep.setRevision(rev);
+        
         if (FSRepository.isInvalidRevision(rep.getRevision())) {
             rep.setTxnId(txnId);
             if (isData) {
@@ -341,13 +360,19 @@ public class FSRevisionNode {
                 return;
             }
         }
-        if (offsets == null || offsets.length == 0 || offsets.length < 5) {
+        
+        representation = representation.substring(delimiterInd + 1);
+        
+        delimiterInd = representation.indexOf(' ');
+        if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
             SVNErrorManager.error(err);
         }
+        String repOffset = representation.substring(0, delimiterInd);
+        
         long offset = -1;
         try {
-            offset = Long.parseLong(offsets[1]);
+            offset = Long.parseLong(repOffset);
             if (offset < 0) {
                 throw new NumberFormatException();
             }
@@ -356,9 +381,18 @@ public class FSRevisionNode {
             SVNErrorManager.error(err);
         }
         rep.setOffset(offset);
+        
+        representation = representation.substring(delimiterInd + 1);
+        delimiterInd = representation.indexOf(' ');
+        if (delimiterInd == -1) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
+            SVNErrorManager.error(err);
+        }
+        String repSize = representation.substring(0, delimiterInd);
+        
         long size = -1;
         try {
-            size = Long.parseLong(offsets[2]);
+            size = Long.parseLong(repSize);
             if (size < 0) {
                 throw new NumberFormatException();
             }
@@ -367,9 +401,18 @@ public class FSRevisionNode {
             SVNErrorManager.error(err);
         }
         rep.setSize(size);
+        
+        representation = representation.substring(delimiterInd + 1);
+        delimiterInd = representation.indexOf(' ');
+        if (delimiterInd == -1) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
+            SVNErrorManager.error(err);
+        }
+        String repExpandedSize = representation.substring(0, delimiterInd);
+        
         long expandedSize = -1;
         try {
-            expandedSize = Long.parseLong(offsets[3]);
+            expandedSize = Long.parseLong(repExpandedSize);
             if (expandedSize < 0) {
                 throw new NumberFormatException();
             }
@@ -378,7 +421,8 @@ public class FSRevisionNode {
             SVNErrorManager.error(err);
         }
         rep.setExpandedSize(expandedSize);
-        String hexDigest = offsets[4];
+        
+        String hexDigest = representation.substring(delimiterInd + 1);
         if (hexDigest.length() != 2 * FSConstants.MD5_DIGESTSIZE || SVNFileUtil.fromHexDigest(hexDigest) == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
             SVNErrorManager.error(err);

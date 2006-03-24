@@ -151,25 +151,35 @@ public class FSID {
     }
 
     public static FSID fromString(String revNodeId) {
-        String[] idParts = revNodeId.split("\\.");
-        if (idParts.length != 3) {
+        int dotInd = revNodeId.indexOf('.');
+        if(dotInd == -1){
             return null;
         }
-        String nodeId = idParts[0];
-        String copyId = idParts[1];
-        if (idParts[2].charAt(0) == 'r') {
-            int slashInd = idParts[2].indexOf('/');
+        
+        String nodeId = revNodeId.substring(0, dotInd);
+        revNodeId = revNodeId.substring(dotInd + 1);
+        
+        dotInd = revNodeId.indexOf('.');
+        if(dotInd == -1){
+            return null;
+        }
+        
+        String copyId = revNodeId.substring(0, dotInd);
+        revNodeId = revNodeId.substring(dotInd + 1);
+        
+        if (revNodeId.charAt(0) == 'r') {
+            int slashInd = revNodeId.indexOf('/');
             long rev = -1;
             long offset = -1;
             try {
-                rev = Long.parseLong(idParts[2].substring(1, slashInd));
-                offset = Long.parseLong(idParts[2].substring(slashInd + 1));
+                rev = Long.parseLong(revNodeId.substring(1, slashInd));
+                offset = Long.parseLong(revNodeId.substring(slashInd + 1));
             } catch (NumberFormatException nfe) {
                 return null;
             }
             return createRevId(nodeId, copyId, rev, offset);
-        } else if (idParts[2].charAt(0) == 't') {
-            String txnId = idParts[2].substring(1);
+        } else if (revNodeId.charAt(0) == 't') {
+            String txnId = revNodeId.substring(1);
             return createTxnId(nodeId, copyId, txnId);
         }
         return null;

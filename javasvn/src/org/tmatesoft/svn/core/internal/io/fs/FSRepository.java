@@ -746,7 +746,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                     ++count;
                 }
 
-                FSRevisionNode copyfromNode = croot.getRevisionNode(path);
+                FSRevisionNode copyfromNode = croot.getRevisionNode(cpath);
                 String copyfromPath = copyfromNode.getCopyFromPath();
                 long copyfromRevision = copyfromNode.getCopyFromRevision();
 
@@ -774,6 +774,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 locationEntries.add(new SVNLocationEntry(locationRevs[count], path));
                 ++count;
             }
+            
             for (count = 0; count < locationEntries.size(); count++) {
                 if (handler != null) {
                     handler.handleLocationEntry((SVNLocationEntry) locationEntries.get(count));

@@ -455,7 +455,7 @@ public class FSCommitEditor implements ISVNEditor {
         OutputStream targetStream = null;
         try {
             sourceStream = FSInputStream.createDeltaStream(new SVNDeltaCombiner(), node, myFSFS);
-            targetStream = FSOutputStream.createStream(node, myTxnRoot);
+            targetStream = FSOutputStream.createStream(node, myTxnRoot, myTargetStream);
             if (myDeltaProcessor == null) {
                 myDeltaProcessor = new SVNDeltaProcessor();
             }

@@ -83,7 +83,26 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
         }
     }
     
-    public static OutputStream createStream(FSRevisionNode revNode, FSTransactionRoot txnRoot) throws SVNException {
+    private void reset(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot) {
+        super.myBufferLength = 0;
+        super.myBuffer = null;
+        myTxnRoot = txnRoot;
+        myTargetFile = file;
+        mySourceStream = source;
+        myDeltaStart = deltaStart;
+        myRepSize = repSize;
+        myRepOffset = repOffset; 
+        isHeaderWritten = false;
+        myRevNode = revNode;
+        mySourceOffset = 0;
+        isSourceDone = false;
+        myTargetLength = 0;
+        mySourceLength = 0;
+        myIsClosed = false;
+        myDigest.reset();
+    }
+    
+    public static OutputStream createStream(FSRevisionNode revNode, FSTransactionRoot txnRoot, FSOutputStream dstStream) throws SVNException {
         if(revNode.getType() != SVNNodeKind.FILE){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to set textual contents of a *non*-file node");
             SVNErrorManager.error(err);
@@ -116,7 +135,13 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
 
             revWriter.write(header.getBytes());
             deltaStart = revWriter.getPosition();
-            return new FSOutputStream(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
+            
+            if(dstStream == null){
+                return new FSOutputStream(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
+            }
+            
+            dstStream.reset(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
+            return dstStream;
         }catch(IOException ioe){
             SVNFileUtil.closeFile(targetOS);
             SVNFileUtil.closeFile(sourceStream);
@@ -202,7 +227,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     }
     
     public void closeStreams(){
-        /* We're done; clean up. */
         SVNFileUtil.closeFile(myTargetFile);
         SVNFileUtil.closeFile(mySourceStream);
     }

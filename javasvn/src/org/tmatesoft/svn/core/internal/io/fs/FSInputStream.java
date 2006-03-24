@@ -253,20 +253,44 @@ public class FSInputStream extends InputStream {
             }
             repArgs.isDelta = true;
             repArgs.isDeltaVsEmpty = false;
+            
             /* We have hopefully a DELTA vs. a non-empty base revision. */
-            String[] args = line.split(" ");
-            if(args.length < 4){
+            int delimiterInd = line.indexOf(' ');
+            if(delimiterInd == -1){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                 SVNErrorManager.error(err);
             }
-            if(!FSConstants.REP_DELTA.equals(args[0])){
+            
+            String header = line.substring(0, delimiterInd);
+            
+            if(!FSConstants.REP_DELTA.equals(header)){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                 SVNErrorManager.error(err);
             }
+
+            line = line.substring(delimiterInd + 1);
+            
             try{
-                repArgs.myBaseRevision = Long.parseLong(args[1]);
-                repArgs.myBaseOffset = Long.parseLong(args[2]);
-                repArgs.myBaseLength = Long.parseLong(args[3]);
+                delimiterInd = line.indexOf(' ');
+                if(delimiterInd == -1){
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
+                    SVNErrorManager.error(err);
+                }
+                String baseRevision = line.substring(0, delimiterInd); 
+                repArgs.myBaseRevision = Long.parseLong(baseRevision);
+
+                line = line.substring(delimiterInd + 1);
+                delimiterInd = line.indexOf(' ');
+                if(delimiterInd == -1){
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
+                    SVNErrorManager.error(err);
+                }
+                String baseOffset = line.substring(0, delimiterInd);
+                repArgs.myBaseOffset = Long.parseLong(baseOffset);
+
+                line = line.substring(delimiterInd + 1);
+
+                repArgs.myBaseLength = Long.parseLong(line);
             }catch(NumberFormatException nfe){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                 SVNErrorManager.error(err);

@@ -283,12 +283,15 @@ public class FSFS {
         if (value == null) {
             return null;
         }
-        String[] values = value.split(" ");
-        if (values == null || values.length < 2) {
+        int spaceInd = value.indexOf(' ');
+        if (spaceInd == -1) {
             return null;
         }
-        SVNNodeKind type = SVNNodeKind.parseKind(values[0]);
-        FSID id = FSID.fromString(values[1]);
+        String kind = value.substring(0, spaceInd);
+        String rawID = value.substring(spaceInd + 1);
+        
+        SVNNodeKind type = SVNNodeKind.parseKind(kind);
+        FSID id = FSID.fromString(rawID);
         if ((type != SVNNodeKind.DIR && type != SVNNodeKind.FILE) || id == null) {
             return null;
         }
@@ -353,15 +356,23 @@ public class FSFS {
             SVNErrorManager.error(err);
         }
         
-        String[] parsedIds = idsLine.split(" ");
-        
-        if (parsedIds.length < 3) {
+        int spaceInd = idsLine.indexOf(' ');
+        if (spaceInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupt current file");
             SVNErrorManager.error(err);
         }
         
-        ids[0] = parsedIds[1];
-        ids[1] = parsedIds[2];
+        idsLine = idsLine.substring(spaceInd + 1);
+        spaceInd = idsLine.indexOf(' ');
+        if (spaceInd == -1) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupt current file");
+            SVNErrorManager.error(err);
+        }
+        String nodeID = idsLine.substring(0, spaceInd);
+        String copyID = idsLine.substring(spaceInd + 1);
+        
+        ids[0] = nodeID;
+        ids[1] = copyID;
         return ids;
     }
 

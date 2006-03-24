@@ -408,14 +408,15 @@ public class FSTransactionRoot extends FSRoot {
             idsFile.close();
         }
         
-        String[] parsedIds = idsToParse.split(" ");
-        if (parsedIds.length < 2) {
+        int delimiterInd = idsToParse.indexOf(' ');
+
+        if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "next-ids file corrupt");
             SVNErrorManager.error(err);
         }
 
-        ids[0] = parsedIds[0];
-        ids[1] = parsedIds[1];
+        ids[0] = idsToParse.substring(0, delimiterInd);
+        ids[1] = idsToParse.substring(delimiterInd + 1);
         return ids;
     }
     
