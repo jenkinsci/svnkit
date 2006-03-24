@@ -53,6 +53,7 @@ public class SVNSocketFactory {
         Socket socket = new Socket(address, port);
         socket.setTcpNoDelay(true);
         socket.setKeepAlive(true);
+        socket.setReuseAddress(true);
         return socket;
     }
 
@@ -61,6 +62,7 @@ public class SVNSocketFactory {
         Socket sslSocket = manager.getSSLContext().getSocketFactory().createSocket(createAddres(host), port);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
+        sslSocket.setReuseAddress(true);
         return sslSocket;
     }
 
@@ -69,6 +71,7 @@ public class SVNSocketFactory {
         Socket sslSocket = manager.getSSLContext().getSocketFactory().createSocket(socket, host, port, true);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
+        sslSocket.setReuseAddress(true);
         return sslSocket;
     }
 
