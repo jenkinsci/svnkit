@@ -12,7 +12,6 @@
 
 package org.tmatesoft.svn.core.internal.io.svn;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
@@ -27,9 +26,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 
 /**
  * @version 1.0
@@ -117,8 +116,7 @@ class SVNCommitEditor implements ISVNEditor {
                 new Object[] { "close-dir", dirBaton.getToken() });
     }
 
-    public void addFile(String path, String copyFromPath, long copyFromRevision)
-            throws SVNException {
+    public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         DirBaton parentBaton = (DirBaton)myDirsStack.peek();
         String fileToken = "c" + myNextToken++; 
             
@@ -162,17 +160,10 @@ class SVNCommitEditor implements ISVNEditor {
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         String fileToken = (String)myFilesToTokens.get(path);
 
-        myConnection.write("(w(s", new Object[] { "textdelta-chunk", fileToken });
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
-            SVNDiffWindowBuilder.save(diffWindow, myDiffWindowCount == 0, bos);
-            byte[] header = bos.toByteArray();
+            diffWindow.writeTo(new SVNDeltaStream(fileToken), myDiffWindowCount == 0);
             myDiffWindowCount++;
-            myConnection.write("b))", new Object[] { header });
-            myConnection.write("(w(s", new Object[] { "textdelta-chunk", fileToken });
-            String length = diffWindow.getNewDataLength() + ":";
-            myConnection.getOutputStream().write(length.getBytes("UTF-8"));
-            return new ChunkOutputStream();
+            return SVNFileUtil.DUMMY_OUT;
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
         }
@@ -242,41 +233,35 @@ class SVNCommitEditor implements ISVNEditor {
         public String getToken(){
             return myToken;
         }
-        
     }
     
-    private final class ChunkOutputStream extends OutputStream {
+    private class SVNDeltaStream extends OutputStream {
         
-        private boolean myIsClosed = false;
-        
+        private Object[] myPrefix;
+
+        public SVNDeltaStream(String token) {
+            myPrefix = new Object[] {"textdelta-chunk", token};
+        }
+
         public void write(byte[] b, int off, int len) throws IOException {
             try {
+                myConnection.write("(w(s", myPrefix);
+                myConnection.getOutputStream().write((len + "").getBytes("UTF-8"));
+                myConnection.getOutputStream().write(':');
                 myConnection.getOutputStream().write(b, off, len);
-            } catch (SVNException e) {
-                throw new IOException(e.getMessage());
-            }
-        }
-
-        public void write(int b) throws IOException {
-            try {
-                myConnection.getOutputStream().write(b);
-            } catch (SVNException e) {
-                throw new IOException(e.getMessage());
-            }
-        }
-
-        public void close() throws IOException {
-            if (myIsClosed) {
-                return;
-            }
-            try {
                 myConnection.getOutputStream().write(' ');
                 myConnection.write("))", null);
             } catch (SVNException e) {
                 throw new IOException(e.getMessage());
-            } finally {
-                myIsClosed = true;
             }
+        }
+
+        public void write(byte[] b) throws IOException {
+            write(b, 0, b.length);
+        }
+
+        public void write(int b) throws IOException {
+            write(new byte[] {(byte) (b & 0xFF)});
         }
     }
 }

@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.io.diff;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,7 +26,6 @@ import org.tmatesoft.svn.core.internal.delta.SVNXDeltaAlgorithm;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -138,7 +136,7 @@ public class SVNDeltaGenerator {
                 return null;
             }
         }
-
+        boolean windowSent = false;
         while(true) {
             int targetLength;
             int sourceLength;
@@ -150,11 +148,10 @@ public class SVNDeltaGenerator {
                 return null;
             }
             if (targetLength <= 0) {
-                // send empty window, needed to create empty file.
-                if (consumer != null) {
-                    SVNDiffWindow window = new SVNDiffWindow(sourceOffset, 0, 0, 0, 0);
-                    OutputStream os = consumer.textDeltaChunk(path, window);
-                    SVNFileUtil.closeFile(os);
+                // send empty window, needed to create empty file. 
+                // only when no windows was sent at all.
+                if (!windowSent && consumer != null) {
+                    consumer.textDeltaChunk(path, SVNDiffWindow.EMPTY);
                 }
                 break;
             } 
@@ -174,6 +171,7 @@ public class SVNDeltaGenerator {
             }
             // generate and send window
             sendDelta(path, sourceOffset, mySourceBuffer, sourceLength, myTargetBuffer, targetLength, consumer);
+            windowSent = true;
             sourceOffset += sourceLength;
         }
         if (consumer != null) {
@@ -185,31 +183,18 @@ public class SVNDeltaGenerator {
     private void sendDelta(String path, int sourceOffset, byte[] source, int sourceLength, byte[] target, int targetLength, ISVNDeltaConsumer consumer) throws SVNException {
         // use x or v algorithm depending on sourceLength
         SVNDeltaAlgorithm algorithm = sourceLength == 0 ? myVDelta : myXDelta;
-        try {
-            algorithm.computeDelta(source, sourceLength, target, targetLength);
-        } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err, e);
-        }
+        algorithm.computeDelta(source, sourceLength, target, targetLength);
         // send single diff window to the editor.
         if (consumer == null) {
             algorithm.reset();
             return;
         }
-        byte[] instructions = algorithm.getDiffInstructionsData();        
-        ByteArrayOutputStream newData = algorithm.getNewDataStream();
-        SVNDiffWindow window = new SVNDiffWindow(sourceOffset, sourceLength, targetLength, instructions.length, newData.size());
-        window.setInstructionsData(instructions);
-        OutputStream newDataStream = consumer.textDeltaChunk(path, window);
-        try {
-            newData.writeTo(newDataStream);
-        } catch (IOException e) {
-            SVNDebugLog.logInfo(e);
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
-        } finally {
-            SVNFileUtil.closeFile(newDataStream);
-        }
+        int instructionsLength = algorithm.getInstructionsLength();
+        int newDataLength = algorithm.getNewDataLength();
+        SVNDiffWindow window = new SVNDiffWindow(sourceOffset, sourceLength, targetLength, instructionsLength, newDataLength);
+        window.setData(algorithm.getData());
+        OutputStream os = consumer.textDeltaChunk(path, window);
+        SVNFileUtil.closeFile(os);
         algorithm.reset();
     }
 }

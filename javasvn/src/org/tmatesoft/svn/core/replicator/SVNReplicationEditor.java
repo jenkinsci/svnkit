@@ -250,8 +250,9 @@ public class SVNReplicationEditor implements ISVNEditor {
         } else if (changedPath == null) {
             baton.myPropsAct = IGNORE;
             baton.myTextAct = IGNORE;
-            myCommitEditor.openFile(path, myPreviousRevision);
-            SVNDebugLog.logInfo("Opening file '" + absPath + "'");
+            // should we open file when we're ignoring it???
+//            myCommitEditor.openFile(path, myPreviousRevision);
+//            SVNDebugLog.logInfo("Opening file '" + absPath + "'");
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unknown bug in addFile()");
             SVNErrorManager.error(err);
@@ -360,7 +361,10 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
-        myCommitEditor.closeFile(path, textChecksum);
+        EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
+        if (baton.myTextAct != IGNORE || baton.myTextAct != IGNORE) {
+            myCommitEditor.closeFile(path, textChecksum);
+        }
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {

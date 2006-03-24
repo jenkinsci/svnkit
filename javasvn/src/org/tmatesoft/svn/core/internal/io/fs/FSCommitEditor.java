@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -453,7 +454,7 @@ public class FSCommitEditor implements ISVNEditor {
         InputStream sourceStream = null;
         OutputStream targetStream = null;
         try {
-            sourceStream = FSInputStream.createDeltaStream(node, myFSFS);
+            sourceStream = FSInputStream.createDeltaStream(new SVNDeltaCombiner(), node, myFSFS);
             targetStream = FSOutputStream.createStream(node, myTxnRoot);
             if (myDeltaProcessor == null) {
                 myDeltaProcessor = new SVNDeltaProcessor();

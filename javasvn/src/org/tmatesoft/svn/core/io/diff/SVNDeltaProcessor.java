@@ -11,8 +11,6 @@
  */
 package org.tmatesoft.svn.core.io.diff;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,8 +30,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  */
 public class SVNDeltaProcessor {
     
-    private SVNDiffWindow myLastWindow;
-    private ByteArrayOutputStream myDataStream;
     private SVNDiffWindowApplyBaton myApplyBaton;
     
     /**
@@ -41,17 +37,6 @@ public class SVNDeltaProcessor {
      * fixed size - 100Kbytes. 
      */
     public SVNDeltaProcessor() {
-        this(100*1024);
-    }
-    
-    /**
-     * Creates a processor with a buffer for new data of a 
-     * fixed size - <code>inialNewDataSize</code>. 
-     * 
-     * @param inialNewDataSize
-     */
-    public SVNDeltaProcessor(int inialNewDataSize) {
-        myDataStream = new ByteArrayOutputStream(inialNewDataSize);
     }
     
     /**
@@ -128,22 +113,15 @@ public class SVNDeltaProcessor {
      * @throws  SVNException
      */
     public OutputStream textDeltaChunk(SVNDiffWindow window) throws SVNException {
-        if (myLastWindow != null) {
-            // apply last window.
-            myLastWindow.apply(myApplyBaton, new ByteArrayInputStream(myDataStream.toByteArray()));
-        }
-        myLastWindow = window;
-        myDataStream.reset();
-        return myDataStream;
+        window.apply(myApplyBaton);
+        return SVNFileUtil.DUMMY_OUT;
     }
     
     private void reset() {
-        myDataStream.reset();
         if (myApplyBaton != null) {
             myApplyBaton.close();
             myApplyBaton = null;
         }
-        myLastWindow = null;
     }
     
     /**
@@ -154,14 +132,8 @@ public class SVNDeltaProcessor {
      * @return  a string representing a hex form of the calculated
      *          MD5 checksum or <span class="javakeyword">null</span> 
      *          if checksum calculation was not required 
-     * @throws  SVNException
      */
-    public String textDeltaEnd() throws SVNException {
-        if (myLastWindow != null) {
-            myLastWindow.apply(myApplyBaton, new ByteArrayInputStream(myDataStream.toByteArray()));
-        }
-        myLastWindow = null;
-        myDataStream.reset();
+    public String textDeltaEnd() {
         try {
             return myApplyBaton.close();
         } finally { 

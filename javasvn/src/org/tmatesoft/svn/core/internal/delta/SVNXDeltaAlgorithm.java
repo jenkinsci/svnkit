@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.delta;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,7 +22,7 @@ public class SVNXDeltaAlgorithm extends SVNDeltaAlgorithm {
     
     private static final int MATCH_BLOCK_SIZE = 64;
     
-    public void computeDelta(byte[] a, int aLength, byte[] b, int bLength) throws IOException {
+    public void computeDelta(byte[] a, int aLength, byte[] b, int bLength) {
         if (bLength < MATCH_BLOCK_SIZE) {
             copyFromNewData(b, 0, bLength);
             return;

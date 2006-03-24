@@ -12,21 +12,12 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import java.io.File;
-import java.io.FilterInputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.IMeasurable;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 
 /**
@@ -43,7 +34,6 @@ class DAVResource {
     private boolean myIsCopy;
     
     private DAVConnection myConnection;
-    private List myDeltaFiles;
     private Map myProperties;
     private boolean myIsAdded;
 
@@ -110,55 +100,8 @@ class DAVResource {
         return myWURL;
     }
     
-    public OutputStream addTextDelta() throws SVNException {
-        if (myDeltaFiles == null) {
-            myDeltaFiles = new LinkedList();
-        }
-        // try to get from mediator.
-        if (myMediator != null) {
-            Object id = new Integer(myDeltaFiles.size());
-            myDeltaFiles.add(id);
-            return myMediator.createTemporaryLocation(SVNEncodingUtil.uriDecode(myPath), id);
-        }
-        File tempFile = SVNFileUtil.createTempFile(".javasvn.", ".tmp");
-        tempFile.deleteOnExit();
-        myDeltaFiles.add(tempFile);
-        return SVNFileUtil.openFileForWriting(tempFile);
-    }
-    
-    public int getDeltaCount() {
-        return myDeltaFiles == null ? 0 : myDeltaFiles.size();        
-    }
-    
-    public InputStream getTextDelta(int i) throws SVNException {
-        if (myMediator != null) {
-            long length = myMediator.getLength(new Integer(i));
-            return new MeasurableStream(myMediator.getTemporaryLocation(new Integer(i)), length);
-        }
-        File file = (File) myDeltaFiles.get(i);
-        return new MeasurableStream(SVNFileUtil.openFileForReading(file), file.length());
-    }
-
-    public long getTextDeltaLength(int i) throws SVNException {
-        if (myMediator != null) {
-            return myMediator.getLength(new Integer(i));
-        }
-        File file = (File) myDeltaFiles.get(i);
-        return file.length();
-    }
     
     public void dispose() {
-        if (myDeltaFiles != null) {
-            for(Iterator values = myDeltaFiles.iterator(); values.hasNext();) {
-                if (myMediator != null) {
-                    myMediator.deleteTemporaryLocation(values.next());
-                    continue;
-                }
-                File file = (File) values.next();
-                file.delete();
-            }
-        }
-        myDeltaFiles = null;
         myProperties = null;
     }
 
@@ -190,20 +133,4 @@ class DAVResource {
         sb.append("]");
         return sb.toString();
     }
-    
-    private static class MeasurableStream extends FilterInputStream implements IMeasurable {
-
-        private long myLength;
-
-        protected MeasurableStream(InputStream in, long length) {
-            super(in);
-            myLength = length;
-        }
-
-        public long getLength() {
-            return myLength;
-        }
-        
-    }
-
 }

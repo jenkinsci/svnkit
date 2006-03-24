@@ -11,24 +11,24 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
+import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
  * @version 1.0
@@ -37,45 +37,28 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer {
     
     public static final int WRITE_BUFFER_SIZE = 512000;
-
     public static final int SVN_DELTA_WINDOW_SIZE = 102400;
 
     private boolean isHeaderWritten;
-
-    private CountingStream myTargetFile;
-    
+    private CountingStream myTargetFile;    
     private long myDeltaStart;
-
-    private long myRepSize;
-    
-    private long myRepOffset;
-    
-    private InputStream mySourceStream;
-    
-    private SVNDeltaGenerator myDeltaGenerator;
-    
-    private FSBufferStream myNewDataStream;
-    
-    private FSRevisionNode myRevNode;
-    
-    private MessageDigest myDigest;
-    
-    private FSTransactionRoot myTxnRoot;
-    
+    private long myRepSize;    
+    private long myRepOffset;    
+    private InputStream mySourceStream;    
+    private SVNDeltaGenerator myDeltaGenerator;    
+    private FSBufferStream myNewDataStream;    
+    private FSRevisionNode myRevNode;    
+    private MessageDigest myDigest;    
+    private FSTransactionRoot myTxnRoot;    
     private long mySourceOffset;
-
-    private boolean isSourceDone;
-    
-    private int myTargetLength;
-    
+    private boolean isSourceDone;    
+    private int myTargetLength;    
     private int mySourceLength;
 
-    private byte[] mySourceBuf = new byte[SVN_DELTA_WINDOW_SIZE];
-    
+    private byte[] mySourceBuf = new byte[SVN_DELTA_WINDOW_SIZE];    
     private byte[] myTargetBuf = new byte[SVN_DELTA_WINDOW_SIZE];
     
-    private SVNDiffWindow myLastWindow;
-    
+    private SVNDiffWindow myLastWindow;    
     private boolean myIsClosed;
     
     private FSOutputStream(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot) throws SVNException {
@@ -125,7 +108,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
             CountingStream revWriter = new CountingStream(targetOS, offset);
             
             FSRepresentation baseRep = revNode.chooseDeltaBase(txnRoot.getOwner());
-            sourceStream = FSInputStream.createDeltaStream(baseRep, txnRoot.getOwner());
+            sourceStream = FSInputStream.createDeltaStream(new SVNDeltaCombiner(), baseRep, txnRoot.getOwner());
             String header;
             
             if(baseRep != null){
@@ -233,7 +216,8 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     }
     
     public void closeStreams(){
-        SVNFileUtil.closeFile(myTargetFile.getRealStream());
+        /* We're done; clean up. */
+        SVNFileUtil.closeFile(myTargetFile);
         SVNFileUtil.closeFile(mySourceStream);
     }
     
@@ -248,7 +232,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     
     private void writeDiffWindow(SVNDiffWindow window) throws SVNException {
         try{
-            SVNDiffWindowBuilder.save(window, !isHeaderWritten, myTargetFile);
+            window.writeTo(myTargetFile, !isHeaderWritten);
             if(!isHeaderWritten){
                 isHeaderWritten = true;
             }

@@ -12,9 +12,6 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
@@ -33,7 +30,6 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVOptionsHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnection;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
-import org.tmatesoft.svn.core.internal.util.IMeasurable;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
@@ -280,31 +276,10 @@ public class DAVConnection {
         return myHttpConnection.request("MKCOL", path, null, (StringBuffer) null, 201, 0, null, null);
     }
     
-    public HTTPStatus doPutDiff(String repositoryPath, String path, InputStream data) throws SVNException {        
+    public HTTPStatus doPutDiff(String repositoryPath, String path, InputStream data, long size) throws SVNException {        
         Map headers = new HashMap();
         headers.put("Content-Type", "application/vnd.svn-svndiff");
-        if (!(data instanceof ByteArrayInputStream || data instanceof IMeasurable)) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            try {
-                while(true) {
-                    int b = data.read();
-                    if (b < 0) {
-                        break;
-                    }
-                    bos.write(b);
-                }
-            } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                SVNErrorManager.error(err, e);
-            } finally {
-                try {
-                    data.close();
-                } catch (IOException e) {
-                    //
-                }
-            }
-            data = new ByteArrayInputStream(bos.toByteArray());
-        } 
+        headers.put("Content-Length", size + "");
         if (myLocks != null && myLocks.containsKey(repositoryPath)) {
             headers.put("If", "<" + repositoryPath + "> (<" + myLocks.get(repositoryPath) + ">)");
         }

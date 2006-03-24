@@ -23,7 +23,6 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.IMeasurable;
 import org.tmatesoft.svn.util.Version;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -145,8 +144,9 @@ class HTTPRequest {
             length = myRequestBody.length;
         } else if (myRequestStream instanceof ByteArrayInputStream) {
             length = ((ByteArrayInputStream) myRequestStream).available();
-        } else if (myRequestStream instanceof IMeasurable) {
-            length = (int) ((IMeasurable) myRequestStream).getLength();
+        } else if (header != null && header.containsKey("Content-Length")) {
+            length = Integer.parseInt((String) header.get("Content-Length"));
+            header.remove("Content-Length");
         }
         StringBuffer headerText = composeHTTPHeader(request, path, header, length, myIsKeepAlive);
         myConnection.sendData(headerText.toString().getBytes());

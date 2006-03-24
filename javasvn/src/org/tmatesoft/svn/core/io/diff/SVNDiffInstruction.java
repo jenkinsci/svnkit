@@ -12,8 +12,7 @@
 
 package org.tmatesoft.svn.core.io.diff;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
 
 /**
@@ -80,7 +79,7 @@ public class SVNDiffInstruction {
      *           the bytes are to be copied
      * @see      SVNDiffWindow
      */
-    public SVNDiffInstruction(int t, long l, long o) {
+    public SVNDiffInstruction(int t, int l, int o) {
         type = t;
         length = l;
         offset = o;        
@@ -104,7 +103,7 @@ public class SVNDiffInstruction {
     /**
      * A length bytes to copy.    
      */
-    public long length;
+    public int length;
     
     /**
      * An offset in the source from where the bytes
@@ -113,7 +112,7 @@ public class SVNDiffInstruction {
      * diff window) in the source/target stream (this can be a file, a buffer).
      *  
      */
-    public long offset;
+    public int offset;
     
     /**
      * Gives a string representation of this object.
@@ -136,31 +135,31 @@ public class SVNDiffInstruction {
         if (type == 0 || type == 1) {
             b.append(offset);
         } else {
-            b.append("x");
+            b.append(offset);
         }
         b.append(":");
         b.append(length);
         return b.toString();
     }
     
-    public void writeTo(OutputStream os) throws IOException {
+    public void writeTo(ByteBuffer target) {
         byte first = (byte) (type << 6);
         if (length <= 0x3f && length > 0) {
             // single-byte lenght;
             first |= (length & 0x3f);
-            os.write(first & 0xff);
+            target.put((byte) (first & 0xff));
         } else {
-            os.write(first & 0xff);
-            writeInt(os, length);
+            target.put((byte) (first & 0xff));
+            writeInt(target, length);
         }
         if (type == 0 || type == 1) {
-            writeInt(os, offset);
+            writeInt(target, offset);
         }
     }
 
-    public static void writeInt(OutputStream os, long i) throws IOException {
+    public static void writeInt(ByteBuffer os, int i) {
         if (i == 0) {
-            os.write(0);
+            os.put((byte) 0);
             return;
         }
         // how many bytes there are:
@@ -175,7 +174,7 @@ public class SVNDiffInstruction {
         while(--count >= 0) {
             b = (byte) ((count > 0 ? 0x1 : 0x0) << 7);
             r = ((byte) ((i >> 7 * count) & 0x7f)) | b;
-            os.write(r);
+            os.put((byte) r);
         }
     }
 }

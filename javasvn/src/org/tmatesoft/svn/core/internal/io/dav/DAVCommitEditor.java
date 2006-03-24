@@ -12,7 +12,7 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import java.io.FilterOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.io.diff.SVNDiffWindowBuilder;
 
 class DAVCommitEditor implements ISVNEditor {
     
@@ -257,41 +256,36 @@ class DAVCommitEditor implements ISVNEditor {
     
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         myCurrentDelta = null;
-        myRealDeltaStream = null;
+        myIsFirstWindow = true;
+        myDeltaFile = null;
     }
     
     private OutputStream myCurrentDelta = null;
-    private OutputStream myRealDeltaStream = null;
+    private File myDeltaFile;
     private boolean myIsAborted;
+    private boolean myIsFirstWindow;
     
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         // save window, create temp file.
-        DAVResource currentFile = (DAVResource) myFilesMap.get(path);
         try {
-            boolean firstWindow = myCurrentDelta == null;
-            myCurrentDelta = myCurrentDelta == null ? currentFile.addTextDelta() : myCurrentDelta;
-            if (firstWindow) {
-                myRealDeltaStream = myCurrentDelta;
-                myCurrentDelta = new FilterOutputStream(myCurrentDelta) {
-                    public void close() throws IOException {
-                        // do not close this stream, will close on txtdelta-end
-                    }
-                    public void write(byte[] b, int off, int len) throws IOException {
-                        super.out.write(b, off, len);
-                    }
-                    
-                };
+            if (myCurrentDelta == null) {
+                myDeltaFile = SVNFileUtil.createTempFile(".jasvsvn.", ".tmp");
+                myCurrentDelta = SVNFileUtil.openFileForWriting(myDeltaFile);
             }
-            SVNDiffWindowBuilder.save(diffWindow, firstWindow, myCurrentDelta);
+            diffWindow.writeTo(myCurrentDelta, myIsFirstWindow);
+            myIsFirstWindow = false;
             return myCurrentDelta;
         } catch (IOException e) {
+            SVNFileUtil.closeFile(myCurrentDelta);
+            SVNFileUtil.deleteFile(myDeltaFile);
+            myDeltaFile = null;
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
             SVNErrorManager.error(err, e);
             return null;
         }
     }
     public void textDeltaEnd(String path) throws SVNException {
-        SVNFileUtil.closeFile(myRealDeltaStream);
+        SVNFileUtil.closeFile(myCurrentDelta);
     }
 
     public void changeFileProperty(String path, String name, String value)  throws SVNException {
@@ -304,22 +298,15 @@ class DAVCommitEditor implements ISVNEditor {
         // do subsequent PUT of all diff windows...
         DAVResource currentFile = (DAVResource) myFilesMap.get(path);
         try {
-            if (currentFile.isAdded() && currentFile.getDeltaCount() == 0) {
-                OutputStream os = textDeltaChunk(path, new SVNDiffWindow(0,0,0,0,0));
-                try {
-                    os.close();
-                } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                    SVNErrorManager.error(err, e);
-                }
-                
-            } else if (currentFile.getDeltaCount() > 0){
+            if (myDeltaFile != null) {
                 InputStream combinedData = null;
                 try {
-                    combinedData = currentFile.getTextDelta(0);
-                    myConnection.doPutDiff(currentFile.getURL(), currentFile.getWorkingURL(), combinedData);
+                    combinedData = SVNFileUtil.openFileForReading(myDeltaFile);
+                    myConnection.doPutDiff(currentFile.getURL(), currentFile.getWorkingURL(), combinedData, myDeltaFile.length());
                 } finally {
                     SVNFileUtil.closeFile(combinedData);
+                    SVNFileUtil.deleteFile(myDeltaFile);
+                    myDeltaFile = null;
                 }
             }
             // do proppatch if there were property changes.
@@ -330,7 +317,6 @@ class DAVCommitEditor implements ISVNEditor {
         } finally {
             currentFile.dispose();
             myCurrentDelta = null;
-            myRealDeltaStream = null;
             myFilesMap.remove(path);
         }
     }

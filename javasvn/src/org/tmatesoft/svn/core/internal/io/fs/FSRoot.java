@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
@@ -302,9 +303,9 @@ public abstract class FSRoot {
         return FSPathChange.fromString(changeLine, copyfromLine);
     }
     
-    public InputStream getFileStreamForPath(String path) throws SVNException {
+    public InputStream getFileStreamForPath(SVNDeltaCombiner combiner, String path) throws SVNException {
         FSRevisionNode fileNode = getRevisionNode(path);
-        return FSInputStream.createDeltaStream(fileNode, getOwner());
+        return FSInputStream.createDeltaStream(combiner, fileNode, getOwner());
     }
 
     private static final class RevisionCache {

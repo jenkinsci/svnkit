@@ -81,7 +81,9 @@ public class FSFile {
     }
     
     public String digest() {
-        return SVNFileUtil.toHexDigest(myDigest);
+        String digest =  SVNFileUtil.toHexDigest(myDigest);
+        myDigest = null;
+        return digest;
     }
     
     public int readInt() throws SVNException {
@@ -244,15 +246,15 @@ public class FSFile {
             }
             myBuffer.position((int) (myPosition - myBufferPosition));
 
-            while(myBuffer.hasRemaining() && target.hasRemaining()) {
-                int r = (myBuffer.get() & 0xFF); 
-                if (myDigest != null) {
-                    myDigest.update((byte) r);
-                }
-                target.put((byte) r);
-                myPosition++;
-                read++;
+            int couldRead = Math.min(myBuffer.remaining(), target.remaining());
+            int readFrom = myBuffer.position() + myBuffer.arrayOffset();
+            target.put(myBuffer.array(), readFrom, couldRead);
+            if (myDigest != null) {
+                myDigest.update(myBuffer.array(), readFrom, couldRead);
             }
+            myPosition += couldRead;
+            read += couldRead;
+            myBuffer.position(myBuffer.position() + couldRead);
         }
         return read;
     }
@@ -266,17 +268,15 @@ public class FSFile {
             }
             myBuffer.position((int) (myPosition - myBufferPosition));
 
-            while(myBuffer.hasRemaining() && toRead > 0) {
-                int r = (myBuffer.get() & 0xFF); 
-                if (myDigest != null) {
-                    myDigest.update((byte) r);
-                }
-                buffer[offset] = (byte) r;
-                offset++;
-                toRead--;
-                myPosition++;
-                read++;
+            int couldRead = Math.min(myBuffer.remaining(), toRead);
+            myBuffer.get(buffer, offset, couldRead);
+            if (myDigest != null) {
+                myDigest.update(buffer, offset, couldRead);
             }
+            toRead -= couldRead;
+            offset += couldRead;
+            myPosition += couldRead;
+            read += couldRead;
         }
         return read;
     }
@@ -294,6 +294,7 @@ public class FSFile {
             myChannel = null;
             myInputStream = null;
             myPosition = 0;
+            myDigest = null;
         }
         
     }
@@ -313,7 +314,7 @@ public class FSFile {
     
     private void allocateReadBuffer(int limit) {
         if (limit > myReadLineBuffer.capacity()) {
-            myReadLineBuffer = ByteBuffer.allocate(limit);
+            myReadLineBuffer = ByteBuffer.allocate(limit*3/2);
         }
         myReadLineBuffer.clear();
         myReadLineBuffer.limit(limit);

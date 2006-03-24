@@ -87,29 +87,11 @@ public class SVNBase64 {
      * @throws IllegalArgumentException
      *             if <tt>s</tt> is not a valid SVNBase64 string.
      */
-    public static byte[] base64ToByteArray(StringBuffer s, byte[] buffer) {
+    public static int base64ToByteArray(StringBuffer s, byte[] buffer) {
         return base64ToByteArray(s, buffer, false);
     }
 
-    /**
-     * Translates the specified "aternate representation" SVNBase64 string into a
-     * byte array.
-     * 
-     * @throws IllegalArgumentException
-     *             or ArrayOutOfBoundsException if <tt>s</tt> is not a valid
-     *             alternate representation SVNBase64 string.
-     */
-    public static byte[] altBase64ToByteArray(StringBuffer s) {
-        return base64ToByteArray(s, null, true);
-    }
-
-    public static int lastLength() {
-        return ourLength;
-    }
-
-    private static int ourLength;
-
-    private static byte[] base64ToByteArray(StringBuffer s, byte[] result, boolean alternate) {
+    private static int base64ToByteArray(StringBuffer s, byte[] result, boolean alternate) {
         byte[] alphaToInt = (alternate ? altBase64ToInt : base64ToInt);
         int sLen = s.length();
         int numGroups = sLen / 4;
@@ -130,10 +112,7 @@ public class SVNBase64 {
             if (s.charAt(sLen - 2) == '=')
                 missingBytesInLastGroup++;
         }
-        ourLength = 3 * numGroups - missingBytesInLastGroup;
-        if (result == null || result.length < ourLength) {
-            result = new byte[ourLength];
-        }
+        int resultLength = 3 * numGroups - missingBytesInLastGroup;
 
         // Translate all full groups from base64 to byte array elements
         int inCursor = 0, outCursor = 0;
@@ -158,9 +137,7 @@ public class SVNBase64 {
                 result[outCursor++] = (byte) ((ch1 << 4) | (ch2 >> 2));
             }
         }
-        // assert inCursor == s.length()-missingBytesInLastGroup;
-        // assert outCursor == result.length;
-        return result;
+        return resultLength;
     }
 
     /**

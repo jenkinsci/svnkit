@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.delta;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -21,16 +20,16 @@ import java.util.Arrays;
 public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
     
     private static final int VD_KEY_SIZE = 4;
-
-    public void computeDelta(byte[] a, int aLength, byte[] b, int bLength) throws IOException {
-        byte[] data = null;
+    
+    public void computeDelta(byte[] a, int aLength, byte[] b, int bLength) {
         int dataLength;
+        byte[] data;
         if (aLength > 0 && bLength > 0) {
             // both are non-empty (reuse some local array).
-            data = new byte[aLength + bLength];
+            data = new byte[(aLength + bLength)];
             System.arraycopy(a, 0, data, 0, aLength);
             System.arraycopy(b, 0, data, aLength, bLength);
-            dataLength = data.length;
+            dataLength = aLength + bLength;
         } else if (aLength == 0) {
             // a is empty
             data = b;
@@ -40,14 +39,12 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
             data = a;
             dataLength = aLength;
         }
-        SlotsTable table = new SlotsTable(dataLength);
-        
-        vdelta(table, data, 0, aLength, false);
-        vdelta(table, data, aLength, dataLength, true);
-        
+        SlotsTable slotsTable = new SlotsTable(dataLength);
+        vdelta(slotsTable, data, 0, aLength, false);
+        vdelta(slotsTable, data, aLength, dataLength, true);
     }
     
-    private void vdelta(SlotsTable table, byte[] data, int start, int end, boolean doOutput) throws IOException {
+    private void vdelta(SlotsTable table, byte[] data, int start, int end, boolean doOutput) {
         int here = start; 
         int insertFrom = -1; 
         
@@ -120,7 +117,7 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
             
     }
     
-    
+
     private int findMatchLength(byte[] data, int match, int from, int end) {
         int here = from;
         while(here < end && data[match] == data[here]) {
@@ -133,22 +130,23 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
     private static class SlotsTable {
         private int[] mySlots;
         private int[] myBuckets;
+        private int myBucketsCount;
 
-        public SlotsTable(int length) {
-            mySlots = new int[length];
-            int bucketsCount = (length / 3) | 1;
-            myBuckets = new int[bucketsCount];
+        public SlotsTable(int dataLength) {
+            mySlots = new int[dataLength];
+            myBucketsCount = (dataLength / 3) | 1;
+            myBuckets = new int[myBucketsCount];
             Arrays.fill(myBuckets, -1);
             Arrays.fill(mySlots, -1);
         }
-        
+
         public int getBucketIndex(byte[] data, int index) {
             int hash = 0;
             hash += (data[index] & 0xFF);
             hash += hash*127 + (data[index + 1] & 0xFF);
             hash += hash*127 + (data[index + 2] & 0xFF);
             hash += hash*127 + (data[index + 3] & 0xFF);
-            hash = hash % myBuckets.length;
+            hash = hash % myBucketsCount;
             return hash < 0 ? -hash : hash;
         }
         

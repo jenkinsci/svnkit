@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -88,7 +89,13 @@ public class DAVGetLocksHandler extends BasicDAVHandler {
         } else if (element == DAVElement.SVN_LOCK_OWNER && cdata != null) {
             myOwner = cdata.toString();
             if (myIsBase64) {
-                myOwner = new String(SVNBase64.base64ToByteArray(new StringBuffer(myComment.trim()), null));
+                byte[] buffer = allocateBuffer(myComment.trim().length());
+                int length = SVNBase64.base64ToByteArray(new StringBuffer(myComment.trim()), buffer);
+                try {
+                    myOwner = new String(buffer, 0, length, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    myComment = new String(buffer, 0, length);
+                }
             }
         } else if (element == DAVElement.SVN_LOCK_COMMENT && cdata != null) {
             myComment = cdata.toString();            
@@ -98,7 +105,13 @@ public class DAVGetLocksHandler extends BasicDAVHandler {
                 myComment = "";
             }
             if (myIsBase64) {
-                myComment = new String(SVNBase64.base64ToByteArray(new StringBuffer(myComment.trim()), null));
+                byte[] buffer = allocateBuffer(myComment.trim().length());
+                int length = SVNBase64.base64ToByteArray(new StringBuffer(myComment.trim()), buffer);
+                try {
+                    myComment = new String(buffer, 0, length, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    myComment = new String(buffer, 0, length);
+                }
             }
         } else if (element == DAVElement.SVN_LOCK_CREATION_DATE && cdata != null) {
             myCreationDate = SVNTimeUtil.parseDate(cdata.toString());

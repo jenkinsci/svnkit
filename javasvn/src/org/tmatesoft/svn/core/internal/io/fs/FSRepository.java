@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -70,6 +71,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     private FSReporterContext myReporterContext;
     private FSFS myFSFS;
     private SVNDeltaGenerator myDeltaGenerator;
+    private SVNDeltaCombiner myDeltaCombiner;
 
     protected FSRepository(SVNURL location, ISVNSession options) {
         super(location, options);
@@ -272,7 +274,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             if (contents != null) {
                 InputStream fileStream = null;
                 try {
-                    fileStream = root.getFileStreamForPath(repositoryPath);
+                    fileStream = root.getFileStreamForPath(new SVNDeltaCombiner(), repositoryPath);
                     byte[] buffer = new byte[FSConstants.SVN_STREAM_CHUNK_SIZE];
                     while (true) {
                         int length = fileStream.read(buffer);
@@ -483,15 +485,18 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 if (handler != null) {
                     handler.openRevision(new SVNFileRevision(revPath, rev, revProps, propDiffs));
                     if (contentsChanged) {
+                        SVNDeltaCombiner sourceCombiner = new SVNDeltaCombiner();
+                        SVNDeltaCombiner targetCombiner = new SVNDeltaCombiner();
                         handler.applyTextDelta(path, null);
                         InputStream sourceStream = null;
                         InputStream targetStream = null;
                         try {
                             if (lastRoot != null && lastPath != null) {
-                                sourceStream = lastRoot.getFileStreamForPath(lastPath);
+                                sourceStream = lastRoot.getFileStreamForPath(sourceCombiner, lastPath);
                             } else {
-                                sourceStream = FSInputStream.createDeltaStream((FSRevisionNode) null, myFSFS);
-                            }targetStream = root.getFileStreamForPath(revPath);
+                                sourceStream = FSInputStream.createDeltaStream(sourceCombiner, (FSRevisionNode) null, myFSFS);
+                            }
+                            targetStream = root.getFileStreamForPath(targetCombiner, revPath);
                             SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
                             deltaGenerator.sendDelta(path, sourceStream, 0, targetStream, handler, false);
                         } finally {
@@ -1118,19 +1123,24 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             SVNErrorManager.error(err);
         }
         myDeltaGenerator = new SVNDeltaGenerator();
-        myReporterContext.getEditor().openRoot(sourceRevision);
-
-        if ("".equals(myReporterContext.getReportTarget())) {
-            diffDirs(sourceRevision, fullSourcePath, fullTargetPath, "", info.isStartEmpty());
-        } else {
-            // update entry
-            updateEntry(sourceRevision, fullSourcePath, sourceEntry, fullTargetPath, targetEntry, myReporterContext.getReportTarget(), info, true);
+        myDeltaCombiner = new SVNDeltaCombiner();
+        try {
+            myReporterContext.getEditor().openRoot(sourceRevision);
+    
+            if ("".equals(myReporterContext.getReportTarget())) {
+                diffDirs(sourceRevision, fullSourcePath, fullTargetPath, "", info.isStartEmpty());
+            } else {
+                // update entry
+                updateEntry(sourceRevision, fullSourcePath, sourceEntry, fullTargetPath, targetEntry, myReporterContext.getReportTarget(), info, true);
+            }
+    
+            myReporterContext.getEditor().closeDir();
+            myReporterContext.getEditor().closeEdit();
+        } finally {
+            myDeltaCombiner = null;
+            myDeltaGenerator = null;
+            disposeReporterContext();
         }
-
-        myReporterContext.getEditor().closeDir();
-        myReporterContext.getEditor().closeEdit();
-
-        disposeReporterContext();
     }
 
     public void abortReport() throws SVNException {
@@ -1238,16 +1248,17 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
 
         myReporterContext.getEditor().applyTextDelta(editPath, sourceHexDigest);
+
         if (myReporterContext.isSendTextDeltas()) {
             InputStream sourceStream = null;
             InputStream targetStream = null;
             try {
                 if (sourceRoot != null && sourcePath != null) {
-                    sourceStream = sourceRoot.getFileStreamForPath(sourcePath);
+                    sourceStream = sourceRoot.getFileStreamForPath(myDeltaCombiner, sourcePath);
                 } else {
-                    sourceStream = FSInputStream.createDeltaStream((FSRevisionNode) null, myFSFS);
+                    sourceStream = FSInputStream.createDeltaStream(myDeltaCombiner, (FSRevisionNode) null, myFSFS);
                 }
-                targetStream = myReporterContext.getTargetRoot().getFileStreamForPath(targetPath);
+                targetStream = myReporterContext.getTargetRoot().getFileStreamForPath(new SVNDeltaCombiner(), targetPath);
                 myDeltaGenerator.sendDelta(editPath, sourceStream, 0, targetStream, myReporterContext.getEditor(), false);
             } finally {
                 SVNFileUtil.closeFile(sourceStream);
@@ -1277,8 +1288,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         InputStream file1IS = null;
         InputStream file2IS = null;
         try {
-            file1IS = root1.getFileStreamForPath(path1);
-            file2IS = root2.getFileStreamForPath(path2);
+            file1IS = root1.getFileStreamForPath(myDeltaCombiner, path1);
+            file2IS = root2.getFileStreamForPath(myDeltaCombiner, path2);
 
             int r1 = -1;
             int r2 = -1;

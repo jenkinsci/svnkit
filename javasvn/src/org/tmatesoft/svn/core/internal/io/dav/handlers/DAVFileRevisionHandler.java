@@ -12,6 +12,7 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -135,8 +136,13 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             if (myPropertyName != null) {
                 String value;
                 if ("base64".equals(myPropertyEncoding)) {
-                    byte[] bytes = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), null);
-                    value = new String(bytes);
+                    byte[] bytes = allocateBuffer(cdata.length());
+                    int length = SVNBase64.base64ToByteArray(cdata, bytes);
+                    try {
+                        value = new String(bytes, 0, length, "UTF-8");
+                    } catch (UnsupportedEncodingException e) {
+                        value = new String(bytes, 0, length);
+                    }
                 } else {
                     value = cdata.toString();
                 }

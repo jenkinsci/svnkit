@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -19,27 +20,26 @@ import java.io.OutputStream;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class CountingStream extends OutputStream {
+public class CountingStream extends FilterOutputStream {
 
     private long myPosition;
-    private OutputStream myWriter;
     
-    public CountingStream(OutputStream writer, long offset) {
-        super();
+    public CountingStream(OutputStream stream, long offset) {
+        super(stream);
         myPosition = offset >= 0 ? offset : 0;
-        myWriter = writer;
+    }
+    
+    public void write(byte[] b, int off, int len) throws IOException {
+        super.out.write(b, off, len);        
+        myPosition += len;
     }
 
     public void write(int b) throws IOException {
-        myWriter.write(b);
+        super.write(b);        
         myPosition++;
     }
     
     public long getPosition(){
         return myPosition;
-    }
-
-    public OutputStream getRealStream(){
-        return myWriter;
     }
 }
