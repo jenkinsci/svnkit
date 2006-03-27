@@ -278,11 +278,14 @@ public class SVNFileUtil {
             srcChannel = is.getChannel();
             os = new FileOutputStream(tmpDst);
             dstChannel = os.getChannel();
-            long count = srcChannel.size();
-            while (count > 0) {
-                count -= dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
+            long copied = 0;
+            long totalSize = srcChannel.size();
+            while (copied < totalSize) {
+                long toCopy = Math.min(1024*1024*1024, totalSize - copied);
+                copied += dstChannel.transferFrom(srcChannel, copied, toCopy);
             }
         } catch (IOException e) {
+            e.printStackTrace();
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy file ''{0}'' to ''{1}''", new Object[] {src, dst});
             SVNErrorManager.error(err);
         } finally {

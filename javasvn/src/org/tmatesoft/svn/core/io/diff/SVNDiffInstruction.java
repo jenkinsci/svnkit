@@ -177,4 +177,25 @@ public class SVNDiffInstruction {
             os.put((byte) r);
         }
     }
+
+    public static void writeLong(ByteBuffer os, long i) {
+        if (i == 0) {
+            os.put((byte) 0);
+            return;
+        }
+        // how many bytes there are:
+        int count = 1;
+        long v = i >> 7;
+        while(v > 0) {
+            v = v >> 7;
+            count++;
+        }
+        byte b;
+        int r;
+        while(--count >= 0) {
+            b = (byte) ((count > 0 ? 0x1 : 0x0) << 7);
+            r = ((byte) ((i >> 7 * count) & 0x7f)) | b;
+            os.put((byte) r);
+        }
+    }
 }

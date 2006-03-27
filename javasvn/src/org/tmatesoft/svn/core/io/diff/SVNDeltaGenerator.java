@@ -125,7 +125,7 @@ public class SVNDeltaGenerator {
      *                          MD5 checksum computed for the target contents; otherwise  <span class="javakeyword">null</span>
      * @throws SVNException
      */
-    public String sendDelta(String path, InputStream source, int sourceOffset, InputStream target, ISVNDeltaConsumer consumer, boolean computeChecksum) throws SVNException {
+    public String sendDelta(String path, InputStream source, long sourceOffset, InputStream target, ISVNDeltaConsumer consumer, boolean computeChecksum) throws SVNException {
         MessageDigest digest = null;
         if (computeChecksum) {
             try {
@@ -180,7 +180,7 @@ public class SVNDeltaGenerator {
         return SVNFileUtil.toHexDigest(digest);
     }
 
-    private void sendDelta(String path, int sourceOffset, byte[] source, int sourceLength, byte[] target, int targetLength, ISVNDeltaConsumer consumer) throws SVNException {
+    private void sendDelta(String path, long sourceOffset, byte[] source, int sourceLength, byte[] target, int targetLength, ISVNDeltaConsumer consumer) throws SVNException {
         // use x or v algorithm depending on sourceLength
         SVNDeltaAlgorithm algorithm = sourceLength == 0 ? myVDelta : myXDelta;
         algorithm.computeDelta(source, sourceLength, target, targetLength);

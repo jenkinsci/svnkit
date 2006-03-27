@@ -139,13 +139,13 @@ class HTTPRequest {
      *  // this may throw IOException that will be converted to: timeout error, can't connect error, or ssl will re-prompt.
      */
     public void dispatch(String request, String path, Map header, int ok1, int ok2, SVNErrorMessage context) throws IOException {
-        int length = 0;
+        long length = 0;
         if (myRequestBody != null) {
             length = myRequestBody.length;
         } else if (myRequestStream instanceof ByteArrayInputStream) {
             length = ((ByteArrayInputStream) myRequestStream).available();
         } else if (header != null && header.containsKey("Content-Length")) {
-            length = Integer.parseInt((String) header.get("Content-Length"));
+            length = Long.parseLong((String) header.get("Content-Length"));
             header.remove("Content-Length");
         }
         StringBuffer headerText = composeHTTPHeader(request, path, header, length, myIsKeepAlive);
@@ -238,7 +238,7 @@ class HTTPRequest {
         return myErrorMessage;
     }
 
-    private StringBuffer composeHTTPHeader(String request, String path, Map header, int length, boolean keepAlive) {
+    private StringBuffer composeHTTPHeader(String request, String path, Map header, long length, boolean keepAlive) {
         StringBuffer sb = new StringBuffer();
         sb.append(request);
         sb.append(' ');

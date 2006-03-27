@@ -36,7 +36,7 @@ public class SVNDiffWindow {
     public static final byte[] SVN_HEADER = new byte[] {'S', 'V', 'N', '\0'};
     public static final SVNDiffWindow EMPTY = new SVNDiffWindow(0,0,0,0,0);
     
-    private final int mySourceViewOffset;
+    private final long mySourceViewOffset;
     private final int mySourceViewLength;
     private final int myTargetViewLength;
     private final int myNewDataLength;
@@ -64,7 +64,7 @@ public class SVNDiffWindow {
      * @param newDataLength       a number of bytes of new data
      * @see                       SVNDiffInstruction
      */
-    public SVNDiffWindow(int sourceViewOffset, int sourceViewLength, int targetViewLength, int instructionsLength, int newDataLength) {
+    public SVNDiffWindow(long sourceViewOffset, int sourceViewLength, int targetViewLength, int instructionsLength, int newDataLength) {
         mySourceViewOffset = sourceViewOffset;
         mySourceViewLength = sourceViewLength;
         myTargetViewLength = targetViewLength;
@@ -87,7 +87,7 @@ public class SVNDiffWindow {
      * @return an offset in the source from where the source bytes
      *         must be copied
      */
-    public int getSourceViewOffset() {
+    public long getSourceViewOffset() {
         return mySourceViewOffset;
     }
     
@@ -179,7 +179,7 @@ public class SVNDiffWindow {
             // copy from the old buffer.
             if (applyBaton.mySourceViewOffset + applyBaton.mySourceViewLength > getSourceViewOffset()) {
                 // copy overlapping part to the new buffer
-                int start = (getSourceViewOffset() - applyBaton.mySourceViewOffset);
+                int start = (int) (getSourceViewOffset() - applyBaton.mySourceViewOffset);
                 System.arraycopy(oldSourceBuffer, start, applyBaton.mySourceBuffer, 0, (applyBaton.mySourceViewLength - start));
                 length = (applyBaton.mySourceViewLength - start);
             }            
@@ -187,7 +187,7 @@ public class SVNDiffWindow {
         if (length < getSourceViewLength()) {
             // fill what remains.
             try {
-                int toSkip = getSourceViewOffset() - (applyBaton.mySourceViewOffset + applyBaton.mySourceViewLength);
+                int toSkip = (int) (getSourceViewOffset() - (applyBaton.mySourceViewOffset + applyBaton.mySourceViewLength));
                 if (toSkip > 0) {
                     applyBaton.mySourceStream.skip(toSkip);
                 }
@@ -316,7 +316,7 @@ public class SVNDiffWindow {
             return;
         }
         ByteBuffer offsets = ByteBuffer.allocate(100);
-        SVNDiffInstruction.writeInt(offsets, mySourceViewOffset);
+        SVNDiffInstruction.writeLong(offsets, mySourceViewOffset);
         SVNDiffInstruction.writeInt(offsets, mySourceViewLength);
         SVNDiffInstruction.writeInt(offsets, myTargetViewLength);
         SVNDiffInstruction.writeInt(offsets, myInstructionsLength);

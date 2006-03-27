@@ -34,7 +34,7 @@ public class SVNDeltaReader {
     private ByteBuffer myBuffer;
     
     private int myHeaderBytes;
-    private int myLastSourceOffset;
+    private long myLastSourceOffset;
     private int myLastSourceLength;
     private boolean myIsWindowSent;
     
@@ -77,7 +77,7 @@ public class SVNDeltaReader {
             myHeaderBytes = 4;
         }
         while(true) {
-            int sourceOffset = readOffset();
+            long sourceOffset = readLongOffset();
             if (sourceOffset < 0) {
                 return;
             }
@@ -144,6 +144,22 @@ public class SVNDeltaReader {
     private int readOffset() {
         myBuffer.mark();
         int offset = 0;
+        byte b;
+        while(myBuffer.hasRemaining()) {
+            b = myBuffer.get();
+            offset = (offset << 7) | (b & 0x7F);
+            if ((b & 0x80) != 0) {
+                continue;
+            }
+            return offset;
+        }
+        myBuffer.reset();
+        return -1;
+    }
+
+    private long readLongOffset() {
+        myBuffer.mark();
+        long offset = 0;
         byte b;
         while(myBuffer.hasRemaining()) {
             b = myBuffer.get();

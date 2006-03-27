@@ -79,7 +79,7 @@ public class SVNDeltaCombiner {
             SVNErrorManager.error(err, e);
         }
         myReadWindowBuffer.flip();
-        int sourceOffset = readOffset(myReadWindowBuffer);
+        long sourceOffset = readLongOffset(myReadWindowBuffer);
         int sourceLength = readOffset(myReadWindowBuffer);
         int targetLength = readOffset(myReadWindowBuffer);
         int instructionsLength = readOffset(myReadWindowBuffer);
@@ -119,7 +119,7 @@ public class SVNDeltaCombiner {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
             SVNErrorManager.error(err, e);
         }
-        if (readOffset(myReadWindowBuffer) < 0) {
+        if (readLongOffset(myReadWindowBuffer) < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
             SVNErrorManager.error(err);
         }
@@ -388,6 +388,22 @@ public class SVNDeltaCombiner {
     private int readOffset(ByteBuffer buffer) {
         buffer.mark();
         int offset = 0;
+        byte b;
+        while(buffer.hasRemaining()) {
+            b = buffer.get();
+            offset = (offset << 7) | (b & 0x7F);
+            if ((b & 0x80) != 0) {
+                continue;
+            }
+            return offset;
+        }
+        buffer.reset();
+        return -1;
+    }
+
+    private long readLongOffset(ByteBuffer buffer) {
+        buffer.mark();
+        long offset = 0;
         byte b;
         while(buffer.hasRemaining()) {
             b = buffer.get();

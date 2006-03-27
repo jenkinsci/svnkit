@@ -126,8 +126,8 @@ public class SVNExportEditor implements ISVNEditor {
         myFileProperties.put(name, value);
     }
 
-    public void applyTextDelta(String commitPath, String baseChecksum)
-            throws SVNException {
+    public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
+        // do not create tmp file when no keyword expansion is needed.
         myCurrentTmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory, myCurrentFile.getName(), ".tmp");
         myDeltaProcessor.applyTextDelta(null, myCurrentTmpFile, true);
     }
@@ -139,12 +139,10 @@ public class SVNExportEditor implements ISVNEditor {
     private String myChecksum;
 
     public void textDeltaEnd(String commitPath) throws SVNException {
-//        myDeltaProcessor.textDeltaEnd();
         myChecksum = myDeltaProcessor.textDeltaEnd();
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {
-//        myDeltaProcessor.close();
         if (textChecksum == null) {
             textChecksum = (String) myFileProperties.get(SVNProperty.CHECKSUM);
         }
