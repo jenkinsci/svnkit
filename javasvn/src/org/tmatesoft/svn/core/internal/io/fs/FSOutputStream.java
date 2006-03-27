@@ -51,33 +51,24 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     private MessageDigest myDigest;    
     private FSTransactionRoot myTxnRoot;    
     private long mySourceOffset;
-    private boolean isSourceDone;    
-    private int myTargetLength;    
-    private int mySourceLength;
 
     private ByteBuffer myTextBuffer;
-    private byte[] mySourceBuf = new byte[SVN_DELTA_WINDOW_SIZE];    
-    private byte[] myTargetBuf = new byte[SVN_DELTA_WINDOW_SIZE];
-    
     private boolean myIsClosed;
     
     private FSOutputStream(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot) throws SVNException {
         myTxnRoot = txnRoot;
         myTargetFile = file;
-        mySourceStream = source;
+        mySourceStream = source;        
         myDeltaStart = deltaStart;
         myRepSize = repSize;
         myRepOffset = repOffset; 
         isHeaderWritten = false;
-        myDeltaGenerator = new SVNDeltaGenerator(SVN_DELTA_WINDOW_SIZE);
         myRevNode = revNode;
         mySourceOffset = 0;
-        isSourceDone = false;
-        myTargetLength = 0;
-        mySourceLength = 0;
         myIsClosed = false;
+
+        myDeltaGenerator = new SVNDeltaGenerator(SVN_DELTA_WINDOW_SIZE);
         myTextBuffer = ByteBuffer.allocate(WRITE_BUFFER_SIZE);
-        myTextBuffer.limit(WRITE_BUFFER_SIZE);
         
         try {
             myDigest = MessageDigest.getInstance("MD5");
@@ -97,9 +88,6 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         isHeaderWritten = false;
         myRevNode = revNode;
         mySourceOffset = 0;
-        isSourceDone = false;
-        myTargetLength = 0;
-        mySourceLength = 0;
         myIsClosed = false;
         myDigest.reset();
         myTextBuffer.clear();
@@ -120,7 +108,8 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         InputStream sourceStream = null;
         long offset = -1;
         long deltaStart = -1;
-        try{
+
+        try {
             File targetFile = txnRoot.getTransactionRevFile(); 
             offset = targetFile.length();
             targetOS = SVNFileUtil.openFileForWriting(targetFile, true);
@@ -142,15 +131,14 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             if(dstStream == null){
                 return new FSOutputStream(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
             }
-            
             dstStream.reset(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
             return dstStream;
-        }catch(IOException ioe){
+        } catch(IOException ioe) {
             SVNFileUtil.closeFile(targetOS);
             SVNFileUtil.closeFile(sourceStream);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
-        }catch(SVNException svne){
+        } catch(SVNException svne) {
             SVNFileUtil.closeFile(targetOS);
             SVNFileUtil.closeFile(sourceStream);
             throw svne;
@@ -159,17 +147,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     }
     
     public void write(int b) throws IOException{
-        myDigest.update((byte)b);
-        myRepSize++; 
-        myTextBuffer.put((byte)b);
-        if(myTextBuffer.remaining() == 0){
-            try{
-                makeDiffWindowFromData(myTextBuffer.array(), myTextBuffer.array().length);
-            }catch(SVNException svne){
-                throw new IOException(svne.getMessage());
-            }
-            myTextBuffer.clear();
-        }
+        write(new byte[] {(byte) (b & 0xFF)}, 0, 1);
     }
     
     public void write(byte[] b) throws IOException{
@@ -183,10 +161,11 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         while(len > 0){
             toWrite = Math.min(len, myTextBuffer.remaining());
             myTextBuffer.put(b, off, toWrite);
-            if(myTextBuffer.remaining() == 0){
-                try{
-                    makeDiffWindowFromData(myTextBuffer.array(), myTextBuffer.array().length);
-                }catch(SVNException svne){
+            if (myTextBuffer.remaining() == 0) {
+                try {
+                    ByteArrayInputStream target = new ByteArrayInputStream(myTextBuffer.array(), 0, myTextBuffer.capacity());
+                    myDeltaGenerator.sendDelta(null, mySourceStream, mySourceOffset, target, this, false);
+                } catch(SVNException svne) {
                     throw new IOException(svne.getMessage());
                 }
                 myTextBuffer.clear();
@@ -200,16 +179,15 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         if(myIsClosed){
             return;
         }
-        
         myIsClosed = true;
         
-        try{
-            makeDiffWindowFromData(myTextBuffer.array(), myTextBuffer.position());
-            flushNextWindow();
+        try {
+            ByteArrayInputStream target = new ByteArrayInputStream(myTextBuffer.array(), 0, myTextBuffer.position());
+            myDeltaGenerator.sendDelta(null, mySourceStream, mySourceOffset, target, this, false);
             
             FSRepresentation rep = new FSRepresentation();
             rep.setOffset(myRepOffset);
-            
+
             long offset = myTargetFile.getPosition();
             
             rep.setSize(offset - myDeltaStart);
@@ -223,9 +201,9 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             myRevNode.setTextRepresentation(rep);
 
             myTxnRoot.getOwner().putTxnRevisionNode(myRevNode.getId(), myRevNode);
-        }catch(SVNException svne){
+        } catch(SVNException svne) {
             throw new IOException(svne.getMessage());
-        }finally{
+        } finally {
             closeStreams();
         }
     }
@@ -238,55 +216,16 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     public FSRevisionNode getRevisionNode(){
         return myRevNode;
     }
-    
-    private void writeDiffWindow(SVNDiffWindow window) throws SVNException {
+
+    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException{
+        mySourceOffset += diffWindow.getInstructionsLength();
         try {
-            window.writeTo(myTargetFile, !isHeaderWritten);
+            diffWindow.writeTo(myTargetFile, !isHeaderWritten);
             isHeaderWritten = true;
         } catch(IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
         }
-    }
-    
-    private void makeDiffWindowFromData(byte[] data, int dataLength) throws IOException, SVNException {
-        if(data == null) {
-            return;
-        }
-        int dataPos = 0;
-        while(dataLength > 0) {
-            if(mySourceLength == 0 && !isSourceDone) {
-                mySourceLength = mySourceStream.read(mySourceBuf);
-                mySourceLength = mySourceLength < 0 ? 0 : mySourceLength;
-                if(mySourceLength < SVN_DELTA_WINDOW_SIZE){
-                    isSourceDone = true;
-                }
-            }
-            int chunkLength = SVN_DELTA_WINDOW_SIZE - myTargetLength;
-            if(chunkLength > dataLength) {
-                chunkLength = dataLength;
-            }
-            System.arraycopy(data, dataPos, myTargetBuf, myTargetLength, chunkLength);
-            dataPos += chunkLength;
-            dataLength -= chunkLength;
-            myTargetLength += chunkLength;
-            if(myTargetLength == SVN_DELTA_WINDOW_SIZE){
-                flushNextWindow();
-                mySourceOffset += mySourceLength;
-                mySourceLength = 0;
-                myTargetLength = 0;
-            }
-        }
-    }
-    
-    private void flushNextWindow() throws SVNException {
-        ByteArrayInputStream sourceData = new ByteArrayInputStream(mySourceBuf, 0, mySourceLength);
-        ByteArrayInputStream targetData = new ByteArrayInputStream(myTargetBuf, 0, myTargetLength);
-        myDeltaGenerator.sendDelta(null, sourceData, (int)mySourceOffset, targetData, this, false);
-    }
-
-    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException{
-        writeDiffWindow(diffWindow);
         return SVNFileUtil.DUMMY_OUT;
     }
 
