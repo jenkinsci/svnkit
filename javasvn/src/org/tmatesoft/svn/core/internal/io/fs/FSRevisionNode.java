@@ -23,6 +23,17 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 public class FSRevisionNode {
+    //rev-node files keywords
+    public static final String HEADER_ID = "id";
+    public static final String HEADER_TYPE = "type";
+    public static final String HEADER_COUNT = "count";
+    public static final String HEADER_PROPS = "props";
+    public static final String HEADER_TEXT = "text";
+    public static final String HEADER_CPATH = "cpath";
+    public static final String HEADER_PRED = "pred";
+    public static final String HEADER_COPYFROM = "copyfrom";
+    public static final String HEADER_COPYROOT = "copyroot";
+
     //id: a.b.r<revID>/offset
     private FSID myId;
     
@@ -56,7 +67,7 @@ public class FSRevisionNode {
 
     //for only node-revs representing dirs 
     private Map myDirContents;
-    
+
     public FSRevisionNode(){
     }
     
@@ -184,7 +195,7 @@ public class FSRevisionNode {
         FSRevisionNode revNode = new FSRevisionNode();
 
         // Read the rev-node id.
-        String revNodeId = (String) headers.get(FSConstants.HEADER_ID);
+        String revNodeId = (String) headers.get(FSRevisionNode.HEADER_ID);
         if (revNodeId == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing node-id in node-rev");
             SVNErrorManager.error(err);
@@ -198,7 +209,7 @@ public class FSRevisionNode {
         revNode.setId(revnodeID);
 
         // Read the type.
-        SVNNodeKind nodeKind = SVNNodeKind.parseKind((String) headers.get(FSConstants.HEADER_TYPE));
+        SVNNodeKind nodeKind = SVNNodeKind.parseKind((String) headers.get(FSRevisionNode.HEADER_TYPE));
         if (nodeKind == SVNNodeKind.NONE || nodeKind == SVNNodeKind.UNKNOWN) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing kind field in node-rev");
             SVNErrorManager.error(err);
@@ -206,7 +217,7 @@ public class FSRevisionNode {
         revNode.setType(nodeKind);
 
         // Read the 'count' field.
-        String countString = (String) headers.get(FSConstants.HEADER_COUNT);
+        String countString = (String) headers.get(FSRevisionNode.HEADER_COUNT);
         if (countString == null) {
             revNode.setCount(0);
         } else {
@@ -221,19 +232,19 @@ public class FSRevisionNode {
         }
 
         // Get the properties location (if any).
-        String propsRepr = (String) headers.get(FSConstants.HEADER_PROPS);
+        String propsRepr = (String) headers.get(FSRevisionNode.HEADER_PROPS);
         if (propsRepr != null) {
             parseRepresentationHeader(propsRepr, revNode, revnodeID.getTxnID(), false);
         }
 
         // Get the data location (if any).
-        String textRepr = (String) headers.get(FSConstants.HEADER_TEXT);
+        String textRepr = (String) headers.get(FSRevisionNode.HEADER_TEXT);
         if (textRepr != null) {
             parseRepresentationHeader(textRepr, revNode, revnodeID.getTxnID(), true);
         }
 
         // Get the created path.
-        String cpath = (String) headers.get(FSConstants.HEADER_CPATH);
+        String cpath = (String) headers.get(FSRevisionNode.HEADER_CPATH);
         if (cpath == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing cpath in node-rev");
             SVNErrorManager.error(err);
@@ -241,7 +252,7 @@ public class FSRevisionNode {
         revNode.setCreatedPath(cpath);
 
         // Get the predecessor rev-node id (if any).
-        String predId = (String) headers.get(FSConstants.HEADER_PRED);
+        String predId = (String) headers.get(FSRevisionNode.HEADER_PRED);
         if (predId != null) {
             FSID predRevNodeId = FSID.fromString(predId);
             if (predRevNodeId == null) {
@@ -252,7 +263,7 @@ public class FSRevisionNode {
         }
 
         // Get the copyroot.
-        String copyroot = (String) headers.get(FSConstants.HEADER_COPYROOT);
+        String copyroot = (String) headers.get(FSRevisionNode.HEADER_COPYROOT);
         if (copyroot == null) {
             revNode.setCopyRootPath(revNode.getCreatedPath());
             revNode.setCopyRootRevision(revNode.getId().getRevision());
@@ -261,10 +272,10 @@ public class FSRevisionNode {
         }
 
         // Get the copyfrom.
-        String copyfrom = (String) headers.get(FSConstants.HEADER_COPYFROM);
+        String copyfrom = (String) headers.get(FSRevisionNode.HEADER_COPYFROM);
         if (copyfrom == null) {
             revNode.setCopyFromPath(null);
-            revNode.setCopyFromRevision(FSConstants.SVN_INVALID_REVNUM);
+            revNode.setCopyFromRevision(FSRepository.SVN_INVALID_REVNUM);
         } else {
             parseCopyFrom(copyfrom, revNode);
         }
@@ -423,7 +434,7 @@ public class FSRevisionNode {
         rep.setExpandedSize(expandedSize);
         
         String hexDigest = representation.substring(delimiterInd + 1);
-        if (hexDigest.length() != 2 * FSConstants.MD5_DIGESTSIZE || SVNFileUtil.fromHexDigest(hexDigest) == null) {
+        if (hexDigest.length() != 32 || SVNFileUtil.fromHexDigest(hexDigest) == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
             SVNErrorManager.error(err);
         }

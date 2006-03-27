@@ -178,7 +178,7 @@ public abstract class FSRoot {
         mapChanges = mapChanges != null ? mapChanges : new HashMap();
         FSPathChange newChange = null;
         String copyfromPath = null;
-        long copyfromRevision = FSConstants.SVN_INVALID_REVNUM;
+        long copyfromRevision = FSRepository.SVN_INVALID_REVNUM;
 
         FSPathChange oldChange = (FSPathChange) mapChanges.get(change.getPath());
         if (oldChange != null) {
@@ -226,12 +226,12 @@ public abstract class FSRoot {
                 }
                 
                 copyfromPath = null;
-                copyfromRevision = FSConstants.SVN_INVALID_REVNUM;
+                copyfromRevision = FSRepository.SVN_INVALID_REVNUM;
 
             } else if (FSPathChangeKind.FS_PATH_CHANGE_RESET == change.getChangeKind()) {
                 oldChange = null;
                 copyfromPath = null;
-                copyfromRevision = FSConstants.SVN_INVALID_REVNUM;
+                copyfromRevision = FSRepository.SVN_INVALID_REVNUM;
                 mapChanges.remove(change.getPath());
             }
             

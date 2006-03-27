@@ -72,6 +72,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     private FSFS myFSFS;
     private SVNDeltaGenerator myDeltaGenerator;
     private SVNDeltaCombiner myDeltaCombiner;
+    //invalid revision number, suppose it to be -1
+    public static final int SVN_INVALID_REVNUM = -1;
 
     protected FSRepository(SVNURL location, ISVNSession options) {
         super(location, options);
@@ -275,13 +277,13 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 InputStream fileStream = null;
                 try {
                     fileStream = root.getFileStreamForPath(new SVNDeltaCombiner(), repositoryPath);
-                    byte[] buffer = new byte[FSConstants.SVN_STREAM_CHUNK_SIZE];
+                    byte[] buffer = new byte[102400];
                     while (true) {
                         int length = fileStream.read(buffer);
                         if (length > 0) {
                             contents.write(buffer, 0, length);
                         }
-                        if (length != FSConstants.SVN_STREAM_CHUNK_SIZE) {
+                        if (length != 102400) {
                             break;
                         }
                     }
@@ -633,7 +635,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
 
     private long getNextHistoryRevision(LinkedList histories) {
-        long nextRevision = FSConstants.SVN_INVALID_REVNUM;
+        long nextRevision = FSRepository.SVN_INVALID_REVNUM;
         for (ListIterator infoes = histories.listIterator(); infoes.hasNext();) {
             LogPathInfo info = (LogPathInfo) infoes.next();
             if (info.getHistory() == null) {
@@ -660,7 +662,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
 
         public long getHistoryRevision() {
-            return myHistory == null ? FSConstants.SVN_INVALID_REVNUM : myHistory.getHistoryEntry().getRevision();
+            return myHistory == null ? FSRepository.SVN_INVALID_REVNUM : myHistory.getHistoryEntry().getRevision();
         }
 
         public void pickUpNextHistory(boolean strict, long start) throws SVNException {
@@ -1034,7 +1036,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
     public void deletePath(String path) throws SVNException {
         try {
-            myFSFS.writePathInfoToReportFile(myReporterContext.getReportFileForWriting(), myReporterContext.getReportTarget(), path, null, null, FSConstants.SVN_INVALID_REVNUM, false);
+            myFSFS.writePathInfoToReportFile(myReporterContext.getReportFileForWriting(), myReporterContext.getReportTarget(), path, null, null, FSRepository.SVN_INVALID_REVNUM, false);
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
@@ -1211,7 +1213,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 if (targetEntries.get(srcEntry.getName()) == null) {
                     String entryEditPath = SVNPathUtil.append(editPath, srcEntry.getName());
                     if (myReporterContext.isRecursive() || srcEntry.getType() != SVNNodeKind.DIR) {
-                        myReporterContext.getEditor().deleteEntry(entryEditPath, FSConstants.SVN_INVALID_REVNUM);
+                        myReporterContext.getEditor().deleteEntry(entryEditPath, FSRepository.SVN_INVALID_REVNUM);
                     }
                 }
             }
@@ -1374,7 +1376,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
 
         if (sourceEntry != null && !related) {
-            myReporterContext.getEditor().deleteEntry(editPath, FSConstants.SVN_INVALID_REVNUM);
+            myReporterContext.getEditor().deleteEntry(editPath, FSRepository.SVN_INVALID_REVNUM);
             sourcePath = null;
         }
 
@@ -1387,7 +1389,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             if (related) {
                 myReporterContext.getEditor().openDir(editPath, sourceRevision);
             } else {
-                myReporterContext.getEditor().addDir(editPath, null, FSConstants.SVN_INVALID_REVNUM);
+                myReporterContext.getEditor().addDir(editPath, null, FSRepository.SVN_INVALID_REVNUM);
             }
             diffDirs(sourceRevision, sourcePath, targetPath, editPath, pathInfo != null ? pathInfo.isStartEmpty() : false);
             myReporterContext.getEditor().closeDir();
@@ -1395,7 +1397,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             if (related) {
                 myReporterContext.getEditor().openFile(editPath, sourceRevision);
             } else {
-                myReporterContext.getEditor().addFile(editPath, null, FSConstants.SVN_INVALID_REVNUM);
+                myReporterContext.getEditor().addFile(editPath, null, FSRepository.SVN_INVALID_REVNUM);
             }
             diffFiles(sourceRevision, sourcePath, targetPath, editPath, pathInfo != null ? pathInfo.getLockToken() : null);
             FSRevisionNode targetNode = myReporterContext.getTargetRoot().getRevisionNode(targetPath);

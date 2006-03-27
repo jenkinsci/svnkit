@@ -44,6 +44,22 @@ import org.tmatesoft.svn.core.io.ISVNLockHandler;
  * @author  TMate Software Ltd.
  */
 public class FSFS {
+    public static final String SVN_REPOS_DB_DIR = "db";
+    public static final String TXN_PATH_EXT = ".txn";
+    public static final String TXN_PATH_EXT_CHILDREN = ".children";
+    public static final String PATH_PREFIX_NODE = "node.";
+    public static final String TXN_PATH_EXT_PROPS = ".props";
+    public static final int DIGEST_SUBDIR_LEN = 3;
+    public static final String SVN_OPAQUE_LOCK_TOKEN = "opaquelocktoken:";
+    public static final String TXN_PATH_REV = "rev";
+    public static final String PATH_LOCK_KEY = "path";
+    public static final String CHILDREN_LOCK_KEY = "children";
+    public static final String TOKEN_LOCK_KEY = "token";
+    public static final String OWNER_LOCK_KEY = "owner";
+    public static final String IS_DAV_COMMENT_LOCK_KEY = "is_dav_comment";
+    public static final String CREATION_DATE_LOCK_KEY = "creation_date";
+    public static final String EXPIRATION_DATE_LOCK_KEY = "expiration_date";
+    public static final String COMMENT_LOCK_KEY = "comment";
     
     private static final int REPOSITORY_FORMAT = 3;
     private static final int DB_FORMAT = 1;
@@ -108,7 +124,7 @@ public class FSFS {
             SVNErrorManager.error(err);
         }
 
-        File dbCurrentFile = new File(myDBRoot, "current");
+        File dbCurrentFile = getCurrentFile();
         if(!(dbCurrentFile.exists() && dbCurrentFile.canRead())){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can''t open file ''{0}''", dbCurrentFile);
             SVNErrorManager.error(err);
@@ -173,7 +189,7 @@ public class FSFS {
     }
 
     protected FSFile getTransactionRevisionNodePropertiesFile(FSID id) {
-        File revNodePropsFile = new File(getTransactionDir(id.getTxnID()), "node." + id.getNodeID() + "." + id.getCopyID() + ".props");
+        File revNodePropsFile = new File(getTransactionDir(id.getTxnID()), PATH_PREFIX_NODE + id.getNodeID() + "." + id.getCopyID() + TXN_PATH_EXT_PROPS);
         return new FSFile(revNodePropsFile);
     }
 
@@ -189,7 +205,7 @@ public class FSFS {
         FSFile revisionFile = null;
 
         if (id.isTxn()) {
-            File file = new File(getTransactionDir(id.getTxnID()), "node." + id.getNodeID() + "." + id.getCopyID());
+            File file = new File(getTransactionDir(id.getTxnID()), PATH_PREFIX_NODE + id.getNodeID() + "." + id.getCopyID());
             revisionFile = new FSFile(file);
         } else {
             revisionFile = getRevisionFile(id.getRevision());
@@ -404,7 +420,7 @@ public class FSFS {
     }
 
     public File getTransactionDir(String txnID) {
-        return new File(myTransactionsRoot, txnID + ".txn");
+        return new File(myTransactionsRoot, txnID + TXN_PATH_EXT);
     }
     
     public File getTransactionsParentDir(){
@@ -417,7 +433,7 @@ public class FSFS {
     }
 
     protected FSFile getTransactionRevisionNodeChildrenFile(FSID txnID) {
-        File childrenFile = new File(getTransactionDir(txnID.getTxnID()), "node." + txnID.getNodeID() + "." + txnID.getCopyID() + ".children");
+        File childrenFile = new File(getTransactionDir(txnID.getTxnID()), PATH_PREFIX_NODE + txnID.getNodeID() + "." + txnID.getCopyID() + TXN_PATH_EXT_CHILDREN);
         return new FSFile(childrenFile);
     }
     
@@ -431,7 +447,7 @@ public class FSFS {
     }
     
     protected FSFile getTransactionRevisionPrototypeFile(String txnID) {
-        File revFile = new File(getTransactionDir(txnID), "rev");
+        File revFile = new File(getTransactionDir(txnID), TXN_PATH_REV);
         return new FSFile(revFile);
     }
 
@@ -510,7 +526,7 @@ public class FSFS {
         revNode.setPredecessorId(sourceNode.getId());
         revNode.setCount(revNode.getCount() + 1);
         revNode.setCopyFromPath(null);
-        revNode.setCopyFromRevision(FSConstants.SVN_INVALID_REVNUM);
+        revNode.setCopyFromRevision(FSRepository.SVN_INVALID_REVNUM);
         revNode.setId(FSID.createTxnId(sourceNode.getId().getNodeID(), sourceNode.getId().getCopyID(), txnID));
         putTxnRevisionNode(revNode.getId(), revNode);
     }
@@ -533,37 +549,37 @@ public class FSFS {
     }
 
     public File getTransactionRevNodeFile(FSID id) {
-        return new File(getTransactionDir(id.getTxnID()), "node." + id.getNodeID() + "." + id.getCopyID());
+        return new File(getTransactionDir(id.getTxnID()), PATH_PREFIX_NODE + id.getNodeID() + "." + id.getCopyID());
     }
 
     public void writeTxnNodeRevision(OutputStream revNodeFile, FSRevisionNode revNode) throws IOException {
-        String id = FSConstants.HEADER_ID + ": " + revNode.getId() + "\n";
+        String id = FSRevisionNode.HEADER_ID + ": " + revNode.getId() + "\n";
         revNodeFile.write(id.getBytes("UTF-8"));
-        String type = FSConstants.HEADER_TYPE + ": " + revNode.getType() + "\n";
+        String type = FSRevisionNode.HEADER_TYPE + ": " + revNode.getType() + "\n";
         revNodeFile.write(type.getBytes("UTF-8"));
         if (revNode.getPredecessorId() != null) {
-            String predId = FSConstants.HEADER_PRED + ": " + revNode.getPredecessorId() + "\n";
+            String predId = FSRevisionNode.HEADER_PRED + ": " + revNode.getPredecessorId() + "\n";
             revNodeFile.write(predId.getBytes("UTF-8"));
         }
-        String count = FSConstants.HEADER_COUNT + ": " + revNode.getCount() + "\n";
+        String count = FSRevisionNode.HEADER_COUNT + ": " + revNode.getCount() + "\n";
         revNodeFile.write(count.getBytes("UTF-8"));
         if (revNode.getTextRepresentation() != null) {
-            String textRepresentation = FSConstants.HEADER_TEXT + ": "
+            String textRepresentation = FSRevisionNode.HEADER_TEXT + ": "
                     + (revNode.getTextRepresentation().getTxnId() != null && revNode.getType() == SVNNodeKind.DIR ? "-1" : revNode.getTextRepresentation().toString()) + "\n";
             revNodeFile.write(textRepresentation.getBytes("UTF-8"));
         }
         if (revNode.getPropsRepresentation() != null) {
-            String propsRepresentation = FSConstants.HEADER_PROPS + ": " + (revNode.getPropsRepresentation().getTxnId() != null ? "-1" : revNode.getPropsRepresentation().toString()) + "\n";
+            String propsRepresentation = FSRevisionNode.HEADER_PROPS + ": " + (revNode.getPropsRepresentation().getTxnId() != null ? "-1" : revNode.getPropsRepresentation().toString()) + "\n";
             revNodeFile.write(propsRepresentation.getBytes("UTF-8"));
         }
-        String cpath = FSConstants.HEADER_CPATH + ": " + revNode.getCreatedPath() + "\n";
+        String cpath = FSRevisionNode.HEADER_CPATH + ": " + revNode.getCreatedPath() + "\n";
         revNodeFile.write(cpath.getBytes("UTF-8"));
         if (revNode.getCopyFromPath() != null) {
-            String copyFromPath = FSConstants.HEADER_COPYFROM + ": " + revNode.getCopyFromRevision() + " " + revNode.getCopyFromPath() + "\n";
+            String copyFromPath = FSRevisionNode.HEADER_COPYFROM + ": " + revNode.getCopyFromRevision() + " " + revNode.getCopyFromPath() + "\n";
             revNodeFile.write(copyFromPath.getBytes("UTF-8"));
         }
         if (revNode.getCopyRootRevision() != revNode.getId().getRevision() || !revNode.getCopyRootPath().equals(revNode.getCreatedPath())) {
-            String copyroot = FSConstants.HEADER_COPYROOT + ": " + revNode.getCopyRootRevision() + " " + revNode.getCopyRootPath() + "\n";
+            String copyroot = FSRevisionNode.HEADER_COPYROOT + ": " + revNode.getCopyRootRevision() + " " + revNode.getCopyRootPath() + "\n";
             revNodeFile.write(copyroot.getBytes("UTF-8"));
         }
         revNodeFile.write("\n".getBytes("UTF-8"));
@@ -636,7 +652,7 @@ public class FSFS {
         
         File digestLockFile = getDigestFileFromRepositoryPath(repositoryPath);
         String digest = getDigestFromRepositoryPath(repositoryPath);
-        File lockDigestSubdir = new File(myLocksRoot, digest.substring(0, FSConstants.DIGEST_SUBDIR_LEN));//FSRepositoryUtil.getDigestSubdirectoryFromDigest(, reposRootDir);
+        File lockDigestSubdir = new File(myLocksRoot, digest.substring(0, FSFS.DIGEST_SUBDIR_LEN));//FSRepositoryUtil.getDigestSubdirectoryFromDigest(, reposRootDir);
 
         if (!ensureDirExists(lockDigestSubdir, true)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Can't create a directory at ''{0}''", lockDigestSubdir);
@@ -646,18 +662,18 @@ public class FSFS {
         Map props = new HashMap();
         
         if (lock != null) {
-            props.put(FSConstants.PATH_LOCK_KEY, lock.getPath());
-            props.put(FSConstants.OWNER_LOCK_KEY, lock.getOwner());
-            props.put(FSConstants.TOKEN_LOCK_KEY, lock.getID());
-            props.put(FSConstants.IS_DAV_COMMENT_LOCK_KEY, "0");
+            props.put(FSFS.PATH_LOCK_KEY, lock.getPath());
+            props.put(FSFS.OWNER_LOCK_KEY, lock.getOwner());
+            props.put(FSFS.TOKEN_LOCK_KEY, lock.getID());
+            props.put(FSFS.IS_DAV_COMMENT_LOCK_KEY, "0");
             if (lock.getComment() != null) {
-                props.put(FSConstants.COMMENT_LOCK_KEY, lock.getComment());
+                props.put(FSFS.COMMENT_LOCK_KEY, lock.getComment());
             }
             if (lock.getCreationDate() != null) {
-                props.put(FSConstants.CREATION_DATE_LOCK_KEY, SVNTimeUtil.formatDate(lock.getCreationDate()));
+                props.put(FSFS.CREATION_DATE_LOCK_KEY, SVNTimeUtil.formatDate(lock.getCreationDate()));
             }
             if (lock.getExpirationDate() != null) {
-                props.put(FSConstants.EXPIRATION_DATE_LOCK_KEY, SVNTimeUtil.formatDate(lock.getExpirationDate()));
+                props.put(FSFS.EXPIRATION_DATE_LOCK_KEY, SVNTimeUtil.formatDate(lock.getExpirationDate()));
             }
         }
         if (children != null && children.size() > 0) {
@@ -667,7 +683,7 @@ public class FSFS {
                 value.append(digests[i]);
                 value.append('\n');
             }
-            props.put(FSConstants.CHILDREN_LOCK_KEY, value.toString());
+            props.put(FSFS.CHILDREN_LOCK_KEY, value.toString());
         }
         try {
             SVNProperties.setProperties(props, digestLockFile);
@@ -696,7 +712,7 @@ public class FSFS {
         
         for (Iterator entries = children.iterator(); entries.hasNext();) {
             String digestName = (String) entries.next();
-            File parent = new File(myLocksRoot, digestName.substring(0, FSConstants.DIGEST_SUBDIR_LEN));
+            File parent = new File(myLocksRoot, digestName.substring(0, FSFS.DIGEST_SUBDIR_LEN));
             File childDigestFile = new File(parent, digestName);
             walkDigestFiles(childDigestFile, getLocksHandler, haveWriteLock);
         }
@@ -734,35 +750,35 @@ public class FSFS {
         }
         
         SVNLock lock = null;
-        String lockPath = (String) lockProps.get(FSConstants.PATH_LOCK_KEY);
+        String lockPath = (String) lockProps.get(FSFS.PATH_LOCK_KEY);
         if (lockPath != null) {
-            String lockToken = (String) lockProps.get(FSConstants.TOKEN_LOCK_KEY);
+            String lockToken = (String) lockProps.get(FSFS.TOKEN_LOCK_KEY);
             if (lockToken == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
-            String lockOwner = (String) lockProps.get(FSConstants.OWNER_LOCK_KEY);
+            String lockOwner = (String) lockProps.get(FSFS.OWNER_LOCK_KEY);
             if (lockOwner == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
-            String davComment = (String) lockProps.get(FSConstants.IS_DAV_COMMENT_LOCK_KEY);
+            String davComment = (String) lockProps.get(FSFS.IS_DAV_COMMENT_LOCK_KEY);
             if (davComment == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
-            String creationTime = (String) lockProps.get(FSConstants.CREATION_DATE_LOCK_KEY);
+            String creationTime = (String) lockProps.get(FSFS.CREATION_DATE_LOCK_KEY);
             if (creationTime == null) {
                 SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
             }
             Date creationDate = SVNTimeUtil.parseDateString(creationTime);
-            String expirationTime = (String) lockProps.get(FSConstants.EXPIRATION_DATE_LOCK_KEY);
+            String expirationTime = (String) lockProps.get(FSFS.EXPIRATION_DATE_LOCK_KEY);
             Date expirationDate = null;
             if (expirationTime != null) {
                 expirationDate = SVNTimeUtil.parseDateString(expirationTime);
             }
-            String comment = (String) lockProps.get(FSConstants.COMMENT_LOCK_KEY);
+            String comment = (String) lockProps.get(FSFS.COMMENT_LOCK_KEY);
             lock = new SVNLock(lockPath, lockToken, lockOwner, comment, creationDate, expirationDate);
         }
         
-        String childEntries = (String) lockProps.get(FSConstants.CHILDREN_LOCK_KEY);
+        String childEntries = (String) lockProps.get(FSFS.CHILDREN_LOCK_KEY);
         if (children != null && childEntries != null) {
             String[] digests = childEntries.split("\n");
             for (int i = 0; i < digests.length; i++) {
@@ -774,7 +790,7 @@ public class FSFS {
     
     public File getDigestFileFromRepositoryPath(String repositoryPath) throws SVNException {
         String digest = getDigestFromRepositoryPath(repositoryPath);
-        File parent = new File(myLocksRoot, digest.substring(0, FSConstants.DIGEST_SUBDIR_LEN));
+        File parent = new File(myLocksRoot, digest.substring(0, FSFS.DIGEST_SUBDIR_LEN));
         return new File(parent, digest);
     }
 
@@ -882,7 +898,7 @@ public class FSFS {
         SVNLock lock = null;
         if (token == null) {
             String uuid = SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
-            token = FSConstants.SVN_OPAQUE_LOCK_TOKEN + uuid;
+            token = FSFS.SVN_OPAQUE_LOCK_TOKEN + uuid;
             lock = new SVNLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate);
         } else {
             lock = new SVNLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate);
@@ -987,12 +1003,12 @@ public class FSFS {
     }
 
     private static boolean isRepositoryRoot(File candidatePath) {
-        File formatFile = new File(candidatePath, FSConstants.SVN_REPOS_FORMAT_FILE);
+        File formatFile = new File(candidatePath, "format");
         SVNFileType fileType = SVNFileType.getType(formatFile);
         if (fileType != SVNFileType.FILE) {
             return false;
         }
-        File dbFile = new File(candidatePath, FSConstants.SVN_REPOS_DB_DIR);
+        File dbFile = new File(candidatePath, SVN_REPOS_DB_DIR);
         fileType = SVNFileType.getType(dbFile);
         if (fileType != SVNFileType.DIRECTORY && fileType != SVNFileType.SYMLINK) {
             return false;

@@ -22,6 +22,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * @author  TMate Software Ltd.
  */
 public class FSPathChange extends SVNLogEntryPath {
+    private static final String FLAG_TRUE = "true";
+    private static final String FLAG_FALSE = "false";
+
     private String myPath;
     private FSID myRevNodeId;
     private FSPathChangeKind myChangeKind;
@@ -117,9 +120,9 @@ public class FSPathChange extends SVNLogEntryPath {
         String textModeStr = changeLine.substring(0, delimiterInd);
         
         boolean textModeBool = false;
-        if (FSConstants.FLAG_TRUE.equals(textModeStr)) {
+        if (FSPathChange.FLAG_TRUE.equals(textModeStr)) {
             textModeBool = true;
-        } else if (FSConstants.FLAG_FALSE.equals(textModeStr)) {
+        } else if (FSPathChange.FLAG_FALSE.equals(textModeStr)) {
             textModeBool = false;
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid text-mod flag in rev-file");
@@ -135,9 +138,9 @@ public class FSPathChange extends SVNLogEntryPath {
         String propModeStr = changeLine.substring(0, delimiterInd);
         
         boolean propModeBool = false;
-        if (FSConstants.FLAG_TRUE.equals(propModeStr)) {
+        if (FSPathChange.FLAG_TRUE.equals(propModeStr)) {
             propModeBool = true;
-        } else if (FSConstants.FLAG_FALSE.equals(propModeStr)) {
+        } else if (FSPathChange.FLAG_FALSE.equals(propModeStr)) {
             propModeBool = false;
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid prop-mod flag in rev-file");
@@ -147,7 +150,7 @@ public class FSPathChange extends SVNLogEntryPath {
         String pathStr = changeLine.substring(delimiterInd + 1);
         
         String copyfromPath = null;
-        long copyfromRevision = FSConstants.SVN_INVALID_REVNUM;
+        long copyfromRevision = FSRepository.SVN_INVALID_REVNUM;
         
         if (copyfromLine != null && copyfromLine.length() != 0) {
             delimiterInd = copyfromLine.indexOf(' ');

@@ -242,10 +242,10 @@ public class FSInputStream extends InputStream {
             String line = file.readLine(160);//FSReader.readNextLine(file, 160);
             FSRepresentationArgs repArgs = new FSRepresentationArgs();
             repArgs.isDelta = false;
-            if(FSConstants.REP_PLAIN.equals(line)){
+            if(FSRepresentation.REP_PLAIN.equals(line)){
                 return repArgs;
             }
-            if(FSConstants.REP_DELTA.equals(line)){
+            if(FSRepresentation.REP_DELTA.equals(line)){
                 /* This is a delta against the empty stream. */
                 repArgs.isDelta = true;
                 repArgs.isDeltaVsEmpty = true;
@@ -263,7 +263,7 @@ public class FSInputStream extends InputStream {
             
             String header = line.substring(0, delimiterInd);
             
-            if(!FSConstants.REP_DELTA.equals(header)){
+            if(!FSRepresentation.REP_DELTA.equals(header)){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                 SVNErrorManager.error(err);
             }

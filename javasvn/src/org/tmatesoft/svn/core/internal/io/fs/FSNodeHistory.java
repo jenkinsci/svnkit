@@ -122,7 +122,7 @@ public class FSNodeHistory {
         if (kind == SVNNodeKind.NONE) {
             SVNErrorManager.error(FSErrors.errorNotFound(root, path));
         }
-        return new FSNodeHistory(new SVNLocationEntry(root.getRevision(), path), false, new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null));
+        return new FSNodeHistory(new SVNLocationEntry(root.getRevision(), path), false, new SVNLocationEntry(FSRepository.SVN_INVALID_REVNUM, null));
     }
 
     private FSNodeHistory historyPrev(boolean crossCopies, FSFS owner) throws SVNException {
@@ -147,7 +147,7 @@ public class FSNodeHistory {
         FSNodeHistory prevHist = null;
         if (revision == commitEntry.getRevision()) {
             if (!reported) {
-                prevHist = new FSNodeHistory(commitEntry, true, new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null));
+                prevHist = new FSNodeHistory(commitEntry, true, new SVNLocationEntry(FSRepository.SVN_INVALID_REVNUM, null));
                 return prevHist;
             }
             FSID predId = revNode.getPredecessorId();
@@ -158,8 +158,8 @@ public class FSNodeHistory {
             commitEntry = new SVNLocationEntry(revNode.getId().getRevision(), revNode.getCreatedPath());
         }
         SVNLocationEntry copyrootEntry = findYoungestCopyroot(owner.getRepositoryRoot(), parentPath);
-        SVNLocationEntry srcEntry = new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null);
-        long dstRev = FSConstants.SVN_INVALID_REVNUM;
+        SVNLocationEntry srcEntry = new SVNLocationEntry(FSRepository.SVN_INVALID_REVNUM, null);
+        long dstRev = FSRepository.SVN_INVALID_REVNUM;
         if (copyrootEntry.getRevision() > commitEntry.getRevision()) {
             FSRevisionRoot copyrootRoot = owner.createRevisionRoot(copyrootEntry.getRevision());
             revNode = copyrootRoot.getRevisionNode(copyrootEntry.getPath());
@@ -183,15 +183,15 @@ public class FSNodeHistory {
             }
             return new FSNodeHistory(new SVNLocationEntry(dstRev, path), retry ? false : true, new SVNLocationEntry(srcEntry.getRevision(), srcEntry.getPath()));
         }
-        return new FSNodeHistory(commitEntry, true, new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null));
+        return new FSNodeHistory(commitEntry, true, new SVNLocationEntry(FSRepository.SVN_INVALID_REVNUM, null));
     }
 
     public FSNodeHistory fsHistoryPrev(boolean crossCopies, FSFS owner) throws SVNException {
         if ("/".equals(historyEntry.getPath())) {
             if (!isInteresting) {
-                return new FSNodeHistory(new SVNLocationEntry(historyEntry.getRevision(), "/"), true, new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null));
+                return new FSNodeHistory(new SVNLocationEntry(historyEntry.getRevision(), "/"), true, new SVNLocationEntry(FSRepository.SVN_INVALID_REVNUM, null));
             } else if (historyEntry.getRevision() > 0) {
-                return new FSNodeHistory(new SVNLocationEntry(historyEntry.getRevision() - 1, "/"), true, new SVNLocationEntry(FSConstants.SVN_INVALID_REVNUM, null));
+                return new FSNodeHistory(new SVNLocationEntry(historyEntry.getRevision() - 1, "/"), true, new SVNLocationEntry(FSRepository.SVN_INVALID_REVNUM, null));
             }
         } else {
             FSNodeHistory prevHist = this;

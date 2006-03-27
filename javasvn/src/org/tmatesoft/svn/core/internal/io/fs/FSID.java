@@ -28,7 +28,7 @@ public class FSID {
     }
     
     public static FSID createTxnId(String nodeId, String copyId, String txnId){
-        return new FSID(nodeId, txnId, copyId, FSConstants.SVN_INVALID_REVNUM, -1);
+        return new FSID(nodeId, txnId, copyId, FSRepository.SVN_INVALID_REVNUM, -1);
     }
 
     public static FSID createRevId(String nodeId, String copyId, long revision, long offset){

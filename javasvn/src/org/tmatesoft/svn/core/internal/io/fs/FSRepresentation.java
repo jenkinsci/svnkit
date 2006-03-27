@@ -17,6 +17,10 @@ package org.tmatesoft.svn.core.internal.io.fs;
  * @author  TMate Software Ltd.
  */
 public class FSRepresentation {
+    public static final String REP_DELTA = "DELTA";
+    public static final String REP_PLAIN = "PLAIN";
+    public static final String REP_TRAILER = "ENDREP";
+
     private long myRevision;
     private long myOffset;
     private long mySize;
@@ -42,7 +46,7 @@ public class FSRepresentation {
     }
 
     public FSRepresentation(){
-        myRevision = FSConstants.SVN_INVALID_REVNUM;
+        myRevision = FSRepository.SVN_INVALID_REVNUM;
         myOffset = -1;
         mySize = -1;
         myExpandedSize = -1;

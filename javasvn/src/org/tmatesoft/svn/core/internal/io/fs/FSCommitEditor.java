@@ -94,10 +94,10 @@ public class FSCommitEditor implements ISVNEditor {
         Map txnProps = myFSFS.getTransactionProperties(myTxn.getTxnId());
         int flags = 0;
         if (txnProps.get(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
-            flags |= FSConstants.SVN_FS_TXN_CHECK_OUT_OF_DATENESS;
+            flags |= FSTransactionRoot.SVN_FS_TXN_CHECK_OUT_OF_DATENESS;
         }
         if (txnProps.get(SVNProperty.TXN_CHECK_LOCKS) != null) {
-            flags |= FSConstants.SVN_FS_TXN_CHECK_LOCKS;
+            flags |= FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS;
         }
         myTxnRoot = myFSFS.createTransactionRoot(myTxn.getTxnId(), flags);
         DirBaton dirBaton = new DirBaton(revision, myBasePath, false);
@@ -106,7 +106,7 @@ public class FSCommitEditor implements ISVNEditor {
 
     private FSTransactionInfo beginTransactionForCommit(long baseRevision) throws SVNException {
         FSHooks.runStartCommitHook(myFSFS.getRepositoryRoot(), myAuthor);
-        FSTransactionInfo txn = FSTransactionRoot.beginTransaction(baseRevision, FSConstants.SVN_FS_TXN_CHECK_LOCKS, myFSFS);
+        FSTransactionInfo txn = FSTransactionRoot.beginTransaction(baseRevision, FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS, myFSFS);
 
         if (myAuthor != null && !"".equals(myAuthor)) {
             myFSFS.setTransactionProperty(txn.getTxnId(), SVNRevisionProperty.AUTHOR, myAuthor);
@@ -155,14 +155,14 @@ public class FSCommitEditor implements ISVNEditor {
             SVNErrorManager.error(err);
         }
 
-        if ((myTxnRoot.getTxnFlags() & FSConstants.SVN_FS_TXN_CHECK_LOCKS) != 0) {
+        if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
             allowLockedOperation(path, myAuthor, myLockTokens, true, false);
         }
 
         makePathMutable(parentPath.getParent(), path);
         myTxnRoot.deleteEntry(parentPath.getParent().getRevNode(), parentPath.getNameEntry());
         myTxnRoot.removeRevNodeFromCache(parentPath.getAbsPath());
-        addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_DELETE, false, false, FSConstants.SVN_INVALID_REVNUM, null);
+        addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_DELETE, false, false, FSRepository.SVN_INVALID_REVNUM, null);
     }
 
     public void absentDir(String path) throws SVNException {
@@ -194,7 +194,7 @@ public class FSCommitEditor implements ISVNEditor {
             makeDir(fullPath);
         }
 
-        DirBaton dirBaton = new DirBaton(FSConstants.SVN_INVALID_REVNUM, fullPath, isCopied);
+        DirBaton dirBaton = new DirBaton(FSRepository.SVN_INVALID_REVNUM, fullPath, isCopied);
         myDirsStack.push(dirBaton);
     }
 
@@ -206,7 +206,7 @@ public class FSCommitEditor implements ISVNEditor {
             SVNErrorManager.error(FSErrors.errorAlreadyExists(myTxnRoot, path, myFSFS));
         }
 
-        if ((myTxnRoot.getTxnFlags() & FSConstants.SVN_FS_TXN_CHECK_LOCKS) != 0) {
+        if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
             allowLockedOperation(path, myAuthor, myLockTokens, true, false);
         }
 
@@ -214,7 +214,7 @@ public class FSCommitEditor implements ISVNEditor {
         FSRevisionNode subDirNode = makeEntry(parentPath.getParent().getRevNode(), parentPath.getParent().getAbsPath(), parentPath.getNameEntry(), true, txnId);
 
         myTxnRoot.putRevNodeToCache(parentPath.getAbsPath(), subDirNode);
-        addChange(path, subDirNode.getId(), FSPathChangeKind.FS_PATH_CHANGE_ADD, false, false, FSConstants.SVN_INVALID_REVNUM, null);
+        addChange(path, subDirNode.getId(), FSPathChangeKind.FS_PATH_CHANGE_ADD, false, false, FSRepository.SVN_INVALID_REVNUM, null);
     }
 
     private FSRevisionNode makeEntry(FSRevisionNode parent, String parentPath, String entryName, boolean isDir, String txnId) throws SVNException {
@@ -238,7 +238,7 @@ public class FSCommitEditor implements ISVNEditor {
         newRevNode.setCreatedPath(SVNPathUtil.concatToAbs(parentPath, entryName));
         newRevNode.setCopyRootPath(parent.getCopyRootPath());
         newRevNode.setCopyRootRevision(parent.getCopyRootRevision());
-        newRevNode.setCopyFromRevision(FSConstants.SVN_INVALID_REVNUM);
+        newRevNode.setCopyFromRevision(FSRepository.SVN_INVALID_REVNUM);
         newRevNode.setCopyFromPath(null);
         FSID newNodeId = createNode(newRevNode, parent.getId().getCopyID(), txnId);
 
@@ -270,7 +270,7 @@ public class FSCommitEditor implements ISVNEditor {
         FSRevisionNode fromNode = fromRoot.getRevisionNode(fromPath);
 
         FSParentPath toParentPath = myTxnRoot.openPath(toPath, false, true);
-        if ((myTxnRoot.getTxnFlags() & FSConstants.SVN_FS_TXN_CHECK_LOCKS) != 0) {
+        if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
             allowLockedOperation(toPath, myAuthor, myLockTokens, true, false);
         }
 
@@ -358,7 +358,7 @@ public class FSCommitEditor implements ISVNEditor {
 
         FSParentPath parentPath = myTxnRoot.openPath(path, true, true);
 
-        if ((myTxnRoot.getTxnFlags() & FSConstants.SVN_FS_TXN_CHECK_LOCKS) != 0) {
+        if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
             allowLockedOperation(path, myAuthor, myLockTokens, false, false);
         }
         
@@ -376,7 +376,7 @@ public class FSCommitEditor implements ISVNEditor {
         }
 
         myTxnRoot.setProplist(parentPath.getRevNode(), properties);
-        addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, false, true, FSConstants.SVN_INVALID_REVNUM, null);
+        addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, false, true, FSRepository.SVN_INVALID_REVNUM, null);
     }
 
     public void closeDir() throws SVNException {
@@ -411,7 +411,7 @@ public class FSCommitEditor implements ISVNEditor {
             SVNErrorManager.error(FSErrors.errorAlreadyExists(myTxnRoot, path, myFSFS));
         }
 
-        if ((myTxnRoot.getTxnFlags() & FSConstants.SVN_FS_TXN_CHECK_LOCKS) != 0) {
+        if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
             allowLockedOperation(path, myAuthor, myLockTokens, false, false);
         }
 
@@ -419,7 +419,7 @@ public class FSCommitEditor implements ISVNEditor {
         FSRevisionNode childNode = makeEntry(parentPath.getParent().getRevNode(), parentPath.getParent().getAbsPath(), parentPath.getNameEntry(), false, txnId);
 
         myTxnRoot.putRevNodeToCache(parentPath.getAbsPath(), childNode);
-        addChange(path, childNode.getId(), FSPathChangeKind.FS_PATH_CHANGE_ADD, false, false, FSConstants.SVN_INVALID_REVNUM, null);
+        addChange(path, childNode.getId(), FSPathChangeKind.FS_PATH_CHANGE_ADD, false, false, FSRepository.SVN_INVALID_REVNUM, null);
     }
 
     public void openFile(String path, long revision) throws SVNException {
@@ -435,7 +435,7 @@ public class FSCommitEditor implements ISVNEditor {
         String fullPath = SVNPathUtil.concatToAbs(myBasePath, path);
         FSParentPath parentPath = myTxnRoot.openPath(fullPath, true, true);
 
-        if ((myTxnRoot.getTxnFlags() & FSConstants.SVN_FS_TXN_CHECK_LOCKS) != 0) {
+        if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
             allowLockedOperation(fullPath, myAuthor, myLockTokens, false, false);
         }
 
@@ -467,7 +467,7 @@ public class FSCommitEditor implements ISVNEditor {
             myTargetStream = (FSOutputStream) targetStream;
         }
 
-        addChange(fullPath, node.getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, true, false, FSConstants.SVN_INVALID_REVNUM, null);
+        addChange(fullPath, node.getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, true, false, FSRepository.SVN_INVALID_REVNUM, null);
     }
 
     private void makePathMutable(FSParentPath parentPath, String errorPath) throws SVNException {
@@ -621,7 +621,7 @@ public class FSCommitEditor implements ISVNEditor {
     }
 
     private long commitTxn() throws SVNException {
-        long newRevision = FSConstants.SVN_INVALID_REVNUM;
+        long newRevision = FSRepository.SVN_INVALID_REVNUM;
 
         while (true) {
             long youngishRev = myFSFS.getYoungestRevision();

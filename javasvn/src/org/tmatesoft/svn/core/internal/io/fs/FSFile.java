@@ -364,7 +364,7 @@ public class FSFile {
         if (read() == '+') {
             return readNumberFromReportFile();
         }
-        return FSConstants.SVN_INVALID_REVNUM;
+        return FSRepository.SVN_INVALID_REVNUM;
     }
     
 }

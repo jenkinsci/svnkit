@@ -21,7 +21,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
  * @author  TMate Software Ltd.
  */
 public class FSKeyGenerator {
-    
+
+    public static final int MAX_KEY_SIZE = 200;
+
     public static String generateNextKey(char[] oldKey) throws SVNException {
         char[] nextKey = new char[oldKey.length + 1];
         boolean carry = true;
@@ -49,8 +51,8 @@ public class FSKeyGenerator {
             }
         }
         int nextKeyLength = oldKey.length + (carry ? 1 : 0);
-        if(nextKeyLength >= FSConstants.MAX_KEY_SIZE){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: new key length is greater than the threshold {0,number,integer}", new Integer(FSConstants.MAX_KEY_SIZE));
+        if(nextKeyLength >= MAX_KEY_SIZE){
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: new key length is greater than the threshold {0,number,integer}", new Integer(FSKeyGenerator.MAX_KEY_SIZE));
             SVNErrorManager.error(err);
         }
         if(carry){
@@ -66,7 +68,7 @@ public class FSKeyGenerator {
         int i3 = 0;
         int carry = 0;
         int val;
-        char[] buf = new char[FSConstants.MAX_KEY_SIZE + 2];
+        char[] buf = new char[MAX_KEY_SIZE + 2];
         while(i1 >= 0 || i2 >= 0 || carry > 0){
             val = carry;
             if(i1 >= 0){

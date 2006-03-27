@@ -131,9 +131,9 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             String header;
             
             if(baseRep != null){
-                header = FSConstants.REP_DELTA + " " + baseRep.getRevision() + " " + baseRep.getOffset() + " " + baseRep.getSize() + "\n"; 
+                header = FSRepresentation.REP_DELTA + " " + baseRep.getRevision() + " " + baseRep.getOffset() + " " + baseRep.getSize() + "\n"; 
             }else{
-                header = FSConstants.REP_DELTA + "\n";
+                header = FSRepresentation.REP_DELTA + "\n";
             }
 
             revWriter.write(header.getBytes("UTF-8"));
@@ -215,7 +215,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             rep.setSize(offset - myDeltaStart);
             rep.setExpandedSize(myRepSize);
             rep.setTxnId(myRevNode.getId().getTxnID());
-            rep.setRevision(FSConstants.SVN_INVALID_REVNUM);
+            rep.setRevision(FSRepository.SVN_INVALID_REVNUM);
             
             rep.setHexDigest(SVNFileUtil.toHexDigest(myDigest));
             
