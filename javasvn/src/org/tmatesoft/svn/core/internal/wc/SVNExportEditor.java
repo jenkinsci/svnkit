@@ -127,7 +127,6 @@ public class SVNExportEditor implements ISVNEditor {
     }
 
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
-        // do not create tmp file when no keyword expansion is needed.
         myCurrentTmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory, myCurrentFile.getName(), ".tmp");
         myDeltaProcessor.applyTextDelta(null, myCurrentTmpFile, true);
     }
@@ -151,28 +150,23 @@ public class SVNExportEditor implements ISVNEditor {
         }
         String realChecksum = myChecksum != null ? myChecksum : SVNFileUtil.computeChecksum(myCurrentTmpFile);
         myChecksum = null;
-        if (textChecksum != null
-                && !textChecksum.equals(realChecksum)) {
+        if (textChecksum != null && !textChecksum.equals(realChecksum)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
                     new Object[] {myCurrentFile, textChecksum, realChecksum}); 
             SVNErrorManager.error(err);
         }
         // retranslate.
         try {
-            String date = (String) myFileProperties
-                    .get(SVNProperty.COMMITTED_DATE);
-            String keywords = (String) myFileProperties
-                    .get(SVNProperty.KEYWORDS);
+            String date = (String) myFileProperties.get(SVNProperty.COMMITTED_DATE);
+            boolean special = myFileProperties.get(SVNProperty.SPECIAL) != null;
+            String keywords = (String) myFileProperties.get(SVNProperty.KEYWORDS);
             Map keywordsMap = null;
             if (keywords != null) {
                 String url = SVNPathUtil.append(myURL, SVNEncodingUtil.uriEncode(myCurrentPath));
                 url = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(myCurrentFile.getName()));
-                String author = (String) myFileProperties
-                        .get(SVNProperty.LAST_AUTHOR);
-                String revStr = (String) myFileProperties
-                        .get(SVNProperty.COMMITTED_REVISION);
-                keywordsMap = SVNTranslator.computeKeywords(keywords, url,
-                        author, date, revStr);
+                String author = (String) myFileProperties.get(SVNProperty.LAST_AUTHOR);
+                String revStr = (String) myFileProperties.get(SVNProperty.COMMITTED_REVISION);
+                keywordsMap = SVNTranslator.computeKeywords(keywords, url, author, date, revStr);
             }
             byte[] eolBytes = null;
             if (SVNProperty.EOL_STYLE_NATIVE.equals(myFileProperties.get(SVNProperty.EOL_STYLE))) {
@@ -180,25 +174,22 @@ public class SVNExportEditor implements ISVNEditor {
             } else if (myFileProperties.containsKey(SVNProperty.EOL_STYLE)) {
                 eolBytes = SVNTranslator.getWorkingEOL((String) myFileProperties.get(SVNProperty.EOL_STYLE));
             }
-            boolean special = myFileProperties.get(SVNProperty.SPECIAL) != null;
+            if (eolBytes != null || (keywordsMap != null && !keywordsMap.isEmpty()) || special) {
+                SVNTranslator.translate(myCurrentTmpFile, myCurrentFile, eolBytes, keywordsMap, special, true);
+            } else {
+                SVNFileUtil.rename(myCurrentTmpFile, myCurrentFile);
+            }
             boolean executable = myFileProperties.get(SVNProperty.EXECUTABLE) != null;
-
-            SVNTranslator.translate(myCurrentTmpFile, myCurrentFile, eolBytes,
-                    keywordsMap, special, true);
             if (executable) {
                 SVNFileUtil.setExecutable(myCurrentFile, true);
             }
             if (!special && date != null) {
-                myCurrentFile.setLastModified(SVNTimeUtil.parseDate(date)
-                        .getTime());
+                myCurrentFile.setLastModified(SVNTimeUtil.parseDate(date).getTime());
             }
-            myEventDispatcher.handleEvent(SVNEventFactory
-                    .createExportAddedEvent(myRoot, myCurrentFile, SVNNodeKind.FILE),
-                    ISVNEventHandler.UNKNOWN);
+            myEventDispatcher.handleEvent(SVNEventFactory.createExportAddedEvent(myRoot, myCurrentFile, SVNNodeKind.FILE), ISVNEventHandler.UNKNOWN);
         } finally {
             myCurrentTmpFile.delete();
         }
-
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
