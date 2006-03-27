@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -34,7 +35,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer {
+public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     
     public static final int WRITE_BUFFER_SIZE = 512000;
     public static final int SVN_DELTA_WINDOW_SIZE = 102400;
@@ -54,6 +55,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     private int myTargetLength;    
     private int mySourceLength;
 
+    private ByteBuffer myTextBuffer;
     private byte[] mySourceBuf = new byte[SVN_DELTA_WINDOW_SIZE];    
     private byte[] myTargetBuf = new byte[SVN_DELTA_WINDOW_SIZE];
     
@@ -74,6 +76,8 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
         myTargetLength = 0;
         mySourceLength = 0;
         myIsClosed = false;
+        myTextBuffer = ByteBuffer.allocate(WRITE_BUFFER_SIZE);
+        myTextBuffer.limit(WRITE_BUFFER_SIZE);
         
         try {
             myDigest = MessageDigest.getInstance("MD5");
@@ -84,8 +88,6 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     }
     
     private void reset(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot) {
-        super.myBufferLength = 0;
-        super.myBuffer = null;
         myTxnRoot = txnRoot;
         myTargetFile = file;
         mySourceStream = source;
@@ -100,6 +102,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
         mySourceLength = 0;
         myIsClosed = false;
         myDigest.reset();
+        myTextBuffer.clear();
     }
     
     public static OutputStream createStream(FSRevisionNode revNode, FSTransactionRoot txnRoot, FSOutputStream dstStream) throws SVNException {
@@ -133,7 +136,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
                 header = FSConstants.REP_DELTA + "\n";
             }
 
-            revWriter.write(header.getBytes());
+            revWriter.write(header.getBytes("UTF-8"));
             deltaStart = revWriter.getPosition();
             
             if(dstStream == null){
@@ -156,17 +159,16 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     }
     
     public void write(int b) throws IOException{
-        super.write(b);
         myDigest.update((byte)b);
         myRepSize++; 
-        if(super.myBufferLength > WRITE_BUFFER_SIZE){
+        myTextBuffer.put((byte)b);
+        if(myTextBuffer.remaining() == 0){
             try{
-                makeDiffWindowFromData(super.myBuffer, super.myBufferLength);
+                makeDiffWindowFromData(myTextBuffer.array(), myTextBuffer.array().length);
             }catch(SVNException svne){
                 throw new IOException(svne.getMessage());
             }
-            super.myBufferLength = 0;
-            super.myBuffer = null;
+            myTextBuffer.clear();
         }
     }
     
@@ -175,17 +177,22 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
     }
     
     public void write(byte[] b, int off, int len) throws IOException{
-        super.write(b, off, len);
         myDigest.update(b, off, len);
         myRepSize += len;
-        if(super.myBufferLength > WRITE_BUFFER_SIZE){
-            try{
-                makeDiffWindowFromData(super.myBuffer, super.myBufferLength);
-            }catch(SVNException svne){
-                throw new IOException(svne.getMessage());
+        int toWrite = 0;
+        while(len > 0){
+            toWrite = Math.min(len, myTextBuffer.remaining());
+            myTextBuffer.put(b, off, toWrite);
+            if(myTextBuffer.remaining() == 0){
+                try{
+                    makeDiffWindowFromData(myTextBuffer.array(), myTextBuffer.array().length);
+                }catch(SVNException svne){
+                    throw new IOException(svne.getMessage());
+                }
+                myTextBuffer.clear();
             }
-            super.myBufferLength = 0;
-            super.myBuffer = null;
+            off += toWrite;
+            len -= toWrite;
         }
     }
 
@@ -197,11 +204,8 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
         myIsClosed = true;
         
         try{
-            makeDiffWindowFromData(super.myBuffer, super.myBufferLength);
+            makeDiffWindowFromData(myTextBuffer.array(), myTextBuffer.position());
             flushNextWindow();
-            
-            super.myBufferLength = 0;
-            super.myBuffer = null;
             
             FSRepresentation rep = new FSRepresentation();
             rep.setOffset(myRepOffset);
@@ -215,7 +219,7 @@ public class FSOutputStream extends FSBufferStream implements ISVNDeltaConsumer 
             
             rep.setHexDigest(SVNFileUtil.toHexDigest(myDigest));
             
-            myTargetFile.write("ENDREP\n".getBytes());
+            myTargetFile.write("ENDREP\n".getBytes("UTF-8"));
             myRevNode.setTextRepresentation(rep);
 
             myTxnRoot.getOwner().putTxnRevisionNode(myRevNode.getId(), myRevNode);

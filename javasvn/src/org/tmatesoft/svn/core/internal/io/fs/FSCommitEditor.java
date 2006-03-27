@@ -684,7 +684,7 @@ public class FSCommitEditor implements ISVNEditor {
             long changedPathOffset = myTxnRoot.writeFinalChangedPathInfo(revWriter);
 
             String offsetsLine = "\n" + newRootId.getOffset() + " " + changedPathOffset + "\n";
-            protoFileOS.write(offsetsLine.getBytes());
+            protoFileOS.write(offsetsLine.getBytes("UTF-8"));
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);

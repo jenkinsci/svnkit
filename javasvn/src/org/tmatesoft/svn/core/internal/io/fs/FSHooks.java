@@ -228,7 +228,7 @@ public class FSHooks {
         if(stdInValue != null){
             OutputStream osToStdIn = hookProcess.getOutputStream();
             try{
-                osToStdIn.write(stdInValue.getBytes());
+                osToStdIn.write(stdInValue.getBytes("UTF-8"));
             }catch(IOException ioe){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[]{hook, ioe.getLocalizedMessage()});
                 SVNErrorManager.error(err, ioe);

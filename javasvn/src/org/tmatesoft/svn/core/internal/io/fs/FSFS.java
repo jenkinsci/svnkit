@@ -467,7 +467,7 @@ public class FSFS {
         try {
             nextIdsFile = SVNFileUtil.openFileForWriting(getNextIDsFile(txnID));
             String ids = nodeID + " " + copyID + "\n";
-            nextIdsFile.write(ids.getBytes());
+            nextIdsFile.write(ids.getBytes("UTF-8"));
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
@@ -538,35 +538,35 @@ public class FSFS {
 
     public void writeTxnNodeRevision(OutputStream revNodeFile, FSRevisionNode revNode) throws IOException {
         String id = FSConstants.HEADER_ID + ": " + revNode.getId() + "\n";
-        revNodeFile.write(id.getBytes());
+        revNodeFile.write(id.getBytes("UTF-8"));
         String type = FSConstants.HEADER_TYPE + ": " + revNode.getType() + "\n";
-        revNodeFile.write(type.getBytes());
+        revNodeFile.write(type.getBytes("UTF-8"));
         if (revNode.getPredecessorId() != null) {
             String predId = FSConstants.HEADER_PRED + ": " + revNode.getPredecessorId() + "\n";
-            revNodeFile.write(predId.getBytes());
+            revNodeFile.write(predId.getBytes("UTF-8"));
         }
         String count = FSConstants.HEADER_COUNT + ": " + revNode.getCount() + "\n";
-        revNodeFile.write(count.getBytes());
+        revNodeFile.write(count.getBytes("UTF-8"));
         if (revNode.getTextRepresentation() != null) {
             String textRepresentation = FSConstants.HEADER_TEXT + ": "
                     + (revNode.getTextRepresentation().getTxnId() != null && revNode.getType() == SVNNodeKind.DIR ? "-1" : revNode.getTextRepresentation().toString()) + "\n";
-            revNodeFile.write(textRepresentation.getBytes());
+            revNodeFile.write(textRepresentation.getBytes("UTF-8"));
         }
         if (revNode.getPropsRepresentation() != null) {
             String propsRepresentation = FSConstants.HEADER_PROPS + ": " + (revNode.getPropsRepresentation().getTxnId() != null ? "-1" : revNode.getPropsRepresentation().toString()) + "\n";
-            revNodeFile.write(propsRepresentation.getBytes());
+            revNodeFile.write(propsRepresentation.getBytes("UTF-8"));
         }
         String cpath = FSConstants.HEADER_CPATH + ": " + revNode.getCreatedPath() + "\n";
-        revNodeFile.write(cpath.getBytes());
+        revNodeFile.write(cpath.getBytes("UTF-8"));
         if (revNode.getCopyFromPath() != null) {
             String copyFromPath = FSConstants.HEADER_COPYFROM + ": " + revNode.getCopyFromRevision() + " " + revNode.getCopyFromPath() + "\n";
-            revNodeFile.write(copyFromPath.getBytes());
+            revNodeFile.write(copyFromPath.getBytes("UTF-8"));
         }
         if (revNode.getCopyRootRevision() != revNode.getId().getRevision() || !revNode.getCopyRootPath().equals(revNode.getCreatedPath())) {
             String copyroot = FSConstants.HEADER_COPYROOT + ": " + revNode.getCopyRootRevision() + " " + revNode.getCopyRootPath() + "\n";
-            revNodeFile.write(copyroot.getBytes());
+            revNodeFile.write(copyroot.getBytes("UTF-8"));
         }
-        revNodeFile.write("\n".getBytes());
+        revNodeFile.write("\n".getBytes("UTF-8"));
     }
     
     public SVNLock getLock(String repositoryPath, boolean haveWriteLock) throws SVNException {
@@ -782,11 +782,14 @@ public class FSFS {
         MessageDigest digestFromPath = null;
         try {
             digestFromPath = MessageDigest.getInstance("MD5");
+            digestFromPath.update(repositoryPath.getBytes("UTF-8"));
         } catch (NoSuchAlgorithmException nsae) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
             SVNErrorManager.error(err, nsae);
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe);
         }
-        digestFromPath.update(repositoryPath.getBytes());
         return SVNFileUtil.toHexDigest(digestFromPath); 
     }
 
@@ -966,7 +969,7 @@ public class FSFS {
         String lockTokenRep = lockToken != null ? "+" + lockToken.length() + ":" + lockToken : "-";
         String startEmptyRep = startEmpty ? "+" : "-";
         String fullRepresentation = "+" + anchorRelativePath.length() + ":" + anchorRelativePath + linkPathRep + revisionRep + startEmptyRep + lockTokenRep;
-        tmpFileOS.write(fullRepresentation.getBytes());
+        tmpFileOS.write(fullRepresentation.getBytes("UTF-8"));
     }
 
     public static File findRepositoryRoot(File path) {

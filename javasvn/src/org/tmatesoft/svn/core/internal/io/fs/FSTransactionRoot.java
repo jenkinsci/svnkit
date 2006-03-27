@@ -366,16 +366,16 @@ public class FSTransactionRoot extends FSRoot {
         }
         
         String output = idString + " " + changeString + " " + SVNProperty.toString(pathChange.isTextModified()) + " " + SVNProperty.toString(pathChange.arePropertiesModified()) + " " + pathChange.getPath() + "\n";
-        changesFile.write(output.getBytes());
+        changesFile.write(output.getBytes("UTF-8"));
         
         String copyfromPath = pathChange.getCopyPath();
         long copyfromRevision = pathChange.getCopyRevision();
         
         if (copyfromPath != null && copyfromRevision != FSConstants.SVN_INVALID_REVNUM) {
             String copyfromLine = copyfromRevision + " " + copyfromPath;
-            changesFile.write(copyfromLine.getBytes());
+            changesFile.write(copyfromLine.getBytes("UTF-8"));
         }
-        changesFile.write("\n".getBytes());
+        changesFile.write("\n".getBytes("UTF-8"));
     }
     
     public long writeFinalChangedPathInfo(final CountingStream protoFile) throws SVNException, IOException {
@@ -433,7 +433,7 @@ public class FSTransactionRoot extends FSRoot {
 
         try {
             currentOS = SVNFileUtil.openFileForWriting(tmpCurrentFile);
-            currentOS.write(line.getBytes());
+            currentOS.write(line.getBytes("UTF-8"));
         } finally {
             SVNFileUtil.closeFile(currentOS);
         }
@@ -570,10 +570,10 @@ public class FSTransactionRoot extends FSRoot {
     private long writeHashRepresentation(Map hashContents, OutputStream protoFile, MessageDigest digest) throws IOException, SVNException {
         HashRepresentationStream targetFile = new HashRepresentationStream(protoFile, digest);
         String header = FSConstants.REP_PLAIN + "\n";
-        protoFile.write(header.getBytes());
+        protoFile.write(header.getBytes("UTF-8"));
         SVNProperties.setProperties(hashContents, targetFile, SVNProperties.SVN_HASH_TERMINATOR);
         String trailer = FSConstants.REP_TRAILER + "\n";
-        protoFile.write(trailer.getBytes());
+        protoFile.write(trailer.getBytes("UTF-8"));
         return targetFile.mySize;
     }
     
