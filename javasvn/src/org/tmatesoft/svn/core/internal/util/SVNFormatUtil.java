@@ -34,6 +34,7 @@ public class SVNFormatUtil {
     
     static {
         SHORT_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+        HUMAN_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
     
     
