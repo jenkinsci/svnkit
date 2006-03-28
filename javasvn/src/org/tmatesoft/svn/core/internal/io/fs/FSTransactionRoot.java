@@ -44,8 +44,6 @@ public class FSTransactionRoot extends FSRoot {
 
     private String myTxnID;
     private int myTxnFlags;
-    private FSTransaction myTxn;
-    private FSRevisionNode myBaseRootNode;
     private File myTxnChangesFile;
     private File myTxnRevFile;
     
@@ -110,20 +108,16 @@ public class FSTransactionRoot extends FSRoot {
     }
 
     public FSRevisionNode getTxnBaseRootNode() throws SVNException {
-        if(myBaseRootNode == null){
-            FSTransaction txn = getTxn();
-            myBaseRootNode = getOwner().getRevisionNode(txn.getBaseID());
-        }
-        return myBaseRootNode;
+        FSTransaction txn = getTxn();
+        FSRevisionNode baseRootNode = getOwner().getRevisionNode(txn.getBaseID());
+        return baseRootNode;
     }
 
     public FSTransaction getTxn() throws SVNException {
-        if(myTxn == null){
-            FSID rootID = FSID.createTxnId("0", "0", myTxnID);
-            FSRevisionNode revNode = getOwner().getRevisionNode(rootID);
-            myTxn = new FSTransaction(revNode.getId(), revNode.getPredecessorId());
-        }
-        return myTxn;
+        FSID rootID = FSID.createTxnId("0", "0", myTxnID);
+        FSRevisionNode revNode = getOwner().getRevisionNode(rootID);
+        FSTransaction txn = new FSTransaction(revNode.getId(), revNode.getPredecessorId());
+        return txn;
     }
 
     public Map getChangedPaths() throws SVNException {
