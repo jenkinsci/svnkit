@@ -93,8 +93,8 @@ public class SVNUUIDGenerator {
             hexNumbers[i] = getHexNumberFromByte(uuid[i]);
         }
         String formatString = "{0}{1}{2}{3}-{4}{5}-{6}{7}-{8}{9}-{10}{11}{12}{13}{14}{15}";
-        String formattedUUID = MessageFormat.format(formatString, hexNumbers);
-        return formattedUUID;
+        Object args = hexNumbers;
+        return MessageFormat.format(formatString, (Object[]) args);
     }
 
     public static String getHexNumberFromByte(byte b) {
