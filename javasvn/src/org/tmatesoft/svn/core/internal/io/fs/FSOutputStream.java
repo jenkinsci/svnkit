@@ -93,7 +93,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myTextBuffer.clear();
     }
     
-    public static OutputStream createStream(FSRevisionNode revNode, FSTransactionRoot txnRoot, FSOutputStream dstStream) throws SVNException {
+    public static OutputStream createStream(FSRevisionNode revNode, FSTransactionRoot txnRoot, OutputStream dstStream) throws SVNException {
         if(revNode.getType() != SVNNodeKind.FILE){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to set textual contents of a *non*-file node");
             SVNErrorManager.error(err);
@@ -128,11 +128,14 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             revWriter.write(header.getBytes("UTF-8"));
             deltaStart = revWriter.getPosition();
             
-            if(dstStream == null){
-                return new FSOutputStream(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
+            if((dstStream != null) && (dstStream instanceof FSOutputStream)){
+                FSOutputStream fsOS = (FSOutputStream)dstStream;
+                fsOS.reset(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
+                return dstStream;
             }
-            dstStream.reset(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
-            return dstStream;
+
+            return new FSOutputStream(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
+            
         } catch(IOException ioe) {
             SVNFileUtil.closeFile(targetOS);
             SVNFileUtil.closeFile(sourceStream);

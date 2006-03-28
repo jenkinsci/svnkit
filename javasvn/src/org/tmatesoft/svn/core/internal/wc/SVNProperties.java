@@ -378,13 +378,13 @@ public class SVNProperties {
             Arrays.sort(keys);
             for(int i = 0; i < keys.length; i++){
                 String propertyName = (String)keys[i];
-                writeProperty(target, 'K', propertyName.getBytes());
+                writeProperty(target, 'K', propertyName.getBytes("UTF-8"));
                 String propertyValue = (String)namesToValues.get(propertyName);
-                writeProperty(target, 'V', propertyValue.getBytes());
+                writeProperty(target, 'V', propertyValue.getBytes("UTF-8"));
             }
             if(terminator != null){
-                String terminatingLine = terminator + "\n";
-                target.write(terminatingLine.getBytes());
+                target.write(terminator.getBytes("UTF-8"));
+                target.write('\n');
             }
         }catch(IOException ioe){    
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
@@ -397,8 +397,8 @@ public class SVNProperties {
             return;
         }
         try {
-            writeProperty(target, 'K', name.getBytes());
-            writeProperty(target, 'V', value.getBytes());
+            writeProperty(target, 'K', name.getBytes("UTF-8"));
+            writeProperty(target, 'V', value.getBytes("UTF-8"));
         }catch(IOException ioe){    
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
@@ -411,7 +411,7 @@ public class SVNProperties {
             return;
         }
         try {
-            writeProperty(target, 'D', name.getBytes());
+            writeProperty(target, 'D', name.getBytes("UTF-8"));
         }catch(IOException ioe){    
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
