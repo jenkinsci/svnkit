@@ -407,6 +407,10 @@ public class SVNCommitClient extends SVNBasicClient {
         // first find dstURL root.
         SVNRepository repos = null;
         SVNFileType srcKind = SVNFileType.getType(path);
+        if (srcKind == SVNFileType.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Path ''{0}'' does not exist", path);            
+            SVNErrorManager.error(err);
+        }
         List newPaths = new ArrayList();
         SVNURL rootURL = dstURL;
         while (true) {
@@ -434,7 +438,7 @@ public class SVNCommitClient extends SVNBasicClient {
             return SVNCommitInfo.NULL;
         }
         commitMessage = validateCommitMessage(commitMessage);
-        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, new SVNImportMediator(srcKind == SVNFileType.DIRECTORY ? path : path.getParentFile()));
+        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, new SVNImportMediator());
         String filePath = "";
         if (srcKind != SVNFileType.DIRECTORY) {
             filePath = (String) newPaths.remove(0);
@@ -457,11 +461,7 @@ public class SVNCommitClient extends SVNBasicClient {
             if (srcKind == SVNFileType.DIRECTORY) {
                 changed = importDir(deltaGenerator, path, path, newDirPath, useGlobalIgnores, recursive, commitEditor);
             } else {
-                if (useGlobalIgnores && getOptions().isIgnored(path.getName())) {
-                    changed = false;
-                } else {
-                    changed = importFile(deltaGenerator, path.getParentFile(), path, srcKind, filePath, commitEditor);
-                }
+                changed = importFile(deltaGenerator, path.getParentFile(), path, srcKind, filePath, commitEditor);
             }
             if (!changed) {
                 try {
