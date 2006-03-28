@@ -27,17 +27,13 @@ import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
  */
 public class SVNImportMediator implements ISVNWorkspaceMediator {
 
-    private File myRoot;
-
     private Map myLocations;
 
-    public SVNImportMediator(File root) {
-        myRoot = root;
+    public SVNImportMediator() {
         myLocations = new HashMap();
     }
 
-    public String getWorkspaceProperty(String path, String name)
-            throws SVNException {
+    public String getWorkspaceProperty(String path, String name)  throws SVNException {
         return null;
     }
 
@@ -46,7 +42,7 @@ public class SVNImportMediator implements ISVNWorkspaceMediator {
     }
 
     public OutputStream createTemporaryLocation(String path, Object id) throws SVNException {
-        File tmpFile = SVNFileUtil.createUniqueFile(myRoot, SVNPathUtil.tail(path), ".tmp");
+        File tmpFile = SVNFileUtil.createTempFile(SVNPathUtil.tail(path), ".tmp");
         OutputStream os = SVNFileUtil.openFileForWriting(tmpFile);
         myLocations.put(id, tmpFile);
         return os;
