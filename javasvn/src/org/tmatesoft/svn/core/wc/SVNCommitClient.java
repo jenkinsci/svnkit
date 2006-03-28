@@ -445,11 +445,7 @@ public class SVNCommitClient extends SVNBasicClient {
             if (srcKind == SVNFileType.DIRECTORY) {
                 changed = importDir(deltaGenerator, path, path, newDirPath, useGlobalIgnores, recursive, commitEditor);
             } else {
-                if (useGlobalIgnores && getOptions().isIgnored(path.getName())) {
-                    changed = false;
-                } else {
-                    changed = importFile(deltaGenerator, path.getParentFile(), path, srcKind, filePath, commitEditor);
-                }
+                changed = importFile(deltaGenerator, path.getParentFile(), path, srcKind, filePath, commitEditor);
             }
             if (!changed) {
                 try {
