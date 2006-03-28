@@ -138,13 +138,13 @@ class HTTPRequest {
      *  // this may throw IOException that will be converted to: timeout error, can't connect error, or ssl will re-prompt.
      */
     public void dispatch(String request, String path, Map header, int ok1, int ok2, SVNErrorMessage context) throws IOException {
-        int length = 0;
+        long length = 0;
         if (myRequestBody != null) {
             length = myRequestBody.length;
         } else if (myRequestStream instanceof ByteArrayInputStream) {
             length = ((ByteArrayInputStream) myRequestStream).available();
         } else if (myRequestStream instanceof IMeasurable) {
-            length = (int) ((IMeasurable) myRequestStream).getLength();
+            length = ((IMeasurable) myRequestStream).getLength();
         }
         StringBuffer headerText = composeHTTPHeader(request, path, header, length);
         myConnection.sendData(headerText.toString().getBytes());
@@ -236,7 +236,7 @@ class HTTPRequest {
         return myErrorMessage;
     }
 
-    private StringBuffer composeHTTPHeader(String request, String path, Map header, int length) {
+    private StringBuffer composeHTTPHeader(String request, String path, Map header, long length) {
         StringBuffer sb = new StringBuffer();
         sb.append(request);
         sb.append(' ');

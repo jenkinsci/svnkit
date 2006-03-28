@@ -137,7 +137,7 @@ public class SVNDeltaGenerator {
                 return null;
             }
         }
-        int sourceOffset = 0;
+        long sourceOffset = 0;
 
         while(true) {
             int targetLength;
@@ -182,7 +182,7 @@ public class SVNDeltaGenerator {
         return SVNFileUtil.toHexDigest(digest);
     }
     
-    private void sendDelta(String path, int sourceOffset, byte[] source, int sourceLength, byte[] target, int targetLength, ISVNEditor consumer) throws SVNException {
+    private void sendDelta(String path, long sourceOffset, byte[] source, int sourceLength, byte[] target, int targetLength, ISVNEditor consumer) throws SVNException {
         // use x or v algorithm depending on sourceLength
         SVNDeltaAlgorithm algorithm = sourceLength == 0 ? myVDelta : myXDelta;
         algorithm.computeDelta(source, sourceLength, target, targetLength);

@@ -21,6 +21,9 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
     
     private static final int VD_KEY_SIZE = 4;
 
+    
+    private SlotsTable mySlotsTable; 
+    
     public void computeDelta(byte[] a, int aLength, byte[] b, int bLength) {
         byte[] data = null;
         int dataLength;
@@ -39,30 +42,17 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
             data = a;
             dataLength = aLength;
         }
-        SlotsTable table = new SlotsTable(dataLength);
-        
-        vdelta(table, data, 0, aLength, false);
-        vdelta(table, data, aLength, dataLength, true);
-        
-        /*
-        int filled = table.myBuckets.length;
-        int collisions = 0;
-        for (int i = 0; i < table.myBuckets.length; i++) {        
-          int slotIndex = table.myBuckets[i];
-          if (slotIndex < 0) {
-            filled--;
-          } else {
-            while (slotIndex >= 0) {            
-              collisions++;
-              slotIndex = table.mySlots[slotIndex];
-            }
-          }
-        }
-        double percents = filled / (table.myBuckets.length/100);
-        String debug = "Hash stats: load " +  percents + "%, collisions " + collisions + ", buckets " + table.myBuckets.length;
-        System.out.println(debug);
-        */
-
+        SlotsTable slotsTable = getSlotsTable(dataLength);
+        vdelta(slotsTable, data, 0, aLength, false);
+        vdelta(slotsTable, data, aLength, dataLength, true);
+    }
+    
+    private SlotsTable getSlotsTable(int dataLength) {
+        if (mySlotsTable == null) {
+            mySlotsTable = new SlotsTable();
+        } 
+        mySlotsTable.reset(dataLength);
+        return mySlotsTable;
     }
     
     private void vdelta(SlotsTable table, byte[] data, int start, int end, boolean doOutput) {
@@ -151,13 +141,18 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
     private static class SlotsTable {
         private int[] mySlots;
         private int[] myBuckets;
+        private int myBucketsCount;
 
-        public SlotsTable(int length) {
-            mySlots = new int[length];
-            int bucketsCount = (length / 3) | 1;
-            myBuckets = new int[bucketsCount];
-            Arrays.fill(myBuckets, -1);
-            Arrays.fill(mySlots, -1);
+        public SlotsTable() {
+        }
+
+        public void reset(int dataLength) {
+            mySlots = allocate(mySlots, dataLength);
+            myBucketsCount = (dataLength / 3) | 1;
+            myBuckets = allocate(myBuckets, myBucketsCount);
+            
+            Arrays.fill(mySlots, 0, dataLength, -1);
+            Arrays.fill(myBuckets, 0, myBucketsCount, -1);
         }
         
         public int getBucketIndex(byte[] data, int index) {
@@ -166,8 +161,8 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
             hash += hash*127 + (data[index + 1] & 0xFF);
             hash += hash*127 + (data[index + 2] & 0xFF);
             hash += hash*127 + (data[index + 3] & 0xFF);
-            hash = hash % myBuckets.length;
-            return Math.abs(hash);
+            hash = hash % myBucketsCount;
+            return hash < 0 ? -hash : hash;
         }
         
         public int getBucket(int bucketIndex) {
@@ -178,6 +173,13 @@ public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {
             int bucketIndex = getBucketIndex(data, slotIndex);
             mySlots[slotIndex] = myBuckets[bucketIndex];
             myBuckets[bucketIndex] = slotIndex; 
+        }
+        
+        private static int[] allocate(int[] array, int length) {
+            if (array == null || array.length < length) {
+                return new int[length*3/2];
+            }
+            return array;
         }
     }
 }
