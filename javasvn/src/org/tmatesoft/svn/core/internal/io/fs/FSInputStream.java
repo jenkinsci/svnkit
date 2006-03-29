@@ -104,13 +104,11 @@ public class FSInputStream extends InputStream {
     
     public int read() throws IOException {
         byte[] buf = new byte[1];
-        int r = 0;
-        try{
-            r = readContents(buf, 0, 1);
-        }catch(SVNException svne){
-            throw new IOException(svne.getMessage());
+        int r = read(buf, 0, 1);
+        if (r <= 0) {
+            return -1;
         }
-        return r == 0 ? -1 : (int)(buf[0] & 0xFF);
+        return buf[0];
     }
     
     private int readContents(byte[] buf, int offset, int length) throws SVNException {
