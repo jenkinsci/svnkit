@@ -19,10 +19,19 @@ package org.tmatesoft.svn.core.internal.io.fs;
 public class FSTransactionInfo {
     private long myBaseRevision;
     private String myTxnId;
+    private FSID myRootID;
+    private FSID myBaseID;
     
     public FSTransactionInfo(long revision, String id) {
         myBaseRevision = revision;
         myTxnId = id;
+    }
+
+    public FSTransactionInfo(FSID rootID, FSID baseID) {
+        myRootID = rootID;
+        myBaseID = baseID;
+        myTxnId = myRootID.getTxnID();
+        myBaseRevision = myBaseID.getRevision();
     }
 
     public long getBaseRevision() {
@@ -39,5 +48,13 @@ public class FSTransactionInfo {
 
     public void setTxnId(String txnId) {
         myTxnId = txnId;
+    }
+
+    public FSID getBaseID() {
+        return myBaseID;
+    }
+    
+    public FSID getRootID() {
+        return myRootID;
     }
 }

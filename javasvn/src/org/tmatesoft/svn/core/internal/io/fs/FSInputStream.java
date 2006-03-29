@@ -146,26 +146,26 @@ public class FSInputStream extends InputStream {
                 remaining -= copyLength;
             } else {
                 FSRepresentationState resultState = (FSRepresentationState)myRepStateList.getFirst();
-                if(resultState.offset == resultState.end) {
+                if(resultState.myOffset == resultState.myEnd) {
                     break;
                 }
                 myCombiner.reset();
                 for(ListIterator states = myRepStateList.listIterator(); states.hasNext();){
                     FSRepresentationState curState = (FSRepresentationState)states.next();
 
-                    while(curState.chunkIndex < myChunkIndex) {
-                        myCombiner.skipWindow(curState.file);
-                        curState.chunkIndex++;
-                        curState.offset = curState.file.position();
-                        if(curState.offset >= curState.end){
+                    while(curState.myChunkIndex < myChunkIndex) {
+                        myCombiner.skipWindow(curState.myFile);
+                        curState.myChunkIndex++;
+                        curState.myOffset = curState.myFile.position();
+                        if(curState.myOffset >= curState.myEnd){
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Reading one svndiff window read beyond the end of the representation");
                             SVNErrorManager.error(err);
                         }
                     }
-                    SVNDiffWindow window = myCombiner.readWindow(curState.file);
+                    SVNDiffWindow window = myCombiner.readWindow(curState.myFile);
                     ByteBuffer target = myCombiner.addWindow(window);
-                    curState.chunkIndex++;
-                    curState.offset = curState.file.position();
+                    curState.myChunkIndex++;
+                    curState.myOffset = curState.myFile.position();
                     if (target != null) {
                         myBuffer = target;
                         myChunkIndex++;
@@ -180,8 +180,8 @@ public class FSInputStream extends InputStream {
     public void close() {
         for(Iterator states = myRepStateList.iterator(); states.hasNext();) {
             FSRepresentationState state = (FSRepresentationState)states.next();
-            if(state.file != null){
-                state.file.close();
+            if(state.myFile != null){
+                state.myFile.close();
             }
             states.remove();
         }
@@ -194,13 +194,12 @@ public class FSInputStream extends InputStream {
         try{
             while(true){
                 file = owner.openAndSeekRepresentation(rep);
-                FSRepresentationArgs repArgs = readRepresentationLine(file);
-                FSRepresentationState repState = new FSRepresentationState();
-                repState.file = file;
-                repState.start = file.position();
-                repState.offset = repState.start;
-                repState.end = repState.start + rep.getSize();
-                if(!repArgs.isDelta){
+                FSRepresentationState repState = readRepresentationLine(file);
+                repState.myFile = file;
+                repState.myStart = file.position();
+                repState.myOffset = repState.myStart;
+                repState.myEnd = repState.myStart + rep.getSize();
+                if(!repState.myIsDelta){
                     return repState;
                 }
                 buffer.clear();
@@ -211,17 +210,17 @@ public class FSInputStream extends InputStream {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed svndiff data in representation");
                     SVNErrorManager.error(err);
                 }
-                repState.version = header[3];
-                repState.chunkIndex = 0;
-                repState.offset+= 4;
+                repState.myVersion = header[3];
+                repState.myChunkIndex = 0;
+                repState.myOffset+= 4;
                 /* Push this rep onto the list.  If it's self-compressed, we're done. */
                 result.addLast(repState);
-                if(repArgs.isDeltaVsEmpty){
+                if(repState.myIsDeltaVsEmpty){
                     return null;
                 }
-                rep.setRevision(repArgs.myBaseRevision);
-                rep.setOffset(repArgs.myBaseOffset);
-                rep.setSize(repArgs.myBaseLength);
+                rep.setRevision(repState.myBaseRevision);
+                rep.setOffset(repState.myBaseOffset);
+                rep.setSize(repState.myBaseLength);
                 rep.setTxnId(null);
             }
         }catch(IOException ioe){
@@ -235,22 +234,22 @@ public class FSInputStream extends InputStream {
         return null;
     }
 
-    private static FSRepresentationArgs readRepresentationLine(FSFile file) throws SVNException {
+    private static FSRepresentationState readRepresentationLine(FSFile file) throws SVNException {
         try{
-            String line = file.readLine(160);//FSReader.readNextLine(file, 160);
-            FSRepresentationArgs repArgs = new FSRepresentationArgs();
-            repArgs.isDelta = false;
+            String line = file.readLine(160);
+            FSRepresentationState repState = new FSRepresentationState();
+            repState.myIsDelta = false;
             if(FSRepresentation.REP_PLAIN.equals(line)){
-                return repArgs;
+                return repState;
             }
             if(FSRepresentation.REP_DELTA.equals(line)){
                 /* This is a delta against the empty stream. */
-                repArgs.isDelta = true;
-                repArgs.isDeltaVsEmpty = true;
-                return repArgs;
+                repState.myIsDelta = true;
+                repState.myIsDeltaVsEmpty = true;
+                return repState;
             }
-            repArgs.isDelta = true;
-            repArgs.isDeltaVsEmpty = false;
+            repState.myIsDelta = true;
+            repState.myIsDeltaVsEmpty = false;
             
             /* We have hopefully a DELTA vs. a non-empty base revision. */
             int delimiterInd = line.indexOf(' ');
@@ -275,7 +274,7 @@ public class FSInputStream extends InputStream {
                     SVNErrorManager.error(err);
                 }
                 String baseRevision = line.substring(0, delimiterInd); 
-                repArgs.myBaseRevision = Long.parseLong(baseRevision);
+                repState.myBaseRevision = Long.parseLong(baseRevision);
 
                 line = line.substring(delimiterInd + 1);
                 delimiterInd = line.indexOf(' ');
@@ -284,25 +283,35 @@ public class FSInputStream extends InputStream {
                     SVNErrorManager.error(err);
                 }
                 String baseOffset = line.substring(0, delimiterInd);
-                repArgs.myBaseOffset = Long.parseLong(baseOffset);
+                repState.myBaseOffset = Long.parseLong(baseOffset);
 
                 line = line.substring(delimiterInd + 1);
 
-                repArgs.myBaseLength = Long.parseLong(line);
+                repState.myBaseLength = Long.parseLong(line);
             }catch(NumberFormatException nfe){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                 SVNErrorManager.error(err);
             }
-            return repArgs;
+            return repState;
         }catch(SVNException svne){
             file.close();
             throw svne;
         }
     }
     
-    private static class FSRepresentationArgs {
-        boolean isDelta;
-        boolean isDeltaVsEmpty;
+    private static class FSRepresentationState {
+        FSFile myFile;
+        /* The starting offset for the raw svndiff/plaintext data minus header. */
+        long myStart;
+        /* The current offset into the file. */
+        long myOffset;
+        /* The end offset of the raw data. */
+        long myEnd;
+        /* If a delta, what svndiff version? */
+        int myVersion;
+        int myChunkIndex;
+        boolean myIsDelta;
+        boolean myIsDeltaVsEmpty;
         long myBaseRevision;
         long myBaseOffset;
         long myBaseLength;

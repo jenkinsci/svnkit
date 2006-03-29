@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 public class FSTransactionRoot extends FSRoot {
     public static final int SVN_FS_TXN_CHECK_OUT_OF_DATENESS = 0x00001;
     public static final int SVN_FS_TXN_CHECK_LOCKS = 0x00002;
+    private static final int MAX_KEY_SIZE = 200;
 
     private String myTxnID;
     private int myTxnFlags;
@@ -101,22 +102,22 @@ public class FSTransactionRoot extends FSRoot {
 
     public FSRevisionNode getRootRevisionNode() throws SVNException {
         if (myRootRevisionNode == null ) {
-            FSTransaction txn = getTxn();
+            FSTransactionInfo txn = getTxn();
             myRootRevisionNode = getOwner().getRevisionNode(txn.getRootID());
         }
         return myRootRevisionNode;
     }
 
     public FSRevisionNode getTxnBaseRootNode() throws SVNException {
-        FSTransaction txn = getTxn();
+        FSTransactionInfo txn = getTxn();
         FSRevisionNode baseRootNode = getOwner().getRevisionNode(txn.getBaseID());
         return baseRootNode;
     }
 
-    public FSTransaction getTxn() throws SVNException {
+    public FSTransactionInfo getTxn() throws SVNException {
         FSID rootID = FSID.createTxnId("0", "0", myTxnID);
         FSRevisionNode revNode = getOwner().getRevisionNode(rootID);
-        FSTransaction txn = new FSTransaction(revNode.getId(), revNode.getPredecessorId());
+        FSTransactionInfo txn = new FSTransactionInfo(revNode.getId(), revNode.getPredecessorId());
         return txn;
     }
 
@@ -400,7 +401,7 @@ public class FSTransactionRoot extends FSRoot {
         FSFile idsFile = new FSFile(getOwner().getNextIDsFile(myTxnID));
         
         try{
-            idsToParse = idsFile.readLine(FSKeyGenerator.MAX_KEY_SIZE * 2 + 3);
+            idsToParse = idsFile.readLine(FSTransactionRoot.MAX_KEY_SIZE * 2 + 3);
         }finally{
             idsFile.close();
         }
@@ -421,8 +422,8 @@ public class FSTransactionRoot extends FSRoot {
         String[] txnIds = readNextIDs();
         String txnNodeId = txnIds[0];
         String txnCopyId = txnIds[1];
-        String newNodeId = FSKeyGenerator.addKeys(startNodeId, txnNodeId);
-        String newCopyId = FSKeyGenerator.addKeys(startCopyId, txnCopyId);
+        String newNodeId = FSTransactionRoot.addKeys(startNodeId, txnNodeId);
+        String newCopyId = FSTransactionRoot.addKeys(startCopyId, txnCopyId);
         String line = newRevision + " " + newNodeId + " " + newCopyId + "\n";
         File currentFile = getOwner().getCurrentFile();
         File tmpCurrentFile = SVNFileUtil.createUniqueFile(currentFile.getParentFile(), currentFile.getName(), ".tmp");
@@ -504,7 +505,7 @@ public class FSTransactionRoot extends FSRoot {
         String nodeId = revNode.getId().getNodeID();
         
         if (nodeId.startsWith("_")) {
-            myNodeId = FSKeyGenerator.addKeys(startNodeId, nodeId.substring(1));
+            myNodeId = FSTransactionRoot.addKeys(startNodeId, nodeId.substring(1));
         } else {
             myNodeId = nodeId;
         }
@@ -513,7 +514,7 @@ public class FSTransactionRoot extends FSRoot {
         String copyId = revNode.getId().getCopyID();
         
         if (copyId.startsWith("_")) {
-            myCopyId = FSKeyGenerator.addKeys(startCopyId, copyId.substring(1));
+            myCopyId = FSTransactionRoot.addKeys(startCopyId, copyId.substring(1));
         } else {
             myCopyId = copyId;
         }
@@ -594,6 +595,80 @@ public class FSTransactionRoot extends FSRoot {
             myTxnChangesFile = new File(getOwner().getTransactionDir(myTxnID), "changes");
         }
         return myTxnChangesFile;
+    }
+
+    public static String generateNextKey(String oldKey) throws SVNException {
+        char[] nextKey = new char[oldKey.length() + 1];
+        boolean carry = true;
+        if(oldKey.length() > 1 && oldKey.charAt(0) == '0'){
+            return null;
+        }
+        for(int i = oldKey.length() - 1; i >= 0; i--){
+            char c = oldKey.charAt(i);
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z'))) {
+                return null;
+            }
+            if(carry){
+                if(c == 'z') {
+                    nextKey[i] = '0';
+                }else {
+                    carry = false;
+                    if(c == '9'){
+                        nextKey[i] = 'a';
+                    }else{
+                        nextKey[i] = (char)(c + 1);
+                    }
+                }
+            }else{
+                nextKey[i] = c;
+            }
+        }
+        int nextKeyLength = oldKey.length() + (carry ? 1 : 0);
+        if(nextKeyLength >= MAX_KEY_SIZE){
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: new key length is greater than the threshold {0,number,integer}", new Integer(MAX_KEY_SIZE));
+            SVNErrorManager.error(err);
+        }
+        if(carry){
+            System.arraycopy(nextKey, 0, nextKey, 1, oldKey.length());
+            nextKey[0] = '1';
+        }
+        return new String(nextKey, 0, nextKeyLength);
+    }
+
+    private static String addKeys(String key1, String key2){
+        int i1 = key1.length() - 1;
+        int i2 = key2.length() - 1;
+        int carry = 0;
+        int val;
+        StringBuffer result = new StringBuffer();
+
+        while(i1 >= 0 || i2 >= 0 || carry > 0){
+            val = carry;
+            
+            if(i1 >= 0){
+                val += key1.charAt(i1) <= '9' ? key1.charAt(i1) - '0' : key1.charAt(i1) - 'a' + 10;
+            }
+            
+            if(i2 >= 0){
+                val += key2.charAt(i2) <= '9' ? key2.charAt(i2) - '0' : key2.charAt(i2) - 'a' + 10;
+            }
+            
+            carry = val / 36;
+            val = val % 36;
+            
+            char sym = val <= 9 ? (char)('0' + val) : (char)(val - 10 + 'a');
+            result.append(sym);
+
+            if(i1 >= 0){
+                --i1;
+            }
+            
+            if(i2 >= 0){
+                --i2;
+            }
+        }
+
+        return result.reverse().toString();
     }
 
     private static class HashRepresentationStream extends OutputStream {

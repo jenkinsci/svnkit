@@ -351,18 +351,7 @@ public class SVNProperties {
             tmpFile = SVNFileUtil.createUniqueFile(target.getParentFile(),
                     target.getName(), ".tmp");
             dst = SVNFileUtil.openFileForWriting(tmpFile);
-            
-            Object[] keys = namesToValues.keySet().toArray();
-            for(int i = 0; i < keys.length; i++){
-                String propertyName = (String)keys[i];
-                writeProperty(dst, 'K', propertyName.getBytes());
-                String propertyValue = (String)namesToValues.get(propertyName);
-                writeProperty(dst, 'V', propertyValue.getBytes());
-            }
-            dst.write(new byte[] { 'E', 'N', 'D', '\n' });
-        }catch(IOException ioe){    
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            setProperties(namesToValues, dst, SVN_HASH_TERMINATOR);
         } finally {
             SVNFileUtil.closeFile(dst);
         }

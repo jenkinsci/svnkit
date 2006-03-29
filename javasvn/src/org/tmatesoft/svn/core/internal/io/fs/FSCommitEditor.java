@@ -260,7 +260,7 @@ public class FSCommitEditor implements ISVNEditor {
         String[] curIds = myTxnRoot.readNextIDs();
         String curNodeId = curIds[0];
         String curCopyId = curIds[1];
-        String nextNodeId = FSKeyGenerator.generateNextKey(curNodeId.toCharArray());
+        String nextNodeId = FSTransactionRoot.generateNextKey(curNodeId);
         myFSFS.writeNextIDs(myTxnRoot.getTxnID(), nextNodeId, curCopyId);
         return "_" + nextNodeId;
     }
@@ -517,7 +517,7 @@ public class FSCommitEditor implements ISVNEditor {
 
             myTxnRoot.putRevNodeToCache(parentPath.getAbsPath(), clone);
         } else {
-            FSTransaction txn = myTxnRoot.getTxn();
+            FSTransactionInfo txn = myTxnRoot.getTxn();
 
             if (txn.getRootID().equals(txn.getBaseID())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: txn ''{0}'' root id ''{1}'' matches base id ''{2}''", new Object[] {txnId, txn.getRootID(), txn.getBaseID()});
@@ -531,7 +531,7 @@ public class FSCommitEditor implements ISVNEditor {
 
     private String reserveCopyId(String txnId) throws SVNException {
         String[] nextIds = myTxnRoot.readNextIDs();
-        String copyId = FSKeyGenerator.generateNextKey(nextIds[1].toCharArray());
+        String copyId = FSTransactionRoot.generateNextKey(nextIds[1]);
         myFSFS.writeNextIDs(txnId, nextIds[0], copyId);
         return "_" + nextIds[1];
     }
