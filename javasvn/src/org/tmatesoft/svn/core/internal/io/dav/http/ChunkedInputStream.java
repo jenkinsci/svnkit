@@ -43,6 +43,10 @@ class ChunkedInputStream extends InputStream {
             int offset = 0;
             while(length > 0) {
                 int count = mySource.read(myBuffer, offset, length);
+                if (count < 0) {
+                    mySource = null;
+                    throw new IOException("Cannot read chunk of data, connection is closed by the server or end of stream reached");
+                }
                 length -= count;
                 offset += count;
             }
