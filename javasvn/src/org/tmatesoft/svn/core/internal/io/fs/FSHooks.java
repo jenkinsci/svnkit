@@ -229,10 +229,10 @@ public class FSHooks {
                 byte[] bytes = stdInValue.getBytes("UTF-8");
                 for(int i = 0; i < bytes.length; i += 1024) {
                     osToStdIn.write(bytes, i, Math.min(1024, bytes.length - i));
+                    osToStdIn.flush();
                 }
             }catch(IOException ioe){
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[]{hook, ioe.getLocalizedMessage()});
-                SVNErrorManager.error(err, ioe);
+                // 
             }finally{
                 SVNFileUtil.closeFile(osToStdIn);
             }
