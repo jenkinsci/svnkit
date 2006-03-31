@@ -12,15 +12,13 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
-import java.io.OutputStream;
-import java.io.InputStream;
 import java.io.IOException;
-import java.lang.Process;
-import java.lang.InterruptedException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -227,8 +225,11 @@ public class FSHooks {
         }
         if(stdInValue != null){
             OutputStream osToStdIn = hookProcess.getOutputStream();
-            try{
-                osToStdIn.write(stdInValue.getBytes("UTF-8"));
+            try {
+                byte[] bytes = stdInValue.getBytes("UTF-8");
+                for(int i = 0; i < bytes.length; i += 1024) {
+                    osToStdIn.write(bytes, i, Math.min(1024, bytes.length - i));
+                }
             }catch(IOException ioe){
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[]{hook, ioe.getLocalizedMessage()});
                 SVNErrorManager.error(err, ioe);
