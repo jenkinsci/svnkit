@@ -510,4 +510,11 @@ public class FSRevisionNode {
         return getTextRepresentation() != null ? getTextRepresentation().getHexDigest() : "";
     }
 
+    public long getFileLength() throws SVNException {
+        if (getType() != SVNNodeKind.FILE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to get length of a *non*-file node");
+            SVNErrorManager.error(err);
+        }
+        return getTextRepresentation() != null ? getTextRepresentation().getExpandedSize() : 0;
+    }
 }

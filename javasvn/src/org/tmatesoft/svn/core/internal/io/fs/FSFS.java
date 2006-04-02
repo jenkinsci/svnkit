@@ -30,6 +30,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
@@ -977,15 +979,20 @@ public class FSFS {
             children.clear();
         }
     }
-    
-    public void writePathInfoToReportFile(OutputStream tmpFileOS, String target, String path, String linkPath, String lockToken, long revision, boolean startEmpty) throws IOException {
-        String anchorRelativePath = SVNPathUtil.append(target, path);
-        String linkPathRep = linkPath != null ? "+" + linkPath.length() + ":" + linkPath : "-";
-        String revisionRep = FSRepository.isValidRevision(revision) ? "+" + revision + ":" : "-";
-        String lockTokenRep = lockToken != null ? "+" + lockToken.length() + ":" + lockToken : "-";
-        String startEmptyRep = startEmpty ? "+" : "-";
-        String fullRepresentation = "+" + anchorRelativePath.length() + ":" + anchorRelativePath + linkPathRep + revisionRep + startEmptyRep + lockTokenRep;
-        tmpFileOS.write(fullRepresentation.getBytes("UTF-8"));
+
+    public Map compoundMetaProperties(long revision) throws SVNException {
+        Map metaProps = new HashMap();
+        Map revProps = getRevisionProperties(revision);
+        String author = (String) revProps.get(SVNRevisionProperty.AUTHOR);
+        String date = (String) revProps.get(SVNRevisionProperty.DATE);
+        String uuid = getUUID();
+        String rev = String.valueOf(revision);
+
+        metaProps.put(SVNProperty.LAST_AUTHOR, author);
+        metaProps.put(SVNProperty.COMMITTED_DATE, date);
+        metaProps.put(SVNProperty.COMMITTED_REVISION, rev);
+        metaProps.put(SVNProperty.UUID, uuid);
+        return metaProps;
     }
 
     public static File findRepositoryRoot(File path) {
