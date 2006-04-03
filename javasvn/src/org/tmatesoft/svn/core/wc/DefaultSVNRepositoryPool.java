@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.io.ISVNSession;
+import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 
@@ -72,6 +73,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     public static final int NO_POOL = 4;
     
     private ISVNAuthenticationManager myAuthManager;
+    private ISVNTunnelProvider myTunnelProvider;
     private boolean myIsKeepConnections;
     private int myPoolMode;
     
@@ -91,8 +93,8 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      * 
      * @param authManager an authentication driver
      */
-    public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager) {
-        this(authManager, true, RUNTIME_POOL);
+    public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, ISVNTunnelProvider tunnelProvider) {
+        this(authManager, tunnelProvider, true, RUNTIME_POOL);
     }
     
     /**
@@ -107,10 +109,11 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      * @param poolMode            a mode of this object represented by
      *                            one of the constant fields of <b>DefaultSVNRepositoryPool</b>
      */
-    public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, boolean keepConnections, int poolMode) {
+    public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, ISVNTunnelProvider tunnelProvider, boolean keepConnections, int poolMode) {
         myAuthManager = authManager;
         myIsKeepConnections = keepConnections;
         myPoolMode = poolMode;
+        myTunnelProvider = tunnelProvider;
     }
     
     /**
@@ -144,6 +147,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         if (!mayReuse || pool == null) {            
             repos = SVNRepositoryFactory.create(url, this);
             repos.setAuthenticationManager(myAuthManager);
+            repos.setTunnelProvider(myTunnelProvider);
             return repos;
         }
         
@@ -155,6 +159,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             saveRepository(pool, repos, url.getProtocol());
         }         
         repos.setAuthenticationManager(myAuthManager);
+        repos.setTunnelProvider(myTunnelProvider);
         
         return repos;
     }

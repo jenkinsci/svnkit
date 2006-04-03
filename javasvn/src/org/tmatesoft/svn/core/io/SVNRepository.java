@@ -128,6 +128,7 @@ public abstract class SVNRepository {
     private Thread myLocker;
     private ISVNAuthenticationManager myAuthManager;
     private ISVNSession myOptions;
+    private ISVNTunnelProvider myTunnelProvider;
 
     protected SVNRepository(SVNURL location, ISVNSession options) {
         myLocation = location;
@@ -308,6 +309,14 @@ public abstract class SVNRepository {
      */
     public ISVNAuthenticationManager getAuthenticationManager() {
         return myAuthManager;
+    }
+    
+    public void setTunnelProvider(ISVNTunnelProvider tunnelProvider) {
+        myTunnelProvider = tunnelProvider;
+    }
+    
+    public ISVNTunnelProvider getTunnelProvider() {
+        return myTunnelProvider;
     }
     
     /**

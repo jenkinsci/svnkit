@@ -36,7 +36,7 @@ public final class SVNRepositoryFactoryImpl extends SVNRepositoryFactory {
         }
         if (!SVNRepositoryFactory.hasRepositoryFactory("^svn(\\+ssh)?://.*$")) {
             SVNRepositoryFactory.registerRepositoryFactory(
-                    "^svn(\\+ssh)?://.*$", new SVNRepositoryFactoryImpl());
+                    "^svn(\\+.+)?://.*$", new SVNRepositoryFactoryImpl());
         }
     }
 

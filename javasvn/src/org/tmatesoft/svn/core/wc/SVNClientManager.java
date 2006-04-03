@@ -130,7 +130,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
     }
 
     private SVNClientManager(ISVNOptions options, final ISVNAuthenticationManager authManager) {
-        this(options, new DefaultSVNRepositoryPool(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager));
+        this(options, new DefaultSVNRepositoryPool(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager, options));
     }
     
     /**

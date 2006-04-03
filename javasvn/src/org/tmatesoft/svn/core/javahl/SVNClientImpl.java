@@ -990,7 +990,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public void dispose() {
         SVNGanymedSession.shutdown();
-        new DefaultSVNRepositoryPool(null).shutdownConnections(true);
+        new DefaultSVNRepositoryPool(null, null).shutdownConnections(true);
     }
 
     public void setConfigDirectory(String configDir) throws ClientException {
@@ -1166,7 +1166,7 @@ public class SVNClientImpl implements SVNClientInterface {
     protected SVNClientManager getClientManager() {
         if (myClientManager == null) {
             updateClientManager();
-            myClientManager = SVNClientManager.newInstance(myOptions, new DefaultSVNRepositoryPool(myAuthenticationManager));
+            myClientManager = SVNClientManager.newInstance(myOptions, new DefaultSVNRepositoryPool(myAuthenticationManager, myOptions));
             myClientManager.setEventHandler(getEventListener());
         }
         return myClientManager;

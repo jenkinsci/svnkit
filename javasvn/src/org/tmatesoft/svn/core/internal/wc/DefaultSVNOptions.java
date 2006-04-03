@@ -327,4 +327,12 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     public ISVNMerger createMerger(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd) {
         return new DefaultSVNMerger(conflictStart, conflictSeparator, conflictEnd);
     }
+
+    public String getTunnelDefinition(String subProtocolName) {
+        if (subProtocolName == null) {
+            return null;
+        }
+        Map tunnels = getConfigFile().getProperties("tunnels");
+        return (String) tunnels.get(subProtocolName);
+    }
 }

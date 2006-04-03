@@ -163,11 +163,11 @@ public class SVNURL {
         }
         myProtocol = url.substring(0, index);
         myProtocol = myProtocol.toLowerCase();
-        if (!DEFAULT_PORTS.containsKey(myProtocol)) {
+        if (!DEFAULT_PORTS.containsKey(myProtocol) && !myProtocol.startsWith("svn+")) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL protocol is not supported ''{0}''", url);
             SVNErrorManager.error(err);
         }
-        if("file".equals(myProtocol)){
+        if ("file".equals(myProtocol)) {
             String normalizedPath = norlmalizeURLPath(url, url.substring("file://".length()));
             URL testURL = null;
             try {
@@ -202,7 +202,7 @@ public class SVNURL {
             }
             myUserName = testURL.getUserInfo();
             myPort = testURL.getPort();
-        }else{
+        } else {
             String testURL = "http" + url.substring(index);
             URL httpURL;
             try {
@@ -228,7 +228,7 @@ public class SVNURL {
             myIsDefaultPort = myPort < 0;
             if (myPort < 0) {
                 Integer defaultPort = (Integer) DEFAULT_PORTS.get(myProtocol);
-                myPort = defaultPort.intValue();
+                myPort = defaultPort != null ? defaultPort.intValue() : 0;
             } 
         }
     }
