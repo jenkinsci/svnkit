@@ -73,7 +73,6 @@ public class SVNTunnelConnector implements ISVNConnector {
         
         // 4. launch process.       
         try {
-            System.out.println("starting: " + expandedTunnel);
             myProcess = Runtime.getRuntime().exec(expandedTunnel);
             myInputStream = SVNDebugLog.createLogStream(myProcess.getInputStream()); 
             myOutputStream = SVNDebugLog.createLogStream(myProcess.getOutputStream()); 
