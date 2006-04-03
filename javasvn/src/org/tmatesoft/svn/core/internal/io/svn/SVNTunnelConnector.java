@@ -123,27 +123,28 @@ public class SVNTunnelConnector implements ISVNConnector {
             SVNErrorManager.error(err);
         }
         tunnelSpec = tunnelSpec.trim();
-        if (tunnelSpec.indexOf(' ') > 0) {
-            String firstSegment = tunnelSpec.substring(0, tunnelSpec.indexOf(' '));
-            String lastSegment = tunnelSpec.substring(tunnelSpec.indexOf(' ')).trim();
-            if (SVNFileUtil.isWindows && firstSegment.charAt(0) == '%' && firstSegment.charAt(firstSegment.length() - 1) == '%') {
-                firstSegment = firstSegment.substring(1);
-                firstSegment = firstSegment.substring(0, firstSegment.length() - 1);
-                firstSegment = SVNFileUtil.getEnvironmentVariable(firstSegment);
-            } else if (!SVNFileUtil.isWindows && firstSegment.charAt(0) == '$') {
-                firstSegment = firstSegment.substring(1);
-                firstSegment = SVNFileUtil.getEnvironmentVariable(firstSegment);
-            } else {
-                firstSegment = null;
-                lastSegment = null;
-            }
-            if (firstSegment != null) {
-                // was expanded.
-                tunnelSpec = firstSegment;
-            } else if (lastSegment != null) {
-                // was expanded with no result.
-                tunnelSpec = lastSegment;
-            }
+
+        int spaceIndex = tunnelSpec.indexOf(' ');
+        String firstSegment = spaceIndex > 0 ? tunnelSpec.substring(0, spaceIndex) : tunnelSpec;
+        String lastSegment = spaceIndex > 0 ? tunnelSpec.substring(spaceIndex).trim() : tunnelSpec;
+        
+        if (firstSegment.charAt(0) == '%' && firstSegment.charAt(firstSegment.length() - 1) == '%') {
+            firstSegment = firstSegment.substring(1);
+            firstSegment = firstSegment.substring(0, firstSegment.length() - 1);
+            firstSegment = SVNFileUtil.getEnvironmentVariable(firstSegment);
+        } else if (firstSegment.charAt(0) == '$') {
+            firstSegment = firstSegment.substring(1);
+            firstSegment = SVNFileUtil.getEnvironmentVariable(firstSegment);
+        } else {
+            firstSegment = null;
+            lastSegment = null;
+        }
+        if (firstSegment != null) {
+            // was expanded.
+            tunnelSpec = firstSegment;
+        } else if (lastSegment != null) {
+            // was expanded with no result.
+            tunnelSpec = lastSegment;
         }
         return tunnelSpec;
     }
