@@ -931,6 +931,9 @@ public class SVNFileUtil {
     public static File createTempFile(String prefix, String suffix) throws SVNException {
         File tmpFile = null;
         try {
+            if (prefix.length() < 3) {
+                prefix = "svn" + prefix;
+            }
             tmpFile = File.createTempFile(prefix, suffix);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create temporary file: {1}", e.getLocalizedMessage());
