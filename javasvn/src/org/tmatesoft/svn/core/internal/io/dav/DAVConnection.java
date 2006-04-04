@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.io.dav;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +36,7 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.helpers.DefaultHandler;
 
 
@@ -124,9 +126,13 @@ public class DAVConnection {
         try {
             status = doReport(path, DAVGetLocksHandler.generateGetLocksRequest(null), handler);
         } catch (SVNException e) {
+            SVNDebugLog.logInfo("error message: " + e.getErrorMessage());
+            SVNDebugLog.logInfo("error code: " + e.getErrorMessage().getErrorCode());
             if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support locking features");
                 SVNErrorManager.error(err, e.getErrorMessage());
+            } else if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+                return new SVNLock[0];
             }
             throw e;
         }
@@ -134,6 +140,8 @@ public class DAVConnection {
         if (status.getCode() == 501) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support locking features");
             SVNErrorManager.error(err, status.getError());
+        } else if (status.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+            return new SVNLock[0];
         } else if (status.getError() != null && status.getError().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) { 
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support locking features");
             SVNErrorManager.error(err, status.getError());

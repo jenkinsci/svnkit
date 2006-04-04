@@ -450,9 +450,6 @@ public class SVNLogClient extends SVNBasicClient {
      * @see                   #doList(File, SVNRevision, SVNRevision, boolean, ISVNDirEntryHandler)   
      */
     public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
-        if (revision == null || !revision.isValid()) {
-            revision = SVNRevision.HEAD;
-        }
         long[] pegRev = new long[] {-1};
         SVNRepository repos = createRepository(url, null, pegRevision, revision, pegRev);
         if (pegRev[0] < 0) {

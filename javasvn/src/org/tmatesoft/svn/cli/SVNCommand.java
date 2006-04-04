@@ -118,6 +118,23 @@ public abstract class SVNCommand {
         return (String) getCommandLine().getArgumentValue(SVNArgument.MESSAGE);
     }
 
+    public static String formatString(String str, int chars, boolean left) {
+        if (str.length() > chars) {
+            return str.substring(0, chars);
+        }
+        StringBuffer formatted = new StringBuffer();
+        if (left) {
+            formatted.append(str);
+        }
+        for(int i = 0; i < chars - str.length(); i++) {
+            formatted.append(' ');
+        }
+        if (!left) {
+            formatted.append(str);
+        }
+        return formatted.toString();
+    }
+
     public static SVNCommand getCommand(String name) {
         if (name == null) {
             return null;
@@ -144,6 +161,7 @@ public abstract class SVNCommand {
                 return (SVNCommand) clazz.newInstance();
             }
         } catch (Throwable th) {
+            SVNDebugLog.logInfo(th);
             //
         }
         return null;
