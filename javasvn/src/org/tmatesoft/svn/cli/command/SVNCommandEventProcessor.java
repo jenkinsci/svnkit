@@ -98,7 +98,7 @@ public class SVNCommandEventProcessor implements ISVNEventHandler {
                 path = SVNFormatUtil.formatPath(event.getFile());
             }
             SVNLock lock = event.getLock();
-            SVNCommand.println(myPrintStream, "'" + path + "' locked by '" + lock.getOwner() + "'.");
+            SVNCommand.println(myPrintStream, "'" + path + "' locked by user '" + lock.getOwner() + "'.");
         } else if (event.getAction() == SVNEventAction.UNLOCKED) {
             String path = event.getPath();
             if (event.getFile() != null) {
