@@ -32,7 +32,7 @@ public class SVNFileType {
     
     private static final boolean fastSymlinkResoution = !"false".equalsIgnoreCase(System.getProperty("javasvn.fastSymlinkResolution"));
     private static final boolean canonPathCacheUsed = !"false".equalsIgnoreCase(System.getProperty("sun.io.useCanonCaches"));
-    private static final boolean detectSymlinks = !"false".equalsIgnoreCase(System.getProperty("javasvn.symlinks", "true"));
+    private static boolean detectSymlinks = !"false".equalsIgnoreCase(System.getProperty("javasvn.symlinks", "true"));
     
     private static final Set ADMIN_FILE_PARENTS = new HashSet();
     
@@ -60,6 +60,16 @@ public class SVNFileType {
         }
         return Integer.toString(myType);
     }
+    
+    
+    public static void setSymlinkSupportEnabled(boolean enabled) {
+        detectSymlinks = enabled;
+    }
+    
+    public static boolean isSymlinkSupportEnabled() {
+        return detectSymlinks;
+    }
+
 
     public static SVNFileType getType(File file) {
         if (file == null) {
