@@ -24,10 +24,9 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
-
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class SVNTestUpdateEditor implements ISVNEditor {
 
@@ -35,22 +34,22 @@ public class SVNTestUpdateEditor implements ISVNEditor {
     private Map myItems;
     private SVNRepository myRepository;
     private int myNumberOfChanges;
-    
-    public SVNTestUpdateEditor(SVNRepository repository, Map items){
+
+    public SVNTestUpdateEditor(SVNRepository repository, Map items) {
         myRepository = repository;
         myItems = items == null ? new HashMap() : items;
         myDirsStack = new Stack();
         myNumberOfChanges = 0;
     }
-    
-    public int getNumberOfChanges(){
+
+    public int getNumberOfChanges() {
         return myNumberOfChanges;
     }
 
-    public Map getItems(){
+    public Map getItems() {
         return myItems;
     }
-    
+
     public void targetRevision(long revision) throws SVNException {
     }
 
@@ -62,7 +61,7 @@ public class SVNTestUpdateEditor implements ISVNEditor {
     public void deleteEntry(String path, long revision) throws SVNException {
         String absPath = myRepository.getRepositoryPath(path);
         myNumberOfChanges++;
-        //sanity removal action
+        // sanity removal action
         myItems.remove(absPath);
     }
 
@@ -87,11 +86,11 @@ public class SVNTestUpdateEditor implements ISVNEditor {
     }
 
     public void changeDirProperty(String name, String value) throws SVNException {
-        SVNItem curDir = (SVNItem)myDirsStack.peek();
+        SVNItem curDir = (SVNItem) myDirsStack.peek();
         String absPath = curDir.getRepositoryPath();
         curDir.changeProperty(name, value);
 
-        if(myItems.get(absPath) == null){
+        if (myItems.get(absPath) == null) {
             myItems.put(absPath, curDir);
         }
 
@@ -117,14 +116,14 @@ public class SVNTestUpdateEditor implements ISVNEditor {
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
         String absPath = myRepository.getRepositoryPath(path);
-        SVNItem fileItem = (SVNItem)myItems.get(absPath);
+        SVNItem fileItem = (SVNItem) myItems.get(absPath);
         fileItem.changeProperty(name, value);
         myNumberOfChanges++;
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
         String absPath = myRepository.getRepositoryPath(path);
-        SVNItem fileItem = (SVNItem)myItems.get(absPath);
+        SVNItem fileItem = (SVNItem) myItems.get(absPath);
         fileItem.setChecksum(textChecksum);
     }
 
@@ -141,7 +140,7 @@ public class SVNTestUpdateEditor implements ISVNEditor {
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         String absPath = myRepository.getRepositoryPath(path);
-        SVNItem fileItem = (SVNItem)myItems.get(absPath);
+        SVNItem fileItem = (SVNItem) myItems.get(absPath);
         fileItem.incrementDeltaChunk();
         return SVNFileUtil.DUMMY_OUT;
     }

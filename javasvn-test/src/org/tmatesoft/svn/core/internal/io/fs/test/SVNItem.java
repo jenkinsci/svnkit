@@ -16,67 +16,67 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
 
-
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class SVNItem {
+
     private String myRepositoryPath;
     private SVNNodeKind myKind;
     private Map myProperties;
     private String myChecksum;
     private int myNumberOfDeltaChunks;
-    
+
     public SVNItem(String path, SVNNodeKind kind) {
         myRepositoryPath = path;
         myKind = kind;
         myNumberOfDeltaChunks = 0;
     }
-    
+
     public String getChecksum() {
         return myChecksum;
     }
-    
+
     public void setChecksum(String checksum) {
         myChecksum = checksum;
     }
-    
+
     public SVNNodeKind getKind() {
         return myKind;
     }
-    
+
     public void setKind(SVNNodeKind kind) {
         myKind = kind;
     }
-    
+
     public Map getProperties() {
         return myProperties;
     }
-    
-    public void changeProperty(String propName, String propVal){
-        if(propVal == null){
+
+    public void changeProperty(String propName, String propVal) {
+        if (propVal == null) {
             return;
         }
-        if(myProperties == null){
+        if (myProperties == null) {
             myProperties = new HashMap();
         }
         myProperties.put(propName, propVal);
     }
-    
+
     public String getRepositoryPath() {
         return myRepositoryPath;
     }
-    
+
     public void setRepositoryPath(String repositoryPath) {
         myRepositoryPath = repositoryPath;
     }
-    
-    public void incrementDeltaChunk(){
+
+    public void incrementDeltaChunk() {
         myNumberOfDeltaChunks++;
     }
-    
-    public int getNumberOfDeltaChunks(){
+
+    public int getNumberOfDeltaChunks() {
         return myNumberOfDeltaChunks;
     }
 }

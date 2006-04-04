@@ -19,26 +19,26 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
-
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class PropertyHandler implements ISVNPropertyHandler {
+
     Map myProps;
-    
-    public PropertyHandler(Map props){
+
+    public PropertyHandler(Map props) {
         myProps = props;
     }
-    
-    public void handleProperty(File path, SVNPropertyData property) throws SVNException{
+
+    public void handleProperty(File path, SVNPropertyData property) throws SVNException {
         myProps.put(property.getName(), property.getValue());
     }
-    
-    public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException{
+
+    public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
     }
-    
-    public void handleProperty(long revision, SVNPropertyData property) throws SVNException{
+
+    public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
     }
 
 }

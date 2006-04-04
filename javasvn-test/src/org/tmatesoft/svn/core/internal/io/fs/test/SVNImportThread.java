@@ -18,31 +18,30 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 
-
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class SVNImportThread extends Thread {
 
     private File myDirectory;
     private SVNURL myURL;
     private String myCommitMessage;
-    
-    public SVNImportThread(File importDir, SVNURL dstURL, String commitMessage){
+
+    public SVNImportThread(File importDir, SVNURL dstURL, String commitMessage) {
         myDirectory = importDir;
         myURL = dstURL;
         myCommitMessage = commitMessage;
     }
-    
+
     public void run() {
         System.out.println("Importing '" + myDirectory + "' to '" + myURL.toDecodedString() + "':");
         System.out.println(myCommitMessage);
         SVNClientManager manager = SVNClientManager.newInstance();
         SVNCommitInfo info = null;
-        try{
+        try {
             info = manager.getCommitClient().doImport(myDirectory, myURL, myCommitMessage, true);
-        }catch(SVNException svne){
+        } catch (SVNException svne) {
             System.out.println("Import failed: " + svne.getErrorMessage().getFullMessage());
             svne.printStackTrace();
             return;
@@ -50,5 +49,5 @@ public class SVNImportThread extends Thread {
         System.out.println("Imported '" + myDirectory + "' to '" + myURL.toDecodedString() + "':");
         System.out.println(info);
     }
-    
+
 }

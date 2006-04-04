@@ -18,20 +18,19 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 
-
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class UpdateHandler implements ISVNEventHandler {
 
     private Map myEvents;
-    
-    public UpdateHandler(){
+
+    public UpdateHandler() {
     }
-    
+
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
-        if(myEvents != null){
+        if (myEvents != null) {
             myEvents.put(event.getPath(), event);
         }
     }
@@ -39,7 +38,7 @@ public class UpdateHandler implements ISVNEventHandler {
     public void checkCancelled() throws SVNCancelException {
     }
 
-    public void setEventsMap(Map pathsToEvents){
+    public void setEventsMap(Map pathsToEvents) {
         myEvents = pathsToEvents;
     }
 }
