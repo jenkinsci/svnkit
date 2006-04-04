@@ -204,6 +204,14 @@ public class SVNCopyClient extends SVNBasicClient {
             topURL = srcURL.removePathTail();
             isResurrect = true;
         }
+
+        SVNRepository repository = createRepository(topURL, true);
+        if (!dstURL.equals(repository.getRepositoryRoot(true)) && srcURL.getPath().startsWith(dstURL.getPath() + "/")) {
+            isResurrect = true;
+            topURL = topURL.removePathTail();
+            repository = createRepository(topURL, true);
+        }
+        
         String srcPath = srcURL.equals(topURL) ? "" : srcURL.toString().substring(topURL.toString().length() + 1);
         srcPath = SVNEncodingUtil.uriDecode(srcPath);
         String dstPath = dstURL.equals(topURL) ? "" : dstURL.toString().substring(topURL.toString().length() + 1);
@@ -213,7 +221,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot move URL ''{0}'' into itself", srcURL);
             SVNErrorManager.error(err);
         }
-        SVNRepository repository = createRepository(topURL, true);
+        
         long srcRevNumber = getRevisionNumber(srcRevision, repository, null);
         long latestRevision = repository.getLatestRevision();
         
