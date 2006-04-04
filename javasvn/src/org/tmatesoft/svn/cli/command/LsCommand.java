@@ -31,9 +31,11 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
 
     private PrintStream myPrintStream;
+    private boolean myIsVerbose;
 
     public void run(PrintStream out, PrintStream err) throws SVNException {
         boolean recursive = getCommandLine().hasArgument(SVNArgument.RECURSIVE);
+        myIsVerbose = getCommandLine().hasArgument(SVNArgument.VERBOSE);
         myPrintStream = out;
 
         SVNRevision revision = parseRevision(getCommandLine());
@@ -43,15 +45,18 @@ public class LsCommand extends SVNCommand implements ISVNDirEntryHandler {
         }
         for(int i = 0; i < getCommandLine().getURLCount(); i++) {
             String url = getCommandLine().getURL(i);
-            logClient.doList(SVNURL.parseURIEncoded(url), getCommandLine().getPegRevision(i), revision == null || !revision.isValid() ? SVNRevision.HEAD : revision, recursive, this);
+            logClient.doList(SVNURL.parseURIEncoded(url), getCommandLine().getPegRevision(i), revision == null ? SVNRevision.UNDEFINED : revision, myIsVerbose, recursive, this);
         }
         for(int i = 0; i < getCommandLine().getPathCount(); i++) {
             File path = new File(getCommandLine().getPathAt(i)).getAbsoluteFile();
-            logClient.doList(path, getCommandLine().getPathPegRevision(i), revision == null || !revision.isValid() ? SVNRevision.BASE : revision, recursive, this);
+            logClient.doList(path, getCommandLine().getPathPegRevision(i), revision == null || !revision.isValid() ? SVNRevision.BASE : revision, myIsVerbose, recursive, this);
         }
     }
 
     public void handleDirEntry(SVNDirEntry dirEntry) {
+        if (myIsVerbose) {
+            myPrintStream.print("here should be verbose info - ");
+        }
         myPrintStream.print(dirEntry.getRelativePath());
         if (dirEntry.getKind() == SVNNodeKind.DIR) {
             myPrintStream.print('/');

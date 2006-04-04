@@ -243,7 +243,7 @@ public abstract class SVNCommand {
         ourCommands.put(new String[] { "info" }, "org.tmatesoft.svn.cli.command.InfoCommand");
         ourCommands.put(new String[] { "resolved" }, "org.tmatesoft.svn.cli.command.ResolvedCommand");
         ourCommands.put(new String[] { "cat" }, "org.tmatesoft.svn.cli.command.CatCommand");
-        ourCommands.put(new String[] { "ls" }, "org.tmatesoft.svn.cli.command.LsCommand");
+        ourCommands.put(new String[] { "ls", "list" }, "org.tmatesoft.svn.cli.command.LsCommand");
         ourCommands.put(new String[] { "log" }, "org.tmatesoft.svn.cli.command.LogCommand");
         ourCommands.put(new String[] { "switch", "sw" }, "org.tmatesoft.svn.cli.command.SwitchCommand");
         ourCommands.put(new String[] { "diff", "di" }, "org.tmatesoft.svn.cli.command.DiffCommand");
