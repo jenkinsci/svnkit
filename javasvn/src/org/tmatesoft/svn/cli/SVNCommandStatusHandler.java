@@ -110,11 +110,11 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
                 result.append(" ");
                 result.append(remoteStatus);
                 result.append("   ");
-                result.append(formatString(wcRevision, 6, false)); // 6 chars
+                result.append(SVNCommand.formatString(wcRevision, 6, false)); // 6 chars
                 result.append("   ");
-                result.append(formatString(commitRevision, 6, false)); // 6 chars
+                result.append(SVNCommand.formatString(commitRevision, 6, false)); // 6 chars
                 result.append(" ");
-                result.append(formatString(commitAuthor, 12, true)); // 12 chars
+                result.append(SVNCommand.formatString(commitAuthor, 12, true)); // 12 chars
                 result.append(" ");
                 result.append(SVNFormatUtil.formatPath(status.getFile()));
             }  else {
@@ -127,7 +127,7 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
                 result.append(" ");
                 result.append(remoteStatus);
                 result.append("    ");
-                result.append(formatString(wcRevision, 6, false)); // 6 chars
+                result.append(SVNCommand.formatString(wcRevision, 6, false)); // 6 chars
                 result.append("    ");
                 result.append(SVNFormatUtil.formatPath(status.getFile()));
             }
@@ -167,22 +167,5 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
             return '?';
         }
         return '?';
-    }
-
-    private static String formatString(String str, int chars, boolean left) {
-        if (str.length() > chars) {
-            return str.substring(0, chars);
-        }
-        StringBuffer formatted = new StringBuffer();
-        if (left) {
-            formatted.append(str);
-        }
-        for(int i = 0; i < chars - str.length(); i++) {
-            formatted.append(' ');
-        }
-        if (!left) {
-            formatted.append(str);
-        }
-        return formatted.toString();
     }
 }
