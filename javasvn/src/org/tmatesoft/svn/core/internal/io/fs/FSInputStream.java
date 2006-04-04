@@ -31,23 +31,20 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class FSInputStream extends InputStream {
-    private LinkedList myRepStateList = new LinkedList();
 
+    private LinkedList myRepStateList = new LinkedList();
     private int myChunkIndex;
     private boolean isChecksumFinalized;
-    
     private String myHexChecksum;
     private long myLength;
     private long myOffset;
-    
     private MessageDigest myDigest;
     private ByteBuffer myBuffer;
-    
     private SVNDeltaCombiner myCombiner;
-    
+
     private FSInputStream(SVNDeltaCombiner combiner, FSRepresentation representation, FSFS owner) throws SVNException {
         myCombiner = combiner;
         myChunkIndex = 0;
@@ -61,47 +58,48 @@ public class FSInputStream extends InputStream {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
             SVNErrorManager.error(err, nsae);
         }
-        
+
         try {
             buildRepresentationList(representation, myRepStateList, owner);
-        } catch(SVNException svne){
-            /* Something terrible has happened while building rep list, 
-             * need to close any files still opened 
+        } catch (SVNException svne) {
+            /*
+             * Something terrible has happened while building rep list, need to
+             * close any files still opened
              */
             close();
             throw svne;
         }
     }
-    
+
     public static InputStream createDeltaStream(SVNDeltaCombiner combiner, FSRevisionNode fileNode, FSFS owner) throws SVNException {
-        if(fileNode == null) {
+        if (fileNode == null) {
             return SVNFileUtil.DUMMY_IN;
         } else if (fileNode.getType() != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to get textual contents of a *non*-file node");
             SVNErrorManager.error(err);
         }
-        FSRepresentation representation = fileNode.getTextRepresentation(); 
-        if(representation == null) {
-            return SVNFileUtil.DUMMY_IN; 
+        FSRepresentation representation = fileNode.getTextRepresentation();
+        if (representation == null) {
+            return SVNFileUtil.DUMMY_IN;
         }
         return new FSInputStream(combiner, representation, owner);
     }
 
     public static InputStream createDeltaStream(SVNDeltaCombiner combiner, FSRepresentation fileRep, FSFS owner) throws SVNException {
-        if(fileRep == null) {
+        if (fileRep == null) {
             return SVNFileUtil.DUMMY_IN;
         }
         return new FSInputStream(combiner, fileRep, owner);
     }
 
     public int read(byte[] buf, int offset, int length) throws IOException {
-        try { 
-            return readContents(buf, offset, length); 
-        } catch(SVNException svne){
+        try {
+            return readContents(buf, offset, length);
+        } catch (SVNException svne) {
             throw new IOException(svne.getMessage());
         }
     }
-    
+
     public int read() throws IOException {
         byte[] buf = new byte[1];
         int r = read(buf, 0, 1);
@@ -110,54 +108,56 @@ public class FSInputStream extends InputStream {
         }
         return buf[0];
     }
-    
+
     private int readContents(byte[] buf, int offset, int length) throws SVNException {
         length = getContents(buf, offset, length);
 
-        if(!isChecksumFinalized){
+        if (!isChecksumFinalized) {
             myDigest.update(buf, offset, length);
             myOffset += length;
-        
-            if(myOffset == myLength){
+
+            if (myOffset == myLength) {
                 isChecksumFinalized = true;
                 String hexDigest = SVNFileUtil.toHexDigest(myDigest);
 
                 if (!myHexChecksum.equals(hexDigest)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Checksum mismatch while reading representation:\n   expected:  {0}\n     actual:  {1}", new Object[]{myHexChecksum, hexDigest});
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Checksum mismatch while reading representation:\n   expected:  {0}\n     actual:  {1}", new Object[] {
+                            myHexChecksum, hexDigest
+                    });
                     SVNErrorManager.error(err);
                 }
             }
         }
-        
+
         return length;
     }
-    
+
     private int getContents(byte[] buffer, int offset, int length) throws SVNException {
         int remaining = length;
         int targetPos = offset;
 
-        while(remaining > 0){
-            
-            if(myBuffer != null && myBuffer.hasRemaining()) {
+        while (remaining > 0) {
+
+            if (myBuffer != null && myBuffer.hasRemaining()) {
                 int copyLength = Math.min(myBuffer.remaining(), remaining);
                 /* Actually copy the data. */
                 myBuffer.get(buffer, targetPos, copyLength);
                 targetPos += copyLength;
                 remaining -= copyLength;
             } else {
-                FSRepresentationState resultState = (FSRepresentationState)myRepStateList.getFirst();
-                if(resultState.myOffset == resultState.myEnd) {
+                FSRepresentationState resultState = (FSRepresentationState) myRepStateList.getFirst();
+                if (resultState.myOffset == resultState.myEnd) {
                     break;
                 }
                 myCombiner.reset();
-                for(ListIterator states = myRepStateList.listIterator(); states.hasNext();){
-                    FSRepresentationState curState = (FSRepresentationState)states.next();
+                for (ListIterator states = myRepStateList.listIterator(); states.hasNext();) {
+                    FSRepresentationState curState = (FSRepresentationState) states.next();
 
-                    while(curState.myChunkIndex < myChunkIndex) {
+                    while (curState.myChunkIndex < myChunkIndex) {
                         myCombiner.skipWindow(curState.myFile);
                         curState.myChunkIndex++;
                         curState.myOffset = curState.myFile.position();
-                        if(curState.myOffset >= curState.myEnd){
+                        if (curState.myOffset >= curState.myEnd) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Reading one svndiff window read beyond the end of the representation");
                             SVNErrorManager.error(err);
                         }
@@ -176,46 +176,49 @@ public class FSInputStream extends InputStream {
         }
         return targetPos;
     }
-    
+
     public void close() {
-        for(Iterator states = myRepStateList.iterator(); states.hasNext();) {
-            FSRepresentationState state = (FSRepresentationState)states.next();
-            if(state.myFile != null){
+        for (Iterator states = myRepStateList.iterator(); states.hasNext();) {
+            FSRepresentationState state = (FSRepresentationState) states.next();
+            if (state.myFile != null) {
                 state.myFile.close();
             }
             states.remove();
         }
     }
-    
+
     private FSRepresentationState buildRepresentationList(FSRepresentation firstRep, LinkedList result, FSFS owner) throws SVNException {
         FSFile file = null;
         FSRepresentation rep = new FSRepresentation(firstRep);
         ByteBuffer buffer = ByteBuffer.allocate(4);
-        try{
-            while(true){
+        try {
+            while (true) {
                 file = owner.openAndSeekRepresentation(rep);
                 FSRepresentationState repState = readRepresentationLine(file);
                 repState.myFile = file;
                 repState.myStart = file.position();
                 repState.myOffset = repState.myStart;
                 repState.myEnd = repState.myStart + rep.getSize();
-                if(!repState.myIsDelta){
+                if (!repState.myIsDelta) {
                     return repState;
                 }
                 buffer.clear();
                 int r = file.read(buffer);
-                
+
                 byte[] header = buffer.array();
-                if(!(header[0] == 'S' && header[1] == 'V' && header[2] == 'N' && r == 4)){
+                if (!(header[0] == 'S' && header[1] == 'V' && header[2] == 'N' && r == 4)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed svndiff data in representation");
                     SVNErrorManager.error(err);
                 }
                 repState.myVersion = header[3];
                 repState.myChunkIndex = 0;
-                repState.myOffset+= 4;
-                /* Push this rep onto the list.  If it's self-compressed, we're done. */
+                repState.myOffset += 4;
+                /*
+                 * Push this rep onto the list. If it's self-compressed, we're
+                 * done.
+                 */
                 result.addLast(repState);
-                if(repState.myIsDeltaVsEmpty){
+                if (repState.myIsDeltaVsEmpty) {
                     return null;
                 }
                 rep.setRevision(repState.myBaseRevision);
@@ -223,11 +226,11 @@ public class FSInputStream extends InputStream {
                 rep.setSize(repState.myBaseLength);
                 rep.setTxnId(null);
             }
-        }catch(IOException ioe){
+        } catch (IOException ioe) {
             file.close();
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
-        }catch(SVNException svne){
+        } catch (SVNException svne) {
             file.close();
             throw svne;
         }
@@ -235,14 +238,14 @@ public class FSInputStream extends InputStream {
     }
 
     private static FSRepresentationState readRepresentationLine(FSFile file) throws SVNException {
-        try{
+        try {
             String line = file.readLine(160);
             FSRepresentationState repState = new FSRepresentationState();
             repState.myIsDelta = false;
-            if(FSRepresentation.REP_PLAIN.equals(line)){
+            if (FSRepresentation.REP_PLAIN.equals(line)) {
                 return repState;
             }
-            if(FSRepresentation.REP_DELTA.equals(line)){
+            if (FSRepresentation.REP_DELTA.equals(line)) {
                 /* This is a delta against the empty stream. */
                 repState.myIsDelta = true;
                 repState.myIsDeltaVsEmpty = true;
@@ -250,35 +253,35 @@ public class FSInputStream extends InputStream {
             }
             repState.myIsDelta = true;
             repState.myIsDeltaVsEmpty = false;
-            
+
             /* We have hopefully a DELTA vs. a non-empty base revision. */
             int delimiterInd = line.indexOf(' ');
-            if(delimiterInd == -1){
+            if (delimiterInd == -1) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                 SVNErrorManager.error(err);
             }
-            
+
             String header = line.substring(0, delimiterInd);
-            
-            if(!FSRepresentation.REP_DELTA.equals(header)){
+
+            if (!FSRepresentation.REP_DELTA.equals(header)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                 SVNErrorManager.error(err);
             }
 
             line = line.substring(delimiterInd + 1);
-            
-            try{
+
+            try {
                 delimiterInd = line.indexOf(' ');
-                if(delimiterInd == -1){
+                if (delimiterInd == -1) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                     SVNErrorManager.error(err);
                 }
-                String baseRevision = line.substring(0, delimiterInd); 
+                String baseRevision = line.substring(0, delimiterInd);
                 repState.myBaseRevision = Long.parseLong(baseRevision);
 
                 line = line.substring(delimiterInd + 1);
                 delimiterInd = line.indexOf(' ');
-                if(delimiterInd == -1){
+                if (delimiterInd == -1) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                     SVNErrorManager.error(err);
                 }
@@ -288,18 +291,19 @@ public class FSInputStream extends InputStream {
                 line = line.substring(delimiterInd + 1);
 
                 repState.myBaseLength = Long.parseLong(line);
-            }catch(NumberFormatException nfe){
+            } catch (NumberFormatException nfe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
                 SVNErrorManager.error(err);
             }
             return repState;
-        }catch(SVNException svne){
+        } catch (SVNException svne) {
             file.close();
             throw svne;
         }
     }
-    
+
     private static class FSRepresentationState {
+
         FSFile myFile;
         /* The starting offset for the raw svndiff/plaintext data minus header. */
         long myStart;

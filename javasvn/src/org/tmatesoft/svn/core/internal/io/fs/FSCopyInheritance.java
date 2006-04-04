@@ -11,12 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class FSCopyInheritance {
+
     // Copy id inheritance style
     public static final int COPY_ID_INHERIT_UNKNOWN = 0;
     public static final int COPY_ID_INHERIT_SELF = 1;
@@ -25,7 +25,7 @@ public class FSCopyInheritance {
 
     private int myStyle;
     private String myCopySourcePath;
-    
+
     public FSCopyInheritance(int style, String path) {
         myStyle = style;
         myCopySourcePath = path;
@@ -34,7 +34,7 @@ public class FSCopyInheritance {
     public String getCopySourcePath() {
         return myCopySourcePath;
     }
-    
+
     public int getStyle() {
         return myStyle;
     }
@@ -42,9 +42,9 @@ public class FSCopyInheritance {
     public void setCopySourcePath(String copySourcePath) {
         myCopySourcePath = copySourcePath;
     }
-    
+
     public void setStyle(int style) {
         myStyle = style;
     }
-    
+
 }

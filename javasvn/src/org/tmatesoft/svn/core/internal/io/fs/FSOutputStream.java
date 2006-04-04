@@ -33,35 +33,34 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
-    
+
     public static final int WRITE_BUFFER_SIZE = 512000;
     public static final int SVN_DELTA_WINDOW_SIZE = 102400;
 
     private boolean isHeaderWritten;
-    private CountingStream myTargetFile;    
+    private CountingStream myTargetFile;
     private long myDeltaStart;
-    private long myRepSize;    
-    private long myRepOffset;    
-    private InputStream mySourceStream;    
-    private SVNDeltaGenerator myDeltaGenerator;    
-    private FSRevisionNode myRevNode;    
-    private MessageDigest myDigest;    
-    private FSTransactionRoot myTxnRoot;    
+    private long myRepSize;
+    private long myRepOffset;
+    private InputStream mySourceStream;
+    private SVNDeltaGenerator myDeltaGenerator;
+    private FSRevisionNode myRevNode;
+    private MessageDigest myDigest;
+    private FSTransactionRoot myTxnRoot;
     private long mySourceOffset;
-
     private ByteBuffer myTextBuffer;
     private boolean myIsClosed;
-    
+
     private FSOutputStream(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot) throws SVNException {
         myTxnRoot = txnRoot;
         myTargetFile = file;
-        mySourceStream = source;        
+        mySourceStream = source;
         myDeltaStart = deltaStart;
         myRepSize = repSize;
-        myRepOffset = repOffset; 
+        myRepOffset = repOffset;
         isHeaderWritten = false;
         myRevNode = revNode;
         mySourceOffset = 0;
@@ -69,7 +68,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
 
         myDeltaGenerator = new SVNDeltaGenerator(SVN_DELTA_WINDOW_SIZE);
         myTextBuffer = ByteBuffer.allocate(WRITE_BUFFER_SIZE);
-        
+
         try {
             myDigest = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException nsae) {
@@ -77,14 +76,14 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             SVNErrorManager.error(err, nsae);
         }
     }
-    
+
     private void reset(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot) {
         myTxnRoot = txnRoot;
         myTargetFile = file;
         mySourceStream = source;
         myDeltaStart = deltaStart;
         myRepSize = repSize;
-        myRepOffset = repOffset; 
+        myRepOffset = repOffset;
         isHeaderWritten = false;
         myRevNode = revNode;
         mySourceOffset = 0;
@@ -92,83 +91,85 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myDigest.reset();
         myTextBuffer.clear();
     }
-    
+
     public static OutputStream createStream(FSRevisionNode revNode, FSTransactionRoot txnRoot, OutputStream dstStream) throws SVNException {
-        if(revNode.getType() != SVNNodeKind.FILE){
+        if (revNode.getType() != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to set textual contents of a *non*-file node");
             SVNErrorManager.error(err);
         }
 
-        if(!revNode.getId().isTxn()){
+        if (!revNode.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempted to set textual contents of an immutable node");
             SVNErrorManager.error(err);
         }
-        
+
         OutputStream targetOS = null;
         InputStream sourceStream = null;
         long offset = -1;
         long deltaStart = -1;
 
         try {
-            File targetFile = txnRoot.getTransactionRevFile(); 
+            File targetFile = txnRoot.getTransactionRevFile();
             offset = targetFile.length();
             targetOS = SVNFileUtil.openFileForWriting(targetFile, true);
             CountingStream revWriter = new CountingStream(targetOS, offset);
-            
+
             FSRepresentation baseRep = revNode.chooseDeltaBase(txnRoot.getOwner());
             sourceStream = FSInputStream.createDeltaStream(new SVNDeltaCombiner(), baseRep, txnRoot.getOwner());
             String header;
-            
-            if(baseRep != null){
-                header = FSRepresentation.REP_DELTA + " " + baseRep.getRevision() + " " + baseRep.getOffset() + " " + baseRep.getSize() + "\n"; 
-            }else{
+
+            if (baseRep != null) {
+                header = FSRepresentation.REP_DELTA + " " + baseRep.getRevision() + " " + baseRep.getOffset() + " " + baseRep.getSize() + "\n";
+            } else {
                 header = FSRepresentation.REP_DELTA + "\n";
             }
 
             revWriter.write(header.getBytes("UTF-8"));
             deltaStart = revWriter.getPosition();
-            
-            if((dstStream != null) && (dstStream instanceof FSOutputStream)){
-                FSOutputStream fsOS = (FSOutputStream)dstStream;
+
+            if ((dstStream != null) && (dstStream instanceof FSOutputStream)) {
+                FSOutputStream fsOS = (FSOutputStream) dstStream;
                 fsOS.reset(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
                 return dstStream;
             }
 
             return new FSOutputStream(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot);
-            
-        } catch(IOException ioe) {
+
+        } catch (IOException ioe) {
             SVNFileUtil.closeFile(targetOS);
             SVNFileUtil.closeFile(sourceStream);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
-        } catch(SVNException svne) {
+        } catch (SVNException svne) {
             SVNFileUtil.closeFile(targetOS);
             SVNFileUtil.closeFile(sourceStream);
             throw svne;
         }
         return null;
     }
-    
-    public void write(int b) throws IOException{
-        write(new byte[] {(byte) (b & 0xFF)}, 0, 1);
+
+    public void write(int b) throws IOException {
+        write(new byte[] {
+            (byte) (b & 0xFF)
+        }, 0, 1);
     }
-    
-    public void write(byte[] b) throws IOException{
+
+    public void write(byte[] b) throws IOException {
         write(b, 0, b.length);
     }
-    
-    public void write(byte[] b, int off, int len) throws IOException{
+
+    public void write(byte[] b, int off, int len) throws IOException {
         myDigest.update(b, off, len);
         myRepSize += len;
         int toWrite = 0;
-        while(len > 0){
+        while (len > 0) {
             toWrite = Math.min(len, myTextBuffer.remaining());
             myTextBuffer.put(b, off, toWrite);
             if (myTextBuffer.remaining() == 0) {
                 try {
                     ByteArrayInputStream target = new ByteArrayInputStream(myTextBuffer.array(), 0, myTextBuffer.capacity());
                     myDeltaGenerator.sendDelta(null, mySourceStream, mySourceOffset, target, this, false);
-                } catch(SVNException svne) {
+                } catch (SVNException svne) {
                     throw new IOException(svne.getMessage());
                 }
                 myTextBuffer.clear();
@@ -179,61 +180,62 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     }
 
     public void close() throws IOException {
-        if(myIsClosed){
+        if (myIsClosed) {
             return;
         }
         myIsClosed = true;
-        
+
         try {
             ByteArrayInputStream target = new ByteArrayInputStream(myTextBuffer.array(), 0, myTextBuffer.position());
             myDeltaGenerator.sendDelta(null, mySourceStream, mySourceOffset, target, this, false);
-            
+
             FSRepresentation rep = new FSRepresentation();
             rep.setOffset(myRepOffset);
 
             long offset = myTargetFile.getPosition();
-            
+
             rep.setSize(offset - myDeltaStart);
             rep.setExpandedSize(myRepSize);
             rep.setTxnId(myRevNode.getId().getTxnID());
             rep.setRevision(FSRepository.SVN_INVALID_REVNUM);
-            
+
             rep.setHexDigest(SVNFileUtil.toHexDigest(myDigest));
-            
+
             myTargetFile.write("ENDREP\n".getBytes("UTF-8"));
             myRevNode.setTextRepresentation(rep);
 
             myTxnRoot.getOwner().putTxnRevisionNode(myRevNode.getId(), myRevNode);
-        } catch(SVNException svne) {
+        } catch (SVNException svne) {
             throw new IOException(svne.getMessage());
         } finally {
             closeStreams();
         }
     }
-    
-    public void closeStreams(){
+
+    public void closeStreams() {
         SVNFileUtil.closeFile(myTargetFile);
         SVNFileUtil.closeFile(mySourceStream);
     }
-    
-    public FSRevisionNode getRevisionNode(){
+
+    public FSRevisionNode getRevisionNode() {
         return myRevNode;
     }
 
-    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException{
+    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         mySourceOffset += diffWindow.getInstructionsLength();
         try {
             diffWindow.writeTo(myTargetFile, !isHeaderWritten);
             isHeaderWritten = true;
-        } catch(IOException ioe) {
+        } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe);
         }
         return SVNFileUtil.DUMMY_OUT;
     }
 
-    public void textDeltaEnd(String path) throws SVNException{
+    public void textDeltaEnd(String path) throws SVNException {
     }
-    public void applyTextDelta(String path, String baseChecksum) throws SVNException{
+
+    public void applyTextDelta(String path, String baseChecksum) throws SVNException {
     }
 }

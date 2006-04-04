@@ -33,12 +33,12 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNProperties;
 
-
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class FSTransactionRoot extends FSRoot {
+
     public static final int SVN_FS_TXN_CHECK_OUT_OF_DATENESS = 0x00001;
     public static final int SVN_FS_TXN_CHECK_LOCKS = 0x00002;
     private static final int MAX_KEY_SIZE = 200;
@@ -47,15 +47,15 @@ public class FSTransactionRoot extends FSRoot {
     private int myTxnFlags;
     private File myTxnChangesFile;
     private File myTxnRevFile;
-    
+
     public FSTransactionRoot(FSFS owner, String txnID, int flags) {
         super(owner);
         myTxnID = txnID;
         myTxnFlags = flags;
-        
+
     }
 
-    public FSCopyInheritance getCopyInheritance(FSParentPath child) throws SVNException{
+    public FSCopyInheritance getCopyInheritance(FSParentPath child) throws SVNException {
         if (child == null || child.getParent() == null || myTxnID == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: invalid txn name or child");
             SVNErrorManager.error(err);
@@ -68,7 +68,7 @@ public class FSTransactionRoot extends FSRoot {
         if (childID.isTxn()) {
             return new FSCopyInheritance(FSCopyInheritance.COPY_ID_INHERIT_SELF, null);
         }
-        
+
         FSCopyInheritance copyInheritance = new FSCopyInheritance(FSCopyInheritance.COPY_ID_INHERIT_PARENT, null);
 
         if (childCopyID.compareTo("0") == 0) {
@@ -80,10 +80,10 @@ public class FSTransactionRoot extends FSRoot {
         }
 
         long copyrootRevision = child.getRevNode().getCopyRootRevision();
-        String copyrootPath = child.getRevNode().getCopyRootPath(); 
+        String copyrootPath = child.getRevNode().getCopyRootPath();
 
-        FSRoot copyrootRoot = getOwner().createRevisionRoot(copyrootRevision); 
-        FSRevisionNode copyrootNode = copyrootRoot.getRevisionNode(copyrootPath); 
+        FSRoot copyrootRoot = getOwner().createRevisionRoot(copyrootRevision);
+        FSRevisionNode copyrootNode = copyrootRoot.getRevisionNode(copyrootPath);
         FSID copyrootID = copyrootNode.getId();
         if (copyrootID.compareTo(childID) == -1) {
             return copyInheritance;
@@ -101,7 +101,7 @@ public class FSTransactionRoot extends FSRoot {
     }
 
     public FSRevisionNode getRootRevisionNode() throws SVNException {
-        if (myRootRevisionNode == null ) {
+        if (myRootRevisionNode == null) {
             FSTransactionInfo txn = getTxn();
             myRootRevisionNode = getOwner().getRevisionNode(txn.getRootID());
         }
@@ -129,30 +129,29 @@ public class FSTransactionRoot extends FSRoot {
             file.close();
         }
     }
-    
+
     public int getTxnFlags() {
         return myTxnFlags;
     }
-    
+
     public void setTxnFlags(int txnFlags) {
         myTxnFlags = txnFlags;
     }
-    
+
     public String getTxnID() {
         return myTxnID;
     }
-    
-    public Map unparseDirEntries(Map entries){
+
+    public Map unparseDirEntries(Map entries) {
         Map unparsedEntries = new HashMap();
-        for(Iterator names = entries.keySet().iterator(); names.hasNext();){
-            String name = (String)names.next();
-            FSEntry dirEntry = (FSEntry)entries.get(name); 
+        for (Iterator names = entries.keySet().iterator(); names.hasNext();) {
+            String name = (String) names.next();
+            FSEntry dirEntry = (FSEntry) entries.get(name);
             String unparsedVal = dirEntry.toString();
             unparsedEntries.put(name, unparsedVal);
         }
         return unparsedEntries;
     }
-
 
     public static FSTransactionInfo beginTransaction(long baseRevision, int flags, FSFS owner) throws SVNException {
         FSTransactionInfo txn = createTxn(baseRevision, owner);
@@ -162,19 +161,19 @@ public class FSTransactionRoot extends FSRoot {
         if ((flags & SVN_FS_TXN_CHECK_OUT_OF_DATENESS) != 0) {
             owner.setTransactionProperty(txn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, SVNProperty.toString(true));
         }
-        
+
         if ((flags & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
             owner.setTransactionProperty(txn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, SVNProperty.toString(true));
         }
-        
+
         return txn;
     }
-    
+
     private static FSTransactionInfo createTxn(long baseRevision, FSFS owner) throws SVNException {
         String txnID = createTxnDir(baseRevision, owner);
         FSTransactionInfo txn = new FSTransactionInfo(baseRevision, txnID);
         FSRevisionRoot root = owner.createRevisionRoot(baseRevision);
-        FSRevisionNode rootNode = root.getRootRevisionNode(); 
+        FSRevisionNode rootNode = root.getRootRevisionNode();
         owner.createNewTxnNodeRevisionFromRevision(txnID, rootNode);
         SVNFileUtil.createEmptyFile(new File(owner.getTransactionDir(txn.getTxnId()), FSFS.TXN_PATH_REV));
         SVNFileUtil.createEmptyFile(new File(owner.getTransactionDir(txn.getTxnId()), "changes"));
@@ -251,7 +250,7 @@ public class FSTransactionRoot extends FSRoot {
 
         removeRevisionNode(id);
     }
-    
+
     private void removeRevisionNode(FSID id) throws SVNException {
         FSRevisionNode node = getOwner().getRevisionNode(id);
 
@@ -267,7 +266,7 @@ public class FSTransactionRoot extends FSRoot {
         if (node.getTextRepresentation() != null && node.getTextRepresentation().isTxn() && node.getType() == SVNNodeKind.DIR) {
             SVNFileUtil.deleteFile(getTransactionRevNodeChildrenFile(id));
         }
-        
+
         SVNFileUtil.deleteFile(getOwner().getTransactionRevNodeFile(id));
     }
 
@@ -312,11 +311,11 @@ public class FSTransactionRoot extends FSRoot {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempted to set entry in immutable node");
             SVNErrorManager.error(err);
         }
-        
+
         FSRepresentation textRep = parentRevNode.getTextRepresentation();
         File childrenFile = getTransactionRevNodeChildrenFile(parentRevNode.getId());
         OutputStream dst = null;
-        
+
         try {
             if (textRep == null || !textRep.isTxn()) {
                 Map entries = parentRevNode.getDirEntries(getOwner());
@@ -362,20 +361,21 @@ public class FSTransactionRoot extends FSRoot {
         } else {
             idString = FSPathChangeKind.ACTION_RESET;
         }
-        
-        String output = idString + " " + changeString + " " + SVNProperty.toString(pathChange.isTextModified()) + " " + SVNProperty.toString(pathChange.arePropertiesModified()) + " " + pathChange.getPath() + "\n";
+
+        String output = idString + " " + changeString + " " + SVNProperty.toString(pathChange.isTextModified()) + " " + SVNProperty.toString(pathChange.arePropertiesModified()) + " "
+                + pathChange.getPath() + "\n";
         changesFile.write(output.getBytes("UTF-8"));
-        
+
         String copyfromPath = pathChange.getCopyPath();
         long copyfromRevision = pathChange.getCopyRevision();
-        
+
         if (copyfromPath != null && copyfromRevision != FSRepository.SVN_INVALID_REVNUM) {
             String copyfromLine = copyfromRevision + " " + copyfromPath;
             changesFile.write(copyfromLine.getBytes("UTF-8"));
         }
         changesFile.write("\n".getBytes("UTF-8"));
     }
-    
+
     public long writeFinalChangedPathInfo(final CountingStream protoFile) throws SVNException, IOException {
         long offset = protoFile.getPosition();
         Map changedPaths = getChangedPaths();
@@ -394,18 +394,18 @@ public class FSTransactionRoot extends FSRoot {
         }
         return offset;
     }
-    
+
     public String[] readNextIDs() throws SVNException {
         String[] ids = new String[2];
         String idsToParse = null;
         FSFile idsFile = new FSFile(getOwner().getNextIDsFile(myTxnID));
-        
-        try{
+
+        try {
             idsToParse = idsFile.readLine(FSTransactionRoot.MAX_KEY_SIZE * 2 + 3);
-        }finally{
+        } finally {
             idsFile.close();
         }
-        
+
         int delimiterInd = idsToParse.indexOf(' ');
 
         if (delimiterInd == -1) {
@@ -417,7 +417,7 @@ public class FSTransactionRoot extends FSRoot {
         ids[1] = idsToParse.substring(delimiterInd + 1);
         return ids;
     }
-    
+
     public void writeFinalCurrentFile(long newRevision, String startNodeId, String startCopyId) throws SVNException, IOException {
         String[] txnIds = readNextIDs();
         String txnNodeId = txnIds[0];
@@ -437,10 +437,10 @@ public class FSTransactionRoot extends FSRoot {
         }
         SVNFileUtil.rename(tmpCurrentFile, currentFile);
     }
-    
+
     public FSID writeFinalRevision(FSID newId, final CountingStream protoFile, long revision, FSID id, String startNodeId, String startCopyId) throws SVNException, IOException {
         newId = null;
-        
+
         if (!id.isTxn()) {
             return newId;
         }
@@ -480,7 +480,7 @@ public class FSTransactionRoot extends FSRoot {
                 textRep.setRevision(revision);
             }
         }
-        
+
         if (revNode.getPropsRepresentation() != null && revNode.getPropsRepresentation().isTxn()) {
             Map props = revNode.getProperties(owner);
             FSRepresentation propsRep = revNode.getPropsRepresentation();
@@ -499,30 +499,30 @@ public class FSTransactionRoot extends FSRoot {
                 SVNErrorManager.error(err, nsae);
             }
         }
-        
+
         long myOffset = protoFile.getPosition();
         String myNodeId = null;
         String nodeId = revNode.getId().getNodeID();
-        
+
         if (nodeId.startsWith("_")) {
             myNodeId = FSTransactionRoot.addKeys(startNodeId, nodeId.substring(1));
         } else {
             myNodeId = nodeId;
         }
-        
+
         String myCopyId = null;
         String copyId = revNode.getId().getCopyID();
-        
+
         if (copyId.startsWith("_")) {
             myCopyId = FSTransactionRoot.addKeys(startCopyId, copyId.substring(1));
         } else {
             myCopyId = copyId;
         }
-        
+
         if (revNode.getCopyRootRevision() == FSRepository.SVN_INVALID_REVNUM) {
             revNode.setCopyRootRevision(revision);
         }
-        
+
         newId = FSID.createRevId(myNodeId, myCopyId, revision, myOffset);
         revNode.setId(newId);
 
@@ -574,7 +574,7 @@ public class FSTransactionRoot extends FSRoot {
         protoFile.write(trailer.getBytes("UTF-8"));
         return targetFile.mySize;
     }
-    
+
     public File getTransactionRevNodePropsFile(FSID id) {
         return new File(getOwner().getTransactionDir(id.getTxnID()), FSFS.PATH_PREFIX_NODE + id.getNodeID() + "." + id.getCopyID() + FSFS.TXN_PATH_EXT_PROPS);
     }
@@ -584,14 +584,14 @@ public class FSTransactionRoot extends FSRoot {
     }
 
     public File getTransactionRevFile() {
-        if(myTxnRevFile == null){
+        if (myTxnRevFile == null) {
             myTxnRevFile = new File(getOwner().getTransactionDir(myTxnID), FSFS.TXN_PATH_REV);
         }
         return myTxnRevFile;
     }
 
     public File getTransactionChangesFile() {
-        if(myTxnChangesFile == null){
+        if (myTxnChangesFile == null) {
             myTxnChangesFile = new File(getOwner().getTransactionDir(myTxnID), "changes");
         }
         return myTxnChangesFile;
@@ -600,70 +600,70 @@ public class FSTransactionRoot extends FSRoot {
     public static String generateNextKey(String oldKey) throws SVNException {
         char[] nextKey = new char[oldKey.length() + 1];
         boolean carry = true;
-        if(oldKey.length() > 1 && oldKey.charAt(0) == '0'){
+        if (oldKey.length() > 1 && oldKey.charAt(0) == '0') {
             return null;
         }
-        for(int i = oldKey.length() - 1; i >= 0; i--){
+        for (int i = oldKey.length() - 1; i >= 0; i--) {
             char c = oldKey.charAt(i);
             if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z'))) {
                 return null;
             }
-            if(carry){
-                if(c == 'z') {
+            if (carry) {
+                if (c == 'z') {
                     nextKey[i] = '0';
-                }else {
+                } else {
                     carry = false;
-                    if(c == '9'){
+                    if (c == '9') {
                         nextKey[i] = 'a';
-                    }else{
-                        nextKey[i] = (char)(c + 1);
+                    } else {
+                        nextKey[i] = (char) (c + 1);
                     }
                 }
-            }else{
+            } else {
                 nextKey[i] = c;
             }
         }
         int nextKeyLength = oldKey.length() + (carry ? 1 : 0);
-        if(nextKeyLength >= MAX_KEY_SIZE){
+        if (nextKeyLength >= MAX_KEY_SIZE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: new key length is greater than the threshold {0,number,integer}", new Integer(MAX_KEY_SIZE));
             SVNErrorManager.error(err);
         }
-        if(carry){
+        if (carry) {
             System.arraycopy(nextKey, 0, nextKey, 1, oldKey.length());
             nextKey[0] = '1';
         }
         return new String(nextKey, 0, nextKeyLength);
     }
 
-    private static String addKeys(String key1, String key2){
+    private static String addKeys(String key1, String key2) {
         int i1 = key1.length() - 1;
         int i2 = key2.length() - 1;
         int carry = 0;
         int val;
         StringBuffer result = new StringBuffer();
 
-        while(i1 >= 0 || i2 >= 0 || carry > 0){
+        while (i1 >= 0 || i2 >= 0 || carry > 0) {
             val = carry;
-            
-            if(i1 >= 0){
+
+            if (i1 >= 0) {
                 val += key1.charAt(i1) <= '9' ? key1.charAt(i1) - '0' : key1.charAt(i1) - 'a' + 10;
             }
-            
-            if(i2 >= 0){
+
+            if (i2 >= 0) {
                 val += key2.charAt(i2) <= '9' ? key2.charAt(i2) - '0' : key2.charAt(i2) - 'a' + 10;
             }
-            
+
             carry = val / 36;
             val = val % 36;
-            
-            char sym = val <= 9 ? (char)('0' + val) : (char)(val - 10 + 'a');
+
+            char sym = val <= 9 ? (char) ('0' + val) : (char) (val - 10 + 'a');
             result.append(sym);
 
-            if(i1 >= 0){
+            if (i1 >= 0) {
                 --i1;
             }
-            
-            if(i2 >= 0){
+
+            if (i2 >= 0) {
                 --i2;
             }
         }
@@ -672,6 +672,7 @@ public class FSTransactionRoot extends FSRoot {
     }
 
     private static class HashRepresentationStream extends OutputStream {
+
         long mySize;
         MessageDigest myChecksum;
         OutputStream myProtoFile;
@@ -690,21 +691,21 @@ public class FSTransactionRoot extends FSRoot {
             }
             mySize++;
         }
-        
-        public void write(byte[] b, int off, int len) throws IOException{
+
+        public void write(byte[] b, int off, int len) throws IOException {
             myProtoFile.write(b, off, len);
             if (myChecksum != null) {
                 myChecksum.update(b, off, len);
             }
-            mySize +=len; 
+            mySize += len;
         }
-        
+
         public void write(byte[] b) throws IOException {
             myProtoFile.write(b);
             if (myChecksum != null) {
                 myChecksum.update(b);
             }
-            mySize += b.length; 
+            mySize += b.length;
         }
     }
 }

@@ -11,12 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class FSRepresentation {
+
     public static final String REP_DELTA = "DELTA";
     public static final String REP_PLAIN = "PLAIN";
     public static final String REP_TRAILER = "ENDREP";
@@ -27,16 +27,16 @@ public class FSRepresentation {
     private long myExpandedSize;
     private String myHexDigest;
     private String myTxnId;
-    
-    public FSRepresentation(long revision, long offset, long size, long expandedSize, String hexDigest){
+
+    public FSRepresentation(long revision, long offset, long size, long expandedSize, String hexDigest) {
         myRevision = revision;
         myOffset = offset;
         mySize = size;
         myExpandedSize = expandedSize;
         myHexDigest = hexDigest;
     }
-   
-    public FSRepresentation(FSRepresentation representation){
+
+    public FSRepresentation(FSRepresentation representation) {
         myRevision = representation.getRevision();
         myOffset = representation.getOffset();
         mySize = representation.getSize();
@@ -45,84 +45,84 @@ public class FSRepresentation {
         myTxnId = representation.myTxnId;
     }
 
-    public FSRepresentation(){
+    public FSRepresentation() {
         myRevision = FSRepository.SVN_INVALID_REVNUM;
         myOffset = -1;
         mySize = -1;
         myExpandedSize = -1;
         myHexDigest = null;
     }
-    
-    public void setRevision(long rev){
+
+    public void setRevision(long rev) {
         myRevision = rev;
     }
 
-    public void setOffset(long offset){
+    public void setOffset(long offset) {
         myOffset = offset;
     }
 
-    public void setSize(long size){
+    public void setSize(long size) {
         mySize = size;
     }
 
-    public void setExpandedSize(long expandedSize){
+    public void setExpandedSize(long expandedSize) {
         myExpandedSize = expandedSize;
     }
-    
-    public void setHexDigest(String hexDigest){
+
+    public void setHexDigest(String hexDigest) {
         myHexDigest = hexDigest;
     }
-    
-    public long getRevision(){
+
+    public long getRevision() {
         return myRevision;
     }
 
-    public long getOffset(){
+    public long getOffset() {
         return myOffset;
     }
 
-    public long getSize(){
+    public long getSize() {
         return mySize;
     }
 
-    public long getExpandedSize(){
+    public long getExpandedSize() {
         return myExpandedSize;
     }
-    
-    public String getHexDigest(){
+
+    public String getHexDigest() {
         return myHexDigest;
     }
 
-    public static boolean compareRepresentations(FSRepresentation r1, FSRepresentation r2){
-        if(r1 == r2){
+    public static boolean compareRepresentations(FSRepresentation r1, FSRepresentation r2) {
+        if (r1 == r2) {
             return true;
-        }else if(r1 == null){
+        } else if (r1 == null) {
             return false;
         }
         return r1.equals(r2);
     }
-    
-    public boolean equals(Object obj){
+
+    public boolean equals(Object obj) {
         if (obj == null || obj.getClass() != FSRepresentation.class) {
             return false;
         }
-        FSRepresentation rep = (FSRepresentation)obj;
+        FSRepresentation rep = (FSRepresentation) obj;
         return myRevision == rep.getRevision() && myOffset == rep.getOffset();
     }
-    
-    public String toString(){
+
+    public String toString() {
         return myRevision + " " + myOffset + " " + mySize + " " + myExpandedSize + " " + myHexDigest;
     }
 
     public String getTxnId() {
         return myTxnId;
     }
-    
+
     public void setTxnId(String txnId) {
         myTxnId = txnId;
     }
-    
-    public boolean isTxn(){
+
+    public boolean isTxn() {
         return myTxnId != null;
     }
 }

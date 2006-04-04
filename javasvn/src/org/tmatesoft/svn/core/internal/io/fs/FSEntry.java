@@ -15,47 +15,48 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class FSEntry {
+
     private FSID myId;
     private SVNNodeKind myType;
     private String myName;
-    
-    public FSEntry(){
+
+    public FSEntry() {
     }
-    
-    public FSEntry(FSID id, SVNNodeKind type, String name){
+
+    public FSEntry(FSID id, SVNNodeKind type, String name) {
         myId = id;
         myType = type;
         myName = name;
     }
-    
-    public void setId(FSID id){
+
+    public void setId(FSID id) {
         myId = id;
     }
 
-    public void setType(SVNNodeKind type){
+    public void setType(SVNNodeKind type) {
         myType = type;
     }
 
-    public void setName(String name){
+    public void setName(String name) {
         myName = name;
     }
-    
-    public FSID getId(){
+
+    public FSID getId() {
         return myId;
     }
 
-    public SVNNodeKind getType(){
+    public SVNNodeKind getType() {
         return myType;
     }
 
-    public String getName(){
+    public String getName() {
         return myName;
     }
-    
-    public String toString(){
+
+    public String toString() {
         return myType + " " + myId;
     }
 }

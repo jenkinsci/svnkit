@@ -13,28 +13,28 @@ package org.tmatesoft.svn.core.internal.io.fs;
 
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
-public class FSClosestCopy{
+public class FSClosestCopy {
 
     private FSRevisionRoot myRoot;
-	
+
     private String path;
-	
-	public FSClosestCopy(){		
-	}	
-	
-    public FSClosestCopy(FSRevisionRoot root, String newPath){
-		myRoot = root;
-		path = newPath;
-	}
-    
-	public FSRevisionRoot getRevisionRoot(){
-		return myRoot;
-	}
-	
-    public String getPath(){
-		return path;
-	}
-	
+
+    public FSClosestCopy() {
+    }
+
+    public FSClosestCopy(FSRevisionRoot root, String newPath) {
+        myRoot = root;
+        path = newPath;
+    }
+
+    public FSRevisionRoot getRevisionRoot() {
+        return myRoot;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
 }

@@ -28,27 +28,26 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public abstract class FSRoot {
 
     private RevisionCache myRevNodesCache;
     private FSFS myFSFS;
-
     protected FSRevisionNode myRootRevisionNode;
 
     protected FSRoot(FSFS owner) {
         myFSFS = owner;
     }
 
-    protected FSFS getOwner(){
+    protected FSFS getOwner() {
         return myFSFS;
     }
 
-    public FSRevisionNode getRevisionNode(String path) throws SVNException{
+    public FSRevisionNode getRevisionNode(String path) throws SVNException {
         String canonPath = path;
         FSRevisionNode node = fetchRevNodeFromCache(canonPath);
-        if(node == null){
+        if (node == null) {
             FSParentPath parentPath = openPath(path, true, false);
             node = parentPath.getRevNode();
         }
@@ -60,7 +59,7 @@ public abstract class FSRoot {
     public abstract Map getChangedPaths() throws SVNException;
 
     public abstract FSCopyInheritance getCopyInheritance(FSParentPath child) throws SVNException;
-    
+
     public FSParentPath openPath(String path, boolean lastEntryMustExist, boolean storeParents) throws SVNException {
         String canonPath = path;
         FSRevisionNode here = getRootRevisionNode();
@@ -69,7 +68,7 @@ public abstract class FSRoot {
         FSParentPath parentPath = new FSParentPath(here, null, null);
         parentPath.setCopyStyle(FSCopyInheritance.COPY_ID_INHERIT_SELF);
 
-        //skip the leading '/'
+        // skip the leading '/'
         String rest = canonPath.substring(1);
 
         while (true) {
@@ -96,17 +95,17 @@ public abstract class FSRoot {
                         throw svne;
                     }
                 }
-                
+
                 parentPath.setParentPath(child, entry, storeParents ? new FSParentPath(parentPath) : null);
-                
-                if(storeParents){
+
+                if (storeParents) {
                     FSCopyInheritance copyInheritance = getCopyInheritance(parentPath);
-                    if(copyInheritance != null){
+                    if (copyInheritance != null) {
                         parentPath.setCopyStyle(copyInheritance.getStyle());
                         parentPath.setCopySourcePath(copyInheritance.getCopySourcePath());
                     }
                 }
-                
+
                 if (cachedRevNode == null) {
                     putRevNodeToCache(pathSoFar, child);
                 }
@@ -184,7 +183,7 @@ public abstract class FSRoot {
         if (oldChange != null) {
             copyfromPath = oldChange.getCopyPath();
             copyfromRevision = oldChange.getCopyRevision();
-            
+
             if ((change.getRevNodeId() == null) && (FSPathChangeKind.FS_PATH_CHANGE_RESET != change.getChangeKind())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing required node revision ID");
                 SVNErrorManager.error(err);
@@ -224,7 +223,7 @@ public abstract class FSRoot {
                     oldChange.setPropertiesModified(change.arePropertiesModified());
                     oldChange.setTextModified(change.isTextModified());
                 }
-                
+
                 copyfromPath = null;
                 copyfromRevision = FSRepository.SVN_INVALID_REVNUM;
 
@@ -234,15 +233,15 @@ public abstract class FSRoot {
                 copyfromRevision = FSRepository.SVN_INVALID_REVNUM;
                 mapChanges.remove(change.getPath());
             }
-            
+
             newChange = oldChange;
         } else {
             copyfromPath = change.getCopyPath();
             copyfromRevision = change.getCopyRevision();
             newChange = change;
         }
-        
-        if(newChange != null){
+
+        if (newChange != null) {
             newChange.setCopyPath(copyfromPath);
             newChange.setCopyRevision(copyfromRevision);
             mapChanges.put(change.getPath(), newChange);
@@ -302,53 +301,54 @@ public abstract class FSRoot {
         String copyfromLine = raReader.readLine(4096);
         return FSPathChange.fromString(changeLine, copyfromLine);
     }
-    
+
     public InputStream getFileStreamForPath(SVNDeltaCombiner combiner, String path) throws SVNException {
         FSRevisionNode fileNode = getRevisionNode(path);
         return FSInputStream.createDeltaStream(combiner, fileNode, getOwner());
     }
 
     private static final class RevisionCache {
+
         private LinkedList myKeys;
         private Map myCache;
         private int mySizeLimit;
-        
-        public RevisionCache(int limit){
+
+        public RevisionCache(int limit) {
             mySizeLimit = limit;
             myKeys = new LinkedList();
-            myCache = new TreeMap(); 
+            myCache = new TreeMap();
         }
-        
-        public void put(Object key, Object value){
-            if(mySizeLimit <= 0){
+
+        public void put(Object key, Object value) {
+            if (mySizeLimit <= 0) {
                 return;
             }
-            if(myKeys.size() == mySizeLimit){
+            if (myKeys.size() == mySizeLimit) {
                 Object cachedKey = myKeys.removeLast();
                 myCache.remove(cachedKey);
             }
             myKeys.addFirst(key);
             myCache.put(key, value);
         }
-        
-        public void delete(Object key){
+
+        public void delete(Object key) {
             myKeys.remove(key);
             myCache.remove(key);
         }
-        
-        public Object fetch(Object key){
+
+        public Object fetch(Object key) {
             int ind = myKeys.indexOf(key);
-            if(ind != -1){
-                if(ind != 0){
+            if (ind != -1) {
+                if (ind != 0) {
                     Object cachedKey = myKeys.remove(ind);
                     myKeys.addFirst(cachedKey);
-                } 
+                }
                 return myCache.get(key);
             }
             return null;
         }
-        
-        public void clear(){
+
+        public void clear() {
             myKeys.clear();
             myCache.clear();
         }

@@ -15,31 +15,30 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class CountingStream extends FilterOutputStream {
 
     private long myPosition;
-    
+
     public CountingStream(OutputStream stream, long offset) {
         super(stream);
         myPosition = offset >= 0 ? offset : 0;
     }
-    
+
     public void write(byte[] b, int off, int len) throws IOException {
-        super.out.write(b, off, len);        
+        super.out.write(b, off, len);
         myPosition += len;
     }
 
     public void write(int b) throws IOException {
-        super.write(b);        
+        super.write(b);
         myPosition++;
     }
-    
-    public long getPosition(){
+
+    public long getPosition() {
         return myPosition;
     }
 }

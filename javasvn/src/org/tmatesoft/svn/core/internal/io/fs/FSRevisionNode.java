@@ -23,7 +23,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 public class FSRevisionNode {
-    //rev-node files keywords
+
+    // rev-node files keywords
     public static final String HEADER_ID = "id";
     public static final String HEADER_TYPE = "type";
     public static final String HEADER_COUNT = "count";
@@ -34,137 +35,137 @@ public class FSRevisionNode {
     public static final String HEADER_COPYFROM = "copyfrom";
     public static final String HEADER_COPYROOT = "copyroot";
 
-    //id: a.b.r<revID>/offset
+    // id: a.b.r<revID>/offset
     private FSID myId;
-    
-    //type: 'dir' or 'file' 
-    private SVNNodeKind myType;
-    
-    //count:  count of revs since base
-    private long myCount;
-    
-    //(_)a.(_)b.tx-y
 
-    //pred: a.b.r<revID>/offset
+    // type: 'dir' or 'file'
+    private SVNNodeKind myType;
+
+    // count: count of revs since base
+    private long myCount;
+
+    // (_)a.(_)b.tx-y
+
+    // pred: a.b.r<revID>/offset
     private FSID myPredecessorId;
-    
-    //text: <rev> <offset> <length> <size> <digest>
+
+    // text: <rev> <offset> <length> <size> <digest>
     private FSRepresentation myTextRepresentation;
-    
-    //props: <rev> <offset> <length> <size> <digest>
+
+    // props: <rev> <offset> <length> <size> <digest>
     private FSRepresentation myPropsRepresentation;
-    
-    //cpath: <path>
+
+    // cpath: <path>
     private String myCreatedPath;
 
-    //copyfrom: <revID> <path>
+    // copyfrom: <revID> <path>
     private long myCopyFromRevision;
     private String myCopyFromPath;
 
-    //copyroot: <revID> <created-path>
-    private long myCopyRootRevision;    
+    // copyroot: <revID> <created-path>
+    private long myCopyRootRevision;
     private String myCopyRootPath;
 
-    //for only node-revs representing dirs 
+    // for only node-revs representing dirs
     private Map myDirContents;
 
-    public FSRevisionNode(){
+    public FSRevisionNode() {
     }
-    
-    public void setId(FSID revNodeID){
+
+    public void setId(FSID revNodeID) {
         myId = revNodeID;
     }
 
-    public void setType(SVNNodeKind nodeKind){
+    public void setType(SVNNodeKind nodeKind) {
         myType = nodeKind;
     }
 
-    public void setCount(long count){
+    public void setCount(long count) {
         myCount = count;
     }
 
-    public void setPredecessorId(FSID predRevNodeId){
+    public void setPredecessorId(FSID predRevNodeId) {
         myPredecessorId = predRevNodeId;
     }
 
-    public void setTextRepresentation(FSRepresentation textRepr){
+    public void setTextRepresentation(FSRepresentation textRepr) {
         myTextRepresentation = textRepr;
     }
 
-    public void setPropsRepresentation(FSRepresentation propsRepr){
+    public void setPropsRepresentation(FSRepresentation propsRepr) {
         myPropsRepresentation = propsRepr;
     }
 
-    public void setCreatedPath(String cpath){
+    public void setCreatedPath(String cpath) {
         myCreatedPath = cpath;
     }
-    
-    public void setCopyFromRevision(long copyFromRev){
+
+    public void setCopyFromRevision(long copyFromRev) {
         myCopyFromRevision = copyFromRev;
     }
-    
-    public void setCopyFromPath(String copyFromPath){
+
+    public void setCopyFromPath(String copyFromPath) {
         myCopyFromPath = copyFromPath;
     }
 
-    public void setCopyRootRevision(long copyRootRev){
+    public void setCopyRootRevision(long copyRootRev) {
         myCopyRootRevision = copyRootRev;
     }
-    
-    public void setCopyRootPath(String copyRootPath){
+
+    public void setCopyRootPath(String copyRootPath) {
         myCopyRootPath = copyRootPath;
     }
 
-    public FSID getId(){
+    public FSID getId() {
         return myId;
     }
 
-    public SVNNodeKind getType(){
+    public SVNNodeKind getType() {
         return myType;
     }
 
-    public long getCount(){
+    public long getCount() {
         return myCount;
     }
 
-    public FSID getPredecessorId(){
+    public FSID getPredecessorId() {
         return myPredecessorId;
     }
 
-    //text
-    public FSRepresentation getTextRepresentation(){
+    // text
+    public FSRepresentation getTextRepresentation() {
         return myTextRepresentation;
     }
 
-    //props
-    public FSRepresentation getPropsRepresentation(){
+    // props
+    public FSRepresentation getPropsRepresentation() {
         return myPropsRepresentation;
     }
 
-    public String getCreatedPath(){
+    public String getCreatedPath() {
         return myCreatedPath;
     }
-    
-    public long getCopyFromRevision(){
+
+    public long getCopyFromRevision() {
         return myCopyFromRevision;
     }
-    
-    public String getCopyFromPath(){
+
+    public String getCopyFromPath() {
         return myCopyFromPath;
     }
 
-    public long getCopyRootRevision(){
+    public long getCopyRootRevision() {
         return myCopyRootRevision;
     }
-    
-    public String getCopyRootPath(){
+
+    public String getCopyRootPath() {
         return myCopyRootPath;
     }
-    
-    public static FSRevisionNode dumpRevisionNode(FSRevisionNode revNode){
+
+    public static FSRevisionNode dumpRevisionNode(FSRevisionNode revNode) {
         FSRevisionNode clone = new FSRevisionNode();
         clone.setId(revNode.getId());
-        if(revNode.getPredecessorId() != null){
+        if (revNode.getPredecessorId() != null) {
             clone.setPredecessorId(revNode.getPredecessorId());
         }
         clone.setType(revNode.getType());
@@ -174,10 +175,10 @@ public class FSRevisionNode {
         clone.setCopyRootRevision(revNode.getCopyRootRevision());
         clone.setCount(revNode.getCount());
         clone.setCreatedPath(revNode.getCreatedPath());
-        if(revNode.getPropsRepresentation() != null){
+        if (revNode.getPropsRepresentation() != null) {
             clone.setPropsRepresentation(new FSRepresentation(revNode.getPropsRepresentation()));
         }
-        if(revNode.getTextRepresentation() != null){
+        if (revNode.getTextRepresentation() != null) {
             clone.setTextRepresentation(new FSRepresentation(revNode.getTextRepresentation()));
         }
         return clone;
@@ -190,7 +191,7 @@ public class FSRevisionNode {
     public void setDirContents(Map dirContents) {
         myDirContents = dirContents;
     }
-    
+
     public static FSRevisionNode fromMap(Map headers) throws SVNException {
         FSRevisionNode revNode = new FSRevisionNode();
 
@@ -294,10 +295,10 @@ public class FSRevisionNode {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyfrom line in node-rev");
             SVNErrorManager.error(err);
         }
-        
+
         String copyfromRev = copyfrom.substring(0, delimiterInd);
         String copyfromPath = copyfrom.substring(delimiterInd + 1);
-        
+
         long rev = -1;
         try {
             rev = Long.parseLong(copyfromRev);
@@ -323,7 +324,7 @@ public class FSRevisionNode {
 
         String copyrootRev = copyroot.substring(0, delimiterInd);
         String copyrootPath = copyroot.substring(delimiterInd + 1);
-        
+
         long rev = -1;
         try {
             rev = Long.parseLong(copyrootRev);
@@ -339,17 +340,17 @@ public class FSRevisionNode {
         if (revNode == null) {
             return;
         }
-        
+
         FSRepresentation rep = new FSRepresentation();
-        
+
         int delimiterInd = representation.indexOf(' ');
         String revision = null;
         if (delimiterInd == -1) {
             revision = representation;
-        }else{
-            revision = representation.substring(0, delimiterInd);    
+        } else {
+            revision = representation.substring(0, delimiterInd);
         }
-        
+
         long rev = -1;
         try {
             rev = Long.parseLong(revision);
@@ -358,7 +359,7 @@ public class FSRevisionNode {
             SVNErrorManager.error(err);
         }
         rep.setRevision(rev);
-        
+
         if (FSRepository.isInvalidRevision(rep.getRevision())) {
             rep.setTxnId(txnId);
             if (isData) {
@@ -371,16 +372,16 @@ public class FSRevisionNode {
                 return;
             }
         }
-        
+
         representation = representation.substring(delimiterInd + 1);
-        
+
         delimiterInd = representation.indexOf(' ');
         if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
             SVNErrorManager.error(err);
         }
         String repOffset = representation.substring(0, delimiterInd);
-        
+
         long offset = -1;
         try {
             offset = Long.parseLong(repOffset);
@@ -392,7 +393,7 @@ public class FSRevisionNode {
             SVNErrorManager.error(err);
         }
         rep.setOffset(offset);
-        
+
         representation = representation.substring(delimiterInd + 1);
         delimiterInd = representation.indexOf(' ');
         if (delimiterInd == -1) {
@@ -400,7 +401,7 @@ public class FSRevisionNode {
             SVNErrorManager.error(err);
         }
         String repSize = representation.substring(0, delimiterInd);
-        
+
         long size = -1;
         try {
             size = Long.parseLong(repSize);
@@ -412,7 +413,7 @@ public class FSRevisionNode {
             SVNErrorManager.error(err);
         }
         rep.setSize(size);
-        
+
         representation = representation.substring(delimiterInd + 1);
         delimiterInd = representation.indexOf(' ');
         if (delimiterInd == -1) {
@@ -420,7 +421,7 @@ public class FSRevisionNode {
             SVNErrorManager.error(err);
         }
         String repExpandedSize = representation.substring(0, delimiterInd);
-        
+
         long expandedSize = -1;
         try {
             expandedSize = Long.parseLong(repExpandedSize);
@@ -432,7 +433,7 @@ public class FSRevisionNode {
             SVNErrorManager.error(err);
         }
         rep.setExpandedSize(expandedSize);
-        
+
         String hexDigest = representation.substring(delimiterInd + 1);
         if (hexDigest.length() != 32 || SVNFileUtil.fromHexDigest(hexDigest) == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
@@ -445,7 +446,7 @@ public class FSRevisionNode {
             revNode.setPropsRepresentation(rep);
         }
     }
-    
+
     public FSRevisionNode getChildDirNode(String childName, FSFS fsfsOwner) throws SVNException {
         if (!SVNPathUtil.isSinglePathComponent(childName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_SINGLE_PATH_COMPONENT, "Attempted to open node with an illegal name ''{0}''", childName);
@@ -454,12 +455,12 @@ public class FSRevisionNode {
 
         Map entries = getDirEntries(fsfsOwner);
         FSEntry entry = entries != null ? (FSEntry) entries.get(childName) : null;
-        
+
         if (entry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Attempted to open non-existent child node ''{0}''", childName);
             SVNErrorManager.error(err);
         }
-        
+
         return fsfsOwner.getRevisionNode(entry.getId());
     }
 
@@ -471,16 +472,16 @@ public class FSRevisionNode {
 
         Map entries = new HashMap();
         Map dirContents = getDirContents();
-        
+
         if (dirContents == null) {
             dirContents = fsfsOwner.getDirContents(this);
             setDirContents(dirContents);
         }
-        
+
         if (dirContents != null) {
             entries.putAll(dirContents);
         }
-        
+
         return entries;
     }
 
@@ -489,21 +490,21 @@ public class FSRevisionNode {
     }
 
     public FSRepresentation chooseDeltaBase(FSFS fsfsOwner) throws SVNException {
-        if(getCount() == 0){
+        if (getCount() == 0) {
             return null;
         }
 
         long count = getCount();
         count = count & (count - 1);
         FSRevisionNode baseNode = this;
-        while((count++) < getCount()){
+        while ((count++) < getCount()) {
             baseNode = fsfsOwner.getRevisionNode(baseNode.getPredecessorId());
         }
-        return baseNode.getTextRepresentation(); 
+        return baseNode.getTextRepresentation();
     }
 
     public String getFileChecksum() throws SVNException {
-        if(getType() != SVNNodeKind.FILE){
+        if (getType() != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to get checksum of a *non*-file node");
             SVNErrorManager.error(err);
         }

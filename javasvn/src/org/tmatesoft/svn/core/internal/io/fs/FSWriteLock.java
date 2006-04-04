@@ -27,69 +27,72 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class FSWriteLock {
+
     private static final Map ourThreadLocksCache = new HashMap();
 
     private RandomAccessFile myLockFile;
     private FileLock myLock;
     private int myReferencesCount = 0;
-    private FSFS myFSFS; 
+    private FSFS myFSFS;
     private String myUUID;
-   
-    private FSWriteLock(String uuid, FSFS owner){
+
+    private FSWriteLock(String uuid, FSFS owner) {
         myUUID = uuid;
         myFSFS = owner;
     }
-    
+
     public static synchronized FSWriteLock getWriteLock(FSFS owner) throws SVNException {
         String uuid = owner.getUUID();
-        FSWriteLock lock = (FSWriteLock)ourThreadLocksCache.get(uuid);
+        FSWriteLock lock = (FSWriteLock) ourThreadLocksCache.get(uuid);
 
-        if(lock == null){
+        if (lock == null) {
             lock = new FSWriteLock(uuid, owner);
             ourThreadLocksCache.put(uuid, lock);
         }
         lock.myReferencesCount++;
         return lock;
     }
-    
+
     public synchronized void lock() throws SVNException {
         File writeLockFile = myFSFS.getWriteLockFile();
 
-        try{
+        try {
             SVNFileType type = SVNFileType.getType(writeLockFile);
-            if(type == SVNFileType.UNKNOWN || type == SVNFileType.NONE){
+            if (type == SVNFileType.UNKNOWN || type == SVNFileType.NONE) {
                 SVNFileUtil.createEmptyFile(writeLockFile);
             }
 
             myLockFile = new RandomAccessFile(writeLockFile, "rw");
-            myLock = myLockFile.getChannel().lock();            
-        }catch(IOException ioe){
+            myLock = myLockFile.getChannel().lock();
+        } catch (IOException ioe) {
             unlock();
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't get exclusive lock on file ''{0}'': {1}", new Object[]{writeLockFile, ioe.getLocalizedMessage()});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't get exclusive lock on file ''{0}'': {1}", new Object[] {
+                    writeLockFile, ioe.getLocalizedMessage()
+            });
             SVNErrorManager.error(err, ioe);
         }
     }
-    
-    public static synchronized void realease(FSWriteLock lock){
-        if(lock == null){
+
+    public static synchronized void realease(FSWriteLock lock) {
+        if (lock == null) {
             return;
         }
-        if((--lock.myReferencesCount) == 0){
+        if ((--lock.myReferencesCount) == 0) {
             ourThreadLocksCache.remove(lock.myUUID);
         }
     }
-    
-    public synchronized void unlock(){
+
+    public synchronized void unlock() {
         if (myLock != null) {
             try {
                 myLock.release();
             } catch (IOException ioex) {
                 //
             }
-            myLock = null; 
+            myLock = null;
         }
         SVNFileUtil.closeFile(myLockFile);
         myLockFile = null;

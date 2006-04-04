@@ -11,18 +11,18 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-
 /**
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class PathInfo {
+
     String myPath;
     String myLinkPath;
     String myLockToken;
     long myRevision;
     boolean startEmpty;
-    
+
     public PathInfo(String path, String linkPath, String lockToken, long revision, boolean empty) {
         myPath = path;
         myLinkPath = linkPath;
@@ -34,24 +34,24 @@ public class PathInfo {
     public String getLinkPath() {
         return myLinkPath;
     }
-    
+
     public String getLockToken() {
         return myLockToken;
     }
-    
+
     public String getPath() {
         return myPath;
     }
-    
+
     public long getRevision() {
         return myRevision;
     }
-    
+
     public boolean isStartEmpty() {
         return startEmpty;
     }
-    
-    public static boolean isRelevant(PathInfo pathInfo, String prefix){
+
+    public static boolean isRelevant(PathInfo pathInfo, String prefix) {
         /* Return true if pathInfo's path is a child of prefix. */
         return pathInfo != null && pathInfo.getPath().startsWith(prefix) && ("".equals(prefix) || pathInfo.getPath().charAt(prefix.length()) == '/');
     }

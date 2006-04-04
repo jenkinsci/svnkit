@@ -16,31 +16,30 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 
-
-
 /**
- * The kind of change that occurred on the path. 
+ * The kind of change that occurred on the path.
  * 
  * @version 1.0
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class FSPathChangeKind {
+
     public static final String ACTION_MODIFY = "modify";
     public static final String ACTION_ADD = "add";
     public static final String ACTION_DELETE = "delete";
     public static final String ACTION_REPLACE = "replace";
     public static final String ACTION_RESET = "reset";
 
-    public static final FSPathChangeKind FS_PATH_CHANGE_MODIFY = new FSPathChangeKind(ACTION_MODIFY); 
-    public static final FSPathChangeKind FS_PATH_CHANGE_ADD = new FSPathChangeKind(ACTION_ADD); 
-    public static final FSPathChangeKind FS_PATH_CHANGE_DELETE = new FSPathChangeKind(ACTION_DELETE); 
-    public static final FSPathChangeKind FS_PATH_CHANGE_REPLACE = new FSPathChangeKind(ACTION_REPLACE); 
+    public static final FSPathChangeKind FS_PATH_CHANGE_MODIFY = new FSPathChangeKind(ACTION_MODIFY);
+    public static final FSPathChangeKind FS_PATH_CHANGE_ADD = new FSPathChangeKind(ACTION_ADD);
+    public static final FSPathChangeKind FS_PATH_CHANGE_DELETE = new FSPathChangeKind(ACTION_DELETE);
+    public static final FSPathChangeKind FS_PATH_CHANGE_REPLACE = new FSPathChangeKind(ACTION_REPLACE);
     public static final FSPathChangeKind FS_PATH_CHANGE_RESET = new FSPathChangeKind(ACTION_RESET);
 
     private String myName;
 
     private static final Map ACTIONS_TO_CHANGE_KINDS = new HashMap();
-    
+
     static {
         ACTIONS_TO_CHANGE_KINDS.put(ACTION_MODIFY, FSPathChangeKind.FS_PATH_CHANGE_MODIFY);
         ACTIONS_TO_CHANGE_KINDS.put(ACTION_ADD, FSPathChangeKind.FS_PATH_CHANGE_ADD);
@@ -53,20 +52,20 @@ public class FSPathChangeKind {
         myName = name;
     }
 
-    public String toString(){
+    public String toString() {
         return myName;
     }
-    
-    public static FSPathChangeKind fromString(String changeKindStr){
-        return (FSPathChangeKind)ACTIONS_TO_CHANGE_KINDS.get(changeKindStr);
+
+    public static FSPathChangeKind fromString(String changeKindStr) {
+        return (FSPathChangeKind) ACTIONS_TO_CHANGE_KINDS.get(changeKindStr);
     }
-    
-    public static char getType(FSPathChangeKind kind){
-        if(kind == FSPathChangeKind.FS_PATH_CHANGE_ADD){
+
+    public static char getType(FSPathChangeKind kind) {
+        if (kind == FSPathChangeKind.FS_PATH_CHANGE_ADD) {
             return SVNLogEntryPath.TYPE_ADDED;
-        }else if(kind == FSPathChangeKind.FS_PATH_CHANGE_DELETE){
+        } else if (kind == FSPathChangeKind.FS_PATH_CHANGE_DELETE) {
             return SVNLogEntryPath.TYPE_DELETED;
-        }else if(kind == FSPathChangeKind.FS_PATH_CHANGE_MODIFY){
+        } else if (kind == FSPathChangeKind.FS_PATH_CHANGE_MODIFY) {
             return SVNLogEntryPath.TYPE_MODIFIED;
         }
 
