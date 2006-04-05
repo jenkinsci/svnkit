@@ -95,9 +95,7 @@ public abstract class SVNRepositoryFactory {
     
     protected static void registerRepositoryFactory(String protocol, SVNRepositoryFactory factory) {
         if (protocol != null && factory != null) {
-            if (!myFactoriesMap.containsKey(protocol)) {
-                myFactoriesMap.put(protocol, factory);
-            }
+            myFactoriesMap.put(protocol, factory);
         }
     }
     
