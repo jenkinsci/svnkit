@@ -23,10 +23,7 @@ import org.tmatesoft.svn.core.io.ISVNSession;
 public class FSRepositoryFactory extends SVNRepositoryFactory {
 
     public static void setup() {
-        if (!SVNRepositoryFactory.hasRepositoryFactory("^file://.*$")) {
-            SVNRepositoryFactory.registerRepositoryFactory(
-                    "^file://.*$", new FSRepositoryFactory());
-        }
+        SVNRepositoryFactory.registerRepositoryFactory("^file://.*$", new FSRepositoryFactory());
     }
     
     protected SVNRepository createRepositoryImpl(SVNURL url, ISVNSession session) {
