@@ -11,12 +11,12 @@ history ALL
 import ALL
 lock ALL
 log ALL
-merge ALL
+merge ALL -4
 prop ALL
 revert ALL
 schedule ALL
 special ALL
-stat ALL
+stat ALL -18
 switch ALL
 trans ALL
 update ALL
