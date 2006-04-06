@@ -328,8 +328,7 @@ public class SVNDiffEditor implements ISVNEditor {
     public void absentFile(String path) throws SVNException {
     }
 
-    private void localDirectoryDiff(SVNDirectoryInfo info, boolean isAdded,
-            OutputStream result) throws SVNException {
+    private void localDirectoryDiff(SVNDirectoryInfo info, boolean isAdded,  OutputStream result) throws SVNException {
         if (myIsCompareToBase) {
             return;
         }
@@ -344,13 +343,19 @@ public class SVNDiffEditor implements ISVNEditor {
                 Map propDiff = baseProps
                         .compareTo(dir.getProperties("", false));
                 String displayPath = dir.getRoot().getAbsolutePath().replace(File.separatorChar, '/');
-                myDiffGenerator.displayPropDiff(displayPath, baseProps.asMap(),
-                        propDiff, result);
+                myDiffGenerator.displayPropDiff(displayPath, baseProps.asMap(),  propDiff, result);
             }
+        }
+        Set processedFiles = null;
+        if (myDiffGenerator.isDiffUnversioned()) {
+            processedFiles = new HashSet();
         }
         SVNEntries svnEntries = dir.getEntries();
         for (Iterator entries = svnEntries.entries(false); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
+            if (processedFiles != null && !"".equals(entry.getName())) {
+                processedFiles.add(entry.getName());
+            }
             if (anchor && !myWCAccess.getTargetName().equals(entry.getName())) {
                 continue;
             }
@@ -395,13 +400,12 @@ public class SVNDiffEditor implements ISVNEditor {
             }
             if (deleted || replaced) {
                 // display text diff for deleted file.
-                String mimeType1 = (String) baseProps
-                        .get(SVNProperty.MIME_TYPE);
+                String mimeType1 = (String) baseProps.get(SVNProperty.MIME_TYPE);
                 String rev1 = "(revision " + Long.toString(entry.getRevision()) + ")";
                 myDiffGenerator.displayFileDiff(fullPath, dir.getBaseFile(name,
                         false), null, rev1, null, mimeType1, null, result);
                 if (deleted) {
-                    return;
+                    continue;
                 }
             }
 
@@ -413,18 +417,15 @@ public class SVNDiffEditor implements ISVNEditor {
                     // display text diff for added file.
 
                     String mimeType1 = null;
-                    String mimeType2 = props
-                            .getPropertyValue(SVNProperty.MIME_TYPE);
-                    String rev2 = "(revision "
-                            + Long.toString(entry.getRevision()) + ")";
+                    String mimeType2 = props.getPropertyValue(SVNProperty.MIME_TYPE);
+                    String rev2 = "(revision " + Long.toString(entry.getRevision()) + ")";
                     String rev1 = "(revision 0)";
 
                     myDiffGenerator.displayFileDiff(fullPath, null, tmpFile,
                             rev1, rev2, mimeType1, mimeType2, result);
                     if (propDiff != null && propDiff.size() > 0) {
                         // display prop diff.
-                        myDiffGenerator.displayPropDiff(fullPath, baseProps,
-                                propDiff, result);
+                        myDiffGenerator.displayPropDiff(fullPath, baseProps, propDiff, result);
                     }
                     continue;
                 }
@@ -433,12 +434,9 @@ public class SVNDiffEditor implements ISVNEditor {
                     tmpFile = dir.getBaseFile(name, true);
                     SVNTranslator.translate(dir, name, name, SVNFileUtil.getBasePath(tmpFile), false, false);
 
-                    String mimeType1 = (String) baseProps
-                            .get(SVNProperty.MIME_TYPE);
-                    String mimeType2 = props
-                            .getPropertyValue(SVNProperty.MIME_TYPE);
-                    String rev1 = "(revision "
-                            + Long.toString(entry.getRevision()) + ")";
+                    String mimeType1 = (String) baseProps.get(SVNProperty.MIME_TYPE);
+                    String mimeType2 = props.getPropertyValue(SVNProperty.MIME_TYPE);
+                    String rev1 = "(revision " + Long.toString(entry.getRevision()) + ")";
                     myDiffGenerator.displayFileDiff(fullPath, dir.getBaseFile(
                             name, false), tmpFile, rev1, null, mimeType1,
                             mimeType2, result);
@@ -451,6 +449,40 @@ public class SVNDiffEditor implements ISVNEditor {
                 if (tmpFile != null) {
                     tmpFile.delete();
                 }
+            }
+        }
+        if (myDiffGenerator.isDiffUnversioned()) {
+            diffUnversioned(result, dir.getRoot(), dir, anchor, processedFiles);
+        }
+    }
+
+    private void diffUnversioned(OutputStream result, File root, SVNDirectory dir, boolean anchor, Set processedFiles) throws SVNException {
+        File[] allFiles = root.listFiles();
+        for (int i = 0; allFiles != null && i < allFiles.length; i++) {
+            File file = allFiles[i];
+            if (SVNFileUtil.getAdminDirectoryName().equals(file.getName())) {
+                continue;
+            }
+            if (processedFiles != null && processedFiles.contains(file.getName())) {
+                continue;
+            }
+            if (anchor && !myWCAccess.getTargetName().equals(file.getName())) {
+                continue;
+            } else if (dir != null && dir.isIgnored(file.getName())) {
+                continue;
+            }
+            // generate patch as for added file.
+            SVNFileType fileType = SVNFileType.getType(file);
+            if (fileType == SVNFileType.DIRECTORY) {
+                diffUnversioned(result, file, null, false, null);
+            } else if (fileType == SVNFileType.FILE) {
+                String mimeType1 = null;
+                String mimeType2 = SVNFileUtil.detectMimeType(file);
+                String rev1 = "";
+                String rev2 = "";
+
+                String fullPath = file.getAbsolutePath().replace(File.separatorChar, '/');
+                myDiffGenerator.displayFileDiff(fullPath, null, file, rev1, rev2, mimeType1, mimeType2, result);
             }
         }
     }

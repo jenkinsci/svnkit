@@ -105,6 +105,10 @@ public interface ISVNDiffGenerator {
      */
     public boolean isDiffDeleted();
     
+    public void setDiffUnversioned(boolean diffUnversioned);
+    
+    public boolean isDiffUnversioned();
+    
     /**
      * Creates a temporary directory (when necessary) where temporary files
      * will be created.
