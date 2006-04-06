@@ -401,7 +401,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 myDiffGenerator.displayFileDiff(fullPath, dir.getBaseFile(name,
                         false), null, rev1, null, mimeType1, null, result);
                 if (deleted) {
-                    return;
+                    continue;
                 }
             }
 
