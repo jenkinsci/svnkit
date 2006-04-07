@@ -1,17 +1,19 @@
 = version 1.0.4
 
-+ minor HTTP support bugfixes
++ Subversion 1.3.1 compatibilty bugfixes.
++ SSH port number was not saved properly when JavaSVN is used within Eclipse.
++ HTTP (DAV) protocol implementation improvements.
++ XML output support for list operation.
++ javasvn.ssh.author system property could be used to ovveride SSH username.
++ commit hook error now properly reported in JavaSVN error message.
 + OS/2 support
-+ SSH port number was not saved properly when JavaSVN is used within Eclipse
-+ commit hook error was not properly reported in JavaSVN error message
-+ bugfixes
 
 = version 1.0.3
 
-+ improved cancellation support
-+ improved versioned symlinks handling
-+ improved HTTP proxies support
-+ bugfixes
++ improved cancellation support.
++ improved versioned symlinks handling.
++ improved HTTP proxies support.
++ bugfixes.
 
 = version 1.0.2
 
