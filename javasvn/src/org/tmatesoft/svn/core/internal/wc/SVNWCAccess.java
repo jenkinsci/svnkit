@@ -460,7 +460,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             }
             if (recursive) {
                 File[] dirs = file.listFiles();
-                for (int i = 0; i < dirs.length; i++) {
+                for (int i = 0; dirs != null && i < dirs.length; i++) {
                     File childDir = dirs[i];
                     if (SVNFileUtil.getAdminDirectoryName().equals(childDir)) {
                         continue;
