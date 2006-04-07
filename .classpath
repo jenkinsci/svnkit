@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="lib" path="contrib/junit/junit.jar"/>
+	<classpathentry output="javasvn/bin" kind="src" path="javasvn/src"/>
+	<classpathentry output="doc/examples/bin" kind="src" path="doc/examples/src"/>
+	<classpathentry output="javasvn-eclipse/bin" kind="src" path="javasvn-eclipse/org.tmatesoft.javasvn/src"/>
+	<classpathentry output="javasvn-test/bin" kind="src" path="javasvn-test/src"/>
+	<classpathentry excluding="**/SVNClient.java|org/tigris/subversion/javahl/tests/" output="contrib/javahl/bin" kind="src" path="contrib/javahl/src"/>
+	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src"/>
+	<classpathentry output="contrib/sequence/bin" kind="src" path="contrib/sequence/src-test"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry sourcepath="contrib/ganymed/ganymedsrc.zip" kind="lib" path="contrib/ganymed/ganymed.jar"/>
+	<classpathentry kind="output" path="javasvn/bin"/>
+</classpath>

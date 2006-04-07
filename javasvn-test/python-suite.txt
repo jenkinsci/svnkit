@@ -1,0 +1,22 @@
+autoprop ALL
+basic ALL
+blame ALL
+cat ALL
+commit ALL
+copy ALL
+diff ALL
+export ALL
+externals ALL 
+history ALL
+import ALL
+lock ALL
+log ALL
+merge ALL -4
+prop ALL
+revert ALL
+schedule ALL
+special ALL
+stat ALL -18
+switch ALL
+trans ALL
+update ALL

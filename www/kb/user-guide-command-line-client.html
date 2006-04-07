@@ -1,0 +1,104 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head><title>JavaSVN command line client</title>
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+</head>
+<body>
+<table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;"  border="0" cellspacing="0" >
+<tr align="center" valign="top" >
+<td colspan="1" rowspan="1">
+
+<div class="leftedge" >
+<div class="rightedge">
+<!--<div style="width: 900px; background: url(bottombg.gif) repeat-x bottom; width: 99.5%;" >-->
+
+<table  cellpadding="0" align="center" width="870" border="0" style="height: 1000px" cellspacing="0">
+<tr align="center" valign="top">
+<td align="left" valign="top" style="padding: 3px 20px 20px 20px;">
+
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr>
+<td rowspan="2" colspan="1" width="50%">
+<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img width="415" height="97" src="../img/javasvn_logo.png" border="0"></a>
+</td>
+<td rowspan="1" colspan="1" width="50%" style="font-style: italic; font-size: 17px; padding-left: 15px" align="left" valign="center">
+The only pure Java Subversion library in the world!
+</td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" align="left" valign="bottom" style="padding-right: 0px; padding-bottom: 12px; padding-left: 5px">
+<!--<span style="font-size: 140%; font-weight: bold;">Pure Java Subversion client library</span>-->
+<!--<hr color="#336699" style="padding-top: 20px" size="5"/>-->
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr style="height: 10px;">
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/17px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<h1>JavaSVN command line client</h1>
+<p>JavaSVN provides its own command line client realization (like svn.exe).
+In fact, it's a script file (specific for an OS) that invokes the main command driver class - 
+<code>SVN</code> (<b>org.tmatesoft.svn.cli</b>), the one which redirects parameters to an 
+appropriate command class (located in <b>org.tmatesoft.svn.cli.command</b>). Command classes
+use the JavaSVN API to perform an operation. 
+</p>
+<p>
+The JavaSVN command line client supports all the most important commands which svn.exe supports. Commands
+have got the same syntax (names, options) as svn.exe has.
+</p>
+<h4>Script files</h4>
+<p>
+In a JavaSVN distribution you can find the following script files:
+<ul>
+<li>svn.bat (for Windows OS)
+<li>svn (shell script for Unix-like systems)
+</ul>
+</p>
+<h4>Usage</h4>
+<p>
+To use the JavaSVN command processor (<code>SVN</code> class) from a command line you should have script files and library jars 
+(such as <code>javasvn.jar</code>, <code>javasvn-cli.jar</code>) set on your PATH environment variable (script and jars must be in the same directory). Also you must have the JAVA_HOME variable
+set to the path where JVM is located on your system. 
+</p>
+<p>
+In addition you can use the <code>SVN</code> class in ant tasks, read <a href="user-guide-ant.html">more</a> about how to do it.
+</p>
+<br>
+<br>
+<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<br />
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
+2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<!--</div>-->
+</td>
+</tr>
+</table>
+</body>
+</html>

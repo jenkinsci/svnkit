@@ -1,0 +1,26 @@
+#!/bin/sh
+
+cygwin=false;
+case "`uname`" in
+  CYGWIN*) cygwin=true ;;
+esac
+
+JAVASVN_HOME=`dirname $0`
+JAVASVN_HOME=`cd "$JAVASVN_HOME" ; pwd`
+
+JAVASVN_CP=$JAVASVN_HOME/javasvn.jar:$JAVASVN_HOME/javasvn-cli.jar:$JAVASVN_HOME/ganymed.jar
+
+if $cygwin ; then
+  JAVASVN_CP=`cygpath --windows --path "$JAVASVN_CP"`
+  [ -n "$JAVASVN_LOGDIR" ] &&
+    JAVASVN_LOGDIR=`cygpath --unix "$JAVASVN_LOGDIR"`
+fi
+
+if [ ! -d $JAVASVN_LOGDIR ]; then
+	mkdir $JAVASVN_LOGDIR
+fi
+
+JAVASVN_VM_OPTIONS="-Dsun.io.useCanonCaches=false -Djava.util.logging.config.file=$JAVASVN_HOME/logging.properties"
+
+JAVASVN_MAINCLASS=org.tmatesoft.svn.cli.SVN
+$JAVA_HOME/bin/java $JAVASVN_VM_OPTIONS -cp $JAVASVN_CP $JAVASVN_MAINCLASS "$@"

@@ -1,0 +1,460 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head><title>How&nbsp;to&nbsp;use&nbsp;ISVNReporter/ISVNEditor&nbsp;in&nbsp;update-related&nbsp;operations</title>
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+</head>
+<body>
+<body>
+<table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;" border="0" cellspacing="0" >
+<tr align="center" valign="top" >
+<td colspan="1" rowspan="1">
+
+<div class="leftedge" >
+<div class="rightedge">
+
+<table  cellpadding="0" align="center" width="870" border="0"  cellspacing="0">
+<tr align="center" valign="top">
+<td align="left" valign="top" style="padding: 20px 20px 20px 20px;">
+
+
+<p>
+<span class="javasvn"><a style="border-bottom: 0px; color: rgb(51, 102, 153);" href="http://tmate.org/svn/">JavaSVN</a>&nbsp;</span><span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
+</p>
+<p><div style="border-bottom: 1px solid #ccc;"></div></p>
+<!--<small><a href="../index.html" style="border-bottom: 0px;">Home</a> :: <a href="index.html" style="border-bottom: 0px;">Knowledge Base</a> :: How to use ISVNReporter/ISVNEditor in update-related operations</small>-->
+
+<table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
+<tr style="height: 10px;">
+
+<td width="60%" valign="top" align="center">
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+
+<!--
+<table border=0 cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr>
+<td>
+<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img src="../img/javasvn_logo.png" border=0 align=bottom></a>
+</td>
+
+<td align="right">
+<span style="font-size: 140%; font-weight: bold;">The only pure Java Subversion client library in the world!</span>
+
+<table border=0 cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 0.7em">
+<tr style="height: 10px;">
+
+<td width="40%" valign="top" align="center">
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 14px/15px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+-->
+
+<h1>How to use ISVNReporter/ISVNEditor in update-related operations</h1>
+<p>
+The following article shortly describes the mechanism of an update-related operation (update, check out, switch, etc.) in terms
+of the <b>JavaSVN</b> low-level API (<b>org.tmatesoft.svn.core.io</b> package). The article is rather dedicated to using 
+<code>ISVNReporter/ISVNEditor</code> interfaces which are the key 'figures' in those operations.    
+</p>
+
+<!--<a name="low-level-api"></a><h3>1. How an update-related operation is performed using low-level API (org.tmatesoft.svn.core.io package)</h3>-->
+<h4>How to use ISVNReporter</h4>
+<p>
+When <code>SVNRepository.update(..)</code> is called <code>ISVNReporterBaton.report(..)</code> 
+is invoked to make reports (with the help of <code>ISVNReporter</code>) of the working files/directories
+state. For example, if the scope is to update existing local items to some 
+definite revision (that is passed to <code>SVNRepository.update(..)</code>) 
+<code>ISVNReporterBaton.report(..)</code> should describe to the server revisions of all the 
+items (files, directories) if their revisions differ from the update target revision. 
+Suppose you have got the following tree you have somewhen checked out from a
+repository:
+</p>
+<pre>
+  /(4)
+  /dirA(5)/
+          /dirB(6)/
+                  /file1.txt(6)
+          /dirC(4)/
+                  /file2.txt(5)
+          /file3.txt(7)
+</pre>
+           
+<p>
+Numbers in brackets correspond to revisions. Well, you see that the root 
+directory has the revision number = 4, dirA - 5, dirB - 6 and so on. When you
+call <code>SVNRepository.update(..)</code> to bring the root directory up to date say to revision
+8 you should describe the revisions of all the entries top-down for each 
+directory (starting with the root):
+</p>
+<pre class="javaCode">
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.io.<code>ISVNReporterBaton</code>;
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.io.<code>ISVNReporter</code>;
+
+<span class="javaKeyword">public class</span> MyReporterBaton <span class="javaKeyword">implements</span> <code>ISVNReporterBaton</code> {
+&nbsp;&nbsp;<span class="javaKeyword">public void</span> report(<code>ISVNReporter</code> reporter) <span class="javaKeyword">throws</span> <code>SVNException</code> {
+
+	<span class="javaCommentSingle">//for the root directory</span>
+	reporter.setPath(<span class="javaString">""</span>, <span class="javaKeyword">null</span>, 4, <span class="javaKeyword">false</span>);
+	
+	<span class="javaCommentSingle">//for "/dirA"</span>
+	reporter.setPath(<span class="javaString">"/dirA"</span>, <span class="javaKeyword">null</span>, 5, <span class="javaKeyword">false</span>);
+	
+	<span class="javaCommentSingle">//for "/dirA/dirB"</span>
+	reporter.setPath(<span class="javaString">"/dirA/dirB"</span>, <span class="javaKeyword">null</span>, 6, <span class="javaKeyword">false</span>);
+		
+	<span class="javaCommentSingle">//for "/dirA/dirB/file1.txt"</span>
+	reporter.setPath(<span class="javaString">"/dirA/dirB/file1.txt"</span>, <span class="javaKeyword">null</span>, 6, <span class="javaKeyword">false</span>);
+
+	<span class="javaCommentSingle">//for "/dirA/dirC"</span>
+	reporter.setPath(<span class="javaString">"/dirA/dirC"</span>, <span class="javaKeyword">null</span>, 4, <span class="javaKeyword">false</span>);
+    
+	....<span class="javaCommentSingle">//and so on for all entries which revisions differ from 8</span>
+
+	<span class="javaCommentMulti">/* always called at the end of the report - when the state of the 
+	 * entire tree is described.
+	 */</span>
+	reporter.finishReport();
+&nbsp;&nbsp;}
+}
+</pre>
+<p>
+Several significant moments:
+<ul>
+<li> 
+if some file(s) was(were) locked then you should provide the lock-token for
+that file(s) as the 2nd parameter of <code>ISVNReporter.setPath(..)</code>. For example:
+<pre>
+	/(4)
+	/file.txt(7, locked)
+</pre>
+file.txt is at the 7th revision and was locked.
+<pre class="javaCode">
+	reporter.setPath(<span class="javaString">"/file.txt"</span>, lockToken, 7, <span class="javaKeyword">false</span>);
+</pre>
+Even though the revision of the locked file is the same as the target update
+revision <code>ISVNReporter.setPath(..)</code> is called for such file anyway.  
+</li>  
+<li>
+The last parameter of <code>ISVNReporter.setPath(..)</code> - boolean flag startEmpty - must be
+<span class="javaKeyword">true</span> for a checkout. Also it's set to <span class="javaKeyword">true</span> for those directories 
+that were not successfully updated at a previous time due to errors (if such situation had a place). So, startEmpty = <span class="javaKeyword">true</span> 
+means the directory is still empty. In other cases it must be <span class="javaKeyword">false</span>.
+</li>
+<li> 
+If a user's local item (file/directory) is updated against a URL different from that
+it was checked out from (being switched in other words), then instead of calling <code>reporter.setPath(..)</code> you should
+call:
+<pre class="javaCode">
+<span class="javaKeyword">import</span> org.tmatesoft.svn.core.<code>SVNURL</code>;
+...    
+    reporter.linkPath(newRepositoryLocation, path, 
+                      lockToken, revision, 
+                      <span class="javaKeyword">false</span>);
+</pre>
+newRepositoryLocation is an <code>SVNURL</code> instance which is the new parent root
+(meaning <span style="font-family: Courier New; font-size: 10pt;">path</span> is relative to this root since this moment). 
+That's the only difference between just an update and a switch.
+</li>
+<li> 
+If an item was scheduled for deletion or if it's a missing directory (that was
+accidentally deleted) then you should call:
+<pre class="javaCode">
+	<span class="javaCommentSingle">//report that the path was deleted</span>
+	reporter.deletePath(path);
+</pre>
+</li>
+ <li>
+At the end of the report call <code>ISVNReporter.finishReport()</code> that denotes the end
+of the report.  
+</li>
+<li>  
+One more important moment: if during a report an exception occured - the report
+failed - call <code>ISVNReporter.abortReport()</code> that properly finishes the report in a
+case of a fault.
+</li>
+</ul> 
+</p>
+
+<h4>How to use ISVNEditor</h4>
+<p>
+When <code>ISVNReporterBaton</code> has finished his work and the server knows everything
+of the user's local versioned items (dirs and files) state it sends to the client commands as
+well as data (file/dir properties and file delta) to bring client's items up to date.
+These commands are translated into calls to <code>ISVNEditor</code> methods.
+</p>
+<p>
+Suppose there's the following local tree which is being updated 
+recursively (starting with the directory the update was initiated on and 
+moving deep down) to 8th revision:
+<pre>
+    /(5)
+    /dirA(5)/
+            /file1.txt(5)
+            /file2.txt(5)
+</pre>
+Assume that only file1.txt is out of date and must be updated. The server sends 
+commands to update the file which are translated into series of calls to 
+<code>ISVNEditor</code> methods. Here is the scheme of this process (an implementor himself
+doesn't make these calls, his aim is only to provide an <code>ISVNEditor</code> 
+implementation to <code>SVNRepository.update(..)</code> method; the following is rather an illustration describing how the <b>JavaSVN</b>
+library invokes <code>ISVNEditor</code> methods):
+<pre class="javaCode">
+     <span class="javaCommentSingle">//sets the target revision the copy is being updated to.</span>
+     editor.targetRevision(revision);
+
+     <span class="javaCommentMulti">/* processing starts with the parent directory the update was
+      * run for - "/"; now modifications can be applied to the opened 
+      * directory.
+      */</span>
+     editor.openRoot(revision);
+
+     <span class="javaCommentSingle">//changing root directory properties</span>
+     editor.changeDirProperty(propertyName1, propertyValue1);
+     editor.changeDirProperty(propertyName2, propertyValue2);
+    
+     .....................................
+    
+     <span class="javaCommentSingle">//opens "/dirA".</span>
+     editor.openDir(<span class="javaString">"/dirA"</span>, revision);
+
+     <span class="javaCommentMulti">/* now modifications can be applied to the opened directory. 
+      * For example, changing its properties.
+      * Also all further calls like editor.openFile(..), 
+      * editor.addFile(..) or editor.openDir(..), editor.addDir(..) 
+      * are relative to the currently opened directory.
+      */</span>
+     editor.changeDirProperty(propertyName1, propertyValue1);
+     editor.changeDirProperty(propertyName2, propertyValue2);
+
+     .....................................
+
+     <span class="javaCommentSingle">//opens file "file1.txt" to modify it</span>
+     editor.openFile(<span class="javaString">"/dirA/file1.txt"</span>, revision);
+ 		
+     <span class="javaCommentSingle">//changing properties of "file1.txt"</span>
+     editor.changeFileProperty(<span class="javaString">"/dirA/file1.txt"</span>, propertyName1, propertyValue1);
+     editor.changeFileProperty(<span class="javaString">"/dirA/file1.txt"</span>, propertyName2, propertyValue2);
+     
+     .....................................
+
+     <span class="javaCommentMulti">/* file contents are out of date - the server sends delta
+      * (the difference between the local BASE-revision copy and 
+      * the file in the repository).
+      * baseChecksum is provided by the server to make certain of 
+      * the delta will be applied correctly - the client should 
+      * compare it with his own one evaluated upon the contents of 
+      * the file at the BASE revision - that is the state of the file 
+      * it had just after the previous update (or checkout). If both 
+      * checksums match each other - it's ok, the delta can be applied 
+      * correctly, if don't - may be the local file is
+      * corrupted, that's an error.
+      */</span>
+     editor.applyTextDelta(<span class="javaString">"/dirA/file1.txt"</span>, baseChecksum);
+
+     <span class="javaCommentMulti">/* well, if the previous step was ok, the next step is to receive 
+      * the delta itself. ISVNEditor.textDeltaChunk(..) receives 
+      * an SVNDiffWindow - this is an object which contains instructions 
+      * on how the delta (the entire delta or a part of it when the delta 
+      * is too big) must be applied. If the delta is too big 
+      * ISVNEditor.textDeltaChunk(..) is called several times to pass all 
+      * parts of the delta; in this case all passed diffWindows should be 
+      * accumulated and associated with their OutputStreams (each call to 
+      * ISVNEditor.textDeltaChunk(..) returns an OutputStream as a storage 
+      * where delta is written).
+      */</span>
+     OutputStream os = editor.textDeltaChunk(<span class="javaString">"/dirA/file1.txt"</span>, diffWindow);
+ 
+     <span class="javaCommentMulti">/* the following is called when all the delta is received.
+      * that is where it's applied to a local file; in this illustration
+      * "file1.txt" is modified.
+      */</span>
+     editor.textDeltaEnd(<span class="javaString">"/dirA/file1.txt"</span>);
+ 		
+     <span class="javaCommentMulti">/* the final point of the file modification: once again the server 
+      * sends a checksum to control if the resultant file ("file1.txt") 
+      * was modified correctly; the client repeats the operation of 
+      * comparing the got checksum with the own one evaluated upon the 
+      * resultant file contents.
+      */</span> 
+     editor.closeFile(<span class="javaString">"/dirA/file1.txt"</span>, textChecksum);
+
+     <span class="javaCommentSingle">//closes the directory  - "/dirA"</span>
+     editor.closeDir();
+ 
+     <span class="javaCommentSingle">//closes the root directory - "/"</span>
+     editor.closeDir();
+
+     <span class="javaCommentMulti">/* editing ends with a call to ISVNEditor.closeEdit() which returns
+      * the commit information (SVNCommitInfo) - what revision the copy is
+      * updated to, who is the author of the changes, when the changes were
+      * committed.
+      */</span>   
+     SVNCommitInfo commitInfo = editor.closeEdit();
+ </pre>
+</p>
+<p>
+That is how an update runs in common words. The described scheme is analogous for
+the case when more than one file is out of date (what is more actual in reality), 
+the local copy tree is processed (by an <code>ISVNEditor</code>) top-down for each directory 
+and file that must be updated.
+</p>
+<p> 
+Well, the case of a checkout is a little bit different. <code>ISVNEditor.openDir(..)</code> and 
+<code>ISVNEditor.openFile(..)</code> are not called, instead <code>ISVNEditor.addDir(..)</code>, <code>ISVNEditor.addFile(..)</code>
+are called for each directory and file to be checked out. This is a principal 
+model of how <code>ISVNEditor</code> methods are invoked during a checkout (suppose we are 
+checking out some node tree from a repository what will lead us to the previous
+illustrartion when the local copy already exists):
+<pre code="javaCode">
+     <span class="javaCommentSingle">//sets the target revision of the copy being checked out.</span>
+     editor.targetRevision(revision);
+
+     <span class="javaCommentMulti">/* ISVNEditor.openRoot is not called;
+      * setting root directory properties.
+      */</span>
+     editor.changeDirProperty(propertyName, propertyValue);
+
+     <span class="javaCommentMulti">/* adds "/dirA". copyDirFromPath & copyFromRevision - are irrelevant 
+      * in an update editor.
+      * If you want to have a compatibility with the native Subversion 
+      * command line client in the case of a checkout (not simply an export) 
+      * an implementation of this method should create an administrative 
+      * area (.svn directory) for the directory being added ("/dirA").
+      */</span> 
+     editor.addDir(<span class="javaString">"/dirA"</span>, copyDirFromPath, CopyFromRevision);
+
+     <span class="javaCommentMulti">/* setting the directory properties - they may be stored in the 
+      * previously created .svn directory (SVN command line client 
+      * compatibility).
+      * Also all further calls like editor.addFile(..)/editor.addDir(..)
+      * are relative to the added directory.
+      */</span>
+     editor.changeDirProperty(propertyName1, propertyValue1);
+     editor.changeDirProperty(propertyName2, propertyValue2);
+
+     .....................................
+
+     <span class="javaCommentMulti">/* adds file "file1.txt". copyFileFromPath & copyFromRevision - are 
+      * irrelevant in an update editor.
+      */</span>
+     editor.addFile(<span class="javaString">"/dirA/file1.txt"</span>, copyFileFromPath, CopyFromRevision);
+
+     <span class="javaCommentMulti">/* setting properties of "file1.txt". May be saved in .svn 
+      * directory (for compatibility with the native SVN command 
+      * line client).
+      */</span>
+     editor.changeFileProperty(<span class="javaString">"/dirA/file1.txt"</span>, propertyName1, propertyValue1);
+     editor.changeFileProperty(<span class="javaString">"/dirA/file1.txt"</span>, propertyName2, propertyValue2);
+     
+     .....................................
+
+     <span class="javaCommentMulti">/* if the file is empty  - only ISVNEditor.applyTextDelta(..) 
+      * and ISVNEditor.textDeltaEnd(..) are called. Otherwise 
+      * ISVNEditor.textDeltaChunk(..) is also invoked.
+      * baseChecksum is irrelevant for a checkout.
+      */</span>
+     editor.applyTextDelta(<span class="javaString">"/dirA/file1.txt"</span>, baseChecksum);
+
+     <span class="javaCommentSingle">//writing file contents (delta is contents in this case).</span>
+     OutputStream os1 = editor.textDeltaChunk(<span class="javaString">"/dirA/file1.txt"</span>, diffWindow1);
+
+     <span class="javaCommentSingle">//if "file1.txt" is too big...</span>
+     OutputStream os2 = editor.textDeltaChunk(<span class="javaString">"/dirA/file1.txt"</span>, diffWindow2);
+
+     .....................................
+
+     <span class="javaCommentSingle">//all contents are received, "file1.txt" can be created</span>
+     editor.textDeltaEnd(<span class="javaString">"/dirA/file1.txt"</span>);
+
+     <span class="javaCommentMulti">/* the final point of the file modification: once again the 
+      * server sends a checksum to control if the resultant file 
+      * ("file1.txt") was transmitted and constructed correctly; 
+      * the client compares the got checksum with the own one 
+      * evaluated upon the resultant file contents.
+      * It may be this method implementation where a copy of the 
+      * file ("file1.txt") - the BASE revision file copy - is 
+      * stored in .svn directory (for compatibility with the 
+      * native SVN command line client).
+      */</span> 
+     editor.closeFile(<span class="javaString">"/dirA/file1.txt"</span>, textChecksum);
+
+     <span class="javaCommentMulti">/* again if you want to have a compatibility with the native 
+      * SVN command line client each entry (wheteher it's a file 
+      * or a directory) that is added should be reflected in its 
+      * parent's administrative directory - .svn
+      */</span>
+
+     <span class="javaCommentSingle">//adds file "file2.txt".</span>  
+     editor.addFile(<span class="javaString">"/dirA/file2.txt"</span>, copyFileFromPath, CopyFromRevision);
+
+     ............................................<span class="javaCommentSingle">//so on</span>
+
+     <span class="javaCommentSingle">//closes the directory  - "/dirA"</span>
+     editor.closeDir();
+
+     <span class="javaCommentSingle">//closes the root directory - "/"</span>
+     editor.closeDir();
+
+     SVNCommitInfo commitInfo = editor.closeEdit();
+</pre>
+
+<br>
+<br>
+
+<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<br />
+
+
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
+2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</td>
+
+</tr>
+</table>
+
+</body>
+</html>

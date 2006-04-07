@@ -1,0 +1,98 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head><title>General options</title>
+<meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+<meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" type="text/css" media="screen" href="../css/home.css">
+</head>
+<body>
+<table bgcolor="white" width="900" cellpadding="0" align="center" style="height: 100%;"  border="0" cellspacing="0" >
+<tr align="center" valign="top" >
+<td colspan="1" rowspan="1">
+
+<div class="leftedge" >
+<div class="rightedge">
+
+<table  cellpadding="0" align="center" width="870" border="0" style="height: 900px" cellspacing="0">
+<tr align="center" valign="top">
+<td align="left" valign="top" style="padding: 3px 20px 20px 20px;">
+
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr>
+<td rowspan="2" colspan="1" width="50%">
+<a style="border-bottom: 0px;" href="http://tmate.org/svn/"><img width="415" height="97" src="../img/javasvn_logo.png" border="0"></a>
+</td>
+<td rowspan="1" colspan="1" width="50%" style="font-style: italic; font-size: 17px; padding-left: 15px" align="left" valign="center">
+The only pure Java Subversion library in the world!
+</td>
+</tr>
+<tr>
+<td rowspan="1" colspan="1" align="left" valign="bottom" style="padding-right: 0px; padding-bottom: 12px; padding-left: 5px">
+<!--<span style="font-size: 140%; font-weight: bold;">Pure Java Subversion client library</span>-->
+<!--<hr color="#336699" style="padding-top: 20px" size="5"/>-->
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
+<tr style="height: 10px;">
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../index.html">Home</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="../download/index.php">Get Library</a>
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/17px trebuchet ms, verdana, tahoma, arial ; border-right: 1px inset #336699;">
+<a class="headitem" style="border-bottom: 0px;" href="index.html">Knowledge Base</a> 
+</td>
+
+<td valign="top" align="center" style="font: normal bold 17px/18px trebuchet ms, verdana, tahoma, arial;">
+<a class="headitem" style="border-bottom: 0px;" href="../licensing/index.html">Licensing</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<h1>General options</h1>
+Like the SVN command line client JavaSVN Working Copy managment classes (<b>org.tmatesoft.svn.core.wc</b>) use global run-time 
+configuration options. <code>ISVNOptions</code> is the interface of an options driver used to manage those options.
+
+<h4>Providing an options driver</h4>
+<p>
+An <code>ISVNOptions</code> object is provided to either an <code>SVN*Client</code>'s constructor or,
+when using a single <code>SVNClientManager</code>, to the client manager's <code>newInstance()</code> method.
+</p>
+<h4>Default Options</h4>
+<p>
+If you haven't special needs to implement a custom run-time config options driver
+you can use a default one. Use the <code>SVNWCUtil</code> class to get a default options
+driver (read <a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNWCUtil.html">javadoc</a>).
+</p>
+<p>
+In short: if you are getting a default options driver not providing a run-time config directory,
+the driver uses the SVN's default run-time configuration area (settings are taken from and stored in the 
+<code><i>config</i></code> file). Otherwise you may provide a preferred config directory, and a default
+driver will first try to seek for all necessary config files (<code><i>config</i></code>, <code><i>servers</i></code>) 
+in that directory. If any one of them does not exist the driver will create a new one.
+</p>
+
+<br />
+<br />
+<p>If you have any questions regarding JavaSVN, would like to report a bug or contribute a patch, please write to 
+<a id="normal" href="mailto:support@tmatesoft.com">support@tmatesoft.com</a></p>
+<br />
+<table style="margin-top: 1em;" width="100%" cellpadding="0" cellspacing="0"><tr><td id="footer" align="left">Copyright &copy; 
+2004-2006, TMate Software</td><td align="right" id="footer">feedback is welcome at <a href="mailto:feedback%40tmatesoft.com">feedback@tmatesoft.com</a></td></tr></table>
+
+</td>
+</tr>
+</table>
+</div>
+</div>
+</td>
+</tr>
+</table>
+</body>
+</html>

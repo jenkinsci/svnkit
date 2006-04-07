@@ -1,0 +1,32 @@
+#
+# To enable JavaSVN debug logging:
+#
+# 1. If you're using JavaSVN command line client (svn.bat or svn command file) 
+#    remane this file to logging.properties file in the same directory.
+#
+# 2. If you're using JavaSVN library with some application put the lines below
+#    into JDK_HOME/jre/lib/logging.properties file, comment out all other lines.
+#
+# 3. Or start application that uses JavaSVN with the following system property set:
+#
+#    java -Djava.util.logging.config.file=path/to/this/file ...
+#
+#    or for Eclipse:
+#    eclipse ... -vmargs -Djava.util.logging.config.file=path/to/this/file
+#
+#    "..." denotes other arguments you may or may not specify in the command line
+#
+
+javasvn.level=FINEST
+handlers = java.util.logging.FileHandler
+
+java.util.logging.FileHandler.pattern = %h/javasvn.%u.log
+java.util.logging.FileHandler.limit = 0
+java.util.logging.FileHandler.count = 1
+java.util.logging.FileHandler.append = true
+
+#
+# Only enable this line when using JavaSVN command line client,
+# otherwise comment it out, default JDK formatter will be used.
+#
+#java.util.logging.FileHandler.formatter = org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter
