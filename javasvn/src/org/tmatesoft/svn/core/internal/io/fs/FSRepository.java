@@ -508,12 +508,12 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     public long log(String[] targetPaths, long startRevision, long endRevision, boolean discoverChangedPaths, boolean strictNode, long limit, ISVNLogEntryHandler handler) throws SVNException {
         try {
             openRepository();
-            String[] absPaths = null;
-            if (targetPaths != null) {
-                absPaths = new String[targetPaths.length];
-                for (int i = 0; i < targetPaths.length; i++) {
-                    absPaths[i] = getRepositoryPath(targetPaths[i]);
-                }
+            if (targetPaths == null || targetPaths.length == 0) {
+                targetPaths = new String[] {""};
+            }
+            String[] absPaths = new String[targetPaths.length];
+            for (int i = 0; i < targetPaths.length; i++) {
+                absPaths[i] = getRepositoryPath(targetPaths[i]);
             }
             long histStart = startRevision;
             long histEnd = endRevision;
@@ -542,7 +542,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
 
             long sendCount = 0;
-            if (absPaths == null || absPaths.length == 0 || (absPaths.length == 1 && "/".equals(absPaths[0]))) {
+            if (absPaths.length == 1 && "/".equals(absPaths[0])) {
                 sendCount = histEnd - histStart + 1;
                 if (limit != 0 && sendCount > limit) {
                     sendCount = limit;
