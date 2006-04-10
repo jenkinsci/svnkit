@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core;
 
+import java.io.Serializable;
 import java.text.MessageFormat;
 
 
@@ -38,7 +39,7 @@ import java.text.MessageFormat;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class SVNErrorMessage {
+public class SVNErrorMessage implements Serializable {
     /**
      * Error messages of this type are considered to be errors (most critical) rather 
      * than warnings. 
@@ -163,7 +164,7 @@ public class SVNErrorMessage {
         return new SVNErrorMessage(code == null ? SVNErrorCode.BASE : code, message == null ? "" : message, 
                 objects == null ? EMPTY_ARRAY : objects, type);
     }
-
+    
     protected SVNErrorMessage(SVNErrorCode code, String message, Object[] relatedObjects, int type) {
         myErrorCode = code;
         if (message != null && message.startsWith("svn: ")) {

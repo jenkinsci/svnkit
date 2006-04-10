@@ -12,6 +12,8 @@
 
 package org.tmatesoft.svn.core;
 
+import java.io.Serializable;
+
 /**
  * The <b>SVNLogEntryPath</b> class encapsulates information about a single 
  * item changed in a revision. This information includes an item's path, a 
@@ -27,7 +29,7 @@ package org.tmatesoft.svn.core;
  * @author 	TMate Software Ltd.
  * @see 	SVNLogEntry
  */
-public class SVNLogEntryPath {
+public class SVNLogEntryPath implements Serializable {
     
     public static final char TYPE_ADDED = 'A';
     public static final char TYPE_DELETED = 'D';
@@ -115,7 +117,7 @@ public class SVNLogEntryPath {
      * @param path a path of an item that was changed (regarding a definite
      *             revision)
      */
-    protected void setPath(String path) {
+    public void setPath(String path) {
     	myPath = path;
     }
 

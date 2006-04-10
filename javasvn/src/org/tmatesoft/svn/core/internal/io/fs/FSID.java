@@ -11,11 +11,13 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.Serializable;
+
 /**
  * @version 1.0
  * @author TMate Software Ltd.
  */
-public class FSID {
+public class FSID implements Serializable {
 
     private String myNodeID;
     private String myCopyID;

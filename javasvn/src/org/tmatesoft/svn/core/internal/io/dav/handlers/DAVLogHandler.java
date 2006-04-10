@@ -71,7 +71,7 @@ public class DAVLogHandler extends BasicDAVHandler {
 	private String myAuthor;
 	private Date myDate;
 	private String myComment;
-	private SVNLogEntryPathEx myPath;
+	private SVNLogEntryPath myPath;
 
 	private int myCount;
     private long myLimit;
@@ -110,7 +110,7 @@ public class DAVLogHandler extends BasicDAVHandler {
 			type = SVNLogEntryPath.TYPE_DELETED;			
 		}
 		if (type != 0) {
-			myPath = new SVNLogEntryPathEx(type, copyPath, copyRevision);
+			myPath = new SVNLogEntryPath(null, type, copyPath, copyRevision);
 		}
 		
 	}
@@ -148,9 +148,9 @@ public class DAVLogHandler extends BasicDAVHandler {
 				if (myPaths == null) {
 					myPaths = new HashMap();
 				}
-				myPath.setPathValue(cdata.toString());
+				myPath.setPath(cdata.toString());
                 String path = myPath.getPath();
-                myPath.setPathValue(path);
+                myPath.setPath(path);
                 myPaths.put(myPath.getPath(), myPath);
 			}
 			myPath = null;
@@ -159,15 +159,5 @@ public class DAVLogHandler extends BasicDAVHandler {
 
 	public int getEntriesCount() {
 		return myCount;
-	}
-	
-	private static class SVNLogEntryPathEx extends SVNLogEntryPath {
-		public SVNLogEntryPathEx(char type, String copyPath, long copyRevision) {
-			super(null, type, copyPath, copyRevision);
-		}
-
-		public void setPathValue(String path) {
-			super.setPath(path);
-		}
 	}
 }

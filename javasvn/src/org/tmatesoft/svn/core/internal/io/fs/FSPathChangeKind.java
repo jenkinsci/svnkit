@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,7 +23,7 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
  * @version 1.0
  * @author TMate Software Ltd.
  */
-public class FSPathChangeKind {
+public class FSPathChangeKind implements Serializable {
 
     public static final String ACTION_MODIFY = "modify";
     public static final String ACTION_ADD = "add";
@@ -55,6 +56,24 @@ public class FSPathChangeKind {
     public String toString() {
         return myName;
     }
+    
+    public int hashCode() {
+        return myName.hashCode();
+    }
+    
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o == null || o.getClass() != FSPathChangeKind.class) {
+            return false;
+        }
+        return myName.equals(((FSPathChangeKind) o).myName);
+    }
+    
+    private Object readResolve() {
+        return ACTIONS_TO_CHANGE_KINDS.get(myName);
+    }
 
     public static FSPathChangeKind fromString(String changeKindStr) {
         return (FSPathChangeKind) ACTIONS_TO_CHANGE_KINDS.get(changeKindStr);
@@ -71,5 +90,6 @@ public class FSPathChangeKind {
 
         return SVNLogEntryPath.TYPE_REPLACED;
     }
+    
 
 }

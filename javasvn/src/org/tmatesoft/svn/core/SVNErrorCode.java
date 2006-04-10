@@ -11,6 +11,10 @@
  */
 package org.tmatesoft.svn.core;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,7 +32,7 @@ import java.util.Map;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class SVNErrorCode {
+public class SVNErrorCode implements Serializable {
     
     private String myDescription;
     private int myCategory;
@@ -51,7 +55,7 @@ public class SVNErrorCode {
         }
         return errorCode;
     }
-
+    
     protected SVNErrorCode(int category, int index, String description) {
         myCategory = category;
         myCode = category + index;
@@ -118,6 +122,18 @@ public class SVNErrorCode {
      */
     public boolean isAuthentication() {
         return this == RA_NOT_AUTHORIZED || this == RA_UNKNOWN_AUTH || getCategory() == AUTHZ_CATEGORY || getCategory() == AUTHN_CATEGORY;
+    }
+    
+    private void writeObject(ObjectOutputStream os) throws IOException {
+        os.writeInt(myCode);
+    }
+
+    private void readObject(ObjectInputStream is) throws IOException {
+        myCode = is.readInt();
+    }
+    
+    private Object readResolve() {
+        return ourErrorCodes.get(new Integer(myCode));
     }
     
     /**

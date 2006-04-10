@@ -12,6 +12,7 @@
 
 package org.tmatesoft.svn.core;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
@@ -28,7 +29,7 @@ import java.util.Map;
  * @see     ISVNLogEntryHandler
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
-public class SVNLogEntry {
+public class SVNLogEntry implements Serializable {
     
     private long myRevision;
     private String myAuthor;
