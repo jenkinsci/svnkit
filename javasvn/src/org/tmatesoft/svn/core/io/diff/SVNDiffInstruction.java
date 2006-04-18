@@ -162,7 +162,6 @@ public class SVNDiffInstruction {
             os.put((byte) 0);
             return;
         }
-        // how many bytes there are:
         int count = 1;
         long v = i >> 7;
         while(v > 0) {
@@ -173,7 +172,7 @@ public class SVNDiffInstruction {
         int r;
         while(--count >= 0) {
             b = (byte) ((count > 0 ? 0x1 : 0x0) << 7);
-            r = ((byte) ((i >> 7 * count) & 0x7f)) | b;
+            r = ((byte) ((i >> (7 * count)) & 0x7f)) | b;
             os.put((byte) r);
         }
     }
@@ -194,7 +193,7 @@ public class SVNDiffInstruction {
         int r;
         while(--count >= 0) {
             b = (byte) ((count > 0 ? 0x1 : 0x0) << 7);
-            r = ((byte) ((i >> 7 * count) & 0x7f)) | b;
+            r = ((byte) ((i >> (7 * count)) & 0x7f)) | b;
             os.put((byte) r);
         }
     }
