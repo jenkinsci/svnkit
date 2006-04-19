@@ -447,6 +447,7 @@ class HTTPConnection implements IHTTPConnection {
                 try {
                     tmpFile = SVNFileUtil.createTempFile(".javasvn", ".spool");
                     dst = SVNFileUtil.openFileForWriting(tmpFile);
+                    // this will exhaust http stream anyway.
                     err = readData(request, dst);
                     closeStream |= err != null;
                     if (err != null) {
@@ -462,13 +463,18 @@ class HTTPConnection implements IHTTPConnection {
             } else {
                 is = createInputStream(request.getResponseHeader(), getInputStream());
             }
+            // this will not close is stream.
             err = readData(is, method, path, handler);
             closeStream |= err != null;
         } catch (IOException e) {
             closeStream = true;
             throw e;
         } finally {
-            if (closeStream) {
+            if (myIsSpoolResponse) {
+                // always close spooled stream.
+                SVNFileUtil.closeFile(is);
+            } else if (err == null && !hasToCloseConnection(request.getResponseHeader())) {
+                // exhaust stream if connection is not about to be closed.
                 SVNFileUtil.closeFile(is);
             }
             if (tmpFile != null) {

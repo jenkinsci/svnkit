@@ -60,6 +60,7 @@ class ChunkedInputStream extends InputStream {
             try {
                 FixedSizeInputStream.consumeRemaining(this);
             } catch (IOException e) {}
+            mySource = null;
         }
     }
 
