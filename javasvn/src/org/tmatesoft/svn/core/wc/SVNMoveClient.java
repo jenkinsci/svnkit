@@ -637,6 +637,18 @@ public class SVNMoveClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot perform 'virtual' {0}: ''{1}'' is a directory", new Object[] {opName, src});
             SVNErrorManager.error(err);
         }
+
+        SVNWCAccess dstAccess = createWCAccess(dst);
+        try {
+            dstAccess.open(true, false);
+            SVNEntry dstEntry = dstAccess.getTargetEntry();
+            if (dstEntry != null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' is already under version control", dst);
+                SVNErrorManager.error(err);                
+            }
+        } finally {
+            dstAccess.close(true);
+        }
         
         SVNWCAccess srcAccess = createWCAccess(src);
         String cfURL = null;
@@ -673,7 +685,7 @@ public class SVNMoveClient extends SVNBasicClient {
             return;
         }
 
-        SVNWCAccess dstAccess = createWCAccess(dst);
+        dstAccess = createWCAccess(dst);
         try {
             dstAccess.open(true, false);
             SVNEntry dstEntry = dstAccess.getTargetEntry();
