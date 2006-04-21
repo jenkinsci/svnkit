@@ -48,12 +48,13 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * <p>
  * It is important to say that before using the library it must be configured 
  * according to implimentations to be used. That is if a repository is assumed
- * to be accessed via the <i>WebDAV</i> protocol (<code>http://</code> or 
- * <code>https://</code>) or a custom <i>svn</i> one 
- * (<code>svn://</code> or <code>svn+ssh://</code>) a user must initialize the library
+ * to be accessed either via the <i>WebDAV</i> protocol (<code>http://</code> or 
+ * <code>https://</code>), or a custom <i>svn</i> one (<code>svn://</code> or <code>svn+ssh://</code>) 
+ * or immediately on the local machine (<code>file:///</code>) a user must initialize the library
  * in a proper way:
  * <pre class="javacode">
- * <span class="javacomment">//import neccessary files</span>
+ * <span class="javacomment">//import neccessary classes</span>
+ * <span class="javakeyword">import</span> org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
  * <span class="javakeyword">import</span> org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
  * <span class="javakeyword">import</span> org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
  * <span class="javakeyword">import</span> org.tmatesoft.svn.core.SVNURL;
@@ -64,23 +65,31 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * ...
  * 
  * <span class="javacomment">//Set up connection protocols support:</span>
- * <span class="javacomment">//for DAV (over http and https)</span>
+ * <span class="javacomment">//http:// and https://</span>
  * DAVRepositoryFactory.setup();
- * <span class="javacomment">//for SVN (over svn and svn+ssh)</span>
- * SVNRepositoryFactoryImpl.setup();</pre>
- * And only after these steps the client can create <i>WebDAV</i> or <i>SVN</i> 
+ * <span class="javacomment">//svn://, svn+xxx:// (svn+ssh:// in particular)</span>
+ * SVNRepositoryFactoryImpl.setup();
+ * <span class="javacomment">//file:///</span>
+ * FSRepositoryFactory.setup();
+ * </pre>
+ * <code>svn+xxx://</code> can be any tunnel scheme for tunneled working with a 
+ * repository. <code>xxx</code> URL scheme is looked up in the section <code>tunnels</code> of the 
+ * standard Subversion <code>config</code> file.
+ * 
+ * <p>
+ * So, only after these setup steps the client can create http | svn | file protocol 
  * implementations of the <code>SVNRepository</code> abstract class to access 
  * the repository.
  * 
  * <p>
  * This is a general way how a user creates an <b>SVNRepository</b> driver object:
  * <pre class="javacode">
- * String url=<span class="javastring">"http://svn.collab.net/svn/trunk/"</span>;
+ * String url=<span class="javastring">"http://svn.collab.net/svn/trunk"</span>;
  * String name=<span class="javastring">"my name"</span>;
  * String password=<span class="javastring">"my password"</span>;
  * repository = <span class="javakeyword">null</span>;
  * <span class="javakeyword">try</span> { 
- *     repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
+ *     repository = SVNRepositoryFactory.create(SVNURL.parseURIDecoded(url));
  *     ISVNAuthenticationManager authManager = 
  *                  SVNWCUtil.createDefaultAuthenticationManager(name, password);
  *     repository.setAuthenticationManager(authManager);
@@ -97,22 +106,16 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * 
  * <p>
  * Also methods of <b>SVNRepository</b> objects are not reenterable - that is, 
- * you can not call methods of <b>SVNRepository</b> neither from within those 
- * handlers that are passed to some of the methods, nor during committing with
- * the help of a commit editor (until the editor's {@link ISVNEditor#closeEdit() closeEdit()} 
+ * you can not call operation methods of an <b>SVNRepository</b> driver neither 
+ * from within those handlers that are passed to some of the driver's methods, nor 
+ * during committing with the help of a commit editor (until the editor's {@link ISVNEditor#closeEdit() closeEdit()} 
  * method is called). 
  * 
  * <p>
  * To authenticate a user over network <b>SVNRepository</b> drivers use
  * <b>ISVNAuthenticationManager</b> auth drivers.
  * 
- * <p>
- * <b>NOTE:</b> unfortunately, at present the JavaSVN library doesn't 
- * provide an implementation for accessing a Subversion repository via the
- * <i>file:///</i> protocol (on a local machine), but in future it will be
- * certainly realized.
- * 
- * @version     1.0
+ * @version     1.1
  * @author      TMate Software Ltd.
  * @see         SVNRepositoryFactory
  * @see         org.tmatesoft.svn.core.auth.ISVNAuthenticationManager
@@ -231,9 +234,8 @@ public abstract class SVNRepository {
     }
 
     /**
-     * Gets a repository's Universal Unique IDentifier (UUID). 
-     * According to uniqueness for different repositories UUID values 
-     * (36 character strings) are different. 
+     * Gets the Universal Unique IDentifier (UUID) of the repository this 
+     * driver is created for.  
      *  
      * @param   forceConnection   if <span class="javakeyword">true</span> then forces
      *                            this driver to test a connection - try to access a 
@@ -311,10 +313,32 @@ public abstract class SVNRepository {
         return myAuthManager;
     }
     
+    /**
+     * Sets a tunnel provider. Actually relevant only to  
+     * <code>svn+xxx://</code> scheme cases. The provider is responsible 
+     * for matching <code>xxx</code> to the tunnel command string.   
+     * 
+     * <p>
+     * If one would like to have a standard Subversion behaviour 
+     * (when tunnel commands are fetched from the <code>config</code> file 
+     * beneath the section named <code>tunnels</code>), he should provide a 
+     * default provider (default implementation of the {@link org.tmatesoft.svn.core.wc.ISVNOptions} 
+     * interface). Refer to {@link org.tmatesoft.svn.core.wc.SVNWCUtil} class 
+     * for more details on how to get a default options driver.   
+     * 
+     * @param tunnelProvider a tunnel provider
+     * @see                  #getTunnelProvider()
+     */
     public void setTunnelProvider(ISVNTunnelProvider tunnelProvider) {
         myTunnelProvider = tunnelProvider;
     }
     
+    /**
+     * Returns a tunnel provider.  
+     * 
+     * @return a tunnel provider
+     * @see    #setTunnelProvider(ISVNTunnelProvider)
+     */
     public ISVNTunnelProvider getTunnelProvider() {
         return myTunnelProvider;
     }
@@ -336,19 +360,16 @@ public abstract class SVNRepository {
         }
     }
     
-    /* init */
     /**
      * Tries to access a repository. Used to check if there're no problems 
      * with accessing a repository and to cache a repository UUID and root
-     * dir location.  
+     * directory location.  
      * 
      * @throws SVNException if a failure occured while connecting to a repository 
      *                      or the user's authentication failed (see 
      *                      {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      */
     public abstract void testConnection() throws SVNException; 
-    
-    /* simple methods */
     
     /**
      * Returns the number of the latest revision of the repository this 
@@ -449,17 +470,17 @@ public abstract class SVNRepository {
      */
     public abstract String getRevisionPropertyValue(long revision, String propertyName) throws SVNException;
     
-    /* simple callback methods */
     /**
 	 * Returns the kind of an item located at the specified path in
      * a particular revision. If the <code>path</code> does not exist 
      * under the specified <code>revision</code>, {@link org.tmatesoft.svn.core.SVNNodeKind#NONE SVNNodeKind.NONE} 
      * will be returned.
-	 * The <code>path</code> is relative to the repository location to which
-     * this driver object is set.
+	 * 
+     * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
      * 
-     * @param  path				a path relative to the repository location
-     *                          to which this object is set 
+     * @param  path				an item's path  
      * @param  revision			a revision number
      * @return 					the node kind for the given <code>path</code> at the given 
      * 							<code>revision</code>
@@ -470,24 +491,30 @@ public abstract class SVNRepository {
     public abstract SVNNodeKind checkPath(String path, long revision) throws SVNException;
     
     /**
-	 * Fetches the contents and properties of a file located at the specified path
+	 * Fetches the contents and/or properties of a file located at the specified path
 	 * in a particular revision.
-     * <p>
-     * The <code>path</code> is relative to the repository location to which
-     * this driver object is set.
 	 * 
 	 * <p>
-	 * If <code>properties</code> is not <span class="javakeyword">null</span> it will 
+     * If <code>contents</code> arg is not <span class="javakeyword">null</span> it 
+     * will be written with file contents.
+     * 
+     * <p>
+	 * If <code>properties</code> arg is not <span class="javakeyword">null</span> it will 
      * receive the properties of the file.  This includes all properties: not just ones 
      * controlled by a user and stored in the repository filesystem, but also non-tweakable 
      * ones (e.g. 'wcprops', 'entryprops', etc.). Property names (keys) are mapped to property
      * values. 
-	 * 
-     * @param path 				a file path relative to the repository location
-     *                          to which this object is set
-     * @param revision 			a revision number
-     * @param properties 		if not <span class="javakeyword">null</span> then    
-     *                          properties will be fetched into this map
+	 *
+     * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
+     * <p>
+     * If <code>revision</code> is invalid (negative), HEAD revision will be used. 
+     * 
+     * @param path 				a file path
+     * @param revision 			a file revision
+     * @param properties 		a file properties receiver map
      * @param contents 			an output stream to write the file contents to
      * @return 					the revision the file has been taken at
      * @throws SVNException		in the following cases:
@@ -501,21 +528,36 @@ public abstract class SVNRepository {
     public abstract long getFile(String path, long revision, Map properties, OutputStream contents) throws SVNException; 
 
     /**
-     * Lists contents of a repository directory. Information of each directory 
-     * entry is represented by a single <b>SVNDirEntry</b> object that is passed
-     * to an implementor's dir entry handler. 
+     * Fetches the contents and/or properties of a directory located at the specified path
+     * in a particular revision. 
+     * 
+     * <p>
+     * If <code>handler</code> arg is not <span class="javakeyword">null</span> it 
+     * will be dispatched information of each directory entry represented by an 
+     * <b>SVNDirEntry</b> object.
      *
-     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * <p>
+     * If <code>properties</code> arg is not <span class="javakeyword">null</span> it will 
+     * receive the properties of the file.  This includes all properties: not just ones 
+     * controlled by a user and stored in the repository filesystem, but also non-tweakable 
+     * ones (e.g. 'wcprops', 'entryprops', etc.). Property names (keys) are mapped to property
+     * values. 
+     *
+     * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
+     * <p>
+     * If <code>revision</code> is invalid (negative), HEAD revision will be used. 
+     * 
+     * <b>NOTE:</b> you may not invoke operation methods of this <b>SVNRepository</b>
      * object from within the provided <code>handler</code>.
      * 
-     * @param  path 		a directory path relative to the repository location
-     *                      to which this object is set  
-     * @param  revision 	a revision number 
-     * @param  properties 	if not <span class="javakeyword">null</span> then all
-     *                      directory properties (including non-tweakable ones)
-     *                      will be put into this map
+     * @param  path 		a directory path   
+     * @param  revision 	a directory revision 
+     * @param  properties 	a directory properties receiver map
      * @param  handler 		a handler to process directory entries
-     * @return 				the revision of the directory listed
+     * @return 				the revision of the directory
      * @throws SVNException	in the following cases:
      *                      <ul>
      *                      <li><code>path</code> not found in the specified <code>revision</code>
@@ -547,8 +589,12 @@ public abstract class SVNRepository {
      * will be provided to the <code>handler</code> as a text delta against an empty file.  
      * For the following revisions, the delta will be against the fulltext contents of the 
      * previous revision.
-     * 
-	 * <p>
+     *
+     * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+	 * 
+     * <p>
      * <b>NOTES:</b> 
      * <ul>
      * <li>you may not invoke methods of this <b>SVNRepository</b>
@@ -556,8 +602,7 @@ public abstract class SVNRepository {
      * <li>this functionality is not available in pre-1.1 servers
      * </ul>
 	 * 
-	 * @param  path 			a file path relative to the repository location
-     *                          to which this object is set
+	 * @param  path 			a file path 
 	 * @param  startRevision 	a revision to start from 
 	 * @param  endRevision   	a revision to stop at
 	 * @param  handler 			a handler that processes file revisions passed  
@@ -609,7 +654,11 @@ public abstract class SVNRepository {
 	 * If <code>strictNode</code> is <span class="javakeyword">true</span>, copy history will 
      * not be traversed (if any exists) when harvesting the revision logs for each path.
 	 * 
-	 * <p>
+     * <p>
+     * Target paths can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+	 * 
+     * <p>
 	 * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
      * object from within the provided <code>handler</code>.
 	 * 
@@ -681,6 +730,10 @@ public abstract class SVNRepository {
      * will be handled. Otherwise this number is ignored.
      * 
      * <p>
+     * Target paths can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
+     * <p>
      * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
      * object from within the provided <code>handler</code>.
      * 
@@ -720,6 +773,10 @@ public abstract class SVNRepository {
      * in a definite revision.
 	 * 
      * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
+     * <p>
      * <b>NOTES:</b> 
      * <ul>
      * <li>you may not invoke methods of this <b>SVNRepository</b>
@@ -727,8 +784,7 @@ public abstract class SVNRepository {
      * <li>this functionality is not available in pre-1.1 servers
      * </ul>
      * 
-     * @param  path			a path relative to the repository location
-     *                      to which this object is set
+     * @param  path			an item's path 
      * @param  pegRevision 	a revision in which <code>path</code> is first 
      *                      looked up 
      * @param  revisions 	an array of numbers of interesting revisions in which
@@ -764,10 +820,13 @@ public abstract class SVNRepository {
      * <code>startRevision</code> and so on - up to the <code>endRevision</code>.
      * 
      * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
+     * <p>
      * <b>NOTE:</b> this functionality is not available in pre-1.1 servers
      *   
-     * @param  path         a file path relative to the repository location
-     *                      to which this object is set
+     * @param  path         a file path 
      * @param  revisions 	if not <span class="javakeyword">null</span> this collection
      *                      will receive all the fetched file revisions   
      * @param  sRevision 	a revision to start from
@@ -801,11 +860,15 @@ public abstract class SVNRepository {
     }
     
     /**
-     * Returns contents of a directory. Information of each directory 
+     * Fetches the contents and properties of a directory located at the specified path
+     * in a particular revision. Information of each directory 
      * entry is represented by a single <b>SVNDirEntry</b> object.
+     *
+     * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
      * 
-     * @param  path         a directory path relative to the repository location
-     *                      to which this object is set  
+     * @param  path         a directory path   
      * @param  revision     a revision number 
      * @param  properties   if not <span class="javakeyword">null</span> then all
      *                      directory properties (including non-tweakable ones)
@@ -840,17 +903,24 @@ public abstract class SVNRepository {
     
     /**
      * Fetches the contents of a directory into the provided 
-     * collection object and returns the directory entry itself. Information 
-     * of each directory entry is represented by an <b>SVNDirEntry</b> object.
+     * collection object and returns the directory entry itself. 
      * 
-     * @param  path                    a directory path relative to the repository location
-     *                                 to which this object is set  
+     * <p>
+     * If <code>entries</code> arg is not <span class="javakeyword">null</span> it 
+     * receives the directory entries. Information of each directory entry is 
+     * represented by an <b>SVNDirEntry</b> object.
+     * 
+     * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
+     * @param  path                    a directory path   
      * @param  revision                a revision number 
      * @param  includeCommitMessages   if <span class="javakeyword">true</span> then
      *                                 dir entries (<b>SVNDirEntry</b> objects) will be supplied 
      *                                 with commit log messages, otherwise not
      * @param  entries                 a collection that receives fetched dir entries                 
-     * @return                         the parent directory entry which contents
+     * @return                         the directory entry itself which contents
      *                                 are fetched into <code>entries</code>
      * @throws SVNException            in the following cases:
      *                                 <ul>
@@ -902,6 +972,10 @@ public abstract class SVNRepository {
      * If <code>strictNode</code> is <span class="javakeyword">true</span>, copy history will 
      * not be traversed (if any exists) when harvesting the revision logs for each path.
      * 
+     * <p>
+     * Target paths can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
      * @param  targetPaths      paths that mean only those revisions at which they were 
      *                          changed
      * @param  entries 			if not <span class="javakeyword">null</span> then this collection
@@ -944,10 +1018,13 @@ public abstract class SVNRepository {
      * object represents a repository path in a definite revision.
      * 
      * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
+     * <p>
      * <b>NOTE:</b> this functionality is not available in pre-1.1 servers
      * 
-     * @param  path         a path relative to the repository location
-     *                      to which this object is set
+     * @param  path         an item's path
      * @param  entries 		if not <span class="javakeyword">null</span> then this 
      *                      collection object receives entry locations
      * @param  pegRevision  a revision in which <code>path</code> is first 
@@ -992,10 +1069,13 @@ public abstract class SVNRepository {
      * object represents a repository path in a definite revision.
      * 
      * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
+     * <p>
      * <b>NOTE:</b> this functionality is not available in pre-1.1 servers
      * 
-     * @param  path         a path relative to the repository location
-     *                      to which this object is set
+     * @param  path         an item's path
      * @param  entries      if not <span class="javakeyword">null</span> then this 
      *                      map object receives entry locations (which keys are revision
      *                      numbers as Longs and mappings are entry locations objects)
@@ -1031,7 +1111,6 @@ public abstract class SVNRepository {
         return result;        
     }
 	
-    /* edit-mode methods */
 	/**
 	 * Calculates the differences between two items. 
 	 *
@@ -1421,8 +1500,11 @@ public abstract class SVNRepository {
      * Gives information about an entry located at the specified path in a particular 
      * revision. 
      * 
-     * @param  path			a path relative to the repository location
-     *                      to which this object is set
+     * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
+     * @param  path			an item's path
      * @param  revision		a revision of the entry; defaults to the latest 
      *                      revision (HEAD)  
      * @return				an <b>SVNDirEntry</b> containing information about
@@ -1495,6 +1577,10 @@ public abstract class SVNRepository {
      * Gets the lock for the file located at the specified path.
      * If the file has no lock the method returns <span class="javakeyword">null</span>.
      * 
+     * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
      * @param  path		     a file path  
      * @return			     an <b>SVNLock</b> instance (representing the lock) or 
      * 					     <span class="javakeyword">null</span> if there's no lock
@@ -1516,6 +1602,10 @@ public abstract class SVNRepository {
 	 * Gets all locks on or below the <code>path</code>, that is if the repository 
 	 * entry (located at the <code>path</code>) is a directory then the method 
 	 * returns locks of all locked files (if any) in it.
+     * 
+     * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
      * 
      * @param  path 		a path under which locks are to be retrieved
      * @return 				an array of <b>SVNLock</b> objects (representing locks)
@@ -1555,11 +1645,13 @@ public abstract class SVNRepository {
 	 * <span class="javakeyword">true</span>, then the existing lock(s) will be "stolen" anyway,
 	 * even if the user name does not match the current lock's owner.
 	 * 
+     * <p>
+     * Paths can be both relative to the location of this driver and absolute to 
+     * the repository root (starting with <code>"/"</code>).
+     * 
      * @param  pathsToRevisions		a map which keys are paths and values are 
      * 								revision numbers (as Longs); paths are strings and revision 
-     * 								numbers are Long objects; all paths are assumed to
-     * 								be relative to the repository location for which
-     * 								the current <b>SVNRepository</b> object was instantiated. 
+     * 								numbers are Long objects 
      * @param  comment				a comment string for the lock (optional)
      * @param  force				<span class="javakeyword">true</span> if the file is to be 
      *                              locked in any way (even if it's already locked by someone else)
@@ -1611,7 +1703,11 @@ public abstract class SVNRepository {
 	 * and <code>force</code> is <span class="javakeyword">false</span>, the method 
 	 * fails with throwing a <b>SVNException</b>. However, if <code>force</code> is 
 	 * <span class="javakeyword">true</span> the lock will be removed anyway.
-	 * 
+	 *
+     * <p>
+     * Paths can be both relative to the location of this driver and absolute to 
+     * the repository root (starting with <code>"/"</code>).
+     * 
      * @param  pathToTokens	a map which keys are file paths and values are file lock
      * 						tokens (both keys and values are strings)
      * @param  force		<span class="javakeyword">true</span> to remove the 
@@ -1646,6 +1742,13 @@ public abstract class SVNRepository {
      */
     public abstract void closeSession() throws SVNException;
     
+    /**
+     * Returns the session options object this driver is using.
+     * If no options object was provided to create this driver then 
+     * it uses a default one - {@link ISVNSession#DEFAULT}. 
+     * 
+     * @return a session options object
+     */
     public ISVNSession getOptions() {
         if (myOptions == null) {
             myOptions = ISVNSession.DEFAULT;

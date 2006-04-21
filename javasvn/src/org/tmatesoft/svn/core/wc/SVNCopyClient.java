@@ -92,7 +92,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * Overloaded <b>doCopy()</b> methods of <b>SVNCopyClient</b> are similar to
  * <code>'svn copy'</code> and <code>'svn move'</code> commands of the SVN command line client. 
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  * 
@@ -171,10 +171,30 @@ public class SVNCopyClient extends SVNBasicClient {
         return myCommitHandler;
     }
 
+    /**
+     * Sets commit parameters to use.
+     * 
+     * <p>
+     * When no parameters are set {@link DefaultSVNCommitParameters default} 
+     * ones are used. 
+     * 
+     * @param parameters commit parameters
+     * @see              #getCommitParameters()
+     */
     public void setCommitParameters(ISVNCommitParameters parameters) {
         myCommitParameters = parameters;
     }
 
+    /**
+     * Returns commit parameters. 
+     * 
+     * <p>
+     * If no user parameters were previously specified, once creates and 
+     * returns {@link DefaultSVNCommitParameters default} ones. 
+     * 
+     * @return commit parameters
+     * @see    #setCommitParameters(ISVNCommitParameters)
+     */
     public ISVNCommitParameters getCommitParameters() {
         if (myCommitParameters == null) {
             myCommitParameters = new DefaultSVNCommitParameters();
@@ -184,7 +204,7 @@ public class SVNCopyClient extends SVNBasicClient {
     
     /**
      * Copies/moves a source URL to a destination one immediately committing changes
-     * to a repository.
+     * to a repository. Equivalent to <code>doCopy(srcURL, srcRevision, dstURL, isMove, false, commitMessage)</code>.
      * 
      * @param  srcURL         a source repository location URL
      * @param  srcRevision    a revision of <code>srcURL</code>
@@ -195,20 +215,54 @@ public class SVNCopyClient extends SVNBasicClient {
      *                        <span class="javakeyword">false</span> to copy
      * @param  commitMessage  a commit log message
      * @return                information on the committed revision
-     * @throws SVNException   if one of the following is true:
-     *                        <ul>
-     *                        <li><code>srcURL</code> and <code>dstURL</code> are not in the
-     *                        same repository  
-     *                        <li><code>srcURL</code> was not found in <code>srcRevision</code>
-     *                        <li><code>dstURL</code> already exists
-     *                        <li><code>isMove = </code><span class="javakeyword">true</span> and 
-     *                        <code>dstURL = srcURL</code>
-     *                        </ul>
+     * @see                   #doCopy(SVNURL, SVNRevision, SVNURL, boolean, boolean, String)                       
      */
     public SVNCommitInfo doCopy(SVNURL srcURL, SVNRevision srcRevision, SVNURL dstURL, boolean isMove, String commitMessage) throws SVNException {
         return doCopy(srcURL, srcRevision, dstURL, isMove, false, commitMessage);
     }
     
+    /**
+     * Copies/moves a source URL to a destination one immediately committing changes
+     * to a repository. 
+     * 
+     * <p>
+     * If <code>dstURL</code> and <code>srcURL</code> are the same, 
+     * <code>failWhenDstExists</code> is <span class="javakeyword">false</span> and 
+     * <code>srcURL</code> is a directory then this directory will be copied into itself.
+     * 
+     * <p> 
+     * If <code>dstURL</code> is a directory, <code>dstURL</code> and <code>srcURL</code> are not the same, 
+     * <code>failWhenDstExists</code> is <span class="javakeyword">false</span>, <code>dstURL</code> 
+     * has not the last path element entry of <code>srcURL</code> then that entry will be copied into 
+     * <code>dstURL</code>. 
+     * 
+     * @param  srcURL            a source repository location URL
+     * @param  srcRevision       a revision of <code>srcURL</code>
+     * @param  dstURL            a target URL where <code>srcURL</code> is to be
+     *                           copied/moved
+     * @param  isMove            <span class="javakeyword">true</span> to move the source
+     *                           to the target (only URL-to-URL), 
+     *                           <span class="javakeyword">false</span> to copy
+     * @param failWhenDstExists  <span class="javakeyword">true</span> to force a failure if 
+     *                           the destination exists   
+     * @param  commitMessage     a commit log message
+     * @return                   information on the committed revision
+     * @throws SVNException      if one of the following is true:
+     *                           <ul>
+     *                           <li><code>srcURL</code> and <code>dstURL</code> are not in the
+     *                           same repository  
+     *                           <li><code>srcURL</code> was not found in <code>srcRevision</code>
+     *                           <li><code>dstURL</code> and <code>srcURL</code> are the same and 
+     *                           <code>failWhenDstExists</code> is <span class="javakeyword">true</span>
+     *                           <li><code>dstURL</code> already exists and <code>failWhenDstExists</code> 
+     *                           is <span class="javakeyword">true</span>
+     *                           <li><code>dstURL</code> already exists, <code>failWhenDstExists</code> 
+     *                           is <span class="javakeyword">false</span>, but <code>dstURL</code> 
+     *                           already contains the top path element name of <code>srcURL</code> 
+     *                           <li><code>isMove = </code><span class="javakeyword">true</span> and 
+     *                           <code>dstURL = srcURL</code>
+     *                           </ul>
+     */
     public SVNCommitInfo doCopy(SVNURL srcURL, SVNRevision srcRevision, SVNURL dstURL, boolean isMove, boolean failWhenDstExists, String commitMessage) throws SVNException {
         SVNURL topURL = SVNURLUtil.getCommonURLAncestor(srcURL, dstURL);
         if (topURL == null) {
@@ -311,9 +365,7 @@ public class SVNCopyClient extends SVNBasicClient {
      * URL immediately committing changes to a repository.
      * 
      * <p>
-     * If <code>srcRevision</code> is not {@link SVNRevision#WORKING} then the repository
-     * location URL of <code>srcPath</code> is copied to <code>dstURL</code>. Otherwise
-     * <code>srcPath</code> itself.
+     * Equivalent to <code>doCopy(srcPath, srcRevision, dstURL, false, commitMessage)</code>. 
      * 
      * @param  srcPath        a source Working Copy path
      * @param  srcRevision    a revision of <code>srcPath</code>
@@ -329,11 +381,43 @@ public class SVNCopyClient extends SVNBasicClient {
      *                        found in <code>srcRevision</code>
      *                        <li><code>dstURL</code> already exists
      *                        </ul>
+     * @see                   #doCopy(File, SVNRevision, SVNURL, boolean, String)
      */
     public SVNCommitInfo doCopy(File srcPath, SVNRevision srcRevision, SVNURL dstURL, String commitMessage) throws SVNException {
         return doCopy(srcPath, srcRevision, dstURL, false, commitMessage);
     }
     
+    /**
+     * Copies a source Working Copy path (or its repository location URL) to a destination 
+     * URL immediately committing changes to a repository.
+     * 
+     * <p>
+     * If <code>srcRevision</code> is not {@link SVNRevision#WORKING} then the repository
+     * location URL of <code>srcPath</code> is copied to <code>dstURL</code>. Otherwise
+     * <code>srcPath</code> itself.
+     * 
+     * <p>
+     * <code>failWhenDstExists</code> behaves 
+     * like in {@link #doCopy(SVNURL, SVNRevision, SVNURL, boolean, boolean, String)}. 
+     * 
+     * @param  srcPath          a source Working Copy path
+     * @param  srcRevision      a revision of <code>srcPath</code>
+     * @param  dstURL           a target URL where <code>srcPath</code> is to be
+     *                          copied
+     * @param failWhenDstExists <span class="javakeyword">true</span> to force a failure if 
+     *                          the destination exists   
+     * @param  commitMessage    a commit log message
+     * @return                  information on the committed revision
+     * @throws SVNException     if one of the following is true:
+     *                          <ul>
+     *                          <li><code>srcPath</code> is not under version control
+     *                          <li><code>srcPath</code> has no URL
+     *                          <li>the repository location of <code>srcPath</code> was not 
+     *                          found in <code>srcRevision</code>
+     *                          <li><code>dstURL</code> already exists and 
+     *                          <code>failWhenDstExists</code> is <span class="javakeyword">true</span>
+     *                          </ul>
+     */
     public SVNCommitInfo doCopy(File srcPath, SVNRevision srcRevision, SVNURL dstURL, boolean failWhenDstExists, String commitMessage) throws SVNException {
         // may be url->url.
         if (srcRevision.isValid() && srcRevision != SVNRevision.WORKING) {

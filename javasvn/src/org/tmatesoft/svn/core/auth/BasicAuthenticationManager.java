@@ -34,9 +34,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * caches credentials.
  * 
  * <p>
- * This manager is not used in JavaSVN internals.
+ * This manager is not used in JavaSVN internals. You may use a default 
+ * manager (how to get it read javadoc for {@link ISVNAuthenticationManager}), 
+ * this basic manager or implement your own one.  
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     ISVNAuthenticationProvider
  */
@@ -85,7 +87,7 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     }
     
     /**
-     * Creates an auth manager given user credentials.
+     * Creates an auth manager given user credentials to use.
      * 
      * @param authentications user credentials
      */

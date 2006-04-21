@@ -64,7 +64,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * </tr>
  * </table>
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNLogClient extends SVNBasicClient {

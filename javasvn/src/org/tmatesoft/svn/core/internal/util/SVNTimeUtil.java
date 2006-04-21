@@ -70,13 +70,14 @@ public class SVNTimeUtil {
     }
 
     public static Date parseDateString(String str) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
         if (str == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
             SVNErrorManager.error(err);
         }
         try {
             return new Date(parseDateAsLong(str));
         } catch (Throwable th) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
             SVNErrorManager.error(err, th);
         }
         return NULL;        

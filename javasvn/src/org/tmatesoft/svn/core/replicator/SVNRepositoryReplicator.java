@@ -35,7 +35,42 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
- * @version 1.0
+ * The <b>SVNRepositoryReplicator</b> class provides an ability to 
+ * make a copy of an existing repository. The replicator does not 
+ * create a repository for itself, so, both repositories, source and 
+ * target, must already exist. 
+ * 
+ * <p>
+ * There's two general strategies for a replicator: 
+ * <ul>
+ * <li>Copying a range of revisions.
+ * <li>Incremental copying (like the first one, but copies a special range of 
+ * revisions).  
+ * </ul>  
+ * 
+ * <p>
+ * If the range of revisions being copied is <code>[start, end]</code>, 
+ * then the target repository's last revision must be <code>start - 1</code>.
+ * For example, when copying from the very beginning of a source 
+ * repository, you pass <code>start = 1</code>, what means that the target 
+ * repository's latest revision must be 0.
+ * 
+ * <p>
+ * An incremental copying means copying from a source repository a revisions 
+ * range starting at the revision equal to the target repository's latest 
+ * revision + 1 (including) and up to the source repository's latest revision (also 
+ * including). This allows to fill up missing revisions from the source repository in 
+ * the target one, when you, say, once replicated the source repository and got some extra 
+ * new revisions in it since then.   
+ *  
+ * <p>
+ * On condition that a user has got read permissions on the entire source repository and 
+ * write permissions on the destination one, replicating guarantees that for each N th 
+ * revision copied from the source repository the user'll have in the N th revision of the 
+ * destination repository the same changes in both versioned and unversioned (revision 
+ * properties) data except locks as in the source repository.  
+ * 
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNRepositoryReplicator implements ISVNEventHandler {
@@ -45,18 +80,39 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
     private SVNRepositoryReplicator(){
     }
     
+    /**
+     * Creates a new repository replicator.
+     * 
+     * @return a new replicator
+     */
     public static SVNRepositoryReplicator newInstance() {
         return new SVNRepositoryReplicator();
     }
 
     /**
-     * Replicate the whole repository or incremental.
+     * Replicates a repository either incrementally or totally.
      * 
-     * @param src
-     * @param dst
-     * @param incremental
-     * @return
+     * <p>
+     * If <code>incremental</code> is <span class="javakeyword">true</span> then 
+     * copies a range of revisions from the source repository starting at the 
+     * revision equal to <code>dst.getLatestRevision() + 1</code> (including) and 
+     * expandig to <code>src.getLatestRevision()</code>.
+     * 
+     * <p>
+     * If <code>incremental</code> is <span class="javakeyword">false</span> then 
+     * the revision range to copy is <code>[1, src.getLatestRevision()]</code>.
+     * 
+     * <p>
+     * Both <code>src</code> and <code>dst</code> must be created for the root locations 
+     * of the repositories.
+     *   
+     * 
+     * @param  src            a source repository to copy from            
+     * @param  dst            a destination repository to copy into
+     * @param  incremental    controls the way of copying
+     * @return                the number of copied revisions
      * @throws SVNException
+     * @see                   #replicateRepository(SVNRepository, SVNRepository, long, long)
      */
     public long replicateRepository(SVNRepository src, SVNRepository dst, boolean incremental) throws SVNException {
         long fromRevision = incremental ? dst.getLatestRevision() + 1 : 1;
@@ -64,12 +120,36 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
     }
 
     /**
+     * Replicates a range of repository revisions. 
      * 
-     * @param  srcURL
-     * @param  dstURL
-     * @param  topRevision
-     * @return                   the number of revisions copied from the source repository
+     * <p>
+     * Starts copying from <code>fromRevision</code> (including) and expands to 
+     * <code>toRevision</code>. If <code>fromRevision <= 0</code> then it defaults 
+     * to revision 1. If <code>toRevision</code> doesn't lie in <code>(0, src.getLatestRevision()]</code>, 
+     * it defaults to <code>src.getLatestRevision()</code>. The latest revision of the 
+     * destination repository must be equal to <code>fromRevision - 1</code>, where <code>fromRevision</code> is 
+     * already a valid revision.
+     * 
+     * <p>
+     * The replicator uses a log operation to investigate the changed paths in every 
+     * revision to be copied. So, for each revision being replicated an appropriate 
+     * event with log information for that revision is {@link #fireReplicatingEvent(SVNLogEntry) fired} 
+     * to the registered {@link ISVNReplicationHandler handler} (if any). Also during each copy 
+     * iteration the replicator tests the handler's {@link ISVNReplicationHandler#checkCancelled() checkCancelled()} 
+     * method to check if the replication operation is cancelled. At the end of the copy operation 
+     * the replicator {@link #fireReplicatedEvent(SVNCommitInfo) fires} yet one event with commit information about the replicated revision.  
+     *  
+     * <p>
+     * Both <code>src</code> and <code>dst</code> must be created for the root locations 
+     * of the repositories.
+     * 
+     * @param  src            a source repository to copy from            
+     * @param  dst            a destination repository to copy into
+     * @param  fromRevision   a start revision 
+     * @param  toRevision     a final revision 
+     * @return                the number of revisions copied from the source repository
      * @throws SVNException
+     * @see                      #replicateRepository(SVNRepository, SVNRepository, boolean)
      */
     public long replicateRepository(SVNRepository src, SVNRepository dst, long fromRevision, long toRevision) throws SVNException {
         fromRevision = fromRevision <= 0 ? 1 : fromRevision;
@@ -190,25 +270,60 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
         }
     }
     
+    /**
+     * Registers a replication handler to this replicator. This handler 
+     * will be notified of every revision to be copied and provided with 
+     * corresponding log information (taken from the source repository) 
+     * concerning that revision. Also the handler is notified as a next 
+     * source repository revision is already replicated, this time the 
+     * handler is dispatched commit information on the revision. In 
+     * addition, during each replicating iteration the handler is used 
+     * to check whether the operation is cancelled.    
+     * 
+     * @param handler a replication handler 
+     */
     public void setReplicationHandler(ISVNReplicationHandler handler) {
         myHandler = handler;
     }
     
+    /**
+     * Fires a replicating iteration started event to the registered  
+     * handler.  
+     * 
+     * @param  revision      log information about the revision to 
+     *                       be copied
+     * @throws SVNException
+     */
     protected void fireReplicatingEvent(SVNLogEntry revision) throws SVNException  {
         if (myHandler != null) {
             myHandler.revisionReplicating(this, revision);
         }
     }
     
+    /**
+     * Fires a replicating iteration finished event to the registered 
+     * handler.
+     * 
+     * @param  commitInfo   commit info about the copied revision (includes revision 
+     *                      number, date, author)
+     * @throws SVNException
+     */
     protected void fireReplicatedEvent(SVNCommitInfo commitInfo) throws SVNException {
         if (myHandler != null) {
             myHandler.revisionReplicated(this, commitInfo);
         }
     }
-
+    
+    /**
+     * Does nothing. 
+     */
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
     }
 
+    /**
+     * Redirects a call to the registered handler's {@link ISVNReplicationHandler#checkCancelled() checkCancelled()} 
+     * method.
+     */
     public void checkCancelled() throws SVNCancelException {
         if (myHandler != null) {
             myHandler.checkCancelled();

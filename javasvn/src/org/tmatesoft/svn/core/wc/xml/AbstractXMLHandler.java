@@ -22,7 +22,7 @@ import org.xml.sax.helpers.AttributesImpl;
  * XML handler classes which are provided in this package. All 
  * XML output is written to a specified <b>ContentHandler</b>.
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public abstract class AbstractXMLHandler {

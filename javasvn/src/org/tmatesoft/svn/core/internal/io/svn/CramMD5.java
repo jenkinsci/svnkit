@@ -31,7 +31,7 @@ public class CramMD5 {
         myCredentials = credentials;
     }
 
-    public byte[] buildChallengeReponse(byte[] challenge) throws IOException {
+    public byte[] buildChallengeResponse(byte[] challenge) throws IOException {
         byte[] password = myCredentials.getPassword().getBytes("UTF-8");
         byte[] secret = new byte[64];
         Arrays.fill(secret, (byte) 0);

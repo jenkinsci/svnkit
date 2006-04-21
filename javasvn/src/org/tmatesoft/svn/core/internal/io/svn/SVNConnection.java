@@ -143,7 +143,7 @@ class SVNConnection {
                         break;
                     } else if (STEP.equals(items[0])) {
                         try {
-                            byte[] response = authenticator.buildChallengeReponse((byte[]) items[1]);
+                            byte[] response = authenticator.buildChallengeResponse((byte[]) items[1]);
                             getOutputStream().write(response);
                             getOutputStream().flush();
                         } catch (IOException e) {

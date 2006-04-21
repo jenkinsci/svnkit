@@ -22,7 +22,7 @@ package org.tmatesoft.svn.core.auth;
  * a user to a repository server, are provided to those drivers by 
  * <b>ISVNAuthenticationManager</b> implementations.
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     SVNPasswordAuthentication
  * @see     SVNSSHAuthentication
@@ -38,6 +38,7 @@ public class SVNAuthentication {
     /**
      * Creates a username user credential object given a username. 
      * 
+     * @param kind              a credential kind
      * @param userName          a repository account username 
      * @param storageAllowed    if <span class="javakeyword">true</span> then
      *                          this credential is allowed to be stored in the 
@@ -68,6 +69,12 @@ public class SVNAuthentication {
         return myIsStorageAllowed;
     }
     
+    /**
+     * Returns a credential kind for which this authentication 
+     * credential is used. 
+     * 
+     * @return a credential kind
+     */
     public String getKind() {
         return myKind;
     }

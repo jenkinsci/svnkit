@@ -23,7 +23,7 @@ import java.util.Map;
  * a revision number, the datestamp when the revision was committed, the author 
  * of the revision, a commit log message and all paths changed in that revision. 
  * 
- * @version 1.0
+ * @version 1.1
  * @author 	TMate Software Ltd.
  * @see 	SVNLogEntryPath
  * @see     ISVNLogEntryHandler
@@ -107,6 +107,11 @@ public class SVNLogEntry implements Serializable {
         return myRevision;
     }
 
+    /**
+     * Calculates and returns a hash code for this object.
+     * 
+     * @return a hash code
+     */
     public int hashCode() {
         final int PRIME = 31;
         int result = 1;
@@ -117,7 +122,15 @@ public class SVNLogEntry implements Serializable {
         result = PRIME * result + ((myChangedPaths == null) ? 0 : myChangedPaths.hashCode());
         return result;
     }
-
+    
+    /**
+     * Compares this object with another one.
+     * 
+     * @param  obj  an object to compare with
+     * @return      <span class="javakeyword">true</span> 
+     *              if this object is the same as the <code>obj</code> 
+     *              argument
+     */
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -133,6 +146,11 @@ public class SVNLogEntry implements Serializable {
             compare(myChangedPaths, other.myChangedPaths);
     }
     
+    /**
+     * Gives a string representation of this oobject.
+     * 
+     * @return a string representing this object
+     */
     public String toString() {
         StringBuffer result = new StringBuffer();
         result.append(myRevision);
@@ -158,6 +176,15 @@ public class SVNLogEntry implements Serializable {
         return result.toString();
     }
     
+    /**
+     * Compares two objects.
+     * 
+     * @param o1 the first object to compare
+     * @param o2 the second object to compare
+     * @return   <span class="javakeyword">true</span> if either both
+     *           <code>o1</code> and <code>o2</code> are <span class="javakeyword">null</span> 
+     *           or <code>o1.equals(o2)</code> returns <span class="javakeyword">true</span>  
+     */
     static boolean compare(Object o1, Object o2) {
         if (o1 == null) {
             return o2 == null;

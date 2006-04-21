@@ -23,7 +23,7 @@ import java.util.HashSet;
  * Revision properties are unversioned, so there is always a risk to 
  * lose information when modifying revision property values. 
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNRevisionProperty {

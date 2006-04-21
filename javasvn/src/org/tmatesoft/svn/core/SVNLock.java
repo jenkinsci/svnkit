@@ -18,7 +18,7 @@ import java.util.Date;
  * information on a lock path, token, owner, comment, creation  
  * and expiration dates.
  * 
- * @version 	1.0 
+ * @version 	1.1
  * @author 		TMate Software Ltd.
  * @since 		SVN 1.2
  * @see         <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
@@ -98,6 +98,7 @@ public class SVNLock {
     public String getID() {
         return myID;
     }
+    
     /**
      * Gets the lock owner.
      * 
@@ -106,6 +107,7 @@ public class SVNLock {
     public String getOwner() {
         return myOwner;
     }
+    
     /**
      * Gets the path of the file for which this lock was created. 
      * The path is relative to the repository root directory.

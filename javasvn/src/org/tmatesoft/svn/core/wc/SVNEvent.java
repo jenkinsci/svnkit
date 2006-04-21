@@ -93,7 +93,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
  * will be dispatched progress events. 
  * </p>
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     ISVNEventHandler
  * @see     SVNStatusType

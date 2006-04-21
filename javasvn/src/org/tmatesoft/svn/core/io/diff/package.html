@@ -8,11 +8,18 @@ package org.tmatesoft.svn.core.io
 
 <BODY>
 <p>
-This package contains interfaces, default implementations and other classes 
-for such purposes as: representing diff instructions & windows, generating 
-diff windows on calculating differences between two files, restoring diff 
-windows from raw delta bytes, applying diff windows to files, converting diff 
-windows back to raw delta bytes for writing them into provided output streams.
+This package contains the classes necessary for such purposes as: generating 
+delta windows upon comparing target bytes against source ones (also may be 
+vs. empty), applying delta windows to files, serializing windows to byte buffers.
+</p>
+
+<p>
+Delta generator (<b>SVNDeltaGenerator</b>) is configurable to produce fixed size delta windows. 
+A delta window (<b>SVNDiffWindow</b>) itself never keeps its entire set of 
+decoded instructions (<b>SVNDiffInstruction</b> objects) in memory, but uses 
+an iterator to access them in sequence. Also it's possible to use a single instruction 
+object template to access window instructions in sequence - by simply changing 
+properties of the same instruction object per iteration.
 </p>
 
 </BODY>

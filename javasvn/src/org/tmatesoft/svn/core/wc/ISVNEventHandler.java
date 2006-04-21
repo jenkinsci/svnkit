@@ -60,7 +60,7 @@ import org.tmatesoft.svn.core.SVNException;
  * are synchronous - that is the caller is blocked till a method 
  * finishes.
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     SVNEvent
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>

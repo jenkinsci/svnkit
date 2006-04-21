@@ -18,12 +18,12 @@ import java.io.File;
  * to authenticate a user over an SSH tunnel.
  * 
  * <p> 
- * To obtain an ssh user credential, specify the {@link ISVNAuthenticationManager#SSH} 
- * kind to credentials getter method of <b>ISVNAuthenticationManager</b> - either 
- * {@link ISVNAuthenticationManager#getFirstAuthentication(String, String, SVNURL) getFirstAuthentication()} or
+ * To obtain an ssh user credential, specify the {@link ISVNAuthenticationManager#SSH SSH} 
+ * kind to credentials getter method of <b>ISVNAuthenticationManager</b>: 
+ * {@link ISVNAuthenticationManager#getFirstAuthentication(String, String, SVNURL) getFirstAuthentication()}, 
  * {@link ISVNAuthenticationManager#getNextAuthentication(String, String, SVNURL) getNextAuthentication()}.
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     ISVNAuthenticationManager  
  */

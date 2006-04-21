@@ -31,7 +31,7 @@ import org.xml.sax.SAXException;
  * that writes XML formatted status information to a specified 
  * <b>ContentHandler</b>. 
  *  
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatusHandler {

@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNException;
  * data storage (mainly instructions and new text data for deltas) as well
  * as for caching and getting some kind of wcprops.
  * 
- * @version	1.0
+ * @version	1.1
  * @author 	TMate Software Ltd.
  * @see		SVNRepository#getCommitEditor(String, Map, boolean, ISVNWorkspaceMediator)
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>

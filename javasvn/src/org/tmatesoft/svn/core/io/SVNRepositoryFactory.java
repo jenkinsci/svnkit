@@ -38,14 +38,14 @@ import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
 /**
  * <b>SVNRepositoryFactory</b> is an abstract factory that is responsible
  * for creating an appropriate <b>SVNRepository</b> driver specific for the 
- * protocol (svn, http) to use.
+ * protocol to use.
  * 
  * <p>
  * Depending on what protocol a user exactly would like to use
  * to access the repository he should first of all set up an 
  * appropriate extension of this factory. So, if the user is going to
  * work with the repository via the custom <i>svn</i>-protocol (or 
- * <i>svn+ssh</i>) he initially calls:
+ * <i>svn+xxx</i>) he initially calls:
  * <pre class="javacode">
  * ...
  * <span class="javakeyword">import</span> org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -54,36 +54,37 @@ import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
  *     <span class="javacomment">//enables working with a repository via the svn-protocol (over svn and svn+ssh)</span>
  *     SVNRepositoryFactoryImpl.setup();
  * ...</pre><br />
- * That <b>setup()</b> method registers an 
- * <b>SVNRepositoryFactoryImpl</b> instance in the factory (calling
- * {@link #registerRepositoryFactory(String, SVNRepositoryFactory) registerRepositoryFactory}). From 
- * this point the <b>SVNRepositoryFactory</b> knows how to create
+ * From this point the <b>SVNRepositoryFactory</b> knows how to create
  * <b>SVNRepository</b> instances specific for the <i>svn</i>-protocol.
- * And further the user can create an <b>SVNRepository</b> instance:
+ * And further on the user can create an <b>SVNRepository</b> instance:
  * <pre class="javacode">
  *     ...
- *     <span class="javacomment">//the user gets an SVNRepository not caring</span>
- *     <span class="javacomment">//how it's implemented for the svn-protocol</span>
- *     SVNRepository repository = SVNRepositoryFactory.create(location);
+ *     <span class="javacomment">//creating a new SVNRepository instance</span>
+ *     String url = <span class="javastring">"svn://host/path"</span>;
+ *     SVNRepository repository = SVNRepositoryFactory.create(SVNURL.parseURIDecoded(url));
  *     ...</pre><br />
- * All that was previously said about the <i>svn</i>-protocol is similar for
- * the <i>WebDAV</i>-protocol:
- * <pre class="javacode">
- * ...
- * <span class="javakeyword">import</span> org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
- * ...
  * 
- *     <span class="javacomment">//do it once in your application prior to using the library</span>
- *     <span class="javacomment">//enables working with a repository via the DAV-protocol (over http and https)</span>
- *     DAVRepositoryFactory.setup();
- * ...</pre>
+ * <table cellpadding="3" cellspacing="1" border="0" width="70%" bgcolor="#999933">
+ * <tr bgcolor="#ADB8D9" align="left">
+ * <td><b>Supported Protocols</b></td>
+ * <td><b>Factory to setup</b></td>
+ * </tr>   
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>svn://, svn+xxx://</td><td>SVNRepositoryFactoryImpl (<b>org.tmatesoft.svn.core.internal.io.svn</b>)</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>http://, https://</td><td>DAVRepositoryFactory (<b>org.tmatesoft.svn.core.internal.io.dav</b>)</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>file:/// (FSFS only)</td><td>FSRepositoryFactory (<b>org.tmatesoft.svn.core.internal.io.fs</b>)</td>
+ * </tr>
+ * </table>
+ * 
  * <p>
- * <b>NOTE:</b> unfortunately, at present the JavaSVN library doesn't 
- * provide an implementation for accessing a Subversion repository via the
- * <i>file:///</i> protocol (on a local machine), but in future it will be
- * certainly realized.
+ * Also <b>SVNRepositoryFactory</b> may be used to create local 
+ * FSFS-type repositories.
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     SVNRepository
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
@@ -194,10 +195,56 @@ public abstract class SVNRepositoryFactory {
         return null;
     }
 
+    /**
+     * Creates a local blank FSFS-type repository.
+     * A call to this routine is equvalent to 
+     * <code>createLocalRepository(path, null, enableRevisionProperties, force)</code>.
+     * 
+     * @param  path                          a repository root location
+     * @param  enableRevisionProperties      enables or not revision property 
+     *                                       modifications
+     * @param  force                         forces operation to run               
+     * @return                               a local URL (file:///) of a newly
+     *                                       created repository
+     * @throws SVNException
+     * @see                                  #createLocalRepository(File, String, boolean, boolean)
+     */
     public static SVNURL createLocalRepository(File path, boolean enableRevisionProperties, boolean force) throws SVNException {
         return createLocalRepository(path, null, enableRevisionProperties, force);
     }
     
+    /**
+     * Creates a local blank FSFS-type repository. This is just similar to 
+     * the Subversion's command: <code>svnadmin create --fs-type=fsfs REPOS_PATH</code>.
+     * The resultant repository is absolutely format-compatible with Subversion.
+     * 
+     * <p>
+     * If <code>uuid</code> is <span class="javakeyword">null</span> or not 36 chars 
+     * wide, the method generates a new UUID for the repository. This UUID would have 
+     * the same format as if it's generated by Subversion itself.
+     * 
+     * <p>
+     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>
+     * then the method creates a <code>pre-revprop-change</code> executable file inside 
+     * the <code>"hooks"</code> subdir of the repository tree. This executable file 
+     * simply returns 0 thus allowing revision property modifications, which are not 
+     * permitted, unless one puts such a hook into that very directory.   
+     *
+     * <p>
+     * If <code>force</code> is <span class="javakeyword">true</span> and there is already 
+     * a repository at the specified <code>path</code>, deletes that repository and creates 
+     * a new one in its place. 
+     * 
+     * @param  path                          a repository root location
+     * @param  uuid                          a repository's uuid
+     * @param  enableRevisionProperties      enables or not revision property 
+     *                                       modifications
+     * @param  force                         forces operation to run               
+     * @return                               a local URL (file:///) of a newly
+     *                                       created repository
+     * @throws SVNException
+     * @see                                  #createLocalRepository(File, boolean, boolean)
+     */
     public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, boolean force) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (!force && fType != SVNFileType.NONE) {

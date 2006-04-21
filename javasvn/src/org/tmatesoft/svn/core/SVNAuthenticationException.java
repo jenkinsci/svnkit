@@ -17,17 +17,29 @@ package org.tmatesoft.svn.core;
  * occured exactly during an authentication try. Provides the same kind 
  * of information as its base class does.
  *   
- * @version	1.0
+ * @version	1.1
  * @author 	TMate Software Ltd.
  * @see		SVNException
  */
 public class SVNAuthenticationException extends SVNException {
 
-    
+    /**
+     * Creates a new authentication exception given detailed error 
+     * information and the original cause.
+     * 
+     * @param errorMessage an error message
+     * @param cause        an original cause
+     */
     public SVNAuthenticationException(SVNErrorMessage errorMessage, Throwable cause) {
         super(errorMessage, cause);
     }
 
+    /**
+     * Creates a new authentication exception given detailed error 
+     * information.
+     * 
+     * @param errorMessage an error message
+     */
     public SVNAuthenticationException(SVNErrorMessage errorMessage) {
         super(errorMessage);
     }

@@ -35,7 +35,7 @@ import java.io.File;
  * packed into a single <b>SVNCommitPacket</b> object. This object is 
  * returned by the method to the caller.
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     SVNCommitPacket
  * 

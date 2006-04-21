@@ -27,7 +27,7 @@ import java.util.Date;
  * commit log message for the last changed revision. <b>SVNDirEntry</b> also knows 
  * if the entry has any properties. 
  * 
- * @version 1.0
+ * @version 1.1
  * @author 	TMate Software Ltd.
  * @see 	ISVNDirEntryHandler
  */
@@ -47,6 +47,7 @@ public class SVNDirEntry implements Comparable {
 
     /**
      * Constructs an instance of <b>SVNDirEntry</b>.
+     * 
      * @param url           a url of this entry 
      * @param name 			an entry name
      * @param kind 			the node kind for the entry
@@ -80,6 +81,20 @@ public class SVNDirEntry implements Comparable {
         return myURL;
     }
 
+    /**
+     * Constructs an instance of <b>SVNDirEntry</b>.
+     * 
+     * @param url           a url of this entry 
+     * @param name          an entry name
+     * @param kind          the node kind for the entry
+     * @param size          the entry size in bytes
+     * @param hasProperties <span class="javakeyword">true</span> if the 
+     *                      entry has properties, otherwise <span class="javakeyword">false</span>
+     * @param revision      the last changed revision of the entry
+     * @param createdDate   the date the entry was last changed
+     * @param lastAuthor    the person who last changed the entry
+     * @param commitMessage the log message of the last change commit
+     */
     public SVNDirEntry(SVNURL url, String name, SVNNodeKind kind, long size,
             boolean hasProperties, long revision, Date createdDate,
             String lastAuthor, String commitMessage) {

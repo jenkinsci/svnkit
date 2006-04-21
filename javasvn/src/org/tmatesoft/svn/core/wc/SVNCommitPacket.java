@@ -28,7 +28,7 @@ import java.util.HashMap;
  * Used by <b>SVNCommitClient</b> in {@link SVNCommitClient#doCollectCommitItems(File[], boolean, boolean, boolean) doCollectCommitItems()}
  * to collect and hold information on paths that have local changes.
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     SVNCommitItem
  */
@@ -134,12 +134,6 @@ public class SVNCommitPacket {
         }
     }
     
-    /**
-     * Returns the item's array index. 
-     * 
-     * @param  item an item which index is to be got
-     * @return      the item's index
-     */
     private int getItemIndex(SVNCommitItem item) {
         for (int i = 0; myCommitItems != null && i < myCommitItems.length; i++) {
             SVNCommitItem commitItem = myCommitItems[i];

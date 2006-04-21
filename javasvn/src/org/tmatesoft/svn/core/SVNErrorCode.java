@@ -29,7 +29,7 @@ import java.util.Map;
  * Error codes (values, common descriptions and categories) are similar 
  * to ones in the native SVN. 
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNErrorCode implements Serializable {

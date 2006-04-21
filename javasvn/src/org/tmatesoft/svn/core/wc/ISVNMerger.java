@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.SVNException;
  * {@link ISVNMergerFactory} interface. Read more about that interface to
  * find out how to get a default implementation of <b>ISVNMerger</b>.
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public interface ISVNMerger {

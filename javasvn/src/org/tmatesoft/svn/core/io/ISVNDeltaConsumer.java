@@ -18,15 +18,20 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 
 /**
- * @version 1.0
+ * The <b>ISVNDeltaConsumer</b> interface is implemented by receivers 
+ * of diff windows. For example, such consumers are passed to a 
+ * {@link org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator delta
+ * generator} when generating a series of diff windows from sources (text/binary streams). 
+ * 
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public interface ISVNDeltaConsumer {
     /**
      * Starts applying text delta(s) to an opened file. 
      *  
-     * @param  path             a file path relative to the root       
-     *                          directory opened by {@link #openRoot(long) openRoot()}                  
+     * @param  path             a file path relative to the edit root       
+     *                          directory                   
      * @param  baseChecksum     an MD5 checksum for the base file contents (before the
      *                          file is changed) 
      * @throws SVNException     if the calculated base file checksum didn't match the expected 
@@ -35,24 +40,29 @@ public interface ISVNDeltaConsumer {
     public void applyTextDelta(String path, String baseChecksum) throws SVNException;
     
     /**
-     * Collects a next delta chunk. Returns an ouput stream to write diff window
-     * instructions and new text data. If there are more than one windows for the file,
+     * Collects a next delta chunk. 
+     * The return type is nomore relevant and is left only for backward compatibility. 
+     * So, the return value may be just <span class="javakeyword">null</span>. Otherwise 
+     * if it's not <span class="javakeyword">null</span>, the stream 
+     * will be immediately closed. 
+     * 
+     * <p>
+     * If there are more than one windows for the file,
      * this method is called several times.
      * 
-     * @param  path           a file path relative to the root       
-     *                        directory opened by {@link #openRoot(long) openRoot()}
+     * @param  path           a file path relative to the edit root       
+     *                        directory
      * @param  diffWindow     a next diff window
-     * @return                an output stream where instructions and new text data
-     *                        will be written to
+     * @return                an output stream
      * @throws SVNException
      */
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException;
     
     /**
-     * Finalizes collecting text delta(s) and applies them to file contents.  
+     * Finalizes collecting text delta(s).  
      * 
-     * @param  path           a file path relative to the root       
-     *                        directory opened by {@link #openRoot(long) openRoot()}
+     * @param  path           a file path relative to the edit root       
+     *                        directory
      * @throws SVNException
      */
     public void textDeltaEnd(String path) throws SVNException;

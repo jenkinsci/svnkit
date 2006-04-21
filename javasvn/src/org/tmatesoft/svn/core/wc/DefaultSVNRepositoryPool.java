@@ -50,7 +50,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
  * that use a single socket connection (i.e. don't close a connection after every repository
  * access operation but reuse a single one). 
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession {

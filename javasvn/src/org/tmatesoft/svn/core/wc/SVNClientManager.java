@@ -100,7 +100,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
  * <li>
  * </ol>
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     ISVNEventHandler
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>

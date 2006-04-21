@@ -19,7 +19,7 @@ package org.tmatesoft.svn.core;
  * on the error (description, error code) is encapsulated inside an error 
  * message that is held by an <b>SVNException</b>. 
  *  
- * @version	1.0
+ * @version	1.1
  * @author 	TMate Software Ltd.
  */
 public class SVNException extends Exception {

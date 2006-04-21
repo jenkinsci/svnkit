@@ -15,9 +15,10 @@ import java.io.File;
 
 /**
  * The <b>SVNSSLAuthentication</b> class represents user's credentials used 
- * to authenticate a user in secure connections.
+ * to authenticate a user in secure connections. Used along with the 
+ * {@link ISVNAuthenticationManager#SSL SSL} credential kind. 
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNSSLAuthentication extends SVNAuthentication {

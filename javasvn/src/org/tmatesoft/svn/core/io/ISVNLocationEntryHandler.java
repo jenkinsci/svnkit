@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNException;
  * mentioned  method retrieves file locations for interested revisions and uses an
  * implementation of <code>ISVNLocationEntryHandler</code> to handle them. 
  * 
- * @version 1.0
+ * @version 1.1
  * @author 	TMate Software Ltd.
  * @see 	SVNLocationEntry 
  */

@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
  * code can process those items and add some generated additional comment to that one 
  * passed into the method. There could be plenty of scenarioes.  
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     DefaultSVNCommitHandler      
  */

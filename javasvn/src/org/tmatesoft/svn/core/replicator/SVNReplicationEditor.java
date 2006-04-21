@@ -40,8 +40,16 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
- * @version 1.0
- * @author TMate Software Ltd.
+ * The <b>SVNReplicationEditor</b> is an editor implementation used by a 
+ * repository replicator as a bridge between an update editor for the source 
+ * repository and a commit editor of the target one. This editor is provided 
+ * to an update method of a source <b>SVNRepository</b> driver to properly translate 
+ * the calls of that driver to calls to a commit editor of the destination <b>SVNRepository</b> 
+ * driver.   
+ * 
+ * @version 1.1
+ * @author  TMate Software Ltd.
+ * @see     org.tmatesoft.svn.core.io.SVNRepository
  */
 public class SVNReplicationEditor implements ISVNEditor {
 
@@ -60,6 +68,19 @@ public class SVNReplicationEditor implements ISVNEditor {
     private SVNCommitInfo myCommitInfo;
     private SVNRepository mySourceRepository;
     
+    /**
+     * Creates a new replication editor.
+     * 
+     * <p>
+     * <code>repository</code> must be created for the root location of 
+     * the source repository which is to be replicated. 
+     * 
+     * @param repository    a source repository       
+     * @param commitEditor  a commit editor received from the destination
+     *                      repository driver (which also must be point to the 
+     *                      root location of the destination repository)
+     * @param revision      log information of the revision to be copied
+     */
     public SVNReplicationEditor(SVNRepository repository, ISVNEditor commitEditor, SVNLogEntry revision) {
         myRepos = repository;
         myCommitEditor = commitEditor;
@@ -110,9 +131,13 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     public void absentDir(String path) throws SVNException {
+        String absPath = getSourceRepository().getRepositoryPath(path);
+        SVNDebugLog.logInfo("Skipping dir '" + absPath + "'");
     }
 
     public void absentFile(String path) throws SVNException {
+        String absPath = getSourceRepository().getRepositoryPath(path);
+        SVNDebugLog.logInfo("Skipping file '" + absPath + "'");
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
@@ -250,9 +275,6 @@ public class SVNReplicationEditor implements ISVNEditor {
         } else if (changedPath == null) {
             baton.myPropsAct = IGNORE;
             baton.myTextAct = IGNORE;
-            // should we open file when we're ignoring it???
-//            myCommitEditor.openFile(path, myPreviousRevision);
-//            SVNDebugLog.logInfo("Opening file '" + absPath + "'");
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unknown bug in addFile()");
             SVNErrorManager.error(err);
@@ -379,6 +401,12 @@ public class SVNReplicationEditor implements ISVNEditor {
         myCommitEditor.abortEdit();
     }
     
+    /**
+     * Returns commit information on the revision 
+     * committed to the replication destination repository.
+     * 
+     * @return commit info (revision, author, date)
+     */
     public SVNCommitInfo getCommitInfo() {
         return myCommitInfo;
     }

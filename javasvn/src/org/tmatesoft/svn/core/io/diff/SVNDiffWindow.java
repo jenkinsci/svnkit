@@ -28,12 +28,31 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * The <b>SVNDiffWindow</b> class represents a diff window that
  * contains instructions and new data of a delta to apply to a file.
  * 
- * @version 1.0
+ * <p>
+ * Instructions are not immediately contained in a window. A diff window 
+ * provides an iterator that reads and constructs one <b>SVNDiffInstruction</b> 
+ * from provided raw bytes per one iteration. There is even an ability to 
+ * use a single <b>SVNDiffInstruction</b> object for read and decoded instructions: 
+ * for subsequent iterations an iterator simply uses the same instruction object 
+ * to return as a newly read and decoded instruction.      
+ * 
+ * @version 1.1
  * @author  TMate Software Ltd.
+ * @see     SVNDiffInstruction
  */
 public class SVNDiffWindow {
     
+    /**
+     * Delta header bytes. Every sequence of delta windows should 
+     * start with this header. 
+     */
     public static final byte[] SVN_HEADER = new byte[] {'S', 'V', 'N', '\0'};
+    
+    /**
+     * An empty window (in particular, its instructions length = 0). Corresponds 
+     * to the case of an empty delta, so, it's passed to a delta consumer to 
+     * create an empty file. 
+     */
     public static final SVNDiffWindow EMPTY = new SVNDiffWindow(0,0,0,0,0);
     
     private final long mySourceViewOffset;
@@ -120,10 +139,52 @@ public class SVNDiffWindow {
         return myNewDataLength;
     }
     
+    /**
+     * Returns an iterator to read instructions in series. 
+     * Objects returned by an iterator's <code>next()</code> method 
+     * are separate <b>SVNDiffInstruction</b> objects.
+     * 
+     * <p>
+     * Instructions as well as new data are read from a byte 
+     * buffer that is passed to this window object via the 
+     * {@link #setData(ByteBuffer) setData()} method.   
+     * 
+     * <p>
+     * A call to this routine is equivalent to a call 
+     * <code>instructions(false)</code>.
+     * 
+     * @return an instructions iterator
+     * @see    #instructions(boolean)
+     * @see    SVNDiffInstruction 
+     */
     public Iterator instructions() {
         return instructions(false);
     }
 
+    /**
+     * Returns an iterator to read instructions in series. 
+     * 
+     * <p>
+     * If <code>template</code> is <span class="javakeyword">true</span> 
+     * then each instruction returned by the iterator is actually the 
+     * same <b>SVNDiffInstruction</b> object, but with proper options. 
+     * This prevents from allocating new memory.  
+     * 
+     * <p>
+     * On the other hand, if <code>template</code> is <span class="javakeyword">false</span> 
+     * then the iterator returns a new allocated <b>SVNDiffInstruction</b> object per 
+     * each instruction read and decoded.
+     * 
+     * <p>
+     * Instructions as well as new data are read from a byte buffer that is 
+     * passed to this window object via the 
+     * {@link #setData(ByteBuffer) setData()} method.   
+     * 
+     * @param  template  to use a single/multiple instruction objects
+     * @return           an instructions iterator
+     * @see              #instructions()
+     * @see              SVNDiffInstruction 
+     */
     public Iterator instructions(boolean template) {
         return new InstructionsIterator(template);
     }
@@ -139,27 +200,29 @@ public class SVNDiffWindow {
      *     of <code>applyBaton</code> to the baton's inner source buffer.  
      *    {@link SVNDiffInstruction#COPY_FROM_SOURCE} instructions of this window are 
      *    relative to the bounds of that source buffer (source view, in other words).
-     * <li>Second, according to instructions copies source bytes from the source buffer
-     *     to the baton's target buffer (target view, in other words). 
+     * <li>Second, according to instructions, copies source bytes from the source buffer
+     *     to the baton's target buffer (or target view, in other words). 
      * <li>Then, if <code>applyBaton</code> is supplied with an MD5 digest, updates it with those bytes
      *     in the target buffer. So, after instructions applying completes, it will be the checksum for
-     *     the full text.
+     *     the full text expanded.
      * <li>The last step - appends the target buffer bytes to the baton's 
      *     target stream.        
      * </ol> 
      * 
      * <p>
-     * {@link SVNDiffInstruction#COPY_FROM_NEW_DATA} instructions are relative to the bounds of
-     * the provided <code>newData</code> stream.
+     * {@link SVNDiffInstruction#COPY_FROM_NEW_DATA} instructions rule to copy bytes from 
+     * the instructions & new data buffer provided to this window object via a call to the 
+     * {@link #setData(ByteBuffer) setData()} method.
      * 
      * <p>
      * {@link SVNDiffInstruction#COPY_FROM_TARGET} instructions are relative to the bounds of
      * the target buffer. 
      * 
      * @param  applyBaton    a baton that provides the source and target 
-     *                       views
-     * @param  newData       an input stream to read new data bytes from
+     *                       views as well as holds the source and targed 
+     *                       streams 
      * @throws SVNException
+     * @see                  #apply(byte[], byte[])
      */
     public void apply(SVNDiffWindowApplyBaton applyBaton) throws SVNException {
         // here we have streams and buffer from the previous calls (or nulls).
@@ -243,6 +306,28 @@ public class SVNDiffWindow {
         }
     }
 
+    /**
+     * Applies this window's instructions provided source and target view buffers. 
+     * 
+     * <p>
+     * If this window has got any {@link SVNDiffInstruction#COPY_FROM_SOURCE} instructions, then 
+     * appropriate bytes described by such an instruction are copied from the <code>sourceBuffer</code> 
+     * to the <code>targetBuffer</code>.
+     *   
+     * <p>
+     * {@link SVNDiffInstruction#COPY_FROM_NEW_DATA} instructions rule to copy bytes from 
+     * the instructions & new data buffer provided to this window object via a call to the 
+     * {@link #setData(ByteBuffer) setData()} method.
+     * 
+     * <p>
+     * {@link SVNDiffInstruction#COPY_FROM_TARGET} instructions are relative to the bounds of
+     * the <code>targetBuffer</code> itself. 
+     * 
+     * @param sourceBuffer  a buffer containing a source view
+     * @param targetBuffer  a buffer to get a target view
+     * @return              the size of the resultant target view
+     * @see                 #apply(SVNDiffWindowApplyBaton)
+     */
     public int apply(byte[] sourceBuffer, byte[] targetBuffer) {
         int dataOffset = myInstructionsLength;
         int tpos = 0;
@@ -276,6 +361,20 @@ public class SVNDiffWindow {
         return getTargetViewLength();
     }
     
+    /**
+     * Sets a byte buffer containing instruction and new data bytes 
+     * of this window. 
+     * 
+     * <p>
+     * Instructions will go before new data within the buffer and should start 
+     * at <code>buffer.position() + buffer.arrayOffset()</code>.
+     * 
+     * <p>
+     * Applying a diff window prior to setting instruction and new data bytes 
+     * may cause a NPE.  
+     * 
+     * @param buffer an input data buffer
+     */
     public void setData(ByteBuffer buffer) {
         myData = buffer.array();
         myDataOffset = buffer.position() + buffer.arrayOffset();
@@ -304,10 +403,28 @@ public class SVNDiffWindow {
         return sb.toString();
     }
     
+    /**
+     * Tells if this window is not empty, i.e. has got any instructions.
+     * 
+     * @return <span class="javakeyword">true</span> if has instructions, 
+     *         <span class="javakeyword">false</span> if has not 
+     */
     public boolean hasInstructions() {
         return myInstructionsLength > 0;
     }
     
+    /**
+     * Writes this window object to the provided stream.
+     * 
+     * <p>
+     * If <code>writeHeader</code> is <span class="javakeyword">true</span> 
+     * then writes {@link #SVN_HEADER} bytes also.
+     * 
+     * @param os             an output stream to write to 
+     * @param writeHeader    controls whether the header should be written 
+     *                       or not
+     * @throws IOException   if an I/O error occurs
+     */
     public void writeTo(OutputStream os, boolean writeHeader) throws IOException {
         if (writeHeader) {
             os.write(SVN_HEADER);
@@ -329,10 +446,23 @@ public class SVNDiffWindow {
         }
     }
     
+    /**
+     * Returns the total amount of new data and instruction bytes.
+     * 
+     * @return new data length + instructions length
+     */
     public int getDataLength() {
         return myNewDataLength + myInstructionsLength;
     }
 
+    /**
+     * Tells whether this window contains any copy-from-source 
+     * instructions. 
+     * 
+     * @return <span class="javakeyword">true</span> if this window 
+     *         has got at least one {@link SVNDiffInstruction#COPY_FROM_SOURCE} 
+     *         instruction
+     */
     public boolean hasCopyFromSourceInstructions() {
         for(Iterator instrs = instructions(true); instrs.hasNext();) {
             SVNDiffInstruction instruction = (SVNDiffInstruction) instrs.next();
@@ -343,6 +473,17 @@ public class SVNDiffWindow {
         return false;
     }
     
+    /**
+     * Creates an exact copy of this window object. 
+     * 
+     * <p> 
+     * <code>targetData</code> is written instruction & new data bytes and 
+     * then is set to a new window object via a call to its {@link #setData(ByteBuffer) setData()} 
+     * method.
+     * 
+     * @param  targetData a byte buffer to receive a copy of this wondow data
+     * @return            a new window object that is an exact copy of this one
+     */
     public SVNDiffWindow clone(ByteBuffer targetData) {
         int targetOffset = targetData.position() + targetData.arrayOffset();
         int position = targetData.position();
@@ -433,6 +574,17 @@ public class SVNDiffWindow {
         }
     }
     
+    /**
+     * Returns an array of instructions of this window.
+     * 
+     * <p>
+     * If <code>target</code> is large enough to receive all instruction 
+     * objects, then it's simply filled up to the end of instructions.
+     * However if it's not, it will be expanded to receive all instructions. 
+     * 
+     * @param  target  an instructions receiver 
+     * @return         an array  containing all instructions
+     */
     public SVNDiffInstruction[] loadDiffInstructions(SVNDiffInstruction[] target) {
         int index = 0;
         for (Iterator instructions = instructions(); instructions.hasNext();) {
@@ -448,10 +600,24 @@ public class SVNDiffWindow {
         return target;
     }
     
+    /**
+     * Returns the amount of instructions of this window object.
+     * 
+     * @return a total number of instructions
+     */
     public int getInstructionsCount() {
         return myInstructionsCount;
     }
 
+    /**
+     * Fills a target buffer with the specified number of new data bytes 
+     * of this window object taken at the specified offset.  
+     * 
+     * @param target a buffer to copy to
+     * @param offset an offset relative to the position of the first 
+     *               new data byte of this window object 
+     * @param length a number of new data bytes to copy
+     */
     public void writeNewData(ByteBuffer target, int offset, int length) {
         offset += myDataOffset + myInstructionsLength;
         target.put(myData, offset, length);

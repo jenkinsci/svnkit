@@ -51,7 +51,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCAccess;
  * all the necessary administrative version control information.
  * </ul>
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNMoveClient extends SVNBasicClient {

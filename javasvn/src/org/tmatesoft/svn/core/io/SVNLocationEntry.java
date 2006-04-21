@@ -17,7 +17,7 @@ package org.tmatesoft.svn.core.io;
  * revision. That is, the repository path of an item in a particular
  * revision.  
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     ISVNLocationEntryHandler
  */

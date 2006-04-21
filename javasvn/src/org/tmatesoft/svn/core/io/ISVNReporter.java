@@ -47,7 +47,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * For more information on using reporters, please, read these on-line article: 
  * <a href="http://tmate.org/svn/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
  * 
- * @version 1.0
+ * @version 1.1
  * @author 	TMate Software Ltd.
  * @see 	ISVNReporterBaton
  * @see 	SVNRepository

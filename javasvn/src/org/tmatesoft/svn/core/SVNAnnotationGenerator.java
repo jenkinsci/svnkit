@@ -75,7 +75,7 @@ import de.regnis.q.sequence.line.QSequenceLineResult;
  *     }
  * ...</pre>
  *   
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
@@ -119,6 +119,15 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myStartRevision = startRevision;
     }
     
+    /**
+     * 
+     * @param fileRevision
+     * @throws SVNException if one of the following occurs:
+     *                      <ul>
+     *                      <li>the file is binary (not text)
+     *                      <li>operation is cancelled
+     *                      </ul>
+     */
     public void openRevision(SVNFileRevision fileRevision) throws SVNException {
         Map propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = (String) (propDiff != null ? propDiff.get(SVNProperty.MIME_TYPE) : null);
@@ -151,6 +160,9 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         }
     }
     
+    /**
+     * Does nothing.
+     */
     public void closeRevision(String token) throws SVNException {
     }
     

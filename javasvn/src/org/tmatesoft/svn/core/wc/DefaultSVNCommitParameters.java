@@ -16,15 +16,30 @@ import java.io.File;
 
 
 /**
- * @version 1.0
+ * <b>DefaultSVNCommitParameters</b> is the default commit parameters 
+ * implementation. 
+ * 
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNCommitParameters implements ISVNCommitParameters {
 
+    /**
+     * Says a committer to skip a missing file.
+     * 
+     * @param  file a missing file
+     * @return      {@link ISVNCommitParameters#SKIP SKIP}
+     */
     public Action onMissingFile(File file) {
         return SKIP;
     }
 
+    /**
+     * Says a committer to abort the operation.
+     * 
+     * @param  file a missing directory
+     * @return      {@link ISVNCommitParameters#ERROR ERROR}
+     */
     public Action onMissingDirectory(File file) {
         return ERROR;
     }

@@ -86,7 +86,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * for remote status invocations - that is when a doStatus() method of <b>SVNStatusClient</b>
  * is called with the flag <code>remote</code> set to <span class="javakeyword">true</span>.
  *  
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     ISVNStatusHandler
  * @see     SVNStatusType
@@ -463,7 +463,7 @@ public class SVNStatus {
     }
     
     /**
-     * Gets the item's last committed repository revision - apllicable for a 
+     * Gets the item's last committed repository revision. Relevant for a 
      * remote status invocation. 
      * 
      * @return the latest repository revision when the item was changed; 
@@ -475,18 +475,42 @@ public class SVNStatus {
         return myRemoteRevision;
     }
     
+    /**
+     * Returns the kind of the item got from the repository. Relevant for a 
+     * remote status invocation. 
+     *  
+     * @return a remote item kind
+     */
     public SVNNodeKind getRemoteKind() {
         return myRemoteKind;
     }
 
+    /**
+     * Gets the item's last changed date. Relevant for a 
+     * remote status invocation. 
+     * 
+     * @return a repository last changed date
+     */
     public Date getRemoteDate() {
         return myRemoteDate;
     }
     
+    /**
+     * Gets the item's last changed author. Relevant for a 
+     * remote status invocation. 
+     * 
+     * @return a last commit author 
+     */
     public String getRemoteAuthor() {
         return myRemoteAuthor;
     }
     
+    /**
+     * Returns the last modified local time of the file item. 
+     * Irrelevant for directories (for directories returns <code>Date(0)</code>).
+     * 
+     * @return last modified time of the file
+     */
     public Date getWorkingContentsDate() {
         if (myLocalContentsDate == null) {
             if (getFile() != null && getKind() == SVNNodeKind.FILE) {
@@ -497,7 +521,13 @@ public class SVNStatus {
         }
         return myLocalContentsDate;
     }
-
+    
+    /**
+     * Returns the last modified local time of file or directory 
+     * properties. 
+     * 
+     * @return last modified time of the item properties
+     */
     public Date getWorkingPropertiesDate() {
         if (myLocalPropertiesDate == null) {
             File propFile = null;

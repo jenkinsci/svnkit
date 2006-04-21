@@ -18,7 +18,7 @@ package org.tmatesoft.svn.core;
  * supported by Subversion. This class holds string constants that are property 
  * names, and gives some useful methods to operate with properties (in particular).
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNProperty {
@@ -31,11 +31,14 @@ public class SVNProperty {
      */
     public static final String SVN_WC_PREFIX = "svn:wc:";
 
-    /* These are transaction properties that correspond to the bitfields
-     * in the 'flags' argument to svn_fs_lock().  
+    /**
+     * A special property used in a commit transaction. 
      */
     public static final String TXN_CHECK_LOCKS = SVN_PREFIX + "check-locks";
-    
+
+    /**
+     * A special property used in a commit transaction. 
+     */
     public static final String TXN_CHECK_OUT_OF_DATENESS = SVN_PREFIX + "check-ood";
 
     /**
@@ -289,9 +292,13 @@ public class SVNProperty {
         return name != null && name.startsWith(SVN_PREFIX);
     }
 
-    /*
-     * Regular are some "svn:" props and all user props, i.e. ones 
-     * stored in the repository fs.
+    /**
+     * Checks if a property is regular. Regular are some <span class="javastring">"svn:"</span> 
+     * properties and all user props, i.e. ones stored in the repository filesystem.
+     *
+     * @param  name a property name
+     * @return      <span class="javakeyword">true</span> if regular, otherwise 
+     *              <span class="javakeyword">false</span>
      */
     public static boolean isRegularProperty(String name){
         if(name == null){

@@ -25,9 +25,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * <b>SVNDiffWindowApplyBaton</b> may be supplied with an MD5 digest object
  * for on-the-fly updating it with the bytes of the target view. So that when
  * a diff window's instructions are applied, the digest will be the checksum
- * for the full text written to the target stream. 
+ * for the full expanded text written to the target stream during delta application. 
  *  
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNDiffWindowApplyBaton {

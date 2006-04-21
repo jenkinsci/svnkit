@@ -33,7 +33,7 @@ import org.xml.sax.SAXException;
  * that writes XML formatted status information to a specified 
  * <b>ContentHandler</b>. 
  *  
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDirEntryHandler, Comparator {
@@ -90,6 +90,10 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
         myDirEntries.add(entry);
     }
     
+    /**
+     * Closes the formatted XML output. 
+     *
+     */
     public void endTarget() {
         try {
             for (Iterator ents = myDirEntries.iterator(); ents.hasNext();) {
@@ -133,7 +137,18 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
     protected String getHeaderName() {
         return LISTS_TAG;
     }
-
+    
+    /**
+     * Compares two objects.
+     * 
+     * @param  o1 the first object to compare
+     * @param  o2 the second object to compare
+     * @return    0 if objects are equal; -1 if <code>o1</code> is 
+     *            <span class="javakeyword">null</span> or if both 
+     *            <code>o1</code> and <code>o2</code> are <b>SVNDirEntry</b> 
+     *            objects and the relative path of the first object is 
+     *            lexicographically less than that of the second one; 1 otherwise 
+     */
     public int compare(Object o1, Object o2) {
         if (o1 == o2) {
             return 0;

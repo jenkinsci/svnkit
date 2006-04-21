@@ -27,7 +27,7 @@ import org.xml.sax.SAXException;
  * This implementation of <b>ContentHandler</b> can write XML contents to 
  * a specified output stream or writer.  
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNXMLSerializer implements ContentHandler {
@@ -128,7 +128,7 @@ public class SVNXMLSerializer implements ContentHandler {
     }
     
     /**
-     * Does nothing.
+     * Writes a End Of Line marker to the output.
      * 
      * @throws SAXException
      */

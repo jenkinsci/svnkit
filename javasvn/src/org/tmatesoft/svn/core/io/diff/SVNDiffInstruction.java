@@ -16,35 +16,31 @@ import java.nio.ByteBuffer;
 
 
 /**
- * The <b>SVNDiffInstruction</b> class represents instructions used to
- * apply delta. 
+ * The <b>SVNDiffInstruction</b> class represents instructions used as delta 
+ * applying rules. 
+ * 
  * <p>
  * For now there are three types of copy instructions:
  * <ul>
  * <li>
  * {@link SVNDiffInstruction#COPY_FROM_SOURCE}: that is when bytes are copied from
- * the source (for example, existing revision of a file) to the target 
- * what means that those bytes are left the same as in the source    
+ * a source view (for example, existing revision of a file) to the target 
+ * one.    
  * </li>
  * <li>
- * {@link SVNDiffInstruction#COPY_FROM_NEW_DATA}: new data is some new bytes that a user
- * has added to an existing revision of a file, i.e. bytes of the user's
- * changes, in other words 
+ * {@link SVNDiffInstruction#COPY_FROM_NEW_DATA}: new data bytes (e.g. new 
+ * text) are copied to the target view.
  * </li>
  * <li>
  * {@link SVNDiffInstruction#COPY_FROM_TARGET}: that is, when a sequence of bytes in the 
- * target must be repeated
+ * target must be repeated.
  * </li>
  * </ul>
  * 
- * <p>
- * When a new file is added to a repository in a particular revision,
- * its contents are entirely new data. But all the further changed 
- * revisions of this file may be got as copying some source bytes
- * from a previous revision and some new bytes that were added only 
- * in the latest (at any point) revision.
+ * These are three different ways how full text representation bytes are 
+ * obtained. 
  *  
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNDiffInstruction {
@@ -142,6 +138,11 @@ public class SVNDiffInstruction {
         return b.toString();
     }
     
+    /**
+     * Wirtes this instruction to a byte buffer.
+     * 
+     * @param target a byte buffer to write to
+     */
     public void writeTo(ByteBuffer target) {
         byte first = (byte) (type << 6);
         if (length <= 0x3f && length > 0) {
@@ -156,7 +157,13 @@ public class SVNDiffInstruction {
             writeInt(target, offset);
         }
     }
-
+    
+    /**
+     * Writes an integer to a byte buffer.
+     * 
+     * @param os a byte buffer to write to 
+     * @param i  an integer to write 
+     */
     public static void writeInt(ByteBuffer os, int i) {
         if (i == 0) {
             os.put((byte) 0);
@@ -177,6 +184,12 @@ public class SVNDiffInstruction {
         }
     }
 
+    /**
+     * Writes a long to a byte buffer. 
+     * 
+     * @param os a byte buffer to write to 
+     * @param i  a long number to write 
+     */
     public static void writeLong(ByteBuffer os, long i) {
         if (i == 0) {
             os.put((byte) 0);

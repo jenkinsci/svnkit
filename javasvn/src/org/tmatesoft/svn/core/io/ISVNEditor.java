@@ -46,7 +46,7 @@ import org.tmatesoft.svn.core.SVNException;
  * <li><a href="http://tmate.org/svn/kb/dev-guide-commit-operation.html">Using ISVNEditor in commit operations</a>
  * </ul>
  *  
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see		ISVNReporterBaton
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>

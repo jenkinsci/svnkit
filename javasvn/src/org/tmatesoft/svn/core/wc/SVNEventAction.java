@@ -44,7 +44,7 @@ package org.tmatesoft.svn.core.wc;
  * <i>UPDATE_</i> prefix are relevant only for update related operations
  * (update, checkout, switch, etc.). 
  *  
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     SVNEvent
  * @see     ISVNEventHandler
@@ -222,6 +222,9 @@ public class SVNEventAction {
      */
     public static final SVNEventAction COMMIT_COMPLETED = new SVNEventAction(32);
 
+    /**
+     * Denotes that file blaming is started.
+     */
     public static final SVNEventAction ANNOTATE = new SVNEventAction(20);
     
     /**

@@ -13,11 +13,23 @@ package org.tmatesoft.svn.core.auth;
 
 
 /**
- * @version 1.0
+ * The <b>SVNUserNameAuthentication</b> class represents a simple 
+ * authentication credential class that uses only a username to 
+ * authenticate a user. Used along with the 
+ * {@link ISVNAuthenticationManager#USERNAME} credential kind.
+ * 
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNUserNameAuthentication extends SVNAuthentication {
-
+    /**
+     * Creates a username authentication credential.
+     * 
+     * @param userName         a user name
+     * @param storageAllowed   if <span class="javakeyword">true</span> then
+     *                         this credential is allowed to be stored in the 
+     *                         global auth cache, otherwise not
+     */
     public SVNUserNameAuthentication(String userName, boolean storageAllowed) {
         super(ISVNAuthenticationManager.USERNAME, userName, storageAllowed);
     }

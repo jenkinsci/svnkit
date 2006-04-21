@@ -38,7 +38,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * string (like <span class="javastring">"http://userInfo@host:port/path"</span>)
  * to a corresponding <i>parse</i> method of this class. 
  *  
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  */
@@ -117,6 +117,14 @@ public class SVNURL {
         return new SVNURL(url, true);
     }
     
+    /**
+     * Creates a <span class="javastring">"file:///"</span> <b>SVNURL</b> 
+     * representation given a filesystem style repository path.  
+     * 
+     * @param  repositoryPath  a repository path as a filesystem path  
+     * @return                 an <b>SVNURL</b> representation  
+     * @throws SVNException
+     */
     public static SVNURL fromFile(File repositoryPath) throws SVNException {
         if (repositoryPath == null) {
             return null;

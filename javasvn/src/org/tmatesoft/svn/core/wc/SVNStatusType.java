@@ -86,7 +86,7 @@ package org.tmatesoft.svn.core.wc;
  *     ...
  * }</pre>
  * 
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     SVNEvent
  * @see     SVNStatus

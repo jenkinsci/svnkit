@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.SVNException;
  * All calls to a <b>handleStatus()</b> method are synchronous - that is the
  * caller is blocked till the method finishes.
  *  
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     SVNStatusClient
  * @see     SVNStatus

@@ -85,7 +85,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * </tr>
  * </table>
  *   
- * @version 1.0
+ * @version 1.1
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://tmate.org/svn/kb/examples/">Examples</a>
  * 
@@ -165,10 +165,30 @@ public class SVNCommitClient extends SVNBasicClient {
         return myCommitHandler;
     }
     
+    /**
+     * Sets commit parameters to use.
+     * 
+     * <p>
+     * When no parameters are set {@link DefaultSVNCommitParameters default} 
+     * ones are used. 
+     * 
+     * @param parameters commit parameters
+     * @see              #getCommitParameters()
+     */
     public void setCommitParameters(ISVNCommitParameters parameters) {
         myCommitParameters = parameters;
     }
     
+    /**
+     * Returns commit parameters. 
+     * 
+     * <p>
+     * If no user parameters were previously specified, once creates and 
+     * returns {@link DefaultSVNCommitParameters default} ones. 
+     * 
+     * @return commit parameters
+     * @see    #setCommitParameters(ISVNCommitParameters)
+     */
     public ISVNCommitParameters getCommitParameters() {
         if (myCommitParameters == null) {
             myCommitParameters = new DefaultSVNCommitParameters();

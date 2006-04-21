@@ -30,13 +30,16 @@ import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 
 /**
  * The <b>SVNDeltaGenerator</b> is intended for generating diff windows of 
- * fixed size reading two verions of file contents from two 
- * {@link InputStream} streams - source and target ones. The main feature 
- * of this generator is that it uses implementations of native SVN V-Delta 
- * (for binary & new text files) and X-Delta (for calculating changes 
- * between target and source text files) algorithms.    
+ * fixed size having a target version of a file against a source one. 
+ * File contents are provided as two streams - source and target ones, or just 
+ * target if delta is generated against empty contents. 
  * 
- * @version 1.0
+ * <p>
+ * The generator uses the V-Delta algorithm for generating full contents delta (vs. empty)  
+ * and the X-Delta algorithm for generating delta as a difference between target and 
+ * non-empty source streams.    
+ * 
+ * @version 1.1
  * @author  TMate Software Ltd.
  */
 public class SVNDeltaGenerator {
@@ -62,8 +65,9 @@ public class SVNDeltaGenerator {
      * Creates a generator that will produce diff windows of 
      * a specified contents length.  
      * 
-     * @param maximumDiffWindowSize a maximum size of file contents
-     *                              for diff windows to be produced
+     * @param maximumDiffWindowSize a maximum size of a file contents
+     *                              chunk that a single applied diff 
+     *                              window would produce
      */
     public SVNDeltaGenerator(int maximumDiffWindowSize) {
         mySourceBuffer = new byte[maximumDiffWindowSize];
@@ -74,9 +78,11 @@ public class SVNDeltaGenerator {
      * Generates a series of diff windows of fixed size comparing 
      * target bytes (from <code>target</code> stream) against an 
      * empty file and sends produced windows to the provided 
-     * consumer. <code>consumer</code>'s {@link org.tmatesoft.svn.core.io.ISVNEditor#textDeltaChunk(String, SVNDiffWindow) textDeltaChunk()} 
-     * method is called to process generated windows (new data is written to 
-     * the output stream returned by that method). 
+     * consumer. <code>consumer</code>'s {@link org.tmatesoft.svn.core.io.ISVNDeltaConsumer#textDeltaChunk(String, SVNDiffWindow) textDeltaChunk()} 
+     * method is called to receive and process generated windows. 
+     * Now new data comes within a window, so the output stream is either 
+     * ignored (if it's <span class="javakeyword">null</span>) or immediately closed 
+     * (if it's not <span class="javakeyword">null</span>).  
      * 
      * <p>
      * If <code>computeChecksum</code> is <span class="javakeyword">true</span>, 
@@ -102,9 +108,11 @@ public class SVNDeltaGenerator {
      * Generates a series of diff windows of fixed size comparing 
      * target bytes (read from <code>target</code> stream) against source
      * bytes (read from <code>source</code> stream), and sends produced windows to the provided 
-     * consumer. <code>consumer</code>'s {@link org.tmatesoft.svn.core.io.ISVNEditor#textDeltaChunk(String, SVNDiffWindow) textDeltaChunk()} 
-     * method is called to process generated windows (new data is written to 
-     * the output stream returned by that method). 
+     * consumer. <code>consumer</code>'s {@link org.tmatesoft.svn.core.io.ISVNDeltaConsumer#textDeltaChunk(String, SVNDiffWindow) textDeltaChunk()} 
+     * method is called to receive and process generated windows. 
+     * Now new data comes within a window, so the output stream is either 
+     * ignored (if it's <span class="javakeyword">null</span>) or immediately closed 
+     * (if it's not <span class="javakeyword">null</span>). 
      * 
      * <p>
      * If <code>computeChecksum</code> is <span class="javakeyword">true</span>, 

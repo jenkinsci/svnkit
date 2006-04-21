@@ -25,15 +25,30 @@ import java.io.Serializable;
  * they are representations of all the changed paths in the revision represented
  * by that <b>SVNLogEntry</b> object.
  * 
- * @version 1.0
+ * @version 1.1
  * @author 	TMate Software Ltd.
  * @see 	SVNLogEntry
  */
 public class SVNLogEntryPath implements Serializable {
     
+    /**
+     * Char <span class="javastring">'A'</span> (item added).
+     */
     public static final char TYPE_ADDED = 'A';
+
+    /**
+     * Char <span class="javastring">'D'</span> (item deleted).
+     */
     public static final char TYPE_DELETED = 'D';
+    
+    /**
+     * Char <span class="javastring">'M'</span> (item modified).
+     */
     public static final char TYPE_MODIFIED = 'M';
+    
+    /**
+     * Char <span class="javastring">'R'</span> (item replaced).
+     */
     public static final char TYPE_REPLACED = 'R';
     
     private String myPath;
@@ -43,7 +58,11 @@ public class SVNLogEntryPath implements Serializable {
     
     /**
      * Constructs an <b>SVNLogEntryPath</b> object. 
-     *  
+     * 
+     * <p>
+     * Use char constants of this class as a change <code>type</code> to 
+     * pass to this constructor. 
+     *   
      * @param path				a path that was changed in a revision
      * @param type				a type of the path change; it can be one of the following: 
      *                          <span class="javastring">'M'</span> - Modified, <span class="javastring">'A'</span> - Added, 
@@ -95,6 +114,7 @@ public class SVNLogEntryPath implements Serializable {
     public String getPath() {
         return myPath;
     }
+    
     /**
      * Gets the type of the change applied to the item represented by this
      * object. This type can be one of the following: 
@@ -132,7 +152,12 @@ public class SVNLogEntryPath implements Serializable {
     protected void setCopyPath(String path) {
         myCopyPath = path;
     }
-
+    
+    /**
+     * Calculates and returns a hash code for this object.
+     * 
+     * @return a hash code
+     */
     public int hashCode() {
         final int PRIME = 31;
         int result = 1;
@@ -143,6 +168,14 @@ public class SVNLogEntryPath implements Serializable {
         return result;
     }
 
+    /**
+     * Compares this object with another one.
+     * 
+     * @param  obj  an object to compare with
+     * @return      <span class="javakeyword">true</span> 
+     *              if this object is the same as the <code>obj</code> 
+     *              argument
+     */
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -157,6 +190,11 @@ public class SVNLogEntryPath implements Serializable {
             SVNLogEntry.compare(myCopyPath, other.myCopyPath);
     }
     
+    /**
+     * Gives a string representation of this oobject.
+     * 
+     * @return a string representing this object
+     */
     public String toString() {
         StringBuffer result = new StringBuffer();
         result.append(myType);
@@ -171,6 +209,5 @@ public class SVNLogEntryPath implements Serializable {
         }
         return result.toString();
     }
-    
     
 }

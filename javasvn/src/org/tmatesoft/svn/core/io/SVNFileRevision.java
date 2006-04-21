@@ -27,7 +27,7 @@ import java.util.Map;
  * <b>SVNFileRevision</b> objects are passed to an <b>ISVNFileRevisionHandler</b>'s {@link ISVNFileRevisionHandler#openRevision(SVNFileRevision) openRevision()}
  * method.  
  * 
- * @version	1.0
+ * @version	1.1
  * @author 	TMate Software Ltd.
  * @see     SVNRepository
  * @see		ISVNFileRevisionHandler
