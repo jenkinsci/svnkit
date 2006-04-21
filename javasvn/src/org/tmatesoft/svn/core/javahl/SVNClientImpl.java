@@ -53,6 +53,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
@@ -84,7 +85,8 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.Version;
 
 /**
- * @author evgeny
+ * @version 1.0
+ * @author  TMate Software Ltd.
  */
 public class SVNClientImpl implements SVNClientInterface {
 
@@ -119,6 +121,7 @@ public class SVNClientImpl implements SVNClientInterface {
     protected SVNClientImpl(SVNClient owner) {
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
+        FSRepositoryFactory.setup();
         myConfigDir = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
         myOwner = owner == null ? (SVNClientInterface) this : (SVNClientInterface) owner;
     }
@@ -1214,7 +1217,8 @@ public class SVNClientImpl implements SVNClientInterface {
                 && (pathOrUrl.startsWith("http://")
                         || pathOrUrl.startsWith("https://")
                         || pathOrUrl.startsWith("svn://") 
-                        || pathOrUrl.startsWith("svn+ssh://"));
+                        || (pathOrUrl.startsWith("svn+") && pathOrUrl.indexOf("://") > 4)
+                        || pathOrUrl.startsWith("file://"));
     }
 
     public String getAdminDirectoryName() {

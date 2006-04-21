@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core;
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -32,6 +33,7 @@ public class JavaSVNPlugin extends Plugin {
         
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
+        FSRepositoryFactory.setup();
     }
     
     
