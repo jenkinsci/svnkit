@@ -110,6 +110,8 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
                 myPasswordAuthentications.add(auth);                
             } else if (auth instanceof SVNSSHAuthentication) {
                 mySSHAuthentications.add(auth);                
+            } else if (auth instanceof SVNUserNameAuthentication) {
+                myUserNameAuthentications.add(auth);                
             }
         }
     }
