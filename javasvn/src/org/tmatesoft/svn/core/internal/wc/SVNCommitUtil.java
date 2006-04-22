@@ -503,20 +503,22 @@ public class SVNCommitUtil {
         String cfURL = null;
         if (entry.getKind() != SVNNodeKind.DIR
                 && entry.getKind() != SVNNodeKind.FILE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknwon entry kind for ''{0}''", path);                    
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown entry kind for ''{0}''", path);                    
             SVNErrorManager.error(err);
         }
         SVNFileType fileType = SVNFileType.getType(path);
         if (fileType == SVNFileType.UNKNOWN) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknwon entry kind for ''{0}''", path);                    
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown entry kind for ''{0}''", path);                    
             SVNErrorManager.error(err);
         }
+        String specialPropertyValue = dir.getProperties(entry.getName(), false).getPropertyValue(SVNProperty.SPECIAL);
         boolean specialFile = fileType == SVNFileType.SYMLINK;
-        if (specialFile != (dir.getProperties(entry.getName(), false)
-                .getPropertyValue(SVNProperty.SPECIAL) != null)
-                && fileType != SVNFileType.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "Entry ''{0}'' has unexpectedly changed special status", path);                    
-            SVNErrorManager.error(err);
+        if (SVNFileType.isSymlinkSupportEnabled()) {
+            if (((specialPropertyValue == null && specialFile) || (!SVNFileUtil.isWindows && specialPropertyValue != null && !specialFile)) 
+                    && fileType != SVNFileType.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "Entry ''{0}'' has unexpectedly changed special status", path);                    
+                SVNErrorManager.error(err);
+            }
         }
         boolean propConflicts;
         boolean textConflicts = false;
