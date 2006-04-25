@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -702,18 +703,23 @@ public class WorkingCopy {
     }
 
     /*
-     * Initializes the library to work with a repository either via svn:// (and
-     * svn+ssh://) or via http:// (and https://)
+     * Initializes the library to work with a repository via 
+     * different protocols.
      */
     private static void setupLibrary() {
         /*
-         * for DAV (over http and https)
+         * For using over http:// and https://
          */
         DAVRepositoryFactory.setup();
         /*
-         * for svn (over svn and svn+ssh)
+         * For using over svn:// and svn+xxx://
          */
         SVNRepositoryFactoryImpl.setup();
+        
+        /*
+         * For using over file:///
+         */
+        FSRepositoryFactory.setup();
     }
 
     /*

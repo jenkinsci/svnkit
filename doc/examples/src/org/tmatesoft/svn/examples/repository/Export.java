@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
@@ -421,17 +422,22 @@ public class Export {
     }
 
     /*
-     * Initializes the library to work with a repository either via 
-     * svn:// (and svn+ssh://) or via http:// (and https://)
+     * Initializes the library to work with a repository via 
+     * different protocols.
      */
     private static void setupLibrary() {
         /*
-         * for DAV (over http and https)
+         * For using over http:// and https://
          */
         DAVRepositoryFactory.setup();
         /*
-         * for SVN (over svn and svn+ssh)
+         * For using over svn:// and svn+xxx://
          */
         SVNRepositoryFactoryImpl.setup();
+        
+        /*
+         * For using over file:///
+         */
+        FSRepositoryFactory.setup();
     }
 }
