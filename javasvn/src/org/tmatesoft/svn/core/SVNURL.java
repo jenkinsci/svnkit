@@ -137,6 +137,21 @@ public class SVNURL {
         return SVNURL.parseURIDecoded("file://" + path);
     }
     
+    public static int getDefaultPortNumber(String protocol) {
+        if (protocol == null) {
+            return -1;
+        }
+        protocol = protocol.toLowerCase();
+        if ("file".equals(protocol)) {
+            return -1;
+        }
+        Integer dPort = (Integer) DEFAULT_PORTS.get(protocol);
+        if (dPort != null) {
+            return dPort.intValue();
+        }
+        return -1;
+    }
+    
     private static final Map DEFAULT_PORTS = new HashMap();
     
     static {
