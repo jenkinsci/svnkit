@@ -2,7 +2,7 @@
 publish_examples("http://tmate.org/svn");
 
 function publish_examples($url){
-	$docURL = "http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples";
+	$docURL = "http://svn.tmate.org/repos/jsvn/tags/1.0.4/doc/examples/src/org/tmatesoft/svn/examples";
 	$examplesPath = array($docURL."/repository/",$docURL."/wc/");
 	
 	$packageDescription = array();
