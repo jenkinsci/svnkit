@@ -100,15 +100,23 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
             // try to get password for ssh from the user.
         } else if(ISVNAuthenticationManager.USERNAME.equals(kind)) {
             String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : System.getProperty("user.name");
-            if (myPrompt instanceof PromptUserPassword3) {
-                PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
+            if (myPrompt instanceof PromptUserPasswordUser) {
+                PromptUserPasswordUser prompt3 = (PromptUserPasswordUser) myPrompt;
                 if (prompt3.prompt(realm, userName, authMayBeStored))  {
                     return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave());
                 }
                 return null;
+            } else if (myPrompt instanceof PromptUserPassword3) {
+                PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
+                userName = prompt3.askQuestion(realm, "User Name", true, authMayBeStored);
+                if (userName != null)  {
+                    return new SVNUserNameAuthentication(userName, prompt3.userAllowedSave());
+                }
+                return null;
             }
-            if (myPrompt.prompt(realm, userName)) {
-                return new SVNUserNameAuthentication(myPrompt.getUsername(), true);
+            userName = myPrompt.askQuestion(realm, "User Name", true);
+            if (userName != null) {
+                return new SVNUserNameAuthentication(userName, true);
             }
             return null;            
         } else if(!ISVNAuthenticationManager.PASSWORD.equals(kind)){

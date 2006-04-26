@@ -77,7 +77,7 @@ public interface ISVNAuthenticationManager {
      * A simple username credential kind (<span class="javastring">"svn.username"</span>). 
      * Only usernames are cached/provided matched against an appropriate 
      * realms (which are repository UUIDs in this case). In particular this kind is 
-     * used in <code>file:///</code> access schemes.
+     * used in <code>file:///</code> and <code>svn+ssh://</code> access schemes.
      */
     public static final String USERNAME = "svn.username";
     
