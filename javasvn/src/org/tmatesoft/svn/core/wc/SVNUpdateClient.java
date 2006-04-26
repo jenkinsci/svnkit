@@ -651,6 +651,92 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 
+    public void doCanonicalizeURLs(File dst, boolean recursive) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess(dst);
+        try {
+            wcAccess.open(true, recursive);
+            SVNEntry entry = wcAccess.getTargetEntry();
+            String name = "";
+            if (entry != null && entry.isFile()) {
+                name = entry.getName();
+            }
+            doCanonicalizeURLs(wcAccess.getTarget(), name, recursive);
+            if (recursive && !isIgnoreExternals()) {
+                for(Iterator externals = wcAccess.externals(); externals.hasNext();) {
+                    SVNExternalInfo info = (SVNExternalInfo) externals.next();
+                    try {
+                        doCanonicalizeURLs(info.getFile(), true);
+                    } catch (SVNCancelException e) {
+                        throw e;
+                    } catch (SVNException e) {
+                        SVNDebugLog.logInfo(e);
+                    }
+                }
+            }
+        } finally {
+            wcAccess.close(true);
+
+        }
+    }
+    private void doCanonicalizeURLs(SVNDirectory dir, String name, boolean recursive) throws SVNException {
+        boolean save = false;
+        checkCancelled();
+        if (!"".equals(name)) {
+            SVNEntry entry = dir.getEntries().getEntry(name, true);
+            save = canonicalizeEntry(entry);
+            dir.getWCProperties(name).setPropertyValue(SVNProperty.WC_URL, null);
+            if (save) {
+                dir.getEntries().save(true);
+            }
+            return;
+        }
+        dir.getWCAccess().addExternals(dir, dir.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS));
+        SVNEntry rootEntry = dir.getEntries().getEntry("", true);
+        save = canonicalizeEntry(rootEntry);
+        dir.getWCProperties("").setPropertyValue(SVNProperty.WC_URL, null);
+        // now all child entries that doesn't has repos/url has new values.
+        for(Iterator ents = dir.getEntries().entries(true); ents.hasNext();) {
+            SVNEntry entry = (SVNEntry) ents.next();
+            if ("".equals(entry.getName())) {
+                continue;
+            }
+            checkCancelled();
+            if (recursive && entry.isDirectory() && 
+                    (entry.isScheduledForAddition() || !entry.isDeleted()) &&
+                    !entry.isAbsent()) {
+                SVNDirectory childDir = dir.getChildDirectory(entry.getName());
+                if (childDir != null) {
+                    doCanonicalizeURLs(childDir, "", recursive);
+                }
+            }
+            save |= canonicalizeEntry(entry);
+            dir.getWCProperties(entry.getName()).setPropertyValue(SVNProperty.WC_URL, null);
+        }
+        if (save) {
+            dir.getEntries().save(true);
+        }
+    }
+    
+    private boolean canonicalizeEntry(SVNEntry entry) throws SVNException {
+        boolean updated = false;
+        SVNURL root = entry.getRepositoryRootURL();
+        if (root != null && !root.hasPort() && root.getPort() > 0) {
+            root = SVNURL.create(root.getProtocol(), root.getUserInfo(), root.getHost(), root.getPort(), root.getPath(), false);
+            updated |= entry.setRepositoryRootURL(root);            
+        }
+        SVNURL url = entry.getSVNURL();
+        if (url != null && !url.hasPort() && url.getPort() > 0) {
+            url = SVNURL.create(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), false);
+            updated |= entry.setURL(url.toString());
+        }
+        SVNURL copyFrom = entry.getCopyFromSVNURL();
+        if (copyFrom != null && !copyFrom.hasPort() && copyFrom.getPort() > 0) {
+            copyFrom = SVNURL.create(copyFrom.getProtocol(), copyFrom.getUserInfo(), copyFrom.getHost(), copyFrom.getPort(), copyFrom.getPath(), false);
+            updated |= entry.setCopyFromURL(copyFrom.toString());
+        }
+        return updated;
+    }
+
     private void handleExternals(SVNWCAccess wcAccess) throws SVNException {
         for (Iterator externals = wcAccess.externals(); externals.hasNext();) {
             SVNExternalInfo external = (SVNExternalInfo) externals.next();
