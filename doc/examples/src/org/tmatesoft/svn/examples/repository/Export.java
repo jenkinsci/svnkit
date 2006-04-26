@@ -237,7 +237,7 @@ public class Export {
             myRootDirectory = root;
             /*
              * Utility class that will help us to transform 'deltas' sent by the 
-             * server to the new files contents.  
+             * server to the new file contents.  
              */
             myDeltaProcessor = new SVNDeltaProcessor();
         }
@@ -354,7 +354,7 @@ public class Export {
 
         /*
          * Server sends deltas in form of 'diff windows'. Depending on the file size 
-         * there may be several diff windows. Utility class SVNDeltaProcessor process 
+         * there may be several diff windows. Utility class SVNDeltaProcessor processes 
          * these windows for us.
          */
         public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow)   throws SVNException {

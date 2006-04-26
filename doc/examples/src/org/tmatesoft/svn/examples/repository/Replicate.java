@@ -28,8 +28,20 @@ import org.tmatesoft.svn.core.replicator.SVNRepositoryReplicator;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /*
+ * This example shows how you can create new repositories
+ * and replicate existing ones using JavaSVN. The program accepts 
+ * two args:filesystem locations of source and target repository.
+ * If they're not provided the program uses default locations.
  * 
- * r1 by 'me' at Wed Apr 26 02:10:14 NOVST 2006
+ * Both repositories are first created, then the source one is 
+ * populated with some data up to revision 4. And lastly the source 
+ * repository is replicated to the target one (all those 4 revisions), 
+ * so that when the program exits you have two repositories with the 
+ * same data.
+ * 
+ * Below you can see a program layout: 
+ * 
+   r1 by 'me' at Wed Apr 26 02:10:14 NOVST 2006
    r2 by 'me' at Wed Apr 26 02:10:14 NOVST 2006
    r3 by 'me' at Wed Apr 26 02:10:15 NOVST 2006
    r4 by 'me' at Wed Apr 26 02:10:15 NOVST 2006
@@ -54,12 +66,10 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  */
 public class Replicate {
 
-    /*
-     * 
-     */
     public static void main(String[] args) {
         /*
          * Default values:
+         * source and target repository paths
          */
         String srcPath = "srcRepository";
         String tgtPath = "tgtRepository";
@@ -72,11 +82,11 @@ public class Replicate {
 
         if (args != null) {
             /*
-             * a source repository url
+             * a source repository path
              */
             srcPath = (args.length >= 1) ? args[0] : srcPath;
             /*
-             * a target repository url
+             * a target repository path
              */
             tgtPath = (args.length >= 2) ? args[1] : tgtPath;
         }
@@ -88,7 +98,37 @@ public class Replicate {
         SVNRepository tgtRepository = null;
         
         try {
+            /*
+             * Creates a source repository:
+             * 
+             * The second (boolean) parameter controls whether a new 
+             * repository is created with an ability for changes to 
+             * revision properties enabled or not. By default 
+             * Subversion repositories disallow such changes until you 
+             * put a pre-revprop-change hook that allows them to the 
+             * repository. So, if the second parameter is true JavaSVN 
+             * creates a repository with an empty pre-revprop-change hook, 
+             * so that you don't have to care of that by yourself. In 
+             * this program we're not going to modify revision props of 
+             * the source repository, so we pass this param set to false.  
+             * 
+             * The third (boolean) and the last parameter forces a 
+             * repository creation. If it's false like in our case 
+             * a new repository won't be created if there is already a 
+             * one in the same location, the method throws an SVNException.
+             * However if this param is true, the existing repository will 
+             * be deleted and a new one will be created.
+             * 
+             * After the repository is successfully created, the createLocalRepository() 
+             * method returns an SVNURL representing a 'file:///' url to the repository which 
+             * can be further used to create an SVNRepository driver.
+             */
             srcURL = SVNRepositoryFactory.createLocalRepository(new File(srcPath), false, false);
+            /*
+             * The only difference for the target repository lies in that a replicator 
+             * copies revision properties as well, so we need to enable revision properties 
+             * changes. 
+             */
             tgtURL = SVNRepositoryFactory.createLocalRepository(new File(tgtPath), true, false);
             
             srcRepository = SVNRepositoryFactory.create(srcURL);
@@ -102,10 +142,17 @@ public class Replicate {
             System.exit(1);
         }
 
+        /*
+         * Deault auth manager is used to cache a username in the 
+         * default Subversion credentials storage area.
+         */
         srcRepository.setAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
         tgtRepository.setAuthenticationManager(SVNWCUtil.createDefaultAuthenticationManager());
         
         try{
+            /*
+             * Fills up the source repository with some data.
+             */
             populateSourceRepository(srcRepository);
             System.out.println();
             long srcLatestRevision = srcRepository.getLatestRevision();
@@ -113,6 +160,10 @@ public class Replicate {
             System.out.println();
             System.out.println("'" + srcURL + "' repository tree:");
             System.out.println();
+            /*
+             * Using the DisplayRepositoryTree example to show the source 
+             * repository tree in the latest revision. 
+             */
             DisplayRepositoryTree.listEntries(srcRepository, "");
         }catch(SVNException svne){
             System.err.println("An error occurred while accessing source repository: " + svne.getErrorMessage().getFullMessage());
@@ -120,12 +171,18 @@ public class Replicate {
         }
 
         try{
+            /*
+             * Replicates the source repository to the target one.
+             */
             long replicatedRevisions = replicateRepository(srcRepository, tgtRepository);
             System.out.println();
             System.out.println("Number of replicated revisions: " + replicatedRevisions);
             System.out.println();
             System.out.println("'" + tgtURL + "' repository tree:");
             System.out.println();
+            /*
+             * Shows the tree of the target repository in the latest revision.
+             */
             DisplayRepositoryTree.listEntries(tgtRepository, "");
         }catch(SVNException svne){
             System.err.println("An error occurred while accessing source repository: " + svne.getErrorMessage().getFullMessage());
@@ -213,6 +270,15 @@ public class Replicate {
     private static long replicateRepository(SVNRepository srcRepository, SVNRepository tgtRepository) throws SVNException {
         long latestRevision = srcRepository.getLatestRevision();
         SVNRepositoryReplicator replicator = SVNRepositoryReplicator.newInstance();
+        /*
+         * Replicates the source repository into the target one starting with the 
+         * first revision and up to the latest revision of the source repository.
+         * The same result is reached if you call:
+         * 
+         * replicator.replicateRepository(srcRepository, tgtRepository, -1, -1)
+         * 
+         * The return value is the total number of replicated revisions.
+         */
         return replicator.replicateRepository(srcRepository, tgtRepository, 1, latestRevision);
     }
     

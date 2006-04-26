@@ -114,18 +114,24 @@ public class DisplayRepositoryTree {
         }
 
         /*
-         * User's authentication information is provided via an ISVNAuthenticationManager
-         * instance. SVNWCUtil creates a default usre's authentication manager given user's
-         * name and password.
+         * User's authentication information (name/password) is provided via  an 
+         * ISVNAuthenticationManager  instance.  SVNWCUtil  creates  a   default 
+         * authentication manager given user's name and password.
+         * 
+         * Default authentication manager first attempts to use provided user name 
+         * and password and then falls back to the credentials stored in the 
+         * default Subversion credentials storage that is located in Subversion 
+         * configuration area. If you'd like to use provided user name and password 
+         * only you may use BasicAuthenticationManager class instead of default 
+         * authentication manager:
+         * 
+         *  authManager = new BasicAuthenticationsManager(userName, userPassword);
+         *  
+         * You may also skip this point - anonymous access will be used. 
          */
         ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name, password);
-
-        /*
-         * Sets the manager of the user's authentication information that will 
-         * be used to authenticate the user to the server (if needed) during 
-         * operations handled by the SVNRepository.
-         */
         repository.setAuthenticationManager(authManager);
+
         try {
             /*
              * Checks up if the specified path/to/repository part of the URL
@@ -142,13 +148,15 @@ public class DisplayRepositoryTree {
                 System.exit(1);
             }
             /*
-             * getRepositoryRoot returns the actual root directory where the
-             * repository was created
+             * getRepositoryRoot() returns the actual root directory where the
+             * repository was created. 'true' forces to connect to the repository 
+             * if the root url is not cached yet. 
              */
             System.out.println("Repository Root: " + repository.getRepositoryRoot(true));
             /*
-             * getRepositoryUUID returns Universal Unique IDentifier (UUID) - an
-             * identifier of the repository
+             * getRepositoryUUID() returns Universal Unique IDentifier (UUID) of the 
+             * repository. 'true' forces to connect to the repository 
+             * if the UUID is not cached yet.
              */
             System.out.println("Repository UUID: " + repository.getRepositoryUUID(true));
             System.out.println("");
