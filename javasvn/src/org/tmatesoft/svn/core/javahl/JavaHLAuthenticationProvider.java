@@ -102,21 +102,19 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
             String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : System.getProperty("user.name");
             if (myPrompt instanceof PromptUserPasswordUser) {
                 PromptUserPasswordUser prompt3 = (PromptUserPasswordUser) myPrompt;
-                if (prompt3.prompt(realm, userName, authMayBeStored))  {
+                if (prompt3.promptUser(realm, userName, authMayBeStored))  {
                     return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave());
                 }
                 return null;
             } else if (myPrompt instanceof PromptUserPassword3) {
                 PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
-                userName = prompt3.askQuestion(realm, "User Name", true, authMayBeStored);
-                if (userName != null)  {
-                    return new SVNUserNameAuthentication(userName, prompt3.userAllowedSave());
+                if (prompt3.prompt(realm, userName, authMayBeStored))  {
+                    return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave());
                 }
                 return null;
-            }
-            userName = myPrompt.askQuestion(realm, "User Name", true);
-            if (userName != null) {
-                return new SVNUserNameAuthentication(userName, true);
+            } 
+            if (myPrompt.prompt(realm, userName)) {
+                return new SVNUserNameAuthentication(myPrompt.getUsername(), false);
             }
             return null;            
         } else if(!ISVNAuthenticationManager.PASSWORD.equals(kind)){
