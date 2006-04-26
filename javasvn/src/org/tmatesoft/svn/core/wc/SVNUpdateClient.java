@@ -651,7 +651,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 
-    public void doCanonicalizeURLs(File dst, boolean recursive) throws SVNException {
+    public void doCanonicalizeURLs(File dst, boolean ommitDefaultPort, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(dst);
         try {
             wcAccess.open(true, recursive);
@@ -660,12 +660,12 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (entry != null && entry.isFile()) {
                 name = entry.getName();
             }
-            doCanonicalizeURLs(wcAccess.getTarget(), name, recursive);
+            doCanonicalizeURLs(wcAccess.getTarget(), name, ommitDefaultPort, recursive);
             if (recursive && !isIgnoreExternals()) {
                 for(Iterator externals = wcAccess.externals(); externals.hasNext();) {
                     SVNExternalInfo info = (SVNExternalInfo) externals.next();
                     try {
-                        doCanonicalizeURLs(info.getFile(), true);
+                        doCanonicalizeURLs(info.getFile(), ommitDefaultPort, true);
                     } catch (SVNCancelException e) {
                         throw e;
                     } catch (SVNException e) {
@@ -678,12 +678,12 @@ public class SVNUpdateClient extends SVNBasicClient {
 
         }
     }
-    private void doCanonicalizeURLs(SVNDirectory dir, String name, boolean recursive) throws SVNException {
+    private void doCanonicalizeURLs(SVNDirectory dir, String name, boolean ommitDefaultPort, boolean recursive) throws SVNException {
         boolean save = false;
         checkCancelled();
         if (!"".equals(name)) {
             SVNEntry entry = dir.getEntries().getEntry(name, true);
-            save = canonicalizeEntry(entry);
+            save = canonicalizeEntry(entry, ommitDefaultPort);
             dir.getWCProperties(name).setPropertyValue(SVNProperty.WC_URL, null);
             if (save) {
                 dir.getEntries().save(true);
@@ -692,7 +692,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
         dir.getWCAccess().addExternals(dir, dir.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS));
         SVNEntry rootEntry = dir.getEntries().getEntry("", true);
-        save = canonicalizeEntry(rootEntry);
+        save = canonicalizeEntry(rootEntry, ommitDefaultPort);
         dir.getWCProperties("").setPropertyValue(SVNProperty.WC_URL, null);
         // now all child entries that doesn't has repos/url has new values.
         for(Iterator ents = dir.getEntries().entries(true); ents.hasNext();) {
@@ -706,10 +706,10 @@ public class SVNUpdateClient extends SVNBasicClient {
                     !entry.isAbsent()) {
                 SVNDirectory childDir = dir.getChildDirectory(entry.getName());
                 if (childDir != null) {
-                    doCanonicalizeURLs(childDir, "", recursive);
+                    doCanonicalizeURLs(childDir, "", ommitDefaultPort, recursive);
                 }
             }
-            save |= canonicalizeEntry(entry);
+            save |= canonicalizeEntry(entry, ommitDefaultPort);
             dir.getWCProperties(entry.getName()).setPropertyValue(SVNProperty.WC_URL, null);
         }
         if (save) {
@@ -717,24 +717,43 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
     
-    private boolean canonicalizeEntry(SVNEntry entry) throws SVNException {
+    private boolean canonicalizeEntry(SVNEntry entry, boolean ommitDefaultPort) throws SVNException {
         boolean updated = false;
-        SVNURL root = entry.getRepositoryRootURL();
-        if (root != null && !root.hasPort() && root.getPort() > 0) {
-            root = SVNURL.create(root.getProtocol(), root.getUserInfo(), root.getHost(), root.getPort(), root.getPath(), false);
+        SVNURL root = canonicalizeURL(entry.getRepositoryRootURL(), ommitDefaultPort);
+        if (root != null) {
             updated |= entry.setRepositoryRootURL(root);            
         }
-        SVNURL url = entry.getSVNURL();
-        if (url != null && !url.hasPort() && url.getPort() > 0) {
-            url = SVNURL.create(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), false);
+        SVNURL url = canonicalizeURL(entry.getSVNURL(), ommitDefaultPort);
+        if (url != null) {
             updated |= entry.setURL(url.toString());
         }
-        SVNURL copyFrom = entry.getCopyFromSVNURL();
-        if (copyFrom != null && !copyFrom.hasPort() && copyFrom.getPort() > 0) {
-            copyFrom = SVNURL.create(copyFrom.getProtocol(), copyFrom.getUserInfo(), copyFrom.getHost(), copyFrom.getPort(), copyFrom.getPath(), false);
+        SVNURL copyFrom = canonicalizeURL(entry.getCopyFromSVNURL(), ommitDefaultPort);
+        if (copyFrom != null) {
             updated |= entry.setCopyFromURL(copyFrom.toString());
         }
         return updated;
+    }
+    
+    private SVNURL canonicalizeURL(SVNURL url, boolean ommitDefaultPort) throws SVNException {
+        if (url == null || url.getPort() <= 0) {
+            // no url or file url.
+            return null;
+        }
+        int defaultPort = SVNURL.getDefaultPortNumber(url.getProtocol());
+        if (defaultPort <= 0) {
+            // file or svn+ext URL.
+            return null;
+        }
+        if (ommitDefaultPort) {
+            // remove port if it is same as default.
+            if (url.hasPort() && url.getPort() == defaultPort) {
+                return SVNURL.create(url.getProtocol(), url.getUserInfo(), url.getHost(), -1, url.getPath(), false);
+            }
+        } else if (!url.hasPort()) {
+            // set port if there is no port set.
+            return SVNURL.create(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), false);
+        }
+        return null;
     }
 
     private void handleExternals(SVNWCAccess wcAccess) throws SVNException {
