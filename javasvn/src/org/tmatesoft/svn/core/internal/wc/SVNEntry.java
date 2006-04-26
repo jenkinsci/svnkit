@@ -282,8 +282,8 @@ public class SVNEntry implements Comparable {
                 revision >= 0 ? Long.toString(revision) : null);
     }
 
-    public void setCopyFromURL(String url) {
-        myEntries.setPropertyValue(myName, SVNProperty.COPYFROM_URL, url);
+    public boolean setCopyFromURL(String url) {
+        return myEntries.setPropertyValue(myName, SVNProperty.COPYFROM_URL, url);
     }
 
     public void setCopied(boolean copied) {
