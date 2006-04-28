@@ -262,14 +262,14 @@ public class SVNDirEntry implements Comparable {
         result.append(mySize);
         result.append(", hasProps=");
         result.append(myHasProperties);
-        result.append(", creation-rev=");
+        result.append(", lastchangedrev=");
         result.append(myRevision);
         if (myLastAuthor != null) {
-            result.append(", lastAuthor=");
+            result.append(", lastauthor=");
             result.append(myLastAuthor);
         }
         if (myCreatedDate != null) {
-            result.append(", creation-date=");
+            result.append(", lastchangeddate=");
             result.append(myCreatedDate);
         }
         return result.toString();
