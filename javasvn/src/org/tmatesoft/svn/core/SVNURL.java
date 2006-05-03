@@ -428,7 +428,8 @@ public class SVNURL {
         boolean eq = myProtocol.equals(url.myProtocol) && 
             myPort == url.myPort &&
             myHost.equals(url.myHost) &&
-            myPath.equals(url.myPath);
+            myPath.equals(url.myPath) &&
+            hasPort() == url.hasPort();
         if (myUserName == null) {
             eq &= url.myUserName == null;
         } else {
