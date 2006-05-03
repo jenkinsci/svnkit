@@ -691,11 +691,13 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             return;
         }
-        String externalsValue = dir.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS);
-        dir.getWCAccess().addExternals(dir, externalsValue);
-        if (externalsValue != null) {
-            externalsValue = canonicalizeExtenrals(externalsValue, omitDefaultPort);
-            dir.getProperties("", false).setPropertyValue(SVNProperty.EXTERNALS, externalsValue);
+        if (!isIgnoreExternals()) {
+            String externalsValue = dir.getProperties("", false).getPropertyValue(SVNProperty.EXTERNALS);
+            dir.getWCAccess().addExternals(dir, externalsValue);
+            if (externalsValue != null) {
+                externalsValue = canonicalizeExtenrals(externalsValue, omitDefaultPort);
+                dir.getProperties("", false).setPropertyValue(SVNProperty.EXTERNALS, externalsValue);
+            }
         }
         
         SVNEntry rootEntry = dir.getEntries().getEntry("", true);
