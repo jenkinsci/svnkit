@@ -657,6 +657,15 @@ public class SVNDiffClient extends SVNBasicClient {
      */
     public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
+        /*
+         * Same as 2. merge sourceWCPATH1@N sourceWCPATH2@M [WCPATH]
+         * or      3. merge -r N:M SOURCE[@REV] [WCPATH]
+         * where SOURCE is a path and path1 and path2 are the same.
+         */
+        SVNRevision pegRevision = SVNRevision.UNDEFINED;
+        if (path1.equals(path2)) {
+            pegRevision = SVNRevision.WORKING;
+        }
         SVNURL url1 = getURL(path1);
         if (url1 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path1);
@@ -677,9 +686,9 @@ public class SVNDiffClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
             if (targetEntry.isFile()) {
-                doMergeFile(url1, path1, revision1, url2, path2, revision2, SVNRevision.UNDEFINED, wcAccess, force, dryRun);
+                doMergeFile(url1, path1, revision1, url2, path2, revision2, pegRevision, wcAccess, force, dryRun);
             } else if (targetEntry.isDirectory()) {
-                doMerge(url1, path1, revision1, url2, path2, revision2, SVNRevision.UNDEFINED, wcAccess, recusrsive, useAncestry, force, dryRun);
+                doMerge(url1, path1, revision1, url2, path2, revision2, pegRevision, wcAccess, recusrsive, useAncestry, force, dryRun);
             }
         } finally {
             wcAccess.close(!dryRun);
@@ -734,6 +743,10 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path1);
             SVNErrorManager.error(err);
         }
+        SVNRevision pegRevision = SVNRevision.UNDEFINED;
+        if (url1.equals(url2)) {
+            pegRevision = SVNRevision.HEAD;
+        }
         SVNWCAccess wcAccess = createWCAccess(dstPath);
         try {
             wcAccess.open(!dryRun, recusrsive);
@@ -744,9 +757,9 @@ public class SVNDiffClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
             if (targetEntry.isFile()) {
-                doMergeFile(url1, path1, revision1, url2, null, revision2, SVNRevision.UNDEFINED, wcAccess, force, dryRun);
+                doMergeFile(url1, path1, revision1, url2, null, revision2, pegRevision, wcAccess, force, dryRun);
             } else if (targetEntry.isDirectory()) {
-                doMerge(url1, path1, revision1, url2, null, revision2, SVNRevision.UNDEFINED, wcAccess, recusrsive, useAncestry, force, dryRun);
+                doMerge(url1, path1, revision1, url2, null, revision2, pegRevision, wcAccess, recusrsive, useAncestry, force, dryRun);
             }
         } finally {
             wcAccess.close(!dryRun);
@@ -800,6 +813,10 @@ public class SVNDiffClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path2);
             SVNErrorManager.error(err);
         }
+        SVNRevision pegRevision = SVNRevision.UNDEFINED;
+        if (url1.equals(url2)) {
+            pegRevision = SVNRevision.WORKING;
+        }
         SVNWCAccess wcAccess = createWCAccess(dstPath);
         try {
             wcAccess.open(!dryRun, recusrsive);
@@ -810,9 +827,9 @@ public class SVNDiffClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
             if (targetEntry.isFile()) {
-                doMergeFile(url1, null, revision1, url2, path2, revision2, SVNRevision.UNDEFINED, wcAccess, force, dryRun);
+                doMergeFile(url1, null, revision1, url2, path2, revision2, pegRevision, wcAccess, force, dryRun);
             } else if (targetEntry.isDirectory()) {
-                doMerge(url1, null, revision1, url2, path2, revision2, SVNRevision.UNDEFINED, wcAccess, recusrsive, useAncestry, force, dryRun);
+                doMerge(url1, null, revision1, url2, path2, revision2, pegRevision, wcAccess, recusrsive, useAncestry, force, dryRun);
             }
         } finally {
             wcAccess.close(!dryRun);
@@ -865,6 +882,10 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(dstPath);
+        SVNRevision pegRevision = SVNRevision.UNDEFINED;
+        if (url1.equals(url2)) {
+            pegRevision = SVNRevision.HEAD;
+        }
         try {
             wcAccess.open(!dryRun, recusrsive);
             
@@ -874,9 +895,9 @@ public class SVNDiffClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
             if (targetEntry.isFile()) {
-                doMergeFile(url1, null, revision1, url2, null, revision2, SVNRevision.UNDEFINED, wcAccess, force, dryRun);
+                doMergeFile(url1, null, revision1, url2, null, revision2, pegRevision, wcAccess, force, dryRun);
             } else if (targetEntry.isDirectory()) {
-                doMerge(url1, null, revision1, url2, null, revision2, SVNRevision.UNDEFINED, wcAccess, recusrsive, useAncestry, force, dryRun);
+                doMerge(url1, null, revision1, url2, null, revision2, pegRevision, wcAccess, recusrsive, useAncestry, force, dryRun);
             }
         } finally {
             wcAccess.close(!dryRun);
@@ -931,6 +952,9 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMerge(SVNURL url1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(dstPath);
+        if (pegRevision == null || !pegRevision.isValid()) {
+            pegRevision = SVNRevision.HEAD;
+        }
         try {
             wcAccess.open(!dryRun, recusrsive);
             
@@ -1001,6 +1025,13 @@ public class SVNDiffClient extends SVNBasicClient {
         if (url1 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path1);
             SVNErrorManager.error(err);
+        }
+        /*
+         * Equivalent of 3. merge -r N:M SOURCE[@REV] [WCPATH]
+         * where SOURCE is a wc path.
+         */
+        if (pegRevision == null || !pegRevision.isValid()) {
+            pegRevision = SVNRevision.WORKING;
         }
         SVNWCAccess wcAccess = createWCAccess(dstPath);
         try {
