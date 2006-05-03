@@ -183,6 +183,10 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @throws SVNException 
      */
     public long doSwitch(File file, SVNURL url, SVNRevision revision, boolean recursive) throws SVNException {
+        return doSwitch(file, url, SVNRevision.UNDEFINED, revision, recursive);
+    }
+
+    public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess(file);
         final SVNReporter reporter = new SVNReporter(wcAccess, true, recursive);
         try {
@@ -199,6 +203,10 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             SVNRepository repository = createRepository(sourceURL, true);
             long revNumber = getRevisionNumber(revision, repository, file);
+            if (pegRevision != null && pegRevision.isValid()) {
+                SVNRepositoryLocation[] locs = getLocations(url, null, pegRevision, SVNRevision.create(revNumber), SVNRevision.UNDEFINED);
+                url = locs[0].getURL();
+            }
 
             SVNUpdateEditor editor = new SVNUpdateEditor(wcAccess, url.toString(), recursive, isLeaveConflictsUnresolved());
             
