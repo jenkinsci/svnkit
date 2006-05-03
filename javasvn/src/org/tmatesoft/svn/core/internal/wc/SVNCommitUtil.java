@@ -104,9 +104,14 @@ public class SVNCommitUtil {
 
     public static SVNWCAccess createCommitWCAccess(File[] paths, boolean recursive, boolean force, Collection relativePaths, SVNStatusClient statusClient) throws SVNException {
         File wcRoot = null;
+        Map localRootsCache = new HashMap();
         for (int i = 0; i < paths.length; i++) {
             File path = paths[i];
-            File newWCRoot = SVNWCUtil.getWorkingCopyRoot(path, true);
+            if (path.isFile()) {
+                path = path.getParentFile();
+            }
+            File newWCRoot = localRootsCache.containsKey(path) ? (File) localRootsCache.get(path) : SVNWCUtil.getWorkingCopyRoot(path, true);
+            localRootsCache.put(path, newWCRoot);
             if (wcRoot != null && !wcRoot.equals(newWCRoot)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Commit targets should belong to the same working copy");
                 SVNErrorManager.error(err);
@@ -237,9 +242,14 @@ public class SVNCommitUtil {
 
     public static SVNWCAccess[] createCommitWCAccess2(File[] paths, boolean recursive, boolean force, Map relativePathsMap, SVNStatusClient statusClient) throws SVNException {
         Map rootsMap = new HashMap(); // wc root file -> paths to be committed (paths).
+        Map localRootsCache = new HashMap();
         for (int i = 0; i < paths.length; i++) {
             File path = paths[i];
-            File wcRoot = SVNWCUtil.getWorkingCopyRoot(path, true);
+            if (path.isFile()) {
+                path = path.getParentFile();
+            }
+            File wcRoot = localRootsCache.containsKey(path) ? (File) localRootsCache.get(path) : SVNWCUtil.getWorkingCopyRoot(path, true);
+            localRootsCache.put(path, wcRoot);
             if (!rootsMap.containsKey(wcRoot)) {
                 rootsMap.put(wcRoot, new ArrayList());
             }
