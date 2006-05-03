@@ -17,8 +17,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -33,7 +31,7 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 class HTTPRequest {
 
-    private static final char[] CRLF = { '\r', '\n' };
+    public static final char[] CRLF = { '\r', '\n' };
 
     private boolean myIsSecured;
     private boolean myIsProxied;
@@ -42,7 +40,7 @@ class HTTPRequest {
     private String myAuthentication;
     private String myProxyAuthentication;
 
-    private Map myResponseHeader;
+    private HTTPHeader myResponseHeader;
     private HTTPStatus myStatus;
 
     private SVNErrorMessage myErrorMessage;
@@ -138,15 +136,15 @@ class HTTPRequest {
      *  - body may be resetable inputStream + length - IMeasurable.
      *  // this may throw IOException that will be converted to: timeout error, can't connect error, or ssl will re-prompt.
      */
-    public void dispatch(String request, String path, Map header, int ok1, int ok2, SVNErrorMessage context) throws IOException {
+    public void dispatch(String request, String path, HTTPHeader header, int ok1, int ok2, SVNErrorMessage context) throws IOException {
         long length = 0;
         if (myRequestBody != null) {
             length = myRequestBody.length;
         } else if (myRequestStream instanceof ByteArrayInputStream) {
             length = ((ByteArrayInputStream) myRequestStream).available();
-        } else if (header != null && header.containsKey("Content-Length")) {
-            length = Long.parseLong((String) header.get("Content-Length"));
-            header.remove("Content-Length");
+        } else if (header != null && header.hasHeader(HTTPHeader.CONTENT_LENGTH_HEADER)) {
+            length = Long.parseLong(header.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER));
+            header.removeHeader(HTTPHeader.CONTENT_LENGTH_HEADER);
         }
         StringBuffer headerText = composeHTTPHeader(request, path, header, length, myIsKeepAlive);
         myConnection.sendData(headerText.toString().getBytes());
@@ -218,7 +216,7 @@ class HTTPRequest {
         return error;
     }
     
-    public Map getResponseHeader() {
+    public HTTPHeader getResponseHeader() {
         return myResponseHeader;
     }
     
@@ -230,7 +228,7 @@ class HTTPRequest {
         myStatus = status;
     }
     
-    public void setResponseHeader(Map header) {
+    public void setResponseHeader(HTTPHeader header) {
         myResponseHeader = header;
     }
     
@@ -238,7 +236,7 @@ class HTTPRequest {
         return myErrorMessage;
     }
 
-    private StringBuffer composeHTTPHeader(String request, String path, Map header, long length, boolean keepAlive) {
+    private StringBuffer composeHTTPHeader(String request, String path, HTTPHeader header, long length, boolean keepAlive) {
         StringBuffer sb = new StringBuffer();
         sb.append(request);
         sb.append(' ');
@@ -291,18 +289,12 @@ class HTTPRequest {
         sb.append(HTTPRequest.CRLF);
         sb.append("Accept-Encoding: gzip");
         sb.append(HTTPRequest.CRLF);
-        if (header == null || !header.containsKey("Content-Type")) {
+        if (header == null || !header.hasHeader(HTTPHeader.CONTENT_TYPE_HEADER)) {
             sb.append("Content-Type: text/xml; charset=\"utf-8\"");
             sb.append(HTTPRequest.CRLF);
         }
         if (header != null) {
-            for (Iterator keys = header.keySet().iterator(); keys.hasNext();) {
-                Object key = keys.next();
-                sb.append(key.toString());
-                sb.append(": ");
-                sb.append(header.get(key).toString());
-                sb.append(HTTPRequest.CRLF);
-            }
+            sb.append(header.toString());
         }
         sb.append(HTTPRequest.CRLF);
         return sb;

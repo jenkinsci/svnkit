@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
+import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -36,19 +37,19 @@ public class DAVUtil {
     public static int DEPTH_INFINITE = -1;
 
     public static HTTPStatus getProperties(DAVConnection connection, String path, int depth, String label, DAVElement[] properties, Map result) throws SVNException {
-        Map header = new HashMap();
+        HTTPHeader header = new HTTPHeader();
         if (depth == DEPTH_ZERO) {
-            header.put("Depth", "0");
+            header.setHeaderValue(HTTPHeader.DEPTH_HEADER, "0");
         } else if (depth == DEPTH_ONE) {
-            header.put("Depth", "1");
+            header.setHeaderValue(HTTPHeader.DEPTH_HEADER, "1");
         } else if (depth == DEPTH_INFINITE) {
-            header.put("Depth", "infinite");
+            header.setHeaderValue(HTTPHeader.DEPTH_HEADER, "infinite");
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Invalid PROPFIND depth value: '{0}'", new Integer(depth));
             SVNErrorManager.error(err);
         }
         if (label != null) {
-            header.put("Label", label);
+            header.setHeaderValue(HTTPHeader.LABEL_HEADER, label);
         }
         StringBuffer body = DAVPropertiesHandler.generatePropertiesRequest(null, properties);
         DAVPropertiesHandler davHandler = new DAVPropertiesHandler();

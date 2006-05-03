@@ -23,8 +23,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collection;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -58,7 +57,6 @@ import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
-
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
@@ -83,7 +81,8 @@ class HTTPConnection implements IHTTPConnection {
     private boolean myIsSecured;
     private boolean myIsProxied;
     private SVNAuthentication myLastValidAuth;
-    private Map myCredentialsChallenge;
+//    private Map myCredentialsChallenge;
+    private HTTPAuthentication myChallengeCredentials;
     private String myProxyAuthentication;
     private boolean myIsKeepAlive;
     private boolean myIsSpoolResponse;
@@ -133,6 +132,7 @@ class HTTPConnection implements IHTTPConnection {
                     proxyAuth.acknowledgeProxyContext(false, err);
                     SVNErrorManager.error(err, connectRequest.getErrorMessage());
                 }
+                //TODO: is it a bug or not?
                 proxyAuth.acknowledgeProxyContext(true, null);
             } else {
                 mySocket = myIsSecured ? SVNSocketFactory.createSSLSocket(sslManager, host, port) : SVNSocketFactory.createPlainSocket(host, port);
@@ -144,7 +144,7 @@ class HTTPConnection implements IHTTPConnection {
         InputStream is = SVNDebugLog.createLogStream(getInputStream());
         try {            
             HTTPStatus status = HTTPParser.parseStatus(is);
-            Map header = HTTPParser.parseHeader(is);
+            HTTPHeader header = HTTPHeader.parseHeader(is);
             request.setStatus(status);
             request.setResponseHeader(header);
         } finally {
@@ -197,11 +197,11 @@ class HTTPConnection implements IHTTPConnection {
         myLastValidAuth = null;
     }
 
-    public HTTPStatus request(String method, String path, Map header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
+    public HTTPStatus request(String method, String path, HTTPHeader header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
         return request(method, path, header, body, ok1, ok2, dst, handler, null);
     }
 
-    public HTTPStatus request(String method, String path, Map header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
+    public HTTPStatus request(String method, String path, HTTPHeader header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
         byte[] buffer = null;
         if (body != null) {
             try {
@@ -213,25 +213,25 @@ class HTTPConnection implements IHTTPConnection {
         return request(method, path, header, buffer != null ? new ByteArrayInputStream(buffer) : null, ok1, ok2, dst, handler, context);
     }
 
-    public HTTPStatus request(String method, String path, Map header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
+    public HTTPStatus request(String method, String path, HTTPHeader header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
         return request(method, path, header, body, ok1, ok2, dst, handler, null);
     }
     
-    public HTTPStatus request(String method, String path, Map header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
-        if (myCredentialsChallenge != null) {
-            myCredentialsChallenge.put("methodname", method);
-            myCredentialsChallenge.put("uri", path);
+    public HTTPStatus request(String method, String path, HTTPHeader header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
+        if (myChallengeCredentials != null) {
+            myChallengeCredentials.setChallengeParameter("methodname", method);
+            myChallengeCredentials.setChallengeParameter("uri", path);
         }
+        
         // 1. prompt for ssl client cert if needed, if cancelled - throw cancellation exception.
         ISVNSSLManager sslManager = promptSSLClientCertificate(true);
         String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
         SVNAuthentication httpAuth = myLastValidAuth;
         if (httpAuth == null && myRepository.getAuthenticationManager() != null && myRepository.getAuthenticationManager().isAuthenticationForced()) {
             httpAuth = myRepository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, sslRealm, null);
-            myCredentialsChallenge = new HashMap();
-            myCredentialsChallenge.put("", "Basic");
-            myCredentialsChallenge.put("methodname", method);
-            myCredentialsChallenge.put("uri", path);
+            myChallengeCredentials = new HTTPBasicAuthentication((SVNPasswordAuthentication)httpAuth);
+            myChallengeCredentials.setChallengeParameter("methodname", method);
+            myChallengeCredentials.setChallengeParameter("uri", path);
         } 
         String realm = null;
 
@@ -254,8 +254,8 @@ class HTTPConnection implements IHTTPConnection {
                 request.setProxied(myIsProxied);
                 request.setSecured(myIsSecured);
                 request.setProxyAuthentication(myProxyAuthentication);
-                if (httpAuth != null && myCredentialsChallenge != null) {
-                    String authResponse = composeAuthResponce(httpAuth, myCredentialsChallenge);
+                if (httpAuth != null && myChallengeCredentials != null) {
+                    String authResponse = myChallengeCredentials.authenticate();//composeAuthResponce(httpAuth, myCredentialsChallenge);
                     request.setAuthentication(authResponse);
                 }
                 request.dispatch(method, path, header, ok1, ok2, context);
@@ -309,8 +309,8 @@ class HTTPConnection implements IHTTPConnection {
                 myLastValidAuth = null;
                 close();
                 
-                String authHeader = (String) request.getResponseHeader().get("WWW-Authenticate");
-                if (authHeader == null) {
+                Collection authHeaderValues = request.getResponseHeader().getHeaderValues(HTTPHeader.AUTHENTICATE_HEADER);
+                if (authHeaderValues == null || authHeaderValues.size() == 0) {
                     err = request.getErrorMessage();
                     status.setError(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, err.getMessageTemplate(), err.getRelatedObjects()));
                     if ("LOCK".equalsIgnoreCase(method)) {
@@ -320,13 +320,16 @@ class HTTPConnection implements IHTTPConnection {
                     SVNErrorManager.error(status.getError());
                     return status;  
                 }
-                myCredentialsChallenge = HTTPParser.parseAuthParameters(authHeader);
-                if (myCredentialsChallenge == null) {
-                    err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "HTTP authorization method ''{0}'' is not supported", authHeader); 
+                
+                try {
+                    myChallengeCredentials = HTTPAuthentication.parseAuthParameters(authHeaderValues); 
+                } catch (SVNException svne) {
+                    err = svne.getErrorMessage(); 
                     break;
                 }
-                myCredentialsChallenge.put("methodname", method);
-                myCredentialsChallenge.put("uri", path);
+
+                myChallengeCredentials.setChallengeParameter("methodname", method);
+                myChallengeCredentials.setChallengeParameter("uri", path);
                 
                 ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
                 if (authManager == null) {
@@ -334,15 +337,17 @@ class HTTPConnection implements IHTTPConnection {
                     break;
                 }
 
-                realm = (String) myCredentialsChallenge.get("realm");
+                realm = myChallengeCredentials.getChallengeParameter("realm");
                 realm = realm == null ? "" : " " + realm;
                 realm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">" + realm;
                 if (httpAuth == null) {
                     httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
                 } else {
-                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, null, httpAuth);
+                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, null, myChallengeCredentials.getCredentials());
                     httpAuth = authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
                 }
+                myChallengeCredentials.setCredentials((SVNPasswordAuthentication)httpAuth);
+
                 if (httpAuth == null) {
                     err = SVNErrorMessage.create(SVNErrorCode.CANCELLED, "HTTP authorization cancelled");
                     break;
@@ -350,7 +355,7 @@ class HTTPConnection implements IHTTPConnection {
                 continue;
             } else if (status.getCode() == HttpURLConnection.HTTP_MOVED_PERM || status.getCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
                 close();
-                String newLocation = (String) request.getResponseHeader().get("Location");
+                String newLocation = request.getResponseHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER);
                 if (newLocation == null) {
                     err = request.getErrorMessage();
                     break;
@@ -617,26 +622,26 @@ class HTTPConnection implements IHTTPConnection {
             } catch (IOException ex) {
             }
         }
-        Map header = request != null ? request.getResponseHeader() : null;
+        HTTPHeader header = request != null ? request.getResponseHeader() : null;
         if (hasToCloseConnection(header)) {
             close();
         }
     }
     
-    private static boolean hasToCloseConnection(Map header) {
+    private static boolean hasToCloseConnection(HTTPHeader header) {
         if (header == null || 
-                "close".equalsIgnoreCase((String) header.get("Connection")) || 
-                "close".equalsIgnoreCase((String) header.get("Proxy-Connection"))) {
+                "close".equalsIgnoreCase(header.getFirstHeaderValue(HTTPHeader.CONNECTION_HEADER)) || 
+                "close".equalsIgnoreCase(header.getFirstHeaderValue(HTTPHeader.PROXY_CONNECTION_HEADER))) {
             return true;
         }
         return false;
     }
     
-    private InputStream createInputStream(Map readHeader, InputStream is) throws IOException {
-        if ("chunked".equalsIgnoreCase((String) readHeader.get("Transfer-Encoding"))) {
+    private InputStream createInputStream(HTTPHeader readHeader, InputStream is) throws IOException {
+        if ("chunked".equalsIgnoreCase(readHeader.getFirstHeaderValue(HTTPHeader.TRANSFER_ENCODING_HEADER))) {
             is = new ChunkedInputStream(is);
-        } else if (readHeader.get("Content-Length") != null) {
-            is = new FixedSizeInputStream(is, Long.parseLong(readHeader.get("Content-Length").toString()));
+        } else if (readHeader.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER) != null) {
+            is = new FixedSizeInputStream(is, Long.parseLong(readHeader.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER).toString()));
         } else if (!hasToCloseConnection(readHeader)) {
             // no content length and no valid transfer-encoding!
             // consider as empty response.
@@ -649,10 +654,10 @@ class HTTPConnection implements IHTTPConnection {
             // and force connection close? (not to read garbage on the next request).
             is = new FixedSizeInputStream(is, 0);
             // this will force connection to close.
-            readHeader.put("Connection", "close");
+            readHeader.setHeaderValue(HTTPHeader.CONNECTION_HEADER, "close");
         } 
         
-        if ("gzip".equals(readHeader.get("Content-Encoding"))) {
+        if ("gzip".equals(readHeader.getFirstHeaderValue(HTTPHeader.CONTENT_ENCODING_HEADER))) {
             is = new GZIPInputStream(is);
         }
         return SVNDebugLog.createLogStream(is);
@@ -664,28 +669,6 @@ class HTTPConnection implements IHTTPConnection {
             return "Basic " + SVNBase64.byteArrayToBase64(auth.getBytes());
         }
         return null;
-    }
-
-    private static String composeAuthResponce(SVNAuthentication credentials, Map credentialsChallenge) throws SVNException {
-        String method = (String) credentialsChallenge.get("");
-        StringBuffer result = new StringBuffer();
-        if ("basic".equalsIgnoreCase(method) && credentials instanceof SVNPasswordAuthentication) {
-            SVNPasswordAuthentication auth = (SVNPasswordAuthentication) credentials;
-            String authStr = auth.getUserName() + ":" + auth.getPassword();
-            authStr = SVNBase64.byteArrayToBase64(authStr.getBytes());
-            result.append("Basic ");
-            result.append(authStr);
-        } else if ("digest".equalsIgnoreCase(method) && credentials instanceof SVNPasswordAuthentication) {
-            SVNPasswordAuthentication auth = (SVNPasswordAuthentication) credentials;
-            result.append("Digest ");
-            HTTPDigestAuth digestAuth = new HTTPDigestAuth(auth, credentialsChallenge);
-            String response = digestAuth.authenticate();
-            result.append(response);
-        } else {
-            SVNErrorManager.authenticationFailed("Authentication method ''{0}'' is not supported", method);
-        }
-
-        return result.toString();
     }
 
     private static synchronized SAXParserFactory getSAXParserFactory() throws FactoryConfigurationError {
