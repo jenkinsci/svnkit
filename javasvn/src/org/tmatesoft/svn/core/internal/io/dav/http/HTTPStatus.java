@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
 import java.io.IOException;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
 
@@ -26,7 +25,7 @@ public class HTTPStatus {
     private String myVersion;
     private int myCode;
     private String myReason;
-    private Map myHeader;
+    private HTTPHeader myHeader;
     private SVNErrorMessage myError;
     
     public static HTTPStatus createHTTPStatus(String statusLine) throws IOException {
@@ -104,11 +103,11 @@ public class HTTPStatus {
         return myVersion;
     }
 
-    public void setHeader(Map header) {
+    public void setHeader(HTTPHeader header) {
         myHeader = header;
     }
     
-    public Map getHeader() {
+    public HTTPHeader getHeader() {
         return myHeader;
     }
 
