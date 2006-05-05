@@ -134,7 +134,7 @@ public class SVNLogClient extends SVNBasicClient {
         if (!tmpFile.isDirectory()) {
             tmpFile = SVNFileUtil.createTempDirectory("annotate");
         }
-        doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev, handler);
+        doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev, handler, null);
     }
     
     /**
@@ -157,24 +157,28 @@ public class SVNLogClient extends SVNBasicClient {
      * @see                   #doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler)
      */
     public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler) throws SVNException {
-        if (startRevision == null || !startRevision.isValid()) {
-            startRevision = SVNRevision.create(1);
-        }
-        SVNRepository repos = createRepository(url, null, pegRevision, endRevision);
-        long endRev = getRevisionNumber(endRevision, repos, null);
-        long startRev = getRevisionNumber(startRevision, repos, null);
-        if (endRev < startRev) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"));
-        }
-        File tmpFile = SVNFileUtil.createTempDirectory("annotate");
-        doAnnotate(repos.getLocation().toDecodedString(), startRev, tmpFile, repos, endRev, handler);
+        doAnnotate(url, pegRevision, startRevision, endRevision, handler, null);
     }
-    
-    private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, ISVNAnnotateHandler handler) throws SVNException {
+
+	public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
+	    if (startRevision == null || !startRevision.isValid()) {
+	        startRevision = SVNRevision.create(1);
+	    }
+	    SVNRepository repos = createRepository(url, null, pegRevision, endRevision);
+	    long endRev = getRevisionNumber(endRevision, repos, null);
+	    long startRev = getRevisionNumber(startRevision, repos, null);
+	    if (endRev < startRev) {
+	        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"));
+	    }
+	    File tmpFile = SVNFileUtil.createTempDirectory("annotate");
+	    doAnnotate(repos.getLocation().toDecodedString(), startRev, tmpFile, repos, endRev, handler, inputEncoding);
+	}
+
+    private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
         SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, this);
         try {
             repos.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, endRev, generator);
-            generator.reportAnnotations(handler, null);
+            generator.reportAnnotations(handler, inputEncoding);
         } finally {
             generator.dispose();
             SVNFileUtil.deleteAll(tmpFile, !"text-base".equals(tmpFile.getName()), null);
