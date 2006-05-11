@@ -345,8 +345,8 @@ class HTTPConnection implements IHTTPConnection {
                     continue;
                 }
                 
-                if (myChallengeCredentials instanceof HTTPNtlmAuthentication2) {
-                    HTTPNtlmAuthentication2 ntlmAuth = (HTTPNtlmAuthentication2)myChallengeCredentials;
+                if (myChallengeCredentials instanceof HTTPNTLMAuthentication) {
+                    HTTPNTLMAuthentication ntlmAuth = (HTTPNTLMAuthentication)myChallengeCredentials;
                     if (ntlmAuth.isInType3State()) {
                         continue;
                     }
