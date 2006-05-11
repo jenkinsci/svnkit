@@ -133,8 +133,7 @@ class DAVCommitEditor implements ISVNEditor {
             copyPath = SVNPathUtil.append(info.baselineBase, info.baselinePath);
 
             // full url.
-            wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() +
-            	newDir.getWorkingURL();
+            wPath = myLocation.setPath(newDir.getWorkingURL(), true).toString();
             myConnection.doCopy(copyPath, wPath, 1);
         } else {
             try {
@@ -231,8 +230,7 @@ class DAVCommitEditor implements ISVNEditor {
             copyPath = SVNPathUtil.append(info.baselineBase, info.baselinePath);
 
             // do "COPY" copyPath to parents working url ?
-            wPath = myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() +
-            	newFile.getWorkingURL();
+            wPath = myLocation.setPath(newFile.getWorkingURL(), true).toString();
             myConnection.doCopy(copyPath, wPath, 0);
             newFile.setAdded(false);
         } else {

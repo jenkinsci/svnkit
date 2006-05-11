@@ -249,9 +249,8 @@ public class DAVConnection {
         String url = getActivityCollectionURL(locationPath, false) + generateUUID();
         HTTPStatus status = myHttpConnection.request("MKACTIVITY", url, null, (StringBuffer) null, 201, 404, null, null);
         if (status.getCode() == 404) {
-            // refetch
             url = getActivityCollectionURL(locationPath, true) + generateUUID();
-            myHttpConnection.request("MKACTIVITY", url, null, (StringBuffer) null, 201, 0, null, null);
+            status = myHttpConnection.request("MKACTIVITY", url, null, (StringBuffer) null, 201, 0, null, null);
         }
         return url;
     }
