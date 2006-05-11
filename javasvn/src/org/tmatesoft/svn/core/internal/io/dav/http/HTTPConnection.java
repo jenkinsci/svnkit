@@ -227,7 +227,8 @@ class HTTPConnection implements IHTTPConnection {
         ISVNSSLManager sslManager = promptSSLClientCertificate(true);
         String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
         SVNAuthentication httpAuth = myLastValidAuth;
-        if (httpAuth == null && myRepository.getAuthenticationManager() != null && myRepository.getAuthenticationManager().isAuthenticationForced()) {
+        boolean isAuthForced = myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().isAuthenticationForced() : false;
+        if (httpAuth == null && isAuthForced) {
             httpAuth = myRepository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, sslRealm, null);
             myChallengeCredentials = new HTTPBasicAuthentication((SVNPasswordAuthentication)httpAuth);
             myChallengeCredentials.setChallengeParameter("methodname", method);
@@ -306,9 +307,6 @@ class HTTPConnection implements IHTTPConnection {
                 close();
                 err = request.getErrorMessage();
             } else if (status.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-                myLastValidAuth = null;
-                close();
-                
                 Collection authHeaderValues = request.getResponseHeader().getHeaderValues(HTTPHeader.AUTHENTICATE_HEADER);
                 if (authHeaderValues == null || authHeaderValues.size() == 0) {
                     err = request.getErrorMessage();
@@ -320,9 +318,20 @@ class HTTPConnection implements IHTTPConnection {
                     SVNErrorManager.error(status.getError());
                     return status;  
                 }
+
+                //we should work around a situation when a server
+                //does not support Basic authentication while we're 
+                //forcing it, credentials should not be immediately
+                //thrown away
+                boolean skip = false;
+                if (isAuthForced) {
+                    if (httpAuth != null && myChallengeCredentials != null && !HTTPAuthentication.isSchemeSupportedByServer(myChallengeCredentials.getAuthenticationScheme(), authHeaderValues)) {
+                        skip = true;
+                    }
+                }
                 
                 try {
-                    myChallengeCredentials = HTTPAuthentication.parseAuthParameters(authHeaderValues); 
+                    myChallengeCredentials = HTTPAuthentication.parseAuthParameters(authHeaderValues, myChallengeCredentials); 
                 } catch (SVNException svne) {
                     err = svne.getErrorMessage(); 
                     break;
@@ -330,6 +339,21 @@ class HTTPConnection implements IHTTPConnection {
 
                 myChallengeCredentials.setChallengeParameter("methodname", method);
                 myChallengeCredentials.setChallengeParameter("uri", path);
+                
+                if (skip) {
+                    close();
+                    continue;
+                }
+                
+                if (myChallengeCredentials instanceof HTTPNtlmAuthentication) {
+                    HTTPNtlmAuthentication ntlmAuth = (HTTPNtlmAuthentication)myChallengeCredentials;
+                    if (ntlmAuth.isInType3State()) {
+                        continue;
+                    }
+                }
+
+                myLastValidAuth = null;
+                close();
                 
                 ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
                 if (authManager == null) {

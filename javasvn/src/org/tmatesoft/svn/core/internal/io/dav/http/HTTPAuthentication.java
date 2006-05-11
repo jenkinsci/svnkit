@@ -76,7 +76,7 @@ abstract class HTTPAuthentication {
         return null;
     }
     
-    public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues) throws SVNException {
+    public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues, HTTPAuthentication prevResponse) throws SVNException {
         if (authHeaderValues == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Missing HTTP authorization method"); 
             SVNErrorManager.error(err);
@@ -156,9 +156,18 @@ abstract class HTTPAuthentication {
                 digestAuth.init();
                 
                 break;
+            } else if ("NTLM".equalsIgnoreCase(method)) {
+                HTTPNtlmAuthentication ntlmAuth = null;
+                if (source.length() == 0) {
+                    ntlmAuth = new HTTPNtlmAuthentication(null);
+                    ntlmAuth.setType1State();
+                } else {
+                    ntlmAuth = (HTTPNtlmAuthentication)prevResponse;
+                    ntlmAuth.parseChallenge(source);
+                    ntlmAuth.setType3State();
+                }
+                auth = ntlmAuth;
             }
-            //TODO: add NTLM authentication
-
         }
 
         if (auth == null) {
@@ -166,8 +175,37 @@ abstract class HTTPAuthentication {
             SVNErrorManager.error(err);
         }
         
+        if (prevResponse != null) {
+            auth.setCredentials(prevResponse.getCredentials());
+        }
+        
         return auth;
     }
+    
+    public static boolean isSchemeSupportedByServer(String scheme, Collection authHeaderValues) throws SVNException {
+        if (authHeaderValues == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Missing HTTP authorization method"); 
+            SVNErrorManager.error(err);
+        }
+
+        String authHeader = null;
+        for (Iterator authSchemes = authHeaderValues.iterator(); authSchemes.hasNext();) {
+            authHeader = (String)authSchemes.next();
+            String source = authHeader.trim();
+            int index = source.indexOf(' ');
+            
+            if (index <= 0) {
+                index = source.length();
+            }
+            String method = source.substring(0, index);
+            if (method.equalsIgnoreCase(scheme)) {
+                return true;
+            }
+        }   
+        return false;
+    }
+    
+    public abstract String getAuthenticationScheme();
     
     public abstract String authenticate() throws SVNException;
 

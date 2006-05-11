@@ -31,4 +31,8 @@ class HTTPBasicAuthentication extends HTTPAuthentication {
         return result.toString();
     }
 
+    public String getAuthenticationScheme(){
+        return "Basic";
+    }
+
 }
