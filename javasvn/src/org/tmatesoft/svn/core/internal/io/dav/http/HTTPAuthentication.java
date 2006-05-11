@@ -158,12 +158,12 @@ abstract class HTTPAuthentication {
                 
                 break;
             } else if ("NTLM".equalsIgnoreCase(method)) {
-                HTTPNtlmAuthentication ntlmAuth = null;
+                HTTPNtlmAuthentication2 ntlmAuth = null;
                 if (source.length() == 0) {
-                    ntlmAuth = new HTTPNtlmAuthentication(null);
+                    ntlmAuth = new HTTPNtlmAuthentication2(null);
                     ntlmAuth.setType1State();
                 } else {
-                    ntlmAuth = (HTTPNtlmAuthentication)prevResponse;
+                    ntlmAuth = (HTTPNtlmAuthentication2)prevResponse;
                     ntlmAuth.parseChallenge(source);
                     ntlmAuth.setType3State();
                 }

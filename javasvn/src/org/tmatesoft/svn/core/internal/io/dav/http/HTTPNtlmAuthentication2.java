@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 
-class HTTPNtlmAuthentication extends HTTPAuthentication {
+class HTTPNtlmAuthentication2 extends HTTPAuthentication {
     private static final String DEFAULT_CHARSET = "ASCII";
     private static final String PROTOCOL_NAME = "NTLMSSP";
     private static final int LM_RESPONSE_LENGTH = 24;
@@ -47,7 +47,7 @@ class HTTPNtlmAuthentication extends HTTPAuthentication {
     private int myPosition; 
     private byte[] myNonce;
     
-    public HTTPNtlmAuthentication(SVNPasswordAuthentication credentials){
+    public HTTPNtlmAuthentication2(SVNPasswordAuthentication credentials){
         super(credentials);
         myState = UNINITIATED;
     }
