@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -208,5 +209,17 @@ abstract class HTTPAuthentication {
     public abstract String getAuthenticationScheme();
     
     public abstract String authenticate() throws SVNException;
+
+    protected static byte[] getASCIIBytes(final String data) {
+        return getBytes(data, "US-ASCII");
+    }
+
+    protected static byte[] getBytes(final String data, String charset) {
+        try {
+            return data.getBytes(charset);
+        } catch (UnsupportedEncodingException e) {
+            return data.getBytes();
+        }
+    }
 
 }

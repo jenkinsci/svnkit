@@ -19,7 +19,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
@@ -123,7 +122,7 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
         tmp.append(pwd);
         String a1 = tmp.toString();
         if(algorithm.equals("MD5-sess")) {
-            String tmp2=encode(md5Helper.digest(SVNEncodingUtil.getBytes(a1, charset)));
+            String tmp2=encode(md5Helper.digest(HTTPAuthentication.getBytes(a1, charset)));
             StringBuffer tmp3 = new StringBuffer(tmp2.length() + nonce.length() + myCnonce.length() + 2);
             tmp3.append(tmp2);
             tmp3.append(':');
@@ -133,9 +132,9 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
             a1 = tmp3.toString();
         }
 
-        String md5a1 = encode(md5Helper.digest(SVNEncodingUtil.getBytes(a1, charset)));
+        String md5a1 = encode(md5Helper.digest(HTTPAuthentication.getBytes(a1, charset)));
         String a2 = method + ":" + uri;
-        String md5a2 = encode(md5Helper.digest(SVNEncodingUtil.getAsciiBytes(a2)));
+        String md5a2 = encode(md5Helper.digest(HTTPAuthentication.getASCIIBytes(a2)));
 
         StringBuffer tmp2;
         if (myQop == null) {
@@ -162,7 +161,7 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
             tmp2.append(md5a2);
         }
 
-        return encode(md5Helper.digest(SVNEncodingUtil.getAsciiBytes(tmp2.toString())));
+        return encode(md5Helper.digest(HTTPAuthentication.getASCIIBytes(tmp2.toString())));
     }
 
     private String getParameter(String name) {
@@ -170,7 +169,7 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
     }
 
     private String getParameter(String name, String defaultValue) {
-        String value = getChallengeParameter(name);//(String) challengeParams.get(name);
+        String value = getChallengeParameter(name);
         if (value == null) {
             value = defaultValue;
         }
@@ -188,7 +187,7 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
             return null;
         }
         cnonce = Long.toString(System.currentTimeMillis());
-        cnonce = encode(md5Helper.digest(SVNEncodingUtil.getAsciiBytes(cnonce)));
+        cnonce = encode(md5Helper.digest(HTTPAuthentication.getASCIIBytes(cnonce)));
         return cnonce;
     }
 

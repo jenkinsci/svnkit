@@ -314,18 +314,6 @@ public class SVNEncodingUtil {
         return sb;
     }
 
-    public static byte[] getAsciiBytes(final String data) {
-        return getBytes(data, "US-ASCII");
-    }
-
-    public static byte[] getBytes(final String data, String charset) {
-        try {
-            return data.getBytes(charset);
-        } catch (UnsupportedEncodingException e) {
-            return data.getBytes();
-        }
-    }
-
     private static final byte[] uri_char_validity = new byte[] {
         0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0,

@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 
@@ -99,11 +98,11 @@ class HTTPNtlmAuthentication extends HTTPAuthentication {
         }
         
         String base64EncodedResponse = SVNBase64.byteArrayToBase64(response);
-        return new String(SVNEncodingUtil.getAsciiBytes(base64EncodedResponse));
+        return new String(HTTPAuthentication.getASCIIBytes(base64EncodedResponse));
     }
     
     public void parseChallenge(String challenge){
-        byte[] challengeBase64Bytes = SVNEncodingUtil.getBytes(challenge, DEFAULT_CHARSET);
+        byte[] challengeBase64Bytes = HTTPAuthentication.getBytes(challenge, DEFAULT_CHARSET);
         byte[] resultBuffer = new byte[challengeBase64Bytes.length];
         SVNBase64.base64ToByteArray(new StringBuffer(new String(challengeBase64Bytes)), resultBuffer);
         myNonce = new byte[8];
@@ -143,9 +142,9 @@ class HTTPNtlmAuthentication extends HTTPAuthentication {
         hostName = hostName.toUpperCase();
         //username = username.toUpperCase();
         
-        byte[] protocol = SVNEncodingUtil.getBytes(PROTOCOL_NAME, DEFAULT_CHARSET);
-        byte[] domainBytes = SVNEncodingUtil.getBytes(domain, DEFAULT_CHARSET);
-        byte[] hostNameBytes = SVNEncodingUtil.getBytes(hostName, DEFAULT_CHARSET);
+        byte[] protocol = HTTPAuthentication.getBytes(PROTOCOL_NAME, DEFAULT_CHARSET);
+        byte[] domainBytes = HTTPAuthentication.getBytes(domain, DEFAULT_CHARSET);
+        byte[] hostNameBytes = HTTPAuthentication.getBytes(hostName, DEFAULT_CHARSET);
         byte[] domLen = convertToShortValue(domainBytes.length);
         byte[] hostLen = convertToShortValue(hostNameBytes.length);
 
