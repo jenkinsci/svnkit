@@ -46,10 +46,24 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     private byte[] myResponse;
     private int myPosition; 
     private byte[] myNonce;
+    private boolean myIsNegotiateLocalCall;
     
     public HTTPNTLMAuthentication(SVNPasswordAuthentication credentials){
         super(credentials);
         myState = UNINITIATED;
+        myIsNegotiateLocalCall = false;
+    }
+    
+    protected HTTPNTLMAuthentication (String name, String password) {
+        super(name, password);
+        myState = UNINITIATED;
+        myIsNegotiateLocalCall = false;
+    }
+
+    protected HTTPNTLMAuthentication () {
+        super();
+        myState = UNINITIATED;
+        myIsNegotiateLocalCall = false;
     }
     
     public void setType1State(){
@@ -104,11 +118,42 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     public void parseChallenge(String challenge){
         byte[] challengeBase64Bytes = HTTPAuthentication.getBytes(challenge, DEFAULT_CHARSET);
         byte[] resultBuffer = new byte[challengeBase64Bytes.length];
-        SVNBase64.base64ToByteArray(new StringBuffer(new String(challengeBase64Bytes)), resultBuffer);
+        int resultLength = SVNBase64.base64ToByteArray(new StringBuffer(new String(challengeBase64Bytes)), resultBuffer);
         myNonce = new byte[8];
         for (int i = 0; i < 8; i++) {
             myNonce[i] = resultBuffer[i + 24];
         }
+        byte[] flagBytes = new byte[4];
+        for (int i = 0; i < 4; i++) {
+            flagBytes[i] = resultBuffer[i + 20];
+        }
+        long flags = fromLong(flagBytes);
+        //check for local call
+        if ((flags & 0x00004000) != 0 && resultLength >= 40) {
+            byte[] contextHBytes = new byte[4];
+            for (int i = 0; i < 4; i++) {
+                contextHBytes[i] = resultBuffer[i + 32];
+            }
+            long contextH = fromLong(contextHBytes);
+            if (contextH != 0) {
+                myIsNegotiateLocalCall = true;
+            } else {
+                myIsNegotiateLocalCall = false;
+            }
+        } else {
+            myIsNegotiateLocalCall = false;
+        }
+        
+    }
+    
+    private long fromLong(byte[] num){
+        long l = 0;
+        for (int i = 0; i < 4 ; i++) {
+            int b = num[i] & 0xff;
+            b = b << i*8;
+            l |=  b;
+        }
+        return l;
     }
     
     public String authenticate() throws SVNException {
@@ -124,7 +169,11 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         int slashInd = login != null ? login.indexOf('\\') : -1; 
         if (slashInd != -1) {
             domain = login.substring(0, slashInd);
-            username = login.substring(slashInd - 1 + "\\\\".length());
+            int lastInd = slashInd + 1;
+            while (lastInd < login.length() && login.charAt(lastInd) == '\\') {
+                lastInd++;
+            }
+            username = login.substring(lastInd);
         } else {
             domain = "";
             username = login;
@@ -140,7 +189,6 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         
         domain = domain.toUpperCase();
         hostName = hostName.toUpperCase();
-        //username = username.toUpperCase();
         
         byte[] protocol = HTTPAuthentication.getBytes(PROTOCOL_NAME, DEFAULT_CHARSET);
         byte[] domainBytes = HTTPAuthentication.getBytes(domain, DEFAULT_CHARSET);
@@ -199,90 +247,179 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             addBytes(domainBytes);
         } else if (myState == TYPE3) {
             byte[] userBytes = username.getBytes();
-            int responseLength = 64 + LM_RESPONSE_LENGTH + domainBytes.length + hostNameBytes.length + userBytes.length;
             
-            initResponse(responseLength);
+            if (!myIsNegotiateLocalCall) {
+                int responseLength = 64 + LM_RESPONSE_LENGTH + domainBytes.length + hostNameBytes.length + userBytes.length;
+                
+                initResponse(responseLength);
+    
+                addBytes(protocol);
+                addByte((byte) 0);
+    
+                //Type3
+                addByte((byte) 3);
+                addByte((byte) 0);
+                addByte((byte) 0);
+                addByte((byte) 0);
+    
+                byte[] lmResponseLength = convertToShortValue(24); 
+                // LM Response Length 
+                addBytes(lmResponseLength);
+                // LM Response allocated space
+                addBytes(lmResponseLength);
+    
+                // LM Response Offset
+                addBytes(convertToShortValue(responseLength - 24));
+                addByte((byte) 0);
+                addByte((byte) 0);
+    
+                byte[] ntlmResponseLength = convertToShortValue(0); 
+                // NTLM Response Length 
+                addBytes(ntlmResponseLength);
+                // NTLM Response allocated space
+                addBytes(ntlmResponseLength);
+    
+                byte[] responseLengthShortBytes = convertToShortValue(responseLength); 
+                // NTLM Response Offset
+                addBytes(responseLengthShortBytes);
+                addByte((byte) 0);
+                addByte((byte) 0);
+    
+                // Domain length
+                addBytes(domLen);
+                // Domain allocated space
+                addBytes(domLen);
+                
+                // Domain Offset
+                addBytes(convertToShortValue(64));
+                addByte((byte) 0);
+                addByte((byte) 0);
+    
+                byte[] usernameLength = convertToShortValue(userBytes.length); 
+                // Username Length 
+                addBytes(usernameLength);
+                // Username allocated space
+                addBytes(usernameLength);
+    
+                // User offset
+                addBytes(convertToShortValue(64 + domainBytes.length));
+                addByte((byte) 0);
+                addByte((byte) 0);
+    
+                // Host name length
+                addBytes(hostLen);
+                // Host name allocated space
+                addBytes(hostLen);
+    
+                // Host offset
+                addBytes(convertToShortValue(64 + domainBytes.length + userBytes.length));
+    
+                for (int i = 0; i < 6; i++) {
+                    addByte((byte) 0);
+                }
+    
+                // Message length
+                addBytes(responseLengthShortBytes);
+                addByte((byte) 0);
+                addByte((byte) 0);
+    
+                // Flags
+                addByte((byte) 6);
+                addByte((byte) 82);
+                addByte((byte) 0);
+                addByte((byte) 0);
+    
+                addBytes(domainBytes);
+                addBytes(userBytes);
+                addBytes(hostNameBytes);
+                
+                String password = getPassword();
+                addBytes(hashPassword(password != null ? password : ""));
+            } else {
+                int responseLength = 64;
+                byte[] responseLengthShortBytes = convertToShortValue(responseLength); 
+                initResponse(responseLength);
 
-            addBytes(protocol);
-            addByte((byte) 0);
+                addBytes(protocol);
+                addByte((byte) 0);
 
-            //Type3
-            addByte((byte) 3);
-            addByte((byte) 0);
-            addByte((byte) 0);
-            addByte((byte) 0);
+                //Type3
+                addByte((byte) 3);
+                addByte((byte) 0);
+                addByte((byte) 0);
+                addByte((byte) 0);
 
-            byte[] lmResponseLength = convertToShortValue(24); 
-            // LM Response Length 
-            addBytes(lmResponseLength);
-            // LM Response allocated space
-            addBytes(lmResponseLength);
+                // LM Response Length 
+                addByte((byte)0);
+                addByte((byte)0);
+                // LM Response allocated space
+                addByte((byte)0);
+                addByte((byte)0);
 
-            // LM Response Offset
-            addBytes(convertToShortValue(responseLength - 24));
-            addByte((byte) 0);
-            addByte((byte) 0);
 
-            byte[] ntlmResponseLength = convertToShortValue(0); 
-            // NTLM Response Length 
-            addBytes(ntlmResponseLength);
-            // NTLM Response allocated space
-            addBytes(ntlmResponseLength);
+                // LM Response Offset
+                addBytes(responseLengthShortBytes);
+                addByte((byte) 0);
+                addByte((byte) 0);
 
-            byte[] responseLengthShortBytes = convertToShortValue(responseLength); 
-            // NTLM Response Offset
-            addBytes(responseLengthShortBytes);
-            addByte((byte) 0);
-            addByte((byte) 0);
+                // NTLM Response Length 
+                addByte((byte)0);
+                addByte((byte)0);
+                // NTLM Response allocated space
+                addByte((byte)0);
+                addByte((byte)0);
+                // NTLM Response Offset
+                addBytes(responseLengthShortBytes);
+                addByte((byte) 0);
+                addByte((byte) 0);
 
-            // Domain length
-            addBytes(domLen);
-            // Domain allocated space
-            addBytes(domLen);
-            
-            // Domain Offset
-            addBytes(convertToShortValue(64));
-            addByte((byte) 0);
-            addByte((byte) 0);
+                // Domain length
+                addByte((byte)0);
+                addByte((byte)0);
+                // Domain allocated space
+                addByte((byte)0);
+                addByte((byte)0);
+                // Domain Offset
+                addBytes(responseLengthShortBytes);
+                addByte((byte) 0);
+                addByte((byte) 0);
 
-            byte[] usernameLength = convertToShortValue(userBytes.length); 
-            // Username Length 
-            addBytes(usernameLength);
-            // Username allocated space
-            addBytes(usernameLength);
+                // Username Length 
+                addByte((byte)0);
+                addByte((byte)0);
+                // Username allocated space
+                addByte((byte)0);
+                addByte((byte)0);
+                // User offset
+                addBytes(responseLengthShortBytes);
+                addByte((byte) 0);
+                addByte((byte) 0);
 
-            // User offset
-            addBytes(convertToShortValue(64 + domainBytes.length));
-            addByte((byte) 0);
-            addByte((byte) 0);
+                // Host name length
+                addByte((byte)0);
+                addByte((byte)0);
+                // Host name allocated space
+                addByte((byte)0);
+                addByte((byte)0);
+                // Host offset
+                addBytes(responseLengthShortBytes);
 
-            // Host name length
-            addBytes(hostLen);
-            // Host name allocated space
-            addBytes(hostLen);
+                for (int i = 0; i < 6; i++) {
+                    addByte((byte) 0);
+                }
 
-            // Host offset
-            addBytes(convertToShortValue(64 + domainBytes.length + userBytes.length));
+                // Message length
+                addBytes(responseLengthShortBytes);
+                addByte((byte) 0);
+                addByte((byte) 0);
 
-            for (int i = 0; i < 6; i++) {
+                // Flags
+                addByte((byte) 6);
+                addByte((byte) 82);
+                addByte((byte) 0);
                 addByte((byte) 0);
             }
-
-            // Message length
-            addBytes(responseLengthShortBytes);
-            addByte((byte) 0);
-            addByte((byte) 0);
-
-            // Flags
-            addByte((byte) 6);
-            addByte((byte) 82);
-            addByte((byte) 0);
-            addByte((byte) 0);
-
-            addBytes(domainBytes);
-            addBytes(userBytes);
-            addBytes(hostNameBytes);
-            addBytes(hashPassword(getPassword()));
+            setType1State();
         }
         
         return "NTLM " + getResponse();

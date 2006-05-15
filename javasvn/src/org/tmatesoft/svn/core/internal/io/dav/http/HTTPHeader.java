@@ -32,6 +32,7 @@ public class HTTPHeader {
     public static final String CONTENT_ENCODING_HEADER = "Content-Encoding";
     public static final String CONTENT_TYPE_HEADER = "Content-Type";
     public static final String AUTHENTICATE_HEADER = "WWW-Authenticate";
+    public static final String PROXY_AUTHENTICATE_HEADER = "Proxy-Authenticate";
     public static final String LOCATION_HEADER = "Location";
     public static final String LOCK_OWNER_HEADER = "X-SVN-Lock-Owner";
     public static final String CREATION_DATE_HEADER = "X-SVN-Creation-Date";

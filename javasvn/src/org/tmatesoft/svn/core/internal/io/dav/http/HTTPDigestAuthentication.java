@@ -40,6 +40,14 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
         super(credentials);
     }
 
+    protected HTTPDigestAuthentication (String name, String password) {
+        super(name, password);
+    }
+
+    protected HTTPDigestAuthentication () {
+        super();
+    }
+
     public void init() throws SVNException {
         String qop = getChallengeParameter("qop");
         String selectedQop = null;
@@ -61,8 +69,11 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
     }
     
     public String authenticate() throws SVNException {
+        if (getUserName() == null || getPassword() == null) {
+            return null;
+        }
+        
         String uname = getUserName();
-
         String digest = createDigest(uname, getPassword(), "US-ASCII");
 
         String uri = getParameter("uri");

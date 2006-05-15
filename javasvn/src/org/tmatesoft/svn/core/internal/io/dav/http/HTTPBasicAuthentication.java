@@ -21,13 +21,24 @@ class HTTPBasicAuthentication extends HTTPAuthentication {
         super(credentials);
     }
 
+    protected HTTPBasicAuthentication (String name, String password) {
+        super(name, password);
+    }
+
+    protected HTTPBasicAuthentication () {
+        super();
+    }
+
     public String authenticate() {
+        if (getUserName() == null || getPassword() == null) {
+            return null;
+        }
+        
         StringBuffer result = new StringBuffer();
         String authStr = getUserName() + ":" + getPassword();
         authStr = SVNBase64.byteArrayToBase64(authStr.getBytes());
         result.append("Basic ");
         result.append(authStr);
-
         return result.toString();
     }
 

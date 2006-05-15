@@ -30,10 +30,22 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 abstract class HTTPAuthentication {
 
     private Map myChallengeParameters;
-    private SVNPasswordAuthentication myOriginalCredentials;
+    private String myUserName;
+    private String myPassword;
     
-    public HTTPAuthentication (SVNPasswordAuthentication credentials) {
-        myOriginalCredentials = credentials;
+    protected HTTPAuthentication (SVNPasswordAuthentication credentials) {
+        if (credentials != null) {
+            myUserName = credentials.getUserName();
+            myPassword = credentials.getPassword();
+        }
+    }
+
+    protected HTTPAuthentication (String name, String password) {
+        myUserName = name;
+        myPassword = password;
+    }
+
+    protected HTTPAuthentication () {
     }
 
     public void setChallengeParameter(String name, String value) {
@@ -55,26 +67,27 @@ abstract class HTTPAuthentication {
         return myChallengeParameters;
     }
     
-    public SVNPasswordAuthentication getCredentials() {
-        return myOriginalCredentials;
-    }
-    
-    public void setCredentials(SVNPasswordAuthentication originalCredentials) {
-        myOriginalCredentials = originalCredentials;
+    public void setCredentials(SVNPasswordAuthentication credentials) {
+        if (credentials != null) {
+            myUserName = credentials.getUserName();
+            myPassword = credentials.getPassword();
+        }
     }
 
     public String getUserName() {
-        if (myOriginalCredentials != null) {
-            return myOriginalCredentials.getUserName();
-        }
-        return null;
+        return myUserName;
     }
     
     public String getPassword() {
-        if (myOriginalCredentials != null) {
-            return myOriginalCredentials.getPassword();
-        }
-        return null;
+        return myPassword;
+    }
+
+    public void setUserName(String name) {
+        myUserName = name;
+    }
+    
+    public void setPassword(String password) {
+        myPassword = password;
     }
     
     public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues, HTTPAuthentication prevResponse) throws SVNException {
@@ -99,11 +112,10 @@ abstract class HTTPAuthentication {
                 }
             }
             String method = source.substring(0, index);
-            //parameters.put("", method);
         
             source = source.substring(index).trim();
             if ("Basic".equalsIgnoreCase(method)) {
-                auth = new HTTPBasicAuthentication(null);
+                auth = new HTTPBasicAuthentication();
                 
                 if (source.indexOf("realm=") >= 0) {
                     source = source.substring(source.indexOf("realm=") + "realm=".length());
@@ -119,7 +131,7 @@ abstract class HTTPAuthentication {
                 }
                 break;
             } else if ("Digest".equalsIgnoreCase(method)) {
-                auth = new HTTPDigestAuthentication(null);
+                auth = new HTTPDigestAuthentication();
                 
                 char[] chars = source.toCharArray();
                 int tokenIndex = 0;
@@ -160,7 +172,7 @@ abstract class HTTPAuthentication {
             } else if ("NTLM".equalsIgnoreCase(method)) {
                 HTTPNTLMAuthentication ntlmAuth = null;
                 if (source.length() == 0) {
-                    ntlmAuth = new HTTPNTLMAuthentication(null);
+                    ntlmAuth = new HTTPNTLMAuthentication();
                     ntlmAuth.setType1State();
                 } else {
                     ntlmAuth = (HTTPNTLMAuthentication)prevResponse;
@@ -168,6 +180,7 @@ abstract class HTTPAuthentication {
                     ntlmAuth.setType3State();
                 }
                 auth = ntlmAuth;
+                break;
             }
         }
 
@@ -177,7 +190,8 @@ abstract class HTTPAuthentication {
         }
         
         if (prevResponse != null) {
-            auth.setCredentials(prevResponse.getCredentials());
+            auth.setUserName(prevResponse.getUserName());
+            auth.setPassword(prevResponse.getPassword());
         }
         
         return auth;
