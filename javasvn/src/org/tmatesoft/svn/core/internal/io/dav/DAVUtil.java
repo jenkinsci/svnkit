@@ -96,6 +96,17 @@ public class DAVUtil {
         DAVProperties props = null;
         String originalPath = fullPath;
         String loppedPath = "";
+        if ("".equals(fullPath)) {
+            props = getStartingProperties(connection, fullPath, null);
+            if (props != null) {
+                if (props.getPropertyValue(DAVElement.REPOSITORY_UUID) != null && repos != null) {
+                    repos.setRepositoryUUID(props.getPropertyValue(DAVElement.REPOSITORY_UUID));
+                }
+                props.setLoppedPath(loppedPath);
+            }
+            return props;
+        }
+        
         while(!"".equals(fullPath)) {
             SVNErrorMessage err = null;
             try {
@@ -119,7 +130,7 @@ public class DAVUtil {
                 SVNErrorMessage err2 = SVNErrorMessage.create(err.getErrorCode(), "The path was not part of repository");
                 SVNErrorManager.error(err2, err);
             }
-        }
+        }        
         if ("".equals(fullPath)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "No part of path ''{0}'' was found in repository HEAD", originalPath);
             SVNErrorManager.error(err);

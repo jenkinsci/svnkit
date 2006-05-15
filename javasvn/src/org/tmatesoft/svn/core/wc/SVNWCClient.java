@@ -1731,7 +1731,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNStatusClient statusClient = new SVNStatusClient((ISVNAuthenticationManager) null, getOptions());
         statusClient.setIgnoreExternals(true);
         final long[] maxRevision = new long[1];
-        final long[] minRevision = new long[1];
+        final long[] minRevision = new long[] {-1};
         final boolean[] switched = new boolean[2];
         final String[] wcURL = new String[1];
         statusClient.doStatus(path, true, false, true, false, false, new ISVNStatusHandler() {

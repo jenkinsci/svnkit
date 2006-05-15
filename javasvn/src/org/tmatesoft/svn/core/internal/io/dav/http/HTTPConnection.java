@@ -216,6 +216,10 @@ class HTTPConnection implements IHTTPConnection {
     }
     
     public HTTPStatus request(String method, String path, HTTPHeader header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
+        if ("".equals(path) || path == null) {
+            path = "/";
+        }
+        
         if (myChallengeCredentials != null) {
             myChallengeCredentials.setChallengeParameter("methodname", method);
             myChallengeCredentials.setChallengeParameter("uri", path);
