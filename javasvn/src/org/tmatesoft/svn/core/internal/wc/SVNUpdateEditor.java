@@ -139,7 +139,7 @@ public class SVNUpdateEditor implements ISVNEditor {
             // notification.
             return;
         }
-        myWCAccess.handleEvent(SVNEventFactory.createUpdateDeleteEvent(myWCAccess, myCurrentDirectory.getDirectory(), name));
+        myWCAccess.handleEvent(SVNEventFactory.createUpdateDeleteEvent(myWCAccess, myCurrentDirectory.getDirectory(), kind, name));
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {

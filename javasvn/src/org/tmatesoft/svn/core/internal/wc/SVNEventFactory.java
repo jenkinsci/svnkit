@@ -162,11 +162,10 @@ public class SVNEventFactory {
                 null, null, null, null, null, null);
     }
 
-    public static SVNEvent createUpdateDeleteEvent(SVNWCAccess source,
-            SVNDirectory dir, String name) {
-        // kind should be 'unknown' for deleted entries
+    public static SVNEvent createUpdateDeleteEvent(SVNWCAccess source, 
+            SVNDirectory dir, SVNNodeKind kind, String name) {
         return new SVNEvent(source, dir, name, SVNEventAction.UPDATE_DELETE,
-                SVNNodeKind.UNKNOWN, -1, null, null, null, null, null, null);
+                kind, -1, null, null, null, null, null, null);
     }
 
     public static SVNEvent createRestoredEvent(SVNWCAccess source,
