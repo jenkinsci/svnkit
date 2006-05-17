@@ -90,18 +90,11 @@ public class SVNUUIDGenerator {
         }
         String[] hexNumbers = new String[16];
         for (int i = 0; i < 16; i++) {
-            hexNumbers[i] = getHexNumberFromByte(uuid[i]);
+            hexNumbers[i] = SVNFormatUtil.getHexNumberFromByte(uuid[i]);
         }
         String formatString = "{0}{1}{2}{3}-{4}{5}-{6}{7}-{8}{9}-{10}{11}{12}{13}{14}{15}";
         Object args = hexNumbers;
         return MessageFormat.format(formatString, (Object[]) args);
-    }
-
-    public static String getHexNumberFromByte(byte b) {
-        int lo = b & 0xf;
-        int hi = (b >> 4) & 0xf;
-        String hex = Integer.toHexString(hi) + Integer.toHexString(lo);
-        return hex;
     }
 
     private static void initState() throws SVNException {

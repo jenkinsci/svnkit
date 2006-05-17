@@ -102,4 +102,11 @@ public class SVNFormatUtil {
         }
         return result.toString();
     }
+
+    public static String getHexNumberFromByte(byte b) {
+        int lo = b & 0xf;
+        int hi = (b >> 4) & 0xf;
+        String hex = Integer.toHexString(hi) + Integer.toHexString(lo);
+        return hex;
+    }
 }

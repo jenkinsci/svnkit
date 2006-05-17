@@ -708,6 +708,10 @@ public class FSCommitEditor implements ISVNEditor {
 
         File dstRevFile = myFSFS.getNewRevisionFile(newRevision);
         SVNFileUtil.rename(revisionPrototypeFile, dstRevFile);
+
+        String commitTime = SVNTimeUtil.formatDate(new Date(System.currentTimeMillis()));
+        myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNRevisionProperty.DATE, commitTime);
+        
         File txnPropsFile = myFSFS.getTransactionPropertiesFile(myTxn.getTxnId());
         File dstRevPropsFile = myFSFS.getNewRevisionPropertiesFile(newRevision);
         SVNFileUtil.rename(txnPropsFile, dstRevPropsFile);

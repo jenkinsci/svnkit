@@ -15,6 +15,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -27,7 +30,9 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 class HTTPNTLMAuthentication extends HTTPAuthentication {
@@ -40,7 +45,75 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     private static byte[] ourMagicBytes = {
         (byte) 0x4B, (byte) 0x47, (byte) 0x53, (byte) 0x21, 
         (byte) 0x40, (byte) 0x23, (byte) 0x24, (byte) 0x25
-        };
+    };
+    
+    private static final long NEGOTIATE_UNICODE = 0x00000001L;  
+    private static final long NEGOTIATE_OEM = 0x00000002L;  
+    private static final long REQUEST_TARGET = 0x00000004L;  
+    private static final long NEGOTIATE_SIGN = 0x00000010L;  
+    private static final long NEGOTIATE_SEAL = 0x00000020L;  
+    private static final long NEGOTIATE_DATAGRAM_STYLE = 0x00000040L;  
+    private static final long NEGOTIATE_LAN_MANAGER_KEY = 0x00000080L;  
+    private static final long NEGOTIATE_NETWARE = 0x00000100L;  
+    private static final long NEGOTIATE_NTLM = 0x00000200L;  
+    private static final long NEGOTIATE_DOMAIN_SUPPLIED = 0x00001000L;  
+    private static final long NEGOTIATE_WORKSTATION_SUPPLIED = 0x00002000L;  
+    private static final long NEGOTIATE_LOCAL_CALL = 0x00004000L;  
+    private static final long NEGOTIATE_ALWAYS_SIGN = 0x00008000L;  
+    private static final long TARGET_TYPE_DOMAIN = 0x00010000L;  
+    private static final long TARGET_TYPE_SERVER = 0x00020000L;  
+    private static final long TARGET_TYPE_SHARE = 0x00040000L;  
+    private static final long NEGOTIATE_NTLM2_KEY = 0x00080000L;  
+    private static final long REQUEST_INIT_RESPONSE = 0x00100000L;  
+    private static final long REQUEST_ACCEPT_RESPONSE = 0x00200000L;  
+    private static final long REQUEST_NON_NT_SESSION_KEY = 0x00400000L;  
+    private static final long NEGOTIATE_TARGET_INFO = 0x00800000L;  
+    private static final long NEGOTIATE_128 = 0x20000000L;  
+    private static final long NEGOTIATE_KEY_EXCHANGE = 0x40000000L;  
+    private static final long NEGOTIATE_56 = 0x80000000L;  
+    
+    private static Map ourFlags = new TreeMap();
+    static {
+        ourFlags.put(new Long(NEGOTIATE_UNICODE), "0x00000001 (Negotiate Unicode)");
+        ourFlags.put(new Long(NEGOTIATE_OEM), "0x00000002 (Negotiate OEM)");
+        ourFlags.put(new Long(REQUEST_TARGET), "0x00000004 (Request Target)");
+        ourFlags.put(new Long(0x00000008L), "0x00000008 (Unknown)");
+        ourFlags.put(new Long(NEGOTIATE_SIGN), "0x00000010 (Negotiate Sign)");
+        ourFlags.put(new Long(NEGOTIATE_SEAL), "0x00000020 (Negotiate Seal)");
+        ourFlags.put(new Long(NEGOTIATE_DATAGRAM_STYLE), "0x00000040 (Negotiate Datagram Style)");
+        ourFlags.put(new Long(NEGOTIATE_LAN_MANAGER_KEY), "0x00000080 (Negotiate Lan Manager Key)");
+        ourFlags.put(new Long(NEGOTIATE_NETWARE), "0x00000100 (Negotiate Netware)");
+        ourFlags.put(new Long(NEGOTIATE_NTLM), "0x00000200 (Negotiate NTLM)");
+        ourFlags.put(new Long(0x00000400L), "0x00000400 (Unknown)");
+        ourFlags.put(new Long(0x00000800L), "0x00000800 (Unknown)");
+        ourFlags.put(new Long(NEGOTIATE_DOMAIN_SUPPLIED), "0x00001000 (Negotiate Domain Supplied)");
+        ourFlags.put(new Long(NEGOTIATE_WORKSTATION_SUPPLIED), "0x00002000 (Negotiate Workstation Supplied)");
+        ourFlags.put(new Long(NEGOTIATE_LOCAL_CALL), "0x00004000 (Negotiate Local Call)");
+        ourFlags.put(new Long(NEGOTIATE_ALWAYS_SIGN), "0x00008000 (Negotiate Always Sign)");
+        ourFlags.put(new Long(TARGET_TYPE_DOMAIN), "0x00010000 (Target Type Domain)");
+        ourFlags.put(new Long(TARGET_TYPE_SERVER), "0x00020000 (Target Type Server)");
+        ourFlags.put(new Long(TARGET_TYPE_SHARE), "0x00040000 (Target Type Share)");
+        ourFlags.put(new Long(NEGOTIATE_NTLM2_KEY), "0x00080000 (Negotiate NTLM2 Key)");
+        ourFlags.put(new Long(REQUEST_INIT_RESPONSE), "0x00100000 (Request Init Response)");
+        ourFlags.put(new Long(REQUEST_ACCEPT_RESPONSE), "0x00200000 (Request Accept Response)");
+        ourFlags.put(new Long(REQUEST_NON_NT_SESSION_KEY), "0x00400000 (Request Non-NT Session Key)");
+        ourFlags.put(new Long(NEGOTIATE_TARGET_INFO), "0x00800000 (Negotiate Target Info)");
+        ourFlags.put(new Long(0x01000000L), "0x01000000 (Unknown)");
+        ourFlags.put(new Long(0x02000000L), "0x02000000 (Unknown)");
+        ourFlags.put(new Long(0x04000000L), "0x04000000 (Unknown)");
+        ourFlags.put(new Long(0x08000000L), "0x08000000 (Unknown)");
+        ourFlags.put(new Long(0x10000000L), "0x10000000 (Unknown)");
+        ourFlags.put(new Long(NEGOTIATE_128), "0x20000000 (Negotiate 128)");
+        ourFlags.put(new Long(NEGOTIATE_KEY_EXCHANGE), "0x40000000 (Negotiate Key Exchange)");
+        ourFlags.put(new Long(NEGOTIATE_56), "0x80000000 (Negotiate 56)");
+    }
+    private static Map ourTargetInfoTypes = new TreeMap();
+    static {
+        ourTargetInfoTypes.put(new Integer(1), "Server Name");
+        ourTargetInfoTypes.put(new Integer(2), "Domain Name");
+        ourTargetInfoTypes.put(new Integer(3), "DNS Host Name");
+        ourTargetInfoTypes.put(new Integer(4), "DNS Domain Name");
+    }
     
     private int myState;
     private byte[] myResponse;
@@ -115,27 +188,115 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         return new String(HTTPAuthentication.getASCIIBytes(base64EncodedResponse));
     }
     
-    public void parseChallenge(String challenge){
+    public void parseChallenge(String challenge) throws SVNException {
+        if (challenge == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "NTLM HTTP auth: expected challenge");
+            SVNErrorManager.error(err);
+        }
         byte[] challengeBase64Bytes = HTTPAuthentication.getBytes(challenge, DEFAULT_CHARSET);
         byte[] resultBuffer = new byte[challengeBase64Bytes.length];
         int resultLength = SVNBase64.base64ToByteArray(new StringBuffer(new String(challengeBase64Bytes)), resultBuffer);
+        
+        String proto = new String(resultBuffer, 0, 7);
+        byte[] typeBytes = new byte[4];
+        for (int i = 0; i < 4; i++) {
+            typeBytes[i] = resultBuffer[8 + i];
+        }
+        long type = toLong(typeBytes); 
+        
+        if (!PROTOCOL_NAME.equalsIgnoreCase(proto)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "NTLM HTTP auth: incorrect signature ''(0}''", proto);
+            SVNErrorManager.error(err);
+        } else if (type != 2) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "NTLM HTTP auth: expected type 2 message instead of ''(0, number, integer}''", new Long(type));
+            SVNErrorManager.error(err);
+        }
+        
         myNonce = new byte[8];
         for (int i = 0; i < 8; i++) {
             myNonce[i] = resultBuffer[i + 24];
         }
+        
         byte[] flagBytes = new byte[4];
         for (int i = 0; i < 4; i++) {
             flagBytes[i] = resultBuffer[i + 20];
         }
-        long flags = fromLong(flagBytes);
+        long flags = toLong(flagBytes);
+        
+        StringBuffer log = new StringBuffer();
+        String base64DecodedMessage = new String(resultBuffer, 0, resultLength);
+        log.append("NTLM auth message: " + base64DecodedMessage);
+        log.append('\n');
+        log.append("Length: " + base64DecodedMessage.length());
+        log.append('\n');
+        log.append("Signature: " + proto);
+        log.append('\n');
+        log.append("Type: " + type);
+        log.append('\n');
+        log.append("Flags: " + Long.toString(flags, 16));
+        log.append('\n');
+        for (Iterator flagsIter = ourFlags.keySet().iterator(); flagsIter.hasNext();) {
+            Long curFlag = (Long)flagsIter.next();
+            if ((flags & curFlag.longValue()) != 0) {
+                log.append(ourFlags.get(curFlag));
+                log.append('\n');
+            }
+        }
+        
+        byte[] targetNameLengthBytes = new byte[2];
+        for (int i = 0; i < 2; i++) {
+            targetNameLengthBytes[i] = resultBuffer[12 + i];
+        }
+        int targetNameLength = toInt(targetNameLengthBytes);
+
+        byte[] targetNameAllocatedBytes = new byte[2];
+        for (int i = 0; i < 2; i++) {
+            targetNameAllocatedBytes[i] = resultBuffer[14 + i];
+        }
+        int targetNameAllocated = toInt(targetNameAllocatedBytes);
+        
+        byte[] targetNameOffsetBytes = new byte[4];
+        for (int i = 0; i < 4; i++) {
+            targetNameOffsetBytes[i] = resultBuffer[16 + i];
+        }
+        long targetNameOffset = toLong(targetNameOffsetBytes); 
+        
+        if (targetNameLength > 0) {
+            String targetName = new String(resultBuffer, (int)targetNameOffset, targetNameAllocated);
+            log.append("Target Name: " + targetName);
+            log.append('\n');
+        }
+        log.append("Challenge: ");
+        for (int i = 0; i < myNonce.length; i++) {
+            log.append(SVNFormatUtil.getHexNumberFromByte(myNonce[i]));
+        }
+        log.append('\n');
+        
         //check for local call
-        if ((flags & 0x00004000) != 0 && resultLength >= 40) {
+        long contextH = -1;
+        long contextL = -1;
+        boolean containsContext = false;
+        if (targetNameOffset != 32 && resultLength >= 40) {
             byte[] contextHBytes = new byte[4];
-            for (int i = 0; i < 4; i++) {
+            byte[] contextLBytes = new byte[4];
+            int i = 0;
+            for (i = 0; i < 4; i++) {
                 contextHBytes[i] = resultBuffer[i + 32];
             }
-            long contextH = fromLong(contextHBytes);
-            if (contextH != 0) {
+            for (;i < 8; i++) {
+                contextLBytes[i - 4] = resultBuffer[i + 32];
+            }
+
+            contextH = toLong(contextHBytes);
+            contextL = toLong(contextLBytes);
+            if (contextL == 0) {
+                containsContext = true;
+                log.append("Context: ");
+                log.append(Long.toString(contextH, 16) + " " + Long.toString(contextL, 16));
+                log.append('\n');
+            }
+            
+            if (contextH != 0 && (flags & NEGOTIATE_LOCAL_CALL) != 0) {
                 myIsNegotiateLocalCall = true;
             } else {
                 myIsNegotiateLocalCall = false;
@@ -144,12 +305,76 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             myIsNegotiateLocalCall = false;
         }
         
+        if ((flags & NEGOTIATE_TARGET_INFO) != 0) {
+            int tgtInfoSecurityBufferOffset = containsContext ? 40: 32;
+            
+            byte[] targetInfoLengthBytes = new byte[2];
+            for (int i = 0; i < 2; i++) {
+                targetInfoLengthBytes[i] = resultBuffer[tgtInfoSecurityBufferOffset + i];
+            }
+            int targetInfoLength = toInt(targetInfoLengthBytes);
+            
+            byte[] targetInfoAllocatedBytes = new byte[2];
+            for (int i = 0; i < 2; i++) {
+                targetInfoAllocatedBytes[i] = resultBuffer[tgtInfoSecurityBufferOffset + 2 + i];
+            }
+            int targetInfoAllocated = toInt(targetInfoAllocatedBytes);
+            
+            byte[] targetInfoOffsetBytes = new byte[4];
+            for (int i = 0; i < 4; i++) {
+                targetInfoOffsetBytes[i] = resultBuffer[tgtInfoSecurityBufferOffset + 4 + i];
+            }
+            long targetInfoOffset = toLong(targetInfoOffsetBytes);
+            
+            byte[] targetInfoTypeBytes = new byte[2];
+            byte[] subblockLengthBytes = new byte[2];
+            int read = 0;
+            while (targetInfoLength > 0 && read <= targetInfoAllocated) {
+                for (int i = 0; i < 2; i++) {
+                    targetInfoTypeBytes[i] = resultBuffer[(int)targetInfoOffset + i];
+                }
+                read += 2;
+                targetInfoOffset += 2;
+                int targetInfoType = toInt(targetInfoTypeBytes);
+                if (targetInfoType == 0){
+                    break;
+                }
+
+                for (int i = 0; i < 2; i++) {
+                    subblockLengthBytes[i] = resultBuffer[(int)targetInfoOffset + i];
+                }
+                read += 2;
+                targetInfoOffset += 2;
+                int subblockLength = toInt(subblockLengthBytes);
+
+                String typeDescription = (String)ourTargetInfoTypes.get(new Integer(targetInfoType));
+                if (typeDescription != null) {
+                    String info = new String(resultBuffer, (int)targetInfoOffset, subblockLength);
+                    log.append(typeDescription + ": " + info);
+                    log.append('\n');
+                }
+                read += subblockLength;
+                targetInfoOffset += subblockLength;
+            }
+        }
+        log.append('\n');
+        SVNDebugLog.logInfo(log.toString());
     }
     
-    private long fromLong(byte[] num){
+    private static int toInt(byte[] num){
+        int l = 0;
+        for (int i = 0; i < 2 ; i++) {
+            int b = num[i] & 0xff;
+            b = b << i*8;
+            l |=  b;
+        }
+        return l;
+    }
+
+    private long toLong(byte[] num){
         long l = 0;
         for (int i = 0; i < 4 ; i++) {
-            int b = num[i] & 0xff;
+            long b = num[i] & 0xff;
             b = b << i*8;
             l |=  b;
         }
@@ -195,7 +420,15 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         byte[] hostNameBytes = HTTPAuthentication.getBytes(hostName, DEFAULT_CHARSET);
         byte[] domLen = convertToShortValue(domainBytes.length);
         byte[] hostLen = convertToShortValue(hostNameBytes.length);
+        StringBuffer sublog = new StringBuffer();
+        sublog.append("Signature: " + PROTOCOL_NAME);
+        sublog.append('\n');
 
+        long flags = NEGOTIATE_OEM | REQUEST_TARGET | NEGOTIATE_NTLM | NEGOTIATE_LOCAL_CALL;
+        if (domain.length() > 0) {
+            flags |= NEGOTIATE_DOMAIN_SUPPLIED;
+        }
+        
         if (myState == TYPE1) {
             int responseLength = 32 + domainBytes.length + hostNameBytes.length;
             
@@ -210,13 +443,30 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             addByte((byte) 0);
             addByte((byte) 0);
             addByte((byte) 0);
+            sublog.append("Type: " + 1);
+            sublog.append('\n');
 
             // Flags (4 bytes long): 'Negotiate OEM', 'Request Target', 
             // 'Negotiate NTLM', 'Negotiate Always Sign'
+            addByte((byte)(flags & 0xff));
+            addByte((byte)((flags >> 8) & 0xff));
+            addByte((byte)((flags >> 16) & 0xff));
+            addByte((byte)((flags >> 24) & 0xff));
+            /*
             addByte((byte) 6);
             addByte((byte) 82);
             addByte((byte) 0);
             addByte((byte) 0);
+            */
+            sublog.append("Flags: " + Long.toString(flags, 16));
+            sublog.append('\n');
+            for (Iterator flagsIter = ourFlags.keySet().iterator(); flagsIter.hasNext();) {
+                Long curFlag = (Long)flagsIter.next();
+                if ((flags & curFlag.longValue()) != 0) {
+                    sublog.append(ourFlags.get(curFlag));
+                    sublog.append('\n');
+                }
+            }
 
             // Domain name length (2 bytes short)
             addBytes(domLen);
@@ -242,12 +492,31 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
 
             // Host name 
             addBytes(hostNameBytes);
+            if (hostName.length() > 0) {
+                sublog.append("Host Name: " + hostName);
+                sublog.append('\n');
+            }
 
             // Domain name
             addBytes(domainBytes);
+            if (domain.length() > 0) {
+                sublog.append("Domain: " + domain);
+                sublog.append('\n');
+            }
         } else if (myState == TYPE3) {
             byte[] userBytes = username.getBytes();
-            
+            sublog.append("Type: " + 3);
+            sublog.append('\n');
+            sublog.append("Flags: " + Long.toString(flags, 16));
+            sublog.append('\n');
+            for (Iterator flagsIter = ourFlags.keySet().iterator(); flagsIter.hasNext();) {
+                Long curFlag = (Long)flagsIter.next();
+                if ((flags & curFlag.longValue()) != 0) {
+                    sublog.append(ourFlags.get(curFlag));
+                    sublog.append('\n');
+                }
+            }
+
             if (!myIsNegotiateLocalCall) {
                 int responseLength = 64 + LM_RESPONSE_LENGTH + domainBytes.length + hostNameBytes.length + userBytes.length;
                 
@@ -324,17 +593,42 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
                 addByte((byte) 0);
     
                 // Flags
+                addByte((byte)(flags & 0xff));
+                addByte((byte)((flags >> 8) & 0xff));
+                addByte((byte)((flags >> 16) & 0xff));
+                addByte((byte)((flags >> 24) & 0xff));
+
+                /*
                 addByte((byte) 6);
                 addByte((byte) 82);
                 addByte((byte) 0);
                 addByte((byte) 0);
-    
+                */
                 addBytes(domainBytes);
+                if (domain.length() > 0) {
+                    sublog.append("Domain: " + domain);
+                    sublog.append('\n');
+                }
+
                 addBytes(userBytes);
+                if (username.length() > 0) {
+                    sublog.append("User Name: " + username);
+                    sublog.append('\n');
+                }
+
                 addBytes(hostNameBytes);
-                
+                if (hostName.length() > 0) {
+                    sublog.append("Host Name: " + hostName);
+                    sublog.append('\n');
+                }
+
                 String password = getPassword();
-                addBytes(hashPassword(password != null ? password : ""));
+                byte[] hash = hashPassword(password != null ? password : ""); 
+                addBytes(hash);
+
+                sublog.append("Hash: " + new String(hash));
+                sublog.append('\n');
+                
             } else {
                 int responseLength = 64;
                 byte[] responseLengthShortBytes = convertToShortValue(responseLength); 
@@ -355,7 +649,6 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
                 // LM Response allocated space
                 addByte((byte)0);
                 addByte((byte)0);
-
 
                 // LM Response Offset
                 addBytes(responseLengthShortBytes);
@@ -414,14 +707,30 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
                 addByte((byte) 0);
 
                 // Flags
+                addByte((byte)(flags & 0xff));
+                addByte((byte)((flags >> 8) & 0xff));
+                addByte((byte)((flags >> 16) & 0xff));
+                addByte((byte)((flags >> 24) & 0xff));
+                
+                /*
                 addByte((byte) 6);
                 addByte((byte) 82);
                 addByte((byte) 0);
                 addByte((byte) 0);
+                */
             }
             setType1State();
         }
-        
+
+        StringBuffer log = new StringBuffer();
+        String message = new String(myResponse, 0, myPosition);
+        log.append("NTLM auth message: " + message);
+        log.append('\n');
+        log.append("Length: " + message.length());
+        log.append('\n');
+        log.append(sublog);
+        SVNDebugLog.logInfo(log.toString());
+
         return "NTLM " + getResponse();
     }
 
