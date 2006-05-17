@@ -905,7 +905,7 @@ public class SVNWCClient extends SVNBasicClient {
         try {
             wcAccess.open(true, true, true);
             if (!force) {
-                wcAccess.getAnchor().canScheduleForDeletion(wcAccess.getTargetName());
+                wcAccess.getAnchor().canScheduleForDeletion(wcAccess.getTargetName(), false);
             }
             if (!dryRun) {
                 wcAccess.getAnchor().scheduleForDeletion(wcAccess.getTargetName(), deleteFiles);

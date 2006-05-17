@@ -87,7 +87,7 @@ public class SVNMerger {
             try {
                 if (!myIsForce) {
                     try {
-                        parentDir.canScheduleForDeletion(name);
+                        parentDir.canScheduleForDeletion(name, false);
                     } catch (SVNException e) {
                         if (e instanceof SVNCancelException) {
                             throw e;
@@ -140,7 +140,7 @@ public class SVNMerger {
                 });
                 if (!myIsForce) {
                     try {
-                        parentDir.canScheduleForDeletion(name);
+                        parentDir.canScheduleForDeletion(name, false);
                     } catch (SVNException e) {
                         if (e instanceof SVNCancelException) {
                             throw e;

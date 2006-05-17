@@ -667,7 +667,7 @@ public class SVNDirectory {
         }
     }
 
-    public void canScheduleForDeletion(String name) throws SVNException {
+    public void canScheduleForDeletion(String name, boolean skipIgnored) throws SVNException {
         // TODO use status call.
         // check if this dir doesn't have obstructed, unversioned or modified
         // entries.
@@ -696,10 +696,9 @@ public class SVNDirectory {
             if (entry == null || entry.isHidden()) {
                 // no entry or entry is 'deleted'
                 // no error if file is ignored.
-                if (isIgnored(fileName)) {
+                if (skipIgnored && isIgnored(fileName)) {
                     continue;
-                }
-                if (getWCAccess() != null) {
+                } else if (skipIgnored && getWCAccess() != null) {
                     ISVNOptions options = getWCAccess().getOptions();
                     if (options != null && options.isIgnored(fileName)) {
                         continue;
@@ -725,7 +724,7 @@ public class SVNDirectory {
                     SVNDirectory childDir = getChildDirectory(childFile
                             .getName());
                     if (childDir != null) {
-                        childDir.canScheduleForDeletion("");
+                        childDir.canScheduleForDeletion("", skipIgnored);
                     }
                 }
             }
