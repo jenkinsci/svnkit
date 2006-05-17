@@ -641,7 +641,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 }
                 srcAccess.open(true, srcType == SVNFileType.DIRECTORY);
                 if (!force) {
-                    srcAccess.getAnchor().canScheduleForDeletion(dstAccess.getTargetName());
+                    srcAccess.getAnchor().canScheduleForDeletion(dstAccess.getTargetName(), true);
                 }
             }
             if (srcAccess != dstAccess) {

@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -666,7 +667,7 @@ public class SVNDirectory {
         }
     }
 
-    public void canScheduleForDeletion(String name) throws SVNException {
+    public void canScheduleForDeletion(String name, boolean skipIgnored) throws SVNException {
         // TODO use status call.
         // check if this dir doesn't have obstructed, unversioned or modified
         // entries.
@@ -688,11 +689,21 @@ public class SVNDirectory {
             if (!"".equals(name) && !childFile.getName().equals(name)) {
                 continue;
             }
-            SVNEntry entry = entries.getEntry(childFile.getName(), true);
-            String path = SVNPathUtil.append(getPath(), childFile.getName());
+            String fileName = childFile.getName();
+            SVNEntry entry = entries.getEntry(fileName, true);
+            String path = SVNPathUtil.append(getPath(), fileName);
             path = path.replace('/', File.separatorChar);
             if (entry == null || entry.isHidden()) {
                 // no entry or entry is 'deleted'
+                // no error if file is ignored.
+                if (skipIgnored && isIgnored(fileName)) {
+                    continue;
+                } else if (skipIgnored && getWCAccess() != null) {
+                    ISVNOptions options = getWCAccess().getOptions();
+                    if (options != null && options.isIgnored(fileName)) {
+                        continue;
+                    }
+                }
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
                 SVNErrorManager.error(err);
             } else {
@@ -713,7 +724,7 @@ public class SVNDirectory {
                     SVNDirectory childDir = getChildDirectory(childFile
                             .getName());
                     if (childDir != null) {
-                        childDir.canScheduleForDeletion("");
+                        childDir.canScheduleForDeletion("", skipIgnored);
                     }
                 }
             }
