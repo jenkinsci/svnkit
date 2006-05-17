@@ -1975,6 +1975,10 @@ public class SVNWCClient extends SVNBasicClient {
                     props.put(SVNProperty.EXECUTABLE, "*");
                 }
             }
+            if (props.get(SVNProperty.MIME_TYPE) != null && props.get(SVNProperty.EOL_STYLE) != null) {
+                props.remove(SVNProperty.EOL_STYLE);
+            }
+            
             for (Iterator names = props.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
                 String propValue = (String) props.get(propName);
