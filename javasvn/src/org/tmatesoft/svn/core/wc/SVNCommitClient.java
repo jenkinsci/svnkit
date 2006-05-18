@@ -1000,7 +1000,9 @@ public class SVNCommitClient extends SVNBasicClient {
                 mimeType = SVNFileUtil.detectMimeType(file);
                 if (mimeType != null) {
                     autoProperties.put(SVNProperty.MIME_TYPE, mimeType);
-                    autoProperties.remove(SVNProperty.EOL_STYLE);
+                    if (SVNProperty.isBinaryMimeType(mimeType)) {
+                        autoProperties.remove(SVNProperty.EOL_STYLE);
+                    }
                 }
             }
             if (!autoProperties.containsKey(SVNProperty.EXECUTABLE) && SVNFileUtil.isExecutable(file)) {

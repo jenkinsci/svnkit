@@ -89,8 +89,7 @@ public class SVNEventFactory {
     public static SVNEvent createAddedEvent(SVNWCAccess source, SVNDirectory dir, SVNEntry entry) {
         String mimeType = null;
         try {
-            mimeType = dir.getProperties(entry.getName(), false)
-                    .getPropertyValue(SVNProperty.MIME_TYPE);
+            mimeType = dir.getProperties(entry.getName(), false).getPropertyValue(SVNProperty.MIME_TYPE);
         } catch (SVNException e) {
             //
         }

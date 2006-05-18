@@ -85,11 +85,9 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             SVNFileInfo info = new SVNFileInfo(path);
             try {
                 info.loadFromRepository(tmpFile, myRepos, myRevision, myEventHandler);
-                String mimeType = (String) info.myBaseProperties
-                        .get(SVNProperty.MIME_TYPE);
+                String mimeType = (String) info.myBaseProperties.get(SVNProperty.MIME_TYPE);
                 String displayPath = SVNPathUtil.append(myBasePath, path);
-                myDiffGenerator.displayFileDiff(displayPath, tmpFile, null,
-                        myRevision1, myRevision2, mimeType, mimeType, myResult);
+                myDiffGenerator.displayFileDiff(displayPath, tmpFile, null, myRevision1, myRevision2, mimeType, mimeType, myResult);
             } finally {
                 if (tmpFile != null) {
                     tmpFile.delete();

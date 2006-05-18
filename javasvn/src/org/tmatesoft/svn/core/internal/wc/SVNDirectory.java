@@ -323,8 +323,7 @@ public class SVNDirectory {
     public SVNStatusType mergeText(String localPath, String basePath,
             String latestPath, String localLabel, String baseLabel,
             String latestLabel, boolean leaveConflict, boolean dryRun) throws SVNException {
-        String mimeType = getProperties(localPath, false).getPropertyValue(
-                SVNProperty.MIME_TYPE);
+        String mimeType = getProperties(localPath, false).getPropertyValue(SVNProperty.MIME_TYPE);
         SVNEntry entry = getEntries().getEntry(localPath, true);
         if (SVNProperty.isBinaryMimeType(mimeType)) {
             // binary
@@ -344,13 +343,11 @@ public class SVNDirectory {
         }
         // text
         // 1. destranslate local
-        File localTmpFile = SVNFileUtil.createUniqueFile(getRoot(), localPath,
-                ".tmp");
+        File localTmpFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, ".tmp");
         SVNTranslator.translate(this, localPath, localPath, SVNFileUtil.getBasePath(localTmpFile), false, false);
         // 2. run merge between all files we have :)
         OutputStream result = null;
-        File resultFile = dryRun ? null : SVNFileUtil.createUniqueFile(
-                getRoot(), localPath, ".result");
+        File resultFile = dryRun ? null : SVNFileUtil.createUniqueFile(getRoot(), localPath, ".result");
 
         byte[] conflictStart = ("<<<<<<< " + localLabel).getBytes();
         byte[] conflictEnd = (">>>>>>> " + latestLabel).getBytes();

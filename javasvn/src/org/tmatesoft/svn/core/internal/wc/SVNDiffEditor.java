@@ -76,8 +76,7 @@ public class SVNDiffEditor implements ISVNEditor {
         if (entry != null && entry.isFile()) {
             SVNProperties baseProps = dir.getBaseProperties(name, false);
             SVNProperties wcProps = dir.getProperties(name, false);
-            String baseMimeType = baseProps
-                    .getPropertyValue(SVNProperty.MIME_TYPE);
+            String baseMimeType = baseProps.getPropertyValue(SVNProperty.MIME_TYPE);
             String wcMimeType = wcProps.getPropertyValue(SVNProperty.MIME_TYPE);
 
             boolean deleted = entry.isScheduledForDeletion();
@@ -239,14 +238,12 @@ public class SVNDiffEditor implements ISVNEditor {
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {
-        String reposMimeType = (String) (myCurrentFile.myPropertyDiff != null ? 
-                myCurrentFile.myPropertyDiff.get(SVNProperty.MIME_TYPE) : null);
+        String reposMimeType = (String) (myCurrentFile.myPropertyDiff != null ?  myCurrentFile.myPropertyDiff.get(SVNProperty.MIME_TYPE) : null);
         String fileName = SVNPathUtil.tail(myCurrentFile.myPath);
         SVNDirectory dir = myWCAccess.getDirectory(myCurrentDirectory.myPath);
         if (reposMimeType == null) {
             if (myCurrentFile.myBaseProperties == null) {
-                myCurrentFile.myBaseProperties = dir != null ? 
-                        dir.getBaseProperties(fileName, false).asMap() : new HashMap();
+                myCurrentFile.myBaseProperties = dir != null ? dir.getBaseProperties(fileName, false).asMap() : new HashMap();
             }
             reposMimeType = (String) myCurrentFile.myBaseProperties.get(SVNProperty.MIME_TYPE);
         }

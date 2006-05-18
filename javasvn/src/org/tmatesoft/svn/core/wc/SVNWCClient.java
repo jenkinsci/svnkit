@@ -1966,7 +1966,9 @@ public class SVNWCClient extends SVNBasicClient {
             props = getOptions().applyAutoProperties(name, props);
             if (props.get(SVNProperty.MIME_TYPE) == null && mimeType != null) {
                 props.put(SVNProperty.MIME_TYPE, mimeType);
-                props.remove(SVNProperty.EOL_STYLE);
+                if (SVNProperty.isBinaryMimeType(mimeType)) {
+                    props.remove(SVNProperty.EOL_STYLE);
+                }
             }
             if (!props.containsKey(SVNProperty.EXECUTABLE)) {
                 executable = SVNFileUtil.isExecutable(file);
@@ -1974,7 +1976,7 @@ public class SVNWCClient extends SVNBasicClient {
                     props.put(SVNProperty.EXECUTABLE, "*");
                 }
             }
-            if (props.get(SVNProperty.MIME_TYPE) != null && props.get(SVNProperty.EOL_STYLE) != null) {
+            if (SVNProperty.isBinaryMimeType((String) props.get(SVNProperty.MIME_TYPE)) && props.get(SVNProperty.EOL_STYLE) != null) {
                 props.remove(SVNProperty.EOL_STYLE);
             }
             

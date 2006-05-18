@@ -241,11 +241,8 @@ public class SVNMergeEditor implements ISVNEditor {
             SVNStatusType props = SVNStatusType.UNCHANGED;
             if (myCurrentFile.myPropertyDiff != null
                     || myCurrentFile.myFile != null) {
-                String mimeType1 = (String) myCurrentFile.myBaseProperties
-                        .get(SVNProperty.MIME_TYPE);
-                String mimeType2 = myCurrentFile.myPropertyDiff != null ? (String) myCurrentFile.myPropertyDiff
-                        .get(SVNProperty.MIME_TYPE)
-                        : null;
+                String mimeType1 = (String) myCurrentFile.myBaseProperties.get(SVNProperty.MIME_TYPE);
+                String mimeType2 = myCurrentFile.myPropertyDiff != null ? (String) myCurrentFile.myPropertyDiff.get(SVNProperty.MIME_TYPE) : null;
                 if (mimeType2 == null) {
                     mimeType2 = mimeType1;
                 }
@@ -255,11 +252,9 @@ public class SVNMergeEditor implements ISVNEditor {
                 SVNStatusType[] result = null;
                 if (myCurrentFile.myIsAdded) {
                     try {
-                        result = myMerger
-                                .fileAdded(
+                        result = myMerger.fileAdded(
                                         myCurrentFile.myWCPath,
-                                        myCurrentFile.myFile != null ? myCurrentFile.myBaseFile
-                                                : null, myCurrentFile.myFile,
+                                        myCurrentFile.myFile != null ? myCurrentFile.myBaseFile : null, myCurrentFile.myFile,
                                         myRevision2, 0, mimeType1, mimeType2,
                                         myCurrentFile.myBaseProperties,
                                         myCurrentFile.myPropertyDiff,
@@ -293,8 +288,7 @@ public class SVNMergeEditor implements ISVNEditor {
             } else {
                 action = SVNEventAction.UPDATE_UPDATE;
             }
-            SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess,
-                    myCurrentFile.myWCPath, action, expectedAction, contents, props, SVNNodeKind.FILE);
+            SVNEvent event = SVNEventFactory.createMergeEvent(myWCAccess, myCurrentFile.myWCPath, action, expectedAction, contents, props, SVNNodeKind.FILE);
             myWCAccess.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         if (myCurrentFile.myFile != null) {
