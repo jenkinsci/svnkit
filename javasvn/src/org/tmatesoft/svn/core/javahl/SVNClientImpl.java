@@ -145,6 +145,7 @@ public class SVNClientImpl implements SVNClientInterface {
         final Collection statuses = new ArrayList();
         SVNStatusClient stClient = getSVNStatusClient();
         try {
+            stClient.setIgnoreExternals(ignoreExternals);
             stClient.doStatus(new File(path).getAbsoluteFile(), descend, onServer, getAll, noIgnore, !ignoreExternals, new ISVNStatusHandler(){
                 public void handleStatus(SVNStatus status) {
                     statuses.add(JavaHLObjectFactory.createStatus(status.getFile().getPath(), status));
@@ -166,6 +167,8 @@ public class SVNClientImpl implements SVNClientInterface {
                 err = err.getChildErrorMessage();
             }
             return new Status[] {};
+        } finally {
+            stClient.setIgnoreExternals(false);
         }
         return (Status[]) statuses.toArray(new Status[statuses.size()]);
     }
