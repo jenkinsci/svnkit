@@ -1,3 +1,12 @@
+= version 1.0.5
+
++ Error 502 on COPY operation fixed.
++ Move operation now moves ignored resources.
++ Error on accessing repository located at host root (http://host) fixed.
++ Error on attempt to copy URLs with username included fixed.
++ Problems with committing of "special" files on windows resolved.
++ Other minor bugfixes
+
 = version 1.0.4
 
 + Subversion 1.3.1 compatibilty bugfixes.
