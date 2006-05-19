@@ -272,17 +272,27 @@ class HTTPConnection implements IHTTPConnection {
                     SVNSSLAuthentication sslAuth = sslManager.getClientAuthentication();
                     if (sslAuth != null) {
                         close();
-                        SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", ssl.getLocalizedMessage());
+                        SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", ssl.getMessage());
                         myRepository.getAuthenticationManager().acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, sslRealm, sslErr, sslAuth);
-                        promptSSLClientCertificate(false);
+                        sslManager = promptSSLClientCertificate(false);
                         continue;
                     }
                 }
-                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ssl.getLocalizedMessage());
+                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ssl.getMessage());
             } catch (IOException e) {
                 if (e instanceof SocketTimeoutException) {
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "timed out waiting for server");
                 } else {
+                    if (sslManager != null && sslManager.isClientCertPromptRequired()) {
+                        SVNSSLAuthentication sslAuth = sslManager.getClientAuthentication();
+                        if (sslAuth != null) {
+                            close();
+                            SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", e.getMessage());
+                            myRepository.getAuthenticationManager().acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, sslRealm, sslErr, sslAuth);
+                            sslManager = promptSSLClientCertificate(false);
+                            continue;
+                        }
+                    }
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
                 }
             } catch (SVNException e) {
