@@ -396,16 +396,15 @@ class SVNReader {
             } else {
                 target[index] = result;
             }
-        } else if (target[index] instanceof OutputStream
-                && result instanceof InputStream) {
+        } else if (target[index] instanceof OutputStream && result instanceof InputStream) {
             InputStream in = (InputStream) result;
             OutputStream out = (OutputStream) target[index];
+            byte[] buffer = new byte[2048];
             try {
                 while (true) {
-                    int read;
-                    read = in.read();
-                    if (read >= 0) {
-                        out.write(read);
+                    int read = in.read(buffer);
+                    if (read > 0) {
+                        out.write(buffer, 0, read);
                     } else {
                         break;
                     }
@@ -415,7 +414,7 @@ class SVNReader {
                 //
             } finally {
                 try {
-                    while (in.read() >= 0) {
+                    while (in.read(buffer) > 0) {
                     }
                 } catch (IOException e1) {
                     //
