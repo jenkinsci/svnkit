@@ -452,12 +452,6 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             addByte((byte)((flags >> 8) & 0xff));
             addByte((byte)((flags >> 16) & 0xff));
             addByte((byte)((flags >> 24) & 0xff));
-            /*
-            addByte((byte) 6);
-            addByte((byte) 82);
-            addByte((byte) 0);
-            addByte((byte) 0);
-            */
             sublog.append("Flags: " + Long.toString(flags, 16));
             sublog.append('\n');
             for (Iterator flagsIter = ourFlags.keySet().iterator(); flagsIter.hasNext();) {
@@ -598,12 +592,6 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
                 addByte((byte)((flags >> 16) & 0xff));
                 addByte((byte)((flags >> 24) & 0xff));
 
-                /*
-                addByte((byte) 6);
-                addByte((byte) 82);
-                addByte((byte) 0);
-                addByte((byte) 0);
-                */
                 addBytes(domainBytes);
                 if (domain.length() > 0) {
                     sublog.append("Domain: " + domain);
@@ -711,13 +699,6 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
                 addByte((byte)((flags >> 8) & 0xff));
                 addByte((byte)((flags >> 16) & 0xff));
                 addByte((byte)((flags >> 24) & 0xff));
-                
-                /*
-                addByte((byte) 6);
-                addByte((byte) 82);
-                addByte((byte) 0);
-                addByte((byte) 0);
-                */
             }
             setType1State();
         }

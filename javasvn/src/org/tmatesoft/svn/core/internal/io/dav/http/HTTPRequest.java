@@ -162,7 +162,8 @@ class HTTPRequest {
         if (myStatus.getCode() == HttpURLConnection.HTTP_MOVED_PERM || 
                 myStatus.getCode() == HttpURLConnection.HTTP_MOVED_TEMP ||
                 myStatus.getCode() == HttpURLConnection.HTTP_FORBIDDEN ||
-                myStatus.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                myStatus.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED ||
+                myStatus.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
             // these errors are always processed by the caller, to allow retry.
             myErrorMessage = createDefaultErrorMessage(myConnection.getHost(), myStatus, context.getMessageTemplate(), context.getRelatedObjects());
             myConnection.skipData(this);

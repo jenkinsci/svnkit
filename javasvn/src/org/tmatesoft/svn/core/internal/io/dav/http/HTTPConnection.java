@@ -131,8 +131,6 @@ class HTTPConnection implements IHTTPConnection {
                     proxyAuth.acknowledgeProxyContext(false, err);
                     SVNErrorManager.error(err, connectRequest.getErrorMessage());
                 }
-                //TODO: is it a bug or not?
-                proxyAuth.acknowledgeProxyContext(true, null);
             } else {
                 myIsProxied = false;
                 myProxyAuthentication = null;
@@ -350,7 +348,17 @@ class HTTPConnection implements IHTTPConnection {
                         continue;
                     }
                 }
+
+                err = SVNErrorMessage.create(SVNErrorCode.CANCELLED, "HTTP proxy authorization cancelled");
+                SVNURL location = myRepository.getLocation();
+                ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
+                ISVNProxyManager proxyManager = authManager != null ? authManager.getProxyManager(location) : null;
+                if (proxyManager != null) {
+                    proxyManager.acknowledgeProxyContext(false, err);
+                }
                 close();
+
+                break;
             } else if (status.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
                 Collection authHeaderValues = request.getResponseHeader().getHeaderValues(HTTPHeader.AUTHENTICATE_HEADER);
                 if (authHeaderValues == null || authHeaderValues.size() == 0) {
@@ -413,11 +421,11 @@ class HTTPConnection implements IHTTPConnection {
                 if (httpAuth == null) {
                     httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
                 } else {
-                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, null, httpAuth);
+                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, request.getErrorMessage(), httpAuth);
                     httpAuth = authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
                 }
                 myChallengeCredentials.setCredentials((SVNPasswordAuthentication)httpAuth);
-
+                
                 if (httpAuth == null) {
                     err = SVNErrorMessage.create(SVNErrorCode.CANCELLED, "HTTP authorization cancelled");
                     break;
@@ -451,6 +459,16 @@ class HTTPConnection implements IHTTPConnection {
             if (err != null) {
                 break;
             }
+            
+            if (myIsProxied) {
+                SVNURL location = myRepository.getLocation();
+                ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
+                ISVNProxyManager proxyManager = authManager != null ? authManager.getProxyManager(location) : null;
+                if (proxyManager != null) {
+                    proxyManager.acknowledgeProxyContext(true, null);
+                }
+            }
+            
             if (httpAuth != null && realm != null && myRepository.getAuthenticationManager() != null) {
                 myRepository.getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, httpAuth);
             }
@@ -733,14 +751,6 @@ class HTTPConnection implements IHTTPConnection {
         return SVNDebugLog.createLogStream(is);
     }
 
-/*    private static String getProxyAuthString(String username, String password) {
-        if (username != null && password != null) {
-            String auth = username + ":" + password;
-            return "Basic " + SVNBase64.byteArrayToBase64(auth.getBytes());
-        }
-        return null;
-    }
-*/
     private static synchronized SAXParserFactory getSAXParserFactory() throws FactoryConfigurationError {
         if (ourSAXParserFactory == null) {
             ourSAXParserFactory = SAXParserFactory.newInstance();
