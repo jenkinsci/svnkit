@@ -317,18 +317,16 @@ public class SVNWCAccess implements ISVNEventHandler {
                 info.setNewExternal(null, -1);
             }
         }
-        return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result
-                .size()]);
+        return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
     }
 
     public static SVNExternalInfo[] parseExternals(String rootPath, String externals) {
         Collection result = new ArrayList();
         if (externals == null) {
-            return (SVNExternalInfo[]) result
-                    .toArray(new SVNExternalInfo[result.size()]);
+            return (SVNExternalInfo[]) result.toArray(new SVNExternalInfo[result.size()]);
         }
-        for (StringTokenizer lines = new StringTokenizer(externals, "\n\r"); lines
-                .hasMoreTokens();) {
+
+        for (StringTokenizer lines = new StringTokenizer(externals, "\n\r"); lines.hasMoreTokens();) {
             String line = lines.nextToken().trim();
             if (line.length() == 0 || line.startsWith("#")) {
                 continue;
@@ -351,8 +349,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             }
             if (parts.size() == 2) {
                 url = (String) parts.get(1);
-            } else if (parts.size() == 3
-                    && parts.get(1).toString().startsWith("-r")) {
+            } else if (parts.size() == 3 && parts.get(1).toString().startsWith("-r")) {
                 String revStr = parts.get(1).toString();
                 revStr = revStr.substring("-r".length());
                 if (!"HEAD".equals(revStr)) {
@@ -375,8 +372,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                 url = (String) parts.get(3);
             }
             if (path != null && url != null) {
-                if ("".equals(rootPath)
-                        && ((String) parts.get(0)).startsWith("/")) {
+                if ("".equals(rootPath) && ((String) parts.get(0)).startsWith("/")) {
                     path = "/" + path;
                 }
                 try {

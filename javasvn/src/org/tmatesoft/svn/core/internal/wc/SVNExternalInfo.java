@@ -12,7 +12,11 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
+import java.util.StringTokenizer;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
 /**
@@ -114,5 +118,20 @@ public class SVNExternalInfo {
         }
         return sb.toString();
     }
-
+    
+    public static void checkPath(String path) throws SVNException {
+        File file = new File(path); 
+        if (file.isAbsolute()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION, "Invalid property 'svn:externals': target involves '.' or '..' or is absolute path"); 
+            SVNErrorManager.error(err);
+        }
+        path = path.replace(File.separatorChar, '/');
+        for(StringTokenizer tokens = new StringTokenizer(path, "/"); tokens.hasMoreTokens();) {
+            String token = tokens.nextToken();
+            if ("".equals(token) || ".".equals(token) || "..".equals(token)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION, "Invalid property 'svn:externals': target involves '.' or '..' or is absolute path"); 
+                SVNErrorManager.error(err);
+            }
+        }
+    }
 }
