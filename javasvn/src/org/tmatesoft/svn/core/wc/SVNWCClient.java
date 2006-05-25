@@ -2250,17 +2250,12 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNExternalInfo[] externalInfos = SVNWCAccess.parseExternals("", value);
                 for (int i = 0; externalInfos != null && i < externalInfos.length; i++) {
                     String path = externalInfos[i].getPath();
-                    if (path.indexOf(".") >= 0 || path.indexOf("..") >= 0 || path.startsWith("/")) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION, "Invalid property 'svn:externals': target involves '.' or '..' or is absolute path"); 
-                        SVNErrorManager.error(err);
-                    }
+                    SVNExternalInfo.checkPath(path);
                 }
             }
         } else if (SVNProperty.KEYWORDS.equals(name)) {
             value = value.trim();
-        } else if (SVNProperty.EXECUTABLE.equals(name)
-                || SVNProperty.SPECIAL.equals(name)
-                || SVNProperty.NEEDS_LOCK.equals(name)) {
+        } else if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.SPECIAL.equals(name) || SVNProperty.NEEDS_LOCK.equals(name)) {
             value = "*";
         }
         return value;
