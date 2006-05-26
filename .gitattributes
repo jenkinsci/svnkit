@@ -168,3 +168,10 @@ www/license.html -text
 www/licensing/index.html -text
 www/rss.php -text
 www/rss2.php -text
+www/wiki/What_Is_JavaSVN.wp -text
+www/wiki/export.vm -text
+www/wiki/html/Access_Protocols.PNG -text
+www/wiki/html/JavaSVN_Architecture.PNG -text
+www/wiki/html/Repository_Tree.png -text
+www/wiki/main.css -text
+www/wiki/main.vm -text
