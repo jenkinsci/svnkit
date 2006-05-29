@@ -1,0 +1,99 @@
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<style type='text/css'>
+/*/*/ /*<![CDATA[*/
+@import "file://G:/materials/Programming/SVNWorkspace/wiki/wpsrc/main.css";
+#quickbar { position: absolute; left: 4px; }
+#article { margin-left: 4px; margin-top: 4px; margin-right: 4px; }
+a.new, #quickbar a.new { color: #CC2200; }
+
+/*]]>*/ /* */
+</style>
+</head>
+<body bgcolor='#FFFFFF' onload=''>
+<div id="content">
+<div id='article'>
+
+<table id="toc" border="0"><tr><th>Table of contents</th></tr><tr><td><ol><li><a href="#How_to_use_different_repository_access_protocols_in_JavaSVN%3F"> How to use different repository access protocols in JavaSVN? </a>
+</li><ol><li><a href="#Instructions_on_initializing_JavaSVN"> Instructions on initializing JavaSVN </a>
+</li></ol><li><a href="#Using_high-level_layer"> Using high-level layer </a>
+</li><li><a href="#Notes"> Notes </a>
+</li></ol></td></tr></table><hr/><a name="How_to_use_different_repository_access_protocols_in_JavaSVN%3F" id="How_to_use_different_repository_access_protocols_in_JavaSVN%3F"></a>
+<h2> How to use different repository access protocols in JavaSVN? </h2><p>When you have downloaded <span class="nobr"><a href="http://tmate.org/svn/download/index.php" class="external" title="http://tmate.org/svn/download/index.php">the latest JavaSVN binaries</a></span> and ready to start using it, a question arises: what initialization 
+steps should be performed in order to set up the library? First of all, as mentioned in the <a href="What_Is_JavaSVN.html">What Is JavaSVN</a>? article, 
+direct interacting with a Subversion repository is carried out by a low-level layer, where the main class representing a 
+repository access driver is an abstract <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html">SVNRepository</a></span> class.
+There are several protocol specific realizations of this driver, one for each protocol. Each driver is created by an abstract factory class - 
+<span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html">SVNRepositoryFactory</a></span>, which also has several protocol 
+specific realizations, each one for each protocol. The following table matches a protocol against a corresponding SVNRepositoryFactory realization:
+
+</p>
+<table border=1
+>
+<tr>
+<td bgcolor=#AACCFF>protocol</td><td bgcolor=#AACCFF>SVNRepositoryFactory realization</td></tr>
+<tr>
+<td><i>svn://</i></td><td>SVNRepositoryFactoryImpl</td></tr>
+<tr>
+<td><i><span class="nobr"><a href="http://&#39;&#39;" class="external" title="http://&#39;&#39;">http://&#39;&#39;</a></span></i></td><td>DAVRepositoryFactory</td></tr>
+<tr>
+<td><i>file:///</i></td><td>FSRepositoryFactory</td></tr></table>
+
+<a name="Instructions_on_initializing_JavaSVN" id="Instructions_on_initializing_JavaSVN"></a>
+<h3> Instructions on initializing JavaSVN </h3><p><font color="red">Prior to using the library</font> you must set up an appropriate <b>SVNRepositoryFactory</b> realization for a 
+particular protocol. For example, if you would like to work with a repository via the <i>svn://</i> protocol, you must 
+register the following factory:
+
+</p><div class="java"><pre>
+       <b><font color="#7F0055">try</font></b> &#123;
+            SVNRepositoryFactoryImpl.setup();
+            ...
+       &#125; <b><font color="#7F0055">catch</font></b> (SVNException e) &#123;
+            <font color="#3F7F5F">//handle exception       		
+</font>       &#125;
+</pre></div><p>After this step <b>SVNRepositoryFactory</b> knows how to create <b>SVNRepository</b> drivers specific for the <i>svn://</i> protocol since
+it contains your registered factory. And further you create a driver itself:
+
+</p><div class="java"><pre>
+       <b><font color="#7F0055">try</font></b> &#123;
+            ...
+            SVNURL url = SVNURL.parseURIDecoded(<font color="#2A00FF">&#34;svn://host/path_to_repository_root/inner_path&#34;</font>);
+            SVNRepository repository = SVNRepositoryFactory.create(url, <b><font color="#7F0055">null</font></b>);
+            ...
+       &#125; <b><font color="#7F0055">catch</font></b> (SVNException e) &#123;
+            <font color="#3F7F5F">//handle exception       		
+</font>       &#125;
+</pre></div><p>In <b>JavaSVN</b> all repository urls are represented by the <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html">SVNURL</a></span> 
+class. If a path string is not <i>UTF-8</i> encoded yet, use the <b>SVNURL</b>&#39;s <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html#parseURIDecoded(java.lang.String)" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNURL.html#parseURIDecoded(java.lang.String)">parseURIDecoded()</a></span> 
+method to create a new url representation (it will be encoded if necessary).
+<br />
+Then you pass the url representation to the <b>SVNRepositoryFactory</b> to create a new <b>SVNRepository</b> driver. So, 
+this way you can bind your driver to any repository location you would like. 
+</p><p><img src="SVNRepository_connection.png">
+</p><p>The diagram above illustrates how different drivers are created for different repository paths: one for the repository 
+root (<i>svn://host/path_to_root</i>), one for a directory (<i>svn://host/path_to_root/dirA</i>) and one for a file 
+(<i>svn://host/path_to_root/dirB/fileB1</i>). Most operations which <b>SVNRepository</b> driver can perform against a 
+repository, accept a repository path which may be one of two types:
+
+</p><ul><li>path that does not start with <i>&quot;/&quot;</i> - is always relative to the location the driver is bound to
+</li><li>path that does start with <i>&quot;/&quot;</i> - is always absolute to the repository root (always starts at the top of the repository tree)
+</li></ul>
+<a name="Using_high-level_layer" id="Using_high-level_layer"></a>
+<h2> Using high-level layer </h2><p>When you use JavaSVN for managing Working Copies you also should set up appropriate factory classes since 
+the high-level layer uses the low-level one for working with a repository. If you miss this initialization step 
+you may get an exception saying that <b>JavaSVN</b> could not create an <b>SVNRepository</b> object for the provided 
+url.
+
+</p><a name="Notes" id="Notes"></a>
+<h2> Notes </h2><p>Please, read the following related articles on: 
+
+</p><ul><li>authentication,
+</li><li>customizing network connections,
+</li><li>run-time options
+</li></ul>   
+
+</div>
+</div>
+</body>
+</html>
