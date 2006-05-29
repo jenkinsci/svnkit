@@ -1,3 +1,9 @@
+= version 1.0.6
+
++ Broken cross-wc commit fixed.
++ svn:externals property were not set when externals directory included dots.
++ Remote status reported newly added working copy resources as remotely deleted.
+
 = version 1.0.5
 
 + Error 502 on COPY operation fixed.
