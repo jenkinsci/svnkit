@@ -85,6 +85,7 @@ class HTTPConnection implements IHTTPConnection {
     private HTTPAuthentication myChallengeCredentials;
     private String myProxyAuthentication;
     private boolean myIsSpoolResponse;
+    private ISVNSSLManager mySSLManager;
 
     
     public HTTPConnection(SVNRepository repository) throws SVNException {
@@ -193,6 +194,7 @@ class HTTPConnection implements IHTTPConnection {
     
     public void clearAuthenticationCache() {
         myLastValidAuth = null;
+        mySSLManager = null;
     }
 
     public HTTPStatus request(String method, String path, HTTPHeader header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
@@ -226,7 +228,7 @@ class HTTPConnection implements IHTTPConnection {
         }
         
         // 1. prompt for ssl client cert if needed, if cancelled - throw cancellation exception.
-        ISVNSSLManager sslManager = promptSSLClientCertificate(true);
+        ISVNSSLManager sslManager = mySSLManager != null ? mySSLManager : promptSSLClientCertificate(true);
         String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
         SVNAuthentication httpAuth = myLastValidAuth;
         String realm = null;
@@ -292,6 +294,7 @@ class HTTPConnection implements IHTTPConnection {
                 sslManager.acknowledgeSSLContext(true, null);
                 SVNSSLAuthentication sslAuth = sslManager.getClientAuthentication();
                 if (sslAuth != null) {
+                    mySSLManager = sslManager;
                     myRepository.getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.SSL, sslRealm, null, sslAuth);
                 }
             }
