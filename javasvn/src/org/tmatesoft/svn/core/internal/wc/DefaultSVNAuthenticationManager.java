@@ -359,10 +359,6 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private class CacheAuthenticationProvider implements ISVNAuthenticationProvider {        
 
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
-            // get next after prev for select kind and realm.
-            if (previousAuth != null) {
-                return null;
-            }
             return (SVNAuthentication) getRuntimeAuthStorage().getData(kind, realm);
         }
         
