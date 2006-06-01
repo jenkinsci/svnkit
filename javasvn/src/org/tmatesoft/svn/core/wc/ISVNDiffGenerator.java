@@ -184,4 +184,6 @@ public interface ISVNDiffGenerator {
      * @throws SVNException if can not save diff data
      */
     public void displayFileDiff(String path, File file1, File file2, String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException;
+    
+    public void displayDeletedDirectory(String path, String rev1, String rev2) throws SVNException;
 }

@@ -376,4 +376,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     public void setDiffUnversioned(boolean diffUnversioned) {
         myIsDiffUnversioned = diffUnversioned;
     }
+
+    public void displayDeletedDirectory(String path, String rev1, String rev2) throws SVNException {
+        // not implemented.
+    }
 }

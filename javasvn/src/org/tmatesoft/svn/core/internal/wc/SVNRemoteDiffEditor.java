@@ -93,6 +93,9 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                     tmpFile.delete();
                 }
             }
+        } else if (nodeKind == SVNNodeKind.DIR) {
+            String displayPath = SVNPathUtil.append(myBasePath, path);
+            myDiffGenerator.displayDeletedDirectory(displayPath, myRevision1, myRevision2);
         }
     }
 
