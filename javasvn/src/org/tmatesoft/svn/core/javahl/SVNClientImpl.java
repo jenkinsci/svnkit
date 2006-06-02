@@ -154,21 +154,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 }
             });
         } catch (SVNException e) {
-            SVNErrorMessage err = e.getErrorMessage();
-            if (err == null || e instanceof SVNAuthenticationException || e instanceof SVNCancelException) {
-                throwException(e);
-            }
-            while(err != null) {
-                int category = err.getErrorCode().getCategory();
-                if (category == SVNErrorCode.RA_CATEGORY ||
-                        category == SVNErrorCode.FS_CATEGORY ||
-                        category == SVNErrorCode.RA_SVN_CATEGORY ||
-                        category == SVNErrorCode.RA_DAV_CATEGORY) {
-                    throwException(e);
-                }
-                err = err.getChildErrorMessage();
-            }
-            return new Status[] {};
+            throwException(e);
         }
         return (Status[]) statuses.toArray(new Status[statuses.size()]);
     }
