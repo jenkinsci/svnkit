@@ -285,9 +285,8 @@ public class SVNFileUtil {
                 copied += dstChannel.transferFrom(srcChannel, copied, toCopy);
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy file ''{0}'' to ''{1}''", new Object[] {src, dst});
-            SVNErrorManager.error(err);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy file ''{0}'' to ''{1}'': {2}", new Object[] {src, dst, e.getLocalizedMessage()});
+            SVNErrorManager.error(err, e);
         } finally {
             if (srcChannel != null) {
                 try {
