@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -60,7 +61,9 @@ public class FSCommitEditor implements ISVNEditor {
     private Stack myDirsStack;
     private FSOutputStream myTargetStream;
     private SVNDeltaProcessor myDeltaProcessor;
-
+    private Map myCurrentFileProps;
+    private String myCurrentFilePath;
+    
     public FSCommitEditor(String path, String logMessage, String userName, Map lockTokens, boolean keepLocks, FSTransactionInfo txn, FSFS owner, FSRepository repository) {
         myPathsToLockTokens = !keepLocks ? lockTokens : null;
         myLockTokens = lockTokens != null ? lockTokens.values() : new LinkedList();
@@ -304,7 +307,6 @@ public class FSCommitEditor implements ISVNEditor {
         OutputStream changesFile = null;
         try {
             changesFile = SVNFileUtil.openFileForWriting(myTxnRoot.getTransactionChangesFile(), true);
-
             FSPathChange pathChange = new FSPathChange(path, id, changeKind, textModified, propsModified, copyFromPath, copyFromRevision);
             myTxnRoot.writeChangeEntry(changesFile, pathChange);
         } catch (IOException ioe) {
@@ -381,7 +383,56 @@ public class FSCommitEditor implements ISVNEditor {
         addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, false, true, FSRepository.SVN_INVALID_REVNUM, null);
     }
 
+    private void changeNodeProperties(String path, Map propNamesToValues) throws SVNException {
+        FSParentPath parentPath = null;
+        Map properties = null;
+        boolean done = false;
+        boolean haveRealChanges = false;
+        for (Iterator propNames = propNamesToValues.keySet().iterator(); propNames.hasNext();) {
+            String propName = (String)propNames.next();
+            if (!SVNProperty.isRegularProperty(propName)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
+                        "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propName);
+                SVNErrorManager.error(err);
+            }
+
+            if (!done) {
+                parentPath = myTxnRoot.openPath(path, true, true);
+
+                if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
+                    allowLockedOperation(path, myAuthor, myLockTokens, false, false);
+                }
+
+                makePathMutable(parentPath, path);
+                properties = parentPath.getRevNode().getProperties(myFSFS);
+                
+                done = true;
+            }
+
+            String propValue = (String)propNamesToValues.get(propName);
+            if (properties.isEmpty() && propValue == null) {
+                continue;
+            }
+
+            if (propValue == null) {
+                properties.remove(propName);
+            } else {
+                properties.put(propName, propValue);
+            }
+            
+            if (!haveRealChanges) {
+                haveRealChanges = true;
+            }
+        }
+
+        if (haveRealChanges) {
+            myTxnRoot.setProplist(parentPath.getRevNode(), properties);
+            addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, false, true, FSRepository.SVN_INVALID_REVNUM, null);
+        }
+    }
+    
     public void closeDir() throws SVNException {
+        flushPendingProperties();
         myDirsStack.pop();
     }
 
@@ -434,6 +485,8 @@ public class FSCommitEditor implements ISVNEditor {
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+        flushPendingProperties();
+
         String fullPath = SVNPathUtil.concatToAbs(myBasePath, path);
         FSParentPath parentPath = myTxnRoot.openPath(fullPath, true, true);
 
@@ -550,14 +603,41 @@ public class FSCommitEditor implements ISVNEditor {
 
     public void changeFileProperty(String path, String name, String value) throws SVNException {
         String fullPath = SVNPathUtil.concatToAbs(myBasePath, path);
-        changeNodeProperty(fullPath, name, value);
+        Map props = getFilePropertiesStorage();
+        if (!fullPath.equals(myCurrentFilePath)) {
+            if (myCurrentFilePath != null) {
+                changeNodeProperties(myCurrentFilePath, props);
+                props.clear();
+            }
+            myCurrentFilePath = fullPath;
+        }
+        props.put(name, value);
+        
+        //changeNodeProperty(fullPath, name, value);
     }
 
+    private Map getFilePropertiesStorage() {
+        if (myCurrentFileProps == null) {
+            myCurrentFileProps = new HashMap();
+        }
+        return myCurrentFileProps;
+    }
+    
+    private void flushPendingProperties() throws SVNException {
+        if (myCurrentFilePath != null) {
+            Map props = getFilePropertiesStorage();
+            changeNodeProperties(myCurrentFilePath, props);
+            props.clear();
+            myCurrentFilePath = null;
+        }
+    }
+    
     public void closeFile(String path, String textChecksum) throws SVNException {
+        flushPendingProperties();
+        
         if (textChecksum != null) {
             String fullPath = SVNPathUtil.concatToAbs(myBasePath, path);
             FSRevisionNode revNode = myTxnRoot.getRevisionNode(fullPath);
-
             if (revNode.getTextRepresentation() != null && !textChecksum.equals(revNode.getTextRepresentation().getHexDigest())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH,
                         "Checksum mismatch for resulting fulltext\n({0}):\n   expected checksum:  {1}\n   actual checksum:    {2}\n", new Object[] {

@@ -221,13 +221,6 @@ public class FSTransactionRoot extends FSRoot {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_ENTRY, "Delete failed--directory has no entry ''{0}''", entryName);
             SVNErrorManager.error(err);
         }
-        /*
-         * TODO: Well, I don't understand this place - why svn devs try to get
-         * the node revision here, - just to act only as a sanity check or what?
-         * The read out node-rev is not used then. The node is got then in
-         * ...delete_if_mutable. So, that is already a check, but when it's
-         * really needed.
-         */
         getOwner().getRevisionNode(dirEntry.getId());
         deleteEntryIfMutable(dirEntry.getId());
         setEntry(parent, entryName, null, SVNNodeKind.UNKNOWN);
