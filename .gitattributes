@@ -38,15 +38,8 @@ doc/javadoc-files/info.png -text
 doc/javadoc-files/javadoc.css -text
 doc/javadoc-files/overview.html -text
 doc/wiki/AuthManager_Architecture.png -text
-doc/wiki/AuthProvider_In_Work1.png -text
-doc/wiki/AuthProvider_In_Work2.png -text
-doc/wiki/AuthProvider_In_Work3.png -text
-doc/wiki/AuthProvider_In_Work4.png -text
-doc/wiki/AuthProvider_In_Work5.png -text
-doc/wiki/AuthProvider_In_Work6.png -text
-doc/wiki/AuthProvider_In_Work7.png -text
-doc/wiki/AuthProvider_In_Work8.png -text
-doc/wiki/AuthProvider_In_Work9.png -text
+doc/wiki/AuthProvider_In_Work.png -text
+doc/wiki/AuthProvider_In_Work_1.png -text
 doc/wiki/Authentication.wp -text
 doc/wiki/Getting_Started_With_JavaSVN.wp -text
 doc/wiki/What_Is_JavaSVN.wp -text
