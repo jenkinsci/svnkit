@@ -1,7 +1,13 @@
+[[JavaSVN Architecture|<<]] ... [[Authentication|>>]]
+<br />
+<br />
+
 == How to use different repository access protocols in JavaSVN? ==
 When you have downloaded [http://tmate.org/svn/download/index.php the latest JavaSVN binaries] and ready to start using it, a question arises: what initialization 
-steps should be performed in order to set up the library? First of all, as mentioned in the [[What Is JavaSVN]]? article, 
-direct interacting with a Subversion repository is carried out by a low-level layer, where the main class representing a 
+steps should be performed in order to set up the library? 
+
+<p>
+Direct interacting with a Subversion repository is carried out by a low-level layer, where the main class representing a 
 repository access driver is an abstract [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] class.
 There are several protocol specific realizations of this driver, one for each protocol. Each driver is created by an abstract factory class - 
 [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html SVNRepositoryFactory], which also has several protocol 
@@ -11,7 +17,7 @@ specific realizations, each one for each protocol. The following table matches a
 |-
 |''svn://''||SVNRepositoryFactoryImpl
 |-
-|''http://''||DAVRepositoryFactory
+|''http:// ''||DAVRepositoryFactory
 |-
 |''file:///''||FSRepositoryFactory
 |}
@@ -56,13 +62,22 @@ repository, accept a repository path which may be one of two types:
 * path that does not start with ''"/"'' - is always relative to the location the driver is bound to
 * path that does start with ''"/"'' - is always absolute to the repository root (always starts at the top of the repository tree)
 
+----
+
 == Using high-level layer ==
-When you use JavaSVN for managing Working Copies you also should set up appropriate factory classes since 
+When you use '''JavaSVN''' for managing Working Copies you also should set up appropriate factory classes since 
 the high-level layer uses the low-level one for working with a repository. If you miss this initialization step 
 you may get an exception saying that '''JavaSVN''' could not create an '''SVNRepository''' object for the provided 
 url.
-== Notes ==
-Please, read the following related articles on: 
-* [[Authentication|authentication]],
-* [[Customization|customizing network connections]],
-* [[Run-time Options|run-time options]]
+=== SVN*Client classes ===
+All high-level operations for managing Working Copies are logically divided to [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html SVN*Client] 
+classes: each '''SVN*Client''' class joins a separate group of operations (for example, [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNUpdateClient.html SVNUpdateClient] 
+provides API on update operations, such as checkout, update, switch, export). There're two different ways of instantiating
+objects of these classes: 
+* Create only necessary '''SVN*Client''' objects.
+* Create a single [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNClientManager.html SVNClientManager] instance which provides objects of necessary '''SVN*Client''' types.
+
+<br />
+<br />
+[[JavaSVN Architecture|<<]] ... [[Authentication|>>]]
+

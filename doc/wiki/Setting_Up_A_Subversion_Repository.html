@@ -1,0 +1,157 @@
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<style type='text/css'>
+/*/*/ /*<![CDATA[*/
+@import "file://G:/materials/Programming/SVNWorkspace/wiki/wpsrc/main.css";
+#quickbar { position: absolute; left: 4px; }
+#article { margin-left: 4px; margin-top: 4px; margin-right: 4px; }
+a.new, #quickbar a.new { color: #CC2200; }
+
+/*]]>*/ /* */
+</style>
+</head>
+<body bgcolor='#FFFFFF' onload=''>
+<div id="content">
+<div id='article'>
+
+<p><a href="What_Is_Subversion_For.html"><<</a> ... <a href="JavaSVN_Architecture.html">>></a>
+<br />
+<br />
+</p>
+
+<table id="toc" border="0"><tr><th>Table of contents</th></tr><tr><td><ol><li><a href="#Subversion_repository_types"> Subversion repository types </a>
+</li><li><a href="#Creating_a_Subversion_repository_manually"> Creating a Subversion repository manually </a>
+</li><li><a href="#Creating_a_Subversion_repository_with_JavaSVN"> Creating a Subversion repository with JavaSVN </a>
+</li><li><a href="#Accessing_a_repository"> Accessing a repository </a>
+</li><ol><li><a href="#file:%2F%2F%2F_access"> file:/// access </a>
+</li><li><a href="#svn:%2F%2F%2C_svn%2Bssh:%2F%2F_access"> svn://, svn+ssh:// access </a>
+</li><li><a href="#http:%2F%2F%2C_https:%2F%2F_access"> http://, https:// access </a>
+</li></ol></ol></td></tr></table><hr/><a name="Subversion_repository_types" id="Subversion_repository_types"></a>
+<h2> Subversion repository types </h2><p>Up to now a <span class="nobr"><a href="http://svnbook.red-bean.com/nightly/en/svn.reposadmin.html#svn.reposadmin.basics.backends" class="external" title="http://svnbook.red-bean.com/nightly/en/svn.reposadmin.html#svn.reposadmin.basics.backends">Subversion repository storage</a></span> 
+can be represented by either a <span class="nobr"><a href="http://svnbook.red-bean.com/nightly/en/svn.reposadmin.html#svn.reposadmin.basics.backends.bdb" class="external" title="http://svnbook.red-bean.com/nightly/en/svn.reposadmin.html#svn.reposadmin.basics.backends.bdb">Berkley DB database</a></span> 
+(mostly reffered as <i>Berkley DB</i> type) or by an <span class="nobr"><a href="http://svnbook.red-bean.com/nightly/en/svn.reposadmin.html#svn.reposadmin.basics.backends.fsfs" class="external" title="http://svnbook.red-bean.com/nightly/en/svn.reposadmin.html#svn.reposadmin.basics.backends.fsfs">ordinary filesystem</a></span> 
+(mostly reffered as <i>FSFS</i> type).
+</p>
+<a name="Creating_a_Subversion_repository_manually" id="Creating_a_Subversion_repository_manually"></a>
+<h2> Creating a Subversion repository manually </h2><p>A Subversion distribution package (it can be downloaded from the <span class="nobr"><a href="http://subversion.tigris.org" class="external" title="http://subversion.tigris.org">Subversion home site</a></span>) 
+includes a tool called <b>svnadmin</b> which is responsible for creating repositories. When you install Subversion you 
+can create a repository performing a command in the command prompt:
+</p><pre> ...&gt;svnadmin create C:\path
+</pre><p>This will create an FSFS repository at the path you specify. You may also explicitly provide the type of a repository 
+back-end:
+</p><pre> ...&gt;svnadmin create --fs-type bdb C:\path
+</pre><p>The layout of a repository root directory looks like this:
+</p><pre> /
+ |_conf/
+ |_dav/
+ |_db/
+ |_hooks/
+ |_locks/
+ |_format
+ |_readme.txt
+  </pre><p>Read <span class="nobr"><a href="http://svnbook.red-bean.com/nightly/en/svn.reposadmin.create.html" class="external" title="http://svnbook.red-bean.com/nightly/en/svn.reposadmin.create.html">official instructions</a></span> how to create and set up 
+a repository on your computer using official Subversion tools.
+</p>
+<a name="Creating_a_Subversion_repository_with_JavaSVN" id="Creating_a_Subversion_repository_with_JavaSVN"></a>
+<h2> Creating a Subversion repository with JavaSVN </h2><p><b>JavaSVN</b> provides an ability to create only FSFS-type repositories. The following is a code snippet which 
+demonstrates how you can create a blank repository using <b>JavaSVN</b>:
+</p><p>
+</p><div class="java"><pre>
+<b><font color="#7F0055">import</font></b> org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+<b><font color="#7F0055">import</font></b> org.tmatesoft.svn.core.SVNURL;
+<b><font color="#7F0055">import</font></b> org.tmatesoft.svn.core.SVNException;
+
+...
+
+    <b><font color="#7F0055">try</font></b> &#123;
+        String tgtPath = <font color="#2A00FF">&#34;C:/repos/root/path&#34;</font>;
+        SVNURL tgtURL = SVNRepositoryFactory.createLocalRepository(<b><font color="#7F0055">new</font></b> File(tgtPath), <b><font color="#7F0055">true</font></b>, <b><font color="#7F0055">false</font></b>);
+    &#125; <b><font color="#7F0055">catch</font></b>(SVNException e) &#123;
+        <font color="#3F7F5F">//handle exception
+</font>    &#125;
+
+...
+</pre></div><p>This will create an FSFS-type repository at path <i>&quot;C:/repos/root/path&quot;</i>.  
+</p><p>
+</p><p>
+The second parameter of the <i>createLocalRepository(...)</i> method set to <i>true</i> enables modifications to 
+<span class="nobr"><a href="http://svnbook.red-bean.com/nightly/en/svn.reposadmin.html#svn.reposadmin.basics.revprops" class="external" title="http://svnbook.red-bean.com/nightly/en/svn.reposadmin.html#svn.reposadmin.basics.revprops">revision properties</a></span> of the 
+created repository. As revision properties are unversioned, there&#39;s a risk to lose their values forever if changes 
+to them are allowed. To allow revision properties changing you have to place an executable <i>pre-revprop-change</i> 
+<span class="nobr"><a href="http://svnbook.red-bean.com/nightly/en/svn.reposadmin.create.html#svn.reposadmin.create.hooks" class="external" title="http://svnbook.red-bean.com/nightly/en/svn.reposadmin.create.html#svn.reposadmin.create.hooks">hook script</a></span>
+file into the <i>hooks</i> directory (see the repository root directory layout above). When someone is trying to change a 
+revision property, a server (say, <span class="nobr"><a href="http://svnbook.red-bean.com/nightly/en/svn.serverconfig.svnserve.html" class="external" title="http://svnbook.red-bean.com/nightly/en/svn.serverconfig.svnserve.html">svnserve</a></span>) 
+first invokes a <i>pre-revprop-change</i> hook. If this hook script is not found in the <i>hooks</i> directory, or the script 
+returns a non-zero value, modifications to revision properties are rejected by the server.
+</p><p>
+</p><p>
+When you create a new repository with the Subversion&#39;s <b>svnadmin</b> tool a new repository&#39;s <i>hook</i> directory 
+contains no real hook files, but only hook templates. This means that you won&#39;t be able to change revision properties 
+until you place a <i>pre-revprop-change</i> hook manually into the target <i>hooks</i> directory. With <b>JavaSVN</b> enabling 
+changes to revision properties is quite straightforward. When the second parameter of the <i>createLocalRepository(...)</i>
+methos is <i>true</i> <b>JavaSVN</b> places an empty executable <i>pre-revprop-change</i> hook script into the <i>hooks</i> 
+directory of a new repository. Such a hook does nothing, simply returns 0 letting the requested change operation perform.
+However when this parameter is <i>false</i> no hook scripts are added (but only templates), and revision properties changing 
+is disabled.
+</p><p>
+</p><p>
+The third parameter of the <i>createLocalRepository(...)</i> method controls whether a repository creation must be forced 
+or not. That is, if this parameter is <i>true</i> and a repository already exists at the path you provide to 
+<i>createLocalRepository(...)</i> <b>JavaSVN</b> replaces it with a new repository. However if it&#39;s <i>false</i> an existing 
+repository is not removed and a new repository creation fails with an <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNException.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNException.html">SVNException</a></span>.
+</p><p>
+</p><p>
+If a repository is successfully created the <i>createLocalRepository(...)</i> method returns a <i>file:///</i> url of the 
+repository root location.
+</p>
+<a name="Accessing_a_repository" id="Accessing_a_repository"></a>
+<h2> Accessing a repository </h2><p>There are two ways of accessing a Subversion repository: 
+
+</p><ul><li>over a network
+</li><li>on a local machine
+</li></ul><p><img src="Subversion_Architecture.png">
+</p><p>Up to now Subversion supports the following repository access schemes:
+</p>
+
+<table border=1
+>
+<tr>
+<td bgcolor=#AACCFF>Schema</td><td bgcolor=#AACCFF>Access Method</td></tr>
+<tr>
+<td>file:///</td><td>direct repository access (on a local disk)</td></tr>
+<tr>
+<td><span class="nobr"><a href="http://" class="external" title="http://">http://</a></span></td><td>access via WebDAV protocol to Subversion-aware Apache server</td></tr>
+<tr>
+<td><span class="nobr"><a href="https://" class="external" title="https://">https://</a></span></td><td>same as <span class="nobr"><a href="http://," class="external" title="http://,">http://,</a></span> but with SSL encryption</td></tr>
+<tr>
+<td>svn://</td><td>access via custom protocol to an svnserve server</td></tr>
+<tr>
+<td>svn+ssh://</td><td>same as svn://, but through an SSH tunnel</td></tr></table>
+
+<a name="file:%2F%2F%2F_access" id="file:%2F%2F%2F_access"></a>
+<h3> file:/// access </h3><p>This protocol does not require you to set up a user account for the repository to work with since the repository is 
+located on the same computer. Subversion will use only a user name in commit operations: if no user name is provided 
+explicitly, a session user name is used.
+</p>
+<a name="svn:%2F%2F%2C_svn%2Bssh:%2F%2F_access" id="svn:%2F%2F%2C_svn%2Bssh:%2F%2F_access"></a>
+<h3> svn://, svn+ssh:// access </h3><p>To use the <i>svn://</i> protocol an administrator configures access rules and accounts that will be used by an <b>svnserve</b> 
+program to authenticate users. <i>svn+ssh://</i> protocol: first a client authenticates himself to a host 
+server over an ssh, a tunneled connection is established and further he works with a repository just like on a local 
+machine. You may try either technique, details are described in <span class="nobr"><a href="http://svnbook.red-bean.com/nightly/en/svn.serverconfig.svnserve.html" class="external" title="http://svnbook.red-bean.com/nightly/en/svn.serverconfig.svnserve.html">this chapter</a></span> 
+of the Subversion book.
+</p>
+<a name="http:%2F%2F%2C_https:%2F%2F_access" id="http:%2F%2F%2C_https:%2F%2F_access"></a>
+<h3> http://, https:// access </h3><p>To use the <i><span class="nobr"><a href="http://" class="external" title="http://">http://</a></span> </i> protocol an dministrator configures an Apache server with a WebDAV protocol extension modules. 
+How to share your repository access over <i><span class="nobr"><a href="http://" class="external" title="http://">http://</a></span> </i> (including acount configuration tips), please, be sure to read 
+the <span class="nobr"><a href="http://svnbook.red-bean.com/nightly/en/svn.serverconfig.httpd.html" class="external" title="http://svnbook.red-bean.com/nightly/en/svn.serverconfig.httpd.html">Apache dedicated chapter</a></span> of the Subversion 
+book.
+</p><p><br />
+<br />
+<a href="What_Is_Subversion_For.html"><<</a> ... <a href="JavaSVN_Architecture.html">>></a>
+</p>   
+
+</div>
+</div>
+</body>
+</html>

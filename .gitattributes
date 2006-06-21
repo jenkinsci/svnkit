@@ -42,7 +42,11 @@ doc/wiki/AuthProvider_In_Work.png -text
 doc/wiki/AuthProvider_In_Work_1.png -text
 doc/wiki/Authentication.wp -text
 doc/wiki/Getting_Started_With_JavaSVN.wp -text
-doc/wiki/What_Is_JavaSVN.wp -text
+doc/wiki/JavaSVN_Architecture.html -text
+doc/wiki/JavaSVN_Architecture.wp -text
+doc/wiki/Setting_Up_A_Subversion_Repository.wp -text
+doc/wiki/Subversion_Architecture.png -text
+doc/wiki/What_Is_Subversion_For.wp -text
 doc/wiki/access_protocols.png -text
 doc/wiki/export.vm -text
 doc/wiki/javasvn_architecture.png -text

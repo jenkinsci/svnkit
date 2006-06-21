@@ -15,14 +15,20 @@ a.new, #quickbar a.new { color: #CC2200; }
 <div id="content">
 <div id='article'>
 
+<p><a href="JavaSVN_Architecture.html"><<</a> ... <a href="Authentication.html">>></a>
+<br />
+<br />
+</p>
 <table id="toc" border="0"><tr><th>Table of contents</th></tr><tr><td><ol><li><a href="#How_to_use_different_repository_access_protocols_in_JavaSVN%3F"> How to use different repository access protocols in JavaSVN? </a>
 </li><ol><li><a href="#Instructions_on_initializing_JavaSVN"> Instructions on initializing JavaSVN </a>
 </li></ol><li><a href="#Using_high-level_layer"> Using high-level layer </a>
-</li><li><a href="#Notes"> Notes </a>
-</li></ol></td></tr></table><hr/><a name="How_to_use_different_repository_access_protocols_in_JavaSVN%3F" id="How_to_use_different_repository_access_protocols_in_JavaSVN%3F"></a>
+</li><ol><li><a href="#SVN%2AClient_classes"> SVN*Client classes </a>
+</li></ol></ol></td></tr></table><hr/><a name="How_to_use_different_repository_access_protocols_in_JavaSVN%3F" id="How_to_use_different_repository_access_protocols_in_JavaSVN%3F"></a>
 <h2> How to use different repository access protocols in JavaSVN? </h2><p>When you have downloaded <span class="nobr"><a href="http://tmate.org/svn/download/index.php" class="external" title="http://tmate.org/svn/download/index.php">the latest JavaSVN binaries</a></span> and ready to start using it, a question arises: what initialization 
-steps should be performed in order to set up the library? First of all, as mentioned in the <a href="What_Is_JavaSVN.html">What Is JavaSVN</a>? article, 
-direct interacting with a Subversion repository is carried out by a low-level layer, where the main class representing a 
+steps should be performed in order to set up the library? 
+</p><p>
+</p><p>
+Direct interacting with a Subversion repository is carried out by a low-level layer, where the main class representing a 
 repository access driver is an abstract <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html">SVNRepository</a></span> class.
 There are several protocol specific realizations of this driver, one for each protocol. Each driver is created by an abstract factory class - 
 <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepositoryFactory.html">SVNRepositoryFactory</a></span>, which also has several protocol 
@@ -36,7 +42,7 @@ specific realizations, each one for each protocol. The following table matches a
 <tr>
 <td><i>svn://</i></td><td>SVNRepositoryFactoryImpl</td></tr>
 <tr>
-<td><i><span class="nobr"><a href="http://&#39;&#39;" class="external" title="http://&#39;&#39;">http://&#39;&#39;</a></span></i></td><td>DAVRepositoryFactory</td></tr>
+<td><i><span class="nobr"><a href="http://" class="external" title="http://">http://</a></span> </i></td><td>DAVRepositoryFactory</td></tr>
 <tr>
 <td><i>file:///</i></td><td>FSRepositoryFactory</td></tr></table>
 
@@ -78,20 +84,27 @@ repository, accept a repository path which may be one of two types:
 
 </p><ul><li>path that does not start with <i>&quot;/&quot;</i> - is always relative to the location the driver is bound to
 </li><li>path that does start with <i>&quot;/&quot;</i> - is always absolute to the repository root (always starts at the top of the repository tree)
-</li></ul>
+</li></ul><hr/>
+
 <a name="Using_high-level_layer" id="Using_high-level_layer"></a>
-<h2> Using high-level layer </h2><p>When you use JavaSVN for managing Working Copies you also should set up appropriate factory classes since 
+<h2> Using high-level layer </h2><p>When you use <b>JavaSVN</b> for managing Working Copies you also should set up appropriate factory classes since 
 the high-level layer uses the low-level one for working with a repository. If you miss this initialization step 
 you may get an exception saying that <b>JavaSVN</b> could not create an <b>SVNRepository</b> object for the provided 
 url.
 
-</p><a name="Notes" id="Notes"></a>
-<h2> Notes </h2><p>Please, read the following related articles on: 
+</p><a name="SVN%2AClient_classes" id="SVN%2AClient_classes"></a>
+<h3> SVN*Client classes </h3><p>All high-level operations for managing Working Copies are logically divided to <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/package-summary.html">SVN*Client</a></span> 
+classes: each <b>SVN*Client</b> class joins a separate group of operations (for example, <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNUpdateClient.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNUpdateClient.html">SVNUpdateClient</a></span> 
+provides API on update operations, such as checkout, update, switch, export). There&#39;re two different ways of instantiating
+objects of these classes: 
 
-</p><ul><li>authentication,
-</li><li>customizing network connections,
-</li><li>run-time options
-</li></ul>   
+</p><ul><li>Create only necessary <b>SVN*Client</b> objects.
+</li><li>Create a single <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNClientManager.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNClientManager.html">SVNClientManager</a></span> instance which provides objects of necessary <b>SVN*Client</b> types.
+</li></ul><p><br />
+<br />
+<a href="JavaSVN_Architecture.html"><<</a> ... <a href="Authentication.html">>></a>
+</p>
+   
 
 </div>
 </div>

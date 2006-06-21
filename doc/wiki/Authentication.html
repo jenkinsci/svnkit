@@ -15,6 +15,10 @@ a.new, #quickbar a.new { color: #CC2200; }
 <div id="content">
 <div id='article'>
 
+<p><a href="Getting_Started_With_JavaSVN.html"><<</a> ... >>
+<br />
+<br />
+</p>
 <table id="toc" border="0"><tr><th>Table of contents</th></tr><tr><td><ol><li><a href="#Authentication_manager"> Authentication manager </a>
 </li><ol><li><a href="#Authentication_manager_usage"> Authentication manager usage </a>
 </li><ol><li><a href="#Authentication_Provider"> Authentication Provider </a>
@@ -26,11 +30,12 @@ a.new, #quickbar a.new { color: #CC2200; }
 </li><ol><li><a href="#DefaultSVNAuthenticationManager"> DefaultSVNAuthenticationManager </a>
 </li><li><a href="#BasicAuthenticationManager"> BasicAuthenticationManager </a>
 </li></ol><li><a href="#Forcing_authentication"> Forcing authentication </a>
-</li></ol></ol></td></tr></table><hr/><a name="Authentication_manager" id="Authentication_manager"></a>
+</li></ol><li><a href="#HTTP_authentication_schemes"> HTTP authentication schemes </a>
+</li></ol></td></tr></table><hr/><a name="Authentication_manager" id="Authentication_manager"></a>
 <h2> Authentication manager </h2><p>When an anonymous access to a repository is not permitted, a server asks for authentication credentials. For these 
 purposes <b>JavaSVN</b> uses authentication managers. Such managers implement the 
 <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html">ISVNAuthenticationManager</a></span> 
-interface. The article <a href="Getting_Started_With_JavaSVN.html">Getting Started With JavaSVN</a> describes how to create an <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html">SVNRepository</a></span> 
+interface. The <a href="Getting_Started_With_JavaSVN.html">previous article</a> describes how to create an <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html">SVNRepository</a></span> 
 driver for working with a repository. After such a driver has been instantiated you provide an authentication manager 
 in the following way:
 
@@ -119,11 +124,11 @@ correspond to them:
 <tr>
 <td bgcolor=#AACCFF>Kind</td><td bgcolor=#AACCFF>Class representation</td><td bgcolor=#AACCFF>Field of usage</td></tr>
 <tr>
-<td><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#PASSWORD" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#PASSWORD">PASSWORD</a></span></td><td><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNPasswordAuthentication.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNPasswordAuthentication.html">SVNPasswordAuthentication</a></span></td><td><i>login:password</i> authorization (<i>svn://</i>, <i><span class="nobr"><a href="http://&#39;&#39;" class="external" title="http://&#39;&#39;">http://&#39;&#39;</a></span>)</i></td></tr>
+<td><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#PASSWORD" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#PASSWORD">PASSWORD</a></span></td><td><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNPasswordAuthentication.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNPasswordAuthentication.html">SVNPasswordAuthentication</a></span></td><td><i>login:password</i> authentication (<i>svn://</i>, <i><span class="nobr"><a href="http://" class="external" title="http://">http://</a></span> </i>)</td></tr>
 <tr>
 <td><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSH" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSH">SSH</a></span></td><td><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSHAuthentication.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSHAuthentication.html">SVNSSHAuthentication</a></span></td><td>In <i>svn+ssh://</i> tunneled connections</td></tr>
 <tr>
-<td><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSL" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSL">SSL</a></span></td><td><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSLAuthentication.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSLAuthentication.html">SVNSSLAuthentication</a></span></td><td>In secure <i><span class="nobr"><a href="https://&#39;&#39;" class="external" title="https://&#39;&#39;">https://&#39;&#39;</a></span> connections</i></td></tr>
+<td><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSL" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSL">SSL</a></span></td><td><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSLAuthentication.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSLAuthentication.html">SVNSSLAuthentication</a></span></td><td>In secure <i><span class="nobr"><a href="https://" class="external" title="https://">https://</a></span> </i> connections</td></tr>
 <tr>
 <td><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#USERNAME" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#USERNAME">USERNAME</a></span></td><td><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNUserNameAuthentication.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNUserNameAuthentication.html">SVNUserNameAuthentication</a></span></td><td>With <i>file:///</i> protocol, on local machines</td></tr></table>
 <p>
@@ -194,7 +199,40 @@ such an auth manager and then use it in <b>JavaSVN</b>.
 you, sometimes it may be effective to have an ability to make <b>JavaSVN</b> immediately authenticate a user without 
 wasting time. The <b>ISVNAuthenticationInterface</b> provides this ability: it returns a flag which <b>JavaSVN</b> 
 uses to control such a behaviour.
-</p>   
+</p>
+<a name="HTTP_authentication_schemes" id="HTTP_authentication_schemes"></a>
+<h2> HTTP authentication schemes </h2><p><b>JavaSVN</b> supports the following http auth schemes (for both server and proxy authentication):
+
+</p><ul><li>Basic
+</li><li>Digest
+</li><li>NTLM
+</li></ul><p>
+</p><p>
+For Basic and Digest schemes you provide a login name and a password. Like this:
+
+</p><div class="java"><pre>
+       ...
+            
+       ISVNAuthenticationManager authManager = <b><font color="#7F0055">new</font></b> BasicAuthenticationManager(<font color="#2A00FF">&#34;login&#34;</font>, <font color="#2A00FF">&#34;password&#34;</font>);
+       
+       ...
+</pre></div>
+<p>
+</p><p>
+In the NTLM auth scheme you also provide a domain name:
+
+</p><div class="java"><pre>
+       ...
+            
+       ISVNAuthenticationManager authManager = <b><font color="#7F0055">new</font></b> BasicAuthenticationManager(<font color="#2A00FF">&#34;DOMAIN&#92;&#92;login&#34;</font>, <font color="#2A00FF">&#34;password&#34;</font>);
+       
+       ...
+</pre></div>
+<p><br />
+<br />
+<a href="Getting_Started_With_JavaSVN.html"><<</a> ... >>
+</p>
+   
 
 </div>
 </div>

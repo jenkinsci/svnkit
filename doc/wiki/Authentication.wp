@@ -1,8 +1,12 @@
+[[Getting Started With JavaSVN|<<]] ... [[|>>]]
+<br />
+<br />
+
 == Authentication manager ==
 When an anonymous access to a repository is not permitted, a server asks for authentication credentials. For these 
 purposes '''JavaSVN''' uses authentication managers. Such managers implement the 
 [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html ISVNAuthenticationManager] 
-interface. The article [[Getting Started With JavaSVN]] describes how to create an [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] 
+interface. The [[Getting Started With JavaSVN|previous article]] describes how to create an [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/SVNRepository.html SVNRepository] 
 driver for working with a repository. After such a driver has been instantiated you provide an authentication manager 
 in the following way:
 <java>
@@ -89,11 +93,11 @@ correspond to them:
 {|border=1
 |bgcolor=#AACCFF|Kind||bgcolor=#AACCFF|Class representation||bgcolor=#AACCFF|Field of usage
 |-
-|[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#PASSWORD PASSWORD]||[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNPasswordAuthentication.html SVNPasswordAuthentication]||''login:password'' authorization (''svn://'', ''http://'')
+|[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#PASSWORD PASSWORD]||[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNPasswordAuthentication.html SVNPasswordAuthentication]||''login:password'' authentication (''svn://'', ''http:// '')
 |-
 |[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSH SSH]||[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSHAuthentication.html SVNSSHAuthentication]||In ''svn+ssh://'' tunneled connections
 |-
-|[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSL SSL]||[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSLAuthentication.html SVNSSLAuthentication]||In secure ''https://'' connections
+|[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#SSL SSL]||[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNSSLAuthentication.html SVNSSLAuthentication]||In secure ''https:// '' connections
 |-
 |[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.html#USERNAME USERNAME]||[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/SVNUserNameAuthentication.html SVNUserNameAuthentication]||With ''file:///'' protocol, on local machines
 |}
@@ -162,3 +166,34 @@ Although one of the Subversion advantages is that you do not need to authenticat
 you, sometimes it may be effective to have an ability to make '''JavaSVN''' immediately authenticate a user without 
 wasting time. The '''ISVNAuthenticationInterface''' provides this ability: it returns a flag which '''JavaSVN''' 
 uses to control such a behaviour.
+
+== HTTP authentication schemes ==
+'''JavaSVN''' supports the following http auth schemes (for both server and proxy authentication):
+* Basic
+* Digest
+* NTLM
+
+<p>
+For Basic and Digest schemes you provide a login name and a password. Like this:
+<java>
+       ...
+            
+       ISVNAuthenticationManager authManager = new BasicAuthenticationManager("login", "password");
+       
+       ...
+</java>
+
+<p>
+In the NTLM auth scheme you also provide a domain name:
+<java>
+       ...
+            
+       ISVNAuthenticationManager authManager = new BasicAuthenticationManager("DOMAIN\\login", "password");
+       
+       ...
+</java>
+
+<br />
+<br />
+[[Getting Started With JavaSVN|<<]] ... [[|>>]]
+
