@@ -107,8 +107,7 @@ abstract class HTTPAuthentication {
             if (index <= 0) {
                 index = source.length();
                 if (!"NTLM".equalsIgnoreCase(source.substring(0, index))) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "HTTP authorization method ''{0}'' is not supported", authHeader); 
-                    SVNErrorManager.error(err);
+                    continue;
                 }
             }
             String method = source.substring(0, index);
