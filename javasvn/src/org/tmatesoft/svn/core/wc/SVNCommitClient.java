@@ -914,6 +914,8 @@ public class SVNCommitClient extends SVNBasicClient {
                         SVNErrorManager.error(err);
                     }
                 }
+                // also use protocol, host and port as a key, not only uuid.
+                uuid += url.getProtocol() + ":" + url.getHost() + ":" + url.getPort();
                 if (!repoUUIDs.containsKey(uuid)) {
                     repoUUIDs.put(uuid, new ArrayList());
                     locktokensMap.put(uuid, new HashMap());
