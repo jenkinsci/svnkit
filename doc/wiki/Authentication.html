@@ -15,7 +15,7 @@ a.new, #quickbar a.new { color: #CC2200; }
 <div id="content">
 <div id='article'>
 
-<p><a href="Getting_Started_With_JavaSVN.html"><<</a> ... >>
+<p><a href="Getting_Started_With_JavaSVN.html"><<</a> ... <a href="Managing_Repository_With_JavaSVN.html">>></a>
 <br />
 <br />
 </p>
@@ -154,11 +154,11 @@ the run-time storage) may be reused without prompting the user again.
 </p>
 <a name="SSL_Manager" id="SSL_Manager"></a>
 <h4> SSL Manager </h4><p>This block is represented by the <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNSSLManager.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNSSLManager.html">ISVNSSLManager</a></span> 
-interface. When a secured http connection is used (<i><span class="nobr"><a href="https://&#39;&#39;" class="external" title="https://&#39;&#39;">https://&#39;&#39;</a></span>), and this manager is not </i>null<i>, it&#39;s used by 
-</i>&#39;JavaSVN<b> to create SSL encrypted sockets (i.e. such a manager provides an appropriate SSL context). However if 
-no SSL manager is provided by an auth manager, </b>JavaSVN<b> uses a default one which, of course, knows nothing of 
+interface. When a secured http connection is used (<i><span class="nobr"><a href="https://" class="external" title="https://">https://</a></span> </i>), and this manager is not <i>null</i>, it&#39;s used by 
+<b>JavaSVN</b> to create SSL encrypted sockets (i.e. such a manager provides an appropriate SSL context). However if 
+no SSL manager is provided by an auth manager, <b>JavaSVN</b> uses a default one which, of course, knows nothing of 
 user certificate files. But this default one will provide an SSL context for creating SSL sockets as well as receive 
-server certificate file.</b>
+server certificate file.
 </p>
 <a name="Default_ISVNAuthenticationManager_implementations" id="Default_ISVNAuthenticationManager_implementations"></a>
 <h3> Default ISVNAuthenticationManager implementations </h3><p><b>JavaSVN</b> provides the following implementations of <b>ISVNAuthenticationManager</b>:
@@ -179,7 +179,7 @@ On Windows machines name\password credentials are often stored encrypted. Unfort
 decrypt such credentials, therefore they are not used (just skipped).
 </p><p>
 </p><p>
-How to instantiate such a default authentication manager see <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNWCUtil.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNWCUtil.html">this javadoc</a></span>.
+The class which is responsible for instantiating <b>DefaultSVNAuthenticationManager</b> objects is <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNWCUtil.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNWCUtil.html">SVNWCUtil</a></span>.
 </p>
 <a name="BasicAuthenticationManager" id="BasicAuthenticationManager"></a>
 <h4> BasicAuthenticationManager </h4><p>This is another very simple implementation of <b>ISVNAuthenticationManager</b>. Its features:
@@ -230,7 +230,7 @@ In the NTLM auth scheme you also provide a domain name:
 </pre></div>
 <p><br />
 <br />
-<a href="Getting_Started_With_JavaSVN.html"><<</a> ... >>
+<a href="Getting_Started_With_JavaSVN.html"><<</a> ... <a href="Managing_Repository_With_JavaSVN.html">>></a>
 </p>
    
 

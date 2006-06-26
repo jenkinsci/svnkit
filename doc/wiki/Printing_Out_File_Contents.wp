@@ -1,0 +1,104 @@
+[[Printing Out A Subversion Repository Tree|<<]] | [[Managing repository With JavaSVN|List]] |  [[Printing Out Repository History|>>]]
+<br />
+<br />
+
+== Printing Out File Contents ==
+In this example we will study how to read contents of a file from a particular revision of a repository. The 
+first steps are just like in the previous example:
+<java>
+...
+
+public class DisplayFile {
+
+    public static void main(String[] args) {
+        DAVRepositoryFactory.setup();
+
+        String url = "http://svn.tmate.org:8080/svn/jsvn/trunk";
+        String name = "anonymous";
+        String password = "anonymous";
+        String filePath = "www/license.html";
+
+        SVNRepository repository = null;
+        try {
+            repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
+            ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name, password);
+            repository.setAuthenticationManager(authManager);
+
+            SVNNodeKind nodeKind = repository.checkPath(filePath, -1);
+            
+            if (nodeKind == SVNNodeKind.NONE) {
+                System.err.println("There is no entry at '" + url + "'.");
+                System.exit(1);
+            } else if (nodeKind == SVNNodeKind.DIR) {
+                System.err.println("The entry at '" + url + "' is a directory while a file was expected.");
+                System.exit(1);
+            }
+
+            ...
+</java>
+Now when we are sure that our url corresponds to a file we read its contents into an ''OutputStream'' and 
+collect its properties into a ''Map''.
+<java>
+            ...
+            Map fileProperties = new HashMap();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            repository.getFile(filePath, -1, fileProperties, baos);
+
+</java>
+Then we find out whether the file is a text or binary file using the MIME type property. If it's a binary we don't 
+print its contents. We also print out versioned file properties.
+<java>
+        ...
+        String mimeType = (String) fileProperties.get(SVNProperty.MIME_TYPE);
+        boolean isTextType = SVNProperty.isTextMimeType(mimeType);
+
+        Iterator iterator = fileProperties.keySet().iterator();
+        while (iterator.hasNext()) {
+            String propertyName = (String) iterator.next();
+            String propertyValue = (String) fileProperties.get(propertyName);
+            System.out.println("File property: " + propertyName + "=" + propertyValue);
+        }
+
+        if (isTextType) {
+            System.out.println("File contents:");
+            System.out.println();
+            try {
+                baos.writeTo(System.out);
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        } else {
+            System.out.println("Not a text file.");
+        }
+        ...
+</java>
+And finally we run the program and have the following output in our console:
+ File property: svn:eol-style=LF File property: svn:entry:revision=645 
+ File property: svn:entry:checksum=6b55de2c879b135fec9657309f5c9769 
+ File property: svn:wc:ra_dav:version-url=/svn/jsvn/!svn/ver/301/trunk/www/usage.html 
+ File property: svn:entry:last-author=alex 
+ File property: svn:entry:committed-date=2005-02-19T23:03:10.978491Z 
+ File property: svn:entry:committed-rev=301 
+ File contents: 
+ 
+ <html><head><title>How to Use :: Documentation :: Pure Java Subversion (SVN) Client Library</title>
+
+ <meta name="keywords" content="Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development">   
+ <meta name="description" content="Pure Java Subversion Library. Open Source, provided by TMate Software">
+
+ <style>
+ html body {
+     margin: 0px;
+     padding: 0px;
+     padding-top: 0.2em;
+     margin-left: 1em;
+ ......................................
+ --------------------------------------------- 
+ Repository latest revision: 645
+
+----
+Download the [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java example program source code].
+
+<br />
+<br />
+[[Printing Out A Subversion Repository Tree|<<]] | [[Managing repository With JavaSVN|List]] |  [[Printing Out Repository History|>>]]

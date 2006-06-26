@@ -1,0 +1,131 @@
+[[Printing Out File Contents|<<]] | [[Managing repository With JavaSVN|List]] |  [[Editing operation Commit|>>]]
+<br />
+<br />
+
+== Getting A Repository History ==
+In this example we'll demonstarte how you may get the history of changes made to a repository (i.e perform a log 
+operation) starting with the very first revision and up to the very last one. 
+<java>
+...
+
+public class History {
+
+    public static void main(String[] args) {
+        DAVRepositoryFactory.setup();
+
+        String url = "http://svn.tmate.org:8080/svn/jsvn/trunk/doc";
+        String name = "anonymous";
+        String password = "anonymous";
+        long startRevision = 0;
+        long endRevision = -1;//HEAD (the latest) revision
+
+        SVNRepository repository = null;
+        try {
+            repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
+            ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name, password);
+            repository.setAuthenticationManager(authManager);
+
+            ...
+            Collection logEntries = null;
+            
+            logEntries = repository.log(new String[] {""}, null, startRevision, endRevision, true, true);
+            ...
+</java>
+We don't use paths to get only those revisions where paths were changed, so we pass an empty array 
+<code>new String[] {""}</code> to the <code>log(...)</code> method of the repository access driver. 
+
+<p>
+The second 
+parameter is a Collection to receive history objects. Information about each revision is represented by a single 
+[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNLogEntry.html SVNLogEntry] object. We pass <code>null</code> 
+since we don't need to fill an existing collection with history objects. 
+
+<p>
+Then we pass a range of revisions for which 
+the history of changes to be fetched out. 
+
+<p>
+The fifth parameter controls whether information of all changed paths per 
+revision should be included into histroy objects. Such information is represented by an 
+[http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNLogEntryPath.html SVNLogEntryPath] object for each revision.
+We are going to print out all changed paths, so setting it to <code>true</code>. 
+
+<p>
+And the last parameter stricts node's history only to the node itself, what means that history of the node's ancestor 
+(if the node has been copied) won't be included. 
+
+<p>
+Now let's print the collected information:
+<java>
+        ...      
+        for (Iterator entries = logEntries.iterator(); entries.hasNext();) {
+            SVNLogEntry logEntry = (SVNLogEntry) entries.next();
+            System.out.println("---------------------------------------------");
+            System.out.println("revision: " + logEntry.getRevision());
+            System.out.println("author: " + logEntry.getAuthor());
+            System.out.println("date: " + logEntry.getDate());
+            System.out.println("log message: " + logEntry.getMessage());
+
+            if (logEntry.getChangedPaths().size() > 0) {
+                System.out.println();
+                System.out.println("changed paths:");
+                Set changedPathsSet = logEntry.getChangedPaths().keySet();
+
+                for (Iterator changedPaths = changedPathsSet.iterator(); changedPaths.hasNext();) {
+                    SVNLogEntryPath entryPath = (SVNLogEntryPath) logEntry.getChangedPaths().get(changedPaths.next());
+                    System.out.println(" "
+                            + entryPath.getType()
+                            + "	"
+                            + entryPath.getPath()
+                            + ((entryPath.getCopyPath() != null) ? " (from "
+                                    + entryPath.getCopyPath() + " revision "
+                                    + entryPath.getCopyRevision() + ")" : ""));
+                }
+            }
+        }
+        ...
+    }
+}
+</java>
+And finally we run the program and have the following output in our console:
+ ---------------------------------------------
+ revision: 1240
+ author: alex
+ date: Tue Aug 02 19:52:49 NOVST 2005
+ log message: 0.9.0 is now trunk
+
+ changed paths:
+  A	/trunk (from /branches/0.9.0 revision 1239)
+ ---------------------------------------------
+ revision: 1263
+ author: sa
+ date: Wed Aug 03 21:19:55 NOVST 2005
+ log message: updated examples, javadoc files
+ 
+ changed paths:
+  M	/trunk/doc/javadoc-files/javadoc.css
+  M	/trunk/doc/javadoc-files/overview.html
+  M	/trunk/doc/examples/src/org/tmatesoft/svn/examples/wc/StatusHandler.java
+ ---------------------------------------------
+ revision: 1287
+ author: sa
+ date: Mon Aug 08 18:27:37 NOVST 2005
+ log message: modified javadoc.css, packages overview
+ 
+ changed paths:
+  M	/trunk/doc/javadoc-files/javadoc.css
+  M	/trunk/doc/javadoc-files/overview.html
+  D	/trunk/doc/javadoc-files/subversion.png
+  A	/trunk/doc/javadoc-files/info.png
+ ---------------------------------------------
+ revision: 1294
+ author: sa
+ date: Tue Aug 09 02:46:29 NOVST 2005
+ log message: corrected wc examples, modified javadoc files
+ 
+----
+Download the [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java example program source code].
+
+<br />
+<br />
+[[Printing Out File Contents|<<]] | [[Managing repository With JavaSVN|List]] |  [[Editing operation Commit|>>]]

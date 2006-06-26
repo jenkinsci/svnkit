@@ -1,0 +1,124 @@
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<style type='text/css'>
+/*/*/ /*<![CDATA[*/
+@import "file://G:/materials/Programming/SVNWorkspace/wiki/wpsrc/main.css";
+#quickbar { position: absolute; left: 4px; }
+#article { margin-left: 4px; margin-top: 4px; margin-right: 4px; }
+a.new, #quickbar a.new { color: #CC2200; }
+
+/*]]>*/ /* */
+</style>
+</head>
+<body bgcolor='#FFFFFF' onload=''>
+<div id="content">
+<div id='article'>
+
+<p><a href="Printing_Out_A_Subversion_Repository_Tree.html"><<</a> | <a href="Managing_repository_With_JavaSVN.html">List</a> |  <a href="Printing_Out_Repository_History.html">>></a>
+<br />
+<br />
+</p>
+<a name="Printing_Out_File_Contents" id="Printing_Out_File_Contents"></a>
+<h2> Printing Out File Contents </h2><p>In this example we will study how to read contents of a file from a particular revision of a repository. The 
+first steps are just like in the previous example:
+
+</p><div class="java"><pre>
+...
+
+<b><font color="#7F0055">public</font></b> <b><font color="#7F0055">class</font></b> DisplayFile &#123;
+
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">void</font></b> main(String&#91;&#93; args) &#123;
+        DAVRepositoryFactory.setup();
+
+        String url = <font color="#2A00FF">&#34;http://svn.tmate.org:8080/svn/jsvn/trunk&#34;</font>;
+        String name = <font color="#2A00FF">&#34;anonymous&#34;</font>;
+        String password = <font color="#2A00FF">&#34;anonymous&#34;</font>;
+        String filePath = <font color="#2A00FF">&#34;www/license.html&#34;</font>;
+
+        SVNRepository repository = <b><font color="#7F0055">null</font></b>;
+        <b><font color="#7F0055">try</font></b> &#123;
+            repository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
+            ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name, password);
+            repository.setAuthenticationManager(authManager);
+
+            SVNNodeKind nodeKind = repository.checkPath(filePath, &#45;1);
+            
+            <b><font color="#7F0055">if</font></b> (nodeKind == SVNNodeKind.NONE) &#123;
+                System.err.println(<font color="#2A00FF">&#34;There is no entry at &#39;&#34;</font> + url + <font color="#2A00FF">&#34;&#39;.&#34;</font>);
+                System.exit(1);
+            &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (nodeKind == SVNNodeKind.DIR) &#123;
+                System.err.println(<font color="#2A00FF">&#34;The entry at &#39;&#34;</font> + url + <font color="#2A00FF">&#34;&#39; is a directory while a file was expected.&#34;</font>);
+                System.exit(1);
+            &#125;
+
+            ...
+</pre></div><p>Now when we are sure that our url corresponds to a file we read its contents into an <i>OutputStream</i> and 
+collect its properties into a <i>Map</i>.
+
+</p><div class="java"><pre>
+            ...
+            Map fileProperties = <b><font color="#7F0055">new</font></b> HashMap();
+            ByteArrayOutputStream baos = <b><font color="#7F0055">new</font></b> ByteArrayOutputStream();
+            repository.getFile(filePath, &#45;1, fileProperties, baos);
+
+</pre></div><p>Then we find out whether the file is a text or binary file using the MIME type property. If it&#39;s a binary we don&#39;t 
+print its contents. We also print out versioned file properties.
+
+</p><div class="java"><pre>
+        ...
+        String mimeType = (String) fileProperties.get(SVNProperty.MIME_TYPE);
+        <b><font color="#7F0055">boolean</font></b> isTextType = SVNProperty.isTextMimeType(mimeType);
+
+        Iterator iterator = fileProperties.keySet().iterator();
+        <b><font color="#7F0055">while</font></b> (iterator.hasNext()) &#123;
+            String propertyName = (String) iterator.next();
+            String propertyValue = (String) fileProperties.get(propertyName);
+            System.out.println(<font color="#2A00FF">&#34;File property: &#34;</font> + propertyName + <font color="#2A00FF">&#34;=&#34;</font> + propertyValue);
+        &#125;
+
+        <b><font color="#7F0055">if</font></b> (isTextType) &#123;
+            System.out.println(<font color="#2A00FF">&#34;File contents:&#34;</font>);
+            System.out.println();
+            <b><font color="#7F0055">try</font></b> &#123;
+                baos.writeTo(System.out);
+            &#125; <b><font color="#7F0055">catch</font></b> (IOException ioe) &#123;
+                ioe.printStackTrace();
+            &#125;
+        &#125; <b><font color="#7F0055">else</font></b> &#123;
+            System.out.println(<font color="#2A00FF">&#34;Not a text file.&#34;</font>);
+        &#125;
+        ...
+</pre></div><p>And finally we run the program and have the following output in our console:
+</p><pre> File property: svn:eol-style=LF File property: svn:entry:revision=645 
+ File property: svn:entry:checksum=6b55de2c879b135fec9657309f5c9769 
+ File property: svn:wc:ra_dav:version-url=/svn/jsvn/!svn/ver/301/trunk/www/usage.html 
+ File property: svn:entry:last-author=alex 
+ File property: svn:entry:committed-date=2005-02-19T23:03:10.978491Z 
+ File property: svn:entry:committed-rev=301 
+ File contents: 
+ 
+ &lt;html&gt;&lt;head&gt;&lt;title&gt;How to Use :: Documentation :: Pure Java Subversion (SVN) Client Library&lt;/title&gt;
+
+ &lt;meta name=&quot;keywords&quot; content=&quot;Subversion,SVN,Version Control,Java,Library,Development,Team,Teamwork,Configuration Management,Software Configuration Management,SCM,CM,Revision Control,Collaboration,Open Source,Software Development,Collaborative Software Development&quot;&gt;   
+ &lt;meta name=&quot;description&quot; content=&quot;Pure Java Subversion Library. Open Source, provided by TMate Software&quot;&gt;
+
+ &lt;style&gt;
+ html body {
+     margin: 0px;
+     padding: 0px;
+     padding-top: 0.2em;
+     margin-left: 1em;
+ ......................................
+ --------------------------------------------- 
+ Repository latest revision: 64</pre><hr/><p>Download the <span class="nobr"><a href="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java" class="external" title="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java">example program source code</a></span>.
+</p><p><br />
+<br />
+<a href="Printing_Out_A_Subversion_Repository_Tree.html"><<</a> | <a href="Managing_repository_With_JavaSVN.html">List</a> |  <a href="Printing_Out_Repository_History.html">>></a>
+
+</p>   
+
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<style type='text/css'>
+/*/*/ /*<![CDATA[*/
+@import "file://G:/materials/Programming/SVNWorkspace/wiki/wpsrc/main.css";
+#quickbar { position: absolute; left: 4px; }
+#article { margin-left: 4px; margin-top: 4px; margin-right: 4px; }
+a.new, #quickbar a.new { color: #CC2200; }
+
+/*]]>*/ /* */
+</style>
+</head>
+<body bgcolor='#FFFFFF' onload=''>
+<div id="content">
+<div id='article'>
+
+<p><a href="Managing_repository_With_JavaSVN.html">List</a> | <a href="Printing_Out_File_Contents.html">>></a>
+<br />
+<br />
+</p>
+<a name="Printing_out_a_Subversion_repository_tree" id="Printing_out_a_Subversion_repository_tree"></a>
+<h2> Printing out a Subversion repository tree </h2><p>The first thing we will try - observing a Subversion repository. First we need to set up the library to use the 
+protocol which we would like to access a repository through. In this example we will use the <i><span class="nobr"><a href="http://" class="external" title="http://">http://</a></span> </i> protocol 
+to observe a world-readable repository: 
+
+</p><div class="java"><pre>
+<b><font color="#7F0055">import</font></b> org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+...
+
+<b><font color="#7F0055">public</font></b> <b><font color="#7F0055">class</font></b> DisplayRepositoryTree &#123;
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">void</font></b> main(String&#91;&#93; args) &#123;
+        DAVRepositoryFactory.setup();
+        ...
+</pre></div><p>We need a URL of the repository and credentials (here we use some dummy ones since we think an Apache will let us 
+read repository contents, but you may change them to some valid credentials to observe repositories closed to 
+unregistered persons). Having these parameters we create an <b>SVNRepository</b> driver for the selected location:
+
+</p><div class="java"><pre>
+        ...
+        String url = <font color="#2A00FF">&#34;http://svn.tmate.org:8080/svn/jsvn/trunk/doc&#34;</font>;
+        String name = <font color="#2A00FF">&#34;anonymous&#34;</font>;
+        String password = <font color="#2A00FF">&#34;anonymous&#34;</font>;
+        
+        SVNRepository repository = <b><font color="#7F0055">null</font></b>;
+        <b><font color="#7F0055">try</font></b> &#123;
+            repository = SVNRepositoryFactory.create(SVNURL.parseURIDecoded(url));
+            ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name, password);
+            repository.setAuthenticationManager(authManager);
+            ...
+</pre></div><p>We have got a repository access driver with a default authentication manager. Let&#39;s print out 
+some information identifying the repository itself - its root location path and UUID:
+
+</p><div class="java"><pre>
+            ...
+            System.out.println(<font color="#2A00FF">&#34;Repository Root: &#34;</font> + repository.getRepositoryRoot(<b><font color="#7F0055">true</font></b>));
+            System.out.println(<font color="#2A00FF">&#34;Repository UUID: &#34;</font> + repository.getRepositoryUUID(<b><font color="#7F0055">true</font></b>));
+            ...
+</pre></div><p>If everything is Ok (we connected to our repository successfully and cached its UUID and root location), we are moving 
+further. Now we will check whether the url we are going to use corresponds to a directory. If it does not, we are 
+finished.
+
+</p><div class="java"><pre>
+            ...
+            SVNNodeKind nodeKind = repository.checkPath(<font color="#2A00FF">&#34;&#34;</font>, &#45;1);
+            <b><font color="#7F0055">if</font></b> (nodeKind == SVNNodeKind.NONE) &#123;
+                System.err.println(<font color="#2A00FF">&#34;There is no entry at &#39;&#34;</font> + url + <font color="#2A00FF">&#34;&#39;.&#34;</font>);
+                System.exit(1);
+            &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (nodeKind == SVNNodeKind.FILE) &#123;
+                System.err.println(<font color="#2A00FF">&#34;The entry at &#39;&#34;</font> + url + <font color="#2A00FF">&#34;&#39; is a file while a directory was expected.&#34;</font>);
+                System.exit(1);
+            &#125;
+            ...
+</pre></div><p>Repository nodes are represented by <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNNodeKind.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNNodeKind.html">SVNNodeKind</a></span> 
+enum objects. Here and later we use an invalid revision number -1 to mean that the latest revision must be used. The 
+next step - writing a function which will recursively call itself to traverse the repository tree starting at a 
+particular path (parameter) and print out all contents:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">void</font></b> listEntries(SVNRepository repository, String path) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        Collection entries = repository.getDir(path, &#45;1, <b><font color="#7F0055">null</font></b>, (Collection) <b><font color="#7F0055">null</font></b>);
+        Iterator iterator = entries.iterator();
+        <b><font color="#7F0055">while</font></b> (iterator.hasNext()) &#123;
+            SVNDirEntry entry = (SVNDirEntry) iterator.next();
+            System.out.println(<font color="#2A00FF">&#34;/&#34;</font> + (path.equals(<font color="#2A00FF">&#34;&#34;</font>) ? <font color="#2A00FF">&#34;&#34;</font> : path + <font color="#2A00FF">&#34;/&#34;</font>) + entry.getName() + 
+                               <font color="#2A00FF">&#34; (author: &#39;&#34;</font> + entry.getAuthor() + <font color="#2A00FF">&#34;&#39;; revision: &#34;</font> + entry.getRevision() + 
+                               <font color="#2A00FF">&#34;; date: &#34;</font> + entry.getDate() + <font color="#2A00FF">&#34;)&#34;</font>);
+            <b><font color="#7F0055">if</font></b> (entry.getKind() == SVNNodeKind.DIR) &#123;
+                listEntries(repository, (path.equals(<font color="#2A00FF">&#34;&#34;</font>)) ? entry.getName() : path + <font color="#2A00FF">&#34;/&#34;</font> + entry.getName());
+            &#125;
+        &#125;
+    &#125;
+</pre></div><p>This function receives a path of a repository subtree which is to be printed out. Using a <code>getDir(...)</code> method 
+of the repository access driver passed it reads the contents of the current path which are represented by 
+<span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNDirEntry.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/SVNDirEntry.html">SVNDirEntry</a></span> objects. If an entry is a 
+directory the function recursively calls itself with the path of that directory. And so on. Collected <b>SVNDirEntry</b> 
+objects contain such information as the last change revision, author, and date-stamp. 
+</p><p>
+</p><p>
+From our <code>main()</code> program we call <code>listEntries()</code> passing our driver object and the current path 
+that the driver is bound to:
+
+</p><div class="java"><pre>
+            ...
+            listEntries(repository, <font color="#2A00FF">&#34;&#34;</font>);
+            ...
+</pre></div><p>At the end of the program we can finish with printing the latest revision of our repository:
+
+</p><div class="java"><pre>
+            ...
+            latestRevision = repository.getLatestRevision();
+            System.out.println(<font color="#2A00FF">&#34;Repository latest revision: &#34;</font> + latestRevision);
+            ...
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            <font color="#3F7F5F">//handle exception
+</font>        &#125;
+    &#125;
+&#125;
+</pre></div><p>And finally we run the program and have the following output in our console:
+</p><pre> /javadoc-files (author: &#39;sa&#39;; revision: 1985; date: Sat Jan 14 23:04:00 NOVT 2006)
+ /javadoc-files/overview.html (author: &#39;sa&#39;; revision: 1985; date: Sat Jan 14 23:04:00 NOVT 2006)
+ /javadoc-files/info.png (author: &#39;sa&#39;; revision: 1287; date: Mon Aug 08 18:27:37 NOVST 2005)
+ /javadoc-files/javadoc.css (author: &#39;sa&#39;; revision: 1294; date: Tue Aug 09 02:46:29 NOVST 2005)
+ /javadoc-files/JavaSVN_API_Packages.jpg (author: &#39;sa&#39;; revision: 1027; date: Fri Jul 08 22:33:09 NOVST 2005)
+ /examples (author: &#39;sa&#39;; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
+ /examples/javasvn-examples.iml (author: &#39;alex&#39;; revision: 1012; date: Wed Jul 06 17:27:11 NOVST 2005)
+ /examples/src (author: &#39;sa&#39;; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
+ /examples/src/org (author: &#39;sa&#39;; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
+ /examples/src/org/tmatesoft (author: &#39;sa&#39;; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
+ /examples/src/org/tmatesoft/svn (author: &#39;sa&#39;; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
+ /examples/src/org/tmatesoft/svn/examples (author: &#39;sa&#39;; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
+ /examples/src/org/tmatesoft/svn/examples/wc (author: &#39;sa&#39;; revision: 2408; date: Wed Apr 26 03:22:53 NOVST 2006)
+ /examples/src/org/tmatesoft/svn/examples/wc/UpdateEventHandler.java (author: &#39;sa&#39;; revision: 1987; date: Sun Jan 15 00:07:44 NOVT 2006)
+ /examples/src/org/tmatesoft/svn/examples/wc/WCEventHandler.java (author: &#39;sa&#39;; revision: 1987; date: Sun Jan 15 00:07:44 NOVT 2006)
+ /examples/src/org/tmatesoft/svn/examples/wc/WorkingCopy.java (author: &#39;sa&#39;; revision: 2408; date: Wed Apr 26 03:22:53 NOVST 2006)
+ /examples/src/org/tmatesoft/svn/examples/wc/InfoHandler.java (author: &#39;sa&#39;; revision: 1987; date: Sun Jan 15 00:07:44 NOVT 2006)
+ /examples/src/org/tmatesoft/svn/examples/wc/CommitEventHandler.java (author: &#39;sa&#39;; revision: 1987; date: Sun Jan 15 00:07:44 NOVT 2006)
+ /examples/src/org/tmatesoft/svn/examples/wc/StatusHandler.java (author: &#39;sa&#39;; revision: 1987; date: Sun Jan 15 00:07:44 NOVT 2006)
+ /examples/src/org/tmatesoft/svn/examples/repository (author: &#39;sa&#39;; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
+ /examples/src/org/tmatesoft/svn/examples/repository/Commit.java (author: &#39;sa&#39;; revision: 2408; date: Wed Apr 26 03:22:53 NOVST 2006)
+ /examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java (author: &#39;sa&#39;; revision: 2408; date: Wed Apr 26 03:22:53 NOVST 2006)
+ /examples/src/org/tmatesoft/svn/examples/repository/DisplayRepositoryTree.java (author: &#39;sa&#39;; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
+ /examples/src/org/tmatesoft/svn/examples/repository/Replicate.java (author: &#39;sa&#39;; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
+ /examples/src/org/tmatesoft/svn/examples/repository/History.java (author: &#39;sa&#39;; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
+ /examples/src/org/tmatesoft/svn/examples/repository/Export.java (author: &#39;sa&#39;; revision: 2412; date: Thu Apr 27 00:36:08 NOVST 2006)
+
+ ---------------------------------------------
+ Repository latest revision: 250</pre><hr/><p>Download the <span class="nobr"><a href="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayRepositoryTree.java" class="external" title="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayRepositoryTree.java">example program source code</a></span>.
+</p><p><br />
+<br />
+<a href="Managing_repository_With_JavaSVN.html">List</a> | <a href="Printing_Out_File_Contents.html">>></a>
+
+</p>   
+
+</div>
+</div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-[[Getting Started With JavaSVN|<<]] ... [[|>>]]
+[[Getting Started With JavaSVN|<<]] ... [[Managing Repository With JavaSVN|>>]]
 <br />
 <br />
 
@@ -124,7 +124,7 @@ If an authentication manager provides a non-null [http://tmate.org/svn/kb/javado
 
 ==== SSL Manager ====
 This block is represented by the [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/auth/ISVNSSLManager.html ISVNSSLManager] 
-interface. When a secured http connection is used (''https://''), and this manager is not ''null'', it's used by 
+interface. When a secured http connection is used (''https:// ''), and this manager is not ''null'', it's used by 
 '''JavaSVN''' to create SSL encrypted sockets (i.e. such a manager provides an appropriate SSL context). However if 
 no SSL manager is provided by an auth manager, '''JavaSVN''' uses a default one which, of course, knows nothing of 
 user certificate files. But this default one will provide an SSL context for creating SSL sockets as well as receive 
@@ -147,7 +147,7 @@ On Windows machines name\password credentials are often stored encrypted. Unfort
 decrypt such credentials, therefore they are not used (just skipped).
 
 <p>
-How to instantiate such a default authentication manager see [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNWCUtil.html this javadoc].
+The class which is responsible for instantiating '''DefaultSVNAuthenticationManager''' objects is [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/wc/SVNWCUtil.html SVNWCUtil].
 
 ==== BasicAuthenticationManager ====
 This is another very simple implementation of '''ISVNAuthenticationManager'''. Its features:
@@ -195,5 +195,5 @@ In the NTLM auth scheme you also provide a domain name:
 
 <br />
 <br />
-[[Getting Started With JavaSVN|<<]] ... [[|>>]]
+[[Getting Started With JavaSVN|<<]] ... [[Managing Repository With JavaSVN|>>]]
 
