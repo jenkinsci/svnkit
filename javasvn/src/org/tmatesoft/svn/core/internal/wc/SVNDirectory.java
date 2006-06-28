@@ -510,10 +510,11 @@ public class SVNDirectory {
                 long tstamp = dst.lastModified();
                 if (myWCAccess.getOptions().isUseCommitTimes() && !special) {
                     entry.setTextTime(entry.getCommittedDate());
-                    tstamp = SVNTimeUtil.parseDate(entry.getCommittedDate())
-                            .getTime();
+                    tstamp = SVNTimeUtil.parseDate(entry.getCommittedDate()).getTime();
                     dst.setLastModified(tstamp);
                 } else {
+                    tstamp = System.currentTimeMillis();
+                    dst.setLastModified(tstamp);
                     entry.setTextTime(SVNTimeUtil.formatDate(new Date(tstamp)));
                 }
                 getEntries().save(false);
