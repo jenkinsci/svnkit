@@ -221,6 +221,8 @@ public class SVNReporter implements ISVNReporterBaton {
             tstamp = SVNTimeUtil.parseDate(entry.getCommittedDate()).getTime();
             dst.setLastModified(tstamp);
         } else {
+            tstamp = System.currentTimeMillis();
+            dst.setLastModified(tstamp);
             entry.setTextTime(SVNTimeUtil.formatDate(new Date(tstamp)));
         }
         dir.getEntries().save(false);
