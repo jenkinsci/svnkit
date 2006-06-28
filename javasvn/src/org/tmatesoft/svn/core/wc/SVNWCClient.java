@@ -2133,13 +2133,11 @@ public class SVNWCClient extends SVNBasicClient {
             if (entry.getKind() == SVNNodeKind.DIR) {
                 SVNDirectory dir = anchor.getChildDirectory(name);
                 if (dir != null) {
-                    doSetLocalProperty(dir, "", propName, propValue, force,
-                            recursive, cancel, handler);
+                    doSetLocalProperty(dir, "", propName, propValue, force, recursive, cancel, handler);
                 }
             } else if (entry.getKind() == SVNNodeKind.FILE) {
                 File wcFile = anchor.getFile(name);
-                if (SVNProperty.IGNORE.equals(propName)
-                        || SVNProperty.EXTERNALS.equals(propName)) {
+                if ((SVNProperty.IGNORE.equals(propName) || SVNProperty.EXTERNALS.equals(propName)) && propValue != null) {
                     if (!recursive) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot set ''{0}'' on a file (''{1}'')",
                                 new Object[] {propName, wcFile});
@@ -2166,12 +2164,10 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 props.setPropertyValue(propName, propValue);
 
-                if (SVNProperty.EOL_STYLE.equals(propName)
-                        || SVNProperty.KEYWORDS.equals(propName)) {
+                if (SVNProperty.EOL_STYLE.equals(propName) || SVNProperty.KEYWORDS.equals(propName)) {
                     entry.setTextTime(null);
                     entries.save(false);
-                } else if (SVNProperty.NEEDS_LOCK.equals(propName)
-                        && propValue == null) {
+                } else if (SVNProperty.NEEDS_LOCK.equals(propName) && propValue == null) {
                     SVNFileUtil.setReadonly(wcFile, false);
                 }
                 if (handler != null) {
@@ -2182,10 +2178,10 @@ public class SVNWCClient extends SVNBasicClient {
             return;
         }
         SVNProperties props = anchor.getProperties(name, false);
-        if (SVNProperty.KEYWORDS.equals(propName)
+        if ((SVNProperty.KEYWORDS.equals(propName)
                 || SVNProperty.EOL_STYLE.equals(propName)
                 || SVNProperty.MIME_TYPE.equals(propName)
-                || SVNProperty.EXECUTABLE.equals(propName)) {
+                || SVNProperty.EXECUTABLE.equals(propName)) && propValue != null) {
             if (!recursive) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot set ''{0}'' on a directory (''{1}'')",
                         new Object[] {propName, anchor.getRoot()});
