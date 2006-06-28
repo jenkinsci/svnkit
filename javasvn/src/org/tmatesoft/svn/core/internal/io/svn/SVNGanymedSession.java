@@ -17,6 +17,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
@@ -41,7 +42,9 @@ import ch.ethz.ssh2.crypto.PEMDecoder;
 public class SVNGanymedSession {
 
     private static Map ourConnectionsPool = new Hashtable();
+    private static Map ourUsersPool = new Hashtable();
     private static boolean ourIsUsePersistentConnection;
+    private static Object ourRequestor;
     
     static {
         String persistent = System.getProperty("javasvn.ssh2.persistent", Boolean.TRUE.toString());
@@ -49,90 +52,95 @@ public class SVNGanymedSession {
     }
 
     static Connection getConnection(SVNURL location, SVNSSHAuthentication credentials) throws SVNException {
-        if ("".equals(credentials.getUserName()) || credentials.getUserName() == null) {
-            SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "User name is required to establish SSH connection");
-            SVNErrorManager.error(error);
-        }
-        int port = location.hasPort() ? location.getPort() : credentials.getPortNumber();
-        if (port < 0) {
-            port = 22;
-        }
-        String key = credentials.getUserName() + ":" + location.getHost() + ":" + port;
-        Connection connection = isUsePersistentConnection() ? (Connection) ourConnectionsPool.get(key) : null;
-        
-        if (connection == null) {
-            File privateKey = credentials.getPrivateKeyFile();
-            String passphrase = credentials.getPassphrase();
-            String password = credentials.getPassword();
-            String userName = credentials.getUserName();
-            
-            password = "".equals(password) && privateKey != null ? null : password;
-            passphrase = "".equals(passphrase) ? null : passphrase;
-            
-            if (privateKey != null && !isValidPrivateKey(privateKey, passphrase)) {
-                if (password == null) {
-                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "File ''{0}'' is not valid OpenSSH DSA or RSA private key file", privateKey);
-                    SVNErrorManager.error(error);
-                } 
-                privateKey = null;
-            }
-            if (privateKey == null && password == null) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Either password or private key should be provided to establish SSH connection");
+        lock(Thread.currentThread());
+        try {
+            if ("".equals(credentials.getUserName()) || credentials.getUserName() == null) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "User name is required to establish SSH connection");
                 SVNErrorManager.error(error);
             }
+            int port = location.hasPort() ? location.getPort() : credentials.getPortNumber();
+            if (port < 0) {
+                port = 22;
+            }
+            String key = credentials.getUserName() + ":" + location.getHost() + ":" + port;
+            Connection connection = isUsePersistentConnection() ? (Connection) ourConnectionsPool.get(key) : null;
             
-            connection = new Connection(location.getHost(), port);
-            try {
-                connection.connect();
-                boolean authenticated = false;
-                if (privateKey != null) {
-                    authenticated = connection.authenticateWithPublicKey(userName, privateKey, passphrase);
-                } else if (password != null) {
-                    String[] methods = connection.getRemainingAuthMethods(userName);
-                    authenticated = false;
-                    for (int i = 0; i < methods.length; i++) {
-                        if ("password".equals(methods[i])) {
-                            authenticated = connection.authenticateWithPassword(userName, password);                    
-                        } else if ("keyboard-interactive".equals(methods[i])) {
-                            final String p = password;
-                            authenticated = connection.authenticateWithKeyboardInteractive(userName, new InteractiveCallback() {
-                                public String[] replyToChallenge(String name, String instruction, int numPrompts, String[] prompt, boolean[] echo) throws Exception {
-                                    String[] reply = new String[numPrompts];
-                                    for (int i = 0; i < reply.length; i++) {
-                                        reply[i] = p;
-                                    }
-                                    return reply;
-                                }
-                            });
-                        }
-                        if (authenticated) {
-                            break;
-                        }
-                    }
-                } else {
+            if (connection == null) {
+                File privateKey = credentials.getPrivateKeyFile();
+                String passphrase = credentials.getPassphrase();
+                String password = credentials.getPassword();
+                String userName = credentials.getUserName();
+                
+                password = "".equals(password) && privateKey != null ? null : password;
+                passphrase = "".equals(passphrase) ? null : passphrase;
+                
+                if (privateKey != null && !isValidPrivateKey(privateKey, passphrase)) {
+                    if (password == null) {
+                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "File ''{0}'' is not valid OpenSSH DSA or RSA private key file", privateKey);
+                        SVNErrorManager.error(error);
+                    } 
+                    privateKey = null;
+                }
+                if (privateKey == null && password == null) {
                     SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Either password or private key should be provided to establish SSH connection");
                     SVNErrorManager.error(error);
                 }
-                if (authenticated) {
-                    if (isUsePersistentConnection()) {
-                        ourConnectionsPool.put(key, connection);
+                
+                connection = new Connection(location.getHost(), port);
+                try {
+                    connection.connect();
+                    boolean authenticated = false;
+                    if (privateKey != null) {
+                        authenticated = connection.authenticateWithPublicKey(userName, privateKey, passphrase);
+                    } else if (password != null) {
+                        String[] methods = connection.getRemainingAuthMethods(userName);
+                        authenticated = false;
+                        for (int i = 0; i < methods.length; i++) {
+                            if ("password".equals(methods[i])) {
+                                authenticated = connection.authenticateWithPassword(userName, password);                    
+                            } else if ("keyboard-interactive".equals(methods[i])) {
+                                final String p = password;
+                                authenticated = connection.authenticateWithKeyboardInteractive(userName, new InteractiveCallback() {
+                                    public String[] replyToChallenge(String name, String instruction, int numPrompts, String[] prompt, boolean[] echo) throws Exception {
+                                        String[] reply = new String[numPrompts];
+                                        for (int i = 0; i < reply.length; i++) {
+                                            reply[i] = p;
+                                        }
+                                        return reply;
+                                    }
+                                });
+                            }
+                            if (authenticated) {
+                                break;
+                            }
+                        }
+                    } else {
+                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Either password or private key should be provided to establish SSH connection");
+                        SVNErrorManager.error(error);
                     }
-                } else {
-                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSH server rejects provided credentials");
-                    SVNErrorManager.error(error);
-                }
-            } catch (IOException e) {
-                if (connection != null) {
-                    connection.close();
-                    if (isUsePersistentConnection()) {
-                        ourConnectionsPool.remove(key);
+                    if (authenticated) {
+                        if (isUsePersistentConnection()) {
+                            ourConnectionsPool.put(key, connection);
+                        }
+                    } else {
+                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSH server rejects provided credentials");
+                        SVNErrorManager.error(error);
                     }
-                }
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {location.setPath("", false), e.getLocalizedMessage()});
-                SVNErrorManager.error(err, e);
-            } 
-        } 
-        return connection;
+                } catch (IOException e) {
+                    if (connection != null) {
+                        connection.close();
+                        if (isUsePersistentConnection()) {
+                            ourConnectionsPool.remove(key);
+                        }
+                    }
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {location.setPath("", false), e.getLocalizedMessage()});
+                    SVNErrorManager.error(err, e);
+                } 
+            }
+            return connection;
+        } finally {
+            unlock();
+        }
     }
 
     private static boolean isValidPrivateKey(File privateKey, String passphrase) {
@@ -166,20 +174,36 @@ public class SVNGanymedSession {
     }
 
     public static void shutdown() {
-        if (ourConnectionsPool.size() > 0) {
+        lock(Thread.currentThread());
+        try {
             for (Iterator e = ourConnectionsPool.values().iterator(); e.hasNext();) {
                 Connection connection = (Connection) (e.next());
-                try {
-                    connection.close();
-                } catch (Exception ee) {
-                }
+                doCloseConnection(connection);
             }
-            ourConnectionsPool.clear();
+        } finally {
+            unlock();
         }
     }
 
     static void closeConnection(Connection connection) {
+        lock(Thread.currentThread());
+        try {
+            doCloseConnection(connection);
+        } finally {
+            unlock();
+        }
+    }
+
+    private static void doCloseConnection(Connection connection) {
         if (connection != null) {
+            Collection users = (Collection) ourUsersPool.get(connection);
+            if (users != null) {
+                users.remove(Thread.currentThread());
+                if (!users.isEmpty()) {
+                    return;
+                }
+            }
+            ourUsersPool.remove(connection);
             connection.close();
             if (!isUsePersistentConnection()) {
                 return;
@@ -191,6 +215,26 @@ public class SVNGanymedSession {
                     return;
                 }
             }
+        }
+    }
+    
+    
+    private static void lock(Object requestor) {
+        synchronized(ourConnectionsPool) {
+            while(ourRequestor != null && ourRequestor != requestor) {
+                try {
+                    ourConnectionsPool.wait();
+                } catch (InterruptedException e) {
+                }
+            }
+            ourRequestor = requestor;
+        }
+    }
+    
+    private static void unlock() {
+        synchronized (ourConnectionsPool) {
+            ourRequestor = null;
+            ourConnectionsPool.notifyAll();
         }
     }
     
