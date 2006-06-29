@@ -212,10 +212,7 @@ public class SVNReporter implements ISVNReporterBaton {
         if (executable) {
             SVNFileUtil.setExecutable(dst, true);
         }
-        if (needsLock) {
-            SVNFileUtil.setReadonly(dst, entry.getLockToken() == null);
-        }
-        long tstamp = dst.lastModified();
+        long tstamp;
         if (myWCAccess.getOptions().isUseCommitTimes() && !special) {
             entry.setTextTime(entry.getCommittedDate());
             tstamp = SVNTimeUtil.parseDate(entry.getCommittedDate()).getTime();
@@ -225,6 +222,9 @@ public class SVNReporter implements ISVNReporterBaton {
             dst.setLastModified(tstamp);
             entry.setTextTime(SVNTimeUtil.formatDate(new Date(tstamp)));
         }
+	    if (needsLock) {
+	        SVNFileUtil.setReadonly(dst, entry.getLockToken() == null);
+	    }
         dir.getEntries().save(false);
 
         myWCAccess.handleEvent(SVNEventFactory.createRestoredEvent(myWCAccess, dir, entry));

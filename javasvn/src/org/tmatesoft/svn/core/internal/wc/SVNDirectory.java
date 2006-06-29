@@ -474,8 +474,7 @@ public class SVNDirectory {
             wasReverted = true;
         } else if (entry.isScheduledForReplacement()) {
             baseProps.copyTo(wcProps);
-            entry.setPropTime(SVNTimeUtil.formatDate(new Date(wcProps.getFile()
-                    .lastModified())));
+            entry.setPropTime(SVNTimeUtil.formatDate(new Date(wcProps.getFile().lastModified())));
             wasReverted = true;
         }
 
@@ -497,17 +496,12 @@ public class SVNDirectory {
                 }
                 SVNTranslator.translate(this, name, SVNFileUtil.getBasePath(src), SVNFileUtil.getBasePath(dst), true, true);
 
-                boolean executable = wcProps
-                        .getPropertyValue(SVNProperty.EXECUTABLE) != null;
-                boolean needsLock = wcProps
-                        .getPropertyValue(SVNProperty.NEEDS_LOCK) != null;
+                boolean executable = wcProps.getPropertyValue(SVNProperty.EXECUTABLE) != null;
+                boolean needsLock = wcProps.getPropertyValue(SVNProperty.NEEDS_LOCK) != null;
                 if (executable) {
                     SVNFileUtil.setExecutable(dst, true);
                 }
-                if (needsLock) {
-                    SVNFileUtil.setReadonly(dst, entry.getLockToken() == null);
-                }
-                long tstamp = dst.lastModified();
+                long tstamp;
                 if (myWCAccess.getOptions().isUseCommitTimes() && !special) {
                     entry.setTextTime(entry.getCommittedDate());
                     tstamp = SVNTimeUtil.parseDate(entry.getCommittedDate()).getTime();
@@ -516,6 +510,9 @@ public class SVNDirectory {
                     tstamp = System.currentTimeMillis();
                     dst.setLastModified(tstamp);
                     entry.setTextTime(SVNTimeUtil.formatDate(new Date(tstamp)));
+                }
+                if (needsLock) {
+                    SVNFileUtil.setReadonly(dst, entry.getLockToken() == null);
                 }
                 getEntries().save(false);
                 wasReverted |= true;
