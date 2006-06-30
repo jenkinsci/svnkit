@@ -144,7 +144,7 @@ class HTTPRequest {
             length = ((ByteArrayInputStream) myRequestStream).available();
         } else if (header != null && header.hasHeader(HTTPHeader.CONTENT_LENGTH_HEADER)) {
             length = Long.parseLong(header.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER));
-            header.removeHeader(HTTPHeader.CONTENT_LENGTH_HEADER);
+//            header.removeHeader(HTTPHeader.CONTENT_LENGTH_HEADER);
         }
         StringBuffer headerText = composeHTTPHeader(request, path, header, length, myIsKeepAlive);
         myConnection.sendData(headerText.toString().getBytes());
@@ -285,9 +285,11 @@ class HTTPRequest {
             sb.append(myProxyAuthentication);
             sb.append(HTTPRequest.CRLF);
         }
-        sb.append("Content-Length: ");
-        sb.append(length);
-        sb.append(HTTPRequest.CRLF);
+        if (header == null || !header.hasHeader(HTTPHeader.CONTENT_LENGTH_HEADER)) {
+            sb.append("Content-Length: ");
+            sb.append(length);
+            sb.append(HTTPRequest.CRLF);
+        }
         sb.append("Accept-Encoding: gzip");
         sb.append(HTTPRequest.CRLF);
         if (header == null || !header.hasHeader(HTTPHeader.CONTENT_TYPE_HEADER)) {
