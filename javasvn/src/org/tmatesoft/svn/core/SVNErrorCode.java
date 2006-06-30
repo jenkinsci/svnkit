@@ -169,7 +169,7 @@ public class SVNErrorCode implements Serializable {
     public static final int AUTHN_CATEGORY = ERR_BASE + 19*ERR_CATEGORY_SIZE;
     public static final int AUTHZ_CATEGORY = ERR_BASE + 20*ERR_CATEGORY_SIZE;
     
-    public static final SVNErrorCode UNKNOWN = new SVNErrorCode(MISC_CATEGORY, ERR_CATEGORY_SIZE - 100, "Uknown error");
+    public static final SVNErrorCode UNKNOWN = new SVNErrorCode(MISC_CATEGORY, ERR_CATEGORY_SIZE - 100, "Unknown error");
     public static final SVNErrorCode IO_ERROR = new SVNErrorCode(MISC_CATEGORY, ERR_CATEGORY_SIZE - 101, "Generic IO error");
 
     public static final SVNErrorCode BAD_CONTAINING_POOL = new SVNErrorCode(BAD_CATEGORY, 0, "Bad parent pool passed to svn_make_pool()");
