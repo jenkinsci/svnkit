@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVMergeHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVProppatchHandler;
+import org.tmatesoft.svn.core.internal.io.dav.http.HTTPBodyInputStream;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -301,7 +302,8 @@ class DAVCommitEditor implements ISVNEditor {
             if (myDeltaFile != null) {
                 InputStream combinedData = null;
                 try {
-                    combinedData = SVNFileUtil.openFileForReading(myDeltaFile);
+                    combinedData = new HTTPBodyInputStream(myDeltaFile);
+                    //SVNFileUtil.openFileForReading(myDeltaFile);
                     myConnection.doPutDiff(currentFile.getURL(), currentFile.getWorkingURL(), combinedData, myDeltaFile.length());
                 } finally {
                     SVNFileUtil.closeFile(combinedData);
