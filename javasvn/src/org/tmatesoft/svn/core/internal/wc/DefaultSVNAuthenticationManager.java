@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /**
@@ -543,5 +544,19 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 
     public void setAuthenticationForced(boolean forced) {
         myIsAuthenticationForced = forced;
+    }
+
+    public long getHTTPTimeout(SVNRepository repository) {
+        String host = repository.getLocation().getHost();
+        Map properties = getHostProperties(host);
+        String timeout = (String) properties.get("http-timeout");
+        long value = -1;
+        if (timeout != null) {
+            try {
+                value = Integer.parseInt(timeout)*1000;
+            } catch (NumberFormatException nfe) {
+            }
+        }
+        return value;
     }
 }

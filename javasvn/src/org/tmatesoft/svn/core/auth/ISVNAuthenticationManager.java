@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.auth;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
  * The <b>ISVNAuthenticationManager</b> is implemented by manager 
@@ -270,5 +271,6 @@ public interface ISVNAuthenticationManager {
      * @see           #isAuthenticationForced()
      */
     public void setAuthenticationForced(boolean forced);
-
+    
+    public long getHTTPTimeout(SVNRepository repository);
 }

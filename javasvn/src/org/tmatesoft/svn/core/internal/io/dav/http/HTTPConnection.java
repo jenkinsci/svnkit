@@ -68,6 +68,8 @@ class HTTPConnection implements IHTTPConnection {
             return new InputSource(new ByteArrayInputStream(new byte[0]));
         }
     };
+    
+    private static final int DEFAULT_HTTP_TIMEOUT = 3600*1000;
 
     private static SAXParserFactory ourSAXParserFactory;
     private byte[] myBuffer;
@@ -104,6 +106,7 @@ class HTTPConnection implements IHTTPConnection {
             close();
             String host = location.getHost();
             int port = location.getPort();
+            
             ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
             ISVNProxyManager proxyAuth = authManager != null ? authManager.getProxyManager(location) : null;
             if (proxyAuth != null && proxyAuth.getProxyHost() != null) {
@@ -136,6 +139,11 @@ class HTTPConnection implements IHTTPConnection {
                 myProxyAuthentication = null;
                 mySocket = myIsSecured ? SVNSocketFactory.createSSLSocket(sslManager, host, port) : SVNSocketFactory.createPlainSocket(host, port);
             }
+            long timeout = myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().getHTTPTimeout(myRepository) : DEFAULT_HTTP_TIMEOUT;
+            if (timeout < 0) {
+                timeout = DEFAULT_HTTP_TIMEOUT;
+            }
+            mySocket.setSoTimeout((int) timeout);
         }
     }
     

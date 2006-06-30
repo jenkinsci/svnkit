@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 
 /**
@@ -245,6 +246,10 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
      * @param errorMessage
      */
     public void acknowledgeProxyContext(boolean accepted, SVNErrorMessage errorMessage) {
+    }
+
+    public long getHTTPTimeout(SVNRepository repository) {
+        return 3600*1000;
     }
 
 }
