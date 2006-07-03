@@ -55,7 +55,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         if (parentFile != null && parentType != SVNFileType.DIRECTORY) {
             // parent doesn't exist or not a directory
             if (!(parentType == SVNFileType.SYMLINK && parentFile.isDirectory())) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' does not exist", parentFile);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' does not exist", parentFile);
                 SVNErrorManager.error(err);
             }
         }
