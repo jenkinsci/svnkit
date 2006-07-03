@@ -122,7 +122,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             }
         } else if (target == null && anchor == null) {
             // both are not versioned :(
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", file);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not under version control", file);
             SVNErrorManager.error(err);
         }
         return new SVNWCAccess(anchor != null ? anchor : target, target != null ? target : anchor, anchor != null ? name : "");

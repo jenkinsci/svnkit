@@ -194,7 +194,7 @@ public class SVNClientImpl implements SVNClientInterface {
         try {
             status = client.doStatus(new File(path).getAbsoluteFile(), onServer);
         } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
                 File file = new File(path).getAbsoluteFile();
                 SVNFileType ft = SVNFileType.getType(file);
                 status = new SVNStatus(null, file, ft == SVNFileType.NONE ? SVNNodeKind.NONE : SVNNodeKind.UNKNOWN, null, null, null, null,
