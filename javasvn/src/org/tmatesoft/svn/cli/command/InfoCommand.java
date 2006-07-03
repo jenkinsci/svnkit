@@ -13,6 +13,7 @@
 package org.tmatesoft.svn.cli.command;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -30,6 +31,8 @@ import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.xml.SVNXMLInfoHandler;
+import org.tmatesoft.svn.core.wc.xml.SVNXMLSerializer;
 
 /**
  * @author TMate Software Ltd.
@@ -50,17 +53,32 @@ public class InfoCommand extends SVNCommand implements ISVNInfoHandler {
         }
         SVNWCClient wcClient = getClientManager().getWCClient();
         myOut = out;
-
+        SVNXMLSerializer serializer = new SVNXMLSerializer(myOut);
+        SVNXMLInfoHandler handler = new SVNXMLInfoHandler(serializer);
+        if (getCommandLine().hasArgument(SVNArgument.XML) && !getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
+            handler.startDocument();
+        }
+        ISVNInfoHandler infoHandler = getCommandLine().hasArgument(SVNArgument.XML) ? handler : (ISVNInfoHandler) this;
         for (int i = 0; i < getCommandLine().getPathCount(); i++) {
             myBaseFile = new File(getCommandLine().getPathAt(i));
             SVNRevision peg = getCommandLine().getPathPegRevision(i);
-            wcClient.doInfo(myBaseFile, peg, revision, recursive, this);
+            handler.setTargetPath(myBaseFile);
+            wcClient.doInfo(myBaseFile, peg, revision, recursive, infoHandler);
         }
         myBaseFile = null;
         for (int i = 0; i < getCommandLine().getURLCount(); i++) {
             String url = getCommandLine().getURL(i);
             SVNRevision peg = getCommandLine().getPegRevision(i);
-            wcClient.doInfo(SVNURL.parseURIEncoded(url), peg, revision, recursive, this);
+            wcClient.doInfo(SVNURL.parseURIEncoded(url), peg, revision, recursive, infoHandler);
+        }
+        if (getCommandLine().hasArgument(SVNArgument.XML)&& !getCommandLine().hasArgument(SVNArgument.INCREMENTAL)) {
+            handler.endDocument();
+        }
+        if (getCommandLine().hasArgument(SVNArgument.XML)) {
+            try {
+                serializer.flush();
+            } catch (IOException e) {
+            }
         }
     }
 
