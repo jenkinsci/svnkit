@@ -1,4 +1,4 @@
-[[Printing Out Repository History|<<]] | [[Managing repository With JavaSVN|List]] |  [[|>>]]
+[[Printing Out Repository History|<<]] | [[Managing repository With JavaSVN|List]] |  [[Editing Operation Update|>>]]
 <br />
 <br />
 
@@ -7,19 +7,20 @@ The low-level layer provides for an ability to ''build'' and ''change'' tree-lik
 developer an abstract '''editor'''. With such an editor you make edits to a repository manually (i.e. explicitly in your 
 code): you add new nodes (directories) and items (files) under those nodes, change or delete existing ones identifying 
 them (refering to them) by their paths in a repository. Now we are going to show this model in details.
+
 == Using the ISVNEditor Interface ==
 [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html ISVNEditor] is the interface for editing 
 operations, for committing changes to a repository in particular. '''ISVNEditor''' is also used to receive and apply 
-changes from a repository during an update but this is the scope of [another article]. 
+changes from a repository during an update but this is the scope of [[Editing Operation Update|another article]]. 
 
 <p>
 Imagine that we have got the following tree structure in our repository:
 
-[[Image:Tree1.png]]
+[[Image:Tree21.png]]
 
 And we want to change it to something like this:
 
-[[Image:Tree2.png]]
+[[Image:Tree22.png]]
 
 In other words we want to:
 * delete /nodeB/itemB1
@@ -43,7 +44,7 @@ commit editor:
 <java>
     ...
     String logMessage = "log message";
-    ISVNEditor editor = repository.getCommitEditor(logMessage, null, true, null);
+    ISVNEditor editor = repository.getCommitEditor(logMessage, null/*locks*/, true/*keepLocks*/, null/*mediator*/);
     ...
 </java>
 Now when we have got an editor we can not call any reposiotory access methods of our '''SVNRepository''' driver till we 
@@ -166,7 +167,7 @@ After we have closed the editor we may go on using our '''SVNRepository''' drive
 changes step by step. Numbers in the diagram correspond to numbers of our steps in 
 the code:
 
-[[Image:Tree3.png]]
+[[Image:Tree23.png]]
 
 Notes:
 
@@ -175,9 +176,211 @@ Notes:
 * you don't have to apply text deltas immediately after you have opened a file; you may first open all necessary files in the way described above, then close all directories (including the root one) remaining opened in a way inverse to the one you opened them, then apply deltas to opened files and finally close files; you can not change directory properties after you've closed target directories.
 * In repository edition operations you'll never need to use the following methods of a commit editor (they are irrelevant in commits, but relevant in updates):
 ** [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentDir(java.lang.String) absentDir()]
-** [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentFile(java.lang.String) absentFiles()]
+** [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentFile(java.lang.String) absentFile()]
 ** [http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#targetRevision(long) targetRevision()]
+
+== Example On Using ISVNEditor In A Commit Operation ==
+In the following example we'll continue discussing application of '''ISVNEditor''' in low-level commit operations. 
+We will perform some simple commits in the following order:
+* add a directory with a file to a repository,
+* modify the added file,
+* copy the whole added directory within a repository,
+* delete both the original and copied directories.
+For each of these four commit operations we'll write separate functions:<br />
+
+<p>
+1. Addition:
+<java>
+    private static SVNCommitInfo addDir(ISVNEditor editor, String dirPath, String filePath, byte[] data) throws SVNException {
+        editor.openRoot(-1);
+
+        editor.addDir(dirPath, null, -1);
+
+        editor.addFile(filePath, null, -1);
+
+        editor.applyTextDelta(filePath, null);
+
+        SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
+        String checksum = deltaGenerator.sendDelta(filePath, new ByteArrayInputStream(data), editor, true);
+
+        editor.closeFile(filePath, checksum);
+
+        //Closes dirPath.
+        editor.closeDir();
+
+        //Closes the root directory.
+        editor.closeDir();
+
+        return editor.closeEdit();
+    }
+</java>
+2. File modification:
+<java>
+    private static SVNCommitInfo modifyFile(ISVNEditor editor, String dirPath, String filePath, byte[] oldData, byte[] newData) throws SVNException {
+        editor.openRoot(-1);
+
+        editor.openDir(dirPath, -1);
+
+        editor.openFile(filePath, -1);
+        
+        editor.applyTextDelta(filePath, null);
+        
+        SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
+        String checksum = deltaGenerator.sendDelta(filePath, new ByteArrayInputStream(oldData), 0, new ByteArrayInputStream(newData), editor, true);
+
+        //Closes filePath.
+        editor.closeFile(filePath, checksum);
+
+        // Closes dirPath.
+        editor.closeDir();
+
+        //Closes the root directory.
+        editor.closeDir();
+
+        return editor.closeEdit();
+    }
+</java>
+Here we use invalid revision numbers (-1) for simplifying the example since they will work for us, and that's all we 
+need now. Of course, in real systems they'd better be real (valid) revision numbers. The same is regarding a base 
+checksum.
+
+<p>
+3. Directory copying:
+<java>
+    private static SVNCommitInfo copyDir(ISVNEditor editor, String srcDirPath, String dstDirPath, long revision) throws SVNException {
+        editor.openRoot(-1);
+        
+        editor.addDir(dstDirPath, srcDirPath, revision);
+
+        //Closes dstDirPath.
+        editor.closeDir();
+
+        //Closes the root directory.
+        editor.closeDir();
+
+        return editor.closeEdit();
+    }
+</java>
+
+<p>
+4. Directory deletion:
+<java>
+    private static SVNCommitInfo deleteDir(ISVNEditor editor, String dirPath) throws SVNException {
+        editor.openRoot(-1);
+
+        editor.deleteEntry(dirPath, -1);
+
+        //Closes the root directory.
+        editor.closeDir();
+
+        return editor.closeEdit();
+    }
+</java>
+Now when we've got these functions we are ready to start:
+<java>
+public class Commit {
+
+    public static void main(String[] args) {
+
+        FSRepositoryFactory.setup();
+        SVNURL url = SVNURL.parseURIDecoded("file:///localhost/testRepos");
+        String userName = "foo";
+        String userPassword = "bar";
+        
+        byte[] contents = "This is a new file".getBytes();
+        byte[] modifiedContents = "This is the same file but modified a little.".getBytes();
+
+        SVNRepository repository = SVNRepositoryFactory.create(url);
+
+        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(userName, userPassword);
+        repository.setAuthenticationManager(authManager);
+
+        SVNNodeKind nodeKind = repository.checkPath("", -1);
+
+        if (nodeKind == SVNNodeKind.NONE) {
+            System.out.println("No entry at URL " + url);
+            System.exit(1);
+        } else if (nodeKind == SVNNodeKind.FILE) {
+            System.out.println("Entry at URL " + url + " is a file while directory was expected");
+            System.exit(1);
+        }
+        
+        //Get exact value of the latest (HEAD) revision.
+        long latestRevision = repository.getLatestRevision();
+        System.out.println("Repository latest revision (before committing): " + latestRevision);
+        
+        ISVNEditor editor = repository.getCommitEditor("directory and file added", null);
+        
+        try {
+            SVNCommitInfo commitInfo = addDir(editor, "test", "test/file.txt", contents);
+            System.out.println("The directory was added: " + commitInfo);
+        } catch (SVNException svne) {
+            editor.abortEdit();
+            throw svne;
+        }
+        
+        editor = repository.getCommitEditor("file contents changed", null);
+        try {
+            commitInfo = modifyFile(editor, "test", "test/file.txt", contents, modifiedContents);
+            System.out.println("The file was changed: " + commitInfo);
+        } catch (SVNException svne) {
+            editor.abortEdit();
+            throw svne;
+        }
+
+        //converts a relative path to an absolute one
+        String absoluteSrcPath = repository.getRepositoryPath("test");
+        long srcRevision = repository.getLatestRevision();
+
+        editor = repository.getCommitEditor("directory copied", null);        
+        try {
+            commitInfo = copyDir(editor, absoluteSrcPath, "test2", srcRevision);
+            System.out.println("The directory was copied: " + commitInfo);
+        } catch (SVNException svne) {
+            editor.abortEdit();
+            throw svne;
+        }
+
+        
+        //Delete directory "test".
+        editor = repository.getCommitEditor("directory deleted", null);
+        try {
+            commitInfo = deleteDir(editor, "test");
+            System.out.println("The directory was deleted: " + commitInfo);
+        } catch (SVNException svne) {
+            editor.abortEdit();
+            throw svne;
+        }
+
+        //Delete directory "test2".
+        editor = repository.getCommitEditor("copied directory deleted", null);
+        try {
+            commitInfo = deleteDir(editor, "test2");
+            System.out.println("The copied directory was deleted: " + commitInfo);
+        } catch (SVNException svne) {
+            editor.abortEdit();
+            throw svne;
+        }
+        
+        latestRevision = repository.getLatestRevision();
+        System.out.println("Repository latest revision (after committing): " + latestRevision);
+        ...
+    }
+    ...
+}
+</java>
+That's what you'll see if you run the program:
+ Repository latest revision (before committing): 0
+ The directory was added: r1 by 'foo' at Tue Jun 27 15:46:59 NOVST 2006
+ The file was changed: r2 by 'foo' at Tue Jun 27 15:46:59 NOVST 2006
+ The directory was copied: r3 by 'foo' at Tue Jun 27 15:46:59 NOVST 2006
+ The directory was deleted: r4 by 'foo' at Tue Jun 27 15:46:59 NOVST 2006
+ The copied directory was deleted: r5 by 'foo' at Tue Jun 27 15:47:00 NOVST 2006
+ Repository latest revision (after committing): 5
+
+----
+Download the [http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/Commit.java example program source code].
 
 <br />
 <br />
-[[Printing Out Repository History|<<]] | [[Managing repository With JavaSVN|List]] |  [[|>>]]
+[[Printing Out Repository History|<<]] | [[Managing repository With JavaSVN|List]] |  [[Editing Operation Update|>>]]

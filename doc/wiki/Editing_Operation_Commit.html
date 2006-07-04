@@ -15,7 +15,7 @@ a.new, #quickbar a.new { color: #CC2200; }
 <div id="content">
 <div id='article'>
 
-<p><a href="Printing_Out_Repository_History.html"><<</a> | <a href="Managing_repository_With_JavaSVN.html">List</a> |  >>
+<p><a href="Printing_Out_Repository_History.html"><<</a> | <a href="Managing_repository_With_JavaSVN.html">List</a> |  <a href="Editing_Operation_Update.html">>></a>
 <br />
 <br />
 </p>
@@ -24,17 +24,17 @@ a.new, #quickbar a.new { color: #CC2200; }
 developer an abstract <b>editor</b>. With such an editor you make edits to a repository manually (i.e. explicitly in your 
 code): you add new nodes (directories) and items (files) under those nodes, change or delete existing ones identifying 
 them (refering to them) by their paths in a repository. Now we are going to show this model in details.
-
-</p><a name="Using_the_ISVNEditor_Interface" id="Using_the_ISVNEditor_Interface"></a>
+</p>
+<a name="Using_the_ISVNEditor_Interface" id="Using_the_ISVNEditor_Interface"></a>
 <h2> Using the ISVNEditor Interface </h2><p><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html">ISVNEditor</a></span> is the interface for editing 
 operations, for committing changes to a repository in particular. <b>ISVNEditor</b> is also used to receive and apply 
-changes from a repository during an update but this is the scope of [another article]. 
+changes from a repository during an update but this is the scope of <a href="Editing_Operation_Update.html">another article</a>. 
 </p><p>
 </p><p>
 Imagine that we have got the following tree structure in our repository:
-</p><p><img src="Tree1.png">
+</p><p><img src="Tree21.png">
 </p><p>And we want to change it to something like this:
-</p><p><img src="Tree2.png">
+</p><p><img src="Tree22.png">
 </p><p>In other words we want to:
 
 </p><ul><li>delete /nodeB/itemB1
@@ -58,7 +58,7 @@ commit editor:
 </p><div class="java"><pre>
     ...
     String logMessage = <font color="#2A00FF">&#34;log message&#34;</font>;
-    ISVNEditor editor = repository.getCommitEditor(logMessage, <b><font color="#7F0055">null</font></b>, <b><font color="#7F0055">true</font></b>, <b><font color="#7F0055">null</font></b>);
+    ISVNEditor editor = repository.getCommitEditor(logMessage, <b><font color="#7F0055">null</font></b><font color="#3F7F5F">/&#42;locks&#42;/</font>, <b><font color="#7F0055">true</font></b><font color="#3F7F5F">/&#42;keepLocks&#42;/</font>, <b><font color="#7F0055">null</font></b><font color="#3F7F5F">/&#42;mediator&#42;/</font>);
     ...
 </pre></div><p>Now when we have got an editor we can not call any reposiotory access methods of our <b>SVNRepository</b> driver till we 
 call the editor&#39;s <span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#closeEdit()" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#closeEdit()">closeEdit()</a></span> 
@@ -179,7 +179,7 @@ wrong. When we&#39;ve got an exception from the editor we should abort it to pur
 </pre></div><p>After we have closed the editor we may go on using our <b>SVNRepository</b> driver. The following diagram illustrates our 
 changes step by step. Numbers in the diagram correspond to numbers of our steps in 
 the code:
-</p><p><img src="Tree3.png">
+</p><p><img src="Tree23.png">
 </p><p>Notes:
 </p>
 <ul><li>with <b>ISVNEditor</b> you edit your repository in a hierarchical way traversing a necessary subtree; that is if your driver is bound to <i>/a</i> and you are going to change <i>/a/b/c/d</i>, you can not just open <i>d</i> without moving down in the tree to the node <i>a/b/c/</i>, you have to open the root (<i>a</i>), then open <i>/a/b</i>, and then <i>/a/b/c</i>, after what you open <i>/a/b/c/d</i>.
@@ -187,11 +187,212 @@ the code:
 </li><li>you don&#39;t have to apply text deltas immediately after you have opened a file; you may first open all necessary files in the way described above, then close all directories (including the root one) remaining opened in a way inverse to the one you opened them, then apply deltas to opened files and finally close files; you can not change directory properties after you&#39;ve closed target directories.
 </li><li>In repository edition operations you&#39;ll never need to use the following methods of a commit editor (they are irrelevant in commits, but relevant in updates):
 </li><ul><li><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentDir(java.lang.String)" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentDir(java.lang.String)">absentDir()</a></span>
-</li><li><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentFile(java.lang.String)" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentFile(java.lang.String)">absentFiles()</a></span>
+</li><li><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentFile(java.lang.String)" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#absentFile(java.lang.String)">absentFile()</a></span>
 </li><li><span class="nobr"><a href="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#targetRevision(long)" class="external" title="http://tmate.org/svn/kb/javadoc/org/tmatesoft/svn/core/io/ISVNEditor.html#targetRevision(long)">targetRevision()</a></span>
-</li></ul></ul><p><br />
+</li></ul></ul>
+<a name="Example_On_Using_ISVNEditor_In_A_Commit_Operation" id="Example_On_Using_ISVNEditor_In_A_Commit_Operation"></a>
+<h2> Example On Using ISVNEditor In A Commit Operation </h2><p>In the following example we&#39;ll continue discussing application of <b>ISVNEditor</b> in low-level commit operations. 
+We will perform some simple commits in the following order:
+
+</p><ul><li>add a directory with a file to a repository,
+</li><li>modify the added file,
+</li><li>copy the whole added directory within a repository,
+</li><li>delete both the original and copied directories.
+</li></ul><p>For each of these four commit operations we&#39;ll write separate functions:<br />
+</p><p>
+</p><p>
+1. Addition:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> SVNCommitInfo addDir(ISVNEditor editor, String dirPath, String filePath, <b><font color="#7F0055">byte</font></b>&#91;&#93; data) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        editor.openRoot(&#45;1);
+
+        editor.addDir(dirPath, <b><font color="#7F0055">null</font></b>, &#45;1);
+
+        editor.addFile(filePath, <b><font color="#7F0055">null</font></b>, &#45;1);
+
+        editor.applyTextDelta(filePath, <b><font color="#7F0055">null</font></b>);
+
+        SVNDeltaGenerator deltaGenerator = <b><font color="#7F0055">new</font></b> SVNDeltaGenerator();
+        String checksum = deltaGenerator.sendDelta(filePath, <b><font color="#7F0055">new</font></b> ByteArrayInputStream(data), editor, <b><font color="#7F0055">true</font></b>);
+
+        editor.closeFile(filePath, checksum);
+
+        <font color="#3F7F5F">//Closes dirPath.
+</font>        editor.closeDir();
+
+        <font color="#3F7F5F">//Closes the root directory.
+</font>        editor.closeDir();
+
+        <b><font color="#7F0055">return</font></b> editor.closeEdit();
+    &#125;
+</pre></div><p>2. File modification:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> SVNCommitInfo modifyFile(ISVNEditor editor, String dirPath, String filePath, <b><font color="#7F0055">byte</font></b>&#91;&#93; oldData, <b><font color="#7F0055">byte</font></b>&#91;&#93; newData) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        editor.openRoot(&#45;1);
+
+        editor.openDir(dirPath, &#45;1);
+
+        editor.openFile(filePath, &#45;1);
+        
+        editor.applyTextDelta(filePath, <b><font color="#7F0055">null</font></b>);
+        
+        SVNDeltaGenerator deltaGenerator = <b><font color="#7F0055">new</font></b> SVNDeltaGenerator();
+        String checksum = deltaGenerator.sendDelta(filePath, <b><font color="#7F0055">new</font></b> ByteArrayInputStream(oldData), 0, <b><font color="#7F0055">new</font></b> ByteArrayInputStream(newData), editor, <b><font color="#7F0055">true</font></b>);
+
+        <font color="#3F7F5F">//Closes filePath.
+</font>        editor.closeFile(filePath, checksum);
+
+        <font color="#3F7F5F">// Closes dirPath.
+</font>        editor.closeDir();
+
+        <font color="#3F7F5F">//Closes the root directory.
+</font>        editor.closeDir();
+
+        <b><font color="#7F0055">return</font></b> editor.closeEdit();
+    &#125;
+</pre></div><p>Here we use invalid revision numbers (-1) for simplifying the example since they will work for us, and that&#39;s all we 
+need now. Of course, in real systems they&#39;d better be real (valid) revision numbers. The same is regarding a base 
+checksum.
+</p><p>
+</p><p>
+3. Directory copying:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> SVNCommitInfo copyDir(ISVNEditor editor, String srcDirPath, String dstDirPath, <b><font color="#7F0055">long</font></b> revision) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        editor.openRoot(&#45;1);
+        
+        editor.addDir(dstDirPath, srcDirPath, revision);
+
+        <font color="#3F7F5F">//Closes dstDirPath.
+</font>        editor.closeDir();
+
+        <font color="#3F7F5F">//Closes the root directory.
+</font>        editor.closeDir();
+
+        <b><font color="#7F0055">return</font></b> editor.closeEdit();
+    &#125;
+</pre></div>
+<p>
+</p><p>
+4. Directory deletion:
+
+</p><div class="java"><pre>
+    <b><font color="#7F0055">private</font></b> <b><font color="#7F0055">static</font></b> SVNCommitInfo deleteDir(ISVNEditor editor, String dirPath) <b><font color="#7F0055">throws</font></b> SVNException &#123;
+        editor.openRoot(&#45;1);
+
+        editor.deleteEntry(dirPath, &#45;1);
+
+        <font color="#3F7F5F">//Closes the root directory.
+</font>        editor.closeDir();
+
+        <b><font color="#7F0055">return</font></b> editor.closeEdit();
+    &#125;
+</pre></div><p>Now when we&#39;ve got these functions we are ready to start:
+
+</p><div class="java"><pre>
+<b><font color="#7F0055">public</font></b> <b><font color="#7F0055">class</font></b> Commit &#123;
+
+    <b><font color="#7F0055">public</font></b> <b><font color="#7F0055">static</font></b> <b><font color="#7F0055">void</font></b> main(String&#91;&#93; args) &#123;
+
+        FSRepositoryFactory.setup();
+        SVNURL url = SVNURL.parseURIDecoded(<font color="#2A00FF">&#34;file:///localhost/testRepos&#34;</font>);
+        String userName = <font color="#2A00FF">&#34;foo&#34;</font>;
+        String userPassword = <font color="#2A00FF">&#34;bar&#34;</font>;
+        
+        <b><font color="#7F0055">byte</font></b>&#91;&#93; contents = <font color="#2A00FF">&#34;This is a new file&#34;</font>.getBytes();
+        <b><font color="#7F0055">byte</font></b>&#91;&#93; modifiedContents = <font color="#2A00FF">&#34;This is the same file but modified a little.&#34;</font>.getBytes();
+
+        SVNRepository repository = SVNRepositoryFactory.create(url);
+
+        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(userName, userPassword);
+        repository.setAuthenticationManager(authManager);
+
+        SVNNodeKind nodeKind = repository.checkPath(<font color="#2A00FF">&#34;&#34;</font>, &#45;1);
+
+        <b><font color="#7F0055">if</font></b> (nodeKind == SVNNodeKind.NONE) &#123;
+            System.out.println(<font color="#2A00FF">&#34;No entry at URL &#34;</font> + url);
+            System.exit(1);
+        &#125; <b><font color="#7F0055">else</font></b> <b><font color="#7F0055">if</font></b> (nodeKind == SVNNodeKind.FILE) &#123;
+            System.out.println(<font color="#2A00FF">&#34;Entry at URL &#34;</font> + url + <font color="#2A00FF">&#34; is a file while directory was expected&#34;</font>);
+            System.exit(1);
+        &#125;
+        
+        <font color="#3F7F5F">//Get exact value of the latest (HEAD) revision.
+</font>        <b><font color="#7F0055">long</font></b> latestRevision = repository.getLatestRevision();
+        System.out.println(<font color="#2A00FF">&#34;Repository latest revision (before committing): &#34;</font> + latestRevision);
+        
+        ISVNEditor editor = repository.getCommitEditor(<font color="#2A00FF">&#34;directory and file added&#34;</font>, <b><font color="#7F0055">null</font></b>);
+        
+        <b><font color="#7F0055">try</font></b> &#123;
+            SVNCommitInfo commitInfo = addDir(editor, <font color="#2A00FF">&#34;test&#34;</font>, <font color="#2A00FF">&#34;test/file.txt&#34;</font>, contents);
+            System.out.println(<font color="#2A00FF">&#34;The directory was added: &#34;</font> + commitInfo);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            editor.abortEdit();
+            <b><font color="#7F0055">throw</font></b> svne;
+        &#125;
+        
+        editor = repository.getCommitEditor(<font color="#2A00FF">&#34;file contents changed&#34;</font>, <b><font color="#7F0055">null</font></b>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            commitInfo = modifyFile(editor, <font color="#2A00FF">&#34;test&#34;</font>, <font color="#2A00FF">&#34;test/file.txt&#34;</font>, contents, modifiedContents);
+            System.out.println(<font color="#2A00FF">&#34;The file was changed: &#34;</font> + commitInfo);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            editor.abortEdit();
+            <b><font color="#7F0055">throw</font></b> svne;
+        &#125;
+
+        <font color="#3F7F5F">//converts a relative path to an absolute one
+</font>        String absoluteSrcPath = repository.getRepositoryPath(<font color="#2A00FF">&#34;test&#34;</font>);
+        <b><font color="#7F0055">long</font></b> srcRevision = repository.getLatestRevision();
+
+        editor = repository.getCommitEditor(<font color="#2A00FF">&#34;directory copied&#34;</font>, <b><font color="#7F0055">null</font></b>);        
+        <b><font color="#7F0055">try</font></b> &#123;
+            commitInfo = copyDir(editor, absoluteSrcPath, <font color="#2A00FF">&#34;test2&#34;</font>, srcRevision);
+            System.out.println(<font color="#2A00FF">&#34;The directory was copied: &#34;</font> + commitInfo);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            editor.abortEdit();
+            <b><font color="#7F0055">throw</font></b> svne;
+        &#125;
+
+        
+        <font color="#3F7F5F">//Delete directory &#34;test&#34;.
+</font>        editor = repository.getCommitEditor(<font color="#2A00FF">&#34;directory deleted&#34;</font>, <b><font color="#7F0055">null</font></b>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            commitInfo = deleteDir(editor, <font color="#2A00FF">&#34;test&#34;</font>);
+            System.out.println(<font color="#2A00FF">&#34;The directory was deleted: &#34;</font> + commitInfo);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            editor.abortEdit();
+            <b><font color="#7F0055">throw</font></b> svne;
+        &#125;
+
+        <font color="#3F7F5F">//Delete directory &#34;test2&#34;.
+</font>        editor = repository.getCommitEditor(<font color="#2A00FF">&#34;copied directory deleted&#34;</font>, <b><font color="#7F0055">null</font></b>);
+        <b><font color="#7F0055">try</font></b> &#123;
+            commitInfo = deleteDir(editor, <font color="#2A00FF">&#34;test2&#34;</font>);
+            System.out.println(<font color="#2A00FF">&#34;The copied directory was deleted: &#34;</font> + commitInfo);
+        &#125; <b><font color="#7F0055">catch</font></b> (SVNException svne) &#123;
+            editor.abortEdit();
+            <b><font color="#7F0055">throw</font></b> svne;
+        &#125;
+        
+        latestRevision = repository.getLatestRevision();
+        System.out.println(<font color="#2A00FF">&#34;Repository latest revision (after committing): &#34;</font> + latestRevision);
+        ...
+    &#125;
+    ...
+&#125;
+</pre></div><p>That&#39;s what you&#39;ll see if you run the program:
+</p><pre> Repository latest revision (before committing): 0
+ The directory was added: r1 by &#39;foo&#39; at Tue Jun 27 15:46:59 NOVST 2006
+ The file was changed: r2 by &#39;foo&#39; at Tue Jun 27 15:46:59 NOVST 2006
+ The directory was copied: r3 by &#39;foo&#39; at Tue Jun 27 15:46:59 NOVST 2006
+ The directory was deleted: r4 by &#39;foo&#39; at Tue Jun 27 15:46:59 NOVST 2006
+ The copied directory was deleted: r5 by &#39;foo&#39; at Tue Jun 27 15:47:00 NOVST 2006
+ Repository latest revision (after committing): </pre><hr/><p>Download the <span class="nobr"><a href="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/Commit.java" class="external" title="http://svn.tmate.org/repos/jsvn/trunk/doc/examples/src/org/tmatesoft/svn/examples/repository/Commit.java">example program source code</a></span>.
+</p><p><br />
 <br />
-<a href="Printing_Out_Repository_History.html"><<</a> | <a href="Managing_repository_With_JavaSVN.html">List</a> |  >>
+<a href="Printing_Out_Repository_History.html"><<</a> | <a href="Managing_repository_With_JavaSVN.html">List</a> |  <a href="Editing_Operation_Update.html">>></a>
 
 </p>   
 
