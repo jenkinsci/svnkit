@@ -409,7 +409,7 @@ public class SVNClientImpl implements SVNClientInterface {
         }
         try {
             if(myMessageHandler != null){
-                client.setCommitHander(new ISVNCommitHandler(){
+                client.setCommitHandler(new ISVNCommitHandler(){
                     public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
                         CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables);
                         return myMessageHandler.getLogMessage(items);
@@ -436,7 +436,7 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNCommitInfo[] commitResults = null;
         try {
             if(myMessageHandler != null){
-                client.setCommitHander(new ISVNCommitHandler(){
+                client.setCommitHandler(new ISVNCommitHandler(){
                     public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
                         CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables);
                         return myMessageHandler.getLogMessage(items);

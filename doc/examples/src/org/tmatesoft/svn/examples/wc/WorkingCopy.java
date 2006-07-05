@@ -1099,7 +1099,7 @@ public class WorkingCopy {
     }
     
     /*
-     * This method is not related to JavaSVN API. Just a method which creates
+     * This method does not relate to JavaSVN API. Just a method which creates
      * local directories and files :)
      */
     private static final void createLocalDir(File aNewDir, File[] localFiles, String[] fileContents){

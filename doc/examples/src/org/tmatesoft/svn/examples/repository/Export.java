@@ -143,7 +143,7 @@ public class Export {
          * Get type of the node located at URL we used to create SVNRepository.
          * 
          * "" (empty string) is path relative to that URL, 
-         * -1 is value that mya be used to specify HEAD (latest) revision.
+         * -1 is value that may be used to specify HEAD (latest) revision.
          */
         SVNNodeKind nodeKind = repository.checkPath("", -1);
         if (nodeKind == SVNNodeKind.NONE) {
@@ -205,19 +205,24 @@ public class Export {
         }
         
         public void report(ISVNReporter reporter) throws SVNException {
-            /*
-             * Here empty working copy is reported.
-             * 
-             * ISVNReporter includes methods that allows to report mixed-rev working copy
-             * and even let server know that some files or directories are locally missing or
-             * locked. 
-             */
-            reporter.setPath("", null, exportRevision, true);
-            
-            /*
-             * Don't forget to finish the report!
-             */
-            reporter.finishReport();
+            try {
+                /*
+                 * Here empty working copy is reported.
+                 * 
+                 * ISVNReporter includes methods that allows to report mixed-rev working copy
+                 * and even let server know that some files or directories are locally missing or
+                 * locked. 
+                 */
+                reporter.setPath("", null, exportRevision, true);
+                
+                /*
+                 * Don't forget to finish the report!
+                 */
+                reporter.finishReport(); 
+            } catch (SVNException svne) {
+                reporter.abortReport();
+                System.out.println("Report failed.");
+            }
         }
     }
 

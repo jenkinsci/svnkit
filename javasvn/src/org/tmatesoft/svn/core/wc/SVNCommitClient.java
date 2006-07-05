@@ -143,7 +143,7 @@ public class SVNCommitClient extends SVNBasicClient {
      * @see	  #getCommitHandler()
      * @see	  ISVNCommitHandler
      */
-    public void setCommitHander(ISVNCommitHandler handler) {
+    public void setCommitHandler(ISVNCommitHandler handler) {
         myCommitHandler = handler;
     }
     

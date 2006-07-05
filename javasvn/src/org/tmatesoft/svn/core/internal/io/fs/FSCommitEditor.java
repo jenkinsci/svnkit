@@ -190,10 +190,7 @@ public class FSCommitEditor implements ISVNEditor {
             }
             copyFromPath = myRepository.getRepositoryPath(copyFromPath);
 
-            FSRevisionRoot copyRoot = myFSFS.createRevisionRoot(copyFromRevision);// FSOldRoot.createRevisionRoot(copyFromRevision,
-                                                                                    // myRevNodesPool.getRootRevisionNode(copyFromRevision,
-                                                                                    // myReposRootDir),
-                                                                                    // myReposRootDir);
+            FSRevisionRoot copyRoot = myFSFS.createRevisionRoot(copyFromRevision);
             makeCopy(copyRoot, copyFromPath, fullPath, true);
             isCopied = true;
         } else {

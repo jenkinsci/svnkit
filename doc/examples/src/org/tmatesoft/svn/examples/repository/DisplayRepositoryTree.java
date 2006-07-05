@@ -70,7 +70,7 @@ public class DisplayRepositoryTree {
         /*
          * default values:
          */
-        String url = "http://svn.tmate.org:8080/svn/jsvn/branches/jorunal";
+        String url = "http://svn.tmate.org:8080/svn/jsvn/trunk/doc";
         String name = "anonymous";
         String password = "anonymous";
 

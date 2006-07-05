@@ -72,7 +72,6 @@ javasvn-eclipse/org.tmatesoft.javasvn.feature/feature.xml eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn/.options eol=lf
 javasvn-eclipse/org.tmatesoft.javasvn/plugin.xml eol=lf
 javasvn-eclipse/site.xml eol=lf
-javasvn-test/PythonTests.xsl -text
 javasvn-test/apache/python.template.conf eol=lf
 javasvn-test/apache/users eol=lf
 javasvn-test/logging.properties -text
