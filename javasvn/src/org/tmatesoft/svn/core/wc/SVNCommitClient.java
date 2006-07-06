@@ -125,6 +125,14 @@ public class SVNCommitClient extends SVNBasicClient {
     protected SVNCommitClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
+
+    /**
+     * 
+     * @deprecated use {@link #setCommitHandler(ISVNCommitHandler)} instead
+     */
+    public void setCommitHander(ISVNCommitHandler handler) {
+        myCommitHandler = handler;
+    }
     
     /**
      * Sets an implementation of <b>ISVNCommitHandler</b> to 
