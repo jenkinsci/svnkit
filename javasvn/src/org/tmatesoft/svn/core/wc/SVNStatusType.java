@@ -302,13 +302,6 @@ public class SVNStatusType {
     
     /**
      * In a status operation denotes that the item in the Working Copy being 
-     * currently processed was merged - that is it was applied the differences
-     * (delta) between two sources in a merge operation.
-     */
-    public static final SVNStatusType STATUS_MERGED = new SVNStatusType(8, "merged", 'G');
-
-    /**
-     * In a status operation denotes that the item in the Working Copy being 
      * currently processed is in a conflict state (local changes overlap those 
      * that came from the repository). The conflicting overlaps need to be manually
      * resolved.

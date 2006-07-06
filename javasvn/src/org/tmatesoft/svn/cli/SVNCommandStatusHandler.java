@@ -153,8 +153,6 @@ public class SVNCommandStatusHandler implements ISVNStatusHandler {
             return 'R';
         } else if (type == SVNStatusType.STATUS_MODIFIED) {
             return 'M';
-        } else if (type == SVNStatusType.STATUS_MERGED) {
-            return 'G';
         } else if (type == SVNStatusType.STATUS_CONFLICTED) {
             return 'C';
         } else if (type == SVNStatusType.STATUS_OBSTRUCTED) {

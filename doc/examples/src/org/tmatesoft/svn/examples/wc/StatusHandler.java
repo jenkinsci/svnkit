@@ -73,12 +73,6 @@ public class StatusHandler implements ISVNStatusHandler, ISVNEventHandler {
              * changes the user has in his working copy. 
              */
             pathChangeType = "C";
-        } else if (contentsStatus == SVNStatusType.STATUS_MERGED) {
-            /*
-             * The file item was merGed (changes that came from the  repository 
-             * did not overlap local changes and were merged into the file).
-             */
-            pathChangeType = "G";
         } else if (contentsStatus == SVNStatusType.STATUS_DELETED) {
             /*
              * The file, directory or symbolic link item has been scheduled for 
