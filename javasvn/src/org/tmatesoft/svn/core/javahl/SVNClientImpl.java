@@ -41,12 +41,10 @@ import org.tigris.subversion.javahl.SVNClientLogLevel;
 import org.tigris.subversion.javahl.Status;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -1228,5 +1226,29 @@ public class SVNClientImpl implements SVNClientInterface {
         return name != null && (SVNFileUtil.isWindows) ?
                 name.equalsIgnoreCase(SVNFileUtil.getAdminDirectoryName()) :
                 name.equals(SVNFileUtil.getAdminDirectoryName());
+    }
+
+    public org.tigris.subversion.javahl.Version getVersion() {
+        return null;
+    }
+    
+    private class JavaSVNVersion extends org.tigris.subversion.javahl.Version {
+
+        public int getMajor() {
+            return versionMajor();
+        }
+
+        public int getMinor() {
+            return versionMinor();
+        }
+
+        public int getPatch() {
+            return versionMicro();
+        }
+
+        public String toString() {
+            return "JavaSVN v" + getMajor() + "." + getMinor() + "." + getPatch();
+        }
+        
     }
 }
