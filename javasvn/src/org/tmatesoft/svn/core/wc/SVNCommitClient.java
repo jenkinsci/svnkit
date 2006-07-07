@@ -813,7 +813,6 @@ public class SVNCommitClient extends SVNBasicClient {
             }
             SVNErrorMessage nestedErr = e.getErrorMessage();
             SVNErrorMessage err = SVNErrorMessage.create(nestedErr.getErrorCode(), "Commit failed (details follow):");
-            err.setChildErrorMessage(nestedErr);
             SVNErrorManager.error(err, e);
             return null;
         }
@@ -893,7 +892,6 @@ public class SVNCommitClient extends SVNBasicClient {
                 }
                 SVNErrorMessage nestedErr = e.getErrorMessage();
                 SVNErrorMessage err = SVNErrorMessage.create(nestedErr.getErrorCode(), "Commit failed (details follow):");
-                err.setChildErrorMessage(nestedErr);
                 SVNErrorManager.error(err, e);
             }
         }
@@ -959,7 +957,6 @@ public class SVNCommitClient extends SVNBasicClient {
             }            
             SVNErrorMessage nestedErr = e.getErrorMessage();
             SVNErrorMessage err = SVNErrorMessage.create(nestedErr.getErrorCode(), "Commit failed (details follow):");
-            err.setChildErrorMessage(nestedErr);
             SVNErrorManager.error(err, e);
         }
         return packetsArray;        
