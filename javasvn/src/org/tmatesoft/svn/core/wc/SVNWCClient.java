@@ -961,6 +961,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNWCAccess wcAccess = createWCAccess(path);
         try {
             wcAccess.open(true, recursive);
+            checkCancelled();
             String name = wcAccess.getTargetName();
 
             if ("".equals(name) && !force) {
@@ -1913,13 +1914,11 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private void addDirectory(SVNWCAccess wcAccess, SVNDirectory dir,
-            String name, boolean force) throws SVNException {
-
+    private void addDirectory(SVNWCAccess wcAccess, SVNDirectory dir, String name, boolean force) throws SVNException {
+        checkCancelled();
         if (dir.add(name, false, force) == null) {
             return;
         }
-
         File file = dir.getFile(name);
         SVNDirectory childDir = dir.getChildDirectory(name);
         if (childDir == null) {
@@ -1936,10 +1935,8 @@ public class SVNWCClient extends SVNBasicClient {
             }
             SVNFileType fileType = SVNFileType.getType(childFile);
             if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
-                SVNEntry entry = childDir.getEntries().getEntry(
-                        childFile.getName(), true);
-                if (force && entry != null && !entry.isScheduledForDeletion()
-                        && !entry.isDeleted()) {
+                SVNEntry entry = childDir.getEntries().getEntry(childFile.getName(), true);
+                if (force && entry != null && !entry.isScheduledForDeletion() && !entry.isDeleted()) {
                     continue;
                 }
                 addSingleFile(childDir, childFile.getName());
@@ -1950,6 +1947,7 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     private void addSingleFile(SVNDirectory dir, String name) throws SVNException {
+        checkCancelled();
         File file = dir.getFile(name);
         dir.add(name, false, false);
 
